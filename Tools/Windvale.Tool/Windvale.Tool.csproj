@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>windvale</AssemblyName>
+    <Description>Windvale Seed command-line tool.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
+    <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
+    <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
+  </ItemGroup>
+</Project>

@@ -19,7 +19,7 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Compiler and runtime
 
-- Should the Stage 0 tools use C# or TypeScript?
+- Which portions of the accepted C# Stage 0 implementation should remain in the permanent recovery bootstrap after self-hosting?
 - Should distributable bytecode be stack-based, register-based, or a hybrid?
 - What is the boundary between compiler IR and stable bytecode?
 - Which memory-management model works for both native system code and managed application code?
@@ -46,9 +46,8 @@ This list records unresolved decisions without presenting them as implementation
 The recommended next decisions are:
 
 1. Define the smallest end-to-end demonstration program and its observable behavior.
-2. Select the Stage 0 implementation language.
-3. Define the language semantic nucleus independently of syntax details.
-4. Choose the bytecode execution model and verifier boundary.
-5. Define WIR and the restricted C bridge.
-6. Select the first architecture, object path, firmware boundary, and VM qualification targets.
-7. Select the source license before publishing implementation code.
+2. Evaluate the implemented Seed semantic nucleus with several small programs before expanding it.
+3. Define the memory and aggregate-type model needed for a self-hosted compiler.
+4. Define the restricted C bridge without changing Windvale semantics.
+5. Select the first architecture, object path, firmware boundary, and VM qualification targets.
+6. Select the source license before publishing implementation code.

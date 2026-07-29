@@ -38,6 +38,8 @@ These paths describe the initial environment, not a public hosting decision.
 - x86-64 with UEFI as the first OS target
 - QEMU as the primary automated VM and Hyper-V as a compatibility target
 
+Decision 0002 subsequently accepted C#, typed WIR, custom verified bytecode, and the first Seed semantic subset. The remaining native and OS choices above are still proposals.
+
 ## Consequences
 
 - Early Windows and Linux work remains part of the finished Windvale ecosystem.

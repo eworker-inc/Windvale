@@ -1,0 +1,10 @@
+module HelloWindvale profile hosted;
+
+capability console.write_line;
+
+data Greeting: text = "Hello from Windvale";
+
+export fn main() -> i32 {
+    console.write_line(Greeting);
+    return 0;
+}

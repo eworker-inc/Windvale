@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Compiler/">
+    <Project Path="Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
+  </Folder>
+  <Folder Name="/Runtime/">
+    <Project Path="Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
+    <Project Path="Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
+  </Folder>
+  <Folder Name="/Tools/">
+    <Project Path="Tools/Windvale.Tool/Windvale.Tool.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj" />
+  </Folder>
+</Solution>
