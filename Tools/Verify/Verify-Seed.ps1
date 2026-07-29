@@ -1,0 +1,79 @@
+[CmdletBinding()]
+param(
+    [ValidateSet('Debug', 'Release')]
+    [string]$Configuration = 'Release',
+    [string]$ReportPath
+)
+
+$ErrorActionPreference = 'Stop'
+$RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$ToolProject = Join-Path $RepositoryRoot 'Tools/Windvale.Tool/Windvale.Tool.csproj'
+$Artifacts = Join-Path $RepositoryRoot 'artifacts'
+New-Item -ItemType Directory -Force -Path $Artifacts | Out-Null
+if ([string]::IsNullOrWhiteSpace($ReportPath)) {
+    $Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+    $ReportPath = Join-Path $RepositoryRoot "artifacts/seed-conformance-windows-$Architecture.json"
+}
+
+dotnet build (Join-Path $RepositoryRoot 'Windvale.slnx') --configuration $Configuration --nologo
+if ($LASTEXITCODE -ne 0) {
+    throw "Windvale Seed build failed with exit code $LASTEXITCODE."
+}
+
+dotnet run `
+    --project (Join-Path $RepositoryRoot 'Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj') `
+    --configuration $Configuration `
+    --no-build `
+    -- `
+    --report $ReportPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Windvale Seed conformance tests failed with exit code $LASTEXITCODE."
+}
+
+dotnet publish `
+    (Join-Path $RepositoryRoot 'Tools/Windvale.Tool/Windvale.Tool.csproj') `
+    --configuration $Configuration `
+    --runtime linux-x64 `
+    --self-contained false `
+    -p:UseAppHost=false `
+    --output (Join-Path $Artifacts 'publish-linux-x64') `
+    --nologo
+if ($LASTEXITCODE -ne 0) {
+    throw "The framework-dependent Linux CLI publication failed with exit code $LASTEXITCODE."
+}
+
+$SumModule = Join-Path $Artifacts 'Sum-Data.wvb'
+$HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
+
+$VerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $SumModule
+if ($LASTEXITCODE -ne 0 -or $VerifyOutput -notcontains 'Verified: SumData') {
+    throw 'The Seed CLI failed to verify Sum-Data.wvb.'
+}
+
+$InspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SumModule
+if ($LASTEXITCODE -ne 0 -or ($InspectOutput -join "`n") -notmatch 'data\.load\.i32') {
+    throw 'The Seed CLI inspector did not expose the expected data instruction.'
+}
+
+$RunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $SumModule
+if ($LASTEXITCODE -ne 0 -or $RunOutput -notcontains 'Result: 29') {
+    throw 'The Seed CLI did not produce Result: 29 for Sum-Data.wvb.'
+}
+
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Hello-Windvale.wv') -o $HelloModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Hello-Windvale.wv.' }
+
+$UnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $HelloModule 2>&1
+if ($LASTEXITCODE -ne 3 -or ($UnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
+    throw 'The Seed CLI did not refuse an ungranted console capability.'
+}
+
+$HelloOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $HelloModule --allow console.write_line
+if ($LASTEXITCODE -ne 0 -or $HelloOutput -notcontains 'Hello from Windvale' -or $HelloOutput -notcontains 'Result: 0') {
+    throw 'The Seed CLI did not run the authorized Hello-Windvale module correctly.'
+}
+
+Write-Output "Windvale Seed verification passed."
+Write-Output "Conformance report: $ReportPath"

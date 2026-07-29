@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Windvale Seed source compiler and typed intermediate representation.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
+  </ItemGroup>
+</Project>

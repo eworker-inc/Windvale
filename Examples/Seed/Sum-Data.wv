@@ -1,0 +1,19 @@
+module SumData profile portable;
+
+data Values: [i32] = [3, 5, 8, 13];
+
+fn Add(left: i32, right: i32) -> i32 {
+    return left + right;
+}
+
+export fn main() -> i32 {
+    let index: i32 = 0;
+    let total: i32 = 0;
+
+    while index < length(Values) {
+        total = Add(total, Values[index]);
+        index = index + 1;
+    }
+
+    return total;
+}

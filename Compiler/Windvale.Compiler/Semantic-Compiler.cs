@@ -1,0 +1,931 @@
+using System.Collections.Immutable;
+using Windvale.Bytecode;
+
+namespace Windvale.Compiler;
+
+internal static class Semanticˉcompiler
+{
+    public static Wirˉmodule Compile(Moduleˉsyntax syntax, Diagnosticˉbag diagnostics)
+    {
+        var Context = new Moduleˉcontext(syntax, diagnostics);
+        return Context.Compile();
+    }
+
+    private sealed class Moduleˉcontext(Moduleˉsyntax syntax, Diagnosticˉbag diagnostics)
+    {
+        private readonly Dictionary<string, Capabilityˉdeclaration> Capabilities =
+            new(StringComparer.Ordinal);
+        private readonly Dictionary<string, Dataˉdeclaration> Data =
+            new(StringComparer.Ordinal);
+        private readonly Dictionary<string, Functionˉsymbol> Functions =
+            new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> Textˉdataˉbyˉvalue =
+            new(StringComparer.Ordinal);
+        private int Syntheticˉtextˉcounter;
+
+        public Wirˉmodule Compile()
+        {
+            var Profile = Bindˉprofile(syntax.Profile);
+            Bindˉcapabilities(Profile);
+            Bindˉdata();
+            Bindˉfunctionˉsignatures();
+
+            var Wirˉfunctions = ImmutableArray.CreateBuilder<Wirˉfunction>(Functions.Count);
+            foreach (var Function in Functions.Values.OrderBy(Function => Function.Name, StringComparer.Ordinal))
+            {
+                var Builder = new Functionˉbuilder(
+                    Function,
+                    diagnostics,
+                    Data,
+                    Functions,
+                    Capabilities,
+                    Getˉorˉaddˉtextˉdata);
+                Wirˉfunctions.Add(Builder.Compile());
+            }
+
+            return new(
+                syntax.Name.Text,
+                Profile,
+                [.. Capabilities.Values.OrderBy(Capability => Capability.Name, StringComparer.Ordinal)],
+                [.. Data.Values.OrderBy(Item => Item.Name, StringComparer.Ordinal)],
+                Wirˉfunctions.ToImmutable());
+        }
+
+        private Moduleˉprofile Bindˉprofile(Syntaxˉtoken profile)
+        {
+            return profile.Kind switch
+            {
+                Tokenˉkind.Portable => Moduleˉprofile.Portable,
+                Tokenˉkind.Hosted => Moduleˉprofile.Hosted,
+                Tokenˉkind.System => Moduleˉprofile.System,
+                _ => Moduleˉprofile.Portable,
+            };
+        }
+
+        private void Bindˉcapabilities(Moduleˉprofile profile)
+        {
+            foreach (var Capabilityˉsyntax in syntax.Capabilities)
+            {
+                if (Capabilities.ContainsKey(Capabilityˉsyntax.Name))
+                {
+                    Report(
+                        "WVC2000",
+                        Capabilityˉsyntax.Span,
+                        $"Capability '{Capabilityˉsyntax.Name}' is declared more than once.");
+                    continue;
+                }
+
+                if (!Seedˉnames.Isˉcapability(Capabilityˉsyntax.Name))
+                {
+                    Report(
+                        "WVC2001",
+                        Capabilityˉsyntax.Span,
+                        $"Capability name '{Capabilityˉsyntax.Name}' is invalid.");
+                    continue;
+                }
+
+                if (!Capabilityˉcatalog.Tryˉget(Capabilityˉsyntax.Name, out var Declaration))
+                {
+                    Report(
+                        "WVC2002",
+                        Capabilityˉsyntax.Span,
+                        $"Capability '{Capabilityˉsyntax.Name}' is not defined by Windvale Seed.");
+                    continue;
+                }
+
+                if (profile == Moduleˉprofile.Portable)
+                {
+                    Report(
+                        "WVC2003",
+                        Capabilityˉsyntax.Span,
+                        "A portable module cannot declare hosted capabilities.");
+                }
+
+                Capabilities.Add(Capabilityˉsyntax.Name, Declaration);
+            }
+        }
+
+        private void Bindˉdata()
+        {
+            foreach (var Dataˉsyntax in syntax.Data)
+            {
+                if (Data.ContainsKey(Dataˉsyntax.Name.Text))
+                {
+                    Report(
+                        "WVC2010",
+                        Dataˉsyntax.Name.Span,
+                        $"Data '{Dataˉsyntax.Name.Text}' is declared more than once.");
+                    continue;
+                }
+
+                Dataˉdeclaration? Declaration = (Dataˉsyntax.Type.Kind, Dataˉsyntax.Value) switch
+                {
+                    (Typeˉsyntaxˉkind.Text, Textˉdataˉvalueˉsyntax Textˉvalue) =>
+                        new Textˉdataˉdeclaration(Dataˉsyntax.Name.Text, Textˉvalue.Value),
+                    (Typeˉsyntaxˉkind.I32ˉarray, I32ˉarrayˉdataˉvalueˉsyntax Array) =>
+                        new I32ˉarrayˉdataˉdeclaration(Dataˉsyntax.Name.Text, Array.Values),
+                    _ => null,
+                };
+
+                if (Declaration is null)
+                {
+                    Report(
+                        "WVC2011",
+                        Dataˉsyntax.Span,
+                        $"Data '{Dataˉsyntax.Name.Text}' has an incompatible initializer.");
+                    continue;
+                }
+
+                Data.Add(Declaration.Name, Declaration);
+                if (Declaration is Textˉdataˉdeclaration Textˉdeclaration &&
+                    !Textˉdataˉbyˉvalue.ContainsKey(Textˉdeclaration.Value))
+                {
+                    Textˉdataˉbyˉvalue.Add(Textˉdeclaration.Value, Textˉdeclaration.Name);
+                }
+            }
+        }
+
+        private void Bindˉfunctionˉsignatures()
+        {
+            foreach (var Functionˉsyntax in syntax.Functions)
+            {
+                if (Functions.ContainsKey(Functionˉsyntax.Name.Text))
+                {
+                    Report(
+                        "WVC2020",
+                        Functionˉsyntax.Name.Span,
+                        $"Function '{Functionˉsyntax.Name.Text}' is declared more than once.");
+                    continue;
+                }
+
+                var Parameterˉnames = new HashSet<string>(StringComparer.Ordinal);
+                var Parameters = ImmutableArray.CreateBuilder<Parameterˉsymbol>(Functionˉsyntax.Parameters.Length);
+                for (var Index = 0; Index < Functionˉsyntax.Parameters.Length; Index++)
+                {
+                    var Parameter = Functionˉsyntax.Parameters[Index];
+                    if (!Parameterˉnames.Add(Parameter.Name.Text))
+                    {
+                        Report(
+                            "WVC2021",
+                            Parameter.Name.Span,
+                            $"Parameter '{Parameter.Name.Text}' is declared more than once.");
+                    }
+
+                    Parameters.Add(new(
+                        Parameter.Name.Text,
+                        Bindˉvalueˉtype(Parameter.Type),
+                        Index,
+                        Parameter.Name.Span));
+                }
+
+                Functions.Add(
+                    Functionˉsyntax.Name.Text,
+                    new(
+                        Functionˉsyntax.Name.Text,
+                        Parameters.ToImmutable(),
+                        Bindˉvalueˉtype(Functionˉsyntax.Returnˉtype),
+                        Functionˉsyntax.Isˉexported,
+                        Functionˉsyntax));
+            }
+        }
+
+        private string Getˉorˉaddˉtextˉdata(string value)
+        {
+            if (Textˉdataˉbyˉvalue.TryGetValue(value, out var Existing))
+            {
+                return Existing;
+            }
+
+            string Name;
+            do
+            {
+                Name = $"__Text_{Syntheticˉtextˉcounter++:D6}";
+            }
+            while (Data.ContainsKey(Name));
+
+            Data.Add(Name, new Textˉdataˉdeclaration(Name, value));
+            Textˉdataˉbyˉvalue.Add(value, Name);
+            return Name;
+        }
+
+        private Valueˉtype Bindˉvalueˉtype(Typeˉsyntax type)
+        {
+            return type.Kind switch
+            {
+                Typeˉsyntaxˉkind.Void => Valueˉtype.Void,
+                Typeˉsyntaxˉkind.I32 => Valueˉtype.I32,
+                Typeˉsyntaxˉkind.Bool => Valueˉtype.Bool,
+                Typeˉsyntaxˉkind.Text => Valueˉtype.Text,
+                _ => Valueˉtype.I32,
+            };
+        }
+
+        private void Report(string code, Sourceˉspan span, string message)
+        {
+            diagnostics.Report(code, "semantic", span, message);
+        }
+    }
+
+    private sealed record Parameterˉsymbol(
+        string Name,
+        Valueˉtype Type,
+        int Slot,
+        Sourceˉspan Span);
+
+    private sealed record Functionˉsymbol(
+        string Name,
+        ImmutableArray<Parameterˉsymbol> Parameters,
+        Valueˉtype Returnˉtype,
+        bool Isˉexported,
+        Functionˉsyntax Syntax)
+    {
+        public ImmutableArray<Valueˉtype> Parameterˉtypes => [.. Parameters.Select(Parameter => Parameter.Type)];
+    }
+
+    private sealed record Localˉsymbol(string Name, Valueˉtype Type, int Slot);
+
+    private readonly record struct Boundˉvalue(Valueˉtype Type, int Temporary)
+    {
+        public static Boundˉvalue Void => new(Valueˉtype.Void, -1);
+    }
+
+    private sealed class Mutableˉblock(int id)
+    {
+        public int Id { get; } = id;
+
+        public List<Wirˉinstruction> Instructions { get; } = [];
+
+        public Wirˉterminator? Terminator { get; set; }
+    }
+
+    private sealed class Functionˉbuilder
+    {
+        private readonly Functionˉsymbol Function;
+        private readonly Diagnosticˉbag Diagnostics;
+        private readonly IReadOnlyDictionary<string, Dataˉdeclaration> Data;
+        private readonly IReadOnlyDictionary<string, Functionˉsymbol> Functions;
+        private readonly IReadOnlyDictionary<string, Capabilityˉdeclaration> Capabilities;
+        private readonly Func<string, string> Getˉtextˉdata;
+        private readonly List<Mutableˉblock> Blocks = [];
+        private readonly List<Valueˉtype> Userˉlocalˉtypes = [];
+        private readonly List<Valueˉtype> Temporaryˉtypes = [];
+        private readonly Stack<Dictionary<string, Localˉsymbol>> Scopes = [];
+        private readonly HashSet<string> Allˉlocalˉnames = new(StringComparer.Ordinal);
+        private Mutableˉblock? Currentˉblock;
+
+        public Functionˉbuilder(
+            Functionˉsymbol function,
+            Diagnosticˉbag diagnostics,
+            IReadOnlyDictionary<string, Dataˉdeclaration> data,
+            IReadOnlyDictionary<string, Functionˉsymbol> functions,
+            IReadOnlyDictionary<string, Capabilityˉdeclaration> capabilities,
+            Func<string, string> getˉtextˉdata)
+        {
+            Function = function;
+            Diagnostics = diagnostics;
+            Data = data;
+            Functions = functions;
+            Capabilities = capabilities;
+            Getˉtextˉdata = getˉtextˉdata;
+        }
+
+        public Wirˉfunction Compile()
+        {
+            Enterˉscope();
+            foreach (var Parameter in Function.Parameters)
+            {
+                if (Allˉlocalˉnames.Add(Parameter.Name))
+                {
+                    Scopes.Peek().Add(Parameter.Name, new(Parameter.Name, Parameter.Type, Parameter.Slot));
+                }
+            }
+
+            Currentˉblock = Createˉblock();
+            Compileˉblock(Function.Syntax.Body, createˉscope: false);
+            if (Currentˉblock is not null)
+            {
+                if (Function.Returnˉtype == Valueˉtype.Void)
+                {
+                    Currentˉblock.Terminator = new Wirˉreturn(null);
+                    Currentˉblock = null;
+                }
+                else
+                {
+                    Report(
+                        "WVC2030",
+                        Function.Syntax.Body.Span,
+                        $"Function '{Function.Name}' can reach the end without returning {Formatˉtype(Function.Returnˉtype)}.");
+                    var Fallbackˉblock = Currentˉblock;
+                    var Temporary = Emitˉresult(Wirˉoperation.I32ˉconstant, Valueˉtype.I32, integerˉoperand: 0);
+                    Fallbackˉblock.Terminator = new Wirˉreturn(Temporary);
+                    Currentˉblock = null;
+                }
+            }
+
+            Exitˉscope();
+            var Frozenˉblocks = Blocks.Select(Block => new Wirˉblock(
+                Block.Id,
+                [.. Block.Instructions],
+                Block.Terminator ?? throw new InvalidOperationException(
+                    $"WIR block {Block.Id} in function '{Function.Name}' has no terminator.")));
+
+            return new(
+                Function.Name,
+                Function.Parameterˉtypes,
+                Function.Returnˉtype,
+                [.. Userˉlocalˉtypes],
+                [.. Temporaryˉtypes],
+                [.. Frozenˉblocks],
+                Function.Isˉexported);
+        }
+
+        private void Compileˉblock(Blockˉstatementˉsyntax block, bool createˉscope = true)
+        {
+            if (createˉscope)
+            {
+                Enterˉscope();
+            }
+
+            foreach (var Statement in block.Statements)
+            {
+                if (Currentˉblock is null)
+                {
+                    Report("WVC2031", Statement.Span, "This statement is unreachable.");
+                    continue;
+                }
+
+                Compileˉstatement(Statement);
+            }
+
+            if (createˉscope)
+            {
+                Exitˉscope();
+            }
+        }
+
+        private void Compileˉstatement(Statementˉsyntax statement)
+        {
+            switch (statement)
+            {
+                case Blockˉstatementˉsyntax Block:
+                    Compileˉblock(Block);
+                    break;
+                case Letˉstatementˉsyntax Let:
+                    Compileˉlet(Let);
+                    break;
+                case Assignmentˉstatementˉsyntax Assignment:
+                    Compileˉassignment(Assignment);
+                    break;
+                case Expressionˉstatementˉsyntax Expression:
+                    _ = Compileˉexpression(Expression.Expression);
+                    break;
+                case Ifˉstatementˉsyntax If:
+                    Compileˉif(If);
+                    break;
+                case Whileˉstatementˉsyntax While:
+                    Compileˉwhile(While);
+                    break;
+                case Returnˉstatementˉsyntax Return:
+                    Compileˉreturn(Return);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown statement syntax '{statement.GetType().Name}'.");
+            }
+        }
+
+        private void Compileˉlet(Letˉstatementˉsyntax statement)
+        {
+            var Type = Bindˉvalueˉtype(statement.Type);
+            var Initializer = Compileˉexpression(statement.Initializer);
+            Requireˉtype(Initializer, Type, statement.Initializer.Span, "local initializer");
+
+            if (!Allˉlocalˉnames.Add(statement.Name.Text))
+            {
+                Report(
+                    "WVC2040",
+                    statement.Name.Span,
+                    $"Local or parameter '{statement.Name.Text}' is already declared in this function.");
+                return;
+            }
+
+            var Slot = Function.Parameters.Length + Userˉlocalˉtypes.Count;
+            Userˉlocalˉtypes.Add(Type);
+            Scopes.Peek().Add(statement.Name.Text, new(statement.Name.Text, Type, Slot));
+            Emit(
+                new(
+                    Wirˉoperation.Storeˉlocal,
+                    null,
+                    [Initializer.Temporary],
+                    Integerˉoperand: Slot));
+        }
+
+        private void Compileˉassignment(Assignmentˉstatementˉsyntax statement)
+        {
+            if (!Tryˉlookupˉlocal(statement.Name.Text, out var Local))
+            {
+                Report(
+                    "WVC2041",
+                    statement.Name.Span,
+                    $"Local or parameter '{statement.Name.Text}' is not declared in this scope.");
+                _ = Compileˉexpression(statement.Value);
+                return;
+            }
+
+            var Value = Compileˉexpression(statement.Value);
+            Requireˉtype(Value, Local.Type, statement.Value.Span, "assignment");
+            Emit(new(
+                Wirˉoperation.Storeˉlocal,
+                null,
+                [Value.Temporary],
+                Integerˉoperand: Local.Slot));
+        }
+
+        private void Compileˉif(Ifˉstatementˉsyntax statement)
+        {
+            var Condition = Compileˉexpression(statement.Condition);
+            Requireˉtype(Condition, Valueˉtype.Bool, statement.Condition.Span, "if condition");
+            var Branchˉsource = Requireˉcurrentˉblock();
+            var Thenˉblock = Createˉblock();
+            var Elseˉblock = Createˉblock();
+            Branchˉsource.Terminator = new Wirˉbranch(Condition.Temporary, Thenˉblock.Id, Elseˉblock.Id);
+
+            Currentˉblock = Thenˉblock;
+            Compileˉblock(statement.Then);
+            var Thenˉend = Currentˉblock;
+
+            Currentˉblock = Elseˉblock;
+            if (statement.Else is not null)
+            {
+                Compileˉblock(statement.Else);
+            }
+
+            var Elseˉend = Currentˉblock;
+            if (Thenˉend is null && Elseˉend is null)
+            {
+                Currentˉblock = null;
+                return;
+            }
+
+            var Joinˉblock = Createˉblock();
+            if (Thenˉend is not null)
+            {
+                Thenˉend.Terminator = new Wirˉjump(Joinˉblock.Id);
+            }
+
+            if (Elseˉend is not null)
+            {
+                Elseˉend.Terminator = new Wirˉjump(Joinˉblock.Id);
+            }
+
+            Currentˉblock = Joinˉblock;
+        }
+
+        private void Compileˉwhile(Whileˉstatementˉsyntax statement)
+        {
+            var Entry = Requireˉcurrentˉblock();
+            var Header = Createˉblock();
+            var Body = Createˉblock();
+            var After = Createˉblock();
+            Entry.Terminator = new Wirˉjump(Header.Id);
+
+            Currentˉblock = Header;
+            var Condition = Compileˉexpression(statement.Condition);
+            Requireˉtype(Condition, Valueˉtype.Bool, statement.Condition.Span, "while condition");
+            Header.Terminator = new Wirˉbranch(Condition.Temporary, Body.Id, After.Id);
+
+            Currentˉblock = Body;
+            Compileˉblock(statement.Body);
+            if (Currentˉblock is not null)
+            {
+                Currentˉblock.Terminator = new Wirˉjump(Header.Id);
+            }
+
+            Currentˉblock = After;
+        }
+
+        private void Compileˉreturn(Returnˉstatementˉsyntax statement)
+        {
+            var Block = Requireˉcurrentˉblock();
+            if (Function.Returnˉtype == Valueˉtype.Void)
+            {
+                if (statement.Value is not null)
+                {
+                    Report("WVC2050", statement.Value.Span, "A void function cannot return a value.");
+                    _ = Compileˉexpression(statement.Value);
+                }
+
+                Block.Terminator = new Wirˉreturn(null);
+            }
+            else if (statement.Value is null)
+            {
+                Report(
+                    "WVC2051",
+                    statement.Span,
+                    $"Function '{Function.Name}' must return {Formatˉtype(Function.Returnˉtype)}.");
+                var Fallback = Emitˉresult(Wirˉoperation.I32ˉconstant, Valueˉtype.I32, integerˉoperand: 0);
+                Block.Terminator = new Wirˉreturn(Fallback);
+            }
+            else
+            {
+                var Value = Compileˉexpression(statement.Value);
+                Requireˉtype(Value, Function.Returnˉtype, statement.Value.Span, "return value");
+                Block.Terminator = new Wirˉreturn(Value.Temporary);
+            }
+
+            Currentˉblock = null;
+        }
+
+        private Boundˉvalue Compileˉexpression(Expressionˉsyntax expression)
+        {
+            return expression switch
+            {
+                Literalˉexpressionˉsyntax Literal => Compileˉliteral(Literal),
+                Nameˉexpressionˉsyntax Name => Compileˉname(Name),
+                Unaryˉexpressionˉsyntax Unary => Compileˉunary(Unary),
+                Binaryˉexpressionˉsyntax Binary => Compileˉbinary(Binary),
+                Callˉexpressionˉsyntax Call => Compileˉcall(Call),
+                Indexˉexpressionˉsyntax Index => Compileˉindex(Index),
+                Invalidˉexpressionˉsyntax Invalid => Invalidˉvalue(Invalid.Span),
+                _ => throw new InvalidOperationException($"Unknown expression syntax '{expression.GetType().Name}'."),
+            };
+        }
+
+        private Boundˉvalue Compileˉliteral(Literalˉexpressionˉsyntax expression)
+        {
+            return expression.Value switch
+            {
+                int Integer => Result(
+                    Wirˉoperation.I32ˉconstant,
+                    Valueˉtype.I32,
+                    integerˉoperand: Integer),
+                bool Boolean => Result(
+                    Wirˉoperation.Boolˉconstant,
+                    Valueˉtype.Bool,
+                    integerˉoperand: Boolean ? 1 : 0),
+                string Text => Result(
+                    Wirˉoperation.Textˉconstant,
+                    Valueˉtype.Text,
+                    nameˉoperand: Getˉtextˉdata(Text)),
+                _ => Invalidˉvalue(expression.Span),
+            };
+        }
+
+        private Boundˉvalue Compileˉname(Nameˉexpressionˉsyntax expression)
+        {
+            if (Tryˉlookupˉlocal(expression.Name, out var Local))
+            {
+                return Result(
+                    Wirˉoperation.Loadˉlocal,
+                    Local.Type,
+                    integerˉoperand: Local.Slot);
+            }
+
+            if (Data.TryGetValue(expression.Name, out var Declaration))
+            {
+                if (Declaration is Textˉdataˉdeclaration)
+                {
+                    return Result(
+                        Wirˉoperation.Textˉconstant,
+                        Valueˉtype.Text,
+                        nameˉoperand: Declaration.Name);
+                }
+
+                Report(
+                    "WVC2060",
+                    expression.Span,
+                    $"Array data '{expression.Name}' must be indexed or passed to length().");
+                return Invalidˉvalue(expression.Span);
+            }
+
+            Report("WVC2061", expression.Span, $"Name '{expression.Name}' is not declared.");
+            return Invalidˉvalue(expression.Span);
+        }
+
+        private Boundˉvalue Compileˉunary(Unaryˉexpressionˉsyntax expression)
+        {
+            var Operand = Compileˉexpression(expression.Operand);
+            if (expression.Operator == Tokenˉkind.Minus)
+            {
+                Requireˉtype(Operand, Valueˉtype.I32, expression.Operand.Span, "unary '-' operand");
+                return Result(Wirˉoperation.I32ˉnegate, Valueˉtype.I32, [Operand.Temporary]);
+            }
+
+            Requireˉtype(Operand, Valueˉtype.Bool, expression.Operand.Span, "unary '!' operand");
+            return Result(Wirˉoperation.Boolˉnot, Valueˉtype.Bool, [Operand.Temporary]);
+        }
+
+        private Boundˉvalue Compileˉbinary(Binaryˉexpressionˉsyntax expression)
+        {
+            var Left = Compileˉexpression(expression.Left);
+            var Right = Compileˉexpression(expression.Right);
+            var Operands = ImmutableArray.Create(Left.Temporary, Right.Temporary);
+
+            switch (expression.Operator)
+            {
+                case Tokenˉkind.Plus:
+                case Tokenˉkind.Minus:
+                case Tokenˉkind.Star:
+                    Requireˉtype(Left, Valueˉtype.I32, expression.Left.Span, "arithmetic operand");
+                    Requireˉtype(Right, Valueˉtype.I32, expression.Right.Span, "arithmetic operand");
+                    return Result(
+                        expression.Operator switch
+                        {
+                            Tokenˉkind.Plus => Wirˉoperation.I32ˉadd,
+                            Tokenˉkind.Minus => Wirˉoperation.I32ˉsubtract,
+                            _ => Wirˉoperation.I32ˉmultiply,
+                        },
+                        Valueˉtype.I32,
+                        Operands);
+                case Tokenˉkind.Less:
+                case Tokenˉkind.Lessˉequals:
+                case Tokenˉkind.Greater:
+                case Tokenˉkind.Greaterˉequals:
+                    Requireˉtype(Left, Valueˉtype.I32, expression.Left.Span, "comparison operand");
+                    Requireˉtype(Right, Valueˉtype.I32, expression.Right.Span, "comparison operand");
+                    return Result(
+                        expression.Operator switch
+                        {
+                            Tokenˉkind.Less => Wirˉoperation.I32ˉless,
+                            Tokenˉkind.Lessˉequals => Wirˉoperation.I32ˉlessˉequal,
+                            Tokenˉkind.Greater => Wirˉoperation.I32ˉgreater,
+                            _ => Wirˉoperation.I32ˉgreaterˉequal,
+                        },
+                        Valueˉtype.Bool,
+                        Operands);
+                case Tokenˉkind.Equalsˉequals:
+                case Tokenˉkind.Bangˉequals:
+                    if (Left.Type != Right.Type || Left.Type is not (Valueˉtype.I32 or Valueˉtype.Bool))
+                    {
+                        Report(
+                            "WVC2062",
+                            expression.Span,
+                            "Equality requires two i32 values or two bool values of the same type.");
+                        return Invalidˉvalue(expression.Span);
+                    }
+
+                    return Result(
+                        (Left.Type, expression.Operator) switch
+                        {
+                            (Valueˉtype.I32, Tokenˉkind.Equalsˉequals) => Wirˉoperation.I32ˉequal,
+                            (Valueˉtype.I32, _) => Wirˉoperation.I32ˉnotˉequal,
+                            (Valueˉtype.Bool, Tokenˉkind.Equalsˉequals) => Wirˉoperation.Boolˉequal,
+                            _ => Wirˉoperation.Boolˉnotˉequal,
+                        },
+                        Valueˉtype.Bool,
+                        Operands);
+                default:
+                    throw new InvalidOperationException($"Unknown binary operator '{expression.Operator}'.");
+            }
+        }
+
+        private Boundˉvalue Compileˉindex(Indexˉexpressionˉsyntax expression)
+        {
+            var Index = Compileˉexpression(expression.Index);
+            Requireˉtype(Index, Valueˉtype.I32, expression.Index.Span, "data index");
+            if (!Data.TryGetValue(expression.Name, out var Declaration) ||
+                Declaration is not I32ˉarrayˉdataˉdeclaration)
+            {
+                Report(
+                    "WVC2063",
+                    expression.Span,
+                    $"'{expression.Name}' is not immutable [i32] data.");
+                return Invalidˉvalue(expression.Span);
+            }
+
+            return Result(
+                Wirˉoperation.Dataˉloadˉi32,
+                Valueˉtype.I32,
+                [Index.Temporary],
+                nameˉoperand: expression.Name);
+        }
+
+        private Boundˉvalue Compileˉcall(Callˉexpressionˉsyntax expression)
+        {
+            if (expression.Name == "length")
+            {
+                return Compileˉlength(expression);
+            }
+
+            var Arguments = expression.Arguments.Select(Compileˉexpression).ToImmutableArray();
+            if (Functions.TryGetValue(expression.Name, out var Calledˉfunction))
+            {
+                Checkˉarguments(expression, Arguments, Calledˉfunction.Parameterˉtypes);
+                return Callˉresult(
+                    Wirˉoperation.Callˉfunction,
+                    Calledˉfunction.Returnˉtype,
+                    Arguments,
+                    expression.Name);
+            }
+
+            if (Capabilities.TryGetValue(expression.Name, out var Capability))
+            {
+                Checkˉarguments(expression, Arguments, Capability.Parameterˉtypes);
+                return Callˉresult(
+                    Wirˉoperation.Callˉcapability,
+                    Capability.Returnˉtype,
+                    Arguments,
+                    expression.Name);
+            }
+
+            if (Capabilityˉcatalog.Tryˉget(expression.Name, out _))
+            {
+                Report(
+                    "WVC2064",
+                    expression.Span,
+                    $"Capability '{expression.Name}' must be declared by the module before it is called.");
+            }
+            else
+            {
+                Report("WVC2065", expression.Span, $"Function or capability '{expression.Name}' is not declared.");
+            }
+
+            return Invalidˉvalue(expression.Span);
+        }
+
+        private Boundˉvalue Compileˉlength(Callˉexpressionˉsyntax expression)
+        {
+            if (expression.Arguments.Length != 1 ||
+                expression.Arguments[0] is not Nameˉexpressionˉsyntax Name ||
+                !Data.TryGetValue(Name.Name, out var Declaration) ||
+                Declaration is not I32ˉarrayˉdataˉdeclaration)
+            {
+                Report(
+                    "WVC2066",
+                    expression.Span,
+                    "length() requires one immutable [i32] data name.");
+                return Invalidˉvalue(expression.Span);
+            }
+
+            return Result(
+                Wirˉoperation.Dataˉlength,
+                Valueˉtype.I32,
+                nameˉoperand: Name.Name);
+        }
+
+        private Boundˉvalue Callˉresult(
+            Wirˉoperation operation,
+            Valueˉtype returnˉtype,
+            ImmutableArray<Boundˉvalue> arguments,
+            string name)
+        {
+            var Operands = arguments.Select(Argument => Argument.Temporary).ToImmutableArray();
+            if (returnˉtype == Valueˉtype.Void)
+            {
+                Emit(new(operation, null, Operands, Nameˉoperand: name));
+                return Boundˉvalue.Void;
+            }
+
+            return Result(operation, returnˉtype, Operands, nameˉoperand: name);
+        }
+
+        private void Checkˉarguments(
+            Callˉexpressionˉsyntax expression,
+            ImmutableArray<Boundˉvalue> arguments,
+            ImmutableArray<Valueˉtype> parameterˉtypes)
+        {
+            if (arguments.Length != parameterˉtypes.Length)
+            {
+                Report(
+                    "WVC2067",
+                    expression.Span,
+                    $"Call to '{expression.Name}' has {arguments.Length} arguments; {parameterˉtypes.Length} are required.");
+            }
+
+            var Count = Math.Min(arguments.Length, parameterˉtypes.Length);
+            for (var Index = 0; Index < Count; Index++)
+            {
+                Requireˉtype(
+                    arguments[Index],
+                    parameterˉtypes[Index],
+                    expression.Arguments[Index].Span,
+                    $"argument {Index + 1}");
+            }
+        }
+
+        private Boundˉvalue Invalidˉvalue(Sourceˉspan span)
+        {
+            _ = span;
+            return Result(Wirˉoperation.I32ˉconstant, Valueˉtype.I32, integerˉoperand: 0);
+        }
+
+        private Boundˉvalue Result(
+            Wirˉoperation operation,
+            Valueˉtype type,
+            ImmutableArray<int> operands = default,
+            int integerˉoperand = 0,
+            string? nameˉoperand = null)
+        {
+            var Temporary = Emitˉresult(
+                operation,
+                type,
+                operands.IsDefault ? [] : operands,
+                integerˉoperand,
+                nameˉoperand);
+            return new(type, Temporary);
+        }
+
+        private int Emitˉresult(
+            Wirˉoperation operation,
+            Valueˉtype type,
+            ImmutableArray<int> operands = default,
+            int integerˉoperand = 0,
+            string? nameˉoperand = null)
+        {
+            var Temporary = Temporaryˉtypes.Count;
+            Temporaryˉtypes.Add(type);
+            Emit(new(
+                operation,
+                Temporary,
+                operands.IsDefault ? [] : operands,
+                integerˉoperand,
+                nameˉoperand));
+            return Temporary;
+        }
+
+        private void Emit(Wirˉinstruction instruction)
+        {
+            Requireˉcurrentˉblock().Instructions.Add(instruction);
+        }
+
+        private void Requireˉtype(
+            Boundˉvalue value,
+            Valueˉtype required,
+            Sourceˉspan span,
+            string role)
+        {
+            if (value.Type != required)
+            {
+                Report(
+                    "WVC2070",
+                    span,
+                    $"The {role} has type {Formatˉtype(value.Type)}; {Formatˉtype(required)} is required.");
+            }
+        }
+
+        private bool Tryˉlookupˉlocal(string name, out Localˉsymbol local)
+        {
+            foreach (var Scope in Scopes)
+            {
+                if (Scope.TryGetValue(name, out local!))
+                {
+                    return true;
+                }
+            }
+
+            local = null!;
+            return false;
+        }
+
+        private void Enterˉscope()
+        {
+            Scopes.Push(new(StringComparer.Ordinal));
+        }
+
+        private void Exitˉscope()
+        {
+            Scopes.Pop();
+        }
+
+        private Mutableˉblock Createˉblock()
+        {
+            var Block = new Mutableˉblock(Blocks.Count);
+            Blocks.Add(Block);
+            return Block;
+        }
+
+        private Mutableˉblock Requireˉcurrentˉblock()
+        {
+            return Currentˉblock ?? throw new InvalidOperationException(
+                $"Function '{Function.Name}' has no current WIR block.");
+        }
+
+        private Valueˉtype Bindˉvalueˉtype(Typeˉsyntax type)
+        {
+            return type.Kind switch
+            {
+                Typeˉsyntaxˉkind.Void => Valueˉtype.Void,
+                Typeˉsyntaxˉkind.I32 => Valueˉtype.I32,
+                Typeˉsyntaxˉkind.Bool => Valueˉtype.Bool,
+                Typeˉsyntaxˉkind.Text => Valueˉtype.Text,
+                _ => Valueˉtype.I32,
+            };
+        }
+
+        private void Report(string code, Sourceˉspan span, string message)
+        {
+            Diagnostics.Report(code, "semantic", span, message);
+        }
+
+        private static string Formatˉtype(Valueˉtype type)
+        {
+            return type switch
+            {
+                Valueˉtype.Void => "void",
+                Valueˉtype.I32 => "i32",
+                Valueˉtype.Bool => "bool",
+                Valueˉtype.Text => "text",
+                _ => type.ToString(),
+            };
+        }
+    }
+}

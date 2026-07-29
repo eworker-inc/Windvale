@@ -97,6 +97,14 @@ Carry the established E-Worker host-code convention into Windvale bootstrap code
 - Code changes require the relevant package checks and focused conformance tests once those commands exist.
 - State exactly which broader checks were not run and why.
 
+Windvale Seed code changes normally require the host verifier:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
+```
+
+On Linux, use `./Tools/Verify/Verify-Seed.sh`. Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require reports from both hosts before cross-host conformance is claimed.
+
 ## Documentation discipline
 
 - Put enduring architecture under `Documents/Architecture/`.

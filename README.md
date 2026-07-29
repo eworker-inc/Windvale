@@ -1,45 +1,130 @@
 # Windvale
 
-Windvale is an open-source experiment in building a small, understandable computing stack with AI as the primary implementation partner.
+Windvale is an open-source-intended experiment in building a small, understandable computing stack with AI as the primary implementation partner.
 
-The intended stack includes a programming language, portable bytecode, a runtime, an assembler, an object format, a linker, a compact foundation library, and eventually a small operating system. The operating system is the final integration demonstration; the language, tools, and runtime should remain independently useful on Windows and Linux.
+The intended stack includes a programming language, portable bytecode, a runtime, an assembler, an object format, a linker, a compact foundation library, and eventually a small operating system. The operating system is the final integration demonstration; the language, tools, and runtime remain independently useful on Windows and Linux.
 
-## Status
+## Current milestone: Windvale Seed
 
-Windvale is in its architecture and bootstrap-planning phase. This repository currently contains project decisions and design notes, not an implementation.
+Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provides:
+
+- A small typed source language with modules, functions, locals, control flow, immutable text and integer data, and explicit capabilities
+- A stack-independent typed Windvale IR
+- Deterministic `.wvb` bytecode generation
+- A bounded binary reader and mandatory control-flow/type verifier
+- A human-readable module inspector and disassembler
+- A portable .NET reference runtime
+- Explicit authorization for hosted `console.write_line` access
+- Conformance, malformed-input, determinism, diagnostics, and runtime-limit coverage
+- One CLI with `compile`, `inspect`, `verify`, and `run` commands
 
 The open-source intent is established. The exact source license has not been selected yet and must be chosen before the first public source release.
 
-## Initial direction
+## Requirements
 
-- Windows and Linux are permanent Windvale runtime and development hosts, not temporary throwaway targets.
-- Portable Windvale modules should run through a Windvale-defined runtime contract instead of inheriting Windows or Linux semantics directly.
-- The same source language should eventually target both portable bytecode and native code.
-- Portable, hosted, and system programming must have explicit capability profiles.
-- The compiler and assembler should share an object-writing model; the compiler should not require text assembly as its internal interface.
+- .NET SDK 10.0.302 or a compatible later patch in the same feature band
+- Windows or Linux
+
+The repository pins the SDK in `global.json` and uses no external NuGet packages.
+
+## Quick start
+
+Build and run the complete Seed verifier on Windows:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
+```
+
+On Linux:
+
+```sh
+./Tools/Verify/Verify-Seed.sh
+```
+
+Compile, verify, inspect, and run the portable example:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv -o artifacts/Sum-Data.wvb
+dotnet run --project Tools/Windvale.Tool -- verify artifacts/Sum-Data.wvb
+dotnet run --project Tools/Windvale.Tool -- inspect artifacts/Sum-Data.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Sum-Data.wvb
+```
+
+The result is:
+
+```text
+Result: 29
+```
+
+Compile and run the hosted example with its capability granted explicitly:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Hello-Windvale.wv -o artifacts/Hello-Windvale.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Hello-Windvale.wvb --allow console.write_line
+```
+
+The runtime refuses that module without `--allow console.write_line`.
+
+## Seed language example
+
+```text
+module SumData profile portable;
+
+data Values: [i32] = [3, 5, 8, 13];
+
+fn Add(left: i32, right: i32) -> i32 {
+    return left + right;
+}
+
+export fn main() -> i32 {
+    let index: i32 = 0;
+    let total: i32 = 0;
+
+    while index < length(Values) {
+        total = Add(total, Values[index]);
+        index = index + 1;
+    }
+
+    return total;
+}
+```
+
+## Repository layout
+
+- `Compiler/` — source lexer, parser, semantic analysis, typed WIR, and bytecode lowering
+- `Runtime/Windvale.Bytecode/` — module contracts, codec, verifier, digest, and inspector
+- `Runtime/Windvale.Runtime/` — verified-bytecode reference interpreter and capability host
+- `Tools/Windvale.Tool/` — command-line composition
+- `Tools/Verify/` — Windows and Linux verification entry points
+- `Tests/` — dependency-free Seed conformance runner
+- `Examples/Seed/` — portable and hosted example programs
+- `Specifications/` — implemented source, bytecode, CLI, and conformance contracts
+- `Documents/` — architecture, decisions, project direction, and open questions
+
+## Architecture direction
+
+- Windows and Linux are permanent Windvale runtime and development hosts.
+- Portable Windvale modules run through Windvale-defined contracts instead of inheriting host semantics.
+- Source syntax, typed WIR, distributable bytecode, and future native IR remain distinct contracts.
+- Portable, hosted, and system programming have explicit capability profiles.
 - The OS should begin as a small vertical system running in virtual machines, with QEMU as the likely automation environment and Hyper-V as an important Windows compatibility target.
 - Bootstrap dependencies and AI contributions must be documented honestly and reproducibly.
 
 ## Documents
 
 - [Project vision](Documents/Project/Project-Vision.md)
+- [Seed implementation](Documents/Architecture/Seed-Implementation.md)
 - [Platform and portability model](Documents/Architecture/Platform-And-Portability.md)
 - [Compiler bootstrap options](Documents/Architecture/Compiler-Bootstrap-Options.md)
+- [Seed language specification](Specifications/Seed-Language.md)
+- [Seed bytecode specification](Specifications/Seed-Bytecode.md)
+- [Seed CLI specification](Specifications/Seed-CLI.md)
+- [Seed conformance specification](Specifications/Seed-Conformance.md)
+- [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
 - [Repository foundation decision](Documents/Decisions/0001-Repository-And-Foundation.md)
+- [Seed bootstrap decision](Documents/Decisions/0002-Windvale-Seed-Bootstrap.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 
-## Development layout
+## Development environment
 
-The initial Windows development lane is:
-
-```text
-D:\windvale\dev01
-```
-
-Its shared source repository is:
-
-```text
-Z:\Windvale.git
-```
-
-Development uses `main` until parallel work requires additional task branches or lanes. See `AGENTS.md` before making non-trivial changes.
+The initial Windows development lane is `D:\windvale\dev01`; its shared source repository is `Z:\Windvale.git`. Development uses `main` until parallel work requires task branches or additional lanes. Read `AGENTS.md` before making non-trivial changes.

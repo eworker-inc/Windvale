@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposal for discussion. No implementation language or backend dependency is accepted by this document.
+C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Decision 0002. Restricted C and native backend choices remain proposals for later milestones.
 
 ## Two different choices
 
@@ -34,7 +34,7 @@ This path uses existing compilers to reach useful milestones quickly while prese
 
 ## Bootstrap implementation languages
 
-### C# — recommended first candidate
+### C# — selected for Stage 0
 
 Advantages:
 
@@ -169,8 +169,7 @@ A direct native backend is ultimately necessary for a self-owned kernel toolchai
 
 ## Decisions still needed
 
-- C# versus TypeScript for the Stage 0 compiler
-- Stack versus register bytecode, and the bytecode type-verification model
+- Whether a future bytecode version should remain stack-based after Seed experience
 - Memory management and object representation
 - Error and exception semantics
 - Integer overflow and floating-point reproducibility rules

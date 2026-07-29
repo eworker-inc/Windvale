@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Windvale.Seed.Tests</AssemblyName>
+    <Description>Dependency-free Windvale Seed conformance test runner.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
+    <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
+    <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
+  </ItemGroup>
+</Project>
