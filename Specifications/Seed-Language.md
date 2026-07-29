@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-This document specifies the source-language subset implemented by Windvale Seed. It is deliberately small and may break during early development. Source is UTF-8 and identifiers are case-sensitive ASCII names matching `[A-Za-z_][A-Za-z0-9_]*`.
+This document specifies the source-language subset implemented by Windvale Seed. It is deliberately small and may break during early development. Source is strict UTF-8. Identifiers are case-sensitive ASCII segments joined by U+02C9 and match `[A-Za-z_][A-Za-z0-9_]*(ˉ[A-Za-z_][A-Za-z0-9_]*)*`. Official source follows [Windvale source naming conventions](Source-Naming.md).
 
 ## Module shape
 
@@ -32,7 +32,7 @@ Parameters and local variables may have `i32`, `bool`, or `text` type. Module da
 - Names within each declaration category are unique.
 - Function and data names occupy separate namespaces.
 - A module exports functions explicitly with `export`.
-- `windvale run` looks for an exported function named `main` with signature `fn() -> i32`.
+- `windvale run` looks for an exported function named `Main` with signature `fn() -> i32`.
 - Capability declarations must be unique and use qualified lowercase names.
 - A portable module cannot declare or call hosted capabilities.
 
@@ -46,6 +46,7 @@ console.write_line(text) -> void
 
 ```text
 let <name>: <type> = <expression>;
+var <name>: <type> = <expression>;
 <name> = <expression>;
 <expression>;
 if <expression> { <statements> } [else { <statements> }]
@@ -53,7 +54,7 @@ while <expression> { <statements> }
 return [<expression>];
 ```
 
-Blocks use lexical scope. Parameters and locals must have unique names within their function in Seed; nested shadowing is rejected to keep diagnostics and lowering simple. Statements after an unconditional return in the same block are rejected as unreachable.
+`let` locals and parameters are immutable. `var` locals may be assigned after initialization. Blocks use lexical scope. Parameters and locals must have unique names within their function in Seed; nested shadowing is rejected to keep diagnostics and lowering simple. Statements after an unconditional return in the same block are rejected as unreachable.
 
 ## Expressions
 

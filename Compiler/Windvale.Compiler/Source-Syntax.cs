@@ -20,6 +20,7 @@ internal enum Tokenˉkind
     Export,
     Fn,
     Let,
+    Var,
     If,
     Else,
     While,
@@ -119,7 +120,8 @@ internal sealed record Blockˉstatementˉsyntax(
     Sourceˉspan Span)
     : Statementˉsyntax(Span);
 
-internal sealed record Letˉstatementˉsyntax(
+internal sealed record Localˉdeclarationˉstatementˉsyntax(
+    bool Isˉmutable,
     Syntaxˉtoken Name,
     Typeˉsyntax Type,
     Expressionˉsyntax Initializer,

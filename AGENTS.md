@@ -79,7 +79,7 @@ Carry the established E-Worker host-code convention into Windvale bootstrap code
 - Constants use `ALL_CAPS_WITH_UNDERSCORES`.
 - File and folder names capitalize the first word and use `-` between words, such as `Object-Model` and `Module-Reader.cs`.
 - C, assembly, exported ABI symbols, and generated identifiers use a deliberately specified ASCII-safe convention for toolchain portability.
-- The future Windvale source-language style is not decided by these host implementation rules. Specify it separately with the language grammar and conventions.
+- Official Windvale source follows `Specifications/Source-Naming.md`: capitalized identifiers, U+02C9 semantic-word separators, immutable `let`, mutable `var`, and ASCII-safe machine namespaces.
 - Prefer explicit types and contracts over loosely shaped objects.
 - Prefer focused modules named after their owned capability over broad `Helpers`, `Utils`, `Common`, or numbered-part files.
 - Add succinct comments only for invariants, format rules, unsafe reasoning, or other non-obvious logic.

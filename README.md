@@ -68,24 +68,24 @@ The runtime refuses that module without `--allow console.write_line`.
 ## Seed language example
 
 ```text
-module SumData profile portable;
+module Sumˉdata profile portable;
 
 data Values: [i32] = [3, 5, 8, 13];
 
-fn Add(left: i32, right: i32) -> i32 {
-    return left + right;
+fn Add(Left: i32, Right: i32) -> i32 {
+    return Left + Right;
 }
 
-export fn main() -> i32 {
-    let index: i32 = 0;
-    let total: i32 = 0;
+export fn Main() -> i32 {
+    var Index: i32 = 0;
+    var Total: i32 = 0;
 
-    while index < length(Values) {
-        total = Add(total, Values[index]);
-        index = index + 1;
+    while Index < length(Values) {
+        Total = Add(Total, Values[Index]);
+        Index = Index + 1;
     }
 
-    return total;
+    return Total;
 }
 ```
 
@@ -117,12 +117,14 @@ export fn main() -> i32 {
 - [Platform and portability model](Documents/Architecture/Platform-And-Portability.md)
 - [Compiler bootstrap options](Documents/Architecture/Compiler-Bootstrap-Options.md)
 - [Seed language specification](Specifications/Seed-Language.md)
+- [Source naming conventions](Specifications/Source-Naming.md)
 - [Seed bytecode specification](Specifications/Seed-Bytecode.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
 - [Repository foundation decision](Documents/Decisions/0001-Repository-And-Foundation.md)
 - [Seed bootstrap decision](Documents/Decisions/0002-Windvale-Seed-Bootstrap.md)
+- [Source naming and mutation decision](Documents/Decisions/0003-Source-Naming-And-Mutation.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 
 ## Development environment

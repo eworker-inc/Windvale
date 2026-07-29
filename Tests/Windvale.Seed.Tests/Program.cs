@@ -11,39 +11,39 @@ namespace Windvale.Seed.Tests;
 
 internal static class Program
 {
-    private const string SUM_SHA256 = "316baac3d6201d3ad3566804b68a6f2c2c0496573f0c9f32fa963f3bcb078ec6";
-    private const string HELLO_SHA256 = "9117a61c9ebf1810b8f0f0b044e2f7599d674c401c4f171f14dac4b06aa3a2cf";
+    private const string SUM_SHA256 = "faf44208d41c852f575e4f3025b0722c8fe6ee2d1c1a55b71b9e109c3eb54ef2";
+    private const string HELLO_SHA256 = "fafbc14e7e82626bcfacf358f777c1b6ce6821a335677a35148da9f857eefed5";
 
     private const string SUM_SOURCE = """
-        module SumData profile portable;
+        module Sumˉdata profile portable;
 
         data Values: [i32] = [3, 5, 8, 13];
 
-        fn Add(left: i32, right: i32) -> i32 {
-            return left + right;
+        fn Add(Left: i32, Right: i32) -> i32 {
+            return Left + Right;
         }
 
-        export fn main() -> i32 {
-            let index: i32 = 0;
-            let total: i32 = 0;
+        export fn Main() -> i32 {
+            var Index: i32 = 0;
+            var Total: i32 = 0;
 
-            while index < length(Values) {
-                total = Add(total, Values[index]);
-                index = index + 1;
+            while Index < length(Values) {
+                Total = Add(Total, Values[Index]);
+                Index = Index + 1;
             }
 
-            return total;
+            return Total;
         }
         """;
 
     private const string HELLO_SOURCE = """
-        module HelloWindvale profile hosted;
+        module Helloˉwindvale profile hosted;
 
         capability console.write_line;
 
         data Greeting: text = "Hello from Windvale";
 
-        export fn main() -> i32 {
+        export fn Main() -> i32 {
             console.write_line(Greeting);
             return 0;
         }
@@ -57,6 +57,7 @@ internal static class Program
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
+        ("macron names and explicit local mutability execute", Namingˉandˉmutabilityˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
         ("source diagnostics contain stable codes and locations", Sourceˉdiagnosticsˉareˉuseful),
         ("binary reader rejects malformed envelopes and UTF-8", Malformedˉmodulesˉareˉrejected),
@@ -167,12 +168,12 @@ internal static class Program
             module Canonical profile portable;
             data Zed: text = "z";
             data Alpha: [i32] = [1];
-            export fn main() -> i32 { return Zebra(); }
+            export fn Main() -> i32 { return Zebra(); }
             fn Zebra() -> i32 { return Alpha[0]; }
             """;
         var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Reorderedˉsource));
         Sequenceˉequal(["Alpha", "Zed"], Module.Module.Data.Select(Data => Data.Name));
-        Sequenceˉequal(["Zebra", "main"], Module.Module.Functions.Select(Function => Function.Name));
+        Sequenceˉequal(["Main", "Zebra"], Module.Module.Functions.Select(Function => Function.Name));
     }
 
     private static void Moduleˉroundˉtrip()
@@ -187,16 +188,16 @@ internal static class Program
     {
         var Bytes = Compileˉsuccess(SUM_SOURCE);
         var Inspection = Moduleˉinspector.Inspect(Moduleˉcodec.Readˉandˉverify(Bytes), Bytes);
-        Contains(Inspection, "Module: SumData");
+        Contains(Inspection, "Module: Sumˉdata");
         Contains(Inspection, "Data (1)");
         Contains(Inspection, "data.load.i32");
         Contains(Inspection, "call function[0] (Add)");
         Contains(Inspection, $"SHA-256: {SUM_SHA256}");
 
         var Unicodeˉsource = $$"""
-            module UnicodePreview profile portable;
+            module Unicodeˉpreview profile portable;
             data Message: text = "{{new string('a', 79)}}😀";
-            export fn main() -> i32 { return 0; }
+            export fn Main() -> i32 { return 0; }
             """;
         var Unicodeˉbytes = Compileˉsuccess(Unicodeˉsource);
         var Unicodeˉinspection = Moduleˉinspector.Inspect(
@@ -213,9 +214,9 @@ internal static class Program
         const string Source = """
             module Conditions profile hosted;
             capability console.write_line;
-            fn IsAnswer(value: i32) -> bool { return !(value != 42); }
-            export fn main() -> i32 {
-                if IsAnswer(6 * 7) {
+            fn Isˉanswer(Value: i32) -> bool { return !(Value != 42); }
+            export fn Main() -> i32 {
+                if Isˉanswer(6 * 7) {
                     console.write_line("answer");
                     return 42;
                 } else {
@@ -233,12 +234,59 @@ internal static class Program
         Equal($"answer{Environment.NewLine}", Output.ToString());
     }
 
+    private static void Namingˉandˉmutabilityˉrun()
+    {
+        const string Source = """
+            module Namingˉandˉmutability profile portable;
+            fn Addˉone(Value: i32) -> i32 { return Value + 1; }
+            export fn Main() -> i32 {
+                let Baseˉvalue: i32 = 40;
+                var Resultˉvalue: i32 = Baseˉvalue;
+                Resultˉvalue = Addˉone(Resultˉvalue);
+                return Resultˉvalue;
+            }
+            """;
+        Equal(41, Runˉportable(Source));
+
+        const string Immutableˉassignment = """
+            module Immutableˉassignment profile portable;
+            export fn Main() -> i32 {
+                let Value: i32 = 1;
+                Value = 2;
+                return Value;
+            }
+            """;
+        Hasˉdiagnostic(Immutableˉassignment, "WVC2042");
+
+        const string Parameterˉassignment = """
+            module Parameterˉassignment profile portable;
+            fn Change(Value: i32) -> i32 {
+                Value = 2;
+                return Value;
+            }
+            export fn Main() -> i32 { return Change(1); }
+            """;
+        Hasˉdiagnostic(Parameterˉassignment, "WVC2042");
+
+        const string Malformedˉseparator = """
+            module Badˉˉname profile portable;
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Malformedˉseparator, "WVC2004");
+
+        const string Confusableˉseparator = """
+            module Bad¯name profile portable;
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Confusableˉseparator, "WVC1002");
+    }
+
     private static void Sourceˉdiagnosticsˉareˉuseful()
     {
         const string Typeˉmismatch = """
             module Broken profile portable;
-            export fn main() -> i32 {
-                let wrong: bool = 1;
+            export fn Main() -> i32 {
+                let Wrong: bool = 1;
                 return 0;
             }
             """;
@@ -250,7 +298,7 @@ internal static class Program
 
         const string Missingˉcapability = """
             module Broken profile hosted;
-            export fn main() -> i32 {
+            export fn Main() -> i32 {
                 console.write_line("no declaration");
                 return 0;
             }
@@ -259,14 +307,14 @@ internal static class Program
 
         const string Missingˉreturn = """
             module Broken profile portable;
-            export fn main() -> i32 { let value: i32 = 1; }
+            export fn Main() -> i32 { let Value: i32 = 1; }
             """;
         Hasˉdiagnostic(Missingˉreturn, "WVC2030");
 
         const string Badˉescape = """
             module Broken profile portable;
             data Text: text = "\q";
-            export fn main() -> i32 { return 0; }
+            export fn Main() -> i32 { return 0; }
             """;
         Hasˉdiagnostic(Badˉescape, "WVC1003");
     }
@@ -275,18 +323,18 @@ internal static class Program
     {
         const string Source = """
             module Operators profile portable;
-            export fn main() -> i32 {
-                let score: i32 = 0;
-                let seven: i32 = 10 - 3;
-                if seven == 7 { score = score + 1; }
-                if seven != 8 { score = score + 1; }
-                if seven <= 7 { score = score + 1; }
-                if seven > 6 { score = score + 1; }
-                if seven >= 7 { score = score + 1; }
-                if -seven < 0 { score = score + 1; }
-                if true == true { score = score + 1; }
-                if true != false { score = score + 1; }
-                return score;
+            export fn Main() -> i32 {
+                var Score: i32 = 0;
+                let Seven: i32 = 10 - 3;
+                if Seven == 7 { Score = Score + 1; }
+                if Seven != 8 { Score = Score + 1; }
+                if Seven <= 7 { Score = Score + 1; }
+                if Seven > 6 { Score = Score + 1; }
+                if Seven >= 7 { Score = Score + 1; }
+                if -Seven < 0 { Score = Score + 1; }
+                if true == true { Score = Score + 1; }
+                if true != false { Score = Score + 1; }
+                return Score;
             }
             """;
         Equal(8, Runˉportable(Source));
@@ -388,27 +436,27 @@ internal static class Program
         Throwsˉbytecode(
             "WVB2124",
             () => Moduleˉverifier.Verify(new(
-                "InvalidText",
+                "Invalidˉtext",
                 Moduleˉprofile.Portable,
                 [],
                 [Invalidˉtext],
-                [new("main", [], Valueˉtype.Void, [], 0, 1, 0)],
+                [new("Main", [], Valueˉtype.Void, [], 0, 1, 0)],
                 [(byte)Opcode.Return],
-                [new("main", Exportˉkind.Function, 0)])));
+                [new("Main", Exportˉkind.Function, 0)])));
     }
 
     private static void Runtimeˉtrapsˉareˉdeterministic()
     {
         const string Overflow = """
             module Overflow profile portable;
-            export fn main() -> i32 { return 2147483647 + 1; }
+            export fn Main() -> i32 { return 2147483647 + 1; }
             """;
         Throwsˉruntime("WVR3007", () => Runˉportable(Overflow));
 
         const string Bounds = """
             module Bounds profile portable;
             data Values: [i32] = [1];
-            export fn main() -> i32 { return Values[2]; }
+            export fn Main() -> i32 { return Values[2]; }
             """;
         Throwsˉruntime("WVR3005", () => Runˉportable(Bounds));
     }
@@ -424,8 +472,8 @@ internal static class Program
 
         const string Recursion = """
             module Recursion profile portable;
-            fn Recurse(value: i32) -> i32 { return Recurse(value + 1); }
-            export fn main() -> i32 { return Recurse(0); }
+            fn Recurse(Value: i32) -> i32 { return Recurse(Value + 1); }
+            export fn Main() -> i32 { return Recurse(0); }
             """;
         var Recursiveˉmodule = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Recursion));
         var Depthˉlimited = new Referenceˉruntime(
@@ -473,7 +521,7 @@ internal static class Program
     {
         const string Sourceˉalphabet =
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" +
-            "{}[]();:,.+-*!<>=_ \t\r\n\\\"";
+            "{}[]();:,.+-*!<>=_ˉ \t\r\n\\\"";
         var Random = new Random(0x57_56_42);
         for (var Case = 0; Case < 500; Case++)
         {
@@ -537,13 +585,13 @@ internal static class Program
         int maximumˉstack)
     {
         return new(
-            "VerifierCase",
+            "Verifierˉcase",
             Moduleˉprofile.Portable,
             [],
             [],
-            [new("main", [], returnˉtype, [], 0, code.Length, maximumˉstack)],
+            [new("Main", [], returnˉtype, [], 0, code.Length, maximumˉstack)],
             code,
-            [new("main", Exportˉkind.Function, 0)]);
+            [new("Main", Exportˉkind.Function, 0)]);
     }
 
     private static byte[] I32ˉinstruction(int value)

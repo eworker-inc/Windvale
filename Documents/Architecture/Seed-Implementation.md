@@ -83,8 +83,8 @@ The implementation uses ordinary portable .NET APIs and has no Windows-specific 
 
 The initial golden modules are:
 
-- `SumData`: `316baac3d6201d3ad3566804b68a6f2c2c0496573f0c9f32fa963f3bcb078ec6`
-- `HelloWindvale`: `9117a61c9ebf1810b8f0f0b044e2f7599d674c401c4f171f14dac4b06aa3a2cf`
+- `Sumˉdata`: `faf44208d41c852f575e4f3025b0722c8fe6ee2d1c1a55b71b9e109c3eb54ef2`
+- `Helloˉwindvale`: `fafbc14e7e82626bcfacf358f777c1b6ce6821a335677a35148da9f857eefed5`
 
 Changes to those hashes require a reviewed bytecode/compiler-contract change rather than an automatic fixture refresh.
 

@@ -11,6 +11,8 @@ This document specifies Windvale bytecode module version 1.0 used by Seed. Windv
 - Lengths, counts, indices, and code offsets use unsigned 32-bit integers.
 - A string is a `u32` byte length followed by that many UTF-8 bytes.
 - Decoders use checked arithmetic and reject trailing or missing payload bytes.
+- Module, data, function, and export names use the Seed source-identifier grammar. These UTF-8 metadata names are not native ABI symbols.
+- Capability names use their separately specified qualified lowercase ASCII grammar.
 
 ## File header
 
@@ -105,6 +107,8 @@ repeat:
 ```
 
 Exports are strictly sorted by ordinal name. An exported name must equal the referenced function's Seed name.
+
+The reference launcher selects exported `Main() -> i32` as the executable source entry point. Future native object formats must define an ASCII-safe external symbol mapping separately.
 
 ## Value types
 

@@ -47,10 +47,10 @@ public sealed class Referenceˉruntime
     {
         Requireˉauthorizedˉcapabilities();
         var Mainˉexport = Verifiedˉmodule.Module.Exports
-            .FirstOrDefault(Export => StringComparer.Ordinal.Equals(Export.Name, "main"));
+            .FirstOrDefault(Export => StringComparer.Ordinal.Equals(Export.Name, "Main"));
         if (Mainˉexport is null)
         {
-            throw new Runtimeˉexception("WVR3002", "The module does not export 'main'.");
+            throw new Runtimeˉexception("WVR3002", "The module does not export 'Main'.");
         }
 
         var Mainˉfunction = Verifiedˉmodule.Module.Functions[Mainˉexport.Targetˉindex];
@@ -58,7 +58,7 @@ public sealed class Referenceˉruntime
         {
             throw new Runtimeˉexception(
                 "WVR3003",
-                "The exported main function must have signature fn() -> i32.");
+                "The exported Main function must have signature fn() -> i32.");
         }
 
         Executedˉinstructions = 0;

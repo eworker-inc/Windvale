@@ -15,7 +15,7 @@ This list records unresolved decisions without presenting them as implementation
 - What exactly does “code and data together” mean in the language and package model?
 - What are the integer, floating-point, text, error, concurrency, and memory semantics?
 - Which facilities belong to safe, unsafe, portable, hosted, and system profiles?
-- What source naming and formatting conventions should Windvale programs use?
+- Should Windvale eventually admit broader Unicode identifiers beyond ASCII segments joined by U+02C9, and if so, under which normalization and confusable-character rules?
 
 ## Compiler and runtime
 

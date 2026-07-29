@@ -48,7 +48,7 @@ dotnet run --project $ToolProject --configuration $Configuration --no-build -- c
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
 
 $VerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $SumModule
-if ($LASTEXITCODE -ne 0 -or $VerifyOutput -notcontains 'Verified: SumData') {
+if ($LASTEXITCODE -ne 0 -or $VerifyOutput -notcontains 'Verified: Sumˉdata') {
     throw 'The Seed CLI failed to verify Sum-Data.wvb.'
 }
 

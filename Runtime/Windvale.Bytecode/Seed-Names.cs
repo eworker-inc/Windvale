@@ -4,7 +4,7 @@ namespace Windvale.Bytecode;
 
 public static partial class Seedˉnames
 {
-    [GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*$", RegexOptions.CultureInvariant)]
     private static partial Regex Identifierˉpattern();
 
     [GeneratedRegex("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$", RegexOptions.CultureInvariant)]
