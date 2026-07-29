@@ -1,0 +1,45 @@
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Logs, temporary files, and generated output
+*.log
+tmp/
+temp/
+.cache/
+artifacts/
+build/
+Build/
+dist/
+Dist/
+out/
+coverage/
+TestResults/
+
+# Dependencies and host tool output
+node_modules/
+bin/
+obj/
+packages/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+.cert/
+.secrets/
+
+# Virtual-machine and firmware artifacts
+*.vhd
+*.vhdx
+*.qcow
+*.qcow2
+*.iso
+*.img
+*.fd
+*.rom
