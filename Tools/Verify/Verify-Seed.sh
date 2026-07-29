@@ -24,7 +24,7 @@ dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build
     compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" -o "$SUM_MODULE"
 
 VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$SUM_MODULE")
-printf '%s\n' "$VERIFY_OUTPUT" | grep -F 'Verified: SumData' >/dev/null
+printf '%s\n' "$VERIFY_OUTPUT" | grep -F 'Verified: Sumˉdata' >/dev/null
 
 INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SUM_MODULE")
 printf '%s\n' "$INSPECT_OUTPUT" | grep -F 'data.load.i32' >/dev/null

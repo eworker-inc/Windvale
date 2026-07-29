@@ -18,6 +18,7 @@ internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
             ["export"] = Tokenˉkind.Export,
             ["fn"] = Tokenˉkind.Fn,
             ["let"] = Tokenˉkind.Let,
+            ["var"] = Tokenˉkind.Var,
             ["if"] = Tokenˉkind.If,
             ["else"] = Tokenˉkind.Else,
             ["while"] = Tokenˉkind.While,
@@ -397,6 +398,6 @@ internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
 
     private static bool Isˉidentifierˉpart(char value)
     {
-        return Isˉidentifierˉstart(value) || char.IsAsciiDigit(value);
+        return Isˉidentifierˉstart(value) || char.IsAsciiDigit(value) || value == '\u02C9';
     }
 }

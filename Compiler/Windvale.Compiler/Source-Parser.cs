@@ -213,7 +213,7 @@ internal sealed class Sourceˉparser
     {
         return Current.Kind switch
         {
-            Tokenˉkind.Let => Parseˉlet(),
+            Tokenˉkind.Let or Tokenˉkind.Var => Parseˉlocalˉdeclaration(),
             Tokenˉkind.If => Parseˉif(),
             Tokenˉkind.While => Parseˉwhile(),
             Tokenˉkind.Return => Parseˉreturn(),
@@ -223,16 +223,17 @@ internal sealed class Sourceˉparser
         };
     }
 
-    private Letˉstatementˉsyntax Parseˉlet()
+    private Localˉdeclarationˉstatementˉsyntax Parseˉlocalˉdeclaration()
     {
-        var Start = Match(Tokenˉkind.Let);
+        var Start = Nextˉtoken();
+        var Isˉmutable = Start.Kind == Tokenˉkind.Var;
         var Name = Match(Tokenˉkind.Identifier);
         Match(Tokenˉkind.Colon);
         var Type = Parseˉtype(allowˉvoid: false, allowˉarray: false);
         Match(Tokenˉkind.Equals);
         var Initializer = Parseˉexpression();
         var End = Match(Tokenˉkind.Semicolon);
-        return new(Name, Type, Initializer, Combine(Start.Span, End.Span));
+        return new(Isˉmutable, Name, Type, Initializer, Combine(Start.Span, End.Span));
     }
 
     private Assignmentˉstatementˉsyntax Parseˉassignment()

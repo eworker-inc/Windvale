@@ -25,6 +25,7 @@ internal static class Semanticˉcompiler
 
         public Wirˉmodule Compile()
         {
+            Bindˉmoduleˉname();
             var Profile = Bindˉprofile(syntax.Profile);
             Bindˉcapabilities(Profile);
             Bindˉdata();
@@ -49,6 +50,17 @@ internal static class Semanticˉcompiler
                 [.. Capabilities.Values.OrderBy(Capability => Capability.Name, StringComparer.Ordinal)],
                 [.. Data.Values.OrderBy(Item => Item.Name, StringComparer.Ordinal)],
                 Wirˉfunctions.ToImmutable());
+        }
+
+        private void Bindˉmoduleˉname()
+        {
+            if (!Seedˉnames.Isˉidentifier(syntax.Name.Text))
+            {
+                Report(
+                    "WVC2004",
+                    syntax.Name.Span,
+                    $"Module name '{syntax.Name.Text}' is not a valid Windvale identifier.");
+            }
         }
 
         private Moduleˉprofile Bindˉprofile(Syntaxˉtoken profile)
@@ -109,6 +121,15 @@ internal static class Semanticˉcompiler
         {
             foreach (var Dataˉsyntax in syntax.Data)
             {
+                if (!Seedˉnames.Isˉidentifier(Dataˉsyntax.Name.Text))
+                {
+                    Report(
+                        "WVC2012",
+                        Dataˉsyntax.Name.Span,
+                        $"Data name '{Dataˉsyntax.Name.Text}' is not a valid Windvale identifier.");
+                    continue;
+                }
+
                 if (Data.ContainsKey(Dataˉsyntax.Name.Text))
                 {
                     Report(
@@ -149,6 +170,15 @@ internal static class Semanticˉcompiler
         {
             foreach (var Functionˉsyntax in syntax.Functions)
             {
+                if (!Seedˉnames.Isˉidentifier(Functionˉsyntax.Name.Text))
+                {
+                    Report(
+                        "WVC2022",
+                        Functionˉsyntax.Name.Span,
+                        $"Function name '{Functionˉsyntax.Name.Text}' is not a valid Windvale identifier.");
+                    continue;
+                }
+
                 if (Functions.ContainsKey(Functionˉsyntax.Name.Text))
                 {
                     Report(
@@ -163,6 +193,14 @@ internal static class Semanticˉcompiler
                 for (var Index = 0; Index < Functionˉsyntax.Parameters.Length; Index++)
                 {
                     var Parameter = Functionˉsyntax.Parameters[Index];
+                    if (!Seedˉnames.Isˉidentifier(Parameter.Name.Text))
+                    {
+                        Report(
+                            "WVC2023",
+                            Parameter.Name.Span,
+                            $"Parameter name '{Parameter.Name.Text}' is not a valid Windvale identifier.");
+                    }
+
                     if (!Parameterˉnames.Add(Parameter.Name.Text))
                     {
                         Report(
@@ -242,7 +280,7 @@ internal static class Semanticˉcompiler
         public ImmutableArray<Valueˉtype> Parameterˉtypes => [.. Parameters.Select(Parameter => Parameter.Type)];
     }
 
-    private sealed record Localˉsymbol(string Name, Valueˉtype Type, int Slot);
+    private sealed record Localˉsymbol(string Name, Valueˉtype Type, int Slot, bool Isˉmutable);
 
     private readonly record struct Boundˉvalue(Valueˉtype Type, int Temporary)
     {
@@ -296,7 +334,7 @@ internal static class Semanticˉcompiler
             {
                 if (Allˉlocalˉnames.Add(Parameter.Name))
                 {
-                    Scopes.Peek().Add(Parameter.Name, new(Parameter.Name, Parameter.Type, Parameter.Slot));
+                    Scopes.Peek().Add(Parameter.Name, new(Parameter.Name, Parameter.Type, Parameter.Slot, false));
                 }
             }
 
@@ -370,8 +408,8 @@ internal static class Semanticˉcompiler
                 case Blockˉstatementˉsyntax Block:
                     Compileˉblock(Block);
                     break;
-                case Letˉstatementˉsyntax Let:
-                    Compileˉlet(Let);
+                case Localˉdeclarationˉstatementˉsyntax Localˉdeclaration:
+                    Compileˉlocalˉdeclaration(Localˉdeclaration);
                     break;
                 case Assignmentˉstatementˉsyntax Assignment:
                     Compileˉassignment(Assignment);
@@ -393,11 +431,20 @@ internal static class Semanticˉcompiler
             }
         }
 
-        private void Compileˉlet(Letˉstatementˉsyntax statement)
+        private void Compileˉlocalˉdeclaration(Localˉdeclarationˉstatementˉsyntax statement)
         {
             var Type = Bindˉvalueˉtype(statement.Type);
             var Initializer = Compileˉexpression(statement.Initializer);
             Requireˉtype(Initializer, Type, statement.Initializer.Span, "local initializer");
+
+            if (!Seedˉnames.Isˉidentifier(statement.Name.Text))
+            {
+                Report(
+                    "WVC2043",
+                    statement.Name.Span,
+                    $"Local name '{statement.Name.Text}' is not a valid Windvale identifier.");
+                return;
+            }
 
             if (!Allˉlocalˉnames.Add(statement.Name.Text))
             {
@@ -410,7 +457,7 @@ internal static class Semanticˉcompiler
 
             var Slot = Function.Parameters.Length + Userˉlocalˉtypes.Count;
             Userˉlocalˉtypes.Add(Type);
-            Scopes.Peek().Add(statement.Name.Text, new(statement.Name.Text, Type, Slot));
+            Scopes.Peek().Add(statement.Name.Text, new(statement.Name.Text, Type, Slot, statement.Isˉmutable));
             Emit(
                 new(
                     Wirˉoperation.Storeˉlocal,
@@ -427,6 +474,16 @@ internal static class Semanticˉcompiler
                     "WVC2041",
                     statement.Name.Span,
                     $"Local or parameter '{statement.Name.Text}' is not declared in this scope.");
+                _ = Compileˉexpression(statement.Value);
+                return;
+            }
+
+            if (!Local.Isˉmutable)
+            {
+                Report(
+                    "WVC2042",
+                    statement.Name.Span,
+                    $"Local or parameter '{statement.Name.Text}' is immutable; copy it to a 'var' local before assigning.");
                 _ = Compileˉexpression(statement.Value);
                 return;
             }

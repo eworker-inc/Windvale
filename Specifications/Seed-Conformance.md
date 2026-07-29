@@ -12,6 +12,8 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, i
 - Exact codec read/write round trips
 - Inspector metadata and disassembly
 - Functions, `if`, `while`, booleans, immutable text, immutable integer data, indexing, and `length`
+- U+02C9 source identifiers, immutable `let`, mutable `var`, immutable parameters, and exported `Main`
+- Rejection of malformed or confusable identifier separators
 - Stable source diagnostic codes with line and column information
 - Malformed header, version, section, length, UTF-8, truncation, trailing-data, and oversize rejection
 - Unknown opcode, truncated operand, invalid branch, invalid local, unreachable instruction, inconsistent stack merge, and maximum-stack rejection

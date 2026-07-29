@@ -16,7 +16,7 @@ windvale help
 - `compile` requires `.wv` input and `.wvb` output paths and refuses to overwrite its source path.
 - `inspect` validates the module structure and prints canonical human-readable metadata and disassembly. It does not execute the module.
 - `verify` performs complete structural and bytecode verification. Success prints the module name and SHA-256 digest.
-- `run` verifies before execution and invokes exported `main() -> i32`.
+- `run` verifies before execution and invokes exported `Main() -> i32`.
 - Hosted capabilities must be granted individually with `--allow`. Declaring a capability in the module does not authorize it.
 - `--max-steps` is a positive integer and defaults to 1,000,000 executed instructions.
 - Successful `run` prints a final `Result: <i32>` line after program output.
