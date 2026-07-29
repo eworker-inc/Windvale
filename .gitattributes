@@ -1,0 +1,21 @@
+* text=auto
+.gitattributes text eol=lf
+.gitignore text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.sh text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.s text eol=lf
+*.asm text eol=lf
+*.wv text eol=lf
+*.wvb binary
+*.wvo binary
+*.efi binary
+*.img binary
+*.vhdx binary
