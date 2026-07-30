@@ -13,6 +13,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - Portable Foundation modules for bounded machine contracts, ordinal byte-span ordering, structured unsigned decimal parsing, and immutable byte construction, driven by the object core, assembler, linker, and future compiler needs
 - A first Windvale-written compiler lexer that streams the complete implemented Seed token surface over strict UTF-8 bytes without a token collection
 - A Windvale-written declaration parser that discovers module/declaration shapes and balanced function-body spans as immutable source views without a declaration collection
+- A Windvale-written body parser that reproduces the complete implemented statement/expression grammar as flat child-span views without a syntax tree collection
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
@@ -167,7 +168,7 @@ dotnet run --project Tools/Windvale.Tool -- compile `
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Lexer-Demo.wvb --max-steps 10000000
 ```
 
-The lexer returns one token plus the next byte cursor and source position. It covers the complete current Seed keyword/operator surface, U+02C9 names, typed decimal literals, strict UTF-8 and string escapes, and bounded failures. The demo returns `0`. The future parser will advance this streaming contract; indexed token rescanning is retained only for verification.
+The lexer returns one token plus the next byte cursor and source position. It covers the complete current Seed keyword/operator surface, U+02C9 names, typed decimal literals, strict UTF-8 and string escapes, and bounded failures. The demo returns `0`. The parser advances this streaming contract; indexed token rescanning is retained only for verification.
 
 Compile the streaming declaration pass and make it parse its own source:
 
@@ -193,7 +194,35 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Declaration-Par
   -- Compiler/Bootstrap/Source-Declaration-Parser.wv
 ```
 
-This is a declaration pass, not yet a statement/expression parser. It parses signatures and balanced body spans so later passes can bind declarations first and parse bodies from exact immutable views. The hosted shell only supplies an explicit file snapshot and report sink.
+The declaration pass parses signatures and balanced body spans so later passes can bind declarations first and parse bodies from exact immutable views. The hosted shell only supplies an explicit file snapshot and report sink.
+
+Compile the statement/expression pass and make it parse its own source:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Compiler/Bootstrap/Source-Body-Parser.wv `
+  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
+  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Foundation/Decimal-Parsing.wv `
+  -o artifacts/Source-Body-Parser.wvb
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Compiler/Source-Body-Parser-Tool.wv `
+  --module Compiler/Bootstrap/Source-Body-Parser.wv `
+  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
+  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Foundation/Decimal-Parsing.wv `
+  -o artifacts/Source-Body-Parser-Tool.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Body-Parser-Tool.wvb `
+  --allow console.write_line `
+  --allow diagnostic.write_line `
+  --allow file.read_bytes `
+  --allow process.argument `
+  --allow process.argument_count `
+  --max-steps 160000000 `
+  -- Compiler/Bootstrap/Source-Body-Parser.wv
+```
+
+The body pass returns flat statement and expression views with bounded child spans, counts, and depths. It validates the lexer, declaration parser, and itself without retaining tokens or a syntax tree; semantic binding is the next compiler slice.
 
 Compile and run the first Windvale-written `wvdump` core:
 

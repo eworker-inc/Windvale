@@ -37,6 +37,9 @@ SOURCE_LEXER_DEMO_MODULE="$ARTIFACTS/Source-Lexer-Demo.wvb"
 SOURCE_DECLARATION_PARSER_MODULE="$ARTIFACTS/Source-Declaration-Parser.wvb"
 SOURCE_DECLARATION_PARSER_DEMO_MODULE="$ARTIFACTS/Source-Declaration-Parser-Demo.wvb"
 SOURCE_DECLARATION_PARSER_TOOL_MODULE="$ARTIFACTS/Source-Declaration-Parser-Tool.wvb"
+SOURCE_BODY_PARSER_MODULE="$ARTIFACTS/Source-Body-Parser.wvb"
+SOURCE_BODY_PARSER_DEMO_MODULE="$ARTIFACTS/Source-Body-Parser-Demo.wvb"
+SOURCE_BODY_PARSER_TOOL_MODULE="$ARTIFACTS/Source-Body-Parser-Tool.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -312,6 +315,86 @@ SOURCE_PARSER_SELF_DECLARATION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --c
     -- "$SOURCE_DECLARATION_PARSER_SOURCE")
 printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=24 tokens=8876 offset=64950' >/dev/null
 printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+SOURCE_BODY_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Body-Parser.wv"
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_BODY_PARSER_MODULE"
+SOURCE_BODY_PARSER_HASH=$(sha256sum "$SOURCE_BODY_PARSER_MODULE" | awk '{print $1}')
+if [ "$SOURCE_BODY_PARSER_HASH" != 'bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f' ]; then
+    echo "The Windvale body parser has an unexpected digest: $SOURCE_BODY_PARSER_HASH" >&2
+    exit 1
+fi
+SOURCE_BODY_PARSER_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_BODY_PARSER_MODULE")
+printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Nominal types (23)' >/dev/null
+printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉexpression' >/dev/null
+printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉstatement' >/dev/null
+printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉexpressionˉvalidated' >/dev/null
+printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉsourceˉbodies' >/dev/null
+printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Exports (38)' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Body-Parser-Demo.wv" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_BODY_PARSER_DEMO_MODULE"
+SOURCE_BODY_PARSER_DEMO_HASH=$(sha256sum "$SOURCE_BODY_PARSER_DEMO_MODULE" | awk '{print $1}')
+if [ "$SOURCE_BODY_PARSER_DEMO_HASH" != '5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba' ]; then
+    echo "The body-parser demo has an unexpected digest: $SOURCE_BODY_PARSER_DEMO_HASH" >&2
+    exit 1
+fi
+SOURCE_BODY_PARSER_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_BODY_PARSER_DEMO_MODULE" --max-steps 30000000)
+printf '%s\n' "$SOURCE_BODY_PARSER_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Body-Parser-Tool.wv" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_BODY_PARSER_TOOL_MODULE"
+SOURCE_BODY_PARSER_TOOL_HASH=$(sha256sum "$SOURCE_BODY_PARSER_TOOL_MODULE" | awk '{print $1}')
+if [ "$SOURCE_BODY_PARSER_TOOL_HASH" != '761887d3674833854d976dd394ad3f83f27d2c74748b6dd0f296c97b117140ca' ]; then
+    echo "The body-parser tool has an unexpected digest: $SOURCE_BODY_PARSER_TOOL_HASH" >&2
+    exit 1
+fi
+SOURCE_LEXER_BODY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_BODY_PARSER_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 100000000 \
+    -- "$SOURCE_LEXER_SOURCE")
+printf '%s\n' "$SOURCE_LEXER_BODY_OUTPUT" | grep -F 'source bodies status=Valid functions=14 top-level=138 statements=510 expression-nodes=1432 statement-depth=17 expression-depth=5 offset=39211' >/dev/null
+printf '%s\n' "$SOURCE_LEXER_BODY_OUTPUT" | grep -F 'Result: 0' >/dev/null
+SOURCE_DECLARATION_BODY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_BODY_PARSER_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 160000000 \
+    -- "$SOURCE_DECLARATION_PARSER_SOURCE")
+printf '%s\n' "$SOURCE_DECLARATION_BODY_OUTPUT" | grep -F 'source bodies status=Valid functions=24 top-level=232 statements=527 expression-nodes=2135 statement-depth=5 expression-depth=3 offset=64951' >/dev/null
+printf '%s\n' "$SOURCE_DECLARATION_BODY_OUTPUT" | grep -F 'Result: 0' >/dev/null
+SOURCE_BODY_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_BODY_PARSER_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 160000000 \
+    -- "$SOURCE_BODY_PARSER_SOURCE")
+printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023' >/dev/null
+printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \

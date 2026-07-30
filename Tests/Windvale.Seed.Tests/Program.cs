@@ -39,6 +39,9 @@ internal static class Program
     private const string SOURCE_DECLARATION_PARSER_SHA256 = "b09be82c374636bf0b75a0dcea21afa648d89676e0fb0ffedcef68f9e958ee61";
     private const string SOURCE_DECLARATION_PARSER_DEMO_SHA256 = "82dd2f72d2b2d148289353045fda861e07638e8fac8ba97164642d185c3b8e9a";
     private const string SOURCE_DECLARATION_PARSER_TOOL_SHA256 = "36406acea0ccab9cf9f91cc9723638ae133daa1d5893dcf64454a983427a520c";
+    private const string SOURCE_BODY_PARSER_SHA256 = "bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f";
+    private const string SOURCE_BODY_PARSER_DEMO_SHA256 = "5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba";
+    private const string SOURCE_BODY_PARSER_TOOL_SHA256 = "761887d3674833854d976dd394ad3f83f27d2c74748b6dd0f296c97b117140ca";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -258,6 +261,15 @@ internal static class Program
     private static readonly string SOURCE_DECLARATION_PARSER_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Declaration-Parser-Tool.wv");
 
+    private static readonly string SOURCE_BODY_PARSER_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Body-Parser.wv");
+
+    private static readonly string SOURCE_BODY_PARSER_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Body-Parser-Demo.wv");
+
+    private static readonly string SOURCE_BODY_PARSER_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Body-Parser-Tool.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -283,6 +295,7 @@ internal static class Program
         ("Foundation byte construction is total, bounded, and shared", Foundationˉbyteˉconstructionˉruns),
         ("Windvale-written source lexer streams the complete Seed token contract", Compilerˉsourceˉlexerˉruns),
         ("Windvale-written declaration parser exposes bounded streaming source views", Compilerˉsourceˉdeclarationˉparserˉruns),
+        ("Windvale-written body parser exposes bounded statement and expression views", Compilerˉsourceˉbodyˉparserˉruns),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
@@ -1053,6 +1066,129 @@ internal static class Program
         Equal(string.Empty, Selfˉresult.Diagnostics);
         Equal(
             "source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=24 tokens=8876 offset=64950\n",
+            Selfˉresult.Output);
+    }
+
+    private static void Compilerˉsourceˉbodyˉparserˉruns()
+    {
+        var Libraryˉbytes = Compileˉwithˉsourceˉdeclarationˉparserˉsuccess(
+            SOURCE_BODY_PARSER_SOURCE,
+            "Source-Body-Parser.wv");
+        Equal(SOURCE_BODY_PARSER_SHA256, Moduleˉdigest.Calculateˉsha256(Libraryˉbytes));
+        var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
+        Equal("Compilerˉsourceˉbodyˉparser", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Equal(23, Library.Module.Types.Length);
+        Equal(38, Library.Module.Exports.Length);
+        foreach (var Typeˉname in new[]
+                 {
+                     "Compilerˉbodyˉparseˉstatus",
+                     "Compilerˉbodyˉparseˉstep",
+                     "Compilerˉsourceˉbodyˉsummary",
+                     "Compilerˉsourceˉexpression",
+                     "Compilerˉsourceˉexpressionˉkind",
+                     "Compilerˉsourceˉposition",
+                     "Compilerˉsourceˉstatement",
+                     "Compilerˉsourceˉstatementˉkind",
+                 })
+        {
+            True(Library.Module.Types.Any(Type => Type.Name == Typeˉname),
+                $"Body-parser type '{Typeˉname}' was not emitted.");
+        }
+        foreach (var Exportˉname in new[]
+                 {
+                     "Compilerˉbodyˉpositionˉbetween",
+                     "Compilerˉparseˉblockˉvalidated",
+                     "Compilerˉparseˉbodyˉspan",
+                     "Compilerˉparseˉbodyˉspanˉvalidated",
+                     "Compilerˉparseˉexpressionˉspan",
+                     "Compilerˉparseˉexpressionˉvalidated",
+                     "Compilerˉparseˉnextˉstatementˉvalidated",
+                     "Compilerˉparseˉsourceˉbodies",
+                 })
+        {
+            True(Library.Module.Exports.Any(Export => Export.Name == Exportˉname),
+                $"Body-parser export '{Exportˉname}' was not emitted.");
+        }
+
+        var Demoˉbytes = Compileˉwithˉsourceˉbodyˉparserˉsuccess(
+            SOURCE_BODY_PARSER_DEMO_SOURCE,
+            "Source-Body-Parser-Demo.wv");
+        Equal(SOURCE_BODY_PARSER_DEMO_SHA256, Moduleˉdigest.Calculateˉsha256(Demoˉbytes));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Demoˉbytes),
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                    Maximumˉinstructions: 30_000_000)).Runˉmain().Exitˉcode);
+
+        var Excessˉarguments = $"Call({string.Join(",", Enumerable.Repeat("0", 65))})";
+        var Deepˉexpression = new string('(', 65) + "0" + new string(')', 65);
+        var Deepˉblocks = new string('{', 66) + "return;" + new string('}', 66);
+        var Excessˉstatements = "{" + string.Concat(Enumerable.Repeat("return;", 4_097)) + "}";
+        var Boundaryˉsource = $$"""
+            module Compilerˉbodyˉparserˉboundaries profile portable;
+            import Compilerˉsourceˉbodyˉparser;
+            data Excessˉarguments: text = "{{Excessˉarguments}}";
+            data Deepˉexpression: text = "{{Deepˉexpression}}";
+            data Deepˉblocks: text = "{{Deepˉblocks}}";
+            data Excessˉstatements: text = "{{Excessˉstatements}}";
+            export fn Main() -> i32 {
+                let Arguments: bytes = Textˉtoˉutf8(Excessˉarguments);
+                let Argumentˉresult: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉspan(Arguments, 0u32, 1u32, 1u32, Bytesˉlength(Arguments));
+                if Argumentˉresult.Status != Compilerˉbodyˉparseˉstatus.Itemˉlimit { return 1; }
+                let Expression: bytes = Textˉtoˉutf8(Deepˉexpression);
+                let Expressionˉresult: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉspan(Expression, 0u32, 1u32, 1u32, Bytesˉlength(Expression));
+                if Expressionˉresult.Status != Compilerˉbodyˉparseˉstatus.Nestingˉlimit { return 2; }
+                let Blocks: bytes = Textˉtoˉutf8(Deepˉblocks);
+                let Blockˉresult: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉbodyˉspan(Blocks, 0u32, 1u32, 1u32, Bytesˉlength(Blocks));
+                if Blockˉresult.Status != Compilerˉbodyˉparseˉstatus.Nestingˉlimit { return 3; }
+                let Statements: bytes = Textˉtoˉutf8(Excessˉstatements);
+                let Statementˉresult: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉbodyˉspan(Statements, 0u32, 1u32, 1u32, Bytesˉlength(Statements));
+                if Statementˉresult.Status != Compilerˉbodyˉparseˉstatus.Itemˉlimit { return 4; }
+                return 0;
+            }
+            """;
+        var Boundaryˉbytes = Compileˉwithˉsourceˉbodyˉparserˉsuccess(
+            Boundaryˉsource,
+            "Source-Body-Parser-Boundaries.wv");
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Boundaryˉbytes),
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                    Maximumˉinstructions: 160_000_000)).Runˉmain().Exitˉcode);
+
+        var Toolˉbytes = Compileˉwithˉsourceˉbodyˉparserˉsuccess(
+            SOURCE_BODY_PARSER_TOOL_SOURCE,
+            "Source-Body-Parser-Tool.wv");
+        Equal(SOURCE_BODY_PARSER_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Lexerˉresult = Runˉsourceˉdeclarationˉparser(
+            Tool, "Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE, 100_000_000);
+        Equal(0, Lexerˉresult.Exitˉcode);
+        Equal(string.Empty, Lexerˉresult.Diagnostics);
+        Equal(1, Lexerˉresult.Readˉcount);
+        Equal(
+            "source bodies status=Valid functions=14 top-level=138 statements=510 expression-nodes=1432 statement-depth=17 expression-depth=5 offset=39211\n",
+            Lexerˉresult.Output);
+        var Declarationˉresult = Runˉsourceˉdeclarationˉparser(
+            Tool, "Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE, 160_000_000);
+        Equal(0, Declarationˉresult.Exitˉcode);
+        Equal(string.Empty, Declarationˉresult.Diagnostics);
+        Equal(1, Declarationˉresult.Readˉcount);
+        Equal(
+            "source bodies status=Valid functions=24 top-level=232 statements=527 expression-nodes=2135 statement-depth=5 expression-depth=3 offset=64951\n",
+            Declarationˉresult.Output);
+        var Selfˉresult = Runˉsourceˉdeclarationˉparser(
+            Tool, "Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE, 160_000_000);
+        Equal(0, Selfˉresult.Exitˉcode);
+        Equal(string.Empty, Selfˉresult.Diagnostics);
+        Equal(1, Selfˉresult.Readˉcount);
+        Equal(
+            "source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023\n",
             Selfˉresult.Output);
     }
 
@@ -3848,6 +3984,15 @@ internal static class Program
         var Sourceˉdeclarationˉparserˉtoolˉbytes = Compileˉwithˉsourceˉdeclarationˉparserˉsuccess(
             SOURCE_DECLARATION_PARSER_TOOL_SOURCE,
             "Source-Declaration-Parser-Tool.wv");
+        var Sourceˉbodyˉparserˉbytes = Compileˉwithˉsourceˉdeclarationˉparserˉsuccess(
+            SOURCE_BODY_PARSER_SOURCE,
+            "Source-Body-Parser.wv");
+        var Sourceˉbodyˉparserˉdemoˉbytes = Compileˉwithˉsourceˉbodyˉparserˉsuccess(
+            SOURCE_BODY_PARSER_DEMO_SOURCE,
+            "Source-Body-Parser-Demo.wv");
+        var Sourceˉbodyˉparserˉtoolˉbytes = Compileˉwithˉsourceˉbodyˉparserˉsuccess(
+            SOURCE_BODY_PARSER_TOOL_SOURCE,
+            "Source-Body-Parser-Tool.wv");
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉwithˉbyteˉorderingˉsuccess(
             WVO_CORE_SOURCE,
@@ -3884,6 +4029,12 @@ internal static class Program
             Sourceˉdeclarationˉparserˉdemoˉbytes);
         var Sourceˉdeclarationˉparserˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(
             Sourceˉdeclarationˉparserˉtoolˉbytes);
+        var Sourceˉbodyˉparserˉhash = Moduleˉdigest.Calculateˉsha256(
+            Sourceˉbodyˉparserˉbytes);
+        var Sourceˉbodyˉparserˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(
+            Sourceˉbodyˉparserˉdemoˉbytes);
+        var Sourceˉbodyˉparserˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(
+            Sourceˉbodyˉparserˉtoolˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
@@ -3910,6 +4061,9 @@ internal static class Program
         Equal(SOURCE_DECLARATION_PARSER_SHA256, Sourceˉdeclarationˉparserˉhash);
         Equal(SOURCE_DECLARATION_PARSER_DEMO_SHA256, Sourceˉdeclarationˉparserˉdemoˉhash);
         Equal(SOURCE_DECLARATION_PARSER_TOOL_SHA256, Sourceˉdeclarationˉparserˉtoolˉhash);
+        Equal(SOURCE_BODY_PARSER_SHA256, Sourceˉbodyˉparserˉhash);
+        Equal(SOURCE_BODY_PARSER_DEMO_SHA256, Sourceˉbodyˉparserˉdemoˉhash);
+        Equal(SOURCE_BODY_PARSER_TOOL_SHA256, Sourceˉbodyˉparserˉtoolˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
@@ -3979,6 +4133,28 @@ internal static class Program
             "Source-Declaration-Parser.wv",
             SOURCE_DECLARATION_PARSER_SOURCE,
             45_000_000);
+        var Sourceˉbodyˉparserˉdemoˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Sourceˉbodyˉparserˉdemoˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                Maximumˉinstructions: 30_000_000)).Runˉmain();
+        var Sourceˉbodyˉparserˉtool = Moduleˉcodec.Readˉandˉverify(
+            Sourceˉbodyˉparserˉtoolˉbytes);
+        var Sourceˉlexerˉbodyˉresult = Runˉsourceˉdeclarationˉparser(
+            Sourceˉbodyˉparserˉtool,
+            "Source-Lexer-Core.wv",
+            SOURCE_LEXER_SOURCE,
+            100_000_000);
+        var Sourceˉdeclarationˉbodyˉresult = Runˉsourceˉdeclarationˉparser(
+            Sourceˉbodyˉparserˉtool,
+            "Source-Declaration-Parser.wv",
+            SOURCE_DECLARATION_PARSER_SOURCE,
+            160_000_000);
+        var Sourceˉbodyˉselfˉresult = Runˉsourceˉdeclarationˉparser(
+            Sourceˉbodyˉparserˉtool,
+            "Source-Body-Parser.wv",
+            SOURCE_BODY_PARSER_SOURCE,
+            160_000_000);
         var Wvˉdumpˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes);
         var Wvˉdumpˉcapabilities = Wvˉdumpˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -4159,6 +4335,16 @@ internal static class Program
         Equal(0, Sourceˉparserˉselfˉdeclarationˉresult.Exitˉcode);
         Equal(string.Empty, Sourceˉparserˉselfˉdeclarationˉresult.Diagnostics);
         Equal(1, Sourceˉparserˉselfˉdeclarationˉresult.Readˉcount);
+        Equal(0, Sourceˉbodyˉparserˉdemoˉresult.Exitˉcode);
+        Equal(0, Sourceˉlexerˉbodyˉresult.Exitˉcode);
+        Equal(string.Empty, Sourceˉlexerˉbodyˉresult.Diagnostics);
+        Equal(1, Sourceˉlexerˉbodyˉresult.Readˉcount);
+        Equal(0, Sourceˉdeclarationˉbodyˉresult.Exitˉcode);
+        Equal(string.Empty, Sourceˉdeclarationˉbodyˉresult.Diagnostics);
+        Equal(1, Sourceˉdeclarationˉbodyˉresult.Readˉcount);
+        Equal(0, Sourceˉbodyˉselfˉresult.Exitˉcode);
+        Equal(string.Empty, Sourceˉbodyˉselfˉresult.Diagnostics);
+        Equal(1, Sourceˉbodyˉselfˉresult.Readˉcount);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
@@ -4206,6 +4392,13 @@ internal static class Program
             Sourceˉdeclarationˉparserˉtoolˉhash,
             Sourceˉlexerˉdeclarationˉresult.Output,
             Sourceˉparserˉselfˉdeclarationˉresult.Output,
+            Sourceˉbodyˉparserˉhash,
+            Sourceˉbodyˉparserˉdemoˉhash,
+            Sourceˉbodyˉparserˉdemoˉresult.Exitˉcode,
+            Sourceˉbodyˉparserˉtoolˉhash,
+            Sourceˉlexerˉbodyˉresult.Output,
+            Sourceˉdeclarationˉbodyˉresult.Output,
+            Sourceˉbodyˉselfˉresult.Output,
             Wvˉdumpˉhash,
             Wvˉdumpˉresult.Exitˉcode,
             Normalizedˉwvdumpˉoutput,
@@ -4527,6 +4720,27 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Compiler parser composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉsourceˉbodyˉparserˉsuccess(
+        string source,
+        string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [
+                new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
+                new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
+                new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+                new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler body-parser composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();
@@ -4978,6 +5192,13 @@ internal static class Program
         [property: JsonPropertyName("sourceDeclarationParserToolSha256")] string Sourceˉdeclarationˉparserˉtoolˉsha256,
         [property: JsonPropertyName("sourceLexerDeclarationOutput")] string Sourceˉlexerˉdeclarationˉoutput,
         [property: JsonPropertyName("sourceParserSelfDeclarationOutput")] string Sourceˉparserˉselfˉdeclarationˉoutput,
+        [property: JsonPropertyName("sourceBodyParserSha256")] string Sourceˉbodyˉparserˉsha256,
+        [property: JsonPropertyName("sourceBodyParserDemoSha256")] string Sourceˉbodyˉparserˉdemoˉsha256,
+        [property: JsonPropertyName("sourceBodyParserDemoResult")] int Sourceˉbodyˉparserˉdemoˉresult,
+        [property: JsonPropertyName("sourceBodyParserToolSha256")] string Sourceˉbodyˉparserˉtoolˉsha256,
+        [property: JsonPropertyName("sourceLexerBodyOutput")] string Sourceˉlexerˉbodyˉoutput,
+        [property: JsonPropertyName("sourceDeclarationBodyOutput")] string Sourceˉdeclarationˉbodyˉoutput,
+        [property: JsonPropertyName("sourceBodySelfOutput")] string Sourceˉbodyˉselfˉoutput,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
         [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
         [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput,

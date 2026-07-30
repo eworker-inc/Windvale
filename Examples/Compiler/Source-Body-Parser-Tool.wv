@@ -1,0 +1,60 @@
+module Compilerˉsourceˉbodyˉparserˉtool profile hosted;
+
+import Compilerˉsourceˉbodyˉparser;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Compilerˉbodyˉsummaryˉreport(
+    Summary: Compilerˉsourceˉbodyˉsummary
+) -> text {
+    var Report: text = "source bodies status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " functions=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Functions));
+    Report = Textˉconcat(Report, " top-level=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Topˉlevelˉstatements));
+    Report = Textˉconcat(Report, " statements=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Statements));
+    Report = Textˉconcat(Report, " expression-nodes=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Expressions));
+    Report = Textˉconcat(Report, " statement-depth=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Maximumˉstatementˉdepth));
+    Report = Textˉconcat(Report, " expression-depth=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Maximumˉexpressionˉdepth));
+    Report = Textˉconcat(Report, " offset=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Endˉoffset));
+}
+
+fn Compilerˉbodyˉfailureˉreport(
+    Summary: Compilerˉsourceˉbodyˉsummary
+) -> text {
+    var Report: text = "source bodies status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " lexical-status=");
+    Report = Textˉconcat(Report, Enumˉname(Summary.Lexicalˉstatus));
+    Report = Textˉconcat(Report, " offset=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoffset));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉline));
+    Report = Textˉconcat(Report, " column=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Failureˉcolumn));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 {
+        diagnostic.write_line("Usage: source-body-parser <source.wv>");
+        return 64;
+    }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Summary: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉsourceˉbodies(Input);
+    if Summary.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        diagnostic.write_line(Compilerˉbodyˉfailureˉreport(Summary));
+        return 1;
+    }
+    console.write_line(Compilerˉbodyˉsummaryˉreport(Summary));
+    return 0;
+}
