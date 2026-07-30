@@ -124,7 +124,7 @@ dotnet run --project Tools/Windvale.Tool -- object-verify artifacts/Hello-Object
 dotnet run --project Tools/Windvale.Tool -- object-inspect artifacts/Hello-Object.wvo
 ```
 
-The Stage 0 assembler emits exact x86-64 instruction bytes, derives symbol offsets and sizes from named definitions, and records unresolved relative and absolute fixups. It never performs link layout or import resolution. The same WVA contract is the target for the next Windvale-written assembler slice.
+The Stage 0 assembler emits exact x86-64 instruction bytes, derives symbol offsets and sizes from named definitions, and records unresolved relative and absolute fixups. It never performs link layout or import resolution. The same WVA contract now anchors the Windvale scanner and remains the oracle for the following semantic-inspector and encoder slices.
 
 Compile and run the first Windvale-written WVA scanner against that source:
 
