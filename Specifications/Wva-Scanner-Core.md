@@ -4,7 +4,7 @@
 
 `Wvaˉscannerˉcore` is the Windvale-written frontend foundation for WVA 1. It consumes immutable source bytes, applies the accepted source and line limits, normalizes accepted line endings, recognizes the exact version header, validates the complete initial WVA grammar and semantic model, and exposes deterministic structural evidence. Its portable functions do not use host text parsing or file APIs; the hosted shell supplies one explicit resource and prints versioned scan and semantic reports.
 
-The lexical scanner and its hosted report are cross-host qualified at `e5fd109` from one exact source archive on Windows x64 and Debian Linux x64. The semantic extension is an implementation candidate until its exact revision completes the same Windows/Debian qualification.
+The lexical scanner was first cross-host qualified at `e5fd109`. The complete scanner and semantic inspector are cross-host qualified at `cc57bf9` from one exact source archive on Windows x64 and Debian Linux x64; both hosts produced the same verified bytecode module and observable semantic classifications.
 
 This is a semantic inspector, not yet the Windvale assembler. It classifies declarations and statements, validates names and numeric widths, resolves declarations and references, and derives aggregate section/data/memory/relocation counts. It deliberately does not construct encoded definition ranges, instruction bytes, symbol records, relocations, or WVO output; those belong to the following encoder gate.
 
