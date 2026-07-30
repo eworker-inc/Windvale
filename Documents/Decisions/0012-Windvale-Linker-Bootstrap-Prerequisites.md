@@ -1,7 +1,7 @@
 # Decision 0012: Windvale linker bootstrap prerequisites
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `348c82a`
 
 ## Context
 
