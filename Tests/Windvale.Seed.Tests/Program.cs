@@ -48,6 +48,9 @@ internal static class Program
     private const string SOURCE_GRAPH_SHA256 = "1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133";
     private const string SOURCE_GRAPH_DEMO_SHA256 = "53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073";
     private const string SOURCE_GRAPH_TOOL_SHA256 = "75fdf22e93f154599cdf4530ebcf828eec061458c73f6ab09b00d0765e3ebdc1";
+    private const string SOURCE_SYMBOLS_SHA256 = "79a60d3734c8c128af327b3c9e015bfa1f5b2c9d7b87abf4fb3fc2428d8bac3a";
+    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "476551cc0990588c3e782f45be83baebbcf3cd519cc0fe8dc17ccd67a7aa3714";
+    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "852dae1fe1962351e46a70e70bbdd4547814de17d75a8409e56aa0f94ccd7a4d";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -294,6 +297,15 @@ internal static class Program
     private static readonly string SOURCE_GRAPH_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Graph-Tool.wv");
 
+    private static readonly string SOURCE_SYMBOLS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Symbols-Core.wv");
+
+    private static readonly string SOURCE_SYMBOLS_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Symbols-Demo.wv");
+
+    private static readonly string SOURCE_SYMBOLS_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Symbols-Tool.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -322,6 +334,7 @@ internal static class Program
         ("Windvale-written body parser exposes bounded statement and expression views", Compilerˉsourceˉbodyˉparserˉruns),
         ("Windvale compiler source sets are canonical, bounded, and portable", Compilerˉsourceˉsetˉruns),
         ("Windvale compiler import graphs are complete, acyclic, and portable", Compilerˉsourceˉgraphˉruns),
+        ("Windvale compiler declaration namespaces and signatures bind portably", Compilerˉsourceˉsymbolsˉrun),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
@@ -1369,6 +1382,92 @@ internal static class Program
         Equal(
             "source graph status=Valid modules=64 imports=63 reachable=64\n",
             Boundary.Output);
+    }
+
+    private static void Compilerˉsourceˉsymbolsˉrun()
+    {
+        var Libraryˉbytes = Compileˉwithˉsourceˉsymbolsˉsuccess(
+            SOURCE_SYMBOLS_SOURCE,
+            "Source-Symbols-Core.wv",
+            includeˉsourceˉsymbols: false);
+        Equal(SOURCE_SYMBOLS_SHA256, Moduleˉdigest.Calculateˉsha256(Libraryˉbytes));
+        var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
+        Equal("Compilerˉsourceˉsymbols", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Equal(38, Library.Module.Types.Length);
+        Equal(32, Library.Module.Exports.Length);
+        foreach (var Typeˉname in new[]
+                 {
+                     "Compilerˉsourceˉsymbolˉmatch",
+                     "Compilerˉsourceˉsymbolˉstatus",
+                     "Compilerˉsourceˉsymbolˉsummary",
+                     "Compilerˉsourceˉtypeˉbinding",
+                 })
+        {
+            True(Library.Module.Types.Any(Type => Type.Name == Typeˉname),
+                $"Source-symbol type '{Typeˉname}' was not emitted.");
+        }
+        True(
+            Library.Module.Exports.Any(Export => Export.Name == "Compilerˉvalidateˉsourceˉsymbols"),
+            "The source-symbol validation entry point was not emitted.");
+
+        var Demoˉbytes = Compileˉwithˉsourceˉsymbolsˉsuccess(
+            SOURCE_SYMBOLS_DEMO_SOURCE,
+            "Source-Symbols-Demo.wv");
+        Equal(SOURCE_SYMBOLS_DEMO_SHA256, Moduleˉdigest.Calculateˉsha256(Demoˉbytes));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Demoˉbytes),
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                    Maximumˉinstructions: 1_500_000_000)).Runˉmain().Exitˉcode);
+
+        var Toolˉbytes = Compileˉwithˉsourceˉsymbolsˉsuccess(
+            SOURCE_SYMBOLS_TOOL_SOURCE,
+            "Source-Symbols-Tool.wv");
+        Equal(SOURCE_SYMBOLS_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        const string Root = """
+            module Symbolsˉtoolˉroot profile portable;
+            import Symbolsˉtoolˉdependency;
+            record Rootˉbox { State: Dependencyˉstate; }
+            export fn Main(Value: Dependencyˉrecord) -> Dependencyˉstate {
+                return Dependencyˉstate.Ready;
+            }
+            """;
+        const string Dependency = """
+            module Symbolsˉtoolˉdependency profile portable;
+            record Dependencyˉrecord { Value: u32; }
+            enum Dependencyˉstate { Ready = 0; }
+            export fn Dependencyˉuse(Value: Dependencyˉrecord) -> Dependencyˉstate {
+                return Dependencyˉstate.Ready;
+            }
+            """;
+        var Small = Runˉsourceˉsetˉtool(
+            Tool,
+            [new("root.wv", Root), new("dependency.wv", Dependency)],
+            500_000_000);
+        Equal(0, Small.Exitˉcode);
+        Equal(string.Empty, Small.Diagnostics);
+        Equal(2, Small.Readˉcount);
+        Equal(
+            "source symbols status=Valid modules=2 capabilities=0 data=0 records=2 enums=1 functions=2 fields=2 members=1 parameters=2 directory-bytes=136 visibility-bytes=4\n",
+            Small.Output);
+
+        const string Unknownˉtype = """
+            module Symbolsˉunknown profile portable;
+            export fn Main(Value: Missingˉtype) -> i32 { return 0; }
+            """;
+        var Rejected = Runˉsourceˉsetˉtool(
+            Tool,
+            [new("unknown.wv", Unknownˉtype)],
+            200_000_000);
+        Equal(1, Rejected.Exitˉcode);
+        Equal(string.Empty, Rejected.Output);
+        Contains(Rejected.Diagnostics, "source symbols status=Unknownˉtype");
+        Contains(Rejected.Diagnostics, "module=0 related-module=1 kind=Function");
+        Equal(1, Rejected.Readˉcount);
     }
 
     private static void Moduleˉroundˉtrip()
@@ -4192,6 +4291,16 @@ internal static class Program
         var Sourceˉgraphˉtoolˉbytes = Compileˉwithˉsourceˉgraphˉsuccess(
             SOURCE_GRAPH_TOOL_SOURCE,
             "Source-Graph-Tool.wv");
+        var Sourceˉsymbolsˉbytes = Compileˉwithˉsourceˉsymbolsˉsuccess(
+            SOURCE_SYMBOLS_SOURCE,
+            "Source-Symbols-Core.wv",
+            includeˉsourceˉsymbols: false);
+        var Sourceˉsymbolsˉdemoˉbytes = Compileˉwithˉsourceˉsymbolsˉsuccess(
+            SOURCE_SYMBOLS_DEMO_SOURCE,
+            "Source-Symbols-Demo.wv");
+        var Sourceˉsymbolsˉtoolˉbytes = Compileˉwithˉsourceˉsymbolsˉsuccess(
+            SOURCE_SYMBOLS_TOOL_SOURCE,
+            "Source-Symbols-Tool.wv");
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉwithˉbyteˉorderingˉsuccess(
             WVO_CORE_SOURCE,
@@ -4240,6 +4349,9 @@ internal static class Program
         var Sourceˉgraphˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉgraphˉbytes);
         var Sourceˉgraphˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉgraphˉdemoˉbytes);
         var Sourceˉgraphˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉgraphˉtoolˉbytes);
+        var Sourceˉsymbolsˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsymbolsˉbytes);
+        var Sourceˉsymbolsˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsymbolsˉdemoˉbytes);
+        var Sourceˉsymbolsˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsymbolsˉtoolˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
@@ -4275,6 +4387,9 @@ internal static class Program
         Equal(SOURCE_GRAPH_SHA256, Sourceˉgraphˉhash);
         Equal(SOURCE_GRAPH_DEMO_SHA256, Sourceˉgraphˉdemoˉhash);
         Equal(SOURCE_GRAPH_TOOL_SHA256, Sourceˉgraphˉtoolˉhash);
+        Equal(SOURCE_SYMBOLS_SHA256, Sourceˉsymbolsˉhash);
+        Equal(SOURCE_SYMBOLS_DEMO_SHA256, Sourceˉsymbolsˉdemoˉhash);
+        Equal(SOURCE_SYMBOLS_TOOL_SHA256, Sourceˉsymbolsˉtoolˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
@@ -4400,6 +4515,25 @@ internal static class Program
                 new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ],
             1_500_000_000);
+        var Sourceˉsymbolsˉdemoˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Sourceˉsymbolsˉdemoˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                Maximumˉinstructions: 1_500_000_000)).Runˉmain();
+        var Sourceˉsymbolsˉtool = Moduleˉcodec.Readˉandˉverify(Sourceˉsymbolsˉtoolˉbytes);
+        var Sourceˉsymbolsˉselfˉresult = Runˉsourceˉsetˉtool(
+            Sourceˉsymbolsˉtool,
+            [
+                new("Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE),
+                new("Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
+                new("Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
+                new("Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE),
+                new("Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+                new("Source-Set-Core.wv", SOURCE_SET_SOURCE),
+                new("Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
+            ],
+            4_000_000_000);
         var Wvˉdumpˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes);
         var Wvˉdumpˉcapabilities = Wvˉdumpˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -4604,6 +4738,13 @@ internal static class Program
         Equal(
             "source graph status=Valid modules=7 imports=6 reachable=7\n",
             Sourceˉgraphˉselfˉresult.Output);
+        Equal(0, Sourceˉsymbolsˉdemoˉresult.Exitˉcode);
+        Equal(0, Sourceˉsymbolsˉselfˉresult.Exitˉcode);
+        Equal(string.Empty, Sourceˉsymbolsˉselfˉresult.Diagnostics);
+        Equal(8, Sourceˉsymbolsˉselfˉresult.Readˉcount);
+        Equal(
+            "source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=131 fields=289 members=181 parameters=582 directory-bytes=4072 visibility-bytes=64\n",
+            Sourceˉsymbolsˉselfˉresult.Output);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
@@ -4668,6 +4809,11 @@ internal static class Program
             Sourceˉgraphˉdemoˉresult.Exitˉcode,
             Sourceˉgraphˉtoolˉhash,
             Sourceˉgraphˉselfˉresult.Output,
+            Sourceˉsymbolsˉhash,
+            Sourceˉsymbolsˉdemoˉhash,
+            Sourceˉsymbolsˉdemoˉresult.Exitˉcode,
+            Sourceˉsymbolsˉtoolˉhash,
+            Sourceˉsymbolsˉselfˉresult.Output,
             Wvˉdumpˉhash,
             Wvˉdumpˉresult.Exitˉcode,
             Normalizedˉwvdumpˉoutput,
@@ -5101,6 +5247,35 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Compiler source-graph composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉsourceˉsymbolsˉsuccess(
+        string source,
+        string sourceˉname,
+        bool includeˉsourceˉsymbols = true)
+    {
+        var Dependencies = new List<Sourceˉmoduleˉinput>();
+        if (includeˉsourceˉsymbols)
+        {
+            Dependencies.Add(new("Compiler/Bootstrap/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
+        }
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
+        Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            Dependencies);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler source-symbol composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();
@@ -5569,6 +5744,11 @@ internal static class Program
         [property: JsonPropertyName("sourceGraphDemoResult")] int Sourceˉgraphˉdemoˉresult,
         [property: JsonPropertyName("sourceGraphToolSha256")] string Sourceˉgraphˉtoolˉsha256,
         [property: JsonPropertyName("sourceGraphSelfOutput")] string Sourceˉgraphˉselfˉoutput,
+        [property: JsonPropertyName("sourceSymbolsSha256")] string Sourceˉsymbolsˉsha256,
+        [property: JsonPropertyName("sourceSymbolsDemoSha256")] string Sourceˉsymbolsˉdemoˉsha256,
+        [property: JsonPropertyName("sourceSymbolsDemoResult")] int Sourceˉsymbolsˉdemoˉresult,
+        [property: JsonPropertyName("sourceSymbolsToolSha256")] string Sourceˉsymbolsˉtoolˉsha256,
+        [property: JsonPropertyName("sourceSymbolsSelfOutput")] string Sourceˉsymbolsˉselfˉoutput,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
         [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
         [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput,

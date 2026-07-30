@@ -97,5 +97,14 @@
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Graph-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Graph-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Bootstrap/Source-Symbols-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Symbols-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Symbols-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Symbols-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Symbols-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Symbols-Tool.wv" />
   </ItemGroup>
 </Project>

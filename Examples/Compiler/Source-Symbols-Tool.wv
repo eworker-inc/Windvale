@@ -1,0 +1,113 @@
+module Compilerˉsourceˉsymbolsˉtool profile hosted;
+
+import Compilerˉsourceˉsymbols;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+data Sourceˉsymbolsˉtoolˉmagic: bytes = [87, 86, 83, 83];
+
+fn Compilerˉsourceˉsymbolsˉtoolˉheader(Modules: u32) -> bytes {
+    var Header: bytes = Sourceˉsymbolsˉtoolˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Compilerˉsourceˉsymbolsˉtoolˉbuild(Modules: u32) -> bytes {
+    var Directory: bytes = Bytesˉslice(Sourceˉsymbolsˉtoolˉmagic, 0u32, 0u32);
+    var Sourceˉoffset: u32 = 16u32 + Modules * 8u32;
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        let Source: bytes = file.read_bytes(process.argument(Index));
+        let Length: u32 = Bytesˉlength(Source);
+        if Length == 0u32 { return Directory; }
+        if Length > 4194304u32 - Sourceˉoffset { return Directory; }
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Sourceˉoffset));
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Length));
+        Sourceˉoffset = Sourceˉoffset + Length;
+        Index = Index + 1u32;
+    }
+
+    var Result: bytes = Bytesˉconcat(Compilerˉsourceˉsymbolsˉtoolˉheader(Modules), Directory);
+    Index = 0u32;
+    while Index < Modules {
+        Result = Bytesˉconcat(Result, file.read_bytes(process.argument(Index)));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Compilerˉsourceˉsymbolsˉtoolˉsuccess(
+    Summary: Compilerˉsourceˉsymbolˉsummary
+) -> text {
+    var Report: text = "source symbols status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " modules=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Modules));
+    Report = Textˉconcat(Report, " capabilities=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Capabilities));
+    Report = Textˉconcat(Report, " data=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Data));
+    Report = Textˉconcat(Report, " records=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Records));
+    Report = Textˉconcat(Report, " enums=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Enums));
+    Report = Textˉconcat(Report, " functions=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Functions));
+    Report = Textˉconcat(Report, " fields=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Fields));
+    Report = Textˉconcat(Report, " members=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Members));
+    Report = Textˉconcat(Report, " parameters=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Parameters));
+    Report = Textˉconcat(Report, " directory-bytes=");
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉlength(Summary.Directory)));
+    Report = Textˉconcat(Report, " visibility-bytes=");
+    return Textˉconcat(Report, U32ˉformat(Bytesˉlength(Summary.Visibility)));
+}
+
+fn Compilerˉsourceˉsymbolsˉtoolˉfailure(
+    Summary: Compilerˉsourceˉsymbolˉsummary
+) -> text {
+    var Report: text = "source symbols status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " graph-status=");
+    Report = Textˉconcat(Report, Enumˉname(Summary.Graphˉstatus));
+    Report = Textˉconcat(Report, " module=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉmodule));
+    Report = Textˉconcat(Report, " related-module=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉrelatedˉmodule));
+    Report = Textˉconcat(Report, " kind=");
+    Report = Textˉconcat(Report, Enumˉname(Summary.Failureˉkind));
+    Report = Textˉconcat(Report, " offset=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoffset));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉline));
+    Report = Textˉconcat(Report, " column=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Failureˉcolumn));
+}
+
+export fn Main() -> i32 {
+    let Modules: u32 = process.argument_count();
+    if Modules == 0u32 {
+        diagnostic.write_line("Usage: source-symbols <root.wv> [sorted-dependency.wv ...]");
+        return 64;
+    }
+    if Modules > 64u32 {
+        diagnostic.write_line("source symbols status=Sourceˉgraph graph-status=Sourceˉset");
+        return 64;
+    }
+    let Input: bytes = Compilerˉsourceˉsymbolsˉtoolˉbuild(Modules);
+    let Summary: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Summary.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
+        diagnostic.write_line(Compilerˉsourceˉsymbolsˉtoolˉfailure(Summary));
+        return 1;
+    }
+    console.write_line(Compilerˉsourceˉsymbolsˉtoolˉsuccess(Summary));
+    return 0;
+}

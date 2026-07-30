@@ -70,6 +70,9 @@ $SourceSetToolModule = Join-Path $Artifacts 'Source-Set-Tool.wvb'
 $SourceGraphModule = Join-Path $Artifacts 'Source-Graph-Core.wvb'
 $SourceGraphDemoModule = Join-Path $Artifacts 'Source-Graph-Demo.wvb'
 $SourceGraphToolModule = Join-Path $Artifacts 'Source-Graph-Tool.wvb'
+$SourceSymbolsModule = Join-Path $Artifacts 'Source-Symbols-Core.wvb'
+$SourceSymbolsDemoModule = Join-Path $Artifacts 'Source-Symbols-Demo.wvb'
+$SourceSymbolsToolModule = Join-Path $Artifacts 'Source-Symbols-Tool.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -667,6 +670,97 @@ if (
     $SourceGraphSelfOutput -notcontains 'Result: 0'
 ) {
     throw 'The source-graph tool did not validate the real compiler graph.'
+}
+
+$SourceSymbolsSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Symbols-Core.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $SourceSymbolsSource `
+    --module $SourceGraphSource `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $ByteConstructionSource `
+    --module $DecimalParsingSource `
+    -o $SourceSymbolsModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-symbol core.' }
+$SourceSymbolsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsModule).Hash.ToLowerInvariant()
+if ($SourceSymbolsHash -ne '79a60d3734c8c128af327b3c9e015bfa1f5b2c9d7b87abf4fb3fc2428d8bac3a') {
+    throw "The Windvale source-symbol core has an unexpected digest: $SourceSymbolsHash"
+}
+$SourceSymbolsInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceSymbolsModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceSymbolsInspection -notmatch 'Nominal types \(38\)' -or
+    $SourceSymbolsInspection -notmatch 'Compilerˉsourceˉsymbolˉstatus' -or
+    $SourceSymbolsInspection -notmatch 'Compilerˉsourceˉsymbolˉsummary' -or
+    $SourceSymbolsInspection -notmatch 'Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid' -or
+    $SourceSymbolsInspection -notmatch 'Compilerˉvalidateˉsourceˉsymbols' -or
+    $SourceSymbolsInspection -notmatch 'Exports \(32\)'
+) {
+    throw 'The Windvale source-symbol inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Symbols-Demo.wv') `
+    --module $SourceSymbolsSource `
+    --module $SourceGraphSource `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $ByteConstructionSource `
+    --module $DecimalParsingSource `
+    -o $SourceSymbolsDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-symbol demo.' }
+$SourceSymbolsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsDemoModule).Hash.ToLowerInvariant()
+if ($SourceSymbolsDemoHash -ne '476551cc0990588c3e782f45be83baebbcf3cd519cc0fe8dc17ccd67a7aa3714') {
+    throw "The source-symbol demo has an unexpected digest: $SourceSymbolsDemoHash"
+}
+$SourceSymbolsDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    run $SourceSymbolsDemoModule --max-steps 1500000000
+if ($LASTEXITCODE -ne 0 -or $SourceSymbolsDemoOutput -notcontains 'Result: 0') {
+    throw 'The source-symbol demo did not return Result: 0.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Symbols-Tool.wv') `
+    --module $SourceSymbolsSource `
+    --module $SourceGraphSource `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $ByteConstructionSource `
+    --module $DecimalParsingSource `
+    -o $SourceSymbolsToolModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-symbol tool.' }
+$SourceSymbolsToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsToolModule).Hash.ToLowerInvariant()
+if ($SourceSymbolsToolHash -ne '852dae1fe1962351e46a70e70bbdd4547814de17d75a8409e56aa0f94ccd7a4d') {
+    throw "The source-symbol tool has an unexpected digest: $SourceSymbolsToolHash"
+}
+$SourceSymbolsArguments = @(
+    'run', $SourceSymbolsToolModule,
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count'
+)
+$SourceSymbolsSelfOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    @SourceSymbolsArguments --max-steps 4000000000 -- `
+    $SourceSymbolsSource `
+    $SourceBodyParserSource `
+    $SourceDeclarationParserSource `
+    $SourceGraphSource `
+    $SourceLexerSource `
+    $SourceSetSource `
+    $ByteConstructionSource `
+    $DecimalParsingSource
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceSymbolsSelfOutput -notcontains 'source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=131 fields=289 members=181 parameters=582 directory-bytes=4072 visibility-bytes=64' -or
+    $SourceSymbolsSelfOutput -notcontains 'Result: 0'
+) {
+    throw 'The source-symbol tool did not bind the real compiler closure.'
 }
 
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
