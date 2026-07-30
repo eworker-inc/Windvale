@@ -1,7 +1,7 @@
 # Decision 0007: Explicit hosted resources
 
 - Date: 2026-07-29
-- Status: Accepted; cross-host qualification pending
+- Status: Accepted and qualified on Windows and Debian Linux
 
 ## Context
 

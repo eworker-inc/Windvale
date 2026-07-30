@@ -15,8 +15,8 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 | 0. Seed and byte primitives | C# Stage 0, typed WIR, verified runtime, `u8`, `u32`, immutable bytes, and Windows/Debian equality. | Qualified |
 | 1. `Wvˉdumpˉcore` | Windvale source safely walks complete WVB headers and section envelopes over supplied bytes, including hostile lengths and malformed cases. | Qualified |
 | 2. Structured inspection | Add only the records, enums, structured results/errors, and bounded formatting demanded by useful section descriptions. | Qualified |
-| 3. Hosted resource boundary | Explicit arguments, file-byte input, diagnostics, and output capabilities with portable parsing kept independent. | Current focus |
-| 4. Useful `wvdump` | Inspect the same real modules identically on Windows and Debian with golden machine-readable reports. | Planned |
+| 3. Hosted resource boundary | Explicit arguments, file-byte input, diagnostics, and output capabilities with portable parsing kept independent. | Qualified |
+| 4. Useful `wvdump` | Inspect the same real modules identically on Windows and Debian with golden machine-readable reports. | Current focus |
 | 5. Object foundation | Deterministic byte construction, sections, symbols, relocations, and the smallest shared object contracts needed by an assembler. | Planned |
 | 6. Assembler and linker | Windvale-written assembler and linker running first as verified bytecode on Windows and Linux. | Planned |
 | 7. Foundation modules | Compact reusable collections, text, binary-format, diagnostics, testing, and I/O-adapter modules driven by tool needs. | Planned |
@@ -29,4 +29,4 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 
 ## Current focus
 
-Phase 2 is qualified at commit `e6c51c6` after the exact source passed the Windows verifier, Debian QA verifier, and portable report comparison. Phase 3 is the current implementation focus. Its candidate implementation adds bounded launcher arguments, bounded native file-byte input, deterministic normal output, a separate diagnostic sink, support preflight, and host-result validation without changing WVB 1.3. The Windvale-written WvDump core now exercises the boundary against real modules while keeping envelope parsing in pure functions. Cross-host qualification is required before Phase 3 is marked complete.
+Phase 3 is qualified at commit `1f4b48a` after the exact source passed the Windows verifier, Debian QA verifier, native hosted-file CLI cases on both systems, and portable report comparison. It adds bounded launcher arguments, bounded native file-byte input, deterministic normal output, a separate diagnostic sink, support preflight, and host-result validation without changing WVB 1.3. Phase 4 is the current implementation focus: decode useful WVB payload declarations and instructions in Windvale and emit deterministic reports for the same real modules on both hosts.
