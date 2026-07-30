@@ -3,7 +3,7 @@
 - Evidence date: 2026-07-30
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Qualified commit: `9c4b9f5`
+- Qualified commit: `348c82a`
 
 ## Requirement evidence
 
@@ -15,10 +15,10 @@
 | Module, assembly, object, and link CLI | The native verifiers invoke `compile`, `assemble`, `link`, `inspect`, `verify`, `run`, `object-inspect`, and `object-verify` against generated artifacts. |
 | Reference runtime | Portable .NET interpreter executes only `Verifiedˉmodule`, with checked signed and unsigned arithmetic, array and byte-range bounds, step, call-depth, capability, and host-result controls. |
 | Explicit capabilities | Hosted arguments, file-byte input and output, standard output, line output, and diagnostics must be declared, supported by the selected host, and granted separately; refusal and success are tested. |
-| Hosted resource boundary | Arguments are immutable and UTF-8 bounded, native file reads stream into bounded immutable bytes, file writes replace one bounded whole value and durably flush, normal and diagnostic sinks are separate, and stable missing/invalid/oversized/bad-host cases are exercised. |
+| Hosted resource boundary | Arguments are immutable and UTF-8 bounded, native file reads stream into bounded immutable bytes, each exact resource name has one first-successful-read snapshot per context, at most 64 distinct snapshots are retained, file writes replace one bounded whole value and durably flush, normal and diagnostic sinks are separate, and stable missing/invalid/oversized/bad-host/snapshot-limit cases are exercised. |
 | Useful diagnostics | Language compiler, assembly parser/semantics, binary readers, link resolution/layout/relocation, verifiers, and runtime failures expose stable codes; source errors retain one-based line and column. |
 | Source conventions | U+02C9 identifiers and exported `Main` compile and execute; immutable `let` locals and parameters reject assignment; mutable `var` locals accept it; malformed and confusable separators are rejected. |
-| Foundation binary and text primitives | `u8`, `u32`, immutable `bytes`, zero-copy slices, immutable concatenation, signed and unsigned little-endian reads and fixed-width construction, explicit byte widening, strict UTF-8 validation/encoding/decoding, and ASCII-safe quoting are type-checked, verified, inspected, executed, and covered by deterministic trap and size-limit tests. |
+| Foundation binary and text primitives | `u8`, `u32`, immutable `bytes`, zero-copy slices, immutable concatenation, signed and unsigned little-endian reads and fixed-width construction, exact SHA-256 identity over sequences and slices, explicit byte widening, strict UTF-8 validation/encoding/decoding, and ASCII-safe quoting are type-checked, verified, inspected, executed, and covered by deterministic trap and size-limit tests. |
 | Immutable nominal records | Record declarations, positional construction, named field reads, nominal function signatures, canonical WVB schemas, verifier rejection cases, runtime values, and inspector output are exercised end to end. |
 | Nominal enums and bounded formatting | Explicit enum declarations, exact nominal equality, enum-valued record fields, member naming, invariant `i32`/`u8`/`u32` formatting, bounded text concatenation, verifier rejection cases, and deterministic runtime output are exercised end to end. |
 | Windvale-written inspection | `Wvˉdumpˉcore` reads an explicit real file through hosted resources while pure Windvale functions validate all seven envelopes, decode every declaration payload and value shape, walk every instruction, reject malformed lengths/UTF-8/opcodes without escaping diagnostic boundaries, and emit a versioned ASCII-safe line report. |
@@ -30,7 +30,7 @@
 | Canonical link evidence | The path-free ASCII/LF map records input digests, section placements, definitions, import providers, patch and target addresses, relocation values, entry, and image digest in deterministic order. It is byte-limited, locale-independent, and compared as a complete value across hosts. |
 | Representative programs | The portable sum returns `29`; the hosted example prints `Hello from Windvale`; the Foundation header returns `1`; WvDump emits the complete golden Sum report; the WVO core writes its exact object; the hosted Windvale assembler writes the 218-byte canonical `Hello-Object.wvo`; and Stage 0 links it with the 91-byte `Console-Provider.wvo` into an independently verified 24-byte image and 1,721-byte map. |
 | Malformed-input coverage | Structured adversarial cases plus deterministic bounded random Windvale source, WVA source, module, object, and link input exercise diagnostic and rejection boundaries. Link coverage includes invalid and oversized objects, invalid entry names, duplicate exports, undefined imports, kind mismatches, non-function entries, aggregate section limits, map limits, unaligned bases, all section kinds, BSS/padding zeros, image/u32 overflow, absolute and relative relocation overflow, 200 hostile objects, locale changes, semantic input reordering, and missing/unchanged output cases. |
-| Cross-host coverage | The same 31-test suite passed on Windows and Debian Linux. Its normalized contracts compare equal for WVB/WVO/WVA/link versions, all module/object/image/map hashes, results, hosted output, complete WvDump/WVA/link reports, and exact assembled and linked bytes. |
+| Cross-host coverage | The same 31-test suite passed on Windows and Debian Linux. Its normalized contracts compare equal for WVB 1.6/WVO/WVA/link versions, all module/object/image/map hashes, results, hosted output, complete WvDump/WVA/link reports, and exact assembled and linked bytes. |
 | Scope control | The qualified Stage 0 linker produces one bounded raw flat memory image and canonical map. No Windvale-written linker, executable-container adapter, native backend, directly executable host program, self-hosted compiler, firmware, kernel, driver, or OS implementation is included. |
 
 ## Verified on the implementation host
@@ -39,9 +39,26 @@
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
 ```
 
-The verifier performs a Release build, runs the 31-test conformance suite, produces a Windows report, publishes the CLI as framework-dependent `linux-x64`, and exercises the real module, Windvale/Stage 0 assembly, object, and Stage 0 link CLI paths. It checks capability refusal, byte-for-byte assembler equality, independent WVO and flat-image verification, exact map output, no file for rejected source/link or a missing parent, and preservation of existing object/image outputs when validation fails. The Windows report SHA-256 was `31e5c02c2a5ddd28b63201803bd733a5cb6356ec34593553503f2451b1781248`.
+The verifier performs a Release build, runs the 31-test conformance suite, produces a Windows report, publishes the CLI as framework-dependent `linux-x64`, and exercises the real module, Windvale/Stage 0 assembly, object, and Stage 0 link CLI paths. It checks capability refusal, deterministic file snapshots, SHA-256 sequence/slice behavior, byte-for-byte assembler equality, independent WVO and flat-image verification, exact map output, no file for rejected source/link or a missing parent, and preservation of existing object/image outputs when validation fails. The WVB 1.6 Windows report SHA-256 was `5711f3025ea56edcc3af017505604c3c4153ad38e5858dedfea73b0d121366e3`.
 
-## Linux QA qualification
+## WVB 1.6 linker-prerequisite qualification
+
+Candidate commit `348c82a` was archived and transferred with matching SHA-256 `985410209aee1cc54753aecd12d8d73658b7f3ffa646a129a4f490bec520817c`, then verified in `/tmp/windvale-prerequisites-348c82a-20260730` on the isolated E-Worker QA host. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`; the reports identify .NET `10.0.10`. The exact archive passed the Release build with zero warnings/errors, all 31 tests, and the complete native CLI verifier. The Debian report was retrieved with SHA-256 `cec2e640181eb7bf5bca91fd7890aecd93137c6f594ca6af0bac873e8c98d3c0`. The report comparator confirmed that the Windows and Debian normalized contracts match.
+
+Both hosts produced WVB format `1.6` with these module identities:
+
+- `Sum-Data.wvb`: `6f3a272d37dd8893995c7f85c236414ed2864bf59de2f3775c08afd426013f8c`.
+- `Hello-Windvale.wvb`: `bcf6597a27384661d2796f1dd8ee6e24cce8e6c7cb84def3b7826a564acb7d54`.
+- `Read-Wvb-Header.wvb`: `72ae31559bb3335b320328c26e70518b6a0f3e617d099d41b328b066bb3784c7`.
+- `Wv-Dump-Core.wvb`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`.
+- `Wvo-Object-Core.wvb`: `76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b`.
+- `Wva-Assembler-Core.wvb`: `9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a`.
+
+The directly retrieved Debian `Wv-Dump-Core.wvb` and `Wva-Assembler-Core.wvb` matched their Windows artifacts byte for byte. Every pre-existing WVO, WVA, image, and map identity remained unchanged, including the 24-byte linked image `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a` and 1,721-byte map `31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4`. Qualification specifically exercised opcode `0x7D` through compiler lowering, verifier stack typing, runtime SHA-256 over a non-zero-offset slice, inspector output, and the Windvale-written WvDump decoder. It also proved same-name snapshot reuse without a second adapter call, snapshot sharing across capability hosts for one context, the 64-distinct-snapshot ceiling, and the 67-argument launcher ceiling. After evidence retrieval, the resolved exact QA directory and transferred archive were removed and confirmed absent.
+
+This qualifies Decision 0012 and the prerequisite portion of roadmap gate 6G. It does not qualify the Windvale-written linker itself.
+
+## Prior Stage 0 linker qualification (WVB 1.5)
 
 Commit `9c4b9f5` was archived and transferred with matching SHA-256 `44565d0f6366eb418dc1a4555d1f7b355df63ec2ea836440de54639087fc335a`, then verified in the uniquely named disposable directory `/tmp/windvale-linker-9c4b9f5-20260730` on the isolated E-Worker QA host. The archive contained the canonical WVA fixture as 403 bytes plus the linker project, provider fixture, and shell verifier. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`. The verification did not use E-Worker release, configuration, service, or durable-data paths. The Debian report was retrieved with SHA-256 `b84cd3a180e8cb167dca3cf909457de91a8643f19911628c426c6e52c6fe5fc0`; the provider WVO, linked image, and canonical map were retrieved separately and each matched the Windows artifact byte for byte; then the resolved exact temporary directory and transferred archive were removed.
 
