@@ -337,6 +337,10 @@ if (
     $WvLinkerInspection -notmatch 'Validateˉdefinitions' -or
     $WvLinkerInspection -notmatch 'Buildˉunrelocatedˉimage' -or
     $WvLinkerInspection -notmatch 'Applyˉrelocations' -or
+    $WvLinkerInspection -notmatch 'Verifierˉplaceˉsection' -or
+    $WvLinkerInspection -notmatch 'Verifierˉfindˉexport' -or
+    $WvLinkerInspection -notmatch 'Verifierˉapplyˉrelocationsˉreverse' -or
+    $WvLinkerInspection -notmatch 'Acceptˉreconstructedˉimage' -or
     $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
     $WvLinkerInspection -notmatch 'bytes\.sha256_hex' -or
     $WvLinkerInspection -notmatch 'file\.read_bytes'

@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Wvˉlinkerˉcore` is the Windvale-written implementation path for Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic section, symbol, and relocation views, resolves multi-object symbols, computes deterministic section placements and defined-symbol addresses, constructs the flat image, and applies both relocation kinds. It is not yet a complete linker: it does not independently reconstruct the result, construct the canonical map, or write an output image.
+`Wvˉlinkerˉcore` is the Windvale-written implementation path for Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic object views, resolves multi-object symbols, computes deterministic placements and addresses, constructs and relocates the flat image, and independently reconstructs every result byte. It is not yet a complete linker: it does not construct the canonical map or write an output image.
 
-The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout was qualified at `709ccb3`; and immutable image construction plus checked relocation is cross-host qualified at `ec9c980` with WVB 1.6 SHA-256 `87fb5974d989d7b7870dab9a6fb4e1bb1bae8549bb90edf78f7bdfdf1824b822`. The exact committed archive passed the full suite and real CLI verifier on Windows and Debian, the normalized contracts and image digests matched, and the directly retrieved modules were byte-for-byte identical.
+The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout at `709ccb3`; and immutable image construction plus checked relocation at `ec9c980`. The current independent-reconstruction extension has WVB 1.6 SHA-256 `0b8d4ce09a043a675e64018c02fac94740b0b878a74801fc622ce7703e956b35` and requires fresh cross-host qualification.
 
 ## Object boundary
 
@@ -42,6 +42,12 @@ No host collection, object decoder, resolver, or layout callback participates. R
 
 Successful analysis now adds `image sha256=<lowercase-hex>` to the report. This digest must equal Stage 0 on both hosts, but it is development evidence rather than the independent reconstruction required before output.
 
+## Independent reconstruction
+
+`Verifyˉlinkˉimage` builds a second complete value through verifier-owned algorithms. Alignment advances an actual address until an independent predicate accepts it. Provider lookup scans all symbols rather than using production export-range lookup. Relocations are applied in reverse input and reverse relocation order with separate signed-magnitude functions. The verifier finally compares the complete candidate and reconstruction byte by byte.
+
+Any placement, provider, address, arithmetic, length, or byte disagreement becomes `WVL1011`, clears the candidate, and returns through diagnostics. The embedded suite injects a one-byte mismatch at the final acceptance boundary and requires `WVL1011` with an empty result. The hosted writer remains unreachable even after successful reconstruction because canonical map construction can still fail.
+
 ## Hosted scan shell
 
 The current shell declares the final linker's explicit hosted capabilities so capability authorization remains visible while the implementation grows. With no arguments, `Main` runs embedded parser and view checks without reading or writing a hosted resource. With one argument, it reads one bounded object resource and emits exactly one report:
@@ -58,7 +64,7 @@ The one-input form remains a parser-development shell. The multi-object analysis
 wvlink-core <base-address> <entry> <output.bin> <input.wvo>...
 ```
 
-It emits `link status=<status> inputs=<u32> sections=<u32> symbols=<u32> relocations=<u32> image-bytes=<u32> entry-address=<u32> input=<u32>`. The output argument is reserved but untouched until image construction and complete verification exist. Success returns `0`; a deterministic WVL rejection reports through diagnostics and returns `2`.
+It emits `link status=<status> inputs=<u32> sections=<u32> symbols=<u32> relocations=<u32> image-bytes=<u32> entry-address=<u32> input=<u32>`. The output argument is reserved but untouched until canonical map construction also succeeds. Success returns `0`; a deterministic WVL rejection reports through diagnostics and returns `2`.
 
 ## Qualification boundary
 
@@ -66,6 +72,6 @@ The conformance test compiles and verifies the exact module, runs its no-input s
 
 Both the Windows and Debian verifiers must also compile and inspect the module through the real CLI, prove capability refusal, run its embedded tests, accept the Windvale-written canonical assembler object, and reject a non-WVO input. The normalized host reports include the exact module digest, self-test result, and canonical hosted scan output.
 
-The current qualification candidate additionally compares canonical and reversed input order, aligned and unaligned bases, all section representations, aggregate overflow, malformed objects, duplicate exports, missing imports, kind mismatch, missing entry, invalid requests, layout overflow, exact counts, image length, entry address, snapshot read counts, and absence of output with the Stage 0 oracle.
+The current qualification candidate additionally compares canonical and reversed input order, aligned and unaligned bases, all section representations, aggregate overflow, malformed objects, duplicate exports, missing imports, kind mismatch, missing entry, invalid requests, layout overflow, exact counts, image length, entry address, snapshot read counts, and absence of output with the Stage 0 oracle. A 4 MiB code-plus-BSS image exercises the accepted maximum image size and complete byte comparison under an explicit 200,000,000-instruction ceiling.
 
-Phase 6 remains incomplete until the same Windvale module implements and qualifies independent reconstruction, canonical map construction, and publish-after-success output behavior.
+Phase 6 remains incomplete until the same Windvale module implements and qualifies canonical map construction and publish-after-success output behavior.
