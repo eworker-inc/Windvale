@@ -9,8 +9,8 @@ The intended stack includes a programming language, portable bytecode, a runtime
 Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provides:
 
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
-- Bounded deterministic compile-time source-module composition with explicit transitive dependencies and no runtime linkage
-- Portable Foundation modules for bounded machine contracts and ordinal byte-span ordering, driven by the object core, assembler, and linker
+- Bounded deterministic compile-time source-module composition with explicit transitive dependencies, nominal source contracts, and no runtime linkage
+- Portable Foundation modules for bounded machine contracts, ordinal byte-span ordering, and structured unsigned decimal parsing, driven by the object core, assembler, linker, and future compiler needs
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
@@ -111,6 +111,19 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Byte-Ordering-Demo.wvb
 
 The module compares validated spans of one immutable byte value without allocation or text decoding. The WVO object core, assembler, and linker share it for canonical name ordering; the demo returns `Result: 0`.
 
+Compile and run the shared bounded decimal parser:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Foundation/Decimal-Parsing.wv -o artifacts/Decimal-Parsing.wvb
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Foundation/Decimal-Parsing-Demo.wv `
+  --module Foundation/Decimal-Parsing.wv `
+  -o artifacts/Decimal-Parsing-Demo.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Decimal-Parsing-Demo.wvb
+```
+
+The module returns an imported immutable `Foundationˉu32ˉparse` record, validates arbitrary byte spans without trapping, and accepts only bounded ASCII decimal values through `u32` maximum. The assembler and linker share it; the demo returns `Result: 0`.
+
 Compile and run the transitive source-module composition example:
 
 ```powershell
@@ -122,7 +135,7 @@ dotnet run --project Tools/Windvale.Tool -- compile `
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Module-Composition-Demo.wvb
 ```
 
-The compiler resolves only the explicitly supplied portable source modules, internalizes dependency functions into one ordinary WVB, and returns `Result: 42`. Reordering the two `--module` inputs produces identical bytes.
+The compiler resolves only the explicitly supplied portable source modules, internalizes dependency records, enums, and functions into one ordinary WVB, and returns `Result: 42`. The leaf's nominal result crosses the transitive module boundary. Reordering the two `--module` inputs produces identical bytes.
 
 Compile and run the first Windvale-written `wvdump` core:
 
@@ -179,6 +192,7 @@ dotnet run --project Tools/Windvale.Tool -- compile `
   Examples/Assembler/Wva-Assembler-Core.wv `
   --module Foundation/Machine-Contracts.wv `
   --module Foundation/Byte-Ordering.wv `
+  --module Foundation/Decimal-Parsing.wv `
   -o artifacts/Wva-Assembler-Core.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Wva-Assembler-Core.wvb `
   --allow console.write_line `
@@ -283,6 +297,7 @@ export fn Main() -> i32 {
 - [Windvale linker core](Specifications/Wv-Linker-Core.md)
 - [Foundation machine contracts](Specifications/Foundation-Machine-Contracts.md)
 - [Foundation ordinal byte-span ordering](Specifications/Foundation-Byte-Ordering.md)
+- [Foundation bounded decimal parsing](Specifications/Foundation-Decimal-Parsing.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
@@ -307,6 +322,8 @@ export fn Main() -> i32 {
 - [Bounded static source-module composition decision](Documents/Decisions/0019-Bounded-Static-Source-Module-Composition.md)
 - [First two-consumer Foundation module decision](Documents/Decisions/0020-First-Two-Consumer-Foundation-Module.md)
 - [Shared ordinal byte-span ordering decision](Documents/Decisions/0021-Shared-Ordinal-Byte-Span-Ordering.md)
+- [Static nominal source contracts decision](Documents/Decisions/0022-Static-Nominal-Source-Contracts.md)
+- [Shared bounded u32 decimal parsing decision](Documents/Decisions/0023-Shared-U32-Decimal-Parsing.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

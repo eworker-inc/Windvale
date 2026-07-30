@@ -33,3 +33,7 @@ This first contract intentionally does not provide aliases, qualified lookup, pr
 The composition fixture uses a transitive two-module dependency graph and produces an ordinary portable module whose only WVB export is root `Main`, whose result is `42`, and whose SHA-256 is `5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612`. Conformance covers dependency-order independence, missing imports, cycles, non-portable dependencies, non-exported dependency functions, root-symbol isolation, unreferenced inputs, late imports, module-count limits, source-specific diagnostics, real CLI execution, no-output rejection, and existing-output preservation.
 
 The exact `df80f91` archive passed the complete verifier on Windows and Debian with equal normalized source-composition hash and result evidence. This qualifies the enabling source-module facility, not a reusable Foundation API; the first extraction still requires two real tool consumers.
+
+## Later evolution
+
+Decision 0022 extends this qualified mechanism to dependency-declared records and enums after a shared structured parse result supplied concrete compiler/tool pressure. The original function-only artifact and evidence above remain the historical qualification baseline; the extension retains the same explicit graph, isolation, static internalization, and WVB 1.6 boundaries.

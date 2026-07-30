@@ -52,6 +52,8 @@ $MachineContractsModule = Join-Path $Artifacts 'Machine-Contracts.wvb'
 $MachineContractsDemoModule = Join-Path $Artifacts 'Machine-Contracts-Demo.wvb'
 $ByteOrderingModule = Join-Path $Artifacts 'Byte-Ordering.wvb'
 $ByteOrderingDemoModule = Join-Path $Artifacts 'Byte-Ordering-Demo.wvb'
+$DecimalParsingModule = Join-Path $Artifacts 'Decimal-Parsing.wvb'
+$DecimalParsingDemoModule = Join-Path $Artifacts 'Decimal-Parsing-Demo.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -123,7 +125,7 @@ dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
     compile $CompositionRoot --module $CompositionMiddle --module $CompositionLeaf -o $CompositionModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-module composition demo.' }
 $CompositionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $CompositionModule).Hash.ToLowerInvariant()
-if ($CompositionHash -ne '5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612') {
+if ($CompositionHash -ne '0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60') {
     throw "The composed source module has an unexpected digest: $CompositionHash"
 }
 $CompositionRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $CompositionModule
@@ -218,6 +220,37 @@ if ($ByteOrderingDemoHash -ne '0b41e8f615630e0734812ba8cd8e7c06e975592b86327c2fe
 $ByteOrderingDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $ByteOrderingDemoModule
 if ($LASTEXITCODE -ne 0 -or $ByteOrderingDemoOutput -notcontains 'Result: 0') {
     throw 'The Foundation byte-ordering demo did not return Result: 0.'
+}
+
+$DecimalParsingSource = Join-Path $RepositoryRoot 'Foundation/Decimal-Parsing.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $DecimalParsingSource -o $DecimalParsingModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation decimal parsing.' }
+$DecimalParsingHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $DecimalParsingModule).Hash.ToLowerInvariant()
+if ($DecimalParsingHash -ne '39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f') {
+    throw "The Foundation decimal-parsing module has an unexpected digest: $DecimalParsingHash"
+}
+$DecimalParsingInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $DecimalParsingModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $DecimalParsingInspection -notmatch 'Foundationˉu32ˉparse' -or
+    $DecimalParsingInspection -notmatch 'Foundationˉu32ˉdecimalˉparse' -or
+    $DecimalParsingInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Foundation decimal-parsing module inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Decimal-Parsing-Demo.wv') `
+    --module $DecimalParsingSource `
+    -o $DecimalParsingDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation decimal-parsing demo.' }
+$DecimalParsingDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $DecimalParsingDemoModule).Hash.ToLowerInvariant()
+if ($DecimalParsingDemoHash -ne '16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695') {
+    throw "The Foundation decimal-parsing demo has an unexpected digest: $DecimalParsingDemoHash"
+}
+$DecimalParsingDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $DecimalParsingDemoModule
+if ($LASTEXITCODE -ne 0 -or $DecimalParsingDemoOutput -notcontains 'Result: 0') {
+    throw 'The Foundation decimal-parsing demo did not return Result: 0.'
 }
 
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
@@ -393,6 +426,7 @@ dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
     compile (Join-Path $RepositoryRoot 'Examples/Assembler/Wva-Assembler-Core.wv') `
     --module $MachineContractsSource `
     --module $ByteOrderingSource `
+    --module $DecimalParsingSource `
     -o $WvaAssemblerModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wva-Assembler-Core.wv.' }
 
@@ -412,6 +446,7 @@ if (
     $WvaAssemblerInspection -notmatch 'Encodeˉrelocations' -or
     $WvaAssemblerInspection -notmatch 'Foundationˉmachineˉnameˉisˉvalid' -or
     $WvaAssemblerInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
+    $WvaAssemblerInspection -notmatch 'Foundationˉu32ˉdecimalˉparse' -or
     $WvaAssemblerInspection -notmatch 'bytes\.concat' -or
     $WvaAssemblerInspection -notmatch 'bytes\.from_u32_little' -or
     $WvaAssemblerInspection -notmatch 'file\.read_bytes' -or
@@ -444,6 +479,7 @@ dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
     compile (Join-Path $RepositoryRoot 'Examples/Linker/Wv-Linker-Core.wv') `
     --module $MachineContractsSource `
     --module $ByteOrderingSource `
+    --module $DecimalParsingSource `
     -o $WvLinkerCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale linker core.' }
 
@@ -474,6 +510,7 @@ if (
     $WvLinkerInspection -notmatch 'Buildˉcanonicalˉmap' -or
     $WvLinkerInspection -notmatch 'Foundationˉalignmentˉisˉvalid' -or
     $WvLinkerInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
+    $WvLinkerInspection -notmatch 'Foundationˉu32ˉdecimalˉparse' -or
     $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
     $WvLinkerInspection -notmatch 'bytes\.sha256_hex' -or
     $WvLinkerInspection -notmatch 'file\.read_bytes' -or

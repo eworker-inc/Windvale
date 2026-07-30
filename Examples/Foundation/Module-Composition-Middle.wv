@@ -3,5 +3,7 @@ module Compositionˉmiddle profile portable;
 import Compositionˉleaf;
 
 export fn Compositionˉanswer() -> i32 {
-    return Compositionˉincrement(41);
+    let Candidate: Compositionˉvalue = Compositionˉmake(41);
+    if Candidate.Status != Compositionˉstatus.Ready { return 0; }
+    return Compositionˉincrement(Candidate.Value);
 }

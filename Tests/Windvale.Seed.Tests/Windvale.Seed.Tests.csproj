@@ -43,5 +43,11 @@
     <EmbeddedResource
       Include="../../Examples/Foundation/Byte-Ordering-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Byte-Ordering-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Foundation/Decimal-Parsing.wv"
+      LogicalName="Windvale.Seed.Tests.Decimal-Parsing.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Foundation/Decimal-Parsing-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Decimal-Parsing-Demo.wv" />
   </ItemGroup>
 </Project>

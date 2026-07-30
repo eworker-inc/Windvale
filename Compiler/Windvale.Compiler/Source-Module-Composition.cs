@@ -168,6 +168,8 @@ internal static class Sourceˉmoduleˉcomposition
         IReadOnlyDictionary<string, Moduleˉsyntax> modules,
         IReadOnlySet<string> included)
     {
+        var Records = ImmutableArray.CreateBuilder<Recordˉsyntax>();
+        var Enums = ImmutableArray.CreateBuilder<Enumˉsyntax>();
         var Functions = ImmutableArray.CreateBuilder<Functionˉsyntax>();
         foreach (var Name in included.OrderBy(Item => Item, StringComparer.Ordinal))
         {
@@ -176,12 +178,18 @@ internal static class Sourceˉmoduleˉcomposition
                 continue;
             }
 
+            Records.AddRange(modules[Name].Records);
+            Enums.AddRange(modules[Name].Enums);
             Functions.AddRange(modules[Name].Functions.Select(Function => Function with { Isˉexported = false }));
         }
+        Records.AddRange(root.Records);
+        Enums.AddRange(root.Enums);
         Functions.AddRange(root.Functions);
         return root with
         {
             Imports = [],
+            Records = Records.ToImmutable(),
+            Enums = Enums.ToImmutable(),
             Functions = Functions.ToImmutable(),
         };
     }
@@ -268,14 +276,13 @@ internal static class Sourceˉmoduleˉcomposition
                 module.Profile.Span,
                 $"Imported source module '{module.Name.Text}' must use profile portable.");
         }
-        if (!module.Capabilities.IsEmpty || !module.Data.IsEmpty ||
-            !module.Records.IsEmpty || !module.Enums.IsEmpty)
+        if (!module.Capabilities.IsEmpty || !module.Data.IsEmpty)
         {
             Report(
                 diagnostics,
                 "WVC0011",
                 module.Name.Span,
-                $"Imported source module '{module.Name.Text}' may contain only imports and functions in this Foundation slice.");
+                $"Imported source module '{module.Name.Text}' may contain only imports, records, enums, and exported functions in this Foundation slice.");
         }
         foreach (var Function in module.Functions)
         {
