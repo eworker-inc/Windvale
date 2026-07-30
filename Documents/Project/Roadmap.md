@@ -26,7 +26,7 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 | 5. Object foundation | Deterministic byte construction, sections, symbols, relocations, and the smallest shared object contracts needed by an assembler. | Qualified |
 | 6. Assembler and linker | Windvale-written assembler and linker running first as verified bytecode on Windows and Linux. | Qualified |
 | 7. Foundation modules | Compact reusable collections, text, binary-format, diagnostics, testing, and I/O-adapter modules driven by tool needs. | Current focus |
-| 8. Self-hosted compiler | Windvale-written lexer, parser, semantics, and code generation for a meaningful subset, followed by a reproducible bootstrap closure. | Planned |
+| 8. Self-hosted compiler | Windvale-written lexer, parser, semantics, and code generation for a meaningful subset, followed by a reproducible bootstrap closure. | First lexer candidate implemented |
 | 9. Native backend | Native WIR lowering, first x86-64 subset, calling convention, object output, and bytecode/native differential tests. | Planned |
 | 10. Native host tools | Produce and qualify native Windvale programs in controlled Windows and Linux environments. | Planned |
 | 11. Boot path and kernel | x86-64 UEFI/QEMU boot, diagnostics, memory foundation, minimal kernel boundary, and Hyper-V qualification. | Planned |
@@ -65,6 +65,8 @@ The first enabling slice, bounded static source-module composition, is qualified
 The completion gate is a documented, versioned Foundation layer used by the assembler and linker on both hosts, not a speculative general-purpose standard library.
 
 ### Phase 8 - self-hosted compiler
+
+The first slice is implemented under Decision 0025: a streaming Windvale-written lexer over immutable UTF-8 bytes. It preserves the complete implemented Seed keyword/operator identities, byte spans, UTF-16-compatible source positions, integer classification, strict string validation, and bounded failures without introducing a token collection. Its cross-host qualification is pending. This intentionally overlaps Phase 7: parser pressure, rather than a speculative library roadmap, will determine the next collection or diagnostic facility.
 
 1. Freeze the meaningful compiler subset required to compile its own lexer, parser, semantic model, and bytecode encoder.
 2. Add language facilities only from concrete compiler pressure: likely bounded collections, richer aggregates, explicit result/error flow, and controlled memory ownership.
@@ -161,4 +163,4 @@ At each checkpoint the project may keep, revise, or replace the proposed mechani
 
 ## Current focus
 
-Phase 6 is qualified. Its WVA 1 Stage 0 contract is qualified at `3bfc6bb`, Windvale scanner at `e5fd109`, semantic inspector at `cc57bf9`, object encoder and hosted assembler at `a689617`, and Stage 0 link oracle at `9c4b9f5`. The complete Windvale linker is qualified at `40ac57d` after the prerequisite, object-view, layout, image, relocation, and independent-reconstruction slices. Windows and Debian produced the same WVB, exact 24-byte image, exact 1,721-byte map, and normalized contract while exercising maximum image/map boundaries and publish-after-success failures. Phase 7 is now the current focus. Its source-module prerequisite is qualified at `df80f91`; `Foundationˉmachineˉcontracts` is qualified at `d46af86`; the three-consumer `Foundationˉbyteˉordering` module is qualified at `4fdea22`; static nominal contracts plus `Foundationˉdecimalˉparsing` are qualified at `6d2a351`; and `Foundationˉbyteˉconstruction` is qualified at `26e2fd1`, all without raising the linker's instruction ceilings. The following abstraction will again be selected from measured compiler/tool pressure; Phase 7 is not complete merely because four modules exist.
+Phase 6 is qualified. Its WVA 1 Stage 0 contract is qualified at `3bfc6bb`, Windvale scanner at `e5fd109`, semantic inspector at `cc57bf9`, object encoder and hosted assembler at `a689617`, and Stage 0 link oracle at `9c4b9f5`. The complete Windvale linker is qualified at `40ac57d` after the prerequisite, object-view, layout, image, relocation, and independent-reconstruction slices. Windows and Debian produced the same WVB, exact 24-byte image, exact 1,721-byte map, and normalized contract while exercising maximum image/map boundaries and publish-after-success failures. Phase 7 remains active: its source-module prerequisite and four evidence-driven Foundation modules are cross-host qualified through `26e2fd1`. In parallel, the first Phase 8 lexer candidate is implemented under Decision 0025 and awaits exact Windows/Debian qualification. The next abstraction will be selected from measured parser pressure; neither Phase 7 nor Phase 8 is complete.

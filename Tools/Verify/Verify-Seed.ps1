@@ -56,6 +56,8 @@ $DecimalParsingModule = Join-Path $Artifacts 'Decimal-Parsing.wvb'
 $DecimalParsingDemoModule = Join-Path $Artifacts 'Decimal-Parsing-Demo.wvb'
 $ByteConstructionModule = Join-Path $Artifacts 'Byte-Construction.wvb'
 $ByteConstructionDemoModule = Join-Path $Artifacts 'Byte-Construction-Demo.wvb'
+$SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
+$SourceLexerDemoModule = Join-Path $Artifacts 'Source-Lexer-Demo.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -285,6 +287,43 @@ if ($ByteConstructionDemoHash -ne 'a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abb
 $ByteConstructionDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $ByteConstructionDemoModule
 if ($LASTEXITCODE -ne 0 -or $ByteConstructionDemoOutput -notcontains 'Result: 0') {
     throw 'The Foundation byte-construction demo did not return Result: 0.'
+}
+
+$SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Lexer-Core.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceLexerModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source lexer.' }
+$SourceLexerHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceLexerModule).Hash.ToLowerInvariant()
+if ($SourceLexerHash -ne '0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04') {
+    throw "The Windvale source lexer has an unexpected digest: $SourceLexerHash"
+}
+$SourceLexerInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceLexerModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceLexerInspection -notmatch 'Nominal types \(6\)' -or
+    $SourceLexerInspection -notmatch 'Compilerˉsourceˉtoken' -or
+    $SourceLexerInspection -notmatch 'Compilerˉtokenˉkind' -or
+    $SourceLexerInspection -notmatch 'Compilerˉlexˉsourceˉbounded' -or
+    $SourceLexerInspection -notmatch 'Exports \(14\)'
+) {
+    throw 'The Windvale source-lexer inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Lexer-Demo.wv') `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceLexerDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-lexer demo.' }
+$SourceLexerDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceLexerDemoModule).Hash.ToLowerInvariant()
+if ($SourceLexerDemoHash -ne '32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a') {
+    throw "The Windvale source-lexer demo has an unexpected digest: $SourceLexerDemoHash"
+}
+$SourceLexerDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    run $SourceLexerDemoModule --max-steps 10000000
+if ($LASTEXITCODE -ne 0 -or $SourceLexerDemoOutput -notcontains 'Result: 0') {
+    throw 'The Windvale source-lexer demo did not return Result: 0.'
 }
 
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule

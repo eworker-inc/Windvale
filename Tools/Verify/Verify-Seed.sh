@@ -32,6 +32,8 @@ DECIMAL_PARSING_MODULE="$ARTIFACTS/Decimal-Parsing.wvb"
 DECIMAL_PARSING_DEMO_MODULE="$ARTIFACTS/Decimal-Parsing-Demo.wvb"
 BYTE_CONSTRUCTION_MODULE="$ARTIFACTS/Byte-Construction.wvb"
 BYTE_CONSTRUCTION_DEMO_MODULE="$ARTIFACTS/Byte-Construction-Demo.wvb"
+SOURCE_LEXER_MODULE="$ARTIFACTS/Source-Lexer-Core.wvb"
+SOURCE_LEXER_DEMO_MODULE="$ARTIFACTS/Source-Lexer-Demo.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -212,6 +214,37 @@ fi
 BYTE_CONSTRUCTION_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     run "$BYTE_CONSTRUCTION_DEMO_MODULE")
 printf '%s\n' "$BYTE_CONSTRUCTION_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Lexer-Core.wv"
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$SOURCE_LEXER_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_LEXER_MODULE"
+SOURCE_LEXER_HASH=$(sha256sum "$SOURCE_LEXER_MODULE" | awk '{print $1}')
+if [ "$SOURCE_LEXER_HASH" != '0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04' ]; then
+    echo "The Windvale source lexer has an unexpected digest: $SOURCE_LEXER_HASH" >&2
+    exit 1
+fi
+SOURCE_LEXER_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_LEXER_MODULE")
+printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Nominal types (6)' >/dev/null
+printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉsourceˉtoken' >/dev/null
+printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉtokenˉkind' >/dev/null
+printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉlexˉsourceˉbounded' >/dev/null
+printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Exports (14)' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Lexer-Demo.wv" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_LEXER_DEMO_MODULE"
+SOURCE_LEXER_DEMO_HASH=$(sha256sum "$SOURCE_LEXER_DEMO_MODULE" | awk '{print $1}')
+if [ "$SOURCE_LEXER_DEMO_HASH" != '32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a' ]; then
+    echo "The Windvale source-lexer demo has an unexpected digest: $SOURCE_LEXER_DEMO_HASH" >&2
+    exit 1
+fi
+SOURCE_LEXER_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_LEXER_DEMO_MODULE" --max-steps 10000000)
+printf '%s\n' "$SOURCE_LEXER_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     compile "$COMPOSITION_ROOT" --module "$COMPOSITION_MIDDLE" -o "$INVALID_COMPOSITION_MODULE" 2>&1)
