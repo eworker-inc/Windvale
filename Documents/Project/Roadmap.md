@@ -16,8 +16,8 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 | 1. `Wvˉdumpˉcore` | Windvale source safely walks complete WVB headers and section envelopes over supplied bytes, including hostile lengths and malformed cases. | Qualified |
 | 2. Structured inspection | Add only the records, enums, structured results/errors, and bounded formatting demanded by useful section descriptions. | Qualified |
 | 3. Hosted resource boundary | Explicit arguments, file-byte input, diagnostics, and output capabilities with portable parsing kept independent. | Qualified |
-| 4. Useful `wvdump` | Inspect the same real modules identically on Windows and Debian with golden machine-readable reports. | Current focus |
-| 5. Object foundation | Deterministic byte construction, sections, symbols, relocations, and the smallest shared object contracts needed by an assembler. | Planned |
+| 4. Useful `wvdump` | Inspect the same real modules identically on Windows and Debian with golden machine-readable reports. | Qualified |
+| 5. Object foundation | Deterministic byte construction, sections, symbols, relocations, and the smallest shared object contracts needed by an assembler. | Current focus |
 | 6. Assembler and linker | Windvale-written assembler and linker running first as verified bytecode on Windows and Linux. | Planned |
 | 7. Foundation modules | Compact reusable collections, text, binary-format, diagnostics, testing, and I/O-adapter modules driven by tool needs. | Planned |
 | 8. Self-hosted compiler | Windvale-written lexer, parser, semantics, and code generation for a meaningful subset, followed by a reproducible bootstrap closure. | Planned |
@@ -29,4 +29,4 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 
 ## Current focus
 
-Phase 3 is qualified at commit `1f4b48a` after the exact source passed the Windows verifier, Debian QA verifier, native hosted-file CLI cases on both systems, and portable report comparison. The Phase 4 candidate advances to WVB 1.4, adds only the Foundation operations demanded by binary inspection, decodes every declaration payload and instruction in Windvale, rejects malformed payloads through structured diagnostics, and emits an ASCII-safe deterministic line report. Windows and exact-archive Debian qualification remain the gate before Phase 4 becomes qualified and Phase 5 becomes current.
+Phase 4 is qualified at commit `a829fc8`. The exact archive passed the Windows and Debian Release verifiers with zero warnings, all 21 tests, native hosted-file cases, identical WVB 1.4 golden artifacts, and byte-for-byte equality of the complete Windvale-generated Sum report. Phase 5 is now the current design focus: define deterministic byte construction and the smallest section, symbol, and relocation contracts that let a Windvale-written assembler and linker become useful without prematurely committing to every future native object format.
