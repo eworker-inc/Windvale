@@ -22,7 +22,7 @@ internal static class Program
     private const string WVO_CORE_SHA256 = "76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a";
-    private const string WVLINK_CORE_SHA256 = "ac00a5b702f2a4ef185bd5f021ec2611bd8a335d1937804ceeb30f28cc1b8ded";
+    private const string WVLINK_CORE_SHA256 = "2a4c24d1330ffbfc6d7253f16978fe5a86264c5118d8bb3e20473d35be023707";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
 
@@ -196,6 +196,7 @@ internal static class Program
         ("Windvale-written WVA assembler enforces source and token boundaries", Wvaˉassemblerˉcoreˉrecognizesˉsource),
         ("Windvale-written WVA assembler matches Stage 0 semantics and bytes", Wvaˉassemblerˉmatchesˉoracle),
         ("Windvale linker core scans WVO exactly at the hosted boundary", Wvˉlinkerˉcoreˉscansˉobjects),
+        ("Windvale linker resolves symbols and lays out sections deterministically", Wvˉlinkerˉresolvesˉandˉlaysˉout),
         ("Stage 0 linker resolves and verifies a canonical flat image", Linkerˉproducesˉcanonicalˉflatˉimage),
         ("Stage 0 linker rejects resolution, layout, and relocation failures", Linkerˉrejectsˉinvalidˉlinks),
         ("Stage 0 linker contains hostile objects and remains deterministic", Linkerˉcontainsˉhostileˉinput),
@@ -1507,6 +1508,10 @@ internal static class Program
         Contains(Inspection, "Findˉsymbol");
         Contains(Inspection, "Findˉrelocation");
         Contains(Inspection, "Symbolˉrangesˉareˉdistinct");
+        Contains(Inspection, "Validateˉexportˉuniqueness");
+        Contains(Inspection, "Validateˉimports");
+        Contains(Inspection, "Measureˉlayout");
+        Contains(Inspection, "Validateˉdefinitions");
 
         var Authorized = Module.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -1585,6 +1590,177 @@ internal static class Program
                     $"WVO random differential case {Case} disagreed: oracle={Oracleˉaccepted}, Windvale={Windvaleˉaccepted}.");
             }
         }
+    }
+
+    private static void Wvˉlinkerˉresolvesˉandˉlaysˉout()
+    {
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(WVLINK_CORE_SOURCE));
+        var Mainˉobject = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE).ToImmutableArray();
+        var Providerˉobject = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE).ToImmutableArray();
+
+        var Oracle = Linkˉsuccess(
+            [Mainˉobject.ToArray(), Providerˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        var Canonical = Runˉwvˉlinkerˉanalysis(
+            Module,
+            Linkˉcontract.DEFAULT_BASE_ADDRESS.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "Main",
+            Mainˉobject,
+            Providerˉobject);
+        Equal(0, Canonical.Exitˉcode);
+        Equal(
+            "link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295\n",
+            Canonical.Output);
+        Equal(string.Empty, Canonical.Diagnostics);
+        Equal(2, Canonical.Readˉcount);
+        Equal(0, Canonical.Writeˉcount);
+        Equal(Oracle.Imageˉbytes.Length, 24);
+        Equal(Oracle.Entryˉaddress, 1_048_576u);
+
+        var Reversedˉoracle = Linkˉsuccess(
+            [Providerˉobject.ToArray(), Mainˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        var Reversed = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "1048576",
+            "Main",
+            Providerˉobject,
+            Mainˉobject);
+        Equal(0, Reversed.Exitˉcode);
+        Contains(Reversed.Output, $"image-bytes={Reversedˉoracle.Imageˉbytes.Length}");
+        Contains(Reversed.Output, $"entry-address={Reversedˉoracle.Entryˉaddress}");
+        Equal(2, Reversed.Readˉcount);
+
+        var Unalignedˉoracle = Linkˉsuccess([Providerˉobject.ToArray()], new(1, "Console_write"));
+        var Unaligned = Runˉwvˉlinkerˉanalysis(Module, "1", "Console_write", Providerˉobject);
+        Equal(0, Unaligned.Exitˉcode);
+        Contains(Unaligned.Output, $"image-bytes={Unalignedˉoracle.Imageˉbytes.Length}");
+        Contains(Unaligned.Output, $"entry-address={Unalignedˉoracle.Entryˉaddress}");
+        Equal(1, Unaligned.Readˉcount);
+
+        var Completeˉobject = Assembleˉsuccess(COMPLETE_ASSEMBLY_SOURCE).ToImmutableArray();
+        var Completeˉoracle = Linkˉsuccess(
+            [Completeˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        var Complete = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "1048576",
+            "Main",
+            Completeˉobject);
+        Equal(0, Complete.Exitˉcode);
+        Contains(Complete.Output, "sections=3 symbols=3 relocations=2");
+        Contains(Complete.Output, $"image-bytes={Completeˉoracle.Imageˉbytes.Length}");
+        Contains(Complete.Output, $"entry-address={Completeˉoracle.Entryˉaddress}");
+
+        var Undefined = Runˉwvˉlinkerˉanalysis(Module, "1048576", "Main", Mainˉobject);
+        Equal(2, Undefined.Exitˉcode);
+        Contains(Undefined.Diagnostics, "link status=WVL1005");
+        Contains(Undefined.Diagnostics, "input=0");
+        Equal(0, Undefined.Writeˉcount);
+
+        var Duplicate = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "1048576",
+            "Console_write",
+            Providerˉobject,
+            Providerˉobject);
+        Equal(2, Duplicate.Exitˉcode);
+        Contains(Duplicate.Diagnostics, "link status=WVL1004");
+        Contains(Duplicate.Diagnostics, "input=1");
+
+        var Wrongˉkindˉprovider = Assembleˉsuccess("""
+            windvale-assembly 1
+            symbol export data Console_write in .data
+            section data .data align 1
+            define Console_write
+            bytes 0
+            end define
+            end section
+            """).ToImmutableArray();
+        var Kindˉmismatch = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "1048576",
+            "Main",
+            Mainˉobject,
+            Wrongˉkindˉprovider);
+        Equal(2, Kindˉmismatch.Exitˉcode);
+        Contains(Kindˉmismatch.Diagnostics, "link status=WVL1006");
+        Contains(Kindˉmismatch.Diagnostics, "input=0");
+
+        var Missingˉentry = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "1048576",
+            "Main",
+            Providerˉobject);
+        Equal(2, Missingˉentry.Exitˉcode);
+        Contains(Missingˉentry.Diagnostics, "link status=WVL1007");
+        Contains(Missingˉentry.Diagnostics, "input=4294967295");
+
+        var Layoutˉoverflow = Runˉwvˉlinkerˉanalysis(
+            Module,
+            uint.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "Console_write",
+            Providerˉobject);
+        Equal(2, Layoutˉoverflow.Exitˉcode);
+        Contains(Layoutˉoverflow.Diagnostics, "link status=WVL1008");
+        Contains(Layoutˉoverflow.Diagnostics, "input=0");
+
+        var Invalidˉobject = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "1048576",
+            "Main",
+            ImmutableArray.Create<byte>(0));
+        Equal(2, Invalidˉobject.Exitˉcode);
+        Contains(Invalidˉobject.Diagnostics, "link status=WVL1002");
+        Contains(Invalidˉobject.Diagnostics, "input=0");
+
+        var Maximumˉsectionˉobject = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            Enumerable.Range(0, Objectˉlimits.MAX_SECTIONS)
+                .Select(Index => new Objectˉsection(
+                    ".s" + Index.ToString("D2", System.Globalization.CultureInfo.InvariantCulture),
+                    Objectˉsectionˉkind.Code,
+                    1,
+                    0,
+                    []))
+                .ToImmutableArray(),
+            [],
+            [])).ToImmutableArray();
+        var Aggregateˉinputs = Enumerable.Repeat(Maximumˉsectionˉobject, 5).ToArray();
+        var Aggregateˉoracle = Linkˉcompiler.Link(
+            Aggregateˉinputs.Select(Bytes => new Linkˉinput(Bytes)).ToImmutableArray(),
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Equal("WVL1003", Aggregateˉoracle.Diagnostics.Single().Code);
+        Equal(-1, Aggregateˉoracle.Diagnostics.Single().Inputˉindex);
+        var Aggregateˉoverflow = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "1048576",
+            "Main",
+            Aggregateˉinputs);
+        Equal(2, Aggregateˉoverflow.Exitˉcode);
+        Contains(Aggregateˉoverflow.Diagnostics, "link status=WVL1003");
+        Contains(Aggregateˉoverflow.Diagnostics, "input=4294967295");
+        Equal(5, Aggregateˉoverflow.Readˉcount);
+
+        var Invalidˉbase = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "4294967296",
+            "Main",
+            Mainˉobject,
+            Providerˉobject);
+        Equal(2, Invalidˉbase.Exitˉcode);
+        Contains(Invalidˉbase.Diagnostics, "link status=WVL1001 inputs=2");
+        Equal(0, Invalidˉbase.Readˉcount);
+
+        var Invalidˉentry = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "1048576",
+            "Bad-name",
+            Mainˉobject,
+            Providerˉobject);
+        Equal(2, Invalidˉentry.Exitˉcode);
+        Contains(Invalidˉentry.Diagnostics, "link status=WVL1001 inputs=2");
+        Equal(0, Invalidˉentry.Readˉcount);
     }
 
     private static void Linkerˉrejectsˉinvalidˉlinks()
@@ -3142,6 +3318,15 @@ internal static class Program
         var Normalizedˉwvˉlinkerˉoutput = Wvˉlinkerˉhosted.Output
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
+        var Wvˉlinkerˉanalysis = Runˉwvˉlinkerˉanalysis(
+            Wvˉlinkerˉmodule,
+            Linkˉcontract.DEFAULT_BASE_ADDRESS.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "Main",
+            Assemblyˉobjectˉbytes.ToImmutableArray(),
+            Providerˉobjectˉbytes.ToImmutableArray());
+        var Normalizedˉwvˉlinkerˉanalysisˉoutput = Wvˉlinkerˉanalysis.Output
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
         Equal(29, Sumˉresult.Exitˉcode);
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
@@ -3177,6 +3362,13 @@ internal static class Program
             "object status=Valid sections=2 symbols=3 relocations=2 offset=218\n",
             Normalizedˉwvˉlinkerˉoutput);
         Equal(string.Empty, Wvˉlinkerˉhosted.Diagnostics);
+        Equal(0, Wvˉlinkerˉanalysis.Exitˉcode);
+        Equal(
+            "link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295\n",
+            Normalizedˉwvˉlinkerˉanalysisˉoutput);
+        Equal(string.Empty, Wvˉlinkerˉanalysis.Diagnostics);
+        Equal(2, Wvˉlinkerˉanalysis.Readˉcount);
+        Equal(0, Wvˉlinkerˉanalysis.Writeˉcount);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
@@ -3189,6 +3381,7 @@ internal static class Program
             Wvˉlinkerˉhash,
             Wvˉlinkerˉselfˉtestˉresult.Exitˉcode,
             Normalizedˉwvˉlinkerˉoutput,
+            Normalizedˉwvˉlinkerˉanalysisˉoutput,
             Linkˉcontract.FORMAT_VERSION.ToString(),
             Linkˉimageˉhash,
             Linkˉmapˉhash,
@@ -3283,6 +3476,53 @@ internal static class Program
                 new Capturingˉfileˉwriter())),
             new(Authorized, Maximumˉinstructions: 20_000_000)).Runˉmain();
         return new(Result.Exitˉcode, Output.ToString(), Diagnostics.ToString());
+    }
+
+    private static Wvˉlinkerˉanalysisˉresult Runˉwvˉlinkerˉanalysis(
+        Verifiedˉmodule module,
+        string baseˉaddress,
+        string entry,
+        params ImmutableArray<byte>[] objects)
+    {
+        var Arguments = ImmutableArray.CreateBuilder<string>(objects.Length + 3);
+        Arguments.Add(baseˉaddress);
+        Arguments.Add(entry);
+        Arguments.Add("output.bin");
+        var Resources = new Dictionary<string, ImmutableArray<byte>>(StringComparer.Ordinal);
+        for (var Index = 0; Index < objects.Length; Index++)
+        {
+            var Name = $"input-{Index.ToString(System.Globalization.CultureInfo.InvariantCulture)}.wvo";
+            Arguments.Add(Name);
+            Resources.Add(Name, objects[Index]);
+        }
+
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Reader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            True(Resources.TryGetValue(Name, out var Bytes), $"Unknown linker resource '{Name}'.");
+            True(Bytes.Length <= Maximumˉbytes, "The hosted linker object limit was too small.");
+            return Bytes;
+        });
+        var Writer = new Capturingˉfileˉwriter();
+        var Authorized = module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Result = new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                Arguments.ToImmutable(),
+                Output,
+                Diagnostics,
+                Reader,
+                Writer)),
+            new(Authorized, Maximumˉinstructions: 20_000_000)).Runˉmain();
+        return new(
+            Result.Exitˉcode,
+            Output.ToString(),
+            Diagnostics.ToString(),
+            Reader.Readˉcount,
+            Writer.Writeˉcount);
     }
 
     private static bool Objectˉisˉvalid(ImmutableArray<byte> objectˉbytes)
@@ -3643,6 +3883,13 @@ internal static class Program
         string Output,
         string Diagnostics);
 
+    private sealed record Wvˉlinkerˉanalysisˉresult(
+        int Exitˉcode,
+        string Output,
+        string Diagnostics,
+        int Readˉcount,
+        int Writeˉcount);
+
     private sealed class Capturingˉfileˉwriter : IHostedˉfileˉwriter
     {
         public int Writeˉcount { get; private set; }
@@ -3690,6 +3937,7 @@ internal static class Program
         [property: JsonPropertyName("wvLinkerCoreSha256")] string Wvˉlinkerˉcoreˉsha256,
         [property: JsonPropertyName("wvLinkerCoreResult")] int Wvˉlinkerˉcoreˉresult,
         [property: JsonPropertyName("wvLinkerHostedOutput")] string Wvˉlinkerˉhostedˉoutput,
+        [property: JsonPropertyName("wvLinkerAnalysisOutput")] string Wvˉlinkerˉanalysisˉoutput,
         [property: JsonPropertyName("linkFormat")] string Linkˉformat,
         [property: JsonPropertyName("linkImageSha256")] string Linkˉimageˉsha256,
         [property: JsonPropertyName("linkMapSha256")] string Linkˉmapˉsha256,

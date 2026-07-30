@@ -331,6 +331,10 @@ if (
     $WvLinkerInspection -notmatch 'Findˉsection' -or
     $WvLinkerInspection -notmatch 'Findˉsymbol' -or
     $WvLinkerInspection -notmatch 'Findˉrelocation' -or
+    $WvLinkerInspection -notmatch 'Validateˉexportˉuniqueness' -or
+    $WvLinkerInspection -notmatch 'Validateˉimports' -or
+    $WvLinkerInspection -notmatch 'Measureˉlayout' -or
+    $WvLinkerInspection -notmatch 'Validateˉdefinitions' -or
     $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
     $WvLinkerInspection -notmatch 'file\.read_bytes'
 ) {
@@ -465,6 +469,34 @@ if (
     $ProviderAssemblyOutput -notcontains 'SHA-256: 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab'
 ) {
     throw 'The Stage 0 assembler did not produce the canonical linker provider object.'
+}
+
+$WindvaleAnalysisOutput = Join-Path $Artifacts '__windvale_analysis_must_not_write__.bin'
+if (Test-Path -LiteralPath $WindvaleAnalysisOutput) {
+    throw "The Windvale analysis-only output unexpectedly exists: $WindvaleAnalysisOutput"
+}
+$WvLinkerAnalysisOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleAnalysisOutput $WindvaleAssemblyObject $LinkProviderObject
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvLinkerAnalysisOutput -notcontains 'link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295' -or
+    $WvLinkerAnalysisOutput -notcontains 'Result: 0'
+) {
+    throw 'The Windvale linker did not reproduce the canonical resolution and layout evidence.'
+}
+if (Test-Path -LiteralPath $WindvaleAnalysisOutput) {
+    throw 'The analysis-only Windvale linker slice unexpectedly wrote an image.'
+}
+
+$WvLinkerUndefinedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleAnalysisOutput $WindvaleAssemblyObject 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    ($WvLinkerUndefinedOutput -join "`n") -notmatch 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' -or
+    $WvLinkerUndefinedOutput -notcontains 'Result: 2'
+) {
+    throw 'The Windvale linker did not reject an undefined import deterministically.'
+}
+if (Test-Path -LiteralPath $WindvaleAnalysisOutput) {
+    throw 'Rejected Windvale link analysis unexpectedly wrote an image.'
 }
 
 $LinkMapOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $LinkedImage $AssemblyObject $LinkProviderObject
