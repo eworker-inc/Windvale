@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Windvale Source Set 1 (`WVSS 1`) is the canonical packed input collection for the portable Windvale-written semantic pipeline. The implementation is a Windows-tested, cross-host qualification candidate under Decision 0029.
+Windvale Source Set 1 (`WVSS 1`) is the canonical packed input collection for the portable Windvale-written semantic pipeline. The implementation is cross-host qualified at commit `00ef0b1` under Decision 0029.
 
 WVSS carries source bytes, not paths, timestamps, encodings, decoded syntax objects, or host handles. Entry zero is the root source. Entries one onward are supplied dependencies ordered strictly by the ordinal UTF-8 bytes of their declared module names.
 
@@ -52,16 +52,16 @@ WVSS is a compiler input container, not a source package, archive, module-distri
 
 The hosted source-set tool accepts explicit root/dependency resource names, constructs WVSS in argument order, and passes it to the portable validator. Dependency order is therefore checked rather than inherited from host enumeration. Repeated reads of the same exact resource use the hosted first-successful-read snapshot.
 
-## Candidate artifacts and evidence
+## Qualified artifacts and evidence
 
 - `Source-Set-Core.wvb`: 177,057 bytes, SHA-256 `c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa766b19b1bfa2b8`.
 - `Source-Set-Demo.wvb`: 186,030 bytes, SHA-256 `0054138c6e39f3c99e5cd4751c796cd599b495880d7db174323342fb7b687488`.
 - `Source-Set-Tool.wvb`: 181,286 bytes, SHA-256 `dc290826985f66f80d469b99235ca290dc617997edee0aab2ea0d4227984aab6`.
 
-The Windows x64 conformance runner passes all 43 tests with zero build warnings/errors. The hosted tool validates the real source-set core plus body parser, declaration parser, lexer, and decimal parser as:
+The Windows x64 and Debian Linux x64 conformance runners each pass all 43 tests with zero build warnings/errors. The hosted tool validates the real source-set core plus body parser, declaration parser, lexer, and decimal parser as:
 
 ```text
 source set status=Valid modules=5 source-bytes=192171 imports=4 records=16 enums=11 functions=86
 ```
 
-Exact-archive Debian qualification remains pending.
+The exact `00ef0b1` archive passed the complete native CLI verifier on both hosts. Their normalized reports matched, the three source-set artifacts above were byte-identical, and 14 directly retrieved dependency/downstream compiler, assembler, linker, object, image, and map artifacts also retained exact cross-host identity.

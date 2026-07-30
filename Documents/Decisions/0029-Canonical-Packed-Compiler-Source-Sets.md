@@ -1,7 +1,7 @@
 # Decision 0029: Canonical packed compiler source sets
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `00ef0b1`
 
 ## Context
 
@@ -32,3 +32,5 @@ The cross-value ordinal comparison remains local to the compiler module because 
 The exact candidate must pass the complete conformance and native CLI verifiers on Windows and Debian. Coverage includes every header field, truncation, bad magic/version/count/directory, noncanonical offsets, zero and oversized lengths, trailing bytes, entry access, strict source/body failures, duplicate names, dependency order/profile/shape/private-function failures, the exact 64-module boundary, and hosted snapshot reuse.
 
 Both hosts must produce identical source-set core, demo, and tool WVB files. The tool must validate the real five-module frontend source set with identical counts and source bytes, and normalized conformance reports must match while every previously qualified direct artifact retains its identity.
+
+Candidate commit `00ef0b1` passed this gate from its exact archive on Windows x64 and Debian GNU/Linux 12 x64. Both hosts completed a zero-warning Release build, all 43 conformance tests, and the complete native CLI verifier. Their normalized reports matched, the three source-set WVB artifacts and 14 directly checked dependency/downstream artifacts were byte-identical, and the hosted tool reported the same real five-module summary on both hosts. The archive and resolved QA directory were removed after evidence retrieval.
