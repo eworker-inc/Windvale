@@ -19,6 +19,7 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, r
 - Windvale-written declaration parsing over streaming source views, including every top-level declaration shape, data/type/literal boundaries, import ordering, flat failure evidence, balanced body spans, real lexer parsing, and declaration-parser self-parsing
 - Windvale-written statement/expression parsing over flat child-span views, including complete Stage 0 precedence and statement grammar, exact body boundaries, nesting/item limits, real lexer/declaration parsing, and body-parser self-parsing
 - Canonical WVSS 1 source-set scanning and views, including malformed envelopes, exact layout, source/body validation, duplicate/order/profile/shape rejection, the 64-module boundary, snapshot reuse, and real frontend-set validation
+- Windvale-written source-graph validation, including exact-name resolution, duplicate/missing imports, root reachability, direct/self cycles, stable failure evidence, the 64-module/63-edge chain, snapshot reuse, and the real compiler closure
 - Exact codec read/write round trips
 - Inspector metadata and disassembly
 - Functions, `if`, `while`, booleans, immutable text, immutable integer data, indexing, and `length`

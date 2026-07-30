@@ -67,6 +67,9 @@ $SourceBodyParserToolModule = Join-Path $Artifacts 'Source-Body-Parser-Tool.wvb'
 $SourceSetModule = Join-Path $Artifacts 'Source-Set-Core.wvb'
 $SourceSetDemoModule = Join-Path $Artifacts 'Source-Set-Demo.wvb'
 $SourceSetToolModule = Join-Path $Artifacts 'Source-Set-Tool.wvb'
+$SourceGraphModule = Join-Path $Artifacts 'Source-Graph-Core.wvb'
+$SourceGraphDemoModule = Join-Path $Artifacts 'Source-Graph-Demo.wvb'
+$SourceGraphToolModule = Join-Path $Artifacts 'Source-Graph-Tool.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -578,6 +581,92 @@ if (
     $SourceSetSelfOutput -notcontains 'Result: 0'
 ) {
     throw 'The source-set tool did not validate the real compiler frontend set.'
+}
+
+$SourceGraphSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Graph-Core.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $SourceGraphSource `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $ByteConstructionSource `
+    --module $DecimalParsingSource `
+    -o $SourceGraphModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-graph core.' }
+$SourceGraphHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphModule).Hash.ToLowerInvariant()
+if ($SourceGraphHash -ne '1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133') {
+    throw "The Windvale source-graph core has an unexpected digest: $SourceGraphHash"
+}
+$SourceGraphInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceGraphModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceGraphInspection -notmatch 'Nominal types \(32\)' -or
+    $SourceGraphInspection -notmatch 'Compilerˉsourceˉgraphˉstatus' -or
+    $SourceGraphInspection -notmatch 'Compilerˉsourceˉgraphˉsummary' -or
+    $SourceGraphInspection -notmatch 'Compilerˉvalidateˉsourceˉgraph' -or
+    $SourceGraphInspection -notmatch 'Exports \(11\)'
+) {
+    throw 'The Windvale source-graph inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Graph-Demo.wv') `
+    --module $SourceGraphSource `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $ByteConstructionSource `
+    --module $DecimalParsingSource `
+    -o $SourceGraphDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-graph demo.' }
+$SourceGraphDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphDemoModule).Hash.ToLowerInvariant()
+if ($SourceGraphDemoHash -ne '53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073') {
+    throw "The source-graph demo has an unexpected digest: $SourceGraphDemoHash"
+}
+$SourceGraphDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    run $SourceGraphDemoModule --max-steps 300000000
+if ($LASTEXITCODE -ne 0 -or $SourceGraphDemoOutput -notcontains 'Result: 0') {
+    throw 'The source-graph demo did not return Result: 0.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Graph-Tool.wv') `
+    --module $SourceGraphSource `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $ByteConstructionSource `
+    --module $DecimalParsingSource `
+    -o $SourceGraphToolModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-graph tool.' }
+$SourceGraphToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphToolModule).Hash.ToLowerInvariant()
+if ($SourceGraphToolHash -ne '75fdf22e93f154599cdf4530ebcf828eec061458c73f6ab09b00d0765e3ebdc1') {
+    throw "The source-graph tool has an unexpected digest: $SourceGraphToolHash"
+}
+$SourceGraphArguments = @(
+    'run', $SourceGraphToolModule,
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count'
+)
+$SourceGraphSelfOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    @SourceGraphArguments --max-steps 1500000000 -- `
+    $SourceGraphSource `
+    $SourceBodyParserSource `
+    $SourceDeclarationParserSource `
+    $SourceLexerSource `
+    $SourceSetSource `
+    $ByteConstructionSource `
+    $DecimalParsingSource
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceGraphSelfOutput -notcontains 'source graph status=Valid modules=7 imports=6 reachable=7' -or
+    $SourceGraphSelfOutput -notcontains 'Result: 0'
+) {
+    throw 'The source-graph tool did not validate the real compiler graph.'
 }
 
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule

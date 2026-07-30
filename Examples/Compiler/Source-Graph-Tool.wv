@@ -1,0 +1,95 @@
+module Compilerˉsourceˉgraphˉtool profile hosted;
+
+import Compilerˉsourceˉgraph;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+data Sourceˉgraphˉtoolˉmagic: bytes = [87, 86, 83, 83];
+
+fn Compilerˉsourceˉgraphˉtoolˉheader(Modules: u32) -> bytes {
+    var Header: bytes = Sourceˉgraphˉtoolˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Compilerˉsourceˉgraphˉtoolˉbuild(Modules: u32) -> bytes {
+    var Directory: bytes = Bytesˉslice(Sourceˉgraphˉtoolˉmagic, 0u32, 0u32);
+    var Sourceˉoffset: u32 = 16u32 + Modules * 8u32;
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        let Source: bytes = file.read_bytes(process.argument(Index));
+        let Length: u32 = Bytesˉlength(Source);
+        if Length == 0u32 { return Directory; }
+        if Length > 4194304u32 - Sourceˉoffset { return Directory; }
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Sourceˉoffset));
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Length));
+        Sourceˉoffset = Sourceˉoffset + Length;
+        Index = Index + 1u32;
+    }
+
+    var Result: bytes = Bytesˉconcat(Compilerˉsourceˉgraphˉtoolˉheader(Modules), Directory);
+    Index = 0u32;
+    while Index < Modules {
+        Result = Bytesˉconcat(Result, file.read_bytes(process.argument(Index)));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Compilerˉsourceˉgraphˉtoolˉsuccess(
+    Summary: Compilerˉsourceˉgraphˉsummary
+) -> text {
+    var Report: text = "source graph status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " modules=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Modules));
+    Report = Textˉconcat(Report, " imports=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Imports));
+    Report = Textˉconcat(Report, " reachable=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Reachable));
+}
+
+fn Compilerˉsourceˉgraphˉtoolˉfailure(
+    Summary: Compilerˉsourceˉgraphˉsummary
+) -> text {
+    var Report: text = "source graph status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " source-set-status=");
+    Report = Textˉconcat(Report, Enumˉname(Summary.Sourceˉsetˉstatus));
+    Report = Textˉconcat(Report, " module=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉmodule));
+    Report = Textˉconcat(Report, " target=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉtarget));
+    Report = Textˉconcat(Report, " offset=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoffset));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉline));
+    Report = Textˉconcat(Report, " column=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Failureˉcolumn));
+}
+
+export fn Main() -> i32 {
+    let Modules: u32 = process.argument_count();
+    if Modules == 0u32 {
+        diagnostic.write_line("Usage: source-graph <root.wv> [sorted-dependency.wv ...]");
+        return 64;
+    }
+    if Modules > 64u32 {
+        diagnostic.write_line("source graph status=Sourceˉset source-set-status=Invalidˉcount");
+        return 64;
+    }
+    let Input: bytes = Compilerˉsourceˉgraphˉtoolˉbuild(Modules);
+    let Summary: Compilerˉsourceˉgraphˉsummary = Compilerˉvalidateˉsourceˉgraph(Input);
+    if Summary.Status != Compilerˉsourceˉgraphˉstatus.Valid {
+        diagnostic.write_line(Compilerˉsourceˉgraphˉtoolˉfailure(Summary));
+        return 1;
+    }
+    console.write_line(Compilerˉsourceˉgraphˉtoolˉsuccess(Summary));
+    return 0;
+}

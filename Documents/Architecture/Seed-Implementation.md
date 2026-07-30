@@ -45,6 +45,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - The first Windvale-written streaming lexer over strict UTF-8 bytes, with Stage 0 token identities and bounded source/failure coordinates
 - A Windvale-written declaration pass exposing module/declaration/body byte spans and counts through streaming cursors without token or declaration collections
 - A compiler-owned canonical packed source-set reader that gives portable semantic phases indexed immutable views over the root and ordered dependencies
+- A Windvale-written import-graph phase that owns bounded module resolution, root reachability, and cycle rejection without host paths or collections
 - Recursive-descent and precedence parsing
 - Explicit bounded source-module graph validation and deterministic static composition of dependency records, enums, and functions
 - Portable Foundation source contracts used by multiple Windvale-written tools
@@ -166,6 +167,9 @@ The current bytecode 1.6 golden modules are:
 - `Compilerˉsourceˉset`: `c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa766b19b1bfa2b8`
 - `Compilerˉsourceˉsetˉdemo`: `0054138c6e39f3c99e5cd4751c796cd599b495880d7db174323342fb7b687488`
 - `Compilerˉsourceˉsetˉtool`: `dc290826985f66f80d469b99235ca290dc617997edee0aab2ea0d4227984aab6`
+- `Compilerˉsourceˉgraph`: `1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133`
+- `Compilerˉsourceˉgraphˉdemo`: `53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073`
+- `Compilerˉsourceˉgraphˉtool`: `75fdf22e93f154599cdf4530ebcf828eec061458c73f6ab09b00d0765e3ebdc1`
 - `Wvˉdumpˉcore`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`
 - `Wvoˉobjectˉcore`: `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`
 - `Wvaˉassemblerˉcore`: `a5f4e913078295a323eac315f9df818877ac519de97028e581cab8577f1dd150`

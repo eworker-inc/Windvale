@@ -1,0 +1,129 @@
+module Compilerˉsourceˉgraphˉdemo profile portable;
+
+import Compilerˉsourceˉgraph;
+
+data Sourceˉgraphˉmagic: bytes = [87, 86, 83, 83];
+
+fn Sourceˉgraphˉheader(Modules: u32) -> bytes {
+    var Header: bytes = Sourceˉgraphˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Sourceˉgraphˉone(First: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(24u32);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉgraphˉheader(1u32), Directory);
+    return Bytesˉconcat(Result, Firstˉbytes);
+}
+
+fn Sourceˉgraphˉtwo(First: text, Second: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Firstˉoffset: u32 = 32u32;
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(Firstˉbytes);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Firstˉoffset);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Secondˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Secondˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉgraphˉheader(2u32), Directory);
+    Result = Bytesˉconcat(Result, Firstˉbytes);
+    return Bytesˉconcat(Result, Secondˉbytes);
+}
+
+fn Sourceˉgraphˉfour(First: text, Second: text, Third: text, Fourth: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Thirdˉbytes: bytes = Textˉtoˉutf8(Third);
+    let Fourthˉbytes: bytes = Textˉtoˉutf8(Fourth);
+    let Firstˉoffset: u32 = 48u32;
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(Firstˉbytes);
+    let Thirdˉoffset: u32 = Secondˉoffset + Bytesˉlength(Secondˉbytes);
+    let Fourthˉoffset: u32 = Thirdˉoffset + Bytesˉlength(Thirdˉbytes);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Firstˉoffset);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Secondˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Secondˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Thirdˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Thirdˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Fourthˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Fourthˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉgraphˉheader(4u32), Directory);
+    Result = Bytesˉconcat(Result, Firstˉbytes);
+    Result = Bytesˉconcat(Result, Secondˉbytes);
+    Result = Bytesˉconcat(Result, Thirdˉbytes);
+    return Bytesˉconcat(Result, Fourthˉbytes);
+}
+
+export fn Main() -> i32 {
+    let Root: text = "module Graphˉroot profile portable; import Graphˉalpha; import Graphˉbeta; export fn Main() -> i32 { return 0; }";
+    let Alpha: text = "module Graphˉalpha profile portable; import Graphˉleaf; export fn Graphˉalphaˉvalue() -> i32 { return 1; }";
+    let Beta: text = "module Graphˉbeta profile portable; import Graphˉleaf; export fn Graphˉbetaˉvalue() -> i32 { return 2; }";
+    let Leaf: text = "module Graphˉleaf profile portable; export fn Graphˉleafˉvalue() -> i32 { return 3; }";
+    let Valid: Compilerˉsourceˉgraphˉsummary = Compilerˉvalidateˉsourceˉgraph(
+        Sourceˉgraphˉfour(Root, Alpha, Beta, Leaf)
+    );
+    if Valid.Status == Compilerˉsourceˉgraphˉstatus.Sourceˉset { return 101; }
+    if Valid.Status == Compilerˉsourceˉgraphˉstatus.Duplicateˉimport { return 102; }
+    if Valid.Status == Compilerˉsourceˉgraphˉstatus.Missingˉimport { return 103; }
+    if Valid.Status == Compilerˉsourceˉgraphˉstatus.Cycle { return 104; }
+    if Valid.Status == Compilerˉsourceˉgraphˉstatus.Unreachable { return 105; }
+    if Valid.Sourceˉsetˉstatus != Compilerˉsourceˉsetˉstatus.Valid { return 2; }
+    if Valid.Modules != 4u32 { return 3; }
+    if Valid.Imports != 4u32 { return 4; }
+    if Valid.Reachable != 4u32 { return 5; }
+
+    let Missing: Compilerˉsourceˉgraphˉsummary = Compilerˉvalidateˉsourceˉgraph(
+        Sourceˉgraphˉone("module Graphˉmissingˉroot profile portable; import Graphˉmissing;")
+    );
+    if Missing.Status != Compilerˉsourceˉgraphˉstatus.Missingˉimport { return 10; }
+    if Missing.Failureˉmodule != 0u32 { return 11; }
+    if Missing.Failureˉtarget != 1u32 { return 12; }
+    if Missing.Failureˉline != 1u32 { return 13; }
+
+    let Duplicate: Compilerˉsourceˉgraphˉsummary = Compilerˉvalidateˉsourceˉgraph(
+        Sourceˉgraphˉtwo(
+            "module Graphˉduplicateˉroot profile portable; import Graphˉalpha; import Graphˉalpha;",
+            "module Graphˉalpha profile portable;"
+        )
+    );
+    if Duplicate.Status != Compilerˉsourceˉgraphˉstatus.Duplicateˉimport { return 20; }
+    if Duplicate.Failureˉmodule != 0u32 { return 21; }
+
+    let Cycle: Compilerˉsourceˉgraphˉsummary = Compilerˉvalidateˉsourceˉgraph(
+        Sourceˉgraphˉtwo(
+            "module Graphˉcycleˉroot profile portable; import Graphˉalpha;",
+            "module Graphˉalpha profile portable; import Graphˉcycleˉroot;"
+        )
+    );
+    if Cycle.Status != Compilerˉsourceˉgraphˉstatus.Cycle { return 30; }
+    if Cycle.Failureˉmodule != 1u32 { return 31; }
+    if Cycle.Failureˉtarget != 0u32 { return 32; }
+
+    let Selfˉcycle: Compilerˉsourceˉgraphˉsummary = Compilerˉvalidateˉsourceˉgraph(
+        Sourceˉgraphˉone("module Graphˉself profile portable; import Graphˉself;")
+    );
+    if Selfˉcycle.Status != Compilerˉsourceˉgraphˉstatus.Cycle { return 40; }
+    if Selfˉcycle.Failureˉmodule != 0u32 { return 41; }
+    if Selfˉcycle.Failureˉtarget != 0u32 { return 42; }
+
+    let Unreachable: Compilerˉsourceˉgraphˉsummary = Compilerˉvalidateˉsourceˉgraph(
+        Sourceˉgraphˉtwo(
+            "module Graphˉunreachableˉroot profile portable;",
+            "module Graphˉalpha profile portable;"
+        )
+    );
+    if Unreachable.Status != Compilerˉsourceˉgraphˉstatus.Unreachable { return 50; }
+    if Unreachable.Reachable != 1u32 { return 51; }
+    if Unreachable.Failureˉmodule != 1u32 { return 52; }
+
+    let Invalidˉset: Compilerˉsourceˉgraphˉsummary = Compilerˉvalidateˉsourceˉgraph(
+        Sourceˉgraphˉone("not a Windvale module")
+    );
+    if Invalidˉset.Status != Compilerˉsourceˉgraphˉstatus.Sourceˉset { return 60; }
+    if Invalidˉset.Sourceˉsetˉstatus != Compilerˉsourceˉsetˉstatus.Sourceˉsyntax { return 61; }
+    return 0;
+}

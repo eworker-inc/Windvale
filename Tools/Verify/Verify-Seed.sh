@@ -43,6 +43,9 @@ SOURCE_BODY_PARSER_TOOL_MODULE="$ARTIFACTS/Source-Body-Parser-Tool.wvb"
 SOURCE_SET_MODULE="$ARTIFACTS/Source-Set-Core.wvb"
 SOURCE_SET_DEMO_MODULE="$ARTIFACTS/Source-Set-Demo.wvb"
 SOURCE_SET_TOOL_MODULE="$ARTIFACTS/Source-Set-Tool.wvb"
+SOURCE_GRAPH_MODULE="$ARTIFACTS/Source-Graph-Core.wvb"
+SOURCE_GRAPH_DEMO_MODULE="$ARTIFACTS/Source-Graph-Demo.wvb"
+SOURCE_GRAPH_TOOL_MODULE="$ARTIFACTS/Source-Graph-Tool.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -463,6 +466,78 @@ SOURCE_SET_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$
     "$DECIMAL_PARSING_SOURCE")
 printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'source set status=Valid modules=5 source-bytes=192171 imports=4 records=16 enums=11 functions=86' >/dev/null
 printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+SOURCE_GRAPH_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Graph-Core.wv"
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_GRAPH_MODULE"
+SOURCE_GRAPH_HASH=$(sha256sum "$SOURCE_GRAPH_MODULE" | awk '{print $1}')
+if [ "$SOURCE_GRAPH_HASH" != '1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133' ]; then
+    echo "The Windvale source-graph core has an unexpected digest: $SOURCE_GRAPH_HASH" >&2
+    exit 1
+fi
+SOURCE_GRAPH_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_GRAPH_MODULE")
+printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Nominal types (32)' >/dev/null
+printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Compilerˉsourceˉgraphˉstatus' >/dev/null
+printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Compilerˉsourceˉgraphˉsummary' >/dev/null
+printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉgraph' >/dev/null
+printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Exports (11)' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Graph-Demo.wv" \
+    --module "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_GRAPH_DEMO_MODULE"
+SOURCE_GRAPH_DEMO_HASH=$(sha256sum "$SOURCE_GRAPH_DEMO_MODULE" | awk '{print $1}')
+if [ "$SOURCE_GRAPH_DEMO_HASH" != '53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073' ]; then
+    echo "The source-graph demo has an unexpected digest: $SOURCE_GRAPH_DEMO_HASH" >&2
+    exit 1
+fi
+SOURCE_GRAPH_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_GRAPH_DEMO_MODULE" --max-steps 300000000)
+printf '%s\n' "$SOURCE_GRAPH_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Graph-Tool.wv" \
+    --module "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_GRAPH_TOOL_MODULE"
+SOURCE_GRAPH_TOOL_HASH=$(sha256sum "$SOURCE_GRAPH_TOOL_MODULE" | awk '{print $1}')
+if [ "$SOURCE_GRAPH_TOOL_HASH" != '75fdf22e93f154599cdf4530ebcf828eec061458c73f6ab09b00d0765e3ebdc1' ]; then
+    echo "The source-graph tool has an unexpected digest: $SOURCE_GRAPH_TOOL_HASH" >&2
+    exit 1
+fi
+SOURCE_GRAPH_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_GRAPH_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 1500000000 \
+    -- "$SOURCE_GRAPH_SOURCE" \
+    "$SOURCE_BODY_PARSER_SOURCE" \
+    "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    "$SOURCE_LEXER_SOURCE" \
+    "$SOURCE_SET_SOURCE" \
+    "$BYTE_CONSTRUCTION_SOURCE" \
+    "$DECIMAL_PARSING_SOURCE")
+printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'source graph status=Valid modules=7 imports=6 reachable=7' >/dev/null
+printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
