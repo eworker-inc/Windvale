@@ -1,7 +1,7 @@
 # Decision 0027: Streaming statement and expression views before syntax collections
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified
 
 ## Context
 
@@ -36,3 +36,5 @@ This is not semantic binding. It does not resolve names, validate types or mutab
 The exact candidate must pass the complete 42-test and native CLI verifiers on Windows and Debian. Tests cover every statement/expression form, precedence and child spans, exact body boundaries, lexical/declaration propagation, 65-argument rejection, 65-level expression and block rejection, and 4,097-statement rejection.
 
 Both hosts must produce identical parser, demo, and hosted-tool WVB files. The hosted tool must emit identical aggregate reports for `Source-Lexer-Core.wv`, `Source-Declaration-Parser.wv`, and `Source-Body-Parser.wv`. Normalized conformance reports must match, and all previously qualified lexer, declaration, object, assembler, linker, object, image, and map identities must remain unchanged.
+
+Candidate commit `ddfa9e3` passed this gate from one exact archive on Windows and Debian GNU/Linux 12 x64. Both hosts completed the Release build with zero warnings/errors, all 42 tests, and the native CLI verifier; produced identical parser, demo, and tool WVB files; emitted identical real-source body summaries; retained every directly checked qualified artifact identity; and produced matching normalized conformance contracts. The exact qualification evidence is recorded in `Documents/Project/Seed-Verification-Evidence.md`.

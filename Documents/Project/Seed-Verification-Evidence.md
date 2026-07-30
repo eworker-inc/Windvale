@@ -211,6 +211,30 @@ The Debian report SHA-256 is `69e324108712136dc689eb23aaa063edf2c852d35bf76e4ed4
 
 This qualifies Decision 0026 and the declaration pass of roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not qualify statement/expression parsing, decoded string construction, a token/declaration/syntax collection, recoverable diagnostic collection, semantic binding, WIR production, WVB encoding, bootstrap closure, native tooling, or any OS layer.
 
+## Windvale bootstrap body-parser qualification
+
+Candidate commit `ddfa9e3` was archived as `windvale-source-body-parser-ddfa9e3.tar.gz` with SHA-256 `6ebc36462fc4ed0655b97d8c10450d81c8e28a3d0d9f305543fd6b4a65e3bda4`, transferred with the same digest, and verified from that exact archive in `/tmp/windvale-source-body-parser-ddfa9e3` on the isolated Debian QA host. Windows and Debian GNU/Linux 12 x64 both completed the Release build with zero warnings/errors, all 42 tests, and the complete native CLI verifier. The QA host used .NET SDK `10.0.302` and .NET `10.0.10`.
+
+The portable body pass implements every Stage 0 statement and expression form over the declaration parser's exact body spans. It returns flat immutable views and retains no token, declaration, statement, expression, or syntax-tree collection. The tests cover all statement/expression forms and precedence, exact child and body spans, lexical/declaration failure propagation, and the hard boundaries for 64 call arguments, expression and statement nesting, 4,096 statements per function, and aggregate expression nodes. The portable demo returned `0` on both hosts under the 30,000,000-instruction ceiling.
+
+Both hosts produced the exact 164,806-byte `Source-Body-Parser.wvb` SHA-256 `bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f`, 168,718-byte demo SHA-256 `5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba`, and 165,942-byte hosted tool SHA-256 `761887d3674833854d976dd394ad3f83f27d2c74748b6dd0f296c97b117140ca`. Directly retrieved Debian copies matched the Windows artifacts byte for byte.
+
+At the conservative qualification ceilings, the hosted tool produced these identical reports on both hosts:
+
+```text
+source bodies status=Valid functions=14 top-level=138 statements=510 expression-nodes=1432 statement-depth=17 expression-depth=5 offset=39211
+source bodies status=Valid functions=24 top-level=232 statements=527 expression-nodes=2135 statement-depth=5 expression-depth=3 offset=64951
+source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023
+```
+
+These cover the real lexer at 100,000,000 instructions, declaration parser at 160,000,000, and body parser at 160,000,000. The qualified body module contains 23 module-defined types and 38 WVB exports; Decision 0027 records why the present source-composition subset mechanically exposes retained dependency helpers.
+
+Every directly checked dependency and downstream product also remained exact across hosts: the 95,703-byte declaration parser SHA-256 `b09be82c374636bf0b75a0dcea21afa648d89676e0fb0ffedcef68f9e958ee61`, 99,847-byte declaration demo SHA-256 `82dd2f72d2b2d148289353045fda861e07638e8fac8ba97164642d185c3b8e9a`, 97,660-byte declaration tool SHA-256 `36406acea0ccab9cf9f91cc9723638ae133daa1d5893dcf64454a983427a520c`, 33,770-byte lexer SHA-256 `0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04`, 39,020-byte lexer demo SHA-256 `32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a`, 29,863-byte object core SHA-256 `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`, 96,781-byte assembler SHA-256 `a5f4e913078295a323eac315f9df818877ac519de97028e581cab8577f1dd150`, 110,840-byte linker SHA-256 `091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa`, 218-byte assembled object SHA-256 `992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`, 24-byte image SHA-256 `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a`, and 1,721-byte map SHA-256 `31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4`.
+
+The Debian report SHA-256 is `f5bd4c12c841683a289213e89491f81d0ec17dc80e81e1dc5cbf384af6f64e7d`, and the Windows report SHA-256 is `eb6c2546bd07017bb815fcd40699f8c887fd6871091601fcfef5a146245e944e`. Their normalized contracts matched. After evidence retrieval, the resolved exact QA directory and transferred archive were removed and confirmed absent.
+
+This qualifies Decision 0027 and the complete syntax-parser portion of roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not qualify decoded string construction, a token/declaration/syntax collection, recoverable diagnostic collection, semantic binding, WIR production, WVB encoding, bootstrap closure, native tooling, or any OS layer.
+
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
 Commit `9c4b9f5` was archived and transferred with matching SHA-256 `44565d0f6366eb418dc1a4555d1f7b355df63ec2ea836440de54639087fc335a`, then verified in the uniquely named disposable directory `/tmp/windvale-linker-9c4b9f5-20260730` on the isolated E-Worker QA host. The archive contained the canonical WVA fixture as 403 bytes plus the linker project, provider fixture, and shell verifier. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`. The verification did not use E-Worker release, configuration, service, or durable-data paths. The Debian report was retrieved with SHA-256 `b84cd3a180e8cb167dca3cf909457de91a8643f19911628c426c6e52c6fe5fc0`; the provider WVO, linked image, and canonical map were retrieved separately and each matched the Windows artifact byte for byte; then the resolved exact temporary directory and transferred archive were removed.

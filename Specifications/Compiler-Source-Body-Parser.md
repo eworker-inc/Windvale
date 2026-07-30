@@ -4,7 +4,7 @@
 
 `Compilerˉsourceˉbodyˉparser` is the third Windvale-written compiler slice. It parses the complete implemented Seed statement/expression grammar from the exact function-body spans supplied by the declaration pass.
 
-The implementation is a Windows-qualified, cross-host qualification candidate under Decision 0027. It imports `Compilerˉsourceˉdeclarationˉparser`, which imports the qualified lexer and decimal parser.
+The implementation is cross-host qualified under Decision 0027. It imports `Compilerˉsourceˉdeclarationˉparser`, which imports the qualified lexer and decimal parser.
 
 ## Structural boundary
 
@@ -70,7 +70,7 @@ The pass enforces:
 
 The first failure is deterministic and includes lexical status, expected/found token kinds, and byte/line/column position. Recoverable multi-error diagnostics remain deferred to semantic compiler pressure.
 
-## Candidate artifacts and evidence
+## Qualified artifacts and evidence
 
 - `Source-Body-Parser.wvb`: 164,806 bytes, SHA-256 `bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f`.
 - `Source-Body-Parser-Demo.wvb`: 168,718 bytes, SHA-256 `5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba`, result `0` under 30,000,000 instructions.
@@ -84,4 +84,4 @@ source bodies status=Valid functions=24 top-level=232 statements=527 expression-
 source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023
 ```
 
-These correspond to the lexer, declaration parser, and body parser. Their qualification ceilings are respectively 100,000,000, 160,000,000, and 160,000,000 instructions. The Windows x64 verifier passed all 42 tests with zero build warnings/errors; Debian qualification is pending.
+These correspond to the lexer, declaration parser, and body parser. Their qualification ceilings are respectively 100,000,000, 160,000,000, and 160,000,000 instructions. Windows x64 and Debian GNU/Linux 12 x64 each passed all 42 tests and the native CLI verifier with zero build warnings/errors from candidate `ddfa9e3`; their exact artifacts and normalized conformance contracts matched.
