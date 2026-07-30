@@ -23,7 +23,7 @@ verified-module boundary
     |
 reference runtime and explicit host capabilities
 
-Windvale source or Stage 0 producer
+Windvale source, WVA 1, or Stage 0 producer
     |
 canonical WVO 1.0 object bytes
     |
@@ -74,6 +74,18 @@ Every function is checked for valid branch boundaries, index and type use, match
 
 The object verifier returns a `Verifiedˉobject`; both CLI object commands decode and verify before reporting. This Stage 0 project is an independent oracle for Windvale-written producers and is not a linker or a host object-format adapter.
 
+### Assembler
+
+`Assembler/Windvale.Assembler/` owns:
+
+- WVA 1 line/token parsing and stable source diagnostics
+- Canonical symbol and section declaration validation
+- Named-definition offset and size derivation
+- The first explicit x86-64 instruction and data encodings
+- WVO relocation creation and verified object production
+
+The assembler depends only on the object model. It returns no bytes until the resulting object passes `Objectˉverifier`. It does not resolve symbols, choose final addresses, apply relocations, define an ABI, or produce an executable image. The C# project is the Stage 0 oracle for the planned Windvale-written assembler and must not become a parallel permanent object path.
+
 ### Runtime
 
 `Runtime/Windvale.Runtime/` owns:
@@ -98,7 +110,7 @@ The interpreter uses ordinary portable .NET APIs and has no Windows-specific or 
 
 ### CLI
 
-`Tools/Windvale.Tool/` owns argument parsing, strict UTF-8 compiler input, native hosted-file adaptation, file output, diagnostic presentation, capability grants, and command exit codes. It does not reimplement compiler, verifier, inspector, or runtime behavior.
+`Tools/Windvale.Tool/` owns argument parsing, strict UTF-8 compiler and assembly input, native hosted-file adaptation, file output, diagnostic presentation, capability grants, and command exit codes. It does not reimplement compiler, assembler, verifier, inspector, or runtime behavior.
 
 ## Determinism
 
@@ -118,20 +130,23 @@ The current bytecode 1.5 golden modules are:
 
 The canonical WVO 1.0 representative object is 189 bytes with SHA-256 `006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a`.
 
+The canonical WVA 1 `Hello-Object.wva` output is SHA-256 `992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`.
+
 Changes to those hashes require a reviewed bytecode/compiler-contract change rather than an automatic fixture refresh.
 
 ## Safety boundaries
 
-- Source and module sizes are bounded before sustained processing.
+- Source, assembly, module, and object sizes are bounded before sustained processing.
 - Binary lengths and offsets use checked conversions and remaining-buffer checks.
 - The reader rejects malformed UTF-8, unsupported flags, version mismatches, missing bytes, and trailing bytes.
 - The verifier rejects unknown opcodes, truncated operands, bad indices, invalid data uses, stack underflow, type mismatches, invalid branches, inconsistent merges, unreachable instructions, and invalid maximum-stack declarations.
+- The assembler rejects malformed structure, noncanonical declarations, mismatched definitions, invalid section contexts, unknown references, numeric-width violations, and objects that fail independent WVO verification.
 - Hosted capabilities must be declared in the module, separately authorized, supported by the selected adapter, and validated again on return.
 - Hosted arguments and file-byte reads/writes have strict count, UTF-8, and allocation bounds; normal and diagnostic output remain separate.
 - Runtime signed or unsigned overflow, array bounds, byte-range bounds, strict UTF-8 decoding, bounded text construction, instruction limits, call-depth limits, and hosted resource failures use stable runtime codes.
 
 ## Deliberate Seed limits
 
-Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, dynamic linking, a native backend, assembler, linker, or operating-system code.
+Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, dynamic linking, a Windvale-written assembler, linker, executable-image writer, native compiler backend, or operating-system code. The implemented Stage 0 assembler is deliberately limited to WVA 1 and WVO production.
 
 These are scope boundaries, not assertions that the current language model is final.

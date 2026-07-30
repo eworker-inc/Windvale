@@ -24,6 +24,7 @@ FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVO_SAMPLE="$ARTIFACTS/Sample.wvo"
+ASSEMBLY_OBJECT="$ARTIFACTS/Hello-Object.wvo"
 dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" -o "$SUM_MODULE"
 
@@ -271,6 +272,19 @@ if [ "$WVO_MISSING_PARENT_EXIT" -ne 3 ]; then
     exit 1
 fi
 printf '%s\n' "$WVO_MISSING_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
+
+ASSEMBLY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    assemble "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" -o "$ASSEMBLY_OBJECT")
+printf '%s\n' "$ASSEMBLY_OUTPUT" | grep -F 'Assembled:' >/dev/null
+printf '%s\n' "$ASSEMBLY_OUTPUT" | grep -F 'SHA-256: 992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85' >/dev/null
+
+ASSEMBLY_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-verify "$ASSEMBLY_OBJECT")
+printf '%s\n' "$ASSEMBLY_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
+
+ASSEMBLY_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-inspect "$ASSEMBLY_OBJECT")
+printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F '.text kind=Code align=16 memory=11 data=11' >/dev/null
+printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4' >/dev/null
+printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F 'kind=Absoluteˉu32 section=1 offset=3 symbol=1 addend=0' >/dev/null
 
 echo "Windvale Seed verification passed."
 echo "Conformance report: $REPORT_PATH"

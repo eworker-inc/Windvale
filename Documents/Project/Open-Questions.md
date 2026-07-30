@@ -28,8 +28,8 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Native toolchain
 
-- Which x86-64 instruction subset is sufficient for the first native milestone?
-- Which assembler surface gives the smallest useful path to canonical WVO 1.0: a line grammar, typed construction API, or both?
+- Which labels, conditional branches, RIP-relative data operations, and 64-bit address forms should follow the accepted WVA 1 core?
+- Should a later ergonomic assembly layer sort declarations and expand expressions/macros into canonical WVA, or should those facilities evolve directly in WVA?
 - Which final formats are required for UEFI, the kernel, debug information, and host interoperability?
 - Which responsibilities belong to the assembler versus the object model and linker?
 
@@ -45,9 +45,10 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Define the smallest assembler grammar and x86-64 instruction subset that produces useful WVO 1.0 objects.
+1. Reproduce the accepted WVA 1 parser and object encoding in verified Windvale bytecode against the Stage 0 oracle.
 2. Define link layout, symbol resolution, relocation application, and the first flat-image output without merging assembler and linker ownership.
-3. Define the memory and aggregate-type model needed for a self-hosted compiler.
-4. Define the restricted C bridge without changing Windvale semantics.
-5. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.
-6. Select the source license before publishing implementation code.
+3. Define the internal-label and address-materialization extensions proven necessary by that linker/native experiment.
+4. Define the memory and aggregate-type model needed for a self-hosted compiler.
+5. Define the restricted C bridge without changing Windvale semantics.
+6. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.
+7. Select the source license before publishing implementation code.

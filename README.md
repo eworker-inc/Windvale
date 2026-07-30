@@ -13,6 +13,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
 - A canonical x86-64-first WVO 1.0 object model with sections, symbols, relocations, a bounded C# oracle, and a Windvale-written producer/structural inspector
+- A versioned WVA 1 textual assembly contract and Stage 0 assembler that infers definition offsets/sizes and emits verified WVO objects
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
@@ -20,7 +21,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A portable .NET reference runtime
 - Explicit hosted arguments, bounded file-byte input and output, standard output, separate diagnostics, support preflight, and exact capability authorization
 - Conformance, malformed-input, determinism, diagnostics, and runtime-limit coverage
-- One CLI with module `compile`, `inspect`, `verify`, and `run` plus object `object-inspect` and `object-verify` commands
+- One CLI with module `compile`, `inspect`, `verify`, and `run`, textual `assemble`, plus object `object-inspect` and `object-verify` commands
 
 The open-source intent is established. The exact source license has not been selected yet and must be chosen before the first public source release.
 
@@ -114,6 +115,16 @@ dotnet run --project Tools/Windvale.Tool -- object-inspect artifacts/Sample.wvo
 
 The object is exactly 189 bytes. It contains `.text` and `.rodata`, local/export/import symbols, and one x86-64 relative `i32` relocation. The verifier rejects noncanonical or malformed objects before inspection.
 
+Assemble the first WVA 1 source and inspect its canonical object:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- assemble Examples/Assembler/Hello-Object.wva -o artifacts/Hello-Object.wvo
+dotnet run --project Tools/Windvale.Tool -- object-verify artifacts/Hello-Object.wvo
+dotnet run --project Tools/Windvale.Tool -- object-inspect artifacts/Hello-Object.wvo
+```
+
+The Stage 0 assembler emits exact x86-64 instruction bytes, derives symbol offsets and sizes from named definitions, and records unresolved relative and absolute fixups. It never performs link layout or import resolution. The same WVA contract is the target for the next Windvale-written assembler slice.
+
 ## Seed language example
 
 ```text
@@ -141,6 +152,7 @@ export fn Main() -> i32 {
 ## Repository layout
 
 - `Compiler/` — source lexer, parser, semantic analysis, typed WIR, and bytecode lowering
+- `Assembler/Windvale.Assembler/` — WVA parser, semantic validation, x86-64 encoding, and WVO production
 - `Runtime/Windvale.Bytecode/` — module contracts, codec, verifier, digest, and inspector
 - `Runtime/Windvale.Runtime/` — verified-bytecode reference interpreter and capability host
 - `Object-Model/Windvale.ObjectModel/` — WVO contracts, codec, verifier, digest, and inspector
@@ -149,6 +161,7 @@ export fn Main() -> i32 {
 - `Tests/` — dependency-free Seed conformance runner
 - `Examples/Seed/` — portable and hosted example programs
 - `Examples/Foundation/` — incremental programs that exercise self-hosting prerequisites
+- `Examples/Assembler/` — canonical WVA sources for the assembler and future linker
 - `Specifications/` — implemented source, bytecode, CLI, and conformance contracts
 - `Documents/` — architecture, decisions, project direction, and open questions
 
@@ -178,6 +191,7 @@ export fn Main() -> i32 {
 - [Source naming conventions](Specifications/Source-Naming.md)
 - [Seed bytecode specification](Specifications/Seed-Bytecode.md)
 - [Windvale object format](Specifications/Windvale-Object-Format.md)
+- [Windvale textual assembly](Specifications/Windvale-Assembly.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
@@ -190,6 +204,7 @@ export fn Main() -> i32 {
 - [Explicit hosted resources decision](Documents/Decisions/0007-Explicit-Hosted-Resources.md)
 - [WvDump payload and report decision](Documents/Decisions/0008-WvDump-Payload-Decoding-And-Safe-Reports.md)
 - [Minimal object foundation decision](Documents/Decisions/0009-Minimal-Windvale-Object-Foundation.md)
+- [Minimal assembly contract decision](Documents/Decisions/0010-Minimal-Windvale-Assembly-Contract.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

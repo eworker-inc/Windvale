@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Windvale.Assembler;
 using Windvale.Bytecode;
 using Windvale.Compiler;
 using Windvale.ObjectModel;
@@ -18,6 +19,7 @@ internal static class Program
     private const string WVDUMP_CORE_SHA256 = "2957fc5523ae3ca16cf1aaeb9104c14a3342a0aefde9ac591bb689f744f1467f";
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "a5d574ea646946b159d95bd7e51434bfcbf7545083a54541438a79a2e5e999df";
+    private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
 
     private const string SUM_SOURCE = """
         module Sumˉdata profile portable;
@@ -125,6 +127,9 @@ internal static class Program
     private static readonly string WVO_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wvo-Object-Core.wv");
 
+    private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Hello-Object.wva");
+
     private static readonly List<(string Name, Action Body)> TESTS =
     [
         ("portable source compiles, verifies, and returns the data sum", Portableˉprogramˉruns),
@@ -141,6 +146,8 @@ internal static class Program
         ("Windvale wvdump decodes bounded payloads and instructions", Wvˉdumpˉcoreˉwalksˉsections),
         ("Windvale object codec validates canonical symbols and relocations", Objectˉmodelˉroundˉtrip),
         ("Windvale-written object core matches the Stage 0 oracle", Wvoˉobjectˉcoreˉmatchesˉoracle),
+        ("WVA assembler emits canonical sections, symbols, and relocations", Assemblerˉemitsˉcanonicalˉobject),
+        ("WVA assembler rejects malformed and inconsistent source", Assemblerˉrejectsˉinvalidˉsource),
         ("immutable nominal records cross function boundaries", Immutableˉrecordsˉrun),
         ("nominal enums and bounded formatting execute", Enumsˉandˉformattingˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
@@ -1116,6 +1123,146 @@ internal static class Program
         _ = Objectˉcodec.Readˉandˉverify(Hostedˉwriter.Bytes.AsSpan());
     }
 
+    private static void Assemblerˉemitsˉcanonicalˉobject()
+    {
+        var Bytes = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE);
+        Equal(WVA_OBJECT_SHA256, Objectˉdigest.Calculateˉsha256(Bytes));
+        Sequenceˉequal(Bytes, Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE));
+        Sequenceˉequal(
+            Bytes,
+            Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE.Replace("\n", "\r\n", StringComparison.Ordinal)));
+
+        var Object = Objectˉcodec.Readˉandˉverify(Bytes).Value;
+        Equal(Objectˉarchitecture.X86ˉ64, Object.Architecture);
+        Equal(2, Object.Sections.Length);
+        Equal(".text", Object.Sections[0].Name);
+        Equal(Objectˉsectionˉkind.Code, Object.Sections[0].Kind);
+        Equal(16u, Object.Sections[0].Alignment);
+        Sequenceˉequal<byte>(
+            [0xB8, 42, 0, 0, 0, 0xE8, 0, 0, 0, 0, 0xC3],
+            Object.Sections[0].Data);
+        Equal(".rodata", Object.Sections[1].Name);
+        Sequenceˉequal<byte>([72, 105, 10, 0, 0, 0, 0], Object.Sections[1].Data);
+
+        Equal(3, Object.Symbols.Length);
+        Equal(new Objectˉsymbol("Message", Objectˉsymbolˉbinding.Local, Objectˉsymbolˉkind.Data, 1, 0, 7), Object.Symbols[0]);
+        Equal(new Objectˉsymbol("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 11), Object.Symbols[1]);
+        Equal(Objectˉsymbolˉbinding.Import, Object.Symbols[2].Binding);
+        Equal("Console_write", Object.Symbols[2].Name);
+        Equal(2, Object.Relocations.Length);
+        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 6, 2, -4), Object.Relocations[0]);
+        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Absoluteˉu32, 1, 3, 1, 0), Object.Relocations[1]);
+        Sequenceˉequal(Bytes, Objectˉcodec.Write(Object));
+
+        const string Completeˉsubset = """
+            windvale-assembly 1
+            symbol local data Bss in .bss
+            symbol local data Values in .data
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            nop
+            trap
+            move_i32 edi -1
+            move_u32 ecx 4294967295
+            jump Main
+            return
+            end define
+            end section
+            section data .data align 4
+            define Values
+            bytes 1 255
+            u32 2309737967
+            i32 -2
+            address_u32 Main
+            end define
+            end section
+            section bss .bss align 16
+            define Bss
+            zero 16
+            end define
+            end section
+            """;
+        var Complete = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(Completeˉsubset)).Value;
+        Equal(3, Complete.Sections.Length);
+        Equal(18u, Complete.Sections[0].Memoryˉsize);
+        Equal(14u, Complete.Sections[1].Memoryˉsize);
+        Equal(Objectˉsectionˉkind.Zeroˉfill, Complete.Sections[2].Kind);
+        Equal(16u, Complete.Sections[2].Memoryˉsize);
+        Equal(0, Complete.Sections[2].Data.Length);
+        Equal(2, Complete.Relocations.Length);
+        Equal(Objectˉrelocationˉkind.Relativeˉi32, Complete.Relocations[0].Kind);
+        Equal(13u, Complete.Relocations[0].Offset);
+        Equal(Objectˉrelocationˉkind.Absoluteˉu32, Complete.Relocations[1].Kind);
+        Equal(10u, Complete.Relocations[1].Offset);
+    }
+
+    private static void Assemblerˉrejectsˉinvalidˉsource()
+    {
+        Hasˉassemblyˉdiagnostic("section code .text align 16", "WVA1001");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            section code .text align 16
+            end section
+            symbol export function Main in .text
+            """, "WVA1002");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol local
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol local data Bad-name in .data
+            """, "WVA1004");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            section code .text align 3
+            end section
+            """, "WVA1005");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            symbol local data Data in .data
+            """, "WVA1006");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .rodata
+            section rodata .rodata align 1
+            define Main
+            bytes 1
+            end define
+            end section
+            """, "WVA1007");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            bytes 1
+            end define
+            end section
+            """, "WVA1008");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            call Missing
+            end define
+            end section
+            """, "WVA1009");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            return
+            """, "WVA1010");
+        Hasˉassemblyˉdiagnostic(
+            new string('a', Assemblyˉlimits.MAX_SOURCE_BYTES + 1),
+            "WVA1011");
+    }
+
     private static void Immutableˉrecordsˉrun()
     {
         const string Source = """
@@ -1877,18 +2024,22 @@ internal static class Program
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉsuccess(WVO_CORE_SOURCE);
         var Wvoˉsampleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
+        var Assemblyˉobjectˉbytes = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE);
         var Sumˉhash = Moduleˉdigest.Calculateˉsha256(Sumˉbytes);
         var Helloˉhash = Moduleˉdigest.Calculateˉsha256(Helloˉbytes);
         var Foundationˉhash = Moduleˉdigest.Calculateˉsha256(Foundationˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvoˉsampleˉhash = Objectˉdigest.Calculateˉsha256(Wvoˉsampleˉbytes);
+        var Assemblyˉobjectˉhash = Objectˉdigest.Calculateˉsha256(Assemblyˉobjectˉbytes);
         Equal(SUM_SHA256, Sumˉhash);
         Equal(HELLO_SHA256, Helloˉhash);
         Equal(FOUNDATION_SHA256, Foundationˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVO_SAMPLE_SHA256, Wvoˉsampleˉhash);
+        Equal(WVA_OBJECT_SHA256, Assemblyˉobjectˉhash);
+        _ = Objectˉcodec.Readˉandˉverify(Assemblyˉobjectˉbytes);
 
         var Sumˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sumˉbytes),
@@ -1986,6 +2137,8 @@ internal static class Program
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
+            Assemblyˉcompiler.FORMAT_VERSION.ToString(),
+            Assemblyˉobjectˉhash,
             Sumˉhash,
             Sumˉresult.Exitˉcode,
             Helloˉhash,
@@ -2018,6 +2171,7 @@ internal static class Program
             }
 
             _ = Seedˉcompiler.Compile(new string(Characters), $"fuzz-{Case}.wv");
+            _ = Assemblyˉcompiler.Assemble(new string(Characters));
         }
 
         for (var Case = 0; Case < 1000; Case++)
@@ -2070,12 +2224,33 @@ internal static class Program
         return Result.Moduleˉbytes.ToArray();
     }
 
+    private static byte[] Assembleˉsuccess(string source)
+    {
+        var Result = Assemblyˉcompiler.Assemble(source);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Assembly failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Objectˉbytes.ToArray();
+    }
+
     private static void Hasˉdiagnostic(string source, string code)
     {
         var Result = Seedˉcompiler.Compile(source);
         False(Result.Success, $"Source expected to produce {code} compiled successfully.");
         True(Result.Diagnostics.Any(Diagnostic => Diagnostic.Code == code),
             $"Expected diagnostic {code}; found {string.Join(", ", Result.Diagnostics.Select(Item => Item.Code))}.");
+    }
+
+    private static void Hasˉassemblyˉdiagnostic(string source, string code)
+    {
+        var Result = Assemblyˉcompiler.Assemble(source);
+        False(Result.Success, $"Assembly source expected to produce {code} succeeded.");
+        Equal(code, Result.Diagnostics.Single().Code);
+        True(Result.Diagnostics[0].Line > 0, "Assembly diagnostic line was not one-based.");
+        True(Result.Diagnostics[0].Column > 0, "Assembly diagnostic column was not one-based.");
     }
 
     private static Objectˉfile Buildˉsampleˉobject()
@@ -2370,6 +2545,8 @@ internal static class Program
     private sealed record Conformanceˉcontract(
         [property: JsonPropertyName("moduleFormat")] string Moduleˉformat,
         [property: JsonPropertyName("objectFormat")] string Objectˉformat,
+        [property: JsonPropertyName("assemblyFormat")] string Assemblyˉformat,
+        [property: JsonPropertyName("assemblyObjectSha256")] string Assemblyˉobjectˉsha256,
         [property: JsonPropertyName("sumSha256")] string Sumˉsha256,
         [property: JsonPropertyName("sumResult")] int Sumˉresult,
         [property: JsonPropertyName("helloSha256")] string Helloˉsha256,

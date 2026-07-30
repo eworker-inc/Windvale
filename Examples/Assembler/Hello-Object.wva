@@ -1,0 +1,21 @@
+windvale-assembly 1
+
+# Symbols are already in canonical local/export/import order.
+symbol local data Message in .rodata
+symbol export function Main in .text
+symbol import function Console_write
+
+section code .text align 16
+define Main
+move_i32 eax 42
+call Console_write
+return
+end define
+end section
+
+section rodata .rodata align 1
+define Message
+bytes 72 105 10
+address_u32 Main
+end define
+end section
