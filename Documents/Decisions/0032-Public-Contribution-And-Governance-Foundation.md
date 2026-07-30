@@ -11,7 +11,7 @@ Windvale's AI-authored development model creates an additional distinction betwe
 
 ## Decision
 
-Publish repository-level contribution, security, governance, support, conduct, and trademark policies. E-Worker Inc remains the project steward and final release authority. Technical direction continues through specifications, qualification evidence, and accepted decision records rather than informal compatibility promises.
+Publish repository-level contribution, security, governance, support, conduct, and trademark policies. [E-Worker Inc](https://eworker.ca) remains the project steward and final release authority. Technical direction continues through specifications, qualification evidence, and accepted decision records rather than informal compatibility promises.
 
 Substantive contributed implementation and project documentation follow Windvale's AI-authored model: an AI system produces the content under human direction and review. The human or organization submitting the contribution is responsible for inspecting it, confirming the right to distribute it, identifying incorporated third-party material, and satisfying the verification gate. A model or provider is recorded only when technically material under Decision 0031.
 

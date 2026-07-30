@@ -1,7 +1,7 @@
 # Earliest-known combined-scope claim evidence
 
 - Review date: 2026-07-30
-- Claim owner: E-Worker Inc
+- Claim owner: [E-Worker Inc](https://eworker.ca)
 - Status: Dated public-search record; not a claim that Windvale is the first project in any individual category
 
 ## Purpose

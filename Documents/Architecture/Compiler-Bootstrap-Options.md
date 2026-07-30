@@ -41,7 +41,7 @@ Advantages:
 - Runs well on Windows and Linux.
 - Strong exact-width integer, binary I/O, Unicode, diagnostics, testing, and immutable-model support.
 - Suitable for a compiler, assembler, linker, disassembler, object inspector, and reference VM in one solution.
-- Already familiar in the surrounding E-Worker development environment.
+- Already familiar in the surrounding [E-Worker](https://eworker.ca) development environment.
 - Faster and safer to iterate than low-level languages for binary parsers and semantic models.
 
 Costs:

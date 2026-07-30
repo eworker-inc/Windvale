@@ -55,7 +55,7 @@ The verifier performs a Release build, runs the 44-test conformance suite, produ
 
 ## WVB 1.6 linker-prerequisite qualification
 
-Candidate commit `348c82a` was archived and transferred with matching SHA-256 `985410209aee1cc54753aecd12d8d73658b7f3ffa646a129a4f490bec520817c`, then verified in `/tmp/windvale-prerequisites-348c82a-20260730` on the isolated E-Worker QA host. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`; the reports identify .NET `10.0.10`. The exact archive passed the Release build with zero warnings/errors, all 31 tests, and the complete native CLI verifier. The Debian report was retrieved with SHA-256 `cec2e640181eb7bf5bca91fd7890aecd93137c6f594ca6af0bac873e8c98d3c0`. The report comparator confirmed that the Windows and Debian normalized contracts match.
+Candidate commit `348c82a` was archived and transferred with matching SHA-256 `985410209aee1cc54753aecd12d8d73658b7f3ffa646a129a4f490bec520817c`, then verified in `/tmp/windvale-prerequisites-348c82a-20260730` on the isolated [E-Worker](https://eworker.ca) QA host. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`; the reports identify .NET `10.0.10`. The exact archive passed the Release build with zero warnings/errors, all 31 tests, and the complete native CLI verifier. The Debian report was retrieved with SHA-256 `cec2e640181eb7bf5bca91fd7890aecd93137c6f594ca6af0bac873e8c98d3c0`. The report comparator confirmed that the Windows and Debian normalized contracts match.
 
 Both hosts produced WVB format `1.6` with these module identities:
 

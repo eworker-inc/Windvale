@@ -71,7 +71,7 @@ Create these source areas only when implementation begins; do not add empty dire
 
 ## Code style and naming
 
-Carry the established E-Worker host-code convention into Windvale bootstrap code where the implementation language supports it:
+Carry the established [E-Worker](https://eworker.ca) host-code convention into Windvale bootstrap code where the implementation language supports it:
 
 - TypeScript and C# identifiers controlled by Windvale use the macron separator `ˉ` (U+02C9) between semantic words and start with capital case, such as `Moduleˉreader` and `Readˉsection`.
 - Do not leave camelCase islands inside macron-separated identifiers.

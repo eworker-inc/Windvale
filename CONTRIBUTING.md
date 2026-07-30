@@ -56,7 +56,7 @@ Changes to portable semantics, bytecode, serialization, runtime behavior, or gol
 
 Keep pull requests focused and reviewable. Update tests and specifications in the same change when a contract changes. Do not describe proposals, incomplete work, or unverified behavior as implemented or qualified.
 
-A maintainer may request a smaller change, additional hostile-input coverage, an independent verifier, deterministic-byte comparison, a decision record, or clearer ownership boundaries before acceptance. E-Worker Inc retains final responsibility for accepting and releasing changes under [GOVERNANCE.md](GOVERNANCE.md).
+A maintainer may request a smaller change, additional hostile-input coverage, an independent verifier, deterministic-byte comparison, a decision record, or clearer ownership boundaries before acceptance. [E-Worker Inc](https://eworker.ca) retains final responsibility for accepting and releasing changes under [GOVERNANCE.md](GOVERNANCE.md).
 
 ## Developer Certificate of Origin
 

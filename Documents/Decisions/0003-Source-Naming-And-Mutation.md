@@ -5,7 +5,7 @@
 
 ## Context
 
-Windvale Seed began with ASCII identifiers, lowercase `main`, and mutable `let` locals. Windvale's bootstrap implementation already follows the E-Worker convention of capitalized semantic names joined by U+02C9. Foundation work will introduce buffers, aggregate data, and larger libraries, so source naming and mutation should become explicit before those contracts expand.
+Windvale Seed began with ASCII identifiers, lowercase `main`, and mutable `let` locals. Windvale's bootstrap implementation already follows the [E-Worker](https://eworker.ca) convention of capitalized semantic names joined by U+02C9. Foundation work will introduce buffers, aggregate data, and larger libraries, so source naming and mutation should become explicit before those contracts expand.
 
 ## Decision
 

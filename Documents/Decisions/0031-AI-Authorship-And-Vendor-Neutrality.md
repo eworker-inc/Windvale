@@ -11,7 +11,7 @@ Per-change model labels would add noise without establishing quality, responsibi
 
 ## Decision
 
-Describe Windvale as implemented and documented entirely by AI systems under human direction and review. E-Worker Inc initiated and stewards the project.
+Describe Windvale as implemented and documented entirely by AI systems under human direction and review. [E-Worker Inc](https://eworker.ca) initiated and stewards the project.
 
 Use “author” and “authored” as descriptive project attribution. These terms do not assert that an AI system is a legal person, a copyright holder, or able to grant a license. The project does not make a universal determination about the copyrightability of AI-produced material; that can depend on the material, human contribution, and applicable jurisdiction.
 

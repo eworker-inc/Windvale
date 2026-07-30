@@ -13,7 +13,7 @@ The project needs useful intermediate outcomes and must avoid rewriting every to
 
 - Use **Windvale** as the umbrella project and repository name.
 - Establish the project with open-source intent; select the exact license before public source release.
-- Use a shared bare Git repository and isolated development-lane layout consistent with the surrounding E-Worker environment.
+- Use a shared bare Git repository and isolated development-lane layout consistent with the surrounding [E-Worker](https://eworker.ca) environment.
 - Keep Windows and Linux as permanent development and runtime hosts.
 - Define Windvale semantics and platform contracts independently from host operating-system behavior.
 - Plan for one source language with portable-bytecode and native-code execution forms.

@@ -2,7 +2,7 @@
 
 ## Stewardship
 
-E-Worker Inc initiated Windvale and is its project steward. The steward controls official repositories and releases, appoints maintainers, accepts or rejects contributions, administers security reports, and decides when a contract or milestone is qualified.
+[E-Worker Inc](https://eworker.ca) initiated Windvale and is its project steward. The steward controls official repositories and releases, appoints maintainers, accepts or rejects contributions, administers security reports, and decides when a contract or milestone is qualified.
 
 Windvale is open source under the MIT License. Open-source permission does not require the official project to accept every compatible change or transfer stewardship of the Windvale identity.
 

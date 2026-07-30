@@ -4,7 +4,7 @@
 
 This runbook prepares the active Windvale project for initial public visibility. It does not declare the project complete, create a stable compatibility promise, or replace the qualification rules for later changes.
 
-The official repository is `eworker-inc/Windvale`. It was created privately, is inspected at an identified commit, and is made public only through a separate E-Worker Inc approval.
+The official repository is `eworker-inc/Windvale`. It was created privately, is inspected at an identified commit, and is made public only through a separate [E-Worker Inc](https://eworker.ca) approval.
 
 ## Accepted publication choices
 

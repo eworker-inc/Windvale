@@ -8,7 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
-- MIT licensing and E-Worker Inc stewardship.
+- MIT licensing and [E-Worker Inc](https://eworker.ca) stewardship.
 - Vendor-neutral AI-authorship and attribution policy.
 - Public contribution, governance, security, support, conduct, and project-identity policies.
 - Windows and Linux repository verification workflows.
