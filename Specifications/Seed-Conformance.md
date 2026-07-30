@@ -12,6 +12,8 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, i
 - Exact codec read/write round trips
 - Inspector metadata and disassembly
 - Functions, `if`, `while`, booleans, immutable text, immutable integer data, indexing, and `length`
+- `u8`, `u32`, immutable `bytes`, slice views, and bounded little-endian reads
+- Checked `u32` overflow and underflow plus byte-read and slice bounds traps
 - U+02C9 source identifiers, immutable `let`, mutable `var`, immutable parameters, and exported `Main`
 - Rejection of malformed or confusable identifier separators
 - Stable source diagnostic codes with line and column information
@@ -44,7 +46,7 @@ After collecting a report from Windows and Linux, compare their portable contrac
 dotnet run --project Tests/Windvale.Seed.Tests --configuration Release --no-build -- --compare-reports artifacts/seed-conformance-windows-x64.json artifacts/seed-conformance-linux-x86_64.json
 ```
 
-The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-format version, complete golden-module SHA-256 values, results, and normalized program output.
+The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-format version, complete golden-module SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, and portable Foundation byte-header example.
 
 ## Evidence discipline
 

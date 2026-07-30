@@ -14,4 +14,5 @@ public static class Bytecodeˉlimits
     public const int MAX_INSTRUCTIONS_PER_FUNCTION = 100_000;
     public const int MAX_OPERAND_STACK = 4096;
     public const int MAX_I32_ARRAY_ELEMENTS = 262_144;
+    public const int MAX_BYTE_DATA_BYTES = 4 * 1024 * 1024;
 }

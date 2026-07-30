@@ -10,7 +10,7 @@ public static class Moduleˉcodec
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public const ushort MAJOR_VERSION = 1;
-    public const ushort MINOR_VERSION = 0;
+    public const ushort MINOR_VERSION = 1;
 
     public static byte[] Write(Bytecodeˉmodule module)
     {
@@ -58,6 +58,10 @@ public static class Moduleˉcodec
                             Writer.Writeˉi32(Value);
                         }
 
+                        break;
+                    case Bytesˉdataˉdeclaration Bytes:
+                        Writer.Writeˉu32(Bytes.Values.Length);
+                        Writer.Writeˉbytes(Bytes.Values.AsSpan());
                         break;
                     default:
                         throw new InvalidOperationException($"Unknown data declaration type '{Data.GetType().Name}'.");
@@ -254,6 +258,14 @@ public static class Moduleˉcodec
                     }
 
                     Result.Add(new I32ˉarrayˉdataˉdeclaration(Name, Values.ToImmutable()));
+                    break;
+                case Dataˉtype.Bytes:
+                    var Byteˉcount = reader.Readˉboundedˉcount(
+                        Bytecodeˉlimits.MAX_BYTE_DATA_BYTES,
+                        "byte data");
+                    Result.Add(new Bytesˉdataˉdeclaration(
+                        Name,
+                        reader.Readˉbytes(Byteˉcount).ToArray().ToImmutableArray()));
                     break;
                 default:
                     throw new Moduleˉformatˉexception(

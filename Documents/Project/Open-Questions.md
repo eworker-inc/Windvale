@@ -13,7 +13,7 @@ This list records unresolved decisions without presenting them as implementation
 
 - What programming model makes Windvale distinct while remaining approachable?
 - What exactly does “code and data together” mean in the language and package model?
-- What are the integer, floating-point, text, error, concurrency, and memory semantics?
+- Beyond the accepted checked `i32`, `u8`, `u32`, immutable text, and immutable bytes nucleus, what integer, floating-point, text, error, concurrency, and memory semantics are needed?
 - Which facilities belong to safe, unsafe, portable, hosted, and system profiles?
 - Should Windvale eventually admit broader Unicode identifiers beyond ASCII segments joined by U+02C9, and if so, under which normalization and confusable-character rules?
 
@@ -45,8 +45,8 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Define the smallest end-to-end demonstration program and its observable behavior.
-2. Evaluate the implemented Seed semantic nucleus with several small programs before expanding it.
+1. Use the accepted immutable byte primitives to build a Windvale-written `.wvb` inspector over supplied bytes.
+2. Define the explicit hosted file-input capability that can supply those bytes without changing portable program semantics.
 3. Define the memory and aggregate-type model needed for a self-hosted compiler.
 4. Define the restricted C bridge without changing Windvale semantics.
 5. Select the first architecture, object path, firmware boundary, and VM qualification targets.

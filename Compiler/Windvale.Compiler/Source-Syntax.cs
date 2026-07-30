@@ -28,8 +28,11 @@ internal enum Tokenˉkind
     True,
     False,
     I32,
+    U8,
+    U32,
     Bool,
     Text,
+    Bytes,
     Void,
     Length,
 
@@ -67,8 +70,11 @@ internal enum Typeˉsyntaxˉkind
 {
     Void,
     I32,
+    U8,
+    U32,
     Bool,
     Text,
+    Bytes,
     I32ˉarray,
     Invalid,
 }
@@ -91,6 +97,11 @@ internal sealed record Textˉdataˉvalueˉsyntax(string Value, Sourceˉspan Span
 
 internal sealed record I32ˉarrayˉdataˉvalueˉsyntax(
     ImmutableArray<int> Values,
+    Sourceˉspan Span)
+    : Dataˉvalueˉsyntax(Span);
+
+internal sealed record Bytesˉdataˉvalueˉsyntax(
+    ImmutableArray<byte> Values,
     Sourceˉspan Span)
     : Dataˉvalueˉsyntax(Span);
 

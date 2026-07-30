@@ -105,13 +105,17 @@ internal sealed class Sourceˉparser
         {
             Value = Parseˉi32ˉarray();
         }
+        else if (Type.Kind == Typeˉsyntaxˉkind.Bytes)
+        {
+            Value = Parseˉbytes();
+        }
         else
         {
             Diagnostics.Report(
                 "WVC1101",
                 "parser",
                 Type.Span,
-                "Module data must have type text or [i32].");
+                "Module data must have type text, bytes, or [i32].");
             var Invalid = Current;
             Nextˉtoken();
             Value = new I32ˉarrayˉdataˉvalueˉsyntax([], Invalid.Span);
@@ -135,7 +139,55 @@ internal sealed class Sourceˉparser
 
             var Integer = Match(Tokenˉkind.Integer);
             var Value = Integer.Value is int Parsed ? Parsed : 0;
+            if (Integer.Value is not int)
+            {
+                Diagnostics.Report(
+                    "WVC1105",
+                    "parser",
+                    Integer.Span,
+                    "An [i32] data element requires an unsuffixed i32 literal.");
+            }
+
             Values.Add(Isˉnegative ? -Value : Value);
+            if (Current.Kind != Tokenˉkind.Comma)
+            {
+                break;
+            }
+
+            Nextˉtoken();
+        }
+
+        var End = Match(Tokenˉkind.Rightˉbracket);
+        return new(Values.ToImmutable(), Combine(Start.Span, End.Span));
+    }
+
+    private Bytesˉdataˉvalueˉsyntax Parseˉbytes()
+    {
+        var Start = Match(Tokenˉkind.Leftˉbracket);
+        var Values = ImmutableArray.CreateBuilder<byte>();
+        while (Current.Kind is not Tokenˉkind.Rightˉbracket and not Tokenˉkind.End)
+        {
+            var Integer = Match(Tokenˉkind.Integer);
+            byte Value;
+            switch (Integer.Value)
+            {
+                case byte Byte:
+                    Value = Byte;
+                    break;
+                case int I32 when I32 is >= byte.MinValue and <= byte.MaxValue:
+                    Value = (byte)I32;
+                    break;
+                default:
+                    Diagnostics.Report(
+                        "WVC1106",
+                        "parser",
+                        Integer.Span,
+                        "A bytes data element must be an unsuffixed or u8 literal from 0 through 255.");
+                    Value = 0;
+                    break;
+            }
+
+            Values.Add(Value);
             if (Current.Kind != Tokenˉkind.Comma)
             {
                 break;
@@ -327,7 +379,7 @@ internal sealed class Sourceˉparser
         {
             case Tokenˉkind.Integer:
                 var Integer = Nextˉtoken();
-                return new Literalˉexpressionˉsyntax((int?)Integer.Value ?? 0, Integer.Span);
+                return new Literalˉexpressionˉsyntax(Integer.Value ?? 0, Integer.Span);
             case Tokenˉkind.String:
                 var String = Nextˉtoken();
                 return new Literalˉexpressionˉsyntax((string?)String.Value ?? string.Empty, String.Span);
@@ -434,8 +486,11 @@ internal sealed class Sourceˉparser
         var Kind = Token.Kind switch
         {
             Tokenˉkind.I32 => Typeˉsyntaxˉkind.I32,
+            Tokenˉkind.U8 => Typeˉsyntaxˉkind.U8,
+            Tokenˉkind.U32 => Typeˉsyntaxˉkind.U32,
             Tokenˉkind.Bool => Typeˉsyntaxˉkind.Bool,
             Tokenˉkind.Text => Typeˉsyntaxˉkind.Text,
+            Tokenˉkind.Bytes => Typeˉsyntaxˉkind.Bytes,
             Tokenˉkind.Void when allowˉvoid => Typeˉsyntaxˉkind.Void,
             _ => Typeˉsyntaxˉkind.Invalid,
         };
@@ -447,8 +502,8 @@ internal sealed class Sourceˉparser
                 "parser",
                 Token.Span,
                 allowˉvoid
-                    ? "Expected type i32, bool, text, or void."
-                    : "Expected type i32, bool, or text.");
+                    ? "Expected type i32, u8, u32, bool, text, bytes, or void."
+                    : "Expected type i32, u8, u32, bool, text, or bytes.");
             if (Current.Kind != Tokenˉkind.End)
             {
                 Nextˉtoken();

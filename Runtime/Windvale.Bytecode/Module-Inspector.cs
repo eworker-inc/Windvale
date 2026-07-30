@@ -52,6 +52,10 @@ public static class Moduleˉinspector
                     Output.Append($"[i32] length={Array.Values.Length} values=");
                     Output.AppendLine(Formatˉarrayˉpreview(Array.Values));
                     break;
+                case Bytesˉdataˉdeclaration Bytes:
+                    Output.Append($"bytes length={Bytes.Values.Length} values=");
+                    Output.AppendLine(Formatˉbytesˉpreview(Bytes.Values));
+                    break;
             }
         }
 
@@ -94,6 +98,9 @@ public static class Moduleˉinspector
             Valueˉtype.I32 => "i32",
             Valueˉtype.Bool => "bool",
             Valueˉtype.Text => "text",
+            Valueˉtype.U8 => "u8",
+            Valueˉtype.U32 => "u32",
+            Valueˉtype.Bytes => "bytes",
             _ => $"unknown({(byte)type})",
         };
     }
@@ -117,15 +124,26 @@ public static class Moduleˉinspector
         {
             Opcode.I32ˉconst => $"i32.const {instruction.Signedˉoperand}",
             Opcode.Boolˉconst => $"bool.const {(instruction.Unsignedˉoperand == 1 ? "true" : "false")}",
+            Opcode.U8ˉconst => $"u8.const {instruction.Unsignedˉoperand}",
+            Opcode.U32ˉconst => $"u32.const {instruction.Unsignedˉoperand}",
             Opcode.Textˉconst => $"text.const data[{instruction.Unsignedˉoperand}] ({module.Data[(int)instruction.Unsignedˉoperand].Name})",
+            Opcode.Bytesˉconst => $"bytes.const data[{instruction.Unsignedˉoperand}] ({module.Data[(int)instruction.Unsignedˉoperand].Name})",
             Opcode.Localˉload => $"local.load {instruction.Unsignedˉoperand}",
             Opcode.Localˉstore => $"local.store {instruction.Unsignedˉoperand}",
             Opcode.Dataˉlength => $"data.length data[{instruction.Unsignedˉoperand}] ({module.Data[(int)instruction.Unsignedˉoperand].Name})",
             Opcode.Dataˉloadˉi32 => $"data.load.i32 data[{instruction.Unsignedˉoperand}] ({module.Data[(int)instruction.Unsignedˉoperand].Name})",
+            Opcode.Bytesˉlength => "bytes.length",
+            Opcode.Bytesˉslice => "bytes.slice",
+            Opcode.Bytesˉreadˉu8 => "bytes.read_u8",
+            Opcode.Bytesˉreadˉu16ˉlittle => "bytes.read_u16_little",
+            Opcode.Bytesˉreadˉu32ˉlittle => "bytes.read_u32_little",
             Opcode.I32ˉadd => "i32.add",
             Opcode.I32ˉsubtract => "i32.subtract",
             Opcode.I32ˉmultiply => "i32.multiply",
             Opcode.I32ˉnegate => "i32.negate",
+            Opcode.U32ˉadd => "u32.add",
+            Opcode.U32ˉsubtract => "u32.subtract",
+            Opcode.U32ˉmultiply => "u32.multiply",
             Opcode.I32ˉequal => "i32.equal",
             Opcode.I32ˉnotˉequal => "i32.not_equal",
             Opcode.I32ˉless => "i32.less",
@@ -135,6 +153,14 @@ public static class Moduleˉinspector
             Opcode.Boolˉequal => "bool.equal",
             Opcode.Boolˉnotˉequal => "bool.not_equal",
             Opcode.Boolˉnot => "bool.not",
+            Opcode.U32ˉequal => "u32.equal",
+            Opcode.U32ˉnotˉequal => "u32.not_equal",
+            Opcode.U32ˉless => "u32.less",
+            Opcode.U32ˉlessˉequal => "u32.less_equal",
+            Opcode.U32ˉgreater => "u32.greater",
+            Opcode.U32ˉgreaterˉequal => "u32.greater_equal",
+            Opcode.U8ˉequal => "u8.equal",
+            Opcode.U8ˉnotˉequal => "u8.not_equal",
             Opcode.Jump => $"jump {instruction.Unsignedˉoperand:X4}",
             Opcode.Branchˉfalse => $"branch.false {instruction.Unsignedˉoperand:X4}",
             Opcode.Call => $"call function[{instruction.Unsignedˉoperand}] ({module.Functions[(int)instruction.Unsignedˉoperand].Name})",
@@ -179,5 +205,14 @@ public static class Moduleˉinspector
         return values.Length <= MAX_PREVIEW_VALUES
             ? $"[{Preview}]"
             : $"[{Preview}, …]";
+    }
+
+    private static string Formatˉbytesˉpreview(System.Collections.Immutable.ImmutableArray<byte> values)
+    {
+        const int MAX_PREVIEW_VALUES = 16;
+        var Preview = string.Join(" ", values.Take(MAX_PREVIEW_VALUES).Select(Value => $"{Value:X2}"));
+        return values.Length <= MAX_PREVIEW_VALUES
+            ? $"[{Preview}]"
+            : $"[{Preview} …]";
     }
 }
