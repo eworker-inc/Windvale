@@ -59,7 +59,9 @@ jobs:
 
       - name: Verify change classification rules
         shell: pwsh
-        run: ./Tools/Verify/Verify-Change-Classification.ps1
+        run: |
+          ./Tools/Verify/Verify-Change-Classification.ps1
+          ./Tools/Verify/Verify-Verification-Plan.ps1
 
   windows-verifier:
     name: Windows verifier

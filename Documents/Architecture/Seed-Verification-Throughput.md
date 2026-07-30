@@ -6,11 +6,19 @@ Windvale keeps the complete cross-host qualification gate, but ordinary developm
 
 ## Levels
 
-- `Fast` builds once and runs tests matching one required case-insensitive displayed-name substring. It may fail fast and may write a local timing report. It does not produce conformance evidence.
+- `Fast` builds once and runs an explicit selection of one or more test areas, a case-insensitive displayed-name substring, or their intersection. It may fail fast and may write a local timing report. It does not produce conformance evidence.
 - `Standard` builds once, runs all 47 in-process conformance tests, and writes the normal host report. It stops before native CLI qualification.
 - `Qualification` is the default and remains the milestone gate. It adds every native CLI, hosted-boundary, deterministic-artifact, and failure-preservation check.
 
 Qualification builds the CLI once and invokes the resulting `windvale.dll` directly in each separate process. This preserves command parsing, process exit codes, native file behavior, capability boundaries, and output checks while removing repeated `dotnet run` project evaluation.
+
+## Development selection
+
+The conformance runner assigns every registered test to one or more stable areas: `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. Repeated area selections form a union. Supplying a displayed-name filter as well intersects that filter with the selected areas. The runner exposes the canonical names through `--list-areas`.
+
+`Tools/Verify/Verify-Changed.ps1` maps changed paths to those areas and invokes the Fast verifier. Compiler, runtime, bytecode, assembler, object-model, linker, and Foundation paths select their owned areas. Specification paths select the areas that implement the named contract. Tests, build configuration, workflows, verification tooling, broad Seed examples, unknown specifications, and unrecognized implementation paths fail closed to all areas. Documentation outside `Specifications/`, the root license, and editor-only changes do not run Seed; editor-relevant paths still run the editor verifier.
+
+Changed-file selection is an inner-loop optimization only. It never writes a conformance report or supplies Standard or Qualification evidence.
 
 GitHub runs the Windows and Linux qualification jobs concurrently. Exact milestone qualification still uses the committed source archive on Windows and the real Debian QA host and compares their normalized reports and direct artifacts.
 

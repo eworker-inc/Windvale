@@ -8,6 +8,7 @@ ARCHITECTURE=$(uname -m)
 REPORT_PATH=${1:-"$REPOSITORY_ROOT/artifacts/seed-conformance-linux-$ARCHITECTURE.json"}
 VERIFY_LEVEL=${VERIFY_LEVEL:-qualification}
 TEST_FILTER=${TEST_FILTER:-}
+TEST_AREAS=${TEST_AREAS:-}
 FAIL_FAST=${FAIL_FAST:-0}
 TIMING_REPORT_PATH=${TIMING_REPORT_PATH:-}
 TOOL_DLL="$REPOSITORY_ROOT/Tools/Windvale.Tool/bin/$CONFIGURATION/net10.0/windvale.dll"
@@ -17,14 +18,14 @@ mkdir -p "$ARTIFACTS"
 
 case "$VERIFY_LEVEL" in
     fast)
-        if [ -z "$TEST_FILTER" ]; then
-            echo 'Fast verification requires TEST_FILTER so its scope is explicit.' >&2
+        if [ -z "$TEST_FILTER" ] && [ -z "$TEST_AREAS" ]; then
+            echo 'Fast verification requires TEST_FILTER or TEST_AREAS so its scope is explicit.' >&2
             exit 64
         fi
         ;;
     standard|qualification)
-        if [ -n "$TEST_FILTER" ]; then
-            echo 'TEST_FILTER is available only with VERIFY_LEVEL=fast.' >&2
+        if [ -n "$TEST_FILTER" ] || [ -n "$TEST_AREAS" ]; then
+            echo 'Test selection is available only with VERIFY_LEVEL=fast.' >&2
             exit 64
         fi
         if [ "$FAIL_FAST" != '0' ]; then
@@ -41,7 +42,22 @@ esac
 dotnet build "$REPOSITORY_ROOT/Windvale.slnx" --configuration "$CONFIGURATION" --nologo
 
 if [ "$VERIFY_LEVEL" = 'fast' ]; then
-    set -- --filter "$TEST_FILTER"
+    set --
+    if [ -n "$TEST_FILTER" ]; then
+        set -- "$@" --filter "$TEST_FILTER"
+    fi
+    if [ -n "$TEST_AREAS" ]; then
+        SAVED_IFS=$IFS
+        IFS=','
+        for TEST_AREA in $TEST_AREAS; do
+            if [ -z "$TEST_AREA" ]; then
+                echo 'TEST_AREAS contains an empty area name.' >&2
+                exit 64
+            fi
+            set -- "$@" --area "$TEST_AREA"
+        done
+        IFS=$SAVED_IFS
+    fi
     if [ "$FAIL_FAST" = '1' ]; then
         set -- "$@" --fail-fast
     fi
@@ -60,7 +76,18 @@ dotnet run \
     "$@"
 
 if [ "$VERIFY_LEVEL" = 'fast' ]; then
-    echo "Windvale Seed fast verification passed for filter: $TEST_FILTER"
+    SELECTION_DESCRIPTION=
+    if [ -n "$TEST_FILTER" ]; then
+        SELECTION_DESCRIPTION="filter '$TEST_FILTER'"
+    fi
+    if [ -n "$TEST_AREAS" ]; then
+        if [ -n "$SELECTION_DESCRIPTION" ]; then
+            SELECTION_DESCRIPTION="$SELECTION_DESCRIPTION and areas [$TEST_AREAS]"
+        else
+            SELECTION_DESCRIPTION="areas [$TEST_AREAS]"
+        fi
+    fi
+    echo "Windvale Seed fast verification passed for $SELECTION_DESCRIPTION."
     exit 0
 fi
 if [ "$VERIFY_LEVEL" = 'standard' ]; then

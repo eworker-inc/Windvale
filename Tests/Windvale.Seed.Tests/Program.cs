@@ -346,55 +346,75 @@ internal static class Program
     private static readonly string WVLINK_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wv-Linker-Core.wv");
 
-    private static readonly List<(string Name, Action Body)> TESTS =
+    private const string TEST_AREA_ASSEMBLER = "assembler";
+    private const string TEST_AREA_BYTECODE = "bytecode";
+    private const string TEST_AREA_COMPILER = "compiler";
+    private const string TEST_AREA_FOUNDATION = "foundation";
+    private const string TEST_AREA_GOLDEN = "golden";
+    private const string TEST_AREA_LINKER = "linker";
+    private const string TEST_AREA_OBJECT_MODEL = "object-model";
+    private const string TEST_AREA_RUNTIME = "runtime";
+
+    private static readonly ImmutableHashSet<string> TEST_AREAS = ImmutableHashSet.Create(
+        StringComparer.Ordinal,
+        TEST_AREA_ASSEMBLER,
+        TEST_AREA_BYTECODE,
+        TEST_AREA_COMPILER,
+        TEST_AREA_FOUNDATION,
+        TEST_AREA_GOLDEN,
+        TEST_AREA_LINKER,
+        TEST_AREA_OBJECT_MODEL,
+        TEST_AREA_RUNTIME);
+
+    private static readonly List<Testˉcase> TESTS =
     [
-        ("portable source compiles, verifies, and returns the data sum", Portableˉprogramˉruns),
-        ("hosted source requires authorization and writes text", Hostedˉprogramˉruns),
-        ("hosted resources are explicit, separated, and bounded", Hostedˉresourcesˉareˉbounded),
-        ("compiler output is deterministic and canonical", Compilerˉisˉdeterministic),
-        ("bounded source modules compose deterministically before bytecode lowering", Sourceˉmodulesˉcompose),
-        ("Foundation machine contracts are shared, bounded, and portable", Foundationˉmachineˉcontractsˉrun),
-        ("Foundation byte ordering is shared, ordinal, and portable", Foundationˉbyteˉorderingˉruns),
-        ("Foundation decimal parsing shares nominal results and boundaries", Foundationˉdecimalˉparsingˉruns),
-        ("Foundation byte construction is total, bounded, and shared", Foundationˉbyteˉconstructionˉruns),
-        ("Windvale-written source lexer streams the complete Seed token contract", Compilerˉsourceˉlexerˉruns),
-        ("Windvale-written declaration parser exposes bounded streaming source views", Compilerˉsourceˉdeclarationˉparserˉruns),
-        ("Windvale-written body parser exposes bounded statement and expression views", Compilerˉsourceˉbodyˉparserˉruns),
-        ("Windvale compiler source sets are canonical, bounded, and portable", Compilerˉsourceˉsetˉruns),
-        ("Windvale compiler import graphs are complete, acyclic, and portable", Compilerˉsourceˉgraphˉruns),
-        ("Windvale compiler declaration namespaces and signatures bind portably", Compilerˉsourceˉsymbolsˉrun),
-        ("Windvale compiler bodies, locals, and calls bind portably", Compilerˉsourceˉbindingsˉrun),
-        ("Windvale compiler lowers typed source into canonical validated WVIR", Compilerˉsourceˉwirˉruns),
-        ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
-        ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
-        ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
-        ("macron names and explicit local mutability execute", Namingˉandˉmutabilityˉrun),
-        ("Foundation byte values, slices, and little-endian reads execute", Foundationˉbytesˉrun),
-        ("Foundation signed reads and strict UTF-8 text operations execute", Foundationˉtextˉrun),
-        ("Foundation constructs deterministic immutable byte values", Foundationˉbyteˉconstructionˉrun),
-        ("Foundation byte concatenation remains balanced under linker-scale assembly", Foundationˉbalancedˉbytesˉrun),
-        ("Windvale wvdump decodes bounded payloads and instructions", Wvˉdumpˉcoreˉwalksˉsections),
-        ("Windvale object codec validates canonical symbols and relocations", Objectˉmodelˉroundˉtrip),
-        ("Windvale-written object core matches the Stage 0 oracle", Wvoˉobjectˉcoreˉmatchesˉoracle),
-        ("WVA assembler emits canonical sections, symbols, and relocations", Assemblerˉemitsˉcanonicalˉobject),
-        ("WVA assembler rejects malformed and inconsistent source", Assemblerˉrejectsˉinvalidˉsource),
-        ("Windvale-written WVA assembler enforces source and token boundaries", Wvaˉassemblerˉcoreˉrecognizesˉsource),
-        ("Windvale-written WVA assembler matches Stage 0 semantics and bytes", Wvaˉassemblerˉmatchesˉoracle),
-        ("Windvale linker core scans WVO exactly at the hosted boundary", Wvˉlinkerˉcoreˉscansˉobjects),
-        ("Windvale linker emits verified deterministic images and maps", Wvˉlinkerˉresolvesˉandˉlaysˉout),
-        ("Stage 0 linker resolves and verifies a canonical flat image", Linkerˉproducesˉcanonicalˉflatˉimage),
-        ("Stage 0 linker rejects resolution, layout, and relocation failures", Linkerˉrejectsˉinvalidˉlinks),
-        ("Stage 0 linker contains hostile objects and remains deterministic", Linkerˉcontainsˉhostileˉinput),
-        ("immutable nominal records cross function boundaries", Immutableˉrecordsˉrun),
-        ("nominal enums and bounded formatting execute", Enumsˉandˉformattingˉrun),
-        ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
-        ("source diagnostics contain stable codes and locations", Sourceˉdiagnosticsˉareˉuseful),
-        ("binary reader rejects malformed envelopes and UTF-8", Malformedˉmodulesˉareˉrejected),
-        ("verifier rejects unsafe instruction streams", Unsafeˉbytecodeˉisˉrejected),
-        ("runtime traps overflow and data bounds", Runtimeˉtrapsˉareˉdeterministic),
-        ("runtime enforces instruction and call-depth limits", Runtimeˉlimitsˉareˉenforced),
-        ("bounded random input never escapes diagnostic boundaries", Randomˉinputˉisˉcontained),
-        ("golden hashes identify the cross-host contract", Goldenˉhashesˉmatch),
+        new("portable source compiles, verifies, and returns the data sum", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Portableˉprogramˉruns),
+        new("hosted source requires authorization and writes text", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Hostedˉprogramˉruns),
+        new("hosted resources are explicit, separated, and bounded", [TEST_AREA_RUNTIME], Hostedˉresourcesˉareˉbounded),
+        new("compiler output is deterministic and canonical", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Compilerˉisˉdeterministic),
+        new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
+        new("Foundation machine contracts are shared, bounded, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉmachineˉcontractsˉrun),
+        new("Foundation byte ordering is shared, ordinal, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉorderingˉruns),
+        new("Foundation decimal parsing shares nominal results and boundaries", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉdecimalˉparsingˉruns),
+        new("Foundation byte construction is total, bounded, and shared", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉconstructionˉruns),
+        new("Windvale-written source lexer streams the complete Seed token contract", [TEST_AREA_COMPILER], Compilerˉsourceˉlexerˉruns),
+        new("Windvale-written declaration parser exposes bounded streaming source views", [TEST_AREA_COMPILER], Compilerˉsourceˉdeclarationˉparserˉruns),
+        new("Windvale-written body parser exposes bounded statement and expression views", [TEST_AREA_COMPILER], Compilerˉsourceˉbodyˉparserˉruns),
+        new("Windvale compiler source sets are canonical, bounded, and portable", [TEST_AREA_COMPILER], Compilerˉsourceˉsetˉruns),
+        new("Windvale compiler import graphs are complete, acyclic, and portable", [TEST_AREA_COMPILER], Compilerˉsourceˉgraphˉruns),
+        new("Windvale compiler declaration namespaces and signatures bind portably", [TEST_AREA_COMPILER], Compilerˉsourceˉsymbolsˉrun),
+        new("Windvale compiler bodies, locals, and calls bind portably", [TEST_AREA_COMPILER], Compilerˉsourceˉbindingsˉrun),
+        new("Windvale compiler lowers typed source into canonical validated WVIR", [TEST_AREA_COMPILER], Compilerˉsourceˉwirˉruns),
+        new("module codec round-trips exact canonical bytes", [TEST_AREA_BYTECODE], Moduleˉroundˉtrip),
+        new("inspector exposes module metadata and disassembly", [TEST_AREA_BYTECODE], Inspectorˉisˉuseful),
+        new("bool, if, text literals, and calls execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Additionalˉsemanticsˉrun),
+        new("macron names and explicit local mutability execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Namingˉandˉmutabilityˉrun),
+        new("Foundation byte values, slices, and little-endian reads execute", [TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Foundationˉbytesˉrun),
+        new("Foundation signed reads and strict UTF-8 text operations execute", [TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Foundationˉtextˉrun),
+        new("Foundation constructs deterministic immutable byte values", [TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Foundationˉbyteˉconstructionˉrun),
+        new("Foundation byte concatenation remains balanced under linker-scale assembly", [TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Foundationˉbalancedˉbytesˉrun),
+        new("Windvale wvdump decodes bounded payloads and instructions", [TEST_AREA_FOUNDATION, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvˉdumpˉcoreˉwalksˉsections),
+        new("Windvale object codec validates canonical symbols and relocations", [TEST_AREA_OBJECT_MODEL], Objectˉmodelˉroundˉtrip),
+        new("Windvale-written object core matches the Stage 0 oracle", [TEST_AREA_OBJECT_MODEL, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvoˉobjectˉcoreˉmatchesˉoracle),
+        new("WVA assembler emits canonical sections, symbols, and relocations", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL], Assemblerˉemitsˉcanonicalˉobject),
+        new("WVA assembler rejects malformed and inconsistent source", [TEST_AREA_ASSEMBLER], Assemblerˉrejectsˉinvalidˉsource),
+        new("Windvale-written WVA assembler enforces source and token boundaries", [TEST_AREA_ASSEMBLER, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvaˉassemblerˉcoreˉrecognizesˉsource),
+        new("Windvale-written WVA assembler matches Stage 0 semantics and bytes", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvaˉassemblerˉmatchesˉoracle),
+        new("Windvale linker core scans WVO exactly at the hosted boundary", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉcoreˉscansˉobjects),
+        new("Windvale linker emits verified deterministic images and maps", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉresolvesˉandˉlaysˉout),
+        new("Stage 0 linker resolves and verifies a canonical flat image", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉproducesˉcanonicalˉflatˉimage),
+        new("Stage 0 linker rejects resolution, layout, and relocation failures", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉrejectsˉinvalidˉlinks),
+        new("Stage 0 linker contains hostile objects and remains deterministic", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉcontainsˉhostileˉinput),
+        new("immutable nominal records cross function boundaries", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Immutableˉrecordsˉrun),
+        new("nominal enums and bounded formatting execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Enumsˉandˉformattingˉrun),
+        new("Seed arithmetic and comparison operators execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Operatorsˉrun),
+        new("source diagnostics contain stable codes and locations", [TEST_AREA_COMPILER], Sourceˉdiagnosticsˉareˉuseful),
+        new("binary reader rejects malformed envelopes and UTF-8", [TEST_AREA_BYTECODE], Malformedˉmodulesˉareˉrejected),
+        new("verifier rejects unsafe instruction streams", [TEST_AREA_BYTECODE], Unsafeˉbytecodeˉisˉrejected),
+        new("runtime traps overflow and data bounds", [TEST_AREA_RUNTIME], Runtimeˉtrapsˉareˉdeterministic),
+        new("runtime enforces instruction and call-depth limits", [TEST_AREA_RUNTIME], Runtimeˉlimitsˉareˉenforced),
+        new("bounded random input never escapes diagnostic boundaries", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_ASSEMBLER], Randomˉinputˉisˉcontained),
+        new("golden hashes identify the cross-host contract", [TEST_AREA_GOLDEN], Goldenˉhashesˉmatch),
     ];
 
     private static Conformanceˉcontract? Contract;
@@ -423,14 +443,37 @@ internal static class Program
             return 0;
         }
 
-        var Selectedˉtests = Options.Filter is null
-            ? TESTS
-            : TESTS
-                .Where(Test => Test.Name.Contains(Options.Filter, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+        if (Options.Listˉareas)
+        {
+            foreach (var Area in TEST_AREAS.Order(StringComparer.Ordinal))
+            {
+                Console.WriteLine(Area);
+            }
+
+            return 0;
+        }
+
+        IEnumerable<Testˉcase> Selection = TESTS;
+        if (Options.Filter is not null)
+        {
+            Selection = Selection.Where(
+                Test => Test.Name.Contains(Options.Filter, StringComparison.OrdinalIgnoreCase));
+        }
+        if (Options.Areas.Count != 0)
+        {
+            Selection = Selection.Where(Test => Test.Areas.Any(Options.Areas.Contains));
+        }
+
+        var Selectedˉtests = Selection.ToList();
         if (Selectedˉtests.Count == 0)
         {
-            Console.Error.WriteLine($"No tests match filter '{Options.Filter}'.");
+            var Selectionˉdescription = Options.Filter is null
+                ? $"areas [{string.Join(", ", Options.Areas.Order(StringComparer.Ordinal))}]"
+                : Options.Areas.Count == 0
+                    ? $"filter '{Options.Filter}'"
+                    : $"filter '{Options.Filter}' and areas " +
+                      $"[{string.Join(", ", Options.Areas.Order(StringComparer.Ordinal))}]";
+            Console.Error.WriteLine($"No tests match {Selectionˉdescription}.");
             return 64;
         }
 
@@ -477,6 +520,7 @@ internal static class Program
             Writeˉtimingˉreport(
                 Options.Timingˉreportˉpath,
                 Options.Filter,
+                Options.Areas,
                 Options.Failˉfast,
                 Selectedˉtests.Count,
                 Suiteˉtimer.ElapsedMilliseconds,
@@ -504,17 +548,19 @@ internal static class Program
         string? Reportˉpath = null;
         string? Filter = null;
         string? Timingˉreportˉpath = null;
+        var Areas = ImmutableHashSet.CreateBuilder<string>(StringComparer.Ordinal);
         var Failˉfast = false;
         var Listˉtests = false;
+        var Listˉareas = false;
 
         for (var Index = 0; Index < arguments.Length; Index++)
         {
             var Argument = arguments[Index];
-            if (Argument is "--report" or "--filter" or "--timing-report")
+            if (Argument is "--report" or "--filter" or "--area" or "--timing-report")
             {
                 if (Index + 1 >= arguments.Length || string.IsNullOrWhiteSpace(arguments[Index + 1]))
                 {
-                    options = new(null, null, false, null, false);
+                    options = Testˉrunnerˉoptions.Empty;
                     error = $"{Argument} requires a value.";
                     return false;
                 }
@@ -524,7 +570,7 @@ internal static class Program
                 {
                     if (Reportˉpath is not null)
                     {
-                        options = new(null, null, false, null, false);
+                        options = Testˉrunnerˉoptions.Empty;
                         error = "--report may be specified only once.";
                         return false;
                     }
@@ -535,18 +581,32 @@ internal static class Program
                 {
                     if (Filter is not null)
                     {
-                        options = new(null, null, false, null, false);
+                        options = Testˉrunnerˉoptions.Empty;
                         error = "--filter may be specified only once.";
                         return false;
                     }
 
                     Filter = Value;
                 }
+                else if (Argument == "--area")
+                {
+                    var Canonicalˉarea = TEST_AREAS.FirstOrDefault(
+                        Area => string.Equals(Area, Value, StringComparison.OrdinalIgnoreCase));
+                    if (Canonicalˉarea is null)
+                    {
+                        options = Testˉrunnerˉoptions.Empty;
+                        error = $"Unknown test area '{Value}'. Expected one of: " +
+                            string.Join(", ", TEST_AREAS.Order(StringComparer.Ordinal)) + ".";
+                        return false;
+                    }
+
+                    Areas.Add(Canonicalˉarea);
+                }
                 else
                 {
                     if (Timingˉreportˉpath is not null)
                     {
-                        options = new(null, null, false, null, false);
+                        options = Testˉrunnerˉoptions.Empty;
                         error = "--timing-report may be specified only once.";
                         return false;
                     }
@@ -569,33 +629,52 @@ internal static class Program
                 continue;
             }
 
-            options = new(null, null, false, null, false);
+            if (Argument == "--list-areas")
+            {
+                Listˉareas = true;
+                continue;
+            }
+
+            options = Testˉrunnerˉoptions.Empty;
             error = $"Unknown argument: {Argument}";
             return false;
         }
 
-        if (Reportˉpath is not null && Filter is not null)
+        if (Reportˉpath is not null && (Filter is not null || Areas.Count != 0))
         {
-            options = new(null, null, false, null, false);
-            error = "--report requires the complete test suite and cannot be combined with --filter.";
+            options = Testˉrunnerˉoptions.Empty;
+            error = "--report requires the complete test suite and cannot be combined with selection options.";
             return false;
         }
 
         if (Reportˉpath is not null && Failˉfast)
         {
-            options = new(null, null, false, null, false);
+            options = Testˉrunnerˉoptions.Empty;
             error = "--report requires the complete test suite and cannot be combined with --fail-fast.";
             return false;
         }
 
-        if (Listˉtests && (Reportˉpath is not null || Filter is not null || Failˉfast || Timingˉreportˉpath is not null))
+        if ((Listˉtests || Listˉareas) && (
+            Listˉtests == Listˉareas ||
+            Reportˉpath is not null ||
+            Filter is not null ||
+            Areas.Count != 0 ||
+            Failˉfast ||
+            Timingˉreportˉpath is not null))
         {
-            options = new(null, null, false, null, false);
-            error = "--list-tests cannot be combined with execution or report options.";
+            options = Testˉrunnerˉoptions.Empty;
+            error = "A list option must be used alone.";
             return false;
         }
 
-        options = new(Reportˉpath, Filter, Failˉfast, Timingˉreportˉpath, Listˉtests);
+        options = new(
+            Reportˉpath,
+            Filter,
+            Areas.ToImmutable(),
+            Failˉfast,
+            Timingˉreportˉpath,
+            Listˉtests,
+            Listˉareas);
         error = string.Empty;
         return true;
     }
@@ -604,8 +683,10 @@ internal static class Program
     {
         Console.Error.WriteLine(
             "Usage: Windvale.Seed.Tests [--report <path>] [--timing-report <path>]\n" +
-            "       Windvale.Seed.Tests --filter <substring> [--fail-fast] [--timing-report <path>]\n" +
+            "       Windvale.Seed.Tests [--filter <substring>] [--area <name>]... " +
+            "[--fail-fast] [--timing-report <path>]\n" +
             "       Windvale.Seed.Tests --list-tests\n" +
+            "       Windvale.Seed.Tests --list-areas\n" +
             "       Windvale.Seed.Tests --compare-reports <first> <second>");
     }
 
@@ -5965,6 +6046,7 @@ internal static class Program
     private static void Writeˉtimingˉreport(
         string path,
         string? filter,
+        ImmutableHashSet<string> areas,
         bool failˉfast,
         int selected,
         long elapsedˉmilliseconds,
@@ -5972,6 +6054,7 @@ internal static class Program
     {
         var Report = new Testˉtimingˉreport(
             filter,
+            [.. areas.Order(StringComparer.Ordinal)],
             failˉfast,
             selected,
             tests.Count,
@@ -6147,12 +6230,29 @@ internal static class Program
         }
     }
 
+    private sealed record Testˉcase(
+        string Name,
+        ImmutableArray<string> Areas,
+        Action Body);
+
     private sealed record Testˉrunnerˉoptions(
         string? Reportˉpath,
         string? Filter,
+        ImmutableHashSet<string> Areas,
         bool Failˉfast,
         string? Timingˉreportˉpath,
-        bool Listˉtests);
+        bool Listˉtests,
+        bool Listˉareas)
+    {
+        public static Testˉrunnerˉoptions Empty { get; } = new(
+            null,
+            null,
+            ImmutableHashSet<string>.Empty,
+            false,
+            null,
+            false,
+            false);
+    }
 
     private sealed record Testˉtimingˉentry(
         [property: JsonPropertyName("name")] string Name,
@@ -6161,6 +6261,7 @@ internal static class Program
 
     private sealed record Testˉtimingˉreport(
         [property: JsonPropertyName("filter")] string? Filter,
+        [property: JsonPropertyName("areas")] ImmutableArray<string> Areas,
         [property: JsonPropertyName("failFast")] bool Failˉfast,
         [property: JsonPropertyName("selected")] int Selected,
         [property: JsonPropertyName("executed")] int Executed,

@@ -6,6 +6,8 @@ param(
     [ValidateSet('Fast', 'Standard', 'Qualification')]
     [string]$Level = 'Qualification',
     [string]$TestFilter,
+    [ValidateSet('assembler', 'bytecode', 'compiler', 'foundation', 'golden', 'linker', 'object-model', 'runtime')]
+    [string[]]$TestArea,
     [switch]$FailFast,
     [string]$TimingReportPath
 )
@@ -16,11 +18,19 @@ $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net
 $TestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj'
 $Artifacts = Join-Path $RepositoryRoot 'artifacts'
 New-Item -ItemType Directory -Force -Path $Artifacts | Out-Null
-if ($Level -eq 'Fast' -and [string]::IsNullOrWhiteSpace($TestFilter)) {
-    throw 'Fast verification requires -TestFilter so its scope is explicit.'
+$SelectedAreas = @($TestArea | Where-Object { ![string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+if (
+    $Level -eq 'Fast' -and
+    [string]::IsNullOrWhiteSpace($TestFilter) -and
+    $SelectedAreas.Count -eq 0
+) {
+    throw 'Fast verification requires -TestFilter or -TestArea so its scope is explicit.'
 }
-if ($Level -ne 'Fast' -and ![string]::IsNullOrWhiteSpace($TestFilter)) {
-    throw '-TestFilter is available only with -Level Fast; Standard and Qualification require all tests.'
+if (
+    $Level -ne 'Fast' -and
+    (![string]::IsNullOrWhiteSpace($TestFilter) -or $SelectedAreas.Count -ne 0)
+) {
+    throw 'Test selection is available only with -Level Fast; Standard and Qualification require all tests.'
 }
 if ($Level -ne 'Fast' -and $FailFast) {
     throw '-FailFast is available only with -Level Fast; Standard and Qualification require the complete suite.'
@@ -37,7 +47,12 @@ if ($LASTEXITCODE -ne 0) {
 
 $TestArguments = @()
 if ($Level -eq 'Fast') {
-    $TestArguments += @('--filter', $TestFilter)
+    if (![string]::IsNullOrWhiteSpace($TestFilter)) {
+        $TestArguments += @('--filter', $TestFilter)
+    }
+    foreach ($Area in $SelectedAreas) {
+        $TestArguments += @('--area', $Area)
+    }
     if ($FailFast) {
         $TestArguments += '--fail-fast'
     }
@@ -54,7 +69,14 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 if ($Level -eq 'Fast') {
-    Write-Host "Windvale Seed fast verification passed for filter: $TestFilter"
+    $Selection = @()
+    if (![string]::IsNullOrWhiteSpace($TestFilter)) {
+        $Selection += "filter '$TestFilter'"
+    }
+    if ($SelectedAreas.Count -ne 0) {
+        $Selection += "areas [$($SelectedAreas -join ', ')]"
+    }
+    Write-Host "Windvale Seed fast verification passed for $($Selection -join ' and ')."
     return
 }
 if ($Level -eq 'Standard') {

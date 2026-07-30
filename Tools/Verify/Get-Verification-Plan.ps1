@@ -1,0 +1,142 @@
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)]
+    [AllowEmptyCollection()]
+    [string[]]$ChangedPath,
+    [switch]$PassThru,
+    [switch]$Quiet
+)
+
+$ErrorActionPreference = 'Stop'
+$Classifier = Join-Path $PSScriptRoot 'Classify-Verification-Changes.ps1'
+$AllAreas = @(
+    'assembler',
+    'bytecode',
+    'compiler',
+    'foundation',
+    'golden',
+    'linker',
+    'object-model',
+    'runtime'
+)
+$Areas = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+
+function Add-Area {
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$Name
+    )
+
+    foreach ($AreaName in $Name) {
+        if ($AreaName -notin $AllAreas) {
+            throw "Unknown verification area in path mapping: $AreaName"
+        }
+        $null = $Areas.Add($AreaName)
+    }
+}
+
+function Add-AllAreas {
+    Add-Area $AllAreas
+}
+
+$Paths = @(
+    $ChangedPath |
+        ForEach-Object {
+            $NormalizedPath = $_.Replace('\', '/')
+            while ($NormalizedPath.StartsWith('./', [StringComparison]::Ordinal)) {
+                $NormalizedPath = $NormalizedPath.Substring(2)
+            }
+            $NormalizedPath.TrimStart('/')
+        } |
+        Where-Object { ![string]::IsNullOrWhiteSpace($_) } |
+        Sort-Object -Unique
+)
+$Classification = & $Classifier -ChangedPath $Paths -PassThru -Quiet
+
+if ($Paths.Count -eq 0) {
+    Add-AllAreas
+}
+
+foreach ($Path in $Paths) {
+    if ($Path.StartsWith('Tools/Editors/', [StringComparison]::Ordinal)) {
+        continue
+    }
+
+    if (
+        !$Path.StartsWith('Specifications/', [StringComparison]::Ordinal) -and
+        ($Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or $Path -eq 'LICENSE')
+    ) {
+        continue
+    }
+
+    if ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
+        Add-Area 'compiler'
+    } elseif ($Path.StartsWith('Runtime/Windvale.Bytecode/', [StringComparison]::Ordinal)) {
+        Add-Area 'bytecode'
+    } elseif ($Path.StartsWith('Runtime/Windvale.Runtime/', [StringComparison]::Ordinal)) {
+        Add-Area 'runtime'
+    } elseif ($Path.StartsWith('Object-Model/', [StringComparison]::Ordinal)) {
+        Add-Area 'object-model'
+    } elseif ($Path.StartsWith('Assembler/', [StringComparison]::Ordinal)) {
+        Add-Area 'assembler'
+    } elseif ($Path.StartsWith('Linker/', [StringComparison]::Ordinal)) {
+        Add-Area 'linker'
+    } elseif ($Path.StartsWith('Foundation/', [StringComparison]::Ordinal)) {
+        Add-Area 'foundation'
+    } elseif ($Path.StartsWith('Examples/Seed/', [StringComparison]::Ordinal)) {
+        Add-Area @('bytecode', 'compiler', 'runtime')
+    } elseif ($Path.StartsWith('Examples/Foundation/', [StringComparison]::Ordinal)) {
+        Add-Area 'foundation'
+    } elseif ($Path.StartsWith('Examples/Compiler/', [StringComparison]::Ordinal)) {
+        Add-Area 'compiler'
+    } elseif ($Path.StartsWith('Examples/Assembler/', [StringComparison]::Ordinal)) {
+        Add-Area 'assembler'
+    } elseif ($Path.StartsWith('Examples/Linker/', [StringComparison]::Ordinal)) {
+        Add-Area 'linker'
+    } elseif ($Path -match '^Specifications/(Compiler-|Source-Naming|Seed-Language|Seed-Records|Seed-Enums)') {
+        Add-Area @('compiler', 'runtime')
+    } elseif ($Path -eq 'Specifications/Seed-Bytecode.md') {
+        Add-Area @('bytecode', 'runtime')
+    } elseif ($Path -eq 'Specifications/Hosted-Resources.md') {
+        Add-Area 'runtime'
+    } elseif ($Path -match '^Specifications/Foundation-') {
+        Add-Area 'foundation'
+    } elseif ($Path -match '^Specifications/Wv-Dump-') {
+        Add-Area @('bytecode', 'foundation', 'runtime')
+    } elseif ($Path -match '^Specifications/(Windvale-Object-Format|Wvo-)') {
+        Add-Area @('foundation', 'object-model', 'runtime')
+    } elseif ($Path -match '^Specifications/(Windvale-Assembly|Wva-)') {
+        Add-Area @('assembler', 'object-model', 'runtime')
+    } elseif ($Path -match '^Specifications/(Windvale-Linking|Wv-Linker-)') {
+        Add-Area @('linker', 'object-model', 'runtime')
+    } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
+        Add-AllAreas
+    } elseif (
+        $Path.StartsWith('Tests/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Verify/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Windvale.Tool/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('.github/', [StringComparison]::Ordinal) -or
+        $Path -in @('Directory.Build.props', 'global.json', 'Windvale.slnx')
+    ) {
+        Add-AllAreas
+    } else {
+        Add-AllAreas
+    }
+}
+
+$SelectedAreas = @($AllAreas | Where-Object { $Areas.Contains($_) })
+$Plan = [pscustomobject]@{
+    Scope = $Classification.Scope
+    Editor = $Classification.Editor
+    Areas = $SelectedAreas
+    ChangedCount = $Paths.Count
+}
+if (!$Quiet) {
+    Write-Host "Changed paths: $($Plan.ChangedCount)"
+    Write-Host "Verification scope: $($Plan.Scope)"
+    Write-Host "Editor verification: $($Plan.Editor.ToString().ToLowerInvariant())"
+    Write-Host "Seed test areas: [$($Plan.Areas -join ', ')]"
+}
+if ($PassThru) {
+    $Plan
+}

@@ -42,13 +42,19 @@ On Linux:
 ./Tools/Verify/Verify-Seed.sh
 ```
 
-During iteration, select the narrowest relevant test by displayed-name substring:
+During iteration, prefer the change-aware development verifier:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestFilter '<substring>' -FailFast
+pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
 ```
 
-Use `-Level Standard` for the complete in-process conformance suite without the native CLI qualification pass. Fast and Standard results are development feedback, not milestone qualification. The default `Qualification` level remains the complete Windows or Linux gate.
+When selecting explicitly, use one or more test areas and optionally narrow them with a displayed-name substring:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea compiler,runtime -TestFilter '<substring>' -FailFast
+```
+
+The available areas are `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. Area selections form a union; an accompanying filter intersects with that union. Use `-Level Standard` for the complete in-process conformance suite without the native CLI qualification pass. Changed-file, Fast, and Standard results are development feedback, not milestone qualification. The default `Qualification` level remains the complete Windows or Linux gate.
 
 Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require evidence from Windows and real Debian before cross-host qualification is claimed. GitHub-hosted CI is a review gate, not a substitute for the exact cross-host qualification procedure.
 

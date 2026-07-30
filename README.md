@@ -95,15 +95,24 @@ Build and run the complete Seed verifier on Windows:
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
 ```
 
-Use the fast tier while iterating on one area; its case-insensitive filter is explicit and may match one or more displayed test names:
+For the normal inner loop, let the changed paths select the relevant test areas:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
+```
+
+Use the fast tier directly when you need to override that plan. Areas are repeatable and combine as a union; a displayed-name filter narrows that union further:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
   -Level Fast `
+  -TestArea compiler,runtime `
   -TestFilter 'declaration namespaces' `
   -FailFast `
   -TimingReportPath artifacts/seed-timing-fast.json
 ```
+
+The available areas are `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. `Verify-Changed.ps1` fails closed to all areas for broad or unrecognized implementation changes. Changed-file and Fast runs are development feedback only.
 
 `-Level Standard` builds and runs the complete 47-test in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
 
@@ -113,7 +122,7 @@ On Linux:
 ./Tools/Verify/Verify-Seed.sh
 ```
 
-Linux exposes the same tiers through `VERIFY_LEVEL`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`. GitHub runs the default qualification level on Windows and Linux concurrently.
+Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`. GitHub runs the default qualification level on Windows and Linux concurrently.
 
 Compile, verify, inspect, and run the portable example:
 
