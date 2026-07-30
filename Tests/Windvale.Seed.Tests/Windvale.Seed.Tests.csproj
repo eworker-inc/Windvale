@@ -9,4 +9,9 @@
     <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource
+      Include="../../Examples/Foundation/Wv-Dump-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Wv-Dump-Core.wv" />
+  </ItemGroup>
 </Project>

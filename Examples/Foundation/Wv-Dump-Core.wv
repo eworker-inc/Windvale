@@ -1,0 +1,199 @@
+module Wvˉdumpˉcore profile portable;
+
+data Shortˉmodule: bytes = [87];
+
+data Badˉmagicˉmodule: bytes = [
+    0, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0
+];
+
+data Badˉversionˉmodule: bytes = [
+    87, 86, 66, 49, 2, 0, 1, 0, 6, 0, 0, 0
+];
+
+data Badˉcountˉmodule: bytes = [
+    87, 86, 66, 49, 1, 0, 1, 0, 5, 0, 0, 0
+];
+
+data Hostileˉlengthˉmodule: bytes = [
+    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    1, 0, 0, 0, 255, 255, 255, 255
+];
+
+data Validˉmodule: bytes = [
+    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    5, 0, 0, 0, 0, 0, 0, 0,
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+];
+
+data Badˉkindˉmodule: bytes = [
+    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    5, 0, 0, 0, 0, 0, 0, 0,
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+];
+
+data Badˉflagsˉmodule: bytes = [
+    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    2, 1, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    5, 0, 0, 0, 0, 0, 0, 0,
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+];
+
+data Truncatedˉmodule: bytes = [
+    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    5, 0, 0, 0, 0, 0, 0, 0,
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0
+];
+
+data Trailingˉmodule: bytes = [
+    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    5, 0, 0, 0, 0, 0, 0, 0,
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    0
+];
+
+fn Rangeˉisˉinside(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total {
+        return false;
+    }
+
+    return Length <= Total - Offset;
+}
+
+fn Sectionˉkindˉmatches(Index: u32, Kind: u8) -> bool {
+    if Index == 0u32 {
+        return Kind == 1u8;
+    }
+    if Index == 1u32 {
+        return Kind == 2u8;
+    }
+    if Index == 2u32 {
+        return Kind == 3u8;
+    }
+    if Index == 3u32 {
+        return Kind == 4u8;
+    }
+    if Index == 4u32 {
+        return Kind == 5u8;
+    }
+
+    return Kind == 6u8;
+}
+
+fn Inspectˉwvbˉenvelope(Input: bytes) -> i32 {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 12u32 {
+        return 1;
+    }
+
+    let Magic: bytes = Bytesˉslice(Input, 0u32, 4u32);
+    if Bytesˉreadˉu8(Magic, 0u32) != 87u8 {
+        return 2;
+    }
+    if Bytesˉreadˉu8(Magic, 1u32) != 86u8 {
+        return 2;
+    }
+    if Bytesˉreadˉu8(Magic, 2u32) != 66u8 {
+        return 2;
+    }
+    if Bytesˉreadˉu8(Magic, 3u32) != 49u8 {
+        return 2;
+    }
+
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
+        return 3;
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 1u32 {
+        return 3;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 6u32 {
+        return 4;
+    }
+
+    var Cursor: u32 = 12u32;
+    var Sectionˉindex: u32 = 0u32;
+    while Sectionˉindex < 6u32 {
+        if !Rangeˉisˉinside(Total, Cursor, 8u32) {
+            return 5;
+        }
+
+        let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+        if !Sectionˉkindˉmatches(Sectionˉindex, Kind) {
+            return 6;
+        }
+        if Bytesˉreadˉu8(Input, Cursor + 1u32) != 0u8 {
+            return 7;
+        }
+        if Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 {
+            return 7;
+        }
+
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Payloadˉoffset: u32 = Cursor + 8u32;
+        if !Rangeˉisˉinside(Total, Payloadˉoffset, Payloadˉlength) {
+            return 5;
+        }
+
+        Cursor = Payloadˉoffset + Payloadˉlength;
+        Sectionˉindex = Sectionˉindex + 1u32;
+    }
+
+    if Cursor != Total {
+        return 8;
+    }
+
+    return 0;
+}
+
+export fn Main() -> i32 {
+    if Inspectˉwvbˉenvelope(Shortˉmodule) != 1 {
+        return 11;
+    }
+    if Inspectˉwvbˉenvelope(Badˉmagicˉmodule) != 2 {
+        return 12;
+    }
+    if Inspectˉwvbˉenvelope(Badˉversionˉmodule) != 3 {
+        return 13;
+    }
+    if Inspectˉwvbˉenvelope(Badˉcountˉmodule) != 4 {
+        return 14;
+    }
+    if Inspectˉwvbˉenvelope(Hostileˉlengthˉmodule) != 5 {
+        return 15;
+    }
+    if Inspectˉwvbˉenvelope(Validˉmodule) != 0 {
+        return 16;
+    }
+    if Inspectˉwvbˉenvelope(Badˉkindˉmodule) != 6 {
+        return 17;
+    }
+    if Inspectˉwvbˉenvelope(Badˉflagsˉmodule) != 7 {
+        return 18;
+    }
+    if Inspectˉwvbˉenvelope(Truncatedˉmodule) != 5 {
+        return 19;
+    }
+    if Inspectˉwvbˉenvelope(Trailingˉmodule) != 8 {
+        return 20;
+    }
+
+    return 0;
+}
