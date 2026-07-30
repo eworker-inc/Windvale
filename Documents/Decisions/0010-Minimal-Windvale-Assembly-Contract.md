@@ -1,7 +1,7 @@
 # Decision 0010: Minimal Windvale assembly contract
 
 - Date: 2026-07-29
-- Status: Accepted; Stage 0 cross-host qualified at `3bfc6bb`, Windvale scanner gate at `e5fd109`, semantic-inspector gate at `cc57bf9`
+- Status: Accepted; Stage 0 cross-host qualified at `3bfc6bb`, Windvale scanner gate at `e5fd109`, semantic-inspector gate at `cc57bf9`, object-encoder and hosted-assembler gates at `a689617`
 
 ## Context
 
@@ -26,6 +26,9 @@ The next boundary must reveal the real needs of a Windvale-written assembler whi
 - The C# assembler is an explicit recovery/oracle dependency, not a second permanent assembly language or object model.
 - Named definitions provide function/data sizes but do not yet provide internal labels. Conditional control flow will require a deliberate label and relocation extension.
 - The first Windvale implementation uses immutable byte cursors and repeated bounded passes. Scanner and semantic-inspector evidence shows that this avoids a premature token collection while preserving exact source limits, line endings, validation classifications, and aggregate sizes. Some semantic name and definition checks are quadratic in declaration count, so object-encoder, linker, or representative-source evidence may still justify bounded collections later.
+- The qualified object encoder measures the complete WVO value before immutable construction, then emits canonical section, symbol, and relocation records in bounded passes. Hosted output is written once only after semantic validation, measurement, encoding, and length agreement, so rejected inputs cannot publish a partial object.
+- Seed has no general checked `u32`-to-`u8` narrowing operation. The bootstrap encoder therefore uses a canonical embedded 0-through-255 byte table and one-byte slices for parsed byte literals and register opcodes. This keeps the current language surface evidence-driven; Foundation or linker pressure may later justify a reusable narrowing facility.
+- Repeated immutable concatenation is acceptable for the bounded bootstrap assembler and its current fixtures, but it is not assumed to be the permanent binary-builder design. Representative linker inputs must measure whether a bounded builder or collection module is required.
 
 ## Reconsider when
 
