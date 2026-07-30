@@ -3,7 +3,10 @@ using System.Text;
 
 namespace Windvale.Compiler;
 
-internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
+internal sealed class Sourceˉlexer(
+    string source,
+    string sourceˉname,
+    Diagnosticˉbag diagnostics)
 {
     private static readonly IReadOnlyDictionary<string, Tokenˉkind> KEYWORDS =
         new Dictionary<string, Tokenˉkind>(StringComparer.Ordinal)
@@ -13,6 +16,7 @@ internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
             ["portable"] = Tokenˉkind.Portable,
             ["hosted"] = Tokenˉkind.Hosted,
             ["system"] = Tokenˉkind.System,
+            ["import"] = Tokenˉkind.Import,
             ["capability"] = Tokenˉkind.Capability,
             ["data"] = Tokenˉkind.Data,
             ["record"] = Tokenˉkind.Record,
@@ -349,7 +353,7 @@ internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
             diagnostics.Report(
                 "WVC1007",
                 "lexer",
-                new(Position, 4, Line, Column),
+                new(Position, 4, Line, Column, sourceˉname),
                 "A Unicode escape contains non-hexadecimal digits.");
             for (var Index = 0; Index < 4; Index++)
             {
@@ -402,7 +406,7 @@ internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
 
     private Sourceˉspan Span(int start, int line, int column)
     {
-        return new(start, Position - start, line, column);
+        return new(start, Position - start, line, column, sourceˉname);
     }
 
     private char Current => Isˉend ? '\0' : source[Position];

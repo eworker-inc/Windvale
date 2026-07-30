@@ -11,6 +11,8 @@ UTF-8 source
     |
 lexer and parser
     |
+bounded static source-module composition
+    |
 semantic symbols and typed WIR
     |
 deterministic stack-bytecode lowering
@@ -41,6 +43,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - Source locations and stable compiler diagnostics
 - Tokenization and strict string-literal handling
 - Recursive-descent and precedence parsing
+- Explicit bounded source-module graph validation and deterministic static composition
 - Module, capability, data, record, enum, function, local, and nominal type binding
 - Typed, stack-independent WIR with explicit blocks and terminators
 - Deterministic lowering from WIR into stack bytecode
@@ -139,6 +142,7 @@ The current bytecode 1.6 golden modules are:
 - `Sumˉdata`: `6f3a272d37dd8893995c7f85c236414ed2864bf59de2f3775c08afd426013f8c`
 - `Helloˉwindvale`: `bcf6597a27384661d2796f1dd8ee6e24cce8e6c7cb84def3b7826a564acb7d54`
 - `Readˉwvbˉheader`: `72ae31559bb3335b320328c26e70518b6a0f3e617d099d41b328b066bb3784c7`
+- `Compositionˉdemo`: `5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612`
 - `Wvˉdumpˉcore`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`
 - `Wvoˉobjectˉcore`: `76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b`
 - `Wvaˉassemblerˉcore`: `9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a`
@@ -154,7 +158,7 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 
 ## Safety boundaries
 
-- Source, assembly, module, and object sizes are bounded before sustained processing.
+- Individual and aggregate source-module input, assembly, module, and object sizes are bounded before sustained processing.
 - Binary lengths and offsets use checked conversions and remaining-buffer checks.
 - The reader rejects malformed UTF-8, unsupported flags, version mismatches, missing bytes, and trailing bytes.
 - The verifier rejects unknown opcodes, truncated operands, bad indices, invalid data uses, stack underflow, type mismatches, invalid branches, inconsistent merges, unreachable instructions, and invalid maximum-stack declarations.
@@ -166,6 +170,6 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 
 ## Deliberate Seed limits
 
-Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, dynamic linking, a Windvale-written linker, host executable-container writer, native compiler backend, or operating-system code. The implemented Stage 0 linker is deliberately limited to verified WVO inputs and one raw flat-memory-image target.
+Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, runtime module linkage, package discovery, a host executable-container writer, native compiler backend, or operating-system code. The qualified Windvale and Stage 0 linkers are deliberately limited to verified WVO inputs and one raw flat-memory-image target.
 
 These are scope boundaries, not assertions that the current language model is final.

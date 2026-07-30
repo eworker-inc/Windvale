@@ -8,10 +8,10 @@ internal sealed class Sourceˉparser
     private readonly ImmutableArray<Syntaxˉtoken> Tokens;
     private int Position;
 
-    public Sourceˉparser(string source, Diagnosticˉbag diagnostics)
+    public Sourceˉparser(string source, string sourceˉname, Diagnosticˉbag diagnostics)
     {
         Diagnostics = diagnostics;
-        var Lexer = new Sourceˉlexer(source, diagnostics);
+        var Lexer = new Sourceˉlexer(source, sourceˉname, diagnostics);
         var Tokensˉbuilder = ImmutableArray.CreateBuilder<Syntaxˉtoken>();
         Syntaxˉtoken Token;
         do
@@ -37,31 +37,49 @@ internal sealed class Sourceˉparser
             : Match(Tokenˉkind.Portable);
         Match(Tokenˉkind.Semicolon);
 
+        var Imports = ImmutableArray.CreateBuilder<Importˉsyntax>();
         var Capabilities = ImmutableArray.CreateBuilder<Capabilityˉsyntax>();
         var Data = ImmutableArray.CreateBuilder<Dataˉsyntax>();
         var Records = ImmutableArray.CreateBuilder<Recordˉsyntax>();
         var Enums = ImmutableArray.CreateBuilder<Enumˉsyntax>();
         var Functions = ImmutableArray.CreateBuilder<Functionˉsyntax>();
+        var Sawˉnonˉimportˉdeclaration = false;
 
         while (Current.Kind != Tokenˉkind.End)
         {
             var Startˉposition = Position;
             switch (Current.Kind)
             {
+                case Tokenˉkind.Import:
+                    if (Sawˉnonˉimportˉdeclaration)
+                    {
+                        Diagnostics.Report(
+                            "WVC1107",
+                            "parser",
+                            Current.Span,
+                            "Source imports must precede every capability, data, type, and function declaration.");
+                    }
+                    Imports.Add(Parseˉimport());
+                    break;
                 case Tokenˉkind.Capability:
+                    Sawˉnonˉimportˉdeclaration = true;
                     Capabilities.Add(Parseˉcapability());
                     break;
                 case Tokenˉkind.Data:
+                    Sawˉnonˉimportˉdeclaration = true;
                     Data.Add(Parseˉdata());
                     break;
                 case Tokenˉkind.Record:
+                    Sawˉnonˉimportˉdeclaration = true;
                     Records.Add(Parseˉrecord());
                     break;
                 case Tokenˉkind.Enum:
+                    Sawˉnonˉimportˉdeclaration = true;
                     Enums.Add(Parseˉenum());
                     break;
                 case Tokenˉkind.Export:
                 case Tokenˉkind.Fn:
+                    Sawˉnonˉimportˉdeclaration = true;
                     Functions.Add(Parseˉfunction());
                     break;
                 default:
@@ -69,7 +87,7 @@ internal sealed class Sourceˉparser
                         "WVC1100",
                         "parser",
                         Current.Span,
-                        $"Expected a capability, data, record, enum, or function declaration but found '{Current.Text}'.");
+                        $"Expected an import, capability, data, record, enum, or function declaration but found '{Current.Text}'.");
                     Nextˉtoken();
                     break;
             }
@@ -83,11 +101,20 @@ internal sealed class Sourceˉparser
         return new(
             Name,
             Profile,
+            Imports.ToImmutable(),
             Capabilities.ToImmutable(),
             Data.ToImmutable(),
             Records.ToImmutable(),
             Enums.ToImmutable(),
             Functions.ToImmutable());
+    }
+
+    private Importˉsyntax Parseˉimport()
+    {
+        var Start = Match(Tokenˉkind.Import);
+        var Name = Match(Tokenˉkind.Identifier);
+        var End = Match(Tokenˉkind.Semicolon);
+        return new(Name, Combine(Start.Span, End.Span));
     }
 
     private Recordˉsyntax Parseˉrecord()
@@ -586,7 +613,10 @@ internal sealed class Sourceˉparser
             "parser",
             Current.Span,
             $"Expected {Formatˉkind(expected)} but found '{Current.Text}'.");
-        return new(expected, string.Empty, new(Current.Span.Start, 0, Current.Span.Line, Current.Span.Column));
+        return new(
+            expected,
+            string.Empty,
+            new(Current.Span.Start, 0, Current.Span.Line, Current.Span.Column, Current.Span.Sourceˉname));
     }
 
     private Syntaxˉtoken Nextˉtoken()
@@ -638,6 +668,11 @@ internal sealed class Sourceˉparser
 
     private static Sourceˉspan Combine(Sourceˉspan start, Sourceˉspan end)
     {
-        return new(start.Start, Math.Max(0, end.Start + end.Length - start.Start), start.Line, start.Column);
+        return new(
+            start.Start,
+            Math.Max(0, end.Start + end.Length - start.Start),
+            start.Line,
+            start.Column,
+            start.Sourceˉname);
     }
 }

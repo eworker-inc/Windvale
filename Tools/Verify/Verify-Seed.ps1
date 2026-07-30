@@ -45,6 +45,9 @@ if ($LASTEXITCODE -ne 0) {
 $SumModule = Join-Path $Artifacts 'Sum-Data.wvb'
 $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
+$CompositionModule = Join-Path $Artifacts 'Module-Composition-Demo.wvb'
+$CompositionReorderedModule = Join-Path $Artifacts 'Module-Composition-Demo-Reordered.wvb'
+$InvalidCompositionModule = Join-Path $Artifacts '__windvale_invalid_composition_output__.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -108,6 +111,49 @@ $FoundationRunOutput = dotnet run --project $ToolProject --configuration $Config
 if ($LASTEXITCODE -ne 0 -or $FoundationRunOutput -notcontains 'Result: 1') {
     throw 'The Seed CLI did not produce Result: 1 for Read-Wvb-Header.wvb.'
 }
+
+$CompositionRoot = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Demo.wv'
+$CompositionMiddle = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Middle.wv'
+$CompositionLeaf = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Leaf.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $CompositionRoot --module $CompositionMiddle --module $CompositionLeaf -o $CompositionModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-module composition demo.' }
+$CompositionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $CompositionModule).Hash.ToLowerInvariant()
+if ($CompositionHash -ne '5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612') {
+    throw "The composed source module has an unexpected digest: $CompositionHash"
+}
+$CompositionRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $CompositionModule
+if ($LASTEXITCODE -ne 0 -or $CompositionRunOutput -notcontains 'Result: 42') {
+    throw 'The composed source module did not return Result: 42.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $CompositionRoot --module $CompositionLeaf --module $CompositionMiddle -o $CompositionReorderedModule
+if ($LASTEXITCODE -ne 0) { throw 'The reordered source-module compile failed.' }
+$CompositionReorderedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $CompositionReorderedModule).Hash.ToLowerInvariant()
+if ($CompositionReorderedHash -ne $CompositionHash) {
+    throw 'Reordering explicit source-module inputs changed the composed WVB bytes.'
+}
+if (Test-Path -LiteralPath $InvalidCompositionModule) {
+    Remove-Item -LiteralPath $InvalidCompositionModule -Force
+}
+$MissingCompositionOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $CompositionRoot --module $CompositionMiddle -o $InvalidCompositionModule 2>&1
+if ($LASTEXITCODE -ne 1 -or ($MissingCompositionOutput -join "`n") -notmatch 'WVC0007') {
+    throw 'The source-module compiler did not reject a missing transitive import.'
+}
+if (Test-Path -LiteralPath $InvalidCompositionModule) {
+    throw 'A rejected source-module composition created an output module.'
+}
+[System.IO.File]::WriteAllBytes($InvalidCompositionModule, [byte[]](9, 8, 7))
+$MissingCompositionOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $CompositionRoot --module $CompositionMiddle -o $InvalidCompositionModule 2>&1
+if ($LASTEXITCODE -ne 1 -or ($MissingCompositionOutput -join "`n") -notmatch 'WVC0007') {
+    throw 'The repeated missing-import composition did not fail deterministically.'
+}
+if ([Convert]::ToHexString([System.IO.File]::ReadAllBytes($InvalidCompositionModule)) -ne '090807') {
+    throw 'A rejected source-module composition modified an existing output module.'
+}
+Remove-Item -LiteralPath $InvalidCompositionModule -Force
 
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wv-Dump-Core.wv.' }

@@ -9,6 +9,7 @@ The intended stack includes a programming language, portable bytecode, a runtime
 Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provides:
 
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
+- Bounded deterministic compile-time source-module composition with explicit transitive dependencies and no runtime linkage
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
@@ -16,7 +17,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A versioned WVA 1 textual assembly contract and Stage 0 assembler that infers definition offsets/sizes and emits verified WVO objects
 - A Windvale-written WVA assembler that performs bounded scanning and semantic validation, derives definition ranges, encodes the complete initial x86-64 instruction/data set, constructs canonical WVO objects, and writes only a fully accepted result
 - A separate Stage 0 linker that resolves verified WVO inputs, lays out a bounded x86-64 flat memory image, applies checked relocations, independently reconstructs the result, and emits a canonical path-free map
-- An in-progress Windvale-written linker core that validates WVO, resolves and lays out inputs, constructs and relocates immutable images, and independently reconstructs every result byte in verified bytecode
+- A qualified Windvale-written linker that validates WVO, resolves and lays out inputs, constructs and independently reconstructs relocated images, emits the canonical map, and publishes only after complete success
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
@@ -82,6 +83,19 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Read-Wvb-Header.wvb
 ```
 
 It exercises `u8`, `u32`, immutable byte slices, and bounded little-endian reads and returns `Result: 1`.
+
+Compile and run the transitive source-module composition example:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Foundation/Module-Composition-Demo.wv `
+  --module Examples/Foundation/Module-Composition-Middle.wv `
+  --module Examples/Foundation/Module-Composition-Leaf.wv `
+  -o artifacts/Module-Composition-Demo.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Module-Composition-Demo.wvb
+```
+
+The compiler resolves only the explicitly supplied portable source modules, internalizes dependency functions into one ordinary WVB, and returns `Result: 42`. Reordering the two `--module` inputs produces identical bytes.
 
 Compile and run the first Windvale-written `wvdump` core:
 

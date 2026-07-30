@@ -1,0 +1,5 @@
+module Compositionˉleaf profile portable;
+
+export fn Compositionˉincrement(Value: i32) -> i32 {
+    return Value + 1;
+}

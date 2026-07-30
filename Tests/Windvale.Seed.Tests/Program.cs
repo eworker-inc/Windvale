@@ -25,6 +25,7 @@ internal static class Program
     private const string WVLINK_CORE_SHA256 = "8d3cb567f6985077b3ad487627bf77a20326b4bc02bcab8d938354f48d339cfd";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
+    private const string SOURCE_COMPOSITION_SHA256 = "5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -156,6 +157,34 @@ internal static class Program
         }
         """;
 
+    private const string COMPOSITION_LEAF_SOURCE = """
+        module Compositionˉleaf profile portable;
+
+        export fn Compositionˉincrement(Value: i32) -> i32 {
+            return Value + 1;
+        }
+        """;
+
+    private const string COMPOSITION_MIDDLE_SOURCE = """
+        module Compositionˉmiddle profile portable;
+
+        import Compositionˉleaf;
+
+        export fn Compositionˉanswer() -> i32 {
+            return Compositionˉincrement(41);
+        }
+        """;
+
+    private const string COMPOSITION_ROOT_SOURCE = """
+        module Compositionˉdemo profile portable;
+
+        import Compositionˉmiddle;
+
+        export fn Main() -> i32 {
+            return Compositionˉanswer();
+        }
+        """;
+
     private static readonly string WVDUMP_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wv-Dump-Core.wv");
 
@@ -180,6 +209,7 @@ internal static class Program
         ("hosted source requires authorization and writes text", Hostedˉprogramˉruns),
         ("hosted resources are explicit, separated, and bounded", Hostedˉresourcesˉareˉbounded),
         ("compiler output is deterministic and canonical", Compilerˉisˉdeterministic),
+        ("bounded source modules compose deterministically before bytecode lowering", Sourceˉmodulesˉcompose),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
@@ -518,6 +548,167 @@ internal static class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Reorderedˉsource));
         Sequenceˉequal(["Alpha", "Zed"], Module.Module.Data.Select(Data => Data.Name));
         Sequenceˉequal(["Main", "Zebra"], Module.Module.Functions.Select(Function => Function.Name));
+    }
+
+    private static void Sourceˉmodulesˉcompose()
+    {
+        var First = Compileˉcompositionˉsuccess(
+            new("middle.wv", COMPOSITION_MIDDLE_SOURCE),
+            new("leaf.wv", COMPOSITION_LEAF_SOURCE));
+        var Second = Compileˉcompositionˉsuccess(
+            new("leaf.wv", COMPOSITION_LEAF_SOURCE),
+            new("middle.wv", COMPOSITION_MIDDLE_SOURCE));
+        Sequenceˉequal(First, Second);
+
+        var Module = Moduleˉcodec.Readˉandˉverify(First);
+        Equal("Compositionˉdemo", Module.Module.Name);
+        Equal(Moduleˉprofile.Portable, Module.Module.Profile);
+        Sequenceˉequal(
+            ["Compositionˉanswer", "Compositionˉincrement", "Main"],
+            Module.Module.Functions.Select(Function => Function.Name));
+        Sequenceˉequal(["Main"], Module.Module.Exports.Select(Export => Export.Name));
+        Equal(
+            42,
+            new Referenceˉruntime(
+                Module,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        var Missing = Seedˉcompiler.Compileˉmodules(
+            new("root.wv", COMPOSITION_ROOT_SOURCE),
+            []);
+        Equal("WVC0007", Missing.Diagnostics.Single().Code);
+        Equal("root.wv", Missing.Diagnostics.Single().Span.Sourceˉname);
+
+        const string Cycleˉroot = """
+            module Cycleˉroot profile portable;
+            import Cycleˉdependency;
+            export fn Main() -> i32 { return Cycleˉvalue(); }
+            """;
+        const string Cycleˉdependency = """
+            module Cycleˉdependency profile portable;
+            import Cycleˉroot;
+            export fn Cycleˉvalue() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("cycle-root.wv", Cycleˉroot),
+                [new("cycle-dependency.wv", Cycleˉdependency)]),
+            "WVC0008");
+
+        const string Hostedˉdependency = """
+            module Hostedˉdependency profile hosted;
+            export fn Hostedˉvalue() -> i32 { return 0; }
+            """;
+        const string Hostedˉroot = """
+            module Hostedˉroot profile hosted;
+            import Hostedˉdependency;
+            export fn Main() -> i32 { return Hostedˉvalue(); }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("hosted-root.wv", Hostedˉroot),
+                [new("hosted-dependency.wv", Hostedˉdependency)]),
+            "WVC0010");
+
+        const string Privateˉdependency = """
+            module Privateˉdependency profile portable;
+            fn Privateˉvalue() -> i32 { return 0; }
+            """;
+        const string Privateˉroot = """
+            module Privateˉroot profile portable;
+            import Privateˉdependency;
+            export fn Main() -> i32 { return Privateˉvalue(); }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("private-root.wv", Privateˉroot),
+                [new("private-dependency.wv", Privateˉdependency)]),
+            "WVC0012");
+
+        const string Dataˉdependency = """
+            module Dataˉdependency profile portable;
+            data Value: [i32] = [0];
+            export fn Dataˉvalue() -> i32 { return Value[0]; }
+            """;
+        const string Dataˉroot = """
+            module Dataˉroot profile portable;
+            import Dataˉdependency;
+            export fn Main() -> i32 { return Dataˉvalue(); }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("data-root.wv", Dataˉroot),
+                [new("data-dependency.wv", Dataˉdependency)]),
+            "WVC0011");
+
+        const string Leakingˉdependency = """
+            module Leakingˉdependency profile portable;
+            export fn Leakingˉvalue() -> i32 { return Rootˉhelper(); }
+            """;
+        const string Leakingˉroot = """
+            module Leakingˉroot profile portable;
+            import Leakingˉdependency;
+            fn Rootˉhelper() -> i32 { return 0; }
+            export fn Main() -> i32 { return Leakingˉvalue(); }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("leaking-root.wv", Leakingˉroot),
+                [new("leaking-dependency.wv", Leakingˉdependency)]),
+            "WVC2065");
+
+        const string Duplicateˉimport = """
+            module Duplicateˉimport profile portable;
+            import Compositionˉleaf;
+            import Compositionˉleaf;
+            export fn Main() -> i32 { return Compositionˉincrement(0); }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("duplicate-import.wv", Duplicateˉimport),
+                [new("leaf.wv", COMPOSITION_LEAF_SOURCE)]),
+            "WVC0006");
+
+        const string Duplicateˉmoduleˉroot = """
+            module Duplicateˉmoduleˉroot profile portable;
+            import Compositionˉleaf;
+            export fn Main() -> i32 { return Compositionˉincrement(0); }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("duplicate-module-root.wv", Duplicateˉmoduleˉroot),
+                [
+                    new("leaf-first.wv", COMPOSITION_LEAF_SOURCE),
+                    new("leaf-second.wv", COMPOSITION_LEAF_SOURCE),
+                ]),
+            "WVC0004");
+
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("root.wv", COMPOSITION_ROOT_SOURCE),
+                [
+                    new("middle.wv", COMPOSITION_MIDDLE_SOURCE),
+                    new("leaf.wv", COMPOSITION_LEAF_SOURCE),
+                    new("unused.wv", "module Unused profile portable; export fn Unusedˉvalue() -> i32 { return 0; }"),
+                ]),
+            "WVC0009");
+
+        const string Lateˉimport = """
+            module Lateˉimport profile portable;
+            export fn Main() -> i32 { return 0; }
+            import Compositionˉleaf;
+            """;
+        Hasˉdiagnostic(Seedˉcompiler.Compile(Lateˉimport, "late.wv"), "WVC1107");
+
+        var Excessˉmodules = Enumerable.Range(0, Seedˉcompiler.MAX_SOURCE_MODULES)
+            .Select(Index => new Sourceˉmoduleˉinput(
+                $"module-{Index}.wv",
+                $"module Module_{Index} profile portable; export fn Value_{Index}() -> i32 {{ return 0; }}"))
+            .ToArray();
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(new("root.wv", COMPOSITION_ROOT_SOURCE), Excessˉmodules),
+            "WVC0002");
     }
 
     private static void Moduleˉroundˉtrip()
@@ -3268,6 +3459,9 @@ internal static class Program
         var Sumˉbytes = Compileˉsuccess(SUM_SOURCE);
         var Helloˉbytes = Compileˉsuccess(HELLO_SOURCE);
         var Foundationˉbytes = Compileˉsuccess(FOUNDATION_SOURCE);
+        var Sourceˉcompositionˉbytes = Compileˉcompositionˉsuccess(
+            new("middle.wv", COMPOSITION_MIDDLE_SOURCE),
+            new("leaf.wv", COMPOSITION_LEAF_SOURCE));
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉsuccess(WVO_CORE_SOURCE);
         var Wvaˉassemblerˉbytes = Compileˉsuccess(WVA_ASSEMBLER_CORE_SOURCE);
@@ -3281,6 +3475,7 @@ internal static class Program
         var Sumˉhash = Moduleˉdigest.Calculateˉsha256(Sumˉbytes);
         var Helloˉhash = Moduleˉdigest.Calculateˉsha256(Helloˉbytes);
         var Foundationˉhash = Moduleˉdigest.Calculateˉsha256(Foundationˉbytes);
+        var Sourceˉcompositionˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉcompositionˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
@@ -3293,6 +3488,7 @@ internal static class Program
         Equal(SUM_SHA256, Sumˉhash);
         Equal(HELLO_SHA256, Helloˉhash);
         Equal(FOUNDATION_SHA256, Foundationˉhash);
+        Equal(SOURCE_COMPOSITION_SHA256, Sourceˉcompositionˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
@@ -3318,6 +3514,10 @@ internal static class Program
             .Replace('\r', '\n');
         var Foundationˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Foundationˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        var Sourceˉcompositionˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Sourceˉcompositionˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
         var Wvˉdumpˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes);
@@ -3451,6 +3651,7 @@ internal static class Program
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
         Equal(1, Foundationˉresult.Exitˉcode);
+        Equal(42, Sourceˉcompositionˉresult.Exitˉcode);
         Equal(0, Wvˉdumpˉresult.Exitˉcode);
         Equal(0, Wvˉdumpˉhostedˉresult.Exitˉcode);
         Equal(string.Empty, Wvˉdumpˉhostedˉdiagnostics.ToString());
@@ -3513,6 +3714,8 @@ internal static class Program
             Helloˉresult.Exitˉcode,
             Foundationˉhash,
             Foundationˉresult.Exitˉcode,
+            Sourceˉcompositionˉhash,
+            Sourceˉcompositionˉresult.Exitˉcode,
             Wvˉdumpˉhash,
             Wvˉdumpˉresult.Exitˉcode,
             Normalizedˉwvdumpˉoutput,
@@ -3697,6 +3900,20 @@ internal static class Program
         return Result.Moduleˉbytes.ToArray();
     }
 
+    private static byte[] Compileˉcompositionˉsuccess(params Sourceˉmoduleˉinput[] dependencies)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new("composition-root.wv", COMPOSITION_ROOT_SOURCE),
+            dependencies);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Source-module compilation failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
     private static byte[] Assembleˉsuccess(string source)
     {
         var Result = Assemblyˉcompiler.Assemble(source);
@@ -3745,9 +3962,14 @@ internal static class Program
     private static void Hasˉdiagnostic(string source, string code)
     {
         var Result = Seedˉcompiler.Compile(source);
-        False(Result.Success, $"Source expected to produce {code} compiled successfully.");
-        True(Result.Diagnostics.Any(Diagnostic => Diagnostic.Code == code),
-            $"Expected diagnostic {code}; found {string.Join(", ", Result.Diagnostics.Select(Item => Item.Code))}.");
+        Hasˉdiagnostic(Result, code);
+    }
+
+    private static void Hasˉdiagnostic(Compilationˉresult result, string code)
+    {
+        False(result.Success, $"Source expected to produce {code} compiled successfully.");
+        True(result.Diagnostics.Any(Diagnostic => Diagnostic.Code == code),
+            $"Expected diagnostic {code}; found {string.Join(", ", result.Diagnostics.Select(Item => Item.Code))}.");
     }
 
     private static void Hasˉassemblyˉdiagnostic(string source, string code)
@@ -4090,6 +4312,8 @@ internal static class Program
         [property: JsonPropertyName("helloResult")] int Helloˉresult,
         [property: JsonPropertyName("foundationSha256")] string Foundationˉsha256,
         [property: JsonPropertyName("foundationResult")] int Foundationˉresult,
+        [property: JsonPropertyName("sourceCompositionSha256")] string Sourceˉcompositionˉsha256,
+        [property: JsonPropertyName("sourceCompositionResult")] int Sourceˉcompositionˉresult,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
         [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
         [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput,

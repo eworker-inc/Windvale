@@ -1,0 +1,7 @@
+module Compositionˉdemo profile portable;
+
+import Compositionˉmiddle;
+
+export fn Main() -> i32 {
+    return Compositionˉanswer();
+}

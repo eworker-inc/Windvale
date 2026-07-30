@@ -6,25 +6,34 @@ namespace Windvale.Compiler;
 public static class Seedˉcompiler
 {
     public const int MAX_SOURCE_CHARACTERS = 4 * 1024 * 1024;
+    public const int MAX_SOURCE_MODULES = Sourceˉmoduleˉcomposition.MAX_SOURCE_MODULES;
+    public const int MAX_TOTAL_SOURCE_CHARACTERS = Sourceˉmoduleˉcomposition.MAX_TOTAL_SOURCE_CHARACTERS;
 
     public static Compilationˉresult Compile(string source, string sourceˉname = "<memory>")
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(sourceˉname);
-        var Diagnostics = new Diagnosticˉbag();
-        if (source.Length > MAX_SOURCE_CHARACTERS)
+        return Compileˉmodules(new(sourceˉname, source), []);
+    }
+
+    public static Compilationˉresult Compileˉmodules(
+        Sourceˉmoduleˉinput root,
+        IReadOnlyList<Sourceˉmoduleˉinput> dependencies)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        ArgumentNullException.ThrowIfNull(root.Sourceˉname);
+        ArgumentNullException.ThrowIfNull(root.Source);
+        ArgumentNullException.ThrowIfNull(dependencies);
+        foreach (var Dependency in dependencies)
         {
-            Diagnostics.Report(
-                "WVC0001",
-                "input",
-                new(0, 0, 1, 1),
-                $"Source '{sourceˉname}' exceeds the {MAX_SOURCE_CHARACTERS} character limit.");
-            return new([], Diagnostics.Toˉimmutable());
+            ArgumentNullException.ThrowIfNull(Dependency);
+            ArgumentNullException.ThrowIfNull(Dependency.Sourceˉname);
+            ArgumentNullException.ThrowIfNull(Dependency.Source);
         }
 
-        var Parser = new Sourceˉparser(source, Diagnostics);
-        var Syntax = Parser.Parseˉmodule();
-        if (Diagnostics.Count != 0)
+        var Diagnostics = new Diagnosticˉbag();
+        var Syntax = Sourceˉmoduleˉcomposition.Compose(root, dependencies, Diagnostics);
+        if (Syntax is null || Diagnostics.Count != 0)
         {
             return new([], Diagnostics.Toˉimmutable());
         }
@@ -47,7 +56,7 @@ public static class Seedˉcompiler
             Diagnostics.Report(
                 "WVC9000",
                 "backend",
-                new(0, 0, 1, 1),
+                new(0, 0, 1, 1, root.Sourceˉname),
                 $"The generated module failed validation: {Exception.Message}");
             return new([], Diagnostics.Toˉimmutable());
         }

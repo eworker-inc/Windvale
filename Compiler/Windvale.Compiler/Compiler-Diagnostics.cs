@@ -6,7 +6,8 @@ public readonly record struct Sourceˉspan(
     int Start,
     int Length,
     int Line,
-    int Column);
+    int Column,
+    string Sourceˉname = "");
 
 public sealed record Compilerˉdiagnostic(
     string Code,
@@ -16,7 +17,10 @@ public sealed record Compilerˉdiagnostic(
 {
     public override string ToString()
     {
-        return $"{Code} {Phase} ({Span.Line},{Span.Column}): {Message}";
+        var Location = string.IsNullOrEmpty(Span.Sourceˉname)
+            ? $"({Span.Line},{Span.Column})"
+            : $"{Span.Sourceˉname}({Span.Line},{Span.Column})";
+        return $"{Code} {Phase} {Location}: {Message}";
     }
 }
 
@@ -41,7 +45,8 @@ internal sealed class Diagnosticˉbag
     public ImmutableArray<Compilerˉdiagnostic> Toˉimmutable()
     {
         return [.. Diagnostics
-            .OrderBy(Diagnostic => Diagnostic.Span.Start)
+            .OrderBy(Diagnostic => Diagnostic.Span.Sourceˉname, StringComparer.Ordinal)
+            .ThenBy(Diagnostic => Diagnostic.Span.Start)
             .ThenBy(Diagnostic => Diagnostic.Code, StringComparer.Ordinal)];
     }
 }
