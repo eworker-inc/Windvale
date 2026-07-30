@@ -43,7 +43,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - Source locations and stable compiler diagnostics
 - Tokenization and strict string-literal handling
 - Recursive-descent and precedence parsing
-- Explicit bounded source-module graph validation and deterministic static composition
+- Explicit bounded source-module graph validation and deterministic static composition of dependency records, enums, and functions
 - Portable Foundation source contracts used by multiple Windvale-written tools
 - Module, capability, data, record, enum, function, local, and nominal type binding
 - Typed, stack-independent WIR with explicit blocks and terminators
@@ -143,15 +143,17 @@ The current bytecode 1.6 golden modules are:
 - `Sumˉdata`: `6f3a272d37dd8893995c7f85c236414ed2864bf59de2f3775c08afd426013f8c`
 - `Helloˉwindvale`: `bcf6597a27384661d2796f1dd8ee6e24cce8e6c7cb84def3b7826a564acb7d54`
 - `Readˉwvbˉheader`: `72ae31559bb3335b320328c26e70518b6a0f3e617d099d41b328b066bb3784c7`
-- `Compositionˉdemo`: `5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612`
+- `Compositionˉdemo`: `0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60`
 - `Foundationˉmachineˉcontracts`: `9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a`
 - `Machineˉcontractsˉdemo`: `b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a`
 - `Foundationˉbyteˉordering`: `194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1`
 - `Foundationˉbyteˉorderingˉdemo`: `0b41e8f615630e0734812ba8cd8e7c06e975592b86327c2fe8220f5e29c10cab`
+- `Foundationˉdecimalˉparsing`: `39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f`
+- `Foundationˉdecimalˉparsingˉdemo`: `16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695`
 - `Wvˉdumpˉcore`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`
 - `Wvoˉobjectˉcore`: `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`
-- `Wvaˉassemblerˉcore`: `92eb62466747e6747f2052efb46a7e5164ba472f2638cc014a4b6b202596b57f`
-- `Wvˉlinkerˉcore`: `88a828ee110d20dcb110a39849bbb9b19b56f746d7084041d5ecbaa3532a894c`
+- `Wvaˉassemblerˉcore`: `d7a9aecb64b99f5ea2b4d61f8900390e06de9708c219164cc1e3d8bb702de416`
+- `Wvˉlinkerˉcore`: `c3d3e17bf1aa55c692fac2749aa6b960b60226469de5b0687af2d93ec54762d2`
 
 The canonical WVO 1.0 representative object is 189 bytes with SHA-256 `006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a`.
 

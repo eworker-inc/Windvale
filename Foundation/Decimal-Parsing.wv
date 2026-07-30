@@ -1,0 +1,34 @@
+module Foundationˉdecimalˉparsing profile portable;
+
+record Foundationˉu32ˉparse {
+    Valid: bool;
+    Value: u32;
+}
+
+export fn Foundationˉu32ˉdecimalˉparse(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> Foundationˉu32ˉparse {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total { return Foundationˉu32ˉparse(false, 0u32); }
+    if Length > Total - Offset { return Foundationˉu32ˉparse(false, 0u32); }
+    if Length == 0u32 { return Foundationˉu32ˉparse(false, 0u32); }
+    if Length > 10u32 { return Foundationˉu32ˉparse(false, 0u32); }
+
+    var Value: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + Index));
+        if Character < 48u32 { return Foundationˉu32ˉparse(false, 0u32); }
+        if Character > 57u32 { return Foundationˉu32ˉparse(false, 0u32); }
+        let Digit: u32 = Character - 48u32;
+        if Value > 429496729u32 { return Foundationˉu32ˉparse(false, 0u32); }
+        if Value == 429496729u32 {
+            if Digit > 5u32 { return Foundationˉu32ˉparse(false, 0u32); }
+        }
+        Value = Value * 10u32 + Digit;
+        Index = Index + 1u32;
+    }
+    return Foundationˉu32ˉparse(true, Value);
+}

@@ -28,6 +28,8 @@ MACHINE_CONTRACTS_MODULE="$ARTIFACTS/Machine-Contracts.wvb"
 MACHINE_CONTRACTS_DEMO_MODULE="$ARTIFACTS/Machine-Contracts-Demo.wvb"
 BYTE_ORDERING_MODULE="$ARTIFACTS/Byte-Ordering.wvb"
 BYTE_ORDERING_DEMO_MODULE="$ARTIFACTS/Byte-Ordering-Demo.wvb"
+DECIMAL_PARSING_MODULE="$ARTIFACTS/Decimal-Parsing.wvb"
+DECIMAL_PARSING_DEMO_MODULE="$ARTIFACTS/Decimal-Parsing-Demo.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -94,7 +96,7 @@ dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build
     --module "$COMPOSITION_LEAF" \
     -o "$COMPOSITION_MODULE"
 COMPOSITION_HASH=$(sha256sum "$COMPOSITION_MODULE" | awk '{print $1}')
-if [ "$COMPOSITION_HASH" != '5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612' ]; then
+if [ "$COMPOSITION_HASH" != '0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60' ]; then
     echo "The composed source module has an unexpected digest: $COMPOSITION_HASH" >&2
     exit 1
 fi
@@ -157,6 +159,31 @@ fi
 BYTE_ORDERING_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     run "$BYTE_ORDERING_DEMO_MODULE")
 printf '%s\n' "$BYTE_ORDERING_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+DECIMAL_PARSING_SOURCE="$REPOSITORY_ROOT/Foundation/Decimal-Parsing.wv"
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$DECIMAL_PARSING_SOURCE" -o "$DECIMAL_PARSING_MODULE"
+DECIMAL_PARSING_HASH=$(sha256sum "$DECIMAL_PARSING_MODULE" | awk '{print $1}')
+if [ "$DECIMAL_PARSING_HASH" != '39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f' ]; then
+    echo "The Foundation decimal-parsing module has an unexpected digest: $DECIMAL_PARSING_HASH" >&2
+    exit 1
+fi
+DECIMAL_PARSING_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$DECIMAL_PARSING_MODULE")
+printf '%s\n' "$DECIMAL_PARSING_INSPECTION" | grep -F 'Foundationˉu32ˉparse' >/dev/null
+printf '%s\n' "$DECIMAL_PARSING_INSPECTION" | grep -F 'Foundationˉu32ˉdecimalˉparse' >/dev/null
+printf '%s\n' "$DECIMAL_PARSING_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Foundation/Decimal-Parsing-Demo.wv" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$DECIMAL_PARSING_DEMO_MODULE"
+DECIMAL_PARSING_DEMO_HASH=$(sha256sum "$DECIMAL_PARSING_DEMO_MODULE" | awk '{print $1}')
+if [ "$DECIMAL_PARSING_DEMO_HASH" != '16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695' ]; then
+    echo "The Foundation decimal-parsing demo has an unexpected digest: $DECIMAL_PARSING_DEMO_HASH" >&2
+    exit 1
+fi
+DECIMAL_PARSING_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$DECIMAL_PARSING_DEMO_MODULE")
+printf '%s\n' "$DECIMAL_PARSING_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     compile "$COMPOSITION_ROOT" --module "$COMPOSITION_MIDDLE" -o "$INVALID_COMPOSITION_MODULE" 2>&1)
@@ -403,6 +430,7 @@ dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build
     compile "$REPOSITORY_ROOT/Examples/Assembler/Wva-Assembler-Core.wv" \
     --module "$MACHINE_CONTRACTS_SOURCE" \
     --module "$BYTE_ORDERING_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
     -o "$WVA_ASSEMBLER_MODULE"
 
 WVA_ASSEMBLER_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVA_ASSEMBLER_MODULE")
@@ -417,6 +445,7 @@ printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉsymbols' >/dev/
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉrelocations' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Foundationˉmachineˉnameˉisˉvalid' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Foundationˉbyteˉspansˉcompare' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Foundationˉu32ˉdecimalˉparse' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'bytes.concat' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'bytes.from_u32_little' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
@@ -447,6 +476,7 @@ dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build
     compile "$REPOSITORY_ROOT/Examples/Linker/Wv-Linker-Core.wv" \
     --module "$MACHINE_CONTRACTS_SOURCE" \
     --module "$BYTE_ORDERING_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
     -o "$WVLINK_CORE_MODULE"
 
 WVLINK_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVLINK_CORE_MODULE")
@@ -472,6 +502,7 @@ printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Definitionˉmapˉminimumˉexce
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Buildˉcanonicalˉmap' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Foundationˉalignmentˉisˉvalid' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Foundationˉbyteˉspansˉcompare' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Foundationˉu32ˉdecimalˉparse' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.read_i32_little' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.sha256_hex' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null

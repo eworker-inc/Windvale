@@ -2,6 +2,7 @@ module Wvˉlinkerˉcore profile hosted;
 
 import Foundationˉmachineˉcontracts;
 import Foundationˉbyteˉordering;
+import Foundationˉdecimalˉparsing;
 
 capability console.write;
 capability diagnostic.write_line;
@@ -116,11 +117,6 @@ enum Linkˉstatus {
     WVL1010 = 10;
     WVL1011 = 11;
     WVL1012 = 12;
-}
-
-record U32ˉparse {
-    Valid: bool;
-    Value: u32;
 }
 
 record Linkˉaggregate {
@@ -741,25 +737,8 @@ fn Acceptedˉobjectˉview(Input: bytes) -> Wvoˉscan {
     );
 }
 
-fn Parseˉu32ˉdecimal(Input: bytes) -> U32ˉparse {
-    let Length: u32 = Bytesˉlength(Input);
-    if Length == 0u32 { return U32ˉparse(false, 0u32); }
-    if Length > 10u32 { return U32ˉparse(false, 0u32); }
-    var Value: u32 = 0u32;
-    var Index: u32 = 0u32;
-    while Index < Length {
-        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Index));
-        if Character < 48u32 { return U32ˉparse(false, 0u32); }
-        if Character > 57u32 { return U32ˉparse(false, 0u32); }
-        let Digit: u32 = Character - 48u32;
-        if Value > 429496729u32 { return U32ˉparse(false, 0u32); }
-        if Value == 429496729u32 {
-            if Digit > 5u32 { return U32ˉparse(false, 0u32); }
-        }
-        Value = Value * 10u32 + Digit;
-        Index = Index + 1u32;
-    }
-    return U32ˉparse(true, Value);
+fn Parseˉu32ˉdecimal(Input: bytes) -> Foundationˉu32ˉparse {
+    return Foundationˉu32ˉdecimalˉparse(Input, 0u32, Bytesˉlength(Input));
 }
 
 fn Compareˉnamesˉacross(
@@ -2619,10 +2598,10 @@ fn Runˉselfˉtests() -> i32 {
     if Trailing.Status != Wvoˉstatus.Trailingˉbytes { return 33; }
     let Badˉplaceholder: Wvoˉscan = Inspectˉobject(Replaceˉu8(Sampleˉobject, 50u32, 1u8));
     if Badˉplaceholder.Status != Wvoˉstatus.Invalidˉrelocation { return 34; }
-    let Maximum: U32ˉparse = Parseˉu32ˉdecimal(Textˉtoˉutf8("4294967295"));
+    let Maximum: Foundationˉu32ˉparse = Parseˉu32ˉdecimal(Textˉtoˉutf8("4294967295"));
     if !Maximum.Valid { return 35; }
     if Maximum.Value != 4294967295u32 { return 36; }
-    let Overflow: U32ˉparse = Parseˉu32ˉdecimal(Textˉtoˉutf8("4294967296"));
+    let Overflow: Foundationˉu32ˉparse = Parseˉu32ˉdecimal(Textˉtoˉutf8("4294967296"));
     if Overflow.Valid { return 37; }
     if Alignmentˉpadding(1u32, 16u32) != 15u32 { return 38; }
     if Alignmentˉpadding(1048577u32, 4096u32) != 4095u32 { return 39; }
@@ -2687,7 +2666,7 @@ fn Runˉfileˉscan() -> i32 {
 }
 
 fn Runˉlinkˉanalysis() -> i32 {
-    let Base: U32ˉparse = Parseˉu32ˉdecimal(Textˉtoˉutf8(process.argument(0u32)));
+    let Base: Foundationˉu32ˉparse = Parseˉu32ˉdecimal(Textˉtoˉutf8(process.argument(0u32)));
     if !Base.Valid {
         let Requestˉfailure: Linkˉanalysis = Linkˉanalysis(
             Linkˉstatus.WVL1001,

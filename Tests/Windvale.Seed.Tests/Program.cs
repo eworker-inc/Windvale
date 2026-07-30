@@ -21,15 +21,17 @@ internal static class Program
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_ASSEMBLER_CORE_SHA256 = "92eb62466747e6747f2052efb46a7e5164ba472f2638cc014a4b6b202596b57f";
-    private const string WVLINK_CORE_SHA256 = "88a828ee110d20dcb110a39849bbb9b19b56f746d7084041d5ecbaa3532a894c";
+    private const string WVA_ASSEMBLER_CORE_SHA256 = "d7a9aecb64b99f5ea2b4d61f8900390e06de9708c219164cc1e3d8bb702de416";
+    private const string WVLINK_CORE_SHA256 = "c3d3e17bf1aa55c692fac2749aa6b960b60226469de5b0687af2d93ec54762d2";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
-    private const string SOURCE_COMPOSITION_SHA256 = "5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612";
+    private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
     private const string BYTE_ORDERING_SHA256 = "194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1";
     private const string BYTE_ORDERING_DEMO_SHA256 = "0b41e8f615630e0734812ba8cd8e7c06e975592b86327c2fe8220f5e29c10cab";
+    private const string DECIMAL_PARSING_SHA256 = "39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f";
+    private const string DECIMAL_PARSING_DEMO_SHA256 = "16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -164,6 +166,19 @@ internal static class Program
     private const string COMPOSITION_LEAF_SOURCE = """
         module Compositionˉleaf profile portable;
 
+        enum Compositionˉstatus {
+            Ready = 1;
+        }
+
+        record Compositionˉvalue {
+            Value: i32;
+            Status: Compositionˉstatus;
+        }
+
+        export fn Compositionˉmake(Value: i32) -> Compositionˉvalue {
+            return Compositionˉvalue(Value, Compositionˉstatus.Ready);
+        }
+
         export fn Compositionˉincrement(Value: i32) -> i32 {
             return Value + 1;
         }
@@ -175,7 +190,9 @@ internal static class Program
         import Compositionˉleaf;
 
         export fn Compositionˉanswer() -> i32 {
-            return Compositionˉincrement(41);
+            let Candidate: Compositionˉvalue = Compositionˉmake(41);
+            if Candidate.Status != Compositionˉstatus.Ready { return 0; }
+            return Compositionˉincrement(Candidate.Value);
         }
         """;
 
@@ -207,6 +224,12 @@ internal static class Program
     private static readonly string BYTE_ORDERING_DEMO_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Byte-Ordering-Demo.wv");
 
+    private static readonly string DECIMAL_PARSING_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Decimal-Parsing.wv");
+
+    private static readonly string DECIMAL_PARSING_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Decimal-Parsing-Demo.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -228,6 +251,7 @@ internal static class Program
         ("bounded source modules compose deterministically before bytecode lowering", Sourceˉmodulesˉcompose),
         ("Foundation machine contracts are shared, bounded, and portable", Foundationˉmachineˉcontractsˉrun),
         ("Foundation byte ordering is shared, ordinal, and portable", Foundationˉbyteˉorderingˉruns),
+        ("Foundation decimal parsing shares nominal results and boundaries", Foundationˉdecimalˉparsingˉruns),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
@@ -582,8 +606,11 @@ internal static class Program
         Equal("Compositionˉdemo", Module.Module.Name);
         Equal(Moduleˉprofile.Portable, Module.Module.Profile);
         Sequenceˉequal(
-            ["Compositionˉanswer", "Compositionˉincrement", "Main"],
+            ["Compositionˉanswer", "Compositionˉincrement", "Compositionˉmake", "Main"],
             Module.Module.Functions.Select(Function => Function.Name));
+        Sequenceˉequal(
+            ["Compositionˉvalue", "Compositionˉstatus"],
+            Module.Module.Types.Select(Type => Type.Name));
         Sequenceˉequal(["Main"], Module.Module.Exports.Select(Export => Export.Name));
         Equal(
             42,
@@ -659,6 +686,30 @@ internal static class Program
                 new("data-root.wv", Dataˉroot),
                 [new("data-dependency.wv", Dataˉdependency)]),
             "WVC0011");
+
+        const string Nominalˉsibling = """
+            module Nominalˉsibling profile portable;
+            record Siblingˉvalue { Value: i32; }
+            export fn Siblingˉmake() -> Siblingˉvalue { return Siblingˉvalue(1); }
+            """;
+        const string Nominalˉleak = """
+            module Nominalˉleak profile portable;
+            export fn Nominalˉleakingˉvalue(Value: Siblingˉvalue) -> i32 { return Value.Value; }
+            """;
+        const string Nominalˉleakˉroot = """
+            module Nominalˉleakˉroot profile portable;
+            import Nominalˉsibling;
+            import Nominalˉleak;
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("nominal-leak-root.wv", Nominalˉleakˉroot),
+                [
+                    new("nominal-sibling.wv", Nominalˉsibling),
+                    new("nominal-leak.wv", Nominalˉleak),
+                ]),
+            "WVC2085");
 
         const string Leakingˉdependency = """
             module Leakingˉdependency profile portable;
@@ -766,6 +817,33 @@ internal static class Program
             BYTE_ORDERING_DEMO_SOURCE,
             "Byte-Ordering-Demo.wv");
         var Demo = Moduleˉcodec.Readˉandˉverify(Demoˉbytes);
+        Sequenceˉequal(["Main"], Demo.Module.Exports.Select(Export => Export.Name));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Demo,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+    }
+
+    private static void Foundationˉdecimalˉparsingˉruns()
+    {
+        var Libraryˉbytes = Compileˉsuccess(DECIMAL_PARSING_SOURCE);
+        var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
+        Equal("Foundationˉdecimalˉparsing", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Sequenceˉequal(
+            ["Foundationˉu32ˉparse"],
+            Library.Module.Types.Select(Type => Type.Name));
+        Sequenceˉequal(
+            ["Foundationˉu32ˉdecimalˉparse"],
+            Library.Module.Exports.Select(Export => Export.Name));
+
+        var Demoˉbytes = Compileˉwithˉdecimalˉparsingˉsuccess(
+            DECIMAL_PARSING_DEMO_SOURCE,
+            "Decimal-Parsing-Demo.wv");
+        var Demo = Moduleˉcodec.Readˉandˉverify(Demoˉbytes);
+        Sequenceˉequal(["Foundationˉu32ˉparse"], Demo.Module.Types.Select(Type => Type.Name));
         Sequenceˉequal(["Main"], Demo.Module.Exports.Select(Export => Export.Name));
         Equal(
             0,
@@ -3544,6 +3622,10 @@ internal static class Program
         var Byteˉorderingˉdemoˉbytes = Compileˉwithˉbyteˉorderingˉsuccess(
             BYTE_ORDERING_DEMO_SOURCE,
             "Byte-Ordering-Demo.wv");
+        var Decimalˉparsingˉbytes = Compileˉsuccess(DECIMAL_PARSING_SOURCE);
+        var Decimalˉparsingˉdemoˉbytes = Compileˉwithˉdecimalˉparsingˉsuccess(
+            DECIMAL_PARSING_DEMO_SOURCE,
+            "Decimal-Parsing-Demo.wv");
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉwithˉbyteˉorderingˉsuccess(
             WVO_CORE_SOURCE,
@@ -3568,6 +3650,8 @@ internal static class Program
         var Machineˉcontractsˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Machineˉcontractsˉdemoˉbytes);
         var Byteˉorderingˉhash = Moduleˉdigest.Calculateˉsha256(Byteˉorderingˉbytes);
         var Byteˉorderingˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Byteˉorderingˉdemoˉbytes);
+        var Decimalˉparsingˉhash = Moduleˉdigest.Calculateˉsha256(Decimalˉparsingˉbytes);
+        var Decimalˉparsingˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Decimalˉparsingˉdemoˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
@@ -3585,6 +3669,8 @@ internal static class Program
         Equal(MACHINE_CONTRACTS_DEMO_SHA256, Machineˉcontractsˉdemoˉhash);
         Equal(BYTE_ORDERING_SHA256, Byteˉorderingˉhash);
         Equal(BYTE_ORDERING_DEMO_SHA256, Byteˉorderingˉdemoˉhash);
+        Equal(DECIMAL_PARSING_SHA256, Decimalˉparsingˉhash);
+        Equal(DECIMAL_PARSING_DEMO_SHA256, Decimalˉparsingˉdemoˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
@@ -3622,6 +3708,10 @@ internal static class Program
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
         var Byteˉorderingˉdemoˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Byteˉorderingˉdemoˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        var Decimalˉparsingˉdemoˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Decimalˉparsingˉdemoˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
         var Wvˉdumpˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes);
@@ -3828,6 +3918,9 @@ internal static class Program
             Byteˉorderingˉhash,
             Byteˉorderingˉdemoˉhash,
             Byteˉorderingˉdemoˉresult.Exitˉcode,
+            Decimalˉparsingˉhash,
+            Decimalˉparsingˉdemoˉhash,
+            Decimalˉparsingˉdemoˉresult.Exitˉcode,
             Wvˉdumpˉhash,
             Wvˉdumpˉresult.Exitˉcode,
             Normalizedˉwvdumpˉoutput,
@@ -4054,6 +4147,20 @@ internal static class Program
         return Result.Moduleˉbytes.ToArray();
     }
 
+    private static byte[] Compileˉwithˉdecimalˉparsingˉsuccess(string source, string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE)]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Foundation composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
     private static byte[] Compileˉwithˉtoolˉfoundationˉsuccess(string source, string sourceˉname)
     {
         var Result = Seedˉcompiler.Compileˉmodules(
@@ -4061,6 +4168,7 @@ internal static class Program
             [
                 new("Foundation/Machine-Contracts.wv", MACHINE_CONTRACTS_SOURCE),
                 new("Foundation/Byte-Ordering.wv", BYTE_ORDERING_SOURCE),
+                new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ]);
         if (!Result.Success)
         {
@@ -4477,6 +4585,9 @@ internal static class Program
         [property: JsonPropertyName("byteOrderingSha256")] string Byteˉorderingˉsha256,
         [property: JsonPropertyName("byteOrderingDemoSha256")] string Byteˉorderingˉdemoˉsha256,
         [property: JsonPropertyName("byteOrderingDemoResult")] int Byteˉorderingˉdemoˉresult,
+        [property: JsonPropertyName("decimalParsingSha256")] string Decimalˉparsingˉsha256,
+        [property: JsonPropertyName("decimalParsingDemoSha256")] string Decimalˉparsingˉdemoˉsha256,
+        [property: JsonPropertyName("decimalParsingDemoResult")] int Decimalˉparsingˉdemoˉresult,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
         [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
         [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput,
