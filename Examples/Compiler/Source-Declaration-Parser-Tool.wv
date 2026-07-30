@@ -1,0 +1,62 @@
+module Compilerˉsourceˉdeclarationˉparserˉtool profile hosted;
+
+import Compilerˉsourceˉdeclarationˉparser;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Compilerˉsourceˉsummaryˉreport(
+    Summary: Compilerˉsourceˉmoduleˉsummary
+) -> text {
+    var Report: text = "source declarations status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " imports=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Imports));
+    Report = Textˉconcat(Report, " capabilities=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Capabilities));
+    Report = Textˉconcat(Report, " data=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Data));
+    Report = Textˉconcat(Report, " records=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Records));
+    Report = Textˉconcat(Report, " enums=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Enums));
+    Report = Textˉconcat(Report, " functions=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Functions));
+    Report = Textˉconcat(Report, " tokens=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Tokens));
+    Report = Textˉconcat(Report, " offset=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Endˉoffset));
+}
+
+fn Compilerˉsourceˉfailureˉreport(
+    Summary: Compilerˉsourceˉmoduleˉsummary
+) -> text {
+    var Report: text = "source declarations status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " lexical-status=");
+    Report = Textˉconcat(Report, Enumˉname(Summary.Lexicalˉstatus));
+    Report = Textˉconcat(Report, " offset=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoffset));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉline));
+    Report = Textˉconcat(Report, " column=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Failureˉcolumn));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 {
+        diagnostic.write_line("Usage: source-declaration-parser <source.wv>");
+        return 64;
+    }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Summary: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Input);
+    if Summary.Status != Compilerˉparseˉstatus.Valid {
+        diagnostic.write_line(Compilerˉsourceˉfailureˉreport(Summary));
+        return 1;
+    }
+    console.write_line(Compilerˉsourceˉsummaryˉreport(Summary));
+    return 0;
+}

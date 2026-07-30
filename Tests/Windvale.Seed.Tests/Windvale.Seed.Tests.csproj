@@ -61,5 +61,14 @@
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Lexer-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Source-Lexer-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Bootstrap/Source-Declaration-Parser.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Declaration-Parser.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Declaration-Parser-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Declaration-Parser-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Declaration-Parser-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Declaration-Parser-Tool.wv" />
   </ItemGroup>
 </Project>

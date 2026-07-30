@@ -16,6 +16,7 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, r
 - Standalone and composed `Foundationˉdecimalˉparsing` validation, imported nominal results, exact range/digit/overflow boundaries, assembler/linker consumers, and unchanged binary outputs
 - Standalone and composed `Foundationˉbyteˉconstruction` validation, exact 4 MiB repeat and total replacement boundaries, assembler/linker consumers, and preserved tool outputs and ceilings
 - Composed Windvale-written Seed lexer validation covering the complete keyword/operator identities, streaming cursors, UTF-8 byte spans, UTF-16-compatible positions, integer suffix/range behavior, strict string escapes, surrogate pairs, and bounded malformed cases
+- Windvale-written declaration parsing over streaming source views, including every top-level declaration shape, data/type/literal boundaries, import ordering, flat failure evidence, balanced body spans, real lexer parsing, and declaration-parser self-parsing
 - Exact codec read/write round trips
 - Inspector metadata and disassembly
 - Functions, `if`, `while`, booleans, immutable text, immutable integer data, indexing, and `length`

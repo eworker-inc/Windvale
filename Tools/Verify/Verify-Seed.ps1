@@ -58,6 +58,9 @@ $ByteConstructionModule = Join-Path $Artifacts 'Byte-Construction.wvb'
 $ByteConstructionDemoModule = Join-Path $Artifacts 'Byte-Construction-Demo.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
 $SourceLexerDemoModule = Join-Path $Artifacts 'Source-Lexer-Demo.wvb'
+$SourceDeclarationParserModule = Join-Path $Artifacts 'Source-Declaration-Parser.wvb'
+$SourceDeclarationParserDemoModule = Join-Path $Artifacts 'Source-Declaration-Parser-Demo.wvb'
+$SourceDeclarationParserToolModule = Join-Path $Artifacts 'Source-Declaration-Parser-Tool.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -78,7 +81,8 @@ if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
 
 $VerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $SumModule
 if ($LASTEXITCODE -ne 0 -or $VerifyOutput -notcontains 'Verified: Sumˉdata') {
-    throw 'The Seed CLI failed to verify Sum-Data.wvb.'
+    $VerifyText = $VerifyOutput -join ' | '
+    throw "The Seed CLI failed to verify Sum-Data.wvb (exit $LASTEXITCODE; output: $VerifyText)."
 }
 
 $InspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SumModule
@@ -324,6 +328,82 @@ $SourceLexerDemoOutput = dotnet run --project $ToolProject --configuration $Conf
     run $SourceLexerDemoModule --max-steps 10000000
 if ($LASTEXITCODE -ne 0 -or $SourceLexerDemoOutput -notcontains 'Result: 0') {
     throw 'The Windvale source-lexer demo did not return Result: 0.'
+}
+
+$SourceDeclarationParserSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Declaration-Parser.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceDeclarationParserModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale declaration parser.' }
+$SourceDeclarationParserHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceDeclarationParserModule).Hash.ToLowerInvariant()
+if ($SourceDeclarationParserHash -ne 'b09be82c374636bf0b75a0dcea21afa648d89676e0fb0ffedcef68f9e958ee61') {
+    throw "The Windvale declaration parser has an unexpected digest: $SourceDeclarationParserHash"
+}
+$SourceDeclarationParserInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceDeclarationParserModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceDeclarationParserInspection -notmatch 'Nominal types \(14\)' -or
+    $SourceDeclarationParserInspection -notmatch 'Compilerˉsourceˉdeclaration' -or
+    $SourceDeclarationParserInspection -notmatch 'Compilerˉsourceˉmoduleˉsummary' -or
+    $SourceDeclarationParserInspection -notmatch 'Compilerˉparseˉnextˉdeclarationˉvalidated' -or
+    $SourceDeclarationParserInspection -notmatch 'Exports \(24\)'
+) {
+    throw 'The Windvale declaration-parser inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Declaration-Parser-Demo.wv') `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceDeclarationParserDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the declaration-parser demo.' }
+$SourceDeclarationParserDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceDeclarationParserDemoModule).Hash.ToLowerInvariant()
+if ($SourceDeclarationParserDemoHash -ne '82dd2f72d2b2d148289353045fda861e07638e8fac8ba97164642d185c3b8e9a') {
+    throw "The declaration-parser demo has an unexpected digest: $SourceDeclarationParserDemoHash"
+}
+$SourceDeclarationParserDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    run $SourceDeclarationParserDemoModule --max-steps 20000000
+if ($LASTEXITCODE -ne 0 -or $SourceDeclarationParserDemoOutput -notcontains 'Result: 0') {
+    throw 'The declaration-parser demo did not return Result: 0.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Declaration-Parser-Tool.wv') `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceDeclarationParserToolModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the declaration-parser tool.' }
+$SourceDeclarationParserToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceDeclarationParserToolModule).Hash.ToLowerInvariant()
+if ($SourceDeclarationParserToolHash -ne '36406acea0ccab9cf9f91cc9723638ae133daa1d5893dcf64454a983427a520c') {
+    throw "The declaration-parser tool has an unexpected digest: $SourceDeclarationParserToolHash"
+}
+$SourceDeclarationParserArguments = @(
+    'run', $SourceDeclarationParserToolModule,
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count'
+)
+$SourceLexerDeclarationOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    @SourceDeclarationParserArguments --max-steps 30000000 -- $SourceLexerSource
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceLexerDeclarationOutput -notcontains 'source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=14 tokens=4715 offset=39210' -or
+    $SourceLexerDeclarationOutput -notcontains 'Result: 0'
+) {
+    throw 'The declaration-parser tool did not parse the real Windvale lexer source.'
+}
+$SourceParserSelfDeclarationOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    @SourceDeclarationParserArguments --max-steps 45000000 -- $SourceDeclarationParserSource
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceParserSelfDeclarationOutput -notcontains 'source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=24 tokens=8876 offset=64950' -or
+    $SourceParserSelfDeclarationOutput -notcontains 'Result: 0'
+) {
+    throw 'The declaration-parser tool did not parse its own declaration source.'
 }
 
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
