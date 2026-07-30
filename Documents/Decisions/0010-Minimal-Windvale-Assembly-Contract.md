@@ -1,7 +1,7 @@
 # Decision 0010: Minimal Windvale assembly contract
 
 - Date: 2026-07-29
-- Status: Accepted; Stage 0 implementation cross-host qualified at `3bfc6bb`
+- Status: Accepted; Stage 0 cross-host qualified at `3bfc6bb`, Windvale scanner gate at `e5fd109`
 
 ## Context
 
@@ -25,6 +25,7 @@ The next boundary must reveal the real needs of a Windvale-written assembler whi
 - Canonical declarations place some responsibility on source producers. This avoids premature dynamic collections and sorting in the bootstrap assembler; a future ergonomic source layer may remove that requirement.
 - The C# assembler is an explicit recovery/oracle dependency, not a second permanent assembly language or object model.
 - Named definitions provide function/data sizes but do not yet provide internal labels. Conditional control flow will require a deliberate label and relocation extension.
+- The first Windvale implementation uses immutable byte cursors and repeated bounded passes. Scanner evidence shows that this avoids a premature token collection while preserving exact source limits and line endings; semantic-inspector evidence may still justify bounded collections later.
 
 ## Reconsider when
 

@@ -42,7 +42,7 @@ Phase 6 is split so that parsing, object production, and link semantics can fail
 | Gate | Deliverable | Qualification evidence |
 | --- | --- | --- |
 | 6A. WVA contract oracle | Versioned WVA 1 grammar, strict Stage 0 parser, x86-64 encoder, independent WVO verification, and canonical examples. | Qualified on Windows and Debian at `3bfc6bb`; exact object bytes agree. |
-| 6B. Windvale source scanner | A Windvale-written bounded UTF-8/line/token scanner that recognizes WVA 1 without host text parsing. | Valid, boundary, malformed UTF-8, line-limit, token, and line-ending cases agree with the oracle. |
+| 6B. Windvale source scanner | A Windvale-written bounded UTF-8/line/token scanner that recognizes WVA 1 without host text parsing. | Qualified on Windows and Debian at `e5fd109`; exact module bytes and hosted reports agree. |
 | 6C. Windvale semantic inspector | Multi-pass symbol, section, definition, statement, reference, ordering, and limit validation expressed in verified bytecode. | Accepted and rejected fixture classifications agree with Stage 0, with stable diagnostics or status records. |
 | 6D. Windvale object encoder | Instruction/data encoding, derived offsets and sizes, symbol records, and relocations emitted as WVO 1.0. | Every canonical fixture is byte-for-byte identical to Stage 0 and passes the independent WVO verifier. |
 | 6E. Hosted assembler shell | Explicit input/output arguments and byte capabilities around a portable assembler core; output is written only after complete validation. | Real CLI assembly succeeds on Windows and Debian; failures leave no partial object. |
@@ -159,4 +159,4 @@ At each checkpoint the project may keep, revise, or replace the proposed mechani
 
 ## Current focus
 
-Phase 6's WVA 1 Stage 0 contract is qualified at `3bfc6bb`: the exact archive passed 26 tests and real CLI assembly on Windows and Debian, and both hosts produced the same verified `Hello-Object.wvo` bytes. The current implementation focus is now the verified Windvale-written WVA parser/encoder against that oracle. Phase 6 remains incomplete until the Windvale module emits the same canonical objects; link layout, resolution, relocation application, and final image output remain a separate following boundary.
+Phase 6's WVA 1 Stage 0 contract is qualified at `3bfc6bb`, and the Windvale-written bounded scanner is qualified at `e5fd109`: the exact replacement archive passed 27 tests and real CLI scanning on Windows and Debian, and both hosts produced the same scanner module and report. The current implementation focus is gate 6C, multi-pass Windvale semantic inspection of declarations, sections, definitions, statements, ordering, integer widths, and references against the Stage 0 oracle. Phase 6 remains incomplete until Windvale emits the same canonical objects and a separately owned linker implements resolution, layout, relocation application, and final image output.

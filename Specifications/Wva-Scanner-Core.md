@@ -4,6 +4,8 @@
 
 `Wvaˉscannerˉcore` is the first Windvale-written implementation slice of WVA 1. It consumes immutable source bytes, applies the accepted source and line limits, normalizes the accepted line endings, recognizes the exact version header, and exposes deterministic token-boundary evidence. Its portable functions do not use host text parsing or file APIs; the hosted shell supplies one explicit resource and prints a versioned report.
 
+The scanner and its hosted report are cross-host qualified at `e5fd109` from one exact source archive on Windows x64 and Debian Linux x64.
+
 This is a lexical foundation, not yet the Windvale assembler. It does not classify declarations or statements, validate names or numeric widths, resolve symbols, derive definition ranges, encode instructions, or emit WVO.
 
 ## Preflight boundary
