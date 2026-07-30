@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text;
 using Windvale.Bytecode;
 
 namespace Windvale.Runtime;
@@ -161,28 +162,230 @@ public sealed record Runtimeˉoptions(
 
 public sealed record Runtimeˉresult(int Exitˉcode, long Executedˉinstructions);
 
+public static class Hostedˉresourceˉlimits
+{
+    public const int MAX_ARGUMENTS = 64;
+    public const int MAX_ARGUMENT_UTF8_BYTES = 4 * 1024;
+    public const int MAX_ARGUMENT_TOTAL_UTF8_BYTES = 64 * 1024;
+}
+
+public enum Hostedˉfileˉerror
+{
+    Invalidˉname,
+    Notˉfound,
+    Permissionˉdenied,
+    Unavailable,
+    Tooˉlarge,
+}
+
+public sealed class Hostedˉfileˉexception : Exception
+{
+    public Hostedˉfileˉexception(Hostedˉfileˉerror error, string message)
+        : base(message)
+    {
+        Error = error;
+    }
+
+    public Hostedˉfileˉerror Error { get; }
+}
+
+public interface IHostedˉfileˉreader
+{
+    ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes);
+}
+
+public sealed class Hostedˉresourceˉcontext
+{
+    private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
+
+    public Hostedˉresourceˉcontext(
+        ImmutableArray<string> arguments,
+        TextWriter standardˉoutput,
+        TextWriter diagnosticˉoutput,
+        IHostedˉfileˉreader? files = null)
+    {
+        ArgumentNullException.ThrowIfNull(standardˉoutput);
+        ArgumentNullException.ThrowIfNull(diagnosticˉoutput);
+        if (arguments.IsDefault)
+        {
+            throw new ArgumentException("Hosted arguments must be an initialized immutable array.", nameof(arguments));
+        }
+
+        if (arguments.Length > Hostedˉresourceˉlimits.MAX_ARGUMENTS)
+        {
+            throw new Runtimeˉexception(
+                "WVR3027",
+                $"The launcher supplied {arguments.Length} arguments; the limit is {Hostedˉresourceˉlimits.MAX_ARGUMENTS}.");
+        }
+
+        var Totalˉbytes = 0;
+        for (var Index = 0; Index < arguments.Length; Index++)
+        {
+            var Argument = arguments[Index] ?? throw new Runtimeˉexception(
+                "WVR3027",
+                $"Hosted argument {Index} is null.");
+            int Utf8ˉbytes;
+            try
+            {
+                Utf8ˉbytes = STRICT_UTF8.GetByteCount(Argument);
+            }
+            catch (EncoderFallbackException)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3027",
+                    $"Hosted argument {Index} is not valid Unicode.");
+            }
+
+            if (Utf8ˉbytes > Hostedˉresourceˉlimits.MAX_ARGUMENT_UTF8_BYTES)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3027",
+                    $"Hosted argument {Index} uses {Utf8ˉbytes} UTF-8 bytes; the per-argument limit is {Hostedˉresourceˉlimits.MAX_ARGUMENT_UTF8_BYTES}.");
+            }
+
+            Totalˉbytes = checked(Totalˉbytes + Utf8ˉbytes);
+            if (Totalˉbytes > Hostedˉresourceˉlimits.MAX_ARGUMENT_TOTAL_UTF8_BYTES)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3027",
+                    $"Hosted arguments use {Totalˉbytes} UTF-8 bytes; the total limit is {Hostedˉresourceˉlimits.MAX_ARGUMENT_TOTAL_UTF8_BYTES}.");
+            }
+        }
+
+        Arguments = arguments;
+        Standardˉoutput = standardˉoutput;
+        Diagnosticˉoutput = diagnosticˉoutput;
+        Files = files;
+    }
+
+    public ImmutableArray<string> Arguments { get; }
+
+    public TextWriter Standardˉoutput { get; }
+
+    public TextWriter Diagnosticˉoutput { get; }
+
+    public IHostedˉfileˉreader? Files { get; }
+}
+
 public interface ICapabilityˉhost
 {
+    bool Supports(string capabilityˉname);
+
     Runtimeˉvalue? Invoke(
         Capabilityˉdeclaration capability,
         ImmutableArray<Runtimeˉvalue> arguments);
 }
 
-public sealed class Referenceˉcapabilityˉhost(TextWriter output) : ICapabilityˉhost
+public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
 {
+    private readonly Hostedˉresourceˉcontext Resources;
+
+    public Referenceˉcapabilityˉhost(TextWriter output)
+        : this(new Hostedˉresourceˉcontext([], output, TextWriter.Null))
+    {
+    }
+
+    public Referenceˉcapabilityˉhost(Hostedˉresourceˉcontext resources)
+    {
+        ArgumentNullException.ThrowIfNull(resources);
+        Resources = resources;
+    }
+
+    public bool Supports(string capabilityˉname)
+    {
+        return capabilityˉname switch
+        {
+            Capabilityˉcatalog.CONSOLE_WRITE or
+            Capabilityˉcatalog.CONSOLE_WRITE_LINE or
+            Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE or
+            Capabilityˉcatalog.PROCESS_ARGUMENT or
+            Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT => true,
+            Capabilityˉcatalog.FILE_READ_BYTES => Resources.Files is not null,
+            _ => false,
+        };
+    }
+
     public Runtimeˉvalue? Invoke(
         Capabilityˉdeclaration capability,
         ImmutableArray<Runtimeˉvalue> arguments)
     {
-        if (capability.Name == Capabilityˉcatalog.CONSOLE_WRITE_LINE)
+        switch (capability.Name)
         {
-            output.WriteLine(arguments[0].Textˉvalue!);
-            return null;
+            case Capabilityˉcatalog.CONSOLE_WRITE:
+                Resources.Standardˉoutput.Write(arguments[0].Textˉvalue!);
+                return null;
+            case Capabilityˉcatalog.CONSOLE_WRITE_LINE:
+                Resources.Standardˉoutput.Write(arguments[0].Textˉvalue!);
+                Resources.Standardˉoutput.Write('\n');
+                return null;
+            case Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE:
+                Resources.Diagnosticˉoutput.Write(arguments[0].Textˉvalue!);
+                Resources.Diagnosticˉoutput.Write('\n');
+                return null;
+            case Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT:
+                return Runtimeˉvalue.Fromˉu32(checked((uint)Resources.Arguments.Length));
+            case Capabilityˉcatalog.PROCESS_ARGUMENT:
+                var Index = arguments[0].U32ˉvalue;
+                if (Index >= (uint)Resources.Arguments.Length)
+                {
+                    throw new Runtimeˉexception(
+                        "WVR3020",
+                        $"Hosted argument index {Index} is outside the supplied count {Resources.Arguments.Length}.");
+                }
+
+                return Runtimeˉvalue.Fromˉtext(Resources.Arguments[(int)Index]);
+            case Capabilityˉcatalog.FILE_READ_BYTES:
+                return Readˉfile(arguments[0].Textˉvalue!);
+            default:
+                throw new Runtimeˉexception(
+                    "WVR3001",
+                    $"The host does not implement capability '{capability.Name}'.");
+        }
+    }
+
+    private Runtimeˉvalue Readˉfile(string resourceˉname)
+    {
+        if (Resources.Files is null)
+        {
+            throw new Runtimeˉexception(
+                "WVR3001",
+                $"The host does not implement capability '{Capabilityˉcatalog.FILE_READ_BYTES}'.");
         }
 
-        throw new Runtimeˉexception(
-            "WVR3001",
-            $"The host does not implement capability '{capability.Name}'.");
+        try
+        {
+            var Bytes = Resources.Files.Readˉbytes(
+                resourceˉname,
+                Bytecodeˉlimits.MAX_BYTE_DATA_BYTES);
+            if (Bytes.IsDefault)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3026",
+                    "The file adapter returned an uninitialized byte value.");
+            }
+
+            if (Bytes.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3025",
+                    $"The file adapter returned {Bytes.Length} bytes; the limit is {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}.");
+            }
+
+            return Runtimeˉvalue.Fromˉbytes(Bytes);
+        }
+        catch (Hostedˉfileˉexception Exception)
+        {
+            var Code = Exception.Error switch
+            {
+                Hostedˉfileˉerror.Invalidˉname => "WVR3021",
+                Hostedˉfileˉerror.Notˉfound => "WVR3022",
+                Hostedˉfileˉerror.Permissionˉdenied => "WVR3023",
+                Hostedˉfileˉerror.Unavailable => "WVR3024",
+                Hostedˉfileˉerror.Tooˉlarge => "WVR3025",
+                _ => "WVR3026",
+            };
+            throw new Runtimeˉexception(Code, Exception.Message);
+        }
     }
 }
 

@@ -11,13 +11,13 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
 - Foundation `u8`, `u32`, immutable byte slices, and bounded little-endian binary reads
 - Deterministic enum names, invariant integer formatting, and bounded text concatenation
-- A Windvale-written bounded walker for the complete `.wvb` header and seven section envelopes with structured results
+- A Windvale-written bounded walker for the complete `.wvb` header and seven section envelopes with structured results and a hosted file shell
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
 - A human-readable module inspector and disassembler
 - A portable .NET reference runtime
-- Explicit authorization for hosted `console.write_line` access
+- Explicit hosted arguments, bounded file-byte input, standard output, separate diagnostics, support preflight, and exact capability authorization
 - Conformance, malformed-input, determinism, diagnostics, and runtime-limit coverage
 - One CLI with `compile`, `inspect`, `verify`, and `run` commands
 
@@ -83,10 +83,16 @@ Compile and run the first Windvale-written `wvdump` core:
 ```powershell
 dotnet run --project Tools/Windvale.Tool -- compile Examples/Foundation/Wv-Dump-Core.wv -o artifacts/Wv-Dump-Core.wvb
 dotnet run --project Tools/Windvale.Tool -- inspect artifacts/Wv-Dump-Core.wvb
-dotnet run --project Tools/Windvale.Tool -- run artifacts/Wv-Dump-Core.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Wv-Dump-Core.wvb `
+  --allow console.write_line `
+  --allow diagnostic.write_line `
+  --allow file.read_bytes `
+  --allow process.argument `
+  --allow process.argument_count `
+  -- artifacts/Sum-Data.wvb
 ```
 
-This portable module walks all seven section envelopes, returns a nominal status plus section count and failure offset, formats a bounded summary, rejects malformed kinds, flags, lengths, truncation, and trailing bytes, and returns `Result: 0` when its valid and adversarial self-checks pass. It is an envelope core, not yet a complete declaration or instruction dumper.
+This hosted module reads an explicit file argument through a bounded capability while its pure Windvale functions walk all seven section envelopes, return a nominal status plus section count and failure offset, and format a deterministic summary. With no program arguments it runs embedded valid and adversarial self-checks. It is an envelope inspector, not yet a complete declaration or instruction dumper.
 
 ## Seed language example
 
@@ -143,6 +149,7 @@ export fn Main() -> i32 {
 - [Seed language specification](Specifications/Seed-Language.md)
 - [Seed immutable records](Specifications/Seed-Records.md)
 - [Seed enums and bounded formatting](Specifications/Seed-Enums-And-Formatting.md)
+- [Hosted resource boundary](Specifications/Hosted-Resources.md)
 - [Foundation byte primitives](Specifications/Foundation-Bytes.md)
 - [Windvale wvdump core](Specifications/Wv-Dump-Core.md)
 - [Source naming conventions](Specifications/Source-Naming.md)
@@ -156,6 +163,7 @@ export fn Main() -> i32 {
 - [Foundation byte primitives decision](Documents/Decisions/0004-Foundation-Byte-Primitives.md)
 - [Immutable nominal records decision](Documents/Decisions/0005-Immutable-Nominal-Records.md)
 - [Nominal enums and bounded formatting decision](Documents/Decisions/0006-Nominal-Enums-And-Bounded-Formatting.md)
+- [Explicit hosted resources decision](Documents/Decisions/0007-Explicit-Hosted-Resources.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

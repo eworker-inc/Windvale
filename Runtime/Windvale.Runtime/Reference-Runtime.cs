@@ -8,6 +8,8 @@ namespace Windvale.Runtime;
 
 public sealed class Referenceˉruntime
 {
+    private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
+
     private readonly Verifiedˉmodule Verifiedˉmodule;
     private readonly ICapabilityˉhost Capabilityˉhost;
     private readonly Runtimeˉoptions Options;
@@ -335,6 +337,11 @@ public sealed class Referenceˉruntime
                         var Capability = Verifiedˉmodule.Module.Capabilities[(int)Instruction.Unsignedˉoperand];
                         var Capabilityˉarguments = Popˉarguments(Stack, Capability.Parameterˉtypes.Length);
                         var Capabilityˉresult = Capabilityˉhost.Invoke(Capability, Capabilityˉarguments);
+                        Validateˉcapabilityˉresult(
+                            Capability,
+                            Capabilityˉresult,
+                            Function.Name,
+                            Instruction.Offset);
                         if (Capabilityˉresult is not null)
                         {
                             Stack.Add(Capabilityˉresult.Value);
@@ -376,7 +383,95 @@ public sealed class Referenceˉruntime
                     "WVR3010",
                     $"Capability '{Capability.Name}' was declared but not authorized.");
             }
+
+            if (!Capabilityˉhost.Supports(Capability.Name))
+            {
+                throw new Runtimeˉexception(
+                    "WVR3001",
+                    $"The host does not implement capability '{Capability.Name}'.");
+            }
         }
+    }
+
+    private static void Validateˉcapabilityˉresult(
+        Capabilityˉdeclaration capability,
+        Runtimeˉvalue? result,
+        string functionˉname,
+        int offset)
+    {
+        if (capability.Returnˉtype == Valueˉtype.Void)
+        {
+            if (result is not null)
+            {
+                Failˉcapabilityˉresult(capability, functionˉname, offset, "returned a value for void");
+            }
+
+            return;
+        }
+
+        if (result is null)
+        {
+            Failˉcapabilityˉresult(capability, functionˉname, offset, "returned no value");
+        }
+
+        var Value = result!.Value;
+        if (Value.Type != capability.Returnˉtype)
+        {
+            Failˉcapabilityˉresult(
+                capability,
+                functionˉname,
+                offset,
+                $"returned {Value.Type} instead of {capability.Returnˉtype}");
+        }
+
+        if (Value.Type.Kind == Valueˉtype.Text)
+        {
+            if (Value.Textˉvalue is null)
+            {
+                Failˉcapabilityˉresult(capability, functionˉname, offset, "returned null text");
+            }
+
+            int Utf8ˉlength;
+            try
+            {
+                Utf8ˉlength = STRICT_UTF8.GetByteCount(Value.Textˉvalue!);
+            }
+            catch (EncoderFallbackException)
+            {
+                Failˉcapabilityˉresult(capability, functionˉname, offset, "returned invalid Unicode text");
+                return;
+            }
+
+            if (Utf8ˉlength > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
+            {
+                Failˉcapabilityˉresult(
+                    capability,
+                    functionˉname,
+                    offset,
+                    $"returned {Utf8ˉlength} UTF-8 bytes; the text limit is {Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES}");
+            }
+        }
+
+        if (Value.Type.Kind == Valueˉtype.Bytes &&
+            Value.Bytesˉvalue.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+        {
+            Failˉcapabilityˉresult(
+                capability,
+                functionˉname,
+                offset,
+                $"returned {Value.Bytesˉvalue.Length} bytes; the byte-value limit is {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}");
+        }
+    }
+
+    private static void Failˉcapabilityˉresult(
+        Capabilityˉdeclaration capability,
+        string functionˉname,
+        int offset,
+        string reason)
+    {
+        throw new Runtimeˉexception(
+            "WVR3013",
+            $"Capability '{capability.Name}' {reason} in function '{functionˉname}' at bytecode offset {offset}.");
     }
 
     private void Countˉinstruction()

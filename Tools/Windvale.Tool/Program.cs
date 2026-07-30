@@ -166,11 +166,12 @@ internal static class Program
         if (arguments.Length == 0)
         {
             return Usageˉerror(
-                "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>]");
+                "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [-- <argument>...]");
         }
 
         var Moduleˉpath = arguments[0];
         var Authorized = ImmutableHashSet.CreateBuilder<string>(StringComparer.Ordinal);
+        var Programˉarguments = ImmutableArray.CreateBuilder<string>();
         long Maximumˉsteps = 1_000_000;
         for (var Index = 1; Index < arguments.Length; Index++)
         {
@@ -192,6 +193,10 @@ internal static class Program
                     }
 
                     break;
+                case "--":
+                    Programˉarguments.AddRange(arguments[(Index + 1)..]);
+                    Index = arguments.Length;
+                    break;
                 default:
                     return Usageˉerror($"Unknown or incomplete run option '{arguments[Index]}'.");
             }
@@ -201,7 +206,11 @@ internal static class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         var Runtime = new Referenceˉruntime(
             Module,
-            new Referenceˉcapabilityˉhost(Console.Out),
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                Programˉarguments.ToImmutable(),
+                Console.Out,
+                Console.Error,
+                new Nativeˉhostedˉfileˉreader())),
             new(Authorized.ToImmutable(), Maximumˉsteps));
         var Result = Runtime.Runˉmain();
         Console.WriteLine($"Result: {Result.Exitˉcode}");
@@ -237,7 +246,7 @@ internal static class Program
         output.WriteLine("  windvale compile <source.wv> [-o <module.wvb>]");
         output.WriteLine("  windvale inspect <module.wvb>");
         output.WriteLine("  windvale verify <module.wvb>");
-        output.WriteLine("  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>]");
+        output.WriteLine("  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [-- <argument>...]");
         output.WriteLine("  windvale help");
     }
 }

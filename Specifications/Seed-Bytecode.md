@@ -63,6 +63,8 @@ repeat:
 
 Entries are strictly sorted by ordinal capability name and cannot be duplicated. Portable modules require zero capabilities.
 
+The current canonical hosted signatures are defined by [Hosted-Resources.md](Hosted-Resources.md). Extending the recognized catalog does not change this encoding or the WVB version when all signatures use existing value types.
+
 ## Data section
 
 ```text

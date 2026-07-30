@@ -118,9 +118,54 @@ if (
     throw 'The Seed CLI inspector did not expose the structured Windvale section walker.'
 }
 
-$WvDumpCoreRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule
+$WvDumpCapabilities = @(
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count'
+)
+
+$WvDumpUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvDumpUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
+    throw 'The Seed CLI did not refuse ungranted WvDump hosted capabilities.'
+}
+
+$WvDumpCoreRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities
 if ($LASTEXITCODE -ne 0 -or $WvDumpCoreRunOutput -notcontains 'Result: 0') {
     throw 'The Seed CLI did not produce Result: 0 for Wv-Dump-Core.wvb.'
+}
+
+$WvDumpHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- $SumModule
+if (
+    $LASTEXITCODE -ne 0 -or
+    ($WvDumpHostedOutput -join "`n") -notmatch 'Valid sections=7 offset=' -or
+    $WvDumpHostedOutput -notcontains 'Result: 0'
+) {
+    throw 'The Windvale-written WvDump core did not inspect a real module through hosted resources.'
+}
+
+$WvDumpInvalidOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    ($WvDumpInvalidOutput -join "`n") -notmatch 'Badˉmagic sections=0 offset=0' -or
+    $WvDumpInvalidOutput -notcontains 'Result: 2'
+) {
+    throw 'The Windvale-written WvDump core did not route an invalid-file diagnostic separately.'
+}
+
+$MissingHostedFile = Join-Path $Artifacts '__windvale_missing_hosted_resource__.wvb'
+if (Test-Path -LiteralPath $MissingHostedFile) {
+    throw "The missing-file verifier path unexpectedly exists: $MissingHostedFile"
+}
+$WvDumpMissingOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- $MissingHostedFile 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvDumpMissingOutput -join "`n") -notmatch 'WVR3022') {
+    throw 'The hosted file adapter did not report a missing resource deterministically.'
+}
+
+$WvDumpInvalidNameOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- '' 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvDumpInvalidNameOutput -join "`n") -notmatch 'WVR3021') {
+    throw 'The hosted file adapter did not reject an empty resource name deterministically.'
 }
 
 Write-Output "Windvale Seed verification passed."

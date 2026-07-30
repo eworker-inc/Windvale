@@ -79,8 +79,85 @@ printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'enum.name' >/dev/null
 printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'u32.format' >/dev/null
 printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'text.concat' >/dev/null
 
-WVDUMP_CORE_RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVDUMP_CORE_MODULE")
+set +e
+WVDUMP_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVDUMP_CORE_MODULE" 2>&1)
+WVDUMP_UNAUTHORIZED_EXIT=$?
+set -e
+if [ "$WVDUMP_UNAUTHORIZED_EXIT" -ne 3 ]; then
+    echo "Expected unauthorized WvDump run exit 3, found $WVDUMP_UNAUTHORIZED_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$WVDUMP_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
+
+WVDUMP_CORE_RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVDUMP_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count)
 printf '%s\n' "$WVDUMP_CORE_RUN_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+WVDUMP_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVDUMP_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    -- "$SUM_MODULE")
+printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'Valid sections=7 offset=' >/dev/null
+printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+WVDUMP_INVALID_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVDUMP_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    -- "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" 2>&1)
+printf '%s\n' "$WVDUMP_INVALID_OUTPUT" | grep -F 'Badˉmagic sections=0 offset=0' >/dev/null
+printf '%s\n' "$WVDUMP_INVALID_OUTPUT" | grep -F 'Result: 2' >/dev/null
+
+MISSING_HOSTED_FILE="$ARTIFACTS/__windvale_missing_hosted_resource__.wvb"
+if [ -e "$MISSING_HOSTED_FILE" ]; then
+    echo "The missing-file verifier path unexpectedly exists: $MISSING_HOSTED_FILE" >&2
+    exit 1
+fi
+set +e
+WVDUMP_MISSING_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVDUMP_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    -- "$MISSING_HOSTED_FILE" 2>&1)
+WVDUMP_MISSING_EXIT=$?
+set -e
+if [ "$WVDUMP_MISSING_EXIT" -ne 3 ]; then
+    echo "Expected missing hosted file exit 3, found $WVDUMP_MISSING_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$WVDUMP_MISSING_OUTPUT" | grep -F 'WVR3022' >/dev/null
+
+set +e
+WVDUMP_INVALID_NAME_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVDUMP_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    -- '' 2>&1)
+WVDUMP_INVALID_NAME_EXIT=$?
+set -e
+if [ "$WVDUMP_INVALID_NAME_EXIT" -ne 3 ]; then
+    echo "Expected invalid hosted file name exit 3, found $WVDUMP_INVALID_NAME_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$WVDUMP_INVALID_NAME_OUTPUT" | grep -F 'WVR3021' >/dev/null
 
 echo "Windvale Seed verification passed."
 echo "Conformance report: $REPORT_PATH"

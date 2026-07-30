@@ -14,7 +14,7 @@ internal static class Program
     private const string SUM_SHA256 = "63ad39f6dbfff9b5ec31deb2d99d235dc59069a14a77033cf0a8284063578947";
     private const string HELLO_SHA256 = "e113e56fef9bd108722fb8b16da93a42eec74699952d9055334c7ae0fe9db79b";
     private const string FOUNDATION_SHA256 = "66e3ec061c06428b3b6fb7f43c45386e1a34f68e4d93ffb0c2a046f2ecca2bed";
-    private const string WVDUMP_CORE_SHA256 = "d2fe00ed4dec255547d40325b8b220ff09c71c00cb1e170ffee0f5d60e566511";
+    private const string WVDUMP_CORE_SHA256 = "666808a2266557c721f952dd6068b2493bd213da358fee3e20a5c3e7a545523e";
 
     private const string SUM_SOURCE = """
         module Sumˉdata profile portable;
@@ -123,6 +123,7 @@ internal static class Program
     [
         ("portable source compiles, verifies, and returns the data sum", Portableˉprogramˉruns),
         ("hosted source requires authorization and writes text", Hostedˉprogramˉruns),
+        ("hosted resources are explicit, separated, and bounded", Hostedˉresourcesˉareˉbounded),
         ("compiler output is deterministic and canonical", Compilerˉisˉdeterministic),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
@@ -229,7 +230,169 @@ internal static class Program
             new(Authorized));
         var Result = Runtime.Runˉmain();
         Equal(0, Result.Exitˉcode);
-        Equal($"Hello from Windvale{Environment.NewLine}", Output.ToString());
+        Equal("Hello from Windvale\n", Output.ToString());
+    }
+
+    private static void Hostedˉresourcesˉareˉbounded()
+    {
+        const string Source = """
+            module Hostedˉresources profile hosted;
+
+            capability console.write;
+            capability console.write_line;
+            capability diagnostic.write_line;
+            capability file.read_bytes;
+            capability process.argument;
+            capability process.argument_count;
+
+            export fn Main() -> i32 {
+                if process.argument_count() != 2u32 {
+                    return 1;
+                }
+
+                let Resourceˉname: text = process.argument(0u32);
+                console.write(Resourceˉname);
+                console.write_line(Textˉconcat(":", process.argument(1u32)));
+                let Input: bytes = file.read_bytes(Resourceˉname);
+                console.write_line(Textˉconcat("bytes=", U32ˉformat(Bytesˉlength(Input))));
+                diagnostic.write_line("note");
+                return 0;
+            }
+            """;
+
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        Sequenceˉequal(
+            [
+                Capabilityˉcatalog.CONSOLE_WRITE,
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            ],
+            Module.Module.Capabilities.Select(Capability => Capability.Name));
+        var Authorized = Module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Files = new Testˉfileˉreader((Resourceˉname, Maximumˉbytes) =>
+        {
+            Equal("input.wvb", Resourceˉname);
+            Equal(Bytecodeˉlimits.MAX_BYTE_DATA_BYTES, Maximumˉbytes);
+            return [87, 86, 66];
+        });
+        var Runtime = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["input.wvb", "tail"],
+                Output,
+                Diagnostics,
+                Files)),
+            new(Authorized));
+        Equal(0, Runtime.Runˉmain().Exitˉcode);
+        Equal("input.wvb:tail\nbytes=3\n", Output.ToString());
+        Equal("note\n", Diagnostics.ToString());
+
+        var Unsupported = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            new(Authorized));
+        Throwsˉruntime("WVR3001", () => _ = Unsupported.Runˉmain());
+
+        const string Badˉargument = """
+            module Badˉargument profile hosted;
+            capability process.argument;
+            export fn Main() -> i32 {
+                process.argument(0u32);
+                return 0;
+            }
+            """;
+        var Badˉargumentˉmodule = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Badˉargument));
+        var Badˉargumentˉruntime = new Referenceˉruntime(
+            Badˉargumentˉmodule,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null)),
+            new(ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.PROCESS_ARGUMENT)));
+        Throwsˉruntime("WVR3020", () => _ = Badˉargumentˉruntime.Runˉmain());
+
+        const string Fileˉsource = """
+            module Fileˉresource profile hosted;
+            capability file.read_bytes;
+            export fn Main() -> i32 {
+                file.read_bytes("input.wvb");
+                return 0;
+            }
+            """;
+        var Fileˉmodule = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Fileˉsource));
+        var Fileˉauthorization = new Runtimeˉoptions(
+            ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.FILE_READ_BYTES));
+        var Missingˉruntime = new Referenceˉruntime(
+            Fileˉmodule,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                new Testˉfileˉreader((_, _) => throw new Hostedˉfileˉexception(
+                    Hostedˉfileˉerror.Notˉfound,
+                    "The requested test resource was not found.")))),
+            Fileˉauthorization);
+        Throwsˉruntime("WVR3022", () => _ = Missingˉruntime.Runˉmain());
+
+        var Oversizedˉruntime = new Referenceˉruntime(
+            Fileˉmodule,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                new Testˉfileˉreader((_, Maximumˉbytes) =>
+                    ImmutableArray.Create(new byte[Maximumˉbytes + 1])))),
+            Fileˉauthorization);
+        Throwsˉruntime("WVR3025", () => _ = Oversizedˉruntime.Runˉmain());
+
+        const string Invalidˉresult = """
+            module Invalidˉhostˉresult profile hosted;
+            capability process.argument_count;
+            export fn Main() -> i32 {
+                process.argument_count();
+                return 0;
+            }
+            """;
+        var Invalidˉresultˉmodule = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Invalidˉresult));
+        var Invalidˉresultˉruntime = new Referenceˉruntime(
+            Invalidˉresultˉmodule,
+            new Invalidˉresultˉcapabilityˉhost(),
+            new(ImmutableHashSet.Create(
+                StringComparer.Ordinal,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT)));
+        Throwsˉruntime("WVR3013", () => _ = Invalidˉresultˉruntime.Runˉmain());
+
+        Throwsˉruntime(
+            "WVR3027",
+            () => _ = new Hostedˉresourceˉcontext(
+                [.. Enumerable.Repeat("a", Hostedˉresourceˉlimits.MAX_ARGUMENTS + 1)],
+                TextWriter.Null,
+                TextWriter.Null));
+        Throwsˉruntime(
+            "WVR3027",
+            () => _ = new Hostedˉresourceˉcontext(
+                [new string('a', Hostedˉresourceˉlimits.MAX_ARGUMENT_UTF8_BYTES + 1)],
+                TextWriter.Null,
+                TextWriter.Null));
+        Throwsˉruntime(
+            "WVR3027",
+            () => _ = new Hostedˉresourceˉcontext(
+                [.. Enumerable.Repeat(new string('a', 4096), 17)],
+                TextWriter.Null,
+                TextWriter.Null));
+        Throwsˉruntime(
+            "WVR3027",
+            () => _ = new Hostedˉresourceˉcontext(
+                ["\uD800"],
+                TextWriter.Null,
+                TextWriter.Null));
     }
 
     private static void Compilerˉisˉdeterministic()
@@ -305,7 +468,7 @@ internal static class Program
             new Referenceˉcapabilityˉhost(Output),
             new(ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.CONSOLE_WRITE_LINE)));
         Equal(42, Runtime.Runˉmain().Exitˉcode);
-        Equal($"answer{Environment.NewLine}", Output.ToString());
+        Equal("answer\n", Output.ToString());
     }
 
     private static void Namingˉandˉmutabilityˉrun()
@@ -508,7 +671,17 @@ internal static class Program
         var Bytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Equal("Wvˉdumpˉcore", Module.Module.Name);
-        Equal(12, Module.Module.Data.Length);
+        Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
+        Equal(13, Module.Module.Data.Length);
+        Sequenceˉequal(
+            [
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            ],
+            Module.Module.Capabilities.Select(Capability => Capability.Name));
         Equal(3, Module.Module.Types.Length);
         Equal("Wvbˉinspection", Module.Module.Types[0].Name);
         Equal("Wvbˉsection", Module.Module.Types[1].Name);
@@ -548,10 +721,51 @@ internal static class Program
         Contains(Inspection, "u32.format");
         Contains(Inspection, "text.concat");
         Equal(WVDUMP_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Bytes));
+        var Authorized = Module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
         Equal(0, new Referenceˉruntime(
             Module,
-            new Referenceˉcapabilityˉhost(new StringWriter()),
-            Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                new Testˉfileˉreader((_, _) => throw new InvalidOperationException(
+                    "The no-argument WvDump self-test must not read a hosted file.")))),
+            new(Authorized)).Runˉmain().Exitˉcode);
+
+        var Hostedˉoutput = new StringWriter();
+        var Hostedˉdiagnostics = new StringWriter();
+        var Hostedˉrun = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["real.wvb"],
+                Hostedˉoutput,
+                Hostedˉdiagnostics,
+                new Testˉfileˉreader((Name, Maximumˉbytes) =>
+                {
+                    Equal("real.wvb", Name);
+                    True(Validˉdata.Values.Length <= Maximumˉbytes, "The hosted byte limit was too small.");
+                    return Validˉdata.Values;
+                }))),
+            new(Authorized)).Runˉmain();
+        Equal(0, Hostedˉrun.Exitˉcode);
+        Equal("Valid sections=7 offset=94\n", Hostedˉoutput.ToString());
+        Equal(string.Empty, Hostedˉdiagnostics.ToString());
+
+        var Invalidˉoutput = new StringWriter();
+        var Invalidˉdiagnostics = new StringWriter();
+        var Invalidˉrun = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["bad.wvb"],
+                Invalidˉoutput,
+                Invalidˉdiagnostics,
+                new Testˉfileˉreader((_, _) => Hostileˉlength.Values))),
+            new(Authorized)).Runˉmain();
+        Equal(2, Invalidˉrun.Exitˉcode);
+        Equal(string.Empty, Invalidˉoutput.ToString());
+        Equal("Outˉofˉbounds sections=0 offset=20\n", Invalidˉdiagnostics.ToString());
     }
 
     private static void Immutableˉrecordsˉrun()
@@ -701,7 +915,7 @@ internal static class Program
                     Capabilityˉcatalog.CONSOLE_WRITE_LINE),
             }).Runˉmain();
         Equal(0, Result.Exitˉcode);
-        Equal("Ready count=42 delta=-7 byte=255" + Environment.NewLine, Output.ToString());
+        Equal("Ready count=42 delta=-7 byte=255\n", Output.ToString());
     }
 
     private static void Sourceˉdiagnosticsˉareˉuseful()
@@ -1266,10 +1480,19 @@ internal static class Program
             Moduleˉcodec.Readˉandˉverify(Foundationˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        var Wvˉdumpˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes);
+        var Wvˉdumpˉcapabilities = Wvˉdumpˉmodule.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
         var Wvˉdumpˉresult = new Referenceˉruntime(
-            Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes),
-            new Referenceˉcapabilityˉhost(new StringWriter()),
-            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+            Wvˉdumpˉmodule,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                new Testˉfileˉreader((_, _) => throw new InvalidOperationException(
+                    "The golden WvDump self-test must not read a hosted file.")))),
+            new(Wvˉdumpˉcapabilities)).Runˉmain();
         Equal(29, Sumˉresult.Exitˉcode);
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
@@ -1556,6 +1779,27 @@ internal static class Program
     private static void False(bool condition, string message)
     {
         True(!condition, message);
+    }
+
+    private sealed class Testˉfileˉreader(
+        Func<string, int, ImmutableArray<byte>> read) : IHostedˉfileˉreader
+    {
+        public ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes)
+        {
+            return read(resourceˉname, maximumˉbytes);
+        }
+    }
+
+    private sealed class Invalidˉresultˉcapabilityˉhost : ICapabilityˉhost
+    {
+        public bool Supports(string capabilityˉname) => true;
+
+        public Runtimeˉvalue? Invoke(
+            Capabilityˉdeclaration capability,
+            ImmutableArray<Runtimeˉvalue> arguments)
+        {
+            return Runtimeˉvalue.Fromˉi32(1);
+        }
     }
 
     private sealed record Conformanceˉcontract(

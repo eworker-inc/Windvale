@@ -6,7 +6,7 @@
 windvale compile <source.wv> [-o <module.wvb>]
 windvale inspect <module.wvb>
 windvale verify <module.wvb>
-windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>]
+windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [-- <argument>...]
 windvale help
 ```
 
@@ -19,6 +19,9 @@ windvale help
 - `run` verifies before execution and invokes exported `Main() -> i32`.
 - Hosted capabilities must be granted individually with `--allow`. Declaring a capability in the module does not authorize it.
 - `--max-steps` is a positive integer and defaults to 1,000,000 executed instructions.
+- Arguments after `--` are passed to the module as its immutable hosted argument snapshot. They are not interpreted as launcher options.
+- The native file adapter resolves `file.read_bytes` resource names with host path rules and enforces the 4 MiB byte-value limit while reading.
+- `console.write` and `console.write_line` use standard output; `diagnostic.write_line` uses standard error. Windvale line output appends LF on every host.
 - Successful `run` prints a final `Result: <i32>` line after program output.
 
 ## Exit codes
