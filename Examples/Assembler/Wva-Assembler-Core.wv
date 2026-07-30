@@ -1,6 +1,7 @@
 module Wvaˉassemblerˉcore profile hosted;
 
 import Foundationˉmachineˉcontracts;
+import Foundationˉbyteˉordering;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -562,15 +563,13 @@ fn Spansˉequal(
     Rightˉoffset: u32,
     Rightˉlength: u32
 ) -> bool {
-    if Leftˉlength != Rightˉlength { return false; }
-    var Index: u32 = 0u32;
-    while Index < Leftˉlength {
-        if Bytesˉreadˉu8(Input, Leftˉoffset + Index) != Bytesˉreadˉu8(Input, Rightˉoffset + Index) {
-            return false;
-        }
-        Index = Index + 1u32;
-    }
-    return true;
+    return Foundationˉbyteˉspansˉcompare(
+        Input,
+        Leftˉoffset,
+        Leftˉlength,
+        Rightˉoffset,
+        Rightˉlength
+    ) == 0;
 }
 
 fn Spanˉequalsˉtoken(
@@ -589,19 +588,13 @@ fn Compareˉspans(
     Rightˉoffset: u32,
     Rightˉlength: u32
 ) -> i32 {
-    var Index: u32 = 0u32;
-    var Limit: u32 = Leftˉlength;
-    if Rightˉlength < Limit { Limit = Rightˉlength; }
-    while Index < Limit {
-        let Left: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Leftˉoffset + Index));
-        let Right: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Rightˉoffset + Index));
-        if Left < Right { return -1; }
-        if Left > Right { return 1; }
-        Index = Index + 1u32;
-    }
-    if Leftˉlength < Rightˉlength { return -1; }
-    if Leftˉlength > Rightˉlength { return 1; }
-    return 0;
+    return Foundationˉbyteˉspansˉcompare(
+        Input,
+        Leftˉoffset,
+        Leftˉlength,
+        Rightˉoffset,
+        Rightˉlength
+    );
 }
 
 fn Machineˉnameˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {

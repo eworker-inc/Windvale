@@ -37,5 +37,11 @@
     <EmbeddedResource
       Include="../../Examples/Foundation/Machine-Contracts-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Machine-Contracts-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Foundation/Byte-Ordering.wv"
+      LogicalName="Windvale.Seed.Tests.Byte-Ordering.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Foundation/Byte-Ordering-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Byte-Ordering-Demo.wv" />
   </ItemGroup>
 </Project>

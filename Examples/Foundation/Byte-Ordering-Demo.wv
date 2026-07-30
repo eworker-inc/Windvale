@@ -1,0 +1,24 @@
+module Foundationˉbyteˉorderingˉdemo profile portable;
+
+import Foundationˉbyteˉordering;
+
+data Cases: bytes = [
+    0, 127, 128, 255,
+    0, 127, 128, 255,
+    0, 255,
+    1, 0,
+    127, 128
+];
+
+export fn Main() -> i32 {
+    if Foundationˉbyteˉspansˉcompare(Cases, 0u32, 0u32, 0u32, 0u32) != 0 { return 1; }
+    if Foundationˉbyteˉspansˉcompare(Cases, 0u32, 4u32, 4u32, 4u32) != 0 { return 2; }
+    if Foundationˉbyteˉspansˉcompare(Cases, 8u32, 2u32, 10u32, 2u32) >= 0 { return 3; }
+    if Foundationˉbyteˉspansˉcompare(Cases, 10u32, 2u32, 8u32, 2u32) <= 0 { return 4; }
+    if Foundationˉbyteˉspansˉcompare(Cases, 10u32, 1u32, 10u32, 2u32) >= 0 { return 5; }
+    if Foundationˉbyteˉspansˉcompare(Cases, 10u32, 2u32, 10u32, 1u32) <= 0 { return 6; }
+    if Foundationˉbyteˉspansˉcompare(Cases, 12u32, 1u32, 13u32, 1u32) >= 0 { return 7; }
+    if Foundationˉbyteˉspansˉcompare(Cases, 13u32, 1u32, 12u32, 1u32) <= 0 { return 8; }
+    if Foundationˉbyteˉspansˉcompare(Cases, 1u32, 2u32, 5u32, 2u32) != 0 { return 9; }
+    return 0;
+}

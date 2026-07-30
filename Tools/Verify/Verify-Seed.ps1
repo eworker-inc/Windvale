@@ -50,6 +50,8 @@ $CompositionReorderedModule = Join-Path $Artifacts 'Module-Composition-Demo-Reor
 $InvalidCompositionModule = Join-Path $Artifacts '__windvale_invalid_composition_output__.wvb'
 $MachineContractsModule = Join-Path $Artifacts 'Machine-Contracts.wvb'
 $MachineContractsDemoModule = Join-Path $Artifacts 'Machine-Contracts-Demo.wvb'
+$ByteOrderingModule = Join-Path $Artifacts 'Byte-Ordering.wvb'
+$ByteOrderingDemoModule = Join-Path $Artifacts 'Byte-Ordering-Demo.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -188,6 +190,36 @@ if ($LASTEXITCODE -ne 0 -or $MachineContractsDemoOutput -notcontains 'Result: 0'
     throw 'The Foundation machine-contract demo did not return Result: 0.'
 }
 
+$ByteOrderingSource = Join-Path $RepositoryRoot 'Foundation/Byte-Ordering.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $ByteOrderingSource -o $ByteOrderingModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation byte ordering.' }
+$ByteOrderingHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteOrderingModule).Hash.ToLowerInvariant()
+if ($ByteOrderingHash -ne '194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1') {
+    throw "The Foundation byte-ordering module has an unexpected digest: $ByteOrderingHash"
+}
+$ByteOrderingInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $ByteOrderingModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $ByteOrderingInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
+    $ByteOrderingInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Foundation byte-ordering module inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Byte-Ordering-Demo.wv') `
+    --module $ByteOrderingSource `
+    -o $ByteOrderingDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation byte-ordering demo.' }
+$ByteOrderingDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteOrderingDemoModule).Hash.ToLowerInvariant()
+if ($ByteOrderingDemoHash -ne '0b41e8f615630e0734812ba8cd8e7c06e975592b86327c2fe8220f5e29c10cab') {
+    throw "The Foundation byte-ordering demo has an unexpected digest: $ByteOrderingDemoHash"
+}
+$ByteOrderingDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $ByteOrderingDemoModule
+if ($LASTEXITCODE -ne 0 -or $ByteOrderingDemoOutput -notcontains 'Result: 0') {
+    throw 'The Foundation byte-ordering demo did not return Result: 0.'
+}
+
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wv-Dump-Core.wv.' }
 
@@ -271,7 +303,10 @@ if ($LASTEXITCODE -ne 3 -or ($WvDumpInvalidNameOutput -join "`n") -notmatch 'WVR
     throw 'The hosted file adapter did not reject an empty resource name deterministically.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wvo-Object-Core.wv') -o $WvoCoreModule
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wvo-Object-Core.wv') `
+    --module $ByteOrderingSource `
+    -o $WvoCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wvo-Object-Core.wv.' }
 
 $WvoCoreVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvoCoreModule
@@ -286,6 +321,7 @@ if (
     $WvoCoreInspection -notmatch 'bytes\.from_u16_little' -or
     $WvoCoreInspection -notmatch 'bytes\.from_i32_little' -or
     $WvoCoreInspection -notmatch 'text\.to_utf8' -or
+    $WvoCoreInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
     $WvoCoreInspection -notmatch 'file\.write_bytes'
 ) {
     throw 'The Seed CLI inspector did not expose the Windvale object writer operations.'
@@ -356,6 +392,7 @@ if ($LASTEXITCODE -ne 3 -or ($WvoMissingParentOutput -join "`n") -notmatch 'WVR3
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
     compile (Join-Path $RepositoryRoot 'Examples/Assembler/Wva-Assembler-Core.wv') `
     --module $MachineContractsSource `
+    --module $ByteOrderingSource `
     -o $WvaAssemblerModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wva-Assembler-Core.wv.' }
 
@@ -374,6 +411,7 @@ if (
     $WvaAssemblerInspection -notmatch 'Encodeˉsymbols' -or
     $WvaAssemblerInspection -notmatch 'Encodeˉrelocations' -or
     $WvaAssemblerInspection -notmatch 'Foundationˉmachineˉnameˉisˉvalid' -or
+    $WvaAssemblerInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
     $WvaAssemblerInspection -notmatch 'bytes\.concat' -or
     $WvaAssemblerInspection -notmatch 'bytes\.from_u32_little' -or
     $WvaAssemblerInspection -notmatch 'file\.read_bytes' -or
@@ -405,6 +443,7 @@ if ($LASTEXITCODE -ne 0 -or $WvaAssemblerSelfTestOutput -notcontains 'Result: 0'
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
     compile (Join-Path $RepositoryRoot 'Examples/Linker/Wv-Linker-Core.wv') `
     --module $MachineContractsSource `
+    --module $ByteOrderingSource `
     -o $WvLinkerCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale linker core.' }
 
@@ -434,6 +473,7 @@ if (
     $WvLinkerInspection -notmatch 'Definitionˉmapˉminimumˉexceedsˉlimit' -or
     $WvLinkerInspection -notmatch 'Buildˉcanonicalˉmap' -or
     $WvLinkerInspection -notmatch 'Foundationˉalignmentˉisˉvalid' -or
+    $WvLinkerInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
     $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
     $WvLinkerInspection -notmatch 'bytes\.sha256_hex' -or
     $WvLinkerInspection -notmatch 'file\.read_bytes' -or
