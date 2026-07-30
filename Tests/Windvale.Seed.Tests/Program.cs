@@ -183,6 +183,7 @@ internal static class Program
         ("Foundation byte values, slices, and little-endian reads execute", Foundationˉbytesˉrun),
         ("Foundation signed reads and strict UTF-8 text operations execute", Foundationˉtextˉrun),
         ("Foundation constructs deterministic immutable byte values", Foundationˉbyteˉconstructionˉrun),
+        ("Foundation byte concatenation remains balanced under linker-scale assembly", Foundationˉbalancedˉbytesˉrun),
         ("Windvale wvdump decodes bounded payloads and instructions", Wvˉdumpˉcoreˉwalksˉsections),
         ("Windvale object codec validates canonical symbols and relocations", Objectˉmodelˉroundˉtrip),
         ("Windvale-written object core matches the Stage 0 oracle", Wvoˉobjectˉcoreˉmatchesˉoracle),
@@ -888,6 +889,47 @@ internal static class Program
             }
             """;
         Throwsˉruntime("WVR3016", () => Runˉportable(U16ˉoverflow));
+    }
+
+    private static void Foundationˉbalancedˉbytesˉrun()
+    {
+        const string Source = """
+            module Foundationˉbalancedˉbytes profile portable;
+
+            data Empty: bytes = [];
+            data Unit: bytes = [171];
+
+            export fn Main() -> i32 {
+                var Value: bytes = Empty;
+                var Index: u32 = 0u32;
+                while Index < 65536u32 {
+                    Value = Bytesˉconcat(Value, Unit);
+                    Index = Index + 1u32;
+                }
+                if Bytesˉlength(Value) != 65536u32 { return 1; }
+                if Bytesˉreadˉu8(Value, 0u32) != 171u8 { return 2; }
+                if Bytesˉreadˉu8(Value, 65535u32) != 171u8 { return 3; }
+
+                var Patched: bytes = Bytesˉslice(Value, 0u32, 32767u32);
+                Patched = Bytesˉconcat(Patched, Bytesˉfromˉu32ˉlittle(2309737967u32));
+                Patched = Bytesˉconcat(Patched, Bytesˉslice(Value, 32771u32, 32765u32));
+                if Bytesˉlength(Patched) != 65536u32 { return 4; }
+                if Bytesˉreadˉu8(Patched, 32766u32) != 171u8 { return 5; }
+                if Bytesˉreadˉu32ˉlittle(Patched, 32767u32) != 2309737967u32 { return 6; }
+                if Bytesˉreadˉu8(Patched, 32771u32) != 171u8 { return 7; }
+                if Bytesˉreadˉu8(Value, 32767u32) != 171u8 { return 8; }
+                return 0;
+            }
+            """;
+
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        var Runtime = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            new(
+                ImmutableHashSet.Create<string>(StringComparer.Ordinal),
+                Maximumˉinstructions: 20_000_000));
+        Equal(0, Runtime.Runˉmain().Exitˉcode);
     }
 
     private static void Wvˉdumpˉcoreˉwalksˉsections()

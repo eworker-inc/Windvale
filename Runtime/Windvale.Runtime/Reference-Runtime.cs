@@ -163,21 +163,22 @@ public sealed class Referenceˉruntime
                         var U8ˉoffset = Pop(Stack).U32ˉvalue;
                         var U8ˉsource = Pop(Stack).Bytesˉvalue;
                         Stack.Add(Runtimeˉvalue.Fromˉu8(
-                            U8ˉsource.Storage[Requireˉbyteˉrange(U8ˉsource, U8ˉoffset, sizeof(byte))]));
+                            U8ˉsource.Storage.Read(Requireˉbyteˉrange(
+                                U8ˉsource,
+                                U8ˉoffset,
+                                sizeof(byte)))));
                         break;
                     case Opcode.Bytesˉreadˉu16ˉlittle:
                         var U16ˉoffset = Pop(Stack).U32ˉvalue;
                         var U16ˉsource = Pop(Stack).Bytesˉvalue;
                         var U16ˉabsolute = Requireˉbyteˉrange(U16ˉsource, U16ˉoffset, sizeof(ushort));
-                        Stack.Add(Runtimeˉvalue.Fromˉu32(BinaryPrimitives.ReadUInt16LittleEndian(
-                            U16ˉsource.Storage.AsSpan(U16ˉabsolute, sizeof(ushort)))));
+                        Stack.Add(Runtimeˉvalue.Fromˉu32(Readˉu16(U16ˉsource.Storage, U16ˉabsolute)));
                         break;
                     case Opcode.Bytesˉreadˉu32ˉlittle:
                         var U32ˉoffset = Pop(Stack).U32ˉvalue;
                         var U32ˉsource = Pop(Stack).Bytesˉvalue;
                         var U32ˉabsolute = Requireˉbyteˉrange(U32ˉsource, U32ˉoffset, sizeof(uint));
-                        Stack.Add(Runtimeˉvalue.Fromˉu32(BinaryPrimitives.ReadUInt32LittleEndian(
-                            U32ˉsource.Storage.AsSpan(U32ˉabsolute, sizeof(uint)))));
+                        Stack.Add(Runtimeˉvalue.Fromˉu32(Readˉu32(U32ˉsource.Storage, U32ˉabsolute)));
                         break;
                     case Opcode.Bytesˉreadˉi32ˉlittle:
                         var Readˉi32ˉoffset = Pop(Stack).U32ˉvalue;
@@ -186,8 +187,9 @@ public sealed class Referenceˉruntime
                             Readˉi32ˉsource,
                             Readˉi32ˉoffset,
                             sizeof(int));
-                        Stack.Add(Runtimeˉvalue.Fromˉi32(BinaryPrimitives.ReadInt32LittleEndian(
-                            Readˉi32ˉsource.Storage.AsSpan(Readˉi32ˉabsolute, sizeof(int)))));
+                        Stack.Add(Runtimeˉvalue.Fromˉi32(Readˉi32(
+                            Readˉi32ˉsource.Storage,
+                            Readˉi32ˉabsolute)));
                         break;
                     case Opcode.I32ˉadd:
                         Applyˉi32ˉbinary(Stack, (Left, Right) => checked(Left + Right));
@@ -325,7 +327,7 @@ public sealed class Referenceˉruntime
 
                         try
                         {
-                            Stack.Add(Runtimeˉvalue.Fromˉtext(STRICT_UTF8.GetString(Utf8ˉsource.Asˉspan())));
+                            Stack.Add(Runtimeˉvalue.Fromˉtext(STRICT_UTF8.GetString(Utf8ˉsource.Toˉarray())));
                         }
                         catch (DecoderFallbackException)
                         {
@@ -371,7 +373,7 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.Bytesˉsha256ˉhex:
                         Stack.Add(Runtimeˉvalue.Fromˉtext(
-                            Convert.ToHexStringLower(SHA256.HashData(Pop(Stack).Bytesˉvalue.Asˉspan()))));
+                            Convert.ToHexStringLower(SHA256.HashData(Pop(Stack).Bytesˉvalue.Toˉarray()))));
                         break;
                     case Opcode.Textˉtoˉutf8:
                         try
@@ -683,7 +685,7 @@ public sealed class Referenceˉruntime
     {
         try
         {
-            _ = STRICT_UTF8.GetCharCount(value.Asˉspan());
+            _ = STRICT_UTF8.GetCharCount(value.Toˉarray());
             return true;
         }
         catch (DecoderFallbackException)
@@ -692,7 +694,7 @@ public sealed class Referenceˉruntime
         }
     }
 
-    private static ImmutableArray<byte> Concatˉbytes(
+    private static Runtimeˉbyteˉslice Concatˉbytes(
         Runtimeˉbyteˉslice left,
         Runtimeˉbyteˉslice right)
     {
@@ -704,10 +706,9 @@ public sealed class Referenceˉruntime
                 $"Concatenated byte result exceeds the byte-value limit {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}.");
         }
 
-        var Result = new byte[Length];
-        left.Asˉspan().CopyTo(Result);
-        right.Asˉspan().CopyTo(Result.AsSpan(left.Length));
-        return ImmutableArray.Create(Result);
+        var Leftˉnode = Runtimeˉbyteˉnode.Slice(left.Storage, left.Offset, left.Length);
+        var Rightˉnode = Runtimeˉbyteˉnode.Slice(right.Storage, right.Offset, right.Length);
+        return new(Runtimeˉbyteˉnode.Concat(Leftˉnode, Rightˉnode), 0, Length);
     }
 
     private static string Quoteˉtext(string value)
@@ -783,5 +784,26 @@ public sealed class Referenceˉruntime
         }
 
         return checked(source.Offset + (int)offset);
+    }
+
+    private static ushort Readˉu16(Runtimeˉbyteˉnode source, int offset)
+    {
+        Span<byte> Buffer = stackalloc byte[sizeof(ushort)];
+        source.Copyˉto(Buffer, offset, Buffer.Length);
+        return BinaryPrimitives.ReadUInt16LittleEndian(Buffer);
+    }
+
+    private static uint Readˉu32(Runtimeˉbyteˉnode source, int offset)
+    {
+        Span<byte> Buffer = stackalloc byte[sizeof(uint)];
+        source.Copyˉto(Buffer, offset, Buffer.Length);
+        return BinaryPrimitives.ReadUInt32LittleEndian(Buffer);
+    }
+
+    private static int Readˉi32(Runtimeˉbyteˉnode source, int offset)
+    {
+        Span<byte> Buffer = stackalloc byte[sizeof(int)];
+        source.Copyˉto(Buffer, offset, Buffer.Length);
+        return BinaryPrimitives.ReadInt32LittleEndian(Buffer);
     }
 }

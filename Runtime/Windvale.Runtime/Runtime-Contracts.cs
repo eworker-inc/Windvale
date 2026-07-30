@@ -8,7 +8,15 @@ public readonly struct Runtimeˉbyteˉslice
 {
     internal Runtimeˉbyteˉslice(ImmutableArray<byte> storage, int offset, int length)
     {
-        if (storage.IsDefault || offset < 0 || length < 0 || length > storage.Length - offset)
+        Storage = Runtimeˉbyteˉnode.From(storage, offset, length);
+        Offset = 0;
+        Length = Storage.Length;
+    }
+
+    internal Runtimeˉbyteˉslice(Runtimeˉbyteˉnode storage, int offset, int length)
+    {
+        ArgumentNullException.ThrowIfNull(storage);
+        if (offset < 0 || length < 0 || length > storage.Length - offset)
         {
             throw new ArgumentOutOfRangeException(nameof(length));
         }
@@ -18,15 +26,22 @@ public readonly struct Runtimeˉbyteˉslice
         Length = length;
     }
 
-    internal ImmutableArray<byte> Storage { get; }
+    internal Runtimeˉbyteˉnode Storage { get; }
 
     internal int Offset { get; }
 
     public int Length { get; }
 
-    internal ReadOnlySpan<byte> Asˉspan()
+    internal byte[] Toˉarray()
     {
-        return Storage.AsSpan(Offset, Length);
+        var Result = new byte[Length];
+        Storage.Copyˉto(Result, Offset, Length);
+        return Result;
+    }
+
+    internal ImmutableArray<byte> Toˉimmutableˉarray()
+    {
+        return ImmutableArray.Create(Toˉarray());
     }
 }
 
@@ -454,7 +469,7 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
         {
             Resources.Fileˉwriter.Writeˉbytes(
                 resourceˉname,
-                ImmutableArray.Create(bytes.Asˉspan().ToArray()),
+                bytes.Toˉimmutableˉarray(),
                 Bytecodeˉlimits.MAX_BYTE_DATA_BYTES);
         }
         catch (Hostedˉfileˉexception Exception)
