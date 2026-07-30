@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Wvˉlinkerˉcore` is the Windvale-written implementation path for Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic object views, resolves multi-object symbols, computes deterministic placements and addresses, constructs and relocates the flat image, and independently reconstructs every result byte. It is not yet a complete linker: it does not construct the canonical map or write an output image.
+`Wvˉlinkerˉcore` is the complete Windvale-written implementation candidate for Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic object views, resolves multi-object symbols, computes deterministic placements and addresses, constructs and relocates the flat image, independently reconstructs every result byte, constructs canonical map version 1, and publishes the image once only after all deterministic work succeeds.
 
-The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout at `709ccb3`; immutable image construction plus checked relocation at `ec9c980`; and independent complete-image reconstruction at `d8008e3`. The qualified WVB 1.6 SHA-256 is `0b8d4ce09a043a675e64018c02fac94740b0b878a74801fc622ce7703e956b35`.
+The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout at `709ccb3`; immutable image construction plus checked relocation at `ec9c980`; and independent complete-image reconstruction at `d8008e3`. The canonical-map/publication candidate has WVB 1.6 SHA-256 `8d3cb567f6985077b3ad487627bf77a20326b4bc02bcab8d938354f48d339cfd` and requires fresh exact-archive Debian qualification.
 
 ## Object boundary
 
@@ -22,7 +22,7 @@ A successful `Wvoˉscan` records the counts and the exact section, symbol, and r
 
 ## Bootstrap algorithm
 
-The first implementation deliberately uses repeated bounded passes over immutable bytes. WVO permits at most 64 sections and 4,096 symbols; canonical ordering lets the scanner compare adjacent records and merge the local/export/import name ranges while checking cross-binding uniqueness. Section lookups rescan from the section start. This is sufficient for the current contract and avoids adding a general collection facility before resolution and layout demonstrate its exact requirements.
+The initial acceptance implementation deliberately uses bounded passes over immutable bytes. WVO permits at most 64 sections and 4,096 symbols; canonical ordering lets the scanner compare adjacent records and merge the local/export/import name ranges while checking cross-binding uniqueness. After `Inspectˉlinkˉinputs` has accepted every exact first-read snapshot, later passes derive `Acceptedˉobjectˉview` offsets and counts from those same values instead of rerunning hostile-input validation. These views cannot accept a different value and do not replace the complete WVO boundary.
 
 The runtime's balanced persistent byte representation makes later slice/replace image construction practical without exposing mutable buffers. First-read hosted file snapshots guarantee that repeated reads of one input resource observe one immutable byte value across all future link passes.
 
@@ -46,7 +46,15 @@ Successful analysis adds `image sha256=<lowercase-hex>` to the report. This dige
 
 `Verifyˉlinkˉimage` builds a second complete value through verifier-owned algorithms. Alignment advances an actual address until an independent predicate accepts it. Provider lookup scans all symbols rather than using production export-range lookup. Relocations are applied in reverse input and reverse relocation order with separate signed-magnitude functions. The verifier finally compares the complete candidate and reconstruction byte by byte.
 
-Any placement, provider, address, arithmetic, length, or byte disagreement becomes `WVL1011`, clears the candidate, and returns through diagnostics. The embedded suite injects a one-byte mismatch at the final acceptance boundary and requires `WVL1011` with an empty result. The hosted writer remains unreachable even after successful reconstruction because canonical map construction can still fail.
+Any placement, provider, address, arithmetic, length, or byte disagreement becomes `WVL1011`, clears the candidate, and returns through diagnostics. The embedded suite injects a one-byte mismatch at the final acceptance boundary and requires `WVL1011` with an empty result. The hosted writer remains unreachable until canonical map construction also succeeds.
+
+## Canonical map and publication
+
+`Buildˉcanonicalˉmap` emits canonical map version 1 directly as immutable ASCII/LF bytes. Input digests use explicit input order; sections use final layout order; definitions, imports, and relocations use input/source order. Names come from the accepted WVO bytes, decimal values use invariant Windvale formatting, and the image identity is calculated from the independently accepted candidate.
+
+`Definitionˉmapˉminimumˉexceedsˉlimit` rejects a definition set whose provable minimum record size already exceeds 1 MiB. `Appendˉmapˉline` then checks the exact cumulative byte length before every append. Both paths return `WVL1012`, discard map bytes, and leave the writer unreachable. The lower-bound optimization cannot reject a map that might fit because it counts only mandatory literal bytes, minimum-width fields, LF, and the exact accepted name lengths.
+
+After the complete map succeeds, `Runˉlinkˉanalysis` invokes `file.write_bytes` exactly once with the accepted image and only then sends the already built map to `console.write`. Deterministic request, object, resolution, layout, relocation, reconstruction, or map failure invokes no writer. A native write failure is reported through the hosted-resource boundary and emits no success map.
 
 ## Hosted scan shell
 
@@ -58,13 +66,13 @@ object status=<status> sections=<u32> symbols=<u32> relocations=<u32> offset=<u3
 
 Valid input sends the LF-terminated report to standard output and returns `0`. Invalid input sends it to the diagnostic sink and returns `2`. Any other argument count reports `Usage: wvlink-core [object.wvo]` and returns `64`. Native resource failures remain stable runtime diagnostics.
 
-The one-input form remains a parser-development shell. The multi-object analysis form already uses the accepted final argument shape:
+The one-input form remains a focused object-inspection shell. The multi-object linker uses the accepted final argument shape:
 
 ```text
 wvlink-core <base-address> <entry> <output.bin> <input.wvo>...
 ```
 
-It emits `link status=<status> inputs=<u32> sections=<u32> symbols=<u32> relocations=<u32> image-bytes=<u32> entry-address=<u32> input=<u32>`. The output argument is reserved but untouched until canonical map construction also succeeds. Success returns `0`; a deterministic WVL rejection reports through diagnostics and returns `2`.
+On success it writes the exact flat image to `<output.bin>`, emits the canonical map to standard output, and returns `0`. A deterministic WVL rejection emits `link status=<status> inputs=<u32> sections=<u32> symbols=<u32> relocations=<u32> image-bytes=<u32> entry-address=<u32> input=<u32>` through diagnostics, returns `2`, and does not create or modify the output.
 
 ## Qualification boundary
 
@@ -72,6 +80,6 @@ The conformance test compiles and verifies the exact module, runs its no-input s
 
 Both the Windows and Debian verifiers must also compile and inspect the module through the real CLI, prove capability refusal, run its embedded tests, accept the Windvale-written canonical assembler object, and reject a non-WVO input. The normalized host reports include the exact module digest, self-test result, and canonical hosted scan output.
 
-The qualified suite additionally compares canonical and reversed input order, aligned and unaligned bases, all section representations, aggregate overflow, malformed objects, duplicate exports, missing imports, kind mismatch, missing entry, invalid requests, layout overflow, exact counts, image length, entry address, snapshot read counts, and absence of output with the Stage 0 oracle. A 4 MiB code-plus-BSS image exercises the accepted maximum image size and complete byte comparison under an explicit 200,000,000-instruction ceiling.
+The candidate suite additionally compares canonical and reversed input order, aligned and unaligned bases, all section representations, aggregate overflow, malformed objects, duplicate exports, missing imports, kind mismatch, missing entry, invalid requests, layout overflow, exact image and map bytes, snapshot read counts, and publish-after-success behavior with the Stage 0 oracle. A 4 MiB code-plus-BSS image exercises the accepted maximum image size, complete byte comparison, map construction, and one hosted write under an explicit 200,000,000-instruction ceiling. Four valid objects containing the aggregate maximum 16,384 short-name definitions prove `WVL1012` with no writer under the same ceiling.
 
-Phase 6 remains incomplete until the same Windvale module implements and qualifies canonical map construction and publish-after-success output behavior.
+The Windows verifier additionally compares real Windvale/Stage 0 image and map files byte for byte, proves rejected links preserve an existing image, and checks a missing output parent. Phase 6 remains incomplete until the exact committed candidate archive passes the same complete verifier on Debian and the cross-host reports agree.
