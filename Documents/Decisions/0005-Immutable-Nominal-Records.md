@@ -1,7 +1,7 @@
 # Decision 0005: Immutable nominal Seed records
 
 - Date: 2026-07-29
-- Status: Accepted; cross-host qualification pending
+- Status: Accepted and qualified on Windows and Debian Linux
 
 ## Context
 
