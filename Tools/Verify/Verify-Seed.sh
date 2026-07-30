@@ -30,6 +30,8 @@ BYTE_ORDERING_MODULE="$ARTIFACTS/Byte-Ordering.wvb"
 BYTE_ORDERING_DEMO_MODULE="$ARTIFACTS/Byte-Ordering-Demo.wvb"
 DECIMAL_PARSING_MODULE="$ARTIFACTS/Decimal-Parsing.wvb"
 DECIMAL_PARSING_DEMO_MODULE="$ARTIFACTS/Decimal-Parsing-Demo.wvb"
+BYTE_CONSTRUCTION_MODULE="$ARTIFACTS/Byte-Construction.wvb"
+BYTE_CONSTRUCTION_DEMO_MODULE="$ARTIFACTS/Byte-Construction-Demo.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -184,6 +186,32 @@ fi
 DECIMAL_PARSING_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     run "$DECIMAL_PARSING_DEMO_MODULE")
 printf '%s\n' "$DECIMAL_PARSING_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+BYTE_CONSTRUCTION_SOURCE="$REPOSITORY_ROOT/Foundation/Byte-Construction.wv"
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$BYTE_CONSTRUCTION_SOURCE" -o "$BYTE_CONSTRUCTION_MODULE"
+BYTE_CONSTRUCTION_HASH=$(sha256sum "$BYTE_CONSTRUCTION_MODULE" | awk '{print $1}')
+if [ "$BYTE_CONSTRUCTION_HASH" != '6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207' ]; then
+    echo "The Foundation byte-construction module has an unexpected digest: $BYTE_CONSTRUCTION_HASH" >&2
+    exit 1
+fi
+BYTE_CONSTRUCTION_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$BYTE_CONSTRUCTION_MODULE")
+printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Foundationˉbytesˉresult' >/dev/null
+printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Foundationˉbytesˉrepeat' >/dev/null
+printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Foundationˉbytesˉreplace' >/dev/null
+printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Exports (2)' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Foundation/Byte-Construction-Demo.wv" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    -o "$BYTE_CONSTRUCTION_DEMO_MODULE"
+BYTE_CONSTRUCTION_DEMO_HASH=$(sha256sum "$BYTE_CONSTRUCTION_DEMO_MODULE" | awk '{print $1}')
+if [ "$BYTE_CONSTRUCTION_DEMO_HASH" != 'a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abbd81f3481fb0e0bc6c29' ]; then
+    echo "The Foundation byte-construction demo has an unexpected digest: $BYTE_CONSTRUCTION_DEMO_HASH" >&2
+    exit 1
+fi
+BYTE_CONSTRUCTION_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$BYTE_CONSTRUCTION_DEMO_MODULE")
+printf '%s\n' "$BYTE_CONSTRUCTION_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     compile "$COMPOSITION_ROOT" --module "$COMPOSITION_MIDDLE" -o "$INVALID_COMPOSITION_MODULE" 2>&1)
@@ -431,6 +459,7 @@ dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build
     --module "$MACHINE_CONTRACTS_SOURCE" \
     --module "$BYTE_ORDERING_SOURCE" \
     --module "$DECIMAL_PARSING_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
     -o "$WVA_ASSEMBLER_MODULE"
 
 WVA_ASSEMBLER_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVA_ASSEMBLER_MODULE")
@@ -446,6 +475,7 @@ printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉrelocations' >/
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Foundationˉmachineˉnameˉisˉvalid' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Foundationˉbyteˉspansˉcompare' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Foundationˉu32ˉdecimalˉparse' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Foundationˉbytesˉrepeat' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'bytes.concat' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'bytes.from_u32_little' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
@@ -477,6 +507,7 @@ dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build
     --module "$MACHINE_CONTRACTS_SOURCE" \
     --module "$BYTE_ORDERING_SOURCE" \
     --module "$DECIMAL_PARSING_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
     -o "$WVLINK_CORE_MODULE"
 
 WVLINK_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVLINK_CORE_MODULE")
@@ -503,6 +534,8 @@ printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Buildˉcanonicalˉmap' >/dev/n
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Foundationˉalignmentˉisˉvalid' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Foundationˉbyteˉspansˉcompare' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Foundationˉu32ˉdecimalˉparse' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Foundationˉbytesˉrepeat' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Foundationˉbytesˉreplace' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.read_i32_little' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.sha256_hex' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null

@@ -1,0 +1,51 @@
+module Foundationˉbyteˉconstruction profile portable;
+
+record Foundationˉbytesˉresult {
+    Valid: bool;
+    Value: bytes;
+}
+
+export fn Foundationˉbytesˉrepeat(Value: u8, Count: u32) -> Foundationˉbytesˉresult {
+    let Unit: bytes = Bytesˉfromˉu8(Value);
+    let Empty: bytes = Bytesˉslice(Unit, 0u32, 0u32);
+    if Count > 4194304u32 { return Foundationˉbytesˉresult(false, Empty); }
+    if Count == 0u32 { return Foundationˉbytesˉresult(true, Empty); }
+
+    var Result: bytes = Unit;
+    while Bytesˉlength(Result) < Count {
+        let Current: u32 = Bytesˉlength(Result);
+        let Remaining: u32 = Count - Current;
+        if Current <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(Result, Bytesˉslice(Result, 0u32, Remaining));
+        }
+    }
+    return Foundationˉbytesˉresult(true, Result);
+}
+
+export fn Foundationˉbytesˉreplace(
+    Input: bytes,
+    Offset: u32,
+    Removedˉlength: u32,
+    Replacement: bytes
+) -> Foundationˉbytesˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    if Offset > Total { return Foundationˉbytesˉresult(false, Empty); }
+    if Removedˉlength > Total - Offset { return Foundationˉbytesˉresult(false, Empty); }
+
+    let Keptˉlength: u32 = Total - Removedˉlength;
+    let Replacementˉlength: u32 = Bytesˉlength(Replacement);
+    if Replacementˉlength > 4194304u32 - Keptˉlength {
+        return Foundationˉbytesˉresult(false, Empty);
+    }
+
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + Removedˉlength;
+    let Suffix: bytes = Bytesˉslice(Input, Suffixˉoffset, Total - Suffixˉoffset);
+    return Foundationˉbytesˉresult(
+        true,
+        Bytesˉconcat(Prefix, Bytesˉconcat(Replacement, Suffix))
+    );
+}

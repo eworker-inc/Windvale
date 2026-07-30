@@ -1,0 +1,73 @@
+module Foundationˉbyteˉconstructionˉdemo profile portable;
+
+import Foundationˉbyteˉconstruction;
+
+data Original: bytes = [1, 2, 3, 4];
+data Replacement: bytes = [9, 8, 7];
+data Unit: bytes = [5];
+
+export fn Main() -> i32 {
+    let Empty: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(7u8, 0u32);
+    if !Empty.Valid { return 1; }
+    if Bytesˉlength(Empty.Value) != 0u32 { return 2; }
+
+    let Repeated: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(128u8, 17u32);
+    if !Repeated.Valid { return 3; }
+    if Bytesˉlength(Repeated.Value) != 17u32 { return 4; }
+    if Bytesˉreadˉu8(Repeated.Value, 0u32) != 128u8 { return 5; }
+    if Bytesˉreadˉu8(Repeated.Value, 16u32) != 128u8 { return 6; }
+
+    let Maximum: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(0u8, 4194304u32);
+    if !Maximum.Valid { return 7; }
+    if Bytesˉlength(Maximum.Value) != 4194304u32 { return 8; }
+    if Bytesˉreadˉu8(Maximum.Value, 4194303u32) != 0u8 { return 9; }
+    let Tooˉlarge: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(0u8, 4194305u32);
+    if Tooˉlarge.Valid { return 10; }
+    if Bytesˉlength(Tooˉlarge.Value) != 0u32 { return 11; }
+
+    let Changed: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Original,
+        1u32,
+        2u32,
+        Replacement
+    );
+    if !Changed.Valid { return 12; }
+    if Bytesˉlength(Changed.Value) != 5u32 { return 13; }
+    if Bytesˉreadˉu8(Changed.Value, 0u32) != 1u8 { return 14; }
+    if Bytesˉreadˉu8(Changed.Value, 1u32) != 9u8 { return 15; }
+    if Bytesˉreadˉu8(Changed.Value, 3u32) != 7u8 { return 16; }
+    if Bytesˉreadˉu8(Changed.Value, 4u32) != 4u8 { return 17; }
+
+    let Appended: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Original,
+        4u32,
+        0u32,
+        Unit
+    );
+    if !Appended.Valid { return 18; }
+    if Bytesˉlength(Appended.Value) != 5u32 { return 19; }
+    if Bytesˉreadˉu8(Appended.Value, 4u32) != 5u8 { return 20; }
+
+    let Badˉoffset: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Original,
+        5u32,
+        0u32,
+        Unit
+    );
+    if Badˉoffset.Valid { return 21; }
+    let Badˉrange: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Original,
+        3u32,
+        2u32,
+        Unit
+    );
+    if Badˉrange.Valid { return 22; }
+    let Oversized: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Maximum.Value,
+        4194304u32,
+        0u32,
+        Unit
+    );
+    if Oversized.Valid { return 23; }
+    return 0;
+}
