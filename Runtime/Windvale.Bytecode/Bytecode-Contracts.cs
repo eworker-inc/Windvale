@@ -19,19 +19,31 @@ public enum Valueˉtype : byte
     U32 = 5,
     Bytes = 6,
     Record = 7,
+    Enum = 8,
 }
 
-public readonly record struct Valueˉshape(Valueˉtype Kind, int Recordˉtypeˉindex = -1)
+public readonly record struct Valueˉshape(Valueˉtype Kind, int Nominalˉtypeˉindex = -1)
 {
     public static implicit operator Valueˉshape(Valueˉtype kind) => new(kind);
 
     public static Valueˉshape Forˉrecord(int recordˉtypeˉindex) =>
         new(Valueˉtype.Record, recordˉtypeˉindex);
 
+    public static Valueˉshape Forˉenum(int enumˉtypeˉindex) =>
+        new(Valueˉtype.Enum, enumˉtypeˉindex);
+
     public override string ToString()
     {
-        return Kind == Valueˉtype.Record ? $"record[{Recordˉtypeˉindex}]" : Kind.ToString();
+        return Kind is Valueˉtype.Record or Valueˉtype.Enum
+            ? $"{Kind.ToString().ToLowerInvariant()}[{Nominalˉtypeˉindex}]"
+            : Kind.ToString();
     }
+}
+
+public enum Nominalˉtypeˉkind : byte
+{
+    Record = 1,
+    Enum = 2,
 }
 
 public enum Dataˉtype : byte
@@ -103,6 +115,14 @@ public enum Opcode : byte
     U8ˉnotˉequal = 0x67,
     Recordˉcreate = 0x68,
     Recordˉfield = 0x69,
+    Enumˉconst = 0x6A,
+    Enumˉequal = 0x6B,
+    Enumˉnotˉequal = 0x6C,
+    Enumˉname = 0x6D,
+    I32ˉformat = 0x6E,
+    U8ˉformat = 0x6F,
+    U32ˉformat = 0x70,
+    Textˉconcat = 0x71,
 
     Jump = 0x30,
     Branchˉfalse = 0x31,
@@ -125,11 +145,21 @@ public sealed record I32ˉarrayˉdataˉdeclaration(string Name, ImmutableArray<i
 public sealed record Bytesˉdataˉdeclaration(string Name, ImmutableArray<byte> Values)
     : Dataˉdeclaration(Name, Dataˉtype.Bytes);
 
-public sealed record Recordˉfieldˉdeclaration(string Name, Valueˉtype Type);
+public abstract record Nominalˉtypeˉdeclaration(string Name, Nominalˉtypeˉkind Kind);
+
+public sealed record Recordˉfieldˉdeclaration(string Name, Valueˉshape Type);
 
 public sealed record Recordˉtypeˉdeclaration(
     string Name,
-    ImmutableArray<Recordˉfieldˉdeclaration> Fields);
+    ImmutableArray<Recordˉfieldˉdeclaration> Fields)
+    : Nominalˉtypeˉdeclaration(Name, Nominalˉtypeˉkind.Record);
+
+public sealed record Enumˉmemberˉdeclaration(string Name, int Value);
+
+public sealed record Enumˉtypeˉdeclaration(
+    string Name,
+    ImmutableArray<Enumˉmemberˉdeclaration> Members)
+    : Nominalˉtypeˉdeclaration(Name, Nominalˉtypeˉkind.Enum);
 
 public sealed record Capabilityˉdeclaration(
     string Name,
@@ -162,7 +192,7 @@ public sealed record Bytecodeˉmodule(
     ImmutableArray<byte> Code,
     ImmutableArray<Exportˉdeclaration> Exports)
 {
-    public ImmutableArray<Recordˉtypeˉdeclaration> Types { get; init; } = [];
+    public ImmutableArray<Nominalˉtypeˉdeclaration> Types { get; init; } = [];
 }
 
 public sealed record Decodedˉinstruction(
@@ -170,7 +200,8 @@ public sealed record Decodedˉinstruction(
     int Size,
     Opcode Opcode,
     int Signedˉoperand = 0,
-    uint Unsignedˉoperand = 0);
+    uint Unsignedˉoperand = 0,
+    uint Secondˉunsignedˉoperand = 0);
 
 public sealed record Verifiedˉfunction(
     Functionˉdeclaration Declaration,

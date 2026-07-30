@@ -14,6 +14,8 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, i
 - Functions, `if`, `while`, booleans, immutable text, immutable integer data, indexing, and `length`
 - `u8`, `u32`, immutable `bytes`, slice views, and bounded little-endian reads
 - Immutable nominal record construction, field access, function parameters/results, canonical encoding, and verifier rejection cases
+- Nominal enum constants, record fields, equality, declared names, canonical encoding, and verifier rejection cases
+- Invariant signed and unsigned integer formatting plus bounded text-concatenation traps
 - Windvale-written WVB section walking with structured results plus valid, wrong-kind, nonzero-flags, hostile-length, truncated, and trailing-byte cases
 - Checked `u32` overflow and underflow plus byte-read and slice bounds traps
 - U+02C9 source identifiers, immutable `let`, mutable `var`, immutable parameters, and exported `Main`

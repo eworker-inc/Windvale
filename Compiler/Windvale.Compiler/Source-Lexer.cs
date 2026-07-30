@@ -16,6 +16,7 @@ internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
             ["capability"] = Tokenˉkind.Capability,
             ["data"] = Tokenˉkind.Data,
             ["record"] = Tokenˉkind.Record,
+            ["enum"] = Tokenˉkind.Enum,
             ["export"] = Tokenˉkind.Export,
             ["fn"] = Tokenˉkind.Fn,
             ["let"] = Tokenˉkind.Let,

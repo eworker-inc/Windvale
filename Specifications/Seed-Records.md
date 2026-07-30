@@ -30,10 +30,10 @@ fn Readˉleft(Value: Pair) -> i32 {
 
 ## Bounds
 
-- A module may declare at most 1,024 record types.
+- A module may declare at most 1,024 nominal record and enum types in total.
 - A record contains 1 through 64 fields.
 - Field names are unique within the record.
-- A field may be `i32`, `u8`, `u32`, `bool`, `text`, or `bytes`.
+- A field may be `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, or a nominal Seed enum.
 - Nested record fields are deferred. This keeps default construction, runtime representation, verification, and lifetime behavior bounded while the bootstrap has no general memory model.
 
 ## Runtime and bytecode

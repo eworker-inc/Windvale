@@ -10,7 +10,7 @@ public static class Moduleˉcodec
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public const ushort MAJOR_VERSION = 1;
-    public const ushort MINOR_VERSION = 2;
+    public const ushort MINOR_VERSION = 3;
 
     public static byte[] Write(Bytecodeˉmodule module)
     {
@@ -112,12 +112,30 @@ public static class Moduleˉcodec
             Writer.Writeˉu32(module.Types.Length);
             foreach (var Type in module.Types)
             {
+                Writer.Writeˉbyte((byte)Type.Kind);
                 Writer.Writeˉstring(Type.Name, isˉname: true);
-                Writer.Writeˉu32(Type.Fields.Length);
-                foreach (var Field in Type.Fields)
+                switch (Type)
                 {
-                    Writer.Writeˉstring(Field.Name, isˉname: true);
-                    Writer.Writeˉbyte((byte)Field.Type);
+                    case Recordˉtypeˉdeclaration Record:
+                        Writer.Writeˉu32(Record.Fields.Length);
+                        foreach (var Field in Record.Fields)
+                        {
+                            Writer.Writeˉstring(Field.Name, isˉname: true);
+                            Writer.Writeˉvalueˉshape(Field.Type);
+                        }
+
+                        break;
+                    case Enumˉtypeˉdeclaration Enum:
+                        Writer.Writeˉu32(Enum.Members.Length);
+                        foreach (var Member in Enum.Members)
+                        {
+                            Writer.Writeˉstring(Member.Name, isˉname: true);
+                            Writer.Writeˉi32(Member.Value);
+                        }
+
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unknown nominal type '{Type.GetType().Name}'.");
                 }
             }
         });
@@ -366,25 +384,51 @@ public static class Moduleˉcodec
         return Result.ToImmutable();
     }
 
-    private static ImmutableArray<Recordˉtypeˉdeclaration> Readˉtypes(ref Byteˉreader reader)
+    private static ImmutableArray<Nominalˉtypeˉdeclaration> Readˉtypes(ref Byteˉreader reader)
     {
-        var Count = reader.Readˉboundedˉcount(Bytecodeˉlimits.MAX_RECORD_TYPES, "record type");
-        var Result = ImmutableArray.CreateBuilder<Recordˉtypeˉdeclaration>(Count);
+        var Count = reader.Readˉboundedˉcount(Bytecodeˉlimits.MAX_NOMINAL_TYPES, "nominal type");
+        var Result = ImmutableArray.CreateBuilder<Nominalˉtypeˉdeclaration>(Count);
         for (var Index = 0; Index < Count; Index++)
         {
-            var Name = reader.Readˉstring(isˉname: true);
-            var Fieldˉcount = reader.Readˉboundedˉcount(
-                Bytecodeˉlimits.MAX_RECORD_FIELDS,
-                "record field");
-            var Fields = ImmutableArray.CreateBuilder<Recordˉfieldˉdeclaration>(Fieldˉcount);
-            for (var Fieldˉindex = 0; Fieldˉindex < Fieldˉcount; Fieldˉindex++)
+            var Kindˉoffset = reader.Absoluteˉoffset;
+            var Rawˉkind = reader.Readˉbyte();
+            if (!Enum.IsDefined(typeof(Nominalˉtypeˉkind), Rawˉkind))
             {
-                var Fieldˉname = reader.Readˉstring(isˉname: true);
-                var Fieldˉtype = reader.Readˉvalueˉtype(allowˉvoid: false, allowˉrecord: false);
-                Fields.Add(new(Fieldˉname, Fieldˉtype));
+                throw new Moduleˉformatˉexception(
+                    "WVB1020",
+                    $"Unknown nominal type kind {Rawˉkind}.",
+                    Kindˉoffset);
             }
 
-            Result.Add(new(Name, Fields.ToImmutable()));
+            var Kind = (Nominalˉtypeˉkind)Rawˉkind;
+            var Name = reader.Readˉstring(isˉname: true);
+            if (Kind == Nominalˉtypeˉkind.Record)
+            {
+                var Fieldˉcount = reader.Readˉboundedˉcount(
+                    Bytecodeˉlimits.MAX_RECORD_FIELDS,
+                    "record field");
+                var Fields = ImmutableArray.CreateBuilder<Recordˉfieldˉdeclaration>(Fieldˉcount);
+                for (var Fieldˉindex = 0; Fieldˉindex < Fieldˉcount; Fieldˉindex++)
+                {
+                    var Fieldˉname = reader.Readˉstring(isˉname: true);
+                    var Fieldˉtype = reader.Readˉvalueˉshape(allowˉvoid: false);
+                    Fields.Add(new(Fieldˉname, Fieldˉtype));
+                }
+
+                Result.Add(new Recordˉtypeˉdeclaration(Name, Fields.ToImmutable()));
+                continue;
+            }
+
+            var Memberˉcount = reader.Readˉboundedˉcount(
+                Bytecodeˉlimits.MAX_ENUM_MEMBERS,
+                "enum member");
+            var Members = ImmutableArray.CreateBuilder<Enumˉmemberˉdeclaration>(Memberˉcount);
+            for (var Memberˉindex = 0; Memberˉindex < Memberˉcount; Memberˉindex++)
+            {
+                Members.Add(new(reader.Readˉstring(isˉname: true), reader.Readˉi32()));
+            }
+
+            Result.Add(new Enumˉtypeˉdeclaration(Name, Members.ToImmutable()));
         }
 
         return Result.ToImmutable();
@@ -492,9 +536,9 @@ public static class Moduleˉcodec
         public void Writeˉvalueˉshape(Valueˉshape shape)
         {
             Writeˉbyte((byte)shape.Kind);
-            if (shape.Kind == Valueˉtype.Record)
+            if (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum)
             {
-                Writeˉu32(shape.Recordˉtypeˉindex);
+                Writeˉu32(shape.Nominalˉtypeˉindex);
             }
         }
 
@@ -592,7 +636,7 @@ public static class Moduleˉcodec
             return Count;
         }
 
-        public Valueˉtype Readˉvalueˉtype(bool allowˉvoid, bool allowˉrecord = false)
+        public Valueˉtype Readˉvalueˉtype(bool allowˉvoid, bool allowˉnominal = false)
         {
             var Typeˉoffset = Absoluteˉoffset;
             var Rawˉtype = Readˉbyte();
@@ -613,11 +657,11 @@ public static class Moduleˉcodec
                     Typeˉoffset);
             }
 
-            if (!allowˉrecord && Type == Valueˉtype.Record)
+            if (!allowˉnominal && Type is Valueˉtype.Record or Valueˉtype.Enum)
             {
                 throw new Moduleˉformatˉexception(
                     "WVB1019",
-                    "A record type is not valid in this type position.",
+                    "A nominal type is not valid in this type position.",
                     Typeˉoffset);
             }
 
@@ -626,10 +670,11 @@ public static class Moduleˉcodec
 
         public Valueˉshape Readˉvalueˉshape(bool allowˉvoid)
         {
-            var Type = Readˉvalueˉtype(allowˉvoid, allowˉrecord: true);
-            return Type == Valueˉtype.Record
-                ? Valueˉshape.Forˉrecord(Readˉnonnegativeˉi32("record type index"))
-                : new(Type);
+            var Type = Readˉvalueˉtype(allowˉvoid, allowˉnominal: true);
+            var Nominalˉindex = Type is Valueˉtype.Record or Valueˉtype.Enum
+                ? Readˉnonnegativeˉi32("nominal type index")
+                : -1;
+            return new(Type, Nominalˉindex);
         }
 
         public string Readˉstring(bool isˉname)

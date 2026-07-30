@@ -107,10 +107,13 @@ $WvDumpCoreInspectOutput = dotnet run --project $ToolProject --configuration $Co
 $WvDumpCoreInspection = $WvDumpCoreInspectOutput -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $WvDumpCoreInspectOutput -notcontains 'Record types (2)' -or
+    $WvDumpCoreInspectOutput -notcontains 'Nominal types (3)' -or
     $WvDumpCoreInspection -notmatch 'Inspectˉwvbˉenvelope' -or
     $WvDumpCoreInspection -notmatch 'record\.create' -or
-    $WvDumpCoreInspection -notmatch 'record\.field'
+    $WvDumpCoreInspection -notmatch 'record\.field' -or
+    $WvDumpCoreInspection -notmatch 'enum\.name' -or
+    $WvDumpCoreInspection -notmatch 'u32\.format' -or
+    $WvDumpCoreInspection -notmatch 'text\.concat'
 ) {
     throw 'The Seed CLI inspector did not expose the structured Windvale section walker.'
 }

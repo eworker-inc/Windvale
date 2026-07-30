@@ -22,6 +22,14 @@ internal enum Wirˉoperation
     Bytesˉreadˉu32ˉlittle,
     Recordˉcreate,
     Recordˉfield,
+    Enumˉconstant,
+    Enumˉequal,
+    Enumˉnotˉequal,
+    Enumˉname,
+    I32ˉformat,
+    U8ˉformat,
+    U32ˉformat,
+    Textˉconcat,
     I32ˉadd,
     I32ˉsubtract,
     I32ˉmultiply,
@@ -56,6 +64,7 @@ internal sealed record Wirˉinstruction(
     ImmutableArray<int> Operands,
     int Integerˉoperand = 0,
     uint Unsignedˉintegerˉoperand = 0,
+    uint Secondˉunsignedˉintegerˉoperand = 0,
     string? Nameˉoperand = null);
 
 internal abstract record Wirˉterminator;
@@ -89,5 +98,5 @@ internal sealed record Wirˉmodule(
     Moduleˉprofile Profile,
     ImmutableArray<Capabilityˉdeclaration> Capabilities,
     ImmutableArray<Dataˉdeclaration> Data,
-    ImmutableArray<Recordˉtypeˉdeclaration> Types,
+    ImmutableArray<Nominalˉtypeˉdeclaration> Types,
     ImmutableArray<Wirˉfunction> Functions);

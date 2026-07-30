@@ -2,7 +2,7 @@
 
 ## Status
 
-This document specifies Windvale bytecode module version 1.2 used by Seed. Windvale is in early development; version 1.2 identifies the binary grammar and is not yet a long-term compatibility promise. Version 1.2 adds immutable nominal records and does not require a backward reader for versions 1.0 or 1.1.
+This document specifies Windvale bytecode module version 1.3 used by Seed. Windvale is in early development; version 1.3 identifies the binary grammar and is not yet a long-term compatibility promise. Version 1.3 generalizes the Types section for nominal enums, adds deterministic bounded formatting, and does not require a backward reader for versions 1.0 through 1.2.
 
 ## Encoding
 
@@ -19,7 +19,7 @@ This document specifies Windvale bytecode module version 1.2 used by Seed. Windv
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 2
+u16      minor version: 3
 u32      section count: 7
 ```
 
@@ -117,16 +117,23 @@ The reference launcher selects exported `Main() -> i32` as the executable source
 ## Types section
 
 ```text
-u32      record type count
+u32      nominal type count
 repeat:
-  string record type name
-  u32    field count
-  repeat:
-    string field name
-    u8   primitive field type
+  u8     nominal kind: 1 record, 2 enum
+  string nominal type name
+  if record:
+    u32    field count
+    repeat:
+      string field name
+      shape field type
+  if enum:
+    u32    member count
+    repeat:
+      string member name
+      i32  member value
 ```
 
-Record types are strictly sorted by ordinal name and cannot be duplicated. Field order is declaration order and therefore constructor order; field names are unique within the record. Seed requires between 1 and 64 fields. Fields may use `i32`, `bool`, `text`, `u8`, `u32`, or `bytes`, but not `void` or another record.
+Nominal types are grouped by kind, then strictly sorted by ordinal name, and names are unique across all kinds. Record field order is declaration order and therefore constructor order; field names are unique within the record. Seed requires between 1 and 64 fields. Fields may use `i32`, `bool`, `text`, `u8`, `u32`, `bytes`, or a nominal enum, but not `void` or another record. Enums contain 1 through 256 uniquely named members with unique `i32` values; member order is declaration order.
 
 ## Value types
 
@@ -139,11 +146,12 @@ Record types are strictly sorted by ordinal name and cannot be duplicated. Field
 5 u32
 6 bytes
 7 record
+8 enum
 ```
 
 `void` is valid only as a return type. Immutable integer arrays are module data and are not operand-stack values. A `bytes` value is an immutable sequence or slice view and can be stored in locals, passed to functions, and returned.
 
-Function parameter, result, and local types use a value shape. A primitive shape is its one-byte value type. A record shape is byte `7` followed by a `u32` index into the Types section. Record identity is nominal: two records with identical fields remain different operand-stack types.
+Function parameter, result, local, and record-field types use a value shape. A primitive shape is its one-byte value type. A nominal shape is byte `7` for a record or byte `8` for an enum followed by a `u32` index into the Types section. Nominal identity is exact: separately declared records or enums remain different operand-stack types even when their contents match.
 
 ## Instruction encoding
 
@@ -192,6 +200,14 @@ Function parameter, result, and local types use a value shape. A primitive shape
 67 u8.not_equal
 68 record.create     u32 record-type index; consumes fields in declaration order
 69 record.field      u32 field index; consumes one nominal record value
+6A enum.const        u32 enum-type index, u32 member index
+6B enum.equal        consumes two values of the same nominal enum
+6C enum.not_equal    consumes two values of the same nominal enum
+6D enum.name         consumes enum, produces its declared member name as text
+6E i32.format        consumes i32, produces invariant decimal text
+6F u8.format         consumes u8, produces invariant decimal text
+70 u32.format        consumes u32, produces invariant decimal text
+71 text.concat       consumes two text values, produces bounded concatenation
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -211,7 +227,7 @@ Verification is required before execution and rejects a module unless:
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
 - Every local, data, function, and capability index is valid and has the required type.
-- Every record type, record shape, constructor operand, and field access has valid nominal identity and exact field types.
+- Every record or enum declaration, nominal shape, constructor operand, field access, enum constant, and enum comparison has valid nominal identity and exact types.
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
 - Operand-stack types and depths agree at control-flow merges.
 - Calls consume the declared parameter types and push only a non-void result.
@@ -231,8 +247,9 @@ Verification is required before execution and rejects a module unless:
 - Capabilities: 32
 - Data declarations: 4,096
 - Functions: 4,096
-- Record types: 1,024
+- Nominal types: 1,024
 - Fields per record: 64
+- Members per enum: 256
 - Parameters or locals per function: 4,096
 - Code per function: 1 MiB
 - Instructions per function: 100,000

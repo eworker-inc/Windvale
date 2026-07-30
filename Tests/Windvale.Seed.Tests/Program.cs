@@ -11,10 +11,10 @@ namespace Windvale.Seed.Tests;
 
 internal static class Program
 {
-    private const string SUM_SHA256 = "8e8b7b8ae4957f228f362e38f02ae92da1e51a8bd369dcd96d5349f3db205051";
-    private const string HELLO_SHA256 = "4260b9500e8fe9ddc03d2e22a186e6395b609d4fe59ef1301298d5ad972d22e1";
-    private const string FOUNDATION_SHA256 = "5ad40cc8cf7a51cd2149d482ff8f8c385fee6643223c282b50cdcbacc11f4745";
-    private const string WVDUMP_CORE_SHA256 = "74cd0059b65b999ddec46da4d6b4a5e8153c4ed28c4c8152bc2eaffa96e9dd69";
+    private const string SUM_SHA256 = "63ad39f6dbfff9b5ec31deb2d99d235dc59069a14a77033cf0a8284063578947";
+    private const string HELLO_SHA256 = "e113e56fef9bd108722fb8b16da93a42eec74699952d9055334c7ae0fe9db79b";
+    private const string FOUNDATION_SHA256 = "66e3ec061c06428b3b6fb7f43c45386e1a34f68e4d93ffb0c2a046f2ecca2bed";
+    private const string WVDUMP_CORE_SHA256 = "d2fe00ed4dec255547d40325b8b220ff09c71c00cb1e170ffee0f5d60e566511";
 
     private const string SUM_SOURCE = """
         module Sumˉdata profile portable;
@@ -54,7 +54,7 @@ internal static class Program
     private const string FOUNDATION_SOURCE = """
         module Readˉwvbˉheader profile portable;
 
-        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0];
+        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0];
 
         fn Headerˉisˉvalid(Input: bytes) -> bool {
             if Bytesˉlength(Input) != 12u32 {
@@ -81,7 +81,7 @@ internal static class Program
             if Version != 1u32 {
                 return false;
             }
-            if Minorˉversion != 2u32 {
+            if Minorˉversion != 3u32 {
                 return false;
             }
             if Sectionˉcount != 7u32 {
@@ -131,6 +131,7 @@ internal static class Program
         ("Foundation byte values, slices, and little-endian reads execute", Foundationˉbytesˉrun),
         ("Windvale wvdump core walks bounded section envelopes", Wvˉdumpˉcoreˉwalksˉsections),
         ("immutable nominal records cross function boundaries", Immutableˉrecordsˉrun),
+        ("nominal enums and bounded formatting execute", Enumsˉandˉformattingˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
         ("source diagnostics contain stable codes and locations", Sourceˉdiagnosticsˉareˉuseful),
         ("binary reader rejects malformed envelopes and UTF-8", Malformedˉmodulesˉareˉrejected),
@@ -416,6 +417,58 @@ internal static class Program
             }
             """;
         Hasˉdiagnostic(Nominalˉmismatch, "WVC2070");
+
+        const string Duplicateˉenumˉmember = """
+            module Broken profile portable;
+            enum State { Ready = 0; Ready = 1; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Duplicateˉenumˉmember, "WVC2093");
+
+        const string Duplicateˉenumˉvalue = """
+            module Broken profile portable;
+            enum State { Ready = 0; Failed = 0; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Duplicateˉenumˉvalue, "WVC2094");
+
+        const string Emptyˉenum = """
+            module Broken profile portable;
+            enum State { }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Emptyˉenum, "WVC2095");
+
+        const string Unsignedˉenumˉvalue = """
+            module Broken profile portable;
+            enum State { Ready = 0u32; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Unsignedˉenumˉvalue, "WVC2099");
+
+        const string Missingˉenumˉmember = """
+            module Broken profile portable;
+            enum State { Ready = 0; }
+            export fn Main() -> i32 { State.Missing; return 0; }
+            """;
+        Hasˉdiagnostic(Missingˉenumˉmember, "WVC2097");
+
+        const string Nameˉnonˉenum = """
+            module Broken profile portable;
+            export fn Main() -> i32 { Enumˉname(1); return 0; }
+            """;
+        Hasˉdiagnostic(Nameˉnonˉenum, "WVC2098");
+
+        const string Enumˉnominalˉmismatch = """
+            module Broken profile portable;
+            enum Left { Value = 0; }
+            enum Right { Value = 0; }
+            export fn Main() -> i32 {
+                let Value: Left = Right.Value;
+                return 0;
+            }
+            """;
+        Hasˉdiagnostic(Enumˉnominalˉmismatch, "WVC2070");
     }
 
     private static void Foundationˉbytesˉrun()
@@ -424,7 +477,7 @@ internal static class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Equal(Dataˉtype.Bytes, Module.Module.Data.Single().Type);
         var Data = (Bytesˉdataˉdeclaration)Module.Module.Data.Single();
-        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0], Data.Values);
+        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0], Data.Values);
         True(
             Module.Module.Functions.SelectMany(Function => Function.Allˉlocalˉtypes)
                 .Contains(Valueˉtype.Bytes),
@@ -455,12 +508,17 @@ internal static class Program
         var Bytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Equal("Wvˉdumpˉcore", Module.Module.Name);
-        Equal(10, Module.Module.Data.Length);
-        Equal(2, Module.Module.Types.Length);
+        Equal(12, Module.Module.Data.Length);
+        Equal(3, Module.Module.Types.Length);
         Equal("Wvbˉinspection", Module.Module.Types[0].Name);
         Equal("Wvbˉsection", Module.Module.Types[1].Name);
-        Equal(3, Module.Module.Types[0].Fields.Length);
-        Equal(6, Module.Module.Types[1].Fields.Length);
+        Equal("Wvbˉstatus", Module.Module.Types[2].Name);
+        Equal(3, ((Recordˉtypeˉdeclaration)Module.Module.Types[0]).Fields.Length);
+        Equal(6, ((Recordˉtypeˉdeclaration)Module.Module.Types[1]).Fields.Length);
+        Equal(
+            Valueˉshape.Forˉenum(2),
+            ((Recordˉtypeˉdeclaration)Module.Module.Types[0]).Fields[0].Type);
+        Equal(9, ((Enumˉtypeˉdeclaration)Module.Module.Types[2]).Members.Length);
 
         var Inspectˉfunction = Module.Module.Functions.Single(
             Function => Function.Name == "Inspectˉwvbˉenvelope");
@@ -481,9 +539,14 @@ internal static class Program
         Contains(Inspection, "Inspectˉwvbˉenvelope");
         Contains(Inspection, "bytes.read_u32_little");
         Contains(Inspection, "u32.less_equal");
-        Contains(Inspection, "Record types (2)");
+        Contains(Inspection, "Nominal types (3)");
         Contains(Inspection, "record.create");
         Contains(Inspection, "record.field");
+        Contains(Inspection, "enum Wvbˉstatus");
+        Contains(Inspection, "enum.const");
+        Contains(Inspection, "enum.name");
+        Contains(Inspection, "u32.format");
+        Contains(Inspection, "text.concat");
         Equal(WVDUMP_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Bytes));
         Equal(0, new Referenceˉruntime(
             Module,
@@ -521,7 +584,7 @@ internal static class Program
 
         var Bytes = Compileˉsuccess(Source);
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
-        var Pair = Module.Module.Types.Single();
+        var Pair = (Recordˉtypeˉdeclaration)Module.Module.Types.Single();
         Equal("Pair", Pair.Name);
         Equal("Left", Pair.Fields[0].Name);
         Equal(Valueˉtype.I32, Pair.Fields[0].Type);
@@ -543,6 +606,102 @@ internal static class Program
             Module,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+    }
+
+    private static void Enumsˉandˉformattingˉrun()
+    {
+        const string Source = """
+            module Enumˉformat profile hosted;
+
+            capability console.write_line;
+
+            enum Runˉstatus {
+                Ready = 7;
+                Failed = 9;
+            }
+
+            record Runˉresult {
+                Status: Runˉstatus;
+                Count: u32;
+                Delta: i32;
+                Byte: u8;
+            }
+
+            fn Describe(Value: Runˉresult) -> text {
+                return Textˉconcat(
+                    Enumˉname(Value.Status),
+                    Textˉconcat(
+                        " count=",
+                        Textˉconcat(
+                            U32ˉformat(Value.Count),
+                            Textˉconcat(
+                                " delta=",
+                                Textˉconcat(
+                                    I32ˉformat(Value.Delta),
+                                    Textˉconcat(" byte=", U8ˉformat(Value.Byte))
+                                )
+                            )
+                        )
+                    )
+                );
+            }
+
+            export fn Main() -> i32 {
+                let Value: Runˉresult = Runˉresult(
+                    Runˉstatus.Ready,
+                    42u32,
+                    -7,
+                    255u8
+                );
+                if Value.Status != Runˉstatus.Ready {
+                    return 1;
+                }
+                if Value.Status == Runˉstatus.Failed {
+                    return 2;
+                }
+
+                console.write_line(Describe(Value));
+                return 0;
+            }
+            """;
+
+        var Bytes = Compileˉsuccess(Source);
+        var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        Equal(2, Module.Module.Types.Length);
+        var Record = (Recordˉtypeˉdeclaration)Module.Module.Types[0];
+        var Enum = (Enumˉtypeˉdeclaration)Module.Module.Types[1];
+        Equal("Runˉresult", Record.Name);
+        Equal("Runˉstatus", Enum.Name);
+        Equal(Valueˉshape.Forˉenum(1), Record.Fields[0].Type);
+        Equal("Ready", Enum.Members[0].Name);
+        Equal(7, Enum.Members[0].Value);
+        Equal("Failed", Enum.Members[1].Name);
+        Equal(9, Enum.Members[1].Value);
+        Sequenceˉequal(Bytes, Moduleˉcodec.Write(Module.Module));
+
+        var Inspection = Moduleˉinspector.Inspect(Module, Bytes);
+        Contains(Inspection, "enum Runˉstatus");
+        Contains(Inspection, "enum.const type[1] (Runˉstatus)");
+        Contains(Inspection, "enum.not_equal");
+        Contains(Inspection, "enum.equal");
+        Contains(Inspection, "enum.name");
+        Contains(Inspection, "i32.format");
+        Contains(Inspection, "u8.format");
+        Contains(Inspection, "u32.format");
+        Contains(Inspection, "text.concat");
+
+        var Output = new StringWriter();
+        var Result = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(Output),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Authorizedˉcapabilities = ImmutableHashSet.Create(
+                    StringComparer.Ordinal,
+                    Capabilityˉcatalog.CONSOLE_WRITE_LINE),
+            }).Runˉmain();
+        Equal(0, Result.Exitˉcode);
+        Equal("Ready count=42 delta=-7 byte=255" + Environment.NewLine, Output.ToString());
     }
 
     private static void Sourceˉdiagnosticsˉareˉuseful()
@@ -613,6 +772,13 @@ internal static class Program
             export fn Main() -> i32 { return 0; }
             """;
         Hasˉdiagnostic(Reservedˉintrinsic, "WVC2024");
+
+        const string Reservedˉenumˉname = """
+            module Broken profile portable;
+            fn Enumˉname(Value: i32) -> text { return "bad"; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Reservedˉenumˉname, "WVC2024");
 
         const string Reservedˉrecordˉconstructor = """
             module Broken profile portable;
@@ -687,8 +853,18 @@ internal static class Program
         var Typesˉpayload = Findˉsectionˉpayload(Badˉtypeˉcount, Sectionˉkind.Types);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Badˉtypeˉcount.AsSpan(Typesˉpayload),
-            Bytecodeˉlimits.MAX_RECORD_TYPES + 1u);
+            Bytecodeˉlimits.MAX_NOMINAL_TYPES + 1u);
         Throwsˉbytecode("WVB1012", () => Moduleˉcodec.Readˉandˉverify(Badˉtypeˉcount));
+
+        const string Enumˉsource = """
+            module Enumˉbinary profile portable;
+            enum State { Ready = 0; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        var Badˉtypeˉkind = Compileˉsuccess(Enumˉsource);
+        var Badˉtypeˉpayload = Findˉsectionˉpayload(Badˉtypeˉkind, Sectionˉkind.Types);
+        Badˉtypeˉkind[Badˉtypeˉpayload + sizeof(uint)] = byte.MaxValue;
+        Throwsˉbytecode("WVB1020", () => Moduleˉcodec.Readˉandˉverify(Badˉtypeˉkind));
     }
 
     private static void Unsafeˉbytecodeˉisˉrejected()
@@ -765,10 +941,12 @@ internal static class Program
         };
         Throwsˉbytecode("WVB2242", () => Moduleˉverifier.Verify(Invalidˉrecordˉshape));
 
-        var Oneˉu32ˉfield = ImmutableArray.Create(
+        ImmutableArray<Nominalˉtypeˉdeclaration> Oneˉu32ˉfield =
+        [
             new Recordˉtypeˉdeclaration(
                 "Pair",
-                [new Recordˉfieldˉdeclaration("Value", Valueˉtype.U32)]));
+                [new Recordˉfieldˉdeclaration("Value", Valueˉtype.U32)]),
+        ];
         var Wrongˉrecordˉfieldˉtype = Buildˉmodule(
             [
                 .. I32ˉinstruction(1),
@@ -817,11 +995,118 @@ internal static class Program
             Valueˉtype.Void,
             maximumˉstack: 0) with
         {
-            Types = [new(
+            Types = [new Recordˉtypeˉdeclaration(
                 "Pair",
                 [new("Value", Valueˉtype.I32), new("Value", Valueˉtype.U32)])],
         };
         Throwsˉbytecode("WVB2152", () => Moduleˉverifier.Verify(Duplicateˉrecordˉmetadata));
+
+        ImmutableArray<Nominalˉtypeˉdeclaration> Oneˉenum =
+        [
+            new Enumˉtypeˉdeclaration(
+                "State",
+                [new("Ready", 0), new("Failed", 1)]),
+        ];
+        var Invalidˉenumˉmember = Buildˉmodule(
+            [
+                .. Twoˉu32ˉinstruction(Opcode.Enumˉconst, 0, 2),
+                (byte)Opcode.Pop,
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.Void,
+            maximumˉstack: 1) with
+        {
+            Types = Oneˉenum,
+        };
+        Throwsˉbytecode("WVB2225", () => Moduleˉverifier.Verify(Invalidˉenumˉmember));
+
+        var Enumˉconstantˉonˉrecord = Buildˉmodule(
+            [
+                .. Twoˉu32ˉinstruction(Opcode.Enumˉconst, 0, 0),
+                (byte)Opcode.Pop,
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.Void,
+            maximumˉstack: 1) with
+        {
+            Types = Oneˉu32ˉfield,
+        };
+        Throwsˉbytecode("WVB2217", () => Moduleˉverifier.Verify(Enumˉconstantˉonˉrecord));
+
+        var Enumˉnameˉonˉprimitive = Buildˉmodule(
+            [
+                .. I32ˉinstruction(0),
+                (byte)Opcode.Enumˉname,
+                (byte)Opcode.Pop,
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.Void,
+            maximumˉstack: 1) with
+        {
+            Types = Oneˉenum,
+        };
+        Throwsˉbytecode("WVB2226", () => Moduleˉverifier.Verify(Enumˉnameˉonˉprimitive));
+
+        ImmutableArray<Nominalˉtypeˉdeclaration> Twoˉenums =
+        [
+            new Enumˉtypeˉdeclaration("First", [new("Value", 0)]),
+            new Enumˉtypeˉdeclaration("Second", [new("Value", 0)]),
+        ];
+        var Mismatchedˉenumˉcomparison = Buildˉmodule(
+            [
+                .. Twoˉu32ˉinstruction(Opcode.Enumˉconst, 0, 0),
+                .. Twoˉu32ˉinstruction(Opcode.Enumˉconst, 1, 0),
+                (byte)Opcode.Enumˉequal,
+                (byte)Opcode.Pop,
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.Void,
+            maximumˉstack: 2) with
+        {
+            Types = Twoˉenums,
+        };
+        Throwsˉbytecode("WVB2224", () => Moduleˉverifier.Verify(Mismatchedˉenumˉcomparison));
+
+        var Wrongˉnominalˉkind = Buildˉmodule(
+            [(byte)Opcode.Return],
+            Valueˉtype.Void,
+            maximumˉstack: 0) with
+        {
+            Types = Oneˉenum,
+            Functions = [new(
+                "Main",
+                [Valueˉshape.Forˉrecord(0)],
+                Valueˉtype.Void,
+                [],
+                0,
+                1,
+                0)],
+        };
+        Throwsˉbytecode("WVB2244", () => Moduleˉverifier.Verify(Wrongˉnominalˉkind));
+
+        var Duplicateˉenumˉmetadata = Buildˉmodule(
+            [(byte)Opcode.Return],
+            Valueˉtype.Void,
+            maximumˉstack: 0) with
+        {
+            Types = [new Enumˉtypeˉdeclaration(
+                "State",
+                [new("Ready", 0), new("Failed", 0)])],
+        };
+        Throwsˉbytecode("WVB2156", () => Moduleˉverifier.Verify(Duplicateˉenumˉmetadata));
+
+        var Duplicateˉnominalˉname = Buildˉmodule(
+            [(byte)Opcode.Return],
+            Valueˉtype.Void,
+            maximumˉstack: 0) with
+        {
+            Types =
+            [
+                new Recordˉtypeˉdeclaration("Same", [new("Value", Valueˉtype.I32)]),
+                new Enumˉtypeˉdeclaration("Same", [new("Value", 0)]),
+            ],
+        };
+        Throwsˉbytecode("WVB2159", () => Moduleˉverifier.Verify(Duplicateˉnominalˉname));
 
         var Oversizedˉbyteˉdata = Buildˉmodule(
             [(byte)Opcode.Return],
@@ -899,6 +1184,32 @@ internal static class Program
             }
             """;
         Throwsˉruntime("WVR3007", () => Runˉportable(U32ˉunderflow));
+
+        var Oversizedˉtextˉresult = Buildˉmodule(
+            [
+                .. U32ˉinstruction(Opcode.Textˉconst, 0),
+                .. U32ˉinstruction(Opcode.Textˉconst, 1),
+                (byte)Opcode.Textˉconcat,
+                (byte)Opcode.Pop,
+                .. I32ˉinstruction(0),
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.I32,
+            maximumˉstack: 2) with
+        {
+            Data =
+            [
+                new Textˉdataˉdeclaration("Left", new string('a', 600_000)),
+                new Textˉdataˉdeclaration("Right", new string('b', 600_000)),
+            ],
+        };
+        var Verifiedˉoversizedˉtext = Moduleˉverifier.Verify(Oversizedˉtextˉresult);
+        Throwsˉruntime(
+            "WVR3012",
+            () => new Referenceˉruntime(
+                Verifiedˉoversizedˉtext,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
     }
 
     private static void Runtimeˉlimitsˉareˉenforced()
@@ -1072,6 +1383,15 @@ internal static class Program
         var Result = new byte[5];
         Result[0] = (byte)opcode;
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(1), value);
+        return Result;
+    }
+
+    private static byte[] Twoˉu32ˉinstruction(Opcode opcode, uint first, uint second)
+    {
+        var Result = new byte[9];
+        Result[0] = (byte)opcode;
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(1), first);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(5), second);
         return Result;
     }
 

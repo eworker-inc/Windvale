@@ -3,24 +3,24 @@ module Wvˉdumpˉcore profile portable;
 data Shortˉmodule: bytes = [87];
 
 data Badˉmagicˉmodule: bytes = [
-    0, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0
+    0, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0
 ];
 
 data Badˉversionˉmodule: bytes = [
-    87, 86, 66, 49, 2, 0, 2, 0, 7, 0, 0, 0
+    87, 86, 66, 49, 2, 0, 3, 0, 7, 0, 0, 0
 ];
 
 data Badˉcountˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 2, 0, 6, 0, 0, 0
+    87, 86, 66, 49, 1, 0, 3, 0, 6, 0, 0, 0
 ];
 
 data Hostileˉlengthˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 255, 255, 255, 255
 ];
 
 data Validˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -31,7 +31,7 @@ data Validˉmodule: bytes = [
 ];
 
 data Badˉkindˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -42,7 +42,7 @@ data Badˉkindˉmodule: bytes = [
 ];
 
 data Badˉflagsˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 1, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -53,7 +53,7 @@ data Badˉflagsˉmodule: bytes = [
 ];
 
 data Truncatedˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -64,7 +64,7 @@ data Truncatedˉmodule: bytes = [
 ];
 
 data Trailingˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -75,8 +75,20 @@ data Trailingˉmodule: bytes = [
     0
 ];
 
+enum Wvbˉstatus {
+    Valid = 0;
+    Shortˉheader = 1;
+    Badˉmagic = 2;
+    Badˉversion = 3;
+    Badˉsectionˉcount = 4;
+    Outˉofˉbounds = 5;
+    Wrongˉsectionˉkind = 6;
+    Unsupportedˉsectionˉheader = 7;
+    Trailingˉbytes = 8;
+}
+
 record Wvbˉinspection {
-    Status: i32;
+    Status: Wvbˉstatus;
     Sectionsˉseen: u32;
     Failureˉoffset: u32;
 }
@@ -135,53 +147,53 @@ fn Readˉsection(Input: bytes, Envelopeˉoffset: u32) -> Wvbˉsection {
 fn Inspectˉwvbˉenvelope(Input: bytes) -> Wvbˉinspection {
     let Total: u32 = Bytesˉlength(Input);
     if Total < 12u32 {
-        return Wvbˉinspection(1, 0u32, Total);
+        return Wvbˉinspection(Wvbˉstatus.Shortˉheader, 0u32, Total);
     }
 
     let Magic: bytes = Bytesˉslice(Input, 0u32, 4u32);
     if Bytesˉreadˉu8(Magic, 0u32) != 87u8 {
-        return Wvbˉinspection(2, 0u32, 0u32);
+        return Wvbˉinspection(Wvbˉstatus.Badˉmagic, 0u32, 0u32);
     }
     if Bytesˉreadˉu8(Magic, 1u32) != 86u8 {
-        return Wvbˉinspection(2, 0u32, 1u32);
+        return Wvbˉinspection(Wvbˉstatus.Badˉmagic, 0u32, 1u32);
     }
     if Bytesˉreadˉu8(Magic, 2u32) != 66u8 {
-        return Wvbˉinspection(2, 0u32, 2u32);
+        return Wvbˉinspection(Wvbˉstatus.Badˉmagic, 0u32, 2u32);
     }
     if Bytesˉreadˉu8(Magic, 3u32) != 49u8 {
-        return Wvbˉinspection(2, 0u32, 3u32);
+        return Wvbˉinspection(Wvbˉstatus.Badˉmagic, 0u32, 3u32);
     }
 
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
-        return Wvbˉinspection(3, 0u32, 4u32);
+        return Wvbˉinspection(Wvbˉstatus.Badˉversion, 0u32, 4u32);
     }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 2u32 {
-        return Wvbˉinspection(3, 0u32, 6u32);
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 3u32 {
+        return Wvbˉinspection(Wvbˉstatus.Badˉversion, 0u32, 6u32);
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
-        return Wvbˉinspection(4, 0u32, 8u32);
+        return Wvbˉinspection(Wvbˉstatus.Badˉsectionˉcount, 0u32, 8u32);
     }
 
     var Cursor: u32 = 12u32;
     var Sectionˉindex: u32 = 0u32;
     while Sectionˉindex < 7u32 {
         if !Rangeˉisˉinside(Total, Cursor, 8u32) {
-            return Wvbˉinspection(5, Sectionˉindex, Cursor);
+            return Wvbˉinspection(Wvbˉstatus.Outˉofˉbounds, Sectionˉindex, Cursor);
         }
 
         let Section: Wvbˉsection = Readˉsection(Input, Cursor);
         if !Sectionˉkindˉmatches(Sectionˉindex, Section.Kind) {
-            return Wvbˉinspection(6, Sectionˉindex, Section.Envelopeˉoffset);
+            return Wvbˉinspection(Wvbˉstatus.Wrongˉsectionˉkind, Sectionˉindex, Section.Envelopeˉoffset);
         }
         if Section.Flags != 0u8 {
-            return Wvbˉinspection(7, Sectionˉindex, Section.Envelopeˉoffset + 1u32);
+            return Wvbˉinspection(Wvbˉstatus.Unsupportedˉsectionˉheader, Sectionˉindex, Section.Envelopeˉoffset + 1u32);
         }
         if Section.Reserved != 0u32 {
-            return Wvbˉinspection(7, Sectionˉindex, Section.Envelopeˉoffset + 2u32);
+            return Wvbˉinspection(Wvbˉstatus.Unsupportedˉsectionˉheader, Sectionˉindex, Section.Envelopeˉoffset + 2u32);
         }
 
         if !Rangeˉisˉinside(Total, Section.Payloadˉoffset, Section.Payloadˉlength) {
-            return Wvbˉinspection(5, Sectionˉindex, Section.Payloadˉoffset);
+            return Wvbˉinspection(Wvbˉstatus.Outˉofˉbounds, Sectionˉindex, Section.Payloadˉoffset);
         }
 
         Cursor = Section.Payloadˉoffset + Section.Payloadˉlength;
@@ -189,15 +201,28 @@ fn Inspectˉwvbˉenvelope(Input: bytes) -> Wvbˉinspection {
     }
 
     if Cursor != Total {
-        return Wvbˉinspection(8, Sectionˉindex, Cursor);
+        return Wvbˉinspection(Wvbˉstatus.Trailingˉbytes, Sectionˉindex, Cursor);
     }
 
-    return Wvbˉinspection(0, Sectionˉindex, Cursor);
+    return Wvbˉinspection(Wvbˉstatus.Valid, Sectionˉindex, Cursor);
+}
+
+fn Describeˉinspection(Result: Wvbˉinspection) -> text {
+    return Textˉconcat(
+        Enumˉname(Result.Status),
+        Textˉconcat(
+            " sections=",
+            Textˉconcat(
+                U32ˉformat(Result.Sectionsˉseen),
+                Textˉconcat(" offset=", U32ˉformat(Result.Failureˉoffset))
+            )
+        )
+    );
 }
 
 export fn Main() -> i32 {
     let Shortˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Shortˉmodule);
-    if Shortˉresult.Status != 1 {
+    if Shortˉresult.Status != Wvbˉstatus.Shortˉheader {
         return 11;
     }
     if Shortˉresult.Failureˉoffset != 1u32 {
@@ -205,22 +230,22 @@ export fn Main() -> i32 {
     }
 
     let Magicˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉmagicˉmodule);
-    if Magicˉresult.Status != 2 {
+    if Magicˉresult.Status != Wvbˉstatus.Badˉmagic {
         return 12;
     }
 
     let Versionˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉversionˉmodule);
-    if Versionˉresult.Status != 3 {
+    if Versionˉresult.Status != Wvbˉstatus.Badˉversion {
         return 13;
     }
 
     let Countˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉcountˉmodule);
-    if Countˉresult.Status != 4 {
+    if Countˉresult.Status != Wvbˉstatus.Badˉsectionˉcount {
         return 14;
     }
 
     let Hostileˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Hostileˉlengthˉmodule);
-    if Hostileˉresult.Status != 5 {
+    if Hostileˉresult.Status != Wvbˉstatus.Outˉofˉbounds {
         return 15;
     }
     if Hostileˉresult.Failureˉoffset != 20u32 {
@@ -228,7 +253,7 @@ export fn Main() -> i32 {
     }
 
     let Validˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Validˉmodule);
-    if Validˉresult.Status != 0 {
+    if Validˉresult.Status != Wvbˉstatus.Valid {
         return 16;
     }
     if Validˉresult.Sectionsˉseen != 7u32 {
@@ -237,9 +262,10 @@ export fn Main() -> i32 {
     if Validˉresult.Failureˉoffset != 94u32 {
         return 36;
     }
+    Describeˉinspection(Validˉresult);
 
     let Kindˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉkindˉmodule);
-    if Kindˉresult.Status != 6 {
+    if Kindˉresult.Status != Wvbˉstatus.Wrongˉsectionˉkind {
         return 17;
     }
     if Kindˉresult.Sectionsˉseen != 2u32 {
@@ -247,12 +273,12 @@ export fn Main() -> i32 {
     }
 
     let Flagsˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉflagsˉmodule);
-    if Flagsˉresult.Status != 7 {
+    if Flagsˉresult.Status != Wvbˉstatus.Unsupportedˉsectionˉheader {
         return 18;
     }
 
     let Truncatedˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Truncatedˉmodule);
-    if Truncatedˉresult.Status != 5 {
+    if Truncatedˉresult.Status != Wvbˉstatus.Outˉofˉbounds {
         return 19;
     }
     if Truncatedˉresult.Sectionsˉseen != 6u32 {
@@ -260,7 +286,7 @@ export fn Main() -> i32 {
     }
 
     let Trailingˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Trailingˉmodule);
-    if Trailingˉresult.Status != 8 {
+    if Trailingˉresult.Status != Wvbˉstatus.Trailingˉbytes {
         return 20;
     }
     if Trailingˉresult.Failureˉoffset != 94u32 {
