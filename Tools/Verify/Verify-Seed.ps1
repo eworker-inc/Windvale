@@ -52,6 +52,10 @@ $WvoSample = Join-Path $Artifacts 'Sample.wvo'
 $AssemblyObject = Join-Path $Artifacts 'Hello-Object.wvo'
 $WindvaleAssemblyObject = Join-Path $Artifacts 'Hello-Object-Windvale.wvo'
 $InvalidWindvaleAssemblyObject = Join-Path $Artifacts '__windvale_invalid_assembly_output__.wvo'
+$LinkProviderObject = Join-Path $Artifacts 'Console-Provider.wvo'
+$LinkedImage = Join-Path $Artifacts 'Hello-Linked.bin'
+$LinkMap = Join-Path $Artifacts 'Hello-Linked.wvmap'
+$InvalidLinkedImage = Join-Path $Artifacts '__windvale_invalid_link_output__.bin'
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
 
@@ -394,6 +398,74 @@ if (
     $AssemblyInspection -notmatch 'kind=Absoluteˉu32 section=1 offset=3 symbol=1 addend=0'
 ) {
     throw 'The object inspector did not expose the expected WVA sections and relocations.'
+}
+
+$ProviderAssemblyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- assemble (Join-Path $RepositoryRoot 'Examples/Linker/Console-Provider.wva') -o $LinkProviderObject
+if (
+    $LASTEXITCODE -ne 0 -or
+    $ProviderAssemblyOutput -notcontains 'SHA-256: 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab'
+) {
+    throw 'The Stage 0 assembler did not produce the canonical linker provider object.'
+}
+
+$LinkMapOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $LinkedImage $AssemblyObject $LinkProviderObject
+if (
+    $LASTEXITCODE -ne 0 -or
+    $LinkMapOutput -notcontains 'windvale-link-map 1' -or
+    $LinkMapOutput -notcontains 'target name=flat-x86-64-v1 architecture=x86-64 base-address=1048576 image-bytes=24' -or
+    $LinkMapOutput -notcontains 'entry name=Main address=1048576' -or
+    $LinkMapOutput -notcontains 'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' -or
+    $LinkMapOutput -notcontains 'import index=0 input=0 source-index=2 kind=function name=Console_write provider-input=1 provider-source-index=0 address=1048592' -or
+    $LinkMapOutput -notcontains 'relocation index=0 input=0 source-index=0 kind=relative-i32 patch-offset=6 patch-address=1048582 target=Console_write target-input=1 target-source-index=0 target-address=1048592 addend=-4 value=6' -or
+    $LinkMapOutput -notcontains 'relocation index=1 input=0 source-index=1 kind=absolute-u32 patch-offset=20 patch-address=1048596 target=Main target-input=0 target-source-index=1 target-address=1048576 addend=0 value=1048576' -or
+    ($LinkMapOutput -join "`n") -match [regex]::Escape($RepositoryRoot)
+) {
+    throw 'The Stage 0 linker did not produce the canonical path-free map.'
+}
+$LinkHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $LinkedImage).Hash.ToLowerInvariant()
+if ($LinkHash -ne '0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a') {
+    throw "The Stage 0 linker wrote unexpected image bytes: $LinkHash"
+}
+[System.IO.File]::WriteAllText(
+    $LinkMap,
+    (($LinkMapOutput -join "`n") + "`n"),
+    [System.Text.UTF8Encoding]::new($false))
+$LinkMapHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $LinkMap).Hash.ToLowerInvariant()
+if ($LinkMapHash -ne '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4') {
+    throw "The Stage 0 linker wrote an unexpected canonical map: $LinkMapHash"
+}
+
+if (Test-Path -LiteralPath $InvalidLinkedImage) {
+    throw "The invalid link output unexpectedly exists: $InvalidLinkedImage"
+}
+$UndefinedLinkOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $InvalidLinkedImage $AssemblyObject 2>&1
+if ($LASTEXITCODE -ne 1 -or ($UndefinedLinkOutput -join "`n") -notmatch 'WVL1005') {
+    throw 'The Stage 0 linker did not reject an undefined import deterministically.'
+}
+if (Test-Path -LiteralPath $InvalidLinkedImage) {
+    throw 'A rejected link created a partial image.'
+}
+
+$ExistingLinkFailure = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $LinkedImage $AssemblyObject 2>&1
+if ($LASTEXITCODE -ne 1 -or ($ExistingLinkFailure -join "`n") -notmatch 'WVL1005') {
+    throw 'The Stage 0 linker did not reject an invalid link targeting an existing image.'
+}
+$PreservedLinkHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $LinkedImage).Hash.ToLowerInvariant()
+if ($PreservedLinkHash -ne $LinkHash) {
+    throw 'A rejected link modified an existing image.'
+}
+
+$MissingLinkParent = Join-Path $Artifacts '__windvale_missing_link_parent__'
+if (Test-Path -LiteralPath $MissingLinkParent) {
+    throw "The missing linker parent unexpectedly exists: $MissingLinkParent"
+}
+$MissingLinkOutput = Join-Path $MissingLinkParent 'Hello.bin'
+$MissingLinkParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $MissingLinkOutput $AssemblyObject $LinkProviderObject 2>&1
+if ($LASTEXITCODE -ne 74 -or ($MissingLinkParentOutput -join "`n") -notmatch 'I/O failed') {
+    throw 'The Stage 0 linker did not report a missing output parent deterministically.'
+}
+if (Test-Path -LiteralPath $MissingLinkOutput) {
+    throw 'The failed linker write left a partial image.'
 }
 
 Write-Output "Windvale Seed verification passed."

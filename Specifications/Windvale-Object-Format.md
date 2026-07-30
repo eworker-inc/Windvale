@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Windvale Object version 1.0 (`WVO1`) is the first structured native-object contract shared by the Stage 0 oracle, Windvale-written assembler experiments, and the future linker. It is deliberately smaller than ELF, COFF, or Mach-O and does not replace those host formats. Its job is to preserve named sections, symbols, and unresolved relocations deterministically until a linker chooses final layout and an output image format.
+Windvale Object version 1.0 (`WVO1`) is the first structured native-object contract shared by the Stage 0 oracle, Windvale-written assembler, and linker. It is deliberately smaller than ELF, COFF, or Mach-O and does not replace those host formats. Its job is to preserve named sections, symbols, and unresolved relocations deterministically until a linker chooses final layout and an output image format.
 
 This is an early-development format without a backward-compatibility promise. Readers must reject unsupported versions rather than guessing.
 

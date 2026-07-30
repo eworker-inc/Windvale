@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Windvale.Assembler;
 using Windvale.Bytecode;
 using Windvale.Compiler;
+using Windvale.Linker;
 using Windvale.ObjectModel;
 using Windvale.Runtime;
 
@@ -21,6 +22,8 @@ internal static class Program
     private const string WVO_CORE_SHA256 = "a5d574ea646946b159d95bd7e51434bfcbf7545083a54541438a79a2e5e999df";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "7dbcf042f011adab5a04670973fc17b6b63d50fb08c09e8e54c3a4adb2c00825";
+    private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
+    private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -164,6 +167,9 @@ internal static class Program
     private static readonly string WVA_ASSEMBLER_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wva-Assembler-Core.wv");
 
+    private static readonly string CONSOLE_PROVIDER_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Console-Provider.wva");
+
     private static readonly List<(string Name, Action Body)> TESTS =
     [
         ("portable source compiles, verifies, and returns the data sum", Portableˉprogramˉruns),
@@ -184,6 +190,9 @@ internal static class Program
         ("WVA assembler rejects malformed and inconsistent source", Assemblerˉrejectsˉinvalidˉsource),
         ("Windvale-written WVA assembler enforces source and token boundaries", Wvaˉassemblerˉcoreˉrecognizesˉsource),
         ("Windvale-written WVA assembler matches Stage 0 semantics and bytes", Wvaˉassemblerˉmatchesˉoracle),
+        ("Stage 0 linker resolves and verifies a canonical flat image", Linkerˉproducesˉcanonicalˉflatˉimage),
+        ("Stage 0 linker rejects resolution, layout, and relocation failures", Linkerˉrejectsˉinvalidˉlinks),
+        ("Stage 0 linker contains hostile objects and remains deterministic", Linkerˉcontainsˉhostileˉinput),
         ("immutable nominal records cross function boundaries", Immutableˉrecordsˉrun),
         ("nominal enums and bounded formatting execute", Enumsˉandˉformattingˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
@@ -1268,6 +1277,226 @@ internal static class Program
         Hasˉassemblyˉdiagnostic(
             new string('a', Assemblyˉlimits.MAX_SOURCE_BYTES + 1),
             "WVA1011");
+    }
+
+    private static void Linkerˉproducesˉcanonicalˉflatˉimage()
+    {
+        var Mainˉobject = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE);
+        var Providerˉobject = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE);
+        var Result = Linkˉsuccess(
+            [Mainˉobject, Providerˉobject],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Equal(Linkˉcontract.FORMAT_VERSION, 1);
+        Equal(24, Result.Imageˉbytes.Length);
+        Equal(Linkˉcontract.DEFAULT_BASE_ADDRESS, Result.Entryˉaddress);
+        Equal(3, Result.Sectionˉcount);
+        Equal(3, Result.Definedˉsymbolˉcount);
+        Equal(1, Result.Importˉcount);
+        Equal(2, Result.Relocationˉcount);
+        Sequenceˉequal<byte>(
+            [
+                0xB8, 0x2A, 0, 0, 0,
+                0xE8, 6, 0, 0, 0,
+                0xC3, 0, 0, 0, 0, 0,
+                0xC3, 72, 105, 10,
+                0, 0, 0x10, 0,
+            ],
+            Result.Imageˉbytes);
+        Equal(LINK_IMAGE_SHA256, Objectˉdigest.Calculateˉsha256(Result.Imageˉbytes.AsSpan()));
+        Equal(LINK_MAP_SHA256, Objectˉdigest.Calculateˉsha256(Result.Mapˉbytes.AsSpan()));
+
+        var Map = System.Text.Encoding.UTF8.GetString(Result.Mapˉbytes.AsSpan());
+        True(Map.EndsWith('\n'), "The canonical link map must end with LF.");
+        False(Map.Contains('\r'), "The canonical link map must not contain CR.");
+        Contains(Map, "target name=flat-x86-64-v1 architecture=x86-64 base-address=1048576 image-bytes=24\n");
+        Contains(Map, "entry name=Main address=1048576\n");
+        Contains(Map, "section index=1 input=1 source-index=0 kind=code name=.text.console image-offset=16 address=1048592");
+        Contains(Map, "import index=0 input=0 source-index=2 kind=function name=Console_write provider-input=1 provider-source-index=0 address=1048592\n");
+        Contains(Map, "relocation index=0 input=0 source-index=0 kind=relative-i32 patch-offset=6 patch-address=1048582 target=Console_write target-input=1 target-source-index=0 target-address=1048592 addend=-4 value=6\n");
+        Contains(Map, "relocation index=1 input=0 source-index=1 kind=absolute-u32 patch-offset=20 patch-address=1048596 target=Main target-input=0 target-source-index=1 target-address=1048576 addend=0 value=1048576\n");
+
+        var Repeated = Linkˉsuccess(
+            [Mainˉobject, Providerˉobject],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Sequenceˉequal(Result.Imageˉbytes, Repeated.Imageˉbytes);
+        Sequenceˉequal(Result.Mapˉbytes, Repeated.Mapˉbytes);
+
+        var Originalˉculture = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture =
+                System.Globalization.CultureInfo.GetCultureInfo("fr-FR");
+            var Otherˉlocale = Linkˉsuccess(
+                [Mainˉobject, Providerˉobject],
+                new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+            Sequenceˉequal(Result.Imageˉbytes, Otherˉlocale.Imageˉbytes);
+            Sequenceˉequal(Result.Mapˉbytes, Otherˉlocale.Mapˉbytes);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = Originalˉculture;
+        }
+
+        var Reversed = Linkˉsuccess(
+            [Providerˉobject, Mainˉobject],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        False(
+            Result.Imageˉbytes.SequenceEqual(Reversed.Imageˉbytes),
+            "Changing semantic input order should change this image layout.");
+        Contains(
+            System.Text.Encoding.UTF8.GetString(Reversed.Mapˉbytes.AsSpan()),
+            $"input index=0 sha256={Objectˉdigest.Calculateˉsha256(Providerˉobject)}\n");
+
+        var Completeˉresult = Linkˉsuccess(
+            [Assembleˉsuccess(COMPLETE_ASSEMBLY_SOURCE)],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Equal(64, Completeˉresult.Imageˉbytes.Length);
+        Equal(-17, BinaryPrimitives.ReadInt32LittleEndian(Completeˉresult.Imageˉbytes.AsSpan().Slice(13)));
+        Equal(
+            Linkˉcontract.DEFAULT_BASE_ADDRESS,
+            BinaryPrimitives.ReadUInt32LittleEndian(Completeˉresult.Imageˉbytes.AsSpan().Slice(30)));
+        True(
+            Completeˉresult.Imageˉbytes.AsSpan(34, 30).SequenceEqual(new byte[30]),
+            "Data-to-BSS padding and BSS bytes must be deterministic zeroes.");
+        var Completeˉmap = System.Text.Encoding.UTF8.GetString(Completeˉresult.Mapˉbytes.AsSpan());
+        Contains(Completeˉmap, "kind=writable-data name=.data image-offset=20 address=1048596 memory-bytes=14");
+        Contains(Completeˉmap, "kind=zero-fill name=.bss image-offset=48 address=1048624 memory-bytes=16 data-bytes=0 alignment=16");
+
+        var Unalignedˉbase = Linkˉsuccess([Providerˉobject], new(1, "Console_write"));
+        Equal(16, Unalignedˉbase.Imageˉbytes.Length);
+        Equal(16u, Unalignedˉbase.Entryˉaddress);
+        True(
+            Unalignedˉbase.Imageˉbytes.AsSpan(0, 15).SequenceEqual(new byte[15]),
+            "Actual-address alignment must materialize leading zero padding.");
+        Equal((byte)0xC3, Unalignedˉbase.Imageˉbytes[15]);
+    }
+
+    private static void Linkerˉrejectsˉinvalidˉlinks()
+    {
+        var Mainˉobject = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE);
+        var Providerˉobject = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE);
+        Hasˉlinkˉdiagnostic([], new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"), "WVL1001");
+        Hasˉlinkˉdiagnostic(
+            [Providerˉobject],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Bad-name"),
+            "WVL1001");
+        Hasˉlinkˉdiagnostic([[0]], new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"), "WVL1002");
+        Hasˉlinkˉdiagnostic(
+            [new byte[Objectˉlimits.MAX_OBJECT_BYTES + 1]],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"),
+            "WVL1002");
+        Hasˉlinkˉdiagnostic(
+            [Providerˉobject, Providerˉobject],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Console_write"),
+            "WVL1004");
+        Hasˉlinkˉdiagnostic(
+            [Mainˉobject],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"),
+            "WVL1005");
+
+        var Wrongˉkindˉprovider = Assembleˉsuccess("""
+            windvale-assembly 1
+            symbol export data Console_write in .data
+            section data .data align 1
+            define Console_write
+            bytes 0
+            end define
+            end section
+            """);
+        Hasˉlinkˉdiagnostic(
+            [Mainˉobject, Wrongˉkindˉprovider],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"),
+            "WVL1006");
+        Hasˉlinkˉdiagnostic(
+            [Providerˉobject],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"),
+            "WVL1007");
+        Hasˉlinkˉdiagnostic(
+            [Wrongˉkindˉprovider],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Console_write"),
+            "WVL1007");
+
+        var Addressˉoverflow = Objectˉcodec.Write(new(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 1, 2, [0, 0])],
+            [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 2)],
+            []));
+        Hasˉlinkˉdiagnostic(
+            [Addressˉoverflow],
+            new(uint.MaxValue, "Main"),
+            "WVL1008");
+
+        var Absoluteˉoverflow = Objectˉcodec.Write(new(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 1, 4, [0, 0, 0, 0])],
+            [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 4)],
+            [new(Objectˉrelocationˉkind.Absoluteˉu32, 0, 0, 0, int.MaxValue)]));
+        Hasˉlinkˉdiagnostic(
+            [Absoluteˉoverflow],
+            new(uint.MaxValue - 3, "Main"),
+            "WVL1009");
+
+        var Relativeˉoverflow = Objectˉcodec.Write(new(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 1, 5, [0, 0, 0, 0, 0])],
+            [
+                new("Target", Objectˉsymbolˉbinding.Local, Objectˉsymbolˉkind.Function, 0, 4, 1),
+                new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 4),
+            ],
+            [new(Objectˉrelocationˉkind.Relativeˉi32, 0, 0, 0, int.MaxValue)]));
+        Hasˉlinkˉdiagnostic([Relativeˉoverflow], new(0, "Main"), "WVL1010");
+
+        var Manyˉsections = Objectˉcodec.Write(new(
+            Objectˉarchitecture.X86ˉ64,
+            Enumerable.Range(0, Objectˉlimits.MAX_SECTIONS)
+                .Select(Index => new Objectˉsection(
+                    $".s{Index:D2}",
+                    Objectˉsectionˉkind.Code,
+                    1,
+                    0,
+                    []))
+                .ToImmutableArray(),
+            [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 0)],
+            []));
+        Hasˉlinkˉdiagnostic(
+            [Manyˉsections, Manyˉsections, Manyˉsections, Manyˉsections, Manyˉsections],
+            new(0, "Main"),
+            "WVL1003");
+
+        var Longˉsuffix = new string('x', 240);
+        var Manyˉsymbols = Objectˉcodec.Write(new(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 1, 0, [])],
+            [
+                .. Enumerable.Range(0, Objectˉlimits.MAX_SYMBOLS - 1)
+                    .Select(Index => new Objectˉsymbol(
+                        $"L{Index:D4}{Longˉsuffix}",
+                        Objectˉsymbolˉbinding.Local,
+                        Objectˉsymbolˉkind.Function,
+                        0,
+                        0,
+                        0)),
+                new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 0),
+            ],
+            []));
+        Hasˉlinkˉdiagnostic([Manyˉsymbols], new(0, "Main"), "WVL1012");
+    }
+
+    private static void Linkerˉcontainsˉhostileˉinput()
+    {
+        var Random = new Random(0x57_56_4C);
+        for (var Case = 0; Case < 200; Case++)
+        {
+            var Bytes = new byte[Random.Next(0, 512)];
+            Random.NextBytes(Bytes);
+            var Result = Linkˉcompiler.Link(
+                [new(Bytes.ToImmutableArray())],
+                new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+            False(Result.Success, $"Hostile object case {Case} unexpectedly linked.");
+            Equal("WVL1002", Result.Diagnostics.Single().Code);
+            Equal(0, Result.Imageˉbytes.Length);
+            Equal(0, Result.Mapˉbytes.Length);
+        }
     }
 
     private static void Wvaˉassemblerˉcoreˉrecognizesˉsource()
@@ -2532,6 +2761,10 @@ internal static class Program
         var Wvaˉassemblerˉbytes = Compileˉsuccess(WVA_ASSEMBLER_CORE_SOURCE);
         var Wvoˉsampleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
         var Assemblyˉobjectˉbytes = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE);
+        var Providerˉobjectˉbytes = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE);
+        var Linkˉresult = Linkˉsuccess(
+            [Assemblyˉobjectˉbytes, Providerˉobjectˉbytes],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
         var Sumˉhash = Moduleˉdigest.Calculateˉsha256(Sumˉbytes);
         var Helloˉhash = Moduleˉdigest.Calculateˉsha256(Helloˉbytes);
         var Foundationˉhash = Moduleˉdigest.Calculateˉsha256(Foundationˉbytes);
@@ -2540,6 +2773,9 @@ internal static class Program
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
         var Wvoˉsampleˉhash = Objectˉdigest.Calculateˉsha256(Wvoˉsampleˉbytes);
         var Assemblyˉobjectˉhash = Objectˉdigest.Calculateˉsha256(Assemblyˉobjectˉbytes);
+        var Linkˉimageˉhash = Objectˉdigest.Calculateˉsha256(Linkˉresult.Imageˉbytes.AsSpan());
+        var Linkˉmapˉhash = Objectˉdigest.Calculateˉsha256(Linkˉresult.Mapˉbytes.AsSpan());
+        var Linkˉmap = System.Text.Encoding.UTF8.GetString(Linkˉresult.Mapˉbytes.AsSpan());
         Equal(SUM_SHA256, Sumˉhash);
         Equal(HELLO_SHA256, Helloˉhash);
         Equal(FOUNDATION_SHA256, Foundationˉhash);
@@ -2548,6 +2784,8 @@ internal static class Program
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
         Equal(WVO_SAMPLE_SHA256, Wvoˉsampleˉhash);
         Equal(WVA_OBJECT_SHA256, Assemblyˉobjectˉhash);
+        Equal(LINK_IMAGE_SHA256, Linkˉimageˉhash);
+        Equal(LINK_MAP_SHA256, Linkˉmapˉhash);
         _ = Objectˉcodec.Readˉandˉverify(Assemblyˉobjectˉbytes);
 
         var Sumˉresult = new Referenceˉruntime(
@@ -2703,6 +2941,10 @@ internal static class Program
             Wvaˉassemblerˉselfˉtestˉresult.Exitˉcode,
             Normalizedˉwvaˉassemblerˉoutput,
             Wvaˉassemblerˉobjectˉhash,
+            Linkˉcontract.FORMAT_VERSION.ToString(),
+            Linkˉimageˉhash,
+            Linkˉmapˉhash,
+            Linkˉmap,
             Sumˉhash,
             Sumˉresult.Exitˉcode,
             Helloˉhash,
@@ -2798,6 +3040,39 @@ internal static class Program
         }
 
         return Result.Objectˉbytes.ToArray();
+    }
+
+    private static Linkˉresult Linkˉsuccess(
+        IEnumerable<byte[]> objectˉbytes,
+        Linkˉoptions options)
+    {
+        var Result = Linkˉcompiler.Link(
+            objectˉbytes
+                .Select(Bytes => new Linkˉinput(Bytes.ToImmutableArray()))
+                .ToImmutableArray(),
+            options);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Link failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+        return Result;
+    }
+
+    private static void Hasˉlinkˉdiagnostic(
+        IEnumerable<byte[]> objectˉbytes,
+        Linkˉoptions options,
+        string code)
+    {
+        var Result = Linkˉcompiler.Link(
+            objectˉbytes
+                .Select(Bytes => new Linkˉinput(Bytes.ToImmutableArray()))
+                .ToImmutableArray(),
+            options);
+        False(Result.Success, $"Link expected to produce {code} succeeded.");
+        Equal(code, Result.Diagnostics.Single().Code);
+        Equal(0, Result.Imageˉbytes.Length);
+        Equal(0, Result.Mapˉbytes.Length);
     }
 
     private static void Hasˉdiagnostic(string source, string code)
@@ -3115,6 +3390,10 @@ internal static class Program
         [property: JsonPropertyName("wvaAssemblerCoreResult")] int Wvaˉassemblerˉcoreˉresult,
         [property: JsonPropertyName("wvaAssemblerHostedOutput")] string Wvaˉassemblerˉhostedˉoutput,
         [property: JsonPropertyName("wvaAssemblerObjectSha256")] string Wvaˉassemblerˉobjectˉsha256,
+        [property: JsonPropertyName("linkFormat")] string Linkˉformat,
+        [property: JsonPropertyName("linkImageSha256")] string Linkˉimageˉsha256,
+        [property: JsonPropertyName("linkMapSha256")] string Linkˉmapˉsha256,
+        [property: JsonPropertyName("linkMap")] string Linkˉmap,
         [property: JsonPropertyName("sumSha256")] string Sumˉsha256,
         [property: JsonPropertyName("sumResult")] int Sumˉresult,
         [property: JsonPropertyName("helloSha256")] string Helloˉsha256,

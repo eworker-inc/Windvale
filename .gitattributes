@@ -17,6 +17,8 @@
 *.wva text eol=lf
 *.wvb binary
 *.wvo binary
+*.bin binary
+*.wvmap text eol=lf
 *.efi binary
 *.img binary
 *.vhdx binary

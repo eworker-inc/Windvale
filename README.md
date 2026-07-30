@@ -15,6 +15,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A canonical x86-64-first WVO 1.0 object model with sections, symbols, relocations, a bounded C# oracle, and a Windvale-written producer/structural inspector
 - A versioned WVA 1 textual assembly contract and Stage 0 assembler that infers definition offsets/sizes and emits verified WVO objects
 - A Windvale-written WVA assembler that performs bounded scanning and semantic validation, derives definition ranges, encodes the complete initial x86-64 instruction/data set, constructs canonical WVO objects, and writes only a fully accepted result
+- A separate Stage 0 linker that resolves verified WVO inputs, lays out a bounded x86-64 flat memory image, applies checked relocations, independently reconstructs the result, and emits a canonical path-free map
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
@@ -22,7 +23,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A portable .NET reference runtime
 - Explicit hosted arguments, bounded file-byte input and output, standard output, separate diagnostics, support preflight, and exact capability authorization
 - Conformance, malformed-input, determinism, diagnostics, and runtime-limit coverage
-- One CLI with module `compile`, `inspect`, `verify`, and `run`, textual `assemble`, plus object `object-inspect` and `object-verify` commands
+- One CLI with module `compile`, `inspect`, `verify`, and `run`, textual `assemble`, deterministic `link`, plus object `object-inspect` and `object-verify` commands
 
 The open-source intent is established. The exact source license has not been selected yet and must be chosen before the first public source release.
 
@@ -142,7 +143,21 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Wva-Assembler-Core.wvb
 dotnet run --project Tools/Windvale.Tool -- object-verify artifacts/Hello-Object-Windvale.wvo
 ```
 
-The assembler validates the complete WVA 1 declaration, section, definition, statement, numeric, ordering, limit, and reference model without host text parsing. It measures the complete object, derives ranges and relocation indices through bounded passes, encodes exact instruction/data and canonical WVO records, and calls the hosted writer only after success. With no program arguments it runs embedded valid, adversarial, and encoding checks. Link layout and relocation application remain a separately owned future tool.
+The assembler validates the complete WVA 1 declaration, section, definition, statement, numeric, ordering, limit, and reference model without host text parsing. It measures the complete object, derives ranges and relocation indices through bounded passes, encodes exact instruction/data and canonical WVO records, and calls the hosted writer only after success. With no program arguments it runs embedded valid, adversarial, and encoding checks. Link layout and relocation application remain separately owned.
+
+Assemble a provider object and link the two verified inputs into the first flat image:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- assemble Examples/Linker/Console-Provider.wva -o artifacts/Console-Provider.wvo
+dotnet run --project Tools/Windvale.Tool -- link `
+  --base-address 1048576 `
+  --entry Main `
+  -o artifacts/Hello-Linked.bin `
+  artifacts/Hello-Object.wvo `
+  artifacts/Console-Provider.wvo
+```
+
+The Stage 0 linker verifies both WVO inputs, resolves `Console_write`, places actual section addresses with alignment, materializes zero padding, applies the relative call and absolute data relocation, independently reconstructs every output byte, and writes a 24-byte image. Standard output is the canonical map. The raw image SHA-256 is `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a`; it is a memory-layout experiment, not yet a Windows, Linux, UEFI, or Windvale OS executable.
 
 ## Seed language example
 
@@ -172,6 +187,7 @@ export fn Main() -> i32 {
 
 - `Compiler/` — source lexer, parser, semantic analysis, typed WIR, and bytecode lowering
 - `Assembler/Windvale.Assembler/` — WVA parser, semantic validation, x86-64 encoding, and WVO production
+- `Linker/Windvale.Linker/` — global symbol resolution, flat-image layout, relocation, independent verification, and canonical maps
 - `Runtime/Windvale.Bytecode/` — module contracts, codec, verifier, digest, and inspector
 - `Runtime/Windvale.Runtime/` — verified-bytecode reference interpreter and capability host
 - `Object-Model/Windvale.ObjectModel/` — WVO contracts, codec, verifier, digest, and inspector
@@ -180,7 +196,8 @@ export fn Main() -> i32 {
 - `Tests/` — dependency-free Seed conformance runner
 - `Examples/Seed/` — portable and hosted example programs
 - `Examples/Foundation/` — incremental programs that exercise self-hosting prerequisites
-- `Examples/Assembler/` — canonical WVA sources for the assembler and future linker
+- `Examples/Assembler/` — canonical WVA sources for assembler and object-production coverage
+- `Examples/Linker/` — multi-object providers and future Windvale linker fixtures
 - `Specifications/` — implemented source, bytecode, CLI, and conformance contracts
 - `Documents/` — architecture, decisions, project direction, and open questions
 
@@ -212,6 +229,7 @@ export fn Main() -> i32 {
 - [Windvale object format](Specifications/Windvale-Object-Format.md)
 - [Windvale textual assembly](Specifications/Windvale-Assembly.md)
 - [Windvale WVA assembler core](Specifications/Wva-Assembler-Core.md)
+- [Windvale linking contract](Specifications/Windvale-Linking.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
@@ -225,6 +243,7 @@ export fn Main() -> i32 {
 - [WvDump payload and report decision](Documents/Decisions/0008-WvDump-Payload-Decoding-And-Safe-Reports.md)
 - [Minimal object foundation decision](Documents/Decisions/0009-Minimal-Windvale-Object-Foundation.md)
 - [Minimal assembly contract decision](Documents/Decisions/0010-Minimal-Windvale-Assembly-Contract.md)
+- [Deterministic flat-image linker decision](Documents/Decisions/0011-Deterministic-Flat-Image-Linker.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

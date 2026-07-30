@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="../../Assembler/Windvale.Assembler/Windvale.Assembler.csproj" />
     <ProjectReference Include="../../Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
+    <ProjectReference Include="../../Linker/Windvale.Linker/Windvale.Linker.csproj" />
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
@@ -18,6 +19,9 @@
     <EmbeddedResource
       Include="../../Examples/Assembler/Wva-Assembler-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wva-Assembler-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Linker/Console-Provider.wva"
+      LogicalName="Windvale.Seed.Tests.Console-Provider.wva" />
     <EmbeddedResource
       Include="../../Examples/Foundation/Wv-Dump-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wv-Dump-Core.wv" />

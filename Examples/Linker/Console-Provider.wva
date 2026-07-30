@@ -1,0 +1,9 @@
+windvale-assembly 1
+
+symbol export function Console_write in .text.console
+
+section code .text.console align 16
+define Console_write
+return
+end define
+end section

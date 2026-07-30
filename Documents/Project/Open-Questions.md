@@ -31,7 +31,7 @@ This list records unresolved decisions without presenting them as implementation
 - Which labels, conditional branches, RIP-relative data operations, and 64-bit address forms should follow the accepted WVA 1 core?
 - Should a later ergonomic assembly layer sort declarations and expand expressions/macros into canonical WVA, or should those facilities evolve directly in WVA?
 - Which final formats are required for UEFI, the kernel, debug information, and host interoperability?
-- Which responsibilities belong to the assembler versus the object model and linker?
+- Which later section-permission, archive-search, dead-stripping, and executable-container responsibilities should extend the accepted minimal linker rather than live in target adapters?
 
 ## Operating system
 
@@ -45,10 +45,9 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Reproduce the accepted WVA 1 parser and object encoding in verified Windvale bytecode against the Stage 0 oracle.
-2. Define link layout, symbol resolution, relocation application, and the first flat-image output without merging assembler and linker ownership.
-3. Define the internal-label and address-materialization extensions proven necessary by that linker/native experiment.
-4. Define the memory and aggregate-type model needed for a self-hosted compiler.
-5. Define the restricted C bridge without changing Windvale semantics.
-6. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.
-7. Select the source license before publishing implementation code.
+1. Qualify the accepted Stage 0 flat-image linker contract on Windows and Debian, then reproduce it in verified Windvale bytecode.
+2. Define the internal-label and address-materialization extensions proven necessary by the linker/native experiment.
+3. Define the memory and aggregate-type model needed for a self-hosted compiler.
+4. Define the restricted C bridge without changing Windvale semantics.
+5. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.
+6. Select the source license before publishing implementation code.
