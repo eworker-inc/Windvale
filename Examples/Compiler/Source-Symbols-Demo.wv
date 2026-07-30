@@ -1,0 +1,196 @@
+module Compilerˉsourceˉsymbolsˉdemo profile portable;
+
+import Compilerˉsourceˉsymbols;
+
+data Sourceˉsymbolsˉmagic: bytes = [87, 86, 83, 83];
+
+fn Sourceˉsymbolsˉheader(Modules: u32) -> bytes {
+    var Header: bytes = Sourceˉsymbolsˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Sourceˉsymbolsˉone(First: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(24u32);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉsymbolsˉheader(1u32), Directory);
+    return Bytesˉconcat(Result, Firstˉbytes);
+}
+
+fn Sourceˉsymbolsˉtwo(First: text, Second: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Firstˉoffset: u32 = 32u32;
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(Firstˉbytes);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Firstˉoffset);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Secondˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Secondˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉsymbolsˉheader(2u32), Directory);
+    Result = Bytesˉconcat(Result, Firstˉbytes);
+    return Bytesˉconcat(Result, Secondˉbytes);
+}
+
+fn Sourceˉsymbolsˉthree(First: text, Second: text, Third: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Thirdˉbytes: bytes = Textˉtoˉutf8(Third);
+    let Firstˉoffset: u32 = 40u32;
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(Firstˉbytes);
+    let Thirdˉoffset: u32 = Secondˉoffset + Bytesˉlength(Secondˉbytes);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Firstˉoffset);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Secondˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Secondˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Thirdˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Thirdˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉsymbolsˉheader(3u32), Directory);
+    Result = Bytesˉconcat(Result, Firstˉbytes);
+    Result = Bytesˉconcat(Result, Secondˉbytes);
+    return Bytesˉconcat(Result, Thirdˉbytes);
+}
+
+fn Sourceˉsymbolsˉfour(First: text, Second: text, Third: text, Fourth: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Thirdˉbytes: bytes = Textˉtoˉutf8(Third);
+    let Fourthˉbytes: bytes = Textˉtoˉutf8(Fourth);
+    let Firstˉoffset: u32 = 48u32;
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(Firstˉbytes);
+    let Thirdˉoffset: u32 = Secondˉoffset + Bytesˉlength(Secondˉbytes);
+    let Fourthˉoffset: u32 = Thirdˉoffset + Bytesˉlength(Thirdˉbytes);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Firstˉoffset);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Secondˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Secondˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Thirdˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Thirdˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Fourthˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Fourthˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉsymbolsˉheader(4u32), Directory);
+    Result = Bytesˉconcat(Result, Firstˉbytes);
+    Result = Bytesˉconcat(Result, Secondˉbytes);
+    Result = Bytesˉconcat(Result, Thirdˉbytes);
+    return Bytesˉconcat(Result, Fourthˉbytes);
+}
+
+fn Sourceˉsymbolsˉstatus(Source: text) -> Compilerˉsourceˉsymbolˉstatus {
+    let Summary: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(
+        Sourceˉsymbolsˉone(Source)
+    );
+    return Summary.Status;
+}
+
+fn Sourceˉsymbolsˉreplaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Input, Offset, 1u32, Bytesˉfromˉu8(Value)
+    );
+    return Replaced.Value;
+}
+
+fn Sourceˉsymbolsˉreplaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
+    );
+    return Replaced.Value;
+}
+
+export fn Main() -> i32 {
+    let Root: text = "module Symbolsˉroot profile hosted; import Symbolsˉalpha; import Symbolsˉbeta; capability console.write_line; data Message: text = \"ready\"; record Rootˉpair { Choice: Symbolsˉchoice; Count: u32; } enum Rootˉstate { Ready = 0; Stopped = 1; } export fn Main(Value: Symbolsˉleaf) -> Rootˉstate { return Rootˉstate.Ready; }";
+    let Alpha: text = "module Symbolsˉalpha profile portable; import Symbolsˉleaf; record Alphaˉrecord { Code: Symbolsˉleafˉstate; } enum Symbolsˉchoice { First = 0; Second = 1; } export fn Alphaˉuse(Value: Symbolsˉleaf) -> Symbolsˉchoice { return Symbolsˉchoice.First; }";
+    let Beta: text = "module Symbolsˉbeta profile portable; record Betaˉrecord { Count: u32; } export fn Betaˉuse(Value: Betaˉrecord) -> u32 { return Value.Count; }";
+    let Leaf: text = "module Symbolsˉleaf profile portable; record Symbolsˉleaf { Value: u32; } enum Symbolsˉleafˉstate { Cold = 0; Warm = 1; } export fn Leafˉuse(Value: Symbolsˉleaf) -> Symbolsˉleafˉstate { return Symbolsˉleafˉstate.Warm; }";
+    let Validˉinput: bytes = Sourceˉsymbolsˉfour(Root, Alpha, Beta, Leaf);
+    let Valid: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(Validˉinput);
+    if Valid.Status != Compilerˉsourceˉsymbolˉstatus.Valid { return 1; }
+    if Valid.Modules != 4u32 { return 2; }
+    if Valid.Capabilities != 1u32 { return 3; }
+    if Valid.Data != 1u32 { return 4; }
+    if Valid.Records != 4u32 { return 5; }
+    if Valid.Enums != 3u32 { return 6; }
+    if Valid.Functions != 4u32 { return 7; }
+    if Valid.Fields != 5u32 { return 8; }
+    if Valid.Members != 6u32 { return 9; }
+    if Valid.Parameters != 4u32 { return 10; }
+    if Bytesˉlength(Valid.Directory) != 328u32 { return 11; }
+    if Bytesˉlength(Valid.Visibility) != 16u32 { return 12; }
+    if Bytesˉreadˉu8(Valid.Visibility, 0u32) != 1u8 { return 13; }
+    if Bytesˉreadˉu8(Valid.Visibility, 3u32) != 1u8 { return 14; }
+    if Bytesˉreadˉu8(Valid.Visibility, 6u32) != 0u8 { return 15; }
+    if Bytesˉreadˉu8(Valid.Visibility, 7u32) != 1u8 { return 16; }
+    if Bytesˉreadˉu8(Valid.Visibility, 11u32) != 0u8 { return 17; }
+    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Validˉinput);
+    if !Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Valid.Directory, 13u32
+    ) { return 18; }
+    if Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Sourceˉsymbolsˉreplaceˉu8(Valid.Directory, 0u32, 0u8), 13u32
+    ) { return 19; }
+    if Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Sourceˉsymbolsˉreplaceˉu32(Valid.Directory, 8u32, 12u32), 13u32
+    ) { return 20; }
+    if Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Sourceˉsymbolsˉreplaceˉu32(Valid.Directory, 16u32, 4u32), 13u32
+    ) { return 21; }
+    if Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Bytesˉconcat(Valid.Directory, Bytesˉfromˉu8(0u8)), 13u32
+    ) { return 22; }
+    let Leafˉname: bytes = Textˉtoˉutf8("Symbolsˉleaf");
+    let Leafˉmatch: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉfindˉnominalˉinˉdirectory(
+        Validˉinput, Scan, Valid.Directory, Leafˉname, 0u32, Bytesˉlength(Leafˉname)
+    );
+    if !Leafˉmatch.Found { return 23; }
+    if Leafˉmatch.Module != 3u32 { return 24; }
+    if Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
+        Validˉinput, Scan, Valid.Directory, Leafˉmatch.Kind,
+        Leafˉname, 0u32, Bytesˉlength(Leafˉname), Valid.Records
+    ) != 3u32 { return 25; }
+
+    if Sourceˉsymbolsˉstatus("module Duplicateˉcapability profile hosted; capability console.write; capability console.write; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉcapability { return 30; }
+    if Sourceˉsymbolsˉstatus("module Unknownˉcapability profile hosted; capability console.unknown; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Unknownˉcapability { return 31; }
+    if Sourceˉsymbolsˉstatus("module Portableˉcapability profile portable; capability console.write; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Capabilityˉprofile { return 32; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉdata profile portable; data Value: text = \"a\"; data Value: text = \"b\"; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉdata { return 33; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉtype profile portable; record Value { Field: i32; } enum Value { One = 1; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉtype { return 34; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉfunction profile portable; fn Value() -> i32 { return 1; } export fn Value() -> i32 { return 2; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉfunction { return 35; }
+    if Sourceˉsymbolsˉstatus("module Constructorˉconflict profile portable; record Value { Field: i32; } export fn Value() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Constructorˉconflict { return 36; }
+    if Sourceˉsymbolsˉstatus("module Reservedˉname profile portable; export fn Bytesˉlength() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Reservedˉname { return 37; }
+    if Sourceˉsymbolsˉstatus("module Emptyˉrecord profile portable; record Empty { } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Emptyˉrecord { return 38; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉfield profile portable; record Pair { Value: i32; Value: u32; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉfield { return 39; }
+    if Sourceˉsymbolsˉstatus("module Emptyˉenum profile portable; enum Empty { } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Emptyˉenum { return 40; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉmember profile portable; enum State { Ready = 0; Ready = 1; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉmember { return 41; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉvalue profile portable; enum State { Ready = 0; Stopped = 0; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉvalue { return 42; }
+    if Sourceˉsymbolsˉstatus("module Unknownˉtype profile portable; export fn Main(Value: Missing) -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Unknownˉtype { return 44; }
+    if Sourceˉsymbolsˉstatus("module Invalidˉfield profile portable; record Inner { Value: i32; } record Outer { Value: Inner; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype { return 45; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉparameter profile portable; export fn Main(Value: i32, Value: i32) -> i32 { return Value; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter { return 46; }
+
+    let Crossˉmoduleˉduplicate: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(
+        Sourceˉsymbolsˉtwo(
+            "module Crossˉduplicateˉroot profile portable; import Crossˉduplicateˉdependency; record Sharedˉtype { Value: i32; } export fn Main() -> i32 { return 0; }",
+            "module Crossˉduplicateˉdependency profile portable; record Sharedˉtype { Value: u32; } export fn Dependencyˉmain() -> i32 { return 0; }"
+        )
+    );
+    if Crossˉmoduleˉduplicate.Status != Compilerˉsourceˉsymbolˉstatus.Duplicateˉtype { return 47; }
+    if Crossˉmoduleˉduplicate.Failureˉmodule != 1u32 { return 48; }
+    if Crossˉmoduleˉduplicate.Failureˉrelatedˉmodule != 0u32 { return 49; }
+
+    let Inaccessible: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(
+        Sourceˉsymbolsˉthree(
+            "module Visibilityˉroot profile portable; import Visibilityˉalpha; import Visibilityˉbeta; export fn Main() -> i32 { return 0; }",
+            "module Visibilityˉalpha profile portable; export fn Alphaˉuse(Value: Visibilityˉbetaˉtype) -> i32 { return 0; }",
+            "module Visibilityˉbeta profile portable; record Visibilityˉbetaˉtype { Value: i32; } export fn Betaˉuse(Value: Visibilityˉbetaˉtype) -> i32 { return Value.Value; }"
+        )
+    );
+    if Inaccessible.Status != Compilerˉsourceˉsymbolˉstatus.Inaccessibleˉtype { return 50; }
+    if Inaccessible.Failureˉmodule != 1u32 { return 51; }
+    if Inaccessible.Failureˉrelatedˉmodule != 2u32 { return 52; }
+
+    let Graphˉfailure: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(
+        Sourceˉsymbolsˉone("module Missingˉimport profile portable; import Missingˉdependency;")
+    );
+    if Graphˉfailure.Status != Compilerˉsourceˉsymbolˉstatus.Sourceˉgraph { return 60; }
+    if Graphˉfailure.Graphˉstatus != Compilerˉsourceˉgraphˉstatus.Missingˉimport { return 61; }
+    return 0;
+}

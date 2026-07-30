@@ -46,6 +46,9 @@ SOURCE_SET_TOOL_MODULE="$ARTIFACTS/Source-Set-Tool.wvb"
 SOURCE_GRAPH_MODULE="$ARTIFACTS/Source-Graph-Core.wvb"
 SOURCE_GRAPH_DEMO_MODULE="$ARTIFACTS/Source-Graph-Demo.wvb"
 SOURCE_GRAPH_TOOL_MODULE="$ARTIFACTS/Source-Graph-Tool.wvb"
+SOURCE_SYMBOLS_MODULE="$ARTIFACTS/Source-Symbols-Core.wvb"
+SOURCE_SYMBOLS_DEMO_MODULE="$ARTIFACTS/Source-Symbols-Demo.wvb"
+SOURCE_SYMBOLS_TOOL_MODULE="$ARTIFACTS/Source-Symbols-Tool.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -538,6 +541,83 @@ SOURCE_GRAPH_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration 
     "$DECIMAL_PARSING_SOURCE")
 printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'source graph status=Valid modules=7 imports=6 reachable=7' >/dev/null
 printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+SOURCE_SYMBOLS_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Symbols-Core.wv"
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$SOURCE_SYMBOLS_SOURCE" \
+    --module "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_SYMBOLS_MODULE"
+SOURCE_SYMBOLS_HASH=$(sha256sum "$SOURCE_SYMBOLS_MODULE" | awk '{print $1}')
+if [ "$SOURCE_SYMBOLS_HASH" != '79a60d3734c8c128af327b3c9e015bfa1f5b2c9d7b87abf4fb3fc2428d8bac3a' ]; then
+    echo "The Windvale source-symbol core has an unexpected digest: $SOURCE_SYMBOLS_HASH" >&2
+    exit 1
+fi
+SOURCE_SYMBOLS_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_SYMBOLS_MODULE")
+printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Nominal types (38)' >/dev/null
+printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉsourceˉsymbolˉstatus' >/dev/null
+printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉsourceˉsymbolˉsummary' >/dev/null
+printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid' >/dev/null
+printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉsymbols' >/dev/null
+printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Exports (32)' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Symbols-Demo.wv" \
+    --module "$SOURCE_SYMBOLS_SOURCE" \
+    --module "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_SYMBOLS_DEMO_MODULE"
+SOURCE_SYMBOLS_DEMO_HASH=$(sha256sum "$SOURCE_SYMBOLS_DEMO_MODULE" | awk '{print $1}')
+if [ "$SOURCE_SYMBOLS_DEMO_HASH" != '476551cc0990588c3e782f45be83baebbcf3cd519cc0fe8dc17ccd67a7aa3714' ]; then
+    echo "The source-symbol demo has an unexpected digest: $SOURCE_SYMBOLS_DEMO_HASH" >&2
+    exit 1
+fi
+SOURCE_SYMBOLS_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_SYMBOLS_DEMO_MODULE" --max-steps 1500000000)
+printf '%s\n' "$SOURCE_SYMBOLS_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Symbols-Tool.wv" \
+    --module "$SOURCE_SYMBOLS_SOURCE" \
+    --module "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_SYMBOLS_TOOL_MODULE"
+SOURCE_SYMBOLS_TOOL_HASH=$(sha256sum "$SOURCE_SYMBOLS_TOOL_MODULE" | awk '{print $1}')
+if [ "$SOURCE_SYMBOLS_TOOL_HASH" != '852dae1fe1962351e46a70e70bbdd4547814de17d75a8409e56aa0f94ccd7a4d' ]; then
+    echo "The source-symbol tool has an unexpected digest: $SOURCE_SYMBOLS_TOOL_HASH" >&2
+    exit 1
+fi
+SOURCE_SYMBOLS_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_SYMBOLS_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 4000000000 \
+    -- "$SOURCE_SYMBOLS_SOURCE" \
+    "$SOURCE_BODY_PARSER_SOURCE" \
+    "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    "$SOURCE_GRAPH_SOURCE" \
+    "$SOURCE_LEXER_SOURCE" \
+    "$SOURCE_SET_SOURCE" \
+    "$BYTE_CONSTRUCTION_SOURCE" \
+    "$DECIMAL_PARSING_SOURCE")
+printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=131 fields=289 members=181 parameters=582 directory-bytes=4072 visibility-bytes=64' >/dev/null
+printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
