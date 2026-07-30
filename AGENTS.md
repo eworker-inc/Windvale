@@ -114,6 +114,7 @@ On Linux, use `./Tools/Verify/Verify-Seed.sh`. Changes to portable semantics, by
 - Distinguish accepted direction from proposals and experiments.
 - Update documentation when semantics, formats, architecture, bootstrap stages, security boundaries, or durable workflows change.
 - Do not record aspirational features as implemented behavior.
+- Treat README overview images and similar graphics as dated editorial snapshots, not generated mirrors of the surrounding prose. Do not update an image merely because README wording or ordinary milestones change. A human or AI maintainer may refresh it periodically when the visual would otherwise become materially misleading; preserve an accurate snapshot date.
 
 ## Git workflow
 
