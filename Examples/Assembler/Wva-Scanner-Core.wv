@@ -17,6 +17,8 @@ data Crˉsource: text = "\r# preface\rwindvale-assembly\t1\rsymbol export functi
 data Badˉheaderˉsource: text = "windvale-assembly 2\nsection code .text align 16\nend section\n";
 data Extraˉheaderˉsource: text = "windvale-assembly 1 extra\nsection code .text align 16\nend section\n";
 data Missingˉheaderˉsource: text = "# comment only\n\t# another comment\n";
+data Missingˉreferenceˉsource: text = "windvale-assembly 1\nsymbol export function Main in .text\nsection code .text align 16\ndefine Main\ncall Missing\nend define\nend section\n";
+data Wrongˉcontextˉsource: text = "windvale-assembly 1\nsymbol export function Main in .text\nsection code .text align 16\ndefine Main\nbytes 1\nend define\nend section\n";
 
 enum Wvaˉtokenˉkind {
     Word = 1;
@@ -58,6 +60,90 @@ record Wvaˉscan {
     Lines: u32;
     Meaningfulˉlines: u32;
     Tokens: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+enum Wvaˉsemanticˉstatus {
+    Valid = 0;
+    Wva1001 = 1;
+    Wva1002 = 2;
+    Wva1003 = 3;
+    Wva1004 = 4;
+    Wva1005 = 5;
+    Wva1006 = 6;
+    Wva1007 = 7;
+    Wva1008 = 8;
+    Wva1009 = 9;
+    Wva1010 = 10;
+    Wva1011 = 11;
+}
+
+record Wvaˉline {
+    Present: bool;
+    Firstˉoffset: u32;
+    Line: u32;
+    Column: u32;
+    Tokens: u32;
+    Nextˉcursor: u32;
+    Nextˉline: u32;
+    Nextˉcolumn: u32;
+}
+
+record Wvaˉu32ˉparse {
+    Valid: bool;
+    Value: u32;
+}
+
+record Wvaˉi32ˉparse {
+    Valid: bool;
+    Value: i32;
+}
+
+record Wvaˉstatementˉcheck {
+    Status: Wvaˉsemanticˉstatus;
+    Kind: u32;
+    Size: u32;
+    Hasˉreference: bool;
+    Referenceˉoffset: u32;
+    Referenceˉlength: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+record Wvaˉsymbolˉlookup {
+    Found: bool;
+    Binding: u32;
+    Kind: u32;
+    Sectionˉoffset: u32;
+    Sectionˉlength: u32;
+}
+
+record Wvaˉsectionˉlookup {
+    Found: bool;
+    Kind: u32;
+    Index: u32;
+}
+
+record Wvaˉdefinitionˉlookup {
+    Count: u32;
+    Sectionˉoffset: u32;
+    Sectionˉlength: u32;
+    Definitionˉoffset: u32;
+    Definitionˉline: u32;
+    Definitionˉcolumn: u32;
+}
+
+record Wvaˉsemanticˉinspection {
+    Status: Wvaˉsemanticˉstatus;
+    Sections: u32;
+    Symbols: u32;
+    Definitions: u32;
+    Relocations: u32;
+    Dataˉbytes: u32;
+    Memoryˉbytes: u32;
     Failureˉoffset: u32;
     Failureˉline: u32;
     Failureˉcolumn: u32;
@@ -364,6 +450,1526 @@ fn Scanˉwva(Input: bytes) -> Wvaˉscan {
     );
 }
 
+fn Readˉmeaningfulˉline(
+    Input: bytes,
+    Start: u32,
+    Startˉline: u32,
+    Startˉcolumn: u32
+) -> Wvaˉline {
+    var Current: Wvaˉtoken = Readˉtoken(Input, Start, Startˉline, Startˉcolumn);
+    while Current.Kind == Wvaˉtokenˉkind.Newline {
+        Current = Readˉtoken(Input, Current.Nextˉcursor, Current.Nextˉline, Current.Nextˉcolumn);
+    }
+    if Current.Kind == Wvaˉtokenˉkind.End {
+        return Wvaˉline(
+            false,
+            Current.Offset,
+            Current.Line,
+            Current.Column,
+            0u32,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+
+    let Firstˉoffset: u32 = Current.Offset;
+    let Firstˉline: u32 = Current.Line;
+    let Firstˉcolumn: u32 = Current.Column;
+    var Count: u32 = 0u32;
+    while Current.Kind == Wvaˉtokenˉkind.Word {
+        Count = Count + 1u32;
+        Current = Readˉtoken(Input, Current.Nextˉcursor, Current.Nextˉline, Current.Nextˉcolumn);
+    }
+    return Wvaˉline(
+        true,
+        Firstˉoffset,
+        Firstˉline,
+        Firstˉcolumn,
+        Count,
+        Current.Nextˉcursor,
+        Current.Nextˉline,
+        Current.Nextˉcolumn
+    );
+}
+
+fn Lineˉtoken(Input: bytes, Value: Wvaˉline, Wanted: u32) -> Wvaˉtoken {
+    var Current: Wvaˉtoken = Readˉtoken(Input, Value.Firstˉoffset, Value.Line, Value.Column);
+    var Index: u32 = 0u32;
+    while Index < Wanted {
+        Current = Readˉtoken(Input, Current.Nextˉcursor, Current.Nextˉline, Current.Nextˉcolumn);
+        Index = Index + 1u32;
+    }
+    return Current;
+}
+
+fn Tokenˉequalsˉtext(Input: bytes, Value: Wvaˉtoken, Expected: text) -> bool {
+    return Tokenˉequals(Input, Value, Textˉtoˉutf8(Expected));
+}
+
+fn Spansˉequal(
+    Input: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> bool {
+    if Leftˉlength != Rightˉlength { return false; }
+    var Index: u32 = 0u32;
+    while Index < Leftˉlength {
+        if Bytesˉreadˉu8(Input, Leftˉoffset + Index) != Bytesˉreadˉu8(Input, Rightˉoffset + Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Spanˉequalsˉtoken(
+    Input: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Right: Wvaˉtoken
+) -> bool {
+    return Spansˉequal(Input, Leftˉoffset, Leftˉlength, Right.Offset, Right.Length);
+}
+
+fn Compareˉspans(
+    Input: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> i32 {
+    var Index: u32 = 0u32;
+    var Limit: u32 = Leftˉlength;
+    if Rightˉlength < Limit { Limit = Rightˉlength; }
+    while Index < Limit {
+        let Left: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Leftˉoffset + Index));
+        let Right: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Rightˉoffset + Index));
+        if Left < Right { return -1; }
+        if Left > Right { return 1; }
+        Index = Index + 1u32;
+    }
+    if Leftˉlength < Rightˉlength { return -1; }
+    if Leftˉlength > Rightˉlength { return 1; }
+    return 0;
+}
+
+fn Machineˉnameˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
+    if Value.Length == 0u32 { return false; }
+    if Value.Length > 255u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < Value.Length {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Value.Offset + Index));
+        var Allowed: bool = false;
+        if Character >= 65u32 {
+            if Character <= 90u32 { Allowed = true; }
+        }
+        if Character >= 97u32 {
+            if Character <= 122u32 { Allowed = true; }
+        }
+        if Character == 95u32 { Allowed = true; }
+        if Character == 46u32 { Allowed = true; }
+        if Character == 36u32 { Allowed = true; }
+        if Index > 0u32 {
+            if Character >= 48u32 {
+                if Character <= 57u32 { Allowed = true; }
+            }
+        }
+        if !Allowed { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Bindingˉtag(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Tokenˉequalsˉtext(Input, Value, "local") { return 1u32; }
+    if Tokenˉequalsˉtext(Input, Value, "export") { return 2u32; }
+    if Tokenˉequalsˉtext(Input, Value, "import") { return 3u32; }
+    return 0u32;
+}
+
+fn Symbolˉkindˉtag(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Tokenˉequalsˉtext(Input, Value, "function") { return 1u32; }
+    if Tokenˉequalsˉtext(Input, Value, "data") { return 2u32; }
+    return 0u32;
+}
+
+fn Sectionˉkindˉtag(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Tokenˉequalsˉtext(Input, Value, "code") { return 1u32; }
+    if Tokenˉequalsˉtext(Input, Value, "rodata") { return 2u32; }
+    if Tokenˉequalsˉtext(Input, Value, "data") { return 3u32; }
+    if Tokenˉequalsˉtext(Input, Value, "bss") { return 4u32; }
+    return 0u32;
+}
+
+fn Registerˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
+    if Tokenˉequalsˉtext(Input, Value, "eax") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "ecx") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "edx") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "ebx") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "esp") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "ebp") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "esi") { return true; }
+    return Tokenˉequalsˉtext(Input, Value, "edi");
+}
+
+fn Alignmentˉisˉvalid(Value: u32) -> bool {
+    if Value == 1u32 { return true; }
+    if Value == 2u32 { return true; }
+    if Value == 4u32 { return true; }
+    if Value == 8u32 { return true; }
+    if Value == 16u32 { return true; }
+    if Value == 32u32 { return true; }
+    if Value == 64u32 { return true; }
+    if Value == 128u32 { return true; }
+    if Value == 256u32 { return true; }
+    if Value == 512u32 { return true; }
+    if Value == 1024u32 { return true; }
+    if Value == 2048u32 { return true; }
+    return Value == 4096u32;
+}
+
+fn Parseˉu32(Input: bytes, Value: Wvaˉtoken) -> Wvaˉu32ˉparse {
+    if Value.Length == 0u32 { return Wvaˉu32ˉparse(false, 0u32); }
+    var Result: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Value.Length {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Value.Offset + Index));
+        if Character < 48u32 { return Wvaˉu32ˉparse(false, 0u32); }
+        if Character > 57u32 { return Wvaˉu32ˉparse(false, 0u32); }
+        let Digit: u32 = Character - 48u32;
+        if Result > 429496729u32 { return Wvaˉu32ˉparse(false, 0u32); }
+        if Result == 429496729u32 {
+            if Digit > 5u32 { return Wvaˉu32ˉparse(false, 0u32); }
+        }
+        Result = Result * 10u32 + Digit;
+        Index = Index + 1u32;
+    }
+    return Wvaˉu32ˉparse(true, Result);
+}
+
+fn Digitˉi32(Value: u8) -> i32 {
+    if Value == 48u8 { return 0; }
+    if Value == 49u8 { return 1; }
+    if Value == 50u8 { return 2; }
+    if Value == 51u8 { return 3; }
+    if Value == 52u8 { return 4; }
+    if Value == 53u8 { return 5; }
+    if Value == 54u8 { return 6; }
+    if Value == 55u8 { return 7; }
+    if Value == 56u8 { return 8; }
+    if Value == 57u8 { return 9; }
+    return -1;
+}
+
+fn Parseˉi32(Input: bytes, Value: Wvaˉtoken) -> Wvaˉi32ˉparse {
+    if Value.Length == 0u32 { return Wvaˉi32ˉparse(false, 0); }
+    var Index: u32 = 0u32;
+    var Negative: bool = false;
+    if Bytesˉreadˉu8(Input, Value.Offset) == 45u8 {
+        Negative = true;
+        Index = 1u32;
+        if Value.Length == 1u32 { return Wvaˉi32ˉparse(false, 0); }
+    }
+
+    var Result: i32 = 0;
+    while Index < Value.Length {
+        let Digit: i32 = Digitˉi32(Bytesˉreadˉu8(Input, Value.Offset + Index));
+        if Digit < 0 { return Wvaˉi32ˉparse(false, 0); }
+        if Negative {
+            if Result < -214748364 { return Wvaˉi32ˉparse(false, 0); }
+            if Result == -214748364 {
+                if Digit > 8 { return Wvaˉi32ˉparse(false, 0); }
+            }
+            Result = Result * 10 - Digit;
+        } else {
+            if Result > 214748364 { return Wvaˉi32ˉparse(false, 0); }
+            if Result == 214748364 {
+                if Digit > 7 { return Wvaˉi32ˉparse(false, 0); }
+            }
+            Result = Result * 10 + Digit;
+        }
+        Index = Index + 1u32;
+    }
+    return Wvaˉi32ˉparse(true, Result);
+}
+
+fn Statementˉfailure(Status: Wvaˉsemanticˉstatus, Value: Wvaˉtoken) -> Wvaˉstatementˉcheck {
+    return Wvaˉstatementˉcheck(
+        Status,
+        0u32,
+        0u32,
+        false,
+        0u32,
+        0u32,
+        Value.Offset,
+        Value.Line,
+        Value.Column
+    );
+}
+
+fn Statementˉsuccess(
+    Kind: u32,
+    Size: u32,
+    Reference: Wvaˉtoken,
+    Hasˉreference: bool,
+    First: Wvaˉtoken
+) -> Wvaˉstatementˉcheck {
+    return Wvaˉstatementˉcheck(
+        Wvaˉsemanticˉstatus.Valid,
+        Kind,
+        Size,
+        Hasˉreference,
+        Reference.Offset,
+        Reference.Length,
+        First.Offset,
+        First.Line,
+        First.Column
+    );
+}
+
+fn Statementˉisˉallowed(Sectionˉkind: u32, Statementˉkind: u32) -> bool {
+    if Sectionˉkind == 1u32 {
+        return Statementˉkind <= 7u32;
+    }
+    if Sectionˉkind == 2u32 {
+        if Statementˉkind >= 8u32 { return Statementˉkind <= 11u32; }
+        return false;
+    }
+    if Sectionˉkind == 3u32 {
+        if Statementˉkind >= 8u32 { return Statementˉkind <= 11u32; }
+        return false;
+    }
+    if Sectionˉkind == 4u32 { return Statementˉkind == 12u32; }
+    return false;
+}
+
+fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉstatementˉcheck {
+    let First: Wvaˉtoken = Lineˉtoken(Input, Line, 0u32);
+    var Kind: u32 = 0u32;
+    var Size: u32 = 0u32;
+    var Hasˉreference: bool = false;
+    var Reference: Wvaˉtoken = First;
+
+    if Tokenˉequalsˉtext(Input, First, "nop") {
+        Kind = 1u32;
+        Size = 1u32;
+        if Line.Tokens != 1u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+    } else {
+        if Tokenˉequalsˉtext(Input, First, "return") {
+            Kind = 2u32;
+            Size = 1u32;
+            if Line.Tokens != 1u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        } else {
+            if Tokenˉequalsˉtext(Input, First, "trap") {
+                Kind = 3u32;
+                Size = 1u32;
+                if Line.Tokens != 1u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+            } else {
+                if Tokenˉequalsˉtext(Input, First, "call") {
+                    Kind = 4u32;
+                    Size = 5u32;
+                    Hasˉreference = true;
+                } else {
+                    if Tokenˉequalsˉtext(Input, First, "jump") {
+                        Kind = 5u32;
+                        Size = 5u32;
+                        Hasˉreference = true;
+                    } else {
+                        if Tokenˉequalsˉtext(Input, First, "address_u32") {
+                            Kind = 11u32;
+                            Size = 4u32;
+                            Hasˉreference = true;
+                        }
+                    }
+                }
+                if Hasˉreference {
+                    if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+                    Reference = Lineˉtoken(Input, Line, 1u32);
+                    if !Machineˉnameˉisˉvalid(Input, Reference) {
+                        return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+                    }
+                } else {
+                    if Tokenˉequalsˉtext(Input, First, "move_i32") {
+                        Kind = 6u32;
+                        Size = 5u32;
+                        if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+                        if !Registerˉisˉvalid(Input, Lineˉtoken(Input, Line, 1u32)) {
+                            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+                        }
+                        let Moveˉi32ˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+                        let Moveˉi32ˉparsed: Wvaˉi32ˉparse = Parseˉi32(Input, Moveˉi32ˉnumber);
+                        if !Moveˉi32ˉparsed.Valid {
+                            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉi32ˉnumber);
+                        }
+                    } else {
+                        if Tokenˉequalsˉtext(Input, First, "move_u32") {
+                            Kind = 7u32;
+                            Size = 5u32;
+                            if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+                            if !Registerˉisˉvalid(Input, Lineˉtoken(Input, Line, 1u32)) {
+                                return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+                            }
+                            let Moveˉu32ˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+                            let Moveˉu32ˉparsed: Wvaˉu32ˉparse = Parseˉu32(Input, Moveˉu32ˉnumber);
+                            if !Moveˉu32ˉparsed.Valid {
+                                return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu32ˉnumber);
+                            }
+                        } else {
+                            if Tokenˉequalsˉtext(Input, First, "bytes") {
+                                Kind = 8u32;
+                                if Line.Tokens < 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+                                if Line.Tokens > 4097u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+                                Size = Line.Tokens - 1u32;
+                                var Index: u32 = 1u32;
+                                while Index < Line.Tokens {
+                                    let Byteˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, Index);
+                                    let Byteˉparsed: Wvaˉu32ˉparse = Parseˉu32(Input, Byteˉnumber);
+                                    if !Byteˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Byteˉnumber); }
+                                    if Byteˉparsed.Value > 255u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Byteˉnumber); }
+                                    Index = Index + 1u32;
+                                }
+                            } else {
+                                if Tokenˉequalsˉtext(Input, First, "u32") {
+                                    Kind = 9u32;
+                                    Size = 4u32;
+                                    if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                    let U32ˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+                                    let U32ˉparsed: Wvaˉu32ˉparse = Parseˉu32(Input, U32ˉnumber);
+                                    if !U32ˉparsed.Valid {
+                                        return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First);
+                                    }
+                                } else {
+                                    if Tokenˉequalsˉtext(Input, First, "i32") {
+                                        Kind = 10u32;
+                                        Size = 4u32;
+                                        if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                        let I32ˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+                                        let I32ˉparsed: Wvaˉi32ˉparse = Parseˉi32(Input, I32ˉnumber);
+                                        if !I32ˉparsed.Valid {
+                                            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First);
+                                        }
+                                    } else {
+                                        if Tokenˉequalsˉtext(Input, First, "zero") {
+                                            Kind = 12u32;
+                                            if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                            let Zeroˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+                                            let Zeroˉparsed: Wvaˉu32ˉparse = Parseˉu32(Input, Zeroˉnumber);
+                                            if !Zeroˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                            if Zeroˉparsed.Value == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                            Size = Zeroˉparsed.Value;
+                                        } else {
+                                            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1002, First);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if !Statementˉisˉallowed(Sectionˉkind, Kind) {
+        return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1008, First);
+    }
+    return Statementˉsuccess(Kind, Size, Reference, Hasˉreference, First);
+}
+
+fn Countˉsymbolˉdeclarations(Input: bytes, Name: Wvaˉtoken) -> u32 {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Count: u32 = 0u32;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") { return Count; }
+        if Tokenˉequalsˉtext(Input, First, "symbol") {
+            let Declaredˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 3u32);
+            if Spanˉequalsˉtoken(Input, Name.Offset, Name.Length, Declaredˉname) {
+                Count = Count + 1u32;
+            }
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Count;
+}
+
+fn Findˉsymbol(Input: bytes, Nameˉoffset: u32, Nameˉlength: u32) -> Wvaˉsymbolˉlookup {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") {
+            return Wvaˉsymbolˉlookup(false, 0u32, 0u32, 0u32, 0u32);
+        }
+        if Tokenˉequalsˉtext(Input, First, "symbol") {
+            let Declaredˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 3u32);
+            if Spansˉequal(Input, Nameˉoffset, Nameˉlength, Declaredˉname.Offset, Declaredˉname.Length) {
+                let Binding: u32 = Bindingˉtag(Input, Lineˉtoken(Input, Current, 1u32));
+                let Kind: u32 = Symbolˉkindˉtag(Input, Lineˉtoken(Input, Current, 2u32));
+                if Binding == 3u32 {
+                    return Wvaˉsymbolˉlookup(true, Binding, Kind, 0u32, 0u32);
+                }
+                let Section: Wvaˉtoken = Lineˉtoken(Input, Current, 5u32);
+                return Wvaˉsymbolˉlookup(true, Binding, Kind, Section.Offset, Section.Length);
+            }
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Wvaˉsymbolˉlookup(false, 0u32, 0u32, 0u32, 0u32);
+}
+
+fn Countˉsectionˉdeclarations(Input: bytes, Name: Wvaˉtoken) -> u32 {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Count: u32 = 0u32;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") {
+            let Declaredˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 2u32);
+            if Spanˉequalsˉtoken(Input, Name.Offset, Name.Length, Declaredˉname) {
+                Count = Count + 1u32;
+            }
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Count;
+}
+
+fn Findˉsection(Input: bytes, Nameˉoffset: u32, Nameˉlength: u32) -> Wvaˉsectionˉlookup {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Index: u32 = 0u32;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") {
+            let Declaredˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 2u32);
+            if Spansˉequal(Input, Nameˉoffset, Nameˉlength, Declaredˉname.Offset, Declaredˉname.Length) {
+                return Wvaˉsectionˉlookup(
+                    true,
+                    Sectionˉkindˉtag(Input, Lineˉtoken(Input, Current, 1u32)),
+                    Index
+                );
+            }
+            Index = Index + 1u32;
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Wvaˉsectionˉlookup(false, 0u32, 0u32);
+}
+
+fn Findˉdefinitions(Input: bytes, Name: Wvaˉtoken) -> Wvaˉdefinitionˉlookup {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Currentˉsectionˉoffset: u32 = 0u32;
+    var Currentˉsectionˉlength: u32 = 0u32;
+    var Foundˉsectionˉoffset: u32 = 0u32;
+    var Foundˉsectionˉlength: u32 = 0u32;
+    var Foundˉdefinitionˉoffset: u32 = 0u32;
+    var Foundˉdefinitionˉline: u32 = 1u32;
+    var Foundˉdefinitionˉcolumn: u32 = 1u32;
+    var Count: u32 = 0u32;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") {
+            let Sectionˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 2u32);
+            Currentˉsectionˉoffset = Sectionˉname.Offset;
+            Currentˉsectionˉlength = Sectionˉname.Length;
+        }
+        if Tokenˉequalsˉtext(Input, First, "define") {
+            let Definitionˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 1u32);
+            if Spanˉequalsˉtoken(Input, Name.Offset, Name.Length, Definitionˉname) {
+                Count = Count + 1u32;
+                if Count == 1u32 {
+                    Foundˉsectionˉoffset = Currentˉsectionˉoffset;
+                    Foundˉsectionˉlength = Currentˉsectionˉlength;
+                    Foundˉdefinitionˉoffset = Definitionˉname.Offset;
+                    Foundˉdefinitionˉline = Definitionˉname.Line;
+                    Foundˉdefinitionˉcolumn = Definitionˉname.Column;
+                }
+            }
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Wvaˉdefinitionˉlookup(
+        Count,
+        Foundˉsectionˉoffset,
+        Foundˉsectionˉlength,
+        Foundˉdefinitionˉoffset,
+        Foundˉdefinitionˉline,
+        Foundˉdefinitionˉcolumn
+    );
+}
+
+fn Definitionˉwasˉseen(
+    Input: bytes,
+    Name: Wvaˉtoken,
+    Beforeˉoffset: u32
+) -> bool {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    while Current.Present {
+        if Current.Firstˉoffset >= Beforeˉoffset { return false; }
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "define") {
+            let Definitionˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 1u32);
+            if Spanˉequalsˉtoken(Input, Name.Offset, Name.Length, Definitionˉname) {
+                return true;
+            }
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return false;
+}
+
+fn Semanticˉfailureˉat(
+    Base: Wvaˉsemanticˉinspection,
+    Status: Wvaˉsemanticˉstatus,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Wvaˉsemanticˉinspection {
+    return Wvaˉsemanticˉinspection(
+        Status,
+        Base.Sections,
+        Base.Symbols,
+        Base.Definitions,
+        Base.Relocations,
+        Base.Dataˉbytes,
+        Base.Memoryˉbytes,
+        Offset,
+        Line,
+        Column
+    );
+}
+
+fn Semanticˉfailure(
+    Base: Wvaˉsemanticˉinspection,
+    Status: Wvaˉsemanticˉstatus,
+    Value: Wvaˉtoken
+) -> Wvaˉsemanticˉinspection {
+    return Semanticˉfailureˉat(Base, Status, Value.Offset, Value.Line, Value.Column);
+}
+
+fn Semanticˉprogress(
+    Sections: u32,
+    Symbols: u32,
+    Definitions: u32,
+    Relocations: u32,
+    Dataˉbytes: u32,
+    Memoryˉbytes: u32,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Wvaˉsemanticˉinspection {
+    return Wvaˉsemanticˉinspection(
+        Wvaˉsemanticˉstatus.Valid,
+        Sections,
+        Symbols,
+        Definitions,
+        Relocations,
+        Dataˉbytes,
+        Memoryˉbytes,
+        Offset,
+        Line,
+        Column
+    );
+}
+
+fn Structuralˉfailure(
+    Status: Wvaˉsemanticˉstatus,
+    Value: Wvaˉtoken,
+    Sections: u32,
+    Symbols: u32,
+    Definitions: u32,
+    Relocations: u32,
+    Dataˉbytes: u32,
+    Memoryˉbytes: u32
+) -> Wvaˉsemanticˉinspection {
+    return Wvaˉsemanticˉinspection(
+        Status,
+        Sections,
+        Symbols,
+        Definitions,
+        Relocations,
+        Dataˉbytes,
+        Memoryˉbytes,
+        Value.Offset,
+        Value.Line,
+        Value.Column
+    );
+}
+
+fn Inspectˉwvaˉsemantics(Input: bytes) -> Wvaˉsemanticˉinspection {
+    let Scan: Wvaˉscan = Scanˉwva(Input);
+    if Scan.Status != Wvaˉscanˉstatus.Valid {
+        var Failureˉstatus: Wvaˉsemanticˉstatus = Wvaˉsemanticˉstatus.Wva1001;
+        if Scan.Status == Wvaˉscanˉstatus.Sourceˉtooˉlarge {
+            Failureˉstatus = Wvaˉsemanticˉstatus.Wva1011;
+        }
+        if Scan.Status == Wvaˉscanˉstatus.Lineˉtooˉlong {
+            Failureˉstatus = Wvaˉsemanticˉstatus.Wva1011;
+        }
+        return Wvaˉsemanticˉinspection(
+            Failureˉstatus,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            Scan.Failureˉoffset,
+            Scan.Failureˉline,
+            Scan.Failureˉcolumn
+        );
+    }
+
+    let Headerˉline: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Headerˉline.Nextˉcursor,
+        Headerˉline.Nextˉline,
+        Headerˉline.Nextˉcolumn
+    );
+    var State: u32 = 0u32;
+    var Sectionsˉstarted: bool = false;
+    var Sectionˉcount: u32 = 0u32;
+    var Symbolˉcount: u32 = 0u32;
+    var Definitionˉcount: u32 = 0u32;
+    var Relocationˉcount: u32 = 0u32;
+    var Totalˉdata: u32 = 0u32;
+    var Totalˉmemory: u32 = 0u32;
+    var Sectionˉdata: u32 = 0u32;
+    var Sectionˉmemory: u32 = 0u32;
+    var Currentˉsectionˉkind: u32 = 0u32;
+    var Currentˉsectionˉoffset: u32 = 0u32;
+    var Currentˉsectionˉlength: u32 = 0u32;
+    var Currentˉsectionˉline: u32 = 1u32;
+    var Currentˉsectionˉcolumn: u32 = 1u32;
+    var Currentˉdefinitionˉoffset: u32 = 0u32;
+    var Currentˉdefinitionˉline: u32 = 1u32;
+    var Currentˉdefinitionˉcolumn: u32 = 1u32;
+    var Previousˉsymbolˉseen: bool = false;
+    var Previousˉsymbolˉbinding: u32 = 0u32;
+    var Previousˉsymbolˉoffset: u32 = 0u32;
+    var Previousˉsymbolˉlength: u32 = 0u32;
+    var Previousˉsectionˉseen: bool = false;
+    var Previousˉsectionˉkind: u32 = 0u32;
+    var Previousˉsectionˉoffset: u32 = 0u32;
+    var Previousˉsectionˉlength: u32 = 0u32;
+
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if State == 0u32 {
+            if Tokenˉequalsˉtext(Input, First, "symbol") {
+                if Sectionsˉstarted {
+                    return Structuralˉfailure(
+                        Wvaˉsemanticˉstatus.Wva1002,
+                        First,
+                        Sectionˉcount,
+                        Symbolˉcount,
+                        Definitionˉcount,
+                        Relocationˉcount,
+                        Totalˉdata,
+                        Totalˉmemory
+                    );
+                }
+                if Current.Tokens < 4u32 {
+                    return Structuralˉfailure(
+                        Wvaˉsemanticˉstatus.Wva1003,
+                        First,
+                        Sectionˉcount,
+                        Symbolˉcount,
+                        Definitionˉcount,
+                        Relocationˉcount,
+                        Totalˉdata,
+                        Totalˉmemory
+                    );
+                }
+                let Symbolˉbindingˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 1u32);
+                let Symbolˉkindˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 2u32);
+                let Symbolˉnameˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 3u32);
+                let Symbolˉbinding: u32 = Bindingˉtag(Input, Symbolˉbindingˉtoken);
+                let Symbolˉkind: u32 = Symbolˉkindˉtag(Input, Symbolˉkindˉtoken);
+                if Symbolˉbinding == 0u32 {
+                    return Structuralˉfailure(
+                        Wvaˉsemanticˉstatus.Wva1002,
+                        Symbolˉbindingˉtoken,
+                        Sectionˉcount,
+                        Symbolˉcount,
+                        Definitionˉcount,
+                        Relocationˉcount,
+                        Totalˉdata,
+                        Totalˉmemory
+                    );
+                }
+                if Symbolˉkind == 0u32 {
+                    return Structuralˉfailure(
+                        Wvaˉsemanticˉstatus.Wva1002,
+                        Symbolˉkindˉtoken,
+                        Sectionˉcount,
+                        Symbolˉcount,
+                        Definitionˉcount,
+                        Relocationˉcount,
+                        Totalˉdata,
+                        Totalˉmemory
+                    );
+                }
+                if !Machineˉnameˉisˉvalid(Input, Symbolˉnameˉtoken) {
+                    return Structuralˉfailure(
+                        Wvaˉsemanticˉstatus.Wva1004,
+                        Symbolˉnameˉtoken,
+                        Sectionˉcount,
+                        Symbolˉcount,
+                        Definitionˉcount,
+                        Relocationˉcount,
+                        Totalˉdata,
+                        Totalˉmemory
+                    );
+                }
+                if Symbolˉbinding == 3u32 {
+                    if Current.Tokens != 4u32 {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1003,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                } else {
+                    if Current.Tokens != 6u32 {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1003,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    let Inˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 4u32);
+                    let Symbolˉsectionˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 5u32);
+                    if !Tokenˉequalsˉtext(Input, Inˉtoken, "in") {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1003,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    if !Machineˉnameˉisˉvalid(Input, Symbolˉsectionˉtoken) {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1004,
+                            Symbolˉsectionˉtoken,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                }
+                if Previousˉsymbolˉseen {
+                    if Symbolˉbinding < Previousˉsymbolˉbinding {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1006,
+                            Symbolˉnameˉtoken,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    if Symbolˉbinding == Previousˉsymbolˉbinding {
+                        if Compareˉspans(
+                            Input,
+                            Previousˉsymbolˉoffset,
+                            Previousˉsymbolˉlength,
+                            Symbolˉnameˉtoken.Offset,
+                            Symbolˉnameˉtoken.Length
+                        ) >= 0 {
+                            return Structuralˉfailure(
+                                Wvaˉsemanticˉstatus.Wva1006,
+                                Symbolˉnameˉtoken,
+                                Sectionˉcount,
+                                Symbolˉcount,
+                                Definitionˉcount,
+                                Relocationˉcount,
+                                Totalˉdata,
+                                Totalˉmemory
+                            );
+                        }
+                    }
+                }
+                Symbolˉcount = Symbolˉcount + 1u32;
+                if Symbolˉcount > 4096u32 {
+                    return Structuralˉfailure(
+                        Wvaˉsemanticˉstatus.Wva1011,
+                        Symbolˉnameˉtoken,
+                        Sectionˉcount,
+                        Symbolˉcount,
+                        Definitionˉcount,
+                        Relocationˉcount,
+                        Totalˉdata,
+                        Totalˉmemory
+                    );
+                }
+                Previousˉsymbolˉseen = true;
+                Previousˉsymbolˉbinding = Symbolˉbinding;
+                Previousˉsymbolˉoffset = Symbolˉnameˉtoken.Offset;
+                Previousˉsymbolˉlength = Symbolˉnameˉtoken.Length;
+            } else {
+                if Tokenˉequalsˉtext(Input, First, "section") {
+                    Sectionsˉstarted = true;
+                    if Current.Tokens != 5u32 {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1003,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    let Sectionˉkindˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 1u32);
+                    let Sectionˉnameˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 2u32);
+                    let Alignˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 3u32);
+                    let Alignmentˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 4u32);
+                    let Sectionˉkind: u32 = Sectionˉkindˉtag(Input, Sectionˉkindˉtoken);
+                    if Sectionˉkind == 0u32 {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1002,
+                            Sectionˉkindˉtoken,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    if !Machineˉnameˉisˉvalid(Input, Sectionˉnameˉtoken) {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1004,
+                            Sectionˉnameˉtoken,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    if !Tokenˉequalsˉtext(Input, Alignˉtoken, "align") {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1003,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    let Alignment: Wvaˉu32ˉparse = Parseˉu32(Input, Alignmentˉtoken);
+                    if !Alignment.Valid {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1005,
+                            Alignmentˉtoken,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    if !Alignmentˉisˉvalid(Alignment.Value) {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1005,
+                            Alignmentˉtoken,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    if Previousˉsectionˉseen {
+                        if Sectionˉkind < Previousˉsectionˉkind {
+                            return Structuralˉfailure(
+                                Wvaˉsemanticˉstatus.Wva1006,
+                                Sectionˉnameˉtoken,
+                                Sectionˉcount,
+                                Symbolˉcount,
+                                Definitionˉcount,
+                                Relocationˉcount,
+                                Totalˉdata,
+                                Totalˉmemory
+                            );
+                        }
+                        if Sectionˉkind == Previousˉsectionˉkind {
+                            if Compareˉspans(
+                                Input,
+                                Previousˉsectionˉoffset,
+                                Previousˉsectionˉlength,
+                                Sectionˉnameˉtoken.Offset,
+                                Sectionˉnameˉtoken.Length
+                            ) >= 0 {
+                                return Structuralˉfailure(
+                                    Wvaˉsemanticˉstatus.Wva1006,
+                                    Sectionˉnameˉtoken,
+                                    Sectionˉcount,
+                                    Symbolˉcount,
+                                    Definitionˉcount,
+                                    Relocationˉcount,
+                                    Totalˉdata,
+                                    Totalˉmemory
+                                );
+                            }
+                        }
+                    }
+                    if Sectionˉcount >= 64u32 {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1011,
+                            Sectionˉnameˉtoken,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    Sectionˉcount = Sectionˉcount + 1u32;
+                    Previousˉsectionˉseen = true;
+                    Previousˉsectionˉkind = Sectionˉkind;
+                    Previousˉsectionˉoffset = Sectionˉnameˉtoken.Offset;
+                    Previousˉsectionˉlength = Sectionˉnameˉtoken.Length;
+                    Currentˉsectionˉkind = Sectionˉkind;
+                    Currentˉsectionˉoffset = Sectionˉnameˉtoken.Offset;
+                    Currentˉsectionˉlength = Sectionˉnameˉtoken.Length;
+                    Currentˉsectionˉline = Sectionˉnameˉtoken.Line;
+                    Currentˉsectionˉcolumn = Sectionˉnameˉtoken.Column;
+                    Sectionˉdata = 0u32;
+                    Sectionˉmemory = 0u32;
+                    State = 1u32;
+                } else {
+                    return Structuralˉfailure(
+                        Wvaˉsemanticˉstatus.Wva1002,
+                        First,
+                        Sectionˉcount,
+                        Symbolˉcount,
+                        Definitionˉcount,
+                        Relocationˉcount,
+                        Totalˉdata,
+                        Totalˉmemory
+                    );
+                }
+            }
+        } else {
+            if State == 1u32 {
+                if Tokenˉequalsˉtext(Input, First, "define") {
+                    if Current.Tokens != 2u32 {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1003,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    let Definitionˉnameˉtoken: Wvaˉtoken = Lineˉtoken(Input, Current, 1u32);
+                    if !Machineˉnameˉisˉvalid(Input, Definitionˉnameˉtoken) {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1004,
+                            Definitionˉnameˉtoken,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    Definitionˉcount = Definitionˉcount + 1u32;
+                    Currentˉdefinitionˉoffset = Definitionˉnameˉtoken.Offset;
+                    Currentˉdefinitionˉline = Definitionˉnameˉtoken.Line;
+                    Currentˉdefinitionˉcolumn = Definitionˉnameˉtoken.Column;
+                    State = 2u32;
+                } else {
+                    var Endsˉsection: bool = false;
+                    if Current.Tokens == 2u32 {
+                        if Tokenˉequalsˉtext(Input, First, "end") {
+                            if Tokenˉequalsˉtext(Input, Lineˉtoken(Input, Current, 1u32), "section") {
+                                Endsˉsection = true;
+                            }
+                        }
+                    }
+                    if !Endsˉsection {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1002,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    if Sectionˉmemory > 16777216u32 - Totalˉmemory {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1011,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    if Sectionˉdata > 4194304u32 - Totalˉdata {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1011,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    Totalˉmemory = Totalˉmemory + Sectionˉmemory;
+                    Totalˉdata = Totalˉdata + Sectionˉdata;
+                    State = 0u32;
+                }
+            } else {
+                var Endsˉdefinition: bool = false;
+                if Current.Tokens == 2u32 {
+                    if Tokenˉequalsˉtext(Input, First, "end") {
+                        if Tokenˉequalsˉtext(Input, Lineˉtoken(Input, Current, 1u32), "define") {
+                            Endsˉdefinition = true;
+                        }
+                    }
+                }
+                if Endsˉdefinition {
+                    State = 1u32;
+                } else {
+                    let Statement: Wvaˉstatementˉcheck = Checkˉstatement(Input, Current, Currentˉsectionˉkind);
+                    if Statement.Status != Wvaˉsemanticˉstatus.Valid {
+                        return Wvaˉsemanticˉinspection(
+                            Statement.Status,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory,
+                            Statement.Failureˉoffset,
+                            Statement.Failureˉline,
+                            Statement.Failureˉcolumn
+                        );
+                    }
+                    if Statement.Size > 16777216u32 - Sectionˉmemory {
+                        return Structuralˉfailure(
+                            Wvaˉsemanticˉstatus.Wva1011,
+                            First,
+                            Sectionˉcount,
+                            Symbolˉcount,
+                            Definitionˉcount,
+                            Relocationˉcount,
+                            Totalˉdata,
+                            Totalˉmemory
+                        );
+                    }
+                    Sectionˉmemory = Sectionˉmemory + Statement.Size;
+                    if Currentˉsectionˉkind != 4u32 {
+                        if Statement.Size > 4194304u32 - Sectionˉdata {
+                            return Structuralˉfailure(
+                                Wvaˉsemanticˉstatus.Wva1011,
+                                First,
+                                Sectionˉcount,
+                                Symbolˉcount,
+                                Definitionˉcount,
+                                Relocationˉcount,
+                                Totalˉdata,
+                                Totalˉmemory
+                            );
+                        }
+                        Sectionˉdata = Sectionˉdata + Statement.Size;
+                    }
+                    if Statement.Hasˉreference {
+                        Relocationˉcount = Relocationˉcount + 1u32;
+                        if Relocationˉcount > 65536u32 {
+                            return Structuralˉfailure(
+                                Wvaˉsemanticˉstatus.Wva1011,
+                                First,
+                                Sectionˉcount,
+                                Symbolˉcount,
+                                Definitionˉcount,
+                                Relocationˉcount,
+                                Totalˉdata,
+                                Totalˉmemory
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+
+    let Progress: Wvaˉsemanticˉinspection = Semanticˉprogress(
+        Sectionˉcount,
+        Symbolˉcount,
+        Definitionˉcount,
+        Relocationˉcount,
+        Totalˉdata,
+        Totalˉmemory,
+        Bytesˉlength(Input),
+        Current.Line,
+        Current.Column
+    );
+    if State == 2u32 {
+        return Semanticˉfailureˉat(
+            Progress,
+            Wvaˉsemanticˉstatus.Wva1010,
+            Currentˉdefinitionˉoffset,
+            Currentˉdefinitionˉline,
+            Currentˉdefinitionˉcolumn
+        );
+    }
+    if State == 1u32 {
+        return Semanticˉfailureˉat(
+            Progress,
+            Wvaˉsemanticˉstatus.Wva1010,
+            Currentˉsectionˉoffset,
+            Currentˉsectionˉline,
+            Currentˉsectionˉcolumn
+        );
+    }
+    if Sectionˉcount == 0u32 {
+        return Semanticˉfailureˉat(Progress, Wvaˉsemanticˉstatus.Wva1007, 0u32, 1u32, 1u32);
+    }
+    return Validateˉwvaˉsemantics(Input, Progress);
+}
+
+fn Validateˉwvaˉsemantics(
+    Input: bytes,
+    Base: Wvaˉsemanticˉinspection
+) -> Wvaˉsemanticˉinspection {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Uniqueˉcurrent: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    while Uniqueˉcurrent.Present {
+        let Uniqueˉfirst: Wvaˉtoken = Lineˉtoken(Input, Uniqueˉcurrent, 0u32);
+        if Tokenˉequalsˉtext(Input, Uniqueˉfirst, "symbol") {
+            let Uniqueˉsymbolˉname: Wvaˉtoken = Lineˉtoken(Input, Uniqueˉcurrent, 3u32);
+            if Countˉsymbolˉdeclarations(Input, Uniqueˉsymbolˉname) > 1u32 {
+                return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1006, Uniqueˉsymbolˉname);
+            }
+        }
+        if Tokenˉequalsˉtext(Input, Uniqueˉfirst, "section") {
+            let Uniqueˉsectionˉname: Wvaˉtoken = Lineˉtoken(Input, Uniqueˉcurrent, 2u32);
+            if Countˉsectionˉdeclarations(Input, Uniqueˉsectionˉname) > 1u32 {
+                return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1006, Uniqueˉsectionˉname);
+            }
+        }
+        Uniqueˉcurrent = Readˉmeaningfulˉline(
+            Input,
+            Uniqueˉcurrent.Nextˉcursor,
+            Uniqueˉcurrent.Nextˉline,
+            Uniqueˉcurrent.Nextˉcolumn
+        );
+    }
+
+    var Symbolˉcurrent: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    while Symbolˉcurrent.Present {
+        let Symbolˉfirst: Wvaˉtoken = Lineˉtoken(Input, Symbolˉcurrent, 0u32);
+        if Tokenˉequalsˉtext(Input, Symbolˉfirst, "section") {
+            Symbolˉcurrent = Wvaˉline(
+                false,
+                Symbolˉcurrent.Firstˉoffset,
+                Symbolˉcurrent.Line,
+                Symbolˉcurrent.Column,
+                0u32,
+                Symbolˉcurrent.Nextˉcursor,
+                Symbolˉcurrent.Nextˉline,
+                Symbolˉcurrent.Nextˉcolumn
+            );
+        } else {
+            let Symbolˉbindingˉvalue: u32 = Bindingˉtag(
+                Input,
+                Lineˉtoken(Input, Symbolˉcurrent, 1u32)
+            );
+            if Symbolˉbindingˉvalue != 3u32 {
+                let Symbolˉkindˉvalue: u32 = Symbolˉkindˉtag(
+                    Input,
+                    Lineˉtoken(Input, Symbolˉcurrent, 2u32)
+                );
+                let Symbolˉnameˉvalue: Wvaˉtoken = Lineˉtoken(Input, Symbolˉcurrent, 3u32);
+                let Symbolˉsectionˉvalue: Wvaˉtoken = Lineˉtoken(Input, Symbolˉcurrent, 5u32);
+                let Declaredˉsection: Wvaˉsectionˉlookup = Findˉsection(
+                    Input,
+                    Symbolˉsectionˉvalue.Offset,
+                    Symbolˉsectionˉvalue.Length
+                );
+                if !Declaredˉsection.Found {
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1007, Symbolˉnameˉvalue);
+                }
+                if Symbolˉkindˉvalue == 1u32 {
+                    if Declaredˉsection.Kind != 1u32 {
+                        return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1007, Symbolˉnameˉvalue);
+                    }
+                } else {
+                    if Declaredˉsection.Kind == 1u32 {
+                        return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1007, Symbolˉnameˉvalue);
+                    }
+                }
+            }
+            Symbolˉcurrent = Readˉmeaningfulˉline(
+                Input,
+                Symbolˉcurrent.Nextˉcursor,
+                Symbolˉcurrent.Nextˉline,
+                Symbolˉcurrent.Nextˉcolumn
+            );
+        }
+    }
+
+    var Bodyˉcurrent: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Bodyˉsectionˉoffset: u32 = 0u32;
+    var Bodyˉsectionˉlength: u32 = 0u32;
+    var Bodyˉsectionˉkind: u32 = 0u32;
+    var Insideˉdefinition: bool = false;
+    while Bodyˉcurrent.Present {
+        let Bodyˉfirst: Wvaˉtoken = Lineˉtoken(Input, Bodyˉcurrent, 0u32);
+        if Tokenˉequalsˉtext(Input, Bodyˉfirst, "section") {
+            let Bodyˉsectionˉname: Wvaˉtoken = Lineˉtoken(Input, Bodyˉcurrent, 2u32);
+            Bodyˉsectionˉoffset = Bodyˉsectionˉname.Offset;
+            Bodyˉsectionˉlength = Bodyˉsectionˉname.Length;
+            Bodyˉsectionˉkind = Sectionˉkindˉtag(Input, Lineˉtoken(Input, Bodyˉcurrent, 1u32));
+        } else {
+            if Tokenˉequalsˉtext(Input, Bodyˉfirst, "define") {
+                let Bodyˉdefinitionˉname: Wvaˉtoken = Lineˉtoken(Input, Bodyˉcurrent, 1u32);
+                let Definitionˉsymbol: Wvaˉsymbolˉlookup = Findˉsymbol(
+                    Input,
+                    Bodyˉdefinitionˉname.Offset,
+                    Bodyˉdefinitionˉname.Length
+                );
+                if !Definitionˉsymbol.Found {
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Bodyˉdefinitionˉname);
+                }
+                if Definitionˉsymbol.Binding == 3u32 {
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1007, Bodyˉdefinitionˉname);
+                }
+                if !Spansˉequal(
+                    Input,
+                    Definitionˉsymbol.Sectionˉoffset,
+                    Definitionˉsymbol.Sectionˉlength,
+                    Bodyˉsectionˉoffset,
+                    Bodyˉsectionˉlength
+                ) {
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1007, Bodyˉdefinitionˉname);
+                }
+                if Definitionˉwasˉseen(Input, Bodyˉdefinitionˉname, Bodyˉcurrent.Firstˉoffset) {
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1006, Bodyˉdefinitionˉname);
+                }
+                Insideˉdefinition = true;
+            } else {
+                var Bodyˉendsˉdefinition: bool = false;
+                if Bodyˉcurrent.Tokens == 2u32 {
+                    if Tokenˉequalsˉtext(Input, Bodyˉfirst, "end") {
+                        if Tokenˉequalsˉtext(Input, Lineˉtoken(Input, Bodyˉcurrent, 1u32), "define") {
+                            Bodyˉendsˉdefinition = true;
+                        }
+                    }
+                }
+                if Bodyˉendsˉdefinition {
+                    Insideˉdefinition = false;
+                } else {
+                    if Insideˉdefinition {
+                        let Bodyˉstatement: Wvaˉstatementˉcheck = Checkˉstatement(
+                            Input,
+                            Bodyˉcurrent,
+                            Bodyˉsectionˉkind
+                        );
+                        if Bodyˉstatement.Hasˉreference {
+                            let Referenceˉsymbol: Wvaˉsymbolˉlookup = Findˉsymbol(
+                                Input,
+                                Bodyˉstatement.Referenceˉoffset,
+                                Bodyˉstatement.Referenceˉlength
+                            );
+                            if !Referenceˉsymbol.Found {
+                                return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Bodyˉfirst);
+                            }
+                            if Bodyˉstatement.Kind == 4u32 {
+                                if Referenceˉsymbol.Kind != 1u32 {
+                                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Bodyˉfirst);
+                                }
+                            }
+                            if Bodyˉstatement.Kind == 5u32 {
+                                if Referenceˉsymbol.Kind != 1u32 {
+                                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Bodyˉfirst);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Bodyˉcurrent = Readˉmeaningfulˉline(
+            Input,
+            Bodyˉcurrent.Nextˉcursor,
+            Bodyˉcurrent.Nextˉline,
+            Bodyˉcurrent.Nextˉcolumn
+        );
+    }
+
+    var Missingˉcurrent: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    while Missingˉcurrent.Present {
+        let Missingˉfirst: Wvaˉtoken = Lineˉtoken(Input, Missingˉcurrent, 0u32);
+        if Tokenˉequalsˉtext(Input, Missingˉfirst, "section") {
+            Missingˉcurrent = Wvaˉline(
+                false,
+                Missingˉcurrent.Firstˉoffset,
+                Missingˉcurrent.Line,
+                Missingˉcurrent.Column,
+                0u32,
+                Missingˉcurrent.Nextˉcursor,
+                Missingˉcurrent.Nextˉline,
+                Missingˉcurrent.Nextˉcolumn
+            );
+        } else {
+            let Missingˉbinding: u32 = Bindingˉtag(Input, Lineˉtoken(Input, Missingˉcurrent, 1u32));
+            if Missingˉbinding != 3u32 {
+                let Missingˉname: Wvaˉtoken = Lineˉtoken(Input, Missingˉcurrent, 3u32);
+                let Definitions: Wvaˉdefinitionˉlookup = Findˉdefinitions(Input, Missingˉname);
+                if Definitions.Count == 0u32 {
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Missingˉname);
+                }
+            }
+            Missingˉcurrent = Readˉmeaningfulˉline(
+                Input,
+                Missingˉcurrent.Nextˉcursor,
+                Missingˉcurrent.Nextˉline,
+                Missingˉcurrent.Nextˉcolumn
+            );
+        }
+    }
+    return Base;
+}
+
 fn Statusˉtext(Status: Wvaˉscanˉstatus) -> text {
     if Status == Wvaˉscanˉstatus.Valid { return "valid"; }
     if Status == Wvaˉscanˉstatus.Sourceˉtooˉlarge { return "source_too_large"; }
@@ -371,6 +1977,21 @@ fn Statusˉtext(Status: Wvaˉscanˉstatus) -> text {
     if Status == Wvaˉscanˉstatus.Lineˉtooˉlong { return "line_too_long"; }
     if Status == Wvaˉscanˉstatus.Missingˉheader { return "missing_header"; }
     return "bad_header";
+}
+
+fn Semanticˉstatusˉtext(Status: Wvaˉsemanticˉstatus) -> text {
+    if Status == Wvaˉsemanticˉstatus.Valid { return "valid"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1001 { return "WVA1001"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1002 { return "WVA1002"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1003 { return "WVA1003"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1004 { return "WVA1004"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1005 { return "WVA1005"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1006 { return "WVA1006"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1007 { return "WVA1007"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1008 { return "WVA1008"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1009 { return "WVA1009"; }
+    if Status == Wvaˉsemanticˉstatus.Wva1010 { return "WVA1010"; }
+    return "WVA1011";
 }
 
 fn Describeˉscan(Result: Wvaˉscan) -> text {
@@ -382,6 +2003,19 @@ fn Describeˉscan(Result: Wvaˉscan) -> text {
         Textˉconcat(" meaningful-lines=", U32ˉformat(Result.Meaningfulˉlines))
     );
     Description = Textˉconcat(Description, Textˉconcat(" tokens=", U32ˉformat(Result.Tokens)));
+    Description = Textˉconcat(Description, Textˉconcat(" offset=", U32ˉformat(Result.Failureˉoffset)));
+    Description = Textˉconcat(Description, Textˉconcat(" line=", U32ˉformat(Result.Failureˉline)));
+    return Textˉconcat(Description, Textˉconcat(" column=", U32ˉformat(Result.Failureˉcolumn)));
+}
+
+fn Describeˉsemantics(Result: Wvaˉsemanticˉinspection) -> text {
+    var Description: text = Textˉconcat("semantics status=", Semanticˉstatusˉtext(Result.Status));
+    Description = Textˉconcat(Description, Textˉconcat(" sections=", U32ˉformat(Result.Sections)));
+    Description = Textˉconcat(Description, Textˉconcat(" symbols=", U32ˉformat(Result.Symbols)));
+    Description = Textˉconcat(Description, Textˉconcat(" definitions=", U32ˉformat(Result.Definitions)));
+    Description = Textˉconcat(Description, Textˉconcat(" relocations=", U32ˉformat(Result.Relocations)));
+    Description = Textˉconcat(Description, Textˉconcat(" data-bytes=", U32ˉformat(Result.Dataˉbytes)));
+    Description = Textˉconcat(Description, Textˉconcat(" memory-bytes=", U32ˉformat(Result.Memoryˉbytes)));
     Description = Textˉconcat(Description, Textˉconcat(" offset=", U32ˉformat(Result.Failureˉoffset)));
     Description = Textˉconcat(Description, Textˉconcat(" line=", U32ˉformat(Result.Failureˉline)));
     return Textˉconcat(Description, Textˉconcat(" column=", U32ˉformat(Result.Failureˉcolumn)));
@@ -427,7 +2061,32 @@ fn Runˉselfˉtests() -> i32 {
     if Long.Failureˉoffset != 4096u32 { return 27; }
     if Long.Failureˉcolumn != 4097u32 { return 37; }
 
+    let Semantic: Wvaˉsemanticˉinspection = Inspectˉwvaˉsemantics(Textˉtoˉutf8(Validˉsource));
+    if Semantic.Status != Wvaˉsemanticˉstatus.Valid { return 41; }
+    if Semantic.Sections != 1u32 { return 51; }
+    if Semantic.Symbols != 1u32 { return 61; }
+    if Semantic.Definitions != 1u32 { return 71; }
+    if Semantic.Relocations != 0u32 { return 81; }
+    if Semantic.Dataˉbytes != 6u32 { return 91; }
+    if Semantic.Memoryˉbytes != 6u32 { return 101; }
+
+    let Missingˉreference: Wvaˉsemanticˉinspection = Inspectˉwvaˉsemantics(
+        Textˉtoˉutf8(Missingˉreferenceˉsource)
+    );
+    if Missingˉreference.Status != Wvaˉsemanticˉstatus.Wva1009 { return 42; }
+
+    let Wrongˉcontext: Wvaˉsemanticˉinspection = Inspectˉwvaˉsemantics(
+        Textˉtoˉutf8(Wrongˉcontextˉsource)
+    );
+    if Wrongˉcontext.Status != Wvaˉsemanticˉstatus.Wva1008 { return 43; }
+
+    let Semanticˉheader: Wvaˉsemanticˉinspection = Inspectˉwvaˉsemantics(
+        Textˉtoˉutf8(Badˉheaderˉsource)
+    );
+    if Semanticˉheader.Status != Wvaˉsemanticˉstatus.Wva1001 { return 44; }
+
     Describeˉscan(Valid);
+    Describeˉsemantics(Semantic);
     return 0;
 }
 
@@ -440,13 +2099,16 @@ fn Runˉfileˉscan() -> i32 {
     let Input: bytes = file.read_bytes(process.argument(0u32));
     let Result: Wvaˉscan = Scanˉwva(Input);
     let Description: text = Describeˉscan(Result);
-    if Result.Status != Wvaˉscanˉstatus.Valid {
-        diagnostic.write_line(Description);
+    let Semantics: Wvaˉsemanticˉinspection = Inspectˉwvaˉsemantics(Input);
+    let Semanticˉdescription: text = Describeˉsemantics(Semantics);
+    if Semantics.Status != Wvaˉsemanticˉstatus.Valid {
+        diagnostic.write_line(Semanticˉdescription);
         return 2;
     }
 
     console.write_line("wvascan 1");
     console.write_line(Description);
+    console.write_line(Semanticˉdescription);
     return 0;
 }
 

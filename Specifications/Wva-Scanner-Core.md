@@ -1,12 +1,12 @@
-# Windvale WVA scanner core
+# Windvale WVA scanner and semantic core
 
 ## Status and purpose
 
-`Wvaˉscannerˉcore` is the first Windvale-written implementation slice of WVA 1. It consumes immutable source bytes, applies the accepted source and line limits, normalizes the accepted line endings, recognizes the exact version header, and exposes deterministic token-boundary evidence. Its portable functions do not use host text parsing or file APIs; the hosted shell supplies one explicit resource and prints a versioned report.
+`Wvaˉscannerˉcore` is the Windvale-written frontend foundation for WVA 1. It consumes immutable source bytes, applies the accepted source and line limits, normalizes accepted line endings, recognizes the exact version header, validates the complete initial WVA grammar and semantic model, and exposes deterministic structural evidence. Its portable functions do not use host text parsing or file APIs; the hosted shell supplies one explicit resource and prints versioned scan and semantic reports.
 
-The scanner and its hosted report are cross-host qualified at `e5fd109` from one exact source archive on Windows x64 and Debian Linux x64.
+The lexical scanner and its hosted report are cross-host qualified at `e5fd109` from one exact source archive on Windows x64 and Debian Linux x64. The semantic extension is an implementation candidate until its exact revision completes the same Windows/Debian qualification.
 
-This is a lexical foundation, not yet the Windvale assembler. It does not classify declarations or statements, validate names or numeric widths, resolve symbols, derive definition ranges, encode instructions, or emit WVO.
+This is a semantic inspector, not yet the Windvale assembler. It classifies declarations and statements, validates names and numeric widths, resolves declarations and references, and derives aggregate section/data/memory/relocation counts. It deliberately does not construct encoded definition ranges, instruction bytes, symbol records, relocations, or WVO output; those belong to the following encoder gate.
 
 ## Preflight boundary
 
@@ -40,7 +40,35 @@ The first meaningful line must contain exactly two words:
 windvale-assembly 1
 ```
 
-Horizontal whitespace and a trailing comment are allowed under the general WVA line rules. A missing meaningful line returns `missing_header`; any wrong, missing, or additional header word returns `bad_header`. Later words are counted but deliberately remain unclassified until the semantic-inspector gate.
+Horizontal whitespace and a trailing comment are allowed under the general WVA line rules. A missing meaningful line returns `missing_header`; any wrong, missing, or additional header word returns `bad_header`.
+
+## Semantic passes
+
+`Inspectˉwvaˉsemantics(Input: bytes)` first requires a valid scan, then performs bounded immutable passes over the same source bytes:
+
+1. Validate line shapes, keywords, declaration/section/definition nesting, machine names, canonical order, alignment, register names, integer widths, statement contexts, and aggregate limits.
+2. Detect globally duplicated symbol and section names, including duplicates that canonical adjacent-order checks alone cannot reveal.
+3. Resolve every non-import symbol's section and enforce function/code and data/non-code ownership.
+4. Resolve every definition to one non-import symbol in its declared section and reject duplicate definitions.
+5. Resolve statement references, require function targets for `call` and `jump`, and require exactly one definition for every non-import symbol.
+
+The accepted statements are the complete initial WVA 1 set: `nop`, `return`, `trap`, `call`, `jump`, `move_i32`, `move_u32`, `bytes`, `u32`, `i32`, `address_u32`, and `zero`. Decimal parsing is performed over bytes with explicit checked arithmetic, including exact `i32` minimum and maximum and `u32` maximum boundaries.
+
+The implementation stores no hidden cursor or host object. It uses repeated source passes and byte spans because current Seed has no general bounded collection module. Those passes are deterministic and bounded by WVA limits, but some name/definition checks are quadratic in declaration count. The object-encoder and linker work must revisit that tradeoff if representative sources or qualification runtime make it impractical.
+
+Semantic status families correspond to the Stage 0 diagnostic codes:
+
+- `WVA1001`: source encoding or version header;
+- `WVA1002`: unexpected or unknown structure, keyword, kind, or statement;
+- `WVA1003`: line/operand shape;
+- `WVA1004`: machine name;
+- `WVA1005`: alignment, register, or numeric width/value;
+- `WVA1006`: duplicate or noncanonical declaration;
+- `WVA1007`: section/symbol ownership or required section;
+- `WVA1008`: statement used in the wrong section kind;
+- `WVA1009`: definition/reference resolution or target kind;
+- `WVA1010`: unclosed definition or section;
+- `WVA1011`: source, line, count, data, memory, or relocation limit.
 
 ## Scan result
 
@@ -54,23 +82,24 @@ Horizontal whitespace and a trailing comment are allowed under the general WVA l
 - failure or terminal byte offset;
 - failure or terminal line and column.
 
-Statuses are `valid`, `source_too_large`, `invalid_utf8`, `line_too_long`, `missing_header`, and `bad_header`. The ASCII report is:
+Scan statuses are `valid`, `source_too_large`, `invalid_utf8`, `line_too_long`, `missing_header`, and `bad_header`. A successfully scanned input receives both report records:
 
 ```text
 wvascan 1
 status=<status> bytes=<u32> lines=<u32> meaningful-lines=<u32> tokens=<u32> offset=<u32> line=<u32> column=<u32>
+semantics status=<valid|WVA1001..WVA1011> sections=<u32> symbols=<u32> definitions=<u32> relocations=<u32> data-bytes=<u32> memory-bytes=<u32> offset=<u32> line=<u32> column=<u32>
 ```
 
-Invalid scans write only the status line to diagnostics and return `2`. A valid hosted scan writes both lines to normal output and returns `0`. Incorrect argument count writes `Usage: wvascan <source.wva>` to diagnostics and returns `64`.
+An invalid lexical scan writes its `status=` line to diagnostics and returns `2`. An invalid semantic inspection writes only its `semantics status=` line to diagnostics and returns `2`. A valid hosted inspection writes all three lines to normal output and returns `0`. Incorrect argument count writes `Usage: wvascan <source.wva>` to diagnostics and returns `64`.
 
 The current strict UTF-8 intrinsic returns validity rather than the first malformed offset, so `invalid_utf8` reports offset zero, line one, column one. The oversized-source status reports the first disallowed offset, 1,048,576, without walking hostile input.
 
 ## Hosted boundary and self-tests
 
-The module declares `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `process.argument`, and `process.argument_count`. All must be explicitly authorized and supported before execution. With no program arguments, the module runs embedded tests without reading a file. Those tests cover comments, tabs, LF, CR, valid and extra header words, a missing header, invalid UTF-8, and a 4,097-byte line.
+The module declares `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `process.argument`, and `process.argument_count`. All must be explicitly authorized and supported before execution. With no program arguments, the module runs embedded tests without reading a file. Those tests cover comments, tabs, LF, CR, valid and extra header words, a missing header, invalid UTF-8, a 4,097-byte line, a valid semantic body, an unresolved reference, a statement in the wrong section, and a bad semantic header.
 
-The host conformance suite additionally covers the exact 4,096-byte boundary, the 1 MiB source boundary, CRLF, capability refusal, the canonical `Hello-Object.wva`, deterministic module bytes, and a real CLI file scan on Windows and Debian.
+The host conformance suite additionally covers the exact 4,096-byte boundary, the 1 MiB source boundary, CRLF, capability refusal, the canonical `Hello-Object.wva`, the complete initial statement set, exact integer limits, all eleven diagnostic families, deliberately hostile structure/reference cases, 200 deterministic source mutations compared with Stage 0, deterministic module bytes, and real CLI inspection on Windows and Debian.
 
-## Replacement path
+## Encoder path
 
-The next gate reuses these pure byte-cursor contracts for multi-pass declaration, section, definition, statement, name, ordering, integer, and reference validation. Object encoding follows only after accepted/rejected source classifications agree with the Stage 0 oracle. If real parser work proves that immutable repeated passes are impractical, the project may introduce a bounded collection or scanner module facility through a recorded decision; it must preserve this observable WVA contract and cross-host evidence.
+The next gate reuses these validated byte spans and statement classifications to derive definition offsets/sizes, append exact instruction and data bytes, construct canonical section/symbol/relocation records, and emit WVO 1.0. It qualifies only when every canonical fixture is byte-for-byte identical to Stage 0 and passes the independently owned WVO verifier. A later refactor may split lexical, semantic, and encoding facilities into modules when the language gains an import/module-composition contract; it must preserve this observable WVA contract and cross-host evidence.
