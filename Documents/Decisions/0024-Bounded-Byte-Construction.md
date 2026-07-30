@@ -1,7 +1,7 @@
 # Decision 0024: Bounded immutable byte construction
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `26e2fd1`
 
 ## Context
 
@@ -48,3 +48,5 @@ This is not a mutable byte builder, general list, stream, cursor, allocator, or 
 The standalone module and composed demo must cover empty, small, unsigned-byte, exact 4 MiB, and oversized repetition; middle replacement with a length change; insertion at the end; invalid offsets/ranges; and final-size overflow. Both tool consumers must preserve their canonical object, image, map, reports, deterministic no-write behavior, and fixed maximum-case instruction ceilings.
 
 Qualification requires the exact committed archive to pass all 39 tests and the complete CLI verifier on Windows and Debian, equal normalized reports, and direct byte equality for the module, demo, assembler, linker, canonical object, linked image, and map.
+
+Candidate `26e2fd1` satisfied this gate on Windows and Debian GNU/Linux 12 x64 with zero build warnings/errors. Both normalized reports matched and all seven named artifacts were directly byte-identical. The 4 MiB demo boundary returned `0`; the assembler and linker preserved their canonical products, deterministic failure publication, and fixed 200,000,000-instruction maximum cases.
