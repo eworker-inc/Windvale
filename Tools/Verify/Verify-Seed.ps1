@@ -48,6 +48,7 @@ $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
+$WvLinkerCoreModule = Join-Path $Artifacts 'Wv-Linker-Core.wvb'
 $WvoSample = Join-Path $Artifacts 'Sample.wvo'
 $AssemblyObject = Join-Path $Artifacts 'Hello-Object.wvo'
 $WindvaleAssemblyObject = Join-Path $Artifacts 'Hello-Object-Windvale.wvo'
@@ -315,6 +316,46 @@ if ($LASTEXITCODE -ne 0 -or $WvaAssemblerSelfTestOutput -notcontains 'Result: 0'
     throw 'The Windvale WVA assembler self-test did not return Result: 0.'
 }
 
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Linker/Wv-Linker-Core.wv') -o $WvLinkerCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale linker core.' }
+
+$WvLinkerVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvLinkerCoreModule
+if ($LASTEXITCODE -ne 0 -or $WvLinkerVerifyOutput -notcontains 'Verified: Wvˉlinkerˉcore') {
+    throw 'The bytecode verifier rejected the Windvale linker core.'
+}
+
+$WvLinkerInspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvLinkerCoreModule
+$WvLinkerInspection = $WvLinkerInspectOutput -join "`n"
+if (
+    $WvLinkerInspection -notmatch 'Inspectˉobject' -or
+    $WvLinkerInspection -notmatch 'Findˉsection' -or
+    $WvLinkerInspection -notmatch 'Findˉsymbol' -or
+    $WvLinkerInspection -notmatch 'Findˉrelocation' -or
+    $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
+    $WvLinkerInspection -notmatch 'file\.read_bytes'
+) {
+    throw 'The Seed CLI inspector did not expose the Windvale linker scanner operations.'
+}
+
+$WvLinkerCapabilities = @(
+    '--allow', 'console.write',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'file.write_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count',
+    '--max-steps', '20000000'
+)
+$WvLinkerUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvLinkerUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
+    throw 'The Seed CLI did not refuse ungranted Windvale linker capabilities.'
+}
+
+$WvLinkerSelfTestOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities
+if ($LASTEXITCODE -ne 0 -or $WvLinkerSelfTestOutput -notcontains 'Result: 0') {
+    throw 'The Windvale linker scanner self-test did not return Result: 0.'
+}
+
 $WvaAssemblerHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') $WindvaleAssemblyObject
 if (
     $LASTEXITCODE -ne 0 -or
@@ -331,6 +372,24 @@ if ($WindvaleAssemblyHash -ne '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d3
 $WindvaleAssemblyVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-verify $WindvaleAssemblyObject
 if ($LASTEXITCODE -ne 0 -or $WindvaleAssemblyVerifyOutput -notcontains 'Verified object: X86ˉ64') {
     throw 'The independent object verifier rejected the Windvale-written assembler output.'
+}
+
+$WvLinkerHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- $WindvaleAssemblyObject
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvLinkerHostedOutput -notcontains 'object status=Valid sections=2 symbols=3 relocations=2 offset=218' -or
+    $WvLinkerHostedOutput -notcontains 'Result: 0'
+) {
+    throw 'The Windvale linker scanner did not accept the canonical assembler object.'
+}
+
+$WvLinkerInvalidOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    ($WvLinkerInvalidOutput -join "`n") -notmatch 'object status=Badˉmagic' -or
+    $WvLinkerInvalidOutput -notcontains 'Result: 2'
+) {
+    throw 'The Windvale linker scanner did not reject a non-WVO input deterministically.'
 }
 $MissingAssemblerParent = Join-Path $Artifacts '__windvale_missing_assembler_parent__'
 if (Test-Path -LiteralPath $MissingAssemblerParent) {

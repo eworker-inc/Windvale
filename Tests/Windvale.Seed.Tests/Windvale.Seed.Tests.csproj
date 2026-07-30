@@ -23,6 +23,9 @@
       Include="../../Examples/Linker/Console-Provider.wva"
       LogicalName="Windvale.Seed.Tests.Console-Provider.wva" />
     <EmbeddedResource
+      Include="../../Examples/Linker/Wv-Linker-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Wv-Linker-Core.wv" />
+    <EmbeddedResource
       Include="../../Examples/Foundation/Wv-Dump-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wv-Dump-Core.wv" />
     <EmbeddedResource

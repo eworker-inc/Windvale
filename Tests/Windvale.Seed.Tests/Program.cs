@@ -22,6 +22,7 @@ internal static class Program
     private const string WVO_CORE_SHA256 = "76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a";
+    private const string WVLINK_CORE_SHA256 = "ac00a5b702f2a4ef185bd5f021ec2611bd8a335d1937804ceeb30f28cc1b8ded";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
 
@@ -170,6 +171,9 @@ internal static class Program
     private static readonly string CONSOLE_PROVIDER_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Console-Provider.wva");
 
+    private static readonly string WVLINK_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wv-Linker-Core.wv");
+
     private static readonly List<(string Name, Action Body)> TESTS =
     [
         ("portable source compiles, verifies, and returns the data sum", Portableˉprogramˉruns),
@@ -191,6 +195,7 @@ internal static class Program
         ("WVA assembler rejects malformed and inconsistent source", Assemblerˉrejectsˉinvalidˉsource),
         ("Windvale-written WVA assembler enforces source and token boundaries", Wvaˉassemblerˉcoreˉrecognizesˉsource),
         ("Windvale-written WVA assembler matches Stage 0 semantics and bytes", Wvaˉassemblerˉmatchesˉoracle),
+        ("Windvale linker core scans WVO exactly at the hosted boundary", Wvˉlinkerˉcoreˉscansˉobjects),
         ("Stage 0 linker resolves and verifies a canonical flat image", Linkerˉproducesˉcanonicalˉflatˉimage),
         ("Stage 0 linker rejects resolution, layout, and relocation failures", Linkerˉrejectsˉinvalidˉlinks),
         ("Stage 0 linker contains hostile objects and remains deterministic", Linkerˉcontainsˉhostileˉinput),
@@ -1476,6 +1481,110 @@ internal static class Program
             Unalignedˉbase.Imageˉbytes.AsSpan(0, 15).SequenceEqual(new byte[15]),
             "Actual-address alignment must materialize leading zero padding.");
         Equal((byte)0xC3, Unalignedˉbase.Imageˉbytes[15]);
+    }
+
+    private static void Wvˉlinkerˉcoreˉscansˉobjects()
+    {
+        var Moduleˉbytes = Compileˉsuccess(WVLINK_CORE_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
+        Equal("Wvˉlinkerˉcore", Module.Module.Name);
+        Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
+        Sequenceˉequal(
+            [
+                Capabilityˉcatalog.CONSOLE_WRITE,
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.FILE_WRITE_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            ],
+            Module.Module.Capabilities.Select(Capability => Capability.Name));
+        Equal(WVLINK_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
+
+        var Inspection = Moduleˉinspector.Inspect(Module, Moduleˉbytes);
+        Contains(Inspection, "Inspectˉobject");
+        Contains(Inspection, "Findˉsection");
+        Contains(Inspection, "Findˉsymbol");
+        Contains(Inspection, "Findˉrelocation");
+        Contains(Inspection, "Symbolˉrangesˉareˉdistinct");
+
+        var Authorized = Module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        Equal(0, new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                new Testˉfileˉreader((_, _) => throw new InvalidOperationException(
+                    "The no-argument linker self-test must not read a hosted file.")),
+                new Capturingˉfileˉwriter())),
+            new(Authorized, Maximumˉinstructions: 20_000_000)).Runˉmain().Exitˉcode);
+
+        var Sampleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject()).ToImmutableArray();
+        var Valid = Runˉwvˉlinkerˉscan(Module, Sampleˉbytes);
+        Equal(0, Valid.Exitˉcode);
+        Equal(
+            "object status=Valid sections=2 symbols=3 relocations=1 offset=189\n",
+            Valid.Output);
+        Equal(string.Empty, Valid.Diagnostics);
+
+        var Badˉmagic = Sampleˉbytes.ToArray();
+        Badˉmagic[0] = 0;
+        var Badˉmagicˉresult = Runˉwvˉlinkerˉscan(Module, Badˉmagic.ToImmutableArray());
+        Equal(2, Badˉmagicˉresult.Exitˉcode);
+        Equal(string.Empty, Badˉmagicˉresult.Output);
+        Contains(Badˉmagicˉresult.Diagnostics, "object status=Badˉmagic");
+
+        var Representativeˉobjects = new[]
+        {
+            Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE).ToImmutableArray(),
+            Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE).ToImmutableArray(),
+            Assembleˉsuccess(COMPLETE_ASSEMBLY_SOURCE).ToImmutableArray(),
+            Objectˉcodec.Write(new Objectˉfile(
+                Objectˉarchitecture.X86ˉ64,
+                [new(".text", Objectˉsectionˉkind.Code, 1, 0, [])],
+                [],
+                [])).ToImmutableArray(),
+        };
+        foreach (var Objectˉbytes in Representativeˉobjects)
+        {
+            True(Objectˉisˉvalid(Objectˉbytes), "The Stage 0 oracle rejected a representative WVO fixture.");
+            Equal(0, Runˉwvˉlinkerˉscan(Module, Objectˉbytes).Exitˉcode);
+        }
+
+        var Random = new Random(0x57_56_4F_31);
+        for (var Case = 0; Case < 128; Case++)
+        {
+            var Mutation = Sampleˉbytes.ToArray();
+            var Offset = Random.Next(Mutation.Length);
+            Mutation[Offset] = Mutation[Offset] == byte.MaxValue
+                ? (byte)0
+                : checked((byte)(Mutation[Offset] + 1));
+            var Mutationˉbytes = Mutation.ToImmutableArray();
+            var Oracleˉaccepted = Objectˉisˉvalid(Mutationˉbytes);
+            var Windvaleˉaccepted = Runˉwvˉlinkerˉscan(Module, Mutationˉbytes).Exitˉcode == 0;
+            if (Oracleˉaccepted != Windvaleˉaccepted)
+            {
+                throw new InvalidOperationException(
+                    $"WVO differential case {Case} at byte {Offset} disagreed: oracle={Oracleˉaccepted}, Windvale={Windvaleˉaccepted}.");
+            }
+        }
+
+        for (var Case = 0; Case < 128; Case++)
+        {
+            var Randomˉbytes = new byte[Random.Next(0, 257)];
+            Random.NextBytes(Randomˉbytes);
+            var Input = Randomˉbytes.ToImmutableArray();
+            var Oracleˉaccepted = Objectˉisˉvalid(Input);
+            var Windvaleˉaccepted = Runˉwvˉlinkerˉscan(Module, Input).Exitˉcode == 0;
+            if (Oracleˉaccepted != Windvaleˉaccepted)
+            {
+                throw new InvalidOperationException(
+                    $"WVO random differential case {Case} disagreed: oracle={Oracleˉaccepted}, Windvale={Windvaleˉaccepted}.");
+            }
+        }
     }
 
     private static void Linkerˉrejectsˉinvalidˉlinks()
@@ -2866,6 +2975,7 @@ internal static class Program
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉsuccess(WVO_CORE_SOURCE);
         var Wvaˉassemblerˉbytes = Compileˉsuccess(WVA_ASSEMBLER_CORE_SOURCE);
+        var Wvˉlinkerˉbytes = Compileˉsuccess(WVLINK_CORE_SOURCE);
         var Wvoˉsampleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
         var Assemblyˉobjectˉbytes = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE);
         var Providerˉobjectˉbytes = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE);
@@ -2878,6 +2988,7 @@ internal static class Program
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
+        var Wvˉlinkerˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉlinkerˉbytes);
         var Wvoˉsampleˉhash = Objectˉdigest.Calculateˉsha256(Wvoˉsampleˉbytes);
         var Assemblyˉobjectˉhash = Objectˉdigest.Calculateˉsha256(Assemblyˉobjectˉbytes);
         var Linkˉimageˉhash = Objectˉdigest.Calculateˉsha256(Linkˉresult.Imageˉbytes.AsSpan());
@@ -2889,6 +3000,7 @@ internal static class Program
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
+        Equal(WVLINK_CORE_SHA256, Wvˉlinkerˉhash);
         Equal(WVO_SAMPLE_SHA256, Wvoˉsampleˉhash);
         Equal(WVA_OBJECT_SHA256, Assemblyˉobjectˉhash);
         Equal(LINK_IMAGE_SHA256, Linkˉimageˉhash);
@@ -3010,6 +3122,26 @@ internal static class Program
             .Replace('\r', '\n');
         var Wvaˉassemblerˉobjectˉhash = Objectˉdigest.Calculateˉsha256(
             Wvaˉassemblerˉwriter.Bytes.AsSpan());
+        var Wvˉlinkerˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉlinkerˉbytes);
+        var Wvˉlinkerˉcapabilities = Wvˉlinkerˉmodule.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Wvˉlinkerˉselfˉtestˉresult = new Referenceˉruntime(
+            Wvˉlinkerˉmodule,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                new Testˉfileˉreader((_, _) => throw new InvalidOperationException(
+                    "The golden Windvale linker self-test must not read a hosted file.")),
+                new Capturingˉfileˉwriter())),
+            new(Wvˉlinkerˉcapabilities, Maximumˉinstructions: 20_000_000)).Runˉmain();
+        var Wvˉlinkerˉhosted = Runˉwvˉlinkerˉscan(
+            Wvˉlinkerˉmodule,
+            Assemblyˉobjectˉbytes.ToImmutableArray());
+        var Normalizedˉwvˉlinkerˉoutput = Wvˉlinkerˉhosted.Output
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
         Equal(29, Sumˉresult.Exitˉcode);
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
@@ -3039,6 +3171,12 @@ internal static class Program
         Sequenceˉequal(Assemblyˉobjectˉbytes, Wvaˉassemblerˉwriter.Bytes);
         Equal(Assemblyˉobjectˉhash, Wvaˉassemblerˉobjectˉhash);
         _ = Objectˉcodec.Readˉandˉverify(Wvaˉassemblerˉwriter.Bytes.AsSpan());
+        Equal(0, Wvˉlinkerˉselfˉtestˉresult.Exitˉcode);
+        Equal(0, Wvˉlinkerˉhosted.Exitˉcode);
+        Equal(
+            "object status=Valid sections=2 symbols=3 relocations=2 offset=218\n",
+            Normalizedˉwvˉlinkerˉoutput);
+        Equal(string.Empty, Wvˉlinkerˉhosted.Diagnostics);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
@@ -3048,6 +3186,9 @@ internal static class Program
             Wvaˉassemblerˉselfˉtestˉresult.Exitˉcode,
             Normalizedˉwvaˉassemblerˉoutput,
             Wvaˉassemblerˉobjectˉhash,
+            Wvˉlinkerˉhash,
+            Wvˉlinkerˉselfˉtestˉresult.Exitˉcode,
+            Normalizedˉwvˉlinkerˉoutput,
             Linkˉcontract.FORMAT_VERSION.ToString(),
             Linkˉimageˉhash,
             Linkˉmapˉhash,
@@ -3113,6 +3254,47 @@ internal static class Program
             {
                 // Rejection through the stable object boundary is the expected result.
             }
+        }
+    }
+
+    private static Wvˉlinkerˉscanˉresult Runˉwvˉlinkerˉscan(
+        Verifiedˉmodule module,
+        ImmutableArray<byte> objectˉbytes)
+    {
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Authorized = module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Result = new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["input.wvo"],
+                Output,
+                Diagnostics,
+                new Testˉfileˉreader((Name, Maximumˉbytes) =>
+                {
+                    Equal("input.wvo", Name);
+                    True(
+                        objectˉbytes.Length <= Maximumˉbytes,
+                        "The hosted WVO byte limit was too small.");
+                    return objectˉbytes;
+                }),
+                new Capturingˉfileˉwriter())),
+            new(Authorized, Maximumˉinstructions: 20_000_000)).Runˉmain();
+        return new(Result.Exitˉcode, Output.ToString(), Diagnostics.ToString());
+    }
+
+    private static bool Objectˉisˉvalid(ImmutableArray<byte> objectˉbytes)
+    {
+        try
+        {
+            _ = Objectˉcodec.Readˉandˉverify(objectˉbytes.AsSpan());
+            return true;
+        }
+        catch (Objectˉexception)
+        {
+            return false;
         }
     }
 
@@ -3456,6 +3638,11 @@ internal static class Program
         }
     }
 
+    private sealed record Wvˉlinkerˉscanˉresult(
+        int Exitˉcode,
+        string Output,
+        string Diagnostics);
+
     private sealed class Capturingˉfileˉwriter : IHostedˉfileˉwriter
     {
         public int Writeˉcount { get; private set; }
@@ -3500,6 +3687,9 @@ internal static class Program
         [property: JsonPropertyName("wvaAssemblerCoreResult")] int Wvaˉassemblerˉcoreˉresult,
         [property: JsonPropertyName("wvaAssemblerHostedOutput")] string Wvaˉassemblerˉhostedˉoutput,
         [property: JsonPropertyName("wvaAssemblerObjectSha256")] string Wvaˉassemblerˉobjectˉsha256,
+        [property: JsonPropertyName("wvLinkerCoreSha256")] string Wvˉlinkerˉcoreˉsha256,
+        [property: JsonPropertyName("wvLinkerCoreResult")] int Wvˉlinkerˉcoreˉresult,
+        [property: JsonPropertyName("wvLinkerHostedOutput")] string Wvˉlinkerˉhostedˉoutput,
         [property: JsonPropertyName("linkFormat")] string Linkˉformat,
         [property: JsonPropertyName("linkImageSha256")] string Linkˉimageˉsha256,
         [property: JsonPropertyName("linkMapSha256")] string Linkˉmapˉsha256,
