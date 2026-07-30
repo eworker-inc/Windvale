@@ -46,6 +46,8 @@ $SumModule = Join-Path $Artifacts 'Sum-Data.wvb'
 $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
+$WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
+$WvoSample = Join-Path $Artifacts 'Sample.wvo'
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
 
@@ -146,7 +148,7 @@ $WvDumpHostedOutput = dotnet run --project $ToolProject --configuration $Configu
 if (
     $LASTEXITCODE -ne 0 -or
     $WvDumpHostedOutput -notcontains 'wvdump 1' -or
-    $WvDumpHostedOutput -notcontains 'module version=1.4 profile=portable name="Sum\u02C9data"' -or
+    $WvDumpHostedOutput -notcontains 'module version=1.5 profile=portable name="Sum\u02C9data"' -or
     $WvDumpHostedOutput -notcontains 'data index=0 name="Values" type=i32_array elements=4' -or
     $WvDumpHostedOutput -notcontains 'instruction function=1 offset=141 opcode=call operand=0' -or
     $WvDumpHostedOutput -notcontains 'export index=0 name="Main" kind=function target=1' -or
@@ -176,6 +178,88 @@ if ($LASTEXITCODE -ne 3 -or ($WvDumpMissingOutput -join "`n") -notmatch 'WVR3022
 $WvDumpInvalidNameOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- '' 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvDumpInvalidNameOutput -join "`n") -notmatch 'WVR3021') {
     throw 'The hosted file adapter did not reject an empty resource name deterministically.'
+}
+
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wvo-Object-Core.wv') -o $WvoCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wvo-Object-Core.wv.' }
+
+$WvoCoreVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvoCoreModule
+if ($LASTEXITCODE -ne 0 -or $WvoCoreVerifyOutput -notcontains 'Verified: Wvoˉobjectˉcore') {
+    throw 'The Seed CLI failed to verify Wvo-Object-Core.wvb.'
+}
+
+$WvoCoreInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvoCoreModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvoCoreInspection -notmatch 'bytes\.concat' -or
+    $WvoCoreInspection -notmatch 'bytes\.from_u16_little' -or
+    $WvoCoreInspection -notmatch 'bytes\.from_i32_little' -or
+    $WvoCoreInspection -notmatch 'text\.to_utf8' -or
+    $WvoCoreInspection -notmatch 'file\.write_bytes'
+) {
+    throw 'The Seed CLI inspector did not expose the Windvale object writer operations.'
+}
+
+$WvoCapabilities = @(
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.write_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count',
+    '--max-steps', '10000000'
+)
+
+$WvoUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvoUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
+    throw 'The Seed CLI did not refuse ungranted WVO writer capabilities.'
+}
+
+$WvoSelfTestOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities
+if ($LASTEXITCODE -ne 0 -or $WvoSelfTestOutput -notcontains 'Result: 0') {
+    throw 'The Windvale object core self-test did not return Result: 0.'
+}
+
+$WvoHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities -- $WvoSample
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvoHostedOutput -notcontains 'Wrote WVO 1.0 bytes=189' -or
+    $WvoHostedOutput -notcontains 'Result: 0'
+) {
+    throw 'The Windvale object core did not write the expected native-host object.'
+}
+
+$WvoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WvoSample).Hash.ToLowerInvariant()
+if ($WvoHash -ne '006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a') {
+    throw "The Windvale object core wrote unexpected bytes: $WvoHash"
+}
+
+$WvoVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-verify $WvoSample
+if ($LASTEXITCODE -ne 0 -or $WvoVerifyOutput -notcontains 'Verified object: X86ˉ64') {
+    throw 'The object verifier rejected the Windvale-written sample.'
+}
+
+$WvoInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-inspect $WvoSample) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvoInspection -notmatch 'Sections \(2\)' -or
+    $WvoInspection -notmatch 'Console_write binding=Import' -or
+    $WvoInspection -notmatch 'kind=Relativeˉi32 section=0 offset=1 symbol=2 addend=-4'
+) {
+    throw 'The object inspector did not expose the expected symbol and relocation records.'
+}
+
+$WvoInvalidNameOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities -- '' 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvoInvalidNameOutput -join "`n") -notmatch 'WVR3021') {
+    throw 'The hosted file writer did not reject an empty resource name deterministically.'
+}
+
+$MissingWriterParent = Join-Path $Artifacts '__windvale_missing_writer_parent__'
+if (Test-Path -LiteralPath $MissingWriterParent) {
+    throw "The missing writer parent unexpectedly exists: $MissingWriterParent"
+}
+$WvoMissingParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities -- (Join-Path $MissingWriterParent 'Sample.wvo') 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvoMissingParentOutput -join "`n") -notmatch 'WVR3022') {
+    throw 'The hosted file writer did not report a missing parent deterministically.'
 }
 
 Write-Output "Windvale Seed verification passed."

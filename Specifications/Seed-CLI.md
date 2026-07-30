@@ -6,6 +6,8 @@
 windvale compile <source.wv> [-o <module.wvb>]
 windvale inspect <module.wvb>
 windvale verify <module.wvb>
+windvale object-inspect <object.wvo>
+windvale object-verify <object.wvo>
 windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [-- <argument>...]
 windvale help
 ```
@@ -16,11 +18,13 @@ windvale help
 - `compile` requires `.wv` input and `.wvb` output paths and refuses to overwrite its source path.
 - `inspect` validates the module structure and prints canonical human-readable metadata and disassembly. It does not execute the module.
 - `verify` performs complete structural and bytecode verification. Success prints the module name and SHA-256 digest.
+- `object-inspect` performs complete WVO structural verification and prints the architecture, sections, symbols, relocations, and SHA-256 digest. It does not link or execute the object.
+- `object-verify` performs complete WVO structural verification and prints the architecture and SHA-256 digest.
 - `run` verifies before execution and invokes exported `Main() -> i32`.
 - Hosted capabilities must be granted individually with `--allow`. Declaring a capability in the module does not authorize it.
 - `--max-steps` is a positive integer and defaults to 1,000,000 executed instructions.
 - Arguments after `--` are passed to the module as its immutable hosted argument snapshot. They are not interpreted as launcher options.
-- The native file adapter resolves `file.read_bytes` resource names with host path rules and enforces the 4 MiB byte-value limit while reading.
+- The native file adapters resolve `file.read_bytes` and `file.write_bytes` resource names with host path rules and enforce the 4 MiB byte-value limit at the boundary. Writing creates or replaces the named file only after an explicit capability grant.
 - `console.write` and `console.write_line` use standard output; `diagnostic.write_line` uses standard error. Windvale line output appends LF on every host.
 - Successful `run` prints a final `Result: <i32>` line after program output.
 

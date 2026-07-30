@@ -1,6 +1,6 @@
 module Readˉwvbˉheader profile portable;
 
-data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0];
+data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0];
 
 fn Headerˉisˉvalid(Input: bytes) -> bool {
     if Bytesˉlength(Input) != 12u32 {
@@ -27,7 +27,7 @@ fn Headerˉisˉvalid(Input: bytes) -> bool {
     if Version != 1u32 {
         return false;
     }
-    if Minorˉversion != 4u32 {
+    if Minorˉversion != 5u32 {
         return false;
     }
     if Sectionˉcount != 7u32 {

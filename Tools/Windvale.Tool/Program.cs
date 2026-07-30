@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Text;
 using Windvale.Bytecode;
 using Windvale.Compiler;
+using Windvale.ObjectModel;
 using Windvale.Runtime;
 
 namespace Windvale.Tool;
@@ -34,6 +35,8 @@ internal static class Program
                 "compile" => Compile(arguments[1..]),
                 "inspect" => Inspect(arguments[1..]),
                 "verify" => Verify(arguments[1..]),
+                "object-inspect" => Inspectˉobject(arguments[1..]),
+                "object-verify" => Verifyˉobject(arguments[1..]),
                 "run" => Run(arguments[1..]),
                 _ => Usageˉerror($"Unknown command '{arguments[0]}'."),
             };
@@ -44,6 +47,11 @@ internal static class Program
             return EXIT_VERIFICATION;
         }
         catch (Moduleˉverificationˉexception Exception)
+        {
+            Console.Error.WriteLine(Exception.Message);
+            return EXIT_VERIFICATION;
+        }
+        catch (Objectˉexception Exception)
         {
             Console.Error.WriteLine(Exception.Message);
             return EXIT_VERIFICATION;
@@ -210,10 +218,38 @@ internal static class Program
                 Programˉarguments.ToImmutable(),
                 Console.Out,
                 Console.Error,
-                new Nativeˉhostedˉfileˉreader())),
+                new Nativeˉhostedˉfileˉreader(),
+                new Nativeˉhostedˉfileˉwriter())),
             new(Authorized.ToImmutable(), Maximumˉsteps));
         var Result = Runtime.Runˉmain();
         Console.WriteLine($"Result: {Result.Exitˉcode}");
+        return EXIT_SUCCESS;
+    }
+
+    private static int Inspectˉobject(string[] arguments)
+    {
+        if (arguments.Length != 1)
+        {
+            return Usageˉerror("Usage: windvale object-inspect <object.wvo>");
+        }
+
+        var Bytes = Readˉobjectˉbytes(arguments[0]);
+        var Value = Objectˉcodec.Readˉandˉverify(Bytes);
+        Console.Write(Objectˉinspector.Inspect(Value, Bytes));
+        return EXIT_SUCCESS;
+    }
+
+    private static int Verifyˉobject(string[] arguments)
+    {
+        if (arguments.Length != 1)
+        {
+            return Usageˉerror("Usage: windvale object-verify <object.wvo>");
+        }
+
+        var Bytes = Readˉobjectˉbytes(arguments[0]);
+        var Value = Objectˉcodec.Readˉandˉverify(Bytes);
+        Console.WriteLine($"Verified object: {Value.Value.Architecture}");
+        Console.WriteLine($"SHA-256: {Objectˉdigest.Calculateˉsha256(Bytes)}");
         return EXIT_SUCCESS;
     }
 
@@ -226,6 +262,18 @@ internal static class Program
             throw new Moduleˉformatˉexception(
                 "WVB1001",
                 "The module exceeds the module-size limit.");
+        }
+
+        return File.ReadAllBytes(Fullˉpath);
+    }
+
+    private static byte[] Readˉobjectˉbytes(string path)
+    {
+        var Fullˉpath = Path.GetFullPath(path);
+        var Length = new FileInfo(Fullˉpath).Length;
+        if (Length > Objectˉlimits.MAX_OBJECT_BYTES)
+        {
+            throw new Objectˉformatˉexception("WVO1001", "The object exceeds the object-size limit.");
         }
 
         return File.ReadAllBytes(Fullˉpath);
@@ -246,6 +294,8 @@ internal static class Program
         output.WriteLine("  windvale compile <source.wv> [-o <module.wvb>]");
         output.WriteLine("  windvale inspect <module.wvb>");
         output.WriteLine("  windvale verify <module.wvb>");
+        output.WriteLine("  windvale object-inspect <object.wvo>");
+        output.WriteLine("  windvale object-verify <object.wvo>");
         output.WriteLine("  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [-- <argument>...]");
         output.WriteLine("  windvale help");
     }

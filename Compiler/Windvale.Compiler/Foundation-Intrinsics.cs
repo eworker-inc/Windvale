@@ -25,6 +25,12 @@ internal static class Foundationˉintrinsics
     public const string TEXT_UTF8_IS_VALID = "Textˉutf8ˉisˉvalid";
     public const string TEXT_FROM_UTF8 = "Textˉfromˉutf8";
     public const string TEXT_QUOTE = "Textˉquote";
+    public const string BYTES_CONCAT = "Bytesˉconcat";
+    public const string BYTES_FROM_U8 = "Bytesˉfromˉu8";
+    public const string BYTES_FROM_U16_LITTLE = "Bytesˉfromˉu16ˉlittle";
+    public const string BYTES_FROM_U32_LITTLE = "Bytesˉfromˉu32ˉlittle";
+    public const string BYTES_FROM_I32_LITTLE = "Bytesˉfromˉi32ˉlittle";
+    public const string TEXT_TO_UTF8 = "Textˉtoˉutf8";
     public const string ENUM_NAME = "Enumˉname";
 
     private static readonly ImmutableDictionary<string, Foundationˉintrinsicˉdeclaration> DECLARATIONS =
@@ -80,6 +86,28 @@ internal static class Foundationˉintrinsics
                 [Valueˉtype.Text],
                 Valueˉtype.Text,
                 Wirˉoperation.Textˉquote),
+            new(
+                BYTES_CONCAT,
+                [Valueˉtype.Bytes, Valueˉtype.Bytes],
+                Valueˉtype.Bytes,
+                Wirˉoperation.Bytesˉconcat),
+            new(BYTES_FROM_U8, [Valueˉtype.U8], Valueˉtype.Bytes, Wirˉoperation.Bytesˉfromˉu8),
+            new(
+                BYTES_FROM_U16_LITTLE,
+                [Valueˉtype.U32],
+                Valueˉtype.Bytes,
+                Wirˉoperation.Bytesˉfromˉu16ˉlittle),
+            new(
+                BYTES_FROM_U32_LITTLE,
+                [Valueˉtype.U32],
+                Valueˉtype.Bytes,
+                Wirˉoperation.Bytesˉfromˉu32ˉlittle),
+            new(
+                BYTES_FROM_I32_LITTLE,
+                [Valueˉtype.I32],
+                Valueˉtype.Bytes,
+                Wirˉoperation.Bytesˉfromˉi32ˉlittle),
+            new(TEXT_TO_UTF8, [Valueˉtype.Text], Valueˉtype.Bytes, Wirˉoperation.Textˉtoˉutf8),
         }.ToImmutableDictionary(Declaration => Declaration.Name, StringComparer.Ordinal);
 
     public static bool Tryˉget(string name, out Foundationˉintrinsicˉdeclaration declaration)

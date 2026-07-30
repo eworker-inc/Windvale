@@ -53,6 +53,7 @@ console.write(text) -> void
 console.write_line(text) -> void
 diagnostic.write_line(text) -> void
 file.read_bytes(text) -> bytes
+file.write_bytes(text, bytes) -> void
 process.argument(u32) -> text
 process.argument_count() -> u32
 ```
@@ -113,6 +114,11 @@ Bytesˉreadˉu8(Value: bytes, Offset: u32) -> u8
 Bytesˉreadˉu16ˉlittle(Value: bytes, Offset: u32) -> u32
 Bytesˉreadˉu32ˉlittle(Value: bytes, Offset: u32) -> u32
 Bytesˉreadˉi32ˉlittle(Value: bytes, Offset: u32) -> i32
+Bytesˉconcat(Left: bytes, Right: bytes) -> bytes
+Bytesˉfromˉu8(Value: u8) -> bytes
+Bytesˉfromˉu16ˉlittle(Value: u32) -> bytes
+Bytesˉfromˉu32ˉlittle(Value: u32) -> bytes
+Bytesˉfromˉi32ˉlittle(Value: i32) -> bytes
 U32ˉfromˉu8(Value: u8) -> u32
 I32ˉformat(Value: i32) -> text
 U8ˉformat(Value: u8) -> text
@@ -120,11 +126,12 @@ U32ˉformat(Value: u32) -> text
 Textˉconcat(Left: text, Right: text) -> text
 Textˉutf8ˉisˉvalid(Value: bytes) -> bool
 Textˉfromˉutf8(Value: bytes) -> text
+Textˉtoˉutf8(Value: text) -> bytes
 Textˉquote(Value: text) -> text
 Enumˉname(Value: <enum>) -> text
 ```
 
-The little-endian reads consume exactly 1, 2, or 4 bytes beginning at `Offset`; the signed read preserves the two's-complement `i32` value. `U32ˉfromˉu8` is the only implicit-width operation and is deliberately explicit in source. UTF-8 validation never traps for invalid input, while decoding invalid input traps with `WVR3014`. Quoting emits printable ASCII directly, uses JSON escapes for quotes, backslashes, and controls, and writes every non-ASCII UTF-16 code unit as uppercase `\uXXXX`; this makes names and text safe to place in line reports without terminal control injection. Numeric formatting uses invariant base-10 text with no host locale, grouping, or leading padding. Concatenation and quoting trap if their result would exceed the 1 MiB UTF-8 value limit. Foundation intrinsic names cannot be redefined by source functions. None of these pure operations provides ambient file access.
+The little-endian reads consume exactly 1, 2, or 4 bytes beginning at `Offset`; the signed read preserves the two's-complement `i32` value. Fixed-width encoders produce exactly the corresponding little-endian bytes, and the `u16` encoder traps with `WVR3016` above 65,535. Byte concatenation is immutable and traps with `WVR3015` if its result would exceed 4 MiB. `U32ˉfromˉu8` is an explicit width change. UTF-8 validation never traps for invalid input, while decoding or encoding an invalid Unicode value traps with `WVR3014`. Quoting emits printable ASCII directly, uses JSON escapes for quotes, backslashes, and controls, and writes every non-ASCII UTF-16 code unit as uppercase `\uXXXX`; this makes names and text safe to place in line reports without terminal control injection. Numeric formatting uses invariant base-10 text with no host locale, grouping, or leading padding. Text concatenation and quoting trap if their result would exceed the 1 MiB UTF-8 value limit. Foundation intrinsic names cannot be redefined by source functions. None of these pure operations provides ambient file access.
 
 ## Runtime behavior
 
@@ -132,8 +139,10 @@ The little-endian reads consume exactly 1, 2, or 4 bytes beginning at `Offset`; 
 - Unsigned integer underflow traps as well as overflow.
 - Immutable data indexing traps when the index is negative or outside the declared data length.
 - Byte reads and slices trap unless their entire requested range is inside the source sequence. A zero-length slice at the end is valid.
+- Byte concatenation traps before allocation when the combined result exceeds the 4 MiB byte-value limit.
+- Fixed-width encoders are host-independent and the `u16` encoder rejects values outside its width.
 - Text concatenation traps before allocation when the combined UTF-8 length exceeds the value limit.
-- Invalid strict UTF-8 decoding traps with `WVR3014`; validation returns `false` for the same bytes.
+- Invalid strict UTF-8 decoding or encoding traps with `WVR3014`; validation returns `false` for malformed input bytes.
 - Text quoting traps before allocation when its ASCII result would exceed the value limit.
 - Calling consumes arguments from left to right and creates a new frame.
 - Bytecode local slots have deterministic defaults (`0`, `false`, empty text, empty bytes, the first declared enum member, or a recursively defaulted immutable record); Windvale source still requires every `let` or `var` declaration to have an initializer.

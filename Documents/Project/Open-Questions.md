@@ -29,7 +29,7 @@ This list records unresolved decisions without presenting them as implementation
 ## Native toolchain
 
 - Which x86-64 instruction subset is sufficient for the first native milestone?
-- Should the first object writer produce an existing format, a Windvale format, or both?
+- Which assembler surface gives the smallest useful path to canonical WVO 1.0: a line grammar, typed construction API, or both?
 - Which final formats are required for UEFI, the kernel, debug information, and host interoperability?
 - Which responsibilities belong to the assembler versus the object model and linker?
 
@@ -45,8 +45,9 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Define deterministic byte construction and the smallest object/symbol/relocation model demanded by an assembler.
-2. Define the memory and aggregate-type model needed for a self-hosted compiler.
-3. Define the restricted C bridge without changing Windvale semantics.
-4. Select the first architecture, object path, firmware boundary, and VM qualification targets.
-5. Select the source license before publishing implementation code.
+1. Define the smallest assembler grammar and x86-64 instruction subset that produces useful WVO 1.0 objects.
+2. Define link layout, symbol resolution, relocation application, and the first flat-image output without merging assembler and linker ownership.
+3. Define the memory and aggregate-type model needed for a self-hosted compiler.
+4. Define the restricted C bridge without changing Windvale semantics.
+5. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.
+6. Select the source license before publishing implementation code.

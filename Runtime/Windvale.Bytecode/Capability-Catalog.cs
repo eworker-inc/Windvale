@@ -8,6 +8,7 @@ public static class Capabilityˉcatalog
     public const string CONSOLE_WRITE_LINE = "console.write_line";
     public const string DIAGNOSTIC_WRITE_LINE = "diagnostic.write_line";
     public const string FILE_READ_BYTES = "file.read_bytes";
+    public const string FILE_WRITE_BYTES = "file.write_bytes";
     public const string PROCESS_ARGUMENT = "process.argument";
     public const string PROCESS_ARGUMENT_COUNT = "process.argument_count";
 
@@ -30,6 +31,10 @@ public static class Capabilityˉcatalog
                 FILE_READ_BYTES,
                 [Valueˉtype.Text],
                 Valueˉtype.Bytes),
+            [FILE_WRITE_BYTES] = new(
+                FILE_WRITE_BYTES,
+                [Valueˉtype.Text, Valueˉtype.Bytes],
+                Valueˉtype.Void),
             [PROCESS_ARGUMENT] = new(
                 PROCESS_ARGUMENT,
                 [Valueˉtype.U32],

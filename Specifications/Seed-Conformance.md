@@ -8,17 +8,19 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, i
 
 - Portable code-and-data compilation and execution
 - Hosted capability declaration, refusal without authorization, and successful authorized output
-- Ordered hosted arguments, bounded native file input, separate output and diagnostic sinks, unsupported-host refusal, stable resource failures, and host-result validation
+- Ordered hosted arguments, bounded native file input and output, separate output and diagnostic sinks, unsupported-host refusal, stable resource failures, and host-result validation
 - Exact deterministic module bytes and canonical declaration ordering
 - Exact codec read/write round trips
 - Inspector metadata and disassembly
 - Functions, `if`, `while`, booleans, immutable text, immutable integer data, indexing, and `length`
-- `u8`, `u32`, immutable `bytes`, slice views, bounded unsigned and signed little-endian reads, and explicit `u8` widening
+- `u8`, `u32`, immutable `bytes`, slice views, bounded unsigned and signed little-endian reads, fixed-width byte construction, immutable concatenation, strict UTF-8 encoding, and explicit `u8` widening
 - Strict UTF-8 validation/decoding, ASCII-safe deterministic quoting, and decoded/quoted text-limit traps
 - Immutable nominal record construction, field access, function parameters/results, canonical encoding, and verifier rejection cases
 - Nominal enum constants, record fields, equality, declared names, canonical encoding, and verifier rejection cases
 - Invariant signed and unsigned integer formatting plus bounded text-concatenation traps
 - Windvale-written WVB envelope and payload decoding with structured results plus valid, wrong-kind, nonzero-flags, hostile-length, truncated, trailing-byte, bad-payload, and unknown-opcode cases
+- Canonical WVO 1.0 sections, symbols, relocations, strict decoding, deterministic encoding, malformed-input rejection, and bounded random object inputs
+- Exact byte equality between the Windvale-written WVO producer and the independent C# object oracle, including native hosted-file persistence
 - Checked `u32` overflow and underflow plus byte-read and slice bounds traps
 - U+02C9 source identifiers, immutable `let`, mutable `var`, immutable parameters, and exported `Main`
 - Rejection of malformed or confusable identifier separators
@@ -52,7 +54,7 @@ After collecting a report from Windows and Linux, compare their portable contrac
 dotnet run --project Tests/Windvale.Seed.Tests --configuration Release --no-build -- --compare-reports artifacts/seed-conformance-windows-x64.json artifacts/seed-conformance-linux-x86_64.json
 ```
 
-The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-format version, complete golden-module SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, Windvale-written hosted `wvdump`, and the complete normalized `wvdump` line report for the real integer-data module. Each host verifier also exercises the same report through its native file adapter.
+The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-format version, object-format version, complete golden module and object SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, Windvale-written hosted `wvdump`, the complete normalized `wvdump` line report for the real integer-data module, and the Windvale-written WVO core plus its exact 189-byte representative object. Each host verifier also exercises the readers and writer through its native file adapters.
 
 ## Evidence discipline
 

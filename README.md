@@ -9,17 +9,18 @@ The intended stack includes a programming language, portable bytecode, a runtime
 Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provides:
 
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
-- Foundation `u8`, `u32`, immutable byte slices, bounded signed/unsigned little-endian reads, and explicit byte widening
-- Strict UTF-8 validation/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
+- Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, and explicit byte widening
+- Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
+- A canonical x86-64-first WVO 1.0 object model with sections, symbols, relocations, a bounded C# oracle, and a Windvale-written producer/structural inspector
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
 - A human-readable module inspector and disassembler
 - A portable .NET reference runtime
-- Explicit hosted arguments, bounded file-byte input, standard output, separate diagnostics, support preflight, and exact capability authorization
+- Explicit hosted arguments, bounded file-byte input and output, standard output, separate diagnostics, support preflight, and exact capability authorization
 - Conformance, malformed-input, determinism, diagnostics, and runtime-limit coverage
-- One CLI with `compile`, `inspect`, `verify`, and `run` commands
+- One CLI with module `compile`, `inspect`, `verify`, and `run` plus object `object-inspect` and `object-verify` commands
 
 The open-source intent is established. The exact source license has not been selected yet and must be chosen before the first public source release.
 
@@ -93,7 +94,25 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Wv-Dump-Core.wvb `
   -- artifacts/Sum-Data.wvb
 ```
 
-This hosted module reads an explicit file argument through a bounded capability while pure Windvale functions validate WVB 1.4, decode declarations and nominal shapes, walk every instruction, and emit a versioned ASCII-safe line report. It validates the complete module before normal output. With no program arguments it runs embedded valid and adversarial self-checks.
+This hosted module reads an explicit file argument through a bounded capability while pure Windvale functions validate WVB 1.5, decode declarations and nominal shapes, walk every instruction, and emit a versioned ASCII-safe line report. It validates the complete module before normal output. With no program arguments it runs embedded valid and adversarial self-checks.
+
+Compile the first Windvale-written WVO object producer, write its representative object through an explicit capability, and inspect it with the independent Stage 0 object reader:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Foundation/Wvo-Object-Core.wv -o artifacts/Wvo-Object-Core.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Wvo-Object-Core.wvb `
+  --allow console.write_line `
+  --allow diagnostic.write_line `
+  --allow file.write_bytes `
+  --allow process.argument `
+  --allow process.argument_count `
+  --max-steps 10000000 `
+  -- artifacts/Sample.wvo
+dotnet run --project Tools/Windvale.Tool -- object-verify artifacts/Sample.wvo
+dotnet run --project Tools/Windvale.Tool -- object-inspect artifacts/Sample.wvo
+```
+
+The object is exactly 189 bytes. It contains `.text` and `.rodata`, local/export/import symbols, and one x86-64 relative `i32` relocation. The verifier rejects noncanonical or malformed objects before inspection.
 
 ## Seed language example
 
@@ -124,6 +143,7 @@ export fn Main() -> i32 {
 - `Compiler/` — source lexer, parser, semantic analysis, typed WIR, and bytecode lowering
 - `Runtime/Windvale.Bytecode/` — module contracts, codec, verifier, digest, and inspector
 - `Runtime/Windvale.Runtime/` — verified-bytecode reference interpreter and capability host
+- `Object-Model/Windvale.ObjectModel/` — WVO contracts, codec, verifier, digest, and inspector
 - `Tools/Windvale.Tool/` — command-line composition
 - `Tools/Verify/` — Windows and Linux verification entry points
 - `Tests/` — dependency-free Seed conformance runner
@@ -154,8 +174,10 @@ export fn Main() -> i32 {
 - [Foundation byte primitives](Specifications/Foundation-Bytes.md)
 - [Windvale wvdump core](Specifications/Wv-Dump-Core.md)
 - [Windvale wvdump report](Specifications/Wv-Dump-Report.md)
+- [Windvale WVO object core](Specifications/Wvo-Object-Core.md)
 - [Source naming conventions](Specifications/Source-Naming.md)
 - [Seed bytecode specification](Specifications/Seed-Bytecode.md)
+- [Windvale object format](Specifications/Windvale-Object-Format.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
@@ -167,6 +189,7 @@ export fn Main() -> i32 {
 - [Nominal enums and bounded formatting decision](Documents/Decisions/0006-Nominal-Enums-And-Bounded-Formatting.md)
 - [Explicit hosted resources decision](Documents/Decisions/0007-Explicit-Hosted-Resources.md)
 - [WvDump payload and report decision](Documents/Decisions/0008-WvDump-Payload-Decoding-And-Safe-Reports.md)
+- [Minimal object foundation decision](Documents/Decisions/0009-Minimal-Windvale-Object-Foundation.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

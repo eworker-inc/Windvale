@@ -2,6 +2,9 @@
   <Folder Name="/Compiler/">
     <Project Path="Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
   </Folder>
+  <Folder Name="/Object-Model/">
+    <Project Path="Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
+  </Folder>
   <Folder Name="/Runtime/">
     <Project Path="Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
     <Project Path="Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
