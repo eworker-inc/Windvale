@@ -1,0 +1,129 @@
+# Windvale linking contract
+
+## Status and purpose
+
+Windvale Linking version 1 defines the first deterministic multi-object link contract and the `flat-x86-64-v1` output target. The C# implementation under `Linker/Windvale.Linker/` is the Stage 0 oracle and remains an implementation candidate until its exact revision completes Windows and Debian qualification.
+
+The target is a raw memory image, not an executable container. It proves input validation, global symbol resolution, address-aware alignment, checked relocation arithmetic, zero-fill materialization, independent output verification, and canonical map evidence without importing PE, ELF, UEFI, loader, ABI, or operating-system policy. The assembler continues to own WVA parsing and WVO construction; the linker consumes only complete verified WVO objects.
+
+This is an early-development contract without a backward-compatibility promise. Unsupported or obsolete inputs must be rejected rather than guessed or migrated.
+
+## Inputs and options
+
+A link request contains:
+
+- one through 64 WVO 1.0 x86-64 objects as immutable byte values in explicit semantic order;
+- one `u32` base address;
+- one required entry-symbol machine name.
+
+Every object is decoded and independently verified before resolution or layout. Host paths, timestamps, file order, locale, and ambient process state are not portable inputs. The caller-supplied object order is meaningful and is preserved in input indices and contribution order; the linker never enumerates or sorts host directories.
+
+The aggregate link is limited to 256 sections, 16,384 symbols, and 65,536 relocations. Counts are checked while inputs are loaded so a hostile collection cannot bypass the link-wide limits even when each object is independently valid.
+
+## Symbol resolution
+
+Local symbols are visible only to relocations in their defining object. Export names form one ordinal global namespace. More than one export with the same name is an error, regardless of whether an import references it.
+
+Every import must resolve to exactly one export with the same ordinal machine name and symbol kind. Unused imports are still unresolved contract obligations and therefore must resolve. An import never falls back to a host library, dynamic loader, ambient symbol, or local symbol in another object.
+
+The requested entry name must identify one exported function. The raw image does not embed the entry address; the canonical map and the link result carry it explicitly for a later image adapter or loader.
+
+## Flat-image layout
+
+The image represents bytes beginning at the requested base address. Section contributions are placed in this exact order:
+
+1. WVO section kind: code, read-only data, writable data, then zero-fill;
+2. input-object index;
+3. source section index within that object.
+
+Before each contribution, the linker aligns the actual address `base address + current image offset` to the section alignment. Alignment gaps contain zero bytes. Materialized sections copy their exact WVO data. Zero-fill sections contribute their declared memory size as zero bytes. Empty sections retain a canonical aligned placement even when they add no bytes.
+
+The complete image is limited to 4 MiB. Every section start, symbol address, and relocation-field address must fit `u32`; the one-past final byte may equal `2^32`. Layout arithmetic is checked and never wraps.
+
+Grouping by kind makes the flat memory policy visible while preserving semantic input order within a kind. Version 1 does not merge same-named sections, discard unused contributions, coalesce constants, reorder by symbol, or insert target-specific headers.
+
+## Relocation application
+
+The linker begins with the independently verified WVO requirement that every four-byte relocation field contains zero. For final target-symbol address `S`, relocation-field address `P`, and signed addend `A`:
+
+```text
+absolute-u32 = S + A
+relative-i32 = S + A - P
+```
+
+`absolute-u32` must fit the full unsigned 32-bit range. `relative-i32` must fit the full signed 32-bit range. The exact little-endian result replaces the four-byte placeholder. Negative absolute results, oversized absolute results, and relative overflow are errors; relocation values never truncate or wrap.
+
+Relocations remain in input-object order and source relocation order for map evidence. A relocation targeting a local or exported definition uses that exact definition. A relocation targeting an import uses the resolved export.
+
+## Independent image verification
+
+The Stage 0 linker does not publish bytes immediately after its layout pass. A separately implemented flat-image verifier reconstructs canonical section order and alignment, all defined-symbol addresses, export uniqueness, import resolutions, entry selection, original section bytes, zero padding, BSS bytes, and every relocation value from the verified inputs. It compares the complete reconstructed image with the candidate. Verification failure returns `WVL1011` and no output bytes.
+
+This verifier is an implementation oracle, not a substitute for later target-specific executable or boot-image validation.
+
+## Canonical map version 1
+
+The map is strict UTF-8 containing only ASCII and LF. It ends with one LF and is limited to 1 MiB. Decimal integers use invariant base 10 with no grouping or padding. Names already satisfy the WVO machine-name grammar and require no quoting. The map contains no paths or timestamps.
+
+Record order is fixed:
+
+```text
+windvale-link-map 1
+target name=flat-x86-64-v1 architecture=x86-64 base-address=<u32> image-bytes=<u32>
+entry name=<name> address=<u32>
+image sha256=<lowercase-hex>
+inputs count=<u32>
+input index=<u32> sha256=<lowercase-hex>
+...
+sections count=<u32>
+section index=<u32> input=<u32> source-index=<u32> kind=<kind> name=<name> image-offset=<u32> address=<u32> memory-bytes=<u32> data-bytes=<u32> alignment=<u32>
+...
+defined-symbols count=<u32>
+symbol index=<u32> input=<u32> source-index=<u32> binding=<local|export> kind=<function|data> name=<name> address=<u32> size=<u32>
+...
+imports count=<u32>
+import index=<u32> input=<u32> source-index=<u32> kind=<function|data> name=<name> provider-input=<u32> provider-source-index=<u32> address=<u32>
+...
+relocations count=<u32>
+relocation index=<u32> input=<u32> source-index=<u32> kind=<absolute-u32|relative-i32> patch-offset=<u32> patch-address=<u32> target=<name> target-input=<u32> target-source-index=<u32> target-address=<u32> addend=<i32> value=<i64-range-decimal>
+...
+```
+
+Defined symbols and imports use input order and source symbol order. Section records use final layout order. The map digest is itself part of cross-host conformance evidence.
+
+## Diagnostics
+
+Link failure produces no image or map bytes. The first deterministic failure is reported:
+
+| Code | Meaning |
+| --- | --- |
+| `WVL1001` | Invalid request, object count, entry name, or CLI contract |
+| `WVL1002` | Uninitialized, malformed, unsupported, or unverifiable input object |
+| `WVL1003` | Aggregate section, symbol, or relocation count exceeded |
+| `WVL1004` | Duplicate exported symbol |
+| `WVL1005` | Undefined imported symbol |
+| `WVL1006` | Import/export symbol-kind mismatch |
+| `WVL1007` | Entry is missing, not exported, or not a function |
+| `WVL1008` | Image-size, alignment, or `u32` address-space overflow |
+| `WVL1009` | `absolute-u32` relocation overflow |
+| `WVL1010` | `relative-i32` relocation overflow |
+| `WVL1011` | Independent flat-image verification failure |
+| `WVL1012` | Canonical map exceeds its byte limit |
+
+An input-specific diagnostic carries its zero-based input index. Global request and aggregate failures use no input index.
+
+## Hosted CLI boundary
+
+The Stage 0 CLI form is deliberately explicit:
+
+```text
+windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...
+```
+
+The CLI requires exact `.wvo` inputs and a distinct `.bin` output. It reads bounded object bytes, completes link validation, image construction, independent verification, and map construction in memory, and only then writes the image once. On success, standard output is exactly the canonical map. Link failures write diagnostics and leave a missing output absent or an existing output unchanged. Native file failures remain host-boundary diagnostics.
+
+## Deliberate omissions
+
+Version 1 has no PE, ELF, UEFI, archive/library search, dynamic linking, weak symbols, COMDAT selection, dead stripping, section merging, executable permissions, debug data, stack/heap declaration, ABI, start-up code, 64-bit absolute relocation, internal-label model, or loader metadata. A raw flat image is not directly executed by Windows or Linux and is not yet a bootable image.
+
+Add target adapters and new relocation or section concepts only when the native backend or VM boot path supplies a concrete case and an independent verification rule.

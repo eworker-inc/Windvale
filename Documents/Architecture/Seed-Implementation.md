@@ -84,7 +84,21 @@ The object verifier returns a `Verifiedˉobject`; both CLI object commands decod
 - The first explicit x86-64 instruction and data encodings
 - WVO relocation creation and verified object production
 
-The assembler depends only on the object model. It returns no bytes until the resulting object passes `Objectˉverifier`. It does not resolve symbols, choose final addresses, apply relocations, define an ABI, or produce an executable image. The C# project is the Stage 0 oracle for the planned Windvale-written assembler and must not become a parallel permanent object path.
+The assembler depends only on the object model. It returns no bytes until the resulting object passes `Objectˉverifier`. It does not resolve symbols, choose final addresses, apply relocations, define an ABI, or produce an executable image. The C# project remains the Stage 0 recovery oracle for the qualified Windvale-written assembler and must not become a parallel permanent object path.
+
+### Linker
+
+`Linker/Windvale.Linker/` owns:
+
+- Link-wide WVO input validation and aggregate limits
+- Object-private locals plus unique global export/import resolution
+- Actual-address alignment and deterministic section contribution order
+- Bounded flat-image construction with zero padding and materialized BSS
+- Checked `absolute-u32` and `relative-i32` relocation application
+- Independent complete-image reconstruction before publication
+- Path-free canonical map construction and SHA-256 image evidence
+
+The linker depends only on the object model. It does not parse WVA, encode instructions, mutate objects, select a host executable format, or define an ABI. The raw flat image is a deterministic memory snapshot; later PE, ELF, UEFI, and Windvale OS adapters remain explicit targets over verified link evidence.
 
 ### Runtime
 
@@ -110,7 +124,7 @@ The interpreter uses ordinary portable .NET APIs and has no Windows-specific or 
 
 ### CLI
 
-`Tools/Windvale.Tool/` owns argument parsing, strict UTF-8 compiler and assembly input, native hosted-file adaptation, file output, diagnostic presentation, capability grants, and command exit codes. It does not reimplement compiler, assembler, verifier, inspector, or runtime behavior.
+`Tools/Windvale.Tool/` owns argument parsing, strict UTF-8 compiler and assembly input, bounded object input, native hosted-file adaptation, file output, diagnostic presentation, capability grants, and command exit codes. It does not reimplement compiler, assembler, linker, verifier, inspector, or runtime behavior.
 
 ## Determinism
 
@@ -132,6 +146,8 @@ The canonical WVO 1.0 representative object is 189 bytes with SHA-256 `006fd8018
 
 The canonical WVA 1 `Hello-Object.wva` output is SHA-256 `992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`.
 
+The canonical Windvale Linking 1 two-object image is 24 bytes with SHA-256 `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a`; its canonical map SHA-256 is `31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4`.
+
 Changes to those hashes require a reviewed bytecode/compiler-contract change rather than an automatic fixture refresh.
 
 ## Safety boundaries
@@ -141,12 +157,13 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 - The reader rejects malformed UTF-8, unsupported flags, version mismatches, missing bytes, and trailing bytes.
 - The verifier rejects unknown opcodes, truncated operands, bad indices, invalid data uses, stack underflow, type mismatches, invalid branches, inconsistent merges, unreachable instructions, and invalid maximum-stack declarations.
 - The assembler rejects malformed structure, noncanonical declarations, mismatched definitions, invalid section contexts, unknown references, numeric-width violations, and objects that fail independent WVO verification.
+- The linker rejects malformed objects, aggregate-limit violations, duplicate exports, unresolved or kind-mismatched imports, invalid entry selection, image/address overflow, relocation overflow, and candidates that fail independent whole-image reconstruction.
 - Hosted capabilities must be declared in the module, separately authorized, supported by the selected adapter, and validated again on return.
 - Hosted arguments and file-byte reads/writes have strict count, UTF-8, and allocation bounds; normal and diagnostic output remain separate.
 - Runtime signed or unsigned overflow, array bounds, byte-range bounds, strict UTF-8 decoding, bounded text construction, instruction limits, call-depth limits, and hosted resource failures use stable runtime codes.
 
 ## Deliberate Seed limits
 
-Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, dynamic linking, a Windvale-written assembler, linker, executable-image writer, native compiler backend, or operating-system code. The implemented Stage 0 assembler is deliberately limited to WVA 1 and WVO production.
+Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, dynamic linking, a Windvale-written linker, host executable-container writer, native compiler backend, or operating-system code. The implemented Stage 0 linker is deliberately limited to verified WVO inputs and one raw flat-memory-image target.
 
 These are scope boundaries, not assertions that the current language model is final.

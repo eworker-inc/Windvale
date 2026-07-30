@@ -39,7 +39,7 @@ It contains:
 - imported function symbol `Console_write`
 - one `relative-i32` relocation at `.text` offset 1 targeting `Console_write` with addend `-4`
 
-The zero relocation field is intentional. Layout and relocation application belong to the future linker.
+The zero relocation field is intentional. Layout and relocation application belong to the separately owned linker.
 
 ## Hosted shell
 
@@ -49,4 +49,4 @@ The module must declare and receive grants for `console.write_line`, `diagnostic
 
 ## Next boundary
 
-The assembler should reuse the WVO contracts while replacing the fixed representative records with parsed instruction, section, label, export, and import declarations. The linker should remain a separate owner of layout, symbol resolution, relocation evaluation, and final image adapters.
+The assembler reuses the WVO contracts while replacing the fixed representative records with parsed instructions, sections, definitions, exports, and imports. The linker remains the separate owner of layout, symbol resolution, relocation evaluation, and final image adapters.

@@ -1,8 +1,10 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Text;
 using Windvale.Assembler;
 using Windvale.Bytecode;
 using Windvale.Compiler;
+using Windvale.Linker;
 using Windvale.ObjectModel;
 using Windvale.Runtime;
 
@@ -35,6 +37,7 @@ internal static class Program
             {
                 "compile" => Compile(arguments[1..]),
                 "assemble" => Assemble(arguments[1..]),
+                "link" => Link(arguments[1..]),
                 "inspect" => Inspect(arguments[1..]),
                 "verify" => Verify(arguments[1..]),
                 "object-inspect" => Inspectˉobject(arguments[1..]),
@@ -225,6 +228,79 @@ internal static class Program
         return EXIT_SUCCESS;
     }
 
+    private static int Link(string[] arguments)
+    {
+        if (arguments.Length < 7 ||
+            arguments[0] != "--base-address" ||
+            arguments[2] != "--entry" ||
+            arguments[4] != "-o" ||
+            !uint.TryParse(
+                arguments[1],
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out var Baseˉaddress))
+        {
+            return Usageˉerror(
+                "Usage: windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");
+        }
+
+        var Entryˉsymbol = arguments[3];
+        var Outputˉpath = Path.GetFullPath(arguments[5]);
+        var Inputˉpaths = arguments[6..].Select(Path.GetFullPath).ToArray();
+        if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(Outputˉpath), ".bin"))
+        {
+            return Usageˉerror("The link output must use the .bin flat-image extension.");
+        }
+        if (Inputˉpaths.Any(Inputˉpath =>
+            !StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(Inputˉpath), ".wvo")))
+        {
+            return Usageˉerror("Every link input must use the .wvo object extension.");
+        }
+        if (Inputˉpaths.Length > Linkˉlimits.MAX_INPUT_OBJECTS)
+        {
+            return Usageˉerror($"A link accepts at most {Linkˉlimits.MAX_INPUT_OBJECTS} object inputs.");
+        }
+
+        var Pathˉcomparer = OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal;
+        if (Inputˉpaths.Any(Inputˉpath => Pathˉcomparer.Equals(Inputˉpath, Outputˉpath)))
+        {
+            return Usageˉerror("The link output path must differ from every input path.");
+        }
+
+        var Inputs = ImmutableArray.CreateBuilder<Linkˉinput>(Inputˉpaths.Length);
+        for (var Inputˉindex = 0; Inputˉindex < Inputˉpaths.Length; Inputˉindex++)
+        {
+            var Inputˉpath = Inputˉpaths[Inputˉindex];
+            if (new FileInfo(Inputˉpath).Length > Objectˉlimits.MAX_OBJECT_BYTES)
+            {
+                Console.Error.WriteLine(
+                    $"input[{Inputˉindex}]: error WVL1002 [linker]: " +
+                    $"The input object exceeds {Objectˉlimits.MAX_OBJECT_BYTES} bytes.");
+                return EXIT_COMPILATION;
+            }
+            Inputs.Add(new(File.ReadAllBytes(Inputˉpath).ToImmutableArray()));
+        }
+        var Result = Linkˉcompiler.Link(Inputs.ToImmutable(), new(Baseˉaddress, Entryˉsymbol));
+        if (!Result.Success)
+        {
+            foreach (var Diagnostic in Result.Diagnostics)
+            {
+                var Scope = Diagnostic.Inputˉindex < 0
+                    ? "link"
+                    : $"input[{Diagnostic.Inputˉindex}]";
+                Console.Error.WriteLine(
+                    $"{Scope}: error {Diagnostic.Code} [linker]: {Diagnostic.Message}");
+            }
+            return EXIT_COMPILATION;
+        }
+
+        File.WriteAllBytes(Outputˉpath, Result.Imageˉbytes.AsSpan());
+        Console.Write(STRICT_UTF8.GetString(Result.Mapˉbytes.AsSpan()));
+        return EXIT_SUCCESS;
+    }
+
     private static int Run(string[] arguments)
     {
         if (arguments.Length == 0)
@@ -349,6 +425,7 @@ internal static class Program
         output.WriteLine("Commands:");
         output.WriteLine("  windvale compile <source.wv> [-o <module.wvb>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
+        output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");
         output.WriteLine("  windvale inspect <module.wvb>");
         output.WriteLine("  windvale verify <module.wvb>");
         output.WriteLine("  windvale object-inspect <object.wvo>");
