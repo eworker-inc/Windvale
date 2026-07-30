@@ -64,6 +64,9 @@ $SourceDeclarationParserToolModule = Join-Path $Artifacts 'Source-Declaration-Pa
 $SourceBodyParserModule = Join-Path $Artifacts 'Source-Body-Parser.wvb'
 $SourceBodyParserDemoModule = Join-Path $Artifacts 'Source-Body-Parser-Demo.wvb'
 $SourceBodyParserToolModule = Join-Path $Artifacts 'Source-Body-Parser-Tool.wvb'
+$SourceSetModule = Join-Path $Artifacts 'Source-Set-Core.wvb'
+$SourceSetDemoModule = Join-Path $Artifacts 'Source-Set-Demo.wvb'
+$SourceSetToolModule = Join-Path $Artifacts 'Source-Set-Tool.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -496,6 +499,85 @@ if (
     $SourceBodySelfOutput -notcontains 'Result: 0'
 ) {
     throw 'The body-parser tool did not parse its own statement and expression source.'
+}
+
+$SourceSetSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Set-Core.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceSetModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-set core.' }
+$SourceSetHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSetModule).Hash.ToLowerInvariant()
+if ($SourceSetHash -ne 'c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa766b19b1bfa2b8') {
+    throw "The Windvale source-set core has an unexpected digest: $SourceSetHash"
+}
+$SourceSetInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceSetModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceSetInspection -notmatch 'Nominal types \(27\)' -or
+    $SourceSetInspection -notmatch 'Compilerˉsourceˉsetˉscan' -or
+    $SourceSetInspection -notmatch 'Compilerˉsourceˉsetˉsummary' -or
+    $SourceSetInspection -notmatch 'Compilerˉscanˉsourceˉset' -or
+    $SourceSetInspection -notmatch 'Compilerˉvalidateˉsourceˉset' -or
+    $SourceSetInspection -notmatch 'Exports \(9\)'
+) {
+    throw 'The Windvale source-set inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Set-Demo.wv') `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceSetDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-set demo.' }
+$SourceSetDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSetDemoModule).Hash.ToLowerInvariant()
+if ($SourceSetDemoHash -ne '0054138c6e39f3c99e5cd4751c796cd599b495880d7db174323342fb7b687488') {
+    throw "The source-set demo has an unexpected digest: $SourceSetDemoHash"
+}
+$SourceSetDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    run $SourceSetDemoModule --max-steps 200000000
+if ($LASTEXITCODE -ne 0 -or $SourceSetDemoOutput -notcontains 'Result: 0') {
+    throw 'The source-set demo did not return Result: 0.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Set-Tool.wv') `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceSetToolModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-set tool.' }
+$SourceSetToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSetToolModule).Hash.ToLowerInvariant()
+if ($SourceSetToolHash -ne 'dc290826985f66f80d469b99235ca290dc617997edee0aab2ea0d4227984aab6') {
+    throw "The source-set tool has an unexpected digest: $SourceSetToolHash"
+}
+$SourceSetArguments = @(
+    'run', $SourceSetToolModule,
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count'
+)
+$SourceSetSelfOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    @SourceSetArguments --max-steps 800000000 -- `
+    $SourceSetSource `
+    $SourceBodyParserSource `
+    $SourceDeclarationParserSource `
+    $SourceLexerSource `
+    $DecimalParsingSource
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceSetSelfOutput -notcontains 'source set status=Valid modules=5 source-bytes=192171 imports=4 records=16 enums=11 functions=86' -or
+    $SourceSetSelfOutput -notcontains 'Result: 0'
+) {
+    throw 'The source-set tool did not validate the real compiler frontend set.'
 }
 
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule

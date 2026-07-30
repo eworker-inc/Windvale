@@ -42,6 +42,9 @@ internal static class Program
     private const string SOURCE_BODY_PARSER_SHA256 = "bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f";
     private const string SOURCE_BODY_PARSER_DEMO_SHA256 = "5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba";
     private const string SOURCE_BODY_PARSER_TOOL_SHA256 = "761887d3674833854d976dd394ad3f83f27d2c74748b6dd0f296c97b117140ca";
+    private const string SOURCE_SET_SHA256 = "c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa766b19b1bfa2b8";
+    private const string SOURCE_SET_DEMO_SHA256 = "0054138c6e39f3c99e5cd4751c796cd599b495880d7db174323342fb7b687488";
+    private const string SOURCE_SET_TOOL_SHA256 = "dc290826985f66f80d469b99235ca290dc617997edee0aab2ea0d4227984aab6";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -270,6 +273,15 @@ internal static class Program
     private static readonly string SOURCE_BODY_PARSER_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Body-Parser-Tool.wv");
 
+    private static readonly string SOURCE_SET_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Set-Core.wv");
+
+    private static readonly string SOURCE_SET_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Set-Demo.wv");
+
+    private static readonly string SOURCE_SET_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Set-Tool.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -296,6 +308,7 @@ internal static class Program
         ("Windvale-written source lexer streams the complete Seed token contract", Compilerˉsourceˉlexerˉruns),
         ("Windvale-written declaration parser exposes bounded streaming source views", Compilerˉsourceˉdeclarationˉparserˉruns),
         ("Windvale-written body parser exposes bounded statement and expression views", Compilerˉsourceˉbodyˉparserˉruns),
+        ("Windvale compiler source sets are canonical, bounded, and portable", Compilerˉsourceˉsetˉruns),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
@@ -1190,6 +1203,93 @@ internal static class Program
         Equal(
             "source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023\n",
             Selfˉresult.Output);
+    }
+
+    private static void Compilerˉsourceˉsetˉruns()
+    {
+        var Libraryˉbytes = Compileˉwithˉsourceˉsetˉsuccess(
+            SOURCE_SET_SOURCE,
+            "Source-Set-Core.wv",
+            includeˉsourceˉset: false);
+        Equal(SOURCE_SET_SHA256, Moduleˉdigest.Calculateˉsha256(Libraryˉbytes));
+        var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
+        Equal("Compilerˉsourceˉset", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Equal(27, Library.Module.Types.Length);
+        Equal(9, Library.Module.Exports.Length);
+        foreach (var Typeˉname in new[]
+                 {
+                     "Compilerˉsourceˉsetˉscan",
+                     "Compilerˉsourceˉsetˉstatus",
+                     "Compilerˉsourceˉsetˉsummary",
+                     "Compilerˉsourceˉsetˉview",
+                 })
+        {
+            True(Library.Module.Types.Any(Type => Type.Name == Typeˉname),
+                $"Source-set type '{Typeˉname}' was not emitted.");
+        }
+        foreach (var Exportˉname in new[]
+                 {
+                     "Compilerˉscanˉsourceˉset",
+                     "Compilerˉsourceˉsetˉmodule",
+                     "Compilerˉsourceˉspansˉcompare",
+                     "Compilerˉvalidateˉsourceˉset",
+                 })
+        {
+            True(Library.Module.Exports.Any(Export => Export.Name == Exportˉname),
+                $"Source-set export '{Exportˉname}' was not emitted.");
+        }
+
+        var Demoˉbytes = Compileˉwithˉsourceˉsetˉsuccess(
+            SOURCE_SET_DEMO_SOURCE,
+            "Source-Set-Demo.wv");
+        Equal(SOURCE_SET_DEMO_SHA256, Moduleˉdigest.Calculateˉsha256(Demoˉbytes));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Demoˉbytes),
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                    Maximumˉinstructions: 200_000_000)).Runˉmain().Exitˉcode);
+
+        var Toolˉbytes = Compileˉwithˉsourceˉsetˉsuccess(
+            SOURCE_SET_TOOL_SOURCE,
+            "Source-Set-Tool.wv");
+        Equal(SOURCE_SET_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        const string Root =
+            "module Setˉroot profile portable; import Setˉdependency; export fn Main() -> i32 { return Setˉvalue(); }";
+        const string Dependency =
+            "module Setˉdependency profile portable; export fn Setˉvalue() -> i32 { return 1; }";
+        var Smallˉset = Runˉsourceˉsetˉtool(
+            Tool,
+            [
+                new("root.wv", Root),
+                new("dependency.wv", Dependency),
+            ],
+            50_000_000);
+        Equal(0, Smallˉset.Exitˉcode);
+        Equal(string.Empty, Smallˉset.Diagnostics);
+        Equal(2, Smallˉset.Readˉcount);
+        Equal(
+            $"source set status=Valid modules=2 source-bytes={System.Text.Encoding.UTF8.GetByteCount(Root) + System.Text.Encoding.UTF8.GetByteCount(Dependency)} imports=1 records=0 enums=0 functions=2\n",
+            Smallˉset.Output);
+
+        var Boundaryˉmodules = new List<Sourceˉmoduleˉinput>
+        {
+            new("root.wv", "module Boundaryˉroot profile portable;"),
+        };
+        for (var Index = 0; Index < 63; Index++)
+        {
+            Boundaryˉmodules.Add(new(
+                $"dependency-{Index:D2}.wv",
+                $"module Boundary_{Index:D2} profile portable;"));
+        }
+        var Boundary = Runˉsourceˉsetˉtool(Tool, Boundaryˉmodules, 300_000_000);
+        Equal(0, Boundary.Exitˉcode);
+        Equal(string.Empty, Boundary.Diagnostics);
+        Equal(64, Boundary.Readˉcount);
+        Contains(Boundary.Output, "source set status=Valid modules=64");
     }
 
     private static void Moduleˉroundˉtrip()
@@ -3993,6 +4093,16 @@ internal static class Program
         var Sourceˉbodyˉparserˉtoolˉbytes = Compileˉwithˉsourceˉbodyˉparserˉsuccess(
             SOURCE_BODY_PARSER_TOOL_SOURCE,
             "Source-Body-Parser-Tool.wv");
+        var Sourceˉsetˉbytes = Compileˉwithˉsourceˉsetˉsuccess(
+            SOURCE_SET_SOURCE,
+            "Source-Set-Core.wv",
+            includeˉsourceˉset: false);
+        var Sourceˉsetˉdemoˉbytes = Compileˉwithˉsourceˉsetˉsuccess(
+            SOURCE_SET_DEMO_SOURCE,
+            "Source-Set-Demo.wv");
+        var Sourceˉsetˉtoolˉbytes = Compileˉwithˉsourceˉsetˉsuccess(
+            SOURCE_SET_TOOL_SOURCE,
+            "Source-Set-Tool.wv");
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉwithˉbyteˉorderingˉsuccess(
             WVO_CORE_SOURCE,
@@ -4035,6 +4145,9 @@ internal static class Program
             Sourceˉbodyˉparserˉdemoˉbytes);
         var Sourceˉbodyˉparserˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(
             Sourceˉbodyˉparserˉtoolˉbytes);
+        var Sourceˉsetˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsetˉbytes);
+        var Sourceˉsetˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsetˉdemoˉbytes);
+        var Sourceˉsetˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsetˉtoolˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
@@ -4064,6 +4177,9 @@ internal static class Program
         Equal(SOURCE_BODY_PARSER_SHA256, Sourceˉbodyˉparserˉhash);
         Equal(SOURCE_BODY_PARSER_DEMO_SHA256, Sourceˉbodyˉparserˉdemoˉhash);
         Equal(SOURCE_BODY_PARSER_TOOL_SHA256, Sourceˉbodyˉparserˉtoolˉhash);
+        Equal(SOURCE_SET_SHA256, Sourceˉsetˉhash);
+        Equal(SOURCE_SET_DEMO_SHA256, Sourceˉsetˉdemoˉhash);
+        Equal(SOURCE_SET_TOOL_SHA256, Sourceˉsetˉtoolˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
@@ -4155,6 +4271,22 @@ internal static class Program
             "Source-Body-Parser.wv",
             SOURCE_BODY_PARSER_SOURCE,
             160_000_000);
+        var Sourceˉsetˉdemoˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Sourceˉsetˉdemoˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                Maximumˉinstructions: 200_000_000)).Runˉmain();
+        var Sourceˉsetˉtool = Moduleˉcodec.Readˉandˉverify(Sourceˉsetˉtoolˉbytes);
+        var Sourceˉsetˉselfˉresult = Runˉsourceˉsetˉtool(
+            Sourceˉsetˉtool,
+            [
+                new("Source-Set-Core.wv", SOURCE_SET_SOURCE),
+                new("Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
+                new("Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
+                new("Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+                new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
+            ],
+            800_000_000);
         var Wvˉdumpˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes);
         var Wvˉdumpˉcapabilities = Wvˉdumpˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -4345,6 +4477,13 @@ internal static class Program
         Equal(0, Sourceˉbodyˉselfˉresult.Exitˉcode);
         Equal(string.Empty, Sourceˉbodyˉselfˉresult.Diagnostics);
         Equal(1, Sourceˉbodyˉselfˉresult.Readˉcount);
+        Equal(0, Sourceˉsetˉdemoˉresult.Exitˉcode);
+        Equal(0, Sourceˉsetˉselfˉresult.Exitˉcode);
+        Equal(string.Empty, Sourceˉsetˉselfˉresult.Diagnostics);
+        Equal(5, Sourceˉsetˉselfˉresult.Readˉcount);
+        Equal(
+            "source set status=Valid modules=5 source-bytes=192171 imports=4 records=16 enums=11 functions=86\n",
+            Sourceˉsetˉselfˉresult.Output);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
@@ -4399,6 +4538,11 @@ internal static class Program
             Sourceˉlexerˉbodyˉresult.Output,
             Sourceˉdeclarationˉbodyˉresult.Output,
             Sourceˉbodyˉselfˉresult.Output,
+            Sourceˉsetˉhash,
+            Sourceˉsetˉdemoˉhash,
+            Sourceˉsetˉdemoˉresult.Exitˉcode,
+            Sourceˉsetˉtoolˉhash,
+            Sourceˉsetˉselfˉresult.Output,
             Wvˉdumpˉhash,
             Wvˉdumpˉresult.Exitˉcode,
             Normalizedˉwvdumpˉoutput,
@@ -4480,6 +4624,43 @@ internal static class Program
             module,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
                 [sourceˉname],
+                Output,
+                Diagnostics,
+                Reader)),
+            new(Authorized, Maximumˉinstructions: maximumˉinstructions)).Runˉmain();
+        return new(
+            Result.Exitˉcode,
+            Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'),
+            Diagnostics.ToString().Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'),
+            Reader.Readˉcount);
+    }
+
+    private static Compilerˉsourceˉparserˉrunˉresult Runˉsourceˉsetˉtool(
+        Verifiedˉmodule module,
+        IReadOnlyList<Sourceˉmoduleˉinput> sources,
+        long maximumˉinstructions)
+    {
+        var Sourceˉbytes = sources.ToDictionary(
+            Source => Source.Sourceˉname,
+            Source => System.Text.Encoding.UTF8.GetBytes(Source.Source).ToImmutableArray(),
+            StringComparer.Ordinal);
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Reader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            True(Sourceˉbytes.TryGetValue(Name, out var Bytes),
+                $"The source-set tool requested unexpected source '{Name}'.");
+            True(Bytes.Length <= Maximumˉbytes,
+                "The hosted source-set byte limit was too small.");
+            return Bytes;
+        });
+        var Authorized = module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Result = new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [.. sources.Select(Source => Source.Sourceˉname)],
                 Output,
                 Diagnostics,
                 Reader)),
@@ -4741,6 +4922,32 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Compiler body-parser composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉsourceˉsetˉsuccess(
+        string source,
+        string sourceˉname,
+        bool includeˉsourceˉset = true)
+    {
+        var Dependencies = new List<Sourceˉmoduleˉinput>();
+        if (includeˉsourceˉset)
+        {
+            Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        }
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            Dependencies);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler source-set composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();
@@ -5199,6 +5406,11 @@ internal static class Program
         [property: JsonPropertyName("sourceLexerBodyOutput")] string Sourceˉlexerˉbodyˉoutput,
         [property: JsonPropertyName("sourceDeclarationBodyOutput")] string Sourceˉdeclarationˉbodyˉoutput,
         [property: JsonPropertyName("sourceBodySelfOutput")] string Sourceˉbodyˉselfˉoutput,
+        [property: JsonPropertyName("sourceSetSha256")] string Sourceˉsetˉsha256,
+        [property: JsonPropertyName("sourceSetDemoSha256")] string Sourceˉsetˉdemoˉsha256,
+        [property: JsonPropertyName("sourceSetDemoResult")] int Sourceˉsetˉdemoˉresult,
+        [property: JsonPropertyName("sourceSetToolSha256")] string Sourceˉsetˉtoolˉsha256,
+        [property: JsonPropertyName("sourceSetSelfOutput")] string Sourceˉsetˉselfˉoutput,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
         [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
         [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput,

@@ -40,6 +40,9 @@ SOURCE_DECLARATION_PARSER_TOOL_MODULE="$ARTIFACTS/Source-Declaration-Parser-Tool
 SOURCE_BODY_PARSER_MODULE="$ARTIFACTS/Source-Body-Parser.wvb"
 SOURCE_BODY_PARSER_DEMO_MODULE="$ARTIFACTS/Source-Body-Parser-Demo.wvb"
 SOURCE_BODY_PARSER_TOOL_MODULE="$ARTIFACTS/Source-Body-Parser-Tool.wvb"
+SOURCE_SET_MODULE="$ARTIFACTS/Source-Set-Core.wvb"
+SOURCE_SET_DEMO_MODULE="$ARTIFACTS/Source-Set-Demo.wvb"
+SOURCE_SET_TOOL_MODULE="$ARTIFACTS/Source-Set-Tool.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -395,6 +398,71 @@ SOURCE_BODY_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "
     -- "$SOURCE_BODY_PARSER_SOURCE")
 printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023' >/dev/null
 printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+SOURCE_SET_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Set-Core.wv"
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_SET_MODULE"
+SOURCE_SET_HASH=$(sha256sum "$SOURCE_SET_MODULE" | awk '{print $1}')
+if [ "$SOURCE_SET_HASH" != 'c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa766b19b1bfa2b8' ]; then
+    echo "The Windvale source-set core has an unexpected digest: $SOURCE_SET_HASH" >&2
+    exit 1
+fi
+SOURCE_SET_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_SET_MODULE")
+printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Nominal types (27)' >/dev/null
+printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉsourceˉsetˉscan' >/dev/null
+printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉsourceˉsetˉsummary' >/dev/null
+printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉscanˉsourceˉset' >/dev/null
+printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉset' >/dev/null
+printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Exports (9)' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Set-Demo.wv" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_SET_DEMO_MODULE"
+SOURCE_SET_DEMO_HASH=$(sha256sum "$SOURCE_SET_DEMO_MODULE" | awk '{print $1}')
+if [ "$SOURCE_SET_DEMO_HASH" != '0054138c6e39f3c99e5cd4751c796cd599b495880d7db174323342fb7b687488' ]; then
+    echo "The source-set demo has an unexpected digest: $SOURCE_SET_DEMO_HASH" >&2
+    exit 1
+fi
+SOURCE_SET_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_SET_DEMO_MODULE" --max-steps 200000000)
+printf '%s\n' "$SOURCE_SET_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Set-Tool.wv" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_SET_TOOL_MODULE"
+SOURCE_SET_TOOL_HASH=$(sha256sum "$SOURCE_SET_TOOL_MODULE" | awk '{print $1}')
+if [ "$SOURCE_SET_TOOL_HASH" != 'dc290826985f66f80d469b99235ca290dc617997edee0aab2ea0d4227984aab6' ]; then
+    echo "The source-set tool has an unexpected digest: $SOURCE_SET_TOOL_HASH" >&2
+    exit 1
+fi
+SOURCE_SET_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$SOURCE_SET_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 800000000 \
+    -- "$SOURCE_SET_SOURCE" \
+    "$SOURCE_BODY_PARSER_SOURCE" \
+    "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    "$SOURCE_LEXER_SOURCE" \
+    "$DECIMAL_PARSING_SOURCE")
+printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'source set status=Valid modules=5 source-bytes=192171 imports=4 records=16 enums=11 functions=86' >/dev/null
+printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \

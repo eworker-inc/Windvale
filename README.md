@@ -16,6 +16,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A first Windvale-written compiler lexer that streams the complete implemented Seed token surface over strict UTF-8 bytes without a token collection
 - A Windvale-written declaration parser that discovers module/declaration shapes and balanced function-body spans as immutable source views without a declaration collection
 - A Windvale-written body parser that reproduces the complete implemented statement/expression grammar as flat child-span views without a syntax tree collection
+- A canonical Windvale Source Set (`WVSS 1`) reader that gives the portable semantic pipeline bounded random access to a root plus ordered dependency sources without host objects or native paths
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
@@ -227,6 +228,40 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Body-Parser-Too
 ```
 
 The body pass returns flat statement and expression views with bounded child spans, counts, and depths. It validates the lexer, declaration parser, and itself without retaining tokens or a syntax tree; semantic binding is the next compiler slice.
+
+Compile the packed source-set reader and validate the real compiler frontend set:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Compiler/Bootstrap/Source-Set-Core.wv `
+  --module Compiler/Bootstrap/Source-Body-Parser.wv `
+  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
+  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Foundation/Decimal-Parsing.wv `
+  -o artifacts/Source-Set-Core.wvb
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Compiler/Source-Set-Tool.wv `
+  --module Compiler/Bootstrap/Source-Set-Core.wv `
+  --module Compiler/Bootstrap/Source-Body-Parser.wv `
+  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
+  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Foundation/Decimal-Parsing.wv `
+  -o artifacts/Source-Set-Tool.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Set-Tool.wvb `
+  --allow console.write_line `
+  --allow diagnostic.write_line `
+  --allow file.read_bytes `
+  --allow process.argument `
+  --allow process.argument_count `
+  --max-steps 800000000 `
+  -- Compiler/Bootstrap/Source-Set-Core.wv `
+     Compiler/Bootstrap/Source-Body-Parser.wv `
+     Compiler/Bootstrap/Source-Declaration-Parser.wv `
+     Compiler/Bootstrap/Source-Lexer-Core.wv `
+     Foundation/Decimal-Parsing.wv
+```
+
+WVSS 1 keeps the root first and dependencies in declared-module-name order, validates every source through the qualified syntax frontend, and exposes immutable source slices by index. Its current 4 MiB aggregate envelope is an explicit Seed limitation; semantic binding will use this format while later memory/collection evidence determines how to close parity with Stage 0's 16 MiB aggregate input contract.
 
 Compile and run the first Windvale-written `wvdump` core:
 

@@ -79,5 +79,14 @@
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Body-Parser-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Body-Parser-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Bootstrap/Source-Set-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Set-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Set-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Set-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Set-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Set-Tool.wv" />
   </ItemGroup>
 </Project>
