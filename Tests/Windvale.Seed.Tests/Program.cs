@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -376,42 +377,207 @@ internal static class Program
             return Compareˉreports(arguments[1], arguments[2]);
         }
 
-        if (arguments.Length is not (0 or 2) || (arguments.Length == 2 && arguments[0] != "--report"))
+        if (!Tryˉparseˉrunnerˉoptions(arguments, out var Options, out var Optionˉerror))
         {
-            Console.Error.WriteLine(
-                "Usage: Windvale.Seed.Tests [--report <path>] | --compare-reports <first> <second>");
+            Console.Error.WriteLine(Optionˉerror);
+            Writeˉrunnerˉusage();
+            return 64;
+        }
+
+        if (Options.Listˉtests)
+        {
+            foreach (var Test in TESTS)
+            {
+                Console.WriteLine(Test.Name);
+            }
+
+            return 0;
+        }
+
+        var Selectedˉtests = Options.Filter is null
+            ? TESTS
+            : TESTS
+                .Where(Test => Test.Name.Contains(Options.Filter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        if (Selectedˉtests.Count == 0)
+        {
+            Console.Error.WriteLine($"No tests match filter '{Options.Filter}'.");
             return 64;
         }
 
         var Failures = 0;
-        foreach (var Test in TESTS)
+        var Timings = new List<Testˉtimingˉentry>(Selectedˉtests.Count);
+        var Suiteˉtimer = Stopwatch.StartNew();
+        foreach (var Test in Selectedˉtests)
         {
+            var Testˉtimer = Stopwatch.StartNew();
+            var Outcome = "passed";
             try
             {
                 Test.Body();
-                Console.WriteLine($"PASS  {Test.Name}");
             }
             catch (Exception Exception)
             {
                 Failures++;
-                Console.Error.WriteLine($"FAIL  {Test.Name}");
+                Outcome = "failed";
+                Testˉtimer.Stop();
+                Console.Error.WriteLine($"FAIL  {Test.Name} ({Testˉtimer.ElapsedMilliseconds} ms)");
                 Console.Error.WriteLine($"      {Exception.Message}");
+                Timings.Add(new(Test.Name, Outcome, Testˉtimer.ElapsedMilliseconds));
+                if (Options.Failˉfast)
+                {
+                    break;
+                }
+
+                continue;
             }
+
+            Testˉtimer.Stop();
+            Console.WriteLine($"PASS  {Test.Name} ({Testˉtimer.ElapsedMilliseconds} ms)");
+            Timings.Add(new(Test.Name, Outcome, Testˉtimer.ElapsedMilliseconds));
         }
 
+        Suiteˉtimer.Stop();
         Console.WriteLine();
-        Console.WriteLine($"Tests: {TESTS.Count}, Passed: {TESTS.Count - Failures}, Failed: {Failures}");
+        Console.WriteLine(
+            $"Tests: {Selectedˉtests.Count}, Executed: {Timings.Count}, " +
+            $"Passed: {Timings.Count - Failures}, Failed: {Failures}, " +
+            $"Elapsed: {Suiteˉtimer.Elapsed.TotalSeconds:F3} s");
+        if (Options.Timingˉreportˉpath is not null)
+        {
+            Writeˉtimingˉreport(
+                Options.Timingˉreportˉpath,
+                Options.Filter,
+                Options.Failˉfast,
+                Selectedˉtests.Count,
+                Suiteˉtimer.ElapsedMilliseconds,
+                Timings);
+        }
+
         if (Failures != 0)
         {
             return 1;
         }
 
-        if (arguments.Length == 2)
+        if (Options.Reportˉpath is not null)
         {
-            Writeˉreport(arguments[1]);
+            Writeˉreport(Options.Reportˉpath);
         }
 
         return 0;
+    }
+
+    private static bool Tryˉparseˉrunnerˉoptions(
+        string[] arguments,
+        out Testˉrunnerˉoptions options,
+        out string error)
+    {
+        string? Reportˉpath = null;
+        string? Filter = null;
+        string? Timingˉreportˉpath = null;
+        var Failˉfast = false;
+        var Listˉtests = false;
+
+        for (var Index = 0; Index < arguments.Length; Index++)
+        {
+            var Argument = arguments[Index];
+            if (Argument is "--report" or "--filter" or "--timing-report")
+            {
+                if (Index + 1 >= arguments.Length || string.IsNullOrWhiteSpace(arguments[Index + 1]))
+                {
+                    options = new(null, null, false, null, false);
+                    error = $"{Argument} requires a value.";
+                    return false;
+                }
+
+                var Value = arguments[++Index];
+                if (Argument == "--report")
+                {
+                    if (Reportˉpath is not null)
+                    {
+                        options = new(null, null, false, null, false);
+                        error = "--report may be specified only once.";
+                        return false;
+                    }
+
+                    Reportˉpath = Value;
+                }
+                else if (Argument == "--filter")
+                {
+                    if (Filter is not null)
+                    {
+                        options = new(null, null, false, null, false);
+                        error = "--filter may be specified only once.";
+                        return false;
+                    }
+
+                    Filter = Value;
+                }
+                else
+                {
+                    if (Timingˉreportˉpath is not null)
+                    {
+                        options = new(null, null, false, null, false);
+                        error = "--timing-report may be specified only once.";
+                        return false;
+                    }
+
+                    Timingˉreportˉpath = Value;
+                }
+
+                continue;
+            }
+
+            if (Argument == "--fail-fast")
+            {
+                Failˉfast = true;
+                continue;
+            }
+
+            if (Argument == "--list-tests")
+            {
+                Listˉtests = true;
+                continue;
+            }
+
+            options = new(null, null, false, null, false);
+            error = $"Unknown argument: {Argument}";
+            return false;
+        }
+
+        if (Reportˉpath is not null && Filter is not null)
+        {
+            options = new(null, null, false, null, false);
+            error = "--report requires the complete test suite and cannot be combined with --filter.";
+            return false;
+        }
+
+        if (Reportˉpath is not null && Failˉfast)
+        {
+            options = new(null, null, false, null, false);
+            error = "--report requires the complete test suite and cannot be combined with --fail-fast.";
+            return false;
+        }
+
+        if (Listˉtests && (Reportˉpath is not null || Filter is not null || Failˉfast || Timingˉreportˉpath is not null))
+        {
+            options = new(null, null, false, null, false);
+            error = "--list-tests cannot be combined with execution or report options.";
+            return false;
+        }
+
+        options = new(Reportˉpath, Filter, Failˉfast, Timingˉreportˉpath, Listˉtests);
+        error = string.Empty;
+        return true;
+    }
+
+    private static void Writeˉrunnerˉusage()
+    {
+        Console.Error.WriteLine(
+            "Usage: Windvale.Seed.Tests [--report <path>] [--timing-report <path>]\n" +
+            "       Windvale.Seed.Tests --filter <substring> [--fail-fast] [--timing-report <path>]\n" +
+            "       Windvale.Seed.Tests --list-tests\n" +
+            "       Windvale.Seed.Tests --compare-reports <first> <second>");
     }
 
     private static void Portableˉprogramˉruns()
@@ -5517,6 +5683,28 @@ internal static class Program
         Console.WriteLine($"Conformance report: {Fullˉpath}");
     }
 
+    private static void Writeˉtimingˉreport(
+        string path,
+        string? filter,
+        bool failˉfast,
+        int selected,
+        long elapsedˉmilliseconds,
+        List<Testˉtimingˉentry> tests)
+    {
+        var Report = new Testˉtimingˉreport(
+            filter,
+            failˉfast,
+            selected,
+            tests.Count,
+            elapsedˉmilliseconds,
+            tests);
+        var Options = new JsonSerializerOptions { WriteIndented = true };
+        var Fullˉpath = Path.GetFullPath(path);
+        Directory.CreateDirectory(Path.GetDirectoryName(Fullˉpath)!);
+        File.WriteAllText(Fullˉpath, JsonSerializer.Serialize(Report, Options) + Environment.NewLine);
+        Console.WriteLine($"Timing report: {Fullˉpath}");
+    }
+
     private static int Compareˉreports(string firstˉpath, string secondˉpath)
     {
         var Options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -5679,6 +5867,26 @@ internal static class Program
             return Runtimeˉvalue.Fromˉi32(1);
         }
     }
+
+    private sealed record Testˉrunnerˉoptions(
+        string? Reportˉpath,
+        string? Filter,
+        bool Failˉfast,
+        string? Timingˉreportˉpath,
+        bool Listˉtests);
+
+    private sealed record Testˉtimingˉentry(
+        [property: JsonPropertyName("name")] string Name,
+        [property: JsonPropertyName("outcome")] string Outcome,
+        [property: JsonPropertyName("elapsedMilliseconds")] long Elapsedˉmilliseconds);
+
+    private sealed record Testˉtimingˉreport(
+        [property: JsonPropertyName("filter")] string? Filter,
+        [property: JsonPropertyName("failFast")] bool Failˉfast,
+        [property: JsonPropertyName("selected")] int Selected,
+        [property: JsonPropertyName("executed")] int Executed,
+        [property: JsonPropertyName("elapsedMilliseconds")] long Elapsedˉmilliseconds,
+        [property: JsonPropertyName("tests")] List<Testˉtimingˉentry> Tests);
 
     private sealed record Conformanceˉcontract(
         [property: JsonPropertyName("moduleFormat")] string Moduleˉformat,

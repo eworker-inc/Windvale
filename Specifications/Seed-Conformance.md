@@ -53,6 +53,14 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, r
 
 ## Host verification
 
+The verifier has three explicit levels:
+
+- `Fast` builds the solution and runs only tests matching one required case-insensitive displayed-name substring. Optional fail-fast and timing-report output make it an inner-loop tool; it cannot publish a conformance report.
+- `Standard` builds and runs the complete in-process conformance suite and writes the host report, then stops before native CLI verification.
+- `Qualification` is the default. It runs Standard plus the complete native CLI, hosted-boundary, deterministic-artifact, and no-partial-output checks.
+
+Every test prints its elapsed milliseconds. `--timing-report <path>` writes a separate local JSON timing document; elapsed time is deliberately excluded from the portable conformance contract. The qualification verifier builds once and invokes the resulting `windvale.dll` directly for CLI checks, avoiding repeated project evaluation without bypassing process, argument, exit-code, or native file behavior.
+
 Windows:
 
 ```powershell
@@ -65,7 +73,19 @@ Linux:
 ./Tools/Verify/Verify-Seed.sh
 ```
 
-Each verifier builds Release binaries, runs the complete suite, and writes an ignored JSON report under `artifacts/`. The report separates the portable `contract` evidence from host metadata.
+Standard and Qualification build Release binaries, run the complete suite, and write an ignored JSON report under `artifacts/`. The report separates the portable `contract` evidence from host metadata. Fast deliberately writes no conformance report.
+
+Windows examples:
+
+```powershell
+# Focused iteration
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestFilter 'source symbols' -FailFast
+
+# Complete in-process suite
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Standard
+```
+
+Linux uses the corresponding `VERIFY_LEVEL=fast|standard|qualification`, `TEST_FILTER`, `FAIL_FAST=1`, and `TIMING_REPORT_PATH` environment variables. The default remains `qualification` on both hosts.
 
 ## Comparing hosts
 
