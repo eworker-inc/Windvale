@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Wvˉlinkerˉcore` is the Windvale-written implementation path for Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic section, symbol, and relocation views, resolves multi-object symbols, and computes deterministic section placements and defined-symbol addresses. It is not yet a complete linker: it does not construct the image, apply relocations, independently reconstruct the result, construct the canonical map, or write an output image.
+`Wvˉlinkerˉcore` is the Windvale-written implementation path for Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic section, symbol, and relocation views, resolves multi-object symbols, computes deterministic section placements and defined-symbol addresses, constructs the flat image, and applies both relocation kinds. It is not yet a complete linker: it does not independently reconstruct the result, construct the canonical map, or write an output image.
 
-The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a` with WVB SHA-256 `ac00a5b702f2a4ef185bd5f021ec2611bd8a335d1937804ceeb30f28cc1b8ded`. The resolution/layout extension is cross-host qualified at `709ccb3` with WVB 1.6 SHA-256 `2a4c24d1330ffbfc6d7253f16978fe5a86264c5118d8bb3e20473d35be023707`; its exact committed archive passed the full suite and real CLI verifier on Windows and Debian, the normalized contracts matched, and the directly retrieved modules were byte-for-byte identical.
+The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout was qualified at `709ccb3`. The current immutable-image/relocation extension has WVB 1.6 SHA-256 `87fb5974d989d7b7870dab9a6fb4e1bb1bae8549bb90edf78f7bdfdf1824b822` and requires fresh cross-host qualification.
 
 ## Object boundary
 
@@ -34,6 +34,14 @@ Layout walks section kind `code`, read-only data, writable data, and zero-fill, 
 
 No host collection, object decoder, resolver, or layout callback participates. Repeated reads use the same immutable resource snapshots. The current analysis returns counts, image length, and entry address but deliberately returns no image bytes.
 
+## Image construction and relocation
+
+`Buildˉunrelocatedˉimage` repeats final placement order and constructs one immutable byte value. Alignment gaps and zero-fill contributions append exact zero bytes; materialized contributions append zero-copy slices of the original object snapshots. The measured image length and constructed byte length must both equal the qualified layout result.
+
+`Applyˉrelocations` walks input and source relocation order. It recomputes the source placement, resolves the local/export/import target to a defined-symbol address, evaluates `absolute-u32` or `relative-i32` using explicit signed magnitudes, rejects overflow as `WVL1009` or `WVL1010`, and replaces exactly four bytes through persistent prefix/value/suffix concatenation. The input objects and unrelocated value remain immutable.
+
+Successful analysis now adds `image sha256=<lowercase-hex>` to the report. This digest must equal Stage 0 on both hosts, but it is development evidence rather than the independent reconstruction required before output.
+
 ## Hosted scan shell
 
 The current shell declares the final linker's explicit hosted capabilities so capability authorization remains visible while the implementation grows. With no arguments, `Main` runs embedded parser and view checks without reading or writing a hosted resource. With one argument, it reads one bounded object resource and emits exactly one report:
@@ -60,4 +68,4 @@ Both the Windows and Debian verifiers must also compile and inspect the module t
 
 The current qualification candidate additionally compares canonical and reversed input order, aligned and unaligned bases, all section representations, aggregate overflow, malformed objects, duplicate exports, missing imports, kind mismatch, missing entry, invalid requests, layout overflow, exact counts, image length, entry address, snapshot read counts, and absence of output with the Stage 0 oracle.
 
-Phase 6 remains incomplete until the same Windvale module implements and qualifies checked relocation, image construction, independent reconstruction, canonical map construction, and publish-after-success output behavior.
+Phase 6 remains incomplete until the same Windvale module implements and qualifies independent reconstruction, canonical map construction, and publish-after-success output behavior.

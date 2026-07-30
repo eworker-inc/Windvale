@@ -22,7 +22,7 @@ internal static class Program
     private const string WVO_CORE_SHA256 = "76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a";
-    private const string WVLINK_CORE_SHA256 = "2a4c24d1330ffbfc6d7253f16978fe5a86264c5118d8bb3e20473d35be023707";
+    private const string WVLINK_CORE_SHA256 = "87fb5974d989d7b7870dab9a6fb4e1bb1bae8549bb90edf78f7bdfdf1824b822";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
 
@@ -196,7 +196,7 @@ internal static class Program
         ("Windvale-written WVA assembler enforces source and token boundaries", Wvaˉassemblerˉcoreˉrecognizesˉsource),
         ("Windvale-written WVA assembler matches Stage 0 semantics and bytes", Wvaˉassemblerˉmatchesˉoracle),
         ("Windvale linker core scans WVO exactly at the hosted boundary", Wvˉlinkerˉcoreˉscansˉobjects),
-        ("Windvale linker resolves symbols and lays out sections deterministically", Wvˉlinkerˉresolvesˉandˉlaysˉout),
+        ("Windvale linker resolves, lays out, and relocates deterministic images", Wvˉlinkerˉresolvesˉandˉlaysˉout),
         ("Stage 0 linker resolves and verifies a canonical flat image", Linkerˉproducesˉcanonicalˉflatˉimage),
         ("Stage 0 linker rejects resolution, layout, and relocation failures", Linkerˉrejectsˉinvalidˉlinks),
         ("Stage 0 linker contains hostile objects and remains deterministic", Linkerˉcontainsˉhostileˉinput),
@@ -1609,7 +1609,8 @@ internal static class Program
             Providerˉobject);
         Equal(0, Canonical.Exitˉcode);
         Equal(
-            "link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295\n",
+            "link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295\n" +
+            $"image sha256={Objectˉdigest.Calculateˉsha256(Oracle.Imageˉbytes.AsSpan())}\n",
             Canonical.Output);
         Equal(string.Empty, Canonical.Diagnostics);
         Equal(2, Canonical.Readˉcount);
@@ -1629,6 +1630,9 @@ internal static class Program
         Equal(0, Reversed.Exitˉcode);
         Contains(Reversed.Output, $"image-bytes={Reversedˉoracle.Imageˉbytes.Length}");
         Contains(Reversed.Output, $"entry-address={Reversedˉoracle.Entryˉaddress}");
+        Contains(
+            Reversed.Output,
+            $"image sha256={Objectˉdigest.Calculateˉsha256(Reversedˉoracle.Imageˉbytes.AsSpan())}");
         Equal(2, Reversed.Readˉcount);
 
         var Unalignedˉoracle = Linkˉsuccess([Providerˉobject.ToArray()], new(1, "Console_write"));
@@ -1636,6 +1640,9 @@ internal static class Program
         Equal(0, Unaligned.Exitˉcode);
         Contains(Unaligned.Output, $"image-bytes={Unalignedˉoracle.Imageˉbytes.Length}");
         Contains(Unaligned.Output, $"entry-address={Unalignedˉoracle.Entryˉaddress}");
+        Contains(
+            Unaligned.Output,
+            $"image sha256={Objectˉdigest.Calculateˉsha256(Unalignedˉoracle.Imageˉbytes.AsSpan())}");
         Equal(1, Unaligned.Readˉcount);
 
         var Completeˉobject = Assembleˉsuccess(COMPLETE_ASSEMBLY_SOURCE).ToImmutableArray();
@@ -1651,6 +1658,9 @@ internal static class Program
         Contains(Complete.Output, "sections=3 symbols=3 relocations=2");
         Contains(Complete.Output, $"image-bytes={Completeˉoracle.Imageˉbytes.Length}");
         Contains(Complete.Output, $"entry-address={Completeˉoracle.Entryˉaddress}");
+        Contains(
+            Complete.Output,
+            $"image sha256={Objectˉdigest.Calculateˉsha256(Completeˉoracle.Imageˉbytes.AsSpan())}");
 
         var Undefined = Runˉwvˉlinkerˉanalysis(Module, "1048576", "Main", Mainˉobject);
         Equal(2, Undefined.Exitˉcode);
@@ -1704,6 +1714,41 @@ internal static class Program
         Equal(2, Layoutˉoverflow.Exitˉcode);
         Contains(Layoutˉoverflow.Diagnostics, "link status=WVL1008");
         Contains(Layoutˉoverflow.Diagnostics, "input=0");
+
+        var Absoluteˉoverflowˉobject = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 1, 4, [0, 0, 0, 0])],
+            [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 4)],
+            [new(Objectˉrelocationˉkind.Absoluteˉu32, 0, 0, 0, int.MaxValue)]))
+            .ToImmutableArray();
+        var Absoluteˉoverflow = Runˉwvˉlinkerˉanalysis(
+            Module,
+            (uint.MaxValue - 3).ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "Main",
+            Absoluteˉoverflowˉobject);
+        Equal(2, Absoluteˉoverflow.Exitˉcode);
+        Contains(Absoluteˉoverflow.Diagnostics, "link status=WVL1009");
+        Contains(Absoluteˉoverflow.Diagnostics, "input=0");
+        Equal(0, Absoluteˉoverflow.Writeˉcount);
+
+        var Relativeˉoverflowˉobject = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 1, 5, [0, 0, 0, 0, 0])],
+            [
+                new("Target", Objectˉsymbolˉbinding.Local, Objectˉsymbolˉkind.Function, 0, 4, 1),
+                new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 4),
+            ],
+            [new(Objectˉrelocationˉkind.Relativeˉi32, 0, 0, 0, int.MaxValue)]))
+            .ToImmutableArray();
+        var Relativeˉoverflow = Runˉwvˉlinkerˉanalysis(
+            Module,
+            "0",
+            "Main",
+            Relativeˉoverflowˉobject);
+        Equal(2, Relativeˉoverflow.Exitˉcode);
+        Contains(Relativeˉoverflow.Diagnostics, "link status=WVL1010");
+        Contains(Relativeˉoverflow.Diagnostics, "input=0");
+        Equal(0, Relativeˉoverflow.Writeˉcount);
 
         var Invalidˉobject = Runˉwvˉlinkerˉanalysis(
             Module,
@@ -3364,7 +3409,8 @@ internal static class Program
         Equal(string.Empty, Wvˉlinkerˉhosted.Diagnostics);
         Equal(0, Wvˉlinkerˉanalysis.Exitˉcode);
         Equal(
-            "link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295\n",
+            "link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295\n" +
+            "image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a\n",
             Normalizedˉwvˉlinkerˉanalysisˉoutput);
         Equal(string.Empty, Wvˉlinkerˉanalysis.Diagnostics);
         Equal(2, Wvˉlinkerˉanalysis.Readˉcount);
