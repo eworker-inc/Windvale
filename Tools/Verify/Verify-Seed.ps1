@@ -47,6 +47,7 @@ $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
+$WvaScannerModule = Join-Path $Artifacts 'Wva-Scanner-Core.wvb'
 $WvoSample = Join-Path $Artifacts 'Sample.wvo'
 $AssemblyObject = Join-Path $Artifacts 'Hello-Object.wvo'
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
@@ -261,6 +262,53 @@ if (Test-Path -LiteralPath $MissingWriterParent) {
 $WvoMissingParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities -- (Join-Path $MissingWriterParent 'Sample.wvo') 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvoMissingParentOutput -join "`n") -notmatch 'WVR3022') {
     throw 'The hosted file writer did not report a missing parent deterministically.'
+}
+
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Assembler/Wva-Scanner-Core.wv') -o $WvaScannerModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wva-Scanner-Core.wv.' }
+
+$WvaScannerVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvaScannerModule
+if ($LASTEXITCODE -ne 0 -or $WvaScannerVerifyOutput -notcontains 'Verified: Wvaˉscannerˉcore') {
+    throw 'The bytecode verifier rejected the Windvale WVA scanner.'
+}
+
+$WvaScannerInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvaScannerModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvaScannerInspection -notmatch 'Scanˉwva' -or
+    $WvaScannerInspection -notmatch 'text\.utf8_is_valid' -or
+    $WvaScannerInspection -notmatch 'file\.read_bytes'
+) {
+    throw 'The Seed CLI inspector did not expose the Windvale WVA scanner operations.'
+}
+
+$WvaScannerCapabilities = @(
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count',
+    '--max-steps', '10000000'
+)
+
+$WvaScannerUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaScannerModule 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvaScannerUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
+    throw 'The Seed CLI did not refuse ungranted WVA scanner capabilities.'
+}
+
+$WvaScannerSelfTestOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaScannerModule @WvaScannerCapabilities
+if ($LASTEXITCODE -ne 0 -or $WvaScannerSelfTestOutput -notcontains 'Result: 0') {
+    throw 'The Windvale WVA scanner self-test did not return Result: 0.'
+}
+
+$WvaScannerHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaScannerModule @WvaScannerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva')
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvaScannerHostedOutput -notcontains 'wvascan 1' -or
+    $WvaScannerHostedOutput -notcontains 'status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1' -or
+    $WvaScannerHostedOutput -notcontains 'Result: 0'
+) {
+    throw 'The Windvale WVA scanner did not recognize the canonical assembly source.'
 }
 
 $AssemblyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- assemble (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') -o $AssemblyObject
