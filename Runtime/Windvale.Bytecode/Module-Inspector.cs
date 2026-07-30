@@ -177,6 +177,7 @@ public static class Moduleˉinspector
             Opcode.Bytesˉreadˉu8 => "bytes.read_u8",
             Opcode.Bytesˉreadˉu16ˉlittle => "bytes.read_u16_little",
             Opcode.Bytesˉreadˉu32ˉlittle => "bytes.read_u32_little",
+            Opcode.Bytesˉreadˉi32ˉlittle => "bytes.read_i32_little",
             Opcode.Recordˉcreate =>
                 $"record.create type[{instruction.Unsignedˉoperand}] ({module.Types[(int)instruction.Unsignedˉoperand].Name})",
             Opcode.Recordˉfield => $"record.field {instruction.Unsignedˉoperand}",
@@ -188,6 +189,10 @@ public static class Moduleˉinspector
             Opcode.U8ˉformat => "u8.format",
             Opcode.U32ˉformat => "u32.format",
             Opcode.Textˉconcat => "text.concat",
+            Opcode.Textˉutf8ˉisˉvalid => "text.utf8_is_valid",
+            Opcode.Textˉfromˉutf8 => "text.from_utf8",
+            Opcode.Textˉquote => "text.quote",
+            Opcode.U32ˉfromˉu8 => "u32.from_u8",
             Opcode.I32ˉadd => "i32.add",
             Opcode.I32ˉsubtract => "i32.subtract",
             Opcode.I32ˉmultiply => "i32.multiply",

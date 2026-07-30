@@ -494,6 +494,11 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.U32);
                 break;
+            case Opcode.Bytesˉreadˉi32ˉlittle:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.I32);
+                break;
             case Opcode.I32ˉadd:
             case Opcode.I32ˉsubtract:
             case Opcode.I32ˉmultiply:
@@ -592,8 +597,24 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Text);
                 break;
+            case Opcode.U32ˉfromˉu8:
+                Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U32);
+                break;
             case Opcode.Textˉconcat:
                 Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Text);
+                break;
+            case Opcode.Textˉutf8ˉisˉvalid:
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bool);
+                break;
+            case Opcode.Textˉfromˉutf8:
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Text);
+                break;
+            case Opcode.Textˉquote:
                 Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Text);
                 break;

@@ -9,9 +9,9 @@ The intended stack includes a programming language, portable bytecode, a runtime
 Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provides:
 
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
-- Foundation `u8`, `u32`, immutable byte slices, and bounded little-endian binary reads
-- Deterministic enum names, invariant integer formatting, and bounded text concatenation
-- A Windvale-written bounded walker for the complete `.wvb` header and seven section envelopes with structured results and a hosted file shell
+- Foundation `u8`, `u32`, immutable byte slices, bounded signed/unsigned little-endian reads, and explicit byte widening
+- Strict UTF-8 validation/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
+- A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
@@ -89,10 +89,11 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Wv-Dump-Core.wvb `
   --allow file.read_bytes `
   --allow process.argument `
   --allow process.argument_count `
+  --max-steps 10000000 `
   -- artifacts/Sum-Data.wvb
 ```
 
-This hosted module reads an explicit file argument through a bounded capability while its pure Windvale functions walk all seven section envelopes, return a nominal status plus section count and failure offset, and format a deterministic summary. With no program arguments it runs embedded valid and adversarial self-checks. It is an envelope inspector, not yet a complete declaration or instruction dumper.
+This hosted module reads an explicit file argument through a bounded capability while pure Windvale functions validate WVB 1.4, decode declarations and nominal shapes, walk every instruction, and emit a versioned ASCII-safe line report. It validates the complete module before normal output. With no program arguments it runs embedded valid and adversarial self-checks.
 
 ## Seed language example
 
@@ -152,6 +153,7 @@ export fn Main() -> i32 {
 - [Hosted resource boundary](Specifications/Hosted-Resources.md)
 - [Foundation byte primitives](Specifications/Foundation-Bytes.md)
 - [Windvale wvdump core](Specifications/Wv-Dump-Core.md)
+- [Windvale wvdump report](Specifications/Wv-Dump-Report.md)
 - [Source naming conventions](Specifications/Source-Naming.md)
 - [Seed bytecode specification](Specifications/Seed-Bytecode.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
@@ -164,6 +166,7 @@ export fn Main() -> i32 {
 - [Immutable nominal records decision](Documents/Decisions/0005-Immutable-Nominal-Records.md)
 - [Nominal enums and bounded formatting decision](Documents/Decisions/0006-Nominal-Enums-And-Bounded-Formatting.md)
 - [Explicit hosted resources decision](Documents/Decisions/0007-Explicit-Hosted-Resources.md)
+- [WvDump payload and report decision](Documents/Decisions/0008-WvDump-Payload-Decoding-And-Safe-Reports.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

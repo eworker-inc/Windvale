@@ -107,13 +107,18 @@ $WvDumpCoreInspectOutput = dotnet run --project $ToolProject --configuration $Co
 $WvDumpCoreInspection = $WvDumpCoreInspectOutput -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $WvDumpCoreInspectOutput -notcontains 'Nominal types (3)' -or
+    $WvDumpCoreInspectOutput -notcontains 'Nominal types (5)' -or
     $WvDumpCoreInspection -notmatch 'Inspectˉwvbˉenvelope' -or
     $WvDumpCoreInspection -notmatch 'record\.create' -or
     $WvDumpCoreInspection -notmatch 'record\.field' -or
     $WvDumpCoreInspection -notmatch 'enum\.name' -or
     $WvDumpCoreInspection -notmatch 'u32\.format' -or
-    $WvDumpCoreInspection -notmatch 'text\.concat'
+    $WvDumpCoreInspection -notmatch 'text\.concat' -or
+    $WvDumpCoreInspection -notmatch 'bytes\.read_i32_little' -or
+    $WvDumpCoreInspection -notmatch 'text\.utf8_is_valid' -or
+    $WvDumpCoreInspection -notmatch 'text\.from_utf8' -or
+    $WvDumpCoreInspection -notmatch 'text\.quote' -or
+    $WvDumpCoreInspection -notmatch 'u32\.from_u8'
 ) {
     throw 'The Seed CLI inspector did not expose the structured Windvale section walker.'
 }
@@ -123,7 +128,8 @@ $WvDumpCapabilities = @(
     '--allow', 'diagnostic.write_line',
     '--allow', 'file.read_bytes',
     '--allow', 'process.argument',
-    '--allow', 'process.argument_count'
+    '--allow', 'process.argument_count',
+    '--max-steps', '10000000'
 )
 
 $WvDumpUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule 2>&1
@@ -139,10 +145,14 @@ if ($LASTEXITCODE -ne 0 -or $WvDumpCoreRunOutput -notcontains 'Result: 0') {
 $WvDumpHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- $SumModule
 if (
     $LASTEXITCODE -ne 0 -or
-    ($WvDumpHostedOutput -join "`n") -notmatch 'Valid sections=7 offset=' -or
+    $WvDumpHostedOutput -notcontains 'wvdump 1' -or
+    $WvDumpHostedOutput -notcontains 'module version=1.4 profile=portable name="Sum\u02C9data"' -or
+    $WvDumpHostedOutput -notcontains 'data index=0 name="Values" type=i32_array elements=4' -or
+    $WvDumpHostedOutput -notcontains 'instruction function=1 offset=141 opcode=call operand=0' -or
+    $WvDumpHostedOutput -notcontains 'export index=0 name="Main" kind=function target=1' -or
     $WvDumpHostedOutput -notcontains 'Result: 0'
 ) {
-    throw 'The Windvale-written WvDump core did not inspect a real module through hosted resources.'
+    throw 'The Windvale-written WvDump core did not produce the expected real-module report.'
 }
 
 $WvDumpInvalidOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1

@@ -13,11 +13,12 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, i
 - Exact codec read/write round trips
 - Inspector metadata and disassembly
 - Functions, `if`, `while`, booleans, immutable text, immutable integer data, indexing, and `length`
-- `u8`, `u32`, immutable `bytes`, slice views, and bounded little-endian reads
+- `u8`, `u32`, immutable `bytes`, slice views, bounded unsigned and signed little-endian reads, and explicit `u8` widening
+- Strict UTF-8 validation/decoding, ASCII-safe deterministic quoting, and decoded/quoted text-limit traps
 - Immutable nominal record construction, field access, function parameters/results, canonical encoding, and verifier rejection cases
 - Nominal enum constants, record fields, equality, declared names, canonical encoding, and verifier rejection cases
 - Invariant signed and unsigned integer formatting plus bounded text-concatenation traps
-- Windvale-written WVB section walking with structured results plus valid, wrong-kind, nonzero-flags, hostile-length, truncated, and trailing-byte cases
+- Windvale-written WVB envelope and payload decoding with structured results plus valid, wrong-kind, nonzero-flags, hostile-length, truncated, trailing-byte, bad-payload, and unknown-opcode cases
 - Checked `u32` overflow and underflow plus byte-read and slice bounds traps
 - U+02C9 source identifiers, immutable `let`, mutable `var`, immutable parameters, and exported `Main`
 - Rejection of malformed or confusable identifier separators
@@ -51,7 +52,7 @@ After collecting a report from Windows and Linux, compare their portable contrac
 dotnet run --project Tests/Windvale.Seed.Tests --configuration Release --no-build -- --compare-reports artifacts/seed-conformance-windows-x64.json artifacts/seed-conformance-linux-x86_64.json
 ```
 
-The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-format version, complete golden-module SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, and Windvale-written hosted `wvdump` envelope core. Each host verifier also makes that core read and inspect an actual generated module through its native file adapter.
+The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-format version, complete golden-module SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, Windvale-written hosted `wvdump`, and the complete normalized `wvdump` line report for the real integer-data module. Each host verifier also exercises the same report through its native file adapter.
 
 ## Evidence discipline
 

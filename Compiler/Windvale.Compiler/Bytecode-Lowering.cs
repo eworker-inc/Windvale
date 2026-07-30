@@ -188,6 +188,7 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.Bytesˉreadˉu8:
                 case Wirˉoperation.Bytesˉreadˉu16ˉlittle:
                 case Wirˉoperation.Bytesˉreadˉu32ˉlittle:
+                case Wirˉoperation.Bytesˉreadˉi32ˉlittle:
                     Loadˉarguments(instruction.Operands);
                     Emitˉnone(
                         Mapˉopcode(instruction.Operation),
@@ -258,6 +259,10 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.I32ˉformat:
                 case Wirˉoperation.U8ˉformat:
                 case Wirˉoperation.U32ˉformat:
+                case Wirˉoperation.U32ˉfromˉu8:
+                case Wirˉoperation.Textˉutf8ˉisˉvalid:
+                case Wirˉoperation.Textˉfromˉutf8:
+                case Wirˉoperation.Textˉquote:
                     Loadˉtemporary(instruction.Operands[0]);
                     Emitˉnone(Mapˉopcode(instruction.Operation), pop: 1, push: 1);
                     Storeˉresult(instruction);
@@ -497,6 +502,7 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.Bytesˉreadˉu8 => Opcode.Bytesˉreadˉu8,
                 Wirˉoperation.Bytesˉreadˉu16ˉlittle => Opcode.Bytesˉreadˉu16ˉlittle,
                 Wirˉoperation.Bytesˉreadˉu32ˉlittle => Opcode.Bytesˉreadˉu32ˉlittle,
+                Wirˉoperation.Bytesˉreadˉi32ˉlittle => Opcode.Bytesˉreadˉi32ˉlittle,
                 Wirˉoperation.U32ˉadd => Opcode.U32ˉadd,
                 Wirˉoperation.U32ˉsubtract => Opcode.U32ˉsubtract,
                 Wirˉoperation.U32ˉmultiply => Opcode.U32ˉmultiply,
@@ -514,7 +520,11 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.I32ˉformat => Opcode.I32ˉformat,
                 Wirˉoperation.U8ˉformat => Opcode.U8ˉformat,
                 Wirˉoperation.U32ˉformat => Opcode.U32ˉformat,
+                Wirˉoperation.U32ˉfromˉu8 => Opcode.U32ˉfromˉu8,
                 Wirˉoperation.Textˉconcat => Opcode.Textˉconcat,
+                Wirˉoperation.Textˉutf8ˉisˉvalid => Opcode.Textˉutf8ˉisˉvalid,
+                Wirˉoperation.Textˉfromˉutf8 => Opcode.Textˉfromˉutf8,
+                Wirˉoperation.Textˉquote => Opcode.Textˉquote,
                 _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),
             };
         }
