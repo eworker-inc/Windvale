@@ -19,44 +19,137 @@ env:
   DOTNET_NOLOGO: "1"
 
 jobs:
-  windows-verifier:
-    name: Windows verifier
-    runs-on: windows-latest
-    timeout-minutes: 60
+  classify-changes:
+    name: Classify verification scope
+    runs-on: ubuntu-latest
+    outputs:
+      scope: ${{ steps.classify.outputs.scope }}
+      editor: ${{ steps.classify.outputs.editor }}
+      base_sha: ${{ steps.classify.outputs.base_sha }}
+      head_sha: ${{ steps.classify.outputs.head_sha }}
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Classify changed paths
+        id: classify
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PULL_REQUEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          $Arguments = @{
+            GitHubOutputPath = $env:GITHUB_OUTPUT
+          }
+          if ($env:EVENT_NAME -eq 'workflow_dispatch') {
+            $Arguments.ForceQualification = $true
+          } elseif ($env:EVENT_NAME -eq 'pull_request') {
+            $Arguments.BaseReference = $env:PULL_REQUEST_BASE_SHA
+            $Arguments.HeadReference = $env:PULL_REQUEST_HEAD_SHA
+          } else {
+            $Arguments.BaseReference = $env:PUSH_BASE_SHA
+            $Arguments.HeadReference = $env:GITHUB_SHA
+          }
+          ./Tools/Verify/Classify-Verification-Changes.ps1 @Arguments
+
+      - name: Verify change classification rules
+        shell: pwsh
+        run: ./Tools/Verify/Verify-Change-Classification.ps1
+
+  windows-verifier:
+    name: Windows verifier
+    needs: classify-changes
+    if: ${{ always() }}
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Require successful change classification
+        if: >-
+          ${{
+            needs.classify-changes.result != 'success' ||
+            (needs.classify-changes.outputs.scope != 'lightweight' &&
+             needs.classify-changes.outputs.scope != 'qualification') ||
+            (needs.classify-changes.outputs.editor != 'true' &&
+             needs.classify-changes.outputs.editor != 'false')
+          }}
+        shell: pwsh
+        run: throw 'Verification scope classification failed.'
+
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Install pinned .NET SDK
+        if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
 
       - name: Verify Windvale editor support
+        if: ${{ needs.classify-changes.outputs.editor == 'true' }}
         shell: pwsh
         run: pwsh -NoProfile -File Tools/Editors/Verify-Windvale-Editor.ps1
 
+      - name: Verify lightweight changes
+        if: ${{ needs.classify-changes.outputs.scope == 'lightweight' }}
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
+        run: git diff --check $env:BASE_SHA $env:HEAD_SHA --
+
       - name: Run Windows verification
+        if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
         shell: pwsh
         run: pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
 
   linux-verifier:
     name: Linux verifier
+    needs: classify-changes
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      - name: Require successful change classification
+        if: >-
+          ${{
+            needs.classify-changes.result != 'success' ||
+            (needs.classify-changes.outputs.scope != 'lightweight' &&
+             needs.classify-changes.outputs.scope != 'qualification') ||
+            (needs.classify-changes.outputs.editor != 'true' &&
+             needs.classify-changes.outputs.editor != 'false')
+          }}
+        shell: bash
+        run: exit 1
+
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Install pinned .NET SDK
+        if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
 
+      - name: Verify lightweight changes
+        if: ${{ needs.classify-changes.outputs.scope == 'lightweight' }}
+        shell: bash
+        env:
+          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
+        run: git diff --check "$BASE_SHA" "$HEAD_SHA" --
+
       - name: Run Linux verification
+        if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
         shell: bash
         run: ./Tools/Verify/Verify-Seed.sh

@@ -14,6 +14,8 @@ Qualification builds the CLI once and invokes the resulting `windvale.dll` direc
 
 GitHub runs the Windows and Linux qualification jobs concurrently. Exact milestone qualification still uses the committed source archive on Windows and the real Debian QA host and compares their normalized reports and direct artifacts.
 
+GitHub keeps the required `Windows verifier` and `Linux verifier` jobs present on every workflow run, but classifies the changed paths before installing .NET or executing Seed. Markdown outside `Specifications/`, the root license, and editor-only changes use a lightweight `git diff --check` path. Editor verification runs for editor files and source-language compiler or specification changes. Specifications, implementation, tests, build configuration, workflows, verifier code, and any unrecognized path fail closed to complete dual-host Qualification. Manual workflow dispatch always selects Qualification and editor verification. The workflow does not use top-level path filters because a skipped required workflow can leave its checks pending.
+
 ## Initial measurements
 
 Measurements on the Windows x64 development host on 2026-07-30:
