@@ -1,7 +1,7 @@
 # Decision 0020: First two-consumer Foundation module
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `d46af86`
 
 ## Context
 
@@ -31,3 +31,5 @@ The module does not define Unicode identifiers, native paths, package names, gen
 The standalone module must compile to a verified WVB with exactly its two declared exports. A portable demo exercises alignment endpoints and rejection, accepted first/subsequent name characters, empty and leading-digit rejection, punctuation rejection, and non-ASCII rejection. The complete assembler and linker suites must retain exact WVO, image, map, diagnostic, and hosted-publication behavior.
 
 Cross-host qualification requires the exact committed archive to pass the complete Windows and Debian verifier, equal normalized Foundation/module/tool contracts, and direct byte comparison of the standalone Foundation WVB plus both composed tool WVB files.
+
+Candidate `d46af86` satisfied this gate on Windows and Debian GNU/Linux 12 x64. Both hosts passed all 36 conformance tests and the complete native CLI verifier with zero build warnings or errors. The standalone Foundation module, its boundary demo, both composed tools, the canonical WVO, and the linked image/map were byte-for-byte equal across hosts; the existing WVO, image, and map identities did not change.

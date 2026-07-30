@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`Foundationˉmachineˉcontracts` is the first reusable Windvale Foundation source module. It owns two small WVO-adjacent semantic rules used by both the Windvale assembler and linker. It is portable, capability-free, deterministic, and bounded.
+`Foundationˉmachineˉcontracts` is the first reusable Windvale Foundation source module. It owns two small WVO-adjacent semantic rules used by both the Windvale assembler and linker. It is portable, capability-free, deterministic, bounded, and cross-host qualified at `d46af86`.
 
 This is an early-development source API without a backward-compatibility promise. It does not change WVB 1.6, WVA 1, WVO 1.0, or Windvale Linking 1.
 
@@ -35,3 +35,5 @@ Both import the module through bounded static source composition. Dependency exp
 The standalone module and `Examples/Foundation/Machine-Contracts-Demo.wv` are fixed conformance artifacts. The demo exercises both accepted alignment endpoints, non-power/zero/oversize alignment rejection, accepted machine-name punctuation and trailing digits, empty/leading-digit/disallowed-punctuation rejection, and non-ASCII rejection.
 
 The complete assembler and linker suites remain the consumer tests. Their exact WVO outputs, flat image, canonical map, result reports, no-write failures, and host boundaries must remain equal to the independent Stage 0 oracles on Windows and Debian.
+
+At qualified commit `d46af86`, the standalone module is 2,465 bytes with SHA-256 `9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a`. The 3,538-byte demo has SHA-256 `b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a` and returns `0`. Windows and Debian produced identical bytes for both artifacts and for the composed assembler and linker modules.
