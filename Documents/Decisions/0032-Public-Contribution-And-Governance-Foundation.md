@@ -1,7 +1,7 @@
 # Decision 0032: Public contribution and governance foundation
 
 - Date: 2026-07-30
-- Status: Accepted; private GitHub import implemented, pre-public identity normalization authorized
+- Status: Accepted; private GitHub import and pre-public identity normalization implemented
 
 ## Context
 
@@ -21,7 +21,7 @@ Use GitHub private vulnerability reporting for confidential security reports and
 
 Keep GitHub ownership, account linkage, descriptive authorship, and responsible submission distinct. The official repository is `eworker-inc/Windvale` under the existing E-Worker Inc organization, which can contain Windvale and other E-Worker projects and is not named after one project or AI model.
 
-Before public visibility, perform one controlled metadata normalization of the imported private bootstrap history. For commits carrying `codex@codex-dev-vm.local`, preserve the `Codex` author and committer names, source trees, messages, timestamps, and parent order while replacing only that non-routable author or committer email with `246088022+EWorkerAI@users.noreply.github.com`. This lets GitHub associate the commits with the `EWorkerAI` project account without erasing their factual Codex attribution. Preserve the pre-normalization tip under a named evidence tag and publish an old-to-new commit mapping with tree-equivalence verification so qualification references remain auditable.
+Before public visibility, perform one controlled metadata normalization of the imported private bootstrap history. For commits carrying `codex@codex-dev-vm.local`, preserve the `Codex` author and committer names, source trees, messages, timestamps, and parent order while replacing only that non-routable author or committer email with `246088022+EWorkerAI@users.noreply.github.com`. This lets GitHub associate the commits with the `EWorkerAI` project account without erasing their factual Codex attribution. Preserve the pre-normalization tip under a named evidence tag and publish an [old-to-new commit mapping](../Project/Bootstrap-Attribution-Migration.md) with tree-equivalence verification so qualification references remain auditable.
 
 The normalization changes commit identifiers. It does not retroactively add DCO sign-offs, change artifact bytes, claim that historical verification was rerun, or turn the GitHub account into the descriptive content author. New E-Worker project-generated commits use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as descriptive author and `E-Worker Inc <info@eworker.ca>` as responsible committer and DCO signer.
 

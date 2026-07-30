@@ -9,7 +9,7 @@ The official repository is `eworker-inc/Windvale`. It was created privately, is 
 ## Accepted publication choices
 
 - Before public visibility, normalize the bootstrap history's non-routable `codex@codex-dev-vm.local` email to the verified `EWorkerAI` project-account address while preserving the factual `Codex` names, source trees, messages, timestamps, and parent order.
-- Preserve the pre-normalization tip under the evidence tag `evidence/pre-eworkerai-linkage` and publish a complete old-to-new mapping with tree-equivalence checks.
+- Preserve the pre-normalization tip under the evidence tag `evidence/pre-eworkerai-linkage` and publish a [complete old-to-new mapping](Bootstrap-Attribution-Migration.md) with tree-equivalence checks.
 - Keep the currently configured shared development remote named `origin` during preparation.
 - Add GitHub as a separate remote named `github`; do not replace or mirror over `origin`.
 - Keep the existing GitHub repository private during normalization and inspection; do not change its visibility implicitly as part of a push.
