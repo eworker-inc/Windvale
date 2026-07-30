@@ -1,7 +1,7 @@
 # Decision 0033: Portable declaration and signature binding
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; exact cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `d57a6d8`
 
 ## Context
 
@@ -44,3 +44,5 @@ The directory and visibility matrix are deliberately narrow compiler data struct
 The exact candidate must pass the complete conformance and native CLI verifiers on Windows and Debian. Portable coverage includes valid cross-module signatures, transitive visibility, namespace conflicts, capability policy, reserved names, empty and duplicate record/enum members, unknown and inaccessible types, nested-record refusal, duplicate parameters, graph failure propagation, canonical nominal indices, and independent rejection of malformed WVSD values.
 
 Both hosts must produce identical symbol core, demo, and tool WVB files. The hosted tool must report the exact real compiler closure counts, normalized conformance reports must match, and all directly compared upstream and downstream artifacts must retain their identities.
+
+Candidate commit `d57a6d8` passed this gate from its exact archive on Windows x64 and Debian GNU/Linux 12 x64. Both hosts completed a zero-warning Release build, all 45 conformance tests, and the complete native CLI verifier. Their normalized reports matched, all 42 directly retrieved verifier artifacts were byte-identical, and the hosted tool produced the required real-closure report. The archive and resolved QA directory were removed after evidence retrieval.

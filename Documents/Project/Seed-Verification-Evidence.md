@@ -276,6 +276,24 @@ The Debian report is 14,428 bytes with SHA-256 `4d9b1f6276bcaf25a2799c33acebd68e
 
 This qualifies Decision 0030 and the import-topology slice of roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not qualify declaration namespaces, nominal layout, function signatures, body/local/call binding, expression types, control flow, typed WIR production, WVB encoding, closure of the 4 MiB versus 16 MiB source-envelope gap, bootstrap closure, native tooling, or any OS layer.
 
+## Portable declaration and signature binding qualification
+
+Candidate commit `d57a6d8` was archived as `windvale-source-symbols-d57a6d8.tar.gz`, 355,035 bytes with SHA-256 `258c3af559b65e9eb45251ff3b68087a959d58f2d53b5eac5b0f96340f6d3c90`, transferred with the same digest, and verified from that exact archive in `/tmp/windvale-source-symbols-d57a6d8` on the isolated Debian QA host. Windows and Debian GNU/Linux 12 x64 both completed the Release build with zero warnings/errors, all 45 tests, and the complete native CLI verifier. The QA host used .NET SDK `10.0.302`.
+
+The portable symbol phase validates the qualified graph, global namespace and capability rules, record/enum/function signature structure, transitive nominal visibility, canonical record-then-enum indices, and stable failure evidence. It publishes a `WVSD 1` fixed-entry declaration directory and a bounded visibility matrix only after independently validating the directory against every accepted source. Tests cover valid cross-module signatures; every namespace/constructor/capability refusal family; empty and duplicate record, enum, and parameter cases; unknown, inaccessible, and nested-record field types; graph failure propagation; canonical nominal lookup; and corrupted directory magic, counts, entries, and trailing bytes.
+
+The first bounded-rescan implementation exhausted 4,000,000,000 instructions after 248.1 seconds on the real compiler closure. Decision 0033 replaces that path with the independently validated directory and once-computed visibility matrix. The retained tool validated the 283,765-byte, eight-module closure under its explicit 4,000,000,000-instruction ceiling with this identical output on both hosts:
+
+```text
+source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=131 fields=289 members=181 parameters=582 directory-bytes=4072 visibility-bytes=64
+```
+
+Both hosts produced the exact 252,266-byte `Source-Symbols-Core.wvb` SHA-256 `79a60d3734c8c128af327b3c9e015bfa1f5b2c9d7b87abf4fb3fc2428d8bac3a`, 264,958-byte demo SHA-256 `476551cc0990588c3e782f45be83baebbcf3cd519cc0fe8dc17ccd67a7aa3714`, and 256,260-byte hosted tool SHA-256 `852dae1fe1962351e46a70e70bbdd4547814de17d75a8409e56aa0f94ccd7a4d`.
+
+The Debian report is 14,964 bytes with SHA-256 `bd514ce1a9ba154cde689e4b1cf4cac23f0b5c50d21b5e58e40074022a04e5dd`; the Windows report is 15,049 bytes with SHA-256 `2f9f0f62b8a98e411500ef34fe697936808c74b39bcfd915c6de780f6fffd1ff`. Their normalized contracts matched. All 42 directly retrieved top-level verifier artifacts, totaling 3,102,891 bytes, matched Windows byte for byte; these include the complete syntax/source-set/graph/symbol chain, Foundation dependencies, object/assembler/linker cores, canonical objects, images, maps, and existing golden modules. After evidence retrieval, the resolved exact QA directory and transferred archive were removed and confirmed absent.
+
+This qualifies Decision 0033 and the declaration/signature slice of roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not qualify body/local/call binding, expression types, control flow, typed WIR production, WVB encoding, closure of the 4 MiB versus 16 MiB source-envelope gap, bootstrap closure, native tooling, or any OS layer.
+
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
 Commit `9c4b9f5` was archived and transferred with matching SHA-256 `44565d0f6366eb418dc1a4555d1f7b355df63ec2ea836440de54639087fc335a`, then verified in the uniquely named disposable directory `/tmp/windvale-linker-9c4b9f5-20260730` on the isolated E-Worker QA host. The archive contained the canonical WVA fixture as 403 bytes plus the linker project, provider fixture, and shell verifier. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`. The verification did not use E-Worker release, configuration, service, or durable-data paths. The Debian report was retrieved with SHA-256 `b84cd3a180e8cb167dca3cf909457de91a8643f19911628c426c6e52c6fe5fc0`; the provider WVO, linked image, and canonical map were retrieved separately and each matched the Windows artifact byte for byte; then the resolved exact temporary directory and transferred archive were removed.
