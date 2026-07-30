@@ -22,7 +22,7 @@ internal static class Program
     private const string WVO_CORE_SHA256 = "76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a";
-    private const string WVLINK_CORE_SHA256 = "87fb5974d989d7b7870dab9a6fb4e1bb1bae8549bb90edf78f7bdfdf1824b822";
+    private const string WVLINK_CORE_SHA256 = "0b8d4ce09a043a675e64018c02fac94740b0b878a74801fc622ce7703e956b35";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
 
@@ -196,7 +196,7 @@ internal static class Program
         ("Windvale-written WVA assembler enforces source and token boundaries", Wvaˉassemblerˉcoreˉrecognizesˉsource),
         ("Windvale-written WVA assembler matches Stage 0 semantics and bytes", Wvaˉassemblerˉmatchesˉoracle),
         ("Windvale linker core scans WVO exactly at the hosted boundary", Wvˉlinkerˉcoreˉscansˉobjects),
-        ("Windvale linker resolves, lays out, and relocates deterministic images", Wvˉlinkerˉresolvesˉandˉlaysˉout),
+        ("Windvale linker reconstructs and verifies deterministic images", Wvˉlinkerˉresolvesˉandˉlaysˉout),
         ("Stage 0 linker resolves and verifies a canonical flat image", Linkerˉproducesˉcanonicalˉflatˉimage),
         ("Stage 0 linker rejects resolution, layout, and relocation failures", Linkerˉrejectsˉinvalidˉlinks),
         ("Stage 0 linker contains hostile objects and remains deterministic", Linkerˉcontainsˉhostileˉinput),
@@ -1512,6 +1512,10 @@ internal static class Program
         Contains(Inspection, "Validateˉimports");
         Contains(Inspection, "Measureˉlayout");
         Contains(Inspection, "Validateˉdefinitions");
+        Contains(Inspection, "Verifierˉplaceˉsection");
+        Contains(Inspection, "Verifierˉbuildˉunrelocatedˉimage");
+        Contains(Inspection, "Verifierˉapplyˉrelocationsˉreverse");
+        Contains(Inspection, "Acceptˉreconstructedˉimage");
 
         var Authorized = Module.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -1661,6 +1665,34 @@ internal static class Program
         Contains(
             Complete.Output,
             $"image sha256={Objectˉdigest.Calculateˉsha256(Completeˉoracle.Imageˉbytes.AsSpan())}");
+
+        var Maximumˉimageˉobject = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [
+                new(".text", Objectˉsectionˉkind.Code, 1, 1, [0xC3]),
+                new(".bss", Objectˉsectionˉkind.Zeroˉfill, 1, Linkˉlimits.MAX_IMAGE_BYTES - 1, []),
+            ],
+            [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 1)],
+            [])).ToImmutableArray();
+        var Maximumˉimageˉoracle = Linkˉsuccess(
+            [Maximumˉimageˉobject.ToArray()],
+            new(0, "Main"));
+        var Maximumˉimage = Runˉwvˉlinkerˉanalysisˉwithˉlimit(
+            Module,
+            "0",
+            "Main",
+            200_000_000,
+            Maximumˉimageˉobject);
+        Equal(0, Maximumˉimage.Exitˉcode);
+        Contains(Maximumˉimage.Output, "image-bytes=4194304");
+        Contains(
+            Maximumˉimage.Output,
+            $"image sha256={Objectˉdigest.Calculateˉsha256(Maximumˉimageˉoracle.Imageˉbytes.AsSpan())}");
+        Equal(1, Maximumˉimage.Readˉcount);
+        Equal(0, Maximumˉimage.Writeˉcount);
+        True(
+            Maximumˉimage.Executedˉinstructions < 200_000_000,
+            "The maximum-image verifier exhausted its explicit instruction budget.");
 
         var Undefined = Runˉwvˉlinkerˉanalysis(Module, "1048576", "Main", Mainˉobject);
         Equal(2, Undefined.Exitˉcode);
@@ -3530,6 +3562,21 @@ internal static class Program
         string entry,
         params ImmutableArray<byte>[] objects)
     {
+        return Runˉwvˉlinkerˉanalysisˉwithˉlimit(
+            module,
+            baseˉaddress,
+            entry,
+            20_000_000,
+            objects);
+    }
+
+    private static Wvˉlinkerˉanalysisˉresult Runˉwvˉlinkerˉanalysisˉwithˉlimit(
+        Verifiedˉmodule module,
+        string baseˉaddress,
+        string entry,
+        int maximumˉinstructions,
+        params ImmutableArray<byte>[] objects)
+    {
         var Arguments = ImmutableArray.CreateBuilder<string>(objects.Length + 3);
         Arguments.Add(baseˉaddress);
         Arguments.Add(entry);
@@ -3562,13 +3609,14 @@ internal static class Program
                 Diagnostics,
                 Reader,
                 Writer)),
-            new(Authorized, Maximumˉinstructions: 20_000_000)).Runˉmain();
+            new(Authorized, Maximumˉinstructions: maximumˉinstructions)).Runˉmain();
         return new(
             Result.Exitˉcode,
             Output.ToString(),
             Diagnostics.ToString(),
             Reader.Readˉcount,
-            Writer.Writeˉcount);
+            Writer.Writeˉcount,
+            Result.Executedˉinstructions);
     }
 
     private static bool Objectˉisˉvalid(ImmutableArray<byte> objectˉbytes)
@@ -3934,7 +3982,8 @@ internal static class Program
         string Output,
         string Diagnostics,
         int Readˉcount,
-        int Writeˉcount);
+        int Writeˉcount,
+        long Executedˉinstructions);
 
     private sealed class Capturingˉfileˉwriter : IHostedˉfileˉwriter
     {
