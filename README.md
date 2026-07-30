@@ -10,6 +10,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
 - Bounded deterministic compile-time source-module composition with explicit transitive dependencies and no runtime linkage
+- A first two-consumer portable Foundation module for bounded machine names and alignments, used by both the Windvale assembler and linker
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
@@ -84,6 +85,19 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Read-Wvb-Header.wvb
 
 It exercises `u8`, `u32`, immutable byte slices, and bounded little-endian reads and returns `Result: 1`.
 
+Compile and run the first shared Foundation contract:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Foundation/Machine-Contracts.wv -o artifacts/Machine-Contracts.wvb
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Foundation/Machine-Contracts-Demo.wv `
+  --module Foundation/Machine-Contracts.wv `
+  -o artifacts/Machine-Contracts-Demo.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Machine-Contracts-Demo.wvb
+```
+
+The module exposes the exact alignment and ASCII machine-name predicates shared by the Windvale assembler and linker. The boundary demo returns `Result: 0`.
+
 Compile and run the transitive source-module composition example:
 
 ```powershell
@@ -145,7 +159,10 @@ The Stage 0 assembler emits exact x86-64 instruction bytes, derives symbol offse
 Compile and run the Windvale-written WVA assembler against that source:
 
 ```powershell
-dotnet run --project Tools/Windvale.Tool -- compile Examples/Assembler/Wva-Assembler-Core.wv -o artifacts/Wva-Assembler-Core.wvb
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Assembler/Wva-Assembler-Core.wv `
+  --module Foundation/Machine-Contracts.wv `
+  -o artifacts/Wva-Assembler-Core.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Wva-Assembler-Core.wvb `
   --allow console.write_line `
   --allow diagnostic.write_line `
@@ -201,6 +218,7 @@ export fn Main() -> i32 {
 ## Repository layout
 
 - `Compiler/` — source lexer, parser, semantic analysis, typed WIR, and bytecode lowering
+- `Foundation/` — portable Windvale source modules with explicit multi-consumer contracts
 - `Assembler/Windvale.Assembler/` — WVA parser, semantic validation, x86-64 encoding, and WVO production
 - `Linker/Windvale.Linker/` — global symbol resolution, flat-image layout, relocation, independent verification, and canonical maps
 - `Runtime/Windvale.Bytecode/` — module contracts, codec, verifier, digest, and inspector
@@ -246,6 +264,7 @@ export fn Main() -> i32 {
 - [Windvale WVA assembler core](Specifications/Wva-Assembler-Core.md)
 - [Windvale linking contract](Specifications/Windvale-Linking.md)
 - [Windvale linker core](Specifications/Wv-Linker-Core.md)
+- [Foundation machine contracts](Specifications/Foundation-Machine-Contracts.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
@@ -267,6 +286,8 @@ export fn Main() -> i32 {
 - [Windvale immutable image and relocations decision](Documents/Decisions/0016-Windvale-Immutable-Image-And-Relocations.md)
 - [Independent Windvale image reconstruction decision](Documents/Decisions/0017-Independent-Windvale-Image-Reconstruction.md)
 - [Canonical Windvale map and publication decision](Documents/Decisions/0018-Canonical-Windvale-Map-And-Publication.md)
+- [Bounded static source-module composition decision](Documents/Decisions/0019-Bounded-Static-Source-Module-Composition.md)
+- [First two-consumer Foundation module decision](Documents/Decisions/0020-First-Two-Consumer-Foundation-Module.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

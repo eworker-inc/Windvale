@@ -48,6 +48,8 @@ $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $CompositionModule = Join-Path $Artifacts 'Module-Composition-Demo.wvb'
 $CompositionReorderedModule = Join-Path $Artifacts 'Module-Composition-Demo-Reordered.wvb'
 $InvalidCompositionModule = Join-Path $Artifacts '__windvale_invalid_composition_output__.wvb'
+$MachineContractsModule = Join-Path $Artifacts 'Machine-Contracts.wvb'
+$MachineContractsDemoModule = Join-Path $Artifacts 'Machine-Contracts-Demo.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -154,6 +156,37 @@ if ([Convert]::ToHexString([System.IO.File]::ReadAllBytes($InvalidCompositionMod
     throw 'A rejected source-module composition modified an existing output module.'
 }
 Remove-Item -LiteralPath $InvalidCompositionModule -Force
+
+$MachineContractsSource = Join-Path $RepositoryRoot 'Foundation/Machine-Contracts.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $MachineContractsSource -o $MachineContractsModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation machine contracts.' }
+$MachineContractsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $MachineContractsModule).Hash.ToLowerInvariant()
+if ($MachineContractsHash -ne '9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a') {
+    throw "The Foundation machine-contract module has an unexpected digest: $MachineContractsHash"
+}
+$MachineContractsInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $MachineContractsModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $MachineContractsInspection -notmatch 'Foundationˉalignmentˉisˉvalid' -or
+    $MachineContractsInspection -notmatch 'Foundationˉmachineˉnameˉisˉvalid' -or
+    $MachineContractsInspection -notmatch 'Exports \(2\)'
+) {
+    throw 'The Foundation machine-contract module inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Machine-Contracts-Demo.wv') `
+    --module $MachineContractsSource `
+    -o $MachineContractsDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation machine-contract demo.' }
+$MachineContractsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $MachineContractsDemoModule).Hash.ToLowerInvariant()
+if ($MachineContractsDemoHash -ne 'b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a') {
+    throw "The Foundation machine-contract demo has an unexpected digest: $MachineContractsDemoHash"
+}
+$MachineContractsDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $MachineContractsDemoModule
+if ($LASTEXITCODE -ne 0 -or $MachineContractsDemoOutput -notcontains 'Result: 0') {
+    throw 'The Foundation machine-contract demo did not return Result: 0.'
+}
 
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wv-Dump-Core.wv.' }
@@ -320,7 +353,10 @@ if ($LASTEXITCODE -ne 3 -or ($WvoMissingParentOutput -join "`n") -notmatch 'WVR3
     throw 'The hosted file writer did not report a missing parent deterministically.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Assembler/Wva-Assembler-Core.wv') -o $WvaAssemblerModule
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Assembler/Wva-Assembler-Core.wv') `
+    --module $MachineContractsSource `
+    -o $WvaAssemblerModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wva-Assembler-Core.wv.' }
 
 $WvaAssemblerVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvaAssemblerModule
@@ -337,6 +373,7 @@ if (
     $WvaAssemblerInspection -notmatch 'Encodeˉsections' -or
     $WvaAssemblerInspection -notmatch 'Encodeˉsymbols' -or
     $WvaAssemblerInspection -notmatch 'Encodeˉrelocations' -or
+    $WvaAssemblerInspection -notmatch 'Foundationˉmachineˉnameˉisˉvalid' -or
     $WvaAssemblerInspection -notmatch 'bytes\.concat' -or
     $WvaAssemblerInspection -notmatch 'bytes\.from_u32_little' -or
     $WvaAssemblerInspection -notmatch 'file\.read_bytes' -or
@@ -365,7 +402,10 @@ if ($LASTEXITCODE -ne 0 -or $WvaAssemblerSelfTestOutput -notcontains 'Result: 0'
     throw 'The Windvale WVA assembler self-test did not return Result: 0.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Linker/Wv-Linker-Core.wv') -o $WvLinkerCoreModule
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Linker/Wv-Linker-Core.wv') `
+    --module $MachineContractsSource `
+    -o $WvLinkerCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale linker core.' }
 
 $WvLinkerVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvLinkerCoreModule
@@ -393,6 +433,7 @@ if (
     $WvLinkerInspection -notmatch 'Acceptedˉobjectˉview' -or
     $WvLinkerInspection -notmatch 'Definitionˉmapˉminimumˉexceedsˉlimit' -or
     $WvLinkerInspection -notmatch 'Buildˉcanonicalˉmap' -or
+    $WvLinkerInspection -notmatch 'Foundationˉalignmentˉisˉvalid' -or
     $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
     $WvLinkerInspection -notmatch 'bytes\.sha256_hex' -or
     $WvLinkerInspection -notmatch 'file\.read_bytes' -or

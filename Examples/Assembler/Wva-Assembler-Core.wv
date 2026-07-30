@@ -1,5 +1,7 @@
 module Wvaˉassemblerˉcore profile hosted;
 
+import Foundationˉmachineˉcontracts;
+
 capability console.write_line;
 capability diagnostic.write_line;
 capability file.read_bytes;
@@ -603,30 +605,7 @@ fn Compareˉspans(
 }
 
 fn Machineˉnameˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
-    if Value.Length == 0u32 { return false; }
-    if Value.Length > 255u32 { return false; }
-    var Index: u32 = 0u32;
-    while Index < Value.Length {
-        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Value.Offset + Index));
-        var Allowed: bool = false;
-        if Character >= 65u32 {
-            if Character <= 90u32 { Allowed = true; }
-        }
-        if Character >= 97u32 {
-            if Character <= 122u32 { Allowed = true; }
-        }
-        if Character == 95u32 { Allowed = true; }
-        if Character == 46u32 { Allowed = true; }
-        if Character == 36u32 { Allowed = true; }
-        if Index > 0u32 {
-            if Character >= 48u32 {
-                if Character <= 57u32 { Allowed = true; }
-            }
-        }
-        if !Allowed { return false; }
-        Index = Index + 1u32;
-    }
-    return true;
+    return Foundationˉmachineˉnameˉisˉvalid(Bytesˉslice(Input, Value.Offset, Value.Length));
 }
 
 fn Bindingˉtag(Input: bytes, Value: Wvaˉtoken) -> u32 {
@@ -659,22 +638,6 @@ fn Registerˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
     if Tokenˉequalsˉtext(Input, Value, "ebp") { return true; }
     if Tokenˉequalsˉtext(Input, Value, "esi") { return true; }
     return Tokenˉequalsˉtext(Input, Value, "edi");
-}
-
-fn Alignmentˉisˉvalid(Value: u32) -> bool {
-    if Value == 1u32 { return true; }
-    if Value == 2u32 { return true; }
-    if Value == 4u32 { return true; }
-    if Value == 8u32 { return true; }
-    if Value == 16u32 { return true; }
-    if Value == 32u32 { return true; }
-    if Value == 64u32 { return true; }
-    if Value == 128u32 { return true; }
-    if Value == 256u32 { return true; }
-    if Value == 512u32 { return true; }
-    if Value == 1024u32 { return true; }
-    if Value == 2048u32 { return true; }
-    return Value == 4096u32;
 }
 
 fn Parseˉu32(Input: bytes, Value: Wvaˉtoken) -> Wvaˉu32ˉparse {
@@ -1509,7 +1472,7 @@ fn Inspectˉwvaˉsemantics(Input: bytes) -> Wvaˉsemanticˉinspection {
                             Totalˉmemory
                         );
                     }
-                    if !Alignmentˉisˉvalid(Alignment.Value) {
+                    if !Foundationˉalignmentˉisˉvalid(Alignment.Value) {
                         return Structuralˉfailure(
                             Wvaˉsemanticˉstatus.Wva1005,
                             Alignmentˉtoken,

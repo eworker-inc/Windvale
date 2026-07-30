@@ -21,11 +21,13 @@ internal static class Program
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_ASSEMBLER_CORE_SHA256 = "9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a";
-    private const string WVLINK_CORE_SHA256 = "8d3cb567f6985077b3ad487627bf77a20326b4bc02bcab8d938354f48d339cfd";
+    private const string WVA_ASSEMBLER_CORE_SHA256 = "5043d1b47686af72c04209875845021862dc664f960dae0a2c1d7babe051d842";
+    private const string WVLINK_CORE_SHA256 = "ffedbf10782850c3cd693c4d8dc2b88b67b33a19714a0d8a489adb9fb728c96e";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string SOURCE_COMPOSITION_SHA256 = "5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612";
+    private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
+    private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -191,6 +193,12 @@ internal static class Program
     private static readonly string WVO_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wvo-Object-Core.wv");
 
+    private static readonly string MACHINE_CONTRACTS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Machine-Contracts.wv");
+
+    private static readonly string MACHINE_CONTRACTS_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Machine-Contracts-Demo.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -210,6 +218,7 @@ internal static class Program
         ("hosted resources are explicit, separated, and bounded", Hostedˉresourcesˉareˉbounded),
         ("compiler output is deterministic and canonical", Compilerˉisˉdeterministic),
         ("bounded source modules compose deterministically before bytecode lowering", Sourceˉmodulesˉcompose),
+        ("Foundation machine contracts are shared, bounded, and portable", Foundationˉmachineˉcontractsˉrun),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
@@ -709,6 +718,29 @@ internal static class Program
         Hasˉdiagnostic(
             Seedˉcompiler.Compileˉmodules(new("root.wv", COMPOSITION_ROOT_SOURCE), Excessˉmodules),
             "WVC0002");
+    }
+
+    private static void Foundationˉmachineˉcontractsˉrun()
+    {
+        var Libraryˉbytes = Compileˉsuccess(MACHINE_CONTRACTS_SOURCE);
+        var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
+        Equal("Foundationˉmachineˉcontracts", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Sequenceˉequal(
+            ["Foundationˉalignmentˉisˉvalid", "Foundationˉmachineˉnameˉisˉvalid"],
+            Library.Module.Exports.Select(Export => Export.Name));
+
+        var Demoˉbytes = Compileˉwithˉmachineˉcontractsˉsuccess(
+            MACHINE_CONTRACTS_DEMO_SOURCE,
+            "Machine-Contracts-Demo.wv");
+        var Demo = Moduleˉcodec.Readˉandˉverify(Demoˉbytes);
+        Sequenceˉequal(["Main"], Demo.Module.Exports.Select(Export => Export.Name));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Demo,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
     }
 
     private static void Moduleˉroundˉtrip()
@@ -1677,7 +1709,9 @@ internal static class Program
 
     private static void Wvˉlinkerˉcoreˉscansˉobjects()
     {
-        var Moduleˉbytes = Compileˉsuccess(WVLINK_CORE_SOURCE);
+        var Moduleˉbytes = Compileˉwithˉmachineˉcontractsˉsuccess(
+            WVLINK_CORE_SOURCE,
+            "Wv-Linker-Core.wv");
         var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
         Equal("Wvˉlinkerˉcore", Module.Module.Name);
         Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
@@ -1791,7 +1825,9 @@ internal static class Program
 
     private static void Wvˉlinkerˉresolvesˉandˉlaysˉout()
     {
-        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(WVLINK_CORE_SOURCE));
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉwithˉmachineˉcontractsˉsuccess(
+            WVLINK_CORE_SOURCE,
+            "Wv-Linker-Core.wv"));
         var Mainˉobject = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE).ToImmutableArray();
         var Providerˉobject = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE).ToImmutableArray();
 
@@ -2204,7 +2240,9 @@ internal static class Program
 
     private static void Wvaˉassemblerˉcoreˉrecognizesˉsource()
     {
-        var Moduleˉbytes = Compileˉsuccess(WVA_ASSEMBLER_CORE_SOURCE);
+        var Moduleˉbytes = Compileˉwithˉmachineˉcontractsˉsuccess(
+            WVA_ASSEMBLER_CORE_SOURCE,
+            "Wva-Assembler-Core.wv");
         Equal(WVA_ASSEMBLER_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
         var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
         Equal("Wvaˉassemblerˉcore", Module.Module.Name);
@@ -2361,7 +2399,9 @@ internal static class Program
 
     private static void Wvaˉassemblerˉmatchesˉoracle()
     {
-        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(WVA_ASSEMBLER_CORE_SOURCE));
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉwithˉmachineˉcontractsˉsuccess(
+            WVA_ASSEMBLER_CORE_SOURCE,
+            "Wva-Assembler-Core.wv"));
         var Authorized = Module.Module.Capabilities
             .Select(Capability => Capability.Name)
             .ToImmutableHashSet(StringComparer.Ordinal);
@@ -3462,10 +3502,18 @@ internal static class Program
         var Sourceˉcompositionˉbytes = Compileˉcompositionˉsuccess(
             new("middle.wv", COMPOSITION_MIDDLE_SOURCE),
             new("leaf.wv", COMPOSITION_LEAF_SOURCE));
+        var Machineˉcontractsˉbytes = Compileˉsuccess(MACHINE_CONTRACTS_SOURCE);
+        var Machineˉcontractsˉdemoˉbytes = Compileˉwithˉmachineˉcontractsˉsuccess(
+            MACHINE_CONTRACTS_DEMO_SOURCE,
+            "Machine-Contracts-Demo.wv");
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉsuccess(WVO_CORE_SOURCE);
-        var Wvaˉassemblerˉbytes = Compileˉsuccess(WVA_ASSEMBLER_CORE_SOURCE);
-        var Wvˉlinkerˉbytes = Compileˉsuccess(WVLINK_CORE_SOURCE);
+        var Wvaˉassemblerˉbytes = Compileˉwithˉmachineˉcontractsˉsuccess(
+            WVA_ASSEMBLER_CORE_SOURCE,
+            "Wva-Assembler-Core.wv");
+        var Wvˉlinkerˉbytes = Compileˉwithˉmachineˉcontractsˉsuccess(
+            WVLINK_CORE_SOURCE,
+            "Wv-Linker-Core.wv");
         var Wvoˉsampleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
         var Assemblyˉobjectˉbytes = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE);
         var Providerˉobjectˉbytes = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE);
@@ -3476,6 +3524,8 @@ internal static class Program
         var Helloˉhash = Moduleˉdigest.Calculateˉsha256(Helloˉbytes);
         var Foundationˉhash = Moduleˉdigest.Calculateˉsha256(Foundationˉbytes);
         var Sourceˉcompositionˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉcompositionˉbytes);
+        var Machineˉcontractsˉhash = Moduleˉdigest.Calculateˉsha256(Machineˉcontractsˉbytes);
+        var Machineˉcontractsˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Machineˉcontractsˉdemoˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
@@ -3489,6 +3539,8 @@ internal static class Program
         Equal(HELLO_SHA256, Helloˉhash);
         Equal(FOUNDATION_SHA256, Foundationˉhash);
         Equal(SOURCE_COMPOSITION_SHA256, Sourceˉcompositionˉhash);
+        Equal(MACHINE_CONTRACTS_SHA256, Machineˉcontractsˉhash);
+        Equal(MACHINE_CONTRACTS_DEMO_SHA256, Machineˉcontractsˉdemoˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
@@ -3518,6 +3570,10 @@ internal static class Program
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
         var Sourceˉcompositionˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sourceˉcompositionˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        var Machineˉcontractsˉdemoˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Machineˉcontractsˉdemoˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
         var Wvˉdumpˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes);
@@ -3652,6 +3708,7 @@ internal static class Program
         Equal(0, Helloˉresult.Exitˉcode);
         Equal(1, Foundationˉresult.Exitˉcode);
         Equal(42, Sourceˉcompositionˉresult.Exitˉcode);
+        Equal(0, Machineˉcontractsˉdemoˉresult.Exitˉcode);
         Equal(0, Wvˉdumpˉresult.Exitˉcode);
         Equal(0, Wvˉdumpˉhostedˉresult.Exitˉcode);
         Equal(string.Empty, Wvˉdumpˉhostedˉdiagnostics.ToString());
@@ -3716,6 +3773,9 @@ internal static class Program
             Foundationˉresult.Exitˉcode,
             Sourceˉcompositionˉhash,
             Sourceˉcompositionˉresult.Exitˉcode,
+            Machineˉcontractsˉhash,
+            Machineˉcontractsˉdemoˉhash,
+            Machineˉcontractsˉdemoˉresult.Exitˉcode,
             Wvˉdumpˉhash,
             Wvˉdumpˉresult.Exitˉcode,
             Normalizedˉwvdumpˉoutput,
@@ -3909,6 +3969,20 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Source-module compilation failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉmachineˉcontractsˉsuccess(string source, string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [new("Foundation/Machine-Contracts.wv", MACHINE_CONTRACTS_SOURCE)]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Foundation composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();
@@ -4314,6 +4388,9 @@ internal static class Program
         [property: JsonPropertyName("foundationResult")] int Foundationˉresult,
         [property: JsonPropertyName("sourceCompositionSha256")] string Sourceˉcompositionˉsha256,
         [property: JsonPropertyName("sourceCompositionResult")] int Sourceˉcompositionˉresult,
+        [property: JsonPropertyName("machineContractsSha256")] string Machineˉcontractsˉsha256,
+        [property: JsonPropertyName("machineContractsDemoSha256")] string Machineˉcontractsˉdemoˉsha256,
+        [property: JsonPropertyName("machineContractsDemoResult")] int Machineˉcontractsˉdemoˉresult,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
         [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
         [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput,

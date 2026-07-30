@@ -44,6 +44,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - Tokenization and strict string-literal handling
 - Recursive-descent and precedence parsing
 - Explicit bounded source-module graph validation and deterministic static composition
+- Portable Foundation source contracts used by multiple Windvale-written tools
 - Module, capability, data, record, enum, function, local, and nominal type binding
 - Typed, stack-independent WIR with explicit blocks and terminators
 - Deterministic lowering from WIR into stack bytecode
@@ -143,10 +144,12 @@ The current bytecode 1.6 golden modules are:
 - `Helloˉwindvale`: `bcf6597a27384661d2796f1dd8ee6e24cce8e6c7cb84def3b7826a564acb7d54`
 - `Readˉwvbˉheader`: `72ae31559bb3335b320328c26e70518b6a0f3e617d099d41b328b066bb3784c7`
 - `Compositionˉdemo`: `5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612`
+- `Foundationˉmachineˉcontracts`: `9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a`
+- `Machineˉcontractsˉdemo`: `b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a`
 - `Wvˉdumpˉcore`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`
 - `Wvoˉobjectˉcore`: `76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b`
-- `Wvaˉassemblerˉcore`: `9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a`
-- `Wvˉlinkerˉcore`: `8d3cb567f6985077b3ad487627bf77a20326b4bc02bcab8d938354f48d339cfd`
+- `Wvaˉassemblerˉcore`: `5043d1b47686af72c04209875845021862dc664f960dae0a2c1d7babe051d842`
+- `Wvˉlinkerˉcore`: `ffedbf10782850c3cd693c4d8dc2b88b67b33a19714a0d8a489adb9fb728c96e`
 
 The canonical WVO 1.0 representative object is 189 bytes with SHA-256 `006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a`.
 

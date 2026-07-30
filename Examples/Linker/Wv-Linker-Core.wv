@@ -1,5 +1,7 @@
 module Wvˉlinkerˉcore profile hosted;
 
+import Foundationˉmachineˉcontracts;
+
 capability console.write;
 capability diagnostic.write_line;
 capability file.read_bytes;
@@ -226,22 +228,7 @@ fn Rangeˉisˉinside(Total: u32, Offset: u32, Length: u32) -> bool {
     return Length <= Total - Offset;
 }
 
-fn Alignmentˉisˉvalid(Value: u32) -> bool {
-    if Value == 1u32 { return true; }
-    if Value == 2u32 { return true; }
-    if Value == 4u32 { return true; }
-    if Value == 8u32 { return true; }
-    if Value == 16u32 { return true; }
-    if Value == 32u32 { return true; }
-    if Value == 64u32 { return true; }
-    if Value == 128u32 { return true; }
-    if Value == 256u32 { return true; }
-    if Value == 512u32 { return true; }
-    if Value == 1024u32 { return true; }
-    if Value == 2048u32 { return true; }
-    return Value == 4096u32;
-}
-
+// The scanner retains this local predicate so it can report the exact first bad byte.
 fn Nameˉcharacterˉisˉvalid(Value: u32, First: bool) -> bool {
     if Value >= 65u32 {
         if Value <= 90u32 { return true; }
@@ -573,7 +560,7 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉscan {
         let Alignment: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
         let Memoryˉsize: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
         let Dataˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
-        if !Alignmentˉisˉvalid(Alignment) { return Invalidˉscan(Wvoˉstatus.Invalidˉsection, Sectionˉcount, Symbolˉcount, Relocationˉcount, Cursor + 4u32); }
+        if !Foundationˉalignmentˉisˉvalid(Alignment) { return Invalidˉscan(Wvoˉstatus.Invalidˉsection, Sectionˉcount, Symbolˉcount, Relocationˉcount, Cursor + 4u32); }
         if Sectionˉkind == 4u32 {
             if Dataˉlength != 0u32 { return Invalidˉscan(Wvoˉstatus.Invalidˉsection, Sectionˉcount, Symbolˉcount, Relocationˉcount, Cursor + 12u32); }
             if Memoryˉsize == 0u32 { return Invalidˉscan(Wvoˉstatus.Invalidˉsection, Sectionˉcount, Symbolˉcount, Relocationˉcount, Cursor + 8u32); }
@@ -794,19 +781,6 @@ fn Parseˉu32ˉdecimal(Input: bytes) -> U32ˉparse {
         Index = Index + 1u32;
     }
     return U32ˉparse(true, Value);
-}
-
-fn Machineˉnameˉisˉvalid(Input: bytes) -> bool {
-    let Length: u32 = Bytesˉlength(Input);
-    if Length == 0u32 { return false; }
-    if Length > 255u32 { return false; }
-    var Index: u32 = 0u32;
-    while Index < Length {
-        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Index));
-        if !Nameˉcharacterˉisˉvalid(Character, Index == 0u32) { return false; }
-        Index = Index + 1u32;
-    }
-    return true;
 }
 
 fn Compareˉnamesˉacross(
@@ -1221,7 +1195,7 @@ fn Analyzeˉlink(
     if Inputˉcount > 64u32 {
         return Invalidˉlinkˉanalysis(Linkˉstatus.WVL1001, 4294967295u32, Inputˉcount, Emptyˉaggregate);
     }
-    if !Machineˉnameˉisˉvalid(Entryˉname) {
+    if !Foundationˉmachineˉnameˉisˉvalid(Entryˉname) {
         return Invalidˉlinkˉanalysis(Linkˉstatus.WVL1001, 4294967295u32, Inputˉcount, Emptyˉaggregate);
     }
 
