@@ -263,8 +263,18 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.Textˉutf8ˉisˉvalid:
                 case Wirˉoperation.Textˉfromˉutf8:
                 case Wirˉoperation.Textˉquote:
+                case Wirˉoperation.Bytesˉfromˉu8:
+                case Wirˉoperation.Bytesˉfromˉu16ˉlittle:
+                case Wirˉoperation.Bytesˉfromˉu32ˉlittle:
+                case Wirˉoperation.Bytesˉfromˉi32ˉlittle:
+                case Wirˉoperation.Textˉtoˉutf8:
                     Loadˉtemporary(instruction.Operands[0]);
                     Emitˉnone(Mapˉopcode(instruction.Operation), pop: 1, push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.Bytesˉconcat:
+                    Loadˉarguments(instruction.Operands);
+                    Emitˉnone(Opcode.Bytesˉconcat, pop: 2, push: 1);
                     Storeˉresult(instruction);
                     break;
                 case Wirˉoperation.Callˉfunction:
@@ -525,6 +535,12 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.Textˉutf8ˉisˉvalid => Opcode.Textˉutf8ˉisˉvalid,
                 Wirˉoperation.Textˉfromˉutf8 => Opcode.Textˉfromˉutf8,
                 Wirˉoperation.Textˉquote => Opcode.Textˉquote,
+                Wirˉoperation.Bytesˉconcat => Opcode.Bytesˉconcat,
+                Wirˉoperation.Bytesˉfromˉu8 => Opcode.Bytesˉfromˉu8,
+                Wirˉoperation.Bytesˉfromˉu16ˉlittle => Opcode.Bytesˉfromˉu16ˉlittle,
+                Wirˉoperation.Bytesˉfromˉu32ˉlittle => Opcode.Bytesˉfromˉu32ˉlittle,
+                Wirˉoperation.Bytesˉfromˉi32ˉlittle => Opcode.Bytesˉfromˉi32ˉlittle,
+                Wirˉoperation.Textˉtoˉutf8 => Opcode.Textˉtoˉutf8,
                 _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),
             };
         }

@@ -9,24 +9,24 @@ capability process.argument_count;
 data Shortˉmodule: bytes = [87];
 
 data Badˉmagicˉmodule: bytes = [
-    0, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0
+    0, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0
 ];
 
 data Badˉversionˉmodule: bytes = [
-    87, 86, 66, 49, 2, 0, 4, 0, 7, 0, 0, 0
+    87, 86, 66, 49, 2, 0, 5, 0, 7, 0, 0, 0
 ];
 
 data Badˉcountˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 4, 0, 6, 0, 0, 0
+    87, 86, 66, 49, 1, 0, 5, 0, 6, 0, 0, 0
 ];
 
 data Hostileˉlengthˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 255, 255, 255, 255
 ];
 
 data Validˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -37,7 +37,7 @@ data Validˉmodule: bytes = [
 ];
 
 data Badˉkindˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -48,7 +48,7 @@ data Badˉkindˉmodule: bytes = [
 ];
 
 data Badˉflagsˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 1, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -59,7 +59,7 @@ data Badˉflagsˉmodule: bytes = [
 ];
 
 data Truncatedˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -70,7 +70,7 @@ data Truncatedˉmodule: bytes = [
 ];
 
 data Trailingˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -303,7 +303,7 @@ fn Opcodeˉsize(Raw: u32) -> u32 {
         return 9u32;
     }
     if Raw >= 107u32 {
-        if Raw <= 118u32 {
+        if Raw <= 124u32 {
             return 1u32;
         }
     }
@@ -368,7 +368,7 @@ fn Inspectˉwvbˉenvelope(Input: bytes) -> Wvbˉinspection {
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
         return Wvbˉinspection(Wvbˉstatus.Badˉversion, 0u32, 4u32);
     }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 4u32 {
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 5u32 {
         return Wvbˉinspection(Wvbˉstatus.Badˉversion, 0u32, 6u32);
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
@@ -982,7 +982,13 @@ fn Opcodeˉname(Raw: u32) -> text {
     if Raw == 115u32 { return "text.utf8_is_valid"; }
     if Raw == 116u32 { return "text.from_utf8"; }
     if Raw == 117u32 { return "text.quote"; }
-    return "u32.from_u8";
+    if Raw == 118u32 { return "u32.from_u8"; }
+    if Raw == 119u32 { return "bytes.concat"; }
+    if Raw == 120u32 { return "bytes.from_u8"; }
+    if Raw == 121u32 { return "bytes.from_u16_little"; }
+    if Raw == 122u32 { return "bytes.from_u32_little"; }
+    if Raw == 123u32 { return "bytes.from_i32_little"; }
+    return "text.to_utf8";
 }
 
 fn Writeˉsectionˉline(Name: text, Section: Wvbˉsection, Count: u32) -> void {
@@ -996,7 +1002,7 @@ fn Writeˉsectionˉline(Name: text, Section: Wvbˉsection, Count: u32) -> void {
 fn Writeˉmoduleˉline(Input: bytes, Section: Wvbˉsection) -> void {
     let Profile: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Section.Payloadˉoffset));
     let Nameˉcursor: u32 = Section.Payloadˉoffset + 1u32;
-    var Line: text = "module version=1.4";
+    var Line: text = "module version=1.5";
     Line = Textˉconcat(Line, Textˉconcat(" profile=", Profileˉname(Profile)));
     Line = Textˉconcat(Line, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Nameˉcursor)));
     console.write_line(Line);

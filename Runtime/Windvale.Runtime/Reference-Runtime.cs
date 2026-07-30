@@ -337,6 +337,51 @@ public sealed class Referenceˉruntime
                     case Opcode.Textˉquote:
                         Stack.Add(Runtimeˉvalue.Fromˉtext(Quoteˉtext(Pop(Stack).Textˉvalue!)));
                         break;
+                    case Opcode.Bytesˉconcat:
+                        var Rightˉbytes = Pop(Stack).Bytesˉvalue;
+                        var Leftˉbytes = Pop(Stack).Bytesˉvalue;
+                        Stack.Add(Runtimeˉvalue.Fromˉbytes(Concatˉbytes(Leftˉbytes, Rightˉbytes)));
+                        break;
+                    case Opcode.Bytesˉfromˉu8:
+                        Stack.Add(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(Pop(Stack).U8ˉvalue)));
+                        break;
+                    case Opcode.Bytesˉfromˉu16ˉlittle:
+                        var U16ˉvalue = Pop(Stack).U32ˉvalue;
+                        if (U16ˉvalue > ushort.MaxValue)
+                        {
+                            throw new Runtimeˉexception(
+                                "WVR3016",
+                                $"Bytesˉfromˉu16ˉlittle received {U16ˉvalue}; the maximum is {ushort.MaxValue}.");
+                        }
+
+                        var U16ˉbytes = new byte[sizeof(ushort)];
+                        BinaryPrimitives.WriteUInt16LittleEndian(U16ˉbytes, (ushort)U16ˉvalue);
+                        Stack.Add(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U16ˉbytes)));
+                        break;
+                    case Opcode.Bytesˉfromˉu32ˉlittle:
+                        var U32ˉbytes = new byte[sizeof(uint)];
+                        BinaryPrimitives.WriteUInt32LittleEndian(U32ˉbytes, Pop(Stack).U32ˉvalue);
+                        Stack.Add(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U32ˉbytes)));
+                        break;
+                    case Opcode.Bytesˉfromˉi32ˉlittle:
+                        var I32ˉbytes = new byte[sizeof(int)];
+                        BinaryPrimitives.WriteInt32LittleEndian(I32ˉbytes, Pop(Stack).I32ˉvalue);
+                        Stack.Add(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(I32ˉbytes)));
+                        break;
+                    case Opcode.Textˉtoˉutf8:
+                        try
+                        {
+                            Stack.Add(Runtimeˉvalue.Fromˉbytes(
+                                ImmutableArray.Create(STRICT_UTF8.GetBytes(Pop(Stack).Textˉvalue!))));
+                        }
+                        catch (EncoderFallbackException)
+                        {
+                            throw new Runtimeˉexception(
+                                "WVR3014",
+                                "Textˉtoˉutf8 received an invalid Unicode value.");
+                        }
+
+                        break;
                     case Opcode.Recordˉcreate:
                         var Recordˉtype = (Recordˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
                             (int)Instruction.Unsignedˉoperand];
@@ -640,6 +685,24 @@ public sealed class Referenceˉruntime
         {
             return false;
         }
+    }
+
+    private static ImmutableArray<byte> Concatˉbytes(
+        Runtimeˉbyteˉslice left,
+        Runtimeˉbyteˉslice right)
+    {
+        var Length = checked(left.Length + right.Length);
+        if (Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+        {
+            throw new Runtimeˉexception(
+                "WVR3015",
+                $"Concatenated byte result exceeds the byte-value limit {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}.");
+        }
+
+        var Result = new byte[Length];
+        left.Asˉspan().CopyTo(Result);
+        right.Asˉspan().CopyTo(Result.AsSpan(left.Length));
+        return ImmutableArray.Create(Result);
     }
 
     private static string Quoteˉtext(string value)

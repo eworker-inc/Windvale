@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
+    <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
   </ItemGroup>
@@ -13,5 +14,8 @@
     <EmbeddedResource
       Include="../../Examples/Foundation/Wv-Dump-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wv-Dump-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Foundation/Wvo-Object-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Wvo-Object-Core.wv" />
   </ItemGroup>
 </Project>

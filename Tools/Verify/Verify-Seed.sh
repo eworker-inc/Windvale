@@ -22,6 +22,8 @@ SUM_MODULE="$ARTIFACTS/Sum-Data.wvb"
 HELLO_MODULE="$ARTIFACTS/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
+WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
+WVO_SAMPLE="$ARTIFACTS/Sample.wvo"
 dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" -o "$SUM_MODULE"
 
@@ -114,7 +116,7 @@ WVDUMP_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CO
     --max-steps 10000000 \
     -- "$SUM_MODULE")
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'wvdump 1' >/dev/null
-printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'module version=1.4 profile=portable name="Sum\u02C9data"' >/dev/null
+printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'module version=1.5 profile=portable name="Sum\u02C9data"' >/dev/null
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'data index=0 name="Values" type=i32_array elements=4' >/dev/null
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'instruction function=1 offset=141 opcode=call operand=0' >/dev/null
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'export index=0 name="Main" kind=function target=1' >/dev/null
@@ -169,6 +171,106 @@ if [ "$WVDUMP_INVALID_NAME_EXIT" -ne 3 ]; then
     exit 1
 fi
 printf '%s\n' "$WVDUMP_INVALID_NAME_OUTPUT" | grep -F 'WVR3021' >/dev/null
+
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Foundation/Wvo-Object-Core.wv" -o "$WVO_CORE_MODULE"
+
+WVO_CORE_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVO_CORE_MODULE")
+printf '%s\n' "$WVO_CORE_VERIFY_OUTPUT" | grep -F 'Verified: Wvoˉobjectˉcore' >/dev/null
+
+WVO_CORE_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$WVO_CORE_MODULE")
+printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.concat' >/dev/null
+printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.from_u16_little' >/dev/null
+printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.from_i32_little' >/dev/null
+printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'text.to_utf8' >/dev/null
+printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null
+
+set +e
+WVO_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVO_CORE_MODULE" 2>&1)
+WVO_UNAUTHORIZED_EXIT=$?
+set -e
+if [ "$WVO_UNAUTHORIZED_EXIT" -ne 3 ]; then
+    echo "Expected unauthorized WVO writer run exit 3, found $WVO_UNAUTHORIZED_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$WVO_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
+
+WVO_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVO_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000)
+printf '%s\n' "$WVO_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+WVO_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVO_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000 \
+    -- "$WVO_SAMPLE")
+printf '%s\n' "$WVO_HOSTED_OUTPUT" | grep -F 'Wrote WVO 1.0 bytes=189' >/dev/null
+printf '%s\n' "$WVO_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+WVO_HASH=$(sha256sum "$WVO_SAMPLE" | awk '{print $1}')
+if [ "$WVO_HASH" != '006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a' ]; then
+    echo "The Windvale object core wrote unexpected bytes: $WVO_HASH" >&2
+    exit 1
+fi
+
+WVO_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-verify "$WVO_SAMPLE")
+printf '%s\n' "$WVO_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
+
+WVO_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-inspect "$WVO_SAMPLE")
+printf '%s\n' "$WVO_INSPECTION" | grep -F 'Sections (2)' >/dev/null
+printf '%s\n' "$WVO_INSPECTION" | grep -F 'Console_write binding=Import' >/dev/null
+printf '%s\n' "$WVO_INSPECTION" | grep -F 'kind=Relativeˉi32 section=0 offset=1 symbol=2 addend=-4' >/dev/null
+
+set +e
+WVO_INVALID_NAME_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVO_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000 \
+    -- '' 2>&1)
+WVO_INVALID_NAME_EXIT=$?
+set -e
+if [ "$WVO_INVALID_NAME_EXIT" -ne 3 ]; then
+    echo "Expected invalid hosted file writer name exit 3, found $WVO_INVALID_NAME_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$WVO_INVALID_NAME_OUTPUT" | grep -F 'WVR3021' >/dev/null
+
+MISSING_WRITER_PARENT="$ARTIFACTS/__windvale_missing_writer_parent__"
+if [ -e "$MISSING_WRITER_PARENT" ]; then
+    echo "The missing writer parent unexpectedly exists: $MISSING_WRITER_PARENT" >&2
+    exit 1
+fi
+set +e
+WVO_MISSING_PARENT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVO_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000 \
+    -- "$MISSING_WRITER_PARENT/Sample.wvo" 2>&1)
+WVO_MISSING_PARENT_EXIT=$?
+set -e
+if [ "$WVO_MISSING_PARENT_EXIT" -ne 3 ]; then
+    echo "Expected missing hosted writer parent exit 3, found $WVO_MISSING_PARENT_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$WVO_MISSING_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
 
 echo "Windvale Seed verification passed."
 echo "Conformance report: $REPORT_PATH"

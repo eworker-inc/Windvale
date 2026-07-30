@@ -618,6 +618,28 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Text);
                 break;
+            case Opcode.Bytesˉconcat:
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bytes);
+                break;
+            case Opcode.Bytesˉfromˉu8:
+                Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bytes);
+                break;
+            case Opcode.Bytesˉfromˉu16ˉlittle:
+            case Opcode.Bytesˉfromˉu32ˉlittle:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bytes);
+                break;
+            case Opcode.Bytesˉfromˉi32ˉlittle:
+                Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bytes);
+                break;
+            case Opcode.Textˉtoˉutf8:
+                Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bytes);
+                break;
             case Opcode.Recordˉcreate:
                 var Recordˉtype = Getˉrecordˉtype(module, instruction, function.Name);
                 for (var Fieldˉindex = Recordˉtype.Fields.Length - 1; Fieldˉindex >= 0; Fieldˉindex--)

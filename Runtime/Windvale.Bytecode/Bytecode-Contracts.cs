@@ -128,6 +128,12 @@ public enum Opcode : byte
     Textˉfromˉutf8 = 0x74,
     Textˉquote = 0x75,
     U32ˉfromˉu8 = 0x76,
+    Bytesˉconcat = 0x77,
+    Bytesˉfromˉu8 = 0x78,
+    Bytesˉfromˉu16ˉlittle = 0x79,
+    Bytesˉfromˉu32ˉlittle = 0x7A,
+    Bytesˉfromˉi32ˉlittle = 0x7B,
+    Textˉtoˉutf8 = 0x7C,
 
     Jump = 0x30,
     Branchˉfalse = 0x31,

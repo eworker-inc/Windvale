@@ -5,16 +5,19 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Windvale.Bytecode;
 using Windvale.Compiler;
+using Windvale.ObjectModel;
 using Windvale.Runtime;
 
 namespace Windvale.Seed.Tests;
 
 internal static class Program
 {
-    private const string SUM_SHA256 = "6a40e6172787ae294361b3a5d9abc92e7b3f004b1e59eabb999a7b844a21bf78";
-    private const string HELLO_SHA256 = "5b9101e15ae42acb333a8a05c60e6d6dbb548e5a04b9c96fdb717dbc58bf9cbe";
-    private const string FOUNDATION_SHA256 = "26176eac5e2f00bb96a4b1ad95ad79238045932b64d8220edcfdea13af202c6a";
-    private const string WVDUMP_CORE_SHA256 = "74c5400120f01f8d4a3e0fa87c3bb20d2edd645208d8ccb930e994a416c497f1";
+    private const string SUM_SHA256 = "64134dfd779b353c5e501c9c23337a0c3849bfef2c97a63a07913705b0f10c6b";
+    private const string HELLO_SHA256 = "43d565c304cf2e2f5d886ee30b1fabf0b2fbfb0c8cd28bd932d85d5add0bf504";
+    private const string FOUNDATION_SHA256 = "0cdf05f6c9e1fb1db0d5ab449207870b5e47cc248f187cd43cd9a5c3c9eee995";
+    private const string WVDUMP_CORE_SHA256 = "2957fc5523ae3ca16cf1aaeb9104c14a3342a0aefde9ac591bb689f744f1467f";
+    private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
+    private const string WVO_CORE_SHA256 = "a5d574ea646946b159d95bd7e51434bfcbf7545083a54541438a79a2e5e999df";
 
     private const string SUM_SOURCE = """
         module Sumˉdata profile portable;
@@ -54,7 +57,7 @@ internal static class Program
     private const string FOUNDATION_SOURCE = """
         module Readˉwvbˉheader profile portable;
 
-        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0];
+        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0];
 
         fn Headerˉisˉvalid(Input: bytes) -> bool {
             if Bytesˉlength(Input) != 12u32 {
@@ -81,7 +84,7 @@ internal static class Program
             if Version != 1u32 {
                 return false;
             }
-            if Minorˉversion != 4u32 {
+            if Minorˉversion != 5u32 {
                 return false;
             }
             if Sectionˉcount != 7u32 {
@@ -119,6 +122,9 @@ internal static class Program
     private static readonly string WVDUMP_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wv-Dump-Core.wv");
 
+    private static readonly string WVO_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wvo-Object-Core.wv");
+
     private static readonly List<(string Name, Action Body)> TESTS =
     [
         ("portable source compiles, verifies, and returns the data sum", Portableˉprogramˉruns),
@@ -131,7 +137,10 @@ internal static class Program
         ("macron names and explicit local mutability execute", Namingˉandˉmutabilityˉrun),
         ("Foundation byte values, slices, and little-endian reads execute", Foundationˉbytesˉrun),
         ("Foundation signed reads and strict UTF-8 text operations execute", Foundationˉtextˉrun),
+        ("Foundation constructs deterministic immutable byte values", Foundationˉbyteˉconstructionˉrun),
         ("Windvale wvdump decodes bounded payloads and instructions", Wvˉdumpˉcoreˉwalksˉsections),
+        ("Windvale object codec validates canonical symbols and relocations", Objectˉmodelˉroundˉtrip),
+        ("Windvale-written object core matches the Stage 0 oracle", Wvoˉobjectˉcoreˉmatchesˉoracle),
         ("immutable nominal records cross function boundaries", Immutableˉrecordsˉrun),
         ("nominal enums and bounded formatting execute", Enumsˉandˉformattingˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
@@ -243,6 +252,7 @@ internal static class Program
             capability console.write_line;
             capability diagnostic.write_line;
             capability file.read_bytes;
+            capability file.write_bytes;
             capability process.argument;
             capability process.argument_count;
 
@@ -255,6 +265,7 @@ internal static class Program
                 console.write(Resourceˉname);
                 console.write_line(Textˉconcat(":", process.argument(1u32)));
                 let Input: bytes = file.read_bytes(Resourceˉname);
+                file.write_bytes(process.argument(1u32), Input);
                 console.write_line(Textˉconcat("bytes=", U32ˉformat(Bytesˉlength(Input))));
                 diagnostic.write_line("note");
                 return 0;
@@ -268,6 +279,7 @@ internal static class Program
                 Capabilityˉcatalog.CONSOLE_WRITE_LINE,
                 Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
                 Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.FILE_WRITE_BYTES,
                 Capabilityˉcatalog.PROCESS_ARGUMENT,
                 Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
             ],
@@ -283,17 +295,22 @@ internal static class Program
             Equal(Bytecodeˉlimits.MAX_BYTE_DATA_BYTES, Maximumˉbytes);
             return [87, 86, 66];
         });
+        var Fileˉwriter = new Capturingˉfileˉwriter();
         var Runtime = new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
                 ["input.wvb", "tail"],
                 Output,
                 Diagnostics,
-                Files)),
+                Files,
+                Fileˉwriter)),
             new(Authorized));
         Equal(0, Runtime.Runˉmain().Exitˉcode);
         Equal("input.wvb:tail\nbytes=3\n", Output.ToString());
         Equal("note\n", Diagnostics.ToString());
+        Equal(1, Fileˉwriter.Writeˉcount);
+        Equal("tail", Fileˉwriter.Resourceˉname);
+        Sequenceˉequal<byte>([87, 86, 66], Fileˉwriter.Bytes);
 
         var Unsupported = new Referenceˉruntime(
             Module,
@@ -641,7 +658,7 @@ internal static class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Equal(Dataˉtype.Bytes, Module.Module.Data.Single().Type);
         var Data = (Bytesˉdataˉdeclaration)Module.Module.Data.Single();
-        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0], Data.Values);
+        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0], Data.Values);
         True(
             Module.Module.Functions.SelectMany(Function => Function.Allˉlocalˉtypes)
                 .Contains(Valueˉtype.Bytes),
@@ -727,6 +744,53 @@ internal static class Program
             }
             """;
         Throwsˉruntime("WVR3014", () => Runˉportable(Invalidˉdecode));
+    }
+
+    private static void Foundationˉbyteˉconstructionˉrun()
+    {
+        const string Source = """
+            module Foundationˉbyteˉconstruction profile portable;
+
+            export fn Main() -> i32 {
+                var Encoded: bytes = Bytesˉfromˉu8(171u8);
+                Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu16ˉlittle(4660u32));
+                Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(2309737967u32));
+                Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉi32ˉlittle(-7));
+                Encoded = Bytesˉconcat(Encoded, Textˉtoˉutf8("WVO"));
+                if Bytesˉlength(Encoded) != 14u32 { return 1; }
+                if Bytesˉreadˉu8(Encoded, 0u32) != 171u8 { return 2; }
+                if Bytesˉreadˉu16ˉlittle(Encoded, 1u32) != 4660u32 { return 3; }
+                if Bytesˉreadˉu32ˉlittle(Encoded, 3u32) != 2309737967u32 { return 4; }
+                if Bytesˉreadˉi32ˉlittle(Encoded, 7u32) != -7 { return 5; }
+                if Bytesˉreadˉu8(Encoded, 11u32) != 87u8 { return 6; }
+                if Bytesˉreadˉu8(Encoded, 12u32) != 86u8 { return 7; }
+                if Bytesˉreadˉu8(Encoded, 13u32) != 79u8 { return 8; }
+                return 0;
+            }
+            """;
+
+        var Bytes = Compileˉsuccess(Source);
+        var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Inspection = Moduleˉinspector.Inspect(Module, Bytes);
+        Contains(Inspection, "bytes.concat");
+        Contains(Inspection, "bytes.from_u8");
+        Contains(Inspection, "bytes.from_u16_little");
+        Contains(Inspection, "bytes.from_u32_little");
+        Contains(Inspection, "bytes.from_i32_little");
+        Contains(Inspection, "text.to_utf8");
+        Equal(0, new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        const string U16ˉoverflow = """
+            module U16ˉoverflow profile portable;
+            export fn Main() -> i32 {
+                Bytesˉfromˉu16ˉlittle(65536u32);
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3016", () => Runˉportable(U16ˉoverflow));
     }
 
     private static void Wvˉdumpˉcoreˉwalksˉsections()
@@ -825,7 +889,7 @@ internal static class Program
         Equal(
             """
             wvdump 1
-            module version=1.4 profile=portable name="A"
+            module version=1.5 profile=portable name="A"
             section name=module offset=20 bytes=6 count=1
             section name=capabilities offset=34 bytes=4 count=0
             section name=data offset=46 bytes=4 count=0
@@ -907,6 +971,149 @@ internal static class Program
         Equal(2, Invalidˉrun.Exitˉcode);
         Equal(string.Empty, Invalidˉoutput.ToString());
         Equal("Outˉofˉbounds sections=0 offset=20\n", Invalidˉdiagnostics.ToString());
+    }
+
+    private static void Objectˉmodelˉroundˉtrip()
+    {
+        var Value = Buildˉsampleˉobject();
+        var Bytes = Objectˉcodec.Write(Value);
+        Equal(189, Bytes.Length);
+        Equal(WVO_SAMPLE_SHA256, Objectˉdigest.Calculateˉsha256(Bytes));
+
+        var Verified = Objectˉcodec.Readˉandˉverify(Bytes);
+        Sequenceˉequal(Bytes, Objectˉcodec.Write(Verified.Value));
+        Equal(Objectˉarchitecture.X86ˉ64, Verified.Value.Architecture);
+        Equal(2, Verified.Value.Sections.Length);
+        Equal(".text", Verified.Value.Sections[0].Name);
+        Equal(Objectˉsectionˉkind.Readˉonlyˉdata, Verified.Value.Sections[1].Kind);
+        Equal(3, Verified.Value.Symbols.Length);
+        Equal(Objectˉlimits.UNDEFINED_SECTION, Verified.Value.Symbols[2].Sectionˉindex);
+        Equal(Objectˉrelocationˉkind.Relativeˉi32, Verified.Value.Relocations.Single().Kind);
+        Equal(-4, Verified.Value.Relocations.Single().Addend);
+        var Inspection = Objectˉinspector.Inspect(Verified, Bytes);
+        Contains(Inspection, "Sections (2)");
+        Contains(Inspection, "Console_write binding=Import");
+        Contains(Inspection, "kind=Relativeˉi32 section=0 offset=1 symbol=2 addend=-4");
+
+        var Badˉmagic = Bytes.ToArray();
+        Badˉmagic[0] = 0;
+        Throwsˉobject("WVO1002", () => Objectˉcodec.Readˉandˉverify(Badˉmagic));
+
+        var Badˉversion = Bytes.ToArray();
+        Badˉversion[6] = 1;
+        Throwsˉobject("WVO1003", () => Objectˉcodec.Readˉandˉverify(Badˉversion));
+
+        var Badˉcount = Bytes.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(Badˉcount.AsSpan(12), uint.MaxValue);
+        Throwsˉobject("WVO1013", () => Objectˉcodec.Readˉandˉverify(Badˉcount));
+
+        var Badˉsectionˉkind = Bytes.ToArray();
+        Badˉsectionˉkind[24] = byte.MaxValue;
+        Throwsˉobject("WVO1007", () => Objectˉcodec.Readˉandˉverify(Badˉsectionˉkind));
+
+        var Badˉutf8 = Bytes.ToArray();
+        Badˉutf8[44] = byte.MaxValue;
+        Throwsˉobject("WVO1014", () => Objectˉcodec.Readˉandˉverify(Badˉutf8));
+        Throwsˉobject("WVO1016", () => Objectˉcodec.Readˉandˉverify(Bytes.AsSpan(0, Bytes.Length - 1)));
+        Throwsˉobject("WVO1015", () => Objectˉcodec.Readˉandˉverify([.. Bytes, (byte)0]));
+
+        var Noncanonicalˉsections = Value with
+        {
+            Sections = [Value.Sections[1], Value.Sections[0]],
+        };
+        Throwsˉobject("WVO2012", () => Objectˉverifier.Verify(Noncanonicalˉsections));
+
+        var Badˉsymbol = Value with
+        {
+            Symbols =
+            [
+                Value.Symbols[0] with { Offset = 4 },
+                Value.Symbols[1],
+                Value.Symbols[2],
+            ],
+        };
+        Throwsˉobject("WVO2025", () => Objectˉverifier.Verify(Badˉsymbol));
+
+        var Badˉplaceholder = Value with
+        {
+            Sections =
+            [
+                Value.Sections[0] with { Data = [232, 1, 0, 0, 0, 195] },
+                Value.Sections[1],
+            ],
+        };
+        Throwsˉobject("WVO2035", () => Objectˉverifier.Verify(Badˉplaceholder));
+
+        var Overlappingˉrelocations = Value with
+        {
+            Relocations =
+            [
+                Value.Relocations[0],
+                Value.Relocations[0] with { Offset = 2 },
+            ],
+        };
+        Throwsˉobject("WVO2033", () => Objectˉverifier.Verify(Overlappingˉrelocations));
+    }
+
+    private static void Wvoˉobjectˉcoreˉmatchesˉoracle()
+    {
+        var Moduleˉbytes = Compileˉsuccess(WVO_CORE_SOURCE);
+        Equal(WVO_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
+        var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
+        Equal("Wvoˉobjectˉcore", Module.Module.Name);
+        Sequenceˉequal(
+            [
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_WRITE_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            ],
+            Module.Module.Capabilities.Select(Capability => Capability.Name));
+        var Moduleˉinspection = Moduleˉinspector.Inspect(Module, Moduleˉbytes);
+        Contains(Moduleˉinspection, "bytes.concat");
+        Contains(Moduleˉinspection, "bytes.from_u16_little");
+        Contains(Moduleˉinspection, "bytes.from_i32_little");
+        Contains(Moduleˉinspection, "text.to_utf8");
+        Contains(Moduleˉinspection, "call.capability capability[2] (file.write_bytes)");
+
+        var Authorized = Module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Selfˉtestˉwriter = new Capturingˉfileˉwriter();
+        var Selfˉtestˉresult = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                null,
+                Selfˉtestˉwriter)),
+            new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
+        Equal(0, Selfˉtestˉresult.Exitˉcode);
+        Equal(0, Selfˉtestˉwriter.Writeˉcount);
+
+        var Hostedˉwriter = new Capturingˉfileˉwriter();
+        var Hostedˉoutput = new StringWriter();
+        var Hostedˉdiagnostics = new StringWriter();
+        var Hostedˉresult = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["sample.wvo"],
+                Hostedˉoutput,
+                Hostedˉdiagnostics,
+                null,
+                Hostedˉwriter)),
+            new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
+        Equal(0, Hostedˉresult.Exitˉcode);
+        Equal("Wrote WVO 1.0 bytes=189\n", Hostedˉoutput.ToString());
+        Equal(string.Empty, Hostedˉdiagnostics.ToString());
+        Equal(1, Hostedˉwriter.Writeˉcount);
+        Equal("sample.wvo", Hostedˉwriter.Resourceˉname);
+        var Oracleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
+        Sequenceˉequal(Oracleˉbytes, Hostedˉwriter.Bytes);
+        Equal(WVO_SAMPLE_SHA256, Objectˉdigest.Calculateˉsha256(Hostedˉwriter.Bytes.AsSpan()));
+        _ = Objectˉcodec.Readˉandˉverify(Hostedˉwriter.Bytes.AsSpan());
     }
 
     private static void Immutableˉrecordsˉrun()
@@ -1612,6 +1819,32 @@ internal static class Program
                 Verifiedˉoversizedˉdecode,
                 new Referenceˉcapabilityˉhost(new StringWriter()),
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+
+        var Oversizedˉbytesˉresult = Buildˉmodule(
+            [
+                .. U32ˉinstruction(Opcode.Bytesˉconst, 0),
+                .. U32ˉinstruction(Opcode.Bytesˉconst, 1),
+                (byte)Opcode.Bytesˉconcat,
+                (byte)Opcode.Pop,
+                .. I32ˉinstruction(0),
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.I32,
+            maximumˉstack: 2) with
+        {
+            Data =
+            [
+                new Bytesˉdataˉdeclaration("Left", ImmutableArray.Create<byte>(new byte[3_000_000])),
+                new Bytesˉdataˉdeclaration("Right", ImmutableArray.Create<byte>(new byte[3_000_000])),
+            ],
+        };
+        var Verifiedˉoversizedˉbytes = Moduleˉverifier.Verify(Oversizedˉbytesˉresult);
+        Throwsˉruntime(
+            "WVR3015",
+            () => new Referenceˉruntime(
+                Verifiedˉoversizedˉbytes,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
     }
 
     private static void Runtimeˉlimitsˉareˉenforced()
@@ -1642,14 +1875,20 @@ internal static class Program
         var Helloˉbytes = Compileˉsuccess(HELLO_SOURCE);
         var Foundationˉbytes = Compileˉsuccess(FOUNDATION_SOURCE);
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
+        var Wvoˉcoreˉbytes = Compileˉsuccess(WVO_CORE_SOURCE);
+        var Wvoˉsampleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
         var Sumˉhash = Moduleˉdigest.Calculateˉsha256(Sumˉbytes);
         var Helloˉhash = Moduleˉdigest.Calculateˉsha256(Helloˉbytes);
         var Foundationˉhash = Moduleˉdigest.Calculateˉsha256(Foundationˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
+        var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
+        var Wvoˉsampleˉhash = Objectˉdigest.Calculateˉsha256(Wvoˉsampleˉbytes);
         Equal(SUM_SHA256, Sumˉhash);
         Equal(HELLO_SHA256, Helloˉhash);
         Equal(FOUNDATION_SHA256, Foundationˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
+        Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
+        Equal(WVO_SAMPLE_SHA256, Wvoˉsampleˉhash);
 
         var Sumˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sumˉbytes),
@@ -1699,6 +1938,35 @@ internal static class Program
         var Normalizedˉwvdumpˉoutput = Wvˉdumpˉhostedˉoutput.ToString()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
+        var Wvoˉmodule = Moduleˉcodec.Readˉandˉverify(Wvoˉcoreˉbytes);
+        var Wvoˉcapabilities = Wvoˉmodule.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Wvoˉselfˉtestˉwriter = new Capturingˉfileˉwriter();
+        var Wvoˉselfˉtestˉresult = new Referenceˉruntime(
+            Wvoˉmodule,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                null,
+                Wvoˉselfˉtestˉwriter)),
+            new(Wvoˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
+        var Wvoˉhostedˉwriter = new Capturingˉfileˉwriter();
+        var Wvoˉhostedˉoutput = new StringWriter();
+        var Wvoˉhostedˉdiagnostics = new StringWriter();
+        var Wvoˉhostedˉresult = new Referenceˉruntime(
+            Wvoˉmodule,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["sample.wvo"],
+                Wvoˉhostedˉoutput,
+                Wvoˉhostedˉdiagnostics,
+                null,
+                Wvoˉhostedˉwriter)),
+            new(Wvoˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
+        var Normalizedˉwvoˉoutput = Wvoˉhostedˉoutput.ToString()
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
         Equal(29, Sumˉresult.Exitˉcode);
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
@@ -1706,11 +1974,18 @@ internal static class Program
         Equal(0, Wvˉdumpˉresult.Exitˉcode);
         Equal(0, Wvˉdumpˉhostedˉresult.Exitˉcode);
         Equal(string.Empty, Wvˉdumpˉhostedˉdiagnostics.ToString());
-        Contains(Normalizedˉwvdumpˉoutput, "module version=1.4 profile=portable name=\"Sum\\u02C9data\"");
+        Contains(Normalizedˉwvdumpˉoutput, "module version=1.5 profile=portable name=\"Sum\\u02C9data\"");
         Contains(Normalizedˉwvdumpˉoutput, "instruction function=1 offset=141 opcode=call operand=0");
         Contains(Normalizedˉwvdumpˉoutput, "export index=0 name=\"Main\" kind=function target=1");
+        Equal(0, Wvoˉselfˉtestˉresult.Exitˉcode);
+        Equal(0, Wvoˉselfˉtestˉwriter.Writeˉcount);
+        Equal(0, Wvoˉhostedˉresult.Exitˉcode);
+        Equal("Wrote WVO 1.0 bytes=189\n", Normalizedˉwvoˉoutput);
+        Equal(string.Empty, Wvoˉhostedˉdiagnostics.ToString());
+        Sequenceˉequal(Wvoˉsampleˉbytes, Wvoˉhostedˉwriter.Bytes);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
+            $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
             Sumˉhash,
             Sumˉresult.Exitˉcode,
             Helloˉhash,
@@ -1720,7 +1995,11 @@ internal static class Program
             Foundationˉresult.Exitˉcode,
             Wvˉdumpˉhash,
             Wvˉdumpˉresult.Exitˉcode,
-            Normalizedˉwvdumpˉoutput);
+            Normalizedˉwvdumpˉoutput,
+            Wvoˉsampleˉhash,
+            Wvoˉcoreˉhash,
+            Wvoˉselfˉtestˉresult.Exitˉcode,
+            Normalizedˉwvoˉoutput);
     }
 
     private static void Randomˉinputˉisˉcontained()
@@ -1754,6 +2033,20 @@ internal static class Program
                 // Rejection through the stable bytecode boundary is the expected result.
             }
         }
+
+        for (var Case = 0; Case < 500; Case++)
+        {
+            var Bytes = new byte[Random.Next(0, 512)];
+            Random.NextBytes(Bytes);
+            try
+            {
+                _ = Objectˉcodec.Readˉandˉverify(Bytes);
+            }
+            catch (Objectˉexception)
+            {
+                // Rejection through the stable object boundary is the expected result.
+            }
+        }
     }
 
     private static int Runˉportable(string source)
@@ -1783,6 +2076,28 @@ internal static class Program
         False(Result.Success, $"Source expected to produce {code} compiled successfully.");
         True(Result.Diagnostics.Any(Diagnostic => Diagnostic.Code == code),
             $"Expected diagnostic {code}; found {string.Join(", ", Result.Diagnostics.Select(Item => Item.Code))}.");
+    }
+
+    private static Objectˉfile Buildˉsampleˉobject()
+    {
+        return new(
+            Objectˉarchitecture.X86ˉ64,
+            [
+                new(".text", Objectˉsectionˉkind.Code, 16, 6, [232, 0, 0, 0, 0, 195]),
+                new(".rodata", Objectˉsectionˉkind.Readˉonlyˉdata, 1, 3, [72, 105, 10]),
+            ],
+            [
+                new("Message", Objectˉsymbolˉbinding.Local, Objectˉsymbolˉkind.Data, 1, 0, 3),
+                new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 6),
+                new(
+                    "Console_write",
+                    Objectˉsymbolˉbinding.Import,
+                    Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
+                    0,
+                    0),
+            ],
+            [new(Objectˉrelocationˉkind.Relativeˉi32, 0, 1, 2, -4)]);
     }
 
     private static Bytecodeˉmodule Buildˉmodule(
@@ -1861,6 +2176,21 @@ internal static class Program
         }
 
         throw new InvalidOperationException($"Expected bytecode failure {expectedˉcode}.");
+    }
+
+    private static void Throwsˉobject(string expectedˉcode, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Objectˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+
+        throw new InvalidOperationException($"Expected object failure {expectedˉcode}.");
     }
 
     private static void Throwsˉruntime(string expectedˉcode, Action action)
@@ -2002,6 +2332,29 @@ internal static class Program
         }
     }
 
+    private sealed class Capturingˉfileˉwriter : IHostedˉfileˉwriter
+    {
+        public int Writeˉcount { get; private set; }
+
+        public string Resourceˉname { get; private set; } = string.Empty;
+
+        public ImmutableArray<byte> Bytes { get; private set; } = [];
+
+        public void Writeˉbytes(
+            string resourceˉname,
+            ImmutableArray<byte> bytes,
+            int maximumˉbytes)
+        {
+            if (bytes.IsDefault || bytes.Length > maximumˉbytes)
+            {
+                throw new InvalidOperationException("The runtime passed invalid bytes to the hosted writer.");
+            }
+            Writeˉcount++;
+            Resourceˉname = resourceˉname;
+            Bytes = bytes;
+        }
+    }
+
     private sealed class Invalidˉresultˉcapabilityˉhost : ICapabilityˉhost
     {
         public bool Supports(string capabilityˉname) => true;
@@ -2016,6 +2369,7 @@ internal static class Program
 
     private sealed record Conformanceˉcontract(
         [property: JsonPropertyName("moduleFormat")] string Moduleˉformat,
+        [property: JsonPropertyName("objectFormat")] string Objectˉformat,
         [property: JsonPropertyName("sumSha256")] string Sumˉsha256,
         [property: JsonPropertyName("sumResult")] int Sumˉresult,
         [property: JsonPropertyName("helloSha256")] string Helloˉsha256,
@@ -2025,7 +2379,11 @@ internal static class Program
         [property: JsonPropertyName("foundationResult")] int Foundationˉresult,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
         [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
-        [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput);
+        [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput,
+        [property: JsonPropertyName("wvoSampleSha256")] string Wvoˉsampleˉsha256,
+        [property: JsonPropertyName("wvoCoreSha256")] string Wvoˉcoreˉsha256,
+        [property: JsonPropertyName("wvoCoreResult")] int Wvoˉcoreˉresult,
+        [property: JsonPropertyName("wvoHostedOutput")] string Wvoˉhostedˉoutput);
 
     private sealed record Hostˉreport(
         [property: JsonPropertyName("operatingSystemFamily")] string Operatingˉsystemˉfamily,

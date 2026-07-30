@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
+    <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
   </ItemGroup>

@@ -194,6 +194,14 @@ public interface IHostedˉfileˉreader
     ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes);
 }
 
+public interface IHostedˉfileˉwriter
+{
+    void Writeˉbytes(
+        string resourceˉname,
+        ImmutableArray<byte> bytes,
+        int maximumˉbytes);
+}
+
 public sealed class Hostedˉresourceˉcontext
 {
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
@@ -202,7 +210,8 @@ public sealed class Hostedˉresourceˉcontext
         ImmutableArray<string> arguments,
         TextWriter standardˉoutput,
         TextWriter diagnosticˉoutput,
-        IHostedˉfileˉreader? files = null)
+        IHostedˉfileˉreader? fileˉreader = null,
+        IHostedˉfileˉwriter? fileˉwriter = null)
     {
         ArgumentNullException.ThrowIfNull(standardˉoutput);
         ArgumentNullException.ThrowIfNull(diagnosticˉoutput);
@@ -255,7 +264,8 @@ public sealed class Hostedˉresourceˉcontext
         Arguments = arguments;
         Standardˉoutput = standardˉoutput;
         Diagnosticˉoutput = diagnosticˉoutput;
-        Files = files;
+        Fileˉreader = fileˉreader;
+        Fileˉwriter = fileˉwriter;
     }
 
     public ImmutableArray<string> Arguments { get; }
@@ -264,7 +274,9 @@ public sealed class Hostedˉresourceˉcontext
 
     public TextWriter Diagnosticˉoutput { get; }
 
-    public IHostedˉfileˉreader? Files { get; }
+    public IHostedˉfileˉreader? Fileˉreader { get; }
+
+    public IHostedˉfileˉwriter? Fileˉwriter { get; }
 }
 
 public interface ICapabilityˉhost
@@ -300,7 +312,8 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
             Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE or
             Capabilityˉcatalog.PROCESS_ARGUMENT or
             Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT => true,
-            Capabilityˉcatalog.FILE_READ_BYTES => Resources.Files is not null,
+            Capabilityˉcatalog.FILE_READ_BYTES => Resources.Fileˉreader is not null,
+            Capabilityˉcatalog.FILE_WRITE_BYTES => Resources.Fileˉwriter is not null,
             _ => false,
         };
     }
@@ -336,6 +349,9 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
                 return Runtimeˉvalue.Fromˉtext(Resources.Arguments[(int)Index]);
             case Capabilityˉcatalog.FILE_READ_BYTES:
                 return Readˉfile(arguments[0].Textˉvalue!);
+            case Capabilityˉcatalog.FILE_WRITE_BYTES:
+                Writeˉfile(arguments[0].Textˉvalue!, arguments[1].Bytesˉvalue);
+                return null;
             default:
                 throw new Runtimeˉexception(
                     "WVR3001",
@@ -345,7 +361,7 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
 
     private Runtimeˉvalue Readˉfile(string resourceˉname)
     {
-        if (Resources.Files is null)
+        if (Resources.Fileˉreader is null)
         {
             throw new Runtimeˉexception(
                 "WVR3001",
@@ -354,7 +370,7 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
 
         try
         {
-            var Bytes = Resources.Files.Readˉbytes(
+            var Bytes = Resources.Fileˉreader.Readˉbytes(
                 resourceˉname,
                 Bytecodeˉlimits.MAX_BYTE_DATA_BYTES);
             if (Bytes.IsDefault)
@@ -372,6 +388,44 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
             }
 
             return Runtimeˉvalue.Fromˉbytes(Bytes);
+        }
+        catch (Hostedˉfileˉexception Exception)
+        {
+            var Code = Exception.Error switch
+            {
+                Hostedˉfileˉerror.Invalidˉname => "WVR3021",
+                Hostedˉfileˉerror.Notˉfound => "WVR3022",
+                Hostedˉfileˉerror.Permissionˉdenied => "WVR3023",
+                Hostedˉfileˉerror.Unavailable => "WVR3024",
+                Hostedˉfileˉerror.Tooˉlarge => "WVR3025",
+                _ => "WVR3026",
+            };
+            throw new Runtimeˉexception(Code, Exception.Message);
+        }
+    }
+
+    private void Writeˉfile(string resourceˉname, Runtimeˉbyteˉslice bytes)
+    {
+        if (Resources.Fileˉwriter is null)
+        {
+            throw new Runtimeˉexception(
+                "WVR3001",
+                $"The host does not implement capability '{Capabilityˉcatalog.FILE_WRITE_BYTES}'.");
+        }
+
+        if (bytes.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+        {
+            throw new Runtimeˉexception(
+                "WVR3025",
+                $"The file value uses {bytes.Length} bytes; the limit is {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}.");
+        }
+
+        try
+        {
+            Resources.Fileˉwriter.Writeˉbytes(
+                resourceˉname,
+                ImmutableArray.Create(bytes.Asˉspan().ToArray()),
+                Bytecodeˉlimits.MAX_BYTE_DATA_BYTES);
         }
         catch (Hostedˉfileˉexception Exception)
         {

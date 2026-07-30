@@ -39,7 +39,7 @@ Integer formatting is invariant base 10. It never uses host locale, grouping sep
 
 ## Bytecode and runtime
 
-The tagged Types-section representation introduced in WVB 1.3 remains part of WVB 1.4. Enum value shapes carry exact nominal type indices. `enum.const` identifies both type and member, enum comparison requires matching shapes, and `enum.name` resolves only a value that the verifier has already proved belongs to that enum.
+The tagged Types-section representation introduced in WVB 1.3 remains part of current WVB 1.5. Enum value shapes carry exact nominal type indices. `enum.const` identifies both type and member, enum comparison requires matching shapes, and `enum.name` resolves only a value that the verifier has already proved belongs to that enum.
 
 The reference runtime stores an enum's declared `i32` value plus its nominal shape. Numeric formatting uses invariant .NET conversion only as the Stage 0 implementation of the specified text; the output contract is Windvale-defined.
 
