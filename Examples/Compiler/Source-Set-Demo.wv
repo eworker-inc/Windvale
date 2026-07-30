@@ -1,0 +1,155 @@
+module Compilerˉsourceˉsetˉdemo profile portable;
+
+import Compilerˉsourceˉset;
+
+data Sourceˉsetˉmagic: bytes = [87, 86, 83, 83];
+
+fn Sourceˉsetˉheader(Modules: u32) -> bytes {
+    var Header: bytes = Sourceˉsetˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Sourceˉsetˉtwo(Root: text, Dependency: text) -> bytes {
+    let Rootˉbytes: bytes = Textˉtoˉutf8(Root);
+    let Dependencyˉbytes: bytes = Textˉtoˉutf8(Dependency);
+    let Rootˉoffset: u32 = 32u32;
+    let Dependencyˉoffset: u32 = Rootˉoffset + Bytesˉlength(Rootˉbytes);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Rootˉoffset);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Rootˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Dependencyˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Dependencyˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉsetˉheader(2u32), Directory);
+    Result = Bytesˉconcat(Result, Rootˉbytes);
+    return Bytesˉconcat(Result, Dependencyˉbytes);
+}
+
+fn Sourceˉsetˉthree(Root: text, First: text, Second: text) -> bytes {
+    let Rootˉbytes: bytes = Textˉtoˉutf8(Root);
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Rootˉoffset: u32 = 40u32;
+    let Firstˉoffset: u32 = Rootˉoffset + Bytesˉlength(Rootˉbytes);
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(Firstˉbytes);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Rootˉoffset);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Rootˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Firstˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Secondˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Secondˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉsetˉheader(3u32), Directory);
+    Result = Bytesˉconcat(Result, Rootˉbytes);
+    Result = Bytesˉconcat(Result, Firstˉbytes);
+    return Bytesˉconcat(Result, Secondˉbytes);
+}
+
+fn Sourceˉsetˉreplaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Before: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Afterˉoffset: u32 = Offset + 1u32;
+    let After: bytes = Bytesˉslice(Input, Afterˉoffset, Bytesˉlength(Input) - Afterˉoffset);
+    return Bytesˉconcat(Bytesˉconcat(Before, Bytesˉfromˉu8(Value)), After);
+}
+
+fn Sourceˉsetˉreplaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Before: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Afterˉoffset: u32 = Offset + 4u32;
+    let After: bytes = Bytesˉslice(Input, Afterˉoffset, Bytesˉlength(Input) - Afterˉoffset);
+    return Bytesˉconcat(Bytesˉconcat(Before, Bytesˉfromˉu32ˉlittle(Value)), After);
+}
+
+export fn Main() -> i32 {
+    let Root: text = "module Setˉroot profile portable; import Setˉdependency; export fn Main() -> i32 { return Setˉvalue(); }";
+    let Dependency: text = "module Setˉdependency profile portable; export fn Setˉvalue() -> i32 { return 1; }";
+    let Valid: bytes = Sourceˉsetˉtwo(Root, Dependency);
+    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Valid);
+    if Scan.Status != Compilerˉsourceˉsetˉstatus.Valid { return 1; }
+    if Scan.Modules != 2u32 { return 2; }
+    if Scan.Directoryˉoffset != 16u32 { return 3; }
+    if Scan.Directoryˉlength != 16u32 { return 4; }
+    if Scan.Sourcesˉoffset != 32u32 { return 5; }
+    if Scan.Sourceˉbytes != Bytesˉlength(Textˉtoˉutf8(Root)) + Bytesˉlength(Textˉtoˉutf8(Dependency)) { return 6; }
+
+    let Rootˉview: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Valid, Scan, 0u32);
+    if Rootˉview.Status != Compilerˉsourceˉsetˉstatus.Valid { return 7; }
+    let Expectedˉroot: bytes = Textˉtoˉutf8(Root);
+    if Compilerˉsourceˉspansˉcompare(
+        Rootˉview.Source,
+        0u32,
+        Bytesˉlength(Rootˉview.Source),
+        Expectedˉroot,
+        0u32,
+        Bytesˉlength(Expectedˉroot)
+    ) != 0 { return 8; }
+    let Missingˉview: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Valid, Scan, 2u32);
+    if Missingˉview.Status != Compilerˉsourceˉsetˉstatus.Invalidˉcount { return 9; }
+
+    let Summary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Valid);
+    if Summary.Status != Compilerˉsourceˉsetˉstatus.Valid { return 10; }
+    if Summary.Modules != 2u32 { return 11; }
+    if Summary.Imports != 1u32 { return 12; }
+    if Summary.Records != 0u32 { return 13; }
+    if Summary.Enums != 0u32 { return 14; }
+    if Summary.Functions != 2u32 { return 15; }
+
+    let Tooˉshort: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Bytesˉslice(Valid, 0u32, 15u32));
+    if Tooˉshort.Status != Compilerˉsourceˉsetˉstatus.Tooˉshort { return 16; }
+    let Badˉmagic: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu8(Valid, 0u32, 0u8));
+    if Badˉmagic.Status != Compilerˉsourceˉsetˉstatus.Invalidˉmagic { return 17; }
+    let Badˉversion: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu8(Valid, 4u32, 2u8));
+    if Badˉversion.Status != Compilerˉsourceˉsetˉstatus.Unsupportedˉversion { return 18; }
+    let Zeroˉcount: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 8u32, 0u32));
+    if Zeroˉcount.Status != Compilerˉsourceˉsetˉstatus.Invalidˉcount { return 19; }
+    let Largeˉcount: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 8u32, 65u32));
+    if Largeˉcount.Status != Compilerˉsourceˉsetˉstatus.Invalidˉcount { return 20; }
+    let Badˉdirectory: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 12u32, 8u32));
+    if Badˉdirectory.Status != Compilerˉsourceˉsetˉstatus.Invalidˉdirectory { return 21; }
+    let Badˉoffset: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 16u32, 33u32));
+    if Badˉoffset.Status != Compilerˉsourceˉsetˉstatus.Noncanonicalˉlayout { return 22; }
+    let Zeroˉlength: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 20u32, 0u32));
+    if Zeroˉlength.Status != Compilerˉsourceˉsetˉstatus.Invalidˉentry { return 23; }
+    let Largeˉlength: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 20u32, Bytesˉlength(Valid)));
+    if Largeˉlength.Status != Compilerˉsourceˉsetˉstatus.Invalidˉentry { return 24; }
+    let Trailing: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Bytesˉconcat(Valid, Bytesˉfromˉu8(0u8)));
+    if Trailing.Status != Compilerˉsourceˉsetˉstatus.Noncanonicalˉlayout { return 25; }
+
+    let Invalidˉsource: bytes = Sourceˉsetˉtwo("not a module", Dependency);
+    let Invalidˉsourceˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Invalidˉsource);
+    if Invalidˉsourceˉsummary.Status != Compilerˉsourceˉsetˉstatus.Sourceˉsyntax { return 26; }
+    let Invalidˉbody: bytes = Sourceˉsetˉtwo("module Setˉroot profile portable; export fn Main() -> i32 { return +; }", Dependency);
+    let Invalidˉbodyˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Invalidˉbody);
+    if Invalidˉbodyˉsummary.Status != Compilerˉsourceˉsetˉstatus.Bodyˉsyntax { return 27; }
+    let Duplicate: bytes = Sourceˉsetˉtwo(
+        "module Same profile portable; export fn Main() -> i32 { return 0; }",
+        "module Same profile portable; export fn Other() -> i32 { return 0; }"
+    );
+    let Duplicateˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Duplicate);
+    if Duplicateˉsummary.Status != Compilerˉsourceˉsetˉstatus.Duplicateˉmodule { return 28; }
+    let Wrongˉorder: bytes = Sourceˉsetˉthree(
+        "module Setˉroot profile portable; export fn Main() -> i32 { return 0; }",
+        "module Zed profile portable; export fn Zedˉvalue() -> i32 { return 0; }",
+        "module Alpha profile portable; export fn Alphaˉvalue() -> i32 { return 0; }"
+    );
+    let Wrongˉorderˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Wrongˉorder);
+    if Wrongˉorderˉsummary.Status != Compilerˉsourceˉsetˉstatus.Dependencyˉorder { return 29; }
+    let Hostedˉdependency: bytes = Sourceˉsetˉtwo(
+        Root,
+        "module Setˉdependency profile hosted; export fn Setˉvalue() -> i32 { return 1; }"
+    );
+    let Hostedˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Hostedˉdependency);
+    if Hostedˉsummary.Status != Compilerˉsourceˉsetˉstatus.Dependencyˉprofile { return 30; }
+    let Dataˉdependency: bytes = Sourceˉsetˉtwo(
+        Root,
+        "module Setˉdependency profile portable; data Value: text = \"x\"; export fn Setˉvalue() -> i32 { return 1; }"
+    );
+    let Dataˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Dataˉdependency);
+    if Dataˉsummary.Status != Compilerˉsourceˉsetˉstatus.Dependencyˉshape { return 31; }
+    let Privateˉdependency: bytes = Sourceˉsetˉtwo(
+        Root,
+        "module Setˉdependency profile portable; fn Setˉvalue() -> i32 { return 1; }"
+    );
+    let Privateˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Privateˉdependency);
+    if Privateˉsummary.Status != Compilerˉsourceˉsetˉstatus.Privateˉdependencyˉfunction { return 32; }
+    return 0;
+}
