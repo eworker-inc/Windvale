@@ -40,6 +40,7 @@ internal sealed class Sourceˉparser
         var Capabilities = ImmutableArray.CreateBuilder<Capabilityˉsyntax>();
         var Data = ImmutableArray.CreateBuilder<Dataˉsyntax>();
         var Records = ImmutableArray.CreateBuilder<Recordˉsyntax>();
+        var Enums = ImmutableArray.CreateBuilder<Enumˉsyntax>();
         var Functions = ImmutableArray.CreateBuilder<Functionˉsyntax>();
 
         while (Current.Kind != Tokenˉkind.End)
@@ -56,6 +57,9 @@ internal sealed class Sourceˉparser
                 case Tokenˉkind.Record:
                     Records.Add(Parseˉrecord());
                     break;
+                case Tokenˉkind.Enum:
+                    Enums.Add(Parseˉenum());
+                    break;
                 case Tokenˉkind.Export:
                 case Tokenˉkind.Fn:
                     Functions.Add(Parseˉfunction());
@@ -65,7 +69,7 @@ internal sealed class Sourceˉparser
                         "WVC1100",
                         "parser",
                         Current.Span,
-                        $"Expected a capability, data, record, or function declaration but found '{Current.Text}'.");
+                        $"Expected a capability, data, record, enum, or function declaration but found '{Current.Text}'.");
                     Nextˉtoken();
                     break;
             }
@@ -82,6 +86,7 @@ internal sealed class Sourceˉparser
             Capabilities.ToImmutable(),
             Data.ToImmutable(),
             Records.ToImmutable(),
+            Enums.ToImmutable(),
             Functions.ToImmutable());
     }
 
@@ -102,6 +107,25 @@ internal sealed class Sourceˉparser
 
         var Recordˉend = Match(Tokenˉkind.Rightˉbrace);
         return new(Name, Fields.ToImmutable(), Combine(Start.Span, Recordˉend.Span));
+    }
+
+    private Enumˉsyntax Parseˉenum()
+    {
+        var Start = Match(Tokenˉkind.Enum);
+        var Name = Match(Tokenˉkind.Identifier);
+        Match(Tokenˉkind.Leftˉbrace);
+        var Members = ImmutableArray.CreateBuilder<Enumˉmemberˉsyntax>();
+        while (Current.Kind is not Tokenˉkind.Rightˉbrace and not Tokenˉkind.End)
+        {
+            var Memberˉname = Match(Tokenˉkind.Identifier);
+            Match(Tokenˉkind.Equals);
+            var Value = Match(Tokenˉkind.Integer);
+            var End = Match(Tokenˉkind.Semicolon);
+            Members.Add(new(Memberˉname, Value, Combine(Memberˉname.Span, End.Span)));
+        }
+
+        var Enumˉend = Match(Tokenˉkind.Rightˉbrace);
+        return new(Name, Members.ToImmutable(), Combine(Start.Span, Enumˉend.Span));
     }
 
     private Capabilityˉsyntax Parseˉcapability()
@@ -525,7 +549,7 @@ internal sealed class Sourceˉparser
             Tokenˉkind.Text => Typeˉsyntaxˉkind.Text,
             Tokenˉkind.Bytes => Typeˉsyntaxˉkind.Bytes,
             Tokenˉkind.Void when allowˉvoid => Typeˉsyntaxˉkind.Void,
-            Tokenˉkind.Identifier => Typeˉsyntaxˉkind.Record,
+            Tokenˉkind.Identifier => Typeˉsyntaxˉkind.Named,
             _ => Typeˉsyntaxˉkind.Invalid,
         };
 
@@ -547,7 +571,7 @@ internal sealed class Sourceˉparser
         }
 
         Nextˉtoken();
-        return new(Kind, Token.Span, Kind == Typeˉsyntaxˉkind.Record ? Token.Text : null);
+        return new(Kind, Token.Span, Kind == Typeˉsyntaxˉkind.Named ? Token.Text : null);
     }
 
     private Syntaxˉtoken Match(Tokenˉkind expected)

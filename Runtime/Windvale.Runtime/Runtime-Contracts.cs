@@ -38,6 +38,7 @@ public readonly record struct Runtimeˉvalue
         string? text,
         byte u8,
         uint u32,
+        int enumˉvalue,
         Runtimeˉbyteˉslice bytes,
         Runtimeˉrecordˉvalue? record)
     {
@@ -47,6 +48,7 @@ public readonly record struct Runtimeˉvalue
         Textˉvalue = text;
         U8ˉvalue = u8;
         U32ˉvalue = u32;
+        Enumˉvalue = enumˉvalue;
         Bytesˉvalue = bytes;
         Recordˉvalue = record;
     }
@@ -63,30 +65,35 @@ public readonly record struct Runtimeˉvalue
 
     public uint U32ˉvalue { get; }
 
+    public int Enumˉvalue { get; }
+
     public Runtimeˉbyteˉslice Bytesˉvalue { get; }
 
     public Runtimeˉrecordˉvalue? Recordˉvalue { get; }
 
     public static Runtimeˉvalue Fromˉi32(int value) =>
-        new(Valueˉtype.I32, value, false, null, 0, 0, default, null);
+        new(Valueˉtype.I32, value, false, null, 0, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉbool(bool value) =>
-        new(Valueˉtype.Bool, 0, value, null, 0, 0, default, null);
+        new(Valueˉtype.Bool, 0, value, null, 0, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉtext(string value) =>
-        new(Valueˉtype.Text, 0, false, value, 0, 0, default, null);
+        new(Valueˉtype.Text, 0, false, value, 0, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉu8(byte value) =>
-        new(Valueˉtype.U8, 0, false, null, value, 0, default, null);
+        new(Valueˉtype.U8, 0, false, null, value, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉu32(uint value) =>
-        new(Valueˉtype.U32, 0, false, null, 0, value, default, null);
+        new(Valueˉtype.U32, 0, false, null, 0, value, 0, default, null);
 
     public static Runtimeˉvalue Fromˉbytes(ImmutableArray<byte> values) =>
         Fromˉbytes(new Runtimeˉbyteˉslice(values, 0, values.Length));
 
     public static Runtimeˉvalue Fromˉbytes(Runtimeˉbyteˉslice value) =>
-        new(Valueˉtype.Bytes, 0, false, null, 0, 0, value, null);
+        new(Valueˉtype.Bytes, 0, false, null, 0, 0, 0, value, null);
+
+    public static Runtimeˉvalue Fromˉenum(int typeˉindex, int value) =>
+        new(Valueˉshape.Forˉenum(typeˉindex), 0, false, null, 0, 0, value, default, null);
 
     public static Runtimeˉvalue Fromˉrecord(
         int typeˉindex,
@@ -98,12 +105,13 @@ public readonly record struct Runtimeˉvalue
             null,
             0,
             0,
+            0,
             default,
             new(typeˉindex, fields));
 
     public static Runtimeˉvalue Default(
         Valueˉshape type,
-        ImmutableArray<Recordˉtypeˉdeclaration> recordˉtypes)
+        ImmutableArray<Nominalˉtypeˉdeclaration> nominalˉtypes)
     {
         return type.Kind switch
         {
@@ -113,19 +121,28 @@ public readonly record struct Runtimeˉvalue
             Valueˉtype.U8 => Fromˉu8(0),
             Valueˉtype.U32 => Fromˉu32(0),
             Valueˉtype.Bytes => Fromˉbytes(ImmutableArray<byte>.Empty),
-            Valueˉtype.Record => Defaultˉrecord(type.Recordˉtypeˉindex, recordˉtypes),
+            Valueˉtype.Record => Defaultˉrecord(type.Nominalˉtypeˉindex, nominalˉtypes),
+            Valueˉtype.Enum => Defaultˉenum(type.Nominalˉtypeˉindex, nominalˉtypes),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Void has no runtime value."),
         };
     }
 
     private static Runtimeˉvalue Defaultˉrecord(
         int typeˉindex,
-        ImmutableArray<Recordˉtypeˉdeclaration> recordˉtypes)
+        ImmutableArray<Nominalˉtypeˉdeclaration> nominalˉtypes)
     {
-        var Type = recordˉtypes[typeˉindex];
+        var Type = (Recordˉtypeˉdeclaration)nominalˉtypes[typeˉindex];
         return Fromˉrecord(
             typeˉindex,
-            [.. Type.Fields.Select(Field => Default(Field.Type, recordˉtypes))]);
+            [.. Type.Fields.Select(Field => Default(Field.Type, nominalˉtypes))]);
+    }
+
+    private static Runtimeˉvalue Defaultˉenum(
+        int typeˉindex,
+        ImmutableArray<Nominalˉtypeˉdeclaration> nominalˉtypes)
+    {
+        var Type = (Enumˉtypeˉdeclaration)nominalˉtypes[typeˉindex];
+        return Fromˉenum(typeˉindex, Type.Members[0].Value);
     }
 }
 

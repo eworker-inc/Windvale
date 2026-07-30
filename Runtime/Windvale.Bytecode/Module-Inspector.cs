@@ -60,15 +60,31 @@ public static class Moduleˉinspector
         }
 
         Output.AppendLine();
-        Output.AppendLine($"Record types ({Module.Types.Length})");
+        Output.AppendLine($"Nominal types ({Module.Types.Length})");
         for (var Typeˉindex = 0; Typeˉindex < Module.Types.Length; Typeˉindex++)
         {
             var Type = Module.Types[Typeˉindex];
-            Output.AppendLine($"  [{Typeˉindex}] record {Type.Name}");
-            for (var Fieldˉindex = 0; Fieldˉindex < Type.Fields.Length; Fieldˉindex++)
+            switch (Type)
             {
-                var Field = Type.Fields[Fieldˉindex];
-                Output.AppendLine($"    [{Fieldˉindex}] {Field.Name}: {Formatˉtype(Field.Type)}");
+                case Recordˉtypeˉdeclaration Record:
+                    Output.AppendLine($"  [{Typeˉindex}] record {Record.Name}");
+                    for (var Fieldˉindex = 0; Fieldˉindex < Record.Fields.Length; Fieldˉindex++)
+                    {
+                        var Field = Record.Fields[Fieldˉindex];
+                        Output.AppendLine(
+                            $"    [{Fieldˉindex}] {Field.Name}: {Formatˉshape(Module, Field.Type)}");
+                    }
+
+                    break;
+                case Enumˉtypeˉdeclaration Enum:
+                    Output.AppendLine($"  [{Typeˉindex}] enum {Enum.Name}");
+                    for (var Memberˉindex = 0; Memberˉindex < Enum.Members.Length; Memberˉindex++)
+                    {
+                        var Member = Enum.Members[Memberˉindex];
+                        Output.AppendLine($"    [{Memberˉindex}] {Member.Name} = {Member.Value}");
+                    }
+
+                    break;
             }
         }
 
@@ -116,15 +132,16 @@ public static class Moduleˉinspector
             Valueˉtype.U32 => "u32",
             Valueˉtype.Bytes => "bytes",
             Valueˉtype.Record => "record",
+            Valueˉtype.Enum => "enum",
             _ => $"unknown({(byte)type})",
         };
     }
 
     private static string Formatˉshape(Bytecodeˉmodule module, Valueˉshape shape)
     {
-        return shape.Kind == Valueˉtype.Record &&
-            (uint)shape.Recordˉtypeˉindex < (uint)module.Types.Length
-                ? module.Types[shape.Recordˉtypeˉindex].Name
+        return (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum) &&
+            (uint)shape.Nominalˉtypeˉindex < (uint)module.Types.Length
+                ? module.Types[shape.Nominalˉtypeˉindex].Name
                 : Formatˉtype(shape.Kind);
     }
 
@@ -163,6 +180,14 @@ public static class Moduleˉinspector
             Opcode.Recordˉcreate =>
                 $"record.create type[{instruction.Unsignedˉoperand}] ({module.Types[(int)instruction.Unsignedˉoperand].Name})",
             Opcode.Recordˉfield => $"record.field {instruction.Unsignedˉoperand}",
+            Opcode.Enumˉconst => Formatˉenumˉconstant(module, instruction),
+            Opcode.Enumˉequal => "enum.equal",
+            Opcode.Enumˉnotˉequal => "enum.not_equal",
+            Opcode.Enumˉname => "enum.name",
+            Opcode.I32ˉformat => "i32.format",
+            Opcode.U8ˉformat => "u8.format",
+            Opcode.U32ˉformat => "u32.format",
+            Opcode.Textˉconcat => "text.concat",
             Opcode.I32ˉadd => "i32.add",
             Opcode.I32ˉsubtract => "i32.subtract",
             Opcode.I32ˉmultiply => "i32.multiply",
@@ -195,6 +220,16 @@ public static class Moduleˉinspector
             Opcode.Return => "return",
             _ => $"unknown 0x{(byte)instruction.Opcode:X2}",
         };
+    }
+
+    private static string Formatˉenumˉconstant(
+        Bytecodeˉmodule module,
+        Decodedˉinstruction instruction)
+    {
+        var Enum = (Enumˉtypeˉdeclaration)module.Types[(int)instruction.Unsignedˉoperand];
+        var Member = Enum.Members[(int)instruction.Secondˉunsignedˉoperand];
+        return $"enum.const type[{instruction.Unsignedˉoperand}] ({Enum.Name}) " +
+            $"member[{instruction.Secondˉunsignedˉoperand}] ({Member.Name}={Member.Value})";
     }
 
     private static string Formatˉtextˉpreview(string value)

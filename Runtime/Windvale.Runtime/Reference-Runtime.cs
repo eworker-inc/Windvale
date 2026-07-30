@@ -1,5 +1,7 @@
 using System.Buffers.Binary;
 using System.Collections.Immutable;
+using System.Globalization;
+using System.Text;
 using Windvale.Bytecode;
 
 namespace Windvale.Runtime;
@@ -246,8 +248,55 @@ public sealed class Referenceˉruntime
                     case Opcode.U8ˉnotˉequal:
                         Applyˉu8ˉcomparison(Stack, (Left, Right) => Left != Right);
                         break;
+                    case Opcode.Enumˉconst:
+                        var Enumˉtype = (Enumˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
+                            (int)Instruction.Unsignedˉoperand];
+                        Stack.Add(Runtimeˉvalue.Fromˉenum(
+                            (int)Instruction.Unsignedˉoperand,
+                            Enumˉtype.Members[(int)Instruction.Secondˉunsignedˉoperand].Value));
+                        break;
+                    case Opcode.Enumˉequal:
+                        Applyˉenumˉcomparison(Stack, (Left, Right) => Left == Right);
+                        break;
+                    case Opcode.Enumˉnotˉequal:
+                        Applyˉenumˉcomparison(Stack, (Left, Right) => Left != Right);
+                        break;
+                    case Opcode.Enumˉname:
+                        var Enumˉvalue = Pop(Stack);
+                        var Namedˉenum = (Enumˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
+                            Enumˉvalue.Type.Nominalˉtypeˉindex];
+                        Stack.Add(Runtimeˉvalue.Fromˉtext(Namedˉenum.Members.Single(
+                            Member => Member.Value == Enumˉvalue.Enumˉvalue).Name));
+                        break;
+                    case Opcode.I32ˉformat:
+                        Stack.Add(Runtimeˉvalue.Fromˉtext(
+                            Pop(Stack).I32ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        break;
+                    case Opcode.U8ˉformat:
+                        Stack.Add(Runtimeˉvalue.Fromˉtext(
+                            Pop(Stack).U8ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        break;
+                    case Opcode.U32ˉformat:
+                        Stack.Add(Runtimeˉvalue.Fromˉtext(
+                            Pop(Stack).U32ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        break;
+                    case Opcode.Textˉconcat:
+                        var Rightˉtext = Pop(Stack).Textˉvalue!;
+                        var Leftˉtext = Pop(Stack).Textˉvalue!;
+                        var Utf8ˉlength = checked(
+                            Encoding.UTF8.GetByteCount(Leftˉtext) + Encoding.UTF8.GetByteCount(Rightˉtext));
+                        if (Utf8ˉlength > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
+                        {
+                            throw new Runtimeˉexception(
+                                "WVR3012",
+                                $"Text concatenation result {Utf8ˉlength} exceeds the UTF-8 value limit.");
+                        }
+
+                        Stack.Add(Runtimeˉvalue.Fromˉtext(string.Concat(Leftˉtext, Rightˉtext)));
+                        break;
                     case Opcode.Recordˉcreate:
-                        var Recordˉtype = Verifiedˉmodule.Module.Types[(int)Instruction.Unsignedˉoperand];
+                        var Recordˉtype = (Recordˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
+                            (int)Instruction.Unsignedˉoperand];
                         var Recordˉfields = Popˉarguments(Stack, Recordˉtype.Fields.Length);
                         Stack.Add(Runtimeˉvalue.Fromˉrecord(
                             (int)Instruction.Unsignedˉoperand,
@@ -414,6 +463,15 @@ public sealed class Referenceˉruntime
     {
         var Right = Pop(stack).Boolˉvalue;
         var Left = Pop(stack).Boolˉvalue;
+        stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+    }
+
+    private static void Applyˉenumˉcomparison(
+        List<Runtimeˉvalue> stack,
+        Func<int, int, bool> operation)
+    {
+        var Right = Pop(stack).Enumˉvalue;
+        var Left = Pop(stack).Enumˉvalue;
         stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
     }
 

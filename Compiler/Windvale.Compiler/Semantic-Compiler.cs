@@ -21,6 +21,8 @@ internal static class Semanticˉcompiler
             new(StringComparer.Ordinal);
         private readonly Dictionary<string, Recordˉsymbol> Records =
             new(StringComparer.Ordinal);
+        private readonly Dictionary<string, Enumˉsymbol> Enums =
+            new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> Textˉdataˉbyˉvalue =
             new(StringComparer.Ordinal);
         private int Syntheticˉtextˉcounter;
@@ -31,7 +33,7 @@ internal static class Semanticˉcompiler
             var Profile = Bindˉprofile(syntax.Profile);
             Bindˉcapabilities(Profile);
             Bindˉdata();
-            Bindˉrecords();
+            Bindˉnominalˉtypes();
             Bindˉfunctionˉsignatures();
 
             var Wirˉfunctions = ImmutableArray.CreateBuilder<Wirˉfunction>(Functions.Count);
@@ -44,6 +46,7 @@ internal static class Semanticˉcompiler
                     Functions,
                     Capabilities,
                     Records,
+                    Enums,
                     Getˉorˉaddˉtextˉdata);
                 Wirˉfunctions.Add(Builder.Compile());
             }
@@ -53,14 +56,19 @@ internal static class Semanticˉcompiler
                 Profile,
                 [.. Capabilities.Values.OrderBy(Capability => Capability.Name, StringComparer.Ordinal)],
                 [.. Data.Values.OrderBy(Item => Item.Name, StringComparer.Ordinal)],
-                [.. Records.Values.OrderBy(Record => Record.Index).Select(Record => Record.Declaration)],
+                [
+                    .. Records.Values.OrderBy(Record => Record.Index).Select(Record =>
+                        (Nominalˉtypeˉdeclaration)Record.Declaration),
+                    .. Enums.Values.OrderBy(Enum => Enum.Index).Select(Enum =>
+                        (Nominalˉtypeˉdeclaration)Enum.Declaration),
+                ],
                 Wirˉfunctions.ToImmutable());
         }
 
-        private void Bindˉrecords()
+        private void Bindˉnominalˉtypes()
         {
             var Seenˉnames = new HashSet<string>(StringComparer.Ordinal);
-            var Valid = new List<Recordˉsyntax>();
+            var Validˉrecords = new List<Recordˉsyntax>();
             foreach (var Record in syntax.Records)
             {
                 if (!Seedˉnames.Isˉidentifier(Record.Name.Text))
@@ -69,7 +77,7 @@ internal static class Semanticˉcompiler
                     continue;
                 }
 
-                if (Record.Name.Text == "length" ||
+                if (Record.Name.Text is "length" or Foundationˉintrinsics.ENUM_NAME ||
                     Foundationˉintrinsics.Tryˉget(Record.Name.Text, out _))
                 {
                     Report("WVC2090", Record.Name.Span, $"Record name '{Record.Name.Text}' is reserved by Windvale Seed.");
@@ -82,17 +90,91 @@ internal static class Semanticˉcompiler
                     continue;
                 }
 
-                Valid.Add(Record);
+                Validˉrecords.Add(Record);
             }
 
-            foreach (var Record in Valid.OrderBy(Item => Item.Name.Text, StringComparer.Ordinal))
+            var Validˉenums = new List<Enumˉsyntax>();
+            foreach (var Enum in syntax.Enums)
             {
-                if (Records.Count >= Bytecodeˉlimits.MAX_RECORD_TYPES)
+                if (!Seedˉnames.Isˉidentifier(Enum.Name.Text))
                 {
-                    Report("WVC2088", Record.Span, "The module exceeds the Seed record-type limit.");
-                    break;
+                    Report("WVC2091", Enum.Name.Span, $"Enum name '{Enum.Name.Text}' is not a valid Windvale identifier.");
+                    continue;
                 }
 
+                if (!Seenˉnames.Add(Enum.Name.Text))
+                {
+                    Report("WVC2092", Enum.Name.Span, $"Nominal type '{Enum.Name.Text}' is declared more than once.");
+                    continue;
+                }
+
+                Validˉenums.Add(Enum);
+            }
+
+            var Orderedˉrecords = Validˉrecords
+                .OrderBy(Item => Item.Name.Text, StringComparer.Ordinal)
+                .ToArray();
+            var Orderedˉenums = Validˉenums
+                .OrderBy(Item => Item.Name.Text, StringComparer.Ordinal)
+                .ToArray();
+            if (Orderedˉrecords.Length + Orderedˉenums.Length > Bytecodeˉlimits.MAX_NOMINAL_TYPES)
+            {
+                Report("WVC2088", syntax.Name.Span, "The module exceeds the Seed nominal-type limit.");
+            }
+
+            foreach (var Record in Orderedˉrecords.Take(Bytecodeˉlimits.MAX_NOMINAL_TYPES))
+            {
+                var Index = Records.Count;
+                Records.Add(
+                    Record.Name.Text,
+                    new(Record.Name.Text, Index, new(Record.Name.Text, [])));
+            }
+
+            var Remainingˉtypeˉslots = Bytecodeˉlimits.MAX_NOMINAL_TYPES - Records.Count;
+            foreach (var Enum in Orderedˉenums.Take(Remainingˉtypeˉslots))
+            {
+                var Memberˉnames = new HashSet<string>(StringComparer.Ordinal);
+                var Memberˉvalues = new HashSet<int>();
+                var Members = ImmutableArray.CreateBuilder<Enumˉmemberˉdeclaration>(Enum.Members.Length);
+                foreach (var Member in Enum.Members)
+                {
+                    if (Members.Count >= Bytecodeˉlimits.MAX_ENUM_MEMBERS)
+                    {
+                        Report("WVC2096", Member.Span, $"Enum '{Enum.Name.Text}' exceeds the Seed member limit.");
+                        break;
+                    }
+
+                    var Value = Member.Value.Value is int Integer ? Integer : 0;
+                    if (Member.Value.Value is not int)
+                    {
+                        Report("WVC2099", Member.Value.Span, "Seed enum values must be unsuffixed nonnegative i32 literals.");
+                    }
+                    if (!Seedˉnames.Isˉidentifier(Member.Name.Text) || !Memberˉnames.Add(Member.Name.Text))
+                    {
+                        Report("WVC2093", Member.Name.Span, $"Enum '{Enum.Name.Text}' has an invalid or duplicate member '{Member.Name.Text}'.");
+                    }
+
+                    if (!Memberˉvalues.Add(Value))
+                    {
+                        Report("WVC2094", Member.Value.Span, $"Enum '{Enum.Name.Text}' repeats value {Value}.");
+                    }
+
+                    Members.Add(new(Member.Name.Text, Value));
+                }
+
+                if (Members.Count == 0)
+                {
+                    Report("WVC2095", Enum.Span, $"Enum '{Enum.Name.Text}' must declare at least one member.");
+                    Members.Add(new("Invalid", 0));
+                }
+
+                var Index = Records.Count + Enums.Count;
+                var Declaration = new Enumˉtypeˉdeclaration(Enum.Name.Text, Members.ToImmutable());
+                Enums.Add(Enum.Name.Text, new(Enum.Name.Text, Index, Declaration));
+            }
+
+            foreach (var Record in Orderedˉrecords.Take(Records.Count))
+            {
                 var Fieldˉnames = new HashSet<string>(StringComparer.Ordinal);
                 var Fields = ImmutableArray.CreateBuilder<Recordˉfieldˉdeclaration>(Record.Fields.Length);
                 foreach (var Field in Record.Fields)
@@ -108,10 +190,25 @@ internal static class Semanticˉcompiler
                         Report("WVC2082", Field.Name.Span, $"Record '{Record.Name.Text}' has an invalid or duplicate field '{Field.Name.Text}'.");
                     }
 
-                    if (Field.Type.Kind is Typeˉsyntaxˉkind.Void or Typeˉsyntaxˉkind.Record or Typeˉsyntaxˉkind.Invalid)
+                    if (Field.Type.Kind is Typeˉsyntaxˉkind.Void or Typeˉsyntaxˉkind.Invalid)
                     {
-                        Report("WVC2083", Field.Type.Span, "Seed record fields must use a primitive value type.");
+                        Report("WVC2083", Field.Type.Span, "Seed record fields must use a primitive or enum value type.");
                         Fields.Add(new(Field.Name.Text, Valueˉtype.I32));
+                        continue;
+                    }
+
+                    if (Field.Type.Kind == Typeˉsyntaxˉkind.Named)
+                    {
+                        if (Field.Type.Name is not null && Enums.TryGetValue(Field.Type.Name, out var Enum))
+                        {
+                            Fields.Add(new(Field.Name.Text, Valueˉshape.Forˉenum(Enum.Index)));
+                        }
+                        else
+                        {
+                            Report("WVC2083", Field.Type.Span, "Seed record fields cannot contain records or unknown named types.");
+                            Fields.Add(new(Field.Name.Text, Valueˉtype.I32));
+                        }
+
                         continue;
                     }
 
@@ -124,9 +221,9 @@ internal static class Semanticˉcompiler
                     Fields.Add(new("Invalid", Valueˉtype.I32));
                 }
 
-                var Index = Records.Count;
                 var Declaration = new Recordˉtypeˉdeclaration(Record.Name.Text, Fields.ToImmutable());
-                Records.Add(Record.Name.Text, new(Record.Name.Text, Index, Declaration));
+                var Existing = Records[Record.Name.Text];
+                Records[Record.Name.Text] = Existing with { Declaration = Declaration };
             }
         }
 
@@ -250,7 +347,7 @@ internal static class Semanticˉcompiler
         {
             foreach (var Functionˉsyntax in syntax.Functions)
             {
-                if (Functionˉsyntax.Name.Text == "length" ||
+                if (Functionˉsyntax.Name.Text is "length" or Foundationˉintrinsics.ENUM_NAME ||
                     Foundationˉintrinsics.Tryˉget(Functionˉsyntax.Name.Text, out _))
                 {
                     Report(
@@ -347,14 +444,19 @@ internal static class Semanticˉcompiler
 
         private Valueˉshape Bindˉvalueˉshape(Typeˉsyntax type)
         {
-            if (type.Kind == Typeˉsyntaxˉkind.Record)
+            if (type.Kind == Typeˉsyntaxˉkind.Named)
             {
                 if (type.Name is not null && Records.TryGetValue(type.Name, out var Record))
                 {
                     return Valueˉshape.Forˉrecord(Record.Index);
                 }
 
-                Report("WVC2085", type.Span, $"Record type '{type.Name}' is not declared.");
+                if (type.Name is not null && Enums.TryGetValue(type.Name, out var Enum))
+                {
+                    return Valueˉshape.Forˉenum(Enum.Index);
+                }
+
+                Report("WVC2085", type.Span, $"Named type '{type.Name}' is not declared.");
                 return Valueˉtype.I32;
             }
 
@@ -403,6 +505,11 @@ internal static class Semanticˉcompiler
         int Index,
         Recordˉtypeˉdeclaration Declaration);
 
+    private sealed record Enumˉsymbol(
+        string Name,
+        int Index,
+        Enumˉtypeˉdeclaration Declaration);
+
     private sealed record Localˉsymbol(string Name, Valueˉshape Type, int Slot, bool Isˉmutable);
 
     private readonly record struct Boundˉvalue(Valueˉshape Type, int Temporary)
@@ -427,6 +534,7 @@ internal static class Semanticˉcompiler
         private readonly IReadOnlyDictionary<string, Functionˉsymbol> Functions;
         private readonly IReadOnlyDictionary<string, Capabilityˉdeclaration> Capabilities;
         private readonly IReadOnlyDictionary<string, Recordˉsymbol> Records;
+        private readonly IReadOnlyDictionary<string, Enumˉsymbol> Enums;
         private readonly Func<string, string> Getˉtextˉdata;
         private readonly List<Mutableˉblock> Blocks = [];
         private readonly List<Valueˉshape> Userˉlocalˉtypes = [];
@@ -442,6 +550,7 @@ internal static class Semanticˉcompiler
             IReadOnlyDictionary<string, Functionˉsymbol> functions,
             IReadOnlyDictionary<string, Capabilityˉdeclaration> capabilities,
             IReadOnlyDictionary<string, Recordˉsymbol> records,
+            IReadOnlyDictionary<string, Enumˉsymbol> enums,
             Func<string, string> getˉtextˉdata)
         {
             Function = function;
@@ -450,6 +559,7 @@ internal static class Semanticˉcompiler
             Functions = functions;
             Capabilities = capabilities;
             Records = records;
+            Enums = enums;
             Getˉtextˉdata = getˉtextˉdata;
         }
 
@@ -876,12 +986,17 @@ internal static class Semanticˉcompiler
                 case Tokenˉkind.Equalsˉequals:
                 case Tokenˉkind.Bangˉequals:
                     if (Left.Type != Right.Type ||
-                        Left.Type.Kind is not (Valueˉtype.I32 or Valueˉtype.U8 or Valueˉtype.U32 or Valueˉtype.Bool))
+                        Left.Type.Kind is not (
+                            Valueˉtype.I32 or
+                            Valueˉtype.U8 or
+                            Valueˉtype.U32 or
+                            Valueˉtype.Bool or
+                            Valueˉtype.Enum))
                     {
                         Report(
                             "WVC2062",
                             expression.Span,
-                            "Equality requires two i32, u8, u32, or bool values of the same type.");
+                            "Equality requires two i32, u8, u32, bool, or identical enum values.");
                         return Invalidˉvalue(expression.Span);
                     }
 
@@ -895,7 +1010,9 @@ internal static class Semanticˉcompiler
                             (Valueˉtype.U32, Tokenˉkind.Equalsˉequals) => Wirˉoperation.U32ˉequal,
                             (Valueˉtype.U32, _) => Wirˉoperation.U32ˉnotˉequal,
                             (Valueˉtype.Bool, Tokenˉkind.Equalsˉequals) => Wirˉoperation.Boolˉequal,
-                            _ => Wirˉoperation.Boolˉnotˉequal,
+                            (Valueˉtype.Bool, _) => Wirˉoperation.Boolˉnotˉequal,
+                            (Valueˉtype.Enum, Tokenˉkind.Equalsˉequals) => Wirˉoperation.Enumˉequal,
+                            _ => Wirˉoperation.Enumˉnotˉequal,
                         },
                         Valueˉtype.Bool,
                         Operands);
@@ -932,6 +1049,11 @@ internal static class Semanticˉcompiler
                 return Compileˉlength(expression);
             }
 
+            if (expression.Name == Foundationˉintrinsics.ENUM_NAME)
+            {
+                return Compileˉenumˉname(expression);
+            }
+
             if (Foundationˉintrinsics.Tryˉget(expression.Name, out var Intrinsic))
             {
                 return Compileˉfoundationˉintrinsic(expression, Intrinsic);
@@ -943,7 +1065,7 @@ internal static class Semanticˉcompiler
                 Checkˉarguments(
                     expression,
                     Recordˉarguments,
-                    [.. Record.Declaration.Fields.Select(Field => (Valueˉshape)Field.Type)]);
+                    [.. Record.Declaration.Fields.Select(Field => Field.Type)]);
                 return Result(
                     Wirˉoperation.Recordˉcreate,
                     Valueˉshape.Forˉrecord(Record.Index),
@@ -989,14 +1111,41 @@ internal static class Semanticˉcompiler
 
         private Boundˉvalue Compileˉfield(Fieldˉexpressionˉsyntax expression)
         {
-            var Target = Compileˉname(new(expression.Target, expression.Span));
+            if (!Tryˉlookupˉlocal(expression.Target, out var Local))
+            {
+                if (!Enums.TryGetValue(expression.Target, out var Enum))
+                {
+                    Report("WVC2086", expression.Span, $"'{expression.Target}' is not a record value or enum type.");
+                    return Invalidˉvalue(expression.Span);
+                }
+
+                for (var Index = 0; Index < Enum.Declaration.Members.Length; Index++)
+                {
+                    if (StringComparer.Ordinal.Equals(Enum.Declaration.Members[Index].Name, expression.Field))
+                    {
+                        return Result(
+                            Wirˉoperation.Enumˉconstant,
+                            Valueˉshape.Forˉenum(Enum.Index),
+                            unsignedˉintegerˉoperand: (uint)Enum.Index,
+                            secondˉunsignedˉintegerˉoperand: (uint)Index);
+                    }
+                }
+
+                Report("WVC2097", expression.Span, $"Enum '{Enum.Name}' has no member '{expression.Field}'.");
+                return Invalidˉvalue(expression.Span);
+            }
+
+            var Target = Result(
+                Wirˉoperation.Loadˉlocal,
+                Local.Type,
+                integerˉoperand: Local.Slot);
             if (Target.Type.Kind != Valueˉtype.Record)
             {
                 Report("WVC2086", expression.Span, $"'{expression.Target}' is not a record value.");
                 return Invalidˉvalue(expression.Span);
             }
 
-            var Record = Records.Values.Single(Item => Item.Index == Target.Type.Recordˉtypeˉindex);
+            var Record = Records.Values.Single(Item => Item.Index == Target.Type.Nominalˉtypeˉindex);
             var Fieldˉindex = -1;
             for (var Index = 0; Index < Record.Declaration.Fields.Length; Index++)
             {
@@ -1018,6 +1167,30 @@ internal static class Semanticˉcompiler
                 Record.Declaration.Fields[Fieldˉindex].Type,
                 [Target.Temporary],
                 unsignedˉintegerˉoperand: (uint)Fieldˉindex);
+        }
+
+        private Boundˉvalue Compileˉenumˉname(Callˉexpressionˉsyntax expression)
+        {
+            var Arguments = expression.Arguments.Select(Compileˉexpression).ToImmutableArray();
+            if (Arguments.Length != 1)
+            {
+                Report(
+                    "WVC2067",
+                    expression.Span,
+                    $"Call to '{expression.Name}' has {Arguments.Length} arguments; 1 is required.");
+                return Invalidˉvalue(expression.Span);
+            }
+
+            if (Arguments[0].Type.Kind != Valueˉtype.Enum)
+            {
+                Report("WVC2098", expression.Arguments[0].Span, "Enumˉname requires an enum value.");
+                return Invalidˉvalue(expression.Span);
+            }
+
+            return Result(
+                Wirˉoperation.Enumˉname,
+                Valueˉtype.Text,
+                [Arguments[0].Temporary]);
         }
 
         private Boundˉvalue Compileˉfoundationˉintrinsic(
@@ -1115,6 +1288,7 @@ internal static class Semanticˉcompiler
             ImmutableArray<int> operands = default,
             int integerˉoperand = 0,
             uint unsignedˉintegerˉoperand = 0,
+            uint secondˉunsignedˉintegerˉoperand = 0,
             string? nameˉoperand = null)
         {
             var Temporary = Emitˉresult(
@@ -1123,6 +1297,7 @@ internal static class Semanticˉcompiler
                 operands.IsDefault ? [] : operands,
                 integerˉoperand,
                 unsignedˉintegerˉoperand,
+                secondˉunsignedˉintegerˉoperand,
                 nameˉoperand);
             return new(type, Temporary);
         }
@@ -1133,6 +1308,7 @@ internal static class Semanticˉcompiler
             ImmutableArray<int> operands = default,
             int integerˉoperand = 0,
             uint unsignedˉintegerˉoperand = 0,
+            uint secondˉunsignedˉintegerˉoperand = 0,
             string? nameˉoperand = null)
         {
             var Temporary = Temporaryˉtypes.Count;
@@ -1141,9 +1317,10 @@ internal static class Semanticˉcompiler
                 operation,
                 Temporary,
                 operands.IsDefault ? [] : operands,
-                integerˉoperand,
-                unsignedˉintegerˉoperand,
-                nameˉoperand));
+                Integerˉoperand: integerˉoperand,
+                Unsignedˉintegerˉoperand: unsignedˉintegerˉoperand,
+                Secondˉunsignedˉintegerˉoperand: secondˉunsignedˉintegerˉoperand,
+                Nameˉoperand: nameˉoperand));
             return Temporary;
         }
 
@@ -1206,14 +1383,19 @@ internal static class Semanticˉcompiler
 
         private Valueˉshape Bindˉvalueˉshape(Typeˉsyntax type)
         {
-            if (type.Kind == Typeˉsyntaxˉkind.Record)
+            if (type.Kind == Typeˉsyntaxˉkind.Named)
             {
                 if (type.Name is not null && Records.TryGetValue(type.Name, out var Record))
                 {
                     return Valueˉshape.Forˉrecord(Record.Index);
                 }
 
-                Report("WVC2085", type.Span, $"Record type '{type.Name}' is not declared.");
+                if (type.Name is not null && Enums.TryGetValue(type.Name, out var Enum))
+                {
+                    return Valueˉshape.Forˉenum(Enum.Index);
+                }
+
+                Report("WVC2085", type.Span, $"Named type '{type.Name}' is not declared.");
                 return Valueˉtype.I32;
             }
 
@@ -1238,9 +1420,15 @@ internal static class Semanticˉcompiler
         private string Formatˉtype(Valueˉshape type)
         {
             if (type.Kind == Valueˉtype.Record &&
-                Records.Values.FirstOrDefault(Record => Record.Index == type.Recordˉtypeˉindex) is { } Record)
+                Records.Values.FirstOrDefault(Record => Record.Index == type.Nominalˉtypeˉindex) is { } Record)
             {
                 return Record.Name;
+            }
+
+            if (type.Kind == Valueˉtype.Enum &&
+                Enums.Values.FirstOrDefault(Enum => Enum.Index == type.Nominalˉtypeˉindex) is { } Enum)
+            {
+                return Enum.Name;
             }
 
             return type.Kind switch

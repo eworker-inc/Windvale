@@ -51,9 +51,9 @@ public static class Moduleˉverifier
             Fail("WVB2104", "The module has too many functions.");
         }
 
-        if (module.Types.Length > Bytecodeˉlimits.MAX_RECORD_TYPES)
+        if (module.Types.Length > Bytecodeˉlimits.MAX_NOMINAL_TYPES)
         {
-            Fail("WVB2106", "The module has too many record types.");
+            Fail("WVB2106", "The module has too many nominal types.");
         }
 
         if (module.Code.Length > Bytecodeˉlimits.MAX_MODULE_BYTES)
@@ -225,32 +225,90 @@ public static class Moduleˉverifier
 
     private static void Verifyˉtypes(Bytecodeˉmodule module)
     {
-        Verifyˉstrictˉordering(module.Types.Select(Type => Type.Name), "record type");
+        Nominalˉtypeˉkind? Previousˉkind = null;
+        string? Previousˉname = null;
+        var Typeˉnames = new HashSet<string>(StringComparer.Ordinal);
         foreach (var Type in module.Types)
         {
+            if (Previousˉkind is not null &&
+                (Type.Kind < Previousˉkind.Value ||
+                    (Type.Kind == Previousˉkind.Value &&
+                        StringComparer.Ordinal.Compare(Previousˉname, Type.Name) >= 0)))
+            {
+                Fail("WVB2157", "Nominal types must be grouped by kind and strictly sorted by name.");
+            }
+
+            Previousˉkind = Type.Kind;
+            Previousˉname = Type.Name;
             if (!Seedˉnames.Isˉidentifier(Type.Name))
             {
-                Fail("WVB2150", $"Record type name '{Type.Name}' is not a Seed identifier.");
+                Fail("WVB2150", $"Nominal type name '{Type.Name}' is not a Seed identifier.");
             }
 
-            if (Type.Fields.Length == 0 || Type.Fields.Length > Bytecodeˉlimits.MAX_RECORD_FIELDS)
+            if (!Typeˉnames.Add(Type.Name))
             {
-                Fail("WVB2151", $"Record type '{Type.Name}' has an invalid field count.");
+                Fail("WVB2159", $"Nominal type name '{Type.Name}' is declared more than once.");
             }
 
-            var Fieldˉnames = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var Field in Type.Fields)
+            switch (Type)
             {
-                if (!Seedˉnames.Isˉidentifier(Field.Name) || !Fieldˉnames.Add(Field.Name))
-                {
-                    Fail("WVB2152", $"Record type '{Type.Name}' has an invalid or duplicate field '{Field.Name}'.");
-                }
+                case Recordˉtypeˉdeclaration Record:
+                    Verifyˉrecordˉtype(module, Record);
+                    break;
+                case Enumˉtypeˉdeclaration Enum:
+                    Verifyˉenumˉtype(Enum);
+                    break;
+                default:
+                    Fail("WVB2158", $"Nominal type '{Type.Name}' has an inconsistent representation.");
+                    break;
+            }
+        }
+    }
 
-                Verifyˉvalueˉtype(Field.Type, allowˉvoid: false, "record field");
-                if (Field.Type == Valueˉtype.Record)
-                {
-                    Fail("WVB2153", $"Record field '{Type.Name}.{Field.Name}' cannot contain a record in Seed.");
-                }
+    private static void Verifyˉrecordˉtype(
+        Bytecodeˉmodule module,
+        Recordˉtypeˉdeclaration type)
+    {
+        if (type.Fields.Length == 0 || type.Fields.Length > Bytecodeˉlimits.MAX_RECORD_FIELDS)
+        {
+            Fail("WVB2151", $"Record type '{type.Name}' has an invalid field count.");
+        }
+
+        var Fieldˉnames = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var Field in type.Fields)
+        {
+            if (!Seedˉnames.Isˉidentifier(Field.Name) || !Fieldˉnames.Add(Field.Name))
+            {
+                Fail("WVB2152", $"Record type '{type.Name}' has an invalid or duplicate field '{Field.Name}'.");
+            }
+
+            Verifyˉvalueˉshape(module, Field.Type, allowˉvoid: false, "record field");
+            if (Field.Type.Kind == Valueˉtype.Record)
+            {
+                Fail("WVB2153", $"Record field '{type.Name}.{Field.Name}' cannot contain a record in Seed.");
+            }
+        }
+    }
+
+    private static void Verifyˉenumˉtype(Enumˉtypeˉdeclaration type)
+    {
+        if (type.Members.Length == 0 || type.Members.Length > Bytecodeˉlimits.MAX_ENUM_MEMBERS)
+        {
+            Fail("WVB2154", $"Enum type '{type.Name}' has an invalid member count.");
+        }
+
+        var Memberˉnames = new HashSet<string>(StringComparer.Ordinal);
+        var Memberˉvalues = new HashSet<int>();
+        foreach (var Member in type.Members)
+        {
+            if (!Seedˉnames.Isˉidentifier(Member.Name) || !Memberˉnames.Add(Member.Name))
+            {
+                Fail("WVB2155", $"Enum type '{type.Name}' has an invalid or duplicate member '{Member.Name}'.");
+            }
+
+            if (!Memberˉvalues.Add(Member.Value))
+            {
+                Fail("WVB2156", $"Enum type '{type.Name}' repeats value {Member.Value}.");
             }
         }
     }
@@ -490,6 +548,55 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Bool);
                 break;
+            case Opcode.Enumˉconst:
+                var Enumˉtype = Getˉenumˉtype(module, instruction, function.Name);
+                if (instruction.Secondˉunsignedˉoperand >= (uint)Enumˉtype.Members.Length)
+                {
+                    Fail(
+                        "WVB2225",
+                        $"Function '{function.Name}' references invalid member {instruction.Secondˉunsignedˉoperand} on enum '{Enumˉtype.Name}'.",
+                        instruction.Offset);
+                }
+
+                Push(stack, Valueˉshape.Forˉenum((int)instruction.Unsignedˉoperand));
+                break;
+            case Opcode.Enumˉequal:
+            case Opcode.Enumˉnotˉequal:
+                var Rightˉenum = Popˉany(stack, function.Name, instruction.Offset);
+                var Leftˉenum = Popˉany(stack, function.Name, instruction.Offset);
+                if (Leftˉenum.Kind != Valueˉtype.Enum || Leftˉenum != Rightˉenum)
+                {
+                    Fail("WVB2224", $"Function '{function.Name}' compares incompatible enum values.", instruction.Offset);
+                }
+
+                Push(stack, Valueˉtype.Bool);
+                break;
+            case Opcode.Enumˉname:
+                var Namedˉenum = Popˉany(stack, function.Name, instruction.Offset);
+                if (Namedˉenum.Kind != Valueˉtype.Enum)
+                {
+                    Fail("WVB2226", $"Function '{function.Name}' names a non-enum value.", instruction.Offset);
+                }
+
+                Push(stack, Valueˉtype.Text);
+                break;
+            case Opcode.I32ˉformat:
+                Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Text);
+                break;
+            case Opcode.U8ˉformat:
+                Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Text);
+                break;
+            case Opcode.U32ˉformat:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Text);
+                break;
+            case Opcode.Textˉconcat:
+                Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Text);
+                break;
             case Opcode.Recordˉcreate:
                 var Recordˉtype = Getˉrecordˉtype(module, instruction, function.Name);
                 for (var Fieldˉindex = Recordˉtype.Fields.Length - 1; Fieldˉindex >= 0; Fieldˉindex--)
@@ -502,12 +609,13 @@ public static class Moduleˉverifier
             case Opcode.Recordˉfield:
                 var Sourceˉshape = Popˉany(stack, function.Name, instruction.Offset);
                 if (Sourceˉshape.Kind != Valueˉtype.Record ||
-                    (uint)Sourceˉshape.Recordˉtypeˉindex >= (uint)module.Types.Length)
+                    (uint)Sourceˉshape.Nominalˉtypeˉindex >= (uint)module.Types.Length ||
+                    module.Types[Sourceˉshape.Nominalˉtypeˉindex] is not Recordˉtypeˉdeclaration)
                 {
                     Fail("WVB2222", $"Function '{function.Name}' reads a field from a non-record value.", instruction.Offset);
                 }
 
-                var Sourceˉtype = module.Types[Sourceˉshape.Recordˉtypeˉindex];
+                var Sourceˉtype = (Recordˉtypeˉdeclaration)module.Types[Sourceˉshape.Nominalˉtypeˉindex];
                 if (instruction.Unsignedˉoperand >= (uint)Sourceˉtype.Fields.Length)
                 {
                     Fail("WVB2223", $"Function '{function.Name}' references invalid field {instruction.Unsignedˉoperand} on record '{Sourceˉtype.Name}'.", instruction.Offset);
@@ -646,7 +754,41 @@ public static class Moduleˉverifier
                 instruction.Offset);
         }
 
-        return module.Types[(int)instruction.Unsignedˉoperand];
+        if (module.Types[(int)instruction.Unsignedˉoperand] is Recordˉtypeˉdeclaration Record)
+        {
+            return Record;
+        }
+
+        Fail(
+            "WVB2216",
+            $"Function '{functionˉname}' constructs non-record type {instruction.Unsignedˉoperand}.",
+            instruction.Offset);
+        return null!;
+    }
+
+    private static Enumˉtypeˉdeclaration Getˉenumˉtype(
+        Bytecodeˉmodule module,
+        Decodedˉinstruction instruction,
+        string functionˉname)
+    {
+        if (instruction.Unsignedˉoperand >= (uint)module.Types.Length)
+        {
+            Fail(
+                "WVB2217",
+                $"Function '{functionˉname}' references invalid enum type {instruction.Unsignedˉoperand}.",
+                instruction.Offset);
+        }
+
+        if (module.Types[(int)instruction.Unsignedˉoperand] is Enumˉtypeˉdeclaration Enum)
+        {
+            return Enum;
+        }
+
+        Fail(
+            "WVB2217",
+            $"Function '{functionˉname}' references invalid enum type {instruction.Unsignedˉoperand}.",
+            instruction.Offset);
+        return null!;
     }
 
     private static void Popˉparameters(
@@ -803,16 +945,24 @@ public static class Moduleˉverifier
         string position)
     {
         Verifyˉvalueˉtype(shape.Kind, allowˉvoid, position);
-        if (shape.Kind == Valueˉtype.Record)
+        if (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum)
         {
-            if ((uint)shape.Recordˉtypeˉindex >= (uint)module.Types.Length)
+            if ((uint)shape.Nominalˉtypeˉindex >= (uint)module.Types.Length)
             {
-                Fail("WVB2242", $"Record type index {shape.Recordˉtypeˉindex} is invalid for a {position}.");
+                Fail("WVB2242", $"Nominal type index {shape.Nominalˉtypeˉindex} is invalid for a {position}.");
+            }
+
+            var Expectedˉkind = shape.Kind == Valueˉtype.Record
+                ? Nominalˉtypeˉkind.Record
+                : Nominalˉtypeˉkind.Enum;
+            if (module.Types[shape.Nominalˉtypeˉindex].Kind != Expectedˉkind)
+            {
+                Fail("WVB2244", $"Nominal type index {shape.Nominalˉtypeˉindex} has the wrong kind for a {position}.");
             }
         }
-        else if (shape.Recordˉtypeˉindex != -1)
+        else if (shape.Nominalˉtypeˉindex != -1)
         {
-            Fail("WVB2243", $"Primitive type '{shape.Kind}' carries a record type index in a {position}.");
+            Fail("WVB2243", $"Primitive type '{shape.Kind}' carries a nominal type index in a {position}.");
         }
     }
 

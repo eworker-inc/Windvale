@@ -213,6 +213,15 @@ internal static class Bytecodeˉlowering
                         push: 1);
                     Storeˉresult(instruction);
                     break;
+                case Wirˉoperation.Enumˉconstant:
+                    Emitˉtwoˉu32(
+                        Opcode.Enumˉconst,
+                        instruction.Unsignedˉintegerˉoperand,
+                        instruction.Secondˉunsignedˉintegerˉoperand,
+                        pop: 0,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
                 case Wirˉoperation.I32ˉadd:
                 case Wirˉoperation.I32ˉsubtract:
                 case Wirˉoperation.I32ˉmultiply:
@@ -235,6 +244,9 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.U32ˉgreaterˉequal:
                 case Wirˉoperation.U8ˉequal:
                 case Wirˉoperation.U8ˉnotˉequal:
+                case Wirˉoperation.Enumˉequal:
+                case Wirˉoperation.Enumˉnotˉequal:
+                case Wirˉoperation.Textˉconcat:
                     Loadˉtemporary(instruction.Operands[0]);
                     Loadˉtemporary(instruction.Operands[1]);
                     Emitˉnone(Mapˉopcode(instruction.Operation), pop: 2, push: 1);
@@ -242,6 +254,10 @@ internal static class Bytecodeˉlowering
                     break;
                 case Wirˉoperation.I32ˉnegate:
                 case Wirˉoperation.Boolˉnot:
+                case Wirˉoperation.Enumˉname:
+                case Wirˉoperation.I32ˉformat:
+                case Wirˉoperation.U8ˉformat:
+                case Wirˉoperation.U32ˉformat:
                     Loadˉtemporary(instruction.Operands[0]);
                     Emitˉnone(Mapˉopcode(instruction.Operation), pop: 1, push: 1);
                     Storeˉresult(instruction);
@@ -403,6 +419,19 @@ internal static class Bytecodeˉlowering
             Applyˉstack(pop, push);
         }
 
+        private void Emitˉtwoˉu32(
+            Opcode opcode,
+            uint firstˉoperand,
+            uint secondˉoperand,
+            int pop,
+            int push)
+        {
+            Bytes.Add((byte)opcode);
+            Writeˉu32(firstˉoperand);
+            Writeˉu32(secondˉoperand);
+            Applyˉstack(pop, push);
+        }
+
         private void Writeˉu32(uint value)
         {
             Span<byte> Buffer = stackalloc byte[sizeof(uint)];
@@ -479,6 +508,13 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.U32ˉgreaterˉequal => Opcode.U32ˉgreaterˉequal,
                 Wirˉoperation.U8ˉequal => Opcode.U8ˉequal,
                 Wirˉoperation.U8ˉnotˉequal => Opcode.U8ˉnotˉequal,
+                Wirˉoperation.Enumˉequal => Opcode.Enumˉequal,
+                Wirˉoperation.Enumˉnotˉequal => Opcode.Enumˉnotˉequal,
+                Wirˉoperation.Enumˉname => Opcode.Enumˉname,
+                Wirˉoperation.I32ˉformat => Opcode.I32ˉformat,
+                Wirˉoperation.U8ˉformat => Opcode.U8ˉformat,
+                Wirˉoperation.U32ˉformat => Opcode.U32ˉformat,
+                Wirˉoperation.Textˉconcat => Opcode.Textˉconcat,
                 _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),
             };
         }

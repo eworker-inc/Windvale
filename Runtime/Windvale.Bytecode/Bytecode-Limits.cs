@@ -15,6 +15,7 @@ public static class Bytecodeˉlimits
     public const int MAX_OPERAND_STACK = 4096;
     public const int MAX_I32_ARRAY_ELEMENTS = 262_144;
     public const int MAX_BYTE_DATA_BYTES = 4 * 1024 * 1024;
-    public const int MAX_RECORD_TYPES = 1_024;
+    public const int MAX_NOMINAL_TYPES = 1_024;
     public const int MAX_RECORD_FIELDS = 64;
+    public const int MAX_ENUM_MEMBERS = 256;
 }
