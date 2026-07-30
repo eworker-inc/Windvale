@@ -4,7 +4,7 @@
 
 `Wvˉlinkerˉcore` is the Windvale-written implementation path for Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic section, symbol, and relocation views, resolves multi-object symbols, computes deterministic section placements and defined-symbol addresses, constructs the flat image, and applies both relocation kinds. It is not yet a complete linker: it does not independently reconstruct the result, construct the canonical map, or write an output image.
 
-The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout was qualified at `709ccb3`. The current immutable-image/relocation extension has WVB 1.6 SHA-256 `87fb5974d989d7b7870dab9a6fb4e1bb1bae8549bb90edf78f7bdfdf1824b822` and requires fresh cross-host qualification.
+The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout was qualified at `709ccb3`; and immutable image construction plus checked relocation is cross-host qualified at `ec9c980` with WVB 1.6 SHA-256 `87fb5974d989d7b7870dab9a6fb4e1bb1bae8549bb90edf78f7bdfdf1824b822`. The exact committed archive passed the full suite and real CLI verifier on Windows and Debian, the normalized contracts and image digests matched, and the directly retrieved modules were byte-for-byte identical.
 
 ## Object boundary
 

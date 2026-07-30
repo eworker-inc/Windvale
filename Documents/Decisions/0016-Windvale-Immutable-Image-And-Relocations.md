@@ -1,7 +1,7 @@
 # Decision 0016: Windvale immutable image construction and relocations
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `ec9c980`
 
 ## Context
 
