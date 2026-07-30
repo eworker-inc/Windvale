@@ -1,7 +1,7 @@
 # Decision 0018: Canonical Windvale map and publication
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `40ac57d`
 
 ## Context
 
