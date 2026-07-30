@@ -1,7 +1,7 @@
 # Decision 0032: Public contribution and governance foundation
 
 - Date: 2026-07-30
-- Status: Accepted; repository files implemented, GitHub import and settings pending
+- Status: Accepted; private GitHub import implemented, pre-public identity normalization authorized
 
 ## Context
 
@@ -19,9 +19,13 @@ Accept contributions under the repository's MIT terms without a separate contrib
 
 Use GitHub private vulnerability reporting for confidential security reports and keep ordinary support in public issues or discussions. Protect the default branch with required Windows and Linux verification checks once public hosting exists. Repository automation receives read-only contents permission unless a narrower workflow explicitly requires more.
 
-Keep GitHub ownership and Git commit identity separate. The official repository will be `eworker-inc/Windvale` under the existing E-Worker Inc organization, which can contain Windvale and other E-Worker projects and is not named after one project or AI model. Import the complete existing `main` history without rewriting Codex author metadata or the commit identifiers referenced by qualification evidence. Subsequent E-Worker project-generated commits use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as descriptive author and `E-Worker Inc <info@eworker.ca>` as responsible committer and DCO signer.
+Keep GitHub ownership, account linkage, descriptive authorship, and responsible submission distinct. The official repository is `eworker-inc/Windvale` under the existing E-Worker Inc organization, which can contain Windvale and other E-Worker projects and is not named after one project or AI model.
 
-Create the GitHub repository privately first, push the existing history through a separate `github` remote, and inspect rendered documentation, automation, history, security controls, and repository settings before making it public. The shared local repository remains a separate remote during preparation. Public visibility requires a distinct steward approval.
+Before public visibility, perform one controlled metadata normalization of the imported private bootstrap history. For commits carrying `codex@codex-dev-vm.local`, preserve the `Codex` author and committer names, source trees, messages, timestamps, and parent order while replacing only that non-routable author or committer email with `246088022+EWorkerAI@users.noreply.github.com`. This lets GitHub associate the commits with the `EWorkerAI` project account without erasing their factual Codex attribution. Preserve the pre-normalization tip under a named evidence tag and publish an old-to-new commit mapping with tree-equivalence verification so qualification references remain auditable.
+
+The normalization changes commit identifiers. It does not retroactively add DCO sign-offs, change artifact bytes, claim that historical verification was rerun, or turn the GitHub account into the descriptive content author. New E-Worker project-generated commits use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as descriptive author and `E-Worker Inc <info@eworker.ca>` as responsible committer and DCO signer.
+
+The GitHub repository was created privately and populated through a separate `github` remote. Inspect rendered documentation, automation, history, security controls, and repository settings after the identity normalization and before making it public. The shared local repository remains a separate remote during preparation. Public visibility requires a distinct steward approval.
 
 Treat cross-host verification before initial public visibility as an **initial publication baseline**, not as completion of the project. The baseline identifies one exact commit and records the checks that passed on Windows and Debian. Windvale remains experimental and continues developing after publication; later commits carry their own automation results and qualification evidence where their changes require it.
 
@@ -33,7 +37,7 @@ Contributors receive one documented path from proposal through review and qualif
 
 The DCO adds a sign-off requirement to commits contributed for inclusion. It does not guarantee that AI-produced material is copyrightable, eliminate third-party review, or convert an AI system into a legal author or rightsholder.
 
-The GitHub organization already exists. The administrative service account is named `EWorkerAI`; its ID-based author address and E-Worker Inc's `info@eworker.ca` committer address are configured and verified for their respective roles. Repository creation, branch rules, private vulnerability reporting, and repository security settings remain publication-time operations. This decision authorizes their configuration but does not claim they exist before they are actually enabled.
+The GitHub organization and private repository exist. The administrative project account is named `EWorkerAI`; its ID-based author address and E-Worker Inc's `info@eworker.ca` committer address are configured and verified for their respective roles. The pre-public normalization makes bootstrap commits visible under that project account while their retained `Codex` names and the mapping record preserve descriptive provenance. Branch rules, private vulnerability reporting, remaining repository security settings, and public visibility remain publication-time operations and must not be described as enabled before inspection confirms them.
 
 ## Reconsider when
 

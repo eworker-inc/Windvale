@@ -19,6 +19,8 @@ Windvale is model- and vendor-neutral. Any AI system may contribute. A reference
 
 AI authorship is the repository-wide default and does not require a model name on every commit or file. Record a specific model, provider, tool version, prompt, or generation procedure only when it is technically material to reproducing or qualifying an artifact, diagnosing behavior, or satisfying a third-party attribution or license obligation.
 
+A Git hosting account association is administrative metadata, not descriptive authorship. A verified project-account email may associate a commit with the steward's GitHub account while the Git author name continues to identify `Codex`, `E-Worker AI`, or another applicable descriptive source. Account linkage must not erase a materially recorded system name or be presented as proof that the account holder personally produced the content.
+
 The person or organization submitting or accepting a contribution remains responsible for review, publication, and confirming that it may be distributed. The MIT License grants permissions from each applicable rightsholder for rights that subsist; it does not depend on treating an AI system as a rightsholder. The root notice is:
 
 ```text
