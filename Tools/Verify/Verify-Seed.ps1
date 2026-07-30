@@ -44,6 +44,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $SumModule = Join-Path $Artifacts 'Sum-Data.wvb'
 $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
+$FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
 
@@ -73,6 +74,24 @@ if ($LASTEXITCODE -ne 3 -or ($UnauthorizedOutput -join "`n") -notmatch 'WVR3010'
 $HelloOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $HelloModule --allow console.write_line
 if ($LASTEXITCODE -ne 0 -or $HelloOutput -notcontains 'Hello from Windvale' -or $HelloOutput -notcontains 'Result: 0') {
     throw 'The Seed CLI did not run the authorized Hello-Windvale module correctly.'
+}
+
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Read-Wvb-Header.wv') -o $FoundationModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Read-Wvb-Header.wv.' }
+
+$FoundationVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $FoundationModule
+if ($LASTEXITCODE -ne 0 -or $FoundationVerifyOutput -notcontains 'Verified: Readˉwvbˉheader') {
+    throw 'The Seed CLI failed to verify Read-Wvb-Header.wvb.'
+}
+
+$FoundationInspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $FoundationModule
+if ($LASTEXITCODE -ne 0 -or ($FoundationInspectOutput -join "`n") -notmatch 'bytes\.read_u32_little') {
+    throw 'The Seed CLI inspector did not expose the expected little-endian read instruction.'
+}
+
+$FoundationRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $FoundationModule
+if ($LASTEXITCODE -ne 0 -or $FoundationRunOutput -notcontains 'Result: 1') {
+    throw 'The Seed CLI did not produce Result: 1 for Read-Wvb-Header.wvb.'
 }
 
 Write-Output "Windvale Seed verification passed."

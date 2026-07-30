@@ -64,7 +64,14 @@ public static class Instructionˉcodec
 
                     break;
 
+                case Opcode.U8ˉconst:
+                    Requireˉoperand(code, Offset, sizeof(byte), functionˉname, Start);
+                    Unsignedˉoperand = code[Offset++];
+                    break;
+
                 case Opcode.Textˉconst:
+                case Opcode.U32ˉconst:
+                case Opcode.Bytesˉconst:
                 case Opcode.Localˉload:
                 case Opcode.Localˉstore:
                 case Opcode.Dataˉlength:
@@ -102,8 +109,10 @@ public static class Instructionˉcodec
         return opcode switch
         {
             Opcode.I32ˉconst => 5,
-            Opcode.Boolˉconst => 2,
+            Opcode.Boolˉconst or Opcode.U8ˉconst => 2,
             Opcode.Textˉconst or
+            Opcode.U32ˉconst or
+            Opcode.Bytesˉconst or
             Opcode.Localˉload or
             Opcode.Localˉstore or
             Opcode.Dataˉlength or

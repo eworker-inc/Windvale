@@ -20,6 +20,7 @@ dotnet run \
 
 SUM_MODULE="$ARTIFACTS/Sum-Data.wvb"
 HELLO_MODULE="$ARTIFACTS/Hello-Windvale.wvb"
+FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
 dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" -o "$SUM_MODULE"
 
@@ -49,6 +50,18 @@ HELLO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURAT
     run "$HELLO_MODULE" --allow console.write_line)
 printf '%s\n' "$HELLO_OUTPUT" | grep -F 'Hello from Windvale' >/dev/null
 printf '%s\n' "$HELLO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Foundation/Read-Wvb-Header.wv" -o "$FOUNDATION_MODULE"
+
+FOUNDATION_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$FOUNDATION_MODULE")
+printf '%s\n' "$FOUNDATION_VERIFY_OUTPUT" | grep -F 'Verified: Readˉwvbˉheader' >/dev/null
+
+FOUNDATION_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$FOUNDATION_MODULE")
+printf '%s\n' "$FOUNDATION_INSPECT_OUTPUT" | grep -F 'bytes.read_u32_little' >/dev/null
+
+FOUNDATION_RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$FOUNDATION_MODULE")
+printf '%s\n' "$FOUNDATION_RUN_OUTPUT" | grep -F 'Result: 1' >/dev/null
 
 echo "Windvale Seed verification passed."
 echo "Conformance report: $REPORT_PATH"

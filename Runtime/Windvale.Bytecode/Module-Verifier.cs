@@ -137,6 +137,13 @@ public static class Moduleˉverifier
                     }
 
                     break;
+                case Bytesˉdataˉdeclaration Bytes when Bytes.Type == Dataˉtype.Bytes:
+                    if (Bytes.Values.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+                    {
+                        Fail("WVB2125", $"Byte data '{Bytes.Name}' exceeds the byte-data limit.");
+                    }
+
+                    break;
                 default:
                     Fail("WVB2123", $"Data declaration '{Data.Name}' has an inconsistent representation.");
                     break;
@@ -341,9 +348,19 @@ public static class Moduleˉverifier
             case Opcode.Boolˉconst:
                 Push(stack, Valueˉtype.Bool);
                 break;
+            case Opcode.U8ˉconst:
+                Push(stack, Valueˉtype.U8);
+                break;
+            case Opcode.U32ˉconst:
+                Push(stack, Valueˉtype.U32);
+                break;
             case Opcode.Textˉconst:
                 Requireˉdataˉtype(module, instruction, Dataˉtype.Text, function.Name);
                 Push(stack, Valueˉtype.Text);
+                break;
+            case Opcode.Bytesˉconst:
+                Requireˉdataˉtype(module, instruction, Dataˉtype.Bytes, function.Name);
+                Push(stack, Valueˉtype.Bytes);
                 break;
             case Opcode.Localˉload:
                 Push(stack, Getˉlocalˉtype(function, instruction));
@@ -360,6 +377,27 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.I32);
                 break;
+            case Opcode.Bytesˉlength:
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U32);
+                break;
+            case Opcode.Bytesˉslice:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bytes);
+                break;
+            case Opcode.Bytesˉreadˉu8:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U8);
+                break;
+            case Opcode.Bytesˉreadˉu16ˉlittle:
+            case Opcode.Bytesˉreadˉu32ˉlittle:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U32);
+                break;
             case Opcode.I32ˉadd:
             case Opcode.I32ˉsubtract:
             case Opcode.I32ˉmultiply:
@@ -370,6 +408,13 @@ public static class Moduleˉverifier
             case Opcode.I32ˉnegate:
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.I32);
+                break;
+            case Opcode.U32ˉadd:
+            case Opcode.U32ˉsubtract:
+            case Opcode.U32ˉmultiply:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U32);
                 break;
             case Opcode.I32ˉequal:
             case Opcode.I32ˉnotˉequal:
@@ -389,6 +434,22 @@ public static class Moduleˉverifier
                 break;
             case Opcode.Boolˉnot:
                 Pop(stack, Valueˉtype.Bool, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bool);
+                break;
+            case Opcode.U32ˉequal:
+            case Opcode.U32ˉnotˉequal:
+            case Opcode.U32ˉless:
+            case Opcode.U32ˉlessˉequal:
+            case Opcode.U32ˉgreater:
+            case Opcode.U32ˉgreaterˉequal:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bool);
+                break;
+            case Opcode.U8ˉequal:
+            case Opcode.U8ˉnotˉequal:
+                Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Bool);
                 break;
             case Opcode.Jump:

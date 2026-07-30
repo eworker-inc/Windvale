@@ -1,0 +1,58 @@
+module Readˉwvbˉheader profile portable;
+
+data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 0, 0, 6, 0, 0, 0];
+
+fn Headerˉisˉvalid(Input: bytes) -> bool {
+    if Bytesˉlength(Input) != 12u32 {
+        return false;
+    }
+
+    let Magic: bytes = Bytesˉslice(Input, 0u32, 4u32);
+    if Bytesˉreadˉu8(Magic, 0u32) != 87u8 {
+        return false;
+    }
+    if Bytesˉreadˉu8(Magic, 1u32) != 86u8 {
+        return false;
+    }
+    if Bytesˉreadˉu8(Magic, 2u32) != 66u8 {
+        return false;
+    }
+    if Bytesˉreadˉu8(Magic, 3u32) != 49u8 {
+        return false;
+    }
+
+    let Version: u32 = Bytesˉreadˉu16ˉlittle(Input, 4u32);
+    let Sectionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 8u32);
+    if Version != 1u32 {
+        return false;
+    }
+    if Sectionˉcount != 6u32 {
+        return false;
+    }
+
+    let Arithmeticˉcheck: u32 = 3u32 * 4u32 - 8u32;
+    if Arithmeticˉcheck <= 3u32 {
+        return false;
+    }
+    if Arithmeticˉcheck > 4u32 {
+        return false;
+    }
+    if Arithmeticˉcheck >= 5u32 {
+        return false;
+    }
+
+    var Checkedˉbytes: u32 = 0u32;
+    while Checkedˉbytes < 4u32 {
+        Checkedˉbytes = Checkedˉbytes + 1u32;
+    }
+
+    return Checkedˉbytes == 4u32;
+}
+
+export fn Main() -> i32 {
+    if Headerˉisˉvalid(Moduleˉheader) {
+        return 1;
+    }
+
+    return 0;
+}

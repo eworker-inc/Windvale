@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.Immutable;
 using Windvale.Bytecode;
 
@@ -108,9 +109,19 @@ public sealed class Referenceˉruntime
                     case Opcode.Boolˉconst:
                         Stack.Add(Runtimeˉvalue.Fromˉbool(Instruction.Unsignedˉoperand == 1));
                         break;
+                    case Opcode.U8ˉconst:
+                        Stack.Add(Runtimeˉvalue.Fromˉu8(checked((byte)Instruction.Unsignedˉoperand)));
+                        break;
+                    case Opcode.U32ˉconst:
+                        Stack.Add(Runtimeˉvalue.Fromˉu32(Instruction.Unsignedˉoperand));
+                        break;
                     case Opcode.Textˉconst:
                         var Text = (Textˉdataˉdeclaration)Verifiedˉmodule.Module.Data[(int)Instruction.Unsignedˉoperand];
                         Stack.Add(Runtimeˉvalue.Fromˉtext(Text.Value));
+                        break;
+                    case Opcode.Bytesˉconst:
+                        var Bytes = (Bytesˉdataˉdeclaration)Verifiedˉmodule.Module.Data[(int)Instruction.Unsignedˉoperand];
+                        Stack.Add(Runtimeˉvalue.Fromˉbytes(Bytes.Values));
                         break;
                     case Opcode.Localˉload:
                         Stack.Add(Locals[(int)Instruction.Unsignedˉoperand]);
@@ -134,6 +145,35 @@ public sealed class Referenceˉruntime
 
                         Stack.Add(Runtimeˉvalue.Fromˉi32(Array.Values[Elementˉindex]));
                         break;
+                    case Opcode.Bytesˉlength:
+                        Stack.Add(Runtimeˉvalue.Fromˉu32(checked((uint)Pop(Stack).Bytesˉvalue.Length)));
+                        break;
+                    case Opcode.Bytesˉslice:
+                        var Sliceˉlength = Pop(Stack).U32ˉvalue;
+                        var Sliceˉoffset = Pop(Stack).U32ˉvalue;
+                        var Sliceˉsource = Pop(Stack).Bytesˉvalue;
+                        Stack.Add(Runtimeˉvalue.Fromˉbytes(Sliceˉbytes(Sliceˉsource, Sliceˉoffset, Sliceˉlength)));
+                        break;
+                    case Opcode.Bytesˉreadˉu8:
+                        var U8ˉoffset = Pop(Stack).U32ˉvalue;
+                        var U8ˉsource = Pop(Stack).Bytesˉvalue;
+                        Stack.Add(Runtimeˉvalue.Fromˉu8(
+                            U8ˉsource.Storage[Requireˉbyteˉrange(U8ˉsource, U8ˉoffset, sizeof(byte))]));
+                        break;
+                    case Opcode.Bytesˉreadˉu16ˉlittle:
+                        var U16ˉoffset = Pop(Stack).U32ˉvalue;
+                        var U16ˉsource = Pop(Stack).Bytesˉvalue;
+                        var U16ˉabsolute = Requireˉbyteˉrange(U16ˉsource, U16ˉoffset, sizeof(ushort));
+                        Stack.Add(Runtimeˉvalue.Fromˉu32(BinaryPrimitives.ReadUInt16LittleEndian(
+                            U16ˉsource.Storage.AsSpan(U16ˉabsolute, sizeof(ushort)))));
+                        break;
+                    case Opcode.Bytesˉreadˉu32ˉlittle:
+                        var U32ˉoffset = Pop(Stack).U32ˉvalue;
+                        var U32ˉsource = Pop(Stack).Bytesˉvalue;
+                        var U32ˉabsolute = Requireˉbyteˉrange(U32ˉsource, U32ˉoffset, sizeof(uint));
+                        Stack.Add(Runtimeˉvalue.Fromˉu32(BinaryPrimitives.ReadUInt32LittleEndian(
+                            U32ˉsource.Storage.AsSpan(U32ˉabsolute, sizeof(uint)))));
+                        break;
                     case Opcode.I32ˉadd:
                         Applyˉi32ˉbinary(Stack, (Left, Right) => checked(Left + Right));
                         break;
@@ -145,6 +185,15 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.I32ˉnegate:
                         Stack.Add(Runtimeˉvalue.Fromˉi32(checked(-Pop(Stack).I32ˉvalue)));
+                        break;
+                    case Opcode.U32ˉadd:
+                        Applyˉu32ˉbinary(Stack, (Left, Right) => checked(Left + Right));
+                        break;
+                    case Opcode.U32ˉsubtract:
+                        Applyˉu32ˉbinary(Stack, (Left, Right) => checked(Left - Right));
+                        break;
+                    case Opcode.U32ˉmultiply:
+                        Applyˉu32ˉbinary(Stack, (Left, Right) => checked(Left * Right));
                         break;
                     case Opcode.I32ˉequal:
                         Applyˉi32ˉcomparison(Stack, (Left, Right) => Left == Right);
@@ -172,6 +221,30 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.Boolˉnot:
                         Stack.Add(Runtimeˉvalue.Fromˉbool(!Pop(Stack).Boolˉvalue));
+                        break;
+                    case Opcode.U32ˉequal:
+                        Applyˉu32ˉcomparison(Stack, (Left, Right) => Left == Right);
+                        break;
+                    case Opcode.U32ˉnotˉequal:
+                        Applyˉu32ˉcomparison(Stack, (Left, Right) => Left != Right);
+                        break;
+                    case Opcode.U32ˉless:
+                        Applyˉu32ˉcomparison(Stack, (Left, Right) => Left < Right);
+                        break;
+                    case Opcode.U32ˉlessˉequal:
+                        Applyˉu32ˉcomparison(Stack, (Left, Right) => Left <= Right);
+                        break;
+                    case Opcode.U32ˉgreater:
+                        Applyˉu32ˉcomparison(Stack, (Left, Right) => Left > Right);
+                        break;
+                    case Opcode.U32ˉgreaterˉequal:
+                        Applyˉu32ˉcomparison(Stack, (Left, Right) => Left >= Right);
+                        break;
+                    case Opcode.U8ˉequal:
+                        Applyˉu8ˉcomparison(Stack, (Left, Right) => Left == Right);
+                        break;
+                    case Opcode.U8ˉnotˉequal:
+                        Applyˉu8ˉcomparison(Stack, (Left, Right) => Left != Right);
                         break;
                     case Opcode.Jump:
                         Instructionˉindex = Instructionˉindices[functionˉindex][(int)Instruction.Unsignedˉoperand];
@@ -297,6 +370,33 @@ public sealed class Referenceˉruntime
         stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
     }
 
+    private static void Applyˉu32ˉbinary(
+        List<Runtimeˉvalue> stack,
+        Func<uint, uint, uint> operation)
+    {
+        var Right = Pop(stack).U32ˉvalue;
+        var Left = Pop(stack).U32ˉvalue;
+        stack.Add(Runtimeˉvalue.Fromˉu32(operation(Left, Right)));
+    }
+
+    private static void Applyˉu32ˉcomparison(
+        List<Runtimeˉvalue> stack,
+        Func<uint, uint, bool> operation)
+    {
+        var Right = Pop(stack).U32ˉvalue;
+        var Left = Pop(stack).U32ˉvalue;
+        stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+    }
+
+    private static void Applyˉu8ˉcomparison(
+        List<Runtimeˉvalue> stack,
+        Func<byte, byte, bool> operation)
+    {
+        var Right = Pop(stack).U8ˉvalue;
+        var Left = Pop(stack).U8ˉvalue;
+        stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+    }
+
     private static void Applyˉboolˉcomparison(
         List<Runtimeˉvalue> stack,
         Func<bool, bool, bool> operation)
@@ -304,5 +404,38 @@ public sealed class Referenceˉruntime
         var Right = Pop(stack).Boolˉvalue;
         var Left = Pop(stack).Boolˉvalue;
         stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+    }
+
+    private static Runtimeˉbyteˉslice Sliceˉbytes(
+        Runtimeˉbyteˉslice source,
+        uint offset,
+        uint length)
+    {
+        if (offset > (uint)source.Length || length > (uint)source.Length - offset)
+        {
+            throw new Runtimeˉexception(
+                "WVR3008",
+                $"Byte slice offset {offset} and length {length} exceed source length {source.Length}.");
+        }
+
+        return new(
+            source.Storage,
+            checked(source.Offset + (int)offset),
+            checked((int)length));
+    }
+
+    private static int Requireˉbyteˉrange(
+        Runtimeˉbyteˉslice source,
+        uint offset,
+        int width)
+    {
+        if (offset > (uint)source.Length || width > source.Length - (int)offset)
+        {
+            throw new Runtimeˉexception(
+                "WVR3008",
+                $"A {width}-byte read at offset {offset} exceeds source length {source.Length}.");
+        }
+
+        return checked(source.Offset + (int)offset);
     }
 }

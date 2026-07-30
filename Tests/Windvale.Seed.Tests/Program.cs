@@ -11,8 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static class Program
 {
-    private const string SUM_SHA256 = "faf44208d41c852f575e4f3025b0722c8fe6ee2d1c1a55b71b9e109c3eb54ef2";
-    private const string HELLO_SHA256 = "fafbc14e7e82626bcfacf358f777c1b6ce6821a335677a35148da9f857eefed5";
+    private const string SUM_SHA256 = "4570d02bc558a5e5d4e341cd9a0edcec733c7fe6d797bf371669305169ef386f";
+    private const string HELLO_SHA256 = "79185b8c138e2f7d6dc34cbdcf82a8a467601c7ae6383bb76305e4d57e4e8a62";
+    private const string FOUNDATION_SHA256 = "72cb8f2af8aa7813d76e528973476147f12b4c548c114b7276ccc99f92b1c48a";
 
     private const string SUM_SOURCE = """
         module Sumˉdata profile portable;
@@ -49,6 +50,67 @@ internal static class Program
         }
         """;
 
+    private const string FOUNDATION_SOURCE = """
+        module Readˉwvbˉheader profile portable;
+
+        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 0, 0, 6, 0, 0, 0];
+
+        fn Headerˉisˉvalid(Input: bytes) -> bool {
+            if Bytesˉlength(Input) != 12u32 {
+                return false;
+            }
+
+            let Magic: bytes = Bytesˉslice(Input, 0u32, 4u32);
+            if Bytesˉreadˉu8(Magic, 0u32) != 87u8 {
+                return false;
+            }
+            if Bytesˉreadˉu8(Magic, 1u32) != 86u8 {
+                return false;
+            }
+            if Bytesˉreadˉu8(Magic, 2u32) != 66u8 {
+                return false;
+            }
+            if Bytesˉreadˉu8(Magic, 3u32) != 49u8 {
+                return false;
+            }
+
+            let Version: u32 = Bytesˉreadˉu16ˉlittle(Input, 4u32);
+            let Sectionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 8u32);
+            if Version != 1u32 {
+                return false;
+            }
+            if Sectionˉcount != 6u32 {
+                return false;
+            }
+
+            let Arithmeticˉcheck: u32 = 3u32 * 4u32 - 8u32;
+            if Arithmeticˉcheck <= 3u32 {
+                return false;
+            }
+            if Arithmeticˉcheck > 4u32 {
+                return false;
+            }
+            if Arithmeticˉcheck >= 5u32 {
+                return false;
+            }
+
+            var Checkedˉbytes: u32 = 0u32;
+            while Checkedˉbytes < 4u32 {
+                Checkedˉbytes = Checkedˉbytes + 1u32;
+            }
+
+            return Checkedˉbytes == 4u32;
+        }
+
+        export fn Main() -> i32 {
+            if Headerˉisˉvalid(Moduleˉheader) {
+                return 1;
+            }
+
+            return 0;
+        }
+        """;
+
     private static readonly List<(string Name, Action Body)> TESTS =
     [
         ("portable source compiles, verifies, and returns the data sum", Portableˉprogramˉruns),
@@ -58,6 +120,7 @@ internal static class Program
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
         ("macron names and explicit local mutability execute", Namingˉandˉmutabilityˉrun),
+        ("Foundation byte values, slices, and little-endian reads execute", Foundationˉbytesˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
         ("source diagnostics contain stable codes and locations", Sourceˉdiagnosticsˉareˉuseful),
         ("binary reader rejects malformed envelopes and UTF-8", Malformedˉmodulesˉareˉrejected),
@@ -281,6 +344,38 @@ internal static class Program
         Hasˉdiagnostic(Confusableˉseparator, "WVC1002");
     }
 
+    private static void Foundationˉbytesˉrun()
+    {
+        var Bytes = Compileˉsuccess(FOUNDATION_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        Equal(Dataˉtype.Bytes, Module.Module.Data.Single().Type);
+        var Data = (Bytesˉdataˉdeclaration)Module.Module.Data.Single();
+        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 0, 0, 6, 0, 0, 0], Data.Values);
+        True(
+            Module.Module.Functions.SelectMany(Function => Function.Allˉlocalˉtypes)
+                .Contains(Valueˉtype.Bytes),
+            "The Foundation module did not preserve its bytes value type.");
+        True(
+            Module.Module.Functions.SelectMany(Function => Function.Allˉlocalˉtypes)
+                .Contains(Valueˉtype.U8),
+            "The Foundation module did not preserve its u8 value type.");
+        True(
+            Module.Module.Functions.SelectMany(Function => Function.Allˉlocalˉtypes)
+                .Contains(Valueˉtype.U32),
+            "The Foundation module did not preserve its u32 value type.");
+
+        var Rewritten = Moduleˉcodec.Write(Module.Module);
+        Sequenceˉequal(Bytes, Rewritten);
+        var Inspection = Moduleˉinspector.Inspect(Module, Bytes);
+        Contains(Inspection, "bytes.read_u32_little");
+        Contains(Inspection, "bytes.slice");
+        Equal(FOUNDATION_SHA256, Moduleˉdigest.Calculateˉsha256(Bytes));
+        Equal(1, new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+    }
+
     private static void Sourceˉdiagnosticsˉareˉuseful()
     {
         const string Typeˉmismatch = """
@@ -317,6 +412,38 @@ internal static class Program
             export fn Main() -> i32 { return 0; }
             """;
         Hasˉdiagnostic(Badˉescape, "WVC1003");
+
+        const string U8ˉoverflow = """
+            module Broken profile portable;
+            export fn Main() -> i32 { 256u8; return 0; }
+            """;
+        Hasˉdiagnostic(U8ˉoverflow, "WVC1001");
+
+        const string U32ˉoverflow = """
+            module Broken profile portable;
+            export fn Main() -> i32 { 4294967296u32; return 0; }
+            """;
+        Hasˉdiagnostic(U32ˉoverflow, "WVC1001");
+
+        const string Byteˉdataˉoverflow = """
+            module Broken profile portable;
+            data Values: bytes = [256];
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Byteˉdataˉoverflow, "WVC1106");
+
+        const string Intrinsicˉtypeˉmismatch = """
+            module Broken profile portable;
+            export fn Main() -> i32 { Bytesˉlength(1u32); return 0; }
+            """;
+        Hasˉdiagnostic(Intrinsicˉtypeˉmismatch, "WVC2070");
+
+        const string Reservedˉintrinsic = """
+            module Broken profile portable;
+            fn Bytesˉlength(Value: i32) -> i32 { return Value; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Reservedˉintrinsic, "WVC2024");
     }
 
     private static void Operatorsˉrun()
@@ -432,6 +559,24 @@ internal static class Program
                 Valueˉtype.Void,
                 maximumˉstack: 0)));
 
+        Throwsˉbytecode(
+            "WVB2220",
+            () => Moduleˉverifier.Verify(Buildˉmodule(
+                [.. I32ˉinstruction(0), (byte)Opcode.Bytesˉlength, (byte)Opcode.Pop, (byte)Opcode.Return],
+                Valueˉtype.Void,
+                maximumˉstack: 1)));
+
+        var Oversizedˉbyteˉdata = Buildˉmodule(
+            [(byte)Opcode.Return],
+            Valueˉtype.Void,
+            maximumˉstack: 0) with
+        {
+            Data = [new Bytesˉdataˉdeclaration(
+                "Oversizedˉbytes",
+                ImmutableArray.Create<byte>(new byte[Bytecodeˉlimits.MAX_BYTE_DATA_BYTES + 1]))],
+        };
+        Throwsˉbytecode("WVB2125", () => Moduleˉverifier.Verify(Oversizedˉbyteˉdata));
+
         var Invalidˉtext = new Textˉdataˉdeclaration("Text", "\uD800");
         Throwsˉbytecode(
             "WVB2124",
@@ -459,6 +604,44 @@ internal static class Program
             export fn Main() -> i32 { return Values[2]; }
             """;
         Throwsˉruntime("WVR3005", () => Runˉportable(Bounds));
+
+        const string Byteˉbounds = """
+            module Byteˉbounds profile portable;
+            data Values: bytes = [1, 2, 3];
+            export fn Main() -> i32 {
+                Bytesˉreadˉu32ˉlittle(Values, 0u32);
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3008", () => Runˉportable(Byteˉbounds));
+
+        const string Sliceˉbounds = """
+            module Sliceˉbounds profile portable;
+            data Values: bytes = [1, 2, 3];
+            export fn Main() -> i32 {
+                Bytesˉslice(Values, 2u32, 2u32);
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3008", () => Runˉportable(Sliceˉbounds));
+
+        const string U32ˉoverflow = """
+            module U32ˉoverflow profile portable;
+            export fn Main() -> i32 {
+                4294967295u32 + 1u32;
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3007", () => Runˉportable(U32ˉoverflow));
+
+        const string U32ˉunderflow = """
+            module U32ˉunderflow profile portable;
+            export fn Main() -> i32 {
+                0u32 - 1u32;
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3007", () => Runˉportable(U32ˉunderflow));
     }
 
     private static void Runtimeˉlimitsˉareˉenforced()
@@ -487,10 +670,13 @@ internal static class Program
     {
         var Sumˉbytes = Compileˉsuccess(SUM_SOURCE);
         var Helloˉbytes = Compileˉsuccess(HELLO_SOURCE);
+        var Foundationˉbytes = Compileˉsuccess(FOUNDATION_SOURCE);
         var Sumˉhash = Moduleˉdigest.Calculateˉsha256(Sumˉbytes);
         var Helloˉhash = Moduleˉdigest.Calculateˉsha256(Helloˉbytes);
+        var Foundationˉhash = Moduleˉdigest.Calculateˉsha256(Foundationˉbytes);
         Equal(SUM_SHA256, Sumˉhash);
         Equal(HELLO_SHA256, Helloˉhash);
+        Equal(FOUNDATION_SHA256, Foundationˉhash);
 
         var Sumˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sumˉbytes),
@@ -505,16 +691,23 @@ internal static class Program
         var Normalizedˉhelloˉoutput = Helloˉoutput.ToString()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
+        var Foundationˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Foundationˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
         Equal(29, Sumˉresult.Exitˉcode);
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
+        Equal(1, Foundationˉresult.Exitˉcode);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             Sumˉhash,
             Sumˉresult.Exitˉcode,
             Helloˉhash,
             Normalizedˉhelloˉoutput,
-            Helloˉresult.Exitˉcode);
+            Helloˉresult.Exitˉcode,
+            Foundationˉhash,
+            Foundationˉresult.Exitˉcode);
     }
 
     private static void Randomˉinputˉisˉcontained()
@@ -776,7 +969,9 @@ internal static class Program
         [property: JsonPropertyName("sumResult")] int Sumˉresult,
         [property: JsonPropertyName("helloSha256")] string Helloˉsha256,
         [property: JsonPropertyName("helloOutput")] string Helloˉoutput,
-        [property: JsonPropertyName("helloResult")] int Helloˉresult);
+        [property: JsonPropertyName("helloResult")] int Helloˉresult,
+        [property: JsonPropertyName("foundationSha256")] string Foundationˉsha256,
+        [property: JsonPropertyName("foundationResult")] int Foundationˉresult);
 
     private sealed record Hostˉreport(
         [property: JsonPropertyName("operatingSystemFamily")] string Operatingˉsystemˉfamily,

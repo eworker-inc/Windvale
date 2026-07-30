@@ -119,6 +119,18 @@ internal static class Bytecodeˉlowering
                     Emitˉi32(Opcode.I32ˉconst, instruction.Integerˉoperand, pop: 0, push: 1);
                     Storeˉresult(instruction);
                     break;
+                case Wirˉoperation.U8ˉconstant:
+                    Emitˉbyte(
+                        Opcode.U8ˉconst,
+                        checked((byte)instruction.Unsignedˉintegerˉoperand),
+                        pop: 0,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.U32ˉconstant:
+                    Emitˉu32(Opcode.U32ˉconst, instruction.Unsignedˉintegerˉoperand, pop: 0, push: 1);
+                    Storeˉresult(instruction);
+                    break;
                 case Wirˉoperation.Boolˉconstant:
                     Emitˉbyte(
                         Opcode.Boolˉconst,
@@ -130,6 +142,14 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.Textˉconstant:
                     Emitˉu32(
                         Opcode.Textˉconst,
+                        Resolve(dataˉindices, instruction.Nameˉoperand, "data"),
+                        pop: 0,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.Bytesˉconstant:
+                    Emitˉu32(
+                        Opcode.Bytesˉconst,
                         Resolve(dataˉindices, instruction.Nameˉoperand, "data"),
                         pop: 0,
                         push: 1);
@@ -160,6 +180,18 @@ internal static class Bytecodeˉlowering
                         push: 1);
                     Storeˉresult(instruction);
                     break;
+                case Wirˉoperation.Bytesˉlength:
+                case Wirˉoperation.Bytesˉslice:
+                case Wirˉoperation.Bytesˉreadˉu8:
+                case Wirˉoperation.Bytesˉreadˉu16ˉlittle:
+                case Wirˉoperation.Bytesˉreadˉu32ˉlittle:
+                    Loadˉarguments(instruction.Operands);
+                    Emitˉnone(
+                        Mapˉopcode(instruction.Operation),
+                        pop: instruction.Operands.Length,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
                 case Wirˉoperation.I32ˉadd:
                 case Wirˉoperation.I32ˉsubtract:
                 case Wirˉoperation.I32ˉmultiply:
@@ -171,6 +203,17 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.I32ˉgreaterˉequal:
                 case Wirˉoperation.Boolˉequal:
                 case Wirˉoperation.Boolˉnotˉequal:
+                case Wirˉoperation.U32ˉadd:
+                case Wirˉoperation.U32ˉsubtract:
+                case Wirˉoperation.U32ˉmultiply:
+                case Wirˉoperation.U32ˉequal:
+                case Wirˉoperation.U32ˉnotˉequal:
+                case Wirˉoperation.U32ˉless:
+                case Wirˉoperation.U32ˉlessˉequal:
+                case Wirˉoperation.U32ˉgreater:
+                case Wirˉoperation.U32ˉgreaterˉequal:
+                case Wirˉoperation.U8ˉequal:
+                case Wirˉoperation.U8ˉnotˉequal:
                     Loadˉtemporary(instruction.Operands[0]);
                     Loadˉtemporary(instruction.Operands[1]);
                     Emitˉnone(Mapˉopcode(instruction.Operation), pop: 2, push: 1);
@@ -329,8 +372,13 @@ internal static class Bytecodeˉlowering
                 throw new ArgumentOutOfRangeException(nameof(operand));
             }
 
+            Emitˉu32(opcode, (uint)operand, pop, push);
+        }
+
+        private void Emitˉu32(Opcode opcode, uint operand, int pop, int push)
+        {
             Bytes.Add((byte)opcode);
-            Writeˉu32((uint)operand);
+            Writeˉu32(operand);
             Applyˉstack(pop, push);
         }
 
@@ -394,6 +442,22 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.Boolˉequal => Opcode.Boolˉequal,
                 Wirˉoperation.Boolˉnotˉequal => Opcode.Boolˉnotˉequal,
                 Wirˉoperation.Boolˉnot => Opcode.Boolˉnot,
+                Wirˉoperation.Bytesˉlength => Opcode.Bytesˉlength,
+                Wirˉoperation.Bytesˉslice => Opcode.Bytesˉslice,
+                Wirˉoperation.Bytesˉreadˉu8 => Opcode.Bytesˉreadˉu8,
+                Wirˉoperation.Bytesˉreadˉu16ˉlittle => Opcode.Bytesˉreadˉu16ˉlittle,
+                Wirˉoperation.Bytesˉreadˉu32ˉlittle => Opcode.Bytesˉreadˉu32ˉlittle,
+                Wirˉoperation.U32ˉadd => Opcode.U32ˉadd,
+                Wirˉoperation.U32ˉsubtract => Opcode.U32ˉsubtract,
+                Wirˉoperation.U32ˉmultiply => Opcode.U32ˉmultiply,
+                Wirˉoperation.U32ˉequal => Opcode.U32ˉequal,
+                Wirˉoperation.U32ˉnotˉequal => Opcode.U32ˉnotˉequal,
+                Wirˉoperation.U32ˉless => Opcode.U32ˉless,
+                Wirˉoperation.U32ˉlessˉequal => Opcode.U32ˉlessˉequal,
+                Wirˉoperation.U32ˉgreater => Opcode.U32ˉgreater,
+                Wirˉoperation.U32ˉgreaterˉequal => Opcode.U32ˉgreaterˉequal,
+                Wirˉoperation.U8ˉequal => Opcode.U8ˉequal,
+                Wirˉoperation.U8ˉnotˉequal => Opcode.U8ˉnotˉequal,
                 _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),
             };
         }

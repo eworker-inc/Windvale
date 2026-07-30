@@ -8,7 +8,8 @@ The intended stack includes a programming language, portable bytecode, a runtime
 
 Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provides:
 
-- A small typed source language with modules, functions, locals, control flow, immutable text and integer data, and explicit capabilities
+- A small typed source language with modules, functions, locals, control flow, immutable text, integer and byte data, and explicit capabilities
+- Foundation `u8`, `u32`, immutable byte slices, and bounded little-endian binary reads
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
@@ -65,6 +66,16 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Hello-Windvale.wvb --a
 
 The runtime refuses that module without `--allow console.write_line`.
 
+Compile and run the portable Foundation example that validates a static `.wvb` header:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Foundation/Read-Wvb-Header.wv -o artifacts/Read-Wvb-Header.wvb
+dotnet run --project Tools/Windvale.Tool -- inspect artifacts/Read-Wvb-Header.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Read-Wvb-Header.wvb
+```
+
+It exercises `u8`, `u32`, immutable byte slices, and bounded little-endian reads and returns `Result: 1`.
+
 ## Seed language example
 
 ```text
@@ -98,6 +109,7 @@ export fn Main() -> i32 {
 - `Tools/Verify/` — Windows and Linux verification entry points
 - `Tests/` — dependency-free Seed conformance runner
 - `Examples/Seed/` — portable and hosted example programs
+- `Examples/Foundation/` — incremental programs that exercise self-hosting prerequisites
 - `Specifications/` — implemented source, bytecode, CLI, and conformance contracts
 - `Documents/` — architecture, decisions, project direction, and open questions
 
@@ -117,6 +129,7 @@ export fn Main() -> i32 {
 - [Platform and portability model](Documents/Architecture/Platform-And-Portability.md)
 - [Compiler bootstrap options](Documents/Architecture/Compiler-Bootstrap-Options.md)
 - [Seed language specification](Specifications/Seed-Language.md)
+- [Foundation byte primitives](Specifications/Foundation-Bytes.md)
 - [Source naming conventions](Specifications/Source-Naming.md)
 - [Seed bytecode specification](Specifications/Seed-Bytecode.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
@@ -125,6 +138,7 @@ export fn Main() -> i32 {
 - [Repository foundation decision](Documents/Decisions/0001-Repository-And-Foundation.md)
 - [Seed bootstrap decision](Documents/Decisions/0002-Windvale-Seed-Bootstrap.md)
 - [Source naming and mutation decision](Documents/Decisions/0003-Source-Naming-And-Mutation.md)
+- [Foundation byte primitives decision](Documents/Decisions/0004-Foundation-Byte-Primitives.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 
 ## Development environment

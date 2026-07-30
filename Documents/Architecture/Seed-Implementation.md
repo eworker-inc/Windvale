@@ -62,6 +62,9 @@ Every function is checked for valid branch boundaries, index and type use, match
 - Typed runtime values
 - Deterministic local defaults
 - Checked `i32` arithmetic
+- Checked `u32` arithmetic and `u8` values
+- Immutable byte sequences and zero-copy slice views
+- Bounded `u8`, little-endian `u16`, and little-endian `u32` reads
 - Immutable data access and bounds traps
 - Function frames and call-depth limits
 - Instruction accounting and execution limits
@@ -81,10 +84,11 @@ The implementation uses ordinary portable .NET APIs and has no Windows-specific 
 - Text is encoded as strict UTF-8.
 - The conformance suite compares complete output bytes and fixed SHA-256 identities.
 
-The initial golden modules are:
+The current bytecode 1.1 golden modules are:
 
-- `Sumˉdata`: `faf44208d41c852f575e4f3025b0722c8fe6ee2d1c1a55b71b9e109c3eb54ef2`
-- `Helloˉwindvale`: `fafbc14e7e82626bcfacf358f777c1b6ce6821a335677a35148da9f857eefed5`
+- `Sumˉdata`: `4570d02bc558a5e5d4e341cd9a0edcec733c7fe6d797bf371669305169ef386f`
+- `Helloˉwindvale`: `79185b8c138e2f7d6dc34cbdcf82a8a467601c7ae6383bb76305e4d57e4e8a62`
+- `Readˉwvbˉheader`: `72cb8f2af8aa7813d76e528973476147f12b4c548c114b7276ccc99f92b1c48a`
 
 Changes to those hashes require a reviewed bytecode/compiler-contract change rather than an automatic fixture refresh.
 
@@ -95,10 +99,10 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 - The reader rejects malformed UTF-8, unsupported flags, version mismatches, missing bytes, and trailing bytes.
 - The verifier rejects unknown opcodes, truncated operands, bad indices, invalid data uses, stack underflow, type mismatches, invalid branches, inconsistent merges, unreachable instructions, and invalid maximum-stack declarations.
 - Hosted capabilities must be declared in the module and separately authorized by the embedding host.
-- Runtime overflow, array bounds, instruction limits, and call-depth limits fail with stable runtime codes.
+- Runtime signed or unsigned overflow, array bounds, byte-range bounds, instruction limits, and call-depth limits fail with stable runtime codes.
 
 ## Deliberate Seed limits
 
-Seed does not include optimization, heap allocation, garbage collection, mutable arrays, structs, floating point, exceptions, threads, async work, raw pointers, foreign calls, dynamic linking, a native backend, assembler, linker, or operating-system code.
+Seed does not include optimization, general heap allocation, garbage collection, mutable arrays, structs, floating point, exceptions, threads, async work, raw pointers, foreign calls, filesystem access, dynamic linking, a native backend, assembler, linker, or operating-system code.
 
 These are scope boundaries, not assertions that the current language model is final.

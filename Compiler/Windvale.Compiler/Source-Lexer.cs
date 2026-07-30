@@ -26,8 +26,11 @@ internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
             ["true"] = Tokenˉkind.True,
             ["false"] = Tokenˉkind.False,
             ["i32"] = Tokenˉkind.I32,
+            ["u8"] = Tokenˉkind.U8,
+            ["u32"] = Tokenˉkind.U32,
             ["bool"] = Tokenˉkind.Bool,
             ["text"] = Tokenˉkind.Text,
+            ["bytes"] = Tokenˉkind.Bytes,
             ["void"] = Tokenˉkind.Void,
             ["length"] = Tokenˉkind.Length,
         };
@@ -71,7 +74,46 @@ internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
                 Advance();
             }
 
-            var Text = source[Start..Position];
+            var Digitˉend = Position;
+            if (Hasˉnumericˉsuffix("u8"))
+            {
+                Advance();
+                Advance();
+                var Digits = source[Start..Digitˉend];
+                if (!uint.TryParse(Digits, NumberStyles.None, CultureInfo.InvariantCulture, out var Rawˉu8) ||
+                    Rawˉu8 > byte.MaxValue)
+                {
+                    diagnostics.Report(
+                        "WVC1001",
+                        "lexer",
+                        Span(Start, Startˉline, Startˉcolumn),
+                        "The decimal u8 literal is outside the range 0 through 255.");
+                    return Token(Tokenˉkind.Integer, Start, Startˉline, Startˉcolumn, (byte)0);
+                }
+
+                return Token(Tokenˉkind.Integer, Start, Startˉline, Startˉcolumn, (byte)Rawˉu8);
+            }
+
+            if (Hasˉnumericˉsuffix("u32"))
+            {
+                Advance();
+                Advance();
+                Advance();
+                var Digits = source[Start..Digitˉend];
+                if (!uint.TryParse(Digits, NumberStyles.None, CultureInfo.InvariantCulture, out var Rawˉu32))
+                {
+                    diagnostics.Report(
+                        "WVC1001",
+                        "lexer",
+                        Span(Start, Startˉline, Startˉcolumn),
+                        "The decimal u32 literal is outside the range 0 through 4294967295.");
+                    return Token(Tokenˉkind.Integer, Start, Startˉline, Startˉcolumn, 0U);
+                }
+
+                return Token(Tokenˉkind.Integer, Start, Startˉline, Startˉcolumn, Rawˉu32);
+            }
+
+            var Text = source[Start..Digitˉend];
             if (!long.TryParse(Text, NumberStyles.None, CultureInfo.InvariantCulture, out var Rawˉvalue) ||
                 Rawˉvalue > int.MaxValue)
             {
@@ -399,5 +441,17 @@ internal sealed class Sourceˉlexer(string source, Diagnosticˉbag diagnostics)
     private static bool Isˉidentifierˉpart(char value)
     {
         return Isˉidentifierˉstart(value) || char.IsAsciiDigit(value) || value == '\u02C9';
+    }
+
+    private bool Hasˉnumericˉsuffix(string suffix)
+    {
+        if (Position + suffix.Length > source.Length ||
+            !source.AsSpan(Position, suffix.Length).SequenceEqual(suffix.AsSpan()))
+        {
+            return false;
+        }
+
+        var Followingˉposition = Position + suffix.Length;
+        return Followingˉposition == source.Length || !Isˉidentifierˉpart(source[Followingˉposition]);
     }
 }

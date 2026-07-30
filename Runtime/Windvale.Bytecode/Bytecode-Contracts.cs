@@ -15,12 +15,16 @@ public enum Valueˉtype : byte
     I32 = 1,
     Bool = 2,
     Text = 3,
+    U8 = 4,
+    U32 = 5,
+    Bytes = 6,
 }
 
 public enum Dataˉtype : byte
 {
     Text = 3,
     I32ˉarray = 4,
+    Bytes = 5,
 }
 
 public enum Sectionˉkind : byte
@@ -47,11 +51,22 @@ public enum Opcode : byte
     Localˉstore = 0x05,
     Dataˉlength = 0x06,
     Dataˉloadˉi32 = 0x07,
+    U8ˉconst = 0x08,
+    U32ˉconst = 0x09,
+    Bytesˉconst = 0x0A,
+    Bytesˉlength = 0x0B,
+    Bytesˉslice = 0x0C,
+    Bytesˉreadˉu8 = 0x0D,
+    Bytesˉreadˉu16ˉlittle = 0x0E,
+    Bytesˉreadˉu32ˉlittle = 0x0F,
 
     I32ˉadd = 0x10,
     I32ˉsubtract = 0x11,
     I32ˉmultiply = 0x12,
     I32ˉnegate = 0x13,
+    U32ˉadd = 0x14,
+    U32ˉsubtract = 0x15,
+    U32ˉmultiply = 0x16,
 
     I32ˉequal = 0x20,
     I32ˉnotˉequal = 0x21,
@@ -62,6 +77,15 @@ public enum Opcode : byte
     Boolˉequal = 0x26,
     Boolˉnotˉequal = 0x27,
     Boolˉnot = 0x28,
+
+    U32ˉequal = 0x60,
+    U32ˉnotˉequal = 0x61,
+    U32ˉless = 0x62,
+    U32ˉlessˉequal = 0x63,
+    U32ˉgreater = 0x64,
+    U32ˉgreaterˉequal = 0x65,
+    U8ˉequal = 0x66,
+    U8ˉnotˉequal = 0x67,
 
     Jump = 0x30,
     Branchˉfalse = 0x31,
@@ -80,6 +104,9 @@ public sealed record Textˉdataˉdeclaration(string Name, string Value)
 
 public sealed record I32ˉarrayˉdataˉdeclaration(string Name, ImmutableArray<int> Values)
     : Dataˉdeclaration(Name, Dataˉtype.I32ˉarray);
+
+public sealed record Bytesˉdataˉdeclaration(string Name, ImmutableArray<byte> Values)
+    : Dataˉdeclaration(Name, Dataˉtype.Bytes);
 
 public sealed record Capabilityˉdeclaration(
     string Name,
