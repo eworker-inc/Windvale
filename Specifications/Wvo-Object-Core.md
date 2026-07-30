@@ -4,7 +4,7 @@
 
 `Examples/Foundation/Wvo-Object-Core.wv` is the first Windvale-written native-tool foundation. It constructs the canonical WVO 1.0 representative object entirely from immutable Windvale values, validates the complete result with Windvale source, and can persist it through an explicitly granted hosted capability. The independent C# object model decodes and verifies the produced bytes again.
 
-The current module imports `Foundationˉbyteˉordering` for canonical section and symbol name comparison. Its composed WVB candidate is 29,863 bytes with SHA-256 `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`; cross-host requalification is pending. The representative WVO bytes remain unchanged.
+The current module imports `Foundationˉbyteˉordering` for canonical section and symbol name comparison and is cross-host requalified at `4fdea22`. Its composed WVB is 29,863 bytes with SHA-256 `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`. The representative WVO bytes remain unchanged.
 
 This is an object producer and structural inspector, not yet an assembler or linker. Its role is to prove that verified Windvale bytecode can create a useful deterministic binary interchange artifact without borrowing Windows or Linux object semantics.
 
