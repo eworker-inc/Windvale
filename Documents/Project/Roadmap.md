@@ -13,8 +13,8 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 | Phase | Deliverable and qualification gate | Status |
 | --- | --- | --- |
 | 0. Seed and byte primitives | C# Stage 0, typed WIR, WVB 1.1, verified runtime, `u8`, `u32`, immutable bytes, and Windows/Debian equality. | Qualified |
-| 1. `Wvˉdumpˉcore` | Windvale source safely walks complete WVB headers and section envelopes over supplied bytes, including hostile lengths and malformed cases. | Implementation candidate |
-| 2. Structured inspection | Add only the records, enums, structured results/errors, and bounded formatting demanded by useful section descriptions. | Planned |
+| 1. `Wvˉdumpˉcore` | Windvale source safely walks complete WVB headers and section envelopes over supplied bytes, including hostile lengths and malformed cases. | Qualified |
+| 2. Structured inspection | Add only the records, enums, structured results/errors, and bounded formatting demanded by useful section descriptions. | Current focus |
 | 3. Hosted resource boundary | Explicit arguments, file-byte input, diagnostics, and output capabilities with portable parsing kept independent. | Planned |
 | 4. Useful `wvdump` | Inspect the same real modules identically on Windows and Debian with golden machine-readable reports. | Planned |
 | 5. Object foundation | Deterministic byte construction, sections, symbols, relocations, and the smallest shared object contracts needed by an assembler. | Planned |
@@ -29,4 +29,4 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 
 ## Current focus
 
-Phase 1 is the current implementation focus. It is complete only after the exact committed source passes the Windows verifier, the Debian QA verifier, and portable report comparison. Phase 2 begins from concrete limitations observed in that qualified tool rather than from a speculative general-purpose type system.
+Phase 1 is qualified at commit `60fd261` after the exact source passed the Windows verifier, Debian QA verifier, and portable report comparison. Phase 2 is the current implementation focus. It begins from a concrete limitation in the qualified tool: numeric status values cannot carry useful section descriptors or structured error details.
