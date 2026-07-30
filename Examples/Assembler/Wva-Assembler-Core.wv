@@ -3,6 +3,7 @@ module Wvaˉassemblerˉcore profile hosted;
 import Foundationˉmachineˉcontracts;
 import Foundationˉbyteˉordering;
 import Foundationˉdecimalˉparsing;
+import Foundationˉbyteˉconstruction;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -13,7 +14,6 @@ capability process.argument_count;
 
 data Headerˉword: bytes = [119, 105, 110, 100, 118, 97, 108, 101, 45, 97, 115, 115, 101, 109, 98, 108, 121];
 data Versionˉword: bytes = [49];
-data Repeatedˉbyte: bytes = [97];
 data Emptyˉbytes: bytes = [];
 data Invalidˉutf8ˉsource: bytes = [119, 105, 110, 100, 118, 97, 108, 101, 45, 97, 115, 115, 101, 109, 98, 108, 121, 32, 49, 10, 195, 40];
 
@@ -2584,13 +2584,8 @@ fn Describeˉencoding(Result: Wvaˉobjectˉencoding) -> text {
 }
 
 fn Repeatˉbytes(Count: u32) -> bytes {
-    var Result: bytes = Emptyˉbytes;
-    var Index: u32 = 0u32;
-    while Index < Count {
-        Result = Bytesˉconcat(Result, Repeatedˉbyte);
-        Index = Index + 1u32;
-    }
-    return Result;
+    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(97u8, Count);
+    return Result.Value;
 }
 
 fn Runˉselfˉtests() -> i32 {

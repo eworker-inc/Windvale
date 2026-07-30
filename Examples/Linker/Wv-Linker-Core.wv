@@ -3,6 +3,7 @@ module Wvˉlinkerˉcore profile hosted;
 import Foundationˉmachineˉcontracts;
 import Foundationˉbyteˉordering;
 import Foundationˉdecimalˉparsing;
+import Foundationˉbyteˉconstruction;
 
 capability console.write;
 capability diagnostic.write_line;
@@ -1248,21 +1249,8 @@ fn Successfulˉimageˉanalysis(Candidate: Imageˉresult) -> Linkˉanalysis {
 }
 
 fn Zeroˉbytes(Length: u32) -> bytes {
-    if Length == 0u32 { return Emptyˉbytes; }
-    var Page: bytes = Unitˉbyte;
-    while Bytesˉlength(Page) < 4096u32 {
-        Page = Bytesˉconcat(Page, Page);
-    }
-    var Result: bytes = Emptyˉbytes;
-    var Remaining: u32 = Length;
-    while Remaining >= 4096u32 {
-        Result = Bytesˉconcat(Result, Page);
-        Remaining = Remaining - 4096u32;
-    }
-    if Remaining > 0u32 {
-        Result = Bytesˉconcat(Result, Bytesˉslice(Page, 0u32, Remaining));
-    }
-    return Result;
+    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(0u8, Length);
+    return Result.Value;
 }
 
 fn Buildˉunrelocatedˉimage(
@@ -1443,17 +1431,13 @@ fn Relativeˉrelocationˉvalue(
 }
 
 fn Patchˉu32(Image: bytes, Offset: u32, Value: u32) -> bytes {
-    let Prefix: bytes = Bytesˉslice(Image, 0u32, Offset);
-    let Suffixˉoffset: u32 = Offset + 4u32;
-    let Suffix: bytes = Bytesˉslice(
+    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
         Image,
-        Suffixˉoffset,
-        Bytesˉlength(Image) - Suffixˉoffset
+        Offset,
+        4u32,
+        Bytesˉfromˉu32ˉlittle(Value)
     );
-    return Bytesˉconcat(
-        Prefix,
-        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Suffix)
-    );
+    return Result.Value;
 }
 
 fn Applyˉrelocations(
@@ -2550,10 +2534,13 @@ fn Describeˉlink(Analysis: Linkˉanalysis) -> text {
 }
 
 fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
-    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
-    let Suffixˉoffset: u32 = Offset + 1u32;
-    let Suffix: bytes = Bytesˉslice(Input, Suffixˉoffset, Bytesˉlength(Input) - Suffixˉoffset);
-    return Bytesˉconcat(Prefix, Bytesˉconcat(Bytesˉfromˉu8(Value), Suffix));
+    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Input,
+        Offset,
+        1u32,
+        Bytesˉfromˉu8(Value)
+    );
+    return Result.Value;
 }
 
 fn Describeˉscan(Scan: Wvoˉscan) -> text {

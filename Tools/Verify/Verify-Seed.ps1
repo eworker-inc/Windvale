@@ -54,6 +54,8 @@ $ByteOrderingModule = Join-Path $Artifacts 'Byte-Ordering.wvb'
 $ByteOrderingDemoModule = Join-Path $Artifacts 'Byte-Ordering-Demo.wvb'
 $DecimalParsingModule = Join-Path $Artifacts 'Decimal-Parsing.wvb'
 $DecimalParsingDemoModule = Join-Path $Artifacts 'Decimal-Parsing-Demo.wvb'
+$ByteConstructionModule = Join-Path $Artifacts 'Byte-Construction.wvb'
+$ByteConstructionDemoModule = Join-Path $Artifacts 'Byte-Construction-Demo.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -253,6 +255,38 @@ if ($LASTEXITCODE -ne 0 -or $DecimalParsingDemoOutput -notcontains 'Result: 0') 
     throw 'The Foundation decimal-parsing demo did not return Result: 0.'
 }
 
+$ByteConstructionSource = Join-Path $RepositoryRoot 'Foundation/Byte-Construction.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $ByteConstructionSource -o $ByteConstructionModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation byte construction.' }
+$ByteConstructionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteConstructionModule).Hash.ToLowerInvariant()
+if ($ByteConstructionHash -ne '6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207') {
+    throw "The Foundation byte-construction module has an unexpected digest: $ByteConstructionHash"
+}
+$ByteConstructionInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $ByteConstructionModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $ByteConstructionInspection -notmatch 'Foundationˉbytesˉresult' -or
+    $ByteConstructionInspection -notmatch 'Foundationˉbytesˉrepeat' -or
+    $ByteConstructionInspection -notmatch 'Foundationˉbytesˉreplace' -or
+    $ByteConstructionInspection -notmatch 'Exports \(2\)'
+) {
+    throw 'The Foundation byte-construction module inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Byte-Construction-Demo.wv') `
+    --module $ByteConstructionSource `
+    -o $ByteConstructionDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation byte-construction demo.' }
+$ByteConstructionDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteConstructionDemoModule).Hash.ToLowerInvariant()
+if ($ByteConstructionDemoHash -ne 'a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abbd81f3481fb0e0bc6c29') {
+    throw "The Foundation byte-construction demo has an unexpected digest: $ByteConstructionDemoHash"
+}
+$ByteConstructionDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $ByteConstructionDemoModule
+if ($LASTEXITCODE -ne 0 -or $ByteConstructionDemoOutput -notcontains 'Result: 0') {
+    throw 'The Foundation byte-construction demo did not return Result: 0.'
+}
+
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wv-Dump-Core.wv.' }
 
@@ -427,6 +461,7 @@ dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
     --module $MachineContractsSource `
     --module $ByteOrderingSource `
     --module $DecimalParsingSource `
+    --module $ByteConstructionSource `
     -o $WvaAssemblerModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wva-Assembler-Core.wv.' }
 
@@ -447,6 +482,7 @@ if (
     $WvaAssemblerInspection -notmatch 'Foundationˉmachineˉnameˉisˉvalid' -or
     $WvaAssemblerInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
     $WvaAssemblerInspection -notmatch 'Foundationˉu32ˉdecimalˉparse' -or
+    $WvaAssemblerInspection -notmatch 'Foundationˉbytesˉrepeat' -or
     $WvaAssemblerInspection -notmatch 'bytes\.concat' -or
     $WvaAssemblerInspection -notmatch 'bytes\.from_u32_little' -or
     $WvaAssemblerInspection -notmatch 'file\.read_bytes' -or
@@ -480,6 +516,7 @@ dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
     --module $MachineContractsSource `
     --module $ByteOrderingSource `
     --module $DecimalParsingSource `
+    --module $ByteConstructionSource `
     -o $WvLinkerCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale linker core.' }
 
@@ -511,6 +548,8 @@ if (
     $WvLinkerInspection -notmatch 'Foundationˉalignmentˉisˉvalid' -or
     $WvLinkerInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
     $WvLinkerInspection -notmatch 'Foundationˉu32ˉdecimalˉparse' -or
+    $WvLinkerInspection -notmatch 'Foundationˉbytesˉrepeat' -or
+    $WvLinkerInspection -notmatch 'Foundationˉbytesˉreplace' -or
     $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
     $WvLinkerInspection -notmatch 'bytes\.sha256_hex' -or
     $WvLinkerInspection -notmatch 'file\.read_bytes' -or
