@@ -1,7 +1,7 @@
 # Decision 0026: Streaming declaration views before statement trees
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified
 
 ## Context
 
@@ -36,3 +36,5 @@ This is not a complete Seed parser. Balanced bodies may contain invalid statemen
 The portable demo must cover every declaration form, data literals, qualified names, types, parameter/field/member counts, export and body spans, import ordering, expected-token failures, profiles, invalid data/type/literal cases, unexpected declarations, missing braces, and lexical propagation.
 
 The exact candidate must pass the complete 41-test and native CLI verifiers on Windows and Debian. Both hosts must produce identical parser, demo, and hosted-tool WVB files; the tool must emit identical reports while parsing `Source-Lexer-Core.wv` and `Source-Declaration-Parser.wv`; normalized conformance reports must match; and all prior artifacts must remain unchanged.
+
+Candidate `fc87a3e` satisfied this gate on Windows and Debian GNU/Linux 12 x64 with zero build warnings/errors and all 41 tests. The normalized reports matched; the parser, demo, hosted tool, lexer, lexer demo, object core, assembler, linker, assembled object, linked image, and map were directly byte-identical. The hosted tool reported the same declaration counts and source endpoints for the real lexer and its own declaration source on both hosts.

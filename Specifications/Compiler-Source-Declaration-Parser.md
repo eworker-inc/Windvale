@@ -4,7 +4,7 @@
 
 `Compilerˉsourceˉdeclarationˉparser` is the second Windvale-written compiler slice. It performs the namespace-shaping declaration pass over strict UTF-8 source and exposes immutable byte-span views without constructing a token or declaration collection.
 
-The current implementation is an implemented qualification candidate under Decision 0026. It imports the qualified `Compilerˉsourceˉlexer`, which imports `Foundationˉdecimalˉparsing`.
+The current implementation is cross-host qualified at `fc87a3e` under Decision 0026. It imports the qualified `Compilerˉsourceˉlexer`, which imports `Foundationˉdecimalˉparsing`.
 
 ## Pass boundary
 
@@ -82,10 +82,12 @@ It parses its own declaration source as:
 source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=24 tokens=8876 offset=64950
 ```
 
-## Qualification candidate
+## Qualified artifacts
 
 - `Source-Declaration-Parser.wvb`: 95,703 bytes, SHA-256 `b09be82c374636bf0b75a0dcea21afa648d89676e0fb0ffedcef68f9e958ee61`.
 - `Source-Declaration-Parser-Demo.wvb`: 99,847 bytes, SHA-256 `82dd2f72d2b2d148289353045fda861e07638e8fac8ba97164642d185c3b8e9a`, result `0` under 20,000,000 instructions.
 - `Source-Declaration-Parser-Tool.wvb`: 97,660 bytes, SHA-256 `36406acea0ccab9cf9f91cc9723638ae133daa1d5893dcf64454a983427a520c`.
 
 The real lexer completes under 30,000,000 instructions. The larger self-declaration pass completes under 45,000,000. These are compiler-front-end qualification ceilings and do not change assembler or linker ceilings.
+
+Windows x64 and Debian GNU/Linux 12 x64 produced these exact artifacts, emitted identical real-lexer and self-parse summaries, passed all 41 conformance tests and the complete native verifier, and matched normalized reports. This qualifies the declaration pass only; statement/expression parsing, binding, WIR construction, and WVB encoding remain later slices.
