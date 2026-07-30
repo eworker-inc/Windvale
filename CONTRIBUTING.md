@@ -62,6 +62,8 @@ Add it with `git commit --signoff`. By signing, the submitter certifies that the
 
 Use a stable verified email or a GitHub-provided ID-based `noreply` email if privacy is required. GitHub usernames, Git author names, and Git emails are separate identifiers. Never publish an address accidentally or invent an address that appears deliverable.
 
+For E-Worker project-generated commits after the Codex bootstrap history, `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` is the descriptive author and `E-Worker Inc <info@eworker.ca>` is the responsible committer and DCO signer. Repository-local Git configuration keeps these roles separate. Other contributors use their own verified identities and responsible sign-offs.
+
 ## Licensing
 
 Contributions accepted into Windvale are distributed under the root [MIT License](LICENSE). A contribution must not include material that the submitter cannot distribute under those terms. AI generation does not erase copyright, license, patent, privacy, export, or attribution obligations attached to source material.

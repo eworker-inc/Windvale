@@ -14,7 +14,8 @@ The planned official repository is `eworker-inc/Windvale`. It is created private
 - Create the GitHub repository as private first and do not change its visibility implicitly as part of a push.
 - Use `main` as the initial default branch.
 - Use [info@eworker.ca](mailto:info@eworker.ca) as the public business, fallback security, conduct, and project-identity contact.
-- Treat `E-Worker AI` as a possible vendor-neutral author name for future E-Worker project-generated commits. Select and verify its Git email separately before use.
+- Use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as the descriptive author for subsequent E-Worker project-generated commits.
+- Use `E-Worker Inc <info@eworker.ca>` as the responsible committer and DCO signer.
 - Apply the Developer Certificate of Origin to new contributions prospectively. Do not rewrite bootstrap history to retrofit sign-offs.
 
 ## 1. Prepare the exact source state
@@ -34,11 +35,11 @@ The candidate may advance while the repository remains private. Freeze one exact
 
 Before creating the repository:
 
-- Confirm the authenticated account is an owner of the existing `eworker-inc` organization.
+- Confirm the authenticated `EWorkerAI` account is an owner of the existing `eworker-inc` organization.
 - Keep at least two human-controlled organization owners so account loss does not strand the project.
 - Confirm two-factor authentication and recovery methods for every owner before enforcing an organization-wide requirement.
-- Decide, with explicit approval and a final availability check, whether to rename the administrative service account to `EWorkerAI` before public visibility. The account name is administrative identity, not source authorship.
-- Verify any email selected for future Git author, committer, or DCO metadata. A public contact address is not automatically a commit address.
+- Confirm `info@eworker.ca` remains verified and the GitHub-provided ID-based author address remains associated with `EWorkerAI`.
+- Confirm each active checkout uses repository-local author and committer configuration. The account login remains administrative identity, not source authorship.
 
 ## 3. Create and populate the private repository
 
