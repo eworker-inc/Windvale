@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Foundationˉbyteˉconstruction` provides total, portable construction operations over Windvale's immutable byte values. It owns efficient repeated-byte creation and checked range replacement for the assembler, linker, and future self-hosted bytecode encoder. Cross-host qualification of the current implementation is pending.
+`Foundationˉbyteˉconstruction` provides total, portable construction operations over Windvale's immutable byte values. It owns efficient repeated-byte creation and checked range replacement for the assembler, linker, and future self-hosted bytecode encoder. The current implementation is cross-host qualified at `26e2fd1`.
 
 ## Result contract
 
@@ -50,4 +50,4 @@ The future Windvale WVB encoder can use replacement for measured branch and tabl
 
 `Examples/Foundation/Byte-Construction-Demo.wv` is the fixed portable boundary artifact and includes the exact 4 MiB value. The complete assembler and linker suites are the consumer tests. Qualification must retain the 218-byte canonical WVO, 24-byte linked image, 1,721-byte canonical map, all no-write failures, and the fixed 200,000,000-instruction maximum link cases.
 
-The candidate standalone WVB is 2,000 bytes with SHA-256 `6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207`. The candidate composed demo is 5,068 bytes with SHA-256 `a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abbd81f3481fb0e0bc6c29` and returns `0`.
+The qualified standalone WVB is 2,000 bytes with SHA-256 `6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207`. The qualified composed demo is 5,068 bytes with SHA-256 `a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abbd81f3481fb0e0bc6c29` and returns `0`. The exact `26e2fd1` archive passed the complete Windows and Debian verifier; both artifacts and both composed tool consumers were byte-identical across hosts while all prior object, image, map, ceiling, and no-write contracts remained intact.
