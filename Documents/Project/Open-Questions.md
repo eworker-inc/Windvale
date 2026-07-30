@@ -4,8 +4,8 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Identity and community
 
-- Which final GitHub organization name will own Windvale and other E-Worker open-source projects?
-- Which dedicated private addresses will receive security and conduct reports?
+- Which individual or service accounts should receive each least-privilege GitHub organization role as the maintainer group grows?
+- Should GitHub Discussions be enabled for public design and usage questions?
 - Where will the public project site and long-term release artifacts live?
 
 ## Language
@@ -44,9 +44,9 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Complete declaration and signature symbol binding over the qualified portable import graph.
+1. Complete exact-archive Debian qualification of declaration and signature binding, then define body, local, and call binding.
 2. Use self-hosting pressure to define the memory, collection, and aggregate-type model needed by the compiler.
 3. Define the restricted C bridge without changing Windvale semantics.
 4. Extend WVA labels and address materialization only when native-backend evidence supplies exact requirements.
 5. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.
-6. Create the public organization and repository, publish monitored private contact routes, and configure DCO, security, branch, and automation settings around the accepted public-foundation policies.
+6. Import the complete history into a private `eworker-inc/Windvale` repository, inspect the initial publication baseline, and configure DCO, security, branch, and automation settings before public visibility.
