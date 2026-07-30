@@ -1,7 +1,7 @@
 # Decision 0015: Windvale linker resolution and layout passes
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `709ccb3`
 
 ## Context
 
