@@ -4,7 +4,6 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Identity and community
 
-- Which open-source license best matches the desired contribution and commercial-use model?
 - Where will the public repository and project site live?
 - Will AI-generated changes require provenance metadata beyond ordinary commit history?
 - What contribution, security-reporting, and governance model should accompany the first public release?
@@ -50,4 +49,4 @@ The recommended next decisions are:
 3. Define the memory and aggregate-type model needed for a self-hosted compiler.
 4. Define the restricted C bridge without changing Windvale semantics.
 5. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.
-6. Select the source license before publishing implementation code.
+6. Define contribution, AI-provenance, security-reporting, and trademark policies around the accepted MIT license.

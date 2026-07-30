@@ -6,6 +6,8 @@ Windvale explores whether people and AI can collaboratively construct a small, c
 
 The intended result is not an AI-generated novelty kernel. Windvale should be understandable enough to study, structured enough to extend, and useful in stages before its operating system is complete.
 
+Windvale is an E-Worker Inc project, with AI agents acting as the primary implementation authors under human direction and review. To our knowledge, it is among the first open-source efforts attempting the full breadth of an owned language, compiler, bytecode, runtime, assembler, object model, linker, native path, Foundation library, and operating system as one coherent AI-authored stack. The qualifier matters: earlier AI-generated operating systems and AI-oriented language/compiler experiments exist, and Windvale must never present future native or OS work as already implemented. Its distinctive claim is the integrated scope and the reproducible evidence carried from one layer to the next.
+
 ## Intended stack
 
 ```text
@@ -61,4 +63,4 @@ The likely first hardware target is x86-64 with UEFI because it provides a pract
 
 ## Open-source intent
 
-Windvale is intended to be open source. The license, contribution model, security-reporting process, and public hosting location remain open decisions. No source release should be described as open source until an approved license is present.
+Windvale is open source under the MIT License, with copyright held by E-Worker Inc. The contribution model, AI-provenance policy, security-reporting process, trademark policy, and public hosting location remain open governance decisions.

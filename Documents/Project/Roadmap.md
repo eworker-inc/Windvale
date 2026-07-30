@@ -31,7 +31,7 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 | 10. Native host tools | Produce and qualify native Windvale programs in controlled Windows and Linux environments. | Planned |
 | 11. Boot path and kernel | x86-64 UEFI/QEMU boot, diagnostics, memory foundation, minimal kernel boundary, and Hyper-V qualification. | Planned |
 | 12. Runtime on Windvale OS | Load, verify, and run one identical Windvale module across Windows, Linux, and Windvale OS. | Planned |
-| 13. Public foundation | Reproducible recovery bootstrap, security limits, licensing, governance, contribution rules, and public-release criteria. | Planned |
+| 13. Public foundation | Reproducible recovery bootstrap, security limits, licensing, governance, contribution rules, and public-release criteria. | MIT license selected; remaining governance planned |
 
 ## Detailed execution plan
 
@@ -127,7 +127,7 @@ The completion gate is the central Windvale portability proof: one module artifa
 
 ### Phase 13 - public foundation
 
-1. Select and add the source license; no earlier open-source-intent statement substitutes for it.
+1. Keep the accepted MIT license and E-Worker Inc stewardship visible in source distributions; Decision 0028 and the root `LICENSE` complete the initial license-selection gate.
 2. Publish the recovery bootstrap, pinned prerequisites, artifact provenance, cross-host qualification procedure, and release manifests.
 3. Define contribution, review, AI-assistance disclosure, security-reporting, supported-version, and vulnerability-response policies.
 4. Audit parsers, verifiers, resource limits, capability authorization, hostile inputs, and reproducible builds against the public threat model.
