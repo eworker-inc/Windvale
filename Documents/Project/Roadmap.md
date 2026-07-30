@@ -53,6 +53,8 @@ Phase 6 is complete only after 6G. A parser demo, hard-coded object producer, or
 
 ### Phase 7 - Foundation modules driven by real tools
 
+The first enabling slice, bounded static source-module composition, is implemented under Decision 0019 with cross-host qualification pending. It deliberately changes neither WVB 1.6 nor runtime loading; the next slice must use it to extract one pure function surface justified by both the assembler and linker.
+
 1. Identify duplicated bounded scanning, byte construction, name validation, diagnostics, result/status, and test behavior in the qualified assembler and linker.
 2. Introduce the smallest module/import and collection facilities needed to express those reusable contracts without hidden mutation or unbounded allocation.
 3. Extract one capability at a time into explicit Foundation modules while preserving exact tool outputs.

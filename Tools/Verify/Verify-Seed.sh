@@ -21,6 +21,9 @@ dotnet run \
 SUM_MODULE="$ARTIFACTS/Sum-Data.wvb"
 HELLO_MODULE="$ARTIFACTS/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
+COMPOSITION_MODULE="$ARTIFACTS/Module-Composition-Demo.wvb"
+COMPOSITION_REORDERED_MODULE="$ARTIFACTS/Module-Composition-Demo-Reordered.wvb"
+INVALID_COMPOSITION_MODULE="$ARTIFACTS/__windvale_invalid_composition_output__.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -77,6 +80,62 @@ printf '%s\n' "$FOUNDATION_INSPECT_OUTPUT" | grep -F 'bytes.read_u32_little' >/d
 
 FOUNDATION_RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$FOUNDATION_MODULE")
 printf '%s\n' "$FOUNDATION_RUN_OUTPUT" | grep -F 'Result: 1' >/dev/null
+
+COMPOSITION_ROOT="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Demo.wv"
+COMPOSITION_MIDDLE="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Middle.wv"
+COMPOSITION_LEAF="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Leaf.wv"
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$COMPOSITION_ROOT" \
+    --module "$COMPOSITION_MIDDLE" \
+    --module "$COMPOSITION_LEAF" \
+    -o "$COMPOSITION_MODULE"
+COMPOSITION_HASH=$(sha256sum "$COMPOSITION_MODULE" | awk '{print $1}')
+if [ "$COMPOSITION_HASH" != '5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612' ]; then
+    echo "The composed source module has an unexpected digest: $COMPOSITION_HASH" >&2
+    exit 1
+fi
+COMPOSITION_RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$COMPOSITION_MODULE")
+printf '%s\n' "$COMPOSITION_RUN_OUTPUT" | grep -F 'Result: 42' >/dev/null
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$COMPOSITION_ROOT" \
+    --module "$COMPOSITION_LEAF" \
+    --module "$COMPOSITION_MIDDLE" \
+    -o "$COMPOSITION_REORDERED_MODULE"
+cmp "$COMPOSITION_MODULE" "$COMPOSITION_REORDERED_MODULE"
+rm -f "$INVALID_COMPOSITION_MODULE"
+set +e
+MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$COMPOSITION_ROOT" --module "$COMPOSITION_MIDDLE" -o "$INVALID_COMPOSITION_MODULE" 2>&1)
+MISSING_COMPOSITION_EXIT=$?
+set -e
+if [ "$MISSING_COMPOSITION_EXIT" -ne 1 ]; then
+    echo "Expected missing source import exit 1, found $MISSING_COMPOSITION_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$MISSING_COMPOSITION_OUTPUT" | grep -F 'WVC0007' >/dev/null
+if [ -e "$INVALID_COMPOSITION_MODULE" ]; then
+    echo 'A rejected source-module composition created an output module.' >&2
+    exit 1
+fi
+printf '\011\010\007' > "$INVALID_COMPOSITION_MODULE"
+set +e
+MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$COMPOSITION_ROOT" --module "$COMPOSITION_MIDDLE" -o "$INVALID_COMPOSITION_MODULE" 2>&1)
+MISSING_COMPOSITION_EXIT=$?
+set -e
+if [ "$MISSING_COMPOSITION_EXIT" -ne 1 ]; then
+    echo "Expected repeated missing source import exit 1, found $MISSING_COMPOSITION_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$MISSING_COMPOSITION_OUTPUT" | grep -F 'WVC0007' >/dev/null
+EXPECTED_EXISTING_COMPOSITION=$(printf '\011\010\007' | sha256sum | awk '{print $1}')
+ACTUAL_EXISTING_COMPOSITION=$(sha256sum "$INVALID_COMPOSITION_MODULE" | awk '{print $1}')
+if [ "$ACTUAL_EXISTING_COMPOSITION" != "$EXPECTED_EXISTING_COMPOSITION" ]; then
+    echo 'A rejected source-module composition modified an existing output module.' >&2
+    exit 1
+fi
+rm -f "$INVALID_COMPOSITION_MODULE"
 
 dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     compile "$REPOSITORY_ROOT/Examples/Foundation/Wv-Dump-Core.wv" -o "$WVDUMP_CORE_MODULE"

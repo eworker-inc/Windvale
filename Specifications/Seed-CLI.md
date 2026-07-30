@@ -3,7 +3,7 @@
 ## Commands
 
 ```text
-windvale compile <source.wv> [-o <module.wvb>]
+windvale compile <source.wv> [--module <dependency.wv>]... [-o <module.wvb>]
 windvale assemble <source.wva> [-o <object.wvo>]
 windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...
 windvale inspect <module.wvb>
@@ -16,8 +16,8 @@ windvale help
 
 ## Behavior
 
-- `compile` reads strict UTF-8 source, compiles it, verifies the generated module, and writes deterministic bytes. The default output replaces the source extension with `.wvb`.
-- `compile` requires `.wv` input and `.wvb` output paths and refuses to overwrite its source path.
+- `compile` reads the strict UTF-8 root source and every explicit repeated `--module` dependency, resolves the complete bounded import graph, composes one module, verifies the generated WVB, and writes deterministic bytes. It performs no implicit source lookup. The default output replaces the root source extension with `.wvb`.
+- `compile` requires `.wv` input and `.wvb` output paths, rejects duplicate source paths, and refuses to overwrite any source input. Compilation or import failure does not create or modify the output.
 - `assemble` reads strict UTF-8 WVA 1 source, validates and encodes it through the Stage 0 assembler, verifies the generated WVO, and writes deterministic bytes. The default output replaces `.wva` with `.wvo`; input and output paths must differ.
 - `link` reads one or more bounded `.wvo` inputs in explicit command order, verifies every object, resolves imports, lays out and relocates the `flat-x86-64-v1` memory image at the required decimal `u32` base address, independently verifies the complete image, and writes one distinct `.bin` output. Success writes the canonical path-free link map to standard output. Link failure writes no map and does not create or modify the image.
 - `inspect` validates the module structure and prints canonical human-readable metadata and disassembly. It does not execute the module.

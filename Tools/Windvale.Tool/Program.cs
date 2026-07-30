@@ -20,6 +20,7 @@ internal static class Program
     private const int EXIT_SOFTWARE = 70;
     private const int EXIT_IO = 74;
     private const int MAX_SOURCE_FILE_BYTES = 16 * 1024 * 1024;
+    private const long MAX_SOURCE_SET_FILE_BYTES = 64L * 1024 * 1024;
 
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
@@ -90,21 +91,43 @@ internal static class Program
 
     private static int Compile(string[] arguments)
     {
-        if (arguments.Length is not (1 or 3) ||
-            (arguments.Length == 3 && arguments[1] != "-o"))
+        const string Usage =
+            "Usage: windvale compile <source.wv> [--module <dependency.wv>]... [-o <module.wvb>]";
+        if (arguments.Length == 0 || arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
-            return Usageˉerror("Usage: windvale compile <source.wv> [-o <module.wvb>]");
+            return Usageˉerror(Usage);
         }
 
         var Sourceˉpath = Path.GetFullPath(arguments[0]);
-        var Outputˉpath = arguments.Length == 3
-            ? Path.GetFullPath(arguments[2])
-            : Path.ChangeExtension(Sourceˉpath, ".wvb");
-        if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(Sourceˉpath), ".wv"))
+        var Dependencyˉpaths = new List<string>();
+        string? Requestedˉoutputˉpath = null;
+        for (var Index = 1; Index < arguments.Length; Index += 2)
         {
-            return Usageˉerror("The compile input must use the .wv source extension.");
+            if (Index + 1 >= arguments.Length)
+            {
+                return Usageˉerror(Usage);
+            }
+            if (arguments[Index] == "--module")
+            {
+                Dependencyˉpaths.Add(Path.GetFullPath(arguments[Index + 1]));
+                continue;
+            }
+            if (arguments[Index] == "-o" && Requestedˉoutputˉpath is null)
+            {
+                Requestedˉoutputˉpath = Path.GetFullPath(arguments[Index + 1]);
+                continue;
+            }
+
+            return Usageˉerror($"Unknown, duplicate, or incomplete compile option '{arguments[Index]}'.");
         }
 
+        var Outputˉpath = Requestedˉoutputˉpath ?? Path.ChangeExtension(Sourceˉpath, ".wvb");
+        if (Dependencyˉpaths.Count >= Seedˉcompiler.MAX_SOURCE_MODULES)
+        {
+            Console.Error.WriteLine(
+                $"A compilation may contain at most {Seedˉcompiler.MAX_SOURCE_MODULES} source modules.");
+            return EXIT_COMPILATION;
+        }
         if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(Outputˉpath), ".wvb"))
         {
             return Usageˉerror("The compile output must use the .wvb module extension.");
@@ -113,27 +136,56 @@ internal static class Program
         var Pathˉcomparer = OperatingSystem.IsWindows()
             ? StringComparer.OrdinalIgnoreCase
             : StringComparer.Ordinal;
-        if (Pathˉcomparer.Equals(Sourceˉpath, Outputˉpath))
+        var Sourceˉpaths = new List<string>(Dependencyˉpaths.Count + 1) { Sourceˉpath };
+        Sourceˉpaths.AddRange(Dependencyˉpaths);
+        var Uniqueˉsourceˉpaths = new HashSet<string>(Pathˉcomparer);
+        foreach (var Path in Sourceˉpaths)
         {
-            return Usageˉerror("The compile output path must differ from the source path.");
+            if (!StringComparer.OrdinalIgnoreCase.Equals(System.IO.Path.GetExtension(Path), ".wv"))
+            {
+                return Usageˉerror("Every compile input must use the .wv source extension.");
+            }
+            if (!Uniqueˉsourceˉpaths.Add(Path))
+            {
+                return Usageˉerror($"The compile source path is supplied more than once: {Path}");
+            }
+            if (Pathˉcomparer.Equals(Path, Outputˉpath))
+            {
+                return Usageˉerror("The compile output path must differ from every source path.");
+            }
         }
 
-        var Sourceˉlength = new FileInfo(Sourceˉpath).Length;
-        if (Sourceˉlength > MAX_SOURCE_FILE_BYTES)
+        var Sourceˉinputs = new List<Sourceˉmoduleˉinput>(Sourceˉpaths.Count);
+        long Totalˉsourceˉbytes = 0;
+        foreach (var Path in Sourceˉpaths)
         {
-            Console.Error.WriteLine(
-                $"Source file exceeds the {MAX_SOURCE_FILE_BYTES} byte input limit.");
-            return EXIT_COMPILATION;
+            var Sourceˉlength = new FileInfo(Path).Length;
+            if (Sourceˉlength > MAX_SOURCE_FILE_BYTES)
+            {
+                Console.Error.WriteLine(
+                    $"Source file '{Path}' exceeds the {MAX_SOURCE_FILE_BYTES} byte input limit.");
+                return EXIT_COMPILATION;
+            }
+            Totalˉsourceˉbytes += Sourceˉlength;
+            if (Totalˉsourceˉbytes > MAX_SOURCE_SET_FILE_BYTES)
+            {
+                Console.Error.WriteLine(
+                    $"The source-file set exceeds the {MAX_SOURCE_SET_FILE_BYTES} byte input limit.");
+                return EXIT_COMPILATION;
+            }
+            Sourceˉinputs.Add(new(Path, File.ReadAllText(Path, STRICT_UTF8)));
         }
 
-        var Source = File.ReadAllText(Sourceˉpath, STRICT_UTF8);
-        var Result = Seedˉcompiler.Compile(Source, Sourceˉpath);
+        var Result = Seedˉcompiler.Compileˉmodules(Sourceˉinputs[0], Sourceˉinputs.Skip(1).ToArray());
         if (!Result.Success)
         {
             foreach (var Diagnostic in Result.Diagnostics)
             {
+                var Diagnosticˉsource = string.IsNullOrEmpty(Diagnostic.Span.Sourceˉname)
+                    ? Sourceˉpath
+                    : Diagnostic.Span.Sourceˉname;
                 Console.Error.WriteLine(
-                    $"{Sourceˉpath}({Diagnostic.Span.Line},{Diagnostic.Span.Column}): " +
+                    $"{Diagnosticˉsource}({Diagnostic.Span.Line},{Diagnostic.Span.Column}): " +
                     $"error {Diagnostic.Code} [{Diagnostic.Phase}]: {Diagnostic.Message}");
             }
 
@@ -423,7 +475,7 @@ internal static class Program
         output.WriteLine("Windvale Seed tool");
         output.WriteLine();
         output.WriteLine("Commands:");
-        output.WriteLine("  windvale compile <source.wv> [-o <module.wvb>]");
+        output.WriteLine("  windvale compile <source.wv> [--module <dependency.wv>]... [-o <module.wvb>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");
         output.WriteLine("  windvale inspect <module.wvb>");

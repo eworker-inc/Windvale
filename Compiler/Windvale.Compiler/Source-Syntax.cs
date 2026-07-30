@@ -15,6 +15,7 @@ internal enum Tokenˉkind
     Portable,
     Hosted,
     System,
+    Import,
     Capability,
     Data,
     Record,
@@ -90,11 +91,14 @@ internal sealed record Typeˉsyntax(
 internal sealed record Moduleˉsyntax(
     Syntaxˉtoken Name,
     Syntaxˉtoken Profile,
+    ImmutableArray<Importˉsyntax> Imports,
     ImmutableArray<Capabilityˉsyntax> Capabilities,
     ImmutableArray<Dataˉsyntax> Data,
     ImmutableArray<Recordˉsyntax> Records,
     ImmutableArray<Enumˉsyntax> Enums,
     ImmutableArray<Functionˉsyntax> Functions);
+
+internal sealed record Importˉsyntax(Syntaxˉtoken Name, Sourceˉspan Span);
 
 internal sealed record Capabilityˉsyntax(string Name, Sourceˉspan Span);
 
