@@ -1,10 +1,14 @@
 # Windvale
 
-Windvale is an MIT-licensed E-Worker Inc project building a small, understandable computing stack with AI as the primary implementation author under human direction and review.
+Windvale is an MIT-licensed E-Worker Inc project building a small, understandable computing stack implemented entirely by AI systems under human direction and review.
 
 The intended stack includes a programming language, portable bytecode, a runtime, an assembler, an object format, a linker, a compact foundation library, and eventually a small operating system. The operating system is the final integration demonstration; the language, tools, and runtime remain independently useful on Windows and Linux.
 
-To our knowledge, Windvale is among the first open-source projects attempting this entire breadth as one coherent, AI-authored stack built from an empty project: owned source-language semantics, compiler, verified bytecode, runtime, assembler, object model, linker, native path, Foundation library, and operating system. This is deliberately an “among the first at this breadth” statement—not a claim that no earlier AI-generated operating system, compiler, or programming-language experiment exists. The assembler, object model, linker, bytecode/runtime foundation, and Windvale-written compiler frontend already have reproducible evidence; the self-hosted compiler, native toolchain, and Windvale OS remain active milestones rather than completed claims.
+The project's code and documentation are authored by AI systems under human direction and review. E-Worker Inc initiated and stewards the project. OpenAI Codex produced most of the initial implementation; future work may come from Codex or any other AI system. Windvale is model- and vendor-neutral. Naming an AI system records development history and does not imply sponsorship, affiliation, endorsement, or ownership by its provider.
+
+As of July 2026, Windvale is among the earliest known open-source efforts to build this full breadth as one coherent, AI-authored stack from an empty project: its own source-language semantics, compiler, verified bytecode, runtime, assembler, object model, linker, Foundation library, native path, and operating system. Earlier AI-authored operating systems and language/toolchain projects exist; this claim concerns the combined scope, not priority for any one component.
+
+Windvale is experimental and not yet stable. The assembler, object model, linker, bytecode/runtime foundation, and Windvale-written compiler frontend have reproducible evidence; the self-hosted compiler, native toolchain, and Windvale OS remain active milestones. Development contracts may change without backward compatibility until they are explicitly stabilized.
 
 ## Current milestone: Windvale Seed
 
@@ -37,7 +41,19 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 
 ## License and stewardship
 
-Windvale is open source under the [MIT License](LICENSE). Copyright © 2026 E-Worker Inc. E-Worker Inc is the project business and steward.
+Windvale is open source under the [MIT License](LICENSE). Copyright © 2026 E-Worker Inc and Windvale contributors. E-Worker Inc is the project business and steward.
+
+“Author” and “authored” describe how the project was produced; they do not assert that an AI system is a legal person or copyright holder. The MIT License grants permissions from each applicable rightsholder for rights that subsist. See [Decision 0031](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md) for the project-wide attribution policy.
+
+## Contributing and project policies
+
+- [Contributing](CONTRIBUTING.md) — development model, evidence, review, DCO sign-off, and licensing
+- [Security](SECURITY.md) — supported versions and private vulnerability reporting
+- [Governance](GOVERNANCE.md) — stewardship, roles, decisions, releases, and identity
+- [Code of conduct](CODE_OF_CONDUCT.md) — participation and private conduct reporting
+- [Support](SUPPORT.md) — public help channels and current support limits
+- [Project identity](TRADEMARKS.md) — permitted reference to Windvale and E-Worker names and visual identity
+- [Changelog](CHANGELOG.md) — unreleased status and initial `0.y.z` versioning policy
 
 ## Requirements
 
@@ -386,6 +402,7 @@ export fn Main() -> i32 {
 - `Tools/Windvale.Tool/` — command-line composition
 - `Tools/Verify/` — Windows and Linux verification entry points
 - `Tests/` — dependency-free Seed conformance runner
+- `.github/` — public issue, pull-request, dependency-update, and verification automation
 - `Examples/Seed/` — portable and hosted example programs
 - `Examples/Foundation/` — incremental programs that exercise self-hosting prerequisites
 - `Examples/Assembler/` — canonical WVA sources for assembler and object-production coverage
@@ -427,6 +444,11 @@ export fn Main() -> i32 {
 - [Foundation ordinal byte-span ordering](Specifications/Foundation-Byte-Ordering.md)
 - [Foundation bounded decimal parsing](Specifications/Foundation-Decimal-Parsing.md)
 - [Foundation bounded byte construction](Specifications/Foundation-Byte-Construction.md)
+- [Compiler source lexer](Specifications/Compiler-Source-Lexer.md)
+- [Compiler source declaration parser](Specifications/Compiler-Source-Declaration-Parser.md)
+- [Compiler source body parser](Specifications/Compiler-Source-Body-Parser.md)
+- [Compiler source-set contract](Specifications/Compiler-Source-Set.md)
+- [Compiler source-graph contract](Specifications/Compiler-Source-Graph.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
@@ -454,9 +476,17 @@ export fn Main() -> i32 {
 - [Static nominal source contracts decision](Documents/Decisions/0022-Static-Nominal-Source-Contracts.md)
 - [Shared bounded u32 decimal parsing decision](Documents/Decisions/0023-Shared-U32-Decimal-Parsing.md)
 - [Bounded immutable byte construction decision](Documents/Decisions/0024-Bounded-Byte-Construction.md)
+- [Streaming bootstrap source lexer decision](Documents/Decisions/0025-Streaming-Bootstrap-Source-Lexer.md)
+- [Streaming declaration views decision](Documents/Decisions/0026-Streaming-Declaration-Views.md)
+- [Streaming statement and expression views decision](Documents/Decisions/0027-Streaming-Statement-And-Expression-Views.md)
+- [MIT license and E-Worker stewardship decision](Documents/Decisions/0028-MIT-License-And-E-Worker-Stewardship.md)
+- [Canonical packed compiler source sets decision](Documents/Decisions/0029-Canonical-Packed-Compiler-Source-Sets.md)
+- [Portable compiler import graphs decision](Documents/Decisions/0030-Portable-Compiler-Import-Graphs.md)
+- [AI authorship and vendor neutrality decision](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md)
+- [Public contribution and governance foundation decision](Documents/Decisions/0032-Public-Contribution-And-Governance-Foundation.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 
-## Development environment
+## Development
 
-The initial Windows development lane is `D:\windvale\dev01`; its shared source repository is `Z:\Windvale.git`. Development uses `main` until parallel work requires task branches or additional lanes. Read `AGENTS.md` before making non-trivial changes.
+Read [AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md) before making non-trivial changes. Use the repository remote and active branch configured for your checkout, preserve unrelated work, and run the platform verifier appropriate to the change.

@@ -21,13 +21,13 @@ The project needs useful intermediate outcomes and must avoid rewriting every to
 - Preserve assembler, linker, runtime, compiler, and library usefulness independently of the future OS.
 - Document bootstrap dependencies and replacement stages honestly.
 
-## Repository locations
+## Repository workflow
 
-- Shared Windows repository: `Z:\Windvale.git`
-- Initial Windows lane: `D:\windvale\dev01`
-- Default branch: `main`
+- Local worktree and mirror locations are environment-specific and are not part of the public project contract.
+- Each checkout uses its configured repository remote.
+- The default branch is `main` until a later branching decision changes it.
 
-These paths describe the initial environment, not a public hosting decision.
+The initial environment used a shared Windows bare repository and isolated development lanes. Those operational details are intentionally not public hosting requirements.
 
 ## Proposed, not yet accepted
 

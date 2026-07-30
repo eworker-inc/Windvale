@@ -1,0 +1,26 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{cs,ps1,wv,wva}]
+indent_style = space
+indent_size = 4
+
+[*.{csproj,props,json,yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.{ps1,cmd}]
+end_of_line = crlf
+
+[*.{sh,c,h,s,asm}]
+end_of_line = lf
+indent_style = space
+indent_size = 4
+
+[Makefile]
+indent_style = tab

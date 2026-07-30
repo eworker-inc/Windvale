@@ -1,7 +1,7 @@
 # Decision 0028: MIT license and E-Worker stewardship
 
 - Date: 2026-07-30
-- Status: Accepted and implemented
+- Status: Accepted and implemented; copyright-notice scope clarified by [Decision 0031](0031-AI-Authorship-And-Vendor-Neutrality.md) and public contribution policy completed by [Decision 0032](0032-Public-Contribution-And-Governance-Foundation.md)
 
 ## Context
 

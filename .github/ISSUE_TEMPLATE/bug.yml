@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a reproducible Windvale defect. Use private vulnerability reporting for security issues.
+title: "Bug: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Do not disclose vulnerabilities, secrets, credentials, or private data here.
+        Follow SECURITY.md for confidential reports.
+  - type: input
+    id: commit
+    attributes:
+      label: Source commit or version
+      description: Provide the exact commit hash, tag, or build identity.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, architecture, .NET SDK, and relevant host details.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed behavior
+      description: Include exact diagnostics and exit codes when available.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Identify the specification or contract when one applies.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Give bounded steps and the smallest safe input that demonstrates the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional evidence
+      description: Add artifact digests, logs, or other non-sensitive evidence.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I removed secrets, credentials, private data, and unrelated generated output.
+          required: true
+        - label: This report does not disclose a security vulnerability.
+          required: true

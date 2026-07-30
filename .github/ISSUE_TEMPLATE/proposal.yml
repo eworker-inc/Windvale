@@ -1,0 +1,46 @@
+name: Design proposal
+description: Propose an architectural, semantic, format, tooling, or project-policy change.
+title: "Proposal: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the concrete limitation or evidence motivating the change.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed direction
+      description: Explain the smallest coherent change and its ownership boundary.
+    validations:
+      required: true
+  - type: textarea
+    id: contracts
+    attributes:
+      label: Affected contracts
+      description: List specifications, decisions, formats, profiles, capabilities, or qualification gates.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and tradeoffs
+      description: Explain credible alternatives, including retaining the current design.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence plan
+      description: Describe tests, hostile inputs, deterministic comparisons, and cross-host evidence needed.
+    validations:
+      required: true
+  - type: checkboxes
+    id: status
+    attributes:
+      label: Status acknowledgement
+      options:
+        - label: I understand that a proposal is not an implemented feature or accepted compatibility promise.
+          required: true

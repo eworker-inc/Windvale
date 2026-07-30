@@ -4,9 +4,9 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Identity and community
 
-- Where will the public repository and project site live?
-- Will AI-generated changes require provenance metadata beyond ordinary commit history?
-- What contribution, security-reporting, and governance model should accompany the first public release?
+- Which final GitHub organization name will own Windvale and other E-Worker open-source projects?
+- Which dedicated private addresses will receive security and conduct reports?
+- Where will the public project site and long-term release artifacts live?
 
 ## Language
 
@@ -44,9 +44,9 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Reproduce the qualified Stage 0 flat-image linker contract in verified Windvale bytecode.
-2. Define the internal-label and address-materialization extensions proven necessary by the linker/native experiment.
-3. Define the memory and aggregate-type model needed for a self-hosted compiler.
-4. Define the restricted C bridge without changing Windvale semantics.
+1. Complete declaration and signature symbol binding over the qualified portable import graph.
+2. Use self-hosting pressure to define the memory, collection, and aggregate-type model needed by the compiler.
+3. Define the restricted C bridge without changing Windvale semantics.
+4. Extend WVA labels and address materialization only when native-backend evidence supplies exact requirements.
 5. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.
-6. Define contribution, AI-provenance, security-reporting, and trademark policies around the accepted MIT license.
+6. Create the public organization and repository, publish monitored private contact routes, and configure DCO, security, branch, and automation settings around the accepted public-foundation policies.
