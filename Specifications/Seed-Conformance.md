@@ -21,6 +21,7 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, r
 - Canonical WVSS 1 source-set scanning and views, including malformed envelopes, exact layout, source/body validation, duplicate/order/profile/shape rejection, the 64-module boundary, snapshot reuse, and real frontend-set validation
 - Windvale-written source-graph validation, including exact-name resolution, duplicate/missing imports, root reachability, direct/self cycles, stable failure evidence, the 64-module/63-edge chain, snapshot reuse, and the real compiler closure
 - Windvale-written declaration and signature binding, including namespace and constructor conflicts, capability policy, aggregate limits, record/enum/parameter uniqueness, transitive type visibility, canonical nominal indices, independent packed-directory validation, stable failure evidence, and the real compiler closure
+- Windvale-written body, local, and call binding, including stable slots/scopes, initializer visibility, whole-function uniqueness, mutability, local types, data/name/call visibility, intrinsic/constructor/function/capability arity, independent WVLB validation, stable failure evidence, and the real compiler closure below its fixed instruction ceiling
 - Exact codec read/write round trips
 - Inspector metadata and disassembly
 - Functions, `if`, `while`, booleans, immutable text, immutable integer data, indexing, and `length`
@@ -81,6 +82,9 @@ Windows examples:
 # Focused iteration
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestFilter 'source symbols' -FailFast
 
+# Focused body-binding iteration
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestFilter 'bodies, locals, and calls' -FailFast
+
 # Complete in-process suite
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Standard
 ```
@@ -95,7 +99,7 @@ After collecting a report from Windows and Linux, compare their portable contrac
 dotnet run --project Tests/Windvale.Seed.Tests --configuration Release --no-build -- --compare-reports artifacts/seed-conformance-windows-x64.json artifacts/seed-conformance-linux-x86_64.json
 ```
 
-The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-, object-, assembly-, and link-format versions, complete golden module, source-composition, Foundation-module, compiler-frontend, object, flat-image, and map SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, deterministic transitive nominal source composition, machine-contract, ordinal-byte-span, bounded-decimal, and immutable-byte-construction Foundation modules plus their demos, the Windvale-written compiler syntax, source-set, graph, and declaration/signature artifacts and real-closure reports, Windvale-written hosted `wvdump`, the complete normalized `wvdump` line report for the real integer-data module, the Windvale-written WVO core and its exact 189-byte object, both Stage 0 and Windvale-written encodings of the canonical WVA example, the Windvale linker core plus its canonical hosted WVO scan, and the complete Windvale-written two-object link map. Each host verifier also exercises native source composition, Foundation/compiler composition, assembly, Windvale assembly, Windvale WVO scanning, exact Windvale/Stage 0 image and map equality, no-partial-output and existing-output preservation, independent object/image verification, map-limit rejection, and hosted file adapters.
+The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-, object-, assembly-, and link-format versions, complete golden module, source-composition, Foundation-module, compiler-frontend, object, flat-image, and map SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, deterministic transitive nominal source composition, machine-contract, ordinal-byte-span, bounded-decimal, and immutable-byte-construction Foundation modules plus their demos, the Windvale-written compiler syntax, source-set, graph, declaration/signature, and body/local/call artifacts and real-closure reports, Windvale-written hosted `wvdump`, the complete normalized `wvdump` line report for the real integer-data module, the Windvale-written WVO core and its exact 189-byte object, both Stage 0 and Windvale-written encodings of the canonical WVA example, the Windvale linker core plus its canonical hosted WVO scan, and the complete Windvale-written two-object link map. Each host verifier also exercises native source composition, Foundation/compiler composition, assembly, Windvale assembly, Windvale WVO scanning, exact Windvale/Stage 0 image and map equality, no-partial-output and existing-output preservation, independent object/image verification, map-limit rejection, and hosted file adapters.
 
 ## Evidence discipline
 

@@ -1,0 +1,151 @@
+module Compilerˉsourceˉbindingsˉdemo profile portable;
+
+import Compilerˉsourceˉbindings;
+
+fn Sourceˉbindingsˉheader(Modules: u32) -> bytes {
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Sourceˉbindingsˉone(First: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(24u32);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉbindingsˉheader(1u32), Directory);
+    return Bytesˉconcat(Result, Firstˉbytes);
+}
+
+fn Sourceˉbindingsˉtwo(First: text, Second: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Firstˉoffset: u32 = 32u32;
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(Firstˉbytes);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Firstˉoffset);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Secondˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Secondˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉbindingsˉheader(2u32), Directory);
+    Result = Bytesˉconcat(Result, Firstˉbytes);
+    return Bytesˉconcat(Result, Secondˉbytes);
+}
+
+fn Sourceˉbindingsˉthree(First: text, Second: text, Third: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Thirdˉbytes: bytes = Textˉtoˉutf8(Third);
+    let Firstˉoffset: u32 = 40u32;
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(Firstˉbytes);
+    let Thirdˉoffset: u32 = Secondˉoffset + Bytesˉlength(Secondˉbytes);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Firstˉoffset);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Secondˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Secondˉbytes)));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Thirdˉoffset));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Thirdˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉbindingsˉheader(3u32), Directory);
+    Result = Bytesˉconcat(Result, Firstˉbytes);
+    Result = Bytesˉconcat(Result, Secondˉbytes);
+    return Bytesˉconcat(Result, Thirdˉbytes);
+}
+
+fn Sourceˉbindingsˉstatus(Source: text) -> Compilerˉsourceˉbindingˉstatus {
+    let Input: bytes = Sourceˉbindingsˉone(Source);
+    let Summary: Compilerˉsourceˉbindingˉsummary = Compilerˉvalidateˉsourceˉbindings(Input);
+    return Summary.Status;
+}
+
+fn Sourceˉbindingsˉreplaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Input, Offset, 1u32, Bytesˉfromˉu8(Value)
+    );
+    return Replaced.Value;
+}
+
+fn Sourceˉbindingsˉreplaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
+    );
+    return Replaced.Value;
+}
+
+export fn Main() -> i32 {
+    let Validˉsource: text = "module Bindingsˉvalid profile hosted; capability console.write_line; data Message: text = \"ready\"; record Pair { Left: i32; Right: i32; } enum State { Ready = 0; } fn Add(Value: i32) -> i32 { return Value + 1; } export fn Main() -> i32 { let Base: i32 = 1; var Result: i32 = Add(Base); if true { let Text: text = Message; console.write_line(Text); Result = Add(Result); } return Result; }";
+    let Validˉinput: bytes = Sourceˉbindingsˉone(Validˉsource);
+    let Valid: Compilerˉsourceˉbindingˉsummary = Compilerˉvalidateˉsourceˉbindings(Validˉinput);
+    if Valid.Status != Compilerˉsourceˉbindingˉstatus.Valid { return 1; }
+    if Valid.Modules != 1u32 { return 2; }
+    if Valid.Functions != 2u32 { return 3; }
+    if Valid.Parameters != 1u32 { return 4; }
+    if Valid.Locals != 3u32 { return 5; }
+    if Valid.Reads != 6u32 { return 6; }
+    if Valid.Assignments != 1u32 { return 7; }
+    if Valid.Calls != 3u32 { return 8; }
+    if Bytesˉlength(Valid.Directory) != 216u32 { return 9; }
+    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Validˉinput);
+    let Symbols: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(Validˉinput);
+    if !Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Valid.Directory
+    ) { return 10; }
+    if Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols,
+        Sourceˉbindingsˉreplaceˉu8(Valid.Directory, 0u32, 0u8)
+    ) { return 11; }
+    if Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols,
+        Sourceˉbindingsˉreplaceˉu32(Valid.Directory, 8u32, 3u32)
+    ) { return 12; }
+    if Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols,
+        Sourceˉbindingsˉreplaceˉu32(Valid.Directory, 16u32, 1u32)
+    ) { return 13; }
+    if Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols,
+        Bytesˉconcat(Valid.Directory, Bytesˉfromˉu8(0u8))
+    ) { return 14; }
+    if Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols,
+        Sourceˉbindingsˉreplaceˉu32(Valid.Directory, 72u32, 1u32)
+    ) { return 15; }
+
+    if Sourceˉbindingsˉstatus("module Bindingsˉduplicate profile portable; export fn Main(Value: i32) -> i32 { let Value: i32 = 1; return Value; }") != Compilerˉsourceˉbindingˉstatus.Duplicateˉlocal { return 20; }
+    if Sourceˉbindingsˉstatus("module Bindingsˉunknownˉtype profile portable; export fn Main() -> i32 { let Value: Missing = 1; return 0; }") != Compilerˉsourceˉbindingˉstatus.Unknownˉtype { return 21; }
+    if Sourceˉbindingsˉstatus("module Bindingsˉunknownˉname profile portable; export fn Main() -> i32 { return Missing; }") != Compilerˉsourceˉbindingˉstatus.Unknownˉname { return 22; }
+    if Sourceˉbindingsˉstatus("module Bindingsˉexpired profile portable; export fn Main() -> i32 { { let Inner: i32 = 1; } return Inner; }") != Compilerˉsourceˉbindingˉstatus.Unknownˉname { return 23; }
+    if Sourceˉbindingsˉstatus("module Bindingsˉself profile portable; export fn Main() -> i32 { let Value: i32 = Value; return 0; }") != Compilerˉsourceˉbindingˉstatus.Unknownˉname { return 24; }
+    if Sourceˉbindingsˉstatus("module Bindingsˉunknownˉassignment profile portable; export fn Main() -> i32 { Missing = 1; return 0; }") != Compilerˉsourceˉbindingˉstatus.Unknownˉassignment { return 25; }
+    if Sourceˉbindingsˉstatus("module Bindingsˉimmutable profile portable; export fn Main() -> i32 { let Value: i32 = 1; Value = 2; return Value; }") != Compilerˉsourceˉbindingˉstatus.Immutableˉassignment { return 26; }
+    if Sourceˉbindingsˉstatus("module Bindingsˉunknownˉcall profile portable; export fn Main() -> i32 { return Missing(); }") != Compilerˉsourceˉbindingˉstatus.Unknownˉcall { return 27; }
+    if Sourceˉbindingsˉstatus("module Bindingsˉcapability profile hosted; export fn Main() -> i32 { console.write_line(\"missing\"); return 0; }") != Compilerˉsourceˉbindingˉstatus.Undeclaredˉcapability { return 28; }
+    if Sourceˉbindingsˉstatus("module Bindingsˉarity profile portable; fn Value(Input: i32) -> i32 { return Input; } export fn Main() -> i32 { return Value(); }") != Compilerˉsourceˉbindingˉstatus.Callˉarity { return 29; }
+
+    let Inaccessibleˉcall: Compilerˉsourceˉbindingˉsummary = Compilerˉvalidateˉsourceˉbindings(
+        Sourceˉbindingsˉthree(
+            "module Bindingsˉcallˉroot profile portable; import Bindingsˉcallˉalpha; import Bindingsˉcallˉbeta; export fn Main() -> i32 { return Alpha(); }",
+            "module Bindingsˉcallˉalpha profile portable; export fn Alpha() -> i32 { return Beta(); }",
+            "module Bindingsˉcallˉbeta profile portable; export fn Beta() -> i32 { return 1; }"
+        )
+    );
+    if Inaccessibleˉcall.Status != Compilerˉsourceˉbindingˉstatus.Inaccessibleˉcall { return 30; }
+    if Inaccessibleˉcall.Failureˉmodule != 1u32 { return 31; }
+    if Inaccessibleˉcall.Failureˉrelatedˉmodule != 2u32 { return 32; }
+
+    let Inaccessibleˉname: Compilerˉsourceˉbindingˉsummary = Compilerˉvalidateˉsourceˉbindings(
+        Sourceˉbindingsˉtwo(
+            "module Bindingsˉnameˉroot profile portable; import Bindingsˉnameˉdependency; data Rootˉvalue: text = \"root\"; export fn Main() -> i32 { return Dependency(); }",
+            "module Bindingsˉnameˉdependency profile portable; export fn Dependency() -> text { return Rootˉvalue; }"
+        )
+    );
+    if Inaccessibleˉname.Status != Compilerˉsourceˉbindingˉstatus.Inaccessibleˉname { return 33; }
+    if Inaccessibleˉname.Failureˉmodule != 1u32 { return 34; }
+    if Inaccessibleˉname.Failureˉrelatedˉmodule != 0u32 { return 35; }
+
+    let Symbolˉfailure: Compilerˉsourceˉbindingˉsummary = Compilerˉvalidateˉsourceˉbindings(
+        Sourceˉbindingsˉone("module Bindingsˉsymbolˉfailure profile portable; export fn Main(Value: Missing) -> i32 { return 0; }")
+    );
+    if Symbolˉfailure.Status != Compilerˉsourceˉbindingˉstatus.Sourceˉsymbols { return 40; }
+    if Symbolˉfailure.Symbolˉstatus != Compilerˉsourceˉsymbolˉstatus.Unknownˉtype { return 41; }
+    return 0;
+}

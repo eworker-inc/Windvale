@@ -52,6 +52,9 @@ internal static class Program
     private const string SOURCE_SYMBOLS_SHA256 = "79a60d3734c8c128af327b3c9e015bfa1f5b2c9d7b87abf4fb3fc2428d8bac3a";
     private const string SOURCE_SYMBOLS_DEMO_SHA256 = "476551cc0990588c3e782f45be83baebbcf3cd519cc0fe8dc17ccd67a7aa3714";
     private const string SOURCE_SYMBOLS_TOOL_SHA256 = "852dae1fe1962351e46a70e70bbdd4547814de17d75a8409e56aa0f94ccd7a4d";
+    private const string SOURCE_BINDINGS_SHA256 = "e9f15ed16a627ae2f96feee001dd0dd7272d744566022e9b353aa79a351ed7d4";
+    private const string SOURCE_BINDINGS_DEMO_SHA256 = "d0007e74e697398d3a4cf52a5ee3143a5f624036f3665f8e2d610674b26eb72e";
+    private const string SOURCE_BINDINGS_TOOL_SHA256 = "dc3911680d5ea22890adfad9c3cf7156c386824591d16c9c39ada677c2dfd8d8";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -307,6 +310,15 @@ internal static class Program
     private static readonly string SOURCE_SYMBOLS_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Symbols-Tool.wv");
 
+    private static readonly string SOURCE_BINDINGS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Bindings-Core.wv");
+
+    private static readonly string SOURCE_BINDINGS_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Bindings-Demo.wv");
+
+    private static readonly string SOURCE_BINDINGS_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Bindings-Tool.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -336,6 +348,7 @@ internal static class Program
         ("Windvale compiler source sets are canonical, bounded, and portable", Compilerˉsourceˉsetˉruns),
         ("Windvale compiler import graphs are complete, acyclic, and portable", Compilerˉsourceˉgraphˉruns),
         ("Windvale compiler declaration namespaces and signatures bind portably", Compilerˉsourceˉsymbolsˉrun),
+        ("Windvale compiler bodies, locals, and calls bind portably", Compilerˉsourceˉbindingsˉrun),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
@@ -1633,6 +1646,90 @@ internal static class Program
         Equal(string.Empty, Rejected.Output);
         Contains(Rejected.Diagnostics, "source symbols status=Unknownˉtype");
         Contains(Rejected.Diagnostics, "module=0 related-module=1 kind=Function");
+        Equal(1, Rejected.Readˉcount);
+    }
+
+    private static void Compilerˉsourceˉbindingsˉrun()
+    {
+        var Libraryˉbytes = Compileˉwithˉsourceˉbindingsˉsuccess(
+            SOURCE_BINDINGS_SOURCE,
+            "Source-Bindings-Core.wv",
+            includeˉsourceˉbindings: false);
+        Equal(SOURCE_BINDINGS_SHA256, Moduleˉdigest.Calculateˉsha256(Libraryˉbytes));
+        var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
+        Equal("Compilerˉsourceˉbindings", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Equal(47, Library.Module.Types.Length);
+        Equal(46, Library.Module.Exports.Length);
+        foreach (var Typeˉname in new[]
+                 {
+                     "Compilerˉsourceˉbindingˉkind",
+                     "Compilerˉsourceˉbindingˉstatus",
+                     "Compilerˉsourceˉbindingˉsummary",
+                     "Compilerˉsourceˉlocalˉmatch",
+                 })
+        {
+            True(Library.Module.Types.Any(Type => Type.Name == Typeˉname),
+                $"Source-binding type '{Typeˉname}' was not emitted.");
+        }
+        True(
+            Library.Module.Exports.Any(Export => Export.Name == "Compilerˉvalidateˉsourceˉbindings"),
+            "The source-binding validation entry point was not emitted.");
+
+        var Demoˉbytes = Compileˉwithˉsourceˉbindingsˉsuccess(
+            SOURCE_BINDINGS_DEMO_SOURCE,
+            "Source-Bindings-Demo.wv");
+        Equal(SOURCE_BINDINGS_DEMO_SHA256, Moduleˉdigest.Calculateˉsha256(Demoˉbytes));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Demoˉbytes),
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                    Maximumˉinstructions: 2_000_000_000)).Runˉmain().Exitˉcode);
+
+        var Toolˉbytes = Compileˉwithˉsourceˉbindingsˉsuccess(
+            SOURCE_BINDINGS_TOOL_SOURCE,
+            "Source-Bindings-Tool.wv");
+        Equal(SOURCE_BINDINGS_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        const string Root = """
+            module Bindingsˉtoolˉroot profile portable;
+            import Bindingsˉtoolˉdependency;
+            export fn Main(Input: u32) -> u32 {
+                let Start: u32 = Dependencyˉvalue(Input);
+                var Result: u32 = Start;
+                Result = Result + 1u32;
+                return Result;
+            }
+            """;
+        const string Dependency = """
+            module Bindingsˉtoolˉdependency profile portable;
+            export fn Dependencyˉvalue(Value: u32) -> u32 { return Value; }
+            """;
+        var Small = Runˉsourceˉsetˉtool(
+            Tool,
+            [new("root.wv", Root), new("dependency.wv", Dependency)],
+            700_000_000);
+        Equal(0, Small.Exitˉcode);
+        Equal(string.Empty, Small.Diagnostics);
+        Equal(2, Small.Readˉcount);
+        Equal(
+            "source bindings status=Valid modules=2 functions=2 parameters=2 locals=2 reads=5 assignments=1 calls=1 directory-bytes=184\n",
+            Small.Output);
+
+        const string Unknownˉname = """
+            module Bindingsˉunknown profile portable;
+            export fn Main() -> u32 { return Missing; }
+            """;
+        var Rejected = Runˉsourceˉsetˉtool(
+            Tool,
+            [new("unknown.wv", Unknownˉname)],
+            300_000_000);
+        Equal(1, Rejected.Exitˉcode);
+        Equal(string.Empty, Rejected.Output);
+        Contains(Rejected.Diagnostics, "source bindings status=Unknownˉname");
+        Contains(Rejected.Diagnostics, "module=0 related-module=1");
         Equal(1, Rejected.Readˉcount);
     }
 
@@ -4467,6 +4564,16 @@ internal static class Program
         var Sourceˉsymbolsˉtoolˉbytes = Compileˉwithˉsourceˉsymbolsˉsuccess(
             SOURCE_SYMBOLS_TOOL_SOURCE,
             "Source-Symbols-Tool.wv");
+        var Sourceˉbindingsˉbytes = Compileˉwithˉsourceˉbindingsˉsuccess(
+            SOURCE_BINDINGS_SOURCE,
+            "Source-Bindings-Core.wv",
+            includeˉsourceˉbindings: false);
+        var Sourceˉbindingsˉdemoˉbytes = Compileˉwithˉsourceˉbindingsˉsuccess(
+            SOURCE_BINDINGS_DEMO_SOURCE,
+            "Source-Bindings-Demo.wv");
+        var Sourceˉbindingsˉtoolˉbytes = Compileˉwithˉsourceˉbindingsˉsuccess(
+            SOURCE_BINDINGS_TOOL_SOURCE,
+            "Source-Bindings-Tool.wv");
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉwithˉbyteˉorderingˉsuccess(
             WVO_CORE_SOURCE,
@@ -4518,6 +4625,9 @@ internal static class Program
         var Sourceˉsymbolsˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsymbolsˉbytes);
         var Sourceˉsymbolsˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsymbolsˉdemoˉbytes);
         var Sourceˉsymbolsˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsymbolsˉtoolˉbytes);
+        var Sourceˉbindingsˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉbindingsˉbytes);
+        var Sourceˉbindingsˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉbindingsˉdemoˉbytes);
+        var Sourceˉbindingsˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉbindingsˉtoolˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
@@ -4556,6 +4666,9 @@ internal static class Program
         Equal(SOURCE_SYMBOLS_SHA256, Sourceˉsymbolsˉhash);
         Equal(SOURCE_SYMBOLS_DEMO_SHA256, Sourceˉsymbolsˉdemoˉhash);
         Equal(SOURCE_SYMBOLS_TOOL_SHA256, Sourceˉsymbolsˉtoolˉhash);
+        Equal(SOURCE_BINDINGS_SHA256, Sourceˉbindingsˉhash);
+        Equal(SOURCE_BINDINGS_DEMO_SHA256, Sourceˉbindingsˉdemoˉhash);
+        Equal(SOURCE_BINDINGS_TOOL_SHA256, Sourceˉbindingsˉtoolˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
@@ -4696,6 +4809,26 @@ internal static class Program
                 new("Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE),
                 new("Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
                 new("Source-Set-Core.wv", SOURCE_SET_SOURCE),
+                new("Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
+            ],
+            4_000_000_000);
+        var Sourceˉbindingsˉdemoˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Sourceˉbindingsˉdemoˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                Maximumˉinstructions: 2_000_000_000)).Runˉmain();
+        var Sourceˉbindingsˉtool = Moduleˉcodec.Readˉandˉverify(Sourceˉbindingsˉtoolˉbytes);
+        var Sourceˉbindingsˉselfˉresult = Runˉsourceˉsetˉtool(
+            Sourceˉbindingsˉtool,
+            [
+                new("Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE),
+                new("Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
+                new("Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
+                new("Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE),
+                new("Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+                new("Source-Set-Core.wv", SOURCE_SET_SOURCE),
+                new("Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE),
                 new("Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
                 new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ],
@@ -4911,6 +5044,13 @@ internal static class Program
         Equal(
             "source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=131 fields=289 members=181 parameters=582 directory-bytes=4072 visibility-bytes=64\n",
             Sourceˉsymbolsˉselfˉresult.Output);
+        Equal(0, Sourceˉbindingsˉdemoˉresult.Exitˉcode);
+        Equal(0, Sourceˉbindingsˉselfˉresult.Exitˉcode);
+        Equal(string.Empty, Sourceˉbindingsˉselfˉresult.Diagnostics);
+        Equal(9, Sourceˉbindingsˉselfˉresult.Readˉcount);
+        Equal(
+            "source bindings status=Valid modules=9 functions=177 parameters=777 locals=896 reads=7937 assignments=602 calls=1344 directory-bytes=62044\n",
+            Sourceˉbindingsˉselfˉresult.Output);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
@@ -4980,6 +5120,11 @@ internal static class Program
             Sourceˉsymbolsˉdemoˉresult.Exitˉcode,
             Sourceˉsymbolsˉtoolˉhash,
             Sourceˉsymbolsˉselfˉresult.Output,
+            Sourceˉbindingsˉhash,
+            Sourceˉbindingsˉdemoˉhash,
+            Sourceˉbindingsˉdemoˉresult.Exitˉcode,
+            Sourceˉbindingsˉtoolˉhash,
+            Sourceˉbindingsˉselfˉresult.Output,
             Wvˉdumpˉhash,
             Wvˉdumpˉresult.Exitˉcode,
             Normalizedˉwvdumpˉoutput,
@@ -5442,6 +5587,36 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Compiler source-symbol composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉsourceˉbindingsˉsuccess(
+        string source,
+        string sourceˉname,
+        bool includeˉsourceˉbindings = true)
+    {
+        var Dependencies = new List<Sourceˉmoduleˉinput>();
+        if (includeˉsourceˉbindings)
+        {
+            Dependencies.Add(new("Compiler/Bootstrap/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
+        }
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
+        Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            Dependencies);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler source-binding composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();
@@ -5957,6 +6132,11 @@ internal static class Program
         [property: JsonPropertyName("sourceSymbolsDemoResult")] int Sourceˉsymbolsˉdemoˉresult,
         [property: JsonPropertyName("sourceSymbolsToolSha256")] string Sourceˉsymbolsˉtoolˉsha256,
         [property: JsonPropertyName("sourceSymbolsSelfOutput")] string Sourceˉsymbolsˉselfˉoutput,
+        [property: JsonPropertyName("sourceBindingsSha256")] string Sourceˉbindingsˉsha256,
+        [property: JsonPropertyName("sourceBindingsDemoSha256")] string Sourceˉbindingsˉdemoˉsha256,
+        [property: JsonPropertyName("sourceBindingsDemoResult")] int Sourceˉbindingsˉdemoˉresult,
+        [property: JsonPropertyName("sourceBindingsToolSha256")] string Sourceˉbindingsˉtoolˉsha256,
+        [property: JsonPropertyName("sourceBindingsSelfOutput")] string Sourceˉbindingsˉselfˉoutput,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
         [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
         [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput,

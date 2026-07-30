@@ -316,7 +316,7 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Set-Tool.wvb `
      Foundation/Decimal-Parsing.wv
 ```
 
-WVSS 1 keeps the root first and dependencies in declared-module-name order, validates every source through the qualified syntax frontend, and exposes immutable source slices by index. `Compilerˉsourceˉgraph` resolves import topology over that boundary. `Compilerˉsourceˉsymbols` now validates global declaration namespaces and signatures, creates an independently checked `WVSD 1` declaration directory, computes transitive module visibility once, and assigns canonical nominal indices. Body names, calls, expression types, control flow, and WIR remain the next semantic work. The current 4 MiB aggregate envelope is an explicit Seed limitation while later memory/collection evidence determines how to close parity with Stage 0's 16 MiB aggregate input contract.
+WVSS 1 keeps the root first and dependencies in declared-module-name order, validates every source through the qualified syntax frontend, and exposes immutable source slices by index. `Compilerˉsourceˉgraph` resolves import topology over that boundary. `Compilerˉsourceˉsymbols` validates global declaration namespaces and signatures, creates an independently checked `WVSD 1` declaration directory, computes transitive module visibility once, and assigns canonical nominal indices. `Compilerˉsourceˉbindings` now assigns parameter/local slots and scopes, resolves body reads, assignments, constructors, functions, capabilities, and Foundation intrinsics, and publishes an independently checked `WVLB 1` binding directory. Complete expression typing, field/operator validation, control-flow proof, WIR, and lowering remain the next semantic work. The current 4 MiB aggregate envelope is an explicit Seed limitation while later memory/collection evidence determines how to close parity with Stage 0's 16 MiB aggregate input contract.
 
 Compile and run the first Windvale-written `wvdump` core:
 
@@ -489,6 +489,7 @@ export fn Main() -> i32 {
 - [Compiler source-set contract](Specifications/Compiler-Source-Set.md)
 - [Compiler source-graph contract](Specifications/Compiler-Source-Graph.md)
 - [Compiler declaration and signature symbols](Specifications/Compiler-Source-Symbols.md)
+- [Compiler body, local, and call binding](Specifications/Compiler-Source-Bindings.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification throughput](Documents/Architecture/Seed-Verification-Throughput.md)
@@ -526,6 +527,7 @@ export fn Main() -> i32 {
 - [AI authorship and vendor neutrality decision](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md)
 - [Public contribution and governance foundation decision](Documents/Decisions/0032-Public-Contribution-And-Governance-Foundation.md)
 - [Portable declaration and signature binding decision](Documents/Decisions/0033-Portable-Declaration-And-Signature-Binding.md)
+- [Portable body, local, and call binding decision](Documents/Decisions/0034-Portable-Body-Local-And-Call-Binding.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

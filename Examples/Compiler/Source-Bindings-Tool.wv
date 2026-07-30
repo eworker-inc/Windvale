@@ -1,0 +1,107 @@
+module Compilerˉsourceˉbindingsˉtool profile hosted;
+
+import Compilerˉsourceˉbindings;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Compilerˉsourceˉbindingsˉtoolˉheader(Modules: u32) -> bytes {
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Compilerˉsourceˉbindingsˉtoolˉbuild(Modules: u32) -> bytes {
+    let Empty: bytes = Textˉtoˉutf8("");
+    var Directory: bytes = Empty;
+    var Sourceˉoffset: u32 = 16u32 + Modules * 8u32;
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        let Source: bytes = file.read_bytes(process.argument(Index));
+        let Length: u32 = Bytesˉlength(Source);
+        if Length == 0u32 { return Empty; }
+        if Length > 4194304u32 - Sourceˉoffset { return Empty; }
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Sourceˉoffset));
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Length));
+        Sourceˉoffset = Sourceˉoffset + Length;
+        Index = Index + 1u32;
+    }
+    var Result: bytes = Bytesˉconcat(
+        Compilerˉsourceˉbindingsˉtoolˉheader(Modules), Directory
+    );
+    Index = 0u32;
+    while Index < Modules {
+        Result = Bytesˉconcat(Result, file.read_bytes(process.argument(Index)));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Compilerˉsourceˉbindingsˉtoolˉsuccess(
+    Summary: Compilerˉsourceˉbindingˉsummary
+) -> text {
+    var Report: text = "source bindings status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " modules=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Modules));
+    Report = Textˉconcat(Report, " functions=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Functions));
+    Report = Textˉconcat(Report, " parameters=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Parameters));
+    Report = Textˉconcat(Report, " locals=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Locals));
+    Report = Textˉconcat(Report, " reads=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Reads));
+    Report = Textˉconcat(Report, " assignments=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Assignments));
+    Report = Textˉconcat(Report, " calls=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Calls));
+    Report = Textˉconcat(Report, " directory-bytes=");
+    return Textˉconcat(Report, U32ˉformat(Bytesˉlength(Summary.Directory)));
+}
+
+fn Compilerˉsourceˉbindingsˉtoolˉfailure(
+    Summary: Compilerˉsourceˉbindingˉsummary
+) -> text {
+    var Report: text = "source bindings status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " symbol-status=");
+    Report = Textˉconcat(Report, Enumˉname(Summary.Symbolˉstatus));
+    Report = Textˉconcat(Report, " module=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉmodule));
+    Report = Textˉconcat(Report, " related-module=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉrelatedˉmodule));
+    Report = Textˉconcat(Report, " function=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉfunction));
+    Report = Textˉconcat(Report, " offset=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoffset));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉline));
+    Report = Textˉconcat(Report, " column=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Failureˉcolumn));
+}
+
+export fn Main() -> i32 {
+    let Modules: u32 = process.argument_count();
+    if Modules == 0u32 {
+        diagnostic.write_line("Usage: source-bindings <root.wv> [sorted-dependency.wv ...]");
+        return 64;
+    }
+    if Modules > 64u32 {
+        diagnostic.write_line("source bindings status=Sourceˉsymbols symbol-status=Sourceˉgraph");
+        return 64;
+    }
+    let Input: bytes = Compilerˉsourceˉbindingsˉtoolˉbuild(Modules);
+    let Summary: Compilerˉsourceˉbindingˉsummary = Compilerˉvalidateˉsourceˉbindings(Input);
+    if Summary.Status != Compilerˉsourceˉbindingˉstatus.Valid {
+        diagnostic.write_line(Compilerˉsourceˉbindingsˉtoolˉfailure(Summary));
+        return 1;
+    }
+    console.write_line(Compilerˉsourceˉbindingsˉtoolˉsuccess(Summary));
+    return 0;
+}

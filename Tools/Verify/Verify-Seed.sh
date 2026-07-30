@@ -100,6 +100,9 @@ SOURCE_GRAPH_TOOL_MODULE="$ARTIFACTS/Source-Graph-Tool.wvb"
 SOURCE_SYMBOLS_MODULE="$ARTIFACTS/Source-Symbols-Core.wvb"
 SOURCE_SYMBOLS_DEMO_MODULE="$ARTIFACTS/Source-Symbols-Demo.wvb"
 SOURCE_SYMBOLS_TOOL_MODULE="$ARTIFACTS/Source-Symbols-Tool.wvb"
+SOURCE_BINDINGS_MODULE="$ARTIFACTS/Source-Bindings-Core.wvb"
+SOURCE_BINDINGS_DEMO_MODULE="$ARTIFACTS/Source-Bindings-Demo.wvb"
+SOURCE_BINDINGS_TOOL_MODULE="$ARTIFACTS/Source-Bindings-Tool.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -669,6 +672,87 @@ SOURCE_SYMBOLS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     "$DECIMAL_PARSING_SOURCE")
 printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=131 fields=289 members=181 parameters=582 directory-bytes=4072 visibility-bytes=64' >/dev/null
 printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+SOURCE_BINDINGS_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Bindings-Core.wv"
+dotnet "$TOOL_DLL" \
+    compile "$SOURCE_BINDINGS_SOURCE" \
+    --module "$SOURCE_SYMBOLS_SOURCE" \
+    --module "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_BINDINGS_MODULE"
+SOURCE_BINDINGS_HASH=$(sha256sum "$SOURCE_BINDINGS_MODULE" | awk '{print $1}')
+if [ "$SOURCE_BINDINGS_HASH" != 'e9f15ed16a627ae2f96feee001dd0dd7272d744566022e9b353aa79a351ed7d4' ]; then
+    echo "The Windvale source-binding core has an unexpected digest: $SOURCE_BINDINGS_HASH" >&2
+    exit 1
+fi
+SOURCE_BINDINGS_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_BINDINGS_MODULE")
+printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Nominal types (47)' >/dev/null
+printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Compilerˉsourceˉbindingˉstatus' >/dev/null
+printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Compilerˉsourceˉbindingˉsummary' >/dev/null
+printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid' >/dev/null
+printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉbindings' >/dev/null
+printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Exports (46)' >/dev/null
+dotnet "$TOOL_DLL" \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Bindings-Demo.wv" \
+    --module "$SOURCE_BINDINGS_SOURCE" \
+    --module "$SOURCE_SYMBOLS_SOURCE" \
+    --module "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_BINDINGS_DEMO_MODULE"
+SOURCE_BINDINGS_DEMO_HASH=$(sha256sum "$SOURCE_BINDINGS_DEMO_MODULE" | awk '{print $1}')
+if [ "$SOURCE_BINDINGS_DEMO_HASH" != 'd0007e74e697398d3a4cf52a5ee3143a5f624036f3665f8e2d610674b26eb72e' ]; then
+    echo "The source-binding demo has an unexpected digest: $SOURCE_BINDINGS_DEMO_HASH" >&2
+    exit 1
+fi
+SOURCE_BINDINGS_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$SOURCE_BINDINGS_DEMO_MODULE" --max-steps 2000000000)
+printf '%s\n' "$SOURCE_BINDINGS_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+dotnet "$TOOL_DLL" \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Bindings-Tool.wv" \
+    --module "$SOURCE_BINDINGS_SOURCE" \
+    --module "$SOURCE_SYMBOLS_SOURCE" \
+    --module "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_BINDINGS_TOOL_MODULE"
+SOURCE_BINDINGS_TOOL_HASH=$(sha256sum "$SOURCE_BINDINGS_TOOL_MODULE" | awk '{print $1}')
+if [ "$SOURCE_BINDINGS_TOOL_HASH" != 'dc3911680d5ea22890adfad9c3cf7156c386824591d16c9c39ada677c2dfd8d8' ]; then
+    echo "The source-binding tool has an unexpected digest: $SOURCE_BINDINGS_TOOL_HASH" >&2
+    exit 1
+fi
+SOURCE_BINDINGS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$SOURCE_BINDINGS_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 4000000000 \
+    -- "$SOURCE_BINDINGS_SOURCE" \
+    "$SOURCE_BODY_PARSER_SOURCE" \
+    "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    "$SOURCE_GRAPH_SOURCE" \
+    "$SOURCE_LEXER_SOURCE" \
+    "$SOURCE_SET_SOURCE" \
+    "$SOURCE_SYMBOLS_SOURCE" \
+    "$BYTE_CONSTRUCTION_SOURCE" \
+    "$DECIMAL_PARSING_SOURCE")
+printf '%s\n' "$SOURCE_BINDINGS_SELF_OUTPUT" | grep -F 'source bindings status=Valid modules=9 functions=177 parameters=777 locals=896 reads=7937 assignments=602 calls=1344 directory-bytes=62044' >/dev/null
+printf '%s\n' "$SOURCE_BINDINGS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet "$TOOL_DLL" \

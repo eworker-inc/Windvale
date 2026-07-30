@@ -106,6 +106,9 @@ $SourceGraphToolModule = Join-Path $Artifacts 'Source-Graph-Tool.wvb'
 $SourceSymbolsModule = Join-Path $Artifacts 'Source-Symbols-Core.wvb'
 $SourceSymbolsDemoModule = Join-Path $Artifacts 'Source-Symbols-Demo.wvb'
 $SourceSymbolsToolModule = Join-Path $Artifacts 'Source-Symbols-Tool.wvb'
+$SourceBindingsModule = Join-Path $Artifacts 'Source-Bindings-Core.wvb'
+$SourceBindingsDemoModule = Join-Path $Artifacts 'Source-Bindings-Demo.wvb'
+$SourceBindingsToolModule = Join-Path $Artifacts 'Source-Bindings-Tool.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -794,6 +797,101 @@ if (
     $SourceSymbolsSelfOutput -notcontains 'Result: 0'
 ) {
     throw 'The source-symbol tool did not bind the real compiler closure.'
+}
+
+$SourceBindingsSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Bindings-Core.wv'
+dotnet $ToolDll `
+    compile $SourceBindingsSource `
+    --module $SourceSymbolsSource `
+    --module $SourceGraphSource `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $ByteConstructionSource `
+    --module $DecimalParsingSource `
+    -o $SourceBindingsModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-binding core.' }
+$SourceBindingsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsModule).Hash.ToLowerInvariant()
+if ($SourceBindingsHash -ne 'e9f15ed16a627ae2f96feee001dd0dd7272d744566022e9b353aa79a351ed7d4') {
+    throw "The Windvale source-binding core has an unexpected digest: $SourceBindingsHash"
+}
+$SourceBindingsInspection = (dotnet $ToolDll inspect $SourceBindingsModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceBindingsInspection -notmatch 'Nominal types \(47\)' -or
+    $SourceBindingsInspection -notmatch 'Compilerˉsourceˉbindingˉstatus' -or
+    $SourceBindingsInspection -notmatch 'Compilerˉsourceˉbindingˉsummary' -or
+    $SourceBindingsInspection -notmatch 'Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid' -or
+    $SourceBindingsInspection -notmatch 'Compilerˉvalidateˉsourceˉbindings' -or
+    $SourceBindingsInspection -notmatch 'Exports \(46\)'
+) {
+    throw 'The Windvale source-binding inspection is incomplete.'
+}
+dotnet $ToolDll `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Bindings-Demo.wv') `
+    --module $SourceBindingsSource `
+    --module $SourceSymbolsSource `
+    --module $SourceGraphSource `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $ByteConstructionSource `
+    --module $DecimalParsingSource `
+    -o $SourceBindingsDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-binding demo.' }
+$SourceBindingsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsDemoModule).Hash.ToLowerInvariant()
+if ($SourceBindingsDemoHash -ne 'd0007e74e697398d3a4cf52a5ee3143a5f624036f3665f8e2d610674b26eb72e') {
+    throw "The source-binding demo has an unexpected digest: $SourceBindingsDemoHash"
+}
+$SourceBindingsDemoOutput = dotnet $ToolDll `
+    run $SourceBindingsDemoModule --max-steps 2000000000
+if ($LASTEXITCODE -ne 0 -or $SourceBindingsDemoOutput -notcontains 'Result: 0') {
+    throw 'The source-binding demo did not return Result: 0.'
+}
+dotnet $ToolDll `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Bindings-Tool.wv') `
+    --module $SourceBindingsSource `
+    --module $SourceSymbolsSource `
+    --module $SourceGraphSource `
+    --module $SourceSetSource `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $ByteConstructionSource `
+    --module $DecimalParsingSource `
+    -o $SourceBindingsToolModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-binding tool.' }
+$SourceBindingsToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsToolModule).Hash.ToLowerInvariant()
+if ($SourceBindingsToolHash -ne 'dc3911680d5ea22890adfad9c3cf7156c386824591d16c9c39ada677c2dfd8d8') {
+    throw "The source-binding tool has an unexpected digest: $SourceBindingsToolHash"
+}
+$SourceBindingsArguments = @(
+    'run', $SourceBindingsToolModule,
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count'
+)
+$SourceBindingsSelfOutput = dotnet $ToolDll `
+    @SourceBindingsArguments --max-steps 4000000000 -- `
+    $SourceBindingsSource `
+    $SourceBodyParserSource `
+    $SourceDeclarationParserSource `
+    $SourceGraphSource `
+    $SourceLexerSource `
+    $SourceSetSource `
+    $SourceSymbolsSource `
+    $ByteConstructionSource `
+    $DecimalParsingSource
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceBindingsSelfOutput -notcontains 'source bindings status=Valid modules=9 functions=177 parameters=777 locals=896 reads=7937 assignments=602 calls=1344 directory-bytes=62044' -or
+    $SourceBindingsSelfOutput -notcontains 'Result: 0'
+) {
+    throw 'The source-binding tool did not bind the real compiler closure.'
 }
 
 dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule

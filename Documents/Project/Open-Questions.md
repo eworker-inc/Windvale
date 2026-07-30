@@ -44,8 +44,8 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Complete exact-archive Debian qualification of declaration and signature binding, then define body, local, and call binding.
-2. Use self-hosting pressure to define the memory, collection, and aggregate-type model needed by the compiler.
+1. Complete exact-archive Windows/Debian qualification of body, local, and call binding, then define typed expression and control-flow semantics.
+2. Use the next semantic and WIR pressure to define only the memory, collection, and aggregate-type facilities actually needed by the compiler.
 3. Define the restricted C bridge without changing Windvale semantics.
 4. Extend WVA labels and address materialization only when native-backend evidence supplies exact requirements.
 5. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.
