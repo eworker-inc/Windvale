@@ -94,6 +94,8 @@ Candidate artifacts are:
 - `Source-Wir-Demo.wvb`: 496,484 bytes, SHA-256 `7d7699cc110284274fb17fa7fd095d7566660f037ad3e3a067ebdeb68e5dd5f3`.
 - `Source-Wir-Tool.wvb`: 492,635 bytes, SHA-256 `c6a1939d2199fa62606f1351beaed3c96a8360ccc20b032b54760ee51f6974a8`.
 
+These artifacts and the complete WVIR contract are cross-host qualified at exact candidate commit `bf77f70b08f332deda9ea3a1691e262e1426c1c1`. Windows x64 and Debian GNU/Linux 12 x64 passed all 47 tests and the complete native verifier; all 48 portable verifier artifacts were byte-identical.
+
 The ten-module compiler closure is intentionally not in the fast loop. Its current separate local-discovery and IR body traversals still exceed the fixed 4,000,000,000-instruction qualification ceiling. Raising the ceiling is not the remedy; a later slice must fuse those traversals or publish reusable typed body evidence before the full self-lowering case becomes a required gate.
 
 WVIR-to-WVB lowering, execution of WVIR itself, optimization, native IR, and OS-specific lowering are not part of this contract.

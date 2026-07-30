@@ -50,6 +50,8 @@ The added semantic work intentionally increases milestone qualification time wit
 
 The typed-WVIR slice adds a focused test that compiles the portable core, runs semantic and corruption coverage, and sends a control-heavy fixture through the hosted source-set tool. On the Windows x64 development host, the complete Fast wrapper took 17.1 seconds after the new resources were added; the WVIR test itself took 6.45 seconds. A warm direct hosted-tool run of the fixture took approximately 1.6 seconds. The candidate 47-test Standard suite passed in 528.217 seconds; its golden-contract case accounted for 449.977 seconds.
 
+Exact commit `bf77f70` completed Qualification in approximately 1,090.7 seconds on Windows and 1,118.8 seconds on Debian QA. Both hosts passed zero-warning Release builds, all 47 tests, and the complete native verifier. Their normalized reports matched, and all 48 portable artifacts totaling 5,624,431 bytes were byte-identical. This preserves the tier split: the milestone gate pays for process-level repetition and direct cross-host evidence, while the focused WVIR loop remains measured in seconds.
+
 The ten-module compiler self-lowering experiment remains outside Fast and Standard. Symbol preparation alone is substantial, and the separate local-discovery plus IR body traversals currently exceed the unchanged 4,000,000,000-instruction ceiling. This is recorded as a body-traversal fusion target, not addressed by increasing limits or putting an unstable multi-minute case in every development loop.
 
 ## Qualification evidence

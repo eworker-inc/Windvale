@@ -16,5 +16,5 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Current development status
 
-- Windvale Seed, its runtime and bytecode foundation, the object model, assembler, linker, Foundation modules, and compiler frontend through declaration/signature binding have qualification evidence.
-- Portable body/local/call binding is cross-host qualified; typed semantics, the native toolchain, and Windvale OS remain active or planned milestones rather than completed releases.
+- Windvale Seed, its runtime and bytecode foundation, the object model, assembler, linker, Foundation modules, and compiler frontend through canonical typed WVIR have qualification evidence.
+- Portable WVIR-to-WVB lowering, bootstrap closure, the native toolchain, and Windvale OS remain active or planned milestones rather than completed releases.

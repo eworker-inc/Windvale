@@ -124,4 +124,4 @@ The hosted tool binds the current real closure as:
 source bindings status=Valid modules=9 functions=187 parameters=813 locals=944 reads=8229 assignments=639 calls=1450 directory-bytes=65148
 ```
 
-The pre-preparation `9185b28` archive passed the stated qualification on both hosts. The hashes above belong to the current WVIR candidate and require a new exact-archive Windows/Debian qualification before they are described as cross-host qualified.
+The pre-preparation implementation was qualified at `9185b28`. The prepared-symbol/local-only implementation and hashes above were requalified as part of the exact `bf77f70` typed-WVIR candidate on Windows and Debian; all 48 directly compared portable artifacts were byte-identical.

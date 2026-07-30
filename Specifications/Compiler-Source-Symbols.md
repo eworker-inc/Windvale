@@ -113,10 +113,10 @@ Failure evidence names the current module, a related prior/target module when ap
 - `Source-Symbols-Demo.wvb`: 274,814 bytes, SHA-256 `ca513e0ea10a84f6c5ccc630927b3c18793b6c2e3d1badabffab08fdcdd2146c`.
 - `Source-Symbols-Tool.wvb`: 266,044 bytes, SHA-256 `840492af48d93af014fb12c59b6711752e80519d50ec45dbecee4483b42dce05`.
 
-The Windows and Debian verifiers each pass a zero-warning Release build, all 45 conformance tests, and the complete native CLI checks. The demo exercises valid and rejected namespaces/signatures plus corrupted directories. The hosted tool validates the real eight-module, 283,765-byte compiler closure as:
+The Windows and Debian verifiers each pass a zero-warning Release build, all 47 conformance tests, and the complete native CLI checks. The demo exercises valid and rejected namespaces/signatures plus corrupted directories. The hosted tool validates the real eight-module, 283,765-byte compiler closure as:
 
 ```text
 source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=290 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64
 ```
 
-The pre-index `d57a6d8` archive passed the stated qualification on both hosts. The hashes above belong to the current WVIR candidate and require a new exact-archive Windows/Debian qualification before they are described as cross-host qualified.
+The pre-index implementation was qualified at `d57a6d8`. The indexed implementation and hashes above were requalified as part of the exact `bf77f70` typed-WVIR candidate on Windows and Debian; all 48 directly compared portable artifacts were byte-identical.

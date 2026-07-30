@@ -1,7 +1,7 @@
 # Decision 0035: Canonical typed source IR
 
 - Date: 2026-07-30
-- Status: Accepted; cross-host qualification pending
+- Status: Accepted; cross-host qualified at `bf77f70`
 
 ## Context
 
@@ -40,3 +40,5 @@ The candidate must pass:
 - the control-heavy hosted tool fixture under its fixed instruction limit.
 
 The full ten-module self-lowering performance target is tracked separately and becomes mandatory only after the body-traversal fusion slice makes it fit under the existing ceiling.
+
+Candidate commit `bf77f70b08f332deda9ea3a1691e262e1426c1c1` passed this gate from one exact archive on Windows x64 and Debian GNU/Linux 12 x64. Both hosts completed zero-warning Release builds, all 47 tests, and the complete native verifier; their normalized reports matched, and all 48 directly retrieved portable artifacts were byte-identical.
