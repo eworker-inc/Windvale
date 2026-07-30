@@ -1,7 +1,7 @@
 # Decision 0008: WvDump payload decoding and safe reports
 
 - Date: 2026-07-29
-- Status: Accepted; cross-host qualification pending
+- Status: Accepted and qualified on Windows and Debian Linux at `a829fc8`
 
 ## Context
 
