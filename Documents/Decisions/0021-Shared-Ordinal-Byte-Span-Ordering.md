@@ -1,7 +1,7 @@
 # Decision 0021: Shared ordinal byte-span ordering
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `4fdea22`
 
 ## Context
 
@@ -38,3 +38,5 @@ The validity precondition is explicit. A future safe arbitrary-span API would ne
 The standalone module must expose only the declared function. Its portable demo covers empty/equal spans, first-byte differences, proper prefixes, subranges, and unsigned `127` versus `128` ordering. The object core, assembler, and linker must preserve their exact produced WVO, hosted reports, linked image, canonical map, failure publication rules, and the existing 200,000,000-instruction maximum cases.
 
 Cross-host qualification requires the exact committed archive to pass all 37 tests and the complete native CLI verifier on Windows and Debian, equal normalized contracts, and direct byte comparison of the Foundation module, its demo, all three composed consumer WVB files, the canonical object, image, and map.
+
+Candidate `4fdea22` satisfied this gate on Windows and Debian GNU/Linux 12 x64 with zero build warnings/errors. It retained the fixed 200,000,000-instruction maximum link cases, every canonical WVO/image/map identity, and every deterministic no-write boundary. The normalized reports matched, and the directly retrieved Foundation module, demo, three consumer WVB files, assembled object, linked image, and map were byte-for-byte equal.
