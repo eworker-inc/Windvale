@@ -47,9 +47,11 @@ $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
-$WvaScannerModule = Join-Path $Artifacts 'Wva-Scanner-Core.wvb'
+$WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
 $WvoSample = Join-Path $Artifacts 'Sample.wvo'
 $AssemblyObject = Join-Path $Artifacts 'Hello-Object.wvo'
+$WindvaleAssemblyObject = Join-Path $Artifacts 'Hello-Object-Windvale.wvo'
+$InvalidWindvaleAssemblyObject = Join-Path $Artifacts '__windvale_invalid_assembly_output__.wvo'
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
 
@@ -264,64 +266,106 @@ if ($LASTEXITCODE -ne 3 -or ($WvoMissingParentOutput -join "`n") -notmatch 'WVR3
     throw 'The hosted file writer did not report a missing parent deterministically.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Assembler/Wva-Scanner-Core.wv') -o $WvaScannerModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wva-Scanner-Core.wv.' }
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Assembler/Wva-Assembler-Core.wv') -o $WvaAssemblerModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wva-Assembler-Core.wv.' }
 
-$WvaScannerVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvaScannerModule
-if ($LASTEXITCODE -ne 0 -or $WvaScannerVerifyOutput -notcontains 'Verified: Wvaˉscannerˉcore') {
-    throw 'The bytecode verifier rejected the Windvale WVA scanner.'
+$WvaAssemblerVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvaAssemblerModule
+if ($LASTEXITCODE -ne 0 -or $WvaAssemblerVerifyOutput -notcontains 'Verified: Wvaˉassemblerˉcore') {
+    throw 'The bytecode verifier rejected the Windvale WVA assembler.'
 }
 
-$WvaScannerInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvaScannerModule) -join "`n"
+$WvaAssemblerInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvaAssemblerModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $WvaScannerInspection -notmatch 'Scanˉwva' -or
-    $WvaScannerInspection -notmatch 'Inspectˉwvaˉsemantics' -or
-    $WvaScannerInspection -notmatch 'Parseˉu32' -or
-    $WvaScannerInspection -notmatch 'Findˉsymbol' -or
-    $WvaScannerInspection -notmatch 'text\.utf8_is_valid' -or
-    $WvaScannerInspection -notmatch 'file\.read_bytes'
+    $WvaAssemblerInspection -notmatch 'Scanˉwva' -or
+    $WvaAssemblerInspection -notmatch 'Inspectˉwvaˉsemantics' -or
+    $WvaAssemblerInspection -notmatch 'Encodeˉwva' -or
+    $WvaAssemblerInspection -notmatch 'Encodeˉsections' -or
+    $WvaAssemblerInspection -notmatch 'Encodeˉsymbols' -or
+    $WvaAssemblerInspection -notmatch 'Encodeˉrelocations' -or
+    $WvaAssemblerInspection -notmatch 'bytes\.concat' -or
+    $WvaAssemblerInspection -notmatch 'bytes\.from_u32_little' -or
+    $WvaAssemblerInspection -notmatch 'file\.read_bytes' -or
+    $WvaAssemblerInspection -notmatch 'file\.write_bytes'
 ) {
-    throw 'The Seed CLI inspector did not expose the Windvale WVA frontend operations.'
+    throw 'The Seed CLI inspector did not expose the Windvale WVA assembler operations.'
 }
 
-$WvaScannerCapabilities = @(
+$WvaAssemblerCapabilities = @(
     '--allow', 'console.write_line',
     '--allow', 'diagnostic.write_line',
     '--allow', 'file.read_bytes',
+    '--allow', 'file.write_bytes',
     '--allow', 'process.argument',
     '--allow', 'process.argument_count',
     '--max-steps', '10000000'
 )
 
-$WvaScannerUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaScannerModule 2>&1
-if ($LASTEXITCODE -ne 3 -or ($WvaScannerUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
-    throw 'The Seed CLI did not refuse ungranted WVA scanner capabilities.'
+$WvaAssemblerUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvaAssemblerUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
+    throw 'The Seed CLI did not refuse ungranted WVA assembler capabilities.'
 }
 
-$WvaScannerSelfTestOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaScannerModule @WvaScannerCapabilities
-if ($LASTEXITCODE -ne 0 -or $WvaScannerSelfTestOutput -notcontains 'Result: 0') {
-    throw 'The Windvale WVA scanner self-test did not return Result: 0.'
+$WvaAssemblerSelfTestOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities
+if ($LASTEXITCODE -ne 0 -or $WvaAssemblerSelfTestOutput -notcontains 'Result: 0') {
+    throw 'The Windvale WVA assembler self-test did not return Result: 0.'
 }
 
-$WvaScannerHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaScannerModule @WvaScannerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva')
+$WvaAssemblerHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') $WindvaleAssemblyObject
 if (
     $LASTEXITCODE -ne 0 -or
-    $WvaScannerHostedOutput -notcontains 'wvascan 1' -or
-    $WvaScannerHostedOutput -notcontains 'status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1' -or
-    $WvaScannerHostedOutput -notcontains 'semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1' -or
-    $WvaScannerHostedOutput -notcontains 'Result: 0'
+    $WvaAssemblerHostedOutput -notcontains 'wvasm 1' -or
+    $WvaAssemblerHostedOutput -notcontains 'assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=403 line=22 column=1' -or
+    $WvaAssemblerHostedOutput -notcontains 'Result: 0'
 ) {
-    throw 'The Windvale WVA frontend did not recognize the canonical assembly source.'
+    throw 'The Windvale WVA assembler did not encode the canonical assembly source.'
+}
+$WindvaleAssemblyHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleAssemblyObject).Hash.ToLowerInvariant()
+if ($WindvaleAssemblyHash -ne '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85') {
+    throw "The Windvale WVA assembler wrote unexpected bytes: $WindvaleAssemblyHash"
+}
+$WindvaleAssemblyVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-verify $WindvaleAssemblyObject
+if ($LASTEXITCODE -ne 0 -or $WindvaleAssemblyVerifyOutput -notcontains 'Verified object: X86ˉ64') {
+    throw 'The independent object verifier rejected the Windvale-written assembler output.'
+}
+$MissingAssemblerParent = Join-Path $Artifacts '__windvale_missing_assembler_parent__'
+if (Test-Path -LiteralPath $MissingAssemblerParent) {
+    throw "The missing assembler parent unexpectedly exists: $MissingAssemblerParent"
+}
+$MissingAssemblerOutput = Join-Path $MissingAssemblerParent 'Hello.wvo'
+$WvaAssemblerMissingParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') $MissingAssemblerOutput 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvaAssemblerMissingParentOutput -join "`n") -notmatch 'WVR3022') {
+    throw 'The Windvale WVA assembler did not report a missing output parent deterministically.'
+}
+if (Test-Path -LiteralPath $MissingAssemblerOutput) {
+    throw 'The failed Windvale assembler host write left a partial output object.'
 }
 
-$WvaSemanticInvalidOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaScannerModule @WvaScannerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
+if (Test-Path -LiteralPath $InvalidWindvaleAssemblyObject) {
+    throw "The invalid Windvale assembly output unexpectedly exists: $InvalidWindvaleAssemblyObject"
+}
+$WvaSemanticInvalidOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') $InvalidWindvaleAssemblyObject 2>&1
 if (
     $LASTEXITCODE -ne 0 -or
-    ($WvaSemanticInvalidOutput -join "`n") -notmatch 'semantics status=WVA1001 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=0 line=1 column=1' -or
+    ($WvaSemanticInvalidOutput -join "`n") -notmatch 'assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1' -or
     $WvaSemanticInvalidOutput -notcontains 'Result: 2'
 ) {
-    throw 'The Windvale WVA frontend did not reject non-WVA source deterministically.'
+    throw 'The Windvale WVA assembler did not reject non-WVA source deterministically.'
+}
+if (Test-Path -LiteralPath $InvalidWindvaleAssemblyObject) {
+    throw 'Rejected Windvale assembly created a partial output object.'
+}
+$WvaSemanticExistingOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') $WindvaleAssemblyObject 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    ($WvaSemanticExistingOutput -join "`n") -notmatch 'assembly status=WVA1001' -or
+    $WvaSemanticExistingOutput -notcontains 'Result: 2'
+) {
+    throw 'The Windvale WVA assembler did not reject invalid input targeting an existing output.'
+}
+$PreservedWindvaleAssemblyHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleAssemblyObject).Hash.ToLowerInvariant()
+if ($PreservedWindvaleAssemblyHash -ne $WindvaleAssemblyHash) {
+    throw 'Rejected Windvale assembly modified an existing output object.'
 }
 
 $AssemblyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- assemble (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') -o $AssemblyObject
@@ -331,6 +375,10 @@ if (
     $AssemblyOutput -notcontains 'SHA-256: 992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85'
 ) {
     throw 'The Stage 0 assembler did not produce the canonical WVA example object.'
+}
+$Stage0AssemblyHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $AssemblyObject).Hash.ToLowerInvariant()
+if ($Stage0AssemblyHash -ne $WindvaleAssemblyHash) {
+    throw 'The Windvale-written and Stage 0 assembler objects differ.'
 }
 
 $AssemblyVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-verify $AssemblyObject

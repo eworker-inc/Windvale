@@ -20,7 +20,7 @@ internal static class Program
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "a5d574ea646946b159d95bd7e51434bfcbf7545083a54541438a79a2e5e999df";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_SCANNER_CORE_SHA256 = "bfc29da9a58ed2ff9130bada231ad2b7ab006c6e5f021926a2a9c8d7a9314e31";
+    private const string WVA_ASSEMBLER_CORE_SHA256 = "7dbcf042f011adab5a04670973fc17b6b63d50fb08c09e8e54c3a4adb2c00825";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -161,8 +161,8 @@ internal static class Program
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
-    private static readonly string WVA_SCANNER_CORE_SOURCE = Readˉembeddedˉsource(
-        "Windvale.Seed.Tests.Wva-Scanner-Core.wv");
+    private static readonly string WVA_ASSEMBLER_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wva-Assembler-Core.wv");
 
     private static readonly List<(string Name, Action Body)> TESTS =
     [
@@ -182,8 +182,8 @@ internal static class Program
         ("Windvale-written object core matches the Stage 0 oracle", Wvoˉobjectˉcoreˉmatchesˉoracle),
         ("WVA assembler emits canonical sections, symbols, and relocations", Assemblerˉemitsˉcanonicalˉobject),
         ("WVA assembler rejects malformed and inconsistent source", Assemblerˉrejectsˉinvalidˉsource),
-        ("Windvale-written WVA scanner enforces source and token boundaries", Wvaˉscannerˉcoreˉrecognizesˉsource),
-        ("Windvale-written WVA semantics agree with the Stage 0 oracle", Wvaˉsemanticˉinspectorˉmatchesˉoracle),
+        ("Windvale-written WVA assembler enforces source and token boundaries", Wvaˉassemblerˉcoreˉrecognizesˉsource),
+        ("Windvale-written WVA assembler matches Stage 0 semantics and bytes", Wvaˉassemblerˉmatchesˉoracle),
         ("immutable nominal records cross function boundaries", Immutableˉrecordsˉrun),
         ("nominal enums and bounded formatting execute", Enumsˉandˉformattingˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
@@ -1270,18 +1270,19 @@ internal static class Program
             "WVA1011");
     }
 
-    private static void Wvaˉscannerˉcoreˉrecognizesˉsource()
+    private static void Wvaˉassemblerˉcoreˉrecognizesˉsource()
     {
-        var Moduleˉbytes = Compileˉsuccess(WVA_SCANNER_CORE_SOURCE);
-        Equal(WVA_SCANNER_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
+        var Moduleˉbytes = Compileˉsuccess(WVA_ASSEMBLER_CORE_SOURCE);
+        Equal(WVA_ASSEMBLER_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
         var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
-        Equal("Wvaˉscannerˉcore", Module.Module.Name);
+        Equal("Wvaˉassemblerˉcore", Module.Module.Name);
         Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
         Sequenceˉequal(
             [
                 Capabilityˉcatalog.CONSOLE_WRITE_LINE,
                 Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
                 Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.FILE_WRITE_BYTES,
                 Capabilityˉcatalog.PROCESS_ARGUMENT,
                 Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
             ],
@@ -1292,12 +1293,20 @@ internal static class Program
         True(
             Module.Module.Types.Any(Type => Type.Name == "Wvaˉsemanticˉstatus"),
             "The WVA semantic status enum was not serialized.");
+        True(
+            Module.Module.Types.Any(Type => Type.Name == "Wvaˉobjectˉencoding"),
+            "The WVA object encoding record was not serialized.");
 
         var Inspection = Moduleˉinspector.Inspect(Module, Moduleˉbytes);
         Contains(Inspection, "Scanˉwva");
+        Contains(Inspection, "Inspectˉwvaˉsemantics");
+        Contains(Inspection, "Encodeˉwva");
         Contains(Inspection, "Readˉtoken");
+        Contains(Inspection, "bytes.concat");
+        Contains(Inspection, "bytes.from_u32_little");
         Contains(Inspection, "text.utf8_is_valid");
         Contains(Inspection, "file.read_bytes");
+        Contains(Inspection, "file.write_bytes");
 
         var Authorized = Module.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -1309,6 +1318,7 @@ internal static class Program
                 new Referenceˉcapabilityˉhost(new StringWriter()),
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain());
 
+        var Selfˉtestˉwriter = new Capturingˉfileˉwriter();
         var Selfˉtest = new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
@@ -1316,112 +1326,125 @@ internal static class Program
                 TextWriter.Null,
                 TextWriter.Null,
                 new Testˉfileˉreader((_, _) => throw new InvalidOperationException(
-                    "The WVA scanner self-test must not read a hosted file.")))),
+                    "The WVA assembler self-test must not read a hosted file.")),
+                Selfˉtestˉwriter)),
             new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
         Equal(0, Selfˉtest.Exitˉcode);
+        Equal(0, Selfˉtestˉwriter.Writeˉcount);
 
-        (Runtimeˉresult Result, string Output, string Diagnostics) Runˉsource(
+        (Runtimeˉresult Result, string Output, string Diagnostics, Capturingˉfileˉwriter Writer) Runˉsource(
             ImmutableArray<byte> input,
             string resourceˉname)
         {
             var Output = new StringWriter();
             var Diagnostics = new StringWriter();
+            var Writer = new Capturingˉfileˉwriter();
             var Result = new Referenceˉruntime(
                 Module,
                 new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
-                    [resourceˉname],
+                    [resourceˉname, resourceˉname + ".wvo"],
                     Output,
                     Diagnostics,
                     new Testˉfileˉreader((Name, Maximumˉbytes) =>
                     {
                         Equal(resourceˉname, Name);
-                        True(input.Length <= Maximumˉbytes, "The WVA scanner hosted byte limit was too small.");
+                        True(input.Length <= Maximumˉbytes, "The WVA assembler hosted byte limit was too small.");
                         return input;
-                    }))),
+                    }),
+                    Writer)),
                 new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
-            return (Result, Output.ToString(), Diagnostics.ToString());
+            return (Result, Output.ToString(), Diagnostics.ToString(), Writer);
         }
 
         var Canonicalˉsource = System.Text.Encoding.UTF8.GetBytes(HELLO_ASSEMBLY_SOURCE).ToImmutableArray();
         var Canonical = Runˉsource(Canonicalˉsource, "hello.wva");
         Equal(0, Canonical.Result.Exitˉcode);
         Equal(
-            "wvascan 1\n" +
-            "status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1\n" +
-            "semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1\n",
+            "wvasm 1\n" +
+            "assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=403 line=22 column=1\n",
             Canonical.Output);
         Equal(string.Empty, Canonical.Diagnostics);
+        Equal(1, Canonical.Writer.Writeˉcount);
+        Equal("hello.wva.wvo", Canonical.Writer.Resourceˉname);
+        Sequenceˉequal(Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE), Canonical.Writer.Bytes);
+        _ = Objectˉcodec.Readˉandˉverify(Canonical.Writer.Bytes.AsSpan());
 
         var Crˉlfˉsource = System.Text.Encoding.UTF8.GetBytes(
             HELLO_ASSEMBLY_SOURCE.Replace("\n", "\r\n", StringComparison.Ordinal)).ToImmutableArray();
         var Crˉlf = Runˉsource(Crˉlfˉsource, "hello-crlf.wva");
         Equal(0, Crˉlf.Result.Exitˉcode);
         Equal(
-            "wvascan 1\n" +
-            "status=valid bytes=424 lines=21 meaningful-lines=17 tokens=52 offset=424 line=22 column=1\n" +
-            "semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=424 line=22 column=1\n",
+            "wvasm 1\n" +
+            "assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=424 line=22 column=1\n",
             Crˉlf.Output);
         Equal(string.Empty, Crˉlf.Diagnostics);
+        Sequenceˉequal(Canonical.Writer.Bytes, Crˉlf.Writer.Bytes);
 
         var Crˉsource = System.Text.Encoding.UTF8.GetBytes(
             HELLO_ASSEMBLY_SOURCE.Replace('\n', '\r')).ToImmutableArray();
         var Cr = Runˉsource(Crˉsource, "hello-cr.wva");
         Equal(0, Cr.Result.Exitˉcode);
         Equal(
-            "wvascan 1\n" +
-            "status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1\n" +
-            "semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1\n",
+            "wvasm 1\n" +
+            "assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=403 line=22 column=1\n",
             Cr.Output);
         Equal(string.Empty, Cr.Diagnostics);
+        Sequenceˉequal(Canonical.Writer.Bytes, Cr.Writer.Bytes);
 
         var Invalidˉutf8 = Runˉsource([255], "invalid-utf8.wva");
         Equal(2, Invalidˉutf8.Result.Exitˉcode);
         Equal(string.Empty, Invalidˉutf8.Output);
         Equal(
-            "semantics status=WVA1001 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=0 line=1 column=1\n",
+            "assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1\n",
             Invalidˉutf8.Diagnostics);
+        Equal(0, Invalidˉutf8.Writer.Writeˉcount);
 
         var Boundary = Runˉsource(
             ImmutableArray.Create(Enumerable.Repeat((byte)'a', Assemblyˉlimits.MAX_LINE_BYTES).ToArray()),
             "boundary-line.wva");
         Equal(2, Boundary.Result.Exitˉcode);
         Equal(
-            "semantics status=WVA1001 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=0 line=1 column=1\n",
+            "assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1\n",
             Boundary.Diagnostics);
+        Equal(0, Boundary.Writer.Writeˉcount);
 
         var Longˉline = Runˉsource(
             ImmutableArray.Create(Enumerable.Repeat((byte)'a', Assemblyˉlimits.MAX_LINE_BYTES + 1).ToArray()),
             "long-line.wva");
         Equal(2, Longˉline.Result.Exitˉcode);
         Equal(
-            "semantics status=WVA1011 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=4096 line=1 column=4097\n",
+            "assembly status=WVA1011 object-bytes=0 sections=0 symbols=0 relocations=0 offset=4096 line=1 column=4097\n",
             Longˉline.Diagnostics);
+        Equal(0, Longˉline.Writer.Writeˉcount);
 
         var Oversizedˉsource = Runˉsource(
             ImmutableArray.Create(new byte[Assemblyˉlimits.MAX_SOURCE_BYTES + 1]),
             "oversized.wva");
         Equal(2, Oversizedˉsource.Result.Exitˉcode);
         Equal(
-            "semantics status=WVA1011 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=1048576 line=1 column=1\n",
+            "assembly status=WVA1011 object-bytes=0 sections=0 symbols=0 relocations=0 offset=1048576 line=1 column=1\n",
             Oversizedˉsource.Diagnostics);
+        Equal(0, Oversizedˉsource.Writer.Writeˉcount);
     }
 
-    private static void Wvaˉsemanticˉinspectorˉmatchesˉoracle()
+    private static void Wvaˉassemblerˉmatchesˉoracle()
     {
-        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(WVA_SCANNER_CORE_SOURCE));
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(WVA_ASSEMBLER_CORE_SOURCE));
         var Authorized = Module.Module.Capabilities
             .Select(Capability => Capability.Name)
             .ToImmutableHashSet(StringComparer.Ordinal);
 
-        (Runtimeˉresult Result, string Output, string Diagnostics) Runˉsource(string source)
+        (Runtimeˉresult Result, string Output, string Diagnostics, Capturingˉfileˉwriter Writer) Runˉsource(
+            string source)
         {
             var Input = System.Text.Encoding.UTF8.GetBytes(source).ToImmutableArray();
             var Output = new StringWriter();
             var Diagnostics = new StringWriter();
+            var Writer = new Capturingˉfileˉwriter();
             var Result = new Referenceˉruntime(
                 Module,
                 new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
-                    ["semantic.wva"],
+                    ["semantic.wva", "semantic.wvo"],
                     Output,
                     Diagnostics,
                     new Testˉfileˉreader((Name, Maximumˉbytes) =>
@@ -1429,9 +1452,10 @@ internal static class Program
                         Equal("semantic.wva", Name);
                         True(Input.Length <= Maximumˉbytes, "The semantic inspector input limit was too small.");
                         return Input;
-                    }))),
+                    }),
+                    Writer)),
                 new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
-            return (Result, Output.ToString(), Diagnostics.ToString());
+            return (Result, Output.ToString(), Diagnostics.ToString(), Writer);
         }
 
         var Complete = Runˉsource(COMPLETE_ASSEMBLY_SOURCE);
@@ -1439,8 +1463,9 @@ internal static class Program
         Equal(string.Empty, Complete.Diagnostics);
         Contains(
             Complete.Output,
-            "semantics status=valid sections=3 symbols=3 definitions=3 relocations=2 " +
-            "data-bytes=32 memory-bytes=48");
+            "assembly status=valid object-bytes=243 sections=3 symbols=3 relocations=2");
+        Sequenceˉequal(Assembleˉsuccess(COMPLETE_ASSEMBLY_SOURCE), Complete.Writer.Bytes);
+        _ = Objectˉcodec.Readˉandˉverify(Complete.Writer.Bytes.AsSpan());
 
         const string Numericˉboundaries = """
             windvale-assembly 1
@@ -1468,9 +1493,80 @@ internal static class Program
         Equal(string.Empty, Numeric.Diagnostics);
         Contains(
             Numeric.Output,
-            "semantics status=valid sections=2 symbols=2 definitions=2 relocations=0 " +
-            "data-bytes=30 memory-bytes=30");
-        _ = Assembleˉsuccess(Numericˉboundaries);
+            "assembly status=valid object-bytes=154 sections=2 symbols=2 relocations=0");
+        Sequenceˉequal(Assembleˉsuccess(Numericˉboundaries), Numeric.Writer.Bytes);
+        _ = Objectˉcodec.Readˉandˉverify(Numeric.Writer.Bytes.AsSpan());
+
+        const string Definitionˉrangesˉandˉregisters = """
+            windvale-assembly 1
+            symbol local function Alpha in .text
+            symbol local function Beta in .text
+            symbol local data First in .data
+            symbol local data Second in .data
+            symbol export function Main in .text
+            symbol import function External
+            section code .text align 16
+            define Alpha
+            move_u32 eax 0
+            move_u32 ecx 1
+            move_u32 edx 2
+            move_u32 ebx 3
+            move_u32 esp 4
+            move_u32 ebp 5
+            move_u32 esi 6
+            move_u32 edi 7
+            call External
+            return
+            end define
+            define Beta
+            jump Main
+            return
+            end define
+            define Main
+            nop
+            trap
+            move_i32 eax -1
+            return
+            end define
+            end section
+            section data .data align 4
+            define First
+            bytes 0 255
+            u32 2309737967
+            i32 -2
+            end define
+            define Second
+            address_u32 Main
+            end define
+            end section
+            """;
+        var Ranges = Runˉsource(Definitionˉrangesˉandˉregisters);
+        Equal(0, Ranges.Result.Exitˉcode);
+        Equal(string.Empty, Ranges.Diagnostics);
+        Contains(
+            Ranges.Output,
+            "assembly status=valid object-bytes=360 sections=2 symbols=6 relocations=3");
+        Sequenceˉequal(Assembleˉsuccess(Definitionˉrangesˉandˉregisters), Ranges.Writer.Bytes);
+        var Rangesˉobject = Objectˉcodec.Readˉandˉverify(Ranges.Writer.Bytes.AsSpan()).Value;
+        Equal(0u, Rangesˉobject.Symbols[0].Offset);
+        Equal(46u, Rangesˉobject.Symbols[1].Offset);
+        Equal(52u, Rangesˉobject.Symbols[4].Offset);
+        Equal(41u, Rangesˉobject.Relocations[0].Offset);
+        Equal(47u, Rangesˉobject.Relocations[1].Offset);
+        Equal(10u, Rangesˉobject.Relocations[2].Offset);
+
+        const string Emptyˉobjectˉsource = """
+            windvale-assembly 1
+            section code .text align 1
+            end section
+            """;
+        var Emptyˉobject = Runˉsource(Emptyˉobjectˉsource);
+        Equal(0, Emptyˉobject.Result.Exitˉcode);
+        Contains(
+            Emptyˉobject.Output,
+            "assembly status=valid object-bytes=49 sections=1 symbols=0 relocations=0");
+        Sequenceˉequal(Assembleˉsuccess(Emptyˉobjectˉsource), Emptyˉobject.Writer.Bytes);
+        _ = Objectˉcodec.Readˉandˉverify(Emptyˉobject.Writer.Bytes.AsSpan());
 
         var Cases = new (string Source, string Code)[]
         {
@@ -1636,7 +1732,8 @@ internal static class Program
             var Windvale = Runˉsource(Source);
             Equal(2, Windvale.Result.Exitˉcode);
             Equal(string.Empty, Windvale.Output);
-            Contains(Windvale.Diagnostics, $"semantics status={Code} ");
+            Contains(Windvale.Diagnostics, $"assembly status={Code} ");
+            Equal(0, Windvale.Writer.Writeˉcount);
         }
 
         const string Mutationˉalphabet =
@@ -1658,6 +1755,16 @@ internal static class Program
             {
                 throw new InvalidOperationException(
                     $"WVA semantic acceptance differed for deterministic mutation {Case}.");
+            }
+            if (Oracle.Success)
+            {
+                Equal(1, Windvale.Writer.Writeˉcount);
+                Sequenceˉequal(Oracle.Objectˉbytes, Windvale.Writer.Bytes);
+                _ = Objectˉcodec.Readˉandˉverify(Windvale.Writer.Bytes.AsSpan());
+            }
+            else
+            {
+                Equal(0, Windvale.Writer.Writeˉcount);
             }
         }
     }
@@ -2422,7 +2529,7 @@ internal static class Program
         var Foundationˉbytes = Compileˉsuccess(FOUNDATION_SOURCE);
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉsuccess(WVO_CORE_SOURCE);
-        var Wvaˉscannerˉbytes = Compileˉsuccess(WVA_SCANNER_CORE_SOURCE);
+        var Wvaˉassemblerˉbytes = Compileˉsuccess(WVA_ASSEMBLER_CORE_SOURCE);
         var Wvoˉsampleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
         var Assemblyˉobjectˉbytes = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE);
         var Sumˉhash = Moduleˉdigest.Calculateˉsha256(Sumˉbytes);
@@ -2430,7 +2537,7 @@ internal static class Program
         var Foundationˉhash = Moduleˉdigest.Calculateˉsha256(Foundationˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
-        var Wvaˉscannerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉscannerˉbytes);
+        var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
         var Wvoˉsampleˉhash = Objectˉdigest.Calculateˉsha256(Wvoˉsampleˉbytes);
         var Assemblyˉobjectˉhash = Objectˉdigest.Calculateˉsha256(Assemblyˉobjectˉbytes);
         Equal(SUM_SHA256, Sumˉhash);
@@ -2438,7 +2545,7 @@ internal static class Program
         Equal(FOUNDATION_SHA256, Foundationˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
-        Equal(WVA_SCANNER_CORE_SHA256, Wvaˉscannerˉhash);
+        Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
         Equal(WVO_SAMPLE_SHA256, Wvoˉsampleˉhash);
         Equal(WVA_OBJECT_SHA256, Assemblyˉobjectˉhash);
         _ = Objectˉcodec.Readˉandˉverify(Assemblyˉobjectˉbytes);
@@ -2520,38 +2627,44 @@ internal static class Program
         var Normalizedˉwvoˉoutput = Wvoˉhostedˉoutput.ToString()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
-        var Wvaˉscannerˉmodule = Moduleˉcodec.Readˉandˉverify(Wvaˉscannerˉbytes);
-        var Wvaˉscannerˉcapabilities = Wvaˉscannerˉmodule.Module.Capabilities
+        var Wvaˉassemblerˉmodule = Moduleˉcodec.Readˉandˉverify(Wvaˉassemblerˉbytes);
+        var Wvaˉassemblerˉcapabilities = Wvaˉassemblerˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
             .ToImmutableHashSet(StringComparer.Ordinal);
-        var Wvaˉscannerˉselfˉtestˉresult = new Referenceˉruntime(
-            Wvaˉscannerˉmodule,
+        var Wvaˉassemblerˉselfˉtestˉwriter = new Capturingˉfileˉwriter();
+        var Wvaˉassemblerˉselfˉtestˉresult = new Referenceˉruntime(
+            Wvaˉassemblerˉmodule,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
                 [],
                 TextWriter.Null,
                 TextWriter.Null,
                 new Testˉfileˉreader((_, _) => throw new InvalidOperationException(
-                    "The golden WVA scanner self-test must not read a hosted file.")))),
-            new(Wvaˉscannerˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
-        var Wvaˉscannerˉhostedˉoutput = new StringWriter();
-        var Wvaˉscannerˉhostedˉdiagnostics = new StringWriter();
+                    "The golden WVA assembler self-test must not read a hosted file.")),
+                Wvaˉassemblerˉselfˉtestˉwriter)),
+            new(Wvaˉassemblerˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
+        var Wvaˉassemblerˉwriter = new Capturingˉfileˉwriter();
+        var Wvaˉassemblerˉhostedˉoutput = new StringWriter();
+        var Wvaˉassemblerˉhostedˉdiagnostics = new StringWriter();
         var Wvaˉsourceˉbytes = System.Text.Encoding.UTF8.GetBytes(HELLO_ASSEMBLY_SOURCE);
-        var Wvaˉscannerˉhostedˉresult = new Referenceˉruntime(
-            Wvaˉscannerˉmodule,
+        var Wvaˉassemblerˉhostedˉresult = new Referenceˉruntime(
+            Wvaˉassemblerˉmodule,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
-                ["hello.wva"],
-                Wvaˉscannerˉhostedˉoutput,
-                Wvaˉscannerˉhostedˉdiagnostics,
+                ["hello.wva", "hello.wvo"],
+                Wvaˉassemblerˉhostedˉoutput,
+                Wvaˉassemblerˉhostedˉdiagnostics,
                 new Testˉfileˉreader((Name, Maximumˉbytes) =>
                 {
                     Equal("hello.wva", Name);
                     True(Wvaˉsourceˉbytes.Length <= Maximumˉbytes, "The golden WVA source limit was too small.");
                     return Wvaˉsourceˉbytes.ToImmutableArray();
-                }))),
-            new(Wvaˉscannerˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
-        var Normalizedˉwvaˉscannerˉoutput = Wvaˉscannerˉhostedˉoutput.ToString()
+                }),
+                Wvaˉassemblerˉwriter)),
+            new(Wvaˉassemblerˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
+        var Normalizedˉwvaˉassemblerˉoutput = Wvaˉassemblerˉhostedˉoutput.ToString()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
+        var Wvaˉassemblerˉobjectˉhash = Objectˉdigest.Calculateˉsha256(
+            Wvaˉassemblerˉwriter.Bytes.AsSpan());
         Equal(29, Sumˉresult.Exitˉcode);
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
@@ -2568,22 +2681,28 @@ internal static class Program
         Equal("Wrote WVO 1.0 bytes=189\n", Normalizedˉwvoˉoutput);
         Equal(string.Empty, Wvoˉhostedˉdiagnostics.ToString());
         Sequenceˉequal(Wvoˉsampleˉbytes, Wvoˉhostedˉwriter.Bytes);
-        Equal(0, Wvaˉscannerˉselfˉtestˉresult.Exitˉcode);
-        Equal(0, Wvaˉscannerˉhostedˉresult.Exitˉcode);
+        Equal(0, Wvaˉassemblerˉselfˉtestˉresult.Exitˉcode);
+        Equal(0, Wvaˉassemblerˉselfˉtestˉwriter.Writeˉcount);
+        Equal(0, Wvaˉassemblerˉhostedˉresult.Exitˉcode);
         Equal(
-            "wvascan 1\n" +
-            "status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1\n" +
-            "semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1\n",
-            Normalizedˉwvaˉscannerˉoutput);
-        Equal(string.Empty, Wvaˉscannerˉhostedˉdiagnostics.ToString());
+            "wvasm 1\n" +
+            "assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=403 line=22 column=1\n",
+            Normalizedˉwvaˉassemblerˉoutput);
+        Equal(string.Empty, Wvaˉassemblerˉhostedˉdiagnostics.ToString());
+        Equal(1, Wvaˉassemblerˉwriter.Writeˉcount);
+        Equal("hello.wvo", Wvaˉassemblerˉwriter.Resourceˉname);
+        Sequenceˉequal(Assemblyˉobjectˉbytes, Wvaˉassemblerˉwriter.Bytes);
+        Equal(Assemblyˉobjectˉhash, Wvaˉassemblerˉobjectˉhash);
+        _ = Objectˉcodec.Readˉandˉverify(Wvaˉassemblerˉwriter.Bytes.AsSpan());
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
             Assemblyˉcompiler.FORMAT_VERSION.ToString(),
             Assemblyˉobjectˉhash,
-            Wvaˉscannerˉhash,
-            Wvaˉscannerˉselfˉtestˉresult.Exitˉcode,
-            Normalizedˉwvaˉscannerˉoutput,
+            Wvaˉassemblerˉhash,
+            Wvaˉassemblerˉselfˉtestˉresult.Exitˉcode,
+            Normalizedˉwvaˉassemblerˉoutput,
+            Wvaˉassemblerˉobjectˉhash,
             Sumˉhash,
             Sumˉresult.Exitˉcode,
             Helloˉhash,
@@ -2992,9 +3111,10 @@ internal static class Program
         [property: JsonPropertyName("objectFormat")] string Objectˉformat,
         [property: JsonPropertyName("assemblyFormat")] string Assemblyˉformat,
         [property: JsonPropertyName("assemblyObjectSha256")] string Assemblyˉobjectˉsha256,
-        [property: JsonPropertyName("wvaScannerCoreSha256")] string Wvaˉscannerˉcoreˉsha256,
-        [property: JsonPropertyName("wvaScannerCoreResult")] int Wvaˉscannerˉcoreˉresult,
-        [property: JsonPropertyName("wvaScannerHostedOutput")] string Wvaˉscannerˉhostedˉoutput,
+        [property: JsonPropertyName("wvaAssemblerCoreSha256")] string Wvaˉassemblerˉcoreˉsha256,
+        [property: JsonPropertyName("wvaAssemblerCoreResult")] int Wvaˉassemblerˉcoreˉresult,
+        [property: JsonPropertyName("wvaAssemblerHostedOutput")] string Wvaˉassemblerˉhostedˉoutput,
+        [property: JsonPropertyName("wvaAssemblerObjectSha256")] string Wvaˉassemblerˉobjectˉsha256,
         [property: JsonPropertyName("sumSha256")] string Sumˉsha256,
         [property: JsonPropertyName("sumResult")] int Sumˉresult,
         [property: JsonPropertyName("helloSha256")] string Helloˉsha256,
