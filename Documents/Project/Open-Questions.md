@@ -45,9 +45,10 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Use the accepted immutable byte primitives to build a Windvale-written `.wvb` inspector over supplied bytes.
-2. Define the explicit hosted file-input capability that can supply those bytes without changing portable program semantics.
-3. Define the memory and aggregate-type model needed for a self-hosted compiler.
-4. Define the restricted C bridge without changing Windvale semantics.
-5. Select the first architecture, object path, firmware boundary, and VM qualification targets.
-6. Select the source license before publishing implementation code.
+1. Replace the first `wvdump` core's numeric statuses with the smallest useful structured result and section descriptor model.
+2. Add bounded numeric and text formatting so the tool can describe inspected sections.
+3. Define the explicit hosted file-input capability that can supply bytes without changing portable inspection semantics.
+4. Define the memory and aggregate-type model needed for a self-hosted compiler.
+5. Define the restricted C bridge without changing Windvale semantics.
+6. Select the first architecture, object path, firmware boundary, and VM qualification targets.
+7. Select the source license before publishing implementation code.

@@ -14,6 +14,7 @@ internal static class Program
     private const string SUM_SHA256 = "4570d02bc558a5e5d4e341cd9a0edcec733c7fe6d797bf371669305169ef386f";
     private const string HELLO_SHA256 = "79185b8c138e2f7d6dc34cbdcf82a8a467601c7ae6383bb76305e4d57e4e8a62";
     private const string FOUNDATION_SHA256 = "72cb8f2af8aa7813d76e528973476147f12b4c548c114b7276ccc99f92b1c48a";
+    private const string WVDUMP_CORE_SHA256 = "c3670bb769168711d61f98845ff503abec2cb48dedfffcb0c5f76a1b6e039b62";
 
     private const string SUM_SOURCE = """
         module Sumˉdata profile portable;
@@ -111,6 +112,9 @@ internal static class Program
         }
         """;
 
+    private static readonly string WVDUMP_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wv-Dump-Core.wv");
+
     private static readonly List<(string Name, Action Body)> TESTS =
     [
         ("portable source compiles, verifies, and returns the data sum", Portableˉprogramˉruns),
@@ -121,6 +125,7 @@ internal static class Program
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
         ("macron names and explicit local mutability execute", Namingˉandˉmutabilityˉrun),
         ("Foundation byte values, slices, and little-endian reads execute", Foundationˉbytesˉrun),
+        ("Windvale wvdump core walks bounded section envelopes", Wvˉdumpˉcoreˉwalksˉsections),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
         ("source diagnostics contain stable codes and locations", Sourceˉdiagnosticsˉareˉuseful),
         ("binary reader rejects malformed envelopes and UTF-8", Malformedˉmodulesˉareˉrejected),
@@ -371,6 +376,35 @@ internal static class Program
         Contains(Inspection, "bytes.slice");
         Equal(FOUNDATION_SHA256, Moduleˉdigest.Calculateˉsha256(Bytes));
         Equal(1, new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+    }
+
+    private static void Wvˉdumpˉcoreˉwalksˉsections()
+    {
+        var Bytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        Equal("Wvˉdumpˉcore", Module.Module.Name);
+        Equal(10, Module.Module.Data.Length);
+
+        var Validˉdata = (Bytesˉdataˉdeclaration)Module.Module.Data.Single(
+            Data => Data.Name == "Validˉmodule");
+        var Embeddedˉmodule = Moduleˉcodec.Readˉandˉverify(Validˉdata.Values.AsSpan());
+        Equal("A", Embeddedˉmodule.Module.Name);
+        Equal(Moduleˉprofile.Portable, Embeddedˉmodule.Module.Profile);
+        Equal(0, Embeddedˉmodule.Module.Functions.Length);
+
+        var Hostileˉlength = (Bytesˉdataˉdeclaration)Module.Module.Data.Single(
+            Data => Data.Name == "Hostileˉlengthˉmodule");
+        Sequenceˉequal<byte>([255, 255, 255, 255], Hostileˉlength.Values.TakeLast(4));
+
+        var Inspection = Moduleˉinspector.Inspect(Module, Bytes);
+        Contains(Inspection, "Inspectˉwvbˉenvelope");
+        Contains(Inspection, "bytes.read_u32_little");
+        Contains(Inspection, "u32.less_equal");
+        Equal(WVDUMP_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Bytes));
+        Equal(0, new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
@@ -671,12 +705,15 @@ internal static class Program
         var Sumˉbytes = Compileˉsuccess(SUM_SOURCE);
         var Helloˉbytes = Compileˉsuccess(HELLO_SOURCE);
         var Foundationˉbytes = Compileˉsuccess(FOUNDATION_SOURCE);
+        var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Sumˉhash = Moduleˉdigest.Calculateˉsha256(Sumˉbytes);
         var Helloˉhash = Moduleˉdigest.Calculateˉsha256(Helloˉbytes);
         var Foundationˉhash = Moduleˉdigest.Calculateˉsha256(Foundationˉbytes);
+        var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         Equal(SUM_SHA256, Sumˉhash);
         Equal(HELLO_SHA256, Helloˉhash);
         Equal(FOUNDATION_SHA256, Foundationˉhash);
+        Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
 
         var Sumˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sumˉbytes),
@@ -695,10 +732,15 @@ internal static class Program
             Moduleˉcodec.Readˉandˉverify(Foundationˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        var Wvˉdumpˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
         Equal(29, Sumˉresult.Exitˉcode);
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
         Equal(1, Foundationˉresult.Exitˉcode);
+        Equal(0, Wvˉdumpˉresult.Exitˉcode);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             Sumˉhash,
@@ -707,7 +749,9 @@ internal static class Program
             Normalizedˉhelloˉoutput,
             Helloˉresult.Exitˉcode,
             Foundationˉhash,
-            Foundationˉresult.Exitˉcode);
+            Foundationˉresult.Exitˉcode,
+            Wvˉdumpˉhash,
+            Wvˉdumpˉresult.Exitˉcode);
     }
 
     private static void Randomˉinputˉisˉcontained()
@@ -950,6 +994,14 @@ internal static class Program
         }
     }
 
+    private static string Readˉembeddedˉsource(string name)
+    {
+        using var Stream = typeof(Program).Assembly.GetManifestResourceStream(name)
+            ?? throw new InvalidOperationException($"Embedded source '{name}' was not found.");
+        using var Reader = new StreamReader(Stream);
+        return Reader.ReadToEnd();
+    }
+
     private static void True(bool condition, string message)
     {
         if (!condition)
@@ -971,7 +1023,9 @@ internal static class Program
         [property: JsonPropertyName("helloOutput")] string Helloˉoutput,
         [property: JsonPropertyName("helloResult")] int Helloˉresult,
         [property: JsonPropertyName("foundationSha256")] string Foundationˉsha256,
-        [property: JsonPropertyName("foundationResult")] int Foundationˉresult);
+        [property: JsonPropertyName("foundationResult")] int Foundationˉresult,
+        [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
+        [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult);
 
     private sealed record Hostˉreport(
         [property: JsonPropertyName("operatingSystemFamily")] string Operatingˉsystemˉfamily,

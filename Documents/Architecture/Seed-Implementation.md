@@ -89,6 +89,7 @@ The current bytecode 1.1 golden modules are:
 - `Sumˉdata`: `4570d02bc558a5e5d4e341cd9a0edcec733c7fe6d797bf371669305169ef386f`
 - `Helloˉwindvale`: `79185b8c138e2f7d6dc34cbdcf82a8a467601c7ae6383bb76305e4d57e4e8a62`
 - `Readˉwvbˉheader`: `72cb8f2af8aa7813d76e528973476147f12b4c548c114b7276ccc99f92b1c48a`
+- `Wvˉdumpˉcore`: `c3670bb769168711d61f98845ff503abec2cb48dedfffcb0c5f76a1b6e039b62`
 
 Changes to those hashes require a reviewed bytecode/compiler-contract change rather than an automatic fixture refresh.
 

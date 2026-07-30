@@ -45,6 +45,7 @@ if ($LASTEXITCODE -ne 0) {
 $SumModule = Join-Path $Artifacts 'Sum-Data.wvb'
 $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
+$WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
 
@@ -92,6 +93,24 @@ if ($LASTEXITCODE -ne 0 -or ($FoundationInspectOutput -join "`n") -notmatch 'byt
 $FoundationRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $FoundationModule
 if ($LASTEXITCODE -ne 0 -or $FoundationRunOutput -notcontains 'Result: 1') {
     throw 'The Seed CLI did not produce Result: 1 for Read-Wvb-Header.wvb.'
+}
+
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wv-Dump-Core.wv.' }
+
+$WvDumpCoreVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvDumpCoreModule
+if ($LASTEXITCODE -ne 0 -or $WvDumpCoreVerifyOutput -notcontains 'Verified: Wvˉdumpˉcore') {
+    throw 'The Seed CLI failed to verify Wv-Dump-Core.wvb.'
+}
+
+$WvDumpCoreInspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvDumpCoreModule
+if ($LASTEXITCODE -ne 0 -or ($WvDumpCoreInspectOutput -join "`n") -notmatch 'Inspectˉwvbˉenvelope') {
+    throw 'The Seed CLI inspector did not expose the Windvale section walker.'
+}
+
+$WvDumpCoreRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule
+if ($LASTEXITCODE -ne 0 -or $WvDumpCoreRunOutput -notcontains 'Result: 0') {
+    throw 'The Seed CLI did not produce Result: 0 for Wv-Dump-Core.wvb.'
 }
 
 Write-Output "Windvale Seed verification passed."
