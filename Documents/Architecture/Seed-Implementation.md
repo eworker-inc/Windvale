@@ -71,13 +71,14 @@ Every function is checked for valid branch boundaries, index and type use, match
 - Immutable data access and bounds traps
 - Function frames and call-depth limits
 - Instruction accounting and execution limits
-- Capability authorization and host invocation
+- Capability authorization, host-support preflight, invocation, and return-value validation
+- Bounded launcher arguments, immutable hosted file input, deterministic output, and separate diagnostics
 
-The implementation uses ordinary portable .NET APIs and has no Windows-specific or Linux-specific execution path. Console output is injected through `ICapabilityˉhost`, keeping the interpreter independent from process-global console state.
+The interpreter uses ordinary portable .NET APIs and has no Windows-specific or Linux-specific execution path. Resources are injected through `ICapabilityˉhost`, keeping execution independent from ambient process arguments, files, and console state. The CLI owns the native path adapter and maps it into the hosted file contract.
 
 ### CLI
 
-`Tools/Windvale.Tool/` owns argument parsing, strict UTF-8 file input, file output, diagnostic presentation, capability grants, and command exit codes. It does not reimplement compiler, verifier, inspector, or runtime behavior.
+`Tools/Windvale.Tool/` owns argument parsing, strict UTF-8 compiler input, native hosted-file adaptation, file output, diagnostic presentation, capability grants, and command exit codes. It does not reimplement compiler, verifier, inspector, or runtime behavior.
 
 ## Determinism
 
@@ -92,7 +93,7 @@ The current bytecode 1.3 golden modules are:
 - `Sumˉdata`: `63ad39f6dbfff9b5ec31deb2d99d235dc59069a14a77033cf0a8284063578947`
 - `Helloˉwindvale`: `e113e56fef9bd108722fb8b16da93a42eec74699952d9055334c7ae0fe9db79b`
 - `Readˉwvbˉheader`: `66e3ec061c06428b3b6fb7f43c45386e1a34f68e4d93ffb0c2a046f2ecca2bed`
-- `Wvˉdumpˉcore`: `d2fe00ed4dec255547d40325b8b220ff09c71c00cb1e170ffee0f5d60e566511`
+- `Wvˉdumpˉcore`: `666808a2266557c721f952dd6068b2493bd213da358fee3e20a5c3e7a545523e`
 
 Changes to those hashes require a reviewed bytecode/compiler-contract change rather than an automatic fixture refresh.
 
@@ -102,11 +103,12 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 - Binary lengths and offsets use checked conversions and remaining-buffer checks.
 - The reader rejects malformed UTF-8, unsupported flags, version mismatches, missing bytes, and trailing bytes.
 - The verifier rejects unknown opcodes, truncated operands, bad indices, invalid data uses, stack underflow, type mismatches, invalid branches, inconsistent merges, unreachable instructions, and invalid maximum-stack declarations.
-- Hosted capabilities must be declared in the module and separately authorized by the embedding host.
-- Runtime signed or unsigned overflow, array bounds, byte-range bounds, instruction limits, and call-depth limits fail with stable runtime codes.
+- Hosted capabilities must be declared in the module, separately authorized, supported by the selected adapter, and validated again on return.
+- Hosted arguments and file-byte results have strict count, UTF-8, and allocation bounds; normal and diagnostic output remain separate.
+- Runtime signed or unsigned overflow, array bounds, byte-range bounds, instruction limits, call-depth limits, and hosted resource failures use stable runtime codes.
 
 ## Deliberate Seed limits
 
-Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, exceptions, threads, async work, raw pointers, foreign calls, filesystem access, dynamic linking, a native backend, assembler, linker, or operating-system code.
+Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file writing or enumeration, dynamic linking, a native backend, assembler, linker, or operating-system code.
 
 These are scope boundaries, not assertions that the current language model is final.

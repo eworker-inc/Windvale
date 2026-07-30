@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-This specification describes the implemented envelope core of a Windvale-written `.wvb` inspector and its structured diagnostic slice. The core proves that portable Windvale source can safely walk its own module envelope, return bounded diagnostic context, and format one deterministic summary. It does not yet decode declaration payloads, disassemble instructions, or read files.
+This specification describes the implemented envelope core of a Windvale-written `.wvb` inspector, its structured diagnostic slice, and its first hosted shell. The pure inspection functions safely walk supplied immutable bytes and format one deterministic summary. The shell now receives an explicit filename argument, reads bounded bytes through a declared capability, and separates normal output from diagnostics. It does not yet decode declaration payloads or disassemble instructions.
 
 The implementation is `Examples/Foundation/Wv-Dump-Core.wv`. Its portable inspection boundary is:
 
@@ -29,6 +29,8 @@ Inspectˉwvbˉenvelope(Input: bytes) -> Wvbˉinspection
 ```
 
 `Status` is a nominal enum rather than a magic integer. `Sectionsˉseen` identifies how many canonical envelopes completed. `Failureˉoffset` identifies the rejected byte offset; on success it is the terminal cursor immediately after the seventh payload. `Describeˉinspection` formats the enum name, section count, and offset with bounded portable intrinsics.
+
+The module uses the hosted profile and declares `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `process.argument`, and `process.argument_count`. With no program arguments, `Main` runs the embedded deterministic qualification fixtures. With one argument, it reads that hosted resource and prints a valid summary to normal output or an invalid summary to diagnostics. Other argument counts print usage to diagnostics. The envelope parser itself calls no hosted capability.
 
 ## Status values
 
@@ -64,4 +66,4 @@ The example embeds:
 
 ## Next boundary
 
-The next inspector boundary is explicit hosted arguments, file-byte input, diagnostics, and output. Portable envelope and payload decoding should remain independent so the same logic can run on Windows, Linux, and Windvale OS.
+The next inspector boundary is useful payload decoding: module identity, capability/data/type/function/export declarations, instruction streams, and deterministic machine-readable reports. Portable decoding should remain independent so the same logic can run on Windows, Linux, and Windvale OS.

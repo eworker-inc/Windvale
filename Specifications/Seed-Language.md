@@ -32,7 +32,7 @@ Seed accepts `system` as a profile value so the serialized contract is explicit,
 - A declared enum name is an immutable nominal scalar type with explicitly valued, named members.
 - `[i32]` is immutable module data. It is not a general runtime array type in Seed.
 
-Parameters and local variables may have `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, or a declared record type. Functions may return the same value types. Module data may be `text`, `[i32]`, or `bytes`.
+Parameters and local variables may have `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, or a declared record or enum type. Functions may return the same value types. Module data may be `text`, `[i32]`, or `bytes`.
 
 ## Declarations
 
@@ -46,11 +46,18 @@ Parameters and local variables may have `i32`, `u8`, `u32`, `bool`, `text`, `byt
 - Capability declarations must be unique and use qualified lowercase names.
 - A portable module cannot declare or call hosted capabilities.
 
-Seed defines one hosted capability:
+Seed defines these hosted capabilities:
 
 ```text
+console.write(text) -> void
 console.write_line(text) -> void
+diagnostic.write_line(text) -> void
+file.read_bytes(text) -> bytes
+process.argument(u32) -> text
+process.argument_count() -> u32
 ```
+
+Their authorization, bounds, output, and host-error semantics are defined by [Hosted-Resources.md](Hosted-Resources.md).
 
 ## Statements
 
@@ -124,7 +131,7 @@ The little-endian reads consume exactly 1, 2, or 4 bytes beginning at `Offset`. 
 - Calling consumes arguments from left to right and creates a new frame.
 - Bytecode local slots have deterministic defaults (`0`, `false`, empty text, empty bytes, the first declared enum member, or a recursively defaulted immutable record); Windvale source still requires every `let` or `var` declaration to have an initializer.
 - The runtime enforces implementation limits for instructions and call depth.
-- Module capability imports must be authorized explicitly by the embedding host.
+- Module capability imports must be authorized explicitly and supported by the selected host before execution.
 - Pure portable execution cannot observe the host operating system.
 
 ## Diagnostics

@@ -1,4 +1,10 @@
-module Wvˉdumpˉcore profile portable;
+module Wvˉdumpˉcore profile hosted;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
 
 data Shortˉmodule: bytes = [87];
 
@@ -220,7 +226,7 @@ fn Describeˉinspection(Result: Wvbˉinspection) -> text {
     );
 }
 
-export fn Main() -> i32 {
+fn Runˉselfˉtests() -> i32 {
     let Shortˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Shortˉmodule);
     if Shortˉresult.Status != Wvbˉstatus.Shortˉheader {
         return 11;
@@ -294,4 +300,31 @@ export fn Main() -> i32 {
     }
 
     return 0;
+}
+
+fn Runˉfileˉinspection() -> i32 {
+    if process.argument_count() != 1u32 {
+        diagnostic.write_line("Usage: wvdump <module.wvb>");
+        return 64;
+    }
+
+    let Inputˉpath: text = process.argument(0u32);
+    let Input: bytes = file.read_bytes(Inputˉpath);
+    let Result: Wvbˉinspection = Inspectˉwvbˉenvelope(Input);
+    let Description: text = Describeˉinspection(Result);
+    if Result.Status != Wvbˉstatus.Valid {
+        diagnostic.write_line(Description);
+        return 2;
+    }
+
+    console.write_line(Description);
+    return 0;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() == 0u32 {
+        return Runˉselfˉtests();
+    }
+
+    return Runˉfileˉinspection();
 }

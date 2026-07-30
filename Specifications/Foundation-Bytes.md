@@ -28,7 +28,7 @@ Each operation validates its complete range before reading or constructing a sli
 
 ## Portability boundary
 
-These operations are pure and available to portable modules. They do not read files, inspect process memory, or depend on the host operating system. The first example embeds a canonical `.wvb` header as module data. `Wv-Dump-Core.wv` then uses the same operations to walk a complete module envelope and adversarial variants. A later hosted capability can provide file bytes to the same portable inspection logic without changing the byte operations.
+These operations are pure and available to portable modules. They do not read files, inspect process memory, or depend on the host operating system. The first example embeds a canonical `.wvb` header as module data. `Wv-Dump-Core.wv` uses the same operations to walk a complete module envelope and adversarial variants; its hosted shell now supplies real file bytes to the unchanged inspection functions through `file.read_bytes`.
 
 ## Deliberate limits
 

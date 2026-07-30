@@ -41,6 +41,8 @@ Portable modules depend only on deterministic language and foundation-library be
 
 Hosted modules may request declared services such as files, networking, windows, clocks, subprocesses, or native interoperability. Availability and authorization remain explicit.
 
+The first accepted hosted boundary supplies an immutable launcher argument snapshot, a bounded opaque-name-to-bytes file read, deterministic standard output, and a separate diagnostic sink. Native adapters own path resolution and native errors. See `Specifications/Hosted-Resources.md`.
+
 ### System
 
 System modules may use raw memory, architecture instructions, interrupts, device registers, kernel services, or other unsafe facilities. System-only behavior must be visible in source, metadata, validation, and review.

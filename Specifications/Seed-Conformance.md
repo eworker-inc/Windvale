@@ -8,6 +8,7 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, i
 
 - Portable code-and-data compilation and execution
 - Hosted capability declaration, refusal without authorization, and successful authorized output
+- Ordered hosted arguments, bounded native file input, separate output and diagnostic sinks, unsupported-host refusal, stable resource failures, and host-result validation
 - Exact deterministic module bytes and canonical declaration ordering
 - Exact codec read/write round trips
 - Inspector metadata and disassembly
@@ -23,7 +24,7 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, i
 - Stable source diagnostic codes with line and column information
 - Malformed header, version, section, length, UTF-8, truncation, trailing-data, and oversize rejection
 - Unknown opcode, truncated operand, invalid branch, invalid local, unreachable instruction, inconsistent stack merge, and maximum-stack rejection
-- Runtime integer-overflow, data-bounds, instruction-limit, call-depth, and capability-authorization traps
+- Runtime integer-overflow, data-bounds, instruction-limit, call-depth, capability-authorization, argument-bound, file-resource, and invalid-host-result traps
 - Deterministic bounded random source and module inputs remain contained by result or diagnostic boundaries
 
 ## Host verification
@@ -50,7 +51,7 @@ After collecting a report from Windows and Linux, compare their portable contrac
 dotnet run --project Tests/Windvale.Seed.Tests --configuration Release --no-build -- --compare-reports artifacts/seed-conformance-windows-x64.json artifacts/seed-conformance-linux-x86_64.json
 ```
 
-The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-format version, complete golden-module SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, and Windvale-written `wvdump` envelope core.
+The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-format version, complete golden-module SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, and Windvale-written hosted `wvdump` envelope core. Each host verifier also makes that core read and inspect an actual generated module through its native file adapter.
 
 ## Evidence discipline
 
