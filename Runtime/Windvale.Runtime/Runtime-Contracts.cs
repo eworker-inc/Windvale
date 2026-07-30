@@ -32,13 +32,14 @@ public readonly struct Runtimeˉbyteˉslice
 public readonly record struct Runtimeˉvalue
 {
     private Runtimeˉvalue(
-        Valueˉtype type,
+        Valueˉshape type,
         int i32,
         bool boolean,
         string? text,
         byte u8,
         uint u32,
-        Runtimeˉbyteˉslice bytes)
+        Runtimeˉbyteˉslice bytes,
+        Runtimeˉrecordˉvalue? record)
     {
         Type = type;
         I32ˉvalue = i32;
@@ -47,9 +48,10 @@ public readonly record struct Runtimeˉvalue
         U8ˉvalue = u8;
         U32ˉvalue = u32;
         Bytesˉvalue = bytes;
+        Recordˉvalue = record;
     }
 
-    public Valueˉtype Type { get; }
+    public Valueˉshape Type { get; }
 
     public int I32ˉvalue { get; }
 
@@ -63,30 +65,47 @@ public readonly record struct Runtimeˉvalue
 
     public Runtimeˉbyteˉslice Bytesˉvalue { get; }
 
+    public Runtimeˉrecordˉvalue? Recordˉvalue { get; }
+
     public static Runtimeˉvalue Fromˉi32(int value) =>
-        new(Valueˉtype.I32, value, false, null, 0, 0, default);
+        new(Valueˉtype.I32, value, false, null, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉbool(bool value) =>
-        new(Valueˉtype.Bool, 0, value, null, 0, 0, default);
+        new(Valueˉtype.Bool, 0, value, null, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉtext(string value) =>
-        new(Valueˉtype.Text, 0, false, value, 0, 0, default);
+        new(Valueˉtype.Text, 0, false, value, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉu8(byte value) =>
-        new(Valueˉtype.U8, 0, false, null, value, 0, default);
+        new(Valueˉtype.U8, 0, false, null, value, 0, default, null);
 
     public static Runtimeˉvalue Fromˉu32(uint value) =>
-        new(Valueˉtype.U32, 0, false, null, 0, value, default);
+        new(Valueˉtype.U32, 0, false, null, 0, value, default, null);
 
     public static Runtimeˉvalue Fromˉbytes(ImmutableArray<byte> values) =>
         Fromˉbytes(new Runtimeˉbyteˉslice(values, 0, values.Length));
 
     public static Runtimeˉvalue Fromˉbytes(Runtimeˉbyteˉslice value) =>
-        new(Valueˉtype.Bytes, 0, false, null, 0, 0, value);
+        new(Valueˉtype.Bytes, 0, false, null, 0, 0, value, null);
 
-    public static Runtimeˉvalue Default(Valueˉtype type)
+    public static Runtimeˉvalue Fromˉrecord(
+        int typeˉindex,
+        ImmutableArray<Runtimeˉvalue> fields) =>
+        new(
+            Valueˉshape.Forˉrecord(typeˉindex),
+            0,
+            false,
+            null,
+            0,
+            0,
+            default,
+            new(typeˉindex, fields));
+
+    public static Runtimeˉvalue Default(
+        Valueˉshape type,
+        ImmutableArray<Recordˉtypeˉdeclaration> recordˉtypes)
     {
-        return type switch
+        return type.Kind switch
         {
             Valueˉtype.I32 => Fromˉi32(0),
             Valueˉtype.Bool => Fromˉbool(false),
@@ -94,10 +113,25 @@ public readonly record struct Runtimeˉvalue
             Valueˉtype.U8 => Fromˉu8(0),
             Valueˉtype.U32 => Fromˉu32(0),
             Valueˉtype.Bytes => Fromˉbytes(ImmutableArray<byte>.Empty),
+            Valueˉtype.Record => Defaultˉrecord(type.Recordˉtypeˉindex, recordˉtypes),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Void has no runtime value."),
         };
     }
+
+    private static Runtimeˉvalue Defaultˉrecord(
+        int typeˉindex,
+        ImmutableArray<Recordˉtypeˉdeclaration> recordˉtypes)
+    {
+        var Type = recordˉtypes[typeˉindex];
+        return Fromˉrecord(
+            typeˉindex,
+            [.. Type.Fields.Select(Field => Default(Field.Type, recordˉtypes))]);
+    }
 }
+
+public sealed record Runtimeˉrecordˉvalue(
+    int Typeˉindex,
+    ImmutableArray<Runtimeˉvalue> Fields);
 
 public sealed record Runtimeˉoptions(
     ImmutableHashSet<string> Authorizedˉcapabilities,

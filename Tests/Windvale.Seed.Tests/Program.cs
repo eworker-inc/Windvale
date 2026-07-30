@@ -11,10 +11,10 @@ namespace Windvale.Seed.Tests;
 
 internal static class Program
 {
-    private const string SUM_SHA256 = "4570d02bc558a5e5d4e341cd9a0edcec733c7fe6d797bf371669305169ef386f";
-    private const string HELLO_SHA256 = "79185b8c138e2f7d6dc34cbdcf82a8a467601c7ae6383bb76305e4d57e4e8a62";
-    private const string FOUNDATION_SHA256 = "72cb8f2af8aa7813d76e528973476147f12b4c548c114b7276ccc99f92b1c48a";
-    private const string WVDUMP_CORE_SHA256 = "c3670bb769168711d61f98845ff503abec2cb48dedfffcb0c5f76a1b6e039b62";
+    private const string SUM_SHA256 = "8e8b7b8ae4957f228f362e38f02ae92da1e51a8bd369dcd96d5349f3db205051";
+    private const string HELLO_SHA256 = "4260b9500e8fe9ddc03d2e22a186e6395b609d4fe59ef1301298d5ad972d22e1";
+    private const string FOUNDATION_SHA256 = "5ad40cc8cf7a51cd2149d482ff8f8c385fee6643223c282b50cdcbacc11f4745";
+    private const string WVDUMP_CORE_SHA256 = "74cd0059b65b999ddec46da4d6b4a5e8153c4ed28c4c8152bc2eaffa96e9dd69";
 
     private const string SUM_SOURCE = """
         module Sumˉdata profile portable;
@@ -54,7 +54,7 @@ internal static class Program
     private const string FOUNDATION_SOURCE = """
         module Readˉwvbˉheader profile portable;
 
-        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 0, 0, 6, 0, 0, 0];
+        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0];
 
         fn Headerˉisˉvalid(Input: bytes) -> bool {
             if Bytesˉlength(Input) != 12u32 {
@@ -76,11 +76,15 @@ internal static class Program
             }
 
             let Version: u32 = Bytesˉreadˉu16ˉlittle(Input, 4u32);
+            let Minorˉversion: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
             let Sectionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 8u32);
             if Version != 1u32 {
                 return false;
             }
-            if Sectionˉcount != 6u32 {
+            if Minorˉversion != 2u32 {
+                return false;
+            }
+            if Sectionˉcount != 7u32 {
                 return false;
             }
 
@@ -126,6 +130,7 @@ internal static class Program
         ("macron names and explicit local mutability execute", Namingˉandˉmutabilityˉrun),
         ("Foundation byte values, slices, and little-endian reads execute", Foundationˉbytesˉrun),
         ("Windvale wvdump core walks bounded section envelopes", Wvˉdumpˉcoreˉwalksˉsections),
+        ("immutable nominal records cross function boundaries", Immutableˉrecordsˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
         ("source diagnostics contain stable codes and locations", Sourceˉdiagnosticsˉareˉuseful),
         ("binary reader rejects malformed envelopes and UTF-8", Malformedˉmodulesˉareˉrejected),
@@ -347,6 +352,70 @@ internal static class Program
             export fn Main() -> i32 { return 0; }
             """;
         Hasˉdiagnostic(Confusableˉseparator, "WVC1002");
+
+        const string Unknownˉrecord = """
+            module Broken profile portable;
+            export fn Main(Value: Missing) -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Unknownˉrecord, "WVC2085");
+
+        const string Duplicateˉrecordˉfield = """
+            module Broken profile portable;
+            record Pair { Value: i32; Value: u32; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Duplicateˉrecordˉfield, "WVC2082");
+
+        const string Emptyˉrecord = """
+            module Broken profile portable;
+            record Empty { }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Emptyˉrecord, "WVC2084");
+
+        const string Nestedˉrecord = """
+            module Broken profile portable;
+            record Inner { Value: i32; }
+            record Outer { Value: Inner; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Nestedˉrecord, "WVC2083");
+
+        const string Wrongˉconstructorˉtype = """
+            module Broken profile portable;
+            record Pair { Value: i32; }
+            export fn Main() -> i32 { Pair(1u32); return 0; }
+            """;
+        Hasˉdiagnostic(Wrongˉconstructorˉtype, "WVC2070");
+
+        const string Missingˉfield = """
+            module Broken profile portable;
+            record Pair { Value: i32; }
+            export fn Main() -> i32 {
+                let Pairˉvalue: Pair = Pair(1);
+                return Pairˉvalue.Missing;
+            }
+            """;
+        Hasˉdiagnostic(Missingˉfield, "WVC2087");
+
+        const string Constructorˉnameˉconflict = """
+            module Broken profile portable;
+            record Pair { Value: i32; }
+            fn Pair(Value: i32) -> i32 { return Value; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Constructorˉnameˉconflict, "WVC2025");
+
+        const string Nominalˉmismatch = """
+            module Broken profile portable;
+            record Left { Value: i32; }
+            record Right { Value: i32; }
+            export fn Main() -> i32 {
+                let Value: Left = Right(1);
+                return 0;
+            }
+            """;
+        Hasˉdiagnostic(Nominalˉmismatch, "WVC2070");
     }
 
     private static void Foundationˉbytesˉrun()
@@ -355,7 +424,7 @@ internal static class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Equal(Dataˉtype.Bytes, Module.Module.Data.Single().Type);
         var Data = (Bytesˉdataˉdeclaration)Module.Module.Data.Single();
-        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 0, 0, 6, 0, 0, 0], Data.Values);
+        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0], Data.Values);
         True(
             Module.Module.Functions.SelectMany(Function => Function.Allˉlocalˉtypes)
                 .Contains(Valueˉtype.Bytes),
@@ -387,6 +456,15 @@ internal static class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Equal("Wvˉdumpˉcore", Module.Module.Name);
         Equal(10, Module.Module.Data.Length);
+        Equal(2, Module.Module.Types.Length);
+        Equal("Wvbˉinspection", Module.Module.Types[0].Name);
+        Equal("Wvbˉsection", Module.Module.Types[1].Name);
+        Equal(3, Module.Module.Types[0].Fields.Length);
+        Equal(6, Module.Module.Types[1].Fields.Length);
+
+        var Inspectˉfunction = Module.Module.Functions.Single(
+            Function => Function.Name == "Inspectˉwvbˉenvelope");
+        Equal(Valueˉshape.Forˉrecord(0), Inspectˉfunction.Returnˉtype);
 
         var Validˉdata = (Bytesˉdataˉdeclaration)Module.Module.Data.Single(
             Data => Data.Name == "Validˉmodule");
@@ -403,8 +481,65 @@ internal static class Program
         Contains(Inspection, "Inspectˉwvbˉenvelope");
         Contains(Inspection, "bytes.read_u32_little");
         Contains(Inspection, "u32.less_equal");
+        Contains(Inspection, "Record types (2)");
+        Contains(Inspection, "record.create");
+        Contains(Inspection, "record.field");
         Equal(WVDUMP_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Bytes));
         Equal(0, new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+    }
+
+    private static void Immutableˉrecordsˉrun()
+    {
+        const string Source = """
+            module Recordˉflow profile portable;
+
+            record Pair {
+                Left: i32;
+                Right: u32;
+            }
+
+            fn Make(Left: i32, Right: u32) -> Pair {
+                return Pair(Left, Right);
+            }
+
+            fn Readˉleft(Value: Pair) -> i32 {
+                return Value.Left;
+            }
+
+            export fn Main() -> i32 {
+                let Value: Pair = Make(42, 9u32);
+                if Value.Right != 9u32 {
+                    return 0;
+                }
+
+                return Readˉleft(Value);
+            }
+            """;
+
+        var Bytes = Compileˉsuccess(Source);
+        var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Pair = Module.Module.Types.Single();
+        Equal("Pair", Pair.Name);
+        Equal("Left", Pair.Fields[0].Name);
+        Equal(Valueˉtype.I32, Pair.Fields[0].Type);
+        Equal("Right", Pair.Fields[1].Name);
+        Equal(Valueˉtype.U32, Pair.Fields[1].Type);
+        Equal(Valueˉshape.Forˉrecord(0), Module.Module.Functions.Single(
+            Function => Function.Name == "Make").Returnˉtype);
+        Equal(Valueˉshape.Forˉrecord(0), Module.Module.Functions.Single(
+            Function => Function.Name == "Readˉleft").Parameterˉtypes.Single());
+        Sequenceˉequal(Bytes, Moduleˉcodec.Write(Module.Module));
+
+        var Inspection = Moduleˉinspector.Inspect(Module, Bytes);
+        Contains(Inspection, "record Pair");
+        Contains(Inspection, "[0] Left: i32");
+        Contains(Inspection, "[1] Right: u32");
+        Contains(Inspection, "record.create type[0] (Pair)");
+        Contains(Inspection, "record.field 0");
+        Equal(42, new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
@@ -478,6 +613,13 @@ internal static class Program
             export fn Main() -> i32 { return 0; }
             """;
         Hasˉdiagnostic(Reservedˉintrinsic, "WVC2024");
+
+        const string Reservedˉrecordˉconstructor = """
+            module Broken profile portable;
+            record Bytesˉlength { Value: i32; }
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(Reservedˉrecordˉconstructor, "WVC2090");
     }
 
     private static void Operatorsˉrun()
@@ -540,6 +682,13 @@ internal static class Program
         var Capabilityˉpayload = Findˉsectionˉpayload(Badˉcount, Sectionˉkind.Capabilities);
         BinaryPrimitives.WriteUInt32LittleEndian(Badˉcount.AsSpan(Capabilityˉpayload), uint.MaxValue);
         Throwsˉbytecode("WVB1011", () => Moduleˉcodec.Readˉandˉverify(Badˉcount));
+
+        var Badˉtypeˉcount = Compileˉsuccess(SUM_SOURCE);
+        var Typesˉpayload = Findˉsectionˉpayload(Badˉtypeˉcount, Sectionˉkind.Types);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Badˉtypeˉcount.AsSpan(Typesˉpayload),
+            Bytecodeˉlimits.MAX_RECORD_TYPES + 1u);
+        Throwsˉbytecode("WVB1012", () => Moduleˉcodec.Readˉandˉverify(Badˉtypeˉcount));
     }
 
     private static void Unsafeˉbytecodeˉisˉrejected()
@@ -599,6 +748,80 @@ internal static class Program
                 [.. I32ˉinstruction(0), (byte)Opcode.Bytesˉlength, (byte)Opcode.Pop, (byte)Opcode.Return],
                 Valueˉtype.Void,
                 maximumˉstack: 1)));
+
+        var Invalidˉrecordˉshape = Buildˉmodule(
+            [(byte)Opcode.Return],
+            Valueˉtype.Void,
+            maximumˉstack: 0) with
+        {
+            Functions = [new(
+                "Main",
+                [Valueˉshape.Forˉrecord(0)],
+                Valueˉtype.Void,
+                [],
+                0,
+                1,
+                0)],
+        };
+        Throwsˉbytecode("WVB2242", () => Moduleˉverifier.Verify(Invalidˉrecordˉshape));
+
+        var Oneˉu32ˉfield = ImmutableArray.Create(
+            new Recordˉtypeˉdeclaration(
+                "Pair",
+                [new Recordˉfieldˉdeclaration("Value", Valueˉtype.U32)]));
+        var Wrongˉrecordˉfieldˉtype = Buildˉmodule(
+            [
+                .. I32ˉinstruction(1),
+                .. U32ˉinstruction(Opcode.Recordˉcreate, 0),
+                (byte)Opcode.Pop,
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.Void,
+            maximumˉstack: 1) with
+        {
+            Types = Oneˉu32ˉfield,
+        };
+        Throwsˉbytecode("WVB2220", () => Moduleˉverifier.Verify(Wrongˉrecordˉfieldˉtype));
+
+        var Fieldˉonˉprimitive = Buildˉmodule(
+            [
+                .. I32ˉinstruction(1),
+                .. U32ˉinstruction(Opcode.Recordˉfield, 0),
+                (byte)Opcode.Pop,
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.Void,
+            maximumˉstack: 1) with
+        {
+            Types = Oneˉu32ˉfield,
+        };
+        Throwsˉbytecode("WVB2222", () => Moduleˉverifier.Verify(Fieldˉonˉprimitive));
+
+        var Invalidˉrecordˉfield = Buildˉmodule(
+            [
+                .. U32ˉinstruction(Opcode.U32ˉconst, 1),
+                .. U32ˉinstruction(Opcode.Recordˉcreate, 0),
+                .. U32ˉinstruction(Opcode.Recordˉfield, 1),
+                (byte)Opcode.Pop,
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.Void,
+            maximumˉstack: 1) with
+        {
+            Types = Oneˉu32ˉfield,
+        };
+        Throwsˉbytecode("WVB2223", () => Moduleˉverifier.Verify(Invalidˉrecordˉfield));
+
+        var Duplicateˉrecordˉmetadata = Buildˉmodule(
+            [(byte)Opcode.Return],
+            Valueˉtype.Void,
+            maximumˉstack: 0) with
+        {
+            Types = [new(
+                "Pair",
+                [new("Value", Valueˉtype.I32), new("Value", Valueˉtype.U32)])],
+        };
+        Throwsˉbytecode("WVB2152", () => Moduleˉverifier.Verify(Duplicateˉrecordˉmetadata));
 
         var Oversizedˉbyteˉdata = Buildˉmodule(
             [(byte)Opcode.Return],

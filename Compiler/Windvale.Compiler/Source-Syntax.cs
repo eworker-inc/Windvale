@@ -17,6 +17,7 @@ internal enum Tokenˉkind
     System,
     Capability,
     Data,
+    Record,
     Export,
     Fn,
     Let,
@@ -76,16 +77,21 @@ internal enum Typeˉsyntaxˉkind
     Text,
     Bytes,
     I32ˉarray,
+    Record,
     Invalid,
 }
 
-internal sealed record Typeˉsyntax(Typeˉsyntaxˉkind Kind, Sourceˉspan Span);
+internal sealed record Typeˉsyntax(
+    Typeˉsyntaxˉkind Kind,
+    Sourceˉspan Span,
+    string? Name = null);
 
 internal sealed record Moduleˉsyntax(
     Syntaxˉtoken Name,
     Syntaxˉtoken Profile,
     ImmutableArray<Capabilityˉsyntax> Capabilities,
     ImmutableArray<Dataˉsyntax> Data,
+    ImmutableArray<Recordˉsyntax> Records,
     ImmutableArray<Functionˉsyntax> Functions);
 
 internal sealed record Capabilityˉsyntax(string Name, Sourceˉspan Span);
@@ -109,6 +115,16 @@ internal sealed record Dataˉsyntax(
     Syntaxˉtoken Name,
     Typeˉsyntax Type,
     Dataˉvalueˉsyntax Value,
+    Sourceˉspan Span);
+
+internal sealed record Recordˉfieldˉsyntax(
+    Syntaxˉtoken Name,
+    Typeˉsyntax Type,
+    Sourceˉspan Span);
+
+internal sealed record Recordˉsyntax(
+    Syntaxˉtoken Name,
+    ImmutableArray<Recordˉfieldˉsyntax> Fields,
     Sourceˉspan Span);
 
 internal sealed record Parameterˉsyntax(
@@ -194,6 +210,12 @@ internal sealed record Callˉexpressionˉsyntax(
 internal sealed record Indexˉexpressionˉsyntax(
     string Name,
     Expressionˉsyntax Index,
+    Sourceˉspan Span)
+    : Expressionˉsyntax(Span);
+
+internal sealed record Fieldˉexpressionˉsyntax(
+    string Target,
+    string Field,
     Sourceˉspan Span)
     : Expressionˉsyntax(Span);
 

@@ -19,6 +19,8 @@ internal static class Semanticˉcompiler
             new(StringComparer.Ordinal);
         private readonly Dictionary<string, Functionˉsymbol> Functions =
             new(StringComparer.Ordinal);
+        private readonly Dictionary<string, Recordˉsymbol> Records =
+            new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> Textˉdataˉbyˉvalue =
             new(StringComparer.Ordinal);
         private int Syntheticˉtextˉcounter;
@@ -29,6 +31,7 @@ internal static class Semanticˉcompiler
             var Profile = Bindˉprofile(syntax.Profile);
             Bindˉcapabilities(Profile);
             Bindˉdata();
+            Bindˉrecords();
             Bindˉfunctionˉsignatures();
 
             var Wirˉfunctions = ImmutableArray.CreateBuilder<Wirˉfunction>(Functions.Count);
@@ -40,6 +43,7 @@ internal static class Semanticˉcompiler
                     Data,
                     Functions,
                     Capabilities,
+                    Records,
                     Getˉorˉaddˉtextˉdata);
                 Wirˉfunctions.Add(Builder.Compile());
             }
@@ -49,7 +53,81 @@ internal static class Semanticˉcompiler
                 Profile,
                 [.. Capabilities.Values.OrderBy(Capability => Capability.Name, StringComparer.Ordinal)],
                 [.. Data.Values.OrderBy(Item => Item.Name, StringComparer.Ordinal)],
+                [.. Records.Values.OrderBy(Record => Record.Index).Select(Record => Record.Declaration)],
                 Wirˉfunctions.ToImmutable());
+        }
+
+        private void Bindˉrecords()
+        {
+            var Seenˉnames = new HashSet<string>(StringComparer.Ordinal);
+            var Valid = new List<Recordˉsyntax>();
+            foreach (var Record in syntax.Records)
+            {
+                if (!Seedˉnames.Isˉidentifier(Record.Name.Text))
+                {
+                    Report("WVC2080", Record.Name.Span, $"Record name '{Record.Name.Text}' is not a valid Windvale identifier.");
+                    continue;
+                }
+
+                if (Record.Name.Text == "length" ||
+                    Foundationˉintrinsics.Tryˉget(Record.Name.Text, out _))
+                {
+                    Report("WVC2090", Record.Name.Span, $"Record name '{Record.Name.Text}' is reserved by Windvale Seed.");
+                    continue;
+                }
+
+                if (!Seenˉnames.Add(Record.Name.Text))
+                {
+                    Report("WVC2081", Record.Name.Span, $"Record '{Record.Name.Text}' is declared more than once.");
+                    continue;
+                }
+
+                Valid.Add(Record);
+            }
+
+            foreach (var Record in Valid.OrderBy(Item => Item.Name.Text, StringComparer.Ordinal))
+            {
+                if (Records.Count >= Bytecodeˉlimits.MAX_RECORD_TYPES)
+                {
+                    Report("WVC2088", Record.Span, "The module exceeds the Seed record-type limit.");
+                    break;
+                }
+
+                var Fieldˉnames = new HashSet<string>(StringComparer.Ordinal);
+                var Fields = ImmutableArray.CreateBuilder<Recordˉfieldˉdeclaration>(Record.Fields.Length);
+                foreach (var Field in Record.Fields)
+                {
+                    if (Fields.Count >= Bytecodeˉlimits.MAX_RECORD_FIELDS)
+                    {
+                        Report("WVC2089", Field.Span, $"Record '{Record.Name.Text}' exceeds the Seed field limit.");
+                        break;
+                    }
+
+                    if (!Seedˉnames.Isˉidentifier(Field.Name.Text) || !Fieldˉnames.Add(Field.Name.Text))
+                    {
+                        Report("WVC2082", Field.Name.Span, $"Record '{Record.Name.Text}' has an invalid or duplicate field '{Field.Name.Text}'.");
+                    }
+
+                    if (Field.Type.Kind is Typeˉsyntaxˉkind.Void or Typeˉsyntaxˉkind.Record or Typeˉsyntaxˉkind.Invalid)
+                    {
+                        Report("WVC2083", Field.Type.Span, "Seed record fields must use a primitive value type.");
+                        Fields.Add(new(Field.Name.Text, Valueˉtype.I32));
+                        continue;
+                    }
+
+                    Fields.Add(new(Field.Name.Text, Bindˉprimitiveˉtype(Field.Type)));
+                }
+
+                if (Fields.Count == 0)
+                {
+                    Report("WVC2084", Record.Span, $"Record '{Record.Name.Text}' must declare at least one field.");
+                    Fields.Add(new("Invalid", Valueˉtype.I32));
+                }
+
+                var Index = Records.Count;
+                var Declaration = new Recordˉtypeˉdeclaration(Record.Name.Text, Fields.ToImmutable());
+                Records.Add(Record.Name.Text, new(Record.Name.Text, Index, Declaration));
+            }
         }
 
         private void Bindˉmoduleˉname()
@@ -172,12 +250,13 @@ internal static class Semanticˉcompiler
         {
             foreach (var Functionˉsyntax in syntax.Functions)
             {
-                if (Foundationˉintrinsics.Tryˉget(Functionˉsyntax.Name.Text, out _))
+                if (Functionˉsyntax.Name.Text == "length" ||
+                    Foundationˉintrinsics.Tryˉget(Functionˉsyntax.Name.Text, out _))
                 {
                     Report(
                         "WVC2024",
                         Functionˉsyntax.Name.Span,
-                        $"Function name '{Functionˉsyntax.Name.Text}' is reserved by Windvale Foundation.");
+                        $"Function name '{Functionˉsyntax.Name.Text}' is reserved by Windvale Seed.");
                     continue;
                 }
 
@@ -196,6 +275,15 @@ internal static class Semanticˉcompiler
                         "WVC2020",
                         Functionˉsyntax.Name.Span,
                         $"Function '{Functionˉsyntax.Name.Text}' is declared more than once.");
+                    continue;
+                }
+
+                if (Records.ContainsKey(Functionˉsyntax.Name.Text))
+                {
+                    Report(
+                        "WVC2025",
+                        Functionˉsyntax.Name.Span,
+                        $"Function name '{Functionˉsyntax.Name.Text}' conflicts with a record constructor.");
                     continue;
                 }
 
@@ -222,7 +310,7 @@ internal static class Semanticˉcompiler
 
                     Parameters.Add(new(
                         Parameter.Name.Text,
-                        Bindˉvalueˉtype(Parameter.Type),
+                        Bindˉvalueˉshape(Parameter.Type),
                         Index,
                         Parameter.Name.Span));
                 }
@@ -232,7 +320,7 @@ internal static class Semanticˉcompiler
                     new(
                         Functionˉsyntax.Name.Text,
                         Parameters.ToImmutable(),
-                        Bindˉvalueˉtype(Functionˉsyntax.Returnˉtype),
+                        Bindˉvalueˉshape(Functionˉsyntax.Returnˉtype),
                         Functionˉsyntax.Isˉexported,
                         Functionˉsyntax));
             }
@@ -257,7 +345,23 @@ internal static class Semanticˉcompiler
             return Name;
         }
 
-        private Valueˉtype Bindˉvalueˉtype(Typeˉsyntax type)
+        private Valueˉshape Bindˉvalueˉshape(Typeˉsyntax type)
+        {
+            if (type.Kind == Typeˉsyntaxˉkind.Record)
+            {
+                if (type.Name is not null && Records.TryGetValue(type.Name, out var Record))
+                {
+                    return Valueˉshape.Forˉrecord(Record.Index);
+                }
+
+                Report("WVC2085", type.Span, $"Record type '{type.Name}' is not declared.");
+                return Valueˉtype.I32;
+            }
+
+            return Bindˉprimitiveˉtype(type);
+        }
+
+        private static Valueˉtype Bindˉprimitiveˉtype(Typeˉsyntax type)
         {
             return type.Kind switch
             {
@@ -280,23 +384,28 @@ internal static class Semanticˉcompiler
 
     private sealed record Parameterˉsymbol(
         string Name,
-        Valueˉtype Type,
+        Valueˉshape Type,
         int Slot,
         Sourceˉspan Span);
 
     private sealed record Functionˉsymbol(
         string Name,
         ImmutableArray<Parameterˉsymbol> Parameters,
-        Valueˉtype Returnˉtype,
+        Valueˉshape Returnˉtype,
         bool Isˉexported,
         Functionˉsyntax Syntax)
     {
-        public ImmutableArray<Valueˉtype> Parameterˉtypes => [.. Parameters.Select(Parameter => Parameter.Type)];
+        public ImmutableArray<Valueˉshape> Parameterˉtypes => [.. Parameters.Select(Parameter => Parameter.Type)];
     }
 
-    private sealed record Localˉsymbol(string Name, Valueˉtype Type, int Slot, bool Isˉmutable);
+    private sealed record Recordˉsymbol(
+        string Name,
+        int Index,
+        Recordˉtypeˉdeclaration Declaration);
 
-    private readonly record struct Boundˉvalue(Valueˉtype Type, int Temporary)
+    private sealed record Localˉsymbol(string Name, Valueˉshape Type, int Slot, bool Isˉmutable);
+
+    private readonly record struct Boundˉvalue(Valueˉshape Type, int Temporary)
     {
         public static Boundˉvalue Void => new(Valueˉtype.Void, -1);
     }
@@ -317,10 +426,11 @@ internal static class Semanticˉcompiler
         private readonly IReadOnlyDictionary<string, Dataˉdeclaration> Data;
         private readonly IReadOnlyDictionary<string, Functionˉsymbol> Functions;
         private readonly IReadOnlyDictionary<string, Capabilityˉdeclaration> Capabilities;
+        private readonly IReadOnlyDictionary<string, Recordˉsymbol> Records;
         private readonly Func<string, string> Getˉtextˉdata;
         private readonly List<Mutableˉblock> Blocks = [];
-        private readonly List<Valueˉtype> Userˉlocalˉtypes = [];
-        private readonly List<Valueˉtype> Temporaryˉtypes = [];
+        private readonly List<Valueˉshape> Userˉlocalˉtypes = [];
+        private readonly List<Valueˉshape> Temporaryˉtypes = [];
         private readonly Stack<Dictionary<string, Localˉsymbol>> Scopes = [];
         private readonly HashSet<string> Allˉlocalˉnames = new(StringComparer.Ordinal);
         private Mutableˉblock? Currentˉblock;
@@ -331,6 +441,7 @@ internal static class Semanticˉcompiler
             IReadOnlyDictionary<string, Dataˉdeclaration> data,
             IReadOnlyDictionary<string, Functionˉsymbol> functions,
             IReadOnlyDictionary<string, Capabilityˉdeclaration> capabilities,
+            IReadOnlyDictionary<string, Recordˉsymbol> records,
             Func<string, string> getˉtextˉdata)
         {
             Function = function;
@@ -338,6 +449,7 @@ internal static class Semanticˉcompiler
             Data = data;
             Functions = functions;
             Capabilities = capabilities;
+            Records = records;
             Getˉtextˉdata = getˉtextˉdata;
         }
 
@@ -447,7 +559,7 @@ internal static class Semanticˉcompiler
 
         private void Compileˉlocalˉdeclaration(Localˉdeclarationˉstatementˉsyntax statement)
         {
-            var Type = Bindˉvalueˉtype(statement.Type);
+            var Type = Bindˉvalueˉshape(statement.Type);
             var Initializer = Compileˉexpression(statement.Initializer);
             Requireˉtype(Initializer, Type, statement.Initializer.Span, "local initializer");
 
@@ -616,6 +728,7 @@ internal static class Semanticˉcompiler
                 Binaryˉexpressionˉsyntax Binary => Compileˉbinary(Binary),
                 Callˉexpressionˉsyntax Call => Compileˉcall(Call),
                 Indexˉexpressionˉsyntax Index => Compileˉindex(Index),
+                Fieldˉexpressionˉsyntax Field => Compileˉfield(Field),
                 Invalidˉexpressionˉsyntax Invalid => Invalidˉvalue(Invalid.Span),
                 _ => throw new InvalidOperationException($"Unknown expression syntax '{expression.GetType().Name}'."),
             };
@@ -712,7 +825,7 @@ internal static class Semanticˉcompiler
                 case Tokenˉkind.Plus:
                 case Tokenˉkind.Minus:
                 case Tokenˉkind.Star:
-                    if (Left.Type != Right.Type || Left.Type is not (Valueˉtype.I32 or Valueˉtype.U32))
+                    if (Left.Type != Right.Type || Left.Type.Kind is not (Valueˉtype.I32 or Valueˉtype.U32))
                     {
                         Report(
                             "WVC2068",
@@ -722,7 +835,7 @@ internal static class Semanticˉcompiler
                     }
 
                     return Result(
-                        (Left.Type, expression.Operator) switch
+                        (Left.Type.Kind, expression.Operator) switch
                         {
                             (Valueˉtype.I32, Tokenˉkind.Plus) => Wirˉoperation.I32ˉadd,
                             (Valueˉtype.I32, Tokenˉkind.Minus) => Wirˉoperation.I32ˉsubtract,
@@ -737,7 +850,7 @@ internal static class Semanticˉcompiler
                 case Tokenˉkind.Lessˉequals:
                 case Tokenˉkind.Greater:
                 case Tokenˉkind.Greaterˉequals:
-                    if (Left.Type != Right.Type || Left.Type is not (Valueˉtype.I32 or Valueˉtype.U32))
+                    if (Left.Type != Right.Type || Left.Type.Kind is not (Valueˉtype.I32 or Valueˉtype.U32))
                     {
                         Report(
                             "WVC2069",
@@ -747,7 +860,7 @@ internal static class Semanticˉcompiler
                     }
 
                     return Result(
-                        (Left.Type, expression.Operator) switch
+                        (Left.Type.Kind, expression.Operator) switch
                         {
                             (Valueˉtype.I32, Tokenˉkind.Less) => Wirˉoperation.I32ˉless,
                             (Valueˉtype.I32, Tokenˉkind.Lessˉequals) => Wirˉoperation.I32ˉlessˉequal,
@@ -763,7 +876,7 @@ internal static class Semanticˉcompiler
                 case Tokenˉkind.Equalsˉequals:
                 case Tokenˉkind.Bangˉequals:
                     if (Left.Type != Right.Type ||
-                        Left.Type is not (Valueˉtype.I32 or Valueˉtype.U8 or Valueˉtype.U32 or Valueˉtype.Bool))
+                        Left.Type.Kind is not (Valueˉtype.I32 or Valueˉtype.U8 or Valueˉtype.U32 or Valueˉtype.Bool))
                     {
                         Report(
                             "WVC2062",
@@ -773,7 +886,7 @@ internal static class Semanticˉcompiler
                     }
 
                     return Result(
-                        (Left.Type, expression.Operator) switch
+                        (Left.Type.Kind, expression.Operator) switch
                         {
                             (Valueˉtype.I32, Tokenˉkind.Equalsˉequals) => Wirˉoperation.I32ˉequal,
                             (Valueˉtype.I32, _) => Wirˉoperation.I32ˉnotˉequal,
@@ -824,6 +937,20 @@ internal static class Semanticˉcompiler
                 return Compileˉfoundationˉintrinsic(expression, Intrinsic);
             }
 
+            if (Records.TryGetValue(expression.Name, out var Record))
+            {
+                var Recordˉarguments = expression.Arguments.Select(Compileˉexpression).ToImmutableArray();
+                Checkˉarguments(
+                    expression,
+                    Recordˉarguments,
+                    [.. Record.Declaration.Fields.Select(Field => (Valueˉshape)Field.Type)]);
+                return Result(
+                    Wirˉoperation.Recordˉcreate,
+                    Valueˉshape.Forˉrecord(Record.Index),
+                    Recordˉarguments.Select(Argument => Argument.Temporary).ToImmutableArray(),
+                    unsignedˉintegerˉoperand: (uint)Record.Index);
+            }
+
             var Arguments = expression.Arguments.Select(Compileˉexpression).ToImmutableArray();
             if (Functions.TryGetValue(expression.Name, out var Calledˉfunction))
             {
@@ -860,6 +987,39 @@ internal static class Semanticˉcompiler
             return Invalidˉvalue(expression.Span);
         }
 
+        private Boundˉvalue Compileˉfield(Fieldˉexpressionˉsyntax expression)
+        {
+            var Target = Compileˉname(new(expression.Target, expression.Span));
+            if (Target.Type.Kind != Valueˉtype.Record)
+            {
+                Report("WVC2086", expression.Span, $"'{expression.Target}' is not a record value.");
+                return Invalidˉvalue(expression.Span);
+            }
+
+            var Record = Records.Values.Single(Item => Item.Index == Target.Type.Recordˉtypeˉindex);
+            var Fieldˉindex = -1;
+            for (var Index = 0; Index < Record.Declaration.Fields.Length; Index++)
+            {
+                if (StringComparer.Ordinal.Equals(Record.Declaration.Fields[Index].Name, expression.Field))
+                {
+                    Fieldˉindex = Index;
+                    break;
+                }
+            }
+
+            if (Fieldˉindex < 0)
+            {
+                Report("WVC2087", expression.Span, $"Record '{Record.Name}' has no field '{expression.Field}'.");
+                return Invalidˉvalue(expression.Span);
+            }
+
+            return Result(
+                Wirˉoperation.Recordˉfield,
+                Record.Declaration.Fields[Fieldˉindex].Type,
+                [Target.Temporary],
+                unsignedˉintegerˉoperand: (uint)Fieldˉindex);
+        }
+
         private Boundˉvalue Compileˉfoundationˉintrinsic(
             Callˉexpressionˉsyntax expression,
             Foundationˉintrinsicˉdeclaration intrinsic)
@@ -894,7 +1054,7 @@ internal static class Semanticˉcompiler
 
         private Boundˉvalue Callˉresult(
             Wirˉoperation operation,
-            Valueˉtype returnˉtype,
+            Valueˉshape returnˉtype,
             ImmutableArray<Boundˉvalue> arguments,
             string name)
         {
@@ -911,7 +1071,7 @@ internal static class Semanticˉcompiler
         private void Checkˉarguments(
             Callˉexpressionˉsyntax expression,
             ImmutableArray<Boundˉvalue> arguments,
-            ImmutableArray<Valueˉtype> parameterˉtypes)
+            ImmutableArray<Valueˉshape> parameterˉtypes)
         {
             if (arguments.Length != parameterˉtypes.Length)
             {
@@ -932,6 +1092,17 @@ internal static class Semanticˉcompiler
             }
         }
 
+        private void Checkˉarguments(
+            Callˉexpressionˉsyntax expression,
+            ImmutableArray<Boundˉvalue> arguments,
+            ImmutableArray<Valueˉtype> parameterˉtypes)
+        {
+            Checkˉarguments(
+                expression,
+                arguments,
+                [.. parameterˉtypes.Select(Type => (Valueˉshape)Type)]);
+        }
+
         private Boundˉvalue Invalidˉvalue(Sourceˉspan span)
         {
             _ = span;
@@ -940,7 +1111,7 @@ internal static class Semanticˉcompiler
 
         private Boundˉvalue Result(
             Wirˉoperation operation,
-            Valueˉtype type,
+            Valueˉshape type,
             ImmutableArray<int> operands = default,
             int integerˉoperand = 0,
             uint unsignedˉintegerˉoperand = 0,
@@ -958,7 +1129,7 @@ internal static class Semanticˉcompiler
 
         private int Emitˉresult(
             Wirˉoperation operation,
-            Valueˉtype type,
+            Valueˉshape type,
             ImmutableArray<int> operands = default,
             int integerˉoperand = 0,
             uint unsignedˉintegerˉoperand = 0,
@@ -983,7 +1154,7 @@ internal static class Semanticˉcompiler
 
         private void Requireˉtype(
             Boundˉvalue value,
-            Valueˉtype required,
+            Valueˉshape required,
             Sourceˉspan span,
             string role)
         {
@@ -1033,8 +1204,19 @@ internal static class Semanticˉcompiler
                 $"Function '{Function.Name}' has no current WIR block.");
         }
 
-        private Valueˉtype Bindˉvalueˉtype(Typeˉsyntax type)
+        private Valueˉshape Bindˉvalueˉshape(Typeˉsyntax type)
         {
+            if (type.Kind == Typeˉsyntaxˉkind.Record)
+            {
+                if (type.Name is not null && Records.TryGetValue(type.Name, out var Record))
+                {
+                    return Valueˉshape.Forˉrecord(Record.Index);
+                }
+
+                Report("WVC2085", type.Span, $"Record type '{type.Name}' is not declared.");
+                return Valueˉtype.I32;
+            }
+
             return type.Kind switch
             {
                 Typeˉsyntaxˉkind.Void => Valueˉtype.Void,
@@ -1053,9 +1235,15 @@ internal static class Semanticˉcompiler
             Diagnostics.Report(code, "semantic", span, message);
         }
 
-        private static string Formatˉtype(Valueˉtype type)
+        private string Formatˉtype(Valueˉshape type)
         {
-            return type switch
+            if (type.Kind == Valueˉtype.Record &&
+                Records.Values.FirstOrDefault(Record => Record.Index == type.Recordˉtypeˉindex) is { } Record)
+            {
+                return Record.Name;
+            }
+
+            return type.Kind switch
             {
                 Valueˉtype.Void => "void",
                 Valueˉtype.I32 => "i32",

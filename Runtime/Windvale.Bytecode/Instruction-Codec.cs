@@ -72,6 +72,8 @@ public static class Instructionˉcodec
                 case Opcode.Textˉconst:
                 case Opcode.U32ˉconst:
                 case Opcode.Bytesˉconst:
+                case Opcode.Recordˉcreate:
+                case Opcode.Recordˉfield:
                 case Opcode.Localˉload:
                 case Opcode.Localˉstore:
                 case Opcode.Dataˉlength:
@@ -113,6 +115,8 @@ public static class Instructionˉcodec
             Opcode.Textˉconst or
             Opcode.U32ˉconst or
             Opcode.Bytesˉconst or
+            Opcode.Recordˉcreate or
+            Opcode.Recordˉfield or
             Opcode.Localˉload or
             Opcode.Localˉstore or
             Opcode.Dataˉlength or

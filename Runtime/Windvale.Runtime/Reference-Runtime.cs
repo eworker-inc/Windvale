@@ -83,7 +83,7 @@ public sealed class Referenceˉruntime
         var Locals = new Runtimeˉvalue[Localˉtypes.Length];
         for (var Index = 0; Index < Locals.Length; Index++)
         {
-            Locals[Index] = Runtimeˉvalue.Default(Localˉtypes[Index]);
+            Locals[Index] = Runtimeˉvalue.Default(Localˉtypes[Index], Verifiedˉmodule.Module.Types);
         }
 
         for (var Index = 0; Index < arguments.Length; Index++)
@@ -245,6 +245,17 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.U8ˉnotˉequal:
                         Applyˉu8ˉcomparison(Stack, (Left, Right) => Left != Right);
+                        break;
+                    case Opcode.Recordˉcreate:
+                        var Recordˉtype = Verifiedˉmodule.Module.Types[(int)Instruction.Unsignedˉoperand];
+                        var Recordˉfields = Popˉarguments(Stack, Recordˉtype.Fields.Length);
+                        Stack.Add(Runtimeˉvalue.Fromˉrecord(
+                            (int)Instruction.Unsignedˉoperand,
+                            Recordˉfields));
+                        break;
+                    case Opcode.Recordˉfield:
+                        var Record = Pop(Stack).Recordˉvalue!;
+                        Stack.Add(Record.Fields[(int)Instruction.Unsignedˉoperand]);
                         break;
                     case Opcode.Jump:
                         Instructionˉindex = Instructionˉindices[functionˉindex][(int)Instruction.Unsignedˉoperand];

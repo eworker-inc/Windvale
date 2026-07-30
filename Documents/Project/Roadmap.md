@@ -12,7 +12,7 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 
 | Phase | Deliverable and qualification gate | Status |
 | --- | --- | --- |
-| 0. Seed and byte primitives | C# Stage 0, typed WIR, WVB 1.1, verified runtime, `u8`, `u32`, immutable bytes, and Windows/Debian equality. | Qualified |
+| 0. Seed and byte primitives | C# Stage 0, typed WIR, verified runtime, `u8`, `u32`, immutable bytes, and Windows/Debian equality. | Qualified |
 | 1. `Wvˉdumpˉcore` | Windvale source safely walks complete WVB headers and section envelopes over supplied bytes, including hostile lengths and malformed cases. | Qualified |
 | 2. Structured inspection | Add only the records, enums, structured results/errors, and bounded formatting demanded by useful section descriptions. | Current focus |
 | 3. Hosted resource boundary | Explicit arguments, file-byte input, diagnostics, and output capabilities with portable parsing kept independent. | Planned |
@@ -29,4 +29,4 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 
 ## Current focus
 
-Phase 1 is qualified at commit `60fd261` after the exact source passed the Windows verifier, Debian QA verifier, and portable report comparison. Phase 2 is the current implementation focus. It begins from a concrete limitation in the qualified tool: numeric status values cannot carry useful section descriptors or structured error details.
+Phase 1 is qualified at commit `60fd261` after the exact source passed the Windows verifier, Debian QA verifier, and portable report comparison. Phase 2 is the current implementation focus. Its first candidate slice adds immutable nominal records throughout source, WIR, WVB 1.2, verification, inspection, and runtime execution. `Wvˉdumpˉcore` now returns a structured result with section count and failure offset and uses a structured section descriptor. Cross-host qualification is required before this slice is marked qualified; compact enum/status naming and bounded formatting remain next.

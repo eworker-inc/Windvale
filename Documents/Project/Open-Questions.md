@@ -13,7 +13,7 @@ This list records unresolved decisions without presenting them as implementation
 
 - What programming model makes Windvale distinct while remaining approachable?
 - What exactly does “code and data together” mean in the language and package model?
-- Beyond the accepted checked `i32`, `u8`, `u32`, immutable text, and immutable bytes nucleus, what integer, floating-point, text, error, concurrency, and memory semantics are needed?
+- Beyond the accepted checked `i32`, `u8`, `u32`, immutable text, immutable bytes, and immutable nominal record nucleus, what integer, floating-point, text, error, concurrency, and memory semantics are needed?
 - Which facilities belong to safe, unsafe, portable, hosted, and system profiles?
 - Should Windvale eventually admit broader Unicode identifiers beyond ASCII segments joined by U+02C9, and if so, under which normalization and confusable-character rules?
 
@@ -45,7 +45,7 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Replace the first `wvdump` core's numeric statuses with the smallest useful structured result and section descriptor model.
+1. Add the smallest enum/status-name model demanded by the structured `wvdump` result.
 2. Add bounded numeric and text formatting so the tool can describe inspected sections.
 3. Define the explicit hosted file-input capability that can supply bytes without changing portable inspection semantics.
 4. Define the memory and aggregate-type model needed for a self-hosted compiler.

@@ -10,7 +10,7 @@ public static class Moduleˉcodec
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public const ushort MAJOR_VERSION = 1;
-    public const ushort MINOR_VERSION = 1;
+    public const ushort MINOR_VERSION = 2;
 
     public static byte[] Write(Bytecodeˉmodule module)
     {
@@ -78,14 +78,14 @@ public static class Moduleˉcodec
                 Writer.Writeˉu32(Function.Parameterˉtypes.Length);
                 foreach (var Parameterˉtype in Function.Parameterˉtypes)
                 {
-                    Writer.Writeˉbyte((byte)Parameterˉtype);
+                    Writer.Writeˉvalueˉshape(Parameterˉtype);
                 }
 
-                Writer.Writeˉbyte((byte)Function.Returnˉtype);
+                Writer.Writeˉvalueˉshape(Function.Returnˉtype);
                 Writer.Writeˉu32(Function.Localˉtypes.Length);
                 foreach (var Localˉtype in Function.Localˉtypes)
                 {
-                    Writer.Writeˉbyte((byte)Localˉtype);
+                    Writer.Writeˉvalueˉshape(Localˉtype);
                 }
 
                 Writer.Writeˉu32(Function.Codeˉoffset);
@@ -107,6 +107,21 @@ public static class Moduleˉcodec
             }
         });
 
+        var Typeˉpayload = Buildˉpayload(Writer =>
+        {
+            Writer.Writeˉu32(module.Types.Length);
+            foreach (var Type in module.Types)
+            {
+                Writer.Writeˉstring(Type.Name, isˉname: true);
+                Writer.Writeˉu32(Type.Fields.Length);
+                foreach (var Field in Type.Fields)
+                {
+                    Writer.Writeˉstring(Field.Name, isˉname: true);
+                    Writer.Writeˉbyte((byte)Field.Type);
+                }
+            }
+        });
+
         using var Stream = new MemoryStream();
         var Rootˉwriter = new Byteˉwriter(Stream);
         Rootˉwriter.Writeˉbytes(MAGIC);
@@ -119,6 +134,7 @@ public static class Moduleˉcodec
         Writeˉsection(Rootˉwriter, Sectionˉkind.Functions, Functionˉpayload);
         Writeˉsection(Rootˉwriter, Sectionˉkind.Code, Codeˉpayload);
         Writeˉsection(Rootˉwriter, Sectionˉkind.Exports, Exportˉpayload);
+        Writeˉsection(Rootˉwriter, Sectionˉkind.Types, Typeˉpayload);
 
         var Result = Stream.ToArray();
         if (Result.Length > Bytecodeˉlimits.MAX_MODULE_BYTES)
@@ -188,6 +204,10 @@ public static class Moduleˉcodec
         var Exports = Readˉexports(ref Exportˉreader);
         Exportˉreader.Requireˉend("Exports");
 
+        var Typeˉreader = Readˉsection(ref Reader, Sectionˉkind.Types);
+        var Types = Readˉtypes(ref Typeˉreader);
+        Typeˉreader.Requireˉend("Types");
+
         Reader.Requireˉend("module file");
 
         return new(
@@ -197,7 +217,10 @@ public static class Moduleˉcodec
             Data,
             Functions,
             Code,
-            Exports);
+            Exports)
+        {
+            Types = Types,
+        };
     }
 
     public static Verifiedˉmodule Readˉandˉverify(ReadOnlySpan<byte> bytes)
@@ -288,20 +311,20 @@ public static class Moduleˉcodec
             var Parameterˉcount = reader.Readˉboundedˉcount(
                 Bytecodeˉlimits.MAX_PARAMETERS_OR_LOCALS,
                 "function parameter");
-            var Parameterˉtypes = ImmutableArray.CreateBuilder<Valueˉtype>(Parameterˉcount);
+            var Parameterˉtypes = ImmutableArray.CreateBuilder<Valueˉshape>(Parameterˉcount);
             for (var Parameterˉindex = 0; Parameterˉindex < Parameterˉcount; Parameterˉindex++)
             {
-                Parameterˉtypes.Add(reader.Readˉvalueˉtype(allowˉvoid: false));
+                Parameterˉtypes.Add(reader.Readˉvalueˉshape(allowˉvoid: false));
             }
 
-            var Returnˉtype = reader.Readˉvalueˉtype(allowˉvoid: true);
+            var Returnˉtype = reader.Readˉvalueˉshape(allowˉvoid: true);
             var Localˉcount = reader.Readˉboundedˉcount(
                 Bytecodeˉlimits.MAX_PARAMETERS_OR_LOCALS,
                 "function local");
-            var Localˉtypes = ImmutableArray.CreateBuilder<Valueˉtype>(Localˉcount);
+            var Localˉtypes = ImmutableArray.CreateBuilder<Valueˉshape>(Localˉcount);
             for (var Localˉindex = 0; Localˉindex < Localˉcount; Localˉindex++)
             {
-                Localˉtypes.Add(reader.Readˉvalueˉtype(allowˉvoid: false));
+                Localˉtypes.Add(reader.Readˉvalueˉshape(allowˉvoid: false));
             }
 
             var Codeˉoffset = reader.Readˉnonnegativeˉi32("function code offset");
@@ -338,6 +361,30 @@ public static class Moduleˉcodec
 
             var Targetˉindex = reader.Readˉnonnegativeˉi32("export target index");
             Result.Add(new(Name, Exportˉkind.Function, Targetˉindex));
+        }
+
+        return Result.ToImmutable();
+    }
+
+    private static ImmutableArray<Recordˉtypeˉdeclaration> Readˉtypes(ref Byteˉreader reader)
+    {
+        var Count = reader.Readˉboundedˉcount(Bytecodeˉlimits.MAX_RECORD_TYPES, "record type");
+        var Result = ImmutableArray.CreateBuilder<Recordˉtypeˉdeclaration>(Count);
+        for (var Index = 0; Index < Count; Index++)
+        {
+            var Name = reader.Readˉstring(isˉname: true);
+            var Fieldˉcount = reader.Readˉboundedˉcount(
+                Bytecodeˉlimits.MAX_RECORD_FIELDS,
+                "record field");
+            var Fields = ImmutableArray.CreateBuilder<Recordˉfieldˉdeclaration>(Fieldˉcount);
+            for (var Fieldˉindex = 0; Fieldˉindex < Fieldˉcount; Fieldˉindex++)
+            {
+                var Fieldˉname = reader.Readˉstring(isˉname: true);
+                var Fieldˉtype = reader.Readˉvalueˉtype(allowˉvoid: false, allowˉrecord: false);
+                Fields.Add(new(Fieldˉname, Fieldˉtype));
+            }
+
+            Result.Add(new(Name, Fields.ToImmutable()));
         }
 
         return Result.ToImmutable();
@@ -442,6 +489,15 @@ public static class Moduleˉcodec
             stream.Write(Buffer);
         }
 
+        public void Writeˉvalueˉshape(Valueˉshape shape)
+        {
+            Writeˉbyte((byte)shape.Kind);
+            if (shape.Kind == Valueˉtype.Record)
+            {
+                Writeˉu32(shape.Recordˉtypeˉindex);
+            }
+        }
+
         public void Writeˉstring(string value, bool isˉname)
         {
             ArgumentNullException.ThrowIfNull(value);
@@ -536,7 +592,7 @@ public static class Moduleˉcodec
             return Count;
         }
 
-        public Valueˉtype Readˉvalueˉtype(bool allowˉvoid)
+        public Valueˉtype Readˉvalueˉtype(bool allowˉvoid, bool allowˉrecord = false)
         {
             var Typeˉoffset = Absoluteˉoffset;
             var Rawˉtype = Readˉbyte();
@@ -557,7 +613,23 @@ public static class Moduleˉcodec
                     Typeˉoffset);
             }
 
+            if (!allowˉrecord && Type == Valueˉtype.Record)
+            {
+                throw new Moduleˉformatˉexception(
+                    "WVB1019",
+                    "A record type is not valid in this type position.",
+                    Typeˉoffset);
+            }
+
             return Type;
+        }
+
+        public Valueˉshape Readˉvalueˉshape(bool allowˉvoid)
+        {
+            var Type = Readˉvalueˉtype(allowˉvoid, allowˉrecord: true);
+            return Type == Valueˉtype.Record
+                ? Valueˉshape.Forˉrecord(Readˉnonnegativeˉi32("record type index"))
+                : new(Type);
         }
 
         public string Readˉstring(bool isˉname)
