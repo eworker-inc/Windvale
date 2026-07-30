@@ -53,7 +53,7 @@ Phase 6 is complete only after 6G. A parser demo, hard-coded object producer, or
 
 ### Phase 7 - Foundation modules driven by real tools
 
-The first enabling slice, bounded static source-module composition, is implemented under Decision 0019 with cross-host qualification pending. It deliberately changes neither WVB 1.6 nor runtime loading; the next slice must use it to extract one pure function surface justified by both the assembler and linker.
+The first enabling slice, bounded static source-module composition, is qualified on Windows and Debian at `df80f91` under Decision 0019. It deliberately changes neither WVB 1.6 nor runtime loading. The current slice must use it to extract one pure function surface justified by both the assembler and linker while preserving their exact observable outputs.
 
 1. Identify duplicated bounded scanning, byte construction, name validation, diagnostics, result/status, and test behavior in the qualified assembler and linker.
 2. Introduce the smallest module/import and collection facilities needed to express those reusable contracts without hidden mutation or unbounded allocation.
@@ -161,4 +161,4 @@ At each checkpoint the project may keep, revise, or replace the proposed mechani
 
 ## Current focus
 
-Phase 6 is qualified. Its WVA 1 Stage 0 contract is qualified at `3bfc6bb`, Windvale scanner at `e5fd109`, semantic inspector at `cc57bf9`, object encoder and hosted assembler at `a689617`, and Stage 0 link oracle at `9c4b9f5`. The complete Windvale linker is qualified at `40ac57d` after the prerequisite, object-view, layout, image, relocation, and independent-reconstruction slices. Windows and Debian produced the same WVB, exact 24-byte image, exact 1,721-byte map, and normalized contract while exercising maximum image/map boundaries and publish-after-success failures. Phase 7 is now the current focus: identify duplication proven by the qualified assembler and linker, then extract only the smallest Foundation module/import and collection facilities justified by both tools.
+Phase 6 is qualified. Its WVA 1 Stage 0 contract is qualified at `3bfc6bb`, Windvale scanner at `e5fd109`, semantic inspector at `cc57bf9`, object encoder and hosted assembler at `a689617`, and Stage 0 link oracle at `9c4b9f5`. The complete Windvale linker is qualified at `40ac57d` after the prerequisite, object-view, layout, image, relocation, and independent-reconstruction slices. Windows and Debian produced the same WVB, exact 24-byte image, exact 1,721-byte map, and normalized contract while exercising maximum image/map boundaries and publish-after-success failures. Phase 7 is now the current focus. Its bounded static source-module composition prerequisite is qualified at `df80f91`; the next work is to inventory duplicated pure functions in the assembler and linker and extract the smallest surface with both as real consumers.
