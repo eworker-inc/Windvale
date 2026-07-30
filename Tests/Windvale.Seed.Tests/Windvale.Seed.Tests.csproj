@@ -16,8 +16,8 @@
       Include="../../Examples/Assembler/Hello-Object.wva"
       LogicalName="Windvale.Seed.Tests.Hello-Object.wva" />
     <EmbeddedResource
-      Include="../../Examples/Assembler/Wva-Scanner-Core.wv"
-      LogicalName="Windvale.Seed.Tests.Wva-Scanner-Core.wv" />
+      Include="../../Examples/Assembler/Wva-Assembler-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Wva-Assembler-Core.wv" />
     <EmbeddedResource
       Include="../../Examples/Foundation/Wv-Dump-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wv-Dump-Core.wv" />

@@ -23,9 +23,11 @@ HELLO_MODULE="$ARTIFACTS/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
-WVA_SCANNER_MODULE="$ARTIFACTS/Wva-Scanner-Core.wvb"
+WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
 WVO_SAMPLE="$ARTIFACTS/Sample.wvo"
 ASSEMBLY_OBJECT="$ARTIFACTS/Hello-Object.wvo"
+WINDVALE_ASSEMBLY_OBJECT="$ARTIFACTS/Hello-Object-Windvale.wvo"
+INVALID_WINDVALE_ASSEMBLY_OBJECT="$ARTIFACTS/__windvale_invalid_assembly_output__.wvo"
 dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" -o "$SUM_MODULE"
 
@@ -275,69 +277,143 @@ fi
 printf '%s\n' "$WVO_MISSING_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
 
 dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
-    compile "$REPOSITORY_ROOT/Examples/Assembler/Wva-Scanner-Core.wv" -o "$WVA_SCANNER_MODULE"
+    compile "$REPOSITORY_ROOT/Examples/Assembler/Wva-Assembler-Core.wv" -o "$WVA_ASSEMBLER_MODULE"
 
-WVA_SCANNER_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVA_SCANNER_MODULE")
-printf '%s\n' "$WVA_SCANNER_VERIFY_OUTPUT" | grep -F 'Verified: Wvaˉscannerˉcore' >/dev/null
+WVA_ASSEMBLER_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVA_ASSEMBLER_MODULE")
+printf '%s\n' "$WVA_ASSEMBLER_VERIFY_OUTPUT" | grep -F 'Verified: Wvaˉassemblerˉcore' >/dev/null
 
-WVA_SCANNER_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$WVA_SCANNER_MODULE")
-printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'Scanˉwva' >/dev/null
-printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'Inspectˉwvaˉsemantics' >/dev/null
-printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'Parseˉu32' >/dev/null
-printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'Findˉsymbol' >/dev/null
-printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'text.utf8_is_valid' >/dev/null
-printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
+WVA_ASSEMBLER_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$WVA_ASSEMBLER_MODULE")
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Scanˉwva' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Inspectˉwvaˉsemantics' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉwva' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉsections' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉsymbols' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉrelocations' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'bytes.concat' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'bytes.from_u32_little' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null
 
 set +e
-WVA_SCANNER_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVA_SCANNER_MODULE" 2>&1)
-WVA_SCANNER_UNAUTHORIZED_EXIT=$?
+WVA_ASSEMBLER_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVA_ASSEMBLER_MODULE" 2>&1)
+WVA_ASSEMBLER_UNAUTHORIZED_EXIT=$?
 set -e
-if [ "$WVA_SCANNER_UNAUTHORIZED_EXIT" -ne 3 ]; then
-    echo "Expected unauthorized WVA scanner run exit 3, found $WVA_SCANNER_UNAUTHORIZED_EXIT." >&2
+if [ "$WVA_ASSEMBLER_UNAUTHORIZED_EXIT" -ne 3 ]; then
+    echo "Expected unauthorized WVA assembler run exit 3, found $WVA_ASSEMBLER_UNAUTHORIZED_EXIT." >&2
     exit 1
 fi
-printf '%s\n' "$WVA_SCANNER_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
 
-WVA_SCANNER_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
-    run "$WVA_SCANNER_MODULE" \
+WVA_ASSEMBLER_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVA_ASSEMBLER_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
     --allow file.read_bytes \
+    --allow file.write_bytes \
     --allow process.argument \
     --allow process.argument_count \
     --max-steps 10000000)
-printf '%s\n' "$WVA_SCANNER_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-WVA_SCANNER_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
-    run "$WVA_SCANNER_MODULE" \
+WVA_ASSEMBLER_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVA_ASSEMBLER_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
     --allow file.read_bytes \
+    --allow file.write_bytes \
     --allow process.argument \
     --allow process.argument_count \
     --max-steps 10000000 \
-    -- "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva")
-printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'wvascan 1' >/dev/null
-printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1' >/dev/null
-printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1' >/dev/null
-printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
+    -- "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" "$WINDVALE_ASSEMBLY_OBJECT")
+printf '%s\n' "$WVA_ASSEMBLER_HOSTED_OUTPUT" | grep -F 'wvasm 1' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_HOSTED_OUTPUT" | grep -F 'assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=403 line=22 column=1' >/dev/null
+printf '%s\n' "$WVA_ASSEMBLER_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
+WINDVALE_ASSEMBLY_HASH=$(sha256sum "$WINDVALE_ASSEMBLY_OBJECT" | awk '{print $1}')
+if [ "$WINDVALE_ASSEMBLY_HASH" != '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85' ]; then
+    echo "The Windvale WVA assembler wrote unexpected bytes: $WINDVALE_ASSEMBLY_HASH" >&2
+    exit 1
+fi
+WINDVALE_ASSEMBLY_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-verify "$WINDVALE_ASSEMBLY_OBJECT")
+printf '%s\n' "$WINDVALE_ASSEMBLY_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
+
+MISSING_ASSEMBLER_PARENT="$ARTIFACTS/__windvale_missing_assembler_parent__"
+if [ -e "$MISSING_ASSEMBLER_PARENT" ]; then
+    echo "The missing assembler parent unexpectedly exists: $MISSING_ASSEMBLER_PARENT" >&2
+    exit 1
+fi
+MISSING_ASSEMBLER_OUTPUT="$MISSING_ASSEMBLER_PARENT/Hello.wvo"
+set +e
+WVA_ASSEMBLER_MISSING_PARENT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVA_ASSEMBLER_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000 \
+    -- "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" "$MISSING_ASSEMBLER_OUTPUT" 2>&1)
+WVA_ASSEMBLER_MISSING_PARENT_EXIT=$?
+set -e
+if [ "$WVA_ASSEMBLER_MISSING_PARENT_EXIT" -ne 3 ]; then
+    echo "Expected missing assembler parent exit 3, found $WVA_ASSEMBLER_MISSING_PARENT_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$WVA_ASSEMBLER_MISSING_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
+if [ -e "$MISSING_ASSEMBLER_OUTPUT" ]; then
+    echo 'The failed Windvale assembler host write left a partial output object.' >&2
+    exit 1
+fi
+
+if [ -e "$INVALID_WINDVALE_ASSEMBLY_OBJECT" ]; then
+    echo "The invalid Windvale assembly output unexpectedly exists: $INVALID_WINDVALE_ASSEMBLY_OBJECT" >&2
+    exit 1
+fi
 WVA_SEMANTIC_INVALID_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
-    run "$WVA_SCANNER_MODULE" \
+    run "$WVA_ASSEMBLER_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
     --allow file.read_bytes \
+    --allow file.write_bytes \
     --allow process.argument \
     --allow process.argument_count \
     --max-steps 10000000 \
-    -- "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" 2>&1)
-printf '%s\n' "$WVA_SEMANTIC_INVALID_OUTPUT" | grep -F 'semantics status=WVA1001 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=0 line=1 column=1' >/dev/null
+    -- "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" "$INVALID_WINDVALE_ASSEMBLY_OBJECT" 2>&1)
+printf '%s\n' "$WVA_SEMANTIC_INVALID_OUTPUT" | grep -F 'assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1' >/dev/null
 printf '%s\n' "$WVA_SEMANTIC_INVALID_OUTPUT" | grep -F 'Result: 2' >/dev/null
+if [ -e "$INVALID_WINDVALE_ASSEMBLY_OBJECT" ]; then
+    echo 'Rejected Windvale assembly created a partial output object.' >&2
+    exit 1
+fi
+
+WVA_SEMANTIC_EXISTING_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVA_ASSEMBLER_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000 \
+    -- "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" "$WINDVALE_ASSEMBLY_OBJECT" 2>&1)
+printf '%s\n' "$WVA_SEMANTIC_EXISTING_OUTPUT" | grep -F 'assembly status=WVA1001' >/dev/null
+printf '%s\n' "$WVA_SEMANTIC_EXISTING_OUTPUT" | grep -F 'Result: 2' >/dev/null
+PRESERVED_WINDVALE_ASSEMBLY_HASH=$(sha256sum "$WINDVALE_ASSEMBLY_OBJECT" | awk '{print $1}')
+if [ "$PRESERVED_WINDVALE_ASSEMBLY_HASH" != "$WINDVALE_ASSEMBLY_HASH" ]; then
+    echo 'Rejected Windvale assembly modified an existing output object.' >&2
+    exit 1
+fi
 
 ASSEMBLY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     assemble "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" -o "$ASSEMBLY_OBJECT")
 printf '%s\n' "$ASSEMBLY_OUTPUT" | grep -F 'Assembled:' >/dev/null
 printf '%s\n' "$ASSEMBLY_OUTPUT" | grep -F 'SHA-256: 992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85' >/dev/null
+STAGE0_ASSEMBLY_HASH=$(sha256sum "$ASSEMBLY_OBJECT" | awk '{print $1}')
+if [ "$STAGE0_ASSEMBLY_HASH" != "$WINDVALE_ASSEMBLY_HASH" ]; then
+    echo 'The Windvale-written and Stage 0 assembler objects differ.' >&2
+    exit 1
+fi
 
 ASSEMBLY_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-verify "$ASSEMBLY_OBJECT")
 printf '%s\n' "$ASSEMBLY_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null

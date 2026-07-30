@@ -22,6 +22,8 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, r
 - Canonical WVO 1.0 sections, symbols, relocations, strict decoding, deterministic encoding, malformed-input rejection, and bounded random object inputs
 - Exact byte equality between the Windvale-written WVO producer and the independent C# object oracle, including native hosted-file persistence
 - WVA 1 parsing, stable diagnostics, canonical symbol/section requirements, the complete initial x86-64 instruction/data subset, inferred definition ranges, deterministic WVO output, and bounded random source
+- Windvale-written WVA scanning, multi-pass semantics, exact object measurement, instruction/data encoding, definition ranges, canonical section/symbol/relocation records, and whole-object hosted persistence
+- Complete byte equality between Windvale and Stage 0 for canonical, numeric-boundary, register, multi-definition, line-ending, empty-object, and accepted deterministic-mutation cases; rejected input invokes no writer and produces no native output
 - Checked `u32` overflow and underflow plus byte-read and slice bounds traps
 - U+02C9 source identifiers, immutable `let`, mutable `var`, immutable parameters, and exported `Main`
 - Rejection of malformed or confusable identifier separators
@@ -55,7 +57,7 @@ After collecting a report from Windows and Linux, compare their portable contrac
 dotnet run --project Tests/Windvale.Seed.Tests --configuration Release --no-build -- --compare-reports artifacts/seed-conformance-windows-x64.json artifacts/seed-conformance-linux-x86_64.json
 ```
 
-The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-, object-, and assembly-format versions, complete golden module and object SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, Windvale-written hosted `wvdump`, the complete normalized `wvdump` line report for the real integer-data module, the Windvale-written WVO core and its exact 189-byte object, and the canonical WVA example object. Each host verifier also exercises the native assembly and object-inspection CLI paths plus the hosted file adapters.
+The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-, object-, and assembly-format versions, complete golden module and object SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, Windvale-written hosted `wvdump`, the complete normalized `wvdump` line report for the real integer-data module, the Windvale-written WVO core and its exact 189-byte object, and both Stage 0 and Windvale-written encodings of the canonical WVA example. Each host verifier also exercises the native assembly, Windvale assembler, no-partial-output, and independent object-verification paths plus the hosted file adapters.
 
 ## Evidence discipline
 

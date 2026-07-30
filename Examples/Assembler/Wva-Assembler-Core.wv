@@ -1,8 +1,9 @@
-module Wvaˉscannerˉcore profile hosted;
+module Wvaˉassemblerˉcore profile hosted;
 
 capability console.write_line;
 capability diagnostic.write_line;
 capability file.read_bytes;
+capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
 
@@ -19,6 +20,24 @@ data Extraˉheaderˉsource: text = "windvale-assembly 1 extra\nsection code .tex
 data Missingˉheaderˉsource: text = "# comment only\n\t# another comment\n";
 data Missingˉreferenceˉsource: text = "windvale-assembly 1\nsymbol export function Main in .text\nsection code .text align 16\ndefine Main\ncall Missing\nend define\nend section\n";
 data Wrongˉcontextˉsource: text = "windvale-assembly 1\nsymbol export function Main in .text\nsection code .text align 16\ndefine Main\nbytes 1\nend define\nend section\n";
+data Byteˉvalues: bytes = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+    32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+    64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+    80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+    96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
+    112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+    128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
+    144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
+    160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
+    176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
+    192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
+    208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223,
+    224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
+    240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
+];
 
 enum Wvaˉtokenˉkind {
     Word = 1;
@@ -144,6 +163,33 @@ record Wvaˉsemanticˉinspection {
     Relocations: u32;
     Dataˉbytes: u32;
     Memoryˉbytes: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+record Wvaˉobjectˉsize {
+    Valid: bool;
+    Bytes: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+record Wvaˉdefinitionˉrange {
+    Found: bool;
+    Sectionˉindex: u32;
+    Offset: u32;
+    Size: u32;
+}
+
+record Wvaˉobjectˉencoding {
+    Status: Wvaˉsemanticˉstatus;
+    Contents: bytes;
+    Objectˉbytes: u32;
+    Sections: u32;
+    Symbols: u32;
+    Relocations: u32;
     Failureˉoffset: u32;
     Failureˉline: u32;
     Failureˉcolumn: u32;
@@ -1970,6 +2016,574 @@ fn Validateˉwvaˉsemantics(
     return Base;
 }
 
+fn Appendˉbytes(Left: bytes, Right: bytes) -> bytes {
+    return Bytesˉconcat(Left, Right);
+}
+
+fn Singleˉbyte(Value: u32) -> bytes {
+    return Bytesˉslice(Byteˉvalues, Value, 1u32);
+}
+
+fn Lineˉisˉend(Input: bytes, Value: Wvaˉline, Expected: text) -> bool {
+    if Value.Tokens != 2u32 { return false; }
+    if !Tokenˉequalsˉtext(Input, Lineˉtoken(Input, Value, 0u32), "end") { return false; }
+    return Tokenˉequalsˉtext(Input, Lineˉtoken(Input, Value, 1u32), Expected);
+}
+
+fn Measureˉwvo(Input: bytes, Semantics: Wvaˉsemanticˉinspection) -> Wvaˉobjectˉsize {
+    var Total: u32 = 24u32 + Semantics.Relocations * 20u32;
+    if Total > 4194304u32 {
+        return Wvaˉobjectˉsize(false, Total, 0u32, 1u32, 1u32);
+    }
+
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Currentˉsectionˉkind: u32 = 0u32;
+    var Insideˉdefinition: bool = false;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        var Amount: u32 = 0u32;
+        if Tokenˉequalsˉtext(Input, First, "symbol") {
+            let Symbolˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 3u32);
+            Amount = 20u32 + Symbolˉname.Length;
+        } else {
+            if Tokenˉequalsˉtext(Input, First, "section") {
+                Currentˉsectionˉkind = Sectionˉkindˉtag(Input, Lineˉtoken(Input, Current, 1u32));
+                let Sectionˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 2u32);
+                Amount = 20u32 + Sectionˉname.Length;
+            } else {
+                if Tokenˉequalsˉtext(Input, First, "define") {
+                    Insideˉdefinition = true;
+                } else {
+                    if Lineˉisˉend(Input, Current, "define") {
+                        Insideˉdefinition = false;
+                    } else {
+                        if Insideˉdefinition {
+                            let Statement: Wvaˉstatementˉcheck = Checkˉstatement(
+                                Input,
+                                Current,
+                                Currentˉsectionˉkind
+                            );
+                            if Currentˉsectionˉkind != 4u32 { Amount = Statement.Size; }
+                        }
+                    }
+                }
+            }
+        }
+        if Amount > 4194304u32 - Total {
+            return Wvaˉobjectˉsize(false, Total, First.Offset, First.Line, First.Column);
+        }
+        Total = Total + Amount;
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Wvaˉobjectˉsize(true, Total, Bytesˉlength(Input), Current.Line, Current.Column);
+}
+
+fn Encodeˉname(Input: bytes, Name: Wvaˉtoken) -> bytes {
+    let Prefix: bytes = Bytesˉfromˉu32ˉlittle(Name.Length);
+    return Appendˉbytes(Prefix, Bytesˉslice(Input, Name.Offset, Name.Length));
+}
+
+fn Encodeˉwvoˉheader(
+    Sectionˉcount: u32,
+    Symbolˉcount: u32,
+    Relocationˉcount: u32
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVO1");
+    Result = Appendˉbytes(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Appendˉbytes(Result, Singleˉbyte(1u32));
+    Result = Appendˉbytes(Result, Singleˉbyte(0u32));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Sectionˉcount));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Symbolˉcount));
+    return Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Relocationˉcount));
+}
+
+fn Registerˉindex(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Tokenˉequalsˉtext(Input, Value, "eax") { return 0u32; }
+    if Tokenˉequalsˉtext(Input, Value, "ecx") { return 1u32; }
+    if Tokenˉequalsˉtext(Input, Value, "edx") { return 2u32; }
+    if Tokenˉequalsˉtext(Input, Value, "ebx") { return 3u32; }
+    if Tokenˉequalsˉtext(Input, Value, "esp") { return 4u32; }
+    if Tokenˉequalsˉtext(Input, Value, "ebp") { return 5u32; }
+    if Tokenˉequalsˉtext(Input, Value, "esi") { return 6u32; }
+    return 7u32;
+}
+
+fn Encodeˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> bytes {
+    let Statement: Wvaˉstatementˉcheck = Checkˉstatement(Input, Line, Sectionˉkind);
+    if Statement.Kind == 1u32 { return Singleˉbyte(144u32); }
+    if Statement.Kind == 2u32 { return Singleˉbyte(195u32); }
+    if Statement.Kind == 3u32 { return Singleˉbyte(204u32); }
+    if Statement.Kind == 4u32 {
+        return Appendˉbytes(Singleˉbyte(232u32), Bytesˉfromˉu32ˉlittle(0u32));
+    }
+    if Statement.Kind == 5u32 {
+        return Appendˉbytes(Singleˉbyte(233u32), Bytesˉfromˉu32ˉlittle(0u32));
+    }
+    if Statement.Kind == 6u32 {
+        let I32ˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
+        let I32ˉnumber: Wvaˉi32ˉparse = Parseˉi32(Input, Lineˉtoken(Input, Line, 2u32));
+        return Appendˉbytes(
+            Singleˉbyte(184u32 + I32ˉregister),
+            Bytesˉfromˉi32ˉlittle(I32ˉnumber.Value)
+        );
+    }
+    if Statement.Kind == 7u32 {
+        let U32ˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
+        let Moveˉu32ˉnumber: Wvaˉu32ˉparse = Parseˉu32(
+            Input,
+            Lineˉtoken(Input, Line, 2u32)
+        );
+        return Appendˉbytes(
+            Singleˉbyte(184u32 + U32ˉregister),
+            Bytesˉfromˉu32ˉlittle(Moveˉu32ˉnumber.Value)
+        );
+    }
+    if Statement.Kind == 8u32 {
+        var Result: bytes = Emptyˉbytes;
+        var Index: u32 = 1u32;
+        while Index < Line.Tokens {
+            let Byteˉnumber: Wvaˉu32ˉparse = Parseˉu32(Input, Lineˉtoken(Input, Line, Index));
+            Result = Appendˉbytes(Result, Singleˉbyte(Byteˉnumber.Value));
+            Index = Index + 1u32;
+        }
+        return Result;
+    }
+    if Statement.Kind == 9u32 {
+        let Dataˉu32ˉnumber: Wvaˉu32ˉparse = Parseˉu32(Input, Lineˉtoken(Input, Line, 1u32));
+        return Bytesˉfromˉu32ˉlittle(Dataˉu32ˉnumber.Value);
+    }
+    if Statement.Kind == 10u32 {
+        let Dataˉi32ˉnumber: Wvaˉi32ˉparse = Parseˉi32(Input, Lineˉtoken(Input, Line, 1u32));
+        return Bytesˉfromˉi32ˉlittle(Dataˉi32ˉnumber.Value);
+    }
+    if Statement.Kind == 11u32 { return Bytesˉfromˉu32ˉlittle(0u32); }
+    return Emptyˉbytes;
+}
+
+fn Encodeˉsectionˉrecord(
+    Input: bytes,
+    Name: Wvaˉtoken,
+    Kind: u32,
+    Alignment: u32,
+    Memoryˉsize: u32,
+    Contents: bytes
+) -> bytes {
+    var Result: bytes = Singleˉbyte(Kind);
+    Result = Appendˉbytes(Result, Singleˉbyte(0u32));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Alignment));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Memoryˉsize));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Contents)));
+    Result = Appendˉbytes(Result, Encodeˉname(Input, Name));
+    return Appendˉbytes(Result, Contents);
+}
+
+fn Encodeˉsections(Input: bytes) -> bytes {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Result: bytes = Emptyˉbytes;
+    var Sectionˉname: Wvaˉtoken = Lineˉtoken(Input, Header, 0u32);
+    var Sectionˉkind: u32 = 0u32;
+    var Sectionˉalignment: u32 = 0u32;
+    var Sectionˉmemory: u32 = 0u32;
+    var Sectionˉcontents: bytes = Emptyˉbytes;
+    var Insideˉdefinition: bool = false;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") {
+            Sectionˉkind = Sectionˉkindˉtag(Input, Lineˉtoken(Input, Current, 1u32));
+            Sectionˉname = Lineˉtoken(Input, Current, 2u32);
+            let Parsedˉalignment: Wvaˉu32ˉparse = Parseˉu32(
+                Input,
+                Lineˉtoken(Input, Current, 4u32)
+            );
+            Sectionˉalignment = Parsedˉalignment.Value;
+            Sectionˉmemory = 0u32;
+            Sectionˉcontents = Emptyˉbytes;
+        } else {
+            if Tokenˉequalsˉtext(Input, First, "define") {
+                Insideˉdefinition = true;
+            } else {
+                if Lineˉisˉend(Input, Current, "define") {
+                    Insideˉdefinition = false;
+                } else {
+                    if Lineˉisˉend(Input, Current, "section") {
+                        Result = Appendˉbytes(
+                            Result,
+                            Encodeˉsectionˉrecord(
+                                Input,
+                                Sectionˉname,
+                                Sectionˉkind,
+                                Sectionˉalignment,
+                                Sectionˉmemory,
+                                Sectionˉcontents
+                            )
+                        );
+                    } else {
+                        if Insideˉdefinition {
+                            let Statement: Wvaˉstatementˉcheck = Checkˉstatement(
+                                Input,
+                                Current,
+                                Sectionˉkind
+                            );
+                            Sectionˉmemory = Sectionˉmemory + Statement.Size;
+                            if Sectionˉkind != 4u32 {
+                                Sectionˉcontents = Appendˉbytes(
+                                    Sectionˉcontents,
+                                    Encodeˉstatement(Input, Current, Sectionˉkind)
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Result;
+}
+
+fn Findˉdefinitionˉrange(Input: bytes, Name: Wvaˉtoken) -> Wvaˉdefinitionˉrange {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Nextˉsectionˉindex: u32 = 0u32;
+    var Currentˉsectionˉindex: u32 = 0u32;
+    var Currentˉsectionˉkind: u32 = 0u32;
+    var Currentˉoffset: u32 = 0u32;
+    var Definitionˉoffset: u32 = 0u32;
+    var Insideˉdefinition: bool = false;
+    var Wantedˉdefinition: bool = false;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") {
+            Currentˉsectionˉindex = Nextˉsectionˉindex;
+            Nextˉsectionˉindex = Nextˉsectionˉindex + 1u32;
+            Currentˉsectionˉkind = Sectionˉkindˉtag(Input, Lineˉtoken(Input, Current, 1u32));
+            Currentˉoffset = 0u32;
+        } else {
+            if Tokenˉequalsˉtext(Input, First, "define") {
+                Insideˉdefinition = true;
+                let Definitionˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 1u32);
+                Wantedˉdefinition = Spansˉequal(
+                    Input,
+                    Name.Offset,
+                    Name.Length,
+                    Definitionˉname.Offset,
+                    Definitionˉname.Length
+                );
+                if Wantedˉdefinition { Definitionˉoffset = Currentˉoffset; }
+            } else {
+                if Lineˉisˉend(Input, Current, "define") {
+                    if Wantedˉdefinition {
+                        return Wvaˉdefinitionˉrange(
+                            true,
+                            Currentˉsectionˉindex,
+                            Definitionˉoffset,
+                            Currentˉoffset - Definitionˉoffset
+                        );
+                    }
+                    Insideˉdefinition = false;
+                    Wantedˉdefinition = false;
+                } else {
+                    if Insideˉdefinition {
+                        let Statement: Wvaˉstatementˉcheck = Checkˉstatement(
+                            Input,
+                            Current,
+                            Currentˉsectionˉkind
+                        );
+                        Currentˉoffset = Currentˉoffset + Statement.Size;
+                    }
+                }
+            }
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Wvaˉdefinitionˉrange(false, 0u32, 0u32, 0u32);
+}
+
+fn Encodeˉsymbolˉrecord(
+    Input: bytes,
+    Name: Wvaˉtoken,
+    Binding: u32,
+    Kind: u32,
+    Sectionˉindex: u32,
+    Offset: u32,
+    Size: u32
+) -> bytes {
+    var Result: bytes = Singleˉbyte(Binding);
+    Result = Appendˉbytes(Result, Singleˉbyte(Kind));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Sectionˉindex));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Offset));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Size));
+    return Appendˉbytes(Result, Encodeˉname(Input, Name));
+}
+
+fn Encodeˉsymbols(Input: bytes) -> bytes {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Result: bytes = Emptyˉbytes;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") { return Result; }
+        let Binding: u32 = Bindingˉtag(Input, Lineˉtoken(Input, Current, 1u32));
+        let Kind: u32 = Symbolˉkindˉtag(Input, Lineˉtoken(Input, Current, 2u32));
+        let Name: Wvaˉtoken = Lineˉtoken(Input, Current, 3u32);
+        var Sectionˉindex: u32 = 4294967295u32;
+        var Offset: u32 = 0u32;
+        var Size: u32 = 0u32;
+        if Binding != 3u32 {
+            let Range: Wvaˉdefinitionˉrange = Findˉdefinitionˉrange(Input, Name);
+            Sectionˉindex = Range.Sectionˉindex;
+            Offset = Range.Offset;
+            Size = Range.Size;
+        }
+        Result = Appendˉbytes(
+            Result,
+            Encodeˉsymbolˉrecord(Input, Name, Binding, Kind, Sectionˉindex, Offset, Size)
+        );
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Result;
+}
+
+fn Findˉsymbolˉindex(Input: bytes, Nameˉoffset: u32, Nameˉlength: u32) -> u32 {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Index: u32 = 0u32;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") { return 0u32; }
+        let Name: Wvaˉtoken = Lineˉtoken(Input, Current, 3u32);
+        if Spansˉequal(Input, Nameˉoffset, Nameˉlength, Name.Offset, Name.Length) {
+            return Index;
+        }
+        Index = Index + 1u32;
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return 0u32;
+}
+
+fn Encodeˉrelocationˉrecord(
+    Kind: u32,
+    Sectionˉindex: u32,
+    Offset: u32,
+    Symbolˉindex: u32,
+    Addend: i32
+) -> bytes {
+    var Result: bytes = Singleˉbyte(Kind);
+    Result = Appendˉbytes(Result, Singleˉbyte(0u32));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Sectionˉindex));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Offset));
+    Result = Appendˉbytes(Result, Bytesˉfromˉu32ˉlittle(Symbolˉindex));
+    return Appendˉbytes(Result, Bytesˉfromˉi32ˉlittle(Addend));
+}
+
+fn Encodeˉrelocations(Input: bytes) -> bytes {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Result: bytes = Emptyˉbytes;
+    var Nextˉsectionˉindex: u32 = 0u32;
+    var Currentˉsectionˉindex: u32 = 0u32;
+    var Currentˉsectionˉkind: u32 = 0u32;
+    var Currentˉoffset: u32 = 0u32;
+    var Insideˉdefinition: bool = false;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") {
+            Currentˉsectionˉindex = Nextˉsectionˉindex;
+            Nextˉsectionˉindex = Nextˉsectionˉindex + 1u32;
+            Currentˉsectionˉkind = Sectionˉkindˉtag(Input, Lineˉtoken(Input, Current, 1u32));
+            Currentˉoffset = 0u32;
+        } else {
+            if Tokenˉequalsˉtext(Input, First, "define") {
+                Insideˉdefinition = true;
+            } else {
+                if Lineˉisˉend(Input, Current, "define") {
+                    Insideˉdefinition = false;
+                } else {
+                    if Insideˉdefinition {
+                        let Statement: Wvaˉstatementˉcheck = Checkˉstatement(
+                            Input,
+                            Current,
+                            Currentˉsectionˉkind
+                        );
+                        if Statement.Hasˉreference {
+                            let Symbolˉindex: u32 = Findˉsymbolˉindex(
+                                Input,
+                                Statement.Referenceˉoffset,
+                                Statement.Referenceˉlength
+                            );
+                            if Statement.Kind == 11u32 {
+                                Result = Appendˉbytes(
+                                    Result,
+                                    Encodeˉrelocationˉrecord(
+                                        1u32,
+                                        Currentˉsectionˉindex,
+                                        Currentˉoffset,
+                                        Symbolˉindex,
+                                        0
+                                    )
+                                );
+                            } else {
+                                Result = Appendˉbytes(
+                                    Result,
+                                    Encodeˉrelocationˉrecord(
+                                        2u32,
+                                        Currentˉsectionˉindex,
+                                        Currentˉoffset + 1u32,
+                                        Symbolˉindex,
+                                        -4
+                                    )
+                                );
+                            }
+                        }
+                        Currentˉoffset = Currentˉoffset + Statement.Size;
+                    }
+                }
+            }
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Result;
+}
+
+fn Encodingˉfailure(
+    Status: Wvaˉsemanticˉstatus,
+    Semantics: Wvaˉsemanticˉinspection,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Wvaˉobjectˉencoding {
+    return Wvaˉobjectˉencoding(
+        Status,
+        Emptyˉbytes,
+        0u32,
+        Semantics.Sections,
+        Semantics.Symbols,
+        Semantics.Relocations,
+        Offset,
+        Line,
+        Column
+    );
+}
+
+fn Encodeˉwva(Input: bytes) -> Wvaˉobjectˉencoding {
+    let Semantics: Wvaˉsemanticˉinspection = Inspectˉwvaˉsemantics(Input);
+    if Semantics.Status != Wvaˉsemanticˉstatus.Valid {
+        return Encodingˉfailure(
+            Semantics.Status,
+            Semantics,
+            Semantics.Failureˉoffset,
+            Semantics.Failureˉline,
+            Semantics.Failureˉcolumn
+        );
+    }
+    let Measured: Wvaˉobjectˉsize = Measureˉwvo(Input, Semantics);
+    if !Measured.Valid {
+        return Encodingˉfailure(
+            Wvaˉsemanticˉstatus.Wva1011,
+            Semantics,
+            Measured.Failureˉoffset,
+            Measured.Failureˉline,
+            Measured.Failureˉcolumn
+        );
+    }
+
+    var Result: bytes = Encodeˉwvoˉheader(
+        Semantics.Sections,
+        Semantics.Symbols,
+        Semantics.Relocations
+    );
+    Result = Appendˉbytes(Result, Encodeˉsections(Input));
+    Result = Appendˉbytes(Result, Encodeˉsymbols(Input));
+    Result = Appendˉbytes(Result, Encodeˉrelocations(Input));
+    if Bytesˉlength(Result) != Measured.Bytes {
+        return Encodingˉfailure(
+            Wvaˉsemanticˉstatus.Wva1011,
+            Semantics,
+            Bytesˉlength(Input),
+            Semantics.Failureˉline,
+            Semantics.Failureˉcolumn
+        );
+    }
+    return Wvaˉobjectˉencoding(
+        Wvaˉsemanticˉstatus.Valid,
+        Result,
+        Measured.Bytes,
+        Semantics.Sections,
+        Semantics.Symbols,
+        Semantics.Relocations,
+        Bytesˉlength(Input),
+        Semantics.Failureˉline,
+        Semantics.Failureˉcolumn
+    );
+}
+
 fn Statusˉtext(Status: Wvaˉscanˉstatus) -> text {
     if Status == Wvaˉscanˉstatus.Valid { return "valid"; }
     if Status == Wvaˉscanˉstatus.Sourceˉtooˉlarge { return "source_too_large"; }
@@ -2016,6 +2630,17 @@ fn Describeˉsemantics(Result: Wvaˉsemanticˉinspection) -> text {
     Description = Textˉconcat(Description, Textˉconcat(" relocations=", U32ˉformat(Result.Relocations)));
     Description = Textˉconcat(Description, Textˉconcat(" data-bytes=", U32ˉformat(Result.Dataˉbytes)));
     Description = Textˉconcat(Description, Textˉconcat(" memory-bytes=", U32ˉformat(Result.Memoryˉbytes)));
+    Description = Textˉconcat(Description, Textˉconcat(" offset=", U32ˉformat(Result.Failureˉoffset)));
+    Description = Textˉconcat(Description, Textˉconcat(" line=", U32ˉformat(Result.Failureˉline)));
+    return Textˉconcat(Description, Textˉconcat(" column=", U32ˉformat(Result.Failureˉcolumn)));
+}
+
+fn Describeˉencoding(Result: Wvaˉobjectˉencoding) -> text {
+    var Description: text = Textˉconcat("assembly status=", Semanticˉstatusˉtext(Result.Status));
+    Description = Textˉconcat(Description, Textˉconcat(" object-bytes=", U32ˉformat(Result.Objectˉbytes)));
+    Description = Textˉconcat(Description, Textˉconcat(" sections=", U32ˉformat(Result.Sections)));
+    Description = Textˉconcat(Description, Textˉconcat(" symbols=", U32ˉformat(Result.Symbols)));
+    Description = Textˉconcat(Description, Textˉconcat(" relocations=", U32ˉformat(Result.Relocations)));
     Description = Textˉconcat(Description, Textˉconcat(" offset=", U32ˉformat(Result.Failureˉoffset)));
     Description = Textˉconcat(Description, Textˉconcat(" line=", U32ˉformat(Result.Failureˉline)));
     return Textˉconcat(Description, Textˉconcat(" column=", U32ˉformat(Result.Failureˉcolumn)));
@@ -2085,30 +2710,46 @@ fn Runˉselfˉtests() -> i32 {
     );
     if Semanticˉheader.Status != Wvaˉsemanticˉstatus.Wva1001 { return 44; }
 
+    let Encoded: Wvaˉobjectˉencoding = Encodeˉwva(Textˉtoˉutf8(Validˉsource));
+    if Encoded.Status != Wvaˉsemanticˉstatus.Valid { return 45; }
+    if Encoded.Objectˉbytes != 79u32 { return 55; }
+    if Bytesˉlength(Encoded.Contents) != 79u32 { return 65; }
+    if Bytesˉreadˉu32ˉlittle(Encoded.Contents, 0u32) != 827283031u32 { return 75; }
+    if Bytesˉreadˉu32ˉlittle(Encoded.Contents, 12u32) != 1u32 { return 85; }
+    if Bytesˉreadˉu32ˉlittle(Encoded.Contents, 16u32) != 1u32 { return 95; }
+    if Bytesˉreadˉu8(Encoded.Contents, 49u32) != 184u8 { return 105; }
+    if Bytesˉreadˉi32ˉlittle(Encoded.Contents, 50u32) != 42 { return 115; }
+    if Bytesˉreadˉu8(Encoded.Contents, 54u32) != 195u8 { return 125; }
+
+    let Rejectedˉencoding: Wvaˉobjectˉencoding = Encodeˉwva(
+        Textˉtoˉutf8(Missingˉreferenceˉsource)
+    );
+    if Rejectedˉencoding.Status != Wvaˉsemanticˉstatus.Wva1009 { return 46; }
+    if Bytesˉlength(Rejectedˉencoding.Contents) != 0u32 { return 56; }
+
     Describeˉscan(Valid);
     Describeˉsemantics(Semantic);
+    Describeˉencoding(Encoded);
     return 0;
 }
 
-fn Runˉfileˉscan() -> i32 {
-    if process.argument_count() != 1u32 {
-        diagnostic.write_line("Usage: wvascan <source.wva>");
+fn Runˉfileˉassembly() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line("Usage: wvasm <source.wva> <output.wvo>");
         return 64;
     }
 
     let Input: bytes = file.read_bytes(process.argument(0u32));
-    let Result: Wvaˉscan = Scanˉwva(Input);
-    let Description: text = Describeˉscan(Result);
-    let Semantics: Wvaˉsemanticˉinspection = Inspectˉwvaˉsemantics(Input);
-    let Semanticˉdescription: text = Describeˉsemantics(Semantics);
-    if Semantics.Status != Wvaˉsemanticˉstatus.Valid {
-        diagnostic.write_line(Semanticˉdescription);
+    let Encoding: Wvaˉobjectˉencoding = Encodeˉwva(Input);
+    let Description: text = Describeˉencoding(Encoding);
+    if Encoding.Status != Wvaˉsemanticˉstatus.Valid {
+        diagnostic.write_line(Description);
         return 2;
     }
 
-    console.write_line("wvascan 1");
+    file.write_bytes(process.argument(1u32), Encoding.Contents);
+    console.write_line("wvasm 1");
     console.write_line(Description);
-    console.write_line(Semanticˉdescription);
     return 0;
 }
 
@@ -2116,5 +2757,5 @@ export fn Main() -> i32 {
     if process.argument_count() == 0u32 {
         return Runˉselfˉtests();
     }
-    return Runˉfileˉscan();
+    return Runˉfileˉassembly();
 }

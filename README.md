@@ -14,7 +14,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
 - A canonical x86-64-first WVO 1.0 object model with sections, symbols, relocations, a bounded C# oracle, and a Windvale-written producer/structural inspector
 - A versioned WVA 1 textual assembly contract and Stage 0 assembler that infers definition offsets/sizes and emits verified WVO objects
-- A Windvale-written bounded WVA scanner that validates strict UTF-8, source and line limits, line endings, comments, token boundaries, and the exact format header through explicit hosted input
+- A Windvale-written WVA assembler that performs bounded scanning and semantic validation, derives definition ranges, encodes the complete initial x86-64 instruction/data set, constructs canonical WVO objects, and writes only a fully accepted result
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
@@ -124,23 +124,25 @@ dotnet run --project Tools/Windvale.Tool -- object-verify artifacts/Hello-Object
 dotnet run --project Tools/Windvale.Tool -- object-inspect artifacts/Hello-Object.wvo
 ```
 
-The Stage 0 assembler emits exact x86-64 instruction bytes, derives symbol offsets and sizes from named definitions, and records unresolved relative and absolute fixups. It never performs link layout or import resolution. The same WVA contract anchors the Windvale frontend and remains the oracle for the following object-encoder slice.
+The Stage 0 assembler emits exact x86-64 instruction bytes, derives symbol offsets and sizes from named definitions, and records unresolved relative and absolute fixups. It never performs link layout or import resolution. The same WVA contract remains the recovery oracle for the Windvale-written implementation.
 
-Compile and run the Windvale-written WVA scanner and semantic inspector against that source:
+Compile and run the Windvale-written WVA assembler against that source:
 
 ```powershell
-dotnet run --project Tools/Windvale.Tool -- compile Examples/Assembler/Wva-Scanner-Core.wv -o artifacts/Wva-Scanner-Core.wvb
-dotnet run --project Tools/Windvale.Tool -- run artifacts/Wva-Scanner-Core.wvb `
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Assembler/Wva-Assembler-Core.wv -o artifacts/Wva-Assembler-Core.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Wva-Assembler-Core.wvb `
   --allow console.write_line `
   --allow diagnostic.write_line `
   --allow file.read_bytes `
+  --allow file.write_bytes `
   --allow process.argument `
   --allow process.argument_count `
   --max-steps 10000000 `
-  -- Examples/Assembler/Hello-Object.wva
+  -- Examples/Assembler/Hello-Object.wva artifacts/Hello-Object-Windvale.wvo
+dotnet run --project Tools/Windvale.Tool -- object-verify artifacts/Hello-Object-Windvale.wvo
 ```
 
-The frontend reads immutable bytes through one explicit capability, validates the complete WVA 1 declaration, section, definition, statement, numeric, ordering, limit, and reference model without host text parsing, and emits deterministic scan and semantic reports. With no program arguments it runs embedded valid and adversarial checks. Exact instruction/data encoding and WVO production are the next Windvale-written gate.
+The assembler validates the complete WVA 1 declaration, section, definition, statement, numeric, ordering, limit, and reference model without host text parsing. It measures the complete object, derives ranges and relocation indices through bounded passes, encodes exact instruction/data and canonical WVO records, and calls the hosted writer only after success. With no program arguments it runs embedded valid, adversarial, and encoding checks. Link layout and relocation application remain a separately owned future tool.
 
 ## Seed language example
 
@@ -209,7 +211,7 @@ export fn Main() -> i32 {
 - [Seed bytecode specification](Specifications/Seed-Bytecode.md)
 - [Windvale object format](Specifications/Windvale-Object-Format.md)
 - [Windvale textual assembly](Specifications/Windvale-Assembly.md)
-- [Windvale WVA scanner and semantic core](Specifications/Wva-Scanner-Core.md)
+- [Windvale WVA assembler core](Specifications/Wva-Assembler-Core.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
