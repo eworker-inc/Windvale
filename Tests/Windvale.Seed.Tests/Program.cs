@@ -14,14 +14,14 @@ namespace Windvale.Seed.Tests;
 
 internal static class Program
 {
-    private const string SUM_SHA256 = "64134dfd779b353c5e501c9c23337a0c3849bfef2c97a63a07913705b0f10c6b";
-    private const string HELLO_SHA256 = "43d565c304cf2e2f5d886ee30b1fabf0b2fbfb0c8cd28bd932d85d5add0bf504";
-    private const string FOUNDATION_SHA256 = "0cdf05f6c9e1fb1db0d5ab449207870b5e47cc248f187cd43cd9a5c3c9eee995";
-    private const string WVDUMP_CORE_SHA256 = "2957fc5523ae3ca16cf1aaeb9104c14a3342a0aefde9ac591bb689f744f1467f";
+    private const string SUM_SHA256 = "6f3a272d37dd8893995c7f85c236414ed2864bf59de2f3775c08afd426013f8c";
+    private const string HELLO_SHA256 = "bcf6597a27384661d2796f1dd8ee6e24cce8e6c7cb84def3b7826a564acb7d54";
+    private const string FOUNDATION_SHA256 = "72ae31559bb3335b320328c26e70518b6a0f3e617d099d41b328b066bb3784c7";
+    private const string WVDUMP_CORE_SHA256 = "38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b";
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
-    private const string WVO_CORE_SHA256 = "a5d574ea646946b159d95bd7e51434bfcbf7545083a54541438a79a2e5e999df";
+    private const string WVO_CORE_SHA256 = "76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_ASSEMBLER_CORE_SHA256 = "7dbcf042f011adab5a04670973fc17b6b63d50fb08c09e8e54c3a4adb2c00825";
+    private const string WVA_ASSEMBLER_CORE_SHA256 = "9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
 
@@ -93,7 +93,7 @@ internal static class Program
     private const string FOUNDATION_SOURCE = """
         module Readˉwvbˉheader profile portable;
 
-        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0];
+        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0];
 
         fn Headerˉisˉvalid(Input: bytes) -> bool {
             if Bytesˉlength(Input) != 12u32 {
@@ -120,7 +120,7 @@ internal static class Program
             if Version != 1u32 {
                 return false;
             }
-            if Minorˉversion != 5u32 {
+            if Minorˉversion != 6u32 {
                 return false;
             }
             if Sectionˉcount != 7u32 {
@@ -317,6 +317,9 @@ internal static class Program
                 console.write(Resourceˉname);
                 console.write_line(Textˉconcat(":", process.argument(1u32)));
                 let Input: bytes = file.read_bytes(Resourceˉname);
+                let Sameˉinput: bytes = file.read_bytes(Resourceˉname);
+                if Bytesˉlength(Sameˉinput) != 3u32 { return 2; }
+                if Bytesˉreadˉu8(Sameˉinput, 0u32) != 87u8 { return 3; }
                 file.write_bytes(process.argument(1u32), Input);
                 console.write_line(Textˉconcat("bytes=", U32ˉformat(Bytesˉlength(Input))));
                 diagnostic.write_line("note");
@@ -358,6 +361,7 @@ internal static class Program
                 Fileˉwriter)),
             new(Authorized));
         Equal(0, Runtime.Runˉmain().Exitˉcode);
+        Equal(1, Files.Readˉcount);
         Equal("input.wvb:tail\nbytes=3\n", Output.ToString());
         Equal("note\n", Diagnostics.ToString());
         Equal(1, Fileˉwriter.Writeˉcount);
@@ -421,6 +425,32 @@ internal static class Program
                     ImmutableArray.Create(new byte[Maximumˉbytes + 1])))),
             Fileˉauthorization);
         Throwsˉruntime("WVR3025", () => _ = Oversizedˉruntime.Runˉmain());
+
+        var Snapshotˉreader = new Testˉfileˉreader((_, _) => [1]);
+        var Snapshotˉcontext = new Hostedˉresourceˉcontext(
+            [],
+            TextWriter.Null,
+            TextWriter.Null,
+            Snapshotˉreader);
+        var Snapshotˉhost = new Referenceˉcapabilityˉhost(Snapshotˉcontext);
+        var Readˉcapability = Fileˉmodule.Module.Capabilities.Single();
+        for (var Index = 0; Index < Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS; Index++)
+        {
+            _ = Snapshotˉhost.Invoke(
+                Readˉcapability,
+                [Runtimeˉvalue.Fromˉtext($"input-{Index}.wvo")]);
+        }
+
+        Equal(Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS, Snapshotˉreader.Readˉcount);
+        _ = new Referenceˉcapabilityˉhost(Snapshotˉcontext).Invoke(
+            Readˉcapability,
+            [Runtimeˉvalue.Fromˉtext("input-0.wvo")]);
+        Equal(Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS, Snapshotˉreader.Readˉcount);
+        Throwsˉruntime(
+            "WVR3028",
+            () => _ = Snapshotˉhost.Invoke(
+                Readˉcapability,
+                [Runtimeˉvalue.Fromˉtext("input-over-limit.wvo")]));
 
         const string Invalidˉresult = """
             module Invalidˉhostˉresult profile hosted;
@@ -710,7 +740,7 @@ internal static class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Equal(Dataˉtype.Bytes, Module.Module.Data.Single().Type);
         var Data = (Bytesˉdataˉdeclaration)Module.Module.Data.Single();
-        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 5, 0, 7, 0, 0, 0], Data.Values);
+        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0], Data.Values);
         True(
             Module.Module.Functions.SelectMany(Function => Function.Allˉlocalˉtypes)
                 .Contains(Valueˉtype.Bytes),
@@ -803,6 +833,13 @@ internal static class Program
         const string Source = """
             module Foundationˉbyteˉconstruction profile portable;
 
+            data Expectedˉdigest: bytes = [
+                48, 53, 101, 101, 51, 101, 101, 99, 102, 97, 98, 55, 55, 49, 99, 57,
+                53, 100, 55, 56, 51, 102, 53, 48, 48, 100, 50, 55, 101, 101, 101, 52,
+                101, 53, 52, 99, 100, 53, 49, 56, 57, 100, 99, 52, 54, 57, 56, 101,
+                99, 52, 97, 54, 55, 102, 100, 51, 99, 100, 101, 57, 55, 97, 52, 98
+            ];
+
             export fn Main() -> i32 {
                 var Encoded: bytes = Bytesˉfromˉu8(171u8);
                 Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu16ˉlittle(4660u32));
@@ -817,6 +854,13 @@ internal static class Program
                 if Bytesˉreadˉu8(Encoded, 11u32) != 87u8 { return 6; }
                 if Bytesˉreadˉu8(Encoded, 12u32) != 86u8 { return 7; }
                 if Bytesˉreadˉu8(Encoded, 13u32) != 79u8 { return 8; }
+                let Digest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Bytesˉslice(Encoded, 11u32, 3u32)));
+                if Bytesˉlength(Digest) != Bytesˉlength(Expectedˉdigest) { return 9; }
+                var Digestˉoffset: u32 = 0u32;
+                while Digestˉoffset < Bytesˉlength(Expectedˉdigest) {
+                    if Bytesˉreadˉu8(Digest, Digestˉoffset) != Bytesˉreadˉu8(Expectedˉdigest, Digestˉoffset) { return 10; }
+                    Digestˉoffset = Digestˉoffset + 1u32;
+                }
                 return 0;
             }
             """;
@@ -829,6 +873,7 @@ internal static class Program
         Contains(Inspection, "bytes.from_u16_little");
         Contains(Inspection, "bytes.from_u32_little");
         Contains(Inspection, "bytes.from_i32_little");
+        Contains(Inspection, "bytes.sha256_hex");
         Contains(Inspection, "text.to_utf8");
         Equal(0, new Referenceˉruntime(
             Module,
@@ -941,7 +986,7 @@ internal static class Program
         Equal(
             """
             wvdump 1
-            module version=1.5 profile=portable name="A"
+            module version=1.6 profile=portable name="A"
             section name=module offset=20 bytes=6 count=1
             section name=capabilities offset=34 bytes=4 count=0
             section name=data offset=46 bytes=4 count=0
@@ -952,6 +997,26 @@ internal static class Program
             """.Replace("\r\n", "\n", StringComparison.Ordinal) + "\n",
             Hostedˉoutput.ToString());
         Equal(string.Empty, Hostedˉdiagnostics.ToString());
+
+        const string Hashˉsource = """
+            module Hashˉinspection profile portable;
+            data Value: bytes = [1, 2, 3];
+            export fn Main() -> i32 {
+                Bytesˉsha256ˉhex(Value);
+                return 0;
+            }
+            """;
+        var Hashˉmoduleˉbytes = Compileˉsuccess(Hashˉsource);
+        var Hashˉoutput = new StringWriter();
+        Equal(0, new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["hash.wvb"],
+                Hashˉoutput,
+                TextWriter.Null,
+                new Testˉfileˉreader((_, _) => Hashˉmoduleˉbytes.ToImmutableArray()))),
+            new(Authorized)).Runˉmain().Exitˉcode);
+        Contains(Hashˉoutput.ToString(), "opcode=bytes.sha256_hex");
 
         var Malformedˉpayload = Validˉdata.Values.ToArray();
         var Dataˉpayload = Findˉsectionˉpayload(Malformedˉpayload, Sectionˉkind.Data);
@@ -2910,7 +2975,7 @@ internal static class Program
         Equal(0, Wvˉdumpˉresult.Exitˉcode);
         Equal(0, Wvˉdumpˉhostedˉresult.Exitˉcode);
         Equal(string.Empty, Wvˉdumpˉhostedˉdiagnostics.ToString());
-        Contains(Normalizedˉwvdumpˉoutput, "module version=1.5 profile=portable name=\"Sum\\u02C9data\"");
+        Contains(Normalizedˉwvdumpˉoutput, "module version=1.6 profile=portable name=\"Sum\\u02C9data\"");
         Contains(Normalizedˉwvdumpˉoutput, "instruction function=1 offset=141 opcode=call operand=0");
         Contains(Normalizedˉwvdumpˉoutput, "export index=0 name=\"Main\" kind=function target=1");
         Equal(0, Wvoˉselfˉtestˉresult.Exitˉcode);
@@ -3340,8 +3405,11 @@ internal static class Program
     private sealed class Testˉfileˉreader(
         Func<string, int, ImmutableArray<byte>> read) : IHostedˉfileˉreader
     {
+        public int Readˉcount { get; private set; }
+
         public ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes)
         {
+            Readˉcount++;
             return read(resourceˉname, maximumˉbytes);
         }
     }

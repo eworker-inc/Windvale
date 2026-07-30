@@ -636,6 +636,10 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Bytes);
                 break;
+            case Opcode.Bytesˉsha256ˉhex:
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Text);
+                break;
             case Opcode.Textˉtoˉutf8:
                 Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Bytes);

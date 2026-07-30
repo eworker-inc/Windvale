@@ -134,6 +134,7 @@ public enum Opcode : byte
     Bytesˉfromˉu32ˉlittle = 0x7A,
     Bytesˉfromˉi32ˉlittle = 0x7B,
     Textˉtoˉutf8 = 0x7C,
+    Bytesˉsha256ˉhex = 0x7D,
 
     Jump = 0x30,
     Branchˉfalse = 0x31,

@@ -30,6 +30,7 @@ internal static class Foundationˉintrinsics
     public const string BYTES_FROM_U16_LITTLE = "Bytesˉfromˉu16ˉlittle";
     public const string BYTES_FROM_U32_LITTLE = "Bytesˉfromˉu32ˉlittle";
     public const string BYTES_FROM_I32_LITTLE = "Bytesˉfromˉi32ˉlittle";
+    public const string BYTES_SHA256_HEX = "Bytesˉsha256ˉhex";
     public const string TEXT_TO_UTF8 = "Textˉtoˉutf8";
     public const string ENUM_NAME = "Enumˉname";
 
@@ -107,6 +108,11 @@ internal static class Foundationˉintrinsics
                 [Valueˉtype.I32],
                 Valueˉtype.Bytes,
                 Wirˉoperation.Bytesˉfromˉi32ˉlittle),
+            new(
+                BYTES_SHA256_HEX,
+                [Valueˉtype.Bytes],
+                Valueˉtype.Text,
+                Wirˉoperation.Bytesˉsha256ˉhex),
             new(TEXT_TO_UTF8, [Valueˉtype.Text], Valueˉtype.Bytes, Wirˉoperation.Textˉtoˉutf8),
         }.ToImmutableDictionary(Declaration => Declaration.Name, StringComparer.Ordinal);
 

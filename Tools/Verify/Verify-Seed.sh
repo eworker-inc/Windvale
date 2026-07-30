@@ -124,7 +124,7 @@ WVDUMP_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CO
     --max-steps 10000000 \
     -- "$SUM_MODULE")
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'wvdump 1' >/dev/null
-printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'module version=1.5 profile=portable name="Sum\u02C9data"' >/dev/null
+printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'module version=1.6 profile=portable name="Sum\u02C9data"' >/dev/null
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'data index=0 name="Values" type=i32_array elements=4' >/dev/null
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'instruction function=1 offset=141 opcode=call operand=0' >/dev/null
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'export index=0 name="Main" kind=function target=1' >/dev/null

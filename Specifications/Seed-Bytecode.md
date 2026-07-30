@@ -2,7 +2,7 @@
 
 ## Status
 
-This document specifies Windvale bytecode module version 1.5 used by Seed. Windvale is in early development; version 1.5 identifies the binary grammar and is not yet a long-term compatibility promise. Version 1.5 adds the immutable byte construction and strict text encoding required by the first Windvale-written object producer. It does not require a backward reader for versions 1.0 through 1.4.
+This document specifies Windvale bytecode module version 1.6 used by Seed. Windvale is in early development; version 1.6 identifies the binary grammar and is not yet a long-term compatibility promise. Version 1.6 adds the exact SHA-256 identity operation required by the accepted deterministic linker-map contract. It does not require a backward reader for versions 1.0 through 1.5.
 
 ## Encoding
 
@@ -19,7 +19,7 @@ This document specifies Windvale bytecode module version 1.5 used by Seed. Windv
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 5
+u16      minor version: 6
 u32      section count: 7
 ```
 
@@ -221,6 +221,7 @@ Function parameter, result, local, and record-field types use a value shape. A p
 7A bytes.from_u32_little consumes u32, produces four bytes
 7B bytes.from_i32_little consumes i32, produces four two's-complement bytes
 7C text.to_utf8       consumes text, produces its strict UTF-8 bytes
+7D bytes.sha256_hex   consumes bytes, produces 64 lowercase ASCII hex characters
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -242,7 +243,7 @@ Verification is required before execution and rejects a module unless:
 - Every local, data, function, and capability index is valid and has the required type.
 - Every record or enum declaration, nominal shape, constructor operand, field access, enum constant, and enum comparison has valid nominal identity and exact types.
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
-- Strict UTF-8 decoding and encoding, safe quoting, signed little-endian reads, fixed-width byte construction, byte concatenation, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
+- Strict UTF-8 decoding and encoding, safe quoting, signed little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
 - Calls consume the declared parameter types and push only a non-void result.
 - Returns match the function return type.

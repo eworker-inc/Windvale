@@ -20,13 +20,13 @@ diagnostic.write_line(Value: text) -> void
 
 A module must use the `hosted` or `system` profile, declare every capability it calls, and receive an exact grant for every declared capability before execution. Declaration is not authorization. The runtime also asks the selected host adapter whether every declared capability is implemented before executing the first instruction. Unsupported capability `WVR3001` and unauthorized capability `WVR3010` are distinct failures.
 
-Capability declarations remain ordinary canonical WVB 1.5 imports. Adding catalog entries does not itself change the module envelope or instruction set.
+Capability declarations remain ordinary canonical WVB 1.6 imports. Adding catalog entries does not itself change the module envelope or instruction set.
 
 ## Arguments
 
 Arguments are an ordered immutable snapshot supplied by the launcher after the `--` separator. They do not include the module path, launcher options, environment variables, or an ambient process command line.
 
-- At most 64 arguments are accepted.
+- At most 67 arguments are accepted. This admits the Windvale linker shell's base address, entry name, output resource, and 64 ordered input resources without adding a second argument transport.
 - Each argument is valid Unicode and at most 4 KiB when encoded as strict UTF-8.
 - The complete argument snapshot is at most 64 KiB of strict UTF-8.
 - `process.argument_count` returns the snapshot count.
@@ -37,7 +37,7 @@ Arguments are an ordered immutable snapshot supplied by the launcher after the `
 
 `file.read_bytes` interprets its text as an opaque hosted resource name. The native Windows and Linux CLI adapter resolves that name using host path rules and the launcher's current working directory. Portable parsing code never sees or branches on those rules.
 
-The capability reads at most 4 MiB and returns one immutable `bytes` value. The native adapter uses a bounded streaming read so file growth cannot bypass the limit. Seed deliberately has no ambient current-directory query, enumeration, metadata, delete, or handle API.
+The capability reads at most 4 MiB and returns one immutable `bytes` value. The native adapter uses a bounded streaming read so file growth cannot bypass the limit. A hosted resource context snapshots the first successful read of each exact ordinal resource name; later reads of that name return the same immutable bytes without consulting the adapter again. At most 64 distinct file snapshots may be retained by one context. A 65th distinct name traps with `WVR3028`. Failed reads are not snapshots. Seed deliberately has no ambient current-directory query, enumeration, metadata, delete, or handle API.
 
 Expected file failures are stable runtime traps:
 
@@ -48,6 +48,7 @@ Expected file failures are stable runtime traps:
 | `WVR3023` | Access was denied. |
 | `WVR3024` | The resource is temporarily or operationally unavailable. |
 | `WVR3025` | The resource exceeds the byte-value limit. |
+| `WVR3028` | The hosted resource context already contains 64 distinct file snapshots. |
 
 These traps are not yet catchable in Seed source. A later result/error model may make selected failures recoverable without changing the capability's bounded allocation rule.
 
@@ -71,4 +72,4 @@ Host adapters translate expected native file read or write failures into `Hosted
 
 ## Deliberate limits
 
-Seed has no environment variables, standard input, file handles, directories, globbing, permissions API, asynchronous I/O, memory mapping, network resources, or platform path abstraction. File writing is deliberately whole-value and replacement-only. Add capabilities only when a Windvale-written tool demonstrates a concrete need.
+Seed has no environment variables, standard input, file handles, directories, globbing, permissions API, asynchronous I/O, memory mapping, network resources, or platform path abstraction. File writing is deliberately whole-value and replacement-only. The first-read cache is a deterministic run snapshot, not a coherent filesystem view: reading two different resource names that the host maps to one native file produces two independently acquired snapshots. Add capabilities only when a Windvale-written tool demonstrates a concrete need.

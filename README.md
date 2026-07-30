@@ -9,7 +9,7 @@ The intended stack includes a programming language, portable bytecode, a runtime
 Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provides:
 
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
-- Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, and explicit byte widening
+- Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
 - A canonical x86-64-first WVO 1.0 object model with sections, symbols, relocations, a bounded C# oracle, and a Windvale-written producer/structural inspector
@@ -21,7 +21,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A bounded binary reader and mandatory control-flow/type verifier
 - A human-readable module inspector and disassembler
 - A portable .NET reference runtime
-- Explicit hosted arguments, bounded file-byte input and output, standard output, separate diagnostics, support preflight, and exact capability authorization
+- Explicit hosted arguments, bounded first-read file snapshots and file output, standard output, separate diagnostics, support preflight, and exact capability authorization
 - Conformance, malformed-input, determinism, diagnostics, and runtime-limit coverage
 - One CLI with module `compile`, `inspect`, `verify`, and `run`, textual `assemble`, deterministic `link`, plus object `object-inspect` and `object-verify` commands
 
@@ -97,7 +97,7 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Wv-Dump-Core.wvb `
   -- artifacts/Sum-Data.wvb
 ```
 
-This hosted module reads an explicit file argument through a bounded capability while pure Windvale functions validate WVB 1.5, decode declarations and nominal shapes, walk every instruction, and emit a versioned ASCII-safe line report. It validates the complete module before normal output. With no program arguments it runs embedded valid and adversarial self-checks.
+This hosted module reads an explicit file argument through a bounded capability while pure Windvale functions validate WVB 1.6, decode declarations and nominal shapes, walk every instruction, and emit a versioned ASCII-safe line report. It validates the complete module before normal output. With no program arguments it runs embedded valid and adversarial self-checks.
 
 Compile the first Windvale-written WVO object producer, write its representative object through an explicit capability, and inspect it with the independent Stage 0 object reader:
 
@@ -244,6 +244,7 @@ export fn Main() -> i32 {
 - [Minimal object foundation decision](Documents/Decisions/0009-Minimal-Windvale-Object-Foundation.md)
 - [Minimal assembly contract decision](Documents/Decisions/0010-Minimal-Windvale-Assembly-Contract.md)
 - [Deterministic flat-image linker decision](Documents/Decisions/0011-Deterministic-Flat-Image-Linker.md)
+- [Windvale linker bootstrap prerequisites decision](Documents/Decisions/0012-Windvale-Linker-Bootstrap-Prerequisites.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

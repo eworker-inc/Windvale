@@ -40,6 +40,7 @@ internal enum Wirˉoperation
     Bytesˉfromˉu16ˉlittle,
     Bytesˉfromˉu32ˉlittle,
     Bytesˉfromˉi32ˉlittle,
+    Bytesˉsha256ˉhex,
     Textˉtoˉutf8,
     I32ˉadd,
     I32ˉsubtract,

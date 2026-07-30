@@ -113,12 +113,12 @@ The linker depends only on the object model. It does not parse WVA, encode instr
 - Nominal enum values, names, equality, and invariant bounded formatting
 - Bounded `u8`, little-endian `u16`, `u32`, and signed `i32` reads
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, and explicit `u8` to `u32` conversion
-- Immutable byte concatenation and fixed-width little-endian construction
+- Immutable byte concatenation, fixed-width little-endian construction, and exact SHA-256 identity
 - Immutable data access and bounds traps
 - Function frames and call-depth limits
 - Instruction accounting and execution limits
 - Capability authorization, host-support preflight, invocation, and return-value validation
-- Bounded launcher arguments, immutable hosted file input and output, deterministic console output, and separate diagnostics
+- Bounded launcher arguments, first-read immutable hosted file snapshots, bounded file output, deterministic console output, and separate diagnostics
 
 The interpreter uses ordinary portable .NET APIs and has no Windows-specific or Linux-specific execution path. Resources are injected through `ICapabilityˉhost`, keeping execution independent from ambient process arguments, files, and console state. The CLI owns the native path adapter and maps it into the hosted file contract.
 
@@ -134,13 +134,14 @@ The interpreter uses ordinary portable .NET APIs and has no Windows-specific or 
 - Text is encoded as strict UTF-8.
 - The conformance suite compares complete output bytes and fixed SHA-256 identities.
 
-The current bytecode 1.5 golden modules are:
+The current bytecode 1.6 golden modules are:
 
-- `Sumˉdata`: `64134dfd779b353c5e501c9c23337a0c3849bfef2c97a63a07913705b0f10c6b`
-- `Helloˉwindvale`: `43d565c304cf2e2f5d886ee30b1fabf0b2fbfb0c8cd28bd932d85d5add0bf504`
-- `Readˉwvbˉheader`: `0cdf05f6c9e1fb1db0d5ab449207870b5e47cc248f187cd43cd9a5c3c9eee995`
-- `Wvˉdumpˉcore`: `2957fc5523ae3ca16cf1aaeb9104c14a3342a0aefde9ac591bb689f744f1467f`
-- `Wvoˉobjectˉcore`: `a5d574ea646946b159d95bd7e51434bfcbf7545083a54541438a79a2e5e999df`
+- `Sumˉdata`: `6f3a272d37dd8893995c7f85c236414ed2864bf59de2f3775c08afd426013f8c`
+- `Helloˉwindvale`: `bcf6597a27384661d2796f1dd8ee6e24cce8e6c7cb84def3b7826a564acb7d54`
+- `Readˉwvbˉheader`: `72ae31559bb3335b320328c26e70518b6a0f3e617d099d41b328b066bb3784c7`
+- `Wvˉdumpˉcore`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`
+- `Wvoˉobjectˉcore`: `76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b`
+- `Wvaˉassemblerˉcore`: `9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a`
 
 The canonical WVO 1.0 representative object is 189 bytes with SHA-256 `006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a`.
 
@@ -159,7 +160,7 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 - The assembler rejects malformed structure, noncanonical declarations, mismatched definitions, invalid section contexts, unknown references, numeric-width violations, and objects that fail independent WVO verification.
 - The linker rejects malformed objects, aggregate-limit violations, duplicate exports, unresolved or kind-mismatched imports, invalid entry selection, image/address overflow, relocation overflow, and candidates that fail independent whole-image reconstruction.
 - Hosted capabilities must be declared in the module, separately authorized, supported by the selected adapter, and validated again on return.
-- Hosted arguments and file-byte reads/writes have strict count, UTF-8, and allocation bounds; normal and diagnostic output remain separate.
+- Hosted arguments and file-byte reads/writes have strict count, UTF-8, snapshot, and allocation bounds; normal and diagnostic output remain separate.
 - Runtime signed or unsigned overflow, array bounds, byte-range bounds, strict UTF-8 decoding, bounded text construction, instruction limits, call-depth limits, and hosted resource failures use stable runtime codes.
 
 ## Deliberate Seed limits
