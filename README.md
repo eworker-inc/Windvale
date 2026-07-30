@@ -4,7 +4,7 @@ Windvale is an MIT-licensed E-Worker Inc project building a small, understandabl
 
 The intended stack includes a programming language, portable bytecode, a runtime, an assembler, an object format, a linker, a compact foundation library, and eventually a small operating system. The operating system is the final integration demonstration; the language, tools, and runtime remain independently useful on Windows and Linux.
 
-The project's code and documentation are authored by AI systems under human direction and review. E-Worker Inc initiated and stewards the project. OpenAI Codex produced most of the initial implementation; future work may come from Codex or any other AI system. Windvale is model- and vendor-neutral. Naming an AI system records development history and does not imply sponsorship, affiliation, endorsement, or ownership by its provider.
+The project's code and documentation are authored entirely by AI systems under human direction and review. E-Worker Inc initiated and stewards the project. Windvale is model- and vendor-neutral. A particular system or provider is recorded only when technically, legally, or operationally material; such a record does not imply sponsorship, affiliation, endorsement, or ownership by its provider.
 
 As of July 2026, Windvale is among the earliest known open-source efforts to build this full breadth as one coherent, AI-authored stack from an empty project: its own source-language semantics, compiler, verified bytecode, runtime, assembler, object model, linker, Foundation library, native path, and operating system. Earlier AI-authored operating systems and language/toolchain projects exist; this claim concerns the combined scope, not priority for any one component.
 

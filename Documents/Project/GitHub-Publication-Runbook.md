@@ -8,7 +8,7 @@ The official repository is `eworker-inc/Windvale`. It was created privately, is 
 
 ## Accepted publication choices
 
-- Before public visibility, normalize the bootstrap history's non-routable `codex@codex-dev-vm.local` email to the verified `EWorkerAI` project-account address while preserving the factual `Codex` names, source trees, messages, timestamps, and parent order.
+- The one-time pre-public identity normalization is complete. Do not repeat it; preserve its evidence while continuing ordinary development from normalized `main`.
 - Preserve the pre-normalization tip under the evidence tag `evidence/pre-eworkerai-linkage` and publish a [complete old-to-new mapping](Bootstrap-Attribution-Migration.md) with tree-equivalence checks.
 - Keep the currently configured shared development remote named `origin` during preparation.
 - Add GitHub as a separate remote named `github`; do not replace or mirror over `origin`.
@@ -19,18 +19,16 @@ The official repository is `eworker-inc/Windvale`. It was created privately, is 
 - Use `E-Worker Inc <info@eworker.ca>` as the responsible committer and DCO signer.
 - Apply the Developer Certificate of Origin to new contributions prospectively. The identity normalization must not retrofit sign-offs onto bootstrap commits.
 
-## 1. Complete the one-time identity normalization
+## 1. Preserve the completed identity normalization
 
-Perform this migration only while the repository is private:
+The migration was completed while the repository was private and is recorded in [Bootstrap attribution migration](Bootstrap-Attribution-Migration.md). Its exact transformation values, commit mapping, and tree-equivalence results belong in that evidence record rather than current project narrative.
 
-1. Fetch both remotes and confirm that local, shared, and GitHub `main` identify the same clean tip.
-2. Create the annotated evidence tag `evidence/pre-eworkerai-linkage` at the pre-normalization tip.
-3. Rewrite only bootstrap author and committer email fields equal to `codex@codex-dev-vm.local`, replacing them with `246088022+EWorkerAI@users.noreply.github.com`. Preserve names, dates, messages, trees, and topology.
-4. Generate a complete old-to-new commit mapping. Verify equal commit counts, equal trees for every mapped pair, unchanged names/messages/dates except for the authorized email fields, and a clean checked-out tree.
-5. Update the private shared and GitHub `main` refs with `--force-with-lease`, using the inspected pre-normalization tips as the leases. Push the evidence tag explicitly; do not use a mirror push.
-6. Confirm through the GitHub API that the normalized bootstrap commits resolve to `EWorkerAI` while retaining `Codex` as their embedded author names.
+1. Keep `evidence/pre-eworkerai-linkage` and the mapping document available for qualification traceability.
+2. Do not rerun, extend, or reinterpret the migration as part of ordinary contribution work.
+3. Confirm that new E-Worker project-generated commits use the configured descriptive author, responsible committer, and DCO sign-off.
+4. Treat any future identity migration as a new governance decision with its own safety and evidence review.
 
-The mapping and evidence tag preserve the identity of previously qualified source snapshots. This metadata migration does not claim that cross-host tests were rerun or that old commits gained DCO sign-offs.
+The mapping and evidence tag preserve the identity of previously qualified source snapshots. The completed metadata migration did not claim that cross-host tests were rerun or that old commits gained DCO sign-offs.
 
 ## 2. Prepare the exact source state
 
