@@ -1,0 +1,23 @@
+module Foundationˉbyteˉordering profile portable;
+
+export fn Foundationˉbyteˉspansˉcompare(
+    Input: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> i32 {
+    var Index: u32 = 0u32;
+    var Limit: u32 = Leftˉlength;
+    if Rightˉlength < Limit { Limit = Rightˉlength; }
+    while Index < Limit {
+        let Leftˉvalue: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Leftˉoffset + Index));
+        let Rightˉvalue: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Rightˉoffset + Index));
+        if Leftˉvalue < Rightˉvalue { return -1; }
+        if Leftˉvalue > Rightˉvalue { return 1; }
+        Index = Index + 1u32;
+    }
+    if Leftˉlength < Rightˉlength { return -1; }
+    if Leftˉlength > Rightˉlength { return 1; }
+    return 0;
+}

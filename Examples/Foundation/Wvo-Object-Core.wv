@@ -1,5 +1,7 @@
 module Wvoˉobjectˉcore profile hosted;
 
+import Foundationˉbyteˉordering;
+
 capability console.write_line;
 capability diagnostic.write_line;
 capability file.write_bytes;
@@ -282,22 +284,6 @@ fn Scanˉstring(Input: bytes, Cursor: u32, End: u32) -> Wvoˉstringˉscan {
     return Wvoˉstringˉscan(Wvoˉstatus.Valid, Valueˉoffset + Length, Valueˉoffset, Length);
 }
 
-fn Compareˉnames(Input: bytes, Leftˉoffset: u32, Leftˉlength: u32, Rightˉoffset: u32, Rightˉlength: u32) -> i32 {
-    var Index: u32 = 0u32;
-    var Minimum: u32 = Leftˉlength;
-    if Rightˉlength < Minimum { Minimum = Rightˉlength; }
-    while Index < Minimum {
-        let Left: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Leftˉoffset + Index));
-        let Right: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Rightˉoffset + Index));
-        if Left < Right { return -1; }
-        if Left > Right { return 1; }
-        Index = Index + 1u32;
-    }
-    if Leftˉlength < Rightˉlength { return -1; }
-    if Leftˉlength > Rightˉlength { return 1; }
-    return 0;
-}
-
 fn Findˉsection(Input: bytes, Sectionˉstart: u32, Sectionˉcount: u32, Wanted: u32) -> Wvoˉsectionˉview {
     var Cursor: u32 = Sectionˉstart;
     var Index: u32 = 0u32;
@@ -380,7 +366,7 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
         if Sectionˉindex > 0u32 {
             if Sectionˉkind < Previousˉsectionˉkind { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉindex, 0u32, 0u32, Cursor); }
             if Sectionˉkind == Previousˉsectionˉkind {
-                if Compareˉnames(
+                if Foundationˉbyteˉspansˉcompare(
                     Input,
                     Previousˉsectionˉname,
                     Previousˉsectionˉnameˉlength,
@@ -431,7 +417,7 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
         if Symbolˉindex > 0u32 {
             if Symbolˉbinding < Previousˉbinding { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉindex, 0u32, Cursor); }
             if Symbolˉbinding == Previousˉbinding {
-                if Compareˉnames(
+                if Foundationˉbyteˉspansˉcompare(
                     Input,
                     Previousˉsymbolˉname,
                     Previousˉsymbolˉnameˉlength,

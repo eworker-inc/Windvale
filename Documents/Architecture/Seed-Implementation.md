@@ -146,10 +146,12 @@ The current bytecode 1.6 golden modules are:
 - `Compositionˉdemo`: `5d27c9667eb66e1abbf46b40d02ab3d4e01b94a421a93bffd0375a550440a612`
 - `Foundationˉmachineˉcontracts`: `9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a`
 - `Machineˉcontractsˉdemo`: `b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a`
+- `Foundationˉbyteˉordering`: `194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1`
+- `Foundationˉbyteˉorderingˉdemo`: `0b41e8f615630e0734812ba8cd8e7c06e975592b86327c2fe8220f5e29c10cab`
 - `Wvˉdumpˉcore`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`
-- `Wvoˉobjectˉcore`: `76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b`
-- `Wvaˉassemblerˉcore`: `5043d1b47686af72c04209875845021862dc664f960dae0a2c1d7babe051d842`
-- `Wvˉlinkerˉcore`: `ffedbf10782850c3cd693c4d8dc2b88b67b33a19714a0d8a489adb9fb728c96e`
+- `Wvoˉobjectˉcore`: `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`
+- `Wvaˉassemblerˉcore`: `92eb62466747e6747f2052efb46a7e5164ba472f2638cc014a4b6b202596b57f`
+- `Wvˉlinkerˉcore`: `88a828ee110d20dcb110a39849bbb9b19b56f746d7084041d5ecbaa3532a894c`
 
 The canonical WVO 1.0 representative object is 189 bytes with SHA-256 `006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a`.
 

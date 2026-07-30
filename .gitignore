@@ -33,6 +33,7 @@ packages/
 *.local
 .cert/
 .secrets/
+.eworker/
 
 # Virtual-machine and firmware artifacts
 *.vhd

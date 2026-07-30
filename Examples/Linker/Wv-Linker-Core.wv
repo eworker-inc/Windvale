@@ -1,6 +1,7 @@
 module Wvˉlinkerˉcore profile hosted;
 
 import Foundationˉmachineˉcontracts;
+import Foundationˉbyteˉordering;
 
 capability console.write;
 capability diagnostic.write_line;
@@ -283,28 +284,6 @@ fn Scanˉstring(Input: bytes, Cursor: u32, End: u32) -> Wvoˉstringˉscan {
     return Wvoˉstringˉscan(Wvoˉstatus.Valid, Valueˉoffset + Length, Valueˉoffset, Length);
 }
 
-fn Compareˉnames(
-    Input: bytes,
-    Leftˉoffset: u32,
-    Leftˉlength: u32,
-    Rightˉoffset: u32,
-    Rightˉlength: u32
-) -> i32 {
-    var Index: u32 = 0u32;
-    var Minimum: u32 = Leftˉlength;
-    if Rightˉlength < Minimum { Minimum = Rightˉlength; }
-    while Index < Minimum {
-        let Left: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Leftˉoffset + Index));
-        let Right: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Rightˉoffset + Index));
-        if Left < Right { return -1; }
-        if Left > Right { return 1; }
-        Index = Index + 1u32;
-    }
-    if Leftˉlength < Rightˉlength { return -1; }
-    if Leftˉlength > Rightˉlength { return 1; }
-    return 0;
-}
-
 fn Readˉsection(Input: bytes, Cursor: u32) -> Wvoˉsectionˉview {
     let Name: Wvoˉstringˉscan = Scanˉstring(Input, Cursor + 16u32, Bytesˉlength(Input));
     let Dataˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
@@ -417,7 +396,7 @@ fn Sectionˉnamesˉareˉunique(Input: bytes, Sectionˉcount: u32) -> bool {
         var Rightˉindex: u32 = Leftˉindex + 1u32;
         while Rightˉindex < Sectionˉcount {
             let Right: Wvoˉsectionˉview = Readˉsection(Input, Rightˉcursor);
-            if Compareˉnames(
+            if Foundationˉbyteˉspansˉcompare(
                 Input,
                 Left.Nameˉoffset,
                 Left.Nameˉlength,
@@ -464,7 +443,7 @@ fn Symbolˉrangesˉareˉdistinct(
         if Rightˉindex >= Rightˉcount { return true; }
         let Left: Wvoˉsymbolˉview = Readˉsymbol(Input, Leftˉcursor);
         let Right: Wvoˉsymbolˉview = Readˉsymbol(Input, Rightˉcursor);
-        let Comparison: i32 = Compareˉnames(
+        let Comparison: i32 = Foundationˉbyteˉspansˉcompare(
             Input,
             Left.Nameˉoffset,
             Left.Nameˉlength,
@@ -574,7 +553,7 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉscan {
         if Sectionˉindex > 0u32 {
             if Sectionˉkind < Previousˉkind { return Invalidˉscan(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉcount, Relocationˉcount, Cursor); }
             if Sectionˉkind == Previousˉkind {
-                if Compareˉnames(Input, Previousˉname, Previousˉnameˉlength, Sectionˉname.Valueˉoffset, Sectionˉname.Length) >= 0 {
+                if Foundationˉbyteˉspansˉcompare(Input, Previousˉname, Previousˉnameˉlength, Sectionˉname.Valueˉoffset, Sectionˉname.Length) >= 0 {
                     return Invalidˉscan(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉcount, Relocationˉcount, Sectionˉname.Valueˉoffset);
                 }
             }
@@ -625,7 +604,7 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉscan {
         if Symbolˉindex > 0u32 {
             if Symbolˉbinding < Previousˉbinding { return Invalidˉscan(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉcount, Relocationˉcount, Cursor); }
             if Symbolˉbinding == Previousˉbinding {
-                if Compareˉnames(Input, Previousˉname, Previousˉnameˉlength, Symbolˉname.Valueˉoffset, Symbolˉname.Length) >= 0 {
+                if Foundationˉbyteˉspansˉcompare(Input, Previousˉname, Previousˉnameˉlength, Symbolˉname.Valueˉoffset, Symbolˉname.Length) >= 0 {
                     return Invalidˉscan(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉcount, Relocationˉcount, Symbolˉname.Valueˉoffset);
                 }
             }

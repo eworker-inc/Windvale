@@ -10,7 +10,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
 - Bounded deterministic compile-time source-module composition with explicit transitive dependencies and no runtime linkage
-- A first two-consumer portable Foundation module for bounded machine names and alignments, used by both the Windvale assembler and linker
+- Portable Foundation modules for bounded machine contracts and ordinal byte-span ordering, driven by the object core, assembler, and linker
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
@@ -98,6 +98,19 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Machine-Contracts-Demo
 
 The module exposes the exact alignment and ASCII machine-name predicates shared by the Windvale assembler and linker. The boundary demo returns `Result: 0`.
 
+Compile and run the shared ordinal byte-span contract:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Foundation/Byte-Ordering.wv -o artifacts/Byte-Ordering.wvb
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Foundation/Byte-Ordering-Demo.wv `
+  --module Foundation/Byte-Ordering.wv `
+  -o artifacts/Byte-Ordering-Demo.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Byte-Ordering-Demo.wvb
+```
+
+The module compares validated spans of one immutable byte value without allocation or text decoding. The WVO object core, assembler, and linker share it for canonical name ordering; the demo returns `Result: 0`.
+
 Compile and run the transitive source-module composition example:
 
 ```powershell
@@ -131,7 +144,10 @@ This hosted module reads an explicit file argument through a bounded capability 
 Compile the first Windvale-written WVO object producer, write its representative object through an explicit capability, and inspect it with the independent Stage 0 object reader:
 
 ```powershell
-dotnet run --project Tools/Windvale.Tool -- compile Examples/Foundation/Wvo-Object-Core.wv -o artifacts/Wvo-Object-Core.wvb
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Foundation/Wvo-Object-Core.wv `
+  --module Foundation/Byte-Ordering.wv `
+  -o artifacts/Wvo-Object-Core.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Wvo-Object-Core.wvb `
   --allow console.write_line `
   --allow diagnostic.write_line `
@@ -162,6 +178,7 @@ Compile and run the Windvale-written WVA assembler against that source:
 dotnet run --project Tools/Windvale.Tool -- compile `
   Examples/Assembler/Wva-Assembler-Core.wv `
   --module Foundation/Machine-Contracts.wv `
+  --module Foundation/Byte-Ordering.wv `
   -o artifacts/Wva-Assembler-Core.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Wva-Assembler-Core.wvb `
   --allow console.write_line `
@@ -265,6 +282,7 @@ export fn Main() -> i32 {
 - [Windvale linking contract](Specifications/Windvale-Linking.md)
 - [Windvale linker core](Specifications/Wv-Linker-Core.md)
 - [Foundation machine contracts](Specifications/Foundation-Machine-Contracts.md)
+- [Foundation ordinal byte-span ordering](Specifications/Foundation-Byte-Ordering.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
@@ -288,6 +306,7 @@ export fn Main() -> i32 {
 - [Canonical Windvale map and publication decision](Documents/Decisions/0018-Canonical-Windvale-Map-And-Publication.md)
 - [Bounded static source-module composition decision](Documents/Decisions/0019-Bounded-Static-Source-Module-Composition.md)
 - [First two-consumer Foundation module decision](Documents/Decisions/0020-First-Two-Consumer-Foundation-Module.md)
+- [Shared ordinal byte-span ordering decision](Documents/Decisions/0021-Shared-Ordinal-Byte-Span-Ordering.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 
