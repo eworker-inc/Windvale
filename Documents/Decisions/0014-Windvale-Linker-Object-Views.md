@@ -1,7 +1,7 @@
 # Decision 0014: Windvale linker object views
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `3eb331a`
 
 ## Context
 
