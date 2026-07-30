@@ -1,7 +1,7 @@
 # Decision 0010: Minimal Windvale assembly contract
 
 - Date: 2026-07-29
-- Status: Accepted; Stage 0 implementation and cross-host qualification pending
+- Status: Accepted; Stage 0 implementation cross-host qualified at `3bfc6bb`
 
 ## Context
 

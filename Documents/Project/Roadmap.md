@@ -29,4 +29,4 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 
 ## Current focus
 
-Phase 5 is qualified at commit `f87a5fa`. Phase 6 now has a WVA 1 contract and Stage 0 candidate: a bounded line grammar, canonical symbol/section declarations, named definition ranges, a deliberately small x86-64 instruction/data subset, stable diagnostics, and mandatory WVO verification. Its exact example object must qualify on Windows and Debian before the grammar becomes the oracle target for the verified Windvale-written assembler. Link layout, resolution, relocation application, and final image output remain a separate following boundary.
+Phase 6's WVA 1 Stage 0 contract is qualified at `3bfc6bb`: the exact archive passed 26 tests and real CLI assembly on Windows and Debian, and both hosts produced the same verified `Hello-Object.wvo` bytes. The current implementation focus is now the verified Windvale-written WVA parser/encoder against that oracle. Phase 6 remains incomplete until the Windvale module emits the same canonical objects; link layout, resolution, relocation application, and final image output remain a separate following boundary.
