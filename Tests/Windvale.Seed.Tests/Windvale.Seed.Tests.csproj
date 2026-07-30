@@ -31,5 +31,11 @@
     <EmbeddedResource
       Include="../../Examples/Foundation/Wvo-Object-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wvo-Object-Core.wv" />
+    <EmbeddedResource
+      Include="../../Foundation/Machine-Contracts.wv"
+      LogicalName="Windvale.Seed.Tests.Machine-Contracts.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Foundation/Machine-Contracts-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Machine-Contracts-Demo.wv" />
   </ItemGroup>
 </Project>
