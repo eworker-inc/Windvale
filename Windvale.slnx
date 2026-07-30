@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Assembler/">
+    <Project Path="Assembler/Windvale.Assembler/Windvale.Assembler.csproj" />
+  </Folder>
   <Folder Name="/Compiler/">
     <Project Path="Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
   </Folder>

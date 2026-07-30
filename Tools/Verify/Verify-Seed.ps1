@@ -48,6 +48,7 @@ $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvoSample = Join-Path $Artifacts 'Sample.wvo'
+$AssemblyObject = Join-Path $Artifacts 'Hello-Object.wvo'
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
 
@@ -260,6 +261,30 @@ if (Test-Path -LiteralPath $MissingWriterParent) {
 $WvoMissingParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities -- (Join-Path $MissingWriterParent 'Sample.wvo') 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvoMissingParentOutput -join "`n") -notmatch 'WVR3022') {
     throw 'The hosted file writer did not report a missing parent deterministically.'
+}
+
+$AssemblyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- assemble (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') -o $AssemblyObject
+if (
+    $LASTEXITCODE -ne 0 -or
+    ($AssemblyOutput -join "`n") -notmatch 'Assembled:' -or
+    $AssemblyOutput -notcontains 'SHA-256: 992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85'
+) {
+    throw 'The Stage 0 assembler did not produce the canonical WVA example object.'
+}
+
+$AssemblyVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-verify $AssemblyObject
+if ($LASTEXITCODE -ne 0 -or $AssemblyVerifyOutput -notcontains 'Verified object: X86ˉ64') {
+    throw 'The object verifier rejected the WVA example object.'
+}
+
+$AssemblyInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-inspect $AssemblyObject) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $AssemblyInspection -notmatch '\.text kind=Code align=16 memory=11 data=11' -or
+    $AssemblyInspection -notmatch 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4' -or
+    $AssemblyInspection -notmatch 'kind=Absoluteˉu32 section=1 offset=3 symbol=1 addend=0'
+) {
+    throw 'The object inspector did not expose the expected WVA sections and relocations.'
 }
 
 Write-Output "Windvale Seed verification passed."

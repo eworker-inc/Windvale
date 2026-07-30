@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text;
+using Windvale.Assembler;
 using Windvale.Bytecode;
 using Windvale.Compiler;
 using Windvale.ObjectModel;
@@ -33,6 +34,7 @@ internal static class Program
             return arguments[0] switch
             {
                 "compile" => Compile(arguments[1..]),
+                "assemble" => Assemble(arguments[1..]),
                 "inspect" => Inspect(arguments[1..]),
                 "verify" => Verify(arguments[1..]),
                 "object-inspect" => Inspectˉobject(arguments[1..]),
@@ -152,6 +154,60 @@ internal static class Program
         var Bytes = Readˉmoduleˉbytes(arguments[0]);
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Console.Write(Moduleˉinspector.Inspect(Module, Bytes));
+        return EXIT_SUCCESS;
+    }
+
+    private static int Assemble(string[] arguments)
+    {
+        if (arguments.Length is not (1 or 3) ||
+            (arguments.Length == 3 && arguments[1] != "-o"))
+        {
+            return Usageˉerror("Usage: windvale assemble <source.wva> [-o <object.wvo>]");
+        }
+
+        var Sourceˉpath = Path.GetFullPath(arguments[0]);
+        var Outputˉpath = arguments.Length == 3
+            ? Path.GetFullPath(arguments[2])
+            : Path.ChangeExtension(Sourceˉpath, ".wvo");
+        if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(Sourceˉpath), ".wva"))
+        {
+            return Usageˉerror("The assemble input must use the .wva source extension.");
+        }
+        if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(Outputˉpath), ".wvo"))
+        {
+            return Usageˉerror("The assemble output must use the .wvo object extension.");
+        }
+
+        var Pathˉcomparer = OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal;
+        if (Pathˉcomparer.Equals(Sourceˉpath, Outputˉpath))
+        {
+            return Usageˉerror("The assemble output path must differ from the source path.");
+        }
+        if (new FileInfo(Sourceˉpath).Length > Assemblyˉlimits.MAX_SOURCE_BYTES)
+        {
+            Console.Error.WriteLine(
+                $"Assembly source exceeds the {Assemblyˉlimits.MAX_SOURCE_BYTES} byte input limit.");
+            return EXIT_COMPILATION;
+        }
+
+        var Source = File.ReadAllText(Sourceˉpath, STRICT_UTF8);
+        var Result = Assemblyˉcompiler.Assemble(Source);
+        if (!Result.Success)
+        {
+            foreach (var Diagnostic in Result.Diagnostics)
+            {
+                Console.Error.WriteLine(
+                    $"{Sourceˉpath}({Diagnostic.Line},{Diagnostic.Column}): " +
+                    $"error {Diagnostic.Code} [assembler]: {Diagnostic.Message}");
+            }
+            return EXIT_COMPILATION;
+        }
+
+        File.WriteAllBytes(Outputˉpath, Result.Objectˉbytes.AsSpan());
+        Console.WriteLine($"Assembled: {Outputˉpath}");
+        Console.WriteLine($"SHA-256: {Objectˉdigest.Calculateˉsha256(Result.Objectˉbytes.AsSpan())}");
         return EXIT_SUCCESS;
     }
 
@@ -292,6 +348,7 @@ internal static class Program
         output.WriteLine();
         output.WriteLine("Commands:");
         output.WriteLine("  windvale compile <source.wv> [-o <module.wvb>]");
+        output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale inspect <module.wvb>");
         output.WriteLine("  windvale verify <module.wvb>");
         output.WriteLine("  windvale object-inspect <object.wvo>");

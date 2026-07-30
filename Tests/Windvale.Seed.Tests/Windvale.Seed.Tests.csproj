@@ -5,12 +5,16 @@
     <Description>Dependency-free Windvale Seed conformance test runner.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../Assembler/Windvale.Assembler/Windvale.Assembler.csproj" />
     <ProjectReference Include="../../Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource
+      Include="../../Examples/Assembler/Hello-Object.wva"
+      LogicalName="Windvale.Seed.Tests.Hello-Object.wva" />
     <EmbeddedResource
       Include="../../Examples/Foundation/Wv-Dump-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wv-Dump-Core.wv" />
