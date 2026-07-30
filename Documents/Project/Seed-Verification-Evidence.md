@@ -3,7 +3,7 @@
 - Evidence date: 2026-07-30
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Qualified commit: `348c82a`
+- Qualified commit: `89ce80b`
 
 ## Requirement evidence
 
@@ -57,6 +57,12 @@ Both hosts produced WVB format `1.6` with these module identities:
 The directly retrieved Debian `Wv-Dump-Core.wvb` and `Wva-Assembler-Core.wvb` matched their Windows artifacts byte for byte. Every pre-existing WVO, WVA, image, and map identity remained unchanged, including the 24-byte linked image `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a` and 1,721-byte map `31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4`. Qualification specifically exercised opcode `0x7D` through compiler lowering, verifier stack typing, runtime SHA-256 over a non-zero-offset slice, inspector output, and the Windvale-written WvDump decoder. It also proved same-name snapshot reuse without a second adapter call, snapshot sharing across capability hosts for one context, the 64-distinct-snapshot ceiling, and the 67-argument launcher ceiling. After evidence retrieval, the resolved exact QA directory and transferred archive were removed and confirmed absent.
 
 This qualifies Decision 0012 and the prerequisite portion of roadmap gate 6G. It does not qualify the Windvale-written linker itself.
+
+## Balanced persistent-byte qualification
+
+Candidate commit `89ce80b` was archived with SHA-256 `a0b6620227b04315936e103a1e42e4d99c14649cc3de1e1e3b8fd30895619452` and verified from that exact archive in `/tmp/windvale-persistent-bytes-89ce80b-20260730` on the Debian QA host. Windows and Debian both completed a zero-warning Release build, all 32 tests, and the complete native CLI verifier. The added Windvale test performs 65,536 one-byte concatenations, validates both endpoints, creates and reads a four-byte patch across persistent slice/concat boundaries, and proves that the original sequence remains unchanged. Both reports retained SHA-256 `5711f3025ea56edcc3af017505604c3c4153ad38e5858dedfea73b0d121366e3` on Windows and `cec2e640181eb7bf5bca91fd7890aecd93137c6f594ca6af0bac873e8c98d3c0` on Debian because the normalized portable contract and every canonical artifact stayed unchanged. The comparator confirmed equality, and the resolved exact QA directory plus transferred archive were removed and confirmed absent.
+
+This qualifies Decision 0013 as an implementation-semantic prerequisite for 6G. It does not add mutable buffers, change WVB, or qualify the Windvale-written linker.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 

@@ -1,7 +1,7 @@
 # Decision 0013: Balanced persistent byte sequences
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `89ce80b`
 
 ## Context
 
