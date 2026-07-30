@@ -11,6 +11,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
 - Bounded deterministic compile-time source-module composition with explicit transitive dependencies, nominal source contracts, and no runtime linkage
 - Portable Foundation modules for bounded machine contracts, ordinal byte-span ordering, structured unsigned decimal parsing, and immutable byte construction, driven by the object core, assembler, linker, and future compiler needs
+- A first Windvale-written compiler lexer that streams the complete implemented Seed token surface over strict UTF-8 bytes without a token collection
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
@@ -149,6 +150,23 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Module-Composition-Dem
 ```
 
 The compiler resolves only the explicitly supplied portable source modules, internalizes dependency records, enums, and functions into one ordinary WVB, and returns `Result: 42`. The leaf's nominal result crosses the transitive module boundary. Reordering the two `--module` inputs produces identical bytes.
+
+Compile and run the first Windvale-written compiler slice:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Foundation/Decimal-Parsing.wv `
+  -o artifacts/Source-Lexer-Core.wvb
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Compiler/Source-Lexer-Demo.wv `
+  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Foundation/Decimal-Parsing.wv `
+  -o artifacts/Source-Lexer-Demo.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Lexer-Demo.wvb --max-steps 10000000
+```
+
+The lexer returns one token plus the next byte cursor and source position. It covers the complete current Seed keyword/operator surface, U+02C9 names, typed decimal literals, strict UTF-8 and string escapes, and bounded failures. The demo returns `0`. The future parser will advance this streaming contract; indexed token rescanning is retained only for verification.
 
 Compile and run the first Windvale-written `wvdump` core:
 

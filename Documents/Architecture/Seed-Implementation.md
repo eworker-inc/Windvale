@@ -42,6 +42,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 
 - Source locations and stable compiler diagnostics
 - Tokenization and strict string-literal handling
+- The first Windvale-written streaming lexer over strict UTF-8 bytes, with Stage 0 token identities and bounded source/failure coordinates
 - Recursive-descent and precedence parsing
 - Explicit bounded source-module graph validation and deterministic static composition of dependency records, enums, and functions
 - Portable Foundation source contracts used by multiple Windvale-written tools
@@ -152,6 +153,8 @@ The current bytecode 1.6 golden modules are:
 - `Foundationˉdecimalˉparsingˉdemo`: `16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695`
 - `Foundationˉbyteˉconstruction`: `6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207`
 - `Foundationˉbyteˉconstructionˉdemo`: `a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abbd81f3481fb0e0bc6c29`
+- `Compilerˉsourceˉlexer`: `0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04`
+- `Compilerˉsourceˉlexerˉdemo`: `32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a`
 - `Wvˉdumpˉcore`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`
 - `Wvoˉobjectˉcore`: `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`
 - `Wvaˉassemblerˉcore`: `a5f4e913078295a323eac315f9df818877ac519de97028e581cab8577f1dd150`

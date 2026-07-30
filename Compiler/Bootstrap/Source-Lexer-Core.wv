@@ -1,0 +1,996 @@
+module Compilerˉsourceˉlexer profile portable;
+
+import Foundationˉdecimalˉparsing;
+
+enum Compilerˉtokenˉkind {
+    End = 0;
+    Bad = 1;
+    Identifier = 2;
+    Integer = 3;
+    String = 4;
+    Module = 5;
+    Profile = 6;
+    Portable = 7;
+    Hosted = 8;
+    System = 9;
+    Import = 10;
+    Capability = 11;
+    Data = 12;
+    Record = 13;
+    Enum = 14;
+    Export = 15;
+    Fn = 16;
+    Let = 17;
+    Var = 18;
+    If = 19;
+    Else = 20;
+    While = 21;
+    Return = 22;
+    True = 23;
+    False = 24;
+    I32 = 25;
+    U8 = 26;
+    U32 = 27;
+    Bool = 28;
+    Text = 29;
+    Bytes = 30;
+    Void = 31;
+    Length = 32;
+    Leftˉparenthesis = 33;
+    Rightˉparenthesis = 34;
+    Leftˉbrace = 35;
+    Rightˉbrace = 36;
+    Leftˉbracket = 37;
+    Rightˉbracket = 38;
+    Semicolon = 39;
+    Colon = 40;
+    Comma = 41;
+    Dot = 42;
+    Arrow = 43;
+    Plus = 44;
+    Minus = 45;
+    Star = 46;
+    Bang = 47;
+    Equals = 48;
+    Equalsˉequals = 49;
+    Bangˉequals = 50;
+    Less = 51;
+    Lessˉequals = 52;
+    Greater = 53;
+    Greaterˉequals = 54;
+}
+
+enum Compilerˉnumericˉkind {
+    None = 0;
+    I32 = 1;
+    U8 = 2;
+    U32 = 3;
+}
+
+enum Compilerˉlexˉstatus {
+    Valid = 0;
+    Sourceˉtooˉlarge = 1;
+    Invalidˉutf8 = 2;
+    Invalidˉcursor = 3;
+    Invalidˉlimit = 4;
+    Unexpectedˉcharacter = 5;
+    Integerˉoutˉofˉrange = 6;
+    Unsupportedˉescape = 7;
+    Unterminatedˉstring = 8;
+    Shortˉunicodeˉescape = 9;
+    Invalidˉunicodeˉescape = 10;
+    Unpairedˉsurrogate = 11;
+    Tooˉmanyˉtokens = 12;
+}
+
+record Compilerˉsourceˉtoken {
+    Status: Compilerˉlexˉstatus;
+    Kind: Compilerˉtokenˉkind;
+    Offset: u32;
+    Length: u32;
+    Nextˉoffset: u32;
+    Line: u32;
+    Column: u32;
+    Nextˉline: u32;
+    Nextˉcolumn: u32;
+    Numericˉkind: Compilerˉnumericˉkind;
+    Numericˉvalue: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+record Compilerˉsourceˉscan {
+    Status: Compilerˉlexˉstatus;
+    Tokens: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+    Endˉoffset: u32;
+    Endˉline: u32;
+    Endˉcolumn: u32;
+}
+
+export fn Compilerˉsourceˉutf8ˉlength(Input: bytes, Offset: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset >= Total { return 0u32; }
+    let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+    if First < 128u32 { return 1u32; }
+    if First < 224u32 { return 2u32; }
+    if First < 240u32 { return 3u32; }
+    return 4u32;
+}
+
+export fn Compilerˉsourceˉcolumnˉwidth(Input: bytes, Offset: u32) -> u32 {
+    if Compilerˉsourceˉutf8ˉlength(Input, Offset) == 4u32 { return 2u32; }
+    return 1u32;
+}
+
+export fn Compilerˉsourceˉwhitespaceˉlength(Input: bytes, Offset: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset >= Total { return 0u32; }
+    let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+    if First == 9u32 { return 1u32; }
+    if First == 10u32 { return 1u32; }
+    if First == 11u32 { return 1u32; }
+    if First == 12u32 { return 1u32; }
+    if First == 13u32 { return 1u32; }
+    if First == 32u32 { return 1u32; }
+
+    if Total - Offset >= 2u32 {
+        let Second: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32));
+        if First == 194u32 {
+            if Second == 133u32 { return 2u32; }
+            if Second == 160u32 { return 2u32; }
+        }
+    }
+    if Total - Offset < 3u32 { return 0u32; }
+    let Threeˉbyteˉsecond: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32));
+    let Third: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 2u32));
+    if First == 225u32 {
+        if Threeˉbyteˉsecond == 154u32 {
+            if Third == 128u32 { return 3u32; }
+        }
+    }
+    if First == 226u32 {
+        if Threeˉbyteˉsecond == 128u32 {
+            if Third >= 128u32 {
+                if Third <= 138u32 { return 3u32; }
+            }
+            if Third == 168u32 { return 3u32; }
+            if Third == 169u32 { return 3u32; }
+            if Third == 175u32 { return 3u32; }
+        }
+        if Threeˉbyteˉsecond == 129u32 {
+            if Third == 159u32 { return 3u32; }
+        }
+    }
+    if First == 227u32 {
+        if Threeˉbyteˉsecond == 128u32 {
+            if Third == 128u32 { return 3u32; }
+        }
+    }
+    return 0u32;
+}
+
+export fn Compilerˉsourceˉidentifierˉstart(Value: u8) -> bool {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Character >= 65u32 {
+        if Character <= 90u32 { return true; }
+    }
+    if Character >= 97u32 {
+        if Character <= 122u32 { return true; }
+    }
+    return Character == 95u32;
+}
+
+export fn Compilerˉsourceˉidentifierˉpartˉlength(Input: bytes, Offset: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset >= Total { return 0u32; }
+    let First: u8 = Bytesˉreadˉu8(Input, Offset);
+    if Compilerˉsourceˉidentifierˉstart(First) { return 1u32; }
+    let Character: u32 = U32ˉfromˉu8(First);
+    if Character >= 48u32 {
+        if Character <= 57u32 { return 1u32; }
+    }
+    if Character == 203u32 {
+        if Total - Offset >= 2u32 {
+            if Bytesˉreadˉu8(Input, Offset + 1u32) == 137u8 { return 2u32; }
+        }
+    }
+    return 0u32;
+}
+
+export fn Compilerˉsourceˉspanˉequalsˉtext(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    if Length != Bytesˉlength(Expectedˉbytes) { return false; }
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total { return false; }
+    if Length > Total - Offset { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) != Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Compilerˉsourceˉkeywordˉkind(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> Compilerˉtokenˉkind {
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "module") { return Compilerˉtokenˉkind.Module; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "profile") { return Compilerˉtokenˉkind.Profile; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "portable") { return Compilerˉtokenˉkind.Portable; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "hosted") { return Compilerˉtokenˉkind.Hosted; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "system") { return Compilerˉtokenˉkind.System; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "import") { return Compilerˉtokenˉkind.Import; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "capability") { return Compilerˉtokenˉkind.Capability; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "data") { return Compilerˉtokenˉkind.Data; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "record") { return Compilerˉtokenˉkind.Record; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "enum") { return Compilerˉtokenˉkind.Enum; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "export") { return Compilerˉtokenˉkind.Export; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "fn") { return Compilerˉtokenˉkind.Fn; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "let") { return Compilerˉtokenˉkind.Let; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "var") { return Compilerˉtokenˉkind.Var; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "if") { return Compilerˉtokenˉkind.If; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "else") { return Compilerˉtokenˉkind.Else; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "while") { return Compilerˉtokenˉkind.While; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "return") { return Compilerˉtokenˉkind.Return; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "true") { return Compilerˉtokenˉkind.True; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "false") { return Compilerˉtokenˉkind.False; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "i32") { return Compilerˉtokenˉkind.I32; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "u8") { return Compilerˉtokenˉkind.U8; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "u32") { return Compilerˉtokenˉkind.U32; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "bool") { return Compilerˉtokenˉkind.Bool; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "text") { return Compilerˉtokenˉkind.Text; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "bytes") { return Compilerˉtokenˉkind.Bytes; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "void") { return Compilerˉtokenˉkind.Void; }
+    if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "length") { return Compilerˉtokenˉkind.Length; }
+    return Compilerˉtokenˉkind.Identifier;
+}
+
+export fn Compilerˉsourceˉhexˉdigit(Value: u8) -> u32 {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Character >= 48u32 {
+        if Character <= 57u32 { return Character - 48u32; }
+    }
+    if Character >= 65u32 {
+        if Character <= 70u32 { return Character - 55u32; }
+    }
+    if Character >= 97u32 {
+        if Character <= 102u32 { return Character - 87u32; }
+    }
+    return 16u32;
+}
+
+export fn Compilerˉsourceˉtokenˉmake(
+    Status: Compilerˉlexˉstatus,
+    Kind: Compilerˉtokenˉkind,
+    Offset: u32,
+    Nextˉoffset: u32,
+    Line: u32,
+    Column: u32,
+    Nextˉline: u32,
+    Nextˉcolumn: u32,
+    Numericˉkind: Compilerˉnumericˉkind,
+    Numericˉvalue: u32,
+    Failureˉoffset: u32,
+    Failureˉline: u32,
+    Failureˉcolumn: u32
+) -> Compilerˉsourceˉtoken {
+    return Compilerˉsourceˉtoken(
+        Status,
+        Kind,
+        Offset,
+        Nextˉoffset - Offset,
+        Nextˉoffset,
+        Line,
+        Column,
+        Nextˉline,
+        Nextˉcolumn,
+        Numericˉkind,
+        Numericˉvalue,
+        Failureˉoffset,
+        Failureˉline,
+        Failureˉcolumn
+    );
+}
+
+export fn Compilerˉlexˉnextˉvalidated(
+    Input: bytes,
+    Start: u32,
+    Startˉline: u32,
+    Startˉcolumn: u32
+) -> Compilerˉsourceˉtoken {
+    let Total: u32 = Bytesˉlength(Input);
+    if Start > Total {
+        return Compilerˉsourceˉtokenˉmake(
+            Compilerˉlexˉstatus.Invalidˉcursor,
+            Compilerˉtokenˉkind.Bad,
+            Total,
+            Total,
+            Startˉline,
+            Startˉcolumn,
+            Startˉline,
+            Startˉcolumn,
+            Compilerˉnumericˉkind.None,
+            0u32,
+            Start,
+            Startˉline,
+            Startˉcolumn
+        );
+    }
+    if Startˉline == 0u32 {
+        return Compilerˉsourceˉtokenˉmake(
+            Compilerˉlexˉstatus.Invalidˉcursor,
+            Compilerˉtokenˉkind.Bad,
+            Start,
+            Start,
+            1u32,
+            Startˉcolumn,
+            1u32,
+            Startˉcolumn,
+            Compilerˉnumericˉkind.None,
+            0u32,
+            Start,
+            Startˉline,
+            Startˉcolumn
+        );
+    }
+    if Startˉcolumn == 0u32 {
+        return Compilerˉsourceˉtokenˉmake(
+            Compilerˉlexˉstatus.Invalidˉcursor,
+            Compilerˉtokenˉkind.Bad,
+            Start,
+            Start,
+            Startˉline,
+            1u32,
+            Startˉline,
+            1u32,
+            Compilerˉnumericˉkind.None,
+            0u32,
+            Start,
+            Startˉline,
+            Startˉcolumn
+        );
+    }
+    if Start < Total {
+        let Startˉbyte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Start));
+        if Startˉbyte >= 128u32 {
+            if Startˉbyte < 192u32 {
+                return Compilerˉsourceˉtokenˉmake(
+                    Compilerˉlexˉstatus.Invalidˉcursor,
+                    Compilerˉtokenˉkind.Bad,
+                    Start,
+                    Start,
+                    Startˉline,
+                    Startˉcolumn,
+                    Startˉline,
+                    Startˉcolumn,
+                    Compilerˉnumericˉkind.None,
+                    0u32,
+                    Start,
+                    Startˉline,
+                    Startˉcolumn
+                );
+            }
+        }
+    }
+
+    var Cursor: u32 = Start;
+    var Line: u32 = Startˉline;
+    var Column: u32 = Startˉcolumn;
+    var Skipping: bool = true;
+    while Skipping {
+        if Cursor >= Total {
+            Skipping = false;
+        } else {
+            let Whiteˉlength: u32 = Compilerˉsourceˉwhitespaceˉlength(Input, Cursor);
+            if Whiteˉlength > 0u32 {
+                if Bytesˉreadˉu8(Input, Cursor) == 10u8 {
+                    Line = Line + 1u32;
+                    Column = 1u32;
+                } else {
+                    Column = Column + 1u32;
+                }
+                Cursor = Cursor + Whiteˉlength;
+            } else {
+                if Bytesˉreadˉu8(Input, Cursor) == 47u8 {
+                    if Total - Cursor >= 2u32 {
+                        if Bytesˉreadˉu8(Input, Cursor + 1u32) == 47u8 {
+                            Cursor = Cursor + 2u32;
+                            Column = Column + 2u32;
+                            var Commentˉcontinues: bool = true;
+                            while Commentˉcontinues {
+                                if Cursor >= Total {
+                                    Commentˉcontinues = false;
+                                } else {
+                                    if Bytesˉreadˉu8(Input, Cursor) == 10u8 {
+                                        Commentˉcontinues = false;
+                                    } else {
+                                        let Commentˉcharacterˉlength: u32 = Compilerˉsourceˉutf8ˉlength(Input, Cursor);
+                                        Column = Column + Compilerˉsourceˉcolumnˉwidth(Input, Cursor);
+                                        Cursor = Cursor + Commentˉcharacterˉlength;
+                                    }
+                                }
+                            }
+                        } else {
+                            Skipping = false;
+                        }
+                    } else {
+                        Skipping = false;
+                    }
+                } else {
+                    Skipping = false;
+                }
+            }
+        }
+    }
+
+    let Tokenˉstart: u32 = Cursor;
+    let Tokenˉline: u32 = Line;
+    let Tokenˉcolumn: u32 = Column;
+    if Cursor == Total {
+        return Compilerˉsourceˉtokenˉmake(
+            Compilerˉlexˉstatus.Valid,
+            Compilerˉtokenˉkind.End,
+            Cursor,
+            Cursor,
+            Line,
+            Column,
+            Line,
+            Column,
+            Compilerˉnumericˉkind.None,
+            0u32,
+            Cursor,
+            Line,
+            Column
+        );
+    }
+
+    let First: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if Compilerˉsourceˉidentifierˉstart(First) {
+        Cursor = Cursor + 1u32;
+        Column = Column + 1u32;
+        var Partˉlength: u32 = Compilerˉsourceˉidentifierˉpartˉlength(Input, Cursor);
+        while Partˉlength > 0u32 {
+            Cursor = Cursor + Partˉlength;
+            Column = Column + 1u32;
+            Partˉlength = Compilerˉsourceˉidentifierˉpartˉlength(Input, Cursor);
+        }
+        let Identifierˉkind: Compilerˉtokenˉkind = Compilerˉsourceˉkeywordˉkind(
+            Input,
+            Tokenˉstart,
+            Cursor - Tokenˉstart
+        );
+        return Compilerˉsourceˉtokenˉmake(
+            Compilerˉlexˉstatus.Valid,
+            Identifierˉkind,
+            Tokenˉstart,
+            Cursor,
+            Tokenˉline,
+            Tokenˉcolumn,
+            Line,
+            Column,
+            Compilerˉnumericˉkind.None,
+            0u32,
+            Tokenˉstart,
+            Tokenˉline,
+            Tokenˉcolumn
+        );
+    }
+
+    let Firstˉvalue: u32 = U32ˉfromˉu8(First);
+    if Firstˉvalue >= 48u32 {
+        if Firstˉvalue <= 57u32 {
+            Cursor = Cursor + 1u32;
+            Column = Column + 1u32;
+            var Readingˉdigits: bool = true;
+            while Readingˉdigits {
+                if Cursor >= Total {
+                    Readingˉdigits = false;
+                } else {
+                    let Digit: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+                    if Digit < 48u32 {
+                        Readingˉdigits = false;
+                    } else {
+                        if Digit > 57u32 {
+                            Readingˉdigits = false;
+                        } else {
+                            Cursor = Cursor + 1u32;
+                            Column = Column + 1u32;
+                        }
+                    }
+                }
+            }
+            let Digitˉend: u32 = Cursor;
+            var Numericˉkind: Compilerˉnumericˉkind = Compilerˉnumericˉkind.I32;
+            if Total - Cursor >= 2u32 {
+                if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 2u32, "u8") {
+                    let U8ˉfollowing: u32 = Cursor + 2u32;
+                    if Compilerˉsourceˉidentifierˉpartˉlength(Input, U8ˉfollowing) == 0u32 {
+                        Numericˉkind = Compilerˉnumericˉkind.U8;
+                        Cursor = U8ˉfollowing;
+                        Column = Column + 2u32;
+                    }
+                }
+            }
+            if Numericˉkind == Compilerˉnumericˉkind.I32 {
+                if Total - Cursor >= 3u32 {
+                    if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u32") {
+                        let U32ˉfollowing: u32 = Cursor + 3u32;
+                        if Compilerˉsourceˉidentifierˉpartˉlength(Input, U32ˉfollowing) == 0u32 {
+                            Numericˉkind = Compilerˉnumericˉkind.U32;
+                            Cursor = U32ˉfollowing;
+                            Column = Column + 3u32;
+                        }
+                    }
+                }
+            }
+            let Parsed: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(
+                Input,
+                Tokenˉstart,
+                Digitˉend - Tokenˉstart
+            );
+            var Numericˉstatus: Compilerˉlexˉstatus = Compilerˉlexˉstatus.Valid;
+            if !Parsed.Valid { Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange; }
+            if Numericˉkind == Compilerˉnumericˉkind.I32 {
+                if Parsed.Value > 2147483647u32 {
+                    Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
+                }
+            }
+            if Numericˉkind == Compilerˉnumericˉkind.U8 {
+                if Parsed.Value > 255u32 {
+                    Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
+                }
+            }
+            return Compilerˉsourceˉtokenˉmake(
+                Numericˉstatus,
+                Compilerˉtokenˉkind.Integer,
+                Tokenˉstart,
+                Cursor,
+                Tokenˉline,
+                Tokenˉcolumn,
+                Line,
+                Column,
+                Numericˉkind,
+                Parsed.Value,
+                Tokenˉstart,
+                Tokenˉline,
+                Tokenˉcolumn
+            );
+        }
+    }
+
+    if First == 34u8 {
+        Cursor = Cursor + 1u32;
+        Column = Column + 1u32;
+        var Stringˉstatus: Compilerˉlexˉstatus = Compilerˉlexˉstatus.Valid;
+        var Failureˉoffset: u32 = Tokenˉstart;
+        var Failureˉline: u32 = Tokenˉline;
+        var Failureˉcolumn: u32 = Tokenˉcolumn;
+        var Terminated: bool = false;
+        var Pendingˉhighˉsurrogate: bool = false;
+        var Reading: bool = true;
+        while Reading {
+            if Cursor >= Total {
+                Reading = false;
+            } else {
+                let Character: u8 = Bytesˉreadˉu8(Input, Cursor);
+                if Character == 34u8 {
+                    Cursor = Cursor + 1u32;
+                    Column = Column + 1u32;
+                    Terminated = true;
+                    Reading = false;
+                } else {
+                    if Character == 10u8 {
+                        Reading = false;
+                    } else {
+                        if Character == 13u8 {
+                            Reading = false;
+                        } else {
+                            if Character == 92u8 {
+                                let Escapeˉoffset: u32 = Cursor;
+                                let Escapeˉcolumn: u32 = Column;
+                                Cursor = Cursor + 1u32;
+                                Column = Column + 1u32;
+                                if Cursor >= Total {
+                                    Reading = false;
+                                } else {
+                                    let Escape: u8 = Bytesˉreadˉu8(Input, Cursor);
+                                    if Escape == 117u8 {
+                                        Cursor = Cursor + 1u32;
+                                        Column = Column + 1u32;
+                                        if Total - Cursor < 4u32 {
+                                            if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                                                Stringˉstatus = Compilerˉlexˉstatus.Shortˉunicodeˉescape;
+                                                Failureˉoffset = Escapeˉoffset;
+                                                Failureˉline = Line;
+                                                Failureˉcolumn = Escapeˉcolumn;
+                                            }
+                                            Cursor = Total;
+                                            Reading = false;
+                                        } else {
+                                            let H0: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Input, Cursor));
+                                            let H1: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Input, Cursor + 1u32));
+                                            let H2: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Input, Cursor + 2u32));
+                                            let H3: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Input, Cursor + 3u32));
+                                            var Hexˉvalid: bool = true;
+                                            if H0 == 16u32 { Hexˉvalid = false; }
+                                            if H1 == 16u32 { Hexˉvalid = false; }
+                                            if H2 == 16u32 { Hexˉvalid = false; }
+                                            if H3 == 16u32 { Hexˉvalid = false; }
+                                            if !Hexˉvalid {
+                                                if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                                                    Stringˉstatus = Compilerˉlexˉstatus.Invalidˉunicodeˉescape;
+                                                    Failureˉoffset = Cursor;
+                                                    Failureˉline = Line;
+                                                    Failureˉcolumn = Column;
+                                                }
+                                            } else {
+                                                let Codeˉunit: u32 = H0 * 4096u32 + H1 * 256u32 + H2 * 16u32 + H3;
+                                                if Codeˉunit >= 55296u32 {
+                                                    if Codeˉunit <= 56319u32 {
+                                                        if Pendingˉhighˉsurrogate {
+                                                            if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                                                                Stringˉstatus = Compilerˉlexˉstatus.Unpairedˉsurrogate;
+                                                                Failureˉoffset = Escapeˉoffset;
+                                                                Failureˉline = Line;
+                                                                Failureˉcolumn = Escapeˉcolumn;
+                                                            }
+                                                        }
+                                                        Pendingˉhighˉsurrogate = true;
+                                                    } else {
+                                                        if Codeˉunit <= 57343u32 {
+                                                            if !Pendingˉhighˉsurrogate {
+                                                                if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                                                                    Stringˉstatus = Compilerˉlexˉstatus.Unpairedˉsurrogate;
+                                                                    Failureˉoffset = Escapeˉoffset;
+                                                                    Failureˉline = Line;
+                                                                    Failureˉcolumn = Escapeˉcolumn;
+                                                                }
+                                                            }
+                                                            Pendingˉhighˉsurrogate = false;
+                                                        } else {
+                                                            if Pendingˉhighˉsurrogate {
+                                                                if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                                                                    Stringˉstatus = Compilerˉlexˉstatus.Unpairedˉsurrogate;
+                                                                    Failureˉoffset = Escapeˉoffset;
+                                                                    Failureˉline = Line;
+                                                                    Failureˉcolumn = Escapeˉcolumn;
+                                                                }
+                                                            }
+                                                            Pendingˉhighˉsurrogate = false;
+                                                        }
+                                                    }
+                                                } else {
+                                                    if Pendingˉhighˉsurrogate {
+                                                        if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                                                            Stringˉstatus = Compilerˉlexˉstatus.Unpairedˉsurrogate;
+                                                            Failureˉoffset = Escapeˉoffset;
+                                                            Failureˉline = Line;
+                                                            Failureˉcolumn = Escapeˉcolumn;
+                                                        }
+                                                    }
+                                                    Pendingˉhighˉsurrogate = false;
+                                                }
+                                            }
+                                            Cursor = Cursor + 4u32;
+                                            Column = Column + 4u32;
+                                        }
+                                    } else {
+                                        var Escapeˉvalid: bool = false;
+                                        if Escape == 34u8 { Escapeˉvalid = true; }
+                                        if Escape == 92u8 { Escapeˉvalid = true; }
+                                        if Escape == 110u8 { Escapeˉvalid = true; }
+                                        if Escape == 114u8 { Escapeˉvalid = true; }
+                                        if Escape == 116u8 { Escapeˉvalid = true; }
+                                        if !Escapeˉvalid {
+                                            if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                                                Stringˉstatus = Compilerˉlexˉstatus.Unsupportedˉescape;
+                                                Failureˉoffset = Escapeˉoffset;
+                                                Failureˉline = Line;
+                                                Failureˉcolumn = Escapeˉcolumn;
+                                            }
+                                        }
+                                        if Pendingˉhighˉsurrogate {
+                                            if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                                                Stringˉstatus = Compilerˉlexˉstatus.Unpairedˉsurrogate;
+                                                Failureˉoffset = Escapeˉoffset;
+                                                Failureˉline = Line;
+                                                Failureˉcolumn = Escapeˉcolumn;
+                                            }
+                                        }
+                                        Pendingˉhighˉsurrogate = false;
+                                        Cursor = Cursor + 1u32;
+                                        Column = Column + 1u32;
+                                    }
+                                }
+                            } else {
+                                if Pendingˉhighˉsurrogate {
+                                    if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                                        Stringˉstatus = Compilerˉlexˉstatus.Unpairedˉsurrogate;
+                                        Failureˉoffset = Cursor;
+                                        Failureˉline = Line;
+                                        Failureˉcolumn = Column;
+                                    }
+                                }
+                                Pendingˉhighˉsurrogate = false;
+                                let Characterˉlength: u32 = Compilerˉsourceˉutf8ˉlength(Input, Cursor);
+                                Column = Column + Compilerˉsourceˉcolumnˉwidth(Input, Cursor);
+                                Cursor = Cursor + Characterˉlength;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if !Terminated {
+            if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                Stringˉstatus = Compilerˉlexˉstatus.Unterminatedˉstring;
+                Failureˉoffset = Tokenˉstart;
+                Failureˉline = Tokenˉline;
+                Failureˉcolumn = Tokenˉcolumn;
+            }
+        } else {
+            if Pendingˉhighˉsurrogate {
+                if Stringˉstatus == Compilerˉlexˉstatus.Valid {
+                    Stringˉstatus = Compilerˉlexˉstatus.Unpairedˉsurrogate;
+                    Failureˉoffset = Tokenˉstart;
+                    Failureˉline = Tokenˉline;
+                    Failureˉcolumn = Tokenˉcolumn;
+                }
+            }
+        }
+        return Compilerˉsourceˉtokenˉmake(
+            Stringˉstatus,
+            Compilerˉtokenˉkind.String,
+            Tokenˉstart,
+            Cursor,
+            Tokenˉline,
+            Tokenˉcolumn,
+            Line,
+            Column,
+            Compilerˉnumericˉkind.None,
+            0u32,
+            Failureˉoffset,
+            Failureˉline,
+            Failureˉcolumn
+        );
+    }
+
+    var Kind: Compilerˉtokenˉkind = Compilerˉtokenˉkind.Bad;
+    var Width: u32 = 1u32;
+    if First == 40u8 { Kind = Compilerˉtokenˉkind.Leftˉparenthesis; }
+    if First == 41u8 { Kind = Compilerˉtokenˉkind.Rightˉparenthesis; }
+    if First == 123u8 { Kind = Compilerˉtokenˉkind.Leftˉbrace; }
+    if First == 125u8 { Kind = Compilerˉtokenˉkind.Rightˉbrace; }
+    if First == 91u8 { Kind = Compilerˉtokenˉkind.Leftˉbracket; }
+    if First == 93u8 { Kind = Compilerˉtokenˉkind.Rightˉbracket; }
+    if First == 59u8 { Kind = Compilerˉtokenˉkind.Semicolon; }
+    if First == 58u8 { Kind = Compilerˉtokenˉkind.Colon; }
+    if First == 44u8 { Kind = Compilerˉtokenˉkind.Comma; }
+    if First == 46u8 { Kind = Compilerˉtokenˉkind.Dot; }
+    if First == 43u8 { Kind = Compilerˉtokenˉkind.Plus; }
+    if First == 42u8 { Kind = Compilerˉtokenˉkind.Star; }
+    if First == 45u8 {
+        Kind = Compilerˉtokenˉkind.Minus;
+        if Total - Cursor >= 2u32 {
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 62u8 {
+                Kind = Compilerˉtokenˉkind.Arrow;
+                Width = 2u32;
+            }
+        }
+    }
+    if First == 33u8 {
+        Kind = Compilerˉtokenˉkind.Bang;
+        if Total - Cursor >= 2u32 {
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
+                Kind = Compilerˉtokenˉkind.Bangˉequals;
+                Width = 2u32;
+            }
+        }
+    }
+    if First == 61u8 {
+        Kind = Compilerˉtokenˉkind.Equals;
+        if Total - Cursor >= 2u32 {
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
+                Kind = Compilerˉtokenˉkind.Equalsˉequals;
+                Width = 2u32;
+            }
+        }
+    }
+    if First == 60u8 {
+        Kind = Compilerˉtokenˉkind.Less;
+        if Total - Cursor >= 2u32 {
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
+                Kind = Compilerˉtokenˉkind.Lessˉequals;
+                Width = 2u32;
+            }
+        }
+    }
+    if First == 62u8 {
+        Kind = Compilerˉtokenˉkind.Greater;
+        if Total - Cursor >= 2u32 {
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
+                Kind = Compilerˉtokenˉkind.Greaterˉequals;
+                Width = 2u32;
+            }
+        }
+    }
+    if Kind != Compilerˉtokenˉkind.Bad {
+        Cursor = Cursor + Width;
+        Column = Column + Width;
+        return Compilerˉsourceˉtokenˉmake(
+            Compilerˉlexˉstatus.Valid,
+            Kind,
+            Tokenˉstart,
+            Cursor,
+            Tokenˉline,
+            Tokenˉcolumn,
+            Line,
+            Column,
+            Compilerˉnumericˉkind.None,
+            0u32,
+            Tokenˉstart,
+            Tokenˉline,
+            Tokenˉcolumn
+        );
+    }
+
+    let Badˉlength: u32 = Compilerˉsourceˉutf8ˉlength(Input, Cursor);
+    Cursor = Cursor + Badˉlength;
+    Column = Column + Compilerˉsourceˉcolumnˉwidth(Input, Tokenˉstart);
+    return Compilerˉsourceˉtokenˉmake(
+        Compilerˉlexˉstatus.Unexpectedˉcharacter,
+        Compilerˉtokenˉkind.Bad,
+        Tokenˉstart,
+        Cursor,
+        Tokenˉline,
+        Tokenˉcolumn,
+        Line,
+        Column,
+        Compilerˉnumericˉkind.None,
+        0u32,
+        Tokenˉstart,
+        Tokenˉline,
+        Tokenˉcolumn
+    );
+}
+
+export fn Compilerˉlexˉnext(
+    Input: bytes,
+    Start: u32,
+    Startˉline: u32,
+    Startˉcolumn: u32
+) -> Compilerˉsourceˉtoken {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total > 4194304u32 {
+        return Compilerˉsourceˉtokenˉmake(
+            Compilerˉlexˉstatus.Sourceˉtooˉlarge,
+            Compilerˉtokenˉkind.Bad,
+            0u32,
+            0u32,
+            1u32,
+            1u32,
+            1u32,
+            1u32,
+            Compilerˉnumericˉkind.None,
+            0u32,
+            4194304u32,
+            1u32,
+            1u32
+        );
+    }
+    if !Textˉutf8ˉisˉvalid(Input) {
+        return Compilerˉsourceˉtokenˉmake(
+            Compilerˉlexˉstatus.Invalidˉutf8,
+            Compilerˉtokenˉkind.Bad,
+            0u32,
+            0u32,
+            1u32,
+            1u32,
+            1u32,
+            1u32,
+            Compilerˉnumericˉkind.None,
+            0u32,
+            0u32,
+            1u32,
+            1u32
+        );
+    }
+    return Compilerˉlexˉnextˉvalidated(Input, Start, Startˉline, Startˉcolumn);
+}
+
+export fn Compilerˉlexˉsourceˉbounded(
+    Input: bytes,
+    Maximumˉtokens: u32
+) -> Compilerˉsourceˉscan {
+    if Maximumˉtokens > 262144u32 {
+        return Compilerˉsourceˉscan(
+            Compilerˉlexˉstatus.Invalidˉlimit,
+            0u32,
+            0u32,
+            1u32,
+            1u32,
+            0u32,
+            1u32,
+            1u32
+        );
+    }
+    var Token: Compilerˉsourceˉtoken = Compilerˉlexˉnext(Input, 0u32, 1u32, 1u32);
+    var Tokens: u32 = 0u32;
+    while Token.Kind != Compilerˉtokenˉkind.End {
+        if Token.Status != Compilerˉlexˉstatus.Valid {
+            return Compilerˉsourceˉscan(
+                Token.Status,
+                Tokens,
+                Token.Failureˉoffset,
+                Token.Failureˉline,
+                Token.Failureˉcolumn,
+                Token.Nextˉoffset,
+                Token.Nextˉline,
+                Token.Nextˉcolumn
+            );
+        }
+        if Tokens == Maximumˉtokens {
+            return Compilerˉsourceˉscan(
+                Compilerˉlexˉstatus.Tooˉmanyˉtokens,
+                Tokens,
+                Token.Offset,
+                Token.Line,
+                Token.Column,
+                Token.Offset,
+                Token.Line,
+                Token.Column
+            );
+        }
+        Tokens = Tokens + 1u32;
+        Token = Compilerˉlexˉnextˉvalidated(
+            Input,
+            Token.Nextˉoffset,
+            Token.Nextˉline,
+            Token.Nextˉcolumn
+        );
+    }
+    return Compilerˉsourceˉscan(
+        Token.Status,
+        Tokens,
+        Token.Failureˉoffset,
+        Token.Failureˉline,
+        Token.Failureˉcolumn,
+        Token.Nextˉoffset,
+        Token.Nextˉline,
+        Token.Nextˉcolumn
+    );
+}
+
+export fn Compilerˉlexˉsource(Input: bytes) -> Compilerˉsourceˉscan {
+    return Compilerˉlexˉsourceˉbounded(Input, 262144u32);
+}
+
+export fn Compilerˉlexˉtokenˉat(Input: bytes, Wanted: u32) -> Compilerˉsourceˉtoken {
+    var Token: Compilerˉsourceˉtoken = Compilerˉlexˉnext(Input, 0u32, 1u32, 1u32);
+    var Index: u32 = 0u32;
+    while Index < Wanted {
+        if Token.Status != Compilerˉlexˉstatus.Valid { return Token; }
+        if Token.Kind == Compilerˉtokenˉkind.End { return Token; }
+        Token = Compilerˉlexˉnextˉvalidated(
+            Input,
+            Token.Nextˉoffset,
+            Token.Nextˉline,
+            Token.Nextˉcolumn
+        );
+        Index = Index + 1u32;
+    }
+    return Token;
+}

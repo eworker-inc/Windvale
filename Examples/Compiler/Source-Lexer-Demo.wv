@@ -1,0 +1,72 @@
+module Compilerˉsourceˉlexerˉdemo profile portable;
+
+import Compilerˉsourceˉlexer;
+
+data Invalidˉutf8: bytes = [195, 40];
+
+export fn Main() -> i32 {
+    let Complete: bytes = Textˉtoˉutf8("module profile portable hosted system import capability data record enum export fn let var if else while return true false i32 u8 u32 bool text bytes void length Alphaˉbeta 0 255u8 4294967295u32 \"x\\n\\u0041\" ( ) { } [ ] ; : , . -> + - * ! = == != < <= > >=");
+    let Scan: Compilerˉsourceˉscan = Compilerˉlexˉsource(Complete);
+    if Scan.Status != Compilerˉlexˉstatus.Valid { return 1; }
+    if Scan.Tokens != 55u32 { return 2; }
+
+    let First: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Complete, 0u32);
+    if First.Kind != Compilerˉtokenˉkind.Module { return 3; }
+    let Lastˉkeyword: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Complete, 27u32);
+    if Lastˉkeyword.Kind != Compilerˉtokenˉkind.Length { return 4; }
+    let Identifier: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Complete, 28u32);
+    if Identifier.Kind != Compilerˉtokenˉkind.Identifier { return 5; }
+    if Identifier.Length != 11u32 { return 6; }
+    let I32ˉliteral: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Complete, 29u32);
+    if I32ˉliteral.Numericˉkind != Compilerˉnumericˉkind.I32 { return 7; }
+    if I32ˉliteral.Numericˉvalue != 0u32 { return 8; }
+    let U8ˉliteral: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Complete, 30u32);
+    if U8ˉliteral.Numericˉkind != Compilerˉnumericˉkind.U8 { return 9; }
+    if U8ˉliteral.Numericˉvalue != 255u32 { return 10; }
+    let U32ˉliteral: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Complete, 31u32);
+    if U32ˉliteral.Numericˉkind != Compilerˉnumericˉkind.U32 { return 11; }
+    if U32ˉliteral.Numericˉvalue != 4294967295u32 { return 12; }
+    let Stringˉliteral: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Complete, 32u32);
+    if Stringˉliteral.Kind != Compilerˉtokenˉkind.String { return 13; }
+    if Stringˉliteral.Status != Compilerˉlexˉstatus.Valid { return 14; }
+    let Arrow: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Complete, 43u32);
+    if Arrow.Kind != Compilerˉtokenˉkind.Arrow { return 15; }
+    let Last: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Complete, 54u32);
+    if Last.Kind != Compilerˉtokenˉkind.Greaterˉequals { return 16; }
+
+    let Withˉtrivia: bytes = Textˉtoˉutf8("// 😀\r\n\u00A0module");
+    let Triviaˉtoken: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Withˉtrivia, 0u32);
+    if Triviaˉtoken.Kind != Compilerˉtokenˉkind.Module { return 17; }
+    if Triviaˉtoken.Line != 2u32 { return 18; }
+    if Triviaˉtoken.Column != 2u32 { return 19; }
+
+    let Invalidˉencoding: Compilerˉsourceˉscan = Compilerˉlexˉsource(Invalidˉutf8);
+    if Invalidˉencoding.Status != Compilerˉlexˉstatus.Invalidˉutf8 { return 20; }
+    let Invalidˉcursor: Compilerˉsourceˉtoken = Compilerˉlexˉnext(Complete, 9999u32, 1u32, 1u32);
+    if Invalidˉcursor.Status != Compilerˉlexˉstatus.Invalidˉcursor { return 21; }
+    let Badˉcharacter: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("@"));
+    if Badˉcharacter.Status != Compilerˉlexˉstatus.Unexpectedˉcharacter { return 22; }
+    let I32ˉoverflow: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("2147483648"));
+    if I32ˉoverflow.Status != Compilerˉlexˉstatus.Integerˉoutˉofˉrange { return 23; }
+    let U8ˉoverflow: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("256u8"));
+    if U8ˉoverflow.Status != Compilerˉlexˉstatus.Integerˉoutˉofˉrange { return 24; }
+    let U32ˉoverflow: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("4294967296u32"));
+    if U32ˉoverflow.Status != Compilerˉlexˉstatus.Integerˉoutˉofˉrange { return 25; }
+    let Badˉescape: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("\"x\\q\""));
+    if Badˉescape.Status != Compilerˉlexˉstatus.Unsupportedˉescape { return 26; }
+    let Unterminated: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("\"hello"));
+    if Unterminated.Status != Compilerˉlexˉstatus.Unterminatedˉstring { return 27; }
+    let Shortˉunicode: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("\"\\u12"));
+    if Shortˉunicode.Status != Compilerˉlexˉstatus.Shortˉunicodeˉescape { return 28; }
+    let Badˉunicode: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("\"\\u12xz\""));
+    if Badˉunicode.Status != Compilerˉlexˉstatus.Invalidˉunicodeˉescape { return 29; }
+    let Unpaired: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("\"\\uD800\""));
+    if Unpaired.Status != Compilerˉlexˉstatus.Unpairedˉsurrogate { return 30; }
+    let Paired: Compilerˉsourceˉscan = Compilerˉlexˉsource(Textˉtoˉutf8("\"\\uD83D\\uDE00\""));
+    if Paired.Status != Compilerˉlexˉstatus.Valid { return 31; }
+    let Limited: Compilerˉsourceˉscan = Compilerˉlexˉsourceˉbounded(Textˉtoˉutf8("! ! !"), 2u32);
+    if Limited.Status != Compilerˉlexˉstatus.Tooˉmanyˉtokens { return 32; }
+    let Badˉlimit: Compilerˉsourceˉscan = Compilerˉlexˉsourceˉbounded(Complete, 262145u32);
+    if Badˉlimit.Status != Compilerˉlexˉstatus.Invalidˉlimit { return 33; }
+    return 0;
+}

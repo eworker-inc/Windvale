@@ -55,5 +55,11 @@
     <EmbeddedResource
       Include="../../Examples/Foundation/Byte-Construction-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Byte-Construction-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Bootstrap/Source-Lexer-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Lexer-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Lexer-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Lexer-Demo.wv" />
   </ItemGroup>
 </Project>
