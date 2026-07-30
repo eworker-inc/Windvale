@@ -1,7 +1,7 @@
 # Decision 0022: Static nominal source contracts
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `6d2a351`
 
 ## Context
 
@@ -32,3 +32,5 @@ Making every nominal declaration visible means a dependency cannot yet keep priv
 The transitive composition fixture must pass a dependency-declared record containing a dependency-declared enum through two imported function layers, retain root-only WVB exports, return `42`, and be byte-identical when explicit dependency argument order changes. A dependency that refers to a nominal type in a sibling it did not import must fail during its isolated semantic check.
 
 The exact committed candidate must pass the complete verifier on Windows and Debian. Cross-host reports and the composed fixture must match exactly. The shared decimal parser in Decision 0023 must prove the feature through real assembler and linker consumers rather than leaving it as unused language surface.
+
+Candidate `6d2a351` satisfied this gate on Windows and Debian GNU/Linux 12 x64 with zero build warnings/errors and all 38 tests. Both hosts produced the same 714-byte nominal composition fixture at SHA-256 `0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60`; it returned `42`, retained only root `Main` as a WVB export, and was byte-identical under reversed explicit dependency arguments. The isolated sibling-type leak failed as required, and Decision 0023 supplied the real nominal consumer contract.

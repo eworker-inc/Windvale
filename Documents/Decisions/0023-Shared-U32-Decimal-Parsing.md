@@ -1,7 +1,7 @@
 # Decision 0023: Shared bounded `u32` decimal parsing
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `6d2a351`
 
 ## Context
 
@@ -43,3 +43,5 @@ The name is intentionally explicit rather than a generic `Parse`. New integer wi
 The standalone module and composed demo must cover zero, `u32` maximum, overflow, empty and over-ten-digit spans, nondigits, non-zero-offset subspans, leading zeroes, invalid offsets, and invalid ranges. Both real tools must compile with the module and preserve exact canonical WVO, image, map, reports, rejection behavior, and fixed instruction ceilings.
 
 Qualification requires the exact committed archive to pass all 38 tests and the complete CLI verifier on Windows and Debian, equal normalized reports, and direct byte equality for the parser, demo, nominal composition fixture, assembler, linker, canonical object, linked image, and map.
+
+Candidate `6d2a351` satisfied this gate on Windows and Debian GNU/Linux 12 x64 with zero build warnings/errors. The normalized reports matched; all eight named artifacts were directly byte-identical; the assembler and linker preserved their canonical products, deterministic failure publication, and existing 200,000,000-instruction maximum cases.

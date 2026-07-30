@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Foundationˉdecimalˉparsing` is the portable owner of bounded ASCII-to-`u32` parsing for immutable byte spans. It supplies the shared structured result used by the Windvale-written assembler and linker and is intended to be reusable by the future self-hosted compiler lexer. Cross-host qualification of the current implementation is pending.
+`Foundationˉdecimalˉparsing` is the portable owner of bounded ASCII-to-`u32` parsing for immutable byte spans. It supplies the shared structured result used by the Windvale-written assembler and linker and is intended to be reusable by the future self-hosted compiler lexer. The current implementation is cross-host qualified at `6d2a351`.
 
 ## Contract
 
@@ -42,4 +42,4 @@ The record and function reach consumers through bounded static source compositio
 
 `Examples/Foundation/Decimal-Parsing-Demo.wv` is the fixed portable boundary artifact. The complete assembler and linker suites are the consumer conformance tests. Qualification must preserve the 218-byte canonical assembled WVO, 24-byte linked image, 1,721-byte canonical map, no-write failures, and existing maximum image/map instruction ceilings.
 
-The candidate standalone WVB is 1,697 bytes with SHA-256 `39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f`. The candidate composed demo is 3,778 bytes with SHA-256 `16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695` and returns `0`.
+The qualified standalone WVB is 1,697 bytes with SHA-256 `39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f`. The qualified composed demo is 3,778 bytes with SHA-256 `16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695` and returns `0`. The exact `6d2a351` archive passed the complete Windows and Debian verifier; both artifacts and both composed tool consumers were byte-identical across hosts while all prior object, image, map, ceiling, and no-write contracts remained intact.
