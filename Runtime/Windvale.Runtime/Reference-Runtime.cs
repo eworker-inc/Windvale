@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using Windvale.Bytecode;
 
@@ -367,6 +368,10 @@ public sealed class Referenceˉruntime
                         var I32ˉbytes = new byte[sizeof(int)];
                         BinaryPrimitives.WriteInt32LittleEndian(I32ˉbytes, Pop(Stack).I32ˉvalue);
                         Stack.Add(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(I32ˉbytes)));
+                        break;
+                    case Opcode.Bytesˉsha256ˉhex:
+                        Stack.Add(Runtimeˉvalue.Fromˉtext(
+                            Convert.ToHexStringLower(SHA256.HashData(Pop(Stack).Bytesˉvalue.Asˉspan()))));
                         break;
                     case Opcode.Textˉtoˉutf8:
                         try

@@ -198,6 +198,7 @@ public static class Moduleˉinspector
             Opcode.Bytesˉfromˉu16ˉlittle => "bytes.from_u16_little",
             Opcode.Bytesˉfromˉu32ˉlittle => "bytes.from_u32_little",
             Opcode.Bytesˉfromˉi32ˉlittle => "bytes.from_i32_little",
+            Opcode.Bytesˉsha256ˉhex => "bytes.sha256_hex",
             Opcode.Textˉtoˉutf8 => "text.to_utf8",
             Opcode.I32ˉadd => "i32.add",
             Opcode.I32ˉsubtract => "i32.subtract",

@@ -156,7 +156,7 @@ $WvDumpHostedOutput = dotnet run --project $ToolProject --configuration $Configu
 if (
     $LASTEXITCODE -ne 0 -or
     $WvDumpHostedOutput -notcontains 'wvdump 1' -or
-    $WvDumpHostedOutput -notcontains 'module version=1.5 profile=portable name="Sum\u02C9data"' -or
+    $WvDumpHostedOutput -notcontains 'module version=1.6 profile=portable name="Sum\u02C9data"' -or
     $WvDumpHostedOutput -notcontains 'data index=0 name="Values" type=i32_array elements=4' -or
     $WvDumpHostedOutput -notcontains 'instruction function=1 offset=141 opcode=call operand=0' -or
     $WvDumpHostedOutput -notcontains 'export index=0 name="Main" kind=function target=1' -or

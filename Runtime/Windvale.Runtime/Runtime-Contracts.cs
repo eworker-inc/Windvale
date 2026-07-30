@@ -164,9 +164,10 @@ public sealed record Runtimeˉresult(int Exitˉcode, long Executedˉinstructions
 
 public static class Hostedˉresourceˉlimits
 {
-    public const int MAX_ARGUMENTS = 64;
+    public const int MAX_ARGUMENTS = 67;
     public const int MAX_ARGUMENT_UTF8_BYTES = 4 * 1024;
     public const int MAX_ARGUMENT_TOTAL_UTF8_BYTES = 64 * 1024;
+    public const int MAX_FILE_SNAPSHOTS = 64;
 }
 
 public enum Hostedˉfileˉerror
@@ -205,6 +206,8 @@ public interface IHostedˉfileˉwriter
 public sealed class Hostedˉresourceˉcontext
 {
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
+    private readonly Dictionary<string, ImmutableArray<byte>> Fileˉsnapshots =
+        new(StringComparer.Ordinal);
 
     public Hostedˉresourceˉcontext(
         ImmutableArray<string> arguments,
@@ -277,6 +280,20 @@ public sealed class Hostedˉresourceˉcontext
     public IHostedˉfileˉreader? Fileˉreader { get; }
 
     public IHostedˉfileˉwriter? Fileˉwriter { get; }
+
+    internal int Fileˉsnapshotˉcount => Fileˉsnapshots.Count;
+
+    internal bool Tryˉgetˉfileˉsnapshot(
+        string resourceˉname,
+        out ImmutableArray<byte> snapshot)
+    {
+        return Fileˉsnapshots.TryGetValue(resourceˉname, out snapshot);
+    }
+
+    internal void Addˉfileˉsnapshot(string resourceˉname, ImmutableArray<byte> snapshot)
+    {
+        Fileˉsnapshots.Add(resourceˉname, snapshot);
+    }
 }
 
 public interface ICapabilityˉhost
@@ -368,6 +385,18 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
                 $"The host does not implement capability '{Capabilityˉcatalog.FILE_READ_BYTES}'.");
         }
 
+        if (Resources.Tryˉgetˉfileˉsnapshot(resourceˉname, out var Snapshot))
+        {
+            return Runtimeˉvalue.Fromˉbytes(Snapshot);
+        }
+
+        if (Resources.Fileˉsnapshotˉcount >= Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS)
+        {
+            throw new Runtimeˉexception(
+                "WVR3028",
+                $"The hosted resource context already contains {Resources.Fileˉsnapshotˉcount} distinct file snapshots; the limit is {Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS}.");
+        }
+
         try
         {
             var Bytes = Resources.Fileˉreader.Readˉbytes(
@@ -387,6 +416,7 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
                     $"The file adapter returned {Bytes.Length} bytes; the limit is {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}.");
             }
 
+            Resources.Addˉfileˉsnapshot(resourceˉname, Bytes);
             return Runtimeˉvalue.Fromˉbytes(Bytes);
         }
         catch (Hostedˉfileˉexception Exception)

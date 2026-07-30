@@ -267,6 +267,7 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.Bytesˉfromˉu16ˉlittle:
                 case Wirˉoperation.Bytesˉfromˉu32ˉlittle:
                 case Wirˉoperation.Bytesˉfromˉi32ˉlittle:
+                case Wirˉoperation.Bytesˉsha256ˉhex:
                 case Wirˉoperation.Textˉtoˉutf8:
                     Loadˉtemporary(instruction.Operands[0]);
                     Emitˉnone(Mapˉopcode(instruction.Operation), pop: 1, push: 1);
@@ -540,6 +541,7 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.Bytesˉfromˉu16ˉlittle => Opcode.Bytesˉfromˉu16ˉlittle,
                 Wirˉoperation.Bytesˉfromˉu32ˉlittle => Opcode.Bytesˉfromˉu32ˉlittle,
                 Wirˉoperation.Bytesˉfromˉi32ˉlittle => Opcode.Bytesˉfromˉi32ˉlittle,
+                Wirˉoperation.Bytesˉsha256ˉhex => Opcode.Bytesˉsha256ˉhex,
                 Wirˉoperation.Textˉtoˉutf8 => Opcode.Textˉtoˉutf8,
                 _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),
             };
