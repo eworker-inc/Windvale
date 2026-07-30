@@ -72,11 +72,25 @@ Build and run the complete Seed verifier on Windows:
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
 ```
 
+Use the fast tier while iterating on one area; its case-insensitive filter is explicit and may match one or more displayed test names:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
+  -Level Fast `
+  -TestFilter 'declaration namespaces' `
+  -FailFast `
+  -TimingReportPath artifacts/seed-timing-fast.json
+```
+
+`-Level Standard` builds and runs the complete 45-test in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
+
 On Linux:
 
 ```sh
 ./Tools/Verify/Verify-Seed.sh
 ```
+
+Linux exposes the same tiers through `VERIFY_LEVEL`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`. GitHub runs the default qualification level on Windows and Linux concurrently.
 
 Compile, verify, inspect, and run the portable example:
 
@@ -455,6 +469,7 @@ export fn Main() -> i32 {
 - [Compiler declaration and signature symbols](Specifications/Compiler-Source-Symbols.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
+- [Seed verification throughput](Documents/Architecture/Seed-Verification-Throughput.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
 - [Repository foundation decision](Documents/Decisions/0001-Repository-And-Foundation.md)
 - [Seed bootstrap decision](Documents/Decisions/0002-Windvale-Seed-Bootstrap.md)

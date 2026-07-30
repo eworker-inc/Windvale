@@ -2,15 +2,30 @@
 param(
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Release',
-    [string]$ReportPath
+    [string]$ReportPath,
+    [ValidateSet('Fast', 'Standard', 'Qualification')]
+    [string]$Level = 'Qualification',
+    [string]$TestFilter,
+    [switch]$FailFast,
+    [string]$TimingReportPath
 )
 
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$ToolProject = Join-Path $RepositoryRoot 'Tools/Windvale.Tool/Windvale.Tool.csproj'
+$ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
+$TestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj'
 $Artifacts = Join-Path $RepositoryRoot 'artifacts'
 New-Item -ItemType Directory -Force -Path $Artifacts | Out-Null
-if ([string]::IsNullOrWhiteSpace($ReportPath)) {
+if ($Level -eq 'Fast' -and [string]::IsNullOrWhiteSpace($TestFilter)) {
+    throw 'Fast verification requires -TestFilter so its scope is explicit.'
+}
+if ($Level -ne 'Fast' -and ![string]::IsNullOrWhiteSpace($TestFilter)) {
+    throw '-TestFilter is available only with -Level Fast; Standard and Qualification require all tests.'
+}
+if ($Level -ne 'Fast' -and $FailFast) {
+    throw '-FailFast is available only with -Level Fast; Standard and Qualification require the complete suite.'
+}
+if ($Level -ne 'Fast' -and [string]::IsNullOrWhiteSpace($ReportPath)) {
     $Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
     $ReportPath = Join-Path $RepositoryRoot "artifacts/seed-conformance-windows-$Architecture.json"
 }
@@ -20,14 +35,32 @@ if ($LASTEXITCODE -ne 0) {
     throw "Windvale Seed build failed with exit code $LASTEXITCODE."
 }
 
-dotnet run `
-    --project (Join-Path $RepositoryRoot 'Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj') `
-    --configuration $Configuration `
-    --no-build `
-    -- `
-    --report $ReportPath
+$TestArguments = @()
+if ($Level -eq 'Fast') {
+    $TestArguments += @('--filter', $TestFilter)
+    if ($FailFast) {
+        $TestArguments += '--fail-fast'
+    }
+} else {
+    $TestArguments += @('--report', $ReportPath)
+}
+if (![string]::IsNullOrWhiteSpace($TimingReportPath)) {
+    $TestArguments += @('--timing-report', $TimingReportPath)
+}
+
+dotnet run --project $TestProject --configuration $Configuration --no-build -- @TestArguments
 if ($LASTEXITCODE -ne 0) {
     throw "Windvale Seed conformance tests failed with exit code $LASTEXITCODE."
+}
+
+if ($Level -eq 'Fast') {
+    Write-Host "Windvale Seed fast verification passed for filter: $TestFilter"
+    return
+}
+if ($Level -eq 'Standard') {
+    Write-Host 'Windvale Seed standard conformance verification passed.'
+    Write-Host "Conformance report: $ReportPath"
+    return
 }
 
 dotnet publish `
@@ -88,52 +121,52 @@ $InvalidWindvaleLinkedImage = Join-Path $Artifacts '__windvale_invalid_wvlink_ou
 $LinkedImage = Join-Path $Artifacts 'Hello-Linked.bin'
 $LinkMap = Join-Path $Artifacts 'Hello-Linked.wvmap'
 $InvalidLinkedImage = Join-Path $Artifacts '__windvale_invalid_link_output__.bin'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
+dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
 
-$VerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $SumModule
+$VerifyOutput = dotnet $ToolDll verify $SumModule
 if ($LASTEXITCODE -ne 0 -or $VerifyOutput -notcontains 'Verified: Sumˉdata') {
     $VerifyText = $VerifyOutput -join ' | '
     throw "The Seed CLI failed to verify Sum-Data.wvb (exit $LASTEXITCODE; output: $VerifyText)."
 }
 
-$InspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SumModule
+$InspectOutput = dotnet $ToolDll inspect $SumModule
 if ($LASTEXITCODE -ne 0 -or ($InspectOutput -join "`n") -notmatch 'data\.load\.i32') {
     throw 'The Seed CLI inspector did not expose the expected data instruction.'
 }
 
-$RunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $SumModule
+$RunOutput = dotnet $ToolDll run $SumModule
 if ($LASTEXITCODE -ne 0 -or $RunOutput -notcontains 'Result: 29') {
     throw 'The Seed CLI did not produce Result: 29 for Sum-Data.wvb.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Seed/Hello-Windvale.wv') -o $HelloModule
+dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Seed/Hello-Windvale.wv') -o $HelloModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Hello-Windvale.wv.' }
 
-$UnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $HelloModule 2>&1
+$UnauthorizedOutput = dotnet $ToolDll run $HelloModule 2>&1
 if ($LASTEXITCODE -ne 3 -or ($UnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
     throw 'The Seed CLI did not refuse an ungranted console capability.'
 }
 
-$HelloOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $HelloModule --allow console.write_line
+$HelloOutput = dotnet $ToolDll run $HelloModule --allow console.write_line
 if ($LASTEXITCODE -ne 0 -or $HelloOutput -notcontains 'Hello from Windvale' -or $HelloOutput -notcontains 'Result: 0') {
     throw 'The Seed CLI did not run the authorized Hello-Windvale module correctly.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Read-Wvb-Header.wv') -o $FoundationModule
+dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Foundation/Read-Wvb-Header.wv') -o $FoundationModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Read-Wvb-Header.wv.' }
 
-$FoundationVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $FoundationModule
+$FoundationVerifyOutput = dotnet $ToolDll verify $FoundationModule
 if ($LASTEXITCODE -ne 0 -or $FoundationVerifyOutput -notcontains 'Verified: Readˉwvbˉheader') {
     throw 'The Seed CLI failed to verify Read-Wvb-Header.wvb.'
 }
 
-$FoundationInspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $FoundationModule
+$FoundationInspectOutput = dotnet $ToolDll inspect $FoundationModule
 if ($LASTEXITCODE -ne 0 -or ($FoundationInspectOutput -join "`n") -notmatch 'bytes\.read_u32_little') {
     throw 'The Seed CLI inspector did not expose the expected little-endian read instruction.'
 }
 
-$FoundationRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $FoundationModule
+$FoundationRunOutput = dotnet $ToolDll run $FoundationModule
 if ($LASTEXITCODE -ne 0 -or $FoundationRunOutput -notcontains 'Result: 1') {
     throw 'The Seed CLI did not produce Result: 1 for Read-Wvb-Header.wvb.'
 }
@@ -141,18 +174,18 @@ if ($LASTEXITCODE -ne 0 -or $FoundationRunOutput -notcontains 'Result: 1') {
 $CompositionRoot = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Demo.wv'
 $CompositionMiddle = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Middle.wv'
 $CompositionLeaf = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Leaf.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $CompositionRoot --module $CompositionMiddle --module $CompositionLeaf -o $CompositionModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-module composition demo.' }
 $CompositionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $CompositionModule).Hash.ToLowerInvariant()
 if ($CompositionHash -ne '0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60') {
     throw "The composed source module has an unexpected digest: $CompositionHash"
 }
-$CompositionRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $CompositionModule
+$CompositionRunOutput = dotnet $ToolDll run $CompositionModule
 if ($LASTEXITCODE -ne 0 -or $CompositionRunOutput -notcontains 'Result: 42') {
     throw 'The composed source module did not return Result: 42.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $CompositionRoot --module $CompositionLeaf --module $CompositionMiddle -o $CompositionReorderedModule
 if ($LASTEXITCODE -ne 0) { throw 'The reordered source-module compile failed.' }
 $CompositionReorderedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $CompositionReorderedModule).Hash.ToLowerInvariant()
@@ -162,7 +195,7 @@ if ($CompositionReorderedHash -ne $CompositionHash) {
 if (Test-Path -LiteralPath $InvalidCompositionModule) {
     Remove-Item -LiteralPath $InvalidCompositionModule -Force
 }
-$MissingCompositionOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$MissingCompositionOutput = dotnet $ToolDll `
     compile $CompositionRoot --module $CompositionMiddle -o $InvalidCompositionModule 2>&1
 if ($LASTEXITCODE -ne 1 -or ($MissingCompositionOutput -join "`n") -notmatch 'WVC0007') {
     throw 'The source-module compiler did not reject a missing transitive import.'
@@ -171,7 +204,7 @@ if (Test-Path -LiteralPath $InvalidCompositionModule) {
     throw 'A rejected source-module composition created an output module.'
 }
 [System.IO.File]::WriteAllBytes($InvalidCompositionModule, [byte[]](9, 8, 7))
-$MissingCompositionOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$MissingCompositionOutput = dotnet $ToolDll `
     compile $CompositionRoot --module $CompositionMiddle -o $InvalidCompositionModule 2>&1
 if ($LASTEXITCODE -ne 1 -or ($MissingCompositionOutput -join "`n") -notmatch 'WVC0007') {
     throw 'The repeated missing-import composition did not fail deterministically.'
@@ -182,14 +215,14 @@ if ([Convert]::ToHexString([System.IO.File]::ReadAllBytes($InvalidCompositionMod
 Remove-Item -LiteralPath $InvalidCompositionModule -Force
 
 $MachineContractsSource = Join-Path $RepositoryRoot 'Foundation/Machine-Contracts.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $MachineContractsSource -o $MachineContractsModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation machine contracts.' }
 $MachineContractsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $MachineContractsModule).Hash.ToLowerInvariant()
 if ($MachineContractsHash -ne '9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a') {
     throw "The Foundation machine-contract module has an unexpected digest: $MachineContractsHash"
 }
-$MachineContractsInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $MachineContractsModule) -join "`n"
+$MachineContractsInspection = (dotnet $ToolDll inspect $MachineContractsModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $MachineContractsInspection -notmatch 'Foundationˉalignmentˉisˉvalid' -or
@@ -198,7 +231,7 @@ if (
 ) {
     throw 'The Foundation machine-contract module inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Foundation/Machine-Contracts-Demo.wv') `
     --module $MachineContractsSource `
     -o $MachineContractsDemoModule
@@ -207,20 +240,20 @@ $MachineContractsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Machin
 if ($MachineContractsDemoHash -ne 'b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a') {
     throw "The Foundation machine-contract demo has an unexpected digest: $MachineContractsDemoHash"
 }
-$MachineContractsDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $MachineContractsDemoModule
+$MachineContractsDemoOutput = dotnet $ToolDll run $MachineContractsDemoModule
 if ($LASTEXITCODE -ne 0 -or $MachineContractsDemoOutput -notcontains 'Result: 0') {
     throw 'The Foundation machine-contract demo did not return Result: 0.'
 }
 
 $ByteOrderingSource = Join-Path $RepositoryRoot 'Foundation/Byte-Ordering.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $ByteOrderingSource -o $ByteOrderingModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation byte ordering.' }
 $ByteOrderingHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteOrderingModule).Hash.ToLowerInvariant()
 if ($ByteOrderingHash -ne '194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1') {
     throw "The Foundation byte-ordering module has an unexpected digest: $ByteOrderingHash"
 }
-$ByteOrderingInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $ByteOrderingModule) -join "`n"
+$ByteOrderingInspection = (dotnet $ToolDll inspect $ByteOrderingModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $ByteOrderingInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
@@ -228,7 +261,7 @@ if (
 ) {
     throw 'The Foundation byte-ordering module inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Foundation/Byte-Ordering-Demo.wv') `
     --module $ByteOrderingSource `
     -o $ByteOrderingDemoModule
@@ -237,20 +270,20 @@ $ByteOrderingDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteOrderi
 if ($ByteOrderingDemoHash -ne '0b41e8f615630e0734812ba8cd8e7c06e975592b86327c2fe8220f5e29c10cab') {
     throw "The Foundation byte-ordering demo has an unexpected digest: $ByteOrderingDemoHash"
 }
-$ByteOrderingDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $ByteOrderingDemoModule
+$ByteOrderingDemoOutput = dotnet $ToolDll run $ByteOrderingDemoModule
 if ($LASTEXITCODE -ne 0 -or $ByteOrderingDemoOutput -notcontains 'Result: 0') {
     throw 'The Foundation byte-ordering demo did not return Result: 0.'
 }
 
 $DecimalParsingSource = Join-Path $RepositoryRoot 'Foundation/Decimal-Parsing.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $DecimalParsingSource -o $DecimalParsingModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation decimal parsing.' }
 $DecimalParsingHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $DecimalParsingModule).Hash.ToLowerInvariant()
 if ($DecimalParsingHash -ne '39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f') {
     throw "The Foundation decimal-parsing module has an unexpected digest: $DecimalParsingHash"
 }
-$DecimalParsingInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $DecimalParsingModule) -join "`n"
+$DecimalParsingInspection = (dotnet $ToolDll inspect $DecimalParsingModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $DecimalParsingInspection -notmatch 'Foundationˉu32ˉparse' -or
@@ -259,7 +292,7 @@ if (
 ) {
     throw 'The Foundation decimal-parsing module inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Foundation/Decimal-Parsing-Demo.wv') `
     --module $DecimalParsingSource `
     -o $DecimalParsingDemoModule
@@ -268,20 +301,20 @@ $DecimalParsingDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $DecimalP
 if ($DecimalParsingDemoHash -ne '16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695') {
     throw "The Foundation decimal-parsing demo has an unexpected digest: $DecimalParsingDemoHash"
 }
-$DecimalParsingDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $DecimalParsingDemoModule
+$DecimalParsingDemoOutput = dotnet $ToolDll run $DecimalParsingDemoModule
 if ($LASTEXITCODE -ne 0 -or $DecimalParsingDemoOutput -notcontains 'Result: 0') {
     throw 'The Foundation decimal-parsing demo did not return Result: 0.'
 }
 
 $ByteConstructionSource = Join-Path $RepositoryRoot 'Foundation/Byte-Construction.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $ByteConstructionSource -o $ByteConstructionModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation byte construction.' }
 $ByteConstructionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteConstructionModule).Hash.ToLowerInvariant()
 if ($ByteConstructionHash -ne '6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207') {
     throw "The Foundation byte-construction module has an unexpected digest: $ByteConstructionHash"
 }
-$ByteConstructionInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $ByteConstructionModule) -join "`n"
+$ByteConstructionInspection = (dotnet $ToolDll inspect $ByteConstructionModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $ByteConstructionInspection -notmatch 'Foundationˉbytesˉresult' -or
@@ -291,7 +324,7 @@ if (
 ) {
     throw 'The Foundation byte-construction module inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Foundation/Byte-Construction-Demo.wv') `
     --module $ByteConstructionSource `
     -o $ByteConstructionDemoModule
@@ -300,13 +333,13 @@ $ByteConstructionDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteCo
 if ($ByteConstructionDemoHash -ne 'a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abbd81f3481fb0e0bc6c29') {
     throw "The Foundation byte-construction demo has an unexpected digest: $ByteConstructionDemoHash"
 }
-$ByteConstructionDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $ByteConstructionDemoModule
+$ByteConstructionDemoOutput = dotnet $ToolDll run $ByteConstructionDemoModule
 if ($LASTEXITCODE -ne 0 -or $ByteConstructionDemoOutput -notcontains 'Result: 0') {
     throw 'The Foundation byte-construction demo did not return Result: 0.'
 }
 
 $SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Lexer-Core.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $SourceLexerSource `
     --module $DecimalParsingSource `
     -o $SourceLexerModule
@@ -315,7 +348,7 @@ $SourceLexerHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceLexerModu
 if ($SourceLexerHash -ne '0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04') {
     throw "The Windvale source lexer has an unexpected digest: $SourceLexerHash"
 }
-$SourceLexerInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceLexerModule) -join "`n"
+$SourceLexerInspection = (dotnet $ToolDll inspect $SourceLexerModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $SourceLexerInspection -notmatch 'Nominal types \(6\)' -or
@@ -326,7 +359,7 @@ if (
 ) {
     throw 'The Windvale source-lexer inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Lexer-Demo.wv') `
     --module $SourceLexerSource `
     --module $DecimalParsingSource `
@@ -336,14 +369,14 @@ $SourceLexerDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceLexer
 if ($SourceLexerDemoHash -ne '32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a') {
     throw "The Windvale source-lexer demo has an unexpected digest: $SourceLexerDemoHash"
 }
-$SourceLexerDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceLexerDemoOutput = dotnet $ToolDll `
     run $SourceLexerDemoModule --max-steps 10000000
 if ($LASTEXITCODE -ne 0 -or $SourceLexerDemoOutput -notcontains 'Result: 0') {
     throw 'The Windvale source-lexer demo did not return Result: 0.'
 }
 
 $SourceDeclarationParserSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Declaration-Parser.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $SourceDeclarationParserSource `
     --module $SourceLexerSource `
     --module $DecimalParsingSource `
@@ -353,7 +386,7 @@ $SourceDeclarationParserHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Sou
 if ($SourceDeclarationParserHash -ne 'b09be82c374636bf0b75a0dcea21afa648d89676e0fb0ffedcef68f9e958ee61') {
     throw "The Windvale declaration parser has an unexpected digest: $SourceDeclarationParserHash"
 }
-$SourceDeclarationParserInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceDeclarationParserModule) -join "`n"
+$SourceDeclarationParserInspection = (dotnet $ToolDll inspect $SourceDeclarationParserModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $SourceDeclarationParserInspection -notmatch 'Nominal types \(14\)' -or
@@ -364,7 +397,7 @@ if (
 ) {
     throw 'The Windvale declaration-parser inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Declaration-Parser-Demo.wv') `
     --module $SourceDeclarationParserSource `
     --module $SourceLexerSource `
@@ -375,12 +408,12 @@ $SourceDeclarationParserDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath 
 if ($SourceDeclarationParserDemoHash -ne '82dd2f72d2b2d148289353045fda861e07638e8fac8ba97164642d185c3b8e9a') {
     throw "The declaration-parser demo has an unexpected digest: $SourceDeclarationParserDemoHash"
 }
-$SourceDeclarationParserDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceDeclarationParserDemoOutput = dotnet $ToolDll `
     run $SourceDeclarationParserDemoModule --max-steps 20000000
 if ($LASTEXITCODE -ne 0 -or $SourceDeclarationParserDemoOutput -notcontains 'Result: 0') {
     throw 'The declaration-parser demo did not return Result: 0.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Declaration-Parser-Tool.wv') `
     --module $SourceDeclarationParserSource `
     --module $SourceLexerSource `
@@ -399,7 +432,7 @@ $SourceDeclarationParserArguments = @(
     '--allow', 'process.argument',
     '--allow', 'process.argument_count'
 )
-$SourceLexerDeclarationOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceLexerDeclarationOutput = dotnet $ToolDll `
     @SourceDeclarationParserArguments --max-steps 30000000 -- $SourceLexerSource
 if (
     $LASTEXITCODE -ne 0 -or
@@ -408,7 +441,7 @@ if (
 ) {
     throw 'The declaration-parser tool did not parse the real Windvale lexer source.'
 }
-$SourceParserSelfDeclarationOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceParserSelfDeclarationOutput = dotnet $ToolDll `
     @SourceDeclarationParserArguments --max-steps 45000000 -- $SourceDeclarationParserSource
 if (
     $LASTEXITCODE -ne 0 -or
@@ -419,7 +452,7 @@ if (
 }
 
 $SourceBodyParserSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Body-Parser.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $SourceBodyParserSource `
     --module $SourceDeclarationParserSource `
     --module $SourceLexerSource `
@@ -430,7 +463,7 @@ $SourceBodyParserHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBody
 if ($SourceBodyParserHash -ne 'bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f') {
     throw "The Windvale body parser has an unexpected digest: $SourceBodyParserHash"
 }
-$SourceBodyParserInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceBodyParserModule) -join "`n"
+$SourceBodyParserInspection = (dotnet $ToolDll inspect $SourceBodyParserModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $SourceBodyParserInspection -notmatch 'Nominal types \(23\)' -or
@@ -442,7 +475,7 @@ if (
 ) {
     throw 'The Windvale body-parser inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Body-Parser-Demo.wv') `
     --module $SourceBodyParserSource `
     --module $SourceDeclarationParserSource `
@@ -454,12 +487,12 @@ $SourceBodyParserDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Source
 if ($SourceBodyParserDemoHash -ne '5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba') {
     throw "The body-parser demo has an unexpected digest: $SourceBodyParserDemoHash"
 }
-$SourceBodyParserDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceBodyParserDemoOutput = dotnet $ToolDll `
     run $SourceBodyParserDemoModule --max-steps 30000000
 if ($LASTEXITCODE -ne 0 -or $SourceBodyParserDemoOutput -notcontains 'Result: 0') {
     throw 'The body-parser demo did not return Result: 0.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Body-Parser-Tool.wv') `
     --module $SourceBodyParserSource `
     --module $SourceDeclarationParserSource `
@@ -479,7 +512,7 @@ $SourceBodyParserArguments = @(
     '--allow', 'process.argument',
     '--allow', 'process.argument_count'
 )
-$SourceLexerBodyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceLexerBodyOutput = dotnet $ToolDll `
     @SourceBodyParserArguments --max-steps 100000000 -- $SourceLexerSource
 if (
     $LASTEXITCODE -ne 0 -or
@@ -488,7 +521,7 @@ if (
 ) {
     throw 'The body-parser tool did not parse the real Windvale lexer bodies.'
 }
-$SourceDeclarationBodyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceDeclarationBodyOutput = dotnet $ToolDll `
     @SourceBodyParserArguments --max-steps 160000000 -- $SourceDeclarationParserSource
 if (
     $LASTEXITCODE -ne 0 -or
@@ -497,7 +530,7 @@ if (
 ) {
     throw 'The body-parser tool did not parse the declaration-parser bodies.'
 }
-$SourceBodySelfOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceBodySelfOutput = dotnet $ToolDll `
     @SourceBodyParserArguments --max-steps 160000000 -- $SourceBodyParserSource
 if (
     $LASTEXITCODE -ne 0 -or
@@ -508,7 +541,7 @@ if (
 }
 
 $SourceSetSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Set-Core.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $SourceSetSource `
     --module $SourceBodyParserSource `
     --module $SourceDeclarationParserSource `
@@ -520,7 +553,7 @@ $SourceSetHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSetModule).
 if ($SourceSetHash -ne 'c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa766b19b1bfa2b8') {
     throw "The Windvale source-set core has an unexpected digest: $SourceSetHash"
 }
-$SourceSetInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceSetModule) -join "`n"
+$SourceSetInspection = (dotnet $ToolDll inspect $SourceSetModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $SourceSetInspection -notmatch 'Nominal types \(27\)' -or
@@ -532,7 +565,7 @@ if (
 ) {
     throw 'The Windvale source-set inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Set-Demo.wv') `
     --module $SourceSetSource `
     --module $SourceBodyParserSource `
@@ -545,12 +578,12 @@ $SourceSetDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSetDemo
 if ($SourceSetDemoHash -ne '0054138c6e39f3c99e5cd4751c796cd599b495880d7db174323342fb7b687488') {
     throw "The source-set demo has an unexpected digest: $SourceSetDemoHash"
 }
-$SourceSetDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceSetDemoOutput = dotnet $ToolDll `
     run $SourceSetDemoModule --max-steps 200000000
 if ($LASTEXITCODE -ne 0 -or $SourceSetDemoOutput -notcontains 'Result: 0') {
     throw 'The source-set demo did not return Result: 0.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Set-Tool.wv') `
     --module $SourceSetSource `
     --module $SourceBodyParserSource `
@@ -571,7 +604,7 @@ $SourceSetArguments = @(
     '--allow', 'process.argument',
     '--allow', 'process.argument_count'
 )
-$SourceSetSelfOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceSetSelfOutput = dotnet $ToolDll `
     @SourceSetArguments --max-steps 800000000 -- `
     $SourceSetSource `
     $SourceBodyParserSource `
@@ -587,7 +620,7 @@ if (
 }
 
 $SourceGraphSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Graph-Core.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $SourceGraphSource `
     --module $SourceSetSource `
     --module $SourceBodyParserSource `
@@ -601,7 +634,7 @@ $SourceGraphHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphModu
 if ($SourceGraphHash -ne '1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133') {
     throw "The Windvale source-graph core has an unexpected digest: $SourceGraphHash"
 }
-$SourceGraphInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceGraphModule) -join "`n"
+$SourceGraphInspection = (dotnet $ToolDll inspect $SourceGraphModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $SourceGraphInspection -notmatch 'Nominal types \(32\)' -or
@@ -612,7 +645,7 @@ if (
 ) {
     throw 'The Windvale source-graph inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Graph-Demo.wv') `
     --module $SourceGraphSource `
     --module $SourceSetSource `
@@ -627,12 +660,12 @@ $SourceGraphDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraph
 if ($SourceGraphDemoHash -ne '53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073') {
     throw "The source-graph demo has an unexpected digest: $SourceGraphDemoHash"
 }
-$SourceGraphDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceGraphDemoOutput = dotnet $ToolDll `
     run $SourceGraphDemoModule --max-steps 300000000
 if ($LASTEXITCODE -ne 0 -or $SourceGraphDemoOutput -notcontains 'Result: 0') {
     throw 'The source-graph demo did not return Result: 0.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Graph-Tool.wv') `
     --module $SourceGraphSource `
     --module $SourceSetSource `
@@ -655,7 +688,7 @@ $SourceGraphArguments = @(
     '--allow', 'process.argument',
     '--allow', 'process.argument_count'
 )
-$SourceGraphSelfOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceGraphSelfOutput = dotnet $ToolDll `
     @SourceGraphArguments --max-steps 1500000000 -- `
     $SourceGraphSource `
     $SourceBodyParserSource `
@@ -673,7 +706,7 @@ if (
 }
 
 $SourceSymbolsSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Symbols-Core.wv'
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile $SourceSymbolsSource `
     --module $SourceGraphSource `
     --module $SourceSetSource `
@@ -688,7 +721,7 @@ $SourceSymbolsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbols
 if ($SourceSymbolsHash -ne '79a60d3734c8c128af327b3c9e015bfa1f5b2c9d7b87abf4fb3fc2428d8bac3a') {
     throw "The Windvale source-symbol core has an unexpected digest: $SourceSymbolsHash"
 }
-$SourceSymbolsInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceSymbolsModule) -join "`n"
+$SourceSymbolsInspection = (dotnet $ToolDll inspect $SourceSymbolsModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $SourceSymbolsInspection -notmatch 'Nominal types \(38\)' -or
@@ -700,7 +733,7 @@ if (
 ) {
     throw 'The Windvale source-symbol inspection is incomplete.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Symbols-Demo.wv') `
     --module $SourceSymbolsSource `
     --module $SourceGraphSource `
@@ -716,12 +749,12 @@ $SourceSymbolsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSym
 if ($SourceSymbolsDemoHash -ne '476551cc0990588c3e782f45be83baebbcf3cd519cc0fe8dc17ccd67a7aa3714') {
     throw "The source-symbol demo has an unexpected digest: $SourceSymbolsDemoHash"
 }
-$SourceSymbolsDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceSymbolsDemoOutput = dotnet $ToolDll `
     run $SourceSymbolsDemoModule --max-steps 1500000000
 if ($LASTEXITCODE -ne 0 -or $SourceSymbolsDemoOutput -notcontains 'Result: 0') {
     throw 'The source-symbol demo did not return Result: 0.'
 }
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Symbols-Tool.wv') `
     --module $SourceSymbolsSource `
     --module $SourceGraphSource `
@@ -745,7 +778,7 @@ $SourceSymbolsArguments = @(
     '--allow', 'process.argument',
     '--allow', 'process.argument_count'
 )
-$SourceSymbolsSelfOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+$SourceSymbolsSelfOutput = dotnet $ToolDll `
     @SourceSymbolsArguments --max-steps 4000000000 -- `
     $SourceSymbolsSource `
     $SourceBodyParserSource `
@@ -763,15 +796,15 @@ if (
     throw 'The source-symbol tool did not bind the real compiler closure.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
+dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wv-Dump-Core.wv.' }
 
-$WvDumpCoreVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvDumpCoreModule
+$WvDumpCoreVerifyOutput = dotnet $ToolDll verify $WvDumpCoreModule
 if ($LASTEXITCODE -ne 0 -or $WvDumpCoreVerifyOutput -notcontains 'Verified: Wvˉdumpˉcore') {
     throw 'The Seed CLI failed to verify Wv-Dump-Core.wvb.'
 }
 
-$WvDumpCoreInspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvDumpCoreModule
+$WvDumpCoreInspectOutput = dotnet $ToolDll inspect $WvDumpCoreModule
 $WvDumpCoreInspection = $WvDumpCoreInspectOutput -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
@@ -800,17 +833,17 @@ $WvDumpCapabilities = @(
     '--max-steps', '10000000'
 )
 
-$WvDumpUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule 2>&1
+$WvDumpUnauthorizedOutput = dotnet $ToolDll run $WvDumpCoreModule 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvDumpUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
     throw 'The Seed CLI did not refuse ungranted WvDump hosted capabilities.'
 }
 
-$WvDumpCoreRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities
+$WvDumpCoreRunOutput = dotnet $ToolDll run $WvDumpCoreModule @WvDumpCapabilities
 if ($LASTEXITCODE -ne 0 -or $WvDumpCoreRunOutput -notcontains 'Result: 0') {
     throw 'The Seed CLI did not produce Result: 0 for Wv-Dump-Core.wvb.'
 }
 
-$WvDumpHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- $SumModule
+$WvDumpHostedOutput = dotnet $ToolDll run $WvDumpCoreModule @WvDumpCapabilities -- $SumModule
 if (
     $LASTEXITCODE -ne 0 -or
     $WvDumpHostedOutput -notcontains 'wvdump 1' -or
@@ -823,7 +856,7 @@ if (
     throw 'The Windvale-written WvDump core did not produce the expected real-module report.'
 }
 
-$WvDumpInvalidOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
+$WvDumpInvalidOutput = dotnet $ToolDll run $WvDumpCoreModule @WvDumpCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
 if (
     $LASTEXITCODE -ne 0 -or
     ($WvDumpInvalidOutput -join "`n") -notmatch 'Badˉmagic sections=0 offset=0' -or
@@ -836,28 +869,28 @@ $MissingHostedFile = Join-Path $Artifacts '__windvale_missing_hosted_resource__.
 if (Test-Path -LiteralPath $MissingHostedFile) {
     throw "The missing-file verifier path unexpectedly exists: $MissingHostedFile"
 }
-$WvDumpMissingOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- $MissingHostedFile 2>&1
+$WvDumpMissingOutput = dotnet $ToolDll run $WvDumpCoreModule @WvDumpCapabilities -- $MissingHostedFile 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvDumpMissingOutput -join "`n") -notmatch 'WVR3022') {
     throw 'The hosted file adapter did not report a missing resource deterministically.'
 }
 
-$WvDumpInvalidNameOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule @WvDumpCapabilities -- '' 2>&1
+$WvDumpInvalidNameOutput = dotnet $ToolDll run $WvDumpCoreModule @WvDumpCapabilities -- '' 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvDumpInvalidNameOutput -join "`n") -notmatch 'WVR3021') {
     throw 'The hosted file adapter did not reject an empty resource name deterministically.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wvo-Object-Core.wv') `
     --module $ByteOrderingSource `
     -o $WvoCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wvo-Object-Core.wv.' }
 
-$WvoCoreVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvoCoreModule
+$WvoCoreVerifyOutput = dotnet $ToolDll verify $WvoCoreModule
 if ($LASTEXITCODE -ne 0 -or $WvoCoreVerifyOutput -notcontains 'Verified: Wvoˉobjectˉcore') {
     throw 'The Seed CLI failed to verify Wvo-Object-Core.wvb.'
 }
 
-$WvoCoreInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvoCoreModule) -join "`n"
+$WvoCoreInspection = (dotnet $ToolDll inspect $WvoCoreModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $WvoCoreInspection -notmatch 'bytes\.concat' -or
@@ -879,17 +912,17 @@ $WvoCapabilities = @(
     '--max-steps', '10000000'
 )
 
-$WvoUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule 2>&1
+$WvoUnauthorizedOutput = dotnet $ToolDll run $WvoCoreModule 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvoUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
     throw 'The Seed CLI did not refuse ungranted WVO writer capabilities.'
 }
 
-$WvoSelfTestOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities
+$WvoSelfTestOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities
 if ($LASTEXITCODE -ne 0 -or $WvoSelfTestOutput -notcontains 'Result: 0') {
     throw 'The Windvale object core self-test did not return Result: 0.'
 }
 
-$WvoHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities -- $WvoSample
+$WvoHostedOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- $WvoSample
 if (
     $LASTEXITCODE -ne 0 -or
     $WvoHostedOutput -notcontains 'Wrote WVO 1.0 bytes=189' -or
@@ -903,12 +936,12 @@ if ($WvoHash -ne '006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb2
     throw "The Windvale object core wrote unexpected bytes: $WvoHash"
 }
 
-$WvoVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-verify $WvoSample
+$WvoVerifyOutput = dotnet $ToolDll object-verify $WvoSample
 if ($LASTEXITCODE -ne 0 -or $WvoVerifyOutput -notcontains 'Verified object: X86ˉ64') {
     throw 'The object verifier rejected the Windvale-written sample.'
 }
 
-$WvoInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-inspect $WvoSample) -join "`n"
+$WvoInspection = (dotnet $ToolDll object-inspect $WvoSample) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $WvoInspection -notmatch 'Sections \(2\)' -or
@@ -918,7 +951,7 @@ if (
     throw 'The object inspector did not expose the expected symbol and relocation records.'
 }
 
-$WvoInvalidNameOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities -- '' 2>&1
+$WvoInvalidNameOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- '' 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvoInvalidNameOutput -join "`n") -notmatch 'WVR3021') {
     throw 'The hosted file writer did not reject an empty resource name deterministically.'
 }
@@ -927,12 +960,12 @@ $MissingWriterParent = Join-Path $Artifacts '__windvale_missing_writer_parent__'
 if (Test-Path -LiteralPath $MissingWriterParent) {
     throw "The missing writer parent unexpectedly exists: $MissingWriterParent"
 }
-$WvoMissingParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvoCoreModule @WvoCapabilities -- (Join-Path $MissingWriterParent 'Sample.wvo') 2>&1
+$WvoMissingParentOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- (Join-Path $MissingWriterParent 'Sample.wvo') 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvoMissingParentOutput -join "`n") -notmatch 'WVR3022') {
     throw 'The hosted file writer did not report a missing parent deterministically.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Assembler/Wva-Assembler-Core.wv') `
     --module $MachineContractsSource `
     --module $ByteOrderingSource `
@@ -941,12 +974,12 @@ dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
     -o $WvaAssemblerModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wva-Assembler-Core.wv.' }
 
-$WvaAssemblerVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvaAssemblerModule
+$WvaAssemblerVerifyOutput = dotnet $ToolDll verify $WvaAssemblerModule
 if ($LASTEXITCODE -ne 0 -or $WvaAssemblerVerifyOutput -notcontains 'Verified: Wvaˉassemblerˉcore') {
     throw 'The bytecode verifier rejected the Windvale WVA assembler.'
 }
 
-$WvaAssemblerInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvaAssemblerModule) -join "`n"
+$WvaAssemblerInspection = (dotnet $ToolDll inspect $WvaAssemblerModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $WvaAssemblerInspection -notmatch 'Scanˉwva' -or
@@ -977,17 +1010,17 @@ $WvaAssemblerCapabilities = @(
     '--max-steps', '10000000'
 )
 
-$WvaAssemblerUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule 2>&1
+$WvaAssemblerUnauthorizedOutput = dotnet $ToolDll run $WvaAssemblerModule 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvaAssemblerUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
     throw 'The Seed CLI did not refuse ungranted WVA assembler capabilities.'
 }
 
-$WvaAssemblerSelfTestOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities
+$WvaAssemblerSelfTestOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities
 if ($LASTEXITCODE -ne 0 -or $WvaAssemblerSelfTestOutput -notcontains 'Result: 0') {
     throw 'The Windvale WVA assembler self-test did not return Result: 0.'
 }
 
-dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+dotnet $ToolDll `
     compile (Join-Path $RepositoryRoot 'Examples/Linker/Wv-Linker-Core.wv') `
     --module $MachineContractsSource `
     --module $ByteOrderingSource `
@@ -996,12 +1029,12 @@ dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
     -o $WvLinkerCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale linker core.' }
 
-$WvLinkerVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- verify $WvLinkerCoreModule
+$WvLinkerVerifyOutput = dotnet $ToolDll verify $WvLinkerCoreModule
 if ($LASTEXITCODE -ne 0 -or $WvLinkerVerifyOutput -notcontains 'Verified: Wvˉlinkerˉcore') {
     throw 'The bytecode verifier rejected the Windvale linker core.'
 }
 
-$WvLinkerInspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvLinkerCoreModule
+$WvLinkerInspectOutput = dotnet $ToolDll inspect $WvLinkerCoreModule
 $WvLinkerInspection = $WvLinkerInspectOutput -join "`n"
 if (
     $WvLinkerInspection -notmatch 'Inspectˉobject' -or
@@ -1043,17 +1076,17 @@ $WvLinkerCapabilities = @(
     '--allow', 'process.argument_count',
     '--max-steps', '20000000'
 )
-$WvLinkerUnauthorizedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule 2>&1
+$WvLinkerUnauthorizedOutput = dotnet $ToolDll run $WvLinkerCoreModule 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvLinkerUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
     throw 'The Seed CLI did not refuse ungranted Windvale linker capabilities.'
 }
 
-$WvLinkerSelfTestOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities
+$WvLinkerSelfTestOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities
 if ($LASTEXITCODE -ne 0 -or $WvLinkerSelfTestOutput -notcontains 'Result: 0') {
     throw 'The Windvale linker scanner self-test did not return Result: 0.'
 }
 
-$WvaAssemblerHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') $WindvaleAssemblyObject
+$WvaAssemblerHostedOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') $WindvaleAssemblyObject
 if (
     $LASTEXITCODE -ne 0 -or
     $WvaAssemblerHostedOutput -notcontains 'wvasm 1' -or
@@ -1066,12 +1099,12 @@ $WindvaleAssemblyHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleAs
 if ($WindvaleAssemblyHash -ne '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85') {
     throw "The Windvale WVA assembler wrote unexpected bytes: $WindvaleAssemblyHash"
 }
-$WindvaleAssemblyVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-verify $WindvaleAssemblyObject
+$WindvaleAssemblyVerifyOutput = dotnet $ToolDll object-verify $WindvaleAssemblyObject
 if ($LASTEXITCODE -ne 0 -or $WindvaleAssemblyVerifyOutput -notcontains 'Verified object: X86ˉ64') {
     throw 'The independent object verifier rejected the Windvale-written assembler output.'
 }
 
-$WvLinkerHostedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- $WindvaleAssemblyObject
+$WvLinkerHostedOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- $WindvaleAssemblyObject
 if (
     $LASTEXITCODE -ne 0 -or
     $WvLinkerHostedOutput -notcontains 'object status=Valid sections=2 symbols=3 relocations=2 offset=218' -or
@@ -1080,7 +1113,7 @@ if (
     throw 'The Windvale linker scanner did not accept the canonical assembler object.'
 }
 
-$WvLinkerInvalidOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
+$WvLinkerInvalidOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
 if (
     $LASTEXITCODE -ne 0 -or
     ($WvLinkerInvalidOutput -join "`n") -notmatch 'object status=Badˉmagic' -or
@@ -1093,7 +1126,7 @@ if (Test-Path -LiteralPath $MissingAssemblerParent) {
     throw "The missing assembler parent unexpectedly exists: $MissingAssemblerParent"
 }
 $MissingAssemblerOutput = Join-Path $MissingAssemblerParent 'Hello.wvo'
-$WvaAssemblerMissingParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') $MissingAssemblerOutput 2>&1
+$WvaAssemblerMissingParentOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') $MissingAssemblerOutput 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvaAssemblerMissingParentOutput -join "`n") -notmatch 'WVR3022') {
     throw 'The Windvale WVA assembler did not report a missing output parent deterministically.'
 }
@@ -1104,7 +1137,7 @@ if (Test-Path -LiteralPath $MissingAssemblerOutput) {
 if (Test-Path -LiteralPath $InvalidWindvaleAssemblyObject) {
     throw "The invalid Windvale assembly output unexpectedly exists: $InvalidWindvaleAssemblyObject"
 }
-$WvaSemanticInvalidOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') $InvalidWindvaleAssemblyObject 2>&1
+$WvaSemanticInvalidOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') $InvalidWindvaleAssemblyObject 2>&1
 if (
     $LASTEXITCODE -ne 0 -or
     ($WvaSemanticInvalidOutput -join "`n") -notmatch 'assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1' -or
@@ -1115,7 +1148,7 @@ if (
 if (Test-Path -LiteralPath $InvalidWindvaleAssemblyObject) {
     throw 'Rejected Windvale assembly created a partial output object.'
 }
-$WvaSemanticExistingOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') $WindvaleAssemblyObject 2>&1
+$WvaSemanticExistingOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') $WindvaleAssemblyObject 2>&1
 if (
     $LASTEXITCODE -ne 0 -or
     ($WvaSemanticExistingOutput -join "`n") -notmatch 'assembly status=WVA1001' -or
@@ -1128,7 +1161,7 @@ if ($PreservedWindvaleAssemblyHash -ne $WindvaleAssemblyHash) {
     throw 'Rejected Windvale assembly modified an existing output object.'
 }
 
-$AssemblyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- assemble (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') -o $AssemblyObject
+$AssemblyOutput = dotnet $ToolDll assemble (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') -o $AssemblyObject
 if (
     $LASTEXITCODE -ne 0 -or
     ($AssemblyOutput -join "`n") -notmatch 'Assembled:' -or
@@ -1141,12 +1174,12 @@ if ($Stage0AssemblyHash -ne $WindvaleAssemblyHash) {
     throw 'The Windvale-written and Stage 0 assembler objects differ.'
 }
 
-$AssemblyVerifyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-verify $AssemblyObject
+$AssemblyVerifyOutput = dotnet $ToolDll object-verify $AssemblyObject
 if ($LASTEXITCODE -ne 0 -or $AssemblyVerifyOutput -notcontains 'Verified object: X86ˉ64') {
     throw 'The object verifier rejected the WVA example object.'
 }
 
-$AssemblyInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- object-inspect $AssemblyObject) -join "`n"
+$AssemblyInspection = (dotnet $ToolDll object-inspect $AssemblyObject) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
     $AssemblyInspection -notmatch '\.text kind=Code align=16 memory=11 data=11' -or
@@ -1156,7 +1189,7 @@ if (
     throw 'The object inspector did not expose the expected WVA sections and relocations.'
 }
 
-$ProviderAssemblyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- assemble (Join-Path $RepositoryRoot 'Examples/Linker/Console-Provider.wva') -o $LinkProviderObject
+$ProviderAssemblyOutput = dotnet $ToolDll assemble (Join-Path $RepositoryRoot 'Examples/Linker/Console-Provider.wva') -o $LinkProviderObject
 if (
     $LASTEXITCODE -ne 0 -or
     $ProviderAssemblyOutput -notcontains 'SHA-256: 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab'
@@ -1164,7 +1197,7 @@ if (
     throw 'The Stage 0 assembler did not produce the canonical linker provider object.'
 }
 
-$WvLinkerMapOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleLinkedImage $WindvaleAssemblyObject $LinkProviderObject
+$WvLinkerMapOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleLinkedImage $WindvaleAssemblyObject $LinkProviderObject
 if (
     $LASTEXITCODE -ne 0 -or
     $WvLinkerMapOutput -notcontains 'windvale-link-map 1' -or
@@ -1195,7 +1228,7 @@ if ($WindvaleLinkMapHash -ne '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22
 if (Test-Path -LiteralPath $InvalidWindvaleLinkedImage) {
     throw "The invalid Windvale link output unexpectedly exists: $InvalidWindvaleLinkedImage"
 }
-$WvLinkerUndefinedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $InvalidWindvaleLinkedImage $WindvaleAssemblyObject 2>&1
+$WvLinkerUndefinedOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $InvalidWindvaleLinkedImage $WindvaleAssemblyObject 2>&1
 if (
     $LASTEXITCODE -ne 0 -or
     ($WvLinkerUndefinedOutput -join "`n") -notmatch 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' -or
@@ -1207,7 +1240,7 @@ if (Test-Path -LiteralPath $InvalidWindvaleLinkedImage) {
     throw 'A rejected Windvale link created a partial image.'
 }
 
-$WvLinkerExistingFailure = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleLinkedImage $WindvaleAssemblyObject 2>&1
+$WvLinkerExistingFailure = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleLinkedImage $WindvaleAssemblyObject 2>&1
 if (
     $LASTEXITCODE -ne 0 -or
     ($WvLinkerExistingFailure -join "`n") -notmatch 'link status=WVL1005' -or
@@ -1225,7 +1258,7 @@ if (Test-Path -LiteralPath $MissingWindvaleLinkParent) {
     throw "The missing Windvale linker parent unexpectedly exists: $MissingWindvaleLinkParent"
 }
 $MissingWindvaleLinkOutput = Join-Path $MissingWindvaleLinkParent 'Hello.bin'
-$MissingWindvaleLinkParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $MissingWindvaleLinkOutput $WindvaleAssemblyObject $LinkProviderObject 2>&1
+$MissingWindvaleLinkParentOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $MissingWindvaleLinkOutput $WindvaleAssemblyObject $LinkProviderObject 2>&1
 if ($LASTEXITCODE -ne 3 -or ($MissingWindvaleLinkParentOutput -join "`n") -notmatch 'WVR3022') {
     throw 'The Windvale linker did not report a missing output parent deterministically.'
 }
@@ -1233,7 +1266,7 @@ if (Test-Path -LiteralPath $MissingWindvaleLinkOutput) {
     throw 'The failed Windvale linker write left a partial image.'
 }
 
-$LinkMapOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $LinkedImage $AssemblyObject $LinkProviderObject
+$LinkMapOutput = dotnet $ToolDll link --base-address 1048576 --entry Main -o $LinkedImage $AssemblyObject $LinkProviderObject
 if (
     $LASTEXITCODE -ne 0 -or
     $LinkMapOutput -notcontains 'windvale-link-map 1' -or
@@ -1275,7 +1308,7 @@ if (-not $MapsMatch) {
 if (Test-Path -LiteralPath $InvalidLinkedImage) {
     throw "The invalid link output unexpectedly exists: $InvalidLinkedImage"
 }
-$UndefinedLinkOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $InvalidLinkedImage $AssemblyObject 2>&1
+$UndefinedLinkOutput = dotnet $ToolDll link --base-address 1048576 --entry Main -o $InvalidLinkedImage $AssemblyObject 2>&1
 if ($LASTEXITCODE -ne 1 -or ($UndefinedLinkOutput -join "`n") -notmatch 'WVL1005') {
     throw 'The Stage 0 linker did not reject an undefined import deterministically.'
 }
@@ -1283,7 +1316,7 @@ if (Test-Path -LiteralPath $InvalidLinkedImage) {
     throw 'A rejected link created a partial image.'
 }
 
-$ExistingLinkFailure = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $LinkedImage $AssemblyObject 2>&1
+$ExistingLinkFailure = dotnet $ToolDll link --base-address 1048576 --entry Main -o $LinkedImage $AssemblyObject 2>&1
 if ($LASTEXITCODE -ne 1 -or ($ExistingLinkFailure -join "`n") -notmatch 'WVL1005') {
     throw 'The Stage 0 linker did not reject an invalid link targeting an existing image.'
 }
@@ -1297,7 +1330,7 @@ if (Test-Path -LiteralPath $MissingLinkParent) {
     throw "The missing linker parent unexpectedly exists: $MissingLinkParent"
 }
 $MissingLinkOutput = Join-Path $MissingLinkParent 'Hello.bin'
-$MissingLinkParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $MissingLinkOutput $AssemblyObject $LinkProviderObject 2>&1
+$MissingLinkParentOutput = dotnet $ToolDll link --base-address 1048576 --entry Main -o $MissingLinkOutput $AssemblyObject $LinkProviderObject 2>&1
 if ($LASTEXITCODE -ne 74 -or ($MissingLinkParentOutput -join "`n") -notmatch 'I/O failed') {
     throw 'The Stage 0 linker did not report a missing output parent deterministically.'
 }

@@ -42,6 +42,14 @@ On Linux:
 ./Tools/Verify/Verify-Seed.sh
 ```
 
+During iteration, select the narrowest relevant test by displayed-name substring:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestFilter '<substring>' -FailFast
+```
+
+Use `-Level Standard` for the complete in-process conformance suite without the native CLI qualification pass. Fast and Standard results are development feedback, not milestone qualification. The default `Qualification` level remains the complete Windows or Linux gate.
+
 Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require evidence from Windows and real Debian before cross-host qualification is claimed. GitHub-hosted CI is a review gate, not a substitute for the exact cross-host qualification procedure.
 
 ## Pull requests

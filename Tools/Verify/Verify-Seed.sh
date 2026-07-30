@@ -6,17 +6,68 @@ REPOSITORY_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 CONFIGURATION=${CONFIGURATION:-Release}
 ARCHITECTURE=$(uname -m)
 REPORT_PATH=${1:-"$REPOSITORY_ROOT/artifacts/seed-conformance-linux-$ARCHITECTURE.json"}
-TOOL_PROJECT="$REPOSITORY_ROOT/Tools/Windvale.Tool/Windvale.Tool.csproj"
+VERIFY_LEVEL=${VERIFY_LEVEL:-qualification}
+TEST_FILTER=${TEST_FILTER:-}
+FAIL_FAST=${FAIL_FAST:-0}
+TIMING_REPORT_PATH=${TIMING_REPORT_PATH:-}
+TOOL_DLL="$REPOSITORY_ROOT/Tools/Windvale.Tool/bin/$CONFIGURATION/net10.0/windvale.dll"
+TEST_PROJECT="$REPOSITORY_ROOT/Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj"
 ARTIFACTS="$REPOSITORY_ROOT/artifacts"
 mkdir -p "$ARTIFACTS"
 
+case "$VERIFY_LEVEL" in
+    fast)
+        if [ -z "$TEST_FILTER" ]; then
+            echo 'Fast verification requires TEST_FILTER so its scope is explicit.' >&2
+            exit 64
+        fi
+        ;;
+    standard|qualification)
+        if [ -n "$TEST_FILTER" ]; then
+            echo 'TEST_FILTER is available only with VERIFY_LEVEL=fast.' >&2
+            exit 64
+        fi
+        if [ "$FAIL_FAST" != '0' ]; then
+            echo 'FAIL_FAST is available only with VERIFY_LEVEL=fast.' >&2
+            exit 64
+        fi
+        ;;
+    *)
+        echo "Unknown VERIFY_LEVEL: $VERIFY_LEVEL" >&2
+        exit 64
+        ;;
+esac
+
 dotnet build "$REPOSITORY_ROOT/Windvale.slnx" --configuration "$CONFIGURATION" --nologo
+
+if [ "$VERIFY_LEVEL" = 'fast' ]; then
+    set -- --filter "$TEST_FILTER"
+    if [ "$FAIL_FAST" = '1' ]; then
+        set -- "$@" --fail-fast
+    fi
+else
+    set -- --report "$REPORT_PATH"
+fi
+if [ -n "$TIMING_REPORT_PATH" ]; then
+    set -- "$@" --timing-report "$TIMING_REPORT_PATH"
+fi
+
 dotnet run \
-    --project "$REPOSITORY_ROOT/Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj" \
+    --project "$TEST_PROJECT" \
     --configuration "$CONFIGURATION" \
     --no-build \
     -- \
-    --report "$REPORT_PATH"
+    "$@"
+
+if [ "$VERIFY_LEVEL" = 'fast' ]; then
+    echo "Windvale Seed fast verification passed for filter: $TEST_FILTER"
+    exit 0
+fi
+if [ "$VERIFY_LEVEL" = 'standard' ]; then
+    echo 'Windvale Seed standard conformance verification passed.'
+    echo "Conformance report: $REPORT_PATH"
+    exit 0
+fi
 
 SUM_MODULE="$ARTIFACTS/Sum-Data.wvb"
 HELLO_MODULE="$ARTIFACTS/Hello-Windvale.wvb"
@@ -64,23 +115,23 @@ INVALID_WINDVALE_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_wvlink_output__.bin
 LINKED_IMAGE="$ARTIFACTS/Hello-Linked.bin"
 LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" -o "$SUM_MODULE"
 
-VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$SUM_MODULE")
+VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$SUM_MODULE")
 printf '%s\n' "$VERIFY_OUTPUT" | grep -F 'Verified: Sumˉdata' >/dev/null
 
-INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SUM_MODULE")
+INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$SUM_MODULE")
 printf '%s\n' "$INSPECT_OUTPUT" | grep -F 'data.load.i32' >/dev/null
 
-RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$SUM_MODULE")
+RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$SUM_MODULE")
 printf '%s\n' "$RUN_OUTPUT" | grep -F 'Result: 29' >/dev/null
 
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Seed/Hello-Windvale.wv" -o "$HELLO_MODULE"
 
 set +e
-UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$HELLO_MODULE" 2>&1)
+UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$HELLO_MODULE" 2>&1)
 UNAUTHORIZED_EXIT=$?
 set -e
 if [ "$UNAUTHORIZED_EXIT" -ne 3 ]; then
@@ -89,27 +140,27 @@ if [ "$UNAUTHORIZED_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
 
-HELLO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+HELLO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$HELLO_MODULE" --allow console.write_line)
 printf '%s\n' "$HELLO_OUTPUT" | grep -F 'Hello from Windvale' >/dev/null
 printf '%s\n' "$HELLO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Foundation/Read-Wvb-Header.wv" -o "$FOUNDATION_MODULE"
 
-FOUNDATION_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$FOUNDATION_MODULE")
+FOUNDATION_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$FOUNDATION_MODULE")
 printf '%s\n' "$FOUNDATION_VERIFY_OUTPUT" | grep -F 'Verified: Readˉwvbˉheader' >/dev/null
 
-FOUNDATION_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$FOUNDATION_MODULE")
+FOUNDATION_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$FOUNDATION_MODULE")
 printf '%s\n' "$FOUNDATION_INSPECT_OUTPUT" | grep -F 'bytes.read_u32_little' >/dev/null
 
-FOUNDATION_RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$FOUNDATION_MODULE")
+FOUNDATION_RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$FOUNDATION_MODULE")
 printf '%s\n' "$FOUNDATION_RUN_OUTPUT" | grep -F 'Result: 1' >/dev/null
 
 COMPOSITION_ROOT="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Demo.wv"
 COMPOSITION_MIDDLE="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Middle.wv"
 COMPOSITION_LEAF="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Leaf.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$COMPOSITION_ROOT" \
     --module "$COMPOSITION_MIDDLE" \
     --module "$COMPOSITION_LEAF" \
@@ -119,10 +170,10 @@ if [ "$COMPOSITION_HASH" != '0980b7178943be516cd9b6924f179d5977ca147e11bf105c506
     echo "The composed source module has an unexpected digest: $COMPOSITION_HASH" >&2
     exit 1
 fi
-COMPOSITION_RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+COMPOSITION_RUN_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$COMPOSITION_MODULE")
 printf '%s\n' "$COMPOSITION_RUN_OUTPUT" | grep -F 'Result: 42' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$COMPOSITION_ROOT" \
     --module "$COMPOSITION_LEAF" \
     --module "$COMPOSITION_MIDDLE" \
@@ -131,18 +182,18 @@ cmp "$COMPOSITION_MODULE" "$COMPOSITION_REORDERED_MODULE"
 rm -f "$INVALID_COMPOSITION_MODULE"
 
 MACHINE_CONTRACTS_SOURCE="$REPOSITORY_ROOT/Foundation/Machine-Contracts.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$MACHINE_CONTRACTS_SOURCE" -o "$MACHINE_CONTRACTS_MODULE"
 MACHINE_CONTRACTS_HASH=$(sha256sum "$MACHINE_CONTRACTS_MODULE" | awk '{print $1}')
 if [ "$MACHINE_CONTRACTS_HASH" != '9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a' ]; then
     echo "The Foundation machine-contract module has an unexpected digest: $MACHINE_CONTRACTS_HASH" >&2
     exit 1
 fi
-MACHINE_CONTRACTS_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$MACHINE_CONTRACTS_MODULE")
+MACHINE_CONTRACTS_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$MACHINE_CONTRACTS_MODULE")
 printf '%s\n' "$MACHINE_CONTRACTS_INSPECTION" | grep -F 'Foundationˉalignmentˉisˉvalid' >/dev/null
 printf '%s\n' "$MACHINE_CONTRACTS_INSPECTION" | grep -F 'Foundationˉmachineˉnameˉisˉvalid' >/dev/null
 printf '%s\n' "$MACHINE_CONTRACTS_INSPECTION" | grep -F 'Exports (2)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Foundation/Machine-Contracts-Demo.wv" \
     --module "$MACHINE_CONTRACTS_SOURCE" \
     -o "$MACHINE_CONTRACTS_DEMO_MODULE"
@@ -151,22 +202,22 @@ if [ "$MACHINE_CONTRACTS_DEMO_HASH" != 'b505d3335fa5a4b1dabe2d5e64e4c7a557e00286
     echo "The Foundation machine-contract demo has an unexpected digest: $MACHINE_CONTRACTS_DEMO_HASH" >&2
     exit 1
 fi
-MACHINE_CONTRACTS_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+MACHINE_CONTRACTS_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$MACHINE_CONTRACTS_DEMO_MODULE")
 printf '%s\n' "$MACHINE_CONTRACTS_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 BYTE_ORDERING_SOURCE="$REPOSITORY_ROOT/Foundation/Byte-Ordering.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$BYTE_ORDERING_SOURCE" -o "$BYTE_ORDERING_MODULE"
 BYTE_ORDERING_HASH=$(sha256sum "$BYTE_ORDERING_MODULE" | awk '{print $1}')
 if [ "$BYTE_ORDERING_HASH" != '194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1' ]; then
     echo "The Foundation byte-ordering module has an unexpected digest: $BYTE_ORDERING_HASH" >&2
     exit 1
 fi
-BYTE_ORDERING_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$BYTE_ORDERING_MODULE")
+BYTE_ORDERING_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$BYTE_ORDERING_MODULE")
 printf '%s\n' "$BYTE_ORDERING_INSPECTION" | grep -F 'Foundationˉbyteˉspansˉcompare' >/dev/null
 printf '%s\n' "$BYTE_ORDERING_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Foundation/Byte-Ordering-Demo.wv" \
     --module "$BYTE_ORDERING_SOURCE" \
     -o "$BYTE_ORDERING_DEMO_MODULE"
@@ -175,23 +226,23 @@ if [ "$BYTE_ORDERING_DEMO_HASH" != '0b41e8f615630e0734812ba8cd8e7c06e975592b8632
     echo "The Foundation byte-ordering demo has an unexpected digest: $BYTE_ORDERING_DEMO_HASH" >&2
     exit 1
 fi
-BYTE_ORDERING_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+BYTE_ORDERING_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$BYTE_ORDERING_DEMO_MODULE")
 printf '%s\n' "$BYTE_ORDERING_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 DECIMAL_PARSING_SOURCE="$REPOSITORY_ROOT/Foundation/Decimal-Parsing.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$DECIMAL_PARSING_SOURCE" -o "$DECIMAL_PARSING_MODULE"
 DECIMAL_PARSING_HASH=$(sha256sum "$DECIMAL_PARSING_MODULE" | awk '{print $1}')
 if [ "$DECIMAL_PARSING_HASH" != '39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f' ]; then
     echo "The Foundation decimal-parsing module has an unexpected digest: $DECIMAL_PARSING_HASH" >&2
     exit 1
 fi
-DECIMAL_PARSING_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$DECIMAL_PARSING_MODULE")
+DECIMAL_PARSING_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$DECIMAL_PARSING_MODULE")
 printf '%s\n' "$DECIMAL_PARSING_INSPECTION" | grep -F 'Foundationˉu32ˉparse' >/dev/null
 printf '%s\n' "$DECIMAL_PARSING_INSPECTION" | grep -F 'Foundationˉu32ˉdecimalˉparse' >/dev/null
 printf '%s\n' "$DECIMAL_PARSING_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Foundation/Decimal-Parsing-Demo.wv" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$DECIMAL_PARSING_DEMO_MODULE"
@@ -200,24 +251,24 @@ if [ "$DECIMAL_PARSING_DEMO_HASH" != '16a20ee595eb708095f6e8c38c809a247749891107
     echo "The Foundation decimal-parsing demo has an unexpected digest: $DECIMAL_PARSING_DEMO_HASH" >&2
     exit 1
 fi
-DECIMAL_PARSING_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+DECIMAL_PARSING_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$DECIMAL_PARSING_DEMO_MODULE")
 printf '%s\n' "$DECIMAL_PARSING_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 BYTE_CONSTRUCTION_SOURCE="$REPOSITORY_ROOT/Foundation/Byte-Construction.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$BYTE_CONSTRUCTION_SOURCE" -o "$BYTE_CONSTRUCTION_MODULE"
 BYTE_CONSTRUCTION_HASH=$(sha256sum "$BYTE_CONSTRUCTION_MODULE" | awk '{print $1}')
 if [ "$BYTE_CONSTRUCTION_HASH" != '6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207' ]; then
     echo "The Foundation byte-construction module has an unexpected digest: $BYTE_CONSTRUCTION_HASH" >&2
     exit 1
 fi
-BYTE_CONSTRUCTION_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$BYTE_CONSTRUCTION_MODULE")
+BYTE_CONSTRUCTION_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$BYTE_CONSTRUCTION_MODULE")
 printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Foundationˉbytesˉresult' >/dev/null
 printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Foundationˉbytesˉrepeat' >/dev/null
 printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Foundationˉbytesˉreplace' >/dev/null
 printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Exports (2)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Foundation/Byte-Construction-Demo.wv" \
     --module "$BYTE_CONSTRUCTION_SOURCE" \
     -o "$BYTE_CONSTRUCTION_DEMO_MODULE"
@@ -226,12 +277,12 @@ if [ "$BYTE_CONSTRUCTION_DEMO_HASH" != 'a9b577dc08ac6e4a0d786f04d6667eb0347c57a0
     echo "The Foundation byte-construction demo has an unexpected digest: $BYTE_CONSTRUCTION_DEMO_HASH" >&2
     exit 1
 fi
-BYTE_CONSTRUCTION_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+BYTE_CONSTRUCTION_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$BYTE_CONSTRUCTION_DEMO_MODULE")
 printf '%s\n' "$BYTE_CONSTRUCTION_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Lexer-Core.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$SOURCE_LEXER_SOURCE" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_LEXER_MODULE"
@@ -240,13 +291,13 @@ if [ "$SOURCE_LEXER_HASH" != '0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b
     echo "The Windvale source lexer has an unexpected digest: $SOURCE_LEXER_HASH" >&2
     exit 1
 fi
-SOURCE_LEXER_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_LEXER_MODULE")
+SOURCE_LEXER_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_LEXER_MODULE")
 printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Nominal types (6)' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉsourceˉtoken' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉtokenˉkind' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉlexˉsourceˉbounded' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Exports (14)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Lexer-Demo.wv" \
     --module "$SOURCE_LEXER_SOURCE" \
     --module "$DECIMAL_PARSING_SOURCE" \
@@ -256,12 +307,12 @@ if [ "$SOURCE_LEXER_DEMO_HASH" != '32429c56b1b027fc440de14487ac0b5c628cec3c9bded
     echo "The Windvale source-lexer demo has an unexpected digest: $SOURCE_LEXER_DEMO_HASH" >&2
     exit 1
 fi
-SOURCE_LEXER_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_LEXER_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_LEXER_DEMO_MODULE" --max-steps 10000000)
 printf '%s\n' "$SOURCE_LEXER_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_DECLARATION_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Declaration-Parser.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$SOURCE_DECLARATION_PARSER_SOURCE" \
     --module "$SOURCE_LEXER_SOURCE" \
     --module "$DECIMAL_PARSING_SOURCE" \
@@ -271,13 +322,13 @@ if [ "$SOURCE_DECLARATION_PARSER_HASH" != 'b09be82c374636bf0b75a0dcea21afa648d89
     echo "The Windvale declaration parser has an unexpected digest: $SOURCE_DECLARATION_PARSER_HASH" >&2
     exit 1
 fi
-SOURCE_DECLARATION_PARSER_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_DECLARATION_PARSER_MODULE")
+SOURCE_DECLARATION_PARSER_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_DECLARATION_PARSER_MODULE")
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Nominal types (14)' >/dev/null
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉdeclaration' >/dev/null
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉmoduleˉsummary' >/dev/null
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉnextˉdeclarationˉvalidated' >/dev/null
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Exports (24)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Declaration-Parser-Demo.wv" \
     --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
     --module "$SOURCE_LEXER_SOURCE" \
@@ -288,10 +339,10 @@ if [ "$SOURCE_DECLARATION_PARSER_DEMO_HASH" != '82dd2f72d2b2d148289353045fda861e
     echo "The declaration-parser demo has an unexpected digest: $SOURCE_DECLARATION_PARSER_DEMO_HASH" >&2
     exit 1
 fi
-SOURCE_DECLARATION_PARSER_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_DECLARATION_PARSER_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_DECLARATION_PARSER_DEMO_MODULE" --max-steps 20000000)
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Declaration-Parser-Tool.wv" \
     --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
     --module "$SOURCE_LEXER_SOURCE" \
@@ -302,7 +353,7 @@ if [ "$SOURCE_DECLARATION_PARSER_TOOL_HASH" != '36406acea0ccab9cf9f91cc9723638ae
     echo "The declaration-parser tool has an unexpected digest: $SOURCE_DECLARATION_PARSER_TOOL_HASH" >&2
     exit 1
 fi
-SOURCE_LEXER_DECLARATION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_LEXER_DECLARATION_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_DECLARATION_PARSER_TOOL_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -313,7 +364,7 @@ SOURCE_LEXER_DECLARATION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configu
     -- "$SOURCE_LEXER_SOURCE")
 printf '%s\n' "$SOURCE_LEXER_DECLARATION_OUTPUT" | grep -F 'source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=14 tokens=4715 offset=39210' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_DECLARATION_OUTPUT" | grep -F 'Result: 0' >/dev/null
-SOURCE_PARSER_SELF_DECLARATION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_PARSER_SELF_DECLARATION_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_DECLARATION_PARSER_TOOL_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -326,7 +377,7 @@ printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'source declara
 printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_BODY_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Body-Parser.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$SOURCE_BODY_PARSER_SOURCE" \
     --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
     --module "$SOURCE_LEXER_SOURCE" \
@@ -337,14 +388,14 @@ if [ "$SOURCE_BODY_PARSER_HASH" != 'bb04309dfd4b037c05a4f0d52903d937336e90e64077
     echo "The Windvale body parser has an unexpected digest: $SOURCE_BODY_PARSER_HASH" >&2
     exit 1
 fi
-SOURCE_BODY_PARSER_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_BODY_PARSER_MODULE")
+SOURCE_BODY_PARSER_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_BODY_PARSER_MODULE")
 printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Nominal types (23)' >/dev/null
 printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉexpression' >/dev/null
 printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉstatement' >/dev/null
 printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉexpressionˉvalidated' >/dev/null
 printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉsourceˉbodies' >/dev/null
 printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Exports (38)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Body-Parser-Demo.wv" \
     --module "$SOURCE_BODY_PARSER_SOURCE" \
     --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
@@ -356,10 +407,10 @@ if [ "$SOURCE_BODY_PARSER_DEMO_HASH" != '5c479f4e922852043696a599a7832a4111d326e
     echo "The body-parser demo has an unexpected digest: $SOURCE_BODY_PARSER_DEMO_HASH" >&2
     exit 1
 fi
-SOURCE_BODY_PARSER_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_BODY_PARSER_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BODY_PARSER_DEMO_MODULE" --max-steps 30000000)
 printf '%s\n' "$SOURCE_BODY_PARSER_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Body-Parser-Tool.wv" \
     --module "$SOURCE_BODY_PARSER_SOURCE" \
     --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
@@ -371,7 +422,7 @@ if [ "$SOURCE_BODY_PARSER_TOOL_HASH" != '761887d3674833854d976dd394ad3f83f27d2c7
     echo "The body-parser tool has an unexpected digest: $SOURCE_BODY_PARSER_TOOL_HASH" >&2
     exit 1
 fi
-SOURCE_LEXER_BODY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_LEXER_BODY_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BODY_PARSER_TOOL_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -382,7 +433,7 @@ SOURCE_LEXER_BODY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration 
     -- "$SOURCE_LEXER_SOURCE")
 printf '%s\n' "$SOURCE_LEXER_BODY_OUTPUT" | grep -F 'source bodies status=Valid functions=14 top-level=138 statements=510 expression-nodes=1432 statement-depth=17 expression-depth=5 offset=39211' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_BODY_OUTPUT" | grep -F 'Result: 0' >/dev/null
-SOURCE_DECLARATION_BODY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_DECLARATION_BODY_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BODY_PARSER_TOOL_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -393,7 +444,7 @@ SOURCE_DECLARATION_BODY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configur
     -- "$SOURCE_DECLARATION_PARSER_SOURCE")
 printf '%s\n' "$SOURCE_DECLARATION_BODY_OUTPUT" | grep -F 'source bodies status=Valid functions=24 top-level=232 statements=527 expression-nodes=2135 statement-depth=5 expression-depth=3 offset=64951' >/dev/null
 printf '%s\n' "$SOURCE_DECLARATION_BODY_OUTPUT" | grep -F 'Result: 0' >/dev/null
-SOURCE_BODY_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_BODY_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BODY_PARSER_TOOL_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -406,7 +457,7 @@ printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'source bodies status=Valid f
 printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_SET_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Set-Core.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$SOURCE_SET_SOURCE" \
     --module "$SOURCE_BODY_PARSER_SOURCE" \
     --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
@@ -418,14 +469,14 @@ if [ "$SOURCE_SET_HASH" != 'c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa76
     echo "The Windvale source-set core has an unexpected digest: $SOURCE_SET_HASH" >&2
     exit 1
 fi
-SOURCE_SET_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_SET_MODULE")
+SOURCE_SET_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_SET_MODULE")
 printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Nominal types (27)' >/dev/null
 printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉsourceˉsetˉscan' >/dev/null
 printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉsourceˉsetˉsummary' >/dev/null
 printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉscanˉsourceˉset' >/dev/null
 printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉset' >/dev/null
 printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Exports (9)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Set-Demo.wv" \
     --module "$SOURCE_SET_SOURCE" \
     --module "$SOURCE_BODY_PARSER_SOURCE" \
@@ -438,10 +489,10 @@ if [ "$SOURCE_SET_DEMO_HASH" != '0054138c6e39f3c99e5cd4751c796cd599b495880d7db17
     echo "The source-set demo has an unexpected digest: $SOURCE_SET_DEMO_HASH" >&2
     exit 1
 fi
-SOURCE_SET_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_SET_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_SET_DEMO_MODULE" --max-steps 200000000)
 printf '%s\n' "$SOURCE_SET_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Set-Tool.wv" \
     --module "$SOURCE_SET_SOURCE" \
     --module "$SOURCE_BODY_PARSER_SOURCE" \
@@ -454,7 +505,7 @@ if [ "$SOURCE_SET_TOOL_HASH" != 'dc290826985f66f80d469b99235ca290dc617997edee0aa
     echo "The source-set tool has an unexpected digest: $SOURCE_SET_TOOL_HASH" >&2
     exit 1
 fi
-SOURCE_SET_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_SET_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_SET_TOOL_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -471,7 +522,7 @@ printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'source set status=Valid modul
 printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_GRAPH_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Graph-Core.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$SOURCE_GRAPH_SOURCE" \
     --module "$SOURCE_SET_SOURCE" \
     --module "$SOURCE_BODY_PARSER_SOURCE" \
@@ -485,13 +536,13 @@ if [ "$SOURCE_GRAPH_HASH" != '1617419c838effd80e4ab3f167912f47f4959002a77b0b1669
     echo "The Windvale source-graph core has an unexpected digest: $SOURCE_GRAPH_HASH" >&2
     exit 1
 fi
-SOURCE_GRAPH_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_GRAPH_MODULE")
+SOURCE_GRAPH_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_GRAPH_MODULE")
 printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Nominal types (32)' >/dev/null
 printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Compilerˉsourceˉgraphˉstatus' >/dev/null
 printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Compilerˉsourceˉgraphˉsummary' >/dev/null
 printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉgraph' >/dev/null
 printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Exports (11)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Graph-Demo.wv" \
     --module "$SOURCE_GRAPH_SOURCE" \
     --module "$SOURCE_SET_SOURCE" \
@@ -506,10 +557,10 @@ if [ "$SOURCE_GRAPH_DEMO_HASH" != '53c976f867dccf60bf26aa74e3942cf877b048405f57d
     echo "The source-graph demo has an unexpected digest: $SOURCE_GRAPH_DEMO_HASH" >&2
     exit 1
 fi
-SOURCE_GRAPH_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_GRAPH_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_GRAPH_DEMO_MODULE" --max-steps 300000000)
 printf '%s\n' "$SOURCE_GRAPH_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Graph-Tool.wv" \
     --module "$SOURCE_GRAPH_SOURCE" \
     --module "$SOURCE_SET_SOURCE" \
@@ -524,7 +575,7 @@ if [ "$SOURCE_GRAPH_TOOL_HASH" != '75fdf22e93f154599cdf4530ebcf828eec061458c73f6
     echo "The source-graph tool has an unexpected digest: $SOURCE_GRAPH_TOOL_HASH" >&2
     exit 1
 fi
-SOURCE_GRAPH_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_GRAPH_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_GRAPH_TOOL_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -543,7 +594,7 @@ printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'source graph status=Valid m
 printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_SYMBOLS_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Symbols-Core.wv"
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$SOURCE_SYMBOLS_SOURCE" \
     --module "$SOURCE_GRAPH_SOURCE" \
     --module "$SOURCE_SET_SOURCE" \
@@ -558,14 +609,14 @@ if [ "$SOURCE_SYMBOLS_HASH" != '79a60d3734c8c128af327b3c9e015bfa1f5b2c9d7b87abf4
     echo "The Windvale source-symbol core has an unexpected digest: $SOURCE_SYMBOLS_HASH" >&2
     exit 1
 fi
-SOURCE_SYMBOLS_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$SOURCE_SYMBOLS_MODULE")
+SOURCE_SYMBOLS_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_SYMBOLS_MODULE")
 printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Nominal types (38)' >/dev/null
 printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉsourceˉsymbolˉstatus' >/dev/null
 printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉsourceˉsymbolˉsummary' >/dev/null
 printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid' >/dev/null
 printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉsymbols' >/dev/null
 printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Exports (32)' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Symbols-Demo.wv" \
     --module "$SOURCE_SYMBOLS_SOURCE" \
     --module "$SOURCE_GRAPH_SOURCE" \
@@ -581,10 +632,10 @@ if [ "$SOURCE_SYMBOLS_DEMO_HASH" != '476551cc0990588c3e782f45be83baebbcf3cd519cc
     echo "The source-symbol demo has an unexpected digest: $SOURCE_SYMBOLS_DEMO_HASH" >&2
     exit 1
 fi
-SOURCE_SYMBOLS_DEMO_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_SYMBOLS_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_SYMBOLS_DEMO_MODULE" --max-steps 1500000000)
 printf '%s\n' "$SOURCE_SYMBOLS_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Symbols-Tool.wv" \
     --module "$SOURCE_SYMBOLS_SOURCE" \
     --module "$SOURCE_GRAPH_SOURCE" \
@@ -600,7 +651,7 @@ if [ "$SOURCE_SYMBOLS_TOOL_HASH" != '852dae1fe1962351e46a70e70bbdd4547814de17d75
     echo "The source-symbol tool has an unexpected digest: $SOURCE_SYMBOLS_TOOL_HASH" >&2
     exit 1
 fi
-SOURCE_SYMBOLS_SELF_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+SOURCE_SYMBOLS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_SYMBOLS_TOOL_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -620,7 +671,7 @@ printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'source symbols status=Val
 printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 set +e
-MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+MISSING_COMPOSITION_OUTPUT=$(dotnet "$TOOL_DLL" \
     compile "$COMPOSITION_ROOT" --module "$COMPOSITION_MIDDLE" -o "$INVALID_COMPOSITION_MODULE" 2>&1)
 MISSING_COMPOSITION_EXIT=$?
 set -e
@@ -635,7 +686,7 @@ if [ -e "$INVALID_COMPOSITION_MODULE" ]; then
 fi
 printf '\011\010\007' > "$INVALID_COMPOSITION_MODULE"
 set +e
-MISSING_COMPOSITION_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+MISSING_COMPOSITION_OUTPUT=$(dotnet "$TOOL_DLL" \
     compile "$COMPOSITION_ROOT" --module "$COMPOSITION_MIDDLE" -o "$INVALID_COMPOSITION_MODULE" 2>&1)
 MISSING_COMPOSITION_EXIT=$?
 set -e
@@ -652,13 +703,13 @@ if [ "$ACTUAL_EXISTING_COMPOSITION" != "$EXPECTED_EXISTING_COMPOSITION" ]; then
 fi
 rm -f "$INVALID_COMPOSITION_MODULE"
 
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Foundation/Wv-Dump-Core.wv" -o "$WVDUMP_CORE_MODULE"
 
-WVDUMP_CORE_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVDUMP_CORE_MODULE")
+WVDUMP_CORE_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$WVDUMP_CORE_MODULE")
 printf '%s\n' "$WVDUMP_CORE_VERIFY_OUTPUT" | grep -F 'Verified: Wvˉdumpˉcore' >/dev/null
 
-WVDUMP_CORE_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$WVDUMP_CORE_MODULE")
+WVDUMP_CORE_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$WVDUMP_CORE_MODULE")
 printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'Inspectˉwvbˉenvelope' >/dev/null
 printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'Nominal types (5)' >/dev/null
 printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'record.create' >/dev/null
@@ -673,7 +724,7 @@ printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'text.quote' >/dev/null
 printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'u32.from_u8' >/dev/null
 
 set +e
-WVDUMP_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVDUMP_CORE_MODULE" 2>&1)
+WVDUMP_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVDUMP_CORE_MODULE" 2>&1)
 WVDUMP_UNAUTHORIZED_EXIT=$?
 set -e
 if [ "$WVDUMP_UNAUTHORIZED_EXIT" -ne 3 ]; then
@@ -682,7 +733,7 @@ if [ "$WVDUMP_UNAUTHORIZED_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVDUMP_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
 
-WVDUMP_CORE_RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVDUMP_CORE_RUN_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVDUMP_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -692,7 +743,7 @@ WVDUMP_CORE_RUN_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$
     --max-steps 10000000)
 printf '%s\n' "$WVDUMP_CORE_RUN_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-WVDUMP_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVDUMP_HOSTED_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVDUMP_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -708,7 +759,7 @@ printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'instruction function=1 offset=1
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'export index=0 name="Main" kind=function target=1' >/dev/null
 printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-WVDUMP_INVALID_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVDUMP_INVALID_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVDUMP_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -725,7 +776,7 @@ if [ -e "$MISSING_HOSTED_FILE" ]; then
     exit 1
 fi
 set +e
-WVDUMP_MISSING_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVDUMP_MISSING_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVDUMP_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -742,7 +793,7 @@ fi
 printf '%s\n' "$WVDUMP_MISSING_OUTPUT" | grep -F 'WVR3022' >/dev/null
 
 set +e
-WVDUMP_INVALID_NAME_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVDUMP_INVALID_NAME_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVDUMP_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -758,15 +809,15 @@ if [ "$WVDUMP_INVALID_NAME_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVDUMP_INVALID_NAME_OUTPUT" | grep -F 'WVR3021' >/dev/null
 
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Foundation/Wvo-Object-Core.wv" \
     --module "$BYTE_ORDERING_SOURCE" \
     -o "$WVO_CORE_MODULE"
 
-WVO_CORE_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVO_CORE_MODULE")
+WVO_CORE_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$WVO_CORE_MODULE")
 printf '%s\n' "$WVO_CORE_VERIFY_OUTPUT" | grep -F 'Verified: Wvoˉobjectˉcore' >/dev/null
 
-WVO_CORE_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$WVO_CORE_MODULE")
+WVO_CORE_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$WVO_CORE_MODULE")
 printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.concat' >/dev/null
 printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.from_u16_little' >/dev/null
 printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.from_i32_little' >/dev/null
@@ -775,7 +826,7 @@ printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'Foundationˉbyteˉspansˉcom
 printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null
 
 set +e
-WVO_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVO_CORE_MODULE" 2>&1)
+WVO_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVO_CORE_MODULE" 2>&1)
 WVO_UNAUTHORIZED_EXIT=$?
 set -e
 if [ "$WVO_UNAUTHORIZED_EXIT" -ne 3 ]; then
@@ -784,7 +835,7 @@ if [ "$WVO_UNAUTHORIZED_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVO_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
 
-WVO_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVO_SELF_TEST_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVO_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -794,7 +845,7 @@ WVO_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CO
     --max-steps 10000000)
 printf '%s\n' "$WVO_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-WVO_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVO_HOSTED_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVO_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -812,16 +863,16 @@ if [ "$WVO_HASH" != '006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002
     exit 1
 fi
 
-WVO_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-verify "$WVO_SAMPLE")
+WVO_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" object-verify "$WVO_SAMPLE")
 printf '%s\n' "$WVO_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
 
-WVO_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-inspect "$WVO_SAMPLE")
+WVO_INSPECTION=$(dotnet "$TOOL_DLL" object-inspect "$WVO_SAMPLE")
 printf '%s\n' "$WVO_INSPECTION" | grep -F 'Sections (2)' >/dev/null
 printf '%s\n' "$WVO_INSPECTION" | grep -F 'Console_write binding=Import' >/dev/null
 printf '%s\n' "$WVO_INSPECTION" | grep -F 'kind=Relativeˉi32 section=0 offset=1 symbol=2 addend=-4' >/dev/null
 
 set +e
-WVO_INVALID_NAME_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVO_INVALID_NAME_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVO_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -844,7 +895,7 @@ if [ -e "$MISSING_WRITER_PARENT" ]; then
     exit 1
 fi
 set +e
-WVO_MISSING_PARENT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVO_MISSING_PARENT_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVO_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -861,7 +912,7 @@ if [ "$WVO_MISSING_PARENT_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVO_MISSING_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
 
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Assembler/Wva-Assembler-Core.wv" \
     --module "$MACHINE_CONTRACTS_SOURCE" \
     --module "$BYTE_ORDERING_SOURCE" \
@@ -869,10 +920,10 @@ dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build
     --module "$BYTE_CONSTRUCTION_SOURCE" \
     -o "$WVA_ASSEMBLER_MODULE"
 
-WVA_ASSEMBLER_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVA_ASSEMBLER_MODULE")
+WVA_ASSEMBLER_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$WVA_ASSEMBLER_MODULE")
 printf '%s\n' "$WVA_ASSEMBLER_VERIFY_OUTPUT" | grep -F 'Verified: Wvaˉassemblerˉcore' >/dev/null
 
-WVA_ASSEMBLER_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$WVA_ASSEMBLER_MODULE")
+WVA_ASSEMBLER_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$WVA_ASSEMBLER_MODULE")
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Scanˉwva' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Inspectˉwvaˉsemantics' >/dev/null
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉwva' >/dev/null
@@ -889,7 +940,7 @@ printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/
 printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null
 
 set +e
-WVA_ASSEMBLER_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVA_ASSEMBLER_MODULE" 2>&1)
+WVA_ASSEMBLER_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVA_ASSEMBLER_MODULE" 2>&1)
 WVA_ASSEMBLER_UNAUTHORIZED_EXIT=$?
 set -e
 if [ "$WVA_ASSEMBLER_UNAUTHORIZED_EXIT" -ne 3 ]; then
@@ -898,7 +949,7 @@ if [ "$WVA_ASSEMBLER_UNAUTHORIZED_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVA_ASSEMBLER_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
 
-WVA_ASSEMBLER_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVA_ASSEMBLER_SELF_TEST_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVA_ASSEMBLER_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -909,7 +960,7 @@ WVA_ASSEMBLER_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configur
     --max-steps 10000000)
 printf '%s\n' "$WVA_ASSEMBLER_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Linker/Wv-Linker-Core.wv" \
     --module "$MACHINE_CONTRACTS_SOURCE" \
     --module "$BYTE_ORDERING_SOURCE" \
@@ -917,10 +968,10 @@ dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build
     --module "$BYTE_CONSTRUCTION_SOURCE" \
     -o "$WVLINK_CORE_MODULE"
 
-WVLINK_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVLINK_CORE_MODULE")
+WVLINK_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$WVLINK_CORE_MODULE")
 printf '%s\n' "$WVLINK_VERIFY_OUTPUT" | grep -F 'Verified: Wvˉlinkerˉcore' >/dev/null
 
-WVLINK_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$WVLINK_CORE_MODULE")
+WVLINK_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$WVLINK_CORE_MODULE")
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Inspectˉobject' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Findˉsection' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Findˉsymbol' >/dev/null
@@ -949,7 +1000,7 @@ printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null
 
 set +e
-WVLINK_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVLINK_CORE_MODULE" 2>&1)
+WVLINK_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVLINK_CORE_MODULE" 2>&1)
 WVLINK_UNAUTHORIZED_EXIT=$?
 set -e
 if [ "$WVLINK_UNAUTHORIZED_EXIT" -ne 3 ]; then
@@ -958,7 +1009,7 @@ if [ "$WVLINK_UNAUTHORIZED_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVLINK_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
 
-WVLINK_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVLINK_SELF_TEST_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVLINK_CORE_MODULE" \
     --allow console.write \
     --allow diagnostic.write_line \
@@ -969,7 +1020,7 @@ WVLINK_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "
     --max-steps 20000000)
 printf '%s\n' "$WVLINK_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-WVA_ASSEMBLER_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVA_ASSEMBLER_HOSTED_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVA_ASSEMBLER_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -988,10 +1039,10 @@ if [ "$WINDVALE_ASSEMBLY_HASH" != '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e
     echo "The Windvale WVA assembler wrote unexpected bytes: $WINDVALE_ASSEMBLY_HASH" >&2
     exit 1
 fi
-WINDVALE_ASSEMBLY_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-verify "$WINDVALE_ASSEMBLY_OBJECT")
+WINDVALE_ASSEMBLY_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" object-verify "$WINDVALE_ASSEMBLY_OBJECT")
 printf '%s\n' "$WINDVALE_ASSEMBLY_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
 
-WVLINK_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVLINK_HOSTED_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVLINK_CORE_MODULE" \
     --allow console.write \
     --allow diagnostic.write_line \
@@ -1004,7 +1055,7 @@ WVLINK_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CO
 printf '%s\n' "$WVLINK_HOSTED_OUTPUT" | grep -F 'object status=Valid sections=2 symbols=3 relocations=2 offset=218' >/dev/null
 printf '%s\n' "$WVLINK_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-WVLINK_INVALID_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVLINK_INVALID_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVLINK_CORE_MODULE" \
     --allow console.write \
     --allow diagnostic.write_line \
@@ -1024,7 +1075,7 @@ if [ -e "$MISSING_ASSEMBLER_PARENT" ]; then
 fi
 MISSING_ASSEMBLER_OUTPUT="$MISSING_ASSEMBLER_PARENT/Hello.wvo"
 set +e
-WVA_ASSEMBLER_MISSING_PARENT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVA_ASSEMBLER_MISSING_PARENT_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVA_ASSEMBLER_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -1050,7 +1101,7 @@ if [ -e "$INVALID_WINDVALE_ASSEMBLY_OBJECT" ]; then
     echo "The invalid Windvale assembly output unexpectedly exists: $INVALID_WINDVALE_ASSEMBLY_OBJECT" >&2
     exit 1
 fi
-WVA_SEMANTIC_INVALID_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVA_SEMANTIC_INVALID_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVA_ASSEMBLER_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -1067,7 +1118,7 @@ if [ -e "$INVALID_WINDVALE_ASSEMBLY_OBJECT" ]; then
     exit 1
 fi
 
-WVA_SEMANTIC_EXISTING_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVA_SEMANTIC_EXISTING_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVA_ASSEMBLER_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
@@ -1085,7 +1136,7 @@ if [ "$PRESERVED_WINDVALE_ASSEMBLY_HASH" != "$WINDVALE_ASSEMBLY_HASH" ]; then
     exit 1
 fi
 
-ASSEMBLY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+ASSEMBLY_OUTPUT=$(dotnet "$TOOL_DLL" \
     assemble "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" -o "$ASSEMBLY_OBJECT")
 printf '%s\n' "$ASSEMBLY_OUTPUT" | grep -F 'Assembled:' >/dev/null
 printf '%s\n' "$ASSEMBLY_OUTPUT" | grep -F 'SHA-256: 992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85' >/dev/null
@@ -1095,19 +1146,19 @@ if [ "$STAGE0_ASSEMBLY_HASH" != "$WINDVALE_ASSEMBLY_HASH" ]; then
     exit 1
 fi
 
-ASSEMBLY_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-verify "$ASSEMBLY_OBJECT")
+ASSEMBLY_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" object-verify "$ASSEMBLY_OBJECT")
 printf '%s\n' "$ASSEMBLY_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
 
-ASSEMBLY_INSPECTION=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- object-inspect "$ASSEMBLY_OBJECT")
+ASSEMBLY_INSPECTION=$(dotnet "$TOOL_DLL" object-inspect "$ASSEMBLY_OBJECT")
 printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F '.text kind=Code align=16 memory=11 data=11' >/dev/null
 printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4' >/dev/null
 printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F 'kind=Absoluteˉu32 section=1 offset=3 symbol=1 addend=0' >/dev/null
 
-PROVIDER_ASSEMBLY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+PROVIDER_ASSEMBLY_OUTPUT=$(dotnet "$TOOL_DLL" \
     assemble "$REPOSITORY_ROOT/Examples/Linker/Console-Provider.wva" -o "$LINK_PROVIDER_OBJECT")
 printf '%s\n' "$PROVIDER_ASSEMBLY_OUTPUT" | grep -F 'SHA-256: 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab' >/dev/null
 
-WVLINK_MAP_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVLINK_MAP_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVLINK_CORE_MODULE" \
     --allow console.write \
     --allow diagnostic.write_line \
@@ -1145,7 +1196,7 @@ if [ -e "$INVALID_WINDVALE_LINKED_IMAGE" ]; then
     echo "The invalid Windvale link output unexpectedly exists: $INVALID_WINDVALE_LINKED_IMAGE" >&2
     exit 1
 fi
-WVLINK_UNDEFINED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVLINK_UNDEFINED_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVLINK_CORE_MODULE" \
     --allow console.write \
     --allow diagnostic.write_line \
@@ -1162,7 +1213,7 @@ if [ -e "$INVALID_WINDVALE_LINKED_IMAGE" ]; then
     exit 1
 fi
 
-WVLINK_EXISTING_FAILURE=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVLINK_EXISTING_FAILURE=$(dotnet "$TOOL_DLL" \
     run "$WVLINK_CORE_MODULE" \
     --allow console.write \
     --allow diagnostic.write_line \
@@ -1187,7 +1238,7 @@ if [ -e "$MISSING_WINDVALE_LINK_PARENT" ]; then
 fi
 MISSING_WINDVALE_LINK_OUTPUT="$MISSING_WINDVALE_LINK_PARENT/Hello.bin"
 set +e
-MISSING_WINDVALE_LINK_PARENT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+MISSING_WINDVALE_LINK_PARENT_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVLINK_CORE_MODULE" \
     --allow console.write \
     --allow diagnostic.write_line \
@@ -1209,7 +1260,7 @@ if [ -e "$MISSING_WINDVALE_LINK_OUTPUT" ]; then
     exit 1
 fi
 
-LINK_MAP_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+LINK_MAP_OUTPUT=$(dotnet "$TOOL_DLL" \
     link --base-address 1048576 --entry Main -o "$LINKED_IMAGE" "$ASSEMBLY_OBJECT" "$LINK_PROVIDER_OBJECT")
 printf '%s\n' "$LINK_MAP_OUTPUT" | grep -Fx 'windvale-link-map 1' >/dev/null
 printf '%s\n' "$LINK_MAP_OUTPUT" | grep -Fx 'target name=flat-x86-64-v1 architecture=x86-64 base-address=1048576 image-bytes=24' >/dev/null
@@ -1247,7 +1298,7 @@ if [ -e "$INVALID_LINKED_IMAGE" ]; then
     exit 1
 fi
 set +e
-UNDEFINED_LINK_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+UNDEFINED_LINK_OUTPUT=$(dotnet "$TOOL_DLL" \
     link --base-address 1048576 --entry Main -o "$INVALID_LINKED_IMAGE" "$ASSEMBLY_OBJECT" 2>&1)
 UNDEFINED_LINK_EXIT=$?
 set -e
@@ -1262,7 +1313,7 @@ if [ -e "$INVALID_LINKED_IMAGE" ]; then
 fi
 
 set +e
-EXISTING_LINK_FAILURE=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+EXISTING_LINK_FAILURE=$(dotnet "$TOOL_DLL" \
     link --base-address 1048576 --entry Main -o "$LINKED_IMAGE" "$ASSEMBLY_OBJECT" 2>&1)
 EXISTING_LINK_EXIT=$?
 set -e
@@ -1284,7 +1335,7 @@ if [ -e "$MISSING_LINK_PARENT" ]; then
 fi
 MISSING_LINK_OUTPUT="$MISSING_LINK_PARENT/Hello.bin"
 set +e
-MISSING_LINK_PARENT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+MISSING_LINK_PARENT_OUTPUT=$(dotnet "$TOOL_DLL" \
     link --base-address 1048576 --entry Main -o "$MISSING_LINK_OUTPUT" "$ASSEMBLY_OBJECT" "$LINK_PROVIDER_OBJECT" 2>&1)
 MISSING_LINK_PARENT_EXIT=$?
 set -e
