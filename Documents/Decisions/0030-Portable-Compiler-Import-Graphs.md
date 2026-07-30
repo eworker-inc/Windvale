@@ -1,7 +1,7 @@
 # Decision 0030: Portable compiler import graphs
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `09c6f54`
 
 ## Context
 
@@ -30,3 +30,5 @@ If symbol binding demonstrates that repeated graph/name queries dominate executi
 The exact candidate must pass the complete conformance and native CLI verifiers on Windows and Debian. Portable coverage includes a valid diamond, transitive reachability, repeated and missing imports, direct and self cycles, unreachable supplied modules, WVSS failure propagation, stable failure coordinates, the exact 64-module/63-edge chain, and the real seven-module compiler graph.
 
 Both hosts must produce identical graph core, demo, and tool WVB files. The hosted tool must report `modules=7 imports=6 reachable=7` from the exact compiler sources, normalized conformance reports must match, and previously qualified direct artifacts must retain their identities.
+
+Candidate commit `09c6f54` passed this gate from its exact archive on Windows x64 and Debian GNU/Linux 12 x64. Both hosts completed a zero-warning Release build, all 44 conformance tests, and the complete native CLI verifier. Their normalized reports matched, all 22 directly retrieved graph/dependency/downstream artifacts were byte-identical, and the hosted tool produced the required real-graph report. The archive and resolved QA directory were removed after evidence retrieval.

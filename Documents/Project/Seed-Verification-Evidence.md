@@ -3,7 +3,7 @@
 - Evidence date: 2026-07-30
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Qualified commit: `00ef0b1`
+- Qualified commit: `09c6f54`
 
 ## Requirement evidence
 
@@ -25,6 +25,7 @@
 | Windvale-written compiler lexer | `Compilerˉsourceˉlexer` streams the complete implemented Seed keyword/operator surface over strict UTF-8 bytes, preserves Stage 0 token identities and UTF-16-compatible positions, classifies bounded integer literals, validates string escapes and surrogate pairs, and reports deterministic bounded failures without allocating a token collection. |
 | Windvale-written compiler parser | Qualified declaration and body passes reproduce the complete implemented top-level, statement, and expression grammar as bounded immutable source views while retaining no token, declaration, statement, expression, or syntax-tree collection. |
 | Canonical compiler source set | WVSS 1 carries one root and as many as 63 canonically ordered dependencies in one validated immutable envelope. The portable Windvale module enforces structure, every qualified frontend pass, unique names, and dependency profile/shape rules without admitting paths, timestamps, host objects, or host collection ordering. |
+| Windvale-written compiler import graph | `Compilerˉsourceˉgraph` resolves exact declared module-name spans, rejects duplicate and missing imports, computes the complete root closure, rejects unreachable supplied modules, and proves acyclicity with deterministic bounded traversal over one immutable state byte per module. |
 | Immutable nominal records | Record declarations, positional construction, named field reads, nominal function signatures, canonical WVB schemas, verifier rejection cases, runtime values, and inspector output are exercised end to end. |
 | Nominal enums and bounded formatting | Explicit enum declarations, exact nominal equality, enum-valued record fields, member naming, invariant `i32`/`u8`/`u32` formatting, bounded text concatenation, verifier rejection cases, and deterministic runtime output are exercised end to end. |
 | Windvale-written inspection | `Wvˉdumpˉcore` reads an explicit real file through hosted resources while pure Windvale functions validate all seven envelopes, decode every declaration payload and value shape, walk every instruction, reject malformed lengths/UTF-8/opcodes without escaping diagnostic boundaries, and emit a versioned ASCII-safe line report. |
@@ -41,8 +42,8 @@
 | Canonical link evidence | The path-free ASCII/LF map records input digests, section placements, definitions, import providers, patch and target addresses, relocation values, entry, and image digest in deterministic order. It is byte-limited, locale-independent, and compared as a complete value across hosts. |
 | Representative programs | The portable sum returns `29`; the hosted example prints `Hello from Windvale`; the Foundation header returns `1`; both Foundation boundary demos return `0`; WvDump emits the complete golden Sum report; the WVO core writes its exact object; the hosted Windvale assembler writes the 218-byte canonical `Hello-Object.wvo`; and both the Windvale linker and Stage 0 link it with the 91-byte `Console-Provider.wvo` into the same independently verified 24-byte image and 1,721-byte map. |
 | Malformed-input coverage | Structured adversarial cases plus deterministic bounded random Windvale source, WVA source, module, object, Windvale WVO-scan, and link input exercise diagnostic and rejection boundaries. Link coverage includes invalid and oversized objects, invalid entry names, duplicate exports, undefined imports, kind mismatches, non-function entries, aggregate section limits, map limits, unaligned bases, all section kinds, BSS/padding zeros, image/u32 overflow, absolute and relative relocation overflow, 200 hostile objects, locale changes, semantic input reordering, and missing/unchanged output cases. |
-| Cross-host coverage | The same 43-test suite passed on Windows and Debian Linux. Its normalized contracts compare equal for WVB 1.6/WVO/WVA/link/WVSS versions, source composition, four Foundation modules and demos, the compiler lexer, declaration parser, body parser, source-set core/demos/tools, all module/object/image/map hashes, results, hosted output, complete WvDump/WVA/Windvale-scan/Windvale-image/link reports, and exact composed, assembled, and linked bytes. |
-| Scope control | The qualified compiler supports bounded static nominal source composition; four focused Foundation modules, the Windvale-written lexer/parser, and the canonical packed source-set boundary are qualified; and the qualified Windvale and Stage 0 linkers produce one bounded raw flat memory image and canonical map. No general collections layer, decoded-string builder, Windvale semantic binder/WIR/WVB encoder, runtime module linker, package manager, executable-container adapter, native backend, directly executable host program, firmware, kernel, driver, or OS implementation is included. |
+| Cross-host coverage | The same 44-test suite passed on Windows and Debian Linux. Its normalized contracts compare equal for WVB 1.6/WVO/WVA/link/WVSS versions, source composition, four Foundation modules and demos, the compiler lexer, declaration parser, body parser, source-set and import-graph cores/demos/tools, all module/object/image/map hashes, results, hosted output, complete WvDump/WVA/Windvale-scan/Windvale-image/link reports, and exact composed, assembled, and linked bytes. |
+| Scope control | The qualified compiler supports bounded static nominal source composition; four focused Foundation modules, the Windvale-written lexer/parser, canonical packed source set, and portable import graph are qualified; and the qualified Windvale and Stage 0 linkers produce one bounded raw flat memory image and canonical map. No general collections layer, decoded-string builder, Windvale declaration/body symbol binder, typed WIR producer, WVB encoder, runtime module linker, package manager, executable-container adapter, native backend, directly executable host program, firmware, kernel, driver, or OS implementation is included. |
 
 ## Verified on the implementation host
 
@@ -50,7 +51,7 @@
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
 ```
 
-The verifier performs a Release build, runs the 43-test conformance suite, produces a Windows report, publishes the CLI as framework-dependent `linux-x64`, and exercises real source composition, Foundation/compiler module composition, compiler frontend and source-set boundaries, module, Windvale/Stage 0 assembly, Windvale WVO scan, complete Windvale and Stage 0 link, object, inspect, verify, and runtime CLI paths. It checks dependency-order independence, import rejection and output preservation, Foundation/compiler boundary behavior, capability refusal, deterministic file snapshots, SHA-256 sequence/slice behavior, byte-for-byte assembler equality, independent complete-image reconstruction, exact Windvale/Stage 0 image and map equality, maximum image and map-limit cases, publish-after-success behavior, no file for rejected source/link or a missing parent, and preservation of existing outputs when validation fails. The source-set-qualified WVB 1.6 Windows report SHA-256 is `213fd24ec0cf764b696e382d52af4153594d317bbf5b359e730ac9418b007e59`.
+The verifier performs a Release build, runs the 44-test conformance suite, produces a Windows report, publishes the CLI as framework-dependent `linux-x64`, and exercises real source composition, Foundation/compiler module composition, compiler frontend, source-set and import-graph boundaries, module, Windvale/Stage 0 assembly, Windvale WVO scan, complete Windvale and Stage 0 link, object, inspect, verify, and runtime CLI paths. It checks dependency-order independence, import rejection and output preservation, Foundation/compiler boundary behavior, capability refusal, deterministic file snapshots, SHA-256 sequence/slice behavior, byte-for-byte assembler equality, independent complete-image reconstruction, exact Windvale/Stage 0 image and map equality, maximum image and map-limit cases, publish-after-success behavior, no file for rejected source/link or a missing parent, and preservation of existing outputs when validation fails. The source-graph-qualified WVB 1.6 Windows report SHA-256 is `e7689ae4d5f71e55e03b07093a978bbb9ef10f38910fb95d5414f769d7c03eea`.
 
 ## WVB 1.6 linker-prerequisite qualification
 
@@ -254,6 +255,26 @@ Directly retrieved Debian copies of 14 dependency/downstream artifacts also matc
 The Debian report is 14,017 bytes with SHA-256 `2690398c4aaedf1b376010ca9126ee5a5adfe2c96d18095ab4e11fb532462e2c`; the Windows report is 14,092 bytes with SHA-256 `213fd24ec0cf764b696e382d52af4153594d317bbf5b359e730ac9418b007e59`. Their normalized contracts matched. After evidence retrieval, the resolved exact QA directory and transferred archive were removed and confirmed absent.
 
 This qualifies Decision 0029 and the canonical multi-module input boundary for roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not qualify semantic import graphs, reachability or cycle checks, symbol/type/control-flow binding, WIR production, WVB encoding, closure of the current 4 MiB versus 16 MiB source-envelope gap, bootstrap closure, native tooling, or any OS layer.
+
+## Portable compiler import-graph qualification
+
+Candidate commit `09c6f54` was archived as `windvale-source-graph-09c6f54.tar.gz`, 324,949 bytes with SHA-256 `79c5f2efa7c915f7c263c7b2b125a716b54c11d7f5e01482a9b3f5b59bb0e08a`, transferred with the same digest, and verified from that exact archive in `/tmp/windvale-source-graph-09c6f54` on the isolated Debian QA host. Windows and Debian GNU/Linux 12 x64 both completed the Release build with zero warnings/errors, all 44 tests, and the complete native CLI verifier. The QA host used .NET SDK `10.0.302` and .NET `10.0.10`.
+
+The portable graph phase first requires a completely valid WVSS value, then resolves imports by exact declared module-name bytes, rejects repeated and missing targets, expands the root closure, rejects the first canonically supplied unreachable module, and proves acyclicity through deterministic zero-incoming removal plus an actual closing-edge witness. Tests cover a valid diamond, transitive reachability, duplicate/missing imports, direct and self cycles, stable module/target/location evidence, source-set failure propagation, and the exact 64-module/63-edge chain. Traversal owns exactly one immutable state byte per module through the qualified byte-construction API and retains no host object or general graph collection.
+
+The hosted tool validated the 214,394-byte real seven-module closure—graph core, body parser, declaration parser, lexer, source-set core, byte construction, and decimal parsing—with this identical output on both hosts under the explicit 1,500,000,000-instruction ceiling:
+
+```text
+source graph status=Valid modules=7 imports=6 reachable=7
+```
+
+Both hosts produced the exact 193,522-byte `Source-Graph-Core.wvb` SHA-256 `1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133`, 199,922-byte demo SHA-256 `53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073`, and 197,203-byte hosted tool SHA-256 `75fdf22e93f154599cdf4530ebcf828eec061458c73f6ab09b00d0765e3ebdc1`.
+
+All 19 directly retrieved dependency/downstream artifacts also matched Windows byte for byte: source-set core/demo/tool, body-parser core/demo/tool, declaration-parser core/demo/tool, lexer core/demo, byte-construction and decimal-parsing cores, object/assembler/linker cores, the 218-byte canonical object, 24-byte image, and 1,721-byte map. Their retained product identities are `992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`, `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a`, and `31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4`.
+
+The Debian report is 14,428 bytes with SHA-256 `4d9b1f6276bcaf25a2799c33acebd68e03a4c852d79964bcd94d96004a94b1cb`; the Windows report is 14,508 bytes with SHA-256 `e7689ae4d5f71e55e03b07093a978bbb9ef10f38910fb95d5414f769d7c03eea`. Their normalized contracts matched. After evidence retrieval, the resolved exact QA directory and transferred archive were removed and confirmed absent.
+
+This qualifies Decision 0030 and the import-topology slice of roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not qualify declaration namespaces, nominal layout, function signatures, body/local/call binding, expression types, control flow, typed WIR production, WVB encoding, closure of the 4 MiB versus 16 MiB source-envelope gap, bootstrap closure, native tooling, or any OS layer.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
