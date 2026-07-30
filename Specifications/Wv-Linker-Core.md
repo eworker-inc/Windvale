@@ -4,7 +4,7 @@
 
 `Wvˉlinkerˉcore` is the Windvale-written implementation path for Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic object views, resolves multi-object symbols, computes deterministic placements and addresses, constructs and relocates the flat image, and independently reconstructs every result byte. It is not yet a complete linker: it does not construct the canonical map or write an output image.
 
-The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout at `709ccb3`; and immutable image construction plus checked relocation at `ec9c980`. The current independent-reconstruction extension has WVB 1.6 SHA-256 `0b8d4ce09a043a675e64018c02fac94740b0b878a74801fc622ce7703e956b35` and requires fresh cross-host qualification.
+The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout at `709ccb3`; immutable image construction plus checked relocation at `ec9c980`; and independent complete-image reconstruction at `d8008e3`. The qualified WVB 1.6 SHA-256 is `0b8d4ce09a043a675e64018c02fac94740b0b878a74801fc622ce7703e956b35`.
 
 ## Object boundary
 
@@ -40,7 +40,7 @@ No host collection, object decoder, resolver, or layout callback participates. R
 
 `Applyˉrelocations` walks input and source relocation order. It recomputes the source placement, resolves the local/export/import target to a defined-symbol address, evaluates `absolute-u32` or `relative-i32` using explicit signed magnitudes, rejects overflow as `WVL1009` or `WVL1010`, and replaces exactly four bytes through persistent prefix/value/suffix concatenation. The input objects and unrelocated value remain immutable.
 
-Successful analysis now adds `image sha256=<lowercase-hex>` to the report. This digest must equal Stage 0 on both hosts, but it is development evidence rather than the independent reconstruction required before output.
+Successful analysis adds `image sha256=<lowercase-hex>` to the report. This digest equals Stage 0 on both qualified hosts, but the verifier uses complete byte equality rather than treating the digest as its acceptance predicate.
 
 ## Independent reconstruction
 
@@ -72,6 +72,6 @@ The conformance test compiles and verifies the exact module, runs its no-input s
 
 Both the Windows and Debian verifiers must also compile and inspect the module through the real CLI, prove capability refusal, run its embedded tests, accept the Windvale-written canonical assembler object, and reject a non-WVO input. The normalized host reports include the exact module digest, self-test result, and canonical hosted scan output.
 
-The current qualification candidate additionally compares canonical and reversed input order, aligned and unaligned bases, all section representations, aggregate overflow, malformed objects, duplicate exports, missing imports, kind mismatch, missing entry, invalid requests, layout overflow, exact counts, image length, entry address, snapshot read counts, and absence of output with the Stage 0 oracle. A 4 MiB code-plus-BSS image exercises the accepted maximum image size and complete byte comparison under an explicit 200,000,000-instruction ceiling.
+The qualified suite additionally compares canonical and reversed input order, aligned and unaligned bases, all section representations, aggregate overflow, malformed objects, duplicate exports, missing imports, kind mismatch, missing entry, invalid requests, layout overflow, exact counts, image length, entry address, snapshot read counts, and absence of output with the Stage 0 oracle. A 4 MiB code-plus-BSS image exercises the accepted maximum image size and complete byte comparison under an explicit 200,000,000-instruction ceiling.
 
 Phase 6 remains incomplete until the same Windvale module implements and qualifies canonical map construction and publish-after-success output behavior.

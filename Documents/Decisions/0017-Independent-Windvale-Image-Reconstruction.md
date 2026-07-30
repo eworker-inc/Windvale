@@ -1,7 +1,7 @@
 # Decision 0017: Independent Windvale image reconstruction
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `d8008e3`
 
 ## Context
 
