@@ -30,6 +30,9 @@ ASSEMBLY_OBJECT="$ARTIFACTS/Hello-Object.wvo"
 WINDVALE_ASSEMBLY_OBJECT="$ARTIFACTS/Hello-Object-Windvale.wvo"
 INVALID_WINDVALE_ASSEMBLY_OBJECT="$ARTIFACTS/__windvale_invalid_assembly_output__.wvo"
 LINK_PROVIDER_OBJECT="$ARTIFACTS/Console-Provider.wvo"
+WINDVALE_LINKED_IMAGE="$ARTIFACTS/Hello-Linked-Windvale.bin"
+WINDVALE_LINK_MAP="$ARTIFACTS/Hello-Linked-Windvale.wvmap"
+INVALID_WINDVALE_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_wvlink_output__.bin"
 LINKED_IMAGE="$ARTIFACTS/Hello-Linked.bin"
 LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
@@ -341,9 +344,13 @@ printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Verifierˉplaceˉsection' >/de
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Verifierˉfindˉexport' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Verifierˉapplyˉrelocationsˉreverse' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Acceptˉreconstructedˉimage' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Acceptedˉobjectˉview' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Definitionˉmapˉminimumˉexceedsˉlimit' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Buildˉcanonicalˉmap' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.read_i32_little' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.sha256_hex' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null
 
 set +e
 WVLINK_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVLINK_CORE_MODULE" 2>&1)
@@ -504,12 +511,7 @@ PROVIDER_ASSEMBLY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration 
     assemble "$REPOSITORY_ROOT/Examples/Linker/Console-Provider.wva" -o "$LINK_PROVIDER_OBJECT")
 printf '%s\n' "$PROVIDER_ASSEMBLY_OUTPUT" | grep -F 'SHA-256: 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab' >/dev/null
 
-WINDVALE_ANALYSIS_OUTPUT="$ARTIFACTS/__windvale_analysis_must_not_write__.bin"
-if [ -e "$WINDVALE_ANALYSIS_OUTPUT" ]; then
-    echo "The Windvale analysis-only output unexpectedly exists: $WINDVALE_ANALYSIS_OUTPUT" >&2
-    exit 1
-fi
-WVLINK_ANALYSIS_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+WVLINK_MAP_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     run "$WVLINK_CORE_MODULE" \
     --allow console.write \
     --allow diagnostic.write_line \
@@ -518,15 +520,35 @@ WVLINK_ANALYSIS_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$
     --allow process.argument \
     --allow process.argument_count \
     --max-steps 20000000 \
-    -- 1048576 Main "$WINDVALE_ANALYSIS_OUTPUT" "$WINDVALE_ASSEMBLY_OBJECT" "$LINK_PROVIDER_OBJECT")
-printf '%s\n' "$WVLINK_ANALYSIS_OUTPUT" | grep -F 'link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295' >/dev/null
-printf '%s\n' "$WVLINK_ANALYSIS_OUTPUT" | grep -F 'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' >/dev/null
-printf '%s\n' "$WVLINK_ANALYSIS_OUTPUT" | grep -F 'Result: 0' >/dev/null
-if [ -e "$WINDVALE_ANALYSIS_OUTPUT" ]; then
-    echo 'The analysis-only Windvale linker slice unexpectedly wrote an image.' >&2
+    -- 1048576 Main "$WINDVALE_LINKED_IMAGE" "$WINDVALE_ASSEMBLY_OBJECT" "$LINK_PROVIDER_OBJECT")
+printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'windvale-link-map 1' >/dev/null
+printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'target name=flat-x86-64-v1 architecture=x86-64 base-address=1048576 image-bytes=24' >/dev/null
+printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'entry name=Main address=1048576' >/dev/null
+printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' >/dev/null
+printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'import index=0 input=0 source-index=2 kind=function name=Console_write provider-input=1 provider-source-index=0 address=1048592' >/dev/null
+printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'relocation index=0 input=0 source-index=0 kind=relative-i32 patch-offset=6 patch-address=1048582 target=Console_write target-input=1 target-source-index=0 target-address=1048592 addend=-4 value=6' >/dev/null
+printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'relocation index=1 input=0 source-index=1 kind=absolute-u32 patch-offset=20 patch-address=1048596 target=Main target-input=0 target-source-index=1 target-address=1048576 addend=0 value=1048576' >/dev/null
+printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -F 'Result: 0' >/dev/null
+if printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -F "$REPOSITORY_ROOT" >/dev/null; then
+    echo 'The Windvale canonical link map exposed a repository path.' >&2
+    exit 1
+fi
+WINDVALE_LINK_HASH=$(sha256sum "$WINDVALE_LINKED_IMAGE" | awk '{print $1}')
+if [ "$WINDVALE_LINK_HASH" != '0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' ]; then
+    echo "The Windvale linker wrote unexpected image bytes: $WINDVALE_LINK_HASH" >&2
+    exit 1
+fi
+printf '%s\n' "$WVLINK_MAP_OUTPUT" | sed '/^Result: 0$/d' > "$WINDVALE_LINK_MAP"
+WINDVALE_LINK_MAP_HASH=$(sha256sum "$WINDVALE_LINK_MAP" | awk '{print $1}')
+if [ "$WINDVALE_LINK_MAP_HASH" != '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4' ]; then
+    echo "The Windvale linker wrote an unexpected canonical map: $WINDVALE_LINK_MAP_HASH" >&2
     exit 1
 fi
 
+if [ -e "$INVALID_WINDVALE_LINKED_IMAGE" ]; then
+    echo "The invalid Windvale link output unexpectedly exists: $INVALID_WINDVALE_LINKED_IMAGE" >&2
+    exit 1
+fi
 WVLINK_UNDEFINED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     run "$WVLINK_CORE_MODULE" \
     --allow console.write \
@@ -536,11 +558,58 @@ WVLINK_UNDEFINED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "
     --allow process.argument \
     --allow process.argument_count \
     --max-steps 20000000 \
-    -- 1048576 Main "$WINDVALE_ANALYSIS_OUTPUT" "$WINDVALE_ASSEMBLY_OBJECT" 2>&1)
+    -- 1048576 Main "$INVALID_WINDVALE_LINKED_IMAGE" "$WINDVALE_ASSEMBLY_OBJECT" 2>&1)
 printf '%s\n' "$WVLINK_UNDEFINED_OUTPUT" | grep -F 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' >/dev/null
 printf '%s\n' "$WVLINK_UNDEFINED_OUTPUT" | grep -F 'Result: 2' >/dev/null
-if [ -e "$WINDVALE_ANALYSIS_OUTPUT" ]; then
-    echo 'Rejected Windvale link analysis unexpectedly wrote an image.' >&2
+if [ -e "$INVALID_WINDVALE_LINKED_IMAGE" ]; then
+    echo 'A rejected Windvale link created a partial image.' >&2
+    exit 1
+fi
+
+WVLINK_EXISTING_FAILURE=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVLINK_CORE_MODULE" \
+    --allow console.write \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 20000000 \
+    -- 1048576 Main "$WINDVALE_LINKED_IMAGE" "$WINDVALE_ASSEMBLY_OBJECT" 2>&1)
+printf '%s\n' "$WVLINK_EXISTING_FAILURE" | grep -F 'link status=WVL1005' >/dev/null
+printf '%s\n' "$WVLINK_EXISTING_FAILURE" | grep -F 'Result: 2' >/dev/null
+PRESERVED_WINDVALE_LINK_HASH=$(sha256sum "$WINDVALE_LINKED_IMAGE" | awk '{print $1}')
+if [ "$PRESERVED_WINDVALE_LINK_HASH" != "$WINDVALE_LINK_HASH" ]; then
+    echo 'A rejected Windvale link modified an existing image.' >&2
+    exit 1
+fi
+
+MISSING_WINDVALE_LINK_PARENT="$ARTIFACTS/__windvale_missing_wvlink_parent__"
+if [ -e "$MISSING_WINDVALE_LINK_PARENT" ]; then
+    echo "The missing Windvale linker parent unexpectedly exists: $MISSING_WINDVALE_LINK_PARENT" >&2
+    exit 1
+fi
+MISSING_WINDVALE_LINK_OUTPUT="$MISSING_WINDVALE_LINK_PARENT/Hello.bin"
+set +e
+MISSING_WINDVALE_LINK_PARENT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVLINK_CORE_MODULE" \
+    --allow console.write \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 20000000 \
+    -- 1048576 Main "$MISSING_WINDVALE_LINK_OUTPUT" "$WINDVALE_ASSEMBLY_OBJECT" "$LINK_PROVIDER_OBJECT" 2>&1)
+MISSING_WINDVALE_LINK_PARENT_EXIT=$?
+set -e
+if [ "$MISSING_WINDVALE_LINK_PARENT_EXIT" -ne 3 ]; then
+    echo "Expected missing Windvale link parent exit 3, found $MISSING_WINDVALE_LINK_PARENT_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$MISSING_WINDVALE_LINK_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
+if [ -e "$MISSING_WINDVALE_LINK_OUTPUT" ]; then
+    echo 'The failed Windvale linker write left a partial image.' >&2
     exit 1
 fi
 
@@ -566,6 +635,14 @@ printf '%s\n' "$LINK_MAP_OUTPUT" > "$LINK_MAP"
 LINK_MAP_HASH=$(sha256sum "$LINK_MAP" | awk '{print $1}')
 if [ "$LINK_MAP_HASH" != '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4' ]; then
     echo "The Stage 0 linker wrote an unexpected canonical map: $LINK_MAP_HASH" >&2
+    exit 1
+fi
+if ! cmp -s "$WINDVALE_LINKED_IMAGE" "$LINKED_IMAGE"; then
+    echo 'The Windvale-written and Stage 0 linked images differ.' >&2
+    exit 1
+fi
+if ! cmp -s "$WINDVALE_LINK_MAP" "$LINK_MAP"; then
+    echo 'The Windvale-written and Stage 0 canonical maps differ.' >&2
     exit 1
 fi
 

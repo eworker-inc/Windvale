@@ -54,6 +54,9 @@ $AssemblyObject = Join-Path $Artifacts 'Hello-Object.wvo'
 $WindvaleAssemblyObject = Join-Path $Artifacts 'Hello-Object-Windvale.wvo'
 $InvalidWindvaleAssemblyObject = Join-Path $Artifacts '__windvale_invalid_assembly_output__.wvo'
 $LinkProviderObject = Join-Path $Artifacts 'Console-Provider.wvo'
+$WindvaleLinkedImage = Join-Path $Artifacts 'Hello-Linked-Windvale.bin'
+$WindvaleLinkMap = Join-Path $Artifacts 'Hello-Linked-Windvale.wvmap'
+$InvalidWindvaleLinkedImage = Join-Path $Artifacts '__windvale_invalid_wvlink_output__.bin'
 $LinkedImage = Join-Path $Artifacts 'Hello-Linked.bin'
 $LinkMap = Join-Path $Artifacts 'Hello-Linked.wvmap'
 $InvalidLinkedImage = Join-Path $Artifacts '__windvale_invalid_link_output__.bin'
@@ -341,9 +344,13 @@ if (
     $WvLinkerInspection -notmatch 'Verifierˉfindˉexport' -or
     $WvLinkerInspection -notmatch 'Verifierˉapplyˉrelocationsˉreverse' -or
     $WvLinkerInspection -notmatch 'Acceptˉreconstructedˉimage' -or
+    $WvLinkerInspection -notmatch 'Acceptedˉobjectˉview' -or
+    $WvLinkerInspection -notmatch 'Definitionˉmapˉminimumˉexceedsˉlimit' -or
+    $WvLinkerInspection -notmatch 'Buildˉcanonicalˉmap' -or
     $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
     $WvLinkerInspection -notmatch 'bytes\.sha256_hex' -or
-    $WvLinkerInspection -notmatch 'file\.read_bytes'
+    $WvLinkerInspection -notmatch 'file\.read_bytes' -or
+    $WvLinkerInspection -notmatch 'file\.write_bytes'
 ) {
     throw 'The Seed CLI inspector did not expose the Windvale linker scanner operations.'
 }
@@ -478,24 +485,38 @@ if (
     throw 'The Stage 0 assembler did not produce the canonical linker provider object.'
 }
 
-$WindvaleAnalysisOutput = Join-Path $Artifacts '__windvale_analysis_must_not_write__.bin'
-if (Test-Path -LiteralPath $WindvaleAnalysisOutput) {
-    throw "The Windvale analysis-only output unexpectedly exists: $WindvaleAnalysisOutput"
-}
-$WvLinkerAnalysisOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleAnalysisOutput $WindvaleAssemblyObject $LinkProviderObject
+$WvLinkerMapOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleLinkedImage $WindvaleAssemblyObject $LinkProviderObject
 if (
     $LASTEXITCODE -ne 0 -or
-    $WvLinkerAnalysisOutput -notcontains 'link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295' -or
-    $WvLinkerAnalysisOutput -notcontains 'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' -or
-    $WvLinkerAnalysisOutput -notcontains 'Result: 0'
+    $WvLinkerMapOutput -notcontains 'windvale-link-map 1' -or
+    $WvLinkerMapOutput -notcontains 'target name=flat-x86-64-v1 architecture=x86-64 base-address=1048576 image-bytes=24' -or
+    $WvLinkerMapOutput -notcontains 'entry name=Main address=1048576' -or
+    $WvLinkerMapOutput -notcontains 'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' -or
+    $WvLinkerMapOutput -notcontains 'import index=0 input=0 source-index=2 kind=function name=Console_write provider-input=1 provider-source-index=0 address=1048592' -or
+    $WvLinkerMapOutput -notcontains 'relocation index=0 input=0 source-index=0 kind=relative-i32 patch-offset=6 patch-address=1048582 target=Console_write target-input=1 target-source-index=0 target-address=1048592 addend=-4 value=6' -or
+    $WvLinkerMapOutput -notcontains 'relocation index=1 input=0 source-index=1 kind=absolute-u32 patch-offset=20 patch-address=1048596 target=Main target-input=0 target-source-index=1 target-address=1048576 addend=0 value=1048576' -or
+    $WvLinkerMapOutput -notcontains 'Result: 0' -or
+    ($WvLinkerMapOutput -join "`n") -match [regex]::Escape($RepositoryRoot)
 ) {
-    throw 'The Windvale linker did not reproduce the canonical resolution and layout evidence.'
+    throw 'The Windvale linker did not produce the canonical path-free map.'
 }
-if (Test-Path -LiteralPath $WindvaleAnalysisOutput) {
-    throw 'The analysis-only Windvale linker slice unexpectedly wrote an image.'
+$WindvaleLinkHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleLinkedImage).Hash.ToLowerInvariant()
+if ($WindvaleLinkHash -ne '0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a') {
+    throw "The Windvale linker wrote unexpected image bytes: $WindvaleLinkHash"
+}
+[System.IO.File]::WriteAllText(
+    $WindvaleLinkMap,
+    ((($WvLinkerMapOutput | Where-Object { $_ -ne 'Result: 0' }) -join "`n") + "`n"),
+    [System.Text.UTF8Encoding]::new($false))
+$WindvaleLinkMapHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleLinkMap).Hash.ToLowerInvariant()
+if ($WindvaleLinkMapHash -ne '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4') {
+    throw "The Windvale linker wrote an unexpected canonical map: $WindvaleLinkMapHash"
 }
 
-$WvLinkerUndefinedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleAnalysisOutput $WindvaleAssemblyObject 2>&1
+if (Test-Path -LiteralPath $InvalidWindvaleLinkedImage) {
+    throw "The invalid Windvale link output unexpectedly exists: $InvalidWindvaleLinkedImage"
+}
+$WvLinkerUndefinedOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $InvalidWindvaleLinkedImage $WindvaleAssemblyObject 2>&1
 if (
     $LASTEXITCODE -ne 0 -or
     ($WvLinkerUndefinedOutput -join "`n") -notmatch 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' -or
@@ -503,8 +524,34 @@ if (
 ) {
     throw 'The Windvale linker did not reject an undefined import deterministically.'
 }
-if (Test-Path -LiteralPath $WindvaleAnalysisOutput) {
-    throw 'Rejected Windvale link analysis unexpectedly wrote an image.'
+if (Test-Path -LiteralPath $InvalidWindvaleLinkedImage) {
+    throw 'A rejected Windvale link created a partial image.'
+}
+
+$WvLinkerExistingFailure = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleLinkedImage $WindvaleAssemblyObject 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    ($WvLinkerExistingFailure -join "`n") -notmatch 'link status=WVL1005' -or
+    $WvLinkerExistingFailure -notcontains 'Result: 2'
+) {
+    throw 'The Windvale linker did not reject an invalid link targeting an existing image.'
+}
+$PreservedWindvaleLinkHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleLinkedImage).Hash.ToLowerInvariant()
+if ($PreservedWindvaleLinkHash -ne $WindvaleLinkHash) {
+    throw 'A rejected Windvale link modified an existing image.'
+}
+
+$MissingWindvaleLinkParent = Join-Path $Artifacts '__windvale_missing_wvlink_parent__'
+if (Test-Path -LiteralPath $MissingWindvaleLinkParent) {
+    throw "The missing Windvale linker parent unexpectedly exists: $MissingWindvaleLinkParent"
+}
+$MissingWindvaleLinkOutput = Join-Path $MissingWindvaleLinkParent 'Hello.bin'
+$MissingWindvaleLinkParentOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $MissingWindvaleLinkOutput $WindvaleAssemblyObject $LinkProviderObject 2>&1
+if ($LASTEXITCODE -ne 3 -or ($MissingWindvaleLinkParentOutput -join "`n") -notmatch 'WVR3022') {
+    throw 'The Windvale linker did not report a missing output parent deterministically.'
+}
+if (Test-Path -LiteralPath $MissingWindvaleLinkOutput) {
+    throw 'The failed Windvale linker write left a partial image.'
 }
 
 $LinkMapOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- link --base-address 1048576 --entry Main -o $LinkedImage $AssemblyObject $LinkProviderObject
@@ -532,6 +579,18 @@ if ($LinkHash -ne '0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ff
 $LinkMapHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $LinkMap).Hash.ToLowerInvariant()
 if ($LinkMapHash -ne '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4') {
     throw "The Stage 0 linker wrote an unexpected canonical map: $LinkMapHash"
+}
+$ImagesMatch = [System.Linq.Enumerable]::SequenceEqual(
+    [byte[]][System.IO.File]::ReadAllBytes($WindvaleLinkedImage),
+    [byte[]][System.IO.File]::ReadAllBytes($LinkedImage))
+if (-not $ImagesMatch) {
+    throw 'The Windvale-written and Stage 0 linked images differ.'
+}
+$MapsMatch = [System.Linq.Enumerable]::SequenceEqual(
+    [byte[]][System.IO.File]::ReadAllBytes($WindvaleLinkMap),
+    [byte[]][System.IO.File]::ReadAllBytes($LinkMap))
+if (-not $MapsMatch) {
+    throw 'The Windvale-written and Stage 0 canonical maps differ.'
 }
 
 if (Test-Path -LiteralPath $InvalidLinkedImage) {

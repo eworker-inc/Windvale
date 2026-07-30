@@ -22,7 +22,7 @@ internal static class Program
     private const string WVO_CORE_SHA256 = "76f5a414bdc8feab35cedb28ecfc56d0ed24b0abcfc3c5c128e4f71fd0e5232b";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "9fe0e79a4895281908df13b31f127dd9dd019282263da71874bbefb7d9d3cb3a";
-    private const string WVLINK_CORE_SHA256 = "0b8d4ce09a043a675e64018c02fac94740b0b878a74801fc622ce7703e956b35";
+    private const string WVLINK_CORE_SHA256 = "8d3cb567f6985077b3ad487627bf77a20326b4bc02bcab8d938354f48d339cfd";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
 
@@ -196,7 +196,7 @@ internal static class Program
         ("Windvale-written WVA assembler enforces source and token boundaries", Wvaˉassemblerˉcoreˉrecognizesˉsource),
         ("Windvale-written WVA assembler matches Stage 0 semantics and bytes", Wvaˉassemblerˉmatchesˉoracle),
         ("Windvale linker core scans WVO exactly at the hosted boundary", Wvˉlinkerˉcoreˉscansˉobjects),
-        ("Windvale linker reconstructs and verifies deterministic images", Wvˉlinkerˉresolvesˉandˉlaysˉout),
+        ("Windvale linker emits verified deterministic images and maps", Wvˉlinkerˉresolvesˉandˉlaysˉout),
         ("Stage 0 linker resolves and verifies a canonical flat image", Linkerˉproducesˉcanonicalˉflatˉimage),
         ("Stage 0 linker rejects resolution, layout, and relocation failures", Linkerˉrejectsˉinvalidˉlinks),
         ("Stage 0 linker contains hostile objects and remains deterministic", Linkerˉcontainsˉhostileˉinput),
@@ -1516,6 +1516,8 @@ internal static class Program
         Contains(Inspection, "Verifierˉbuildˉunrelocatedˉimage");
         Contains(Inspection, "Verifierˉapplyˉrelocationsˉreverse");
         Contains(Inspection, "Acceptˉreconstructedˉimage");
+        Contains(Inspection, "Appendˉmapˉline");
+        Contains(Inspection, "Buildˉcanonicalˉmap");
 
         var Authorized = Module.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -1612,13 +1614,12 @@ internal static class Program
             Mainˉobject,
             Providerˉobject);
         Equal(0, Canonical.Exitˉcode);
-        Equal(
-            "link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295\n" +
-            $"image sha256={Objectˉdigest.Calculateˉsha256(Oracle.Imageˉbytes.AsSpan())}\n",
-            Canonical.Output);
+        Equal(System.Text.Encoding.UTF8.GetString(Oracle.Mapˉbytes.AsSpan()), Canonical.Output);
         Equal(string.Empty, Canonical.Diagnostics);
         Equal(2, Canonical.Readˉcount);
-        Equal(0, Canonical.Writeˉcount);
+        Equal(1, Canonical.Writeˉcount);
+        Equal("output.bin", Canonical.Writtenˉresourceˉname);
+        Sequenceˉequal(Oracle.Imageˉbytes, Canonical.Writtenˉbytes);
         Equal(Oracle.Imageˉbytes.Length, 24);
         Equal(Oracle.Entryˉaddress, 1_048_576u);
 
@@ -1632,22 +1633,22 @@ internal static class Program
             Providerˉobject,
             Mainˉobject);
         Equal(0, Reversed.Exitˉcode);
-        Contains(Reversed.Output, $"image-bytes={Reversedˉoracle.Imageˉbytes.Length}");
-        Contains(Reversed.Output, $"entry-address={Reversedˉoracle.Entryˉaddress}");
-        Contains(
-            Reversed.Output,
-            $"image sha256={Objectˉdigest.Calculateˉsha256(Reversedˉoracle.Imageˉbytes.AsSpan())}");
+        Equal(
+            System.Text.Encoding.UTF8.GetString(Reversedˉoracle.Mapˉbytes.AsSpan()),
+            Reversed.Output);
         Equal(2, Reversed.Readˉcount);
+        Equal(1, Reversed.Writeˉcount);
+        Sequenceˉequal(Reversedˉoracle.Imageˉbytes, Reversed.Writtenˉbytes);
 
         var Unalignedˉoracle = Linkˉsuccess([Providerˉobject.ToArray()], new(1, "Console_write"));
         var Unaligned = Runˉwvˉlinkerˉanalysis(Module, "1", "Console_write", Providerˉobject);
         Equal(0, Unaligned.Exitˉcode);
-        Contains(Unaligned.Output, $"image-bytes={Unalignedˉoracle.Imageˉbytes.Length}");
-        Contains(Unaligned.Output, $"entry-address={Unalignedˉoracle.Entryˉaddress}");
-        Contains(
-            Unaligned.Output,
-            $"image sha256={Objectˉdigest.Calculateˉsha256(Unalignedˉoracle.Imageˉbytes.AsSpan())}");
+        Equal(
+            System.Text.Encoding.UTF8.GetString(Unalignedˉoracle.Mapˉbytes.AsSpan()),
+            Unaligned.Output);
         Equal(1, Unaligned.Readˉcount);
+        Equal(1, Unaligned.Writeˉcount);
+        Sequenceˉequal(Unalignedˉoracle.Imageˉbytes, Unaligned.Writtenˉbytes);
 
         var Completeˉobject = Assembleˉsuccess(COMPLETE_ASSEMBLY_SOURCE).ToImmutableArray();
         var Completeˉoracle = Linkˉsuccess(
@@ -1659,12 +1660,11 @@ internal static class Program
             "Main",
             Completeˉobject);
         Equal(0, Complete.Exitˉcode);
-        Contains(Complete.Output, "sections=3 symbols=3 relocations=2");
-        Contains(Complete.Output, $"image-bytes={Completeˉoracle.Imageˉbytes.Length}");
-        Contains(Complete.Output, $"entry-address={Completeˉoracle.Entryˉaddress}");
-        Contains(
-            Complete.Output,
-            $"image sha256={Objectˉdigest.Calculateˉsha256(Completeˉoracle.Imageˉbytes.AsSpan())}");
+        Equal(
+            System.Text.Encoding.UTF8.GetString(Completeˉoracle.Mapˉbytes.AsSpan()),
+            Complete.Output);
+        Equal(1, Complete.Writeˉcount);
+        Sequenceˉequal(Completeˉoracle.Imageˉbytes, Complete.Writtenˉbytes);
 
         var Maximumˉimageˉobject = Objectˉcodec.Write(new Objectˉfile(
             Objectˉarchitecture.X86ˉ64,
@@ -1684,15 +1684,58 @@ internal static class Program
             200_000_000,
             Maximumˉimageˉobject);
         Equal(0, Maximumˉimage.Exitˉcode);
-        Contains(Maximumˉimage.Output, "image-bytes=4194304");
-        Contains(
-            Maximumˉimage.Output,
-            $"image sha256={Objectˉdigest.Calculateˉsha256(Maximumˉimageˉoracle.Imageˉbytes.AsSpan())}");
+        Equal(
+            System.Text.Encoding.UTF8.GetString(Maximumˉimageˉoracle.Mapˉbytes.AsSpan()),
+            Maximumˉimage.Output);
         Equal(1, Maximumˉimage.Readˉcount);
-        Equal(0, Maximumˉimage.Writeˉcount);
+        Equal(1, Maximumˉimage.Writeˉcount);
+        Equal(
+            Objectˉdigest.Calculateˉsha256(Maximumˉimageˉoracle.Imageˉbytes.AsSpan()),
+            Objectˉdigest.Calculateˉsha256(Maximumˉimage.Writtenˉbytes.AsSpan()));
         True(
             Maximumˉimage.Executedˉinstructions < 200_000_000,
             "The maximum-image verifier exhausted its explicit instruction budget.");
+
+        var Mapˉlimitˉlocals = Enumerable.Range(0, Objectˉlimits.MAX_SYMBOLS)
+            .Select(Index => new Objectˉsymbol(
+                $"L{Index:D4}",
+                Objectˉsymbolˉbinding.Local,
+                Objectˉsymbolˉkind.Function,
+                0,
+                0,
+                0))
+            .ToImmutableArray();
+        var Mapˉlimitˉlocalˉobject = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 1, 0, [])],
+            Mapˉlimitˉlocals,
+            [])).ToImmutableArray();
+        var Mapˉlimitˉentryˉobject = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 1, 0, [])],
+            [
+                .. Mapˉlimitˉlocals.Take(Objectˉlimits.MAX_SYMBOLS - 1),
+                new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 0),
+            ],
+            [])).ToImmutableArray();
+        var Mapˉlimit = Runˉwvˉlinkerˉanalysisˉwithˉlimit(
+            Module,
+            "0",
+            "Main",
+            200_000_000,
+            Mapˉlimitˉentryˉobject,
+            Mapˉlimitˉlocalˉobject,
+            Mapˉlimitˉlocalˉobject,
+            Mapˉlimitˉlocalˉobject);
+        Equal(2, Mapˉlimit.Exitˉcode);
+        Equal(string.Empty, Mapˉlimit.Output);
+        Contains(Mapˉlimit.Diagnostics, "link status=WVL1012");
+        Contains(Mapˉlimit.Diagnostics, "input=4294967295");
+        Equal(4, Mapˉlimit.Readˉcount);
+        Equal(0, Mapˉlimit.Writeˉcount);
+        True(
+            Mapˉlimit.Executedˉinstructions < 200_000_000,
+            "The maximum-map rejection exhausted its explicit instruction budget.");
 
         var Undefined = Runˉwvˉlinkerˉanalysis(Module, "1048576", "Main", Mainˉobject);
         Equal(2, Undefined.Exitˉcode);
@@ -3440,13 +3483,12 @@ internal static class Program
             Normalizedˉwvˉlinkerˉoutput);
         Equal(string.Empty, Wvˉlinkerˉhosted.Diagnostics);
         Equal(0, Wvˉlinkerˉanalysis.Exitˉcode);
-        Equal(
-            "link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295\n" +
-            "image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a\n",
-            Normalizedˉwvˉlinkerˉanalysisˉoutput);
+        Equal(Linkˉmap, Normalizedˉwvˉlinkerˉanalysisˉoutput);
         Equal(string.Empty, Wvˉlinkerˉanalysis.Diagnostics);
         Equal(2, Wvˉlinkerˉanalysis.Readˉcount);
-        Equal(0, Wvˉlinkerˉanalysis.Writeˉcount);
+        Equal(1, Wvˉlinkerˉanalysis.Writeˉcount);
+        Equal("output.bin", Wvˉlinkerˉanalysis.Writtenˉresourceˉname);
+        Sequenceˉequal(Linkˉresult.Imageˉbytes, Wvˉlinkerˉanalysis.Writtenˉbytes);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
@@ -3616,6 +3658,8 @@ internal static class Program
             Diagnostics.ToString(),
             Reader.Readˉcount,
             Writer.Writeˉcount,
+            Writer.Resourceˉname,
+            Writer.Bytes,
             Result.Executedˉinstructions);
     }
 
@@ -3983,6 +4027,8 @@ internal static class Program
         string Diagnostics,
         int Readˉcount,
         int Writeˉcount,
+        string Writtenˉresourceˉname,
+        ImmutableArray<byte> Writtenˉbytes,
         long Executedˉinstructions);
 
     private sealed class Capturingˉfileˉwriter : IHostedˉfileˉwriter
@@ -4032,7 +4078,7 @@ internal static class Program
         [property: JsonPropertyName("wvLinkerCoreSha256")] string Wvˉlinkerˉcoreˉsha256,
         [property: JsonPropertyName("wvLinkerCoreResult")] int Wvˉlinkerˉcoreˉresult,
         [property: JsonPropertyName("wvLinkerHostedOutput")] string Wvˉlinkerˉhostedˉoutput,
-        [property: JsonPropertyName("wvLinkerAnalysisOutput")] string Wvˉlinkerˉanalysisˉoutput,
+        [property: JsonPropertyName("wvLinkerMapOutput")] string Wvˉlinkerˉmapˉoutput,
         [property: JsonPropertyName("linkFormat")] string Linkˉformat,
         [property: JsonPropertyName("linkImageSha256")] string Linkˉimageˉsha256,
         [property: JsonPropertyName("linkMapSha256")] string Linkˉmapˉsha256,

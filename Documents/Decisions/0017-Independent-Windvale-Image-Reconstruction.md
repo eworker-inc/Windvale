@@ -26,7 +26,7 @@ The verifier may trust the already qualified WVO structural boundary, but it mus
 - The verifier deliberately repeats work and is not optimized around candidate intermediates. This improves fault separation but increases instruction cost.
 - The conformance suite exercises the complete 4 MiB image limit under an explicit 200,000,000-instruction ceiling; smaller native smoke cases retain the ordinary 20,000,000-instruction ceiling.
 - Shared primitives remain limited to the qualified immutable WVO reader, byte slices/concatenation, and fixed-width byte operations; resolution shortcuts, placement arithmetic, relocation evaluation, and traversal order are separate.
-- Image publication remains disabled until the canonical map is also complete and accepted, because a later map-limit failure must not leave an output image.
+- Image publication remained disabled until Decision 0018 completed the canonical map and publish-after-success boundary, because a later map-limit failure must not leave an output image.
 
 ## Reconsider when
 

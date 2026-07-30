@@ -158,7 +158,7 @@ dotnet run --project Tools/Windvale.Tool -- link `
   artifacts/Console-Provider.wvo
 ```
 
-The Stage 0 linker verifies both WVO inputs, resolves `Console_write`, places actual section addresses with alignment, materializes zero padding, applies the relative call and absolute data relocation, independently reconstructs every output byte, and writes a 24-byte image. Standard output is the canonical map. The raw image SHA-256 is `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a`; it is a memory-layout experiment, not yet a Windows, Linux, UEFI, or Windvale OS executable.
+The Stage 0 linker verifies both WVO inputs, resolves `Console_write`, places actual section addresses with alignment, materializes zero padding, applies the relative call and absolute data relocation, independently reconstructs every output byte, and writes a 24-byte image. The Windvale-written `Wvˉlinkerˉcore` now implements the same contract as verified bytecode: it validates each immutable input snapshot, independently reconstructs the image, constructs the complete bounded canonical map, and invokes the host writer once only after every deterministic step succeeds. The two implementations produce byte-identical images and maps. The raw image SHA-256 is `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a`; it is a memory-layout experiment, not yet a Windows, Linux, UEFI, or Windvale OS executable.
 
 ## Seed language example
 
@@ -198,7 +198,7 @@ export fn Main() -> i32 {
 - `Examples/Seed/` — portable and hosted example programs
 - `Examples/Foundation/` — incremental programs that exercise self-hosting prerequisites
 - `Examples/Assembler/` — canonical WVA sources for assembler and object-production coverage
-- `Examples/Linker/` — multi-object providers and future Windvale linker fixtures
+- `Examples/Linker/` — multi-object providers and the Windvale-written linker core
 - `Specifications/` — implemented source, bytecode, CLI, and conformance contracts
 - `Documents/` — architecture, decisions, project direction, and open questions
 
@@ -252,6 +252,7 @@ export fn Main() -> i32 {
 - [Windvale linker resolution and layout decision](Documents/Decisions/0015-Windvale-Linker-Resolution-And-Layout.md)
 - [Windvale immutable image and relocations decision](Documents/Decisions/0016-Windvale-Immutable-Image-And-Relocations.md)
 - [Independent Windvale image reconstruction decision](Documents/Decisions/0017-Independent-Windvale-Image-Reconstruction.md)
+- [Canonical Windvale map and publication decision](Documents/Decisions/0018-Canonical-Windvale-Map-And-Publication.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 
