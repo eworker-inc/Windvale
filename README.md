@@ -1,8 +1,10 @@
 # Windvale
 
-Windvale is an open-source-intended experiment in building a small, understandable computing stack with AI as the primary implementation partner.
+Windvale is an MIT-licensed E-Worker Inc project building a small, understandable computing stack with AI as the primary implementation author under human direction and review.
 
 The intended stack includes a programming language, portable bytecode, a runtime, an assembler, an object format, a linker, a compact foundation library, and eventually a small operating system. The operating system is the final integration demonstration; the language, tools, and runtime remain independently useful on Windows and Linux.
+
+To our knowledge, Windvale is among the first open-source projects attempting this entire breadth as one coherent, AI-authored stack built from an empty project: owned source-language semantics, compiler, verified bytecode, runtime, assembler, object model, linker, native path, Foundation library, and operating system. This is deliberately an “among the first at this breadth” statement—not a claim that no earlier AI-generated operating system, compiler, or programming-language experiment exists. The assembler, object model, linker, bytecode/runtime foundation, and Windvale-written compiler frontend already have reproducible evidence; the self-hosted compiler, native toolchain, and Windvale OS remain active milestones rather than completed claims.
 
 ## Current milestone: Windvale Seed
 
@@ -31,7 +33,9 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - Conformance, malformed-input, determinism, diagnostics, and runtime-limit coverage
 - One CLI with module `compile`, `inspect`, `verify`, and `run`, textual `assemble`, deterministic `link`, plus object `object-inspect` and `object-verify` commands
 
-The open-source intent is established. The exact source license has not been selected yet and must be chosen before the first public source release.
+## License and stewardship
+
+Windvale is open source under the [MIT License](LICENSE). Copyright © 2026 E-Worker Inc. E-Worker Inc is the project business and steward.
 
 ## Requirements
 
