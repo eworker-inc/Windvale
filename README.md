@@ -8,9 +8,9 @@ The intended stack includes a programming language, portable bytecode, a runtime
 
 Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provides:
 
-- A small typed source language with modules, functions, locals, control flow, immutable text, integer and byte data, and explicit capabilities
+- A small typed source language with modules, functions, locals, control flow, immutable nominal records, immutable text, integer and byte data, and explicit capabilities
 - Foundation `u8`, `u32`, immutable byte slices, and bounded little-endian binary reads
-- A Windvale-written bounded walker for the complete `.wvb` header and six section envelopes
+- A Windvale-written bounded walker for the complete `.wvb` header and seven section envelopes with structured results
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
@@ -85,7 +85,7 @@ dotnet run --project Tools/Windvale.Tool -- inspect artifacts/Wv-Dump-Core.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Wv-Dump-Core.wvb
 ```
 
-This portable module walks all six section envelopes, rejects malformed kinds, flags, lengths, truncation, and trailing bytes, and returns `Result: 0` when its valid and adversarial self-checks pass. It is an envelope core, not yet a complete declaration or instruction dumper.
+This portable module walks all seven section envelopes, returns a structured inspection result with section count and failure offset, rejects malformed kinds, flags, lengths, truncation, and trailing bytes, and returns `Result: 0` when its valid and adversarial self-checks pass. It is an envelope core, not yet a complete declaration or instruction dumper.
 
 ## Seed language example
 
@@ -140,6 +140,7 @@ export fn Main() -> i32 {
 - [Platform and portability model](Documents/Architecture/Platform-And-Portability.md)
 - [Compiler bootstrap options](Documents/Architecture/Compiler-Bootstrap-Options.md)
 - [Seed language specification](Specifications/Seed-Language.md)
+- [Seed immutable records](Specifications/Seed-Records.md)
 - [Foundation byte primitives](Specifications/Foundation-Bytes.md)
 - [Windvale wvdump core](Specifications/Wv-Dump-Core.md)
 - [Source naming conventions](Specifications/Source-Naming.md)
@@ -151,6 +152,7 @@ export fn Main() -> i32 {
 - [Seed bootstrap decision](Documents/Decisions/0002-Windvale-Seed-Bootstrap.md)
 - [Source naming and mutation decision](Documents/Decisions/0003-Source-Naming-And-Mutation.md)
 - [Foundation byte primitives decision](Documents/Decisions/0004-Foundation-Byte-Primitives.md)
+- [Immutable nominal records decision](Documents/Decisions/0005-Immutable-Nominal-Records.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

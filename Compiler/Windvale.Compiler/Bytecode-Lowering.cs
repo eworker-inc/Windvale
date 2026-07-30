@@ -57,7 +57,10 @@ internal static class Bytecodeˉlowering
             module.Data,
             Functionˉdeclarations.ToImmutable(),
             Moduleˉcode.ToImmutable(),
-            Exports);
+            Exports)
+        {
+            Types = module.Types,
+        };
     }
 
     private sealed class Codeˉemitter(
@@ -189,6 +192,24 @@ internal static class Bytecodeˉlowering
                     Emitˉnone(
                         Mapˉopcode(instruction.Operation),
                         pop: instruction.Operands.Length,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.Recordˉcreate:
+                    Loadˉarguments(instruction.Operands);
+                    Emitˉu32(
+                        Opcode.Recordˉcreate,
+                        instruction.Unsignedˉintegerˉoperand,
+                        pop: instruction.Operands.Length,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.Recordˉfield:
+                    Loadˉtemporary(instruction.Operands[0]);
+                    Emitˉu32(
+                        Opcode.Recordˉfield,
+                        instruction.Unsignedˉintegerˉoperand,
+                        pop: 1,
                         push: 1);
                     Storeˉresult(instruction);
                     break;

@@ -3,72 +3,92 @@ module Wvˉdumpˉcore profile portable;
 data Shortˉmodule: bytes = [87];
 
 data Badˉmagicˉmodule: bytes = [
-    0, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0
+    0, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0
 ];
 
 data Badˉversionˉmodule: bytes = [
-    87, 86, 66, 49, 2, 0, 1, 0, 6, 0, 0, 0
+    87, 86, 66, 49, 2, 0, 2, 0, 7, 0, 0, 0
 ];
 
 data Badˉcountˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 1, 0, 5, 0, 0, 0
+    87, 86, 66, 49, 1, 0, 2, 0, 6, 0, 0, 0
 ];
 
 data Hostileˉlengthˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 255, 255, 255, 255
 ];
 
 data Validˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     5, 0, 0, 0, 0, 0, 0, 0,
-    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
 ];
 
 data Badˉkindˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     5, 0, 0, 0, 0, 0, 0, 0,
-    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
 ];
 
 data Badˉflagsˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 1, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     5, 0, 0, 0, 0, 0, 0, 0,
-    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
 ];
 
 data Truncatedˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
-    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
-    2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
-    3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
-    4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
-    5, 0, 0, 0, 0, 0, 0, 0,
-    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0
-];
-
-data Trailingˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 1, 0, 6, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     5, 0, 0, 0, 0, 0, 0, 0,
     6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0
+];
+
+data Trailingˉmodule: bytes = [
+    87, 86, 66, 49, 1, 0, 2, 0, 7, 0, 0, 0,
+    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    5, 0, 0, 0, 0, 0, 0, 0,
+    6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+    7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     0
 ];
+
+record Wvbˉinspection {
+    Status: i32;
+    Sectionsˉseen: u32;
+    Failureˉoffset: u32;
+}
+
+record Wvbˉsection {
+    Kind: u8;
+    Flags: u8;
+    Reserved: u32;
+    Envelopeˉoffset: u32;
+    Payloadˉoffset: u32;
+    Payloadˉlength: u32;
+}
 
 fn Rangeˉisˉinside(Total: u32, Offset: u32, Length: u32) -> bool {
     if Offset > Total {
@@ -94,105 +114,157 @@ fn Sectionˉkindˉmatches(Index: u32, Kind: u8) -> bool {
     if Index == 4u32 {
         return Kind == 5u8;
     }
+    if Index == 5u32 {
+        return Kind == 6u8;
+    }
 
-    return Kind == 6u8;
+    return Kind == 7u8;
 }
 
-fn Inspectˉwvbˉenvelope(Input: bytes) -> i32 {
+fn Readˉsection(Input: bytes, Envelopeˉoffset: u32) -> Wvbˉsection {
+    return Wvbˉsection(
+        Bytesˉreadˉu8(Input, Envelopeˉoffset),
+        Bytesˉreadˉu8(Input, Envelopeˉoffset + 1u32),
+        Bytesˉreadˉu16ˉlittle(Input, Envelopeˉoffset + 2u32),
+        Envelopeˉoffset,
+        Envelopeˉoffset + 8u32,
+        Bytesˉreadˉu32ˉlittle(Input, Envelopeˉoffset + 4u32)
+    );
+}
+
+fn Inspectˉwvbˉenvelope(Input: bytes) -> Wvbˉinspection {
     let Total: u32 = Bytesˉlength(Input);
     if Total < 12u32 {
-        return 1;
+        return Wvbˉinspection(1, 0u32, Total);
     }
 
     let Magic: bytes = Bytesˉslice(Input, 0u32, 4u32);
     if Bytesˉreadˉu8(Magic, 0u32) != 87u8 {
-        return 2;
+        return Wvbˉinspection(2, 0u32, 0u32);
     }
     if Bytesˉreadˉu8(Magic, 1u32) != 86u8 {
-        return 2;
+        return Wvbˉinspection(2, 0u32, 1u32);
     }
     if Bytesˉreadˉu8(Magic, 2u32) != 66u8 {
-        return 2;
+        return Wvbˉinspection(2, 0u32, 2u32);
     }
     if Bytesˉreadˉu8(Magic, 3u32) != 49u8 {
-        return 2;
+        return Wvbˉinspection(2, 0u32, 3u32);
     }
 
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
-        return 3;
+        return Wvbˉinspection(3, 0u32, 4u32);
     }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 1u32 {
-        return 3;
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 2u32 {
+        return Wvbˉinspection(3, 0u32, 6u32);
     }
-    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 6u32 {
-        return 4;
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
+        return Wvbˉinspection(4, 0u32, 8u32);
     }
 
     var Cursor: u32 = 12u32;
     var Sectionˉindex: u32 = 0u32;
-    while Sectionˉindex < 6u32 {
+    while Sectionˉindex < 7u32 {
         if !Rangeˉisˉinside(Total, Cursor, 8u32) {
-            return 5;
+            return Wvbˉinspection(5, Sectionˉindex, Cursor);
         }
 
-        let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
-        if !Sectionˉkindˉmatches(Sectionˉindex, Kind) {
-            return 6;
+        let Section: Wvbˉsection = Readˉsection(Input, Cursor);
+        if !Sectionˉkindˉmatches(Sectionˉindex, Section.Kind) {
+            return Wvbˉinspection(6, Sectionˉindex, Section.Envelopeˉoffset);
         }
-        if Bytesˉreadˉu8(Input, Cursor + 1u32) != 0u8 {
-            return 7;
+        if Section.Flags != 0u8 {
+            return Wvbˉinspection(7, Sectionˉindex, Section.Envelopeˉoffset + 1u32);
         }
-        if Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 {
-            return 7;
-        }
-
-        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
-        let Payloadˉoffset: u32 = Cursor + 8u32;
-        if !Rangeˉisˉinside(Total, Payloadˉoffset, Payloadˉlength) {
-            return 5;
+        if Section.Reserved != 0u32 {
+            return Wvbˉinspection(7, Sectionˉindex, Section.Envelopeˉoffset + 2u32);
         }
 
-        Cursor = Payloadˉoffset + Payloadˉlength;
+        if !Rangeˉisˉinside(Total, Section.Payloadˉoffset, Section.Payloadˉlength) {
+            return Wvbˉinspection(5, Sectionˉindex, Section.Payloadˉoffset);
+        }
+
+        Cursor = Section.Payloadˉoffset + Section.Payloadˉlength;
         Sectionˉindex = Sectionˉindex + 1u32;
     }
 
     if Cursor != Total {
-        return 8;
+        return Wvbˉinspection(8, Sectionˉindex, Cursor);
     }
 
-    return 0;
+    return Wvbˉinspection(0, Sectionˉindex, Cursor);
 }
 
 export fn Main() -> i32 {
-    if Inspectˉwvbˉenvelope(Shortˉmodule) != 1 {
+    let Shortˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Shortˉmodule);
+    if Shortˉresult.Status != 1 {
         return 11;
     }
-    if Inspectˉwvbˉenvelope(Badˉmagicˉmodule) != 2 {
+    if Shortˉresult.Failureˉoffset != 1u32 {
+        return 21;
+    }
+
+    let Magicˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉmagicˉmodule);
+    if Magicˉresult.Status != 2 {
         return 12;
     }
-    if Inspectˉwvbˉenvelope(Badˉversionˉmodule) != 3 {
+
+    let Versionˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉversionˉmodule);
+    if Versionˉresult.Status != 3 {
         return 13;
     }
-    if Inspectˉwvbˉenvelope(Badˉcountˉmodule) != 4 {
+
+    let Countˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉcountˉmodule);
+    if Countˉresult.Status != 4 {
         return 14;
     }
-    if Inspectˉwvbˉenvelope(Hostileˉlengthˉmodule) != 5 {
+
+    let Hostileˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Hostileˉlengthˉmodule);
+    if Hostileˉresult.Status != 5 {
         return 15;
     }
-    if Inspectˉwvbˉenvelope(Validˉmodule) != 0 {
+    if Hostileˉresult.Failureˉoffset != 20u32 {
+        return 25;
+    }
+
+    let Validˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Validˉmodule);
+    if Validˉresult.Status != 0 {
         return 16;
     }
-    if Inspectˉwvbˉenvelope(Badˉkindˉmodule) != 6 {
+    if Validˉresult.Sectionsˉseen != 7u32 {
+        return 26;
+    }
+    if Validˉresult.Failureˉoffset != 94u32 {
+        return 36;
+    }
+
+    let Kindˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉkindˉmodule);
+    if Kindˉresult.Status != 6 {
         return 17;
     }
-    if Inspectˉwvbˉenvelope(Badˉflagsˉmodule) != 7 {
+    if Kindˉresult.Sectionsˉseen != 2u32 {
+        return 27;
+    }
+
+    let Flagsˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉflagsˉmodule);
+    if Flagsˉresult.Status != 7 {
         return 18;
     }
-    if Inspectˉwvbˉenvelope(Truncatedˉmodule) != 5 {
+
+    let Truncatedˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Truncatedˉmodule);
+    if Truncatedˉresult.Status != 5 {
         return 19;
     }
-    if Inspectˉwvbˉenvelope(Trailingˉmodule) != 8 {
+    if Truncatedˉresult.Sectionsˉseen != 6u32 {
+        return 29;
+    }
+
+    let Trailingˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Trailingˉmodule);
+    if Trailingˉresult.Status != 8 {
         return 20;
+    }
+    if Trailingˉresult.Failureˉoffset != 94u32 {
+        return 30;
     }
 
     return 0;

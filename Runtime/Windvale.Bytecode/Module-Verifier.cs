@@ -51,6 +51,11 @@ public static class Moduleˉverifier
             Fail("WVB2104", "The module has too many functions.");
         }
 
+        if (module.Types.Length > Bytecodeˉlimits.MAX_RECORD_TYPES)
+        {
+            Fail("WVB2106", "The module has too many record types.");
+        }
+
         if (module.Code.Length > Bytecodeˉlimits.MAX_MODULE_BYTES)
         {
             Fail("WVB2105", "The code section exceeds the module-size limit.");
@@ -58,6 +63,7 @@ public static class Moduleˉverifier
 
         Verifyˉcapabilities(module);
         Verifyˉdata(module);
+        Verifyˉtypes(module);
         Verifyˉfunctionˉmetadata(module);
         Verifyˉexports(module);
     }
@@ -173,15 +179,15 @@ public static class Moduleˉverifier
 
             foreach (var Parameterˉtype in Function.Parameterˉtypes)
             {
-                Verifyˉvalueˉtype(Parameterˉtype, allowˉvoid: false, "function parameter");
+                Verifyˉvalueˉshape(module, Parameterˉtype, allowˉvoid: false, "function parameter");
             }
 
             foreach (var Localˉtype in Function.Localˉtypes)
             {
-                Verifyˉvalueˉtype(Localˉtype, allowˉvoid: false, "function local");
+                Verifyˉvalueˉshape(module, Localˉtype, allowˉvoid: false, "function local");
             }
 
-            Verifyˉvalueˉtype(Function.Returnˉtype, allowˉvoid: true, "function return");
+            Verifyˉvalueˉshape(module, Function.Returnˉtype, allowˉvoid: true, "function return");
 
             if (Function.Codeˉoffset != Expectedˉcodeˉoffset)
             {
@@ -214,6 +220,38 @@ public static class Moduleˉverifier
         if (Expectedˉcodeˉoffset != module.Code.Length)
         {
             Fail("WVB2136", "Function code ranges do not cover the complete Code section.");
+        }
+    }
+
+    private static void Verifyˉtypes(Bytecodeˉmodule module)
+    {
+        Verifyˉstrictˉordering(module.Types.Select(Type => Type.Name), "record type");
+        foreach (var Type in module.Types)
+        {
+            if (!Seedˉnames.Isˉidentifier(Type.Name))
+            {
+                Fail("WVB2150", $"Record type name '{Type.Name}' is not a Seed identifier.");
+            }
+
+            if (Type.Fields.Length == 0 || Type.Fields.Length > Bytecodeˉlimits.MAX_RECORD_FIELDS)
+            {
+                Fail("WVB2151", $"Record type '{Type.Name}' has an invalid field count.");
+            }
+
+            var Fieldˉnames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var Field in Type.Fields)
+            {
+                if (!Seedˉnames.Isˉidentifier(Field.Name) || !Fieldˉnames.Add(Field.Name))
+                {
+                    Fail("WVB2152", $"Record type '{Type.Name}' has an invalid or duplicate field '{Field.Name}'.");
+                }
+
+                Verifyˉvalueˉtype(Field.Type, allowˉvoid: false, "record field");
+                if (Field.Type == Valueˉtype.Record)
+                {
+                    Fail("WVB2153", $"Record field '{Type.Name}.{Field.Name}' cannot contain a record in Seed.");
+                }
+            }
         }
     }
 
@@ -252,7 +290,7 @@ public static class Moduleˉverifier
         var Instructionsˉbyˉoffset = instructions.ToDictionary(
             Instruction => Instruction.Offset,
             Instruction => Instruction);
-        var Entryˉstacks = new Dictionary<int, ImmutableArray<Valueˉtype>>();
+        var Entryˉstacks = new Dictionary<int, ImmutableArray<Valueˉshape>>();
         var Pending = new Queue<int>();
         var Maximumˉstack = 0;
         Mergeˉentry(0, [], Entryˉstacks, Pending, function.Name);
@@ -338,7 +376,7 @@ public static class Moduleˉverifier
         Bytecodeˉmodule module,
         Functionˉdeclaration function,
         Decodedˉinstruction instruction,
-        List<Valueˉtype> stack)
+        List<Valueˉshape> stack)
     {
         switch (instruction.Opcode)
         {
@@ -452,6 +490,31 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Bool);
                 break;
+            case Opcode.Recordˉcreate:
+                var Recordˉtype = Getˉrecordˉtype(module, instruction, function.Name);
+                for (var Fieldˉindex = Recordˉtype.Fields.Length - 1; Fieldˉindex >= 0; Fieldˉindex--)
+                {
+                    Pop(stack, Recordˉtype.Fields[Fieldˉindex].Type, function.Name, instruction.Offset);
+                }
+
+                Push(stack, Valueˉshape.Forˉrecord((int)instruction.Unsignedˉoperand));
+                break;
+            case Opcode.Recordˉfield:
+                var Sourceˉshape = Popˉany(stack, function.Name, instruction.Offset);
+                if (Sourceˉshape.Kind != Valueˉtype.Record ||
+                    (uint)Sourceˉshape.Recordˉtypeˉindex >= (uint)module.Types.Length)
+                {
+                    Fail("WVB2222", $"Function '{function.Name}' reads a field from a non-record value.", instruction.Offset);
+                }
+
+                var Sourceˉtype = module.Types[Sourceˉshape.Recordˉtypeˉindex];
+                if (instruction.Unsignedˉoperand >= (uint)Sourceˉtype.Fields.Length)
+                {
+                    Fail("WVB2223", $"Function '{function.Name}' references invalid field {instruction.Unsignedˉoperand} on record '{Sourceˉtype.Name}'.", instruction.Offset);
+                }
+
+                Push(stack, Sourceˉtype.Fields[(int)instruction.Unsignedˉoperand].Type);
+                break;
             case Opcode.Jump:
                 break;
             case Opcode.Branchˉfalse:
@@ -499,7 +562,7 @@ public static class Moduleˉverifier
         }
     }
 
-    private static Valueˉtype Getˉlocalˉtype(
+    private static Valueˉshape Getˉlocalˉtype(
         Functionˉdeclaration function,
         Decodedˉinstruction instruction)
     {
@@ -570,8 +633,36 @@ public static class Moduleˉverifier
         return module.Capabilities[(int)instruction.Unsignedˉoperand];
     }
 
+    private static Recordˉtypeˉdeclaration Getˉrecordˉtype(
+        Bytecodeˉmodule module,
+        Decodedˉinstruction instruction,
+        string functionˉname)
+    {
+        if (instruction.Unsignedˉoperand >= (uint)module.Types.Length)
+        {
+            Fail(
+                "WVB2215",
+                $"Function '{functionˉname}' constructs invalid record type {instruction.Unsignedˉoperand}.",
+                instruction.Offset);
+        }
+
+        return module.Types[(int)instruction.Unsignedˉoperand];
+    }
+
     private static void Popˉparameters(
-        List<Valueˉtype> stack,
+        List<Valueˉshape> stack,
+        ImmutableArray<Valueˉshape> parameters,
+        string functionˉname,
+        int offset)
+    {
+        for (var Index = parameters.Length - 1; Index >= 0; Index--)
+        {
+            Pop(stack, parameters[Index], functionˉname, offset);
+        }
+    }
+
+    private static void Popˉparameters(
+        List<Valueˉshape> stack,
         ImmutableArray<Valueˉtype> parameters,
         string functionˉname,
         int offset)
@@ -582,14 +673,14 @@ public static class Moduleˉverifier
         }
     }
 
-    private static void Push(List<Valueˉtype> stack, Valueˉtype type)
+    private static void Push(List<Valueˉshape> stack, Valueˉshape type)
     {
         stack.Add(type);
     }
 
     private static void Pop(
-        List<Valueˉtype> stack,
-        Valueˉtype expectedˉtype,
+        List<Valueˉshape> stack,
+        Valueˉshape expectedˉtype,
         string functionˉname,
         int offset)
     {
@@ -603,7 +694,7 @@ public static class Moduleˉverifier
         }
     }
 
-    private static Valueˉtype Popˉany(List<Valueˉtype> stack, string functionˉname, int offset)
+    private static Valueˉshape Popˉany(List<Valueˉshape> stack, string functionˉname, int offset)
     {
         if (stack.Count == 0)
         {
@@ -619,9 +710,9 @@ public static class Moduleˉverifier
     private static void Mergeˉfallthrough(
         int nextˉoffset,
         int codeˉlength,
-        ImmutableArray<Valueˉtype> stack,
+        ImmutableArray<Valueˉshape> stack,
         Dictionary<int, Decodedˉinstruction> instructions,
-        Dictionary<int, ImmutableArray<Valueˉtype>> entryˉstacks,
+        Dictionary<int, ImmutableArray<Valueˉshape>> entryˉstacks,
         Queue<int> pending,
         string functionˉname,
         int sourceˉoffset)
@@ -639,9 +730,9 @@ public static class Moduleˉverifier
 
     private static void Mergeˉbranchˉtarget(
         uint rawˉtarget,
-        ImmutableArray<Valueˉtype> stack,
+        ImmutableArray<Valueˉshape> stack,
         Dictionary<int, Decodedˉinstruction> instructions,
-        Dictionary<int, ImmutableArray<Valueˉtype>> entryˉstacks,
+        Dictionary<int, ImmutableArray<Valueˉshape>> entryˉstacks,
         Queue<int> pending,
         string functionˉname,
         int sourceˉoffset)
@@ -659,8 +750,8 @@ public static class Moduleˉverifier
 
     private static void Mergeˉentry(
         int offset,
-        ImmutableArray<Valueˉtype> stack,
-        Dictionary<int, ImmutableArray<Valueˉtype>> entryˉstacks,
+        ImmutableArray<Valueˉshape> stack,
+        Dictionary<int, ImmutableArray<Valueˉshape>> entryˉstacks,
         Queue<int> pending,
         string functionˉname)
     {
@@ -702,6 +793,26 @@ public static class Moduleˉverifier
         if (!Enum.IsDefined(type) || (!allowˉvoid && type == Valueˉtype.Void))
         {
             Fail("WVB2241", $"Value type '{type}' is invalid for a {position}.");
+        }
+    }
+
+    private static void Verifyˉvalueˉshape(
+        Bytecodeˉmodule module,
+        Valueˉshape shape,
+        bool allowˉvoid,
+        string position)
+    {
+        Verifyˉvalueˉtype(shape.Kind, allowˉvoid, position);
+        if (shape.Kind == Valueˉtype.Record)
+        {
+            if ((uint)shape.Recordˉtypeˉindex >= (uint)module.Types.Length)
+            {
+                Fail("WVB2242", $"Record type index {shape.Recordˉtypeˉindex} is invalid for a {position}.");
+            }
+        }
+        else if (shape.Recordˉtypeˉindex != -1)
+        {
+            Fail("WVB2243", $"Primitive type '{shape.Kind}' carries a record type index in a {position}.");
         }
     }
 

@@ -39,6 +39,7 @@ internal sealed class Sourceˉparser
 
         var Capabilities = ImmutableArray.CreateBuilder<Capabilityˉsyntax>();
         var Data = ImmutableArray.CreateBuilder<Dataˉsyntax>();
+        var Records = ImmutableArray.CreateBuilder<Recordˉsyntax>();
         var Functions = ImmutableArray.CreateBuilder<Functionˉsyntax>();
 
         while (Current.Kind != Tokenˉkind.End)
@@ -52,6 +53,9 @@ internal sealed class Sourceˉparser
                 case Tokenˉkind.Data:
                     Data.Add(Parseˉdata());
                     break;
+                case Tokenˉkind.Record:
+                    Records.Add(Parseˉrecord());
+                    break;
                 case Tokenˉkind.Export:
                 case Tokenˉkind.Fn:
                     Functions.Add(Parseˉfunction());
@@ -61,7 +65,7 @@ internal sealed class Sourceˉparser
                         "WVC1100",
                         "parser",
                         Current.Span,
-                        $"Expected a capability, data, or function declaration but found '{Current.Text}'.");
+                        $"Expected a capability, data, record, or function declaration but found '{Current.Text}'.");
                     Nextˉtoken();
                     break;
             }
@@ -77,7 +81,27 @@ internal sealed class Sourceˉparser
             Profile,
             Capabilities.ToImmutable(),
             Data.ToImmutable(),
+            Records.ToImmutable(),
             Functions.ToImmutable());
+    }
+
+    private Recordˉsyntax Parseˉrecord()
+    {
+        var Start = Match(Tokenˉkind.Record);
+        var Name = Match(Tokenˉkind.Identifier);
+        Match(Tokenˉkind.Leftˉbrace);
+        var Fields = ImmutableArray.CreateBuilder<Recordˉfieldˉsyntax>();
+        while (Current.Kind is not Tokenˉkind.Rightˉbrace and not Tokenˉkind.End)
+        {
+            var Fieldˉname = Match(Tokenˉkind.Identifier);
+            Match(Tokenˉkind.Colon);
+            var Fieldˉtype = Parseˉtype(allowˉvoid: false, allowˉarray: false);
+            var End = Match(Tokenˉkind.Semicolon);
+            Fields.Add(new(Fieldˉname, Fieldˉtype, Combine(Fieldˉname.Span, End.Span)));
+        }
+
+        var Recordˉend = Match(Tokenˉkind.Rightˉbrace);
+        return new(Name, Fields.ToImmutable(), Combine(Start.Span, Recordˉend.Span));
     }
 
     private Capabilityˉsyntax Parseˉcapability()
@@ -444,6 +468,15 @@ internal sealed class Sourceˉparser
             return new Indexˉexpressionˉsyntax(Name.Name, Index, Combine(Name.Span, End.Span));
         }
 
+        var Dotˉindex = Name.Name.IndexOf('.', StringComparison.Ordinal);
+        if (Dotˉindex >= 0 && Name.Name.IndexOf('.', Dotˉindex + 1) < 0)
+        {
+            return new Fieldˉexpressionˉsyntax(
+                Name.Name[..Dotˉindex],
+                Name.Name[(Dotˉindex + 1)..],
+                Name.Span);
+        }
+
         return new Nameˉexpressionˉsyntax(Name.Name, Name.Span);
     }
 
@@ -492,6 +525,7 @@ internal sealed class Sourceˉparser
             Tokenˉkind.Text => Typeˉsyntaxˉkind.Text,
             Tokenˉkind.Bytes => Typeˉsyntaxˉkind.Bytes,
             Tokenˉkind.Void when allowˉvoid => Typeˉsyntaxˉkind.Void,
+            Tokenˉkind.Identifier => Typeˉsyntaxˉkind.Record,
             _ => Typeˉsyntaxˉkind.Invalid,
         };
 
@@ -502,8 +536,8 @@ internal sealed class Sourceˉparser
                 "parser",
                 Token.Span,
                 allowˉvoid
-                    ? "Expected type i32, u8, u32, bool, text, bytes, or void."
-                    : "Expected type i32, u8, u32, bool, text, or bytes.");
+                    ? "Expected a primitive type, declared record name, or void."
+                    : "Expected a primitive type or declared record name.");
             if (Current.Kind != Tokenˉkind.End)
             {
                 Nextˉtoken();
@@ -513,7 +547,7 @@ internal sealed class Sourceˉparser
         }
 
         Nextˉtoken();
-        return new(Kind, Token.Span);
+        return new(Kind, Token.Span, Kind == Typeˉsyntaxˉkind.Record ? Token.Text : null);
     }
 
     private Syntaxˉtoken Match(Tokenˉkind expected)

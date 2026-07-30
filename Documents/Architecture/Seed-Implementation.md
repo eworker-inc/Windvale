@@ -35,7 +35,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - Source locations and stable compiler diagnostics
 - Tokenization and strict string-literal handling
 - Recursive-descent and precedence parsing
-- Module, capability, data, function, local, and type binding
+- Module, capability, data, record, function, local, and nominal type binding
 - Typed, stack-independent WIR with explicit blocks and terminators
 - Deterministic lowering from WIR into stack bytecode
 
@@ -45,8 +45,8 @@ WIR uses virtual temporaries and local slots. Bytecode lowering assigns every WI
 
 `Runtime/Windvale.Bytecode/` owns:
 
-- Immutable module records
-- Canonical six-section serialization
+- Immutable bytecode contracts and nominal record schemas
+- Canonical seven-section serialization
 - Strict UTF-8 and little-endian binary decoding
 - Size, count, range, canonical-order, and signature limits
 - Instruction decoding
@@ -64,6 +64,7 @@ Every function is checked for valid branch boundaries, index and type use, match
 - Checked `i32` arithmetic
 - Checked `u32` arithmetic and `u8` values
 - Immutable byte sequences and zero-copy slice views
+- Immutable nominal record values and field access
 - Bounded `u8`, little-endian `u16`, and little-endian `u32` reads
 - Immutable data access and bounds traps
 - Function frames and call-depth limits
@@ -84,12 +85,12 @@ The implementation uses ordinary portable .NET APIs and has no Windows-specific 
 - Text is encoded as strict UTF-8.
 - The conformance suite compares complete output bytes and fixed SHA-256 identities.
 
-The current bytecode 1.1 golden modules are:
+The current bytecode 1.2 golden modules are:
 
-- `Sumˉdata`: `4570d02bc558a5e5d4e341cd9a0edcec733c7fe6d797bf371669305169ef386f`
-- `Helloˉwindvale`: `79185b8c138e2f7d6dc34cbdcf82a8a467601c7ae6383bb76305e4d57e4e8a62`
-- `Readˉwvbˉheader`: `72cb8f2af8aa7813d76e528973476147f12b4c548c114b7276ccc99f92b1c48a`
-- `Wvˉdumpˉcore`: `c3670bb769168711d61f98845ff503abec2cb48dedfffcb0c5f76a1b6e039b62`
+- `Sumˉdata`: `8e8b7b8ae4957f228f362e38f02ae92da1e51a8bd369dcd96d5349f3db205051`
+- `Helloˉwindvale`: `4260b9500e8fe9ddc03d2e22a186e6395b609d4fe59ef1301298d5ad972d22e1`
+- `Readˉwvbˉheader`: `5ad40cc8cf7a51cd2149d482ff8f8c385fee6643223c282b50cdcbacc11f4745`
+- `Wvˉdumpˉcore`: `74cd0059b65b999ddec46da4d6b4a5e8153c4ed28c4c8152bc2eaffa96e9dd69`
 
 Changes to those hashes require a reviewed bytecode/compiler-contract change rather than an automatic fixture refresh.
 
@@ -104,6 +105,6 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 
 ## Deliberate Seed limits
 
-Seed does not include optimization, general heap allocation, garbage collection, mutable arrays, structs, floating point, exceptions, threads, async work, raw pointers, foreign calls, filesystem access, dynamic linking, a native backend, assembler, linker, or operating-system code.
+Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, floating point, exceptions, threads, async work, raw pointers, foreign calls, filesystem access, dynamic linking, a native backend, assembler, linker, or operating-system code.
 
 These are scope boundaries, not assertions that the current language model is final.

@@ -18,6 +18,20 @@ public enum Valueˉtype : byte
     U8 = 4,
     U32 = 5,
     Bytes = 6,
+    Record = 7,
+}
+
+public readonly record struct Valueˉshape(Valueˉtype Kind, int Recordˉtypeˉindex = -1)
+{
+    public static implicit operator Valueˉshape(Valueˉtype kind) => new(kind);
+
+    public static Valueˉshape Forˉrecord(int recordˉtypeˉindex) =>
+        new(Valueˉtype.Record, recordˉtypeˉindex);
+
+    public override string ToString()
+    {
+        return Kind == Valueˉtype.Record ? $"record[{Recordˉtypeˉindex}]" : Kind.ToString();
+    }
 }
 
 public enum Dataˉtype : byte
@@ -35,6 +49,7 @@ public enum Sectionˉkind : byte
     Functions = 4,
     Code = 5,
     Exports = 6,
+    Types = 7,
 }
 
 public enum Exportˉkind : byte
@@ -86,6 +101,8 @@ public enum Opcode : byte
     U32ˉgreaterˉequal = 0x65,
     U8ˉequal = 0x66,
     U8ˉnotˉequal = 0x67,
+    Recordˉcreate = 0x68,
+    Recordˉfield = 0x69,
 
     Jump = 0x30,
     Branchˉfalse = 0x31,
@@ -108,6 +125,12 @@ public sealed record I32ˉarrayˉdataˉdeclaration(string Name, ImmutableArray<i
 public sealed record Bytesˉdataˉdeclaration(string Name, ImmutableArray<byte> Values)
     : Dataˉdeclaration(Name, Dataˉtype.Bytes);
 
+public sealed record Recordˉfieldˉdeclaration(string Name, Valueˉtype Type);
+
+public sealed record Recordˉtypeˉdeclaration(
+    string Name,
+    ImmutableArray<Recordˉfieldˉdeclaration> Fields);
+
 public sealed record Capabilityˉdeclaration(
     string Name,
     ImmutableArray<Valueˉtype> Parameterˉtypes,
@@ -115,14 +138,14 @@ public sealed record Capabilityˉdeclaration(
 
 public sealed record Functionˉdeclaration(
     string Name,
-    ImmutableArray<Valueˉtype> Parameterˉtypes,
-    Valueˉtype Returnˉtype,
-    ImmutableArray<Valueˉtype> Localˉtypes,
+    ImmutableArray<Valueˉshape> Parameterˉtypes,
+    Valueˉshape Returnˉtype,
+    ImmutableArray<Valueˉshape> Localˉtypes,
     int Codeˉoffset,
     int Codeˉlength,
     int Maximumˉstackˉdepth)
 {
-    public ImmutableArray<Valueˉtype> Allˉlocalˉtypes => [.. Parameterˉtypes, .. Localˉtypes];
+    public ImmutableArray<Valueˉshape> Allˉlocalˉtypes => [.. Parameterˉtypes, .. Localˉtypes];
 }
 
 public sealed record Exportˉdeclaration(
@@ -137,7 +160,10 @@ public sealed record Bytecodeˉmodule(
     ImmutableArray<Dataˉdeclaration> Data,
     ImmutableArray<Functionˉdeclaration> Functions,
     ImmutableArray<byte> Code,
-    ImmutableArray<Exportˉdeclaration> Exports);
+    ImmutableArray<Exportˉdeclaration> Exports)
+{
+    public ImmutableArray<Recordˉtypeˉdeclaration> Types { get; init; } = [];
+}
 
 public sealed record Decodedˉinstruction(
     int Offset,

@@ -20,6 +20,8 @@ internal enum Wirˉoperation
     Bytesˉreadˉu8,
     Bytesˉreadˉu16ˉlittle,
     Bytesˉreadˉu32ˉlittle,
+    Recordˉcreate,
+    Recordˉfield,
     I32ˉadd,
     I32ˉsubtract,
     I32ˉmultiply,
@@ -75,10 +77,10 @@ internal sealed record Wirˉblock(
 
 internal sealed record Wirˉfunction(
     string Name,
-    ImmutableArray<Valueˉtype> Parameterˉtypes,
-    Valueˉtype Returnˉtype,
-    ImmutableArray<Valueˉtype> Userˉlocalˉtypes,
-    ImmutableArray<Valueˉtype> Temporaryˉtypes,
+    ImmutableArray<Valueˉshape> Parameterˉtypes,
+    Valueˉshape Returnˉtype,
+    ImmutableArray<Valueˉshape> Userˉlocalˉtypes,
+    ImmutableArray<Valueˉshape> Temporaryˉtypes,
     ImmutableArray<Wirˉblock> Blocks,
     bool Isˉexported);
 
@@ -87,4 +89,5 @@ internal sealed record Wirˉmodule(
     Moduleˉprofile Profile,
     ImmutableArray<Capabilityˉdeclaration> Capabilities,
     ImmutableArray<Dataˉdeclaration> Data,
+    ImmutableArray<Recordˉtypeˉdeclaration> Types,
     ImmutableArray<Wirˉfunction> Functions);

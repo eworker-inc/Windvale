@@ -60,15 +60,29 @@ public static class Moduleˉinspector
         }
 
         Output.AppendLine();
+        Output.AppendLine($"Record types ({Module.Types.Length})");
+        for (var Typeˉindex = 0; Typeˉindex < Module.Types.Length; Typeˉindex++)
+        {
+            var Type = Module.Types[Typeˉindex];
+            Output.AppendLine($"  [{Typeˉindex}] record {Type.Name}");
+            for (var Fieldˉindex = 0; Fieldˉindex < Type.Fields.Length; Fieldˉindex++)
+            {
+                var Field = Type.Fields[Fieldˉindex];
+                Output.AppendLine($"    [{Fieldˉindex}] {Field.Name}: {Formatˉtype(Field.Type)}");
+            }
+        }
+
+        Output.AppendLine();
         Output.AppendLine($"Functions ({Module.Functions.Length})");
         for (var Functionˉindex = 0; Functionˉindex < verifiedˉmodule.Functions.Length; Functionˉindex++)
         {
             var Function = verifiedˉmodule.Functions[Functionˉindex];
             var Declaration = Function.Declaration;
             Output.Append($"  [{Functionˉindex}] {Declaration.Name}(");
-            Output.Append(string.Join(", ", Declaration.Parameterˉtypes.Select(Formatˉtype)));
+            Output.Append(string.Join(", ", Declaration.Parameterˉtypes.Select(
+                Type => Formatˉshape(Module, Type))));
             Output.Append(") -> ");
-            Output.Append(Formatˉtype(Declaration.Returnˉtype));
+            Output.Append(Formatˉshape(Module, Declaration.Returnˉtype));
             Output.Append($" locals={Declaration.Localˉtypes.Length}");
             Output.Append($" max-stack={Declaration.Maximumˉstackˉdepth}");
             Output.AppendLine();
@@ -101,8 +115,17 @@ public static class Moduleˉinspector
             Valueˉtype.U8 => "u8",
             Valueˉtype.U32 => "u32",
             Valueˉtype.Bytes => "bytes",
+            Valueˉtype.Record => "record",
             _ => $"unknown({(byte)type})",
         };
+    }
+
+    private static string Formatˉshape(Bytecodeˉmodule module, Valueˉshape shape)
+    {
+        return shape.Kind == Valueˉtype.Record &&
+            (uint)shape.Recordˉtypeˉindex < (uint)module.Types.Length
+                ? module.Types[shape.Recordˉtypeˉindex].Name
+                : Formatˉtype(shape.Kind);
     }
 
     private static string Formatˉprofile(Moduleˉprofile profile)
@@ -137,6 +160,9 @@ public static class Moduleˉinspector
             Opcode.Bytesˉreadˉu8 => "bytes.read_u8",
             Opcode.Bytesˉreadˉu16ˉlittle => "bytes.read_u16_little",
             Opcode.Bytesˉreadˉu32ˉlittle => "bytes.read_u32_little",
+            Opcode.Recordˉcreate =>
+                $"record.create type[{instruction.Unsignedˉoperand}] ({module.Types[(int)instruction.Unsignedˉoperand].Name})",
+            Opcode.Recordˉfield => $"record.field {instruction.Unsignedˉoperand}",
             Opcode.I32ˉadd => "i32.add",
             Opcode.I32ˉsubtract => "i32.subtract",
             Opcode.I32ˉmultiply => "i32.multiply",

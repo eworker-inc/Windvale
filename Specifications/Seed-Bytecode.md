@@ -2,7 +2,7 @@
 
 ## Status
 
-This document specifies Windvale bytecode module version 1.1 used by Seed. Windvale is in early development; version 1.1 identifies the binary grammar and is not yet a long-term compatibility promise. Version 1.1 adds unsigned byte primitives and does not require a backward reader for version 1.0.
+This document specifies Windvale bytecode module version 1.2 used by Seed. Windvale is in early development; version 1.2 identifies the binary grammar and is not yet a long-term compatibility promise. Version 1.2 adds immutable nominal records and does not require a backward reader for versions 1.0 or 1.1.
 
 ## Encoding
 
@@ -19,8 +19,8 @@ This document specifies Windvale bytecode module version 1.1 used by Seed. Windv
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 1
-u32      section count: 6
+u16      minor version: 2
+u32      section count: 7
 ```
 
 Every section has this envelope:
@@ -33,7 +33,7 @@ u32      payload byte length
 bytes    payload
 ```
 
-The six mandatory sections occur exactly once in this order:
+The seven mandatory sections occur exactly once in this order:
 
 1. Module
 2. Capabilities
@@ -41,6 +41,7 @@ The six mandatory sections occur exactly once in this order:
 4. Functions
 5. Code
 6. Exports
+7. Types
 
 ## Module section
 
@@ -88,10 +89,10 @@ u32      function count
 repeat:
   string function name
   u32    parameter count
-  u8[]   parameter types
-  u8     return type
+  shape[] parameter types
+  shape   return type
   u32    non-parameter local count
-  u8[]   local types
+  shape[] local types
   u32    code offset within the Code section
   u32    code byte length
   u32    declared maximum operand-stack depth
@@ -113,6 +114,20 @@ Exports are strictly sorted by ordinal name. An exported name must equal the ref
 
 The reference launcher selects exported `Main() -> i32` as the executable source entry point. Future native object formats must define an ASCII-safe external symbol mapping separately.
 
+## Types section
+
+```text
+u32      record type count
+repeat:
+  string record type name
+  u32    field count
+  repeat:
+    string field name
+    u8   primitive field type
+```
+
+Record types are strictly sorted by ordinal name and cannot be duplicated. Field order is declaration order and therefore constructor order; field names are unique within the record. Seed requires between 1 and 64 fields. Fields may use `i32`, `bool`, `text`, `u8`, `u32`, or `bytes`, but not `void` or another record.
+
 ## Value types
 
 ```text
@@ -123,9 +138,12 @@ The reference launcher selects exported `Main() -> i32` as the executable source
 4 u8
 5 u32
 6 bytes
+7 record
 ```
 
 `void` is valid only as a return type. Immutable integer arrays are module data and are not operand-stack values. A `bytes` value is an immutable sequence or slice view and can be stored in locals, passed to functions, and returned.
+
+Function parameter, result, and local types use a value shape. A primitive shape is its one-byte value type. A record shape is byte `7` followed by a `u32` index into the Types section. Record identity is nominal: two records with identical fields remain different operand-stack types.
 
 ## Instruction encoding
 
@@ -172,6 +190,8 @@ The reference launcher selects exported `Main() -> i32` as the executable source
 65 u32.greater_equal
 66 u8.equal
 67 u8.not_equal
+68 record.create     u32 record-type index; consumes fields in declaration order
+69 record.field      u32 field index; consumes one nominal record value
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -191,6 +211,7 @@ Verification is required before execution and rejects a module unless:
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
 - Every local, data, function, and capability index is valid and has the required type.
+- Every record type, record shape, constructor operand, and field access has valid nominal identity and exact field types.
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
 - Operand-stack types and depths agree at control-flow merges.
 - Calls consume the declared parameter types and push only a non-void result.
@@ -203,13 +224,15 @@ Verification is required before execution and rejects a module unless:
 ## Implementation limits
 
 - Module bytes: 16 MiB
-- Sections: exactly 6
+- Sections: exactly 7
 - UTF-8 value: 1 MiB
 - Byte-data value: 4 MiB
 - Declaration name: 255 UTF-8 bytes
 - Capabilities: 32
 - Data declarations: 4,096
 - Functions: 4,096
+- Record types: 1,024
+- Fields per record: 64
 - Parameters or locals per function: 4,096
 - Code per function: 1 MiB
 - Instructions per function: 100,000

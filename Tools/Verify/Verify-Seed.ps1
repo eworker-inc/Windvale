@@ -104,8 +104,15 @@ if ($LASTEXITCODE -ne 0 -or $WvDumpCoreVerifyOutput -notcontains 'Verified: Wvˉ
 }
 
 $WvDumpCoreInspectOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $WvDumpCoreModule
-if ($LASTEXITCODE -ne 0 -or ($WvDumpCoreInspectOutput -join "`n") -notmatch 'Inspectˉwvbˉenvelope') {
-    throw 'The Seed CLI inspector did not expose the Windvale section walker.'
+$WvDumpCoreInspection = $WvDumpCoreInspectOutput -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvDumpCoreInspectOutput -notcontains 'Record types (2)' -or
+    $WvDumpCoreInspection -notmatch 'Inspectˉwvbˉenvelope' -or
+    $WvDumpCoreInspection -notmatch 'record\.create' -or
+    $WvDumpCoreInspection -notmatch 'record\.field'
+) {
+    throw 'The Seed CLI inspector did not expose the structured Windvale section walker.'
 }
 
 $WvDumpCoreRunOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvDumpCoreModule
