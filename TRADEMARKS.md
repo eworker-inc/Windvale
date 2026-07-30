@@ -21,4 +21,4 @@ Separate permission is required to:
 
 When naming compatibility, prefer factual wording such as “compatible with Windvale WVB 1.6” and identify the exact supported contract. Compatibility language must not imply that E-Worker Inc tested or approved the implementation.
 
-Questions about uses outside this policy should be directed through E-Worker Inc's private business contact route at [eworker.ca](https://eworker.ca/).
+Questions about uses outside this policy should be directed to [info@eworker.ca](mailto:info@eworker.ca).

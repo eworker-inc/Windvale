@@ -29,7 +29,7 @@ This policy applies in official Windvale repositories, issue trackers, reviews, 
 
 ## Reporting
 
-Do not place sensitive conduct reports in a public issue. Use a private business contact route published at [eworker.ca](https://eworker.ca/) and identify the message as a Windvale conduct report. Provide only the information needed to understand the incident, including links or screenshots when safe.
+Do not place sensitive conduct reports in a public issue. Email [info@eworker.ca](mailto:info@eworker.ca) with the subject `Windvale conduct report`. Provide only the information needed to understand the incident, including links or screenshots when safe.
 
 E-Worker Inc will handle reports as privately as reasonably possible, subject to safety and legal obligations. Anyone involved in a report must recuse themselves from deciding its outcome. Knowingly false reports or retaliation may themselves violate this policy, but an unsubstantiated good-faith report does not.
 

@@ -55,6 +55,7 @@ Windvale is open source under the [MIT License](LICENSE). Copyright © 2026 E-Wo
 - [Support](SUPPORT.md) — public help channels and current support limits
 - [Project identity](TRADEMARKS.md) — permitted reference to Windvale and E-Worker names and visual identity
 - [Changelog](CHANGELOG.md) — unreleased status and initial `0.y.z` versioning policy
+- [GitHub publication runbook](Documents/Project/GitHub-Publication-Runbook.md) — private-first import, initial baseline, and public-visibility checklist
 
 ## Requirements
 
@@ -423,6 +424,7 @@ export fn Main() -> i32 {
 ## Documents
 
 - [Project vision](Documents/Project/Project-Vision.md)
+- [GitHub publication runbook](Documents/Project/GitHub-Publication-Runbook.md)
 - [Seed implementation](Documents/Architecture/Seed-Implementation.md)
 - [Platform and portability model](Documents/Architecture/Platform-And-Portability.md)
 - [Compiler bootstrap options](Documents/Architecture/Compiler-Bootstrap-Options.md)
@@ -450,6 +452,7 @@ export fn Main() -> i32 {
 - [Compiler source body parser](Specifications/Compiler-Source-Body-Parser.md)
 - [Compiler source-set contract](Specifications/Compiler-Source-Set.md)
 - [Compiler source-graph contract](Specifications/Compiler-Source-Graph.md)
+- [Compiler declaration and signature symbols](Specifications/Compiler-Source-Symbols.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
@@ -485,6 +488,7 @@ export fn Main() -> i32 {
 - [Portable compiler import graphs decision](Documents/Decisions/0030-Portable-Compiler-Import-Graphs.md)
 - [AI authorship and vendor neutrality decision](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md)
 - [Public contribution and governance foundation decision](Documents/Decisions/0032-Public-Contribution-And-Governance-Foundation.md)
+- [Portable declaration and signature binding decision](Documents/Decisions/0033-Portable-Declaration-And-Signature-Binding.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

@@ -31,9 +31,9 @@ Official releases require an identified source commit, release notes, applicable
 
 Repository ownership, GitHub login, Git author metadata, DCO sign-off, AI attribution, and legal stewardship serve different purposes and need not use the same name.
 
-Existing commits naming Codex preserve development history and are not rewritten merely to associate them with a GitHub profile. Future project-generated commits may use `E-Worker AI` as a vendor-neutral descriptive author name shared across E-Worker projects. The repository context identifies Windvale. The author's email must be a dedicated verified address or a GitHub-provided ID-based `noreply` address selected by the steward. The responsible submitter supplies the DCO sign-off.
+Existing commits naming Codex preserve development history and are not rewritten merely to associate them with a GitHub profile. The initial GitHub import preserves the complete existing commit history and metadata. Future project-generated commits may use `E-Worker AI` as a vendor-neutral descriptive author name shared across E-Worker projects. The repository context identifies Windvale. The author's email must be a dedicated verified address or a GitHub-provided ID-based `noreply` address selected by the steward. The responsible submitter supplies the DCO sign-off.
 
-The official public repository should be owned by an E-Worker Inc GitHub organization that can contain Windvale and other E-Worker projects. Individual or service accounts administer it through least-privilege roles; the organization should not be named after one project or AI model.
+The official GitHub repository is planned as `eworker-inc/Windvale` under the existing [E-Worker Inc organization](https://github.com/eworker-inc), which can contain Windvale and other E-Worker projects. It will be imported privately and inspected before public visibility. Individual or service accounts administer it through least-privilege roles; the organization is not named after one project or AI model.
 
 ## Changes to governance
 

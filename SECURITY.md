@@ -19,7 +19,7 @@ Include, when available:
 - Whether output, credentials, private data, or system integrity may be affected.
 - Any proposed mitigation, without requiring the reporter to supply a patch.
 
-Do not include secrets or personal data that are unnecessary to reproduce the issue. If the GitHub private-reporting control is unavailable, use a private business contact route published at [eworker.ca](https://eworker.ca/) and request a confidential security channel; do not disclose exploit details in that first message.
+Do not include secrets or personal data that are unnecessary to reproduce the issue. If the GitHub private-reporting control is unavailable, email [info@eworker.ca](mailto:info@eworker.ca) with the subject `Windvale security report` and request a confidential security channel; do not disclose exploit details in that first message.
 
 ## Response and disclosure
 

@@ -1,7 +1,7 @@
 # Decision 0032: Public contribution and governance foundation
 
 - Date: 2026-07-30
-- Status: Accepted; repository files implemented, hosting settings pending
+- Status: Accepted; repository files implemented, GitHub import and settings pending
 
 ## Context
 
@@ -19,7 +19,11 @@ Accept contributions under the repository's MIT terms without a separate contrib
 
 Use GitHub private vulnerability reporting for confidential security reports and keep ordinary support in public issues or discussions. Protect the default branch with required Windows and Linux verification checks once public hosting exists. Repository automation receives read-only contents permission unless a narrower workflow explicitly requires more.
 
-Keep GitHub ownership and Git commit identity separate. The public repository should be owned by an E-Worker Inc organization containing Windvale and other E-Worker projects, not by an account named after one project or AI model. Existing Codex-authored history remains factual and is not rewritten merely to attach it to a GitHub profile. Future E-Worker project-generated commits may use the reusable descriptive author name `E-Worker AI`; the associated email must be a dedicated verified address or GitHub-provided ID-based `noreply` address, never an invented deliverable address or a private personal address published accidentally.
+Keep GitHub ownership and Git commit identity separate. The official repository will be `eworker-inc/Windvale` under the existing E-Worker Inc organization, which can contain Windvale and other E-Worker projects and is not named after one project or AI model. Import the complete existing `main` history without rewriting Codex author metadata or the commit identifiers referenced by qualification evidence. Future E-Worker project-generated commits may use the reusable descriptive author name `E-Worker AI`; the associated email must be a dedicated verified address or GitHub-provided ID-based `noreply` address, never an invented deliverable address or a private personal address published accidentally.
+
+Create the GitHub repository privately first, push the existing history through a separate `github` remote, and inspect rendered documentation, automation, history, security controls, and repository settings before making it public. The shared local repository remains a separate remote during preparation. Public visibility requires a distinct steward approval.
+
+Treat cross-host verification before initial public visibility as an **initial publication baseline**, not as completion of the project. The baseline identifies one exact commit and records the checks that passed on Windows and Debian. Windvale remains experimental and continues developing after publication; later commits carry their own automation results and qualification evidence where their changes require it.
 
 The MIT License does not grant rights to imply official status, sponsorship, or endorsement through the Windvale or E-Worker names and visual identity. The trademark policy permits truthful referential use and clearly distinguished forks while reserving official presentation to the steward.
 
@@ -29,7 +33,7 @@ Contributors receive one documented path from proposal through review and qualif
 
 The DCO adds a sign-off requirement to commits contributed for inclusion. It does not guarantee that AI-produced material is copyrightable, eliminate third-party review, or convert an AI system into a legal author or rightsholder.
 
-GitHub organization creation, the final account name, a verified commit email, branch rules, private vulnerability reporting, and repository security settings remain publication-time operations. This decision authorizes their configuration but does not claim they exist before they are actually enabled.
+The GitHub organization already exists. Repository creation, any administrative-account rename, a verified future commit email, branch rules, private vulnerability reporting, and repository security settings remain publication-time operations. This decision authorizes their configuration but does not claim they exist before they are actually enabled.
 
 ## Reconsider when
 
