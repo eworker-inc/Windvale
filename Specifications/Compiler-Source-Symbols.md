@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉsymbols` is the Windows-qualified candidate portable declaration and signature phase under Decision 0031. The complete Windows gate passes; exact-archive Debian qualification is pending. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes independently validated lookup evidence for later semantic phases.
+`Compilerˉsourceˉsymbols` is the Windows-qualified candidate portable declaration and signature phase under Decision 0033. The complete Windows gate passes; exact-archive Debian qualification is pending. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes independently validated lookup evidence for later semantic phases.
 
 It does not bind function bodies, locals, calls, expressions, control flow, construct WIR, or emit WVB.
 

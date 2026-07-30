@@ -1,4 +1,4 @@
-# Decision 0031: Portable declaration and signature binding
+# Decision 0033: Portable declaration and signature binding
 
 - Date: 2026-07-30
 - Status: Accepted and implemented; exact cross-host qualification pending
