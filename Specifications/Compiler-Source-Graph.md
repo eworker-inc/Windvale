@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉgraph` is the Windows-tested cross-host qualification candidate for portable import topology under Decision 0030. It consumes one completely validated WVSS 1 value and proves that its supplied sources form one complete, acyclic graph rooted at entry zero.
+`Compilerˉsourceˉgraph` is the cross-host-qualified portable import-topology phase at commit `09c6f54` under Decision 0030. It consumes one completely validated WVSS 1 value and proves that its supplied sources form one complete, acyclic graph rooted at entry zero.
 
 This is the first semantic phase above the source container. It does not discover files, parse paths, bind declarations or bodies, construct WIR, or emit WVB.
 
@@ -53,16 +53,16 @@ The graph contains one through 64 modules because WVSS owns that bound. Traversa
 
 Headers and leading import declarations are rescanned from accepted immutable sources. No edge table is retained. The graph phase does not increase the 4 MiB WVSS ceiling or the parser's declaration limits.
 
-## Candidate artifacts and evidence
+## Qualified artifacts and evidence
 
 - `Source-Graph-Core.wvb`: 193,522 bytes, SHA-256 `1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133`.
 - `Source-Graph-Demo.wvb`: 199,922 bytes, SHA-256 `53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073`.
 - `Source-Graph-Tool.wvb`: 197,203 bytes, SHA-256 `75fdf22e93f154599cdf4530ebcf828eec061458c73f6ab09b00d0765e3ebdc1`.
 
-The current Windows conformance runner passes all 44 tests with zero build warnings/errors. The demo covers valid and rejected topology, and the hosted tool validates the real compiler closure as:
+The Windows and Debian conformance runners each pass all 44 tests with zero build warnings/errors. The demo covers valid and rejected topology, and the hosted tool validates the real compiler closure as:
 
 ```text
 source graph status=Valid modules=7 imports=6 reachable=7
 ```
 
-Exact-archive Debian qualification remains pending.
+The exact `09c6f54` archive passed the complete native CLI verifier on both hosts. Their normalized reports matched, the three graph artifacts above were byte-identical, and 19 directly retrieved dependency/downstream source-set, parser, Foundation, assembler, linker, object, image, and map artifacts retained exact cross-host identity.
