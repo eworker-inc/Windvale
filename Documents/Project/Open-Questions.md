@@ -45,7 +45,7 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Qualify the accepted Stage 0 flat-image linker contract on Windows and Debian, then reproduce it in verified Windvale bytecode.
+1. Reproduce the qualified Stage 0 flat-image linker contract in verified Windvale bytecode.
 2. Define the internal-label and address-materialization extensions proven necessary by the linker/native experiment.
 3. Define the memory and aggregate-type model needed for a self-hosted compiler.
 4. Define the restricted C bridge without changing Windvale semantics.

@@ -1,7 +1,7 @@
 # Decision 0011: Deterministic flat-image linker
 
 - Date: 2026-07-30
-- Status: Accepted as a Stage 0 implementation candidate; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `9c4b9f5`
 
 ## Context
 
