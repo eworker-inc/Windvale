@@ -1,7 +1,7 @@
 # Decision 0025: Streaming bootstrap source lexer
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `d91dbfb`
 
 ## Context
 
@@ -36,3 +36,5 @@ This decision does not implement a parser, decoded string values, token collecti
 The fixed demo must cover all keywords and punctuation, U+02C9 identifiers, all integer classifications and range failures, strict UTF-8 rejection, Unicode whitespace and comment position tracking, valid and invalid escapes, surrogate pairing, invalid cursors, unexpected characters, token limits, and exact portable result `0`.
 
 Qualification requires the exact committed candidate to pass the complete 40-test suite and native CLI verifier on Windows and Debian, equal normalized reports, and direct byte equality for `Source-Lexer-Core.wvb` and `Source-Lexer-Demo.wvb`. The candidate identities are respectively `0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04` and `32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a`.
+
+Candidate `d91dbfb` satisfied this gate on Windows and Debian GNU/Linux 12 x64 with zero build warnings/errors. Both normalized reports matched, the two lexer artifacts were directly byte-identical, and the previously qualified assembler, linker, object, image, and map identities remained unchanged.

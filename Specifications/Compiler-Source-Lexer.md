@@ -4,7 +4,7 @@
 
 `Compilerˉsourceˉlexer` is the first Windvale-written self-hosted compiler slice. It tokenizes the complete implemented Seed lexical surface over immutable UTF-8 bytes. The module is portable, capability-free, and depends only on `Foundationˉdecimalˉparsing`.
 
-The current implementation is an implemented qualification candidate under Decision 0025. It does not replace the Stage 0 compiler yet.
+The current implementation is cross-host qualified at `d91dbfb` under Decision 0025. It does not replace the Stage 0 compiler yet.
 
 ## Limits and coordinates
 
@@ -72,6 +72,6 @@ Compilerˉlexˉtokenˉat(Input, Wanted) -> Compilerˉsourceˉtoken
 
 `Compilerˉsourceˉscan` reports final status, accepted token count, failure coordinates, and end cursor. It never stores a token sequence. `Compilerˉlexˉtokenˉat` exists for tests and inspection and is not the parser iteration contract.
 
-## Qualification candidate
+## Qualification
 
-`Compiler/Bootstrap/Source-Lexer-Core.wv` composes to a 33,770-byte WVB with SHA-256 `0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 39,020-byte WVB with SHA-256 `32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a` and returns `0` under the 10,000,000-instruction ceiling.
+`Compiler/Bootstrap/Source-Lexer-Core.wv` composes to a 33,770-byte WVB with SHA-256 `0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 39,020-byte WVB with SHA-256 `32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a` and returns `0` under the 10,000,000-instruction ceiling. The exact `d91dbfb` archive passed all 40 tests and both native verifiers; the normalized Windows and Debian contracts and directly retrieved artifacts matched.
