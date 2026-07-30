@@ -19,7 +19,7 @@ Accept contributions under the repository's MIT terms without a separate contrib
 
 Use GitHub private vulnerability reporting for confidential security reports and keep ordinary support in public issues or discussions. Protect the default branch with required Windows and Linux verification checks once public hosting exists. Repository automation receives read-only contents permission unless a narrower workflow explicitly requires more.
 
-Keep GitHub ownership and Git commit identity separate. The official repository will be `eworker-inc/Windvale` under the existing E-Worker Inc organization, which can contain Windvale and other E-Worker projects and is not named after one project or AI model. Import the complete existing `main` history without rewriting Codex author metadata or the commit identifiers referenced by qualification evidence. Future E-Worker project-generated commits may use the reusable descriptive author name `E-Worker AI`; the associated email must be a dedicated verified address or GitHub-provided ID-based `noreply` address, never an invented deliverable address or a private personal address published accidentally.
+Keep GitHub ownership and Git commit identity separate. The official repository will be `eworker-inc/Windvale` under the existing E-Worker Inc organization, which can contain Windvale and other E-Worker projects and is not named after one project or AI model. Import the complete existing `main` history without rewriting Codex author metadata or the commit identifiers referenced by qualification evidence. Subsequent E-Worker project-generated commits use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as descriptive author and `E-Worker Inc <info@eworker.ca>` as responsible committer and DCO signer.
 
 Create the GitHub repository privately first, push the existing history through a separate `github` remote, and inspect rendered documentation, automation, history, security controls, and repository settings before making it public. The shared local repository remains a separate remote during preparation. Public visibility requires a distinct steward approval.
 
@@ -33,7 +33,7 @@ Contributors receive one documented path from proposal through review and qualif
 
 The DCO adds a sign-off requirement to commits contributed for inclusion. It does not guarantee that AI-produced material is copyrightable, eliminate third-party review, or convert an AI system into a legal author or rightsholder.
 
-The GitHub organization already exists. Repository creation, any administrative-account rename, a verified future commit email, branch rules, private vulnerability reporting, and repository security settings remain publication-time operations. This decision authorizes their configuration but does not claim they exist before they are actually enabled.
+The GitHub organization already exists. The administrative service account is named `EWorkerAI`; its ID-based author address and E-Worker Inc's `info@eworker.ca` committer address are configured and verified for their respective roles. Repository creation, branch rules, private vulnerability reporting, and repository security settings remain publication-time operations. This decision authorizes their configuration but does not claim they exist before they are actually enabled.
 
 ## Reconsider when
 
