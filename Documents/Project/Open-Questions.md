@@ -45,9 +45,8 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Decode enough WVB payload declarations and instructions to make `wvdump` useful on real modules.
-2. Define deterministic byte construction and the smallest object/symbol/relocation model demanded by an assembler.
-3. Define the memory and aggregate-type model needed for a self-hosted compiler.
-4. Define the restricted C bridge without changing Windvale semantics.
-5. Select the first architecture, object path, firmware boundary, and VM qualification targets.
-6. Select the source license before publishing implementation code.
+1. Define deterministic byte construction and the smallest object/symbol/relocation model demanded by an assembler.
+2. Define the memory and aggregate-type model needed for a self-hosted compiler.
+3. Define the restricted C bridge without changing Windvale semantics.
+4. Select the first architecture, object path, firmware boundary, and VM qualification targets.
+5. Select the source license before publishing implementation code.

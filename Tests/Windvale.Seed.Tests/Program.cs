@@ -11,10 +11,10 @@ namespace Windvale.Seed.Tests;
 
 internal static class Program
 {
-    private const string SUM_SHA256 = "63ad39f6dbfff9b5ec31deb2d99d235dc59069a14a77033cf0a8284063578947";
-    private const string HELLO_SHA256 = "e113e56fef9bd108722fb8b16da93a42eec74699952d9055334c7ae0fe9db79b";
-    private const string FOUNDATION_SHA256 = "66e3ec061c06428b3b6fb7f43c45386e1a34f68e4d93ffb0c2a046f2ecca2bed";
-    private const string WVDUMP_CORE_SHA256 = "666808a2266557c721f952dd6068b2493bd213da358fee3e20a5c3e7a545523e";
+    private const string SUM_SHA256 = "6a40e6172787ae294361b3a5d9abc92e7b3f004b1e59eabb999a7b844a21bf78";
+    private const string HELLO_SHA256 = "5b9101e15ae42acb333a8a05c60e6d6dbb548e5a04b9c96fdb717dbc58bf9cbe";
+    private const string FOUNDATION_SHA256 = "26176eac5e2f00bb96a4b1ad95ad79238045932b64d8220edcfdea13af202c6a";
+    private const string WVDUMP_CORE_SHA256 = "74c5400120f01f8d4a3e0fa87c3bb20d2edd645208d8ccb930e994a416c497f1";
 
     private const string SUM_SOURCE = """
         module Sumˉdata profile portable;
@@ -54,7 +54,7 @@ internal static class Program
     private const string FOUNDATION_SOURCE = """
         module Readˉwvbˉheader profile portable;
 
-        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0];
+        data Moduleˉheader: bytes = [87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0];
 
         fn Headerˉisˉvalid(Input: bytes) -> bool {
             if Bytesˉlength(Input) != 12u32 {
@@ -81,7 +81,7 @@ internal static class Program
             if Version != 1u32 {
                 return false;
             }
-            if Minorˉversion != 3u32 {
+            if Minorˉversion != 4u32 {
                 return false;
             }
             if Sectionˉcount != 7u32 {
@@ -130,7 +130,8 @@ internal static class Program
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
         ("macron names and explicit local mutability execute", Namingˉandˉmutabilityˉrun),
         ("Foundation byte values, slices, and little-endian reads execute", Foundationˉbytesˉrun),
-        ("Windvale wvdump core walks bounded section envelopes", Wvˉdumpˉcoreˉwalksˉsections),
+        ("Foundation signed reads and strict UTF-8 text operations execute", Foundationˉtextˉrun),
+        ("Windvale wvdump decodes bounded payloads and instructions", Wvˉdumpˉcoreˉwalksˉsections),
         ("immutable nominal records cross function boundaries", Immutableˉrecordsˉrun),
         ("nominal enums and bounded formatting execute", Enumsˉandˉformattingˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
@@ -640,7 +641,7 @@ internal static class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Equal(Dataˉtype.Bytes, Module.Module.Data.Single().Type);
         var Data = (Bytesˉdataˉdeclaration)Module.Module.Data.Single();
-        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0], Data.Values);
+        Sequenceˉequal<byte>([87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0], Data.Values);
         True(
             Module.Module.Functions.SelectMany(Function => Function.Allˉlocalˉtypes)
                 .Contains(Valueˉtype.Bytes),
@@ -666,13 +667,75 @@ internal static class Program
             Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
     }
 
+    private static void Foundationˉtextˉrun()
+    {
+        const string Source = """
+            module Foundationˉtext profile hosted;
+
+            capability console.write_line;
+
+            data Encoded: bytes = [
+                87, 105, 110, 100, 118, 97, 108, 101, 32,
+                226, 152, 131,
+                240, 159, 152, 128
+            ];
+            data Invalid: bytes = [195, 40];
+            data Signed: bytes = [249, 255, 255, 255];
+            data Escaped: bytes = [34, 92, 10, 9];
+
+            export fn Main() -> i32 {
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Encoded, 0u32)) != 87u32 {
+                    return 3;
+                }
+                if !Textˉutf8ˉisˉvalid(Encoded) {
+                    return 1;
+                }
+                if Textˉutf8ˉisˉvalid(Invalid) {
+                    return 2;
+                }
+
+                console.write_line(Textˉquote(Textˉfromˉutf8(Encoded)));
+                console.write_line(Textˉquote(Textˉfromˉutf8(Escaped)));
+                return Bytesˉreadˉi32ˉlittle(Signed, 0u32) + 7;
+            }
+            """;
+
+        var Bytes = Compileˉsuccess(Source);
+        var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Inspection = Moduleˉinspector.Inspect(Module, Bytes);
+        Contains(Inspection, "bytes.read_i32_little");
+        Contains(Inspection, "text.utf8_is_valid");
+        Contains(Inspection, "text.from_utf8");
+        Contains(Inspection, "text.quote");
+        Contains(Inspection, "u32.from_u8");
+        var Output = new StringWriter();
+        var Result = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(Output),
+            new(ImmutableHashSet.Create(
+                StringComparer.Ordinal,
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE))).Runˉmain();
+        Equal(0, Result.Exitˉcode);
+        Equal("\"Windvale \\u2603\\uD83D\\uDE00\"\n\"\\\"\\\\\\n\\t\"\n", Output.ToString());
+
+        const string Invalidˉdecode = """
+            module Invalidˉutf8 profile portable;
+            data Invalid: bytes = [195, 40];
+            export fn Main() -> i32 {
+                Textˉfromˉutf8(Invalid);
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3014", () => Runˉportable(Invalidˉdecode));
+    }
+
     private static void Wvˉdumpˉcoreˉwalksˉsections()
     {
         var Bytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
         Equal("Wvˉdumpˉcore", Module.Module.Name);
         Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
-        Equal(13, Module.Module.Data.Length);
+        Equal(10, Module.Module.Data.OfType<Bytesˉdataˉdeclaration>().Count());
         Sequenceˉequal(
             [
                 Capabilityˉcatalog.CONSOLE_WRITE_LINE,
@@ -682,16 +745,20 @@ internal static class Program
                 Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
             ],
             Module.Module.Capabilities.Select(Capability => Capability.Name));
-        Equal(3, Module.Module.Types.Length);
+        Equal(5, Module.Module.Types.Length);
         Equal("Wvbˉinspection", Module.Module.Types[0].Name);
-        Equal("Wvbˉsection", Module.Module.Types[1].Name);
-        Equal("Wvbˉstatus", Module.Module.Types[2].Name);
+        Equal("Wvbˉpayloadˉinspection", Module.Module.Types[1].Name);
+        Equal("Wvbˉscan", Module.Module.Types[2].Name);
+        Equal("Wvbˉsection", Module.Module.Types[3].Name);
+        Equal("Wvbˉstatus", Module.Module.Types[4].Name);
         Equal(3, ((Recordˉtypeˉdeclaration)Module.Module.Types[0]).Fields.Length);
-        Equal(6, ((Recordˉtypeˉdeclaration)Module.Module.Types[1]).Fields.Length);
+        Equal(4, ((Recordˉtypeˉdeclaration)Module.Module.Types[1]).Fields.Length);
+        Equal(4, ((Recordˉtypeˉdeclaration)Module.Module.Types[2]).Fields.Length);
+        Equal(6, ((Recordˉtypeˉdeclaration)Module.Module.Types[3]).Fields.Length);
         Equal(
-            Valueˉshape.Forˉenum(2),
+            Valueˉshape.Forˉenum(4),
             ((Recordˉtypeˉdeclaration)Module.Module.Types[0]).Fields[0].Type);
-        Equal(9, ((Enumˉtypeˉdeclaration)Module.Module.Types[2]).Members.Length);
+        Equal(19, ((Enumˉtypeˉdeclaration)Module.Module.Types[4]).Members.Length);
 
         var Inspectˉfunction = Module.Module.Functions.Single(
             Function => Function.Name == "Inspectˉwvbˉenvelope");
@@ -712,7 +779,7 @@ internal static class Program
         Contains(Inspection, "Inspectˉwvbˉenvelope");
         Contains(Inspection, "bytes.read_u32_little");
         Contains(Inspection, "u32.less_equal");
-        Contains(Inspection, "Nominal types (3)");
+        Contains(Inspection, "Nominal types (5)");
         Contains(Inspection, "record.create");
         Contains(Inspection, "record.field");
         Contains(Inspection, "enum Wvbˉstatus");
@@ -720,6 +787,11 @@ internal static class Program
         Contains(Inspection, "enum.name");
         Contains(Inspection, "u32.format");
         Contains(Inspection, "text.concat");
+        Contains(Inspection, "bytes.read_i32_little");
+        Contains(Inspection, "text.utf8_is_valid");
+        Contains(Inspection, "text.from_utf8");
+        Contains(Inspection, "text.quote");
+        Contains(Inspection, "u32.from_u8");
         Equal(WVDUMP_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Bytes));
         var Authorized = Module.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -750,8 +822,77 @@ internal static class Program
                 }))),
             new(Authorized)).Runˉmain();
         Equal(0, Hostedˉrun.Exitˉcode);
-        Equal("Valid sections=7 offset=94\n", Hostedˉoutput.ToString());
+        Equal(
+            """
+            wvdump 1
+            module version=1.4 profile=portable name="A"
+            section name=module offset=20 bytes=6 count=1
+            section name=capabilities offset=34 bytes=4 count=0
+            section name=data offset=46 bytes=4 count=0
+            section name=functions offset=58 bytes=4 count=0
+            section name=code offset=70 bytes=0 count=0
+            section name=exports offset=78 bytes=4 count=0
+            section name=types offset=90 bytes=4 count=0
+            """.Replace("\r\n", "\n", StringComparison.Ordinal) + "\n",
+            Hostedˉoutput.ToString());
         Equal(string.Empty, Hostedˉdiagnostics.ToString());
+
+        var Malformedˉpayload = Validˉdata.Values.ToArray();
+        var Dataˉpayload = Findˉsectionˉpayload(Malformedˉpayload, Sectionˉkind.Data);
+        BinaryPrimitives.WriteUInt32LittleEndian(Malformedˉpayload.AsSpan(Dataˉpayload), 1u);
+        var Malformedˉpayloadˉoutput = new StringWriter();
+        var Malformedˉpayloadˉdiagnostics = new StringWriter();
+        var Malformedˉpayloadˉrun = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["bad-payload.wvb"],
+                Malformedˉpayloadˉoutput,
+                Malformedˉpayloadˉdiagnostics,
+                new Testˉfileˉreader((_, _) => Malformedˉpayload.ToImmutableArray()))),
+            new(Authorized)).Runˉmain();
+        Equal(2, Malformedˉpayloadˉrun.Exitˉcode);
+        Equal(string.Empty, Malformedˉpayloadˉoutput.ToString());
+        Equal(
+            $"Outˉofˉbounds declarations=1 instructions=0 offset={Dataˉpayload + sizeof(uint)}\n",
+            Malformedˉpayloadˉdiagnostics.ToString());
+
+        var Invalidˉutf8 = Validˉdata.Values.ToArray();
+        var Moduleˉpayload = Findˉsectionˉpayload(Invalidˉutf8, Sectionˉkind.Module);
+        Invalidˉutf8[Moduleˉpayload + 5] = byte.MaxValue;
+        var Invalidˉutf8ˉoutput = new StringWriter();
+        var Invalidˉutf8ˉdiagnostics = new StringWriter();
+        var Invalidˉutf8ˉrun = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["bad-utf8.wvb"],
+                Invalidˉutf8ˉoutput,
+                Invalidˉutf8ˉdiagnostics,
+                new Testˉfileˉreader((_, _) => Invalidˉutf8.ToImmutableArray()))),
+            new(Authorized)).Runˉmain();
+        Equal(2, Invalidˉutf8ˉrun.Exitˉcode);
+        Equal(string.Empty, Invalidˉutf8ˉoutput.ToString());
+        Equal(
+            $"Invalidˉutf8 declarations=0 instructions=0 offset={Moduleˉpayload + 5}\n",
+            Invalidˉutf8ˉdiagnostics.ToString());
+
+        var Malformedˉopcode = Compileˉsuccess(SUM_SOURCE);
+        var Codeˉpayload = Findˉsectionˉpayload(Malformedˉopcode, Sectionˉkind.Code);
+        Malformedˉopcode[Codeˉpayload] = byte.MaxValue;
+        var Malformedˉopcodeˉoutput = new StringWriter();
+        var Malformedˉopcodeˉdiagnostics = new StringWriter();
+        var Malformedˉopcodeˉrun = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["bad-opcode.wvb"],
+                Malformedˉopcodeˉoutput,
+                Malformedˉopcodeˉdiagnostics,
+                new Testˉfileˉreader((_, _) => Malformedˉopcode.ToImmutableArray()))),
+            new(Authorized)).Runˉmain();
+        Equal(2, Malformedˉopcodeˉrun.Exitˉcode);
+        Equal(string.Empty, Malformedˉopcodeˉoutput.ToString());
+        Equal(
+            $"Unknownˉopcode declarations=2 instructions=0 offset={Codeˉpayload}\n",
+            Malformedˉopcodeˉdiagnostics.ToString());
 
         var Invalidˉoutput = new StringWriter();
         var Invalidˉdiagnostics = new StringWriter();
@@ -1424,6 +1565,53 @@ internal static class Program
                 Verifiedˉoversizedˉtext,
                 new Referenceˉcapabilityˉhost(new StringWriter()),
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+
+        var Oversizedˉquoteˉresult = Buildˉmodule(
+            [
+                .. U32ˉinstruction(Opcode.Textˉconst, 0),
+                (byte)Opcode.Textˉquote,
+                (byte)Opcode.Pop,
+                .. I32ˉinstruction(0),
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.I32,
+            maximumˉstack: 1) with
+        {
+            Data = [new Textˉdataˉdeclaration("Quoted", new string('\u0100', 200_000))],
+        };
+        var Verifiedˉoversizedˉquote = Moduleˉverifier.Verify(Oversizedˉquoteˉresult);
+        Throwsˉruntime(
+            "WVR3012",
+            () => new Referenceˉruntime(
+                Verifiedˉoversizedˉquote,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+
+        var Oversizedˉdecodeˉresult = Buildˉmodule(
+            [
+                .. U32ˉinstruction(Opcode.Bytesˉconst, 0),
+                (byte)Opcode.Textˉfromˉutf8,
+                (byte)Opcode.Pop,
+                .. I32ˉinstruction(0),
+                (byte)Opcode.Return,
+            ],
+            Valueˉtype.I32,
+            maximumˉstack: 1) with
+        {
+            Data =
+            [
+                new Bytesˉdataˉdeclaration(
+                    "Encoded",
+                    ImmutableArray.Create<byte>(new byte[Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES + 1])),
+            ],
+        };
+        var Verifiedˉoversizedˉdecode = Moduleˉverifier.Verify(Oversizedˉdecodeˉresult);
+        Throwsˉruntime(
+            "WVR3012",
+            () => new Referenceˉruntime(
+                Verifiedˉoversizedˉdecode,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
     }
 
     private static void Runtimeˉlimitsˉareˉenforced()
@@ -1493,11 +1681,34 @@ internal static class Program
                 new Testˉfileˉreader((_, _) => throw new InvalidOperationException(
                     "The golden WvDump self-test must not read a hosted file.")))),
             new(Wvˉdumpˉcapabilities)).Runˉmain();
+        var Wvˉdumpˉhostedˉoutput = new StringWriter();
+        var Wvˉdumpˉhostedˉdiagnostics = new StringWriter();
+        var Wvˉdumpˉhostedˉresult = new Referenceˉruntime(
+            Wvˉdumpˉmodule,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["sum.wvb"],
+                Wvˉdumpˉhostedˉoutput,
+                Wvˉdumpˉhostedˉdiagnostics,
+                new Testˉfileˉreader((Name, Maximumˉbytes) =>
+                {
+                    Equal("sum.wvb", Name);
+                    True(Sumˉbytes.Length <= Maximumˉbytes, "The golden WvDump byte limit was too small.");
+                    return Sumˉbytes.ToImmutableArray();
+                }))),
+            new(Wvˉdumpˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
+        var Normalizedˉwvdumpˉoutput = Wvˉdumpˉhostedˉoutput.ToString()
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
         Equal(29, Sumˉresult.Exitˉcode);
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
         Equal(1, Foundationˉresult.Exitˉcode);
         Equal(0, Wvˉdumpˉresult.Exitˉcode);
+        Equal(0, Wvˉdumpˉhostedˉresult.Exitˉcode);
+        Equal(string.Empty, Wvˉdumpˉhostedˉdiagnostics.ToString());
+        Contains(Normalizedˉwvdumpˉoutput, "module version=1.4 profile=portable name=\"Sum\\u02C9data\"");
+        Contains(Normalizedˉwvdumpˉoutput, "instruction function=1 offset=141 opcode=call operand=0");
+        Contains(Normalizedˉwvdumpˉoutput, "export index=0 name=\"Main\" kind=function target=1");
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             Sumˉhash,
@@ -1508,7 +1719,8 @@ internal static class Program
             Foundationˉhash,
             Foundationˉresult.Exitˉcode,
             Wvˉdumpˉhash,
-            Wvˉdumpˉresult.Exitˉcode);
+            Wvˉdumpˉresult.Exitˉcode,
+            Normalizedˉwvdumpˉoutput);
     }
 
     private static void Randomˉinputˉisˉcontained()
@@ -1812,7 +2024,8 @@ internal static class Program
         [property: JsonPropertyName("foundationSha256")] string Foundationˉsha256,
         [property: JsonPropertyName("foundationResult")] int Foundationˉresult,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
-        [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult);
+        [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
+        [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput);
 
     private sealed record Hostˉreport(
         [property: JsonPropertyName("operatingSystemFamily")] string Operatingˉsystemˉfamily,

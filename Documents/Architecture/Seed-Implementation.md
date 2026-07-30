@@ -67,7 +67,8 @@ Every function is checked for valid branch boundaries, index and type use, match
 - Immutable byte sequences and zero-copy slice views
 - Immutable nominal record values and field access
 - Nominal enum values, names, equality, and invariant bounded formatting
-- Bounded `u8`, little-endian `u16`, and little-endian `u32` reads
+- Bounded `u8`, little-endian `u16`, `u32`, and signed `i32` reads
+- Strict UTF-8 validation/decoding, safe ASCII quoting, and explicit `u8` to `u32` conversion
 - Immutable data access and bounds traps
 - Function frames and call-depth limits
 - Instruction accounting and execution limits
@@ -88,12 +89,12 @@ The interpreter uses ordinary portable .NET APIs and has no Windows-specific or 
 - Text is encoded as strict UTF-8.
 - The conformance suite compares complete output bytes and fixed SHA-256 identities.
 
-The current bytecode 1.3 golden modules are:
+The current bytecode 1.4 golden modules are:
 
-- `Sumˉdata`: `63ad39f6dbfff9b5ec31deb2d99d235dc59069a14a77033cf0a8284063578947`
-- `Helloˉwindvale`: `e113e56fef9bd108722fb8b16da93a42eec74699952d9055334c7ae0fe9db79b`
-- `Readˉwvbˉheader`: `66e3ec061c06428b3b6fb7f43c45386e1a34f68e4d93ffb0c2a046f2ecca2bed`
-- `Wvˉdumpˉcore`: `666808a2266557c721f952dd6068b2493bd213da358fee3e20a5c3e7a545523e`
+- `Sumˉdata`: `6a40e6172787ae294361b3a5d9abc92e7b3f004b1e59eabb999a7b844a21bf78`
+- `Helloˉwindvale`: `5b9101e15ae42acb333a8a05c60e6d6dbb548e5a04b9c96fdb717dbc58bf9cbe`
+- `Readˉwvbˉheader`: `26176eac5e2f00bb96a4b1ad95ad79238045932b64d8220edcfdea13af202c6a`
+- `Wvˉdumpˉcore`: `74c5400120f01f8d4a3e0fa87c3bb20d2edd645208d8ccb930e994a416c497f1`
 
 Changes to those hashes require a reviewed bytecode/compiler-contract change rather than an automatic fixture refresh.
 
@@ -105,7 +106,7 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 - The verifier rejects unknown opcodes, truncated operands, bad indices, invalid data uses, stack underflow, type mismatches, invalid branches, inconsistent merges, unreachable instructions, and invalid maximum-stack declarations.
 - Hosted capabilities must be declared in the module, separately authorized, supported by the selected adapter, and validated again on return.
 - Hosted arguments and file-byte results have strict count, UTF-8, and allocation bounds; normal and diagnostic output remain separate.
-- Runtime signed or unsigned overflow, array bounds, byte-range bounds, instruction limits, call-depth limits, and hosted resource failures use stable runtime codes.
+- Runtime signed or unsigned overflow, array bounds, byte-range bounds, strict UTF-8 decoding, bounded text construction, instruction limits, call-depth limits, and hosted resource failures use stable runtime codes.
 
 ## Deliberate Seed limits
 

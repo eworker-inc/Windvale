@@ -19,7 +19,7 @@ diagnostic.write_line(Value: text) -> void
 
 A module must use the `hosted` or `system` profile, declare every capability it calls, and receive an exact grant for every declared capability before execution. Declaration is not authorization. The runtime also asks the selected host adapter whether every declared capability is implemented before executing the first instruction. Unsupported capability `WVR3001` and unauthorized capability `WVR3010` are distinct failures.
 
-Capability declarations remain ordinary canonical WVB 1.3 imports. Adding catalog entries does not change the module envelope or instruction set.
+Capability declarations remain ordinary canonical WVB 1.4 imports. Adding catalog entries does not itself change the module envelope or instruction set.
 
 ## Arguments
 

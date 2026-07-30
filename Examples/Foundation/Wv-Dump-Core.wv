@@ -9,24 +9,24 @@ capability process.argument_count;
 data Shortˉmodule: bytes = [87];
 
 data Badˉmagicˉmodule: bytes = [
-    0, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0
+    0, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0
 ];
 
 data Badˉversionˉmodule: bytes = [
-    87, 86, 66, 49, 2, 0, 3, 0, 7, 0, 0, 0
+    87, 86, 66, 49, 2, 0, 4, 0, 7, 0, 0, 0
 ];
 
 data Badˉcountˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 3, 0, 6, 0, 0, 0
+    87, 86, 66, 49, 1, 0, 4, 0, 6, 0, 0, 0
 ];
 
 data Hostileˉlengthˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 255, 255, 255, 255
 ];
 
 data Validˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -37,7 +37,7 @@ data Validˉmodule: bytes = [
 ];
 
 data Badˉkindˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -48,7 +48,7 @@ data Badˉkindˉmodule: bytes = [
 ];
 
 data Badˉflagsˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 1, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -59,7 +59,7 @@ data Badˉflagsˉmodule: bytes = [
 ];
 
 data Truncatedˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -70,7 +70,7 @@ data Truncatedˉmodule: bytes = [
 ];
 
 data Trailingˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 3, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 4, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -91,6 +91,16 @@ enum Wvbˉstatus {
     Wrongˉsectionˉkind = 6;
     Unsupportedˉsectionˉheader = 7;
     Trailingˉbytes = 8;
+    Invalidˉpayload = 9;
+    Invalidˉutf8 = 10;
+    Limitˉexceeded = 11;
+    Unknownˉvalueˉtype = 12;
+    Unknownˉdataˉtype = 13;
+    Unknownˉnominalˉtype = 14;
+    Unknownˉexportˉkind = 15;
+    Unknownˉopcode = 16;
+    Truncatedˉinstruction = 17;
+    Invalidˉinstruction = 18;
 }
 
 record Wvbˉinspection {
@@ -106,6 +116,20 @@ record Wvbˉsection {
     Envelopeˉoffset: u32;
     Payloadˉoffset: u32;
     Payloadˉlength: u32;
+}
+
+record Wvbˉscan {
+    Status: Wvbˉstatus;
+    Cursor: u32;
+    Items: u32;
+    Detail: u32;
+}
+
+record Wvbˉpayloadˉinspection {
+    Status: Wvbˉstatus;
+    Failureˉoffset: u32;
+    Declarationsˉseen: u32;
+    Instructionsˉseen: u32;
 }
 
 fn Rangeˉisˉinside(Total: u32, Offset: u32, Length: u32) -> bool {
@@ -150,6 +174,177 @@ fn Readˉsection(Input: bytes, Envelopeˉoffset: u32) -> Wvbˉsection {
     );
 }
 
+fn Findˉsection(Input: bytes, Wantedˉindex: u32) -> Wvbˉsection {
+    var Cursor: u32 = 12u32;
+    var Sectionˉindex: u32 = 0u32;
+    while Sectionˉindex < Wantedˉindex {
+        let Section: Wvbˉsection = Readˉsection(Input, Cursor);
+        Cursor = Section.Payloadˉoffset + Section.Payloadˉlength;
+        Sectionˉindex = Sectionˉindex + 1u32;
+    }
+
+    return Readˉsection(Input, Cursor);
+}
+
+fn Scanˉfailure(Status: Wvbˉstatus, Offset: u32) -> Wvbˉscan {
+    return Wvbˉscan(Status, Offset, 0u32, 0u32);
+}
+
+fn Scanˉstring(Input: bytes, Cursor: u32, End: u32, Maximum: u32) -> Wvbˉscan {
+    if !Rangeˉisˉinside(End, Cursor, 4u32) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+    }
+
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    if Length > Maximum {
+        return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+    }
+
+    let Valueˉoffset: u32 = Cursor + 4u32;
+    if !Rangeˉisˉinside(End, Valueˉoffset, Length) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Valueˉoffset);
+    }
+
+    let Value: bytes = Bytesˉslice(Input, Valueˉoffset, Length);
+    if !Textˉutf8ˉisˉvalid(Value) {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉutf8, Valueˉoffset);
+    }
+
+    return Wvbˉscan(Wvbˉstatus.Valid, Valueˉoffset + Length, 1u32, Length);
+}
+
+fn Scanˉshape(Input: bytes, Cursor: u32, End: u32, Allowˉvoid: bool, Allowˉnominal: bool) -> Wvbˉscan {
+    if !Rangeˉisˉinside(End, Cursor, 1u32) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+    }
+
+    let Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+    if Raw > 8u32 {
+        return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
+    }
+    if !Allowˉvoid {
+        if Raw == 0u32 {
+            return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
+        }
+    }
+    if Raw >= 7u32 {
+        if !Allowˉnominal {
+            return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
+        }
+        if !Rangeˉisˉinside(End, Cursor + 1u32, 4u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor + 1u32);
+        }
+        let Nominalˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        if Nominalˉindex > 2147483647u32 {
+            return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor + 1u32);
+        }
+        return Wvbˉscan(Wvbˉstatus.Valid, Cursor + 5u32, 1u32, Raw);
+    }
+
+    return Wvbˉscan(Wvbˉstatus.Valid, Cursor + 1u32, 1u32, Raw);
+}
+
+fn Opcodeˉsize(Raw: u32) -> u32 {
+    if Raw == 1u32 {
+        return 5u32;
+    }
+    if Raw == 2u32 {
+        return 2u32;
+    }
+    if Raw >= 3u32 {
+        if Raw <= 7u32 {
+            return 5u32;
+        }
+    }
+    if Raw == 8u32 {
+        return 2u32;
+    }
+    if Raw >= 9u32 {
+        if Raw <= 10u32 {
+            return 5u32;
+        }
+    }
+    if Raw >= 11u32 {
+        if Raw <= 22u32 {
+            return 1u32;
+        }
+    }
+    if Raw >= 32u32 {
+        if Raw <= 40u32 {
+            return 1u32;
+        }
+    }
+    if Raw >= 48u32 {
+        if Raw <= 49u32 {
+            return 5u32;
+        }
+    }
+    if Raw >= 64u32 {
+        if Raw <= 65u32 {
+            return 5u32;
+        }
+    }
+    if Raw >= 80u32 {
+        if Raw <= 81u32 {
+            return 1u32;
+        }
+    }
+    if Raw >= 96u32 {
+        if Raw <= 103u32 {
+            return 1u32;
+        }
+    }
+    if Raw >= 104u32 {
+        if Raw <= 105u32 {
+            return 5u32;
+        }
+    }
+    if Raw == 106u32 {
+        return 9u32;
+    }
+    if Raw >= 107u32 {
+        if Raw <= 118u32 {
+            return 1u32;
+        }
+    }
+
+    return 0u32;
+}
+
+fn Scanˉinstructions(Input: bytes, Start: u32, End: u32) -> Wvbˉscan {
+    if Start == End {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉinstruction, Start);
+    }
+
+    var Cursor: u32 = Start;
+    var Count: u32 = 0u32;
+    while Cursor < End {
+        if Count >= 100000u32 {
+            return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+        }
+
+        let Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        let Size: u32 = Opcodeˉsize(Raw);
+        if Size == 0u32 {
+            return Scanˉfailure(Wvbˉstatus.Unknownˉopcode, Cursor);
+        }
+        if !Rangeˉisˉinside(End, Cursor, Size) {
+            return Scanˉfailure(Wvbˉstatus.Truncatedˉinstruction, Cursor);
+        }
+        if Raw == 2u32 {
+            let Boolˉvalue: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32));
+            if Boolˉvalue > 1u32 {
+                return Scanˉfailure(Wvbˉstatus.Invalidˉinstruction, Cursor);
+            }
+        }
+
+        Cursor = Cursor + Size;
+        Count = Count + 1u32;
+    }
+
+    return Wvbˉscan(Wvbˉstatus.Valid, Cursor, Count, 0u32);
+}
+
 fn Inspectˉwvbˉenvelope(Input: bytes) -> Wvbˉinspection {
     let Total: u32 = Bytesˉlength(Input);
     if Total < 12u32 {
@@ -173,7 +368,7 @@ fn Inspectˉwvbˉenvelope(Input: bytes) -> Wvbˉinspection {
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
         return Wvbˉinspection(Wvbˉstatus.Badˉversion, 0u32, 4u32);
     }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 3u32 {
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 4u32 {
         return Wvbˉinspection(Wvbˉstatus.Badˉversion, 0u32, 6u32);
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
@@ -213,6 +408,880 @@ fn Inspectˉwvbˉenvelope(Input: bytes) -> Wvbˉinspection {
     return Wvbˉinspection(Wvbˉstatus.Valid, Sectionˉindex, Cursor);
 }
 
+fn Scanˉmoduleˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
+    let End: u32 = Section.Payloadˉoffset + Section.Payloadˉlength;
+    if !Rangeˉisˉinside(End, Section.Payloadˉoffset, 1u32) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Section.Payloadˉoffset);
+    }
+
+    let Profile: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Section.Payloadˉoffset));
+    if Profile < 1u32 {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Section.Payloadˉoffset);
+    }
+    if Profile > 3u32 {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Section.Payloadˉoffset);
+    }
+
+    let Name: Wvbˉscan = Scanˉstring(Input, Section.Payloadˉoffset + 1u32, End, 255u32);
+    if Name.Status != Wvbˉstatus.Valid {
+        return Name;
+    }
+    if Name.Cursor != End {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Name.Cursor);
+    }
+
+    return Wvbˉscan(Wvbˉstatus.Valid, End, 1u32, Profile);
+}
+
+fn Scanˉcapabilityˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
+    let End: u32 = Section.Payloadˉoffset + Section.Payloadˉlength;
+    if !Rangeˉisˉinside(End, Section.Payloadˉoffset, 4u32) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Section.Payloadˉoffset);
+    }
+
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    if Count > 32u32 {
+        return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Section.Payloadˉoffset);
+    }
+
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Name: Wvbˉscan = Scanˉstring(Input, Cursor, End, 255u32);
+        if Name.Status != Wvbˉstatus.Valid {
+            return Name;
+        }
+        Cursor = Name.Cursor;
+        if !Rangeˉisˉinside(End, Cursor, 4u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+        }
+
+        let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        if Parameterˉcount > 4096u32 {
+            return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+        }
+        Cursor = Cursor + 4u32;
+
+        var Parameterˉindex: u32 = 0u32;
+        while Parameterˉindex < Parameterˉcount {
+            let Parameter: Wvbˉscan = Scanˉshape(Input, Cursor, End, false, false);
+            if Parameter.Status != Wvbˉstatus.Valid {
+                return Parameter;
+            }
+            Cursor = Parameter.Cursor;
+            Parameterˉindex = Parameterˉindex + 1u32;
+        }
+
+        let Returnˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, true, false);
+        if Returnˉtype.Status != Wvbˉstatus.Valid {
+            return Returnˉtype;
+        }
+        Cursor = Returnˉtype.Cursor;
+        Index = Index + 1u32;
+    }
+
+    if Cursor != End {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor);
+    }
+    return Wvbˉscan(Wvbˉstatus.Valid, End, Count, 0u32);
+}
+
+fn Scanˉdataˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
+    let End: u32 = Section.Payloadˉoffset + Section.Payloadˉlength;
+    if !Rangeˉisˉinside(End, Section.Payloadˉoffset, 4u32) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Section.Payloadˉoffset);
+    }
+
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    if Count > 4096u32 {
+        return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Section.Payloadˉoffset);
+    }
+
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Name: Wvbˉscan = Scanˉstring(Input, Cursor, End, 255u32);
+        if Name.Status != Wvbˉstatus.Valid {
+            return Name;
+        }
+        Cursor = Name.Cursor;
+        if !Rangeˉisˉinside(End, Cursor, 1u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+        }
+
+        let Dataˉtype: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        Cursor = Cursor + 1u32;
+        if Dataˉtype == 3u32 {
+            let Textˉvalue: Wvbˉscan = Scanˉstring(Input, Cursor, End, 1048576u32);
+            if Textˉvalue.Status != Wvbˉstatus.Valid {
+                return Textˉvalue;
+            }
+            Cursor = Textˉvalue.Cursor;
+        } else {
+            if Dataˉtype == 4u32 {
+                if !Rangeˉisˉinside(End, Cursor, 4u32) {
+                    return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+                }
+                let Elementˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+                if Elementˉcount > 262144u32 {
+                    return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+                }
+                Cursor = Cursor + 4u32;
+                let Elementˉbytes: u32 = Elementˉcount * 4u32;
+                if !Rangeˉisˉinside(End, Cursor, Elementˉbytes) {
+                    return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+                }
+                Cursor = Cursor + Elementˉbytes;
+            } else {
+                if Dataˉtype == 5u32 {
+                    if !Rangeˉisˉinside(End, Cursor, 4u32) {
+                        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+                    }
+                    let Byteˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+                    if Byteˉcount > 4194304u32 {
+                        return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+                    }
+                    Cursor = Cursor + 4u32;
+                    if !Rangeˉisˉinside(End, Cursor, Byteˉcount) {
+                        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+                    }
+                    Cursor = Cursor + Byteˉcount;
+                } else {
+                    return Scanˉfailure(Wvbˉstatus.Unknownˉdataˉtype, Cursor - 1u32);
+                }
+            }
+        }
+
+        Index = Index + 1u32;
+    }
+
+    if Cursor != End {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor);
+    }
+    return Wvbˉscan(Wvbˉstatus.Valid, End, Count, 0u32);
+}
+
+fn Scanˉfunctionˉpayload(Input: bytes, Section: Wvbˉsection, Code: Wvbˉsection) -> Wvbˉscan {
+    let End: u32 = Section.Payloadˉoffset + Section.Payloadˉlength;
+    if !Rangeˉisˉinside(End, Section.Payloadˉoffset, 4u32) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Section.Payloadˉoffset);
+    }
+
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    if Count > 4096u32 {
+        return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Section.Payloadˉoffset);
+    }
+
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    var Expectedˉcodeˉoffset: u32 = 0u32;
+    var Instructionˉcount: u32 = 0u32;
+    while Index < Count {
+        let Name: Wvbˉscan = Scanˉstring(Input, Cursor, End, 255u32);
+        if Name.Status != Wvbˉstatus.Valid {
+            return Name;
+        }
+        Cursor = Name.Cursor;
+        if !Rangeˉisˉinside(End, Cursor, 4u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+        }
+
+        let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        if Parameterˉcount > 4096u32 {
+            return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+        }
+        Cursor = Cursor + 4u32;
+
+        var Parameterˉindex: u32 = 0u32;
+        while Parameterˉindex < Parameterˉcount {
+            let Parameter: Wvbˉscan = Scanˉshape(Input, Cursor, End, false, true);
+            if Parameter.Status != Wvbˉstatus.Valid {
+                return Parameter;
+            }
+            Cursor = Parameter.Cursor;
+            Parameterˉindex = Parameterˉindex + 1u32;
+        }
+
+        let Returnˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, true, true);
+        if Returnˉtype.Status != Wvbˉstatus.Valid {
+            return Returnˉtype;
+        }
+        Cursor = Returnˉtype.Cursor;
+        if !Rangeˉisˉinside(End, Cursor, 4u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+        }
+
+        let Localˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        if Localˉcount > 4096u32 {
+            return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+        }
+        if Parameterˉcount > 4096u32 - Localˉcount {
+            return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+        }
+        Cursor = Cursor + 4u32;
+
+        var Localˉindex: u32 = 0u32;
+        while Localˉindex < Localˉcount {
+            let Localˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, false, true);
+            if Localˉtype.Status != Wvbˉstatus.Valid {
+                return Localˉtype;
+            }
+            Cursor = Localˉtype.Cursor;
+            Localˉindex = Localˉindex + 1u32;
+        }
+
+        if !Rangeˉisˉinside(End, Cursor, 12u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+        }
+        let Codeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Maximumˉstack: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        if Codeˉoffset != Expectedˉcodeˉoffset {
+            return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor);
+        }
+        if Codeˉlength == 0u32 {
+            return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor + 4u32);
+        }
+        if Codeˉlength > 1048576u32 {
+            return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor + 4u32);
+        }
+        if Maximumˉstack > 4096u32 {
+            return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor + 8u32);
+        }
+        if !Rangeˉisˉinside(Code.Payloadˉlength, Codeˉoffset, Codeˉlength) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+        }
+
+        let Instructions: Wvbˉscan = Scanˉinstructions(
+            Input,
+            Code.Payloadˉoffset + Codeˉoffset,
+            Code.Payloadˉoffset + Codeˉoffset + Codeˉlength
+        );
+        if Instructions.Status != Wvbˉstatus.Valid {
+            return Instructions;
+        }
+        Instructionˉcount = Instructionˉcount + Instructions.Items;
+        Expectedˉcodeˉoffset = Expectedˉcodeˉoffset + Codeˉlength;
+        Cursor = Cursor + 12u32;
+        Index = Index + 1u32;
+    }
+
+    if Cursor != End {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor);
+    }
+    if Expectedˉcodeˉoffset != Code.Payloadˉlength {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Code.Payloadˉoffset + Expectedˉcodeˉoffset);
+    }
+    return Wvbˉscan(Wvbˉstatus.Valid, End, Count, Instructionˉcount);
+}
+
+fn Scanˉexportˉpayload(Input: bytes, Section: Wvbˉsection, Functionˉcount: u32) -> Wvbˉscan {
+    let End: u32 = Section.Payloadˉoffset + Section.Payloadˉlength;
+    if !Rangeˉisˉinside(End, Section.Payloadˉoffset, 4u32) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Section.Payloadˉoffset);
+    }
+
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    if Count > 4096u32 {
+        return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Section.Payloadˉoffset);
+    }
+
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Name: Wvbˉscan = Scanˉstring(Input, Cursor, End, 255u32);
+        if Name.Status != Wvbˉstatus.Valid {
+            return Name;
+        }
+        Cursor = Name.Cursor;
+        if !Rangeˉisˉinside(End, Cursor, 5u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+        }
+        if Bytesˉreadˉu8(Input, Cursor) != 1u8 {
+            return Scanˉfailure(Wvbˉstatus.Unknownˉexportˉkind, Cursor);
+        }
+        let Targetˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        if Targetˉindex >= Functionˉcount {
+            return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor + 1u32);
+        }
+        Cursor = Cursor + 5u32;
+        Index = Index + 1u32;
+    }
+
+    if Cursor != End {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor);
+    }
+    return Wvbˉscan(Wvbˉstatus.Valid, End, Count, 0u32);
+}
+
+fn Scanˉtypeˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
+    let End: u32 = Section.Payloadˉoffset + Section.Payloadˉlength;
+    if !Rangeˉisˉinside(End, Section.Payloadˉoffset, 4u32) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Section.Payloadˉoffset);
+    }
+
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    if Count > 1024u32 {
+        return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Section.Payloadˉoffset);
+    }
+
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if !Rangeˉisˉinside(End, Cursor, 1u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+        }
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        if Kind < 1u32 {
+            return Scanˉfailure(Wvbˉstatus.Unknownˉnominalˉtype, Cursor);
+        }
+        if Kind > 2u32 {
+            return Scanˉfailure(Wvbˉstatus.Unknownˉnominalˉtype, Cursor);
+        }
+        Cursor = Cursor + 1u32;
+
+        let Name: Wvbˉscan = Scanˉstring(Input, Cursor, End, 255u32);
+        if Name.Status != Wvbˉstatus.Valid {
+            return Name;
+        }
+        Cursor = Name.Cursor;
+        if !Rangeˉisˉinside(End, Cursor, 4u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+        }
+        let Itemˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        if Itemˉcount == 0u32 {
+            return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor);
+        }
+        if Kind == 1u32 {
+            if Itemˉcount > 64u32 {
+                return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+            }
+        } else {
+            if Itemˉcount > 256u32 {
+                return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
+            }
+        }
+        Cursor = Cursor + 4u32;
+
+        var Itemˉindex: u32 = 0u32;
+        while Itemˉindex < Itemˉcount {
+            let Itemˉname: Wvbˉscan = Scanˉstring(Input, Cursor, End, 255u32);
+            if Itemˉname.Status != Wvbˉstatus.Valid {
+                return Itemˉname;
+            }
+            Cursor = Itemˉname.Cursor;
+            if Kind == 1u32 {
+                let Fieldˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, false, true);
+                if Fieldˉtype.Status != Wvbˉstatus.Valid {
+                    return Fieldˉtype;
+                }
+                Cursor = Fieldˉtype.Cursor;
+            } else {
+                if !Rangeˉisˉinside(End, Cursor, 4u32) {
+                    return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+                }
+                Cursor = Cursor + 4u32;
+            }
+            Itemˉindex = Itemˉindex + 1u32;
+        }
+
+        Index = Index + 1u32;
+    }
+
+    if Cursor != End {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor);
+    }
+    return Wvbˉscan(Wvbˉstatus.Valid, End, Count, 0u32);
+}
+
+fn Inspectˉwvbˉpayloads(Input: bytes) -> Wvbˉpayloadˉinspection {
+    let Moduleˉsection: Wvbˉsection = Findˉsection(Input, 0u32);
+    let Capabilityˉsection: Wvbˉsection = Findˉsection(Input, 1u32);
+    let Dataˉsection: Wvbˉsection = Findˉsection(Input, 2u32);
+    let Functionˉsection: Wvbˉsection = Findˉsection(Input, 3u32);
+    let Codeˉsection: Wvbˉsection = Findˉsection(Input, 4u32);
+    let Exportˉsection: Wvbˉsection = Findˉsection(Input, 5u32);
+    let Typeˉsection: Wvbˉsection = Findˉsection(Input, 6u32);
+
+    let Moduleˉresult: Wvbˉscan = Scanˉmoduleˉpayload(Input, Moduleˉsection);
+    if Moduleˉresult.Status != Wvbˉstatus.Valid {
+        return Wvbˉpayloadˉinspection(Moduleˉresult.Status, Moduleˉresult.Cursor, 0u32, 0u32);
+    }
+    let Capabilityˉresult: Wvbˉscan = Scanˉcapabilityˉpayload(Input, Capabilityˉsection);
+    if Capabilityˉresult.Status != Wvbˉstatus.Valid {
+        return Wvbˉpayloadˉinspection(Capabilityˉresult.Status, Capabilityˉresult.Cursor, 1u32, 0u32);
+    }
+    let Dataˉresult: Wvbˉscan = Scanˉdataˉpayload(Input, Dataˉsection);
+    if Dataˉresult.Status != Wvbˉstatus.Valid {
+        return Wvbˉpayloadˉinspection(
+            Dataˉresult.Status,
+            Dataˉresult.Cursor,
+            1u32 + Capabilityˉresult.Items,
+            0u32
+        );
+    }
+    let Functionˉresult: Wvbˉscan = Scanˉfunctionˉpayload(Input, Functionˉsection, Codeˉsection);
+    if Functionˉresult.Status != Wvbˉstatus.Valid {
+        return Wvbˉpayloadˉinspection(
+            Functionˉresult.Status,
+            Functionˉresult.Cursor,
+            1u32 + Capabilityˉresult.Items + Dataˉresult.Items,
+            0u32
+        );
+    }
+    let Exportˉresult: Wvbˉscan = Scanˉexportˉpayload(Input, Exportˉsection, Functionˉresult.Items);
+    if Exportˉresult.Status != Wvbˉstatus.Valid {
+        return Wvbˉpayloadˉinspection(
+            Exportˉresult.Status,
+            Exportˉresult.Cursor,
+            1u32 + Capabilityˉresult.Items + Dataˉresult.Items + Functionˉresult.Items,
+            Functionˉresult.Detail
+        );
+    }
+    let Typeˉresult: Wvbˉscan = Scanˉtypeˉpayload(Input, Typeˉsection);
+    if Typeˉresult.Status != Wvbˉstatus.Valid {
+        return Wvbˉpayloadˉinspection(
+            Typeˉresult.Status,
+            Typeˉresult.Cursor,
+            1u32 + Capabilityˉresult.Items + Dataˉresult.Items + Functionˉresult.Items + Exportˉresult.Items,
+            Functionˉresult.Detail
+        );
+    }
+
+    return Wvbˉpayloadˉinspection(
+        Wvbˉstatus.Valid,
+        Bytesˉlength(Input),
+        1u32 + Capabilityˉresult.Items + Dataˉresult.Items + Functionˉresult.Items + Exportˉresult.Items + Typeˉresult.Items,
+        Functionˉresult.Detail
+    );
+}
+
+fn Stringˉvalue(Input: bytes, Cursor: u32) -> text {
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    return Textˉfromˉutf8(Bytesˉslice(Input, Cursor + 4u32, Length));
+}
+
+fn Quotedˉstringˉvalue(Input: bytes, Cursor: u32) -> text {
+    return Textˉquote(Stringˉvalue(Input, Cursor));
+}
+
+fn Nextˉstring(Input: bytes, Cursor: u32) -> u32 {
+    return Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Input, Cursor);
+}
+
+fn Profileˉname(Profile: u32) -> text {
+    if Profile == 1u32 {
+        return "portable";
+    }
+    if Profile == 2u32 {
+        return "hosted";
+    }
+    return "system";
+}
+
+fn Primitiveˉtypeˉname(Raw: u32) -> text {
+    if Raw == 0u32 {
+        return "void";
+    }
+    if Raw == 1u32 {
+        return "i32";
+    }
+    if Raw == 2u32 {
+        return "bool";
+    }
+    if Raw == 3u32 {
+        return "text";
+    }
+    if Raw == 4u32 {
+        return "u8";
+    }
+    if Raw == 5u32 {
+        return "u32";
+    }
+    return "bytes";
+}
+
+fn Shapeˉname(Input: bytes, Cursor: u32) -> text {
+    let Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+    if Raw < 7u32 {
+        return Primitiveˉtypeˉname(Raw);
+    }
+
+    let Index: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+    if Raw == 7u32 {
+        return Textˉconcat("record[", Textˉconcat(U32ˉformat(Index), "]"));
+    }
+    return Textˉconcat("enum[", Textˉconcat(U32ˉformat(Index), "]"));
+}
+
+fn Nextˉshape(Input: bytes, Cursor: u32) -> u32 {
+    let Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+    if Raw >= 7u32 {
+        return Cursor + 5u32;
+    }
+    return Cursor + 1u32;
+}
+
+fn Opcodeˉname(Raw: u32) -> text {
+    if Raw == 1u32 { return "i32.const"; }
+    if Raw == 2u32 { return "bool.const"; }
+    if Raw == 3u32 { return "text.const"; }
+    if Raw == 4u32 { return "local.load"; }
+    if Raw == 5u32 { return "local.store"; }
+    if Raw == 6u32 { return "data.length"; }
+    if Raw == 7u32 { return "data.load.i32"; }
+    if Raw == 8u32 { return "u8.const"; }
+    if Raw == 9u32 { return "u32.const"; }
+    if Raw == 10u32 { return "bytes.const"; }
+    if Raw == 11u32 { return "bytes.length"; }
+    if Raw == 12u32 { return "bytes.slice"; }
+    if Raw == 13u32 { return "bytes.read_u8"; }
+    if Raw == 14u32 { return "bytes.read_u16_little"; }
+    if Raw == 15u32 { return "bytes.read_u32_little"; }
+    if Raw == 16u32 { return "i32.add"; }
+    if Raw == 17u32 { return "i32.subtract"; }
+    if Raw == 18u32 { return "i32.multiply"; }
+    if Raw == 19u32 { return "i32.negate"; }
+    if Raw == 20u32 { return "u32.add"; }
+    if Raw == 21u32 { return "u32.subtract"; }
+    if Raw == 22u32 { return "u32.multiply"; }
+    if Raw == 32u32 { return "i32.equal"; }
+    if Raw == 33u32 { return "i32.not_equal"; }
+    if Raw == 34u32 { return "i32.less"; }
+    if Raw == 35u32 { return "i32.less_equal"; }
+    if Raw == 36u32 { return "i32.greater"; }
+    if Raw == 37u32 { return "i32.greater_equal"; }
+    if Raw == 38u32 { return "bool.equal"; }
+    if Raw == 39u32 { return "bool.not_equal"; }
+    if Raw == 40u32 { return "bool.not"; }
+    if Raw == 48u32 { return "jump"; }
+    if Raw == 49u32 { return "branch.false"; }
+    if Raw == 64u32 { return "call"; }
+    if Raw == 65u32 { return "call.capability"; }
+    if Raw == 80u32 { return "pop"; }
+    if Raw == 81u32 { return "return"; }
+    if Raw == 96u32 { return "u32.equal"; }
+    if Raw == 97u32 { return "u32.not_equal"; }
+    if Raw == 98u32 { return "u32.less"; }
+    if Raw == 99u32 { return "u32.less_equal"; }
+    if Raw == 100u32 { return "u32.greater"; }
+    if Raw == 101u32 { return "u32.greater_equal"; }
+    if Raw == 102u32 { return "u8.equal"; }
+    if Raw == 103u32 { return "u8.not_equal"; }
+    if Raw == 104u32 { return "record.create"; }
+    if Raw == 105u32 { return "record.field"; }
+    if Raw == 106u32 { return "enum.const"; }
+    if Raw == 107u32 { return "enum.equal"; }
+    if Raw == 108u32 { return "enum.not_equal"; }
+    if Raw == 109u32 { return "enum.name"; }
+    if Raw == 110u32 { return "i32.format"; }
+    if Raw == 111u32 { return "u8.format"; }
+    if Raw == 112u32 { return "u32.format"; }
+    if Raw == 113u32 { return "text.concat"; }
+    if Raw == 114u32 { return "bytes.read_i32_little"; }
+    if Raw == 115u32 { return "text.utf8_is_valid"; }
+    if Raw == 116u32 { return "text.from_utf8"; }
+    if Raw == 117u32 { return "text.quote"; }
+    return "u32.from_u8";
+}
+
+fn Writeˉsectionˉline(Name: text, Section: Wvbˉsection, Count: u32) -> void {
+    var Line: text = Textˉconcat("section name=", Name);
+    Line = Textˉconcat(Line, Textˉconcat(" offset=", U32ˉformat(Section.Payloadˉoffset)));
+    Line = Textˉconcat(Line, Textˉconcat(" bytes=", U32ˉformat(Section.Payloadˉlength)));
+    Line = Textˉconcat(Line, Textˉconcat(" count=", U32ˉformat(Count)));
+    console.write_line(Line);
+}
+
+fn Writeˉmoduleˉline(Input: bytes, Section: Wvbˉsection) -> void {
+    let Profile: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Section.Payloadˉoffset));
+    let Nameˉcursor: u32 = Section.Payloadˉoffset + 1u32;
+    var Line: text = "module version=1.4";
+    Line = Textˉconcat(Line, Textˉconcat(" profile=", Profileˉname(Profile)));
+    Line = Textˉconcat(Line, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Nameˉcursor)));
+    console.write_line(Line);
+}
+
+fn Writeˉcapabilities(Input: bytes, Section: Wvbˉsection) -> void {
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Nameˉcursor: u32 = Cursor;
+        Cursor = Nextˉstring(Input, Cursor);
+        let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        let Parameterˉcursor: u32 = Cursor;
+        var Parameterˉindex: u32 = 0u32;
+        while Parameterˉindex < Parameterˉcount {
+            Cursor = Nextˉshape(Input, Cursor);
+            Parameterˉindex = Parameterˉindex + 1u32;
+        }
+
+        var Line: text = Textˉconcat("capability index=", U32ˉformat(Index));
+        Line = Textˉconcat(Line, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Nameˉcursor)));
+        Line = Textˉconcat(Line, Textˉconcat(" parameters=", U32ˉformat(Parameterˉcount)));
+        Line = Textˉconcat(Line, Textˉconcat(" result=", Shapeˉname(Input, Cursor)));
+        console.write_line(Line);
+
+        var Parameterˉread: u32 = Parameterˉcursor;
+        Parameterˉindex = 0u32;
+        while Parameterˉindex < Parameterˉcount {
+            var Parameterˉline: text = Textˉconcat("capability_parameter capability=", U32ˉformat(Index));
+            Parameterˉline = Textˉconcat(Parameterˉline, Textˉconcat(" index=", U32ˉformat(Parameterˉindex)));
+            Parameterˉline = Textˉconcat(Parameterˉline, Textˉconcat(" type=", Shapeˉname(Input, Parameterˉread)));
+            console.write_line(Parameterˉline);
+            Parameterˉread = Nextˉshape(Input, Parameterˉread);
+            Parameterˉindex = Parameterˉindex + 1u32;
+        }
+
+        Cursor = Nextˉshape(Input, Cursor);
+        Index = Index + 1u32;
+    }
+}
+
+fn Writeˉdata(Input: bytes, Section: Wvbˉsection) -> void {
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Nameˉcursor: u32 = Cursor;
+        Cursor = Nextˉstring(Input, Cursor);
+        let Dataˉtype: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        Cursor = Cursor + 1u32;
+
+        var Line: text = Textˉconcat("data index=", U32ˉformat(Index));
+        Line = Textˉconcat(Line, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Nameˉcursor)));
+        if Dataˉtype == 3u32 {
+            let Textˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+            Line = Textˉconcat(Line, " type=text");
+            Line = Textˉconcat(Line, Textˉconcat(" bytes=", U32ˉformat(Textˉbytes)));
+            Cursor = Cursor + 4u32 + Textˉbytes;
+        } else {
+            if Dataˉtype == 4u32 {
+                let Elementˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+                Line = Textˉconcat(Line, " type=i32_array");
+                Line = Textˉconcat(Line, Textˉconcat(" elements=", U32ˉformat(Elementˉcount)));
+                Cursor = Cursor + 4u32 + Elementˉcount * 4u32;
+            } else {
+                let Byteˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+                Line = Textˉconcat(Line, " type=bytes");
+                Line = Textˉconcat(Line, Textˉconcat(" bytes=", U32ˉformat(Byteˉcount)));
+                Cursor = Cursor + 4u32 + Byteˉcount;
+            }
+        }
+        console.write_line(Line);
+        Index = Index + 1u32;
+    }
+}
+
+fn Writeˉinstructions(Input: bytes, Start: u32, Length: u32, Functionˉindex: u32) -> void {
+    let End: u32 = Start + Length;
+    var Cursor: u32 = Start;
+    while Cursor < End {
+        let Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        let Size: u32 = Opcodeˉsize(Raw);
+        var Line: text = Textˉconcat("instruction function=", U32ˉformat(Functionˉindex));
+        Line = Textˉconcat(Line, Textˉconcat(" offset=", U32ˉformat(Cursor - Start)));
+        Line = Textˉconcat(Line, Textˉconcat(" opcode=", Opcodeˉname(Raw)));
+        if Raw == 1u32 {
+            Line = Textˉconcat(Line, Textˉconcat(" operand=", I32ˉformat(Bytesˉreadˉi32ˉlittle(Input, Cursor + 1u32))));
+        } else {
+            if Raw == 2u32 {
+                if Bytesˉreadˉu8(Input, Cursor + 1u32) == 0u8 {
+                    Line = Textˉconcat(Line, " operand=false");
+                } else {
+                    Line = Textˉconcat(Line, " operand=true");
+                }
+            } else {
+                if Raw == 8u32 {
+                    Line = Textˉconcat(
+                        Line,
+                        Textˉconcat(" operand=", U32ˉformat(U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32))))
+                    );
+                } else {
+                    if Raw == 106u32 {
+                        Line = Textˉconcat(Line, Textˉconcat(" operand=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32))));
+                        Line = Textˉconcat(Line, Textˉconcat(" operand2=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 5u32))));
+                    } else {
+                        if Size == 5u32 {
+                            Line = Textˉconcat(Line, Textˉconcat(" operand=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32))));
+                        }
+                    }
+                }
+            }
+        }
+        console.write_line(Line);
+        Cursor = Cursor + Size;
+    }
+}
+
+fn Writeˉfunctions(Input: bytes, Section: Wvbˉsection, Code: Wvbˉsection) -> void {
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Nameˉcursor: u32 = Cursor;
+        Cursor = Nextˉstring(Input, Cursor);
+        let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        let Parameterˉcursor: u32 = Cursor;
+        var Parameterˉindex: u32 = 0u32;
+        while Parameterˉindex < Parameterˉcount {
+            Cursor = Nextˉshape(Input, Cursor);
+            Parameterˉindex = Parameterˉindex + 1u32;
+        }
+
+        let Returnˉcursor: u32 = Cursor;
+        Cursor = Nextˉshape(Input, Cursor);
+        let Localˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        let Localˉcursor: u32 = Cursor;
+        var Localˉindex: u32 = 0u32;
+        while Localˉindex < Localˉcount {
+            Cursor = Nextˉshape(Input, Cursor);
+            Localˉindex = Localˉindex + 1u32;
+        }
+
+        let Codeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Maximumˉstack: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        var Line: text = Textˉconcat("function index=", U32ˉformat(Index));
+        Line = Textˉconcat(Line, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Nameˉcursor)));
+        Line = Textˉconcat(Line, Textˉconcat(" parameters=", U32ˉformat(Parameterˉcount)));
+        Line = Textˉconcat(Line, Textˉconcat(" result=", Shapeˉname(Input, Returnˉcursor)));
+        Line = Textˉconcat(Line, Textˉconcat(" locals=", U32ˉformat(Localˉcount)));
+        Line = Textˉconcat(Line, Textˉconcat(" code_offset=", U32ˉformat(Codeˉoffset)));
+        Line = Textˉconcat(Line, Textˉconcat(" code_bytes=", U32ˉformat(Codeˉlength)));
+        Line = Textˉconcat(Line, Textˉconcat(" max_stack=", U32ˉformat(Maximumˉstack)));
+        console.write_line(Line);
+
+        var Parameterˉread: u32 = Parameterˉcursor;
+        Parameterˉindex = 0u32;
+        while Parameterˉindex < Parameterˉcount {
+            var Parameterˉline: text = Textˉconcat("function_parameter function=", U32ˉformat(Index));
+            Parameterˉline = Textˉconcat(Parameterˉline, Textˉconcat(" index=", U32ˉformat(Parameterˉindex)));
+            Parameterˉline = Textˉconcat(Parameterˉline, Textˉconcat(" type=", Shapeˉname(Input, Parameterˉread)));
+            console.write_line(Parameterˉline);
+            Parameterˉread = Nextˉshape(Input, Parameterˉread);
+            Parameterˉindex = Parameterˉindex + 1u32;
+        }
+
+        var Localˉread: u32 = Localˉcursor;
+        Localˉindex = 0u32;
+        while Localˉindex < Localˉcount {
+            var Localˉline: text = Textˉconcat("function_local function=", U32ˉformat(Index));
+            Localˉline = Textˉconcat(Localˉline, Textˉconcat(" index=", U32ˉformat(Localˉindex)));
+            Localˉline = Textˉconcat(Localˉline, Textˉconcat(" type=", Shapeˉname(Input, Localˉread)));
+            console.write_line(Localˉline);
+            Localˉread = Nextˉshape(Input, Localˉread);
+            Localˉindex = Localˉindex + 1u32;
+        }
+
+        Writeˉinstructions(Input, Code.Payloadˉoffset + Codeˉoffset, Codeˉlength, Index);
+        Cursor = Cursor + 12u32;
+        Index = Index + 1u32;
+    }
+}
+
+fn Writeˉexports(Input: bytes, Section: Wvbˉsection) -> void {
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Nameˉcursor: u32 = Cursor;
+        Cursor = Nextˉstring(Input, Cursor);
+        let Targetˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        var Line: text = Textˉconcat("export index=", U32ˉformat(Index));
+        Line = Textˉconcat(Line, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Nameˉcursor)));
+        Line = Textˉconcat(Line, " kind=function");
+        Line = Textˉconcat(Line, Textˉconcat(" target=", U32ˉformat(Targetˉindex)));
+        console.write_line(Line);
+        Cursor = Cursor + 5u32;
+        Index = Index + 1u32;
+    }
+}
+
+fn Writeˉtypes(Input: bytes, Section: Wvbˉsection) -> void {
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset);
+    var Cursor: u32 = Section.Payloadˉoffset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        Cursor = Cursor + 1u32;
+        let Nameˉcursor: u32 = Cursor;
+        Cursor = Nextˉstring(Input, Cursor);
+        let Itemˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+
+        var Line: text = Textˉconcat("type index=", U32ˉformat(Index));
+        Line = Textˉconcat(Line, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Nameˉcursor)));
+        if Kind == 1u32 {
+            Line = Textˉconcat(Line, " kind=record");
+            Line = Textˉconcat(Line, Textˉconcat(" fields=", U32ˉformat(Itemˉcount)));
+        } else {
+            Line = Textˉconcat(Line, " kind=enum");
+            Line = Textˉconcat(Line, Textˉconcat(" members=", U32ˉformat(Itemˉcount)));
+        }
+        console.write_line(Line);
+
+        var Itemˉindex: u32 = 0u32;
+        while Itemˉindex < Itemˉcount {
+            let Itemˉname: u32 = Cursor;
+            Cursor = Nextˉstring(Input, Cursor);
+            if Kind == 1u32 {
+                var Fieldˉline: text = Textˉconcat("record_field type=", U32ˉformat(Index));
+                Fieldˉline = Textˉconcat(Fieldˉline, Textˉconcat(" index=", U32ˉformat(Itemˉindex)));
+                Fieldˉline = Textˉconcat(Fieldˉline, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Itemˉname)));
+                Fieldˉline = Textˉconcat(Fieldˉline, Textˉconcat(" value_type=", Shapeˉname(Input, Cursor)));
+                console.write_line(Fieldˉline);
+                Cursor = Nextˉshape(Input, Cursor);
+            } else {
+                var Memberˉline: text = Textˉconcat("enum_member type=", U32ˉformat(Index));
+                Memberˉline = Textˉconcat(Memberˉline, Textˉconcat(" index=", U32ˉformat(Itemˉindex)));
+                Memberˉline = Textˉconcat(Memberˉline, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Itemˉname)));
+                Memberˉline = Textˉconcat(Memberˉline, Textˉconcat(" value=", I32ˉformat(Bytesˉreadˉi32ˉlittle(Input, Cursor))));
+                console.write_line(Memberˉline);
+                Cursor = Cursor + 4u32;
+            }
+            Itemˉindex = Itemˉindex + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+}
+
+fn Writeˉreport(Input: bytes) -> void {
+    let Moduleˉsection: Wvbˉsection = Findˉsection(Input, 0u32);
+    let Capabilityˉsection: Wvbˉsection = Findˉsection(Input, 1u32);
+    let Dataˉsection: Wvbˉsection = Findˉsection(Input, 2u32);
+    let Functionˉsection: Wvbˉsection = Findˉsection(Input, 3u32);
+    let Codeˉsection: Wvbˉsection = Findˉsection(Input, 4u32);
+    let Exportˉsection: Wvbˉsection = Findˉsection(Input, 5u32);
+    let Typeˉsection: Wvbˉsection = Findˉsection(Input, 6u32);
+
+    let Capabilityˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Capabilityˉsection.Payloadˉoffset);
+    let Dataˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Dataˉsection.Payloadˉoffset);
+    let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉsection.Payloadˉoffset);
+    let Exportˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Exportˉsection.Payloadˉoffset);
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Typeˉsection.Payloadˉoffset);
+    let Functionˉscan: Wvbˉscan = Scanˉfunctionˉpayload(Input, Functionˉsection, Codeˉsection);
+
+    console.write_line("wvdump 1");
+    Writeˉmoduleˉline(Input, Moduleˉsection);
+    Writeˉsectionˉline("module", Moduleˉsection, 1u32);
+    Writeˉsectionˉline("capabilities", Capabilityˉsection, Capabilityˉcount);
+    Writeˉsectionˉline("data", Dataˉsection, Dataˉcount);
+    Writeˉsectionˉline("functions", Functionˉsection, Functionˉcount);
+    Writeˉsectionˉline("code", Codeˉsection, Functionˉscan.Detail);
+    Writeˉsectionˉline("exports", Exportˉsection, Exportˉcount);
+    Writeˉsectionˉline("types", Typeˉsection, Typeˉcount);
+    Writeˉcapabilities(Input, Capabilityˉsection);
+    Writeˉdata(Input, Dataˉsection);
+    Writeˉfunctions(Input, Functionˉsection, Codeˉsection);
+    Writeˉexports(Input, Exportˉsection);
+    Writeˉtypes(Input, Typeˉsection);
+}
+
 fn Describeˉinspection(Result: Wvbˉinspection) -> text {
     return Textˉconcat(
         Enumˉname(Result.Status),
@@ -223,6 +1292,22 @@ fn Describeˉinspection(Result: Wvbˉinspection) -> text {
                 Textˉconcat(" offset=", U32ˉformat(Result.Failureˉoffset))
             )
         )
+    );
+}
+
+fn Describeˉpayloadˉinspection(Result: Wvbˉpayloadˉinspection) -> text {
+    var Description: text = Enumˉname(Result.Status);
+    Description = Textˉconcat(
+        Description,
+        Textˉconcat(" declarations=", U32ˉformat(Result.Declarationsˉseen))
+    );
+    Description = Textˉconcat(
+        Description,
+        Textˉconcat(" instructions=", U32ˉformat(Result.Instructionsˉseen))
+    );
+    return Textˉconcat(
+        Description,
+        Textˉconcat(" offset=", U32ˉformat(Result.Failureˉoffset))
     );
 }
 
@@ -269,6 +1354,17 @@ fn Runˉselfˉtests() -> i32 {
         return 36;
     }
     Describeˉinspection(Validˉresult);
+
+    let Payloadˉresult: Wvbˉpayloadˉinspection = Inspectˉwvbˉpayloads(Validˉmodule);
+    if Payloadˉresult.Status != Wvbˉstatus.Valid {
+        return 46;
+    }
+    if Payloadˉresult.Declarationsˉseen != 1u32 {
+        return 56;
+    }
+    if Payloadˉresult.Instructionsˉseen != 0u32 {
+        return 66;
+    }
 
     let Kindˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Badˉkindˉmodule);
     if Kindˉresult.Status != Wvbˉstatus.Wrongˉsectionˉkind {
@@ -317,7 +1413,13 @@ fn Runˉfileˉinspection() -> i32 {
         return 2;
     }
 
-    console.write_line(Description);
+    let Payload: Wvbˉpayloadˉinspection = Inspectˉwvbˉpayloads(Input);
+    if Payload.Status != Wvbˉstatus.Valid {
+        diagnostic.write_line(Describeˉpayloadˉinspection(Payload));
+        return 2;
+    }
+
+    Writeˉreport(Input);
     return 0;
 }
 

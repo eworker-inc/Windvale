@@ -10,7 +10,7 @@ public static class Moduleˉcodec
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public const ushort MAJOR_VERSION = 1;
-    public const ushort MINOR_VERSION = 3;
+    public const ushort MINOR_VERSION = 4;
 
     public static byte[] Write(Bytecodeˉmodule module)
     {

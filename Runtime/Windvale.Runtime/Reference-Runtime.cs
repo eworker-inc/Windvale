@@ -178,6 +178,16 @@ public sealed class Referenceˉruntime
                         Stack.Add(Runtimeˉvalue.Fromˉu32(BinaryPrimitives.ReadUInt32LittleEndian(
                             U32ˉsource.Storage.AsSpan(U32ˉabsolute, sizeof(uint)))));
                         break;
+                    case Opcode.Bytesˉreadˉi32ˉlittle:
+                        var Readˉi32ˉoffset = Pop(Stack).U32ˉvalue;
+                        var Readˉi32ˉsource = Pop(Stack).Bytesˉvalue;
+                        var Readˉi32ˉabsolute = Requireˉbyteˉrange(
+                            Readˉi32ˉsource,
+                            Readˉi32ˉoffset,
+                            sizeof(int));
+                        Stack.Add(Runtimeˉvalue.Fromˉi32(BinaryPrimitives.ReadInt32LittleEndian(
+                            Readˉi32ˉsource.Storage.AsSpan(Readˉi32ˉabsolute, sizeof(int)))));
+                        break;
                     case Opcode.I32ˉadd:
                         Applyˉi32ˉbinary(Stack, (Left, Right) => checked(Left + Right));
                         break;
@@ -282,6 +292,9 @@ public sealed class Referenceˉruntime
                         Stack.Add(Runtimeˉvalue.Fromˉtext(
                             Pop(Stack).U32ˉvalue.ToString(CultureInfo.InvariantCulture)));
                         break;
+                    case Opcode.U32ˉfromˉu8:
+                        Stack.Add(Runtimeˉvalue.Fromˉu32(Pop(Stack).U8ˉvalue));
+                        break;
                     case Opcode.Textˉconcat:
                         var Rightˉtext = Pop(Stack).Textˉvalue!;
                         var Leftˉtext = Pop(Stack).Textˉvalue!;
@@ -295,6 +308,34 @@ public sealed class Referenceˉruntime
                         }
 
                         Stack.Add(Runtimeˉvalue.Fromˉtext(string.Concat(Leftˉtext, Rightˉtext)));
+                        break;
+                    case Opcode.Textˉutf8ˉisˉvalid:
+                        var Utf8ˉcandidate = Pop(Stack).Bytesˉvalue;
+                        Stack.Add(Runtimeˉvalue.Fromˉbool(Isˉvalidˉutf8(Utf8ˉcandidate)));
+                        break;
+                    case Opcode.Textˉfromˉutf8:
+                        var Utf8ˉsource = Pop(Stack).Bytesˉvalue;
+                        if (Utf8ˉsource.Length > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
+                        {
+                            throw new Runtimeˉexception(
+                                "WVR3012",
+                                $"Decoded text result exceeds the UTF-8 value limit {Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES}.");
+                        }
+
+                        try
+                        {
+                            Stack.Add(Runtimeˉvalue.Fromˉtext(STRICT_UTF8.GetString(Utf8ˉsource.Asˉspan())));
+                        }
+                        catch (DecoderFallbackException)
+                        {
+                            throw new Runtimeˉexception(
+                                "WVR3014",
+                                "Textˉfromˉutf8 received an invalid UTF-8 byte sequence.");
+                        }
+
+                        break;
+                    case Opcode.Textˉquote:
+                        Stack.Add(Runtimeˉvalue.Fromˉtext(Quoteˉtext(Pop(Stack).Textˉvalue!)));
                         break;
                     case Opcode.Recordˉcreate:
                         var Recordˉtype = (Recordˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
@@ -586,6 +627,79 @@ public sealed class Referenceˉruntime
             source.Storage,
             checked(source.Offset + (int)offset),
             checked((int)length));
+    }
+
+    private static bool Isˉvalidˉutf8(Runtimeˉbyteˉslice value)
+    {
+        try
+        {
+            _ = STRICT_UTF8.GetCharCount(value.Asˉspan());
+            return true;
+        }
+        catch (DecoderFallbackException)
+        {
+            return false;
+        }
+    }
+
+    private static string Quoteˉtext(string value)
+    {
+        var Outputˉlength = 2;
+        foreach (var Character in value)
+        {
+            Outputˉlength = checked(Outputˉlength + Character switch
+            {
+                '"' or '\\' or '\b' or '\f' or '\n' or '\r' or '\t' => 2,
+                >= ' ' and <= '~' => 1,
+                _ => 6,
+            });
+            if (Outputˉlength > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3012",
+                    $"Quoted text result exceeds the UTF-8 value limit {Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES}.");
+            }
+        }
+
+        var Result = new StringBuilder(Outputˉlength);
+        Result.Append('"');
+        foreach (var Character in value)
+        {
+            switch (Character)
+            {
+                case '"':
+                    Result.Append("\\\"");
+                    break;
+                case '\\':
+                    Result.Append("\\\\");
+                    break;
+                case '\b':
+                    Result.Append("\\b");
+                    break;
+                case '\f':
+                    Result.Append("\\f");
+                    break;
+                case '\n':
+                    Result.Append("\\n");
+                    break;
+                case '\r':
+                    Result.Append("\\r");
+                    break;
+                case '\t':
+                    Result.Append("\\t");
+                    break;
+                case >= ' ' and <= '~':
+                    Result.Append(Character);
+                    break;
+                default:
+                    Result.Append("\\u");
+                    Result.Append(((ushort)Character).ToString("X4", CultureInfo.InvariantCulture));
+                    break;
+            }
+        }
+
+        Result.Append('"');
+        return Result.ToString();
     }
 
     private static int Requireˉbyteˉrange(
