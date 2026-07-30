@@ -1,7 +1,7 @@
 # Decision 0009: Minimal Windvale object foundation
 
 - Date: 2026-07-29
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `f87a5fa`
 
 ## Context
 

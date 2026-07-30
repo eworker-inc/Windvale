@@ -17,8 +17,8 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 | 2. Structured inspection | Add only the records, enums, structured results/errors, and bounded formatting demanded by useful section descriptions. | Qualified |
 | 3. Hosted resource boundary | Explicit arguments, file-byte input, diagnostics, and output capabilities with portable parsing kept independent. | Qualified |
 | 4. Useful `wvdump` | Inspect the same real modules identically on Windows and Debian with golden machine-readable reports. | Qualified |
-| 5. Object foundation | Deterministic byte construction, sections, symbols, relocations, and the smallest shared object contracts needed by an assembler. | Qualification pending |
-| 6. Assembler and linker | Windvale-written assembler and linker running first as verified bytecode on Windows and Linux. | Planned |
+| 5. Object foundation | Deterministic byte construction, sections, symbols, relocations, and the smallest shared object contracts needed by an assembler. | Qualified |
+| 6. Assembler and linker | Windvale-written assembler and linker running first as verified bytecode on Windows and Linux. | Current focus |
 | 7. Foundation modules | Compact reusable collections, text, binary-format, diagnostics, testing, and I/O-adapter modules driven by tool needs. | Planned |
 | 8. Self-hosted compiler | Windvale-written lexer, parser, semantics, and code generation for a meaningful subset, followed by a reproducible bootstrap closure. | Planned |
 | 9. Native backend | Native WIR lowering, first x86-64 subset, calling convention, object output, and bytecode/native differential tests. | Planned |
@@ -29,4 +29,4 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 
 ## Current focus
 
-Phase 4 is qualified at commit `a829fc8`. Phase 5 now has an implemented candidate: WVB 1.5 immutable byte construction, bounded hosted file output, the canonical x86-64-first WVO 1.0 contract and C# oracle, and a Windvale-written producer/structural inspector whose 189-byte representative object must match the oracle exactly. Qualification requires the exact candidate archive to pass the complete Windows and Debian verifier and portable-contract comparison. After that evidence is recorded, Phase 6 becomes the current focus: define the smallest useful assembler grammar and x86-64 instruction subset, then keep link layout and relocation application in a separate Windvale-written linker.
+Phase 5 is qualified at commit `f87a5fa`. The exact archive passed the Windows and Debian Release verifiers with zero warnings, all 24 tests, identical WVB 1.5 and WVO 1.0 portable contracts, native hosted-writer cases, and byte-for-byte equality of the Windvale-written 189-byte object and independent C# oracle. Phase 6 is now the current focus: define the smallest useful assembler grammar and x86-64 instruction subset, emit canonical WVO sections/symbols/relocations, then keep layout, symbol resolution, relocation application, and final image output in a separate Windvale-written linker.
