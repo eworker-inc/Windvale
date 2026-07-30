@@ -1,0 +1,44 @@
+module Wirˉvalid profile hosted;
+
+capability console.write_line;
+
+data Numbers: [i32] = [1, 2, 3];
+data Message: text = "value=";
+
+record Pair {
+    Left: i32;
+    Right: i32;
+}
+
+enum State {
+    Ready = 0;
+    Waiting = 1;
+}
+
+fn Add(Value: i32) -> i32 {
+    return Value + 1;
+}
+
+fn Choose(Value: i32) -> i32 {
+    if Value > 0 {
+        return Value;
+    } else {
+        return 0;
+    }
+}
+
+export fn Main() -> i32 {
+    let Pairˉvalue: Pair = Pair(1, 2);
+    let Stateˉvalue: State = State.Ready;
+    var Result: i32 = Add(Pairˉvalue.Left);
+    if Stateˉvalue == State.Ready {
+        Result = Result + Numbers[0];
+    }
+    while Result < 4 {
+        Result = Result + 1;
+    }
+    let Count: i32 = length(Numbers);
+    let Report: text = Textˉconcat(Message, I32ˉformat(Count));
+    console.write_line(Report);
+    return Choose(Result);
+}

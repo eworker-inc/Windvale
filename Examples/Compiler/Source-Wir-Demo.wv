@@ -1,0 +1,121 @@
+module Compilerˉsourceˉwirˉdemo profile portable;
+
+import Compilerˉsourceˉwir;
+
+fn Sourceˉwirˉheader(Modules: u32) -> bytes {
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Sourceˉwirˉone(First: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(24u32);
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes)));
+    var Result: bytes = Bytesˉconcat(Sourceˉwirˉheader(1u32), Directory);
+    return Bytesˉconcat(Result, Firstˉbytes);
+}
+
+fn Sourceˉwirˉstatus(Source: text) -> Compilerˉsourceˉwirˉstatus {
+    let Input: bytes = Sourceˉwirˉone(Source);
+    let Summary: Compilerˉsourceˉwirˉsummary = Compilerˉvalidateˉsourceˉwir(Input);
+    return Summary.Status;
+}
+
+fn Sourceˉwirˉreplaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Input, Offset, 1u32, Bytesˉfromˉu8(Value)
+    );
+    return Replaced.Value;
+}
+
+fn Sourceˉwirˉreplaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
+    );
+    return Replaced.Value;
+}
+
+export fn Main() -> i32 {
+    let Validˉsource: text = "module Wirˉvalid profile hosted; capability console.write_line; data Numbers: [i32] = [1, 2, 3]; data Message: text = \"value=\"; record Pair { Left: i32; Right: i32; } enum State { Ready = 0; Waiting = 1; } fn Add(Value: i32) -> i32 { return Value + 1; } fn Choose(Value: i32) -> i32 { if Value > 0 { return Value; } else { return 0; } } export fn Main() -> i32 { let Pairˉvalue: Pair = Pair(1, 2); let Stateˉvalue: State = State.Ready; var Result: i32 = Add(Pairˉvalue.Left); if Stateˉvalue == State.Ready { Result = Result + Numbers[0]; } while Result < 4 { Result = Result + 1; } let Count: i32 = length(Numbers); let Report: text = Textˉconcat(Message, I32ˉformat(Count)); console.write_line(Report); return Choose(Result); }";
+    let Validˉinput: bytes = Sourceˉwirˉone(Validˉsource);
+    let Valid: Compilerˉsourceˉwirˉsummary = Compilerˉvalidateˉsourceˉwir(Validˉinput);
+    if Valid.Status != Compilerˉsourceˉwirˉstatus.Valid { return 1; }
+    if Valid.Bindingˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return 2; }
+    if Valid.Modules != 1u32 { return 3; }
+    if Valid.Functions != 8u32 { return 4; }
+    if Valid.Blocks == 0u32 { return 5; }
+    if Valid.Operations == 0u32 { return 6; }
+    if Valid.Temporaries == 0u32 { return 7; }
+    if Valid.Operands == 0u32 { return 8; }
+    if Bytesˉlength(Valid.Directory) <= 48u32 { return 9; }
+    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Validˉinput);
+    let Symbols: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(Validˉinput);
+    let Bindings: Compilerˉsourceˉbindingˉsummary = Compilerˉvalidateˉsourceˉbindings(Validˉinput);
+    if !Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings, Valid.Directory
+    ) { return 10; }
+    if Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings,
+        Sourceˉwirˉreplaceˉu8(Valid.Directory, 0u32, 0u8)
+    ) { return 11; }
+    if Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings,
+        Sourceˉwirˉreplaceˉu32(Valid.Directory, 12u32, 44u32)
+    ) { return 12; }
+    if Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings,
+        Sourceˉwirˉreplaceˉu32(Valid.Directory, 16u32, 0u32)
+    ) { return 13; }
+    if Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings,
+        Bytesˉconcat(Valid.Directory, Bytesˉfromˉu8(0u8))
+    ) { return 14; }
+    let Blocksˉoffset: u32 = 48u32 + Valid.Functions * 48u32;
+    let Operationsˉoffset: u32 = Blocksˉoffset + Valid.Blocks * 36u32;
+    let Temporariesˉoffset: u32 = Operationsˉoffset + Valid.Operations * 48u32;
+    let Operandsˉoffset: u32 = Temporariesˉoffset + Valid.Temporaries * 4u32;
+    if Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings,
+        Sourceˉwirˉreplaceˉu32(Valid.Directory, 288u32, 1u32)
+    ) { return 15; }
+    if Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings,
+        Sourceˉwirˉreplaceˉu32(Valid.Directory, Blocksˉoffset, 1u32)
+    ) { return 16; }
+    if Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings,
+        Sourceˉwirˉreplaceˉu32(Valid.Directory, Operationsˉoffset + 12u32, 64u32)
+    ) { return 17; }
+    if Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings,
+        Sourceˉwirˉreplaceˉu32(Valid.Directory, Temporariesˉoffset, 0u32)
+    ) { return 18; }
+    if Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Validˉinput, Scan, Symbols, Bindings,
+        Sourceˉwirˉreplaceˉu32(
+            Valid.Directory, Operandsˉoffset, Compilerˉsourceˉwirˉsentinel()
+        )
+    ) { return 19; }
+
+    if Sourceˉwirˉstatus("module Wirˉtype profile portable; export fn Main() -> i32 { let Value: u32 = 1; return 0; }") != Compilerˉsourceˉwirˉstatus.Typeˉmismatch { return 20; }
+    if Sourceˉwirˉstatus("module Wirˉcondition profile portable; export fn Main() -> i32 { if 1 { return 1; } return 0; }") != Compilerˉsourceˉwirˉstatus.Invalidˉcondition { return 21; }
+    if Sourceˉwirˉstatus("module Wirˉreturn profile portable; export fn Main() -> void { return 1; }") != Compilerˉsourceˉwirˉstatus.Invalidˉreturn { return 22; }
+    if Sourceˉwirˉstatus("module Wirˉmissing profile portable; export fn Main(Value: i32) -> i32 { if Value > 0 { return Value; } }") != Compilerˉsourceˉwirˉstatus.Missingˉreturn { return 23; }
+    if Sourceˉwirˉstatus("module Wirˉunreachable profile portable; export fn Main() -> i32 { return 1; let Value: i32 = 2; }") != Compilerˉsourceˉwirˉstatus.Unreachableˉstatement { return 24; }
+    if Sourceˉwirˉstatus("module Wirˉdata profile portable; data Message: text = \"x\"; export fn Main() -> i32 { return length(Message); }") != Compilerˉsourceˉwirˉstatus.Invalidˉdataˉuse { return 25; }
+    if Sourceˉwirˉstatus("module Wirˉindex profile portable; data Values: [i32] = [1]; export fn Main() -> i32 { return Values[true]; }") != Compilerˉsourceˉwirˉstatus.Invalidˉindex { return 26; }
+    if Sourceˉwirˉstatus("module Wirˉfield profile portable; export fn Main() -> i32 { let Value: i32 = 1; return Value.Left; }") != Compilerˉsourceˉwirˉstatus.Invalidˉfieldˉtarget { return 27; }
+    if Sourceˉwirˉstatus("module Wirˉunknownˉfield profile portable; record Pair { Left: i32; } export fn Main() -> i32 { let Value: Pair = Pair(1); return Value.Right; }") != Compilerˉsourceˉwirˉstatus.Unknownˉfield { return 28; }
+    if Sourceˉwirˉstatus("module Wirˉunknownˉmember profile portable; enum State { Ready = 0; } export fn Main() -> i32 { let Value: State = State.Missing; return 0; }") != Compilerˉsourceˉwirˉstatus.Unknownˉenumˉmember { return 29; }
+    if Sourceˉwirˉstatus("module Wirˉoperator profile portable; export fn Main() -> i32 { let Value: text = \"a\" + \"b\"; return 0; }") != Compilerˉsourceˉwirˉstatus.Invalidˉoperator { return 30; }
+    if Sourceˉwirˉstatus("module Wirˉargument profile portable; fn Value(Input: i32) -> i32 { return Input; } export fn Main() -> i32 { return Value(true); }") != Compilerˉsourceˉwirˉstatus.Invalidˉargument { return 31; }
+    let Bindingˉfailure: Compilerˉsourceˉwirˉsummary = Compilerˉvalidateˉsourceˉwir(
+        Sourceˉwirˉone("module Wirˉbinding profile portable; export fn Main() -> i32 { return Missing; }")
+    );
+    if Bindingˉfailure.Status != Compilerˉsourceˉwirˉstatus.Sourceˉbindings { return 32; }
+    if Bindingˉfailure.Bindingˉstatus != Compilerˉsourceˉbindingˉstatus.Unknownˉname { return 33; }
+    return 0;
+}

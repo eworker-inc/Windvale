@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉsymbols` is the cross-host-qualified portable declaration and signature phase at commit `d57a6d8` under Decision 0033. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes independently validated lookup evidence for later semantic phases.
+`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current WVIR candidate adds deterministic indexed lookup evidence while preserving the qualified namespace, signature, and WVSD contracts. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes evidence for later semantic phases.
 
 It does not bind function bodies, locals, calls, expressions, control flow, construct WIR, or emit WVB.
 
@@ -50,6 +50,7 @@ record Compilerˉsourceˉsymbolˉsummary {
     Parameters: u32;
     Directory: bytes;
     Visibility: bytes;
+    Lookup: bytes;
     Failureˉmodule: u32;
     Failureˉrelatedˉmodule: u32;
     Failureˉkind: Compilerˉsourceˉdeclarationˉkind;
@@ -62,7 +63,7 @@ Compilerˉvalidateˉsourceˉsymbols(Input: bytes)
     -> Compilerˉsourceˉsymbolˉsummary
 ```
 
-Success returns aggregate declaration/member counts, a valid WVSD directory, a valid visibility matrix, both failure module indices equal to `Modules`, failure kind `End`, failure offset equal to the complete WVSS length, and zero failure line/column. Failure returns empty `Directory` and `Visibility` values. A graph rejection preserves the graph status and its failure evidence.
+Success returns aggregate declaration/member counts, a valid WVSD directory, a valid visibility matrix, an internal deterministic lookup index, both failure module indices equal to `Modules`, failure kind `End`, failure offset equal to the complete WVSS length, and zero failure line/column. Failure returns empty evidence values. A graph rejection preserves the graph status and its failure evidence.
 
 ## Namespace and signature rules
 
@@ -90,7 +91,11 @@ All integers are unsigned little-endian. The directory contains no padding.
 
 Each entry contains six `u32` fields in this order: WVSS module index, declaration-kind value, declaration byte offset, name byte offset, name byte length, and declaration item count. Imports are excluded. Entries use canonical WVSS module order and source declaration order.
 
-The directory length must be exactly `16 + EntryCount * 24`. Before lookup, `Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid` reparses every accepted source as a stream and compares every field and the final entry count. This is an independent publication boundary, not trust in bytes merely because the same module constructed them.
+The directory length must be exactly `16 + EntryCount * 24`. `Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid` remains an exported strict validator that reparses every accepted source as a stream. The normal phase constructs counts and entries together, checks the complete binary shape, and compares every entry with its source declaration during the namespace pass. This preserves an independent canonical comparison without a redundant whole-source traversal.
+
+## Internal lookup index
+
+`Lookup` is a private `WVSI 1` acceleration index. It groups WVSD entry indices by the first UTF-8 byte of the declaration name and stores record/enum rank prefixes for each of the 256 byte buckets. Name equality remains exact ordinal UTF-8 comparison over validated absolute WVSS spans. The index never changes namespace semantics and is not a separately published compatibility format.
 
 ## Visibility matrix
 
@@ -98,20 +103,20 @@ The directory length must be exactly `16 + EntryCount * 24`. Before lookup, `Com
 
 ## Deterministic processing order
 
-The phase validates in this order: source graph; aggregate counts; WVSD construction and independent validation; namespaces and capability policy; visibility construction; then record, enum, and function signatures in canonical WVSS module/source order. Within a declaration, members are checked in source order. Inputs containing multiple faults receive the first failure under this order.
+The phase validates in this order: source graph; aggregate counts plus WVSD construction; directory shape; namespaces, canonical entry correspondence, and capability policy; visibility construction; then record, enum, and function signatures in canonical WVSS module/source order. Within a declaration, members are checked in source order. Inputs containing multiple faults receive the first failure under this order.
 
 Failure evidence names the current module, a related prior/target module when applicable, declaration kind, name/token byte offset, and one-based line/column. `Modules` is the sentinel when no related module exists.
 
-## Qualified artifacts and evidence
+## Candidate artifacts and evidence
 
-- `Source-Symbols-Core.wvb`: 252,266 bytes, SHA-256 `79a60d3734c8c128af327b3c9e015bfa1f5b2c9d7b87abf4fb3fc2428d8bac3a`.
-- `Source-Symbols-Demo.wvb`: 264,958 bytes, SHA-256 `476551cc0990588c3e782f45be83baebbcf3cd519cc0fe8dc17ccd67a7aa3714`.
-- `Source-Symbols-Tool.wvb`: 256,260 bytes, SHA-256 `852dae1fe1962351e46a70e70bbdd4547814de17d75a8409e56aa0f94ccd7a4d`.
+- `Source-Symbols-Core.wvb`: 262,263 bytes, SHA-256 `624fd35749645c0cf269c6d298303b614efad1e112e86cb045016485386d58f6`.
+- `Source-Symbols-Demo.wvb`: 274,814 bytes, SHA-256 `ca513e0ea10a84f6c5ccc630927b3c18793b6c2e3d1badabffab08fdcdd2146c`.
+- `Source-Symbols-Tool.wvb`: 266,044 bytes, SHA-256 `840492af48d93af014fb12c59b6711752e80519d50ec45dbecee4483b42dce05`.
 
 The Windows and Debian verifiers each pass a zero-warning Release build, all 45 conformance tests, and the complete native CLI checks. The demo exercises valid and rejected namespaces/signatures plus corrupted directories. The hosted tool validates the real eight-module, 283,765-byte compiler closure as:
 
 ```text
-source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=131 fields=289 members=181 parameters=582 directory-bytes=4072 visibility-bytes=64
+source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=290 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64
 ```
 
-The exact `d57a6d8` archive passed on both hosts. Their normalized reports matched, and all 42 directly retrieved verifier artifacts—3,102,891 bytes including the three symbol artifacts and retained dependency/downstream outputs—were byte-identical.
+The pre-index `d57a6d8` archive passed the stated qualification on both hosts. The hashes above belong to the current WVIR candidate and require a new exact-archive Windows/Debian qualification before they are described as cross-host qualified.

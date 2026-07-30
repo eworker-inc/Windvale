@@ -49,12 +49,15 @@ internal static class Program
     private const string SOURCE_GRAPH_SHA256 = "1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133";
     private const string SOURCE_GRAPH_DEMO_SHA256 = "53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073";
     private const string SOURCE_GRAPH_TOOL_SHA256 = "75fdf22e93f154599cdf4530ebcf828eec061458c73f6ab09b00d0765e3ebdc1";
-    private const string SOURCE_SYMBOLS_SHA256 = "79a60d3734c8c128af327b3c9e015bfa1f5b2c9d7b87abf4fb3fc2428d8bac3a";
-    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "476551cc0990588c3e782f45be83baebbcf3cd519cc0fe8dc17ccd67a7aa3714";
-    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "852dae1fe1962351e46a70e70bbdd4547814de17d75a8409e56aa0f94ccd7a4d";
-    private const string SOURCE_BINDINGS_SHA256 = "e9f15ed16a627ae2f96feee001dd0dd7272d744566022e9b353aa79a351ed7d4";
-    private const string SOURCE_BINDINGS_DEMO_SHA256 = "d0007e74e697398d3a4cf52a5ee3143a5f624036f3665f8e2d610674b26eb72e";
-    private const string SOURCE_BINDINGS_TOOL_SHA256 = "dc3911680d5ea22890adfad9c3cf7156c386824591d16c9c39ada677c2dfd8d8";
+    private const string SOURCE_SYMBOLS_SHA256 = "624fd35749645c0cf269c6d298303b614efad1e112e86cb045016485386d58f6";
+    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "ca513e0ea10a84f6c5ccc630927b3c18793b6c2e3d1badabffab08fdcdd2146c";
+    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "840492af48d93af014fb12c59b6711752e80519d50ec45dbecee4483b42dce05";
+    private const string SOURCE_BINDINGS_SHA256 = "8656850137e843920f8296660936d6f9043b2804095035e87289c4569ebe535b";
+    private const string SOURCE_BINDINGS_DEMO_SHA256 = "a78ecea3579a2ff64ae2ae19e40a424663193982fad497fe944f5fac6c262d81";
+    private const string SOURCE_BINDINGS_TOOL_SHA256 = "abcd8a8edda501d3a357fee1af368304687cca0b8a3f7686c2ebe01361d554f7";
+    private const string SOURCE_WIR_SHA256 = "ebea7beb54939e9f3b396905859ca25bef49c5765bebccd645860fb1741debfe";
+    private const string SOURCE_WIR_DEMO_SHA256 = "7d7699cc110284274fb17fa7fd095d7566660f037ad3e3a067ebdeb68e5dd5f3";
+    private const string SOURCE_WIR_TOOL_SHA256 = "c6a1939d2199fa62606f1351beaed3c96a8360ccc20b032b54760ee51f6974a8";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -319,6 +322,18 @@ internal static class Program
     private static readonly string SOURCE_BINDINGS_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Bindings-Tool.wv");
 
+    private static readonly string SOURCE_WIR_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wir-Core.wv");
+
+    private static readonly string SOURCE_WIR_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wir-Demo.wv");
+
+    private static readonly string SOURCE_WIR_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wir-Tool.wv");
+
+    private static readonly string SOURCE_WIR_VALID_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wir-Valid.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -349,6 +364,7 @@ internal static class Program
         ("Windvale compiler import graphs are complete, acyclic, and portable", Compilerˉsourceˉgraphˉruns),
         ("Windvale compiler declaration namespaces and signatures bind portably", Compilerˉsourceˉsymbolsˉrun),
         ("Windvale compiler bodies, locals, and calls bind portably", Compilerˉsourceˉbindingsˉrun),
+        ("Windvale compiler lowers typed source into canonical validated WVIR", Compilerˉsourceˉwirˉruns),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
@@ -1574,7 +1590,7 @@ internal static class Program
         Equal("Compilerˉsourceˉsymbols", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
         Equal(38, Library.Module.Types.Length);
-        Equal(32, Library.Module.Exports.Length);
+        Equal(36, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉsourceˉsymbolˉmatch",
@@ -1660,7 +1676,7 @@ internal static class Program
         Equal("Compilerˉsourceˉbindings", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
         Equal(47, Library.Module.Types.Length);
-        Equal(46, Library.Module.Exports.Length);
+        Equal(52, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉsourceˉbindingˉkind",
@@ -1731,6 +1747,63 @@ internal static class Program
         Contains(Rejected.Diagnostics, "source bindings status=Unknownˉname");
         Contains(Rejected.Diagnostics, "module=0 related-module=1");
         Equal(1, Rejected.Readˉcount);
+    }
+
+    private static void Compilerˉsourceˉwirˉruns()
+    {
+        var Libraryˉbytes = Compileˉwithˉsourceˉwirˉsuccess(
+            SOURCE_WIR_SOURCE,
+            "Source-Wir-Core.wv",
+            includeˉsourceˉwir: false);
+        Equal(SOURCE_WIR_SHA256, Moduleˉdigest.Calculateˉsha256(Libraryˉbytes));
+        var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
+        Equal("Compilerˉsourceˉwir", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Equal(62, Library.Module.Exports.Length);
+        foreach (var Typeˉname in new[]
+                 {
+                     "Compilerˉsourceˉwirˉoperation",
+                     "Compilerˉsourceˉwirˉstatus",
+                     "Compilerˉsourceˉwirˉsummary",
+                 })
+        {
+            True(Library.Module.Types.Any(Type => Type.Name == Typeˉname),
+                $"WVIR type '{Typeˉname}' was not emitted.");
+        }
+        True(
+            Library.Module.Exports.Any(Export => Export.Name == "Compilerˉvalidateˉsourceˉwir"),
+            "The source-to-WVIR validation entry point was not emitted.");
+        True(
+            Library.Module.Exports.Any(Export => Export.Name == "Compilerˉsourceˉwirˉdirectoryˉisˉvalid"),
+            "The independent WVIR directory validator was not emitted.");
+
+        var Demoˉbytes = Compileˉwithˉsourceˉwirˉsuccess(
+            SOURCE_WIR_DEMO_SOURCE,
+            "Source-Wir-Demo.wv");
+        Equal(SOURCE_WIR_DEMO_SHA256, Moduleˉdigest.Calculateˉsha256(Demoˉbytes));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Demoˉbytes),
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                    Maximumˉinstructions: 4_000_000_000)).Runˉmain().Exitˉcode);
+
+        var Toolˉbytes = Compileˉwithˉsourceˉwirˉsuccess(
+            SOURCE_WIR_TOOL_SOURCE,
+            "Source-Wir-Tool.wv");
+        Equal(SOURCE_WIR_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Valid = Runˉsourceˉsetˉtool(
+            Tool,
+            [new("valid.wv", SOURCE_WIR_VALID_SOURCE)],
+            2_000_000_000);
+        Equal(0, Valid.Exitˉcode);
+        Equal(string.Empty, Valid.Diagnostics);
+        Equal(1, Valid.Readˉcount);
+        Equal(
+            "source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporaries=36 operands=29 directory-bytes=3200\n",
+            Valid.Output);
     }
 
     private static void Moduleˉroundˉtrip()
@@ -5042,14 +5115,14 @@ internal static class Program
         Equal(string.Empty, Sourceˉsymbolsˉselfˉresult.Diagnostics);
         Equal(8, Sourceˉsymbolsˉselfˉresult.Readˉcount);
         Equal(
-            "source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=131 fields=289 members=181 parameters=582 directory-bytes=4072 visibility-bytes=64\n",
+            "source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=290 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64\n",
             Sourceˉsymbolsˉselfˉresult.Output);
         Equal(0, Sourceˉbindingsˉdemoˉresult.Exitˉcode);
         Equal(0, Sourceˉbindingsˉselfˉresult.Exitˉcode);
         Equal(string.Empty, Sourceˉbindingsˉselfˉresult.Diagnostics);
         Equal(9, Sourceˉbindingsˉselfˉresult.Readˉcount);
         Equal(
-            "source bindings status=Valid modules=9 functions=177 parameters=777 locals=896 reads=7937 assignments=602 calls=1344 directory-bytes=62044\n",
+            "source bindings status=Valid modules=9 functions=187 parameters=813 locals=944 reads=8229 assignments=639 calls=1450 directory-bytes=65148\n",
             Sourceˉbindingsˉselfˉresult.Output);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
@@ -5617,6 +5690,37 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Compiler source-binding composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉsourceˉwirˉsuccess(
+        string source,
+        string sourceˉname,
+        bool includeˉsourceˉwir = true)
+    {
+        var Dependencies = new List<Sourceˉmoduleˉinput>();
+        if (includeˉsourceˉwir)
+        {
+            Dependencies.Add(new("Compiler/Bootstrap/Source-Wir-Core.wv", SOURCE_WIR_SOURCE));
+        }
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
+        Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            Dependencies);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler WVIR composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();

@@ -115,5 +115,17 @@
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Bindings-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Bindings-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Bootstrap/Source-Wir-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wir-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Wir-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wir-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Wir-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wir-Tool.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wir/Valid.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wir-Valid.wv" />
   </ItemGroup>
 </Project>

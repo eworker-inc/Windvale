@@ -47,6 +47,8 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - A compiler-owned canonical packed source-set reader that gives portable semantic phases indexed immutable views over the root and ordered dependencies
 - A Windvale-written import-graph phase that owns bounded module resolution, root reachability, and cycle rejection without host paths or collections
 - A Windvale-written declaration/signature symbol phase with independently validated packed declaration evidence, transitive visibility, deterministic nominal indices, and stable namespace/type failures
+- A Windvale-written parameter/local and body-reference binder with independently validated packed WVLB evidence
+- A Windvale-written typed WVIR producer with explicit blocks, temporaries, source spans, and an independent packed-directory validator
 - Recursive-descent and precedence parsing
 - Explicit bounded source-module graph validation and deterministic static composition of dependency records, enums, and functions
 - Portable Foundation source contracts used by multiple Windvale-written tools
@@ -54,7 +56,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - Typed, stack-independent WIR with explicit blocks and terminators
 - Deterministic lowering from WIR into stack bytecode
 
-WIR uses virtual temporaries and local slots. Bytecode lowering assigns every WIR temporary a bytecode local, keeping the operand stack empty between WIR operations and at block boundaries. This is intentionally verbose but makes the first backend easy to inspect and verify.
+WIR uses virtual temporaries and local slots. The Stage 0 C# compiler already lowers its typed WIR to bytecode. The portable Windvale-written front end now publishes the separate WVIR 1 contract; connecting that evidence to a Windvale-written WVB backend is the next compiler stage. The intended backend assigns every WIR temporary a bytecode local, keeping the operand stack empty between WIR operations and at block boundaries. This is intentionally verbose but makes the first backend easy to inspect and verify.
 
 ### Bytecode
 

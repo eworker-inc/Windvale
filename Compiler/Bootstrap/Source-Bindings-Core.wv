@@ -448,6 +448,7 @@ export fn Compilerˉsourceˉbindingsˉcollectˉlocal(
             Input,
             Scan,
             Symbols.Directory,
+            Symbols.Lookup,
             Symbols.Visibility,
             Module,
             Source,
@@ -779,9 +780,15 @@ export fn Compilerˉsourceˉbindingsˉfindˉdeclaration(
 ) -> Compilerˉsourceˉbindingˉmatch {
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
     let Queryˉfirst: u8 = Bytesˉreadˉu8(Source, Nameˉoffset);
+    let Range: Compilerˉsourceˉposition = Compilerˉsourceˉsymbolsˉlookupˉrange(
+        Symbols.Lookup, Queryˉfirst
+    );
     var Index: u32 = 0u32;
-    while Index < Entries {
-        let Entry: u32 = 16u32 + Index * 24u32;
+    while Index < Range.Line {
+        let Directoryˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Lookup, 4112u32 + (Range.Offset + Index) * 4u32
+        );
+        let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
         let Target: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry);
         let Entryˉkind: Compilerˉsourceˉdeclarationˉkind = Compilerˉsourceˉsymbolsˉdeclarationˉkind(
             Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 4u32)
@@ -802,7 +809,7 @@ export fn Compilerˉsourceˉbindingsˉfindˉdeclaration(
                         Compilerˉsourceˉcallableˉkind.None,
                         Target,
                         Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 20u32),
-                        Index
+                        Directoryˉindex
                     );
                 }
             }
@@ -888,9 +895,15 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
     if Intrinsic.Found { return Intrinsic; }
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
     let Queryˉfirst: u8 = Bytesˉreadˉu8(Source, Offset);
+    let Range: Compilerˉsourceˉposition = Compilerˉsourceˉsymbolsˉlookupˉrange(
+        Symbols.Lookup, Queryˉfirst
+    );
     var Index: u32 = 0u32;
-    while Index < Entries {
-        let Entry: u32 = 16u32 + Index * 24u32;
+    while Index < Range.Line {
+        let Directoryˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Lookup, 4112u32 + (Range.Offset + Index) * 4u32
+        );
+        let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
         let Kindˉvalue: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 4u32);
         var Callableˉkind: Compilerˉsourceˉcallableˉkind = Compilerˉsourceˉcallableˉkind.None;
         if Kindˉvalue == 4u32 { Callableˉkind = Compilerˉsourceˉcallableˉkind.Record; }
@@ -919,7 +932,7 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
                         Callableˉkind,
                         Target,
                         Items,
-                        Index
+                        Directoryˉindex
                     );
                 }
             }
@@ -1067,6 +1080,7 @@ export fn Compilerˉsourceˉbindingsˉbindˉfield(
         Input,
         Scan,
         Symbols.Directory,
+        Symbols.Lookup,
         Source,
         Expression.Firstˉoffset,
         Expression.Firstˉlength
@@ -1347,6 +1361,28 @@ export fn Compilerˉsourceˉbindingsˉphaseˉbuild(
     );
 }
 
+export fn Compilerˉsourceˉbindingsˉphaseˉmerge(
+    Global: Compilerˉsourceˉbindingˉphase,
+    Local: Compilerˉsourceˉbindingˉphase
+) -> Compilerˉsourceˉbindingˉphase {
+    if Local.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Local; }
+    if Local.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Local; }
+    let Build: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingˉbuild(
+        Compilerˉsourceˉbindingˉstatus.Valid,
+        Bytesˉconcat(Global.Payload, Local.Payload),
+        Global.Entries + Local.Entries,
+        Global.Parameters + Local.Parameters,
+        Global.Locals + Local.Locals,
+        Local.Nextˉslot,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+    );
+    let Body: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbodyˉcombine(
+        Compilerˉsourceˉbindingsˉphaseˉbodyˉvalue(Global),
+        Compilerˉsourceˉbindingsˉphaseˉbodyˉvalue(Local)
+    );
+    return Compilerˉsourceˉbindingsˉphaseˉfrom(Build, Body);
+}
+
 export fn Compilerˉsourceˉbindingsˉphaseˉblock(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
@@ -1358,6 +1394,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
     Line: u32,
     Column: u32,
     Endˉoffset: u32,
+    Bindˉbody: bool,
     Phase: Compilerˉsourceˉbindingˉphase
 ) -> Compilerˉsourceˉbindingˉphase {
     let Start: Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(Source, Offset, Line, Column, Endˉoffset);
@@ -1379,20 +1416,22 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
             let Bindingˉfirst: u32 = Result.Entries - Result.Nextˉslot;
             let Bindingˉentries: u32 = Result.Entries;
             if Statement.Kind == Compilerˉsourceˉstatementˉkind.Local {
-                let Localˉexpressionˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
-                    Source, Statement.Offset, Statement.Line, Statement.Column,
-                    Statement.Expressionˉoffset
-                );
-                let Localˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
-                    Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
-                    Module, Function, Source,
-                    Statement.Expressionˉoffset,
-                    Localˉexpressionˉposition.Line,
-                    Localˉexpressionˉposition.Column,
-                    Statement.Expressionˉoffset + Statement.Expressionˉlength
-                );
-                Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Localˉbody);
-                if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
+                if Bindˉbody {
+                    let Localˉexpressionˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+                        Source, Statement.Offset, Statement.Line, Statement.Column,
+                        Statement.Expressionˉoffset
+                    );
+                    let Localˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
+                        Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
+                        Module, Function, Source,
+                        Statement.Expressionˉoffset,
+                        Localˉexpressionˉposition.Line,
+                        Localˉexpressionˉposition.Column,
+                        Statement.Expressionˉoffset + Statement.Expressionˉlength
+                    );
+                    Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Localˉbody);
+                    if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
+                }
                 let Localˉbuild: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉcollectˉlocal(
                     Input, Scan, Symbols, Module, Function, Source,
                     Statement, Endˉoffset,
@@ -1402,41 +1441,46 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                 if Result.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
             }
             if Statement.Kind == Compilerˉsourceˉstatementˉkind.Assignment {
-                let Assignmentˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉassignment(
-                    Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
-                    Module, Function, Source, Statement
-                );
-                Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Assignmentˉbody);
-                if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
-                let Assignmentˉvalueˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
-                    Source, Statement.Offset, Statement.Line, Statement.Column,
-                    Statement.Expressionˉoffset
-                );
-                let Assignmentˉvalue: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
-                    Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
-                    Module, Function, Source,
-                    Statement.Expressionˉoffset,
-                    Assignmentˉvalueˉposition.Line,
-                    Assignmentˉvalueˉposition.Column,
-                    Statement.Expressionˉoffset + Statement.Expressionˉlength
-                );
-                Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Assignmentˉvalue);
+                if Bindˉbody {
+                    let Assignmentˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉassignment(
+                        Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
+                        Module, Function, Source, Statement
+                    );
+                    Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Assignmentˉbody);
+                    if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
+                    let Assignmentˉvalueˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+                        Source, Statement.Offset, Statement.Line, Statement.Column,
+                        Statement.Expressionˉoffset
+                    );
+                    let Assignmentˉvalue: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
+                        Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
+                        Module, Function, Source,
+                        Statement.Expressionˉoffset,
+                        Assignmentˉvalueˉposition.Line,
+                        Assignmentˉvalueˉposition.Column,
+                        Statement.Expressionˉoffset + Statement.Expressionˉlength
+                    );
+                    Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Assignmentˉvalue);
+                }
             }
             if Statement.Kind == Compilerˉsourceˉstatementˉkind.Expression {
-                let Standaloneˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
-                    Source, Statement.Offset, Statement.Line, Statement.Column,
-                    Statement.Expressionˉoffset
-                );
-                let Standaloneˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
-                    Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
-                    Module, Function, Source,
-                    Statement.Expressionˉoffset, Standaloneˉposition.Line, Standaloneˉposition.Column,
-                    Statement.Expressionˉoffset + Statement.Expressionˉlength
-                );
-                Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Standaloneˉbody);
+                if Bindˉbody {
+                    let Standaloneˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+                        Source, Statement.Offset, Statement.Line, Statement.Column,
+                        Statement.Expressionˉoffset
+                    );
+                    let Standaloneˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
+                        Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
+                        Module, Function, Source,
+                        Statement.Expressionˉoffset, Standaloneˉposition.Line, Standaloneˉposition.Column,
+                        Statement.Expressionˉoffset + Statement.Expressionˉlength
+                    );
+                    Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Standaloneˉbody);
+                }
             }
             if Statement.Kind == Compilerˉsourceˉstatementˉkind.Return {
-                if Statement.Expressionˉlength > 0u32 {
+                if Bindˉbody {
+                    if Statement.Expressionˉlength > 0u32 {
                     let Returnˉvalueˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
                         Source, Statement.Offset, Statement.Line, Statement.Column,
                         Statement.Expressionˉoffset
@@ -1449,25 +1493,28 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                         Returnˉvalueˉposition.Column,
                         Statement.Expressionˉoffset + Statement.Expressionˉlength
                     );
-                    Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Returnˉbody);
+                        Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Returnˉbody);
+                    }
                 }
             }
             if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
             if Statement.Kind == Compilerˉsourceˉstatementˉkind.If {
-                let Ifˉphaseˉconditionˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
-                    Source, Statement.Offset, Statement.Line, Statement.Column,
-                    Statement.Expressionˉoffset
-                );
-                let Ifˉconditionˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
-                    Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
-                    Module, Function, Source,
-                    Statement.Expressionˉoffset,
-                    Ifˉphaseˉconditionˉposition.Line,
-                    Ifˉphaseˉconditionˉposition.Column,
-                    Statement.Expressionˉoffset + Statement.Expressionˉlength
-                );
-                Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Ifˉconditionˉbody);
-                if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
+                if Bindˉbody {
+                    let Ifˉphaseˉconditionˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+                        Source, Statement.Offset, Statement.Line, Statement.Column,
+                        Statement.Expressionˉoffset
+                    );
+                    let Ifˉconditionˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
+                        Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
+                        Module, Function, Source,
+                        Statement.Expressionˉoffset,
+                        Ifˉphaseˉconditionˉposition.Line,
+                        Ifˉphaseˉconditionˉposition.Column,
+                        Statement.Expressionˉoffset + Statement.Expressionˉlength
+                    );
+                    Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Ifˉconditionˉbody);
+                    if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
+                }
                 let Ifˉfirstˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
                     Source, Statement.Offset, Statement.Line, Statement.Column,
                     Statement.Firstˉblockˉoffset
@@ -1478,7 +1525,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                     Ifˉfirstˉposition.Line,
                     Ifˉfirstˉposition.Column,
                     Statement.Firstˉblockˉoffset + Statement.Firstˉblockˉlength,
-                    Result
+                    Bindˉbody, Result
                 );
                 if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
                 if Result.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
@@ -1493,25 +1540,27 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                         Ifˉsecondˉposition.Line,
                         Ifˉsecondˉposition.Column,
                         Statement.Secondˉblockˉoffset + Statement.Secondˉblockˉlength,
-                        Result
+                        Bindˉbody, Result
                     );
                 }
             }
             if Statement.Kind == Compilerˉsourceˉstatementˉkind.While {
-                let Whileˉphaseˉconditionˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
-                    Source, Statement.Offset, Statement.Line, Statement.Column,
-                    Statement.Expressionˉoffset
-                );
-                let Whileˉconditionˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
-                    Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
-                    Module, Function, Source,
-                    Statement.Expressionˉoffset,
-                    Whileˉphaseˉconditionˉposition.Line,
-                    Whileˉphaseˉconditionˉposition.Column,
-                    Statement.Expressionˉoffset + Statement.Expressionˉlength
-                );
-                Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Whileˉconditionˉbody);
-                if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
+                if Bindˉbody {
+                    let Whileˉphaseˉconditionˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+                        Source, Statement.Offset, Statement.Line, Statement.Column,
+                        Statement.Expressionˉoffset
+                    );
+                    let Whileˉconditionˉbody: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbindˉexpression(
+                        Input, Scan, Symbols, Result.Payload, Bindingˉfirst, Bindingˉentries,
+                        Module, Function, Source,
+                        Statement.Expressionˉoffset,
+                        Whileˉphaseˉconditionˉposition.Line,
+                        Whileˉphaseˉconditionˉposition.Column,
+                        Statement.Expressionˉoffset + Statement.Expressionˉlength
+                    );
+                    Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Whileˉconditionˉbody);
+                    if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
+                }
                 let Whileˉphaseˉbodyˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
                     Source, Statement.Offset, Statement.Line, Statement.Column,
                     Statement.Firstˉblockˉoffset
@@ -1522,7 +1571,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                     Whileˉphaseˉbodyˉposition.Line,
                     Whileˉphaseˉbodyˉposition.Column,
                     Statement.Firstˉblockˉoffset + Statement.Firstˉblockˉlength,
-                    Result
+                    Bindˉbody, Result
                 );
             }
             if Statement.Kind == Compilerˉsourceˉstatementˉkind.Block {
@@ -1536,7 +1585,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                     Nestedˉposition.Line,
                     Nestedˉposition.Column,
                     Statement.Firstˉblockˉoffset + Statement.Firstˉblockˉlength,
-                    Result
+                    Bindˉbody, Result
                 );
             }
             if Result.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Result; }
@@ -1559,6 +1608,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉfunction(
     Declaration: Compilerˉsourceˉdeclaration,
     Declarationˉline: u32,
     Declarationˉcolumn: u32,
+    Bindˉbody: bool,
     Phase: Compilerˉsourceˉbindingˉphase
 ) -> Compilerˉsourceˉbindingˉphase {
     var Result: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉbuild(
@@ -1604,7 +1654,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉfunction(
         var Parameterˉshape: u32 = Compilerˉsourceˉbindingsˉsourceˉshape(Type.Typeˉkind);
         if Type.Typeˉkind == Compilerˉsourceˉtypeˉkind.Named {
             let Parameterˉbinding: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
-                Input, Scan, Symbols.Directory, Symbols.Visibility, Module, Source,
+                Input, Scan, Symbols.Directory, Symbols.Lookup, Symbols.Visibility, Module, Source,
                 Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
                 Symbols.Records, Symbols.Enums, false
             );
@@ -1663,14 +1713,15 @@ export fn Compilerˉsourceˉbindingsˉphaseˉfunction(
         Input, Scan, Symbols, Module, Function, Source,
         Declaration.Bodyˉoffset, Bodyˉposition.Line, Bodyˉposition.Column,
         Declaration.Bodyˉoffset + Declaration.Bodyˉlength,
-        Result
+        Bindˉbody, Result
     );
 }
 
-export fn Compilerˉsourceˉbindingsˉphase(
+export fn Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary
+    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Bindˉbody: bool
 ) -> Compilerˉsourceˉbindingˉphase {
     var Phase: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉempty(Input);
     var Module: u32 = 0u32;
@@ -1697,12 +1748,18 @@ export fn Compilerˉsourceˉbindingsˉphase(
                     let Function: u32 = Compilerˉsourceˉbindingsˉfunctionˉentry(
                         Symbols.Directory, Module, Declaration.Declarationˉoffset
                     );
-                    Phase = Compilerˉsourceˉbindingsˉphaseˉfunction(
+                    let Localˉphase: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉfunction(
                         Input, Scan, Symbols, Module, Function, View.Source,
-                        Declaration, Position.Line, Position.Column, Phase
+                        Declaration, Position.Line, Position.Column, Bindˉbody,
+                        Compilerˉsourceˉbindingsˉphaseˉempty(Input)
                     );
-                    if Phase.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Phase; }
-                    if Phase.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid { return Phase; }
+                    if Localˉphase.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
+                        return Localˉphase;
+                    }
+                    if Localˉphase.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
+                        return Localˉphase;
+                    }
+                    Phase = Compilerˉsourceˉbindingsˉphaseˉmerge(Phase, Localˉphase);
                 }
                 if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Import {
                     Sawˉnonˉimport = true;
@@ -1715,6 +1772,22 @@ export fn Compilerˉsourceˉbindingsˉphase(
         Module = Module + 1u32;
     }
     return Phase;
+}
+
+export fn Compilerˉsourceˉbindingsˉphase(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Symbols: Compilerˉsourceˉsymbolˉsummary
+) -> Compilerˉsourceˉbindingˉphase {
+    return Compilerˉsourceˉbindingsˉphaseˉwithˉbody(Input, Scan, Symbols, true);
+}
+
+export fn Compilerˉsourceˉbindingsˉlocalˉphase(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Symbols: Compilerˉsourceˉsymbolˉsummary
+) -> Compilerˉsourceˉbindingˉphase {
+    return Compilerˉsourceˉbindingsˉphaseˉwithˉbody(Input, Scan, Symbols, false);
 }
 
 export fn Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(
@@ -1819,14 +1892,14 @@ export fn Compilerˉsourceˉbindingsˉsummaryˉsuccess(
     );
 }
 
-export fn Compilerˉvalidateˉsourceˉbindings(Input: bytes) -> Compilerˉsourceˉbindingˉsummary {
-    let Symbols: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(Input);
-    if Symbols.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
-        return Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(Input, Symbols);
-    }
-    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Input);
-    let Phase: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphase(
-        Input, Scan, Symbols
+export fn Compilerˉsourceˉbindingsˉfromˉsymbolsˉwithˉbody(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Bindˉbody: bool
+) -> Compilerˉsourceˉbindingˉsummary {
+    let Phase: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
+        Input, Scan, Symbols, Bindˉbody
     );
     let Build: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase);
     let Body: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉphaseˉbodyˉvalue(Phase);
@@ -1868,4 +1941,33 @@ export fn Compilerˉvalidateˉsourceˉbindings(Input: bytes) -> Compilerˉsource
     return Compilerˉsourceˉbindingsˉsummaryˉsuccess(
         Input, Symbols, Build, Body, Directory
     );
+}
+
+export fn Compilerˉsourceˉbindingsˉfromˉsymbols(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Symbols: Compilerˉsourceˉsymbolˉsummary
+) -> Compilerˉsourceˉbindingˉsummary {
+    return Compilerˉsourceˉbindingsˉfromˉsymbolsˉwithˉbody(
+        Input, Scan, Symbols, true
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉlocalsˉfromˉsymbols(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Symbols: Compilerˉsourceˉsymbolˉsummary
+) -> Compilerˉsourceˉbindingˉsummary {
+    return Compilerˉsourceˉbindingsˉfromˉsymbolsˉwithˉbody(
+        Input, Scan, Symbols, false
+    );
+}
+
+export fn Compilerˉvalidateˉsourceˉbindings(Input: bytes) -> Compilerˉsourceˉbindingˉsummary {
+    let Symbols: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbols.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(Input, Symbols);
+    }
+    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Input);
+    return Compilerˉsourceˉbindingsˉfromˉsymbols(Input, Scan, Symbols);
 }

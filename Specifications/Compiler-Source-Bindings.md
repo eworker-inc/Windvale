@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉbindings` is the cross-host-qualified portable body-binding phase at commit `9185b28` under Decision 0034. It consumes one complete, valid, acyclic WVSS 1 graph; reuses the qualified WVSD 1 declaration directory and visibility matrix; binds function parameters, locals, data reads, assignments, constructors, functions, capabilities, and Foundation intrinsics; and publishes independently validated local-binding evidence.
+`Compilerˉsourceˉbindings` is the portable body-binding phase introduced and cross-host qualified under Decision 0034. The current WVIR candidate adds prepared-symbol and local-only entry points while preserving the qualified full-binding and WVLB contracts. It consumes one complete, valid, acyclic WVSS 1 graph; reuses WVSD 1 declaration evidence; binds function parameters, locals, data reads, assignments, constructors, functions, capabilities, and Foundation intrinsics; and publishes independently validated local-binding evidence.
 
-This slice does not yet infer complete expression types, validate field ownership, validate operator operand/result types, prove control-flow returns, construct WIR, or emit WVB. Those remain the next semantic layer.
+Complete expression types, field ownership, operator/result types, return proof, and WIR construction now belong to `Compilerˉsourceˉwir`; this phase remains the owner of binding identity and diagnostic precedence. It does not emit WVB.
 
 ## Result contract
 
@@ -50,6 +50,8 @@ record Compilerˉsourceˉbindingˉsummary {
 Compilerˉvalidateˉsourceˉbindings(Input: bytes)
     -> Compilerˉsourceˉbindingˉsummary
 ```
+
+Later portable phases may reuse validated preparation through `Compilerˉsourceˉbindingsˉfromˉsymbols` for the complete binding pass or `Compilerˉsourceˉbindingsˉlocalsˉfromˉsymbols` for parameter/local evidence only. The latter still parses every function body to discover lexical locals but skips reference/call counting. Typed lowering invokes the complete pass as an error oracle when it rejects a program, preserving established binding failures before typed-WVIR failures.
 
 Success returns aggregate body counts, a valid WVLB directory, both failure module indices equal to `Modules`, failure function equal to the WVSD entry count, failure offset equal to the complete WVSS length, and zero failure line/column. Failure returns an empty published directory. A source-symbol rejection preserves the upstream symbol status and failure evidence.
 
@@ -104,22 +106,22 @@ Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks th
 
 The phase validates source symbols first, then traverses modules, declarations, statements, and expression children in canonical source order. A local initializer is bound before its declaration is appended. Call arguments are bound before the call target and arity. The first failure under this order is returned with current module, related module or sentinel, WVSD function entry, byte offset, and one-based line/column.
 
-One combined pass constructs local evidence and binds body references. Hot lookups pass the immutable binding payload plus the current function range directly. Global lookup compares source names against absolute offsets in the packed WVSS input. The implementation does not retain the measured alternatives that rebuilt a growing temporary directory for each statement or sliced a module source for every symbol candidate.
+One combined full pass constructs local evidence and binds body references. Hot lookups pass the immutable binding payload plus the current function range directly. Global lookup uses the prepared symbol index and compares names against absolute offsets in the packed WVSS input. Each function constructs its binding payload privately and merges it once, avoiding quadratic global byte-buffer growth.
 
 The real nine-module compiler closure must complete below the fixed 4,000,000,000-instruction ceiling. Raising that ceiling is not an accepted substitute for correcting repeated materialization or rescan work.
 
-## Qualified artifacts and evidence
+## Candidate artifacts and evidence
 
-- `Source-Bindings-Core.wvb`: 321,127 bytes, SHA-256 `e9f15ed16a627ae2f96feee001dd0dd7272d744566022e9b353aa79a351ed7d4`.
-- `Source-Bindings-Demo.wvb`: 328,438 bytes, SHA-256 `d0007e74e697398d3a4cf52a5ee3143a5f624036f3665f8e2d610674b26eb72e`.
-- `Source-Bindings-Tool.wvb`: 324,035 bytes, SHA-256 `dc3911680d5ea22890adfad9c3cf7156c386824591d16c9c39ada677c2dfd8d8`.
+- `Source-Bindings-Core.wvb`: 334,172 bytes, SHA-256 `8656850137e843920f8296660936d6f9043b2804095035e87289c4569ebe535b`.
+- `Source-Bindings-Demo.wvb`: 341,161 bytes, SHA-256 `a78ecea3579a2ff64ae2ae19e40a424663193982fad497fe944f5fac6c262d81`.
+- `Source-Bindings-Tool.wvb`: 336,758 bytes, SHA-256 `abcd8a8edda501d3a357fee1af368304687cca0b8a3f7686c2ebe01361d554f7`.
 
 The focused demo covers valid parameters/locals/data/calls; mutable and immutable assignment; nested scope and initializer visibility; duplicate locals; primitive, visible, unknown, and inaccessible local types; unknown and inaccessible names/calls; undeclared capabilities; arity; upstream symbol failures; and corrupted header, range, entry, and trailing-data evidence.
 
 The hosted tool binds the current real closure as:
 
 ```text
-source bindings status=Valid modules=9 functions=177 parameters=777 locals=896 reads=7937 assignments=602 calls=1344 directory-bytes=62044
+source bindings status=Valid modules=9 functions=187 parameters=813 locals=944 reads=8229 assignments=639 calls=1450 directory-bytes=65148
 ```
 
-The exact `9185b28` archive passed a zero-warning Release build, all 46 tests, and the complete native CLI verifier on Windows x64 and Debian GNU/Linux 12 x64. Their normalized contracts matched. All 45 directly retrieved artifacts—4,076,491 bytes including the complete compiler chain and downstream tool products—were byte-identical.
+The pre-preparation `9185b28` archive passed the stated qualification on both hosts. The hashes above belong to the current WVIR candidate and require a new exact-archive Windows/Debian qualification before they are described as cross-host qualified.

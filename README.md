@@ -32,6 +32,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A Windvale-written body parser that reproduces the complete implemented statement/expression grammar as flat child-span views without a syntax tree collection
 - A canonical Windvale Source Set (`WVSS 1`) reader that gives the portable semantic pipeline bounded random access to a root plus ordered dependency sources without host objects or native paths
 - A Windvale-written import graph and declaration/signature binder with independently validated packed symbol evidence, transitive visibility, and deterministic nominal identities
+- A Windvale-written body binder with canonical parameter/local evidence and a typed WVIR producer with explicit blocks, temporaries, operations, source spans, and independent binary validation
 - A Windvale-written import-graph phase that resolves the complete WVSS root closure and rejects duplicate, missing, cyclic, and unreachable imports without host collections
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
@@ -104,7 +105,7 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
   -TimingReportPath artifacts/seed-timing-fast.json
 ```
 
-`-Level Standard` builds and runs the complete 45-test in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
+`-Level Standard` builds and runs the complete 47-test in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
 
 On Linux:
 
@@ -316,7 +317,7 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Set-Tool.wvb `
      Foundation/Decimal-Parsing.wv
 ```
 
-WVSS 1 keeps the root first and dependencies in declared-module-name order, validates every source through the qualified syntax frontend, and exposes immutable source slices by index. `Compilerˉsourceˉgraph` resolves import topology over that boundary. `Compilerˉsourceˉsymbols` validates global declaration namespaces and signatures, creates an independently checked `WVSD 1` declaration directory, computes transitive module visibility once, and assigns canonical nominal indices. Cross-host-qualified `Compilerˉsourceˉbindings` assigns parameter/local slots and scopes, resolves body reads, assignments, constructors, functions, capabilities, and Foundation intrinsics, and publishes an independently checked `WVLB 1` binding directory. Complete expression typing, field/operator validation, control-flow proof, WIR, and lowering remain the next semantic work. The current 4 MiB aggregate envelope is an explicit Seed limitation while later memory/collection evidence determines how to close parity with Stage 0's 16 MiB aggregate input contract.
+WVSS 1 keeps the root first and dependencies in declared-module-name order, validates every source through the qualified syntax frontend, and exposes immutable source slices by index. `Compilerˉsourceˉgraph` resolves import topology over that boundary. `Compilerˉsourceˉsymbols` validates global declaration namespaces and signatures, creates an independently checked `WVSD 1` declaration directory, computes transitive module visibility once, and assigns canonical nominal indices. `Compilerˉsourceˉbindings` assigns parameter/local slots and scopes, resolves body reads, assignments, constructors, functions, capabilities, and Foundation intrinsics, and publishes an independently checked `WVLB 1` binding directory. `Compilerˉsourceˉwir` now performs complete implemented expression typing, field/operator checks, control-flow construction, and independent `WVIR 1` validation. WVIR-to-WVB lowering remains the next compiler stage. The current 4 MiB aggregate envelope is an explicit Seed limitation while later memory/collection evidence determines how to close parity with Stage 0's 16 MiB aggregate input contract.
 
 Compile and run the first Windvale-written `wvdump` core:
 
@@ -490,6 +491,7 @@ export fn Main() -> i32 {
 - [Compiler source-graph contract](Specifications/Compiler-Source-Graph.md)
 - [Compiler declaration and signature symbols](Specifications/Compiler-Source-Symbols.md)
 - [Compiler body, local, and call binding](Specifications/Compiler-Source-Bindings.md)
+- [Compiler typed source IR](Specifications/Compiler-Source-Wir.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification throughput](Documents/Architecture/Seed-Verification-Throughput.md)
@@ -528,6 +530,7 @@ export fn Main() -> i32 {
 - [Public contribution and governance foundation decision](Documents/Decisions/0032-Public-Contribution-And-Governance-Foundation.md)
 - [Portable declaration and signature binding decision](Documents/Decisions/0033-Portable-Declaration-And-Signature-Binding.md)
 - [Portable body, local, and call binding decision](Documents/Decisions/0034-Portable-Body-Local-And-Call-Binding.md)
+- [Canonical typed source IR decision](Documents/Decisions/0035-Canonical-Typed-Source-IR.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

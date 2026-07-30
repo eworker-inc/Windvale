@@ -140,12 +140,13 @@ export fn Main() -> i32 {
     ) { return 22; }
     let Leafˉname: bytes = Textˉtoˉutf8("Symbolsˉleaf");
     let Leafˉmatch: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉfindˉnominalˉinˉdirectory(
-        Validˉinput, Scan, Valid.Directory, Leafˉname, 0u32, Bytesˉlength(Leafˉname)
+        Validˉinput, Scan, Valid.Directory, Valid.Lookup,
+        Leafˉname, 0u32, Bytesˉlength(Leafˉname)
     );
     if !Leafˉmatch.Found { return 23; }
     if Leafˉmatch.Module != 3u32 { return 24; }
     if Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
-        Validˉinput, Scan, Valid.Directory, Leafˉmatch.Kind,
+        Validˉinput, Scan, Valid.Directory, Valid.Lookup, Leafˉmatch.Kind,
         Leafˉname, 0u32, Bytesˉlength(Leafˉname), Valid.Records
     ) != 3u32 { return 25; }
 

@@ -7,7 +7,7 @@ Windvale keeps the complete cross-host qualification gate, but ordinary developm
 ## Levels
 
 - `Fast` builds once and runs tests matching one required case-insensitive displayed-name substring. It may fail fast and may write a local timing report. It does not produce conformance evidence.
-- `Standard` builds once, runs all 46 in-process conformance tests, and writes the normal host report. It stops before native CLI qualification.
+- `Standard` builds once, runs all 47 in-process conformance tests, and writes the normal host report. It stops before native CLI qualification.
 - `Qualification` is the default and remains the milestone gate. It adds every native CLI, hosted-boundary, deterministic-artifact, and failure-preservation check.
 
 Qualification builds the CLI once and invokes the resulting `windvale.dll` directly in each separate process. This preserves command parsing, process exit codes, native file behavior, capability boundaries, and output checks while removing repeated `dotnet run` project evaluation.
@@ -45,6 +45,12 @@ Build time is only a few seconds and is not the current bottleneck. Further broa
 Decision 0034 adds one real nine-module body-binding closure to the portable golden contract and a second independent execution through the native CLI qualification boundary. On exact commit `9185b28`, the focused binding test took 2.877 seconds on Windows and 2.691 seconds on Debian. Windows Qualification completed in approximately 1,005.8 seconds with a 526.833-second suite; Debian Qualification completed in approximately 1,066.4 seconds with a 538.947-second suite.
 
 The added semantic work intentionally increases milestone qualification time without increasing the normal inner loop: the Fast binding command remains a few seconds after the warm build, and Standard executes the expensive closure once. Qualification alone pays for the second process-level CLI closure. A future optimization must target the golden real-closure work or execute independent closures concurrently with isolated runtime/output state; repeated project evaluation is no longer the significant cost.
+
+## Typed-WVIR verification
+
+The typed-WVIR slice adds a focused test that compiles the portable core, runs semantic and corruption coverage, and sends a control-heavy fixture through the hosted source-set tool. On the Windows x64 development host, the complete Fast wrapper took 17.1 seconds after the new resources were added; the WVIR test itself took 6.45 seconds. A warm direct hosted-tool run of the fixture took approximately 1.6 seconds. The candidate 47-test Standard suite passed in 528.217 seconds; its golden-contract case accounted for 449.977 seconds.
+
+The ten-module compiler self-lowering experiment remains outside Fast and Standard. Symbol preparation alone is substantial, and the separate local-discovery plus IR body traversals currently exceed the unchanged 4,000,000,000-instruction ceiling. This is recorded as a body-traversal fusion target, not addressed by increasing limits or putting an unstable multi-minute case in every development loop.
 
 ## Qualification evidence
 
