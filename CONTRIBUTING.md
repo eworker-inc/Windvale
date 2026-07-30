@@ -70,7 +70,9 @@ Add it with `git commit --signoff`. By signing, the submitter certifies that the
 
 Use a stable verified email or a GitHub-provided ID-based `noreply` email if privacy is required. GitHub usernames, Git author names, and Git emails are separate identifiers. Never publish an address accidentally or invent an address that appears deliverable.
 
-For E-Worker project-generated commits after the Codex bootstrap history, `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` is the descriptive author and `E-Worker Inc <info@eworker.ca>` is the responsible committer and DCO signer. Repository-local Git configuration keeps these roles separate. Other contributors use their own verified identities and responsible sign-offs.
+Windvale completed a one-time identity normalization before public visibility. Bootstrap commits retain the descriptive `Codex` author and committer names, but their non-routable machine-local email is replaced by `246088022+EWorkerAI@users.noreply.github.com` so GitHub can associate them with the steward's project account. That account association does not replace the recorded AI-system name, imply that the account holder personally produced the content, add a retroactive DCO sign-off, or change the repository-wide provenance policy.
+
+New E-Worker project-generated commits use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as the descriptive author and `E-Worker Inc <info@eworker.ca>` as the responsible committer and DCO signer. Repository-local Git configuration keeps these roles separate and persists across host restarts. Other contributors use their own verified identities and responsible sign-offs.
 
 ## Licensing
 

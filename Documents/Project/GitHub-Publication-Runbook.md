@@ -4,21 +4,35 @@
 
 This runbook prepares the active Windvale project for initial public visibility. It does not declare the project complete, create a stable compatibility promise, or replace the qualification rules for later changes.
 
-The planned official repository is `eworker-inc/Windvale`. It is created privately, inspected at an identified commit, and made public only through a separate E-Worker Inc approval.
+The official repository is `eworker-inc/Windvale`. It was created privately, is inspected at an identified commit, and is made public only through a separate E-Worker Inc approval.
 
 ## Accepted publication choices
 
-- Preserve the complete existing `main` history, including factual Codex author metadata and every commit identifier referenced by qualification evidence.
+- Before public visibility, normalize the bootstrap history's non-routable `codex@codex-dev-vm.local` email to the verified `EWorkerAI` project-account address while preserving the factual `Codex` names, source trees, messages, timestamps, and parent order.
+- Preserve the pre-normalization tip under the evidence tag `evidence/pre-eworkerai-linkage` and publish a complete old-to-new mapping with tree-equivalence checks.
 - Keep the currently configured shared development remote named `origin` during preparation.
 - Add GitHub as a separate remote named `github`; do not replace or mirror over `origin`.
-- Create the GitHub repository as private first and do not change its visibility implicitly as part of a push.
+- Keep the existing GitHub repository private during normalization and inspection; do not change its visibility implicitly as part of a push.
 - Use `main` as the initial default branch.
 - Use [info@eworker.ca](mailto:info@eworker.ca) as the public business, fallback security, conduct, and project-identity contact.
-- Use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as the descriptive author for subsequent E-Worker project-generated commits.
+- Use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as the descriptive author for new E-Worker project-generated commits.
 - Use `E-Worker Inc <info@eworker.ca>` as the responsible committer and DCO signer.
-- Apply the Developer Certificate of Origin to new contributions prospectively. Do not rewrite bootstrap history to retrofit sign-offs.
+- Apply the Developer Certificate of Origin to new contributions prospectively. The identity normalization must not retrofit sign-offs onto bootstrap commits.
 
-## 1. Prepare the exact source state
+## 1. Complete the one-time identity normalization
+
+Perform this migration only while the repository is private:
+
+1. Fetch both remotes and confirm that local, shared, and GitHub `main` identify the same clean tip.
+2. Create the annotated evidence tag `evidence/pre-eworkerai-linkage` at the pre-normalization tip.
+3. Rewrite only bootstrap author and committer email fields equal to `codex@codex-dev-vm.local`, replacing them with `246088022+EWorkerAI@users.noreply.github.com`. Preserve names, dates, messages, trees, and topology.
+4. Generate a complete old-to-new commit mapping. Verify equal commit counts, equal trees for every mapped pair, unchanged names/messages/dates except for the authorized email fields, and a clean checked-out tree.
+5. Update the private shared and GitHub `main` refs with `--force-with-lease`, using the inspected pre-normalization tips as the leases. Push the evidence tag explicitly; do not use a mirror push.
+6. Confirm through the GitHub API that the normalized bootstrap commits resolve to `EWorkerAI` while retaining `Codex` as their embedded author names.
+
+The mapping and evidence tag preserve the identity of previously qualified source snapshots. This metadata migration does not claim that cross-host tests were rerun or that old commits gained DCO sign-offs.
+
+## 2. Prepare the exact source state
 
 Wait for active implementation work to reach a clean committed point, then:
 
@@ -31,9 +45,9 @@ Wait for active implementation work to reach a clean committed point, then:
 
 The candidate may advance while the repository remains private. Freeze one exact commit only when performing the initial publication baseline.
 
-## 2. Confirm GitHub identity and recovery
+## 3. Confirm GitHub identity and recovery
 
-Before creating the repository:
+Before public visibility:
 
 - Confirm the authenticated `EWorkerAI` account is an owner of the existing `eworker-inc` organization.
 - Keep at least two human-controlled organization owners so account loss does not strand the project.
@@ -41,18 +55,18 @@ Before creating the repository:
 - Confirm `info@eworker.ca` remains verified and the GitHub-provided ID-based author address remains associated with `EWorkerAI`.
 - Confirm each active checkout uses repository-local author and committer configuration. The account login remains administrative identity, not source authorship.
 
-## 3. Create and populate the private repository
+## 4. Confirm the private repository and remotes
 
-Authenticate GitHub CLI, confirm the active account and organization membership, and create `eworker-inc/Windvale` with private visibility. Then add and push the separate remote:
+Authenticate GitHub CLI, confirm the active account and organization membership, and inspect the existing private `eworker-inc/Windvale` repository. Confirm that the separate remote remains:
 
 ```powershell
-git remote add github https://github.com/eworker-inc/Windvale.git
-git push github main
+git remote get-url github
+git ls-remote github refs/heads/main
 ```
 
-If the `github` remote already exists, inspect it rather than replacing it blindly. Do not push credentials in a remote URL, use `--mirror`, force-push, or delete the local shared remote.
+Inspect the existing `github` remote rather than replacing it blindly. Do not push credentials in a remote URL, use `--mirror`, delete the local shared remote, or force-push outside the one authorized identity-normalization step.
 
-## 4. Inspect privately
+## 5. Inspect privately
 
 At the private GitHub repository:
 
@@ -67,7 +81,7 @@ At the private GitHub repository:
 - Protect `main` after the initial checks have run: require the applicable checks, block force pushes and branch deletion, and avoid rules that make a single-maintainer project impossible to operate safely.
 - Decide whether Issues and Discussions are enabled and verify that their public guidance matches `SUPPORT.md` and `SECURITY.md`.
 
-## 5. Record the initial publication baseline
+## 6. Record the initial publication baseline
 
 The initial publication baseline identifies one exact commit. From clean source archives of that commit:
 
@@ -79,7 +93,7 @@ The initial publication baseline identifies one exact commit. From clean source 
 
 This is a publication snapshot, not a final project verification. Windvale remains experimental and development continues after the repository becomes public.
 
-## 6. Approve public visibility
+## 7. Approve public visibility
 
 Changing repository visibility requires a separate explicit approval from E-Worker Inc. Immediately before that change:
 
@@ -90,7 +104,7 @@ Changing repository visibility requires a separate explicit approval from E-Work
 
 After approval, change visibility to public and verify the repository from a signed-out view. Check cloning, rendered links, Actions visibility, issue forms, private vulnerability reporting, and the commit-history evidence links.
 
-## 7. Continue normal development
+## 8. Continue normal development
 
 Public visibility does not freeze Windvale. Each later change follows the ordinary contribution and verification policy:
 
