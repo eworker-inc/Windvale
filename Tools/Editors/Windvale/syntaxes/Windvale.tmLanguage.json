@@ -1,0 +1,286 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Windvale",
+  "scopeName": "source.windvale",
+  "fileTypes": [
+    "wv"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#declarations"
+    },
+    {
+      "include": "#declaration-keywords"
+    },
+    {
+      "include": "#control-keywords"
+    },
+    {
+      "include": "#storage-keywords"
+    },
+    {
+      "include": "#profile-keywords"
+    },
+    {
+      "include": "#type-keywords"
+    },
+    {
+      "include": "#boolean-literals"
+    },
+    {
+      "include": "#built-in-functions"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#calls"
+    },
+    {
+      "include": "#members"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#punctuation"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.windvale",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.windvale",
+          "begin": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.windvale"
+            }
+          },
+          "end": "\"|$",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.windvale"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.windvale",
+              "match": "\\\\(?:[\"\\\\nrt]|u[0-9A-Fa-f]{4})"
+            },
+            {
+              "name": "invalid.illegal.escape.windvale",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "match": "(?<![A-Za-z0-9_ˉ])(module|import)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.module.windvale"
+            },
+            "2": {
+              "name": "entity.name.namespace.windvale"
+            }
+          }
+        },
+        {
+          "match": "(?<![A-Za-z0-9_ˉ])(capability)\\s+([a-z_][a-z0-9_]*(?:\\.[a-z_][a-z0-9_]*)+)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.capability.windvale"
+            },
+            "2": {
+              "name": "entity.name.function.capability.windvale"
+            }
+          }
+        },
+        {
+          "match": "(?<![A-Za-z0-9_ˉ])(record|enum)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.type.windvale"
+            },
+            "2": {
+              "name": "entity.name.type.windvale"
+            }
+          }
+        },
+        {
+          "match": "(?<![A-Za-z0-9_ˉ])(data)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.data.windvale"
+            },
+            "2": {
+              "name": "variable.other.constant.windvale"
+            }
+          }
+        },
+        {
+          "match": "(?<![A-Za-z0-9_ˉ])(fn)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.function.windvale"
+            },
+            "2": {
+              "name": "entity.name.function.windvale"
+            }
+          }
+        },
+        {
+          "match": "(?<![A-Za-z0-9_ˉ])(let|var)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "captures": {
+            "1": {
+              "name": "storage.modifier.windvale"
+            },
+            "2": {
+              "name": "variable.other.definition.windvale"
+            }
+          }
+        },
+        {
+          "name": "variable.other.definition.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)(?=\\s*:)"
+        }
+      ]
+    },
+    "declaration-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.declaration.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])(?:module|profile|import|capability|data|record|enum|export|fn)(?![A-Za-z0-9_ˉ])"
+        }
+      ]
+    },
+    "control-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.flow.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])(?:if|else|while|return)(?![A-Za-z0-9_ˉ])"
+        }
+      ]
+    },
+    "storage-keywords": {
+      "patterns": [
+        {
+          "name": "storage.modifier.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])(?:let|var)(?![A-Za-z0-9_ˉ])"
+        }
+      ]
+    },
+    "profile-keywords": {
+      "patterns": [
+        {
+          "name": "storage.modifier.profile.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])(?:portable|hosted|system)(?![A-Za-z0-9_ˉ])"
+        }
+      ]
+    },
+    "type-keywords": {
+      "patterns": [
+        {
+          "name": "storage.type.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])(?:i32|u8|u32|bool|text|bytes|void)(?![A-Za-z0-9_ˉ])"
+        }
+      ]
+    },
+    "boolean-literals": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])(?:true|false)(?![A-Za-z0-9_ˉ])"
+        }
+      ]
+    },
+    "built-in-functions": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])length(?![A-Za-z0-9_ˉ])"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "match": "(?<![A-Za-z0-9_ˉ])([0-9]+)(u8|u32)?(?![A-Za-z0-9_ˉ])",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.integer.decimal.windvale"
+            },
+            "2": {
+              "name": "storage.type.numeric.suffix.windvale"
+            }
+          }
+        }
+      ]
+    },
+    "calls": {
+      "patterns": [
+        {
+          "name": "entity.name.function.capability.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])([a-z_][a-z0-9_]*(?:\\.[a-z_][a-z0-9_]*)+)(?=\\s*\\()"
+        },
+        {
+          "name": "entity.name.function.call.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)(?=\\s*\\()"
+        }
+      ]
+    },
+    "members": {
+      "patterns": [
+        {
+          "match": "(\\.)([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.accessor.windvale"
+            },
+            "2": {
+              "name": "variable.other.member.windvale"
+            }
+          }
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.windvale",
+          "match": "->|==|!=|<=|>=|[+\\-*!<>=]"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.section.group.windvale",
+          "match": "[(){}\\[\\]]"
+        },
+        {
+          "name": "punctuation.separator.windvale",
+          "match": "[;:,]"
+        }
+      ]
+    }
+  }
+}

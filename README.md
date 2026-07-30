@@ -74,6 +74,18 @@ Windvale is open source under the [MIT License](LICENSE). Copyright © 2026 E-Wo
 
 The repository pins the SDK in `global.json` and uses no external NuGet packages.
 
+## Editor support
+
+The repository includes [Windvale language support](Tools/Editors/Windvale/README.md) for `.wv` source files. Its TextMate-compatible `source.windvale` grammar provides Windvale syntax highlighting and a Visual Studio Code language configuration while the language builds enough public adoption for a future GitHub Linguist submission.
+
+Preview it from the repository root in a Visual Studio Code Extension Development Host:
+
+```powershell
+code --extensionDevelopmentPath=Tools/Editors/Windvale .
+```
+
+GitHub does not load repository-local grammars, so GitHub file highlighting and the repository language bar will continue to omit Windvale until Linguist accepts the language. The project does not misclassify `.wv` as C# or another existing language in the meantime.
+
 ## Quick start
 
 Build and run the complete Seed verifier on Windows:

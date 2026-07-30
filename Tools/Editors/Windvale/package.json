@@ -1,0 +1,57 @@
+{
+  "name": "windvale-language",
+  "displayName": "Windvale Language Support",
+  "description": "Syntax highlighting and editor configuration for Windvale source files.",
+  "version": "0.1.0",
+  "publisher": "eworker-inc",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eworker-inc/Windvale.git",
+    "directory": "Tools/Editors/Windvale"
+  },
+  "homepage": "https://github.com/eworker-inc/Windvale/tree/main/Tools/Editors/Windvale",
+  "bugs": {
+    "url": "https://github.com/eworker-inc/Windvale/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "windvale",
+    "language",
+    "syntax",
+    "highlighting"
+  ],
+  "files": [
+    "Language-Configuration.json",
+    "syntaxes/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "windvale",
+        "aliases": [
+          "Windvale",
+          "windvale"
+        ],
+        "extensions": [
+          ".wv"
+        ],
+        "configuration": "./Language-Configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "windvale",
+        "scopeName": "source.windvale",
+        "path": "./syntaxes/Windvale.tmLanguage.json"
+      }
+    ]
+  }
+}

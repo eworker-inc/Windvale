@@ -12,6 +12,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Vendor-neutral AI-authorship and attribution policy.
 - Public contribution, governance, security, support, conduct, and project-identity policies.
 - Windows and Linux repository verification workflows.
+- Repository-owned Windvale syntax highlighting and Visual Studio Code language support for `.wv` source files.
 
 ### Current development status
 

@@ -94,6 +94,7 @@ Carry the established E-Worker host-code convention into Windvale bootstrap code
 - Use differential tests when a temporary C backend, reference VM, native backend, or host adapter should implement the same semantics.
 - Test deterministic builds by comparing output bytes, not only behavior.
 - Keep a reference implementation simple enough to act as an oracle even when faster implementations appear.
+- Keep `Tools/Editors/Windvale/` synchronized with changes to the implemented `.wv` lexical surface, and run `Tools/Editors/Verify-Windvale-Editor.ps1` after changing its grammar or package metadata. Keep WVA textual assembly separate from Windvale source classification.
 - Documentation-only changes normally require `git diff --check`, link/path inspection, and review of the changed Markdown.
 - Code changes require the relevant package checks and focused conformance tests once those commands exist.
 - State exactly which broader checks were not run and why.

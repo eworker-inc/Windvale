@@ -34,6 +34,10 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Verify Windvale editor support
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Editors/Verify-Windvale-Editor.ps1
+
       - name: Run Windows verification
         shell: pwsh
         run: pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
