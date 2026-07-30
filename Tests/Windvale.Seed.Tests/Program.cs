@@ -45,6 +45,9 @@ internal static class Program
     private const string SOURCE_SET_SHA256 = "c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa766b19b1bfa2b8";
     private const string SOURCE_SET_DEMO_SHA256 = "0054138c6e39f3c99e5cd4751c796cd599b495880d7db174323342fb7b687488";
     private const string SOURCE_SET_TOOL_SHA256 = "dc290826985f66f80d469b99235ca290dc617997edee0aab2ea0d4227984aab6";
+    private const string SOURCE_GRAPH_SHA256 = "1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133";
+    private const string SOURCE_GRAPH_DEMO_SHA256 = "53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073";
+    private const string SOURCE_GRAPH_TOOL_SHA256 = "75fdf22e93f154599cdf4530ebcf828eec061458c73f6ab09b00d0765e3ebdc1";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -282,6 +285,15 @@ internal static class Program
     private static readonly string SOURCE_SET_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Set-Tool.wv");
 
+    private static readonly string SOURCE_GRAPH_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Graph-Core.wv");
+
+    private static readonly string SOURCE_GRAPH_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Graph-Demo.wv");
+
+    private static readonly string SOURCE_GRAPH_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Graph-Tool.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -309,6 +321,7 @@ internal static class Program
         ("Windvale-written declaration parser exposes bounded streaming source views", Compilerˉsourceˉdeclarationˉparserˉruns),
         ("Windvale-written body parser exposes bounded statement and expression views", Compilerˉsourceˉbodyˉparserˉruns),
         ("Windvale compiler source sets are canonical, bounded, and portable", Compilerˉsourceˉsetˉruns),
+        ("Windvale compiler import graphs are complete, acyclic, and portable", Compilerˉsourceˉgraphˉruns),
         ("module codec round-trips exact canonical bytes", Moduleˉroundˉtrip),
         ("inspector exposes module metadata and disassembly", Inspectorˉisˉuseful),
         ("bool, if, text literals, and calls execute", Additionalˉsemanticsˉrun),
@@ -1290,6 +1303,72 @@ internal static class Program
         Equal(string.Empty, Boundary.Diagnostics);
         Equal(64, Boundary.Readˉcount);
         Contains(Boundary.Output, "source set status=Valid modules=64");
+    }
+
+    private static void Compilerˉsourceˉgraphˉruns()
+    {
+        var Libraryˉbytes = Compileˉwithˉsourceˉgraphˉsuccess(
+            SOURCE_GRAPH_SOURCE,
+            "Source-Graph-Core.wv",
+            includeˉsourceˉgraph: false);
+        Equal(SOURCE_GRAPH_SHA256, Moduleˉdigest.Calculateˉsha256(Libraryˉbytes));
+        var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
+        Equal("Compilerˉsourceˉgraph", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Equal(32, Library.Module.Types.Length);
+        Equal(11, Library.Module.Exports.Length);
+        foreach (var Typeˉname in new[]
+                 {
+                     "Compilerˉsourceˉgraphˉmatch",
+                     "Compilerˉsourceˉgraphˉstatus",
+                     "Compilerˉsourceˉgraphˉsummary",
+                     "Compilerˉsourceˉgraphˉwalk",
+                 })
+        {
+            True(Library.Module.Types.Any(Type => Type.Name == Typeˉname),
+                $"Source-graph type '{Typeˉname}' was not emitted.");
+        }
+        True(
+            Library.Module.Exports.Any(Export => Export.Name == "Compilerˉvalidateˉsourceˉgraph"),
+            "The source-graph validation entry point was not emitted.");
+
+        var Demoˉbytes = Compileˉwithˉsourceˉgraphˉsuccess(
+            SOURCE_GRAPH_DEMO_SOURCE,
+            "Source-Graph-Demo.wv");
+        Equal(SOURCE_GRAPH_DEMO_SHA256, Moduleˉdigest.Calculateˉsha256(Demoˉbytes));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Demoˉbytes),
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                    Maximumˉinstructions: 300_000_000)).Runˉmain().Exitˉcode);
+
+        var Toolˉbytes = Compileˉwithˉsourceˉgraphˉsuccess(
+            SOURCE_GRAPH_TOOL_SOURCE,
+            "Source-Graph-Tool.wv");
+        Equal(SOURCE_GRAPH_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Boundaryˉmodules = new List<Sourceˉmoduleˉinput>
+        {
+            new(
+                "root.wv",
+                "module Graphˉboundaryˉroot profile portable; import Graph_00;"),
+        };
+        for (var Index = 0; Index < 63; Index++)
+        {
+            var Import = Index == 62 ? string.Empty : $" import Graph_{Index + 1:D2};";
+            Boundaryˉmodules.Add(new(
+                $"dependency-{Index:D2}.wv",
+                $"module Graph_{Index:D2} profile portable;{Import}"));
+        }
+        var Boundary = Runˉsourceˉsetˉtool(Tool, Boundaryˉmodules, 600_000_000);
+        Equal(0, Boundary.Exitˉcode);
+        Equal(string.Empty, Boundary.Diagnostics);
+        Equal(64, Boundary.Readˉcount);
+        Equal(
+            "source graph status=Valid modules=64 imports=63 reachable=64\n",
+            Boundary.Output);
     }
 
     private static void Moduleˉroundˉtrip()
@@ -4103,6 +4182,16 @@ internal static class Program
         var Sourceˉsetˉtoolˉbytes = Compileˉwithˉsourceˉsetˉsuccess(
             SOURCE_SET_TOOL_SOURCE,
             "Source-Set-Tool.wv");
+        var Sourceˉgraphˉbytes = Compileˉwithˉsourceˉgraphˉsuccess(
+            SOURCE_GRAPH_SOURCE,
+            "Source-Graph-Core.wv",
+            includeˉsourceˉgraph: false);
+        var Sourceˉgraphˉdemoˉbytes = Compileˉwithˉsourceˉgraphˉsuccess(
+            SOURCE_GRAPH_DEMO_SOURCE,
+            "Source-Graph-Demo.wv");
+        var Sourceˉgraphˉtoolˉbytes = Compileˉwithˉsourceˉgraphˉsuccess(
+            SOURCE_GRAPH_TOOL_SOURCE,
+            "Source-Graph-Tool.wv");
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
         var Wvoˉcoreˉbytes = Compileˉwithˉbyteˉorderingˉsuccess(
             WVO_CORE_SOURCE,
@@ -4148,6 +4237,9 @@ internal static class Program
         var Sourceˉsetˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsetˉbytes);
         var Sourceˉsetˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsetˉdemoˉbytes);
         var Sourceˉsetˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉsetˉtoolˉbytes);
+        var Sourceˉgraphˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉgraphˉbytes);
+        var Sourceˉgraphˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉgraphˉdemoˉbytes);
+        var Sourceˉgraphˉtoolˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉgraphˉtoolˉbytes);
         var Wvˉdumpˉhash = Moduleˉdigest.Calculateˉsha256(Wvˉdumpˉbytes);
         var Wvoˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Wvoˉcoreˉbytes);
         var Wvaˉassemblerˉhash = Moduleˉdigest.Calculateˉsha256(Wvaˉassemblerˉbytes);
@@ -4180,6 +4272,9 @@ internal static class Program
         Equal(SOURCE_SET_SHA256, Sourceˉsetˉhash);
         Equal(SOURCE_SET_DEMO_SHA256, Sourceˉsetˉdemoˉhash);
         Equal(SOURCE_SET_TOOL_SHA256, Sourceˉsetˉtoolˉhash);
+        Equal(SOURCE_GRAPH_SHA256, Sourceˉgraphˉhash);
+        Equal(SOURCE_GRAPH_DEMO_SHA256, Sourceˉgraphˉdemoˉhash);
+        Equal(SOURCE_GRAPH_TOOL_SHA256, Sourceˉgraphˉtoolˉhash);
         Equal(WVDUMP_CORE_SHA256, Wvˉdumpˉhash);
         Equal(WVO_CORE_SHA256, Wvoˉcoreˉhash);
         Equal(WVA_ASSEMBLER_CORE_SHA256, Wvaˉassemblerˉhash);
@@ -4287,6 +4382,24 @@ internal static class Program
                 new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ],
             800_000_000);
+        var Sourceˉgraphˉdemoˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Sourceˉgraphˉdemoˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                Maximumˉinstructions: 300_000_000)).Runˉmain();
+        var Sourceˉgraphˉtool = Moduleˉcodec.Readˉandˉverify(Sourceˉgraphˉtoolˉbytes);
+        var Sourceˉgraphˉselfˉresult = Runˉsourceˉsetˉtool(
+            Sourceˉgraphˉtool,
+            [
+                new("Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE),
+                new("Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
+                new("Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
+                new("Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+                new("Source-Set-Core.wv", SOURCE_SET_SOURCE),
+                new("Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
+            ],
+            1_500_000_000);
         var Wvˉdumpˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes);
         var Wvˉdumpˉcapabilities = Wvˉdumpˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -4484,6 +4597,13 @@ internal static class Program
         Equal(
             "source set status=Valid modules=5 source-bytes=192171 imports=4 records=16 enums=11 functions=86\n",
             Sourceˉsetˉselfˉresult.Output);
+        Equal(0, Sourceˉgraphˉdemoˉresult.Exitˉcode);
+        Equal(0, Sourceˉgraphˉselfˉresult.Exitˉcode);
+        Equal(string.Empty, Sourceˉgraphˉselfˉresult.Diagnostics);
+        Equal(7, Sourceˉgraphˉselfˉresult.Readˉcount);
+        Equal(
+            "source graph status=Valid modules=7 imports=6 reachable=7\n",
+            Sourceˉgraphˉselfˉresult.Output);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
             $"{Objectˉcodec.MAJOR_VERSION}.{Objectˉcodec.MINOR_VERSION}",
@@ -4543,6 +4663,11 @@ internal static class Program
             Sourceˉsetˉdemoˉresult.Exitˉcode,
             Sourceˉsetˉtoolˉhash,
             Sourceˉsetˉselfˉresult.Output,
+            Sourceˉgraphˉhash,
+            Sourceˉgraphˉdemoˉhash,
+            Sourceˉgraphˉdemoˉresult.Exitˉcode,
+            Sourceˉgraphˉtoolˉhash,
+            Sourceˉgraphˉselfˉresult.Output,
             Wvˉdumpˉhash,
             Wvˉdumpˉresult.Exitˉcode,
             Normalizedˉwvdumpˉoutput,
@@ -4948,6 +5073,34 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Compiler source-set composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉsourceˉgraphˉsuccess(
+        string source,
+        string sourceˉname,
+        bool includeˉsourceˉgraph = true)
+    {
+        var Dependencies = new List<Sourceˉmoduleˉinput>();
+        if (includeˉsourceˉgraph)
+        {
+            Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+        }
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
+        Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            Dependencies);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler source-graph composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();
@@ -5411,6 +5564,11 @@ internal static class Program
         [property: JsonPropertyName("sourceSetDemoResult")] int Sourceˉsetˉdemoˉresult,
         [property: JsonPropertyName("sourceSetToolSha256")] string Sourceˉsetˉtoolˉsha256,
         [property: JsonPropertyName("sourceSetSelfOutput")] string Sourceˉsetˉselfˉoutput,
+        [property: JsonPropertyName("sourceGraphSha256")] string Sourceˉgraphˉsha256,
+        [property: JsonPropertyName("sourceGraphDemoSha256")] string Sourceˉgraphˉdemoˉsha256,
+        [property: JsonPropertyName("sourceGraphDemoResult")] int Sourceˉgraphˉdemoˉresult,
+        [property: JsonPropertyName("sourceGraphToolSha256")] string Sourceˉgraphˉtoolˉsha256,
+        [property: JsonPropertyName("sourceGraphSelfOutput")] string Sourceˉgraphˉselfˉoutput,
         [property: JsonPropertyName("wvdumpCoreSha256")] string Wvˉdumpˉcoreˉsha256,
         [property: JsonPropertyName("wvdumpCoreResult")] int Wvˉdumpˉcoreˉresult,
         [property: JsonPropertyName("wvdumpHostedOutput")] string Wvˉdumpˉhostedˉoutput,

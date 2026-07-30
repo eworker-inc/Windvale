@@ -88,5 +88,14 @@
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Set-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Set-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Bootstrap/Source-Graph-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Graph-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Graph-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Graph-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Graph-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Graph-Tool.wv" />
   </ItemGroup>
 </Project>
