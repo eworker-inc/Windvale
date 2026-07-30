@@ -7,7 +7,7 @@ Windvale keeps the complete cross-host qualification gate, but ordinary developm
 ## Levels
 
 - `Fast` builds once and runs tests matching one required case-insensitive displayed-name substring. It may fail fast and may write a local timing report. It does not produce conformance evidence.
-- `Standard` builds once, runs all 45 in-process conformance tests, and writes the normal host report. It stops before native CLI qualification.
+- `Standard` builds once, runs all 46 in-process conformance tests, and writes the normal host report. It stops before native CLI qualification.
 - `Qualification` is the default and remains the milestone gate. It adds every native CLI, hosted-boundary, deterministic-artifact, and failure-preservation check.
 
 Qualification builds the CLI once and invokes the resulting `windvale.dll` directly in each separate process. This preserves command parsing, process exit codes, native file behavior, capability boundaries, and output checks while removing repeated `dotnet run` project evaluation.
@@ -40,11 +40,19 @@ The first timing profile shows where remaining work belongs:
 
 Build time is only a few seconds and is not the current bottleneck. Further broad build tuning is unlikely to matter. Any parallel-test or artifact-reuse experiment should start with the golden-contract path, use isolated state/output, measure memory and elapsed time on both hosts, and retain a sequential oracle until equivalence is established.
 
+## Body-binding measurements
+
+Decision 0034 adds one real nine-module body-binding closure to the portable golden contract and a second independent execution through the native CLI qualification boundary. On exact commit `9185b28`, the focused binding test took 2.877 seconds on Windows and 2.691 seconds on Debian. Windows Qualification completed in approximately 1,005.8 seconds with a 526.833-second suite; Debian Qualification completed in approximately 1,066.4 seconds with a 538.947-second suite.
+
+The added semantic work intentionally increases milestone qualification time without increasing the normal inner loop: the Fast binding command remains a few seconds after the warm build, and Standard executes the expensive closure once. Qualification alone pays for the second process-level CLI closure. A future optimization must target the golden real-closure work or execute independent closures concurrently with isolated runtime/output state; repeated project evaluation is no longer the significant cost.
+
 ## Qualification evidence
 
 The optimized verifier was qualified from the exact pre-normalization commit `de88007b4716c88604321baaad4c4d5c417d317e`, archived as `windvale-verification-speed-de88007.tar.gz`, 362,715 bytes with SHA-256 `dc5fab40a06a3f19706923fa3f569178297cd97bda5b9a8dc9e2b9c128942b92`. The attribution migration ledger maps it to tree-identical normalized commit `00466fd9e9feaac4655cdf9748ac1dc56b586a84`.
 
 Windows x64 completed Qualification in 481.3 seconds with a 253.025-second suite; Debian GNU/Linux 12 x64 completed it in 501.8 seconds with a 270.660-second suite. Both hosts passed all 45 tests, the complete native CLI verifier, and zero-warning Release builds. Their normalized conformance reports matched, and all 42 directly compared artifacts, totaling 3,102,891 bytes, were byte-identical. The Windows report SHA-256 is `2f9f0f62b8a98e411500ef34fe697936808c74b39bcfd915c6de780f6fffd1ff`; the Debian report SHA-256 is `bd514ce1a9ba154cde689e4b1cf4cac23f0b5c50d21b5e58e40074022a04e5dd`. After retrieving the evidence, the exact Debian QA directory and transferred archive were removed and confirmed absent.
+
+The binding candidate commit `9185b28af7a7a7802d8606162ef7a5413d82dc33` was archived as `windvale-source-bindings-9185b28.tar.gz`, 2,583,180 bytes with SHA-256 `4f6c8d12ea80a52ad9d9cf989b80ac1e6cb1d2f9d266ad9e71effa3afb81c2ef`. Both hosts passed all 46 tests, the complete native CLI verifier, and zero-warning Release builds. The Windows report is 15,561 bytes with SHA-256 `cb17433f772f0336208e39623be65726b3b9d57525afa5fc7a53a80f93af9972`; the Debian report is 15,471 bytes with SHA-256 `f25adeb591fa8547ffadbd38c61f1a1f667cbbf57f1e909e9e48a520fb3e54e8`. Their normalized contracts matched, and all 45 directly compared artifacts, totaling 4,076,491 bytes, were byte-identical. The retrieved Debian artifact bundle was 1,188,300 bytes with SHA-256 `a91577a01962854ee7f0f5f806f860adfd77698c43ecea2c32cd8e03c098b7b5`. After retrieval, the resolved Debian QA directory, source archive, and artifact bundle were removed and confirmed absent.
 
 ## Evidence rules
 

@@ -294,6 +294,26 @@ The Debian report is 14,964 bytes with SHA-256 `bd514ce1a9ba154cde689e4b1cf4cac2
 
 This qualifies Decision 0033 and the declaration/signature slice of roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not qualify body/local/call binding, expression types, control flow, typed WIR production, WVB encoding, closure of the 4 MiB versus 16 MiB source-envelope gap, bootstrap closure, native tooling, or any OS layer.
 
+## Portable body, local, and call binding qualification
+
+Candidate commit `9185b28af7a7a7802d8606162ef7a5413d82dc33` was archived as `windvale-source-bindings-9185b28.tar.gz`, 2,583,180 bytes with SHA-256 `4f6c8d12ea80a52ad9d9cf989b80ac1e6cb1d2f9d266ad9e71effa3afb81c2ef`, transferred with the same digest, and verified from that exact archive in `/tmp/windvale-source-bindings-9185b28` on the isolated Debian QA host. Windows and Debian GNU/Linux 12 x64 both completed the Release build with zero warnings/errors, all 46 tests, and the complete native CLI verifier. The QA host used .NET SDK `10.0.302`.
+
+The portable binding phase validates the qualified source-symbol result, assigns deterministic parameter/local slots and source scopes, binds local/global reads and assignments, resolves Foundation intrinsics, record constructors, functions, and declared capabilities through the visibility matrix, checks call arity, and returns stable failure evidence. It publishes `WVLB 1` only after independently validating its header, exact length, canonical per-function ranges, declaration ownership, binding order/kind/slot, shape identities, identifier spans, scope spans, and trailing data.
+
+A separate collect-then-bind prototype repeated body parsing and directory reconstruction and exceeded the 4,000,000,000-instruction ceiling. A combined prototype that still rebuilt the growing binding directory per statement failed after approximately 276 seconds; direct payload access reduced that failure to approximately 264 seconds but still retained per-symbol source slicing. The accepted packed-span implementation passes raw binding ranges through local lookup and compares global names against absolute WVSS source offsets. It completed the real nine-module closure below the unchanged ceiling with identical output on both hosts:
+
+```text
+source bindings status=Valid modules=9 functions=177 parameters=777 locals=896 reads=7937 assignments=602 calls=1344 directory-bytes=62044
+```
+
+Both hosts produced the exact 321,127-byte `Source-Bindings-Core.wvb` SHA-256 `e9f15ed16a627ae2f96feee001dd0dd7272d744566022e9b353aa79a351ed7d4`, 328,438-byte demo SHA-256 `d0007e74e697398d3a4cf52a5ee3143a5f624036f3665f8e2d610674b26eb72e`, and 324,035-byte hosted tool SHA-256 `dc3911680d5ea22890adfad9c3cf7156c386824591d16c9c39ada677c2dfd8d8`.
+
+Windows Qualification completed in approximately 1,005.8 seconds with a 526.833-second suite; Debian completed in approximately 1,066.4 seconds with a 538.947-second suite. The focused source-binding test took 2.877 seconds on Windows and 2.691 seconds on Debian. The Windows report is 15,561 bytes with SHA-256 `cb17433f772f0336208e39623be65726b3b9d57525afa5fc7a53a80f93af9972`; the Debian report is 15,471 bytes with SHA-256 `f25adeb591fa8547ffadbd38c61f1a1f667cbbf57f1e909e9e48a520fb3e54e8`. Their normalized contracts matched.
+
+All 45 directly retrieved top-level verifier artifacts, totaling 4,076,491 bytes, matched Windows byte for byte. The transferred Debian artifact bundle was 1,188,300 bytes with SHA-256 `a91577a01962854ee7f0f5f806f860adfd77698c43ecea2c32cd8e03c098b7b5`. These artifacts include the complete lexer/parser/source-set/graph/symbol/binding chain, Foundation dependencies, object/assembler/linker cores, canonical objects, images, maps, and existing golden modules. After evidence retrieval, the exact resolved QA directory, source archive, and artifact bundle were removed through `/bin/sh` and independently confirmed absent.
+
+This qualifies Decision 0034 and the body/local/call slice of roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not qualify complete expression types, field/operator validation, control-flow proof, typed WIR production, WVB encoding, closure of the 4 MiB versus 16 MiB source-envelope gap, bootstrap closure, native tooling, or any OS layer.
+
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
 Commit `9c4b9f5` was archived and transferred with matching SHA-256 `44565d0f6366eb418dc1a4555d1f7b355df63ec2ea836440de54639087fc335a`, then verified in the uniquely named disposable directory `/tmp/windvale-linker-9c4b9f5-20260730` on the isolated E-Worker QA host. The archive contained the canonical WVA fixture as 403 bytes plus the linker project, provider fixture, and shell verifier. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`. The verification did not use E-Worker release, configuration, service, or durable-data paths. The Debian report was retrieved with SHA-256 `b84cd3a180e8cb167dca3cf909457de91a8643f19911628c426c6e52c6fe5fc0`; the provider WVO, linked image, and canonical map were retrieved separately and each matched the Windows artifact byte for byte; then the resolved exact temporary directory and transferred archive were removed.

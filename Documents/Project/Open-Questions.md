@@ -44,8 +44,8 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Complete exact-archive Windows/Debian qualification of body, local, and call binding, then define typed expression and control-flow semantics.
-2. Use the next semantic and WIR pressure to define only the memory, collection, and aggregate-type facilities actually needed by the compiler.
+1. Define typed expression and control-flow semantics above the qualified WVSD/WVLB evidence, then introduce the smallest independently validated WIR boundary.
+2. Use that semantic and WIR pressure to define only the memory, collection, and aggregate-type facilities actually needed by the compiler.
 3. Define the restricted C bridge without changing Windvale semantics.
 4. Extend WVA labels and address materialization only when native-backend evidence supplies exact requirements.
 5. Select the firmware boundary and VM qualification targets for the accepted first x86-64 path.

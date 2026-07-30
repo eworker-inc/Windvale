@@ -1,7 +1,7 @@
 # Decision 0034: Portable body, local, and call binding
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified at `9185b28`
 
 ## Context
 
@@ -53,4 +53,6 @@ The exact candidate must pass the complete Release conformance and native CLI ve
 - exact core, demo, and hosted-tool hashes; and
 - the exact real-closure report under the fixed instruction ceiling.
 
-Windows and Debian reports must normalize to the same contract, and all directly compared verifier artifacts must be byte-identical. Qualification evidence and the candidate commit are recorded only after that gate passes.
+Windows and Debian reports must normalize to the same contract, and all directly compared verifier artifacts must be byte-identical.
+
+Candidate commit `9185b28` passed this gate from its exact archive on Windows x64 and Debian GNU/Linux 12 x64. Both hosts completed a zero-warning Release build, all 46 conformance tests, and the complete native CLI verifier. Their normalized reports matched, all 45 directly retrieved verifier artifacts were byte-identical, and the hosted tool produced the required real-closure report below the fixed ceiling. The resolved Debian QA directory and both transferred archives were removed and independently confirmed absent after evidence retrieval.

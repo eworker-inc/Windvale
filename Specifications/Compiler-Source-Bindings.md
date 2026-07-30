@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉbindings` is the portable body-binding phase above `Compilerˉsourceˉsymbols`. It consumes one complete, valid, acyclic WVSS 1 graph; reuses the qualified WVSD 1 declaration directory and visibility matrix; binds function parameters, locals, data reads, assignments, constructors, functions, capabilities, and Foundation intrinsics; and publishes independently validated local-binding evidence.
+`Compilerˉsourceˉbindings` is the cross-host-qualified portable body-binding phase at commit `9185b28` under Decision 0034. It consumes one complete, valid, acyclic WVSS 1 graph; reuses the qualified WVSD 1 declaration directory and visibility matrix; binds function parameters, locals, data reads, assignments, constructors, functions, capabilities, and Foundation intrinsics; and publishes independently validated local-binding evidence.
 
 This slice does not yet infer complete expression types, validate field ownership, validate operator operand/result types, prove control-flow returns, construct WIR, or emit WVB. Those remain the next semantic layer.
 
@@ -108,7 +108,7 @@ One combined pass constructs local evidence and binds body references. Hot looku
 
 The real nine-module compiler closure must complete below the fixed 4,000,000,000-instruction ceiling. Raising that ceiling is not an accepted substitute for correcting repeated materialization or rescan work.
 
-## Candidate artifacts and evidence
+## Qualified artifacts and evidence
 
 - `Source-Bindings-Core.wvb`: 321,127 bytes, SHA-256 `e9f15ed16a627ae2f96feee001dd0dd7272d744566022e9b353aa79a351ed7d4`.
 - `Source-Bindings-Demo.wvb`: 328,438 bytes, SHA-256 `d0007e74e697398d3a4cf52a5ee3143a5f624036f3665f8e2d610674b26eb72e`.
@@ -122,4 +122,4 @@ The hosted tool binds the current real closure as:
 source bindings status=Valid modules=9 functions=177 parameters=777 locals=896 reads=7937 assignments=602 calls=1344 directory-bytes=62044
 ```
 
-Cross-host qualification is required before these candidate artifacts are described as qualified.
+The exact `9185b28` archive passed a zero-warning Release build, all 46 tests, and the complete native CLI verifier on Windows x64 and Debian GNU/Linux 12 x64. Their normalized contracts matched. All 45 directly retrieved artifacts—4,076,491 bytes including the complete compiler chain and downstream tool products—were byte-identical.
