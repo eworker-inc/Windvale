@@ -1,0 +1,458 @@
+module Wvaˉscannerˉcore profile hosted;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+data Headerˉword: bytes = [119, 105, 110, 100, 118, 97, 108, 101, 45, 97, 115, 115, 101, 109, 98, 108, 121];
+data Versionˉword: bytes = [49];
+data Repeatedˉbyte: bytes = [97];
+data Emptyˉbytes: bytes = [];
+data Invalidˉutf8ˉsource: bytes = [119, 105, 110, 100, 118, 97, 108, 101, 45, 97, 115, 115, 101, 109, 98, 108, 121, 32, 49, 10, 195, 40];
+
+data Validˉsource: text = "# Windvale assembly\nwindvale-assembly 1 # format\n\nsymbol export function Main in .text\nsection code .text align 16\ndefine Main\nmove_i32 eax 42\nreturn\nend define\nend section\n";
+data Crˉsource: text = "\r# preface\rwindvale-assembly\t1\rsymbol export function Main in .text\rsection code .text align 16\rdefine Main\rreturn\rend define\rend section\r";
+data Badˉheaderˉsource: text = "windvale-assembly 2\nsection code .text align 16\nend section\n";
+data Extraˉheaderˉsource: text = "windvale-assembly 1 extra\nsection code .text align 16\nend section\n";
+data Missingˉheaderˉsource: text = "# comment only\n\t# another comment\n";
+
+enum Wvaˉtokenˉkind {
+    Word = 1;
+    Newline = 2;
+    End = 3;
+}
+
+enum Wvaˉscanˉstatus {
+    Valid = 0;
+    Sourceˉtooˉlarge = 1;
+    Invalidˉutf8 = 2;
+    Lineˉtooˉlong = 3;
+    Missingˉheader = 4;
+    Badˉheader = 5;
+}
+
+record Wvaˉtoken {
+    Kind: Wvaˉtokenˉkind;
+    Offset: u32;
+    Length: u32;
+    Nextˉcursor: u32;
+    Line: u32;
+    Column: u32;
+    Nextˉline: u32;
+    Nextˉcolumn: u32;
+}
+
+record Wvaˉpreflight {
+    Status: Wvaˉscanˉstatus;
+    Lines: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+record Wvaˉscan {
+    Status: Wvaˉscanˉstatus;
+    Sourceˉbytes: u32;
+    Lines: u32;
+    Meaningfulˉlines: u32;
+    Tokens: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+fn Byteˉisˉhorizontalˉspace(Value: u8) -> bool {
+    if Value == 32u8 { return true; }
+    return Value == 9u8;
+}
+
+fn Byteˉisˉnewline(Value: u8) -> bool {
+    if Value == 10u8 { return true; }
+    return Value == 13u8;
+}
+
+fn Scanˉtoˉlineˉend(Input: bytes, Start: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Start;
+    while Cursor < Total {
+        if Byteˉisˉnewline(Bytesˉreadˉu8(Input, Cursor)) {
+            return Cursor;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Cursor;
+}
+
+fn Readˉtoken(Input: bytes, Start: u32, Startˉline: u32, Startˉcolumn: u32) -> Wvaˉtoken {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Start;
+    var Line: u32 = Startˉline;
+    var Column: u32 = Startˉcolumn;
+
+    while Cursor < Total {
+        let Current: u8 = Bytesˉreadˉu8(Input, Cursor);
+        if Byteˉisˉhorizontalˉspace(Current) {
+            Cursor = Cursor + 1u32;
+            Column = Column + 1u32;
+        } else {
+            if Current == 35u8 {
+                let Commentˉend: u32 = Scanˉtoˉlineˉend(Input, Cursor);
+                Column = Column + Commentˉend - Cursor;
+                Cursor = Commentˉend;
+            } else {
+                if Current == 13u8 {
+                    var Next: u32 = Cursor + 1u32;
+                    if Next < Total {
+                        if Bytesˉreadˉu8(Input, Next) == 10u8 {
+                            Next = Next + 1u32;
+                        }
+                    }
+                    return Wvaˉtoken(
+                        Wvaˉtokenˉkind.Newline,
+                        Cursor,
+                        Next - Cursor,
+                        Next,
+                        Line,
+                        Column,
+                        Line + 1u32,
+                        1u32
+                    );
+                }
+                if Current == 10u8 {
+                    return Wvaˉtoken(
+                        Wvaˉtokenˉkind.Newline,
+                        Cursor,
+                        1u32,
+                        Cursor + 1u32,
+                        Line,
+                        Column,
+                        Line + 1u32,
+                        1u32
+                    );
+                }
+
+                let Wordˉoffset: u32 = Cursor;
+                let Wordˉcolumn: u32 = Column;
+                while Cursor < Total {
+                    let Value: u8 = Bytesˉreadˉu8(Input, Cursor);
+                    if Byteˉisˉhorizontalˉspace(Value) {
+                        return Wvaˉtoken(
+                            Wvaˉtokenˉkind.Word,
+                            Wordˉoffset,
+                            Cursor - Wordˉoffset,
+                            Cursor,
+                            Line,
+                            Wordˉcolumn,
+                            Line,
+                            Column
+                        );
+                    }
+                    if Value == 35u8 {
+                        return Wvaˉtoken(
+                            Wvaˉtokenˉkind.Word,
+                            Wordˉoffset,
+                            Cursor - Wordˉoffset,
+                            Cursor,
+                            Line,
+                            Wordˉcolumn,
+                            Line,
+                            Column
+                        );
+                    }
+                    if Byteˉisˉnewline(Value) {
+                        return Wvaˉtoken(
+                            Wvaˉtokenˉkind.Word,
+                            Wordˉoffset,
+                            Cursor - Wordˉoffset,
+                            Cursor,
+                            Line,
+                            Wordˉcolumn,
+                            Line,
+                            Column
+                        );
+                    }
+                    Cursor = Cursor + 1u32;
+                    Column = Column + 1u32;
+                }
+                return Wvaˉtoken(
+                    Wvaˉtokenˉkind.Word,
+                    Wordˉoffset,
+                    Cursor - Wordˉoffset,
+                    Cursor,
+                    Line,
+                    Wordˉcolumn,
+                    Line,
+                    Column
+                );
+            }
+        }
+    }
+
+    return Wvaˉtoken(
+        Wvaˉtokenˉkind.End,
+        Cursor,
+        0u32,
+        Cursor,
+        Line,
+        Column,
+        Line,
+        Column
+    );
+}
+
+fn Tokenˉequals(Input: bytes, Value: Wvaˉtoken, Expected: bytes) -> bool {
+    let Expectedˉlength: u32 = Bytesˉlength(Expected);
+    if Value.Kind != Wvaˉtokenˉkind.Word { return false; }
+    if Value.Length != Expectedˉlength { return false; }
+
+    var Index: u32 = 0u32;
+    while Index < Expectedˉlength {
+        if Bytesˉreadˉu8(Input, Value.Offset + Index) != Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Preflightˉsource(Input: bytes) -> Wvaˉpreflight {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total > 1048576u32 {
+        return Wvaˉpreflight(Wvaˉscanˉstatus.Sourceˉtooˉlarge, 0u32, 1048576u32, 1u32, 1u32);
+    }
+    if !Textˉutf8ˉisˉvalid(Input) {
+        return Wvaˉpreflight(Wvaˉscanˉstatus.Invalidˉutf8, 0u32, 0u32, 1u32, 1u32);
+    }
+
+    var Cursor: u32 = 0u32;
+    var Line: u32 = 1u32;
+    var Linesˉseen: u32 = 0u32;
+    var Lineˉbytes: u32 = 0u32;
+    while Cursor < Total {
+        let Value: u8 = Bytesˉreadˉu8(Input, Cursor);
+        if Value == 13u8 {
+            Cursor = Cursor + 1u32;
+            if Cursor < Total {
+                if Bytesˉreadˉu8(Input, Cursor) == 10u8 {
+                    Cursor = Cursor + 1u32;
+                }
+            }
+            Linesˉseen = Linesˉseen + 1u32;
+            Line = Line + 1u32;
+            Lineˉbytes = 0u32;
+        } else {
+            if Value == 10u8 {
+                Cursor = Cursor + 1u32;
+                Linesˉseen = Linesˉseen + 1u32;
+                Line = Line + 1u32;
+                Lineˉbytes = 0u32;
+            } else {
+                Lineˉbytes = Lineˉbytes + 1u32;
+                if Lineˉbytes > 4096u32 {
+                    return Wvaˉpreflight(
+                        Wvaˉscanˉstatus.Lineˉtooˉlong,
+                        Linesˉseen,
+                        Cursor,
+                        Line,
+                        Lineˉbytes
+                    );
+                }
+                Cursor = Cursor + 1u32;
+            }
+        }
+    }
+    if Lineˉbytes > 0u32 {
+        Linesˉseen = Linesˉseen + 1u32;
+    }
+    return Wvaˉpreflight(Wvaˉscanˉstatus.Valid, Linesˉseen, Total, Line, Lineˉbytes + 1u32);
+}
+
+fn Failedˉscan(Input: bytes, Preflight: Wvaˉpreflight) -> Wvaˉscan {
+    return Wvaˉscan(
+        Preflight.Status,
+        Bytesˉlength(Input),
+        Preflight.Lines,
+        0u32,
+        0u32,
+        Preflight.Failureˉoffset,
+        Preflight.Failureˉline,
+        Preflight.Failureˉcolumn
+    );
+}
+
+fn Headerˉfailure(Input: bytes, Lines: u32, Value: Wvaˉtoken, Status: Wvaˉscanˉstatus) -> Wvaˉscan {
+    return Wvaˉscan(
+        Status,
+        Bytesˉlength(Input),
+        Lines,
+        0u32,
+        0u32,
+        Value.Offset,
+        Value.Line,
+        Value.Column
+    );
+}
+
+fn Scanˉwva(Input: bytes) -> Wvaˉscan {
+    let Preflight: Wvaˉpreflight = Preflightˉsource(Input);
+    if Preflight.Status != Wvaˉscanˉstatus.Valid {
+        return Failedˉscan(Input, Preflight);
+    }
+
+    var Current: Wvaˉtoken = Readˉtoken(Input, 0u32, 1u32, 1u32);
+    while Current.Kind == Wvaˉtokenˉkind.Newline {
+        Current = Readˉtoken(Input, Current.Nextˉcursor, Current.Nextˉline, Current.Nextˉcolumn);
+    }
+    if Current.Kind == Wvaˉtokenˉkind.End {
+        return Headerˉfailure(Input, Preflight.Lines, Current, Wvaˉscanˉstatus.Missingˉheader);
+    }
+    if !Tokenˉequals(Input, Current, Headerˉword) {
+        return Headerˉfailure(Input, Preflight.Lines, Current, Wvaˉscanˉstatus.Badˉheader);
+    }
+
+    let Headerˉline: u32 = Current.Line;
+    var Tokenˉcount: u32 = 1u32;
+    Current = Readˉtoken(Input, Current.Nextˉcursor, Current.Nextˉline, Current.Nextˉcolumn);
+    if Current.Kind != Wvaˉtokenˉkind.Word {
+        return Headerˉfailure(Input, Preflight.Lines, Current, Wvaˉscanˉstatus.Badˉheader);
+    }
+    if Current.Line != Headerˉline {
+        return Headerˉfailure(Input, Preflight.Lines, Current, Wvaˉscanˉstatus.Badˉheader);
+    }
+    if !Tokenˉequals(Input, Current, Versionˉword) {
+        return Headerˉfailure(Input, Preflight.Lines, Current, Wvaˉscanˉstatus.Badˉheader);
+    }
+    Tokenˉcount = 2u32;
+
+    Current = Readˉtoken(Input, Current.Nextˉcursor, Current.Nextˉline, Current.Nextˉcolumn);
+    if Current.Kind == Wvaˉtokenˉkind.Word {
+        return Headerˉfailure(Input, Preflight.Lines, Current, Wvaˉscanˉstatus.Badˉheader);
+    }
+
+    var Meaningfulˉlines: u32 = 1u32;
+    var Lineˉhasˉtoken: bool = false;
+    if Current.Kind == Wvaˉtokenˉkind.Newline {
+        Current = Readˉtoken(Input, Current.Nextˉcursor, Current.Nextˉline, Current.Nextˉcolumn);
+    }
+    while Current.Kind != Wvaˉtokenˉkind.End {
+        if Current.Kind == Wvaˉtokenˉkind.Word {
+            Tokenˉcount = Tokenˉcount + 1u32;
+            Lineˉhasˉtoken = true;
+        } else {
+            if Lineˉhasˉtoken {
+                Meaningfulˉlines = Meaningfulˉlines + 1u32;
+                Lineˉhasˉtoken = false;
+            }
+        }
+        Current = Readˉtoken(Input, Current.Nextˉcursor, Current.Nextˉline, Current.Nextˉcolumn);
+    }
+    if Lineˉhasˉtoken {
+        Meaningfulˉlines = Meaningfulˉlines + 1u32;
+    }
+
+    return Wvaˉscan(
+        Wvaˉscanˉstatus.Valid,
+        Bytesˉlength(Input),
+        Preflight.Lines,
+        Meaningfulˉlines,
+        Tokenˉcount,
+        Current.Offset,
+        Current.Line,
+        Current.Column
+    );
+}
+
+fn Statusˉtext(Status: Wvaˉscanˉstatus) -> text {
+    if Status == Wvaˉscanˉstatus.Valid { return "valid"; }
+    if Status == Wvaˉscanˉstatus.Sourceˉtooˉlarge { return "source_too_large"; }
+    if Status == Wvaˉscanˉstatus.Invalidˉutf8 { return "invalid_utf8"; }
+    if Status == Wvaˉscanˉstatus.Lineˉtooˉlong { return "line_too_long"; }
+    if Status == Wvaˉscanˉstatus.Missingˉheader { return "missing_header"; }
+    return "bad_header";
+}
+
+fn Describeˉscan(Result: Wvaˉscan) -> text {
+    var Description: text = Textˉconcat("status=", Statusˉtext(Result.Status));
+    Description = Textˉconcat(Description, Textˉconcat(" bytes=", U32ˉformat(Result.Sourceˉbytes)));
+    Description = Textˉconcat(Description, Textˉconcat(" lines=", U32ˉformat(Result.Lines)));
+    Description = Textˉconcat(
+        Description,
+        Textˉconcat(" meaningful-lines=", U32ˉformat(Result.Meaningfulˉlines))
+    );
+    Description = Textˉconcat(Description, Textˉconcat(" tokens=", U32ˉformat(Result.Tokens)));
+    Description = Textˉconcat(Description, Textˉconcat(" offset=", U32ˉformat(Result.Failureˉoffset)));
+    Description = Textˉconcat(Description, Textˉconcat(" line=", U32ˉformat(Result.Failureˉline)));
+    return Textˉconcat(Description, Textˉconcat(" column=", U32ˉformat(Result.Failureˉcolumn)));
+}
+
+fn Repeatˉbytes(Count: u32) -> bytes {
+    var Result: bytes = Emptyˉbytes;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Result = Bytesˉconcat(Result, Repeatedˉbyte);
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Runˉselfˉtests() -> i32 {
+    let Valid: Wvaˉscan = Scanˉwva(Textˉtoˉutf8(Validˉsource));
+    if Valid.Status != Wvaˉscanˉstatus.Valid { return 11; }
+    if Valid.Meaningfulˉlines != 8u32 { return 21; }
+    if Valid.Tokens != 23u32 { return 31; }
+
+    let Cr: Wvaˉscan = Scanˉwva(Textˉtoˉutf8(Crˉsource));
+    if Cr.Status != Wvaˉscanˉstatus.Valid { return 12; }
+    if Cr.Meaningfulˉlines != 7u32 { return 22; }
+
+    let Bad: Wvaˉscan = Scanˉwva(Textˉtoˉutf8(Badˉheaderˉsource));
+    if Bad.Status != Wvaˉscanˉstatus.Badˉheader { return 13; }
+    if Bad.Failureˉline != 1u32 { return 23; }
+    if Bad.Failureˉcolumn != 19u32 { return 33; }
+
+    let Extra: Wvaˉscan = Scanˉwva(Textˉtoˉutf8(Extraˉheaderˉsource));
+    if Extra.Status != Wvaˉscanˉstatus.Badˉheader { return 14; }
+    if Extra.Failureˉcolumn != 21u32 { return 24; }
+
+    let Missing: Wvaˉscan = Scanˉwva(Textˉtoˉutf8(Missingˉheaderˉsource));
+    if Missing.Status != Wvaˉscanˉstatus.Missingˉheader { return 15; }
+
+    let Invalid: Wvaˉscan = Scanˉwva(Invalidˉutf8ˉsource);
+    if Invalid.Status != Wvaˉscanˉstatus.Invalidˉutf8 { return 16; }
+
+    let Long: Wvaˉscan = Scanˉwva(Repeatˉbytes(4097u32));
+    if Long.Status != Wvaˉscanˉstatus.Lineˉtooˉlong { return 17; }
+    if Long.Failureˉoffset != 4096u32 { return 27; }
+    if Long.Failureˉcolumn != 4097u32 { return 37; }
+
+    Describeˉscan(Valid);
+    return 0;
+}
+
+fn Runˉfileˉscan() -> i32 {
+    if process.argument_count() != 1u32 {
+        diagnostic.write_line("Usage: wvascan <source.wva>");
+        return 64;
+    }
+
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Result: Wvaˉscan = Scanˉwva(Input);
+    let Description: text = Describeˉscan(Result);
+    if Result.Status != Wvaˉscanˉstatus.Valid {
+        diagnostic.write_line(Description);
+        return 2;
+    }
+
+    console.write_line("wvascan 1");
+    console.write_line(Description);
+    return 0;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() == 0u32 {
+        return Runˉselfˉtests();
+    }
+    return Runˉfileˉscan();
+}

@@ -23,6 +23,7 @@ HELLO_MODULE="$ARTIFACTS/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
+WVA_SCANNER_MODULE="$ARTIFACTS/Wva-Scanner-Core.wvb"
 WVO_SAMPLE="$ARTIFACTS/Sample.wvo"
 ASSEMBLY_OBJECT="$ARTIFACTS/Hello-Object.wvo"
 dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
@@ -272,6 +273,50 @@ if [ "$WVO_MISSING_PARENT_EXIT" -ne 3 ]; then
     exit 1
 fi
 printf '%s\n' "$WVO_MISSING_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
+
+dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    compile "$REPOSITORY_ROOT/Examples/Assembler/Wva-Scanner-Core.wv" -o "$WVA_SCANNER_MODULE"
+
+WVA_SCANNER_VERIFY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- verify "$WVA_SCANNER_MODULE")
+printf '%s\n' "$WVA_SCANNER_VERIFY_OUTPUT" | grep -F 'Verified: Wvaˉscannerˉcore' >/dev/null
+
+WVA_SCANNER_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$WVA_SCANNER_MODULE")
+printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'Scanˉwva' >/dev/null
+printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'text.utf8_is_valid' >/dev/null
+printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
+
+set +e
+WVA_SCANNER_UNAUTHORIZED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- run "$WVA_SCANNER_MODULE" 2>&1)
+WVA_SCANNER_UNAUTHORIZED_EXIT=$?
+set -e
+if [ "$WVA_SCANNER_UNAUTHORIZED_EXIT" -ne 3 ]; then
+    echo "Expected unauthorized WVA scanner run exit 3, found $WVA_SCANNER_UNAUTHORIZED_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$WVA_SCANNER_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
+
+WVA_SCANNER_SELF_TEST_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVA_SCANNER_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000)
+printf '%s\n' "$WVA_SCANNER_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+WVA_SCANNER_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVA_SCANNER_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000 \
+    -- "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva")
+printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'wvascan 1' >/dev/null
+printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1' >/dev/null
+printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 ASSEMBLY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     assemble "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" -o "$ASSEMBLY_OBJECT")

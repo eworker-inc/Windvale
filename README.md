@@ -14,6 +14,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
 - A canonical x86-64-first WVO 1.0 object model with sections, symbols, relocations, a bounded C# oracle, and a Windvale-written producer/structural inspector
 - A versioned WVA 1 textual assembly contract and Stage 0 assembler that infers definition offsets/sizes and emits verified WVO objects
+- A Windvale-written bounded WVA scanner that validates strict UTF-8, source and line limits, line endings, comments, token boundaries, and the exact format header through explicit hosted input
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
@@ -125,6 +126,22 @@ dotnet run --project Tools/Windvale.Tool -- object-inspect artifacts/Hello-Objec
 
 The Stage 0 assembler emits exact x86-64 instruction bytes, derives symbol offsets and sizes from named definitions, and records unresolved relative and absolute fixups. It never performs link layout or import resolution. The same WVA contract is the target for the next Windvale-written assembler slice.
 
+Compile and run the first Windvale-written WVA scanner against that source:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Assembler/Wva-Scanner-Core.wv -o artifacts/Wva-Scanner-Core.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Wva-Scanner-Core.wvb `
+  --allow console.write_line `
+  --allow diagnostic.write_line `
+  --allow file.read_bytes `
+  --allow process.argument `
+  --allow process.argument_count `
+  --max-steps 10000000 `
+  -- Examples/Assembler/Hello-Object.wva
+```
+
+The scanner reads immutable bytes through one explicit capability, validates WVA source boundaries without host text parsing, and emits a deterministic `wvascan 1` report. With no program arguments it runs embedded valid and adversarial checks. Semantic statement validation and WVO encoding remain the following Windvale-written gates.
+
 ## Seed language example
 
 ```text
@@ -192,6 +209,7 @@ export fn Main() -> i32 {
 - [Seed bytecode specification](Specifications/Seed-Bytecode.md)
 - [Windvale object format](Specifications/Windvale-Object-Format.md)
 - [Windvale textual assembly](Specifications/Windvale-Assembly.md)
+- [Windvale WVA scanner core](Specifications/Wva-Scanner-Core.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
