@@ -99,6 +99,74 @@ record Wvoˉscan {
     Failureˉoffset: u32;
 }
 
+enum Linkˉstatus {
+    Valid = 0;
+    WVL1001 = 1;
+    WVL1002 = 2;
+    WVL1003 = 3;
+    WVL1004 = 4;
+    WVL1005 = 5;
+    WVL1006 = 6;
+    WVL1007 = 7;
+    WVL1008 = 8;
+}
+
+record U32ˉparse {
+    Valid: bool;
+    Value: u32;
+}
+
+record Linkˉaggregate {
+    Status: Linkˉstatus;
+    Failureˉinput: u32;
+    Sectionˉcount: u32;
+    Symbolˉcount: u32;
+    Relocationˉcount: u32;
+    Importˉcount: u32;
+}
+
+record Linkˉphase {
+    Status: Linkˉstatus;
+    Failureˉinput: u32;
+}
+
+record Exportˉreference {
+    Found: bool;
+    Inputˉindex: u32;
+    Symbolˉindex: u32;
+    Kind: u32;
+}
+
+record Layoutˉstep {
+    Status: Linkˉstatus;
+    Imageˉsize: u32;
+    Imageˉoffset: u32;
+    Address: u32;
+}
+
+record Layoutˉscan {
+    Status: Linkˉstatus;
+    Failureˉinput: u32;
+    Imageˉsize: u32;
+}
+
+record Definitionˉscan {
+    Status: Linkˉstatus;
+    Failureˉinput: u32;
+    Entryˉaddress: u32;
+}
+
+record Linkˉanalysis {
+    Status: Linkˉstatus;
+    Failureˉinput: u32;
+    Inputˉcount: u32;
+    Sectionˉcount: u32;
+    Symbolˉcount: u32;
+    Relocationˉcount: u32;
+    Imageˉsize: u32;
+    Entryˉaddress: u32;
+}
+
 fn Invalidˉscan(
     Status: Wvoˉstatus,
     Sectionˉcount: u32,
@@ -322,12 +390,14 @@ fn Findˉrelocation(Input: bytes, Scan: Wvoˉscan, Wanted: u32) -> Wvoˉrelocati
 }
 
 fn Sectionˉnamesˉareˉunique(Input: bytes, Sectionˉcount: u32) -> bool {
+    var Leftˉcursor: u32 = 24u32;
     var Leftˉindex: u32 = 0u32;
     while Leftˉindex < Sectionˉcount {
-        let Left: Wvoˉsectionˉview = Findˉsection(Input, Sectionˉcount, Leftˉindex);
+        let Left: Wvoˉsectionˉview = Readˉsection(Input, Leftˉcursor);
+        var Rightˉcursor: u32 = Left.Cursor;
         var Rightˉindex: u32 = Leftˉindex + 1u32;
         while Rightˉindex < Sectionˉcount {
-            let Right: Wvoˉsectionˉview = Findˉsection(Input, Sectionˉcount, Rightˉindex);
+            let Right: Wvoˉsectionˉview = Readˉsection(Input, Rightˉcursor);
             if Compareˉnames(
                 Input,
                 Left.Nameˉoffset,
@@ -337,8 +407,10 @@ fn Sectionˉnamesˉareˉunique(Input: bytes, Sectionˉcount: u32) -> bool {
             ) == 0 {
                 return false;
             }
+            Rightˉcursor = Right.Cursor;
             Rightˉindex = Rightˉindex + 1u32;
         }
+        Leftˉcursor = Left.Cursor;
         Leftˉindex = Leftˉindex + 1u32;
     }
     return true;
@@ -630,6 +702,506 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉscan {
     );
 }
 
+fn Parseˉu32ˉdecimal(Input: bytes) -> U32ˉparse {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 { return U32ˉparse(false, 0u32); }
+    if Length > 10u32 { return U32ˉparse(false, 0u32); }
+    var Value: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Index));
+        if Character < 48u32 { return U32ˉparse(false, 0u32); }
+        if Character > 57u32 { return U32ˉparse(false, 0u32); }
+        let Digit: u32 = Character - 48u32;
+        if Value > 429496729u32 { return U32ˉparse(false, 0u32); }
+        if Value == 429496729u32 {
+            if Digit > 5u32 { return U32ˉparse(false, 0u32); }
+        }
+        Value = Value * 10u32 + Digit;
+        Index = Index + 1u32;
+    }
+    return U32ˉparse(true, Value);
+}
+
+fn Machineˉnameˉisˉvalid(Input: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 { return false; }
+    if Length > 255u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Index));
+        if !Nameˉcharacterˉisˉvalid(Character, Index == 0u32) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compareˉnamesˉacross(
+    Left: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Right: bytes,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> i32 {
+    var Index: u32 = 0u32;
+    var Minimum: u32 = Leftˉlength;
+    if Rightˉlength < Minimum { Minimum = Rightˉlength; }
+    while Index < Minimum {
+        let Leftˉcharacter: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Left, Leftˉoffset + Index));
+        let Rightˉcharacter: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Right, Rightˉoffset + Index));
+        if Leftˉcharacter < Rightˉcharacter { return -1; }
+        if Leftˉcharacter > Rightˉcharacter { return 1; }
+        Index = Index + 1u32;
+    }
+    if Leftˉlength < Rightˉlength { return -1; }
+    if Leftˉlength > Rightˉlength { return 1; }
+    return 0;
+}
+
+fn Readˉlinkˉinput(Inputˉindex: u32) -> bytes {
+    return file.read_bytes(process.argument(Inputˉindex + 3u32));
+}
+
+fn Inspectˉlinkˉinputs(Inputˉcount: u32) -> Linkˉaggregate {
+    var Sectionˉcount: u32 = 0u32;
+    var Symbolˉcount: u32 = 0u32;
+    var Relocationˉcount: u32 = 0u32;
+    var Importˉcount: u32 = 0u32;
+    var Inputˉindex: u32 = 0u32;
+    while Inputˉindex < Inputˉcount {
+        let Objectˉbytes: bytes = Readˉlinkˉinput(Inputˉindex);
+        let Scan: Wvoˉscan = Inspectˉobject(Objectˉbytes);
+        if Scan.Status != Wvoˉstatus.Valid {
+            return Linkˉaggregate(
+                Linkˉstatus.WVL1002,
+                Inputˉindex,
+                Sectionˉcount,
+                Symbolˉcount,
+                Relocationˉcount,
+                Importˉcount
+            );
+        }
+        if Scan.Sectionˉcount > 256u32 - Sectionˉcount {
+            return Linkˉaggregate(Linkˉstatus.WVL1003, 4294967295u32, Sectionˉcount, Symbolˉcount, Relocationˉcount, Importˉcount);
+        }
+        if Scan.Symbolˉcount > 16384u32 - Symbolˉcount {
+            return Linkˉaggregate(Linkˉstatus.WVL1003, 4294967295u32, Sectionˉcount, Symbolˉcount, Relocationˉcount, Importˉcount);
+        }
+        if Scan.Relocationˉcount > 65536u32 - Relocationˉcount {
+            return Linkˉaggregate(Linkˉstatus.WVL1003, 4294967295u32, Sectionˉcount, Symbolˉcount, Relocationˉcount, Importˉcount);
+        }
+        Sectionˉcount = Sectionˉcount + Scan.Sectionˉcount;
+        Symbolˉcount = Symbolˉcount + Scan.Symbolˉcount;
+        Relocationˉcount = Relocationˉcount + Scan.Relocationˉcount;
+        Importˉcount = Importˉcount + Scan.Importˉcount;
+        Inputˉindex = Inputˉindex + 1u32;
+    }
+    return Linkˉaggregate(
+        Linkˉstatus.Valid,
+        4294967295u32,
+        Sectionˉcount,
+        Symbolˉcount,
+        Relocationˉcount,
+        Importˉcount
+    );
+}
+
+fn Exportˉrangesˉareˉdistinct(
+    Left: bytes,
+    Leftˉscan: Wvoˉscan,
+    Right: bytes,
+    Rightˉscan: Wvoˉscan
+) -> bool {
+    if Leftˉscan.Exportˉcount == 0u32 { return true; }
+    if Rightˉscan.Exportˉcount == 0u32 { return true; }
+    var Leftˉcursor: u32 = Symbolˉcursorˉat(
+        Left,
+        Leftˉscan.Symbolˉstart,
+        Leftˉscan.Localˉcount
+    );
+    var Rightˉcursor: u32 = Symbolˉcursorˉat(
+        Right,
+        Rightˉscan.Symbolˉstart,
+        Rightˉscan.Localˉcount
+    );
+    var Leftˉindex: u32 = 0u32;
+    var Rightˉindex: u32 = 0u32;
+    while Leftˉindex < Leftˉscan.Exportˉcount {
+        if Rightˉindex >= Rightˉscan.Exportˉcount { return true; }
+        let Leftˉsymbol: Wvoˉsymbolˉview = Readˉsymbol(Left, Leftˉcursor);
+        let Rightˉsymbol: Wvoˉsymbolˉview = Readˉsymbol(Right, Rightˉcursor);
+        let Comparison: i32 = Compareˉnamesˉacross(
+            Left,
+            Leftˉsymbol.Nameˉoffset,
+            Leftˉsymbol.Nameˉlength,
+            Right,
+            Rightˉsymbol.Nameˉoffset,
+            Rightˉsymbol.Nameˉlength
+        );
+        if Comparison == 0 { return false; }
+        if Comparison < 0 {
+            Leftˉcursor = Leftˉsymbol.Cursor;
+            Leftˉindex = Leftˉindex + 1u32;
+        } else {
+            Rightˉcursor = Rightˉsymbol.Cursor;
+            Rightˉindex = Rightˉindex + 1u32;
+        }
+    }
+    return true;
+}
+
+fn Validateˉexportˉuniqueness(Inputˉcount: u32) -> Linkˉphase {
+    var Currentˉinput: u32 = 1u32;
+    while Currentˉinput < Inputˉcount {
+        let Current: bytes = Readˉlinkˉinput(Currentˉinput);
+        let Currentˉscan: Wvoˉscan = Inspectˉobject(Current);
+        var Earlierˉinput: u32 = 0u32;
+        while Earlierˉinput < Currentˉinput {
+            let Earlier: bytes = Readˉlinkˉinput(Earlierˉinput);
+            let Earlierˉscan: Wvoˉscan = Inspectˉobject(Earlier);
+            if !Exportˉrangesˉareˉdistinct(Earlier, Earlierˉscan, Current, Currentˉscan) {
+                return Linkˉphase(Linkˉstatus.WVL1004, Currentˉinput);
+            }
+            Earlierˉinput = Earlierˉinput + 1u32;
+        }
+        Currentˉinput = Currentˉinput + 1u32;
+    }
+    return Linkˉphase(Linkˉstatus.Valid, 4294967295u32);
+}
+
+fn Findˉexportˉinˉinput(
+    Nameˉinput: bytes,
+    Nameˉoffset: u32,
+    Nameˉlength: u32,
+    Providerˉinput: u32
+) -> Exportˉreference {
+    let Provider: bytes = Readˉlinkˉinput(Providerˉinput);
+    let Scan: Wvoˉscan = Inspectˉobject(Provider);
+    var Cursor: u32 = Symbolˉcursorˉat(Provider, Scan.Symbolˉstart, Scan.Localˉcount);
+    var Index: u32 = 0u32;
+    while Index < Scan.Exportˉcount {
+        let Symbol: Wvoˉsymbolˉview = Readˉsymbol(Provider, Cursor);
+        let Comparison: i32 = Compareˉnamesˉacross(
+            Nameˉinput,
+            Nameˉoffset,
+            Nameˉlength,
+            Provider,
+            Symbol.Nameˉoffset,
+            Symbol.Nameˉlength
+        );
+        if Comparison == 0 {
+            return Exportˉreference(
+                true,
+                Providerˉinput,
+                Scan.Localˉcount + Index,
+                Symbol.Kind
+            );
+        }
+        if Comparison < 0 { return Exportˉreference(false, 0u32, 0u32, 0u32); }
+        Cursor = Symbol.Cursor;
+        Index = Index + 1u32;
+    }
+    return Exportˉreference(false, 0u32, 0u32, 0u32);
+}
+
+fn Findˉexport(
+    Nameˉinput: bytes,
+    Nameˉoffset: u32,
+    Nameˉlength: u32,
+    Inputˉcount: u32
+) -> Exportˉreference {
+    var Providerˉinput: u32 = 0u32;
+    while Providerˉinput < Inputˉcount {
+        let Found: Exportˉreference = Findˉexportˉinˉinput(
+            Nameˉinput,
+            Nameˉoffset,
+            Nameˉlength,
+            Providerˉinput
+        );
+        if Found.Found { return Found; }
+        Providerˉinput = Providerˉinput + 1u32;
+    }
+    return Exportˉreference(false, 0u32, 0u32, 0u32);
+}
+
+fn Validateˉimports(Inputˉcount: u32) -> Linkˉphase {
+    var Inputˉindex: u32 = 0u32;
+    while Inputˉindex < Inputˉcount {
+        let Input: bytes = Readˉlinkˉinput(Inputˉindex);
+        let Scan: Wvoˉscan = Inspectˉobject(Input);
+        var Cursor: u32 = Symbolˉcursorˉat(
+            Input,
+            Scan.Symbolˉstart,
+            Scan.Localˉcount + Scan.Exportˉcount
+        );
+        var Index: u32 = 0u32;
+        while Index < Scan.Importˉcount {
+            let Symbol: Wvoˉsymbolˉview = Readˉsymbol(Input, Cursor);
+            let Provider: Exportˉreference = Findˉexport(
+                Input,
+                Symbol.Nameˉoffset,
+                Symbol.Nameˉlength,
+                Inputˉcount
+            );
+            if !Provider.Found { return Linkˉphase(Linkˉstatus.WVL1005, Inputˉindex); }
+            if Provider.Kind != Symbol.Kind {
+                return Linkˉphase(Linkˉstatus.WVL1006, Inputˉindex);
+            }
+            Cursor = Symbol.Cursor;
+            Index = Index + 1u32;
+        }
+        Inputˉindex = Inputˉindex + 1u32;
+    }
+    return Linkˉphase(Linkˉstatus.Valid, 4294967295u32);
+}
+
+fn Alignmentˉpadding(Address: u32, Alignment: u32) -> u32 {
+    if Alignment == 1u32 { return 0u32; }
+    let Encoded: bytes = Bytesˉfromˉu32ˉlittle(Address);
+    var Remainder: u32 = 0u32;
+    if Alignment <= 256u32 {
+        Remainder = U32ˉfromˉu8(Bytesˉreadˉu8(Encoded, 0u32));
+    } else {
+        Remainder = Bytesˉreadˉu16ˉlittle(Encoded, 0u32);
+    }
+    while Remainder >= Alignment {
+        Remainder = Remainder - Alignment;
+    }
+    if Remainder == 0u32 { return 0u32; }
+    return Alignment - Remainder;
+}
+
+fn Placeˉsection(
+    Baseˉaddress: u32,
+    Cursor: u32,
+    Section: Wvoˉsectionˉview
+) -> Layoutˉstep {
+    if Cursor > 4294967295u32 - Baseˉaddress {
+        return Layoutˉstep(Linkˉstatus.WVL1008, Cursor, 0u32, 0u32);
+    }
+    let Currentˉaddress: u32 = Baseˉaddress + Cursor;
+    let Padding: u32 = Alignmentˉpadding(Currentˉaddress, Section.Alignment);
+    if Padding > 4294967295u32 - Currentˉaddress {
+        return Layoutˉstep(Linkˉstatus.WVL1008, Cursor, 0u32, 0u32);
+    }
+    let Imageˉoffset: u32 = Cursor + Padding;
+    if Imageˉoffset > 4194304u32 {
+        return Layoutˉstep(Linkˉstatus.WVL1008, Cursor, 0u32, 0u32);
+    }
+    if Section.Memoryˉsize > 4194304u32 - Imageˉoffset {
+        return Layoutˉstep(Linkˉstatus.WVL1008, Cursor, 0u32, 0u32);
+    }
+    let End: u32 = Imageˉoffset + Section.Memoryˉsize;
+    if Baseˉaddress != 0u32 {
+        let Available: u32 = 4294967295u32 - Baseˉaddress + 1u32;
+        if End > Available {
+            return Layoutˉstep(Linkˉstatus.WVL1008, Cursor, 0u32, 0u32);
+        }
+    }
+    return Layoutˉstep(
+        Linkˉstatus.Valid,
+        End,
+        Imageˉoffset,
+        Currentˉaddress + Padding
+    );
+}
+
+fn Measureˉlayout(Inputˉcount: u32, Baseˉaddress: u32) -> Layoutˉscan {
+    var Cursor: u32 = 0u32;
+    var Kind: u32 = 1u32;
+    while Kind <= 4u32 {
+        var Inputˉindex: u32 = 0u32;
+        while Inputˉindex < Inputˉcount {
+            let Input: bytes = Readˉlinkˉinput(Inputˉindex);
+            let Scan: Wvoˉscan = Inspectˉobject(Input);
+            var Sectionˉcursor: u32 = 24u32;
+            var Sectionˉindex: u32 = 0u32;
+            while Sectionˉindex < Scan.Sectionˉcount {
+                let Section: Wvoˉsectionˉview = Readˉsection(Input, Sectionˉcursor);
+                if Section.Kind == Kind {
+                    let Step: Layoutˉstep = Placeˉsection(Baseˉaddress, Cursor, Section);
+                    if Step.Status != Linkˉstatus.Valid {
+                        return Layoutˉscan(Step.Status, Inputˉindex, Cursor);
+                    }
+                    Cursor = Step.Imageˉsize;
+                }
+                Sectionˉcursor = Section.Cursor;
+                Sectionˉindex = Sectionˉindex + 1u32;
+            }
+            Inputˉindex = Inputˉindex + 1u32;
+        }
+        Kind = Kind + 1u32;
+    }
+    return Layoutˉscan(Linkˉstatus.Valid, 4294967295u32, Cursor);
+}
+
+fn Findˉplacement(
+    Inputˉcount: u32,
+    Baseˉaddress: u32,
+    Wantedˉinput: u32,
+    Wantedˉsection: u32
+) -> Layoutˉstep {
+    var Cursor: u32 = 0u32;
+    var Kind: u32 = 1u32;
+    while Kind <= 4u32 {
+        var Inputˉindex: u32 = 0u32;
+        while Inputˉindex < Inputˉcount {
+            let Input: bytes = Readˉlinkˉinput(Inputˉindex);
+            let Scan: Wvoˉscan = Inspectˉobject(Input);
+            var Sectionˉcursor: u32 = 24u32;
+            var Sectionˉindex: u32 = 0u32;
+            while Sectionˉindex < Scan.Sectionˉcount {
+                let Section: Wvoˉsectionˉview = Readˉsection(Input, Sectionˉcursor);
+                if Section.Kind == Kind {
+                    let Step: Layoutˉstep = Placeˉsection(Baseˉaddress, Cursor, Section);
+                    if Step.Status != Linkˉstatus.Valid { return Step; }
+                    if Inputˉindex == Wantedˉinput {
+                        if Sectionˉindex == Wantedˉsection { return Step; }
+                    }
+                    Cursor = Step.Imageˉsize;
+                }
+                Sectionˉcursor = Section.Cursor;
+                Sectionˉindex = Sectionˉindex + 1u32;
+            }
+            Inputˉindex = Inputˉindex + 1u32;
+        }
+        Kind = Kind + 1u32;
+    }
+    return Layoutˉstep(Linkˉstatus.WVL1002, Cursor, 0u32, 0u32);
+}
+
+fn Validateˉdefinitions(
+    Inputˉcount: u32,
+    Baseˉaddress: u32,
+    Entry: Exportˉreference
+) -> Definitionˉscan {
+    var Entryˉaddress: u32 = 0u32;
+    var Inputˉindex: u32 = 0u32;
+    while Inputˉindex < Inputˉcount {
+        let Input: bytes = Readˉlinkˉinput(Inputˉindex);
+        let Scan: Wvoˉscan = Inspectˉobject(Input);
+        var Cursor: u32 = Scan.Symbolˉstart;
+        var Symbolˉindex: u32 = 0u32;
+        while Symbolˉindex < Scan.Symbolˉcount {
+            let Symbol: Wvoˉsymbolˉview = Readˉsymbol(Input, Cursor);
+            if Symbol.Binding != 3u32 {
+                let Placement: Layoutˉstep = Findˉplacement(
+                    Inputˉcount,
+                    Baseˉaddress,
+                    Inputˉindex,
+                    Symbol.Sectionˉindex
+                );
+                if Placement.Status != Linkˉstatus.Valid {
+                    return Definitionˉscan(Linkˉstatus.WVL1008, Inputˉindex, 0u32);
+                }
+                if Symbol.Offset > 4294967295u32 - Placement.Address {
+                    return Definitionˉscan(Linkˉstatus.WVL1008, Inputˉindex, 0u32);
+                }
+                let Address: u32 = Placement.Address + Symbol.Offset;
+                if Inputˉindex == Entry.Inputˉindex {
+                    if Symbolˉindex == Entry.Symbolˉindex { Entryˉaddress = Address; }
+                }
+            }
+            Cursor = Symbol.Cursor;
+            Symbolˉindex = Symbolˉindex + 1u32;
+        }
+        Inputˉindex = Inputˉindex + 1u32;
+    }
+    return Definitionˉscan(Linkˉstatus.Valid, 4294967295u32, Entryˉaddress);
+}
+
+fn Invalidˉlinkˉanalysis(
+    Status: Linkˉstatus,
+    Failureˉinput: u32,
+    Inputˉcount: u32,
+    Aggregate: Linkˉaggregate
+) -> Linkˉanalysis {
+    return Linkˉanalysis(
+        Status,
+        Failureˉinput,
+        Inputˉcount,
+        Aggregate.Sectionˉcount,
+        Aggregate.Symbolˉcount,
+        Aggregate.Relocationˉcount,
+        0u32,
+        0u32
+    );
+}
+
+fn Analyzeˉlink(
+    Baseˉaddress: u32,
+    Entryˉname: bytes,
+    Inputˉcount: u32
+) -> Linkˉanalysis {
+    let Emptyˉaggregate: Linkˉaggregate = Linkˉaggregate(
+        Linkˉstatus.Valid,
+        4294967295u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+    if Inputˉcount == 0u32 {
+        return Invalidˉlinkˉanalysis(Linkˉstatus.WVL1001, 4294967295u32, Inputˉcount, Emptyˉaggregate);
+    }
+    if Inputˉcount > 64u32 {
+        return Invalidˉlinkˉanalysis(Linkˉstatus.WVL1001, 4294967295u32, Inputˉcount, Emptyˉaggregate);
+    }
+    if !Machineˉnameˉisˉvalid(Entryˉname) {
+        return Invalidˉlinkˉanalysis(Linkˉstatus.WVL1001, 4294967295u32, Inputˉcount, Emptyˉaggregate);
+    }
+
+    let Aggregate: Linkˉaggregate = Inspectˉlinkˉinputs(Inputˉcount);
+    if Aggregate.Status != Linkˉstatus.Valid {
+        return Invalidˉlinkˉanalysis(Aggregate.Status, Aggregate.Failureˉinput, Inputˉcount, Aggregate);
+    }
+    let Exportˉphase: Linkˉphase = Validateˉexportˉuniqueness(Inputˉcount);
+    if Exportˉphase.Status != Linkˉstatus.Valid {
+        return Invalidˉlinkˉanalysis(Exportˉphase.Status, Exportˉphase.Failureˉinput, Inputˉcount, Aggregate);
+    }
+    let Importˉphase: Linkˉphase = Validateˉimports(Inputˉcount);
+    if Importˉphase.Status != Linkˉstatus.Valid {
+        return Invalidˉlinkˉanalysis(Importˉphase.Status, Importˉphase.Failureˉinput, Inputˉcount, Aggregate);
+    }
+    let Entry: Exportˉreference = Findˉexport(Entryˉname, 0u32, Bytesˉlength(Entryˉname), Inputˉcount);
+    if !Entry.Found {
+        return Invalidˉlinkˉanalysis(Linkˉstatus.WVL1007, 4294967295u32, Inputˉcount, Aggregate);
+    }
+    if Entry.Kind != 1u32 {
+        return Invalidˉlinkˉanalysis(Linkˉstatus.WVL1007, 4294967295u32, Inputˉcount, Aggregate);
+    }
+    let Layout: Layoutˉscan = Measureˉlayout(Inputˉcount, Baseˉaddress);
+    if Layout.Status != Linkˉstatus.Valid {
+        return Invalidˉlinkˉanalysis(Layout.Status, Layout.Failureˉinput, Inputˉcount, Aggregate);
+    }
+    let Definitions: Definitionˉscan = Validateˉdefinitions(Inputˉcount, Baseˉaddress, Entry);
+    if Definitions.Status != Linkˉstatus.Valid {
+        return Invalidˉlinkˉanalysis(Definitions.Status, Definitions.Failureˉinput, Inputˉcount, Aggregate);
+    }
+    return Linkˉanalysis(
+        Linkˉstatus.Valid,
+        4294967295u32,
+        Inputˉcount,
+        Aggregate.Sectionˉcount,
+        Aggregate.Symbolˉcount,
+        Aggregate.Relocationˉcount,
+        Layout.Imageˉsize,
+        Definitions.Entryˉaddress
+    );
+}
+
+fn Describeˉlink(Analysis: Linkˉanalysis) -> text {
+    var Result: text = Textˉconcat("link status=", Enumˉname(Analysis.Status));
+    Result = Textˉconcat(Result, Textˉconcat(" inputs=", U32ˉformat(Analysis.Inputˉcount)));
+    Result = Textˉconcat(Result, Textˉconcat(" sections=", U32ˉformat(Analysis.Sectionˉcount)));
+    Result = Textˉconcat(Result, Textˉconcat(" symbols=", U32ˉformat(Analysis.Symbolˉcount)));
+    Result = Textˉconcat(Result, Textˉconcat(" relocations=", U32ˉformat(Analysis.Relocationˉcount)));
+    Result = Textˉconcat(Result, Textˉconcat(" image-bytes=", U32ˉformat(Analysis.Imageˉsize)));
+    Result = Textˉconcat(Result, Textˉconcat(" entry-address=", U32ˉformat(Analysis.Entryˉaddress)));
+    return Textˉconcat(Result, Textˉconcat(" input=", U32ˉformat(Analysis.Failureˉinput)));
+}
+
 fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
     let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
     let Suffixˉoffset: u32 = Offset + 1u32;
@@ -679,6 +1251,13 @@ fn Runˉselfˉtests() -> i32 {
     if Trailing.Status != Wvoˉstatus.Trailingˉbytes { return 33; }
     let Badˉplaceholder: Wvoˉscan = Inspectˉobject(Replaceˉu8(Sampleˉobject, 50u32, 1u8));
     if Badˉplaceholder.Status != Wvoˉstatus.Invalidˉrelocation { return 34; }
+    let Maximum: U32ˉparse = Parseˉu32ˉdecimal(Textˉtoˉutf8("4294967295"));
+    if !Maximum.Valid { return 35; }
+    if Maximum.Value != 4294967295u32 { return 36; }
+    let Overflow: U32ˉparse = Parseˉu32ˉdecimal(Textˉtoˉutf8("4294967296"));
+    if Overflow.Valid { return 37; }
+    if Alignmentˉpadding(1u32, 16u32) != 15u32 { return 38; }
+    if Alignmentˉpadding(1048577u32, 4096u32) != 4095u32 { return 39; }
     Describeˉscan(Scan);
     return 0;
 }
@@ -695,6 +1274,37 @@ fn Runˉfileˉscan() -> i32 {
     return 0;
 }
 
+fn Runˉlinkˉanalysis() -> i32 {
+    let Base: U32ˉparse = Parseˉu32ˉdecimal(Textˉtoˉutf8(process.argument(0u32)));
+    if !Base.Valid {
+        let Failure: Linkˉanalysis = Linkˉanalysis(
+            Linkˉstatus.WVL1001,
+            4294967295u32,
+            process.argument_count() - 3u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32
+        );
+        diagnostic.write_line(Describeˉlink(Failure));
+        return 2;
+    }
+    let Entry: bytes = Textˉtoˉutf8(process.argument(1u32));
+    let Analysis: Linkˉanalysis = Analyzeˉlink(
+        Base.Value,
+        Entry,
+        process.argument_count() - 3u32
+    );
+    let Description: text = Describeˉlink(Analysis);
+    if Analysis.Status != Linkˉstatus.Valid {
+        diagnostic.write_line(Description);
+        return 2;
+    }
+    console.write(Textˉconcat(Description, "\n"));
+    return 0;
+}
+
 export fn Main() -> i32 {
     if process.argument_count() == 0u32 {
         return Runˉselfˉtests();
@@ -702,6 +1312,9 @@ export fn Main() -> i32 {
     if process.argument_count() == 1u32 {
         return Runˉfileˉscan();
     }
-    diagnostic.write_line("Usage: wvlink-core [object.wvo]");
+    if process.argument_count() >= 4u32 {
+        if process.argument_count() <= 67u32 { return Runˉlinkˉanalysis(); }
+    }
+    diagnostic.write_line("Usage: wvlink-core [object.wvo] | <base-address> <entry> <output.bin> <input.wvo>...");
     return 64;
 }

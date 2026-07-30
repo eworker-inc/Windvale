@@ -16,7 +16,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A versioned WVA 1 textual assembly contract and Stage 0 assembler that infers definition offsets/sizes and emits verified WVO objects
 - A Windvale-written WVA assembler that performs bounded scanning and semantic validation, derives definition ranges, encodes the complete initial x86-64 instruction/data set, constructs canonical WVO objects, and writes only a fully accepted result
 - A separate Stage 0 linker that resolves verified WVO inputs, lays out a bounded x86-64 flat memory image, applies checked relocations, independently reconstructs the result, and emits a canonical path-free map
-- An in-progress Windvale-written linker core whose first verified-bytecode slice independently validates complete WVO structure and exposes immutable section, symbol, and relocation views
+- An in-progress Windvale-written linker core that validates complete WVO structure, exposes immutable object views, resolves multi-object symbols, and computes deterministic section and entry addresses in verified bytecode
 - A stack-independent typed Windvale IR
 - Deterministic `.wvb` bytecode generation
 - A bounded binary reader and mandatory control-flow/type verifier
@@ -249,6 +249,7 @@ export fn Main() -> i32 {
 - [Windvale linker bootstrap prerequisites decision](Documents/Decisions/0012-Windvale-Linker-Bootstrap-Prerequisites.md)
 - [Balanced persistent byte sequences decision](Documents/Decisions/0013-Balanced-Persistent-Byte-Sequences.md)
 - [Windvale linker object views decision](Documents/Decisions/0014-Windvale-Linker-Object-Views.md)
+- [Windvale linker resolution and layout decision](Documents/Decisions/0015-Windvale-Linker-Resolution-And-Layout.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

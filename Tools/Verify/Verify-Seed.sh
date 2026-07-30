@@ -331,6 +331,10 @@ printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Inspectˉobject' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Findˉsection' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Findˉsymbol' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Findˉrelocation' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Validateˉexportˉuniqueness' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Validateˉimports' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Measureˉlayout' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Validateˉdefinitions' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.read_i32_little' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
 
@@ -492,6 +496,45 @@ printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F 'kind=Absoluteˉu32 section=1 off
 PROVIDER_ASSEMBLY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     assemble "$REPOSITORY_ROOT/Examples/Linker/Console-Provider.wva" -o "$LINK_PROVIDER_OBJECT")
 printf '%s\n' "$PROVIDER_ASSEMBLY_OUTPUT" | grep -F 'SHA-256: 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab' >/dev/null
+
+WINDVALE_ANALYSIS_OUTPUT="$ARTIFACTS/__windvale_analysis_must_not_write__.bin"
+if [ -e "$WINDVALE_ANALYSIS_OUTPUT" ]; then
+    echo "The Windvale analysis-only output unexpectedly exists: $WINDVALE_ANALYSIS_OUTPUT" >&2
+    exit 1
+fi
+WVLINK_ANALYSIS_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVLINK_CORE_MODULE" \
+    --allow console.write \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 20000000 \
+    -- 1048576 Main "$WINDVALE_ANALYSIS_OUTPUT" "$WINDVALE_ASSEMBLY_OBJECT" "$LINK_PROVIDER_OBJECT")
+printf '%s\n' "$WVLINK_ANALYSIS_OUTPUT" | grep -F 'link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295' >/dev/null
+printf '%s\n' "$WVLINK_ANALYSIS_OUTPUT" | grep -F 'Result: 0' >/dev/null
+if [ -e "$WINDVALE_ANALYSIS_OUTPUT" ]; then
+    echo 'The analysis-only Windvale linker slice unexpectedly wrote an image.' >&2
+    exit 1
+fi
+
+WVLINK_UNDEFINED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVLINK_CORE_MODULE" \
+    --allow console.write \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 20000000 \
+    -- 1048576 Main "$WINDVALE_ANALYSIS_OUTPUT" "$WINDVALE_ASSEMBLY_OBJECT" 2>&1)
+printf '%s\n' "$WVLINK_UNDEFINED_OUTPUT" | grep -F 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' >/dev/null
+printf '%s\n' "$WVLINK_UNDEFINED_OUTPUT" | grep -F 'Result: 2' >/dev/null
+if [ -e "$WINDVALE_ANALYSIS_OUTPUT" ]; then
+    echo 'Rejected Windvale link analysis unexpectedly wrote an image.' >&2
+    exit 1
+fi
 
 LINK_MAP_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     link --base-address 1048576 --entry Main -o "$LINKED_IMAGE" "$ASSEMBLY_OBJECT" "$LINK_PROVIDER_OBJECT")

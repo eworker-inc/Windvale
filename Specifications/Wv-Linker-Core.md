@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Wvˉlinkerˉcore` is the Windvale-written implementation path for Windvale Linking 1. The current first slice consumes one immutable WVO 1.0 value, validates the complete object structure in verified bytecode, and exposes deterministic section, symbol, and relocation views for later link passes. It is a parser/indexing milestone, not yet a complete linker: it does not resolve symbols, lay out an image, apply relocations, reconstruct the result, construct a map, or write an output image.
+`Wvˉlinkerˉcore` is the Windvale-written implementation path for Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic section, symbol, and relocation views, resolves multi-object symbols, and computes deterministic section placements and defined-symbol addresses. It is not yet a complete linker: it does not construct the image, apply relocations, independently reconstruct the result, construct the canonical map, or write an output image.
 
-The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. Its current WVB 1.6 SHA-256 is `ac00a5b702f2a4ef185bd5f021ec2611bd8a335d1937804ceeb30f28cc1b8ded`. This object-scanner slice is cross-host qualified at `3eb331a`: the exact committed archive passed the full suite and real CLI verifier on Windows and Debian, the normalized contracts matched, and the directly retrieved modules were byte-for-byte identical.
+The module is compiled from `Examples/Linker/Wv-Linker-Core.wv`. The object-scanner slice was cross-host qualified at `3eb331a` with WVB SHA-256 `ac00a5b702f2a4ef185bd5f021ec2611bd8a335d1937804ceeb30f28cc1b8ded`. The current resolution/layout extension has WVB 1.6 SHA-256 `2a4c24d1330ffbfc6d7253f16978fe5a86264c5118d8bb3e20473d35be023707` and requires fresh cross-host qualification.
 
 ## Object boundary
 
@@ -26,6 +26,14 @@ The first implementation deliberately uses repeated bounded passes over immutabl
 
 The runtime's balanced persistent byte representation makes later slice/replace image construction practical without exposing mutable buffers. First-read hosted file snapshots guarantee that repeated reads of one input resource observe one immutable byte value across all future link passes.
 
+## Multi-object resolution and layout
+
+The full analysis request accepts one through 64 objects in explicit argument order. It validates every object and the link-wide limits of 256 sections, 16,384 symbols, and 65,536 relocations before resolution. Duplicate exports are detected by merge-walking pairs of canonical export ranges. Each canonical import range is then resolved against export ranges in input order; missing names produce `WVL1005` and kind disagreement produces `WVL1006`. The requested entry must resolve to an exported function.
+
+Layout walks section kind `code`, read-only data, writable data, and zero-fill, then input index and source section index. Alignment applies to the actual address, not merely the image offset. The implementation derives padding from the low byte for alignments through 256 and the low 16 bits for alignments through 4,096, then uses checked `u32` and image-limit arithmetic. A later pass recomputes placements for every non-import symbol, rejects an address beyond `u32`, and captures the selected entry address.
+
+No host collection, object decoder, resolver, or layout callback participates. Repeated reads use the same immutable resource snapshots. The current analysis returns counts, image length, and entry address but deliberately returns no image bytes.
+
 ## Hosted scan shell
 
 The current shell declares the final linker's explicit hosted capabilities so capability authorization remains visible while the implementation grows. With no arguments, `Main` runs embedded parser and view checks without reading or writing a hosted resource. With one argument, it reads one bounded object resource and emits exactly one report:
@@ -36,7 +44,13 @@ object status=<status> sections=<u32> symbols=<u32> relocations=<u32> offset=<u3
 
 Valid input sends the LF-terminated report to standard output and returns `0`. Invalid input sends it to the diagnostic sink and returns `2`. Any other argument count reports `Usage: wvlink-core [object.wvo]` and returns `64`. Native resource failures remain stable runtime diagnostics.
 
-This one-input form is a development shell. The completed linker shell will use the accepted explicit argument contract for base address, entry name, output resource, and one through 64 ordered input objects.
+The one-input form remains a parser-development shell. The multi-object analysis form already uses the accepted final argument shape:
+
+```text
+wvlink-core <base-address> <entry> <output.bin> <input.wvo>...
+```
+
+It emits `link status=<status> inputs=<u32> sections=<u32> symbols=<u32> relocations=<u32> image-bytes=<u32> entry-address=<u32> input=<u32>`. The output argument is reserved but untouched until image construction and complete verification exist. Success returns `0`; a deterministic WVL rejection reports through diagnostics and returns `2`.
 
 ## Qualification boundary
 
@@ -44,4 +58,6 @@ The conformance test compiles and verifies the exact module, runs its no-input s
 
 Both the Windows and Debian verifiers must also compile and inspect the module through the real CLI, prove capability refusal, run its embedded tests, accept the Windvale-written canonical assembler object, and reject a non-WVO input. The normalized host reports include the exact module digest, self-test result, and canonical hosted scan output.
 
-Qualification of this slice proves portable object parsing and view offsets only. Phase 6 remains incomplete until the same Windvale module implements and qualifies full multi-object resolution, deterministic layout, checked relocation, independent image reconstruction, canonical map construction, and publish-after-success output behavior.
+The current qualification candidate additionally compares canonical and reversed input order, aligned and unaligned bases, all section representations, aggregate overflow, malformed objects, duplicate exports, missing imports, kind mismatch, missing entry, invalid requests, layout overflow, exact counts, image length, entry address, snapshot read counts, and absence of output with the Stage 0 oracle.
+
+Phase 6 remains incomplete until the same Windvale module implements and qualifies checked relocation, image construction, independent reconstruction, canonical map construction, and publish-after-success output behavior.
