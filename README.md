@@ -12,6 +12,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - Bounded deterministic compile-time source-module composition with explicit transitive dependencies, nominal source contracts, and no runtime linkage
 - Portable Foundation modules for bounded machine contracts, ordinal byte-span ordering, structured unsigned decimal parsing, and immutable byte construction, driven by the object core, assembler, linker, and future compiler needs
 - A first Windvale-written compiler lexer that streams the complete implemented Seed token surface over strict UTF-8 bytes without a token collection
+- A Windvale-written declaration parser that discovers module/declaration shapes and balanced function-body spans as immutable source views without a declaration collection
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
 - A Windvale-written `.wvb` decoder that validates every section payload, reports declarations, and walks complete instruction streams through a hosted file shell
@@ -167,6 +168,32 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Lexer-Demo.wvb 
 ```
 
 The lexer returns one token plus the next byte cursor and source position. It covers the complete current Seed keyword/operator surface, U+02C9 names, typed decimal literals, strict UTF-8 and string escapes, and bounded failures. The demo returns `0`. The future parser will advance this streaming contract; indexed token rescanning is retained only for verification.
+
+Compile the streaming declaration pass and make it parse its own source:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Compiler/Bootstrap/Source-Declaration-Parser.wv `
+  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Foundation/Decimal-Parsing.wv `
+  -o artifacts/Source-Declaration-Parser.wvb
+dotnet run --project Tools/Windvale.Tool -- compile `
+  Examples/Compiler/Source-Declaration-Parser-Tool.wv `
+  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
+  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Foundation/Decimal-Parsing.wv `
+  -o artifacts/Source-Declaration-Parser-Tool.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Declaration-Parser-Tool.wvb `
+  --allow console.write_line `
+  --allow diagnostic.write_line `
+  --allow file.read_bytes `
+  --allow process.argument `
+  --allow process.argument_count `
+  --max-steps 45000000 `
+  -- Compiler/Bootstrap/Source-Declaration-Parser.wv
+```
+
+This is a declaration pass, not yet a statement/expression parser. It parses signatures and balanced body spans so later passes can bind declarations first and parse bodies from exact immutable views. The hosted shell only supplies an explicit file snapshot and report sink.
 
 Compile and run the first Windvale-written `wvdump` core:
 
