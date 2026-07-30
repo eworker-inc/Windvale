@@ -1,0 +1,61 @@
+module Compilerˉsourceˉbodyˉparserˉdemo profile portable;
+
+import Compilerˉsourceˉbodyˉparser;
+
+data Invalidˉutf8: bytes = [195, 40];
+
+export fn Main() -> i32 {
+    let Complete: bytes = Textˉtoˉutf8("module Bodyˉtest profile portable; fn Helper(Value: i32) -> i32 { var Total: i32 = -Value + 2 * 3; Total = Total + 1; if Total >= 0 { while Total > 0 { Total = Total - 1; } } else { { return 1; } } Console.writeˉline(\"x\"); return Values[Call(1, 2)] + Pair.Left; } fn Empty() -> void { return; }");
+    let Summary: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉsourceˉbodies(Complete);
+    if Summary.Status != Compilerˉbodyˉparseˉstatus.Valid { return 1; }
+    if Summary.Functions != 2u32 { return 2; }
+    if Summary.Topˉlevelˉstatements != 6u32 { return 3; }
+    if Summary.Statements != 10u32 { return 4; }
+    if Summary.Expressions != 27u32 { return 5; }
+    if Summary.Maximumˉstatementˉdepth != 3u32 { return 6; }
+    if Summary.Maximumˉexpressionˉdepth != 4u32 { return 7; }
+
+    let Body: bytes = Textˉtoˉutf8("{ var Total: i32 = -Value + 2 * 3; return Total; }");
+    let Bodyˉsummary: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉbodyˉspan(Body, 0u32, 1u32, 1u32, Bytesˉlength(Body));
+    if Bodyˉsummary.Status != Compilerˉbodyˉparseˉstatus.Valid { return 8; }
+    if Bodyˉsummary.Topˉlevelˉstatements != 2u32 { return 9; }
+    let First: Compilerˉsourceˉstatement = Compilerˉparseˉnextˉstatementˉvalidated(Body, 1u32, 1u32, 2u32, Bytesˉlength(Body), 0u32);
+    if First.Status != Compilerˉbodyˉparseˉstatus.Valid { return 10; }
+    if First.Kind != Compilerˉsourceˉstatementˉkind.Local { return 11; }
+    if !First.Isˉmutable { return 12; }
+    if First.Typeˉkind != Compilerˉsourceˉtypeˉkind.I32 { return 13; }
+    if First.Expressions != 6u32 { return 14; }
+
+    let Precedenceˉsource: bytes = Textˉtoˉutf8("A + B * C");
+    let Precedence: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉspan(Precedenceˉsource, 0u32, 1u32, 1u32, Bytesˉlength(Precedenceˉsource));
+    if Precedence.Status != Compilerˉbodyˉparseˉstatus.Valid { return 15; }
+    if Precedence.Kind != Compilerˉsourceˉexpressionˉkind.Binary { return 16; }
+    if Precedence.Operator != Compilerˉtokenˉkind.Plus { return 17; }
+    if Precedence.Nodes != 5u32 { return 18; }
+    if Precedence.Depth != 3u32 { return 19; }
+    let Rightˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(Precedenceˉsource, Precedence.Offset, Precedence.Line, Precedence.Column, Precedence.Secondˉoffset);
+    let Right: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉspan(Precedenceˉsource, Precedence.Secondˉoffset, Rightˉposition.Line, Rightˉposition.Column, Precedence.Secondˉoffset + Precedence.Secondˉlength);
+    if Right.Operator != Compilerˉtokenˉkind.Star { return 20; }
+    if Right.Nodes != 3u32 { return 21; }
+
+    let Callˉsource: bytes = Textˉtoˉutf8("Call(1, Values[2])");
+    let Call: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉspan(Callˉsource, 0u32, 1u32, 1u32, Bytesˉlength(Callˉsource));
+    if Call.Kind != Compilerˉsourceˉexpressionˉkind.Call { return 22; }
+    if Call.Items != 2u32 { return 23; }
+    if Call.Nodes != 4u32 { return 24; }
+    if Call.Depth != 3u32 { return 25; }
+
+    let Missingˉsemicolon: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉsourceˉbodies(Textˉtoˉutf8("module Bad profile portable; fn Main() -> i32 { return 0 }"));
+    if Missingˉsemicolon.Status != Compilerˉbodyˉparseˉstatus.Expectedˉtoken { return 26; }
+    if Missingˉsemicolon.Expected != Compilerˉtokenˉkind.Semicolon { return 27; }
+    let Missingˉexpression: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉsourceˉbodies(Textˉtoˉutf8("module Bad profile portable; fn Main() -> i32 { return +; }"));
+    if Missingˉexpression.Status != Compilerˉbodyˉparseˉstatus.Expectedˉexpression { return 28; }
+    let Declarationˉfailure: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉsourceˉbodies(Textˉtoˉutf8("module Bad profile maybe;"));
+    if Declarationˉfailure.Status != Compilerˉbodyˉparseˉstatus.Declarationˉerror { return 29; }
+    let Invalidˉspan: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉspan(Callˉsource, 0u32, 1u32, 1u32, Bytesˉlength(Callˉsource) + 1u32);
+    if Invalidˉspan.Status != Compilerˉbodyˉparseˉstatus.Invalidˉspan { return 30; }
+    let Invalidˉencoding: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉbodyˉspan(Invalidˉutf8, 0u32, 1u32, 1u32, Bytesˉlength(Invalidˉutf8));
+    if Invalidˉencoding.Status != Compilerˉbodyˉparseˉstatus.Lexicalˉerror { return 31; }
+    if Invalidˉencoding.Lexicalˉstatus != Compilerˉlexˉstatus.Invalidˉutf8 { return 32; }
+    return 0;
+}

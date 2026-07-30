@@ -61,6 +61,9 @@ $SourceLexerDemoModule = Join-Path $Artifacts 'Source-Lexer-Demo.wvb'
 $SourceDeclarationParserModule = Join-Path $Artifacts 'Source-Declaration-Parser.wvb'
 $SourceDeclarationParserDemoModule = Join-Path $Artifacts 'Source-Declaration-Parser-Demo.wvb'
 $SourceDeclarationParserToolModule = Join-Path $Artifacts 'Source-Declaration-Parser-Tool.wvb'
+$SourceBodyParserModule = Join-Path $Artifacts 'Source-Body-Parser.wvb'
+$SourceBodyParserDemoModule = Join-Path $Artifacts 'Source-Body-Parser-Demo.wvb'
+$SourceBodyParserToolModule = Join-Path $Artifacts 'Source-Body-Parser-Tool.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -404,6 +407,95 @@ if (
     $SourceParserSelfDeclarationOutput -notcontains 'Result: 0'
 ) {
     throw 'The declaration-parser tool did not parse its own declaration source.'
+}
+
+$SourceBodyParserSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Body-Parser.wv'
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceBodyParserModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale body parser.' }
+$SourceBodyParserHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBodyParserModule).Hash.ToLowerInvariant()
+if ($SourceBodyParserHash -ne 'bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f') {
+    throw "The Windvale body parser has an unexpected digest: $SourceBodyParserHash"
+}
+$SourceBodyParserInspection = (dotnet run --project $ToolProject --configuration $Configuration --no-build -- inspect $SourceBodyParserModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceBodyParserInspection -notmatch 'Nominal types \(23\)' -or
+    $SourceBodyParserInspection -notmatch 'Compilerˉsourceˉexpression' -or
+    $SourceBodyParserInspection -notmatch 'Compilerˉsourceˉstatement' -or
+    $SourceBodyParserInspection -notmatch 'Compilerˉparseˉexpressionˉvalidated' -or
+    $SourceBodyParserInspection -notmatch 'Compilerˉparseˉsourceˉbodies' -or
+    $SourceBodyParserInspection -notmatch 'Exports \(38\)'
+) {
+    throw 'The Windvale body-parser inspection is incomplete.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Body-Parser-Demo.wv') `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceBodyParserDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the body-parser demo.' }
+$SourceBodyParserDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBodyParserDemoModule).Hash.ToLowerInvariant()
+if ($SourceBodyParserDemoHash -ne '5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba') {
+    throw "The body-parser demo has an unexpected digest: $SourceBodyParserDemoHash"
+}
+$SourceBodyParserDemoOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    run $SourceBodyParserDemoModule --max-steps 30000000
+if ($LASTEXITCODE -ne 0 -or $SourceBodyParserDemoOutput -notcontains 'Result: 0') {
+    throw 'The body-parser demo did not return Result: 0.'
+}
+dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Body-Parser-Tool.wv') `
+    --module $SourceBodyParserSource `
+    --module $SourceDeclarationParserSource `
+    --module $SourceLexerSource `
+    --module $DecimalParsingSource `
+    -o $SourceBodyParserToolModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the body-parser tool.' }
+$SourceBodyParserToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBodyParserToolModule).Hash.ToLowerInvariant()
+if ($SourceBodyParserToolHash -ne '761887d3674833854d976dd394ad3f83f27d2c74748b6dd0f296c97b117140ca') {
+    throw "The body-parser tool has an unexpected digest: $SourceBodyParserToolHash"
+}
+$SourceBodyParserArguments = @(
+    'run', $SourceBodyParserToolModule,
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count'
+)
+$SourceLexerBodyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    @SourceBodyParserArguments --max-steps 100000000 -- $SourceLexerSource
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceLexerBodyOutput -notcontains 'source bodies status=Valid functions=14 top-level=138 statements=510 expression-nodes=1432 statement-depth=17 expression-depth=5 offset=39211' -or
+    $SourceLexerBodyOutput -notcontains 'Result: 0'
+) {
+    throw 'The body-parser tool did not parse the real Windvale lexer bodies.'
+}
+$SourceDeclarationBodyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    @SourceBodyParserArguments --max-steps 160000000 -- $SourceDeclarationParserSource
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceDeclarationBodyOutput -notcontains 'source bodies status=Valid functions=24 top-level=232 statements=527 expression-nodes=2135 statement-depth=5 expression-depth=3 offset=64951' -or
+    $SourceDeclarationBodyOutput -notcontains 'Result: 0'
+) {
+    throw 'The body-parser tool did not parse the declaration-parser bodies.'
+}
+$SourceBodySelfOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- `
+    @SourceBodyParserArguments --max-steps 160000000 -- $SourceBodyParserSource
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceBodySelfOutput -notcontains 'source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023' -or
+    $SourceBodySelfOutput -notcontains 'Result: 0'
+) {
+    throw 'The body-parser tool did not parse its own statement and expression source.'
 }
 
 dotnet run --project $ToolProject --configuration $Configuration --no-build -- compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule

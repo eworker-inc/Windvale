@@ -159,6 +159,9 @@ The current bytecode 1.6 golden modules are:
 - `Compilerˉsourceˉdeclarationˉparser`: `b09be82c374636bf0b75a0dcea21afa648d89676e0fb0ffedcef68f9e958ee61`
 - `Compilerˉsourceˉdeclarationˉparserˉdemo`: `82dd2f72d2b2d148289353045fda861e07638e8fac8ba97164642d185c3b8e9a`
 - `Compilerˉsourceˉdeclarationˉparserˉtool`: `36406acea0ccab9cf9f91cc9723638ae133daa1d5893dcf64454a983427a520c`
+- `Compilerˉsourceˉbodyˉparser`: `bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f`
+- `Compilerˉsourceˉbodyˉparserˉdemo`: `5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba`
+- `Compilerˉsourceˉbodyˉparserˉtool`: `761887d3674833854d976dd394ad3f83f27d2c74748b6dd0f296c97b117140ca`
 - `Wvˉdumpˉcore`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`
 - `Wvoˉobjectˉcore`: `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`
 - `Wvaˉassemblerˉcore`: `a5f4e913078295a323eac315f9df818877ac519de97028e581cab8577f1dd150`
