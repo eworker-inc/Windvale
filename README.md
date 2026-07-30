@@ -104,7 +104,7 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
   -TimingReportPath artifacts/seed-timing-fast.json
 ```
 
-`-Level Standard` builds and runs the complete 45-test in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
+`-Level Standard` builds and runs the complete 46-test in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
 
 On Linux:
 
