@@ -276,10 +276,13 @@ $WvaScannerInspection = (dotnet run --project $ToolProject --configuration $Conf
 if (
     $LASTEXITCODE -ne 0 -or
     $WvaScannerInspection -notmatch 'Scanˉwva' -or
+    $WvaScannerInspection -notmatch 'Inspectˉwvaˉsemantics' -or
+    $WvaScannerInspection -notmatch 'Parseˉu32' -or
+    $WvaScannerInspection -notmatch 'Findˉsymbol' -or
     $WvaScannerInspection -notmatch 'text\.utf8_is_valid' -or
     $WvaScannerInspection -notmatch 'file\.read_bytes'
 ) {
-    throw 'The Seed CLI inspector did not expose the Windvale WVA scanner operations.'
+    throw 'The Seed CLI inspector did not expose the Windvale WVA frontend operations.'
 }
 
 $WvaScannerCapabilities = @(
@@ -306,9 +309,19 @@ if (
     $LASTEXITCODE -ne 0 -or
     $WvaScannerHostedOutput -notcontains 'wvascan 1' -or
     $WvaScannerHostedOutput -notcontains 'status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1' -or
+    $WvaScannerHostedOutput -notcontains 'semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1' -or
     $WvaScannerHostedOutput -notcontains 'Result: 0'
 ) {
-    throw 'The Windvale WVA scanner did not recognize the canonical assembly source.'
+    throw 'The Windvale WVA frontend did not recognize the canonical assembly source.'
+}
+
+$WvaSemanticInvalidOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- run $WvaScannerModule @WvaScannerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    ($WvaSemanticInvalidOutput -join "`n") -notmatch 'semantics status=WVA1001 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=0 line=1 column=1' -or
+    $WvaSemanticInvalidOutput -notcontains 'Result: 2'
+) {
+    throw 'The Windvale WVA frontend did not reject non-WVA source deterministically.'
 }
 
 $AssemblyOutput = dotnet run --project $ToolProject --configuration $Configuration --no-build -- assemble (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') -o $AssemblyObject

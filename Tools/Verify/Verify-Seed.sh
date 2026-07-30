@@ -282,6 +282,9 @@ printf '%s\n' "$WVA_SCANNER_VERIFY_OUTPUT" | grep -F 'Verified: Wvaˉscannerˉco
 
 WVA_SCANNER_INSPECT_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- inspect "$WVA_SCANNER_MODULE")
 printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'Scanˉwva' >/dev/null
+printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'Inspectˉwvaˉsemantics' >/dev/null
+printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'Parseˉu32' >/dev/null
+printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'Findˉsymbol' >/dev/null
 printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'text.utf8_is_valid' >/dev/null
 printf '%s\n' "$WVA_SCANNER_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
 
@@ -316,7 +319,20 @@ WVA_SCANNER_HOSTED_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration
     -- "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva")
 printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'wvascan 1' >/dev/null
 printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1' >/dev/null
+printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1' >/dev/null
 printf '%s\n' "$WVA_SCANNER_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+WVA_SEMANTIC_INVALID_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
+    run "$WVA_SCANNER_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000 \
+    -- "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" 2>&1)
+printf '%s\n' "$WVA_SEMANTIC_INVALID_OUTPUT" | grep -F 'semantics status=WVA1001 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=0 line=1 column=1' >/dev/null
+printf '%s\n' "$WVA_SEMANTIC_INVALID_OUTPUT" | grep -F 'Result: 2' >/dev/null
 
 ASSEMBLY_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$CONFIGURATION" --no-build -- \
     assemble "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" -o "$ASSEMBLY_OBJECT")

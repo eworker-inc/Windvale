@@ -20,7 +20,37 @@ internal static class Program
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "a5d574ea646946b159d95bd7e51434bfcbf7545083a54541438a79a2e5e999df";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_SCANNER_CORE_SHA256 = "6c0bd3e6a203debb5779f0c0934d9b751921de6a1ac21aaa9744f1afcb97004d";
+    private const string WVA_SCANNER_CORE_SHA256 = "bfc29da9a58ed2ff9130bada231ad2b7ab006c6e5f021926a2a9c8d7a9314e31";
+
+    private const string COMPLETE_ASSEMBLY_SOURCE = """
+        windvale-assembly 1
+        symbol local data Bss in .bss
+        symbol local data Values in .data
+        symbol export function Main in .text
+        section code .text align 16
+        define Main
+        nop
+        trap
+        move_i32 edi -1
+        move_u32 ecx 4294967295
+        jump Main
+        return
+        end define
+        end section
+        section data .data align 4
+        define Values
+        bytes 1 255
+        u32 2309737967
+        i32 -2
+        address_u32 Main
+        end define
+        end section
+        section bss .bss align 16
+        define Bss
+        zero 16
+        end define
+        end section
+        """;
 
     private const string SUM_SOURCE = """
         module Sumˉdata profile portable;
@@ -153,6 +183,7 @@ internal static class Program
         ("WVA assembler emits canonical sections, symbols, and relocations", Assemblerˉemitsˉcanonicalˉobject),
         ("WVA assembler rejects malformed and inconsistent source", Assemblerˉrejectsˉinvalidˉsource),
         ("Windvale-written WVA scanner enforces source and token boundaries", Wvaˉscannerˉcoreˉrecognizesˉsource),
+        ("Windvale-written WVA semantics agree with the Stage 0 oracle", Wvaˉsemanticˉinspectorˉmatchesˉoracle),
         ("immutable nominal records cross function boundaries", Immutableˉrecordsˉrun),
         ("nominal enums and bounded formatting execute", Enumsˉandˉformattingˉrun),
         ("Seed arithmetic and comparison operators execute", Operatorsˉrun),
@@ -1159,36 +1190,7 @@ internal static class Program
         Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Absoluteˉu32, 1, 3, 1, 0), Object.Relocations[1]);
         Sequenceˉequal(Bytes, Objectˉcodec.Write(Object));
 
-        const string Completeˉsubset = """
-            windvale-assembly 1
-            symbol local data Bss in .bss
-            symbol local data Values in .data
-            symbol export function Main in .text
-            section code .text align 16
-            define Main
-            nop
-            trap
-            move_i32 edi -1
-            move_u32 ecx 4294967295
-            jump Main
-            return
-            end define
-            end section
-            section data .data align 4
-            define Values
-            bytes 1 255
-            u32 2309737967
-            i32 -2
-            address_u32 Main
-            end define
-            end section
-            section bss .bss align 16
-            define Bss
-            zero 16
-            end define
-            end section
-            """;
-        var Complete = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(Completeˉsubset)).Value;
+        var Complete = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(COMPLETE_ASSEMBLY_SOURCE)).Value;
         Equal(3, Complete.Sections.Length);
         Equal(18u, Complete.Sections[0].Memoryˉsize);
         Equal(14u, Complete.Sections[1].Memoryˉsize);
@@ -1284,9 +1286,12 @@ internal static class Program
                 Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
             ],
             Module.Module.Capabilities.Select(Capability => Capability.Name));
-        Sequenceˉequal(
-            ["Wvaˉpreflight", "Wvaˉscan", "Wvaˉtoken", "Wvaˉscanˉstatus", "Wvaˉtokenˉkind"],
-            Module.Module.Types.Select(Type => Type.Name));
+        True(
+            Module.Module.Types.Any(Type => Type.Name == "Wvaˉsemanticˉinspection"),
+            "The WVA semantic inspection record was not serialized.");
+        True(
+            Module.Module.Types.Any(Type => Type.Name == "Wvaˉsemanticˉstatus"),
+            "The WVA semantic status enum was not serialized.");
 
         var Inspection = Moduleˉinspector.Inspect(Module, Moduleˉbytes);
         Contains(Inspection, "Scanˉwva");
@@ -1342,7 +1347,8 @@ internal static class Program
         Equal(0, Canonical.Result.Exitˉcode);
         Equal(
             "wvascan 1\n" +
-            "status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1\n",
+            "status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1\n" +
+            "semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1\n",
             Canonical.Output);
         Equal(string.Empty, Canonical.Diagnostics);
 
@@ -1352,7 +1358,8 @@ internal static class Program
         Equal(0, Crˉlf.Result.Exitˉcode);
         Equal(
             "wvascan 1\n" +
-            "status=valid bytes=424 lines=21 meaningful-lines=17 tokens=52 offset=424 line=22 column=1\n",
+            "status=valid bytes=424 lines=21 meaningful-lines=17 tokens=52 offset=424 line=22 column=1\n" +
+            "semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=424 line=22 column=1\n",
             Crˉlf.Output);
         Equal(string.Empty, Crˉlf.Diagnostics);
 
@@ -1362,7 +1369,8 @@ internal static class Program
         Equal(0, Cr.Result.Exitˉcode);
         Equal(
             "wvascan 1\n" +
-            "status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1\n",
+            "status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1\n" +
+            "semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1\n",
             Cr.Output);
         Equal(string.Empty, Cr.Diagnostics);
 
@@ -1370,7 +1378,7 @@ internal static class Program
         Equal(2, Invalidˉutf8.Result.Exitˉcode);
         Equal(string.Empty, Invalidˉutf8.Output);
         Equal(
-            "status=invalid_utf8 bytes=1 lines=0 meaningful-lines=0 tokens=0 offset=0 line=1 column=1\n",
+            "semantics status=WVA1001 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=0 line=1 column=1\n",
             Invalidˉutf8.Diagnostics);
 
         var Boundary = Runˉsource(
@@ -1378,7 +1386,7 @@ internal static class Program
             "boundary-line.wva");
         Equal(2, Boundary.Result.Exitˉcode);
         Equal(
-            "status=bad_header bytes=4096 lines=1 meaningful-lines=0 tokens=0 offset=0 line=1 column=1\n",
+            "semantics status=WVA1001 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=0 line=1 column=1\n",
             Boundary.Diagnostics);
 
         var Longˉline = Runˉsource(
@@ -1386,7 +1394,7 @@ internal static class Program
             "long-line.wva");
         Equal(2, Longˉline.Result.Exitˉcode);
         Equal(
-            "status=line_too_long bytes=4097 lines=0 meaningful-lines=0 tokens=0 offset=4096 line=1 column=4097\n",
+            "semantics status=WVA1011 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=4096 line=1 column=4097\n",
             Longˉline.Diagnostics);
 
         var Oversizedˉsource = Runˉsource(
@@ -1394,8 +1402,264 @@ internal static class Program
             "oversized.wva");
         Equal(2, Oversizedˉsource.Result.Exitˉcode);
         Equal(
-            "status=source_too_large bytes=1048577 lines=0 meaningful-lines=0 tokens=0 offset=1048576 line=1 column=1\n",
+            "semantics status=WVA1011 sections=0 symbols=0 definitions=0 relocations=0 data-bytes=0 memory-bytes=0 offset=1048576 line=1 column=1\n",
             Oversizedˉsource.Diagnostics);
+    }
+
+    private static void Wvaˉsemanticˉinspectorˉmatchesˉoracle()
+    {
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(WVA_SCANNER_CORE_SOURCE));
+        var Authorized = Module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+
+        (Runtimeˉresult Result, string Output, string Diagnostics) Runˉsource(string source)
+        {
+            var Input = System.Text.Encoding.UTF8.GetBytes(source).ToImmutableArray();
+            var Output = new StringWriter();
+            var Diagnostics = new StringWriter();
+            var Result = new Referenceˉruntime(
+                Module,
+                new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                    ["semantic.wva"],
+                    Output,
+                    Diagnostics,
+                    new Testˉfileˉreader((Name, Maximumˉbytes) =>
+                    {
+                        Equal("semantic.wva", Name);
+                        True(Input.Length <= Maximumˉbytes, "The semantic inspector input limit was too small.");
+                        return Input;
+                    }))),
+                new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
+            return (Result, Output.ToString(), Diagnostics.ToString());
+        }
+
+        var Complete = Runˉsource(COMPLETE_ASSEMBLY_SOURCE);
+        Equal(0, Complete.Result.Exitˉcode);
+        Equal(string.Empty, Complete.Diagnostics);
+        Contains(
+            Complete.Output,
+            "semantics status=valid sections=3 symbols=3 definitions=3 relocations=2 " +
+            "data-bytes=32 memory-bytes=48");
+
+        const string Numericˉboundaries = """
+            windvale-assembly 1
+            symbol local data Limits in .data
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            move_i32 eax -2147483648
+            move_i32 ecx 2147483647
+            move_u32 edx 4294967295
+            return
+            end define
+            end section
+            section data .data align 4
+            define Limits
+            i32 -2147483648
+            i32 2147483647
+            u32 4294967295
+            bytes 0 255
+            end define
+            end section
+            """;
+        var Numeric = Runˉsource(Numericˉboundaries);
+        Equal(0, Numeric.Result.Exitˉcode);
+        Equal(string.Empty, Numeric.Diagnostics);
+        Contains(
+            Numeric.Output,
+            "semantics status=valid sections=2 symbols=2 definitions=2 relocations=0 " +
+            "data-bytes=30 memory-bytes=30");
+        _ = Assembleˉsuccess(Numericˉboundaries);
+
+        var Cases = new (string Source, string Code)[]
+        {
+            ("section code .text align 16", "WVA1001"),
+            ("""
+                windvale-assembly 1
+                section code .text align 16
+                end section
+                symbol export function Main in .text
+                """, "WVA1002"),
+            ("""
+                windvale-assembly 1
+                symbol local
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol local data Bad-name in .data
+                """, "WVA1004"),
+            ("""
+                windvale-assembly 1
+                section code .text align 3
+                end section
+                """, "WVA1005"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                symbol local data Data in .data
+                """, "WVA1006"),
+            ("""
+                windvale-assembly 1
+                symbol local data Same in .data
+                symbol export function Same in .text
+                section code .text align 16
+                end section
+                section data .data align 1
+                end section
+                """, "WVA1006"),
+            ("""
+                windvale-assembly 1
+                section code Same align 16
+                end section
+                section data Same align 1
+                end section
+                """, "WVA1006"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .rodata
+                section rodata .rodata align 1
+                define Main
+                bytes 1
+                end define
+                end section
+                """, "WVA1007"),
+            ("""
+                windvale-assembly 1
+                symbol import function External
+                section code .text align 16
+                define External
+                return
+                end define
+                end section
+                """, "WVA1007"),
+            ("""
+                windvale-assembly 1
+                symbol local data Value in .data
+                section rodata .rodata align 1
+                define Value
+                bytes 1
+                end define
+                end section
+                section data .data align 1
+                end section
+                """, "WVA1007"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                bytes 1
+                end define
+                end section
+                """, "WVA1008"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                call Missing
+                end define
+                end section
+                """, "WVA1009"),
+            ("""
+                windvale-assembly 1
+                symbol local data Target in .data
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                call Target
+                end define
+                end section
+                section data .data align 1
+                define Target
+                bytes 1
+                end define
+                end section
+                """, "WVA1009"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                end section
+                """, "WVA1009"),
+            ("""
+                windvale-assembly 1
+                section code .text align 16
+                define Unknown
+                return
+                end define
+                end section
+                """, "WVA1009"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                return
+                """, "WVA1010"),
+            ("""
+                windvale-assembly 1
+                symbol local data Huge in .bss
+                section bss .bss align 16
+                define Huge
+                zero 16777217
+                end define
+                end section
+                """, "WVA1011"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                move_i32 eax -2147483649
+                end define
+                end section
+                """, "WVA1005"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                move_u32 eax 4294967296
+                end define
+                end section
+                """, "WVA1005"),
+        };
+
+        foreach (var (Source, Code) in Cases)
+        {
+            var Oracle = Assemblyˉcompiler.Assemble(Source);
+            False(Oracle.Success, $"The Stage 0 oracle unexpectedly accepted the {Code} fixture.");
+            Equal(Code, Oracle.Diagnostics.Single().Code);
+
+            var Windvale = Runˉsource(Source);
+            Equal(2, Windvale.Result.Exitˉcode);
+            Equal(string.Empty, Windvale.Output);
+            Contains(Windvale.Diagnostics, $"semantics status={Code} ");
+        }
+
+        const string Mutationˉalphabet =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._$- #\t\r\n";
+        var Random = new Random(0x57_56_41);
+        for (var Case = 0; Case < 200; Case++)
+        {
+            var Mutated = COMPLETE_ASSEMBLY_SOURCE.ToCharArray();
+            var Mutationˉcount = Random.Next(1, 5);
+            for (var Mutation = 0; Mutation < Mutationˉcount; Mutation++)
+            {
+                var Position = Random.Next(Mutated.Length);
+                Mutated[Position] = Mutationˉalphabet[Random.Next(Mutationˉalphabet.Length)];
+            }
+            var Source = new string(Mutated);
+            var Oracle = Assemblyˉcompiler.Assemble(Source);
+            var Windvale = Runˉsource(Source);
+            if (Oracle.Success != (Windvale.Result.Exitˉcode == 0))
+            {
+                throw new InvalidOperationException(
+                    $"WVA semantic acceptance differed for deterministic mutation {Case}.");
+            }
+        }
     }
 
     private static void Immutableˉrecordsˉrun()
@@ -2308,7 +2572,8 @@ internal static class Program
         Equal(0, Wvaˉscannerˉhostedˉresult.Exitˉcode);
         Equal(
             "wvascan 1\n" +
-            "status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1\n",
+            "status=valid bytes=403 lines=21 meaningful-lines=17 tokens=52 offset=403 line=22 column=1\n" +
+            "semantics status=valid sections=2 symbols=3 definitions=2 relocations=2 data-bytes=18 memory-bytes=18 offset=403 line=22 column=1\n",
             Normalizedˉwvaˉscannerˉoutput);
         Equal(string.Empty, Wvaˉscannerˉhostedˉdiagnostics.ToString());
         Contract = new(
