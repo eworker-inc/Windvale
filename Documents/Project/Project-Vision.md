@@ -2,11 +2,13 @@
 
 ## Purpose
 
-Windvale explores whether people and AI can collaboratively construct a small, coherent, verifiable computing stack from low-level development tools through useful applications.
+Windvale explores whether AI systems, working under human direction and review, can construct a small, coherent, verifiable computing stack from low-level development tools through useful applications.
 
 The intended result is not an AI-generated novelty kernel. Windvale should be understandable enough to study, structured enough to extend, and useful in stages before its operating system is complete.
 
-Windvale is an E-Worker Inc project, with AI agents acting as the primary implementation authors under human direction and review. To our knowledge, it is among the first open-source efforts attempting the full breadth of an owned language, compiler, bytecode, runtime, assembler, object model, linker, native path, Foundation library, and operating system as one coherent AI-authored stack. The qualifier matters: earlier AI-generated operating systems and AI-oriented language/compiler experiments exist, and Windvale must never present future native or OS work as already implemented. Its distinctive claim is the integrated scope and the reproducible evidence carried from one layer to the next.
+Windvale is an E-Worker Inc project whose code and documentation are authored entirely by AI systems under human direction and review. OpenAI Codex produced most of the initial implementation, but Windvale is model- and vendor-neutral: Codex and other AI systems may contribute, and factual references to a system do not imply sponsorship, affiliation, endorsement, or ownership by its provider. “Author” is descriptive project attribution, not a claim that an AI system is a legal person or copyright holder.
+
+As of July 2026, Windvale is among the earliest known open-source efforts to build an owned language, compiler, verified bytecode, runtime, assembler, object model, linker, native path, Foundation library, and operating system as one coherent AI-authored stack from an empty project. Earlier AI-authored operating systems and language/toolchain projects exist; the claim is deliberately limited to this combined scope. Windvale must also distinguish qualified evidence from future scope: its distinctive value is not priority alone, but reproducible evidence carried from one layer to the next.
 
 ## Intended stack
 
@@ -63,4 +65,4 @@ The likely first hardware target is x86-64 with UEFI because it provides a pract
 
 ## Open-source intent
 
-Windvale is open source under the MIT License, with copyright held by E-Worker Inc. The contribution model, AI-provenance policy, security-reporting process, trademark policy, and public hosting location remain open governance decisions.
+Windvale is open source under the MIT License with a copyright notice naming E-Worker Inc and Windvale contributors. E-Worker Inc initiated and stewards the project. [Decision 0031](../Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md) defines vendor-neutral AI authorship, and [Decision 0032](../Decisions/0032-Public-Contribution-And-Governance-Foundation.md) defines contribution, security, governance, support, conduct, and project-identity policy. The final GitHub organization name, public hosting location, private contact addresses, and hosting settings remain publication-time decisions.

@@ -4,7 +4,7 @@
 
 Windvale Assembly version 1 (`WVA 1`) is the first textual source contract for constructing canonical x86-64 WVO 1.0 objects. It is intentionally a small semantic assembly language rather than a spelling of Intel or AT&T syntax. The assembler owns parsing, instruction encoding, definition offsets, symbol sizes, and relocation records. It does not choose final addresses, resolve imports, apply relocations, or produce PE, ELF, UEFI, or flat images; those are linker responsibilities.
 
-WVA 1 is an early-development contract without a backward-compatibility promise. The dependency-free C# assembler is the Stage 0 oracle. The same contract is intended for a verified Windvale-written assembler before Phase 6 is complete.
+WVA 1 is an early-development contract without a backward-compatibility promise. The dependency-free C# assembler remains the Stage 0 oracle and recovery path. The qualified Windvale-written assembler implements the same contract in verified bytecode.
 
 ## Source encoding and lines
 

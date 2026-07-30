@@ -9,8 +9,8 @@ Windvale is an open-source experiment in constructing a small computing stack: l
 ## Quick start
 
 - Read this file before making non-trivial changes.
-- Use the active development lane. The initial Windows lane is `D:\windvale\dev01`.
-- Use `Z:\Windvale.git` as the shared repository remote on the current Windows development environment.
+- Follow `CONTRIBUTING.md` for public contribution, DCO sign-off, provenance, and pull-request requirements.
+- Use the active checkout and its configured repository remote; local worktree and mirror paths are environment-specific.
 - Use `main` as the default branch until the repository establishes a different branching policy.
 - Before changes, run `git status --short --branch` and `git pull --ff-only`.
 - Preserve unrelated work and stage only files belonging to the current task.
