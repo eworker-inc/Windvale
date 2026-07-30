@@ -335,7 +335,10 @@ if (
     $WvLinkerInspection -notmatch 'Validateˉimports' -or
     $WvLinkerInspection -notmatch 'Measureˉlayout' -or
     $WvLinkerInspection -notmatch 'Validateˉdefinitions' -or
+    $WvLinkerInspection -notmatch 'Buildˉunrelocatedˉimage' -or
+    $WvLinkerInspection -notmatch 'Applyˉrelocations' -or
     $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
+    $WvLinkerInspection -notmatch 'bytes\.sha256_hex' -or
     $WvLinkerInspection -notmatch 'file\.read_bytes'
 ) {
     throw 'The Seed CLI inspector did not expose the Windvale linker scanner operations.'
@@ -479,6 +482,7 @@ $WvLinkerAnalysisOutput = dotnet run --project $ToolProject --configuration $Con
 if (
     $LASTEXITCODE -ne 0 -or
     $WvLinkerAnalysisOutput -notcontains 'link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295' -or
+    $WvLinkerAnalysisOutput -notcontains 'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' -or
     $WvLinkerAnalysisOutput -notcontains 'Result: 0'
 ) {
     throw 'The Windvale linker did not reproduce the canonical resolution and layout evidence.'

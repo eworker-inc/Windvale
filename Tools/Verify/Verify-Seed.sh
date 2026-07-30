@@ -335,7 +335,10 @@ printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Validateˉexportˉuniqueness' 
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Validateˉimports' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Measureˉlayout' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Validateˉdefinitions' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Buildˉunrelocatedˉimage' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Applyˉrelocations' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.read_i32_little' >/dev/null
+printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.sha256_hex' >/dev/null
 printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
 
 set +e
@@ -513,6 +516,7 @@ WVLINK_ANALYSIS_OUTPUT=$(dotnet run --project "$TOOL_PROJECT" --configuration "$
     --max-steps 20000000 \
     -- 1048576 Main "$WINDVALE_ANALYSIS_OUTPUT" "$WINDVALE_ASSEMBLY_OBJECT" "$LINK_PROVIDER_OBJECT")
 printf '%s\n' "$WVLINK_ANALYSIS_OUTPUT" | grep -F 'link status=Valid inputs=2 sections=3 symbols=4 relocations=2 image-bytes=24 entry-address=1048576 input=4294967295' >/dev/null
+printf '%s\n' "$WVLINK_ANALYSIS_OUTPUT" | grep -F 'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' >/dev/null
 printf '%s\n' "$WVLINK_ANALYSIS_OUTPUT" | grep -F 'Result: 0' >/dev/null
 if [ -e "$WINDVALE_ANALYSIS_OUTPUT" ]; then
     echo 'The analysis-only Windvale linker slice unexpectedly wrote an image.' >&2
