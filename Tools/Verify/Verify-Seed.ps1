@@ -838,7 +838,7 @@ dotnet $ToolDll `
     -o $SourceBindingsModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-binding core.' }
 $SourceBindingsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsModule).Hash.ToLowerInvariant()
-if ($SourceBindingsHash -ne '8656850137e843920f8296660936d6f9043b2804095035e87289c4569ebe535b') {
+if ($SourceBindingsHash -ne '7f0317cf91401b963885db94abe1c640461f31086daabe02231d888c89afa8bd') {
     throw "The Windvale source-binding core has an unexpected digest: $SourceBindingsHash"
 }
 $SourceBindingsInspection = (dotnet $ToolDll inspect $SourceBindingsModule) -join "`n"
@@ -867,7 +867,7 @@ dotnet $ToolDll `
     -o $SourceBindingsDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-binding demo.' }
 $SourceBindingsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsDemoModule).Hash.ToLowerInvariant()
-if ($SourceBindingsDemoHash -ne 'a78ecea3579a2ff64ae2ae19e40a424663193982fad497fe944f5fac6c262d81') {
+if ($SourceBindingsDemoHash -ne 'bcaf22c63edcf538a68eb725caa13ed75db96b962d791da843449a25f8a46df3') {
     throw "The source-binding demo has an unexpected digest: $SourceBindingsDemoHash"
 }
 $SourceBindingsDemoOutput = dotnet $ToolDll `
@@ -889,7 +889,7 @@ dotnet $ToolDll `
     -o $SourceBindingsToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-binding tool.' }
 $SourceBindingsToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsToolModule).Hash.ToLowerInvariant()
-if ($SourceBindingsToolHash -ne 'abcd8a8edda501d3a357fee1af368304687cca0b8a3f7686c2ebe01361d554f7') {
+if ($SourceBindingsToolHash -ne '30b7300141b5712e90c020bb53abc629961b20d6c0364ff09f0920b68bbc1bd3') {
     throw "The source-binding tool has an unexpected digest: $SourceBindingsToolHash"
 }
 $SourceBindingsArguments = @(
@@ -913,7 +913,7 @@ $SourceBindingsSelfOutput = dotnet $ToolDll `
     $DecimalParsingSource
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceBindingsSelfOutput -notcontains 'source bindings status=Valid modules=9 functions=187 parameters=813 locals=944 reads=8229 assignments=639 calls=1450 directory-bytes=65148' -or
+    $SourceBindingsSelfOutput -notcontains 'source bindings status=Valid modules=9 functions=187 parameters=813 locals=942 reads=8260 assignments=609 calls=1473 directory-bytes=65076' -or
     $SourceBindingsSelfOutput -notcontains 'Result: 0'
 ) {
     throw 'The source-binding tool did not bind the real compiler closure.'
@@ -934,7 +934,7 @@ dotnet $ToolDll `
     -o $SourceWirModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale typed-WVIR core.' }
 $SourceWirHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWirModule).Hash.ToLowerInvariant()
-if ($SourceWirHash -ne 'ebea7beb54939e9f3b396905859ca25bef49c5765bebccd645860fb1741debfe') {
+if ($SourceWirHash -ne '89e2590e99ea96ebea5995491bc13d9497b2b5c41b566c3653acfc4713b6414b') {
     throw "The Windvale typed-WVIR core has an unexpected digest: $SourceWirHash"
 }
 $SourceWirInspection = (dotnet $ToolDll inspect $SourceWirModule) -join "`n"
@@ -963,7 +963,7 @@ dotnet $ToolDll `
     -o $SourceWirDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the typed-WVIR demo.' }
 $SourceWirDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWirDemoModule).Hash.ToLowerInvariant()
-if ($SourceWirDemoHash -ne '7d7699cc110284274fb17fa7fd095d7566660f037ad3e3a067ebdeb68e5dd5f3') {
+if ($SourceWirDemoHash -ne '2d58a05a5ad7e39fda20e4706f52d365f15fe53d3cfae998431024fa1c1edada') {
     throw "The typed-WVIR demo has an unexpected digest: $SourceWirDemoHash"
 }
 $SourceWirDemoOutput = dotnet $ToolDll run $SourceWirDemoModule --max-steps 4000000000
@@ -985,7 +985,7 @@ dotnet $ToolDll `
     -o $SourceWirToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the typed-WVIR tool.' }
 $SourceWirToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWirToolModule).Hash.ToLowerInvariant()
-if ($SourceWirToolHash -ne 'c6a1939d2199fa62606f1351beaed3c96a8360ccc20b032b54760ee51f6974a8') {
+if ($SourceWirToolHash -ne '8bbca67184db5d8d980e61268021771d25b20f47624878abec6b9e54afbd6c4d') {
     throw "The typed-WVIR tool has an unexpected digest: $SourceWirToolHash"
 }
 $SourceWirFixtureOutput = dotnet $ToolDll `
