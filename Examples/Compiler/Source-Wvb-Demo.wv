@@ -42,12 +42,15 @@ export fn Main() -> i32 {
     ) != Compilerˉsourceˉwvbˉstatus.Valid { return 9; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉhosted profile hosted; export fn Main() -> i32 { return 0; }"
-    ) != Compilerˉsourceˉwvbˉstatus.Unsupportedˉprofile { return 10; }
+    ) != Compilerˉsourceˉwvbˉstatus.Valid { return 10; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉorder profile portable; export fn Zed() -> i32 { return 0; } fn Alpha() -> i32 { return 1; }"
     ) != Compilerˉsourceˉwvbˉstatus.Valid { return 11; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉrecord profile portable; record Pair { Value: i32; } export fn Main() -> i32 { return 0; }"
     ) != Compilerˉsourceˉwvbˉstatus.Valid { return 12; }
+    if Compilerˉsourceˉwvbˉdemoˉstatus(
+        "module Wvbˉsystem profile system; capability process.argument_count; export fn Main() -> i32 { return 0; }"
+    ) != Compilerˉsourceˉwvbˉstatus.Valid { return 13; }
     return 0;
 }

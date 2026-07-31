@@ -145,5 +145,8 @@
     <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Nominal-Types.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Nominal-Types.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Hosted-Capabilities.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Hosted-Capabilities.wv" />
   </ItemGroup>
 </Project>

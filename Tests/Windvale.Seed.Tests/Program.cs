@@ -58,11 +58,12 @@ internal static class Program
     private const string SOURCE_WIR_SHA256 = "89e2590e99ea96ebea5995491bc13d9497b2b5c41b566c3653acfc4713b6414b";
     private const string SOURCE_WIR_DEMO_SHA256 = "2d58a05a5ad7e39fda20e4706f52d365f15fe53d3cfae998431024fa1c1edada";
     private const string SOURCE_WIR_TOOL_SHA256 = "8bbca67184db5d8d980e61268021771d25b20f47624878abec6b9e54afbd6c4d";
-    private const string SOURCE_WVB_SHA256 = "fc08eb2cf97b9e67ca7393300fb2e0e3e743d65d12c01642dd650c669abfcbb4";
-    private const string SOURCE_WVB_DEMO_SHA256 = "28370090024ee90672b1270e2392cacbbfb7b26c5e449285ecc49a2af2c575ad";
-    private const string SOURCE_WVB_TOOL_SHA256 = "433f4f5249c7995a2582d8e8c89cc4289b1eec539929a21c9cf7882ecbc9816f";
+    private const string SOURCE_WVB_SHA256 = "4f8738e60e152e8cb20b8aa85792536303c5a05c42636205b426d826f65f3aa6";
+    private const string SOURCE_WVB_DEMO_SHA256 = "34c08767a264b75bf552583dd868720306a04b99a03e7324b93c96bc6046eead";
+    private const string SOURCE_WVB_TOOL_SHA256 = "3862a74e7f0b1a3fc42dc043a6dcbe14651bec15b264fe7b4c65574f1a4c16c7";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
+    private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -356,6 +357,9 @@ internal static class Program
 
     private static readonly string SOURCE_WVB_NOMINAL_TYPES_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Nominal-Types.wv");
+
+    private static readonly string SOURCE_WVB_HOSTED_CAPABILITIES_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Hosted-Capabilities.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -2103,6 +2107,86 @@ internal static class Program
                 Nominalˉgenerated,
                 new Referenceˉcapabilityˉhost(new StringWriter()),
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        var Hostedˉsourceˉbytes = System.Text.Encoding.UTF8.GetBytes(
+            SOURCE_WVB_HOSTED_CAPABILITIES_SOURCE).ToImmutableArray();
+        var Hostedˉoutput = new StringWriter();
+        var Hostedˉdiagnostics = new StringWriter();
+        var Hostedˉwriter = new Capturingˉfileˉwriter();
+        var Hostedˉreader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            Equal("hosted-capabilities.wv", Name);
+            True(Hostedˉsourceˉbytes.Length <= Maximumˉbytes,
+                "The source-to-WVB hosted byte limit was too small for capabilities.");
+            return Hostedˉsourceˉbytes;
+        });
+        var Hostedˉtoolˉresult = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["hosted-capabilities.wv", "hosted-capabilities.wvb"],
+                Hostedˉoutput,
+                Hostedˉdiagnostics,
+                Hostedˉreader,
+                Hostedˉwriter)),
+            new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+        Equal(0, Hostedˉtoolˉresult.Exitˉcode);
+        Equal(string.Empty, Hostedˉdiagnostics.ToString());
+        Equal(
+            "source wvb status=Valid functions=7 code-bytes=249 module-bytes=849\n",
+            Hostedˉoutput.ToString().Replace("\r\n", "\n", StringComparison.Ordinal));
+        Equal(1, Hostedˉreader.Readˉcount);
+        Equal(1, Hostedˉwriter.Writeˉcount);
+        Equal("hosted-capabilities.wvb", Hostedˉwriter.Resourceˉname);
+
+        var Hostedˉstageˉzeroˉbytes = Compileˉsuccess(SOURCE_WVB_HOSTED_CAPABILITIES_SOURCE);
+        Equal(
+            SOURCE_WVB_HOSTED_CAPABILITIES_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Hostedˉstageˉzeroˉbytes));
+        Sequenceˉequal(Hostedˉstageˉzeroˉbytes, Hostedˉwriter.Bytes);
+        var Hostedˉgenerated = Moduleˉcodec.Readˉandˉverify(Hostedˉwriter.Bytes.AsSpan());
+        Equal("Sourceˉwvbˉhostedˉcapabilities", Hostedˉgenerated.Module.Name);
+        Equal(Moduleˉprofile.Hosted, Hostedˉgenerated.Module.Profile);
+        Sequenceˉequal(
+            new[]
+            {
+                Capabilityˉcatalog.CONSOLE_WRITE,
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.FILE_WRITE_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            },
+            Hostedˉgenerated.Module.Capabilities.Select(Capability => Capability.Name));
+        var Hostedˉinspection = Moduleˉinspector.Inspect(
+            Hostedˉgenerated,
+            Hostedˉwriter.Bytes.AsSpan());
+        for (var Capabilityˉindex = 0; Capabilityˉindex < 7; Capabilityˉindex++)
+        {
+            Contains(Hostedˉinspection, $"call.capability capability[{Capabilityˉindex}]");
+        }
+        var Runtimeˉoutput = new StringWriter();
+        var Runtimeˉdiagnostics = new StringWriter();
+        var Runtimeˉreader = new Testˉfileˉreader((_, _) => []);
+        var Runtimeˉwriter = new Capturingˉfileˉwriter();
+        var Runtimeˉauthorized = Hostedˉgenerated.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Hostedˉgenerated,
+                new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                    [],
+                    Runtimeˉoutput,
+                    Runtimeˉdiagnostics,
+                    Runtimeˉreader,
+                    Runtimeˉwriter)),
+                new(Runtimeˉauthorized)).Runˉmain().Exitˉcode);
+        Equal(string.Empty, Runtimeˉoutput.ToString());
+        Equal(string.Empty, Runtimeˉdiagnostics.ToString());
+        Equal(0, Runtimeˉreader.Readˉcount);
+        Equal(0, Runtimeˉwriter.Writeˉcount);
     }
 
     private static void Moduleˉroundˉtrip()

@@ -1,0 +1,38 @@
+module Sourceˉwvbˉhostedˉcapabilities profile hosted;
+
+capability process.argument_count;
+capability console.write_line;
+capability file.write_bytes;
+capability diagnostic.write_line;
+capability process.argument;
+capability file.read_bytes;
+capability console.write;
+
+fn Readˉbytes(Name: text) -> bytes {
+    return file.read_bytes(Name);
+}
+
+fn Writeˉbytes(Name: text, Value: bytes) -> void {
+    file.write_bytes(Name, Value);
+}
+
+fn Writeˉdiagnostic(Value: text) -> void {
+    diagnostic.write_line(Value);
+}
+
+fn Writeˉtext(Value: text) -> void {
+    console.write(Value);
+}
+
+fn Writeˉline(Value: text) -> void {
+    console.write_line(Value);
+}
+
+fn Argument(Index: u32) -> text {
+    return process.argument(Index);
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 0u32 { return 1; }
+    return 0;
+}
