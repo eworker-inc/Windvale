@@ -167,6 +167,10 @@ Decision 0059 adds one differential case whose focused execution takes approxima
 
 The native case itself is not a new throughput bottleneck. Keeping the golden compiler closure out of Development continues to provide the useful broad loop. Windows and Debian qualification may run concurrently, but each host must retain its normal UTF-8 console contract: a hidden redirected Windows process decoded a macron name with a replacement character even though the CLI exited successfully, and was discarded in favor of the clean foreground qualification rather than weakening the output check.
 
+Decision 0060 widens that same differential case instead of registering another full-suite test. The final focused validations took 0.140 seconds on Windows and 0.128 seconds on exact-archive Debian. Windows Development passed all 48 regular tests in 54.295 seconds. Standard passed all 49 tests in 230.495 suite seconds and 241.6 wall-clock seconds. Exact commit `84dd908` completed concurrent Qualification in 474.1 seconds on Windows and 489.4 seconds on Debian, with suite times of 223.137 and 235.710 seconds. Both hosts passed zero-warning builds, all 49 tests, and the complete CLI verifier; normalized reports and all 61 portable artifacts matched.
+
+Checked arithmetic therefore remains effectively free in the inner loop relative to the compiler closures. The focused case is the normal edit-time check, Development is the broad coherent-slice check, and exact Standard plus dual-host Qualification remain milestone evidence. The next comparisons/control-flow slice should continue growing this differential case unless it needs a genuinely separate ownership or failure boundary.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.
