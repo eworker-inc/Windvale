@@ -7,7 +7,7 @@ Windvale keeps the complete cross-host qualification gate, but ordinary developm
 ## Levels
 
 - `Fast` builds once and runs an explicit selection of one or more test areas, a case-insensitive displayed-name substring, or their intersection. It may fail fast and may write a local timing report. It does not produce conformance evidence.
-- `Standard` builds once, runs all 47 in-process conformance tests, and writes the normal host report. It stops before native CLI qualification.
+- `Standard` builds once, runs all registered in-process conformance tests, and writes the normal host report. It stops before native CLI qualification.
 - `Qualification` is the default and remains the milestone gate. It adds every native CLI, hosted-boundary, deterministic-artifact, and failure-preservation check.
 
 Qualification builds the CLI once and invokes the resulting `windvale.dll` directly in each separate process. This preserves command parsing, process exit codes, native file behavior, capability boundaries, and output checks while removing repeated `dotnet run` project evaluation.
@@ -96,6 +96,12 @@ The typed-WVIR slice adds a focused test that compiles the portable core, runs s
 Exact commit `bf77f70` completed Qualification in approximately 1,090.7 seconds on Windows and 1,118.8 seconds on Debian QA. Both hosts passed zero-warning Release builds, all 47 tests, and the complete native verifier. Their normalized reports matched, and all 48 portable artifacts totaling 5,624,431 bytes were byte-identical. This preserves the tier split: the milestone gate pays for process-level repetition and direct cross-host evidence, while the focused WVIR loop remains measured in seconds.
 
 The ten-module compiler self-lowering experiment remains outside Fast and Standard. Symbol preparation alone is substantial, and the separate local-discovery plus IR body traversals currently exceed the unchanged 4,000,000,000-instruction ceiling. This is recorded as a body-traversal fusion target, not addressed by increasing limits or putting an unstable multi-minute case in every development loop.
+
+## Canonical backend measurements
+
+Decision 0037 adds the interleaved static-data/text fixture to the existing source-to-WVB focused test without adding another complete-suite case. On exact commit `636627c`, that focused test took 4.585 seconds on Windows and 4.701 seconds on Debian. Windows Qualification completed in 902.4 seconds with a 457.742-second suite; Debian Qualification completed in 916.4 seconds with a 471.285-second suite. Both hosts passed all 48 tests, the complete native verifier, and zero-warning Release builds.
+
+This preserves the intended cost split: canonical remapping, text interning, intrinsic lowering, exact Stage 0 differential comparison, mandatory WVB verification, and runtime execution remain available in a seconds-scale focused loop, while only milestone qualification pays for the full native and cross-host gates.
 
 ## Qualification evidence
 

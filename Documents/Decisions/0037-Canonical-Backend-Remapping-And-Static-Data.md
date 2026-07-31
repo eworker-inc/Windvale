@@ -1,7 +1,7 @@
 # Decision 0037: Canonical backend remapping and static data
 
 - Date: 2026-07-31
-- Status: Accepted; cross-host qualification pending
+- Status: Accepted; cross-host qualified at `636627c`
 
 ## Context
 
@@ -39,4 +39,4 @@ The candidate must pass:
 - the complete Standard suite and native verifier on Windows; and
 - exact-commit Debian qualification with matching normalized reports and byte-identical retrieved portable artifacts.
 
-The implementation remains pending cross-host qualification until all gates above are recorded in `Documents/Project/Seed-Verification-Evidence.md`.
+Exact candidate commit `636627cfd6d5e81094c0b8b076c0391ee00eb228` passed every gate on Windows x64 and Debian GNU/Linux 12 x64. The normalized verifier contracts matched, and all 55 retrieved portable artifacts were byte-identical. The complete evidence is recorded in `Documents/Project/Seed-Verification-Evidence.md`.
