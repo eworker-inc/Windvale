@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Windvale OS boot environment version 1 defines the accepted dependency preflight for the first x86-64 UEFI experiment. It fixes the emulator machine and immutable firmware inputs before a Windvale boot image exists. Passing this contract proves only that the required environment is present; it does not prove firmware entry, a bootable image, a kernel, or an operating system.
+Windvale OS boot environment version 1 defines the accepted dependency preflight for the first x86-64 UEFI experiments. It fixes the emulator machine and immutable firmware inputs independently from generated boot artifacts. Passing this contract proves only that the required environment is present; it does not prove firmware entry, a bootable image, a kernel, or an operating system.
 
 [Decision 0044](../Documents/Decisions/0044-First-X64-Uefi-Boot-Environment.md) owns the architecture choice and its reconsideration conditions.
 

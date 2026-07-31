@@ -12,7 +12,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $EXPECTED_QEMU_EXIT_CODE = 1
-$EXPECTED_SERIAL_MARKER = "windvale-os-boot 1`nstatus=pass`n"
+$EXPECTED_SERIAL_MARKER =
+    "windvale-os-boot 2`nentry=pass`nsystem-table=pass`nmemory-map=pass`nstatus=pass`n"
 
 function Fail-Boot {
     param(
@@ -183,9 +184,10 @@ try {
         Status = 'pass'
         Architecture = 'x86-64'
         ApplicationFormat = 'pe32-plus-uefi-application-v1'
+        ProbeVersion = 2
         EfiBytes = $EfiIdentity.Length
         EfiSha256 = $EfiSha256
-        SerialMarker = 'windvale-os-boot-1-status-pass'
+        SerialMarker = 'windvale-os-boot-2-entry-system-table-memory-map-status-pass'
         QemuExitCode = $Process.ExitCode
         RunDirectory = if ($KeepRunDirectory) { $RunDirectory } else { $null }
     }
@@ -193,10 +195,11 @@ try {
     if ($PassThru) {
         $Report
     } elseif (!$Quiet) {
-        Write-Output 'windvale-os-boot-report 1'
+        Write-Output 'windvale-os-boot-report 2'
         Write-Output "status=$($Report.Status)"
         Write-Output "architecture=$($Report.Architecture)"
         Write-Output "application-format=$($Report.ApplicationFormat)"
+        Write-Output "probe-version=$($Report.ProbeVersion)"
         Write-Output "efi-bytes=$($Report.EfiBytes)"
         Write-Output "efi-sha256=$($Report.EfiSha256)"
         Write-Output "serial-marker=$($Report.SerialMarker)"

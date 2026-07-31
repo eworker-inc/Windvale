@@ -35,6 +35,8 @@ The frontend and semantic model should be shared. Backend differences must not s
 
 [Decision 0044](../Decisions/0044-First-X64-Uefi-Boot-Environment.md) accepts x86-64 with UEFI 2.11 as the first Windvale OS boot environment. QEMU `pc-q35-11.0` with exact EDK II firmware bytes and TCG acceleration is the primary automated VM; Hyper-V Generation 2 is the later Windows compatibility target. This fixes a reproducible experiment boundary without making QEMU devices, UEFI services, PE32+, or the x64 firmware convention part of portable language behavior.
 
+[Decision 0045](../Decisions/0045-First-Uefi-Application-And-Boot-Probe.md) adds a narrow deterministic PE32+ target adapter and first firmware-entry probe. [Decision 0046](../Decisions/0046-Bounded-Uefi-Memory-Map-Probe.md) validates the exercised system/boot-services structure and acquires, walks, and frees a bounded UEFI memory map through ABI-correct calls. These remain system-profile bootstrap boundaries. The QEMU exit port and raw Stage 0 instruction builder are test implementation details, not portable or hosted Windvale capabilities.
+
 The accepted environment is not yet a bootable image or kernel. Executable-container writing, firmware entry, diagnostics, memory handoff, shutdown, and the kernel/process boundary remain separately specified and verified slices.
 
 ## Capability profiles

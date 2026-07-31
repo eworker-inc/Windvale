@@ -30,7 +30,7 @@ QEMU, EDK II firmware, variable stores, VM disks, and generated firmware images 
 
 The first boot experiment now has a fixed architecture, firmware boundary, emulator machine, resource envelope, and immutable firmware identity. It can run under TCG inside the existing Hyper-V development VM without enabling nested virtualization. WHPX, KVM, and other accelerators may be measured later, but they are not required to reproduce the first environment check.
 
-This decision does not claim an operating-system implementation. [Decision 0045](0045-First-Uefi-Application-And-Boot-Probe.md) now defines the first PE32+ writer, serial marker, and QEMU completion transport. Disk-image publication, memory-map handoff, page allocation, traps, kernel/process boundaries, system capabilities, bytecode runtime port, and clean shutdown remain later bounded slices.
+This decision does not claim an operating-system implementation. [Decision 0045](0045-First-Uefi-Application-And-Boot-Probe.md) defines the first PE32+ writer, serial marker, and QEMU completion transport; [Decision 0046](0046-Bounded-Uefi-Memory-Map-Probe.md) adds bounded memory-map acquisition and release. Disk-image publication, persistent memory handoff, `ExitBootServices`, page allocation, traps, kernel/process boundaries, system capabilities, bytecode runtime port, and clean shutdown remain later bounded slices.
 
 The environment may be revised if the accepted EDK II bytes cannot exercise a required UEFI rule, `pc-q35-11.0` cannot supply stable automation, TCG makes the bounded boot probe impractical, or Hyper-V exposes a material incompatibility. A newer dependency alone is not sufficient reason to change a qualified environment.
 

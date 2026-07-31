@@ -14,6 +14,7 @@ internal static class Program
         new("UEFI verifier rejects malformed and noncanonical images", Verifierˉrejectsˉmalformedˉimages),
         new("UEFI verifier contains bounded hostile input", Verifierˉcontainsˉhostileˉinput),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
+        new("firmware probe carries the bounded UEFI memory-map call shape", Firmwareˉprobeˉcarriesˉmemoryˉmapˉcalls),
     ];
 
     public static int Main()
@@ -130,13 +131,29 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(2_048, First.Length);
+        Equal(4_096, First.Length);
         Equal(
-            "7ee7acb6ca1bdce9e2179f302bd6a98dce1f1a638ca760991f362fc71d35f026",
+            "2fd7372854e549040108eea2327c0e1b384625f40914bf50dc711e127953f6cf",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
         Equal(0u, Verified.Entryˉcodeˉoffset);
+    }
+
+    private static void Firmwareˉprobeˉcarriesˉmemoryˉmapˉcalls()
+    {
+        Equal(
+            "windvale-os-boot 2\nentry=pass\nsystem-table=pass\nmemory-map=pass\nstatus=pass\n",
+            Firmwareˉprobe.SERIAL_MARKER);
+        var Application = Firmwareˉprobe.Buildˉapplication();
+        var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
+        Equal(1, Countˉsequence(Code, [0x48, 0x81, 0xEC, 0x88, 0x00, 0x00, 0x00]));
+        Equal(1, Countˉsequence(Code, [0x49, 0x42, 0x49, 0x20, 0x53, 0x59, 0x53, 0x54]));
+        Equal(1, Countˉsequence(Code, [0x42, 0x4F, 0x4F, 0x54, 0x53, 0x45, 0x52, 0x56]));
+        Equal(1, Countˉsequence(Code, [0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80]));
+        Equal(2, Countˉsequence(Code, [0xFF, 0x50, 0x38]));
+        Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x40]));
+        Equal(2, Countˉsequence(Code, [0xFF, 0x50, 0x48]));
     }
 
     private static Linkˉresult Linkˉcode(ImmutableArray<byte> code, uint baseˉaddress = 0)
@@ -156,6 +173,19 @@ internal static class Program
         var Result = source.ToArray();
         Result[offset] ^= 0x01;
         return Result;
+    }
+
+    private static int Countˉsequence(ImmutableArray<byte> source, ImmutableArray<byte> pattern)
+    {
+        var Count = 0;
+        for (var Offset = 0; Offset <= source.Length - pattern.Length; Offset++)
+        {
+            if (source.AsSpan(Offset, pattern.Length).SequenceEqual(pattern.AsSpan()))
+            {
+                Count++;
+            }
+        }
+        return Count;
     }
 
     private static void Reject(ReadOnlySpan<byte> bytes, string expectedˉcode)
