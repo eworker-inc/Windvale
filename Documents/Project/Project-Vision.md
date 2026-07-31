@@ -51,7 +51,7 @@ The first Windvale OS milestone should be a small vertical system rather than a 
 - Demonstrate the same bytecode module on Windows, Linux, and Windvale OS.
 - Shut down cleanly and produce machine-readable test evidence.
 
-The likely first hardware target is x86-64 with UEFI because it provides a practical path to QEMU and Hyper-V. This remains a proposal until the architecture and boot decision is recorded separately.
+The accepted first boot environment is x86-64 with UEFI 2.11, QEMU as the primary automated VM, and Hyper-V Generation 2 as the later Windows compatibility target. [Decision 0044](../Decisions/0044-First-X64-Uefi-Boot-Environment.md) fixes the initial machine and firmware inputs without claiming that a bootable image or kernel already exists.
 
 ## Non-goals for the first stages
 
