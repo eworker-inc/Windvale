@@ -42,6 +42,10 @@ The first allocation reduction removes ordinary function-call argument arrays an
 
 The final telemetry-enabled Standard run passed all 47 tests in 481.156 seconds, down from 525.956 seconds, an 8.5% improvement. Its golden phase completed in 413.716 seconds, down 7.7%, while retaining the same instruction count and 565.14 GiB allocation total.
 
+The next source-level optimization groups intrinsic-call candidates by UTF-8 byte length, orders common compiler intrinsics first, and returns on the first name match. The focused bindings test average fell from 3.661 to 3.366 seconds, an 8.1% improvement. The final Standard run passed all 47 tests in 458.922 seconds, 4.6% below the pooled-frame baseline, while its golden test fell from 413.716 to 390.397 seconds, a 5.6% improvement. The source-bindings phase fell from 240.420 to 220.950 seconds, an 8.1% improvement.
+
+This is a CPU-throughput trade rather than another allocation reduction. The changed bootstrap source increased source-bindings instructions from 3,722,805,908 to 3,746,501,967, or 0.6%, and allocation traffic from 319.98 to 322.46 GiB, or 0.8%, while replacing expensive candidate text conversions with cheaper length and branch instructions. Runtime byte-value allocation therefore remains the next measured allocation target.
+
 Runtime optimization does not require the entire suite on every edit. Use the focused `bodies, locals` compiler test for the seconds-scale correctness loop, run the `golden` area alone with a timing report for occasional performance checkpoints, and reserve Standard plus Qualification for the final candidate:
 
 ```powershell

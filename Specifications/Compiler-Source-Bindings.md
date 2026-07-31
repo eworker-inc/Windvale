@@ -108,20 +108,22 @@ The phase validates source symbols first, then traverses modules, declarations, 
 
 One combined full pass constructs local evidence and binds body references. Hot lookups pass the immutable binding payload plus the current function range directly. Global lookup uses the prepared symbol index and compares names against absolute offsets in the packed WVSS input. Each function constructs its binding payload privately and merges it once, avoiding quadratic global byte-buffer growth.
 
+Intrinsic-call lookup dispatches candidates by exact UTF-8 byte length, checks the most common compiler intrinsics first within each length group, and returns on the first match. A nonmatching length does not materialize the candidate text as bytes.
+
 The real nine-module compiler closure must complete below the fixed 4,000,000,000-instruction ceiling. Raising that ceiling is not an accepted substitute for correcting repeated materialization or rescan work.
 
 ## Candidate artifacts and evidence
 
-- `Source-Bindings-Core.wvb`: 334,172 bytes, SHA-256 `8656850137e843920f8296660936d6f9043b2804095035e87289c4569ebe535b`.
-- `Source-Bindings-Demo.wvb`: 341,161 bytes, SHA-256 `a78ecea3579a2ff64ae2ae19e40a424663193982fad497fe944f5fac6c262d81`.
-- `Source-Bindings-Tool.wvb`: 336,758 bytes, SHA-256 `abcd8a8edda501d3a357fee1af368304687cca0b8a3f7686c2ebe01361d554f7`.
+- `Source-Bindings-Core.wvb`: 336,890 bytes, SHA-256 `7f0317cf91401b963885db94abe1c640461f31086daabe02231d888c89afa8bd`.
+- `Source-Bindings-Demo.wvb`: 343,879 bytes, SHA-256 `bcaf22c63edcf538a68eb725caa13ed75db96b962d791da843449a25f8a46df3`.
+- `Source-Bindings-Tool.wvb`: 339,476 bytes, SHA-256 `30b7300141b5712e90c020bb53abc629961b20d6c0364ff09f0920b68bbc1bd3`.
 
 The focused demo covers valid parameters/locals/data/calls; mutable and immutable assignment; nested scope and initializer visibility; duplicate locals; primitive, visible, unknown, and inaccessible local types; unknown and inaccessible names/calls; undeclared capabilities; arity; upstream symbol failures; and corrupted header, range, entry, and trailing-data evidence.
 
 The hosted tool binds the current real closure as:
 
 ```text
-source bindings status=Valid modules=9 functions=187 parameters=813 locals=944 reads=8229 assignments=639 calls=1450 directory-bytes=65148
+source bindings status=Valid modules=9 functions=187 parameters=813 locals=942 reads=8260 assignments=609 calls=1473 directory-bytes=65076
 ```
 
-The pre-preparation implementation was qualified at `9185b28`. The prepared-symbol/local-only implementation and hashes above were requalified as part of the exact `bf77f70` typed-WVIR candidate on Windows and Debian; all 48 directly compared portable artifacts were byte-identical.
+The pre-preparation implementation was qualified at `9185b28`. The prepared-symbol/local-only baseline was requalified as part of the exact `bf77f70` typed-WVIR candidate on Windows and Debian; all 48 portable artifacts compared for that historical candidate were byte-identical.

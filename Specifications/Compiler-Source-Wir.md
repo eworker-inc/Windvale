@@ -90,11 +90,11 @@ source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporarie
 
 Candidate artifacts are:
 
-- `Source-Wir-Core.wvb`: 490,693 bytes, SHA-256 `ebea7beb54939e9f3b396905859ca25bef49c5765bebccd645860fb1741debfe`.
-- `Source-Wir-Demo.wvb`: 496,484 bytes, SHA-256 `7d7699cc110284274fb17fa7fd095d7566660f037ad3e3a067ebdeb68e5dd5f3`.
-- `Source-Wir-Tool.wvb`: 492,635 bytes, SHA-256 `c6a1939d2199fa62606f1351beaed3c96a8360ccc20b032b54760ee51f6974a8`.
+- `Source-Wir-Core.wvb`: 493,411 bytes, SHA-256 `89e2590e99ea96ebea5995491bc13d9497b2b5c41b566c3653acfc4713b6414b`.
+- `Source-Wir-Demo.wvb`: 499,202 bytes, SHA-256 `2d58a05a5ad7e39fda20e4706f52d365f15fe53d3cfae998431024fa1c1edada`.
+- `Source-Wir-Tool.wvb`: 495,353 bytes, SHA-256 `8bbca67184db5d8d980e61268021771d25b20f47624878abec6b9e54afbd6c4d`.
 
-These artifacts and the complete WVIR contract are cross-host qualified at exact candidate commit `bf77f70b08f332deda9ea3a1691e262e1426c1c1`. Windows x64 and Debian GNU/Linux 12 x64 passed all 47 tests and the complete native verifier; all 48 portable verifier artifacts were byte-identical.
+The prior typed-WVIR candidate at exact commit `bf77f70b08f332deda9ea3a1691e262e1426c1c1` was cross-host qualified on Windows x64 and Debian GNU/Linux 12 x64. Both hosts passed all 47 tests and the complete native verifier, and all 48 portable artifacts compared for that historical candidate were byte-identical.
 
 The ten-module compiler closure is intentionally not in the fast loop. Its current separate local-discovery and IR body traversals still exceed the fixed 4,000,000,000-instruction qualification ceiling. Raising the ceiling is not the remedy; a later slice must fuse those traversals or publish reusable typed body evidence before the full self-lowering case becomes a required gate.
 
