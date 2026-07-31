@@ -589,6 +589,8 @@ export fn Main() -> i32 {
 - [Capability profiles in the Windvale backend decision](Documents/Decisions/0039-Capability-Profiles-In-The-Windvale-Backend.md)
 - [Static multi-module Windvale backend decision](Documents/Decisions/0040-Static-Multi-Module-Windvale-Backend.md)
 - [Fused local discovery and typed WVIR decision](Documents/Decisions/0041-Fused-Local-Discovery-And-Typed-Wvir.md)
+- [Bounded lexical dispatch and function profiling decision](Documents/Decisions/0042-Bounded-Lexical-Dispatch-And-Function-Profiling.md)
+- [Compiler implementation role layout decision](Documents/Decisions/0043-Compiler-Implementation-Role-Layout.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

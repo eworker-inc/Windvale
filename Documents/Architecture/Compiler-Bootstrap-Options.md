@@ -4,7 +4,7 @@
 
 C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Decision 0002. Restricted C and native backend choices remain proposals for later milestones.
 
-“Bootstrap” names the staged process that starts from an existing host toolchain and reaches a reproducible Windvale-built stack. It is not the durable product name of either compiler implementation. The Windvale-written implementation is the **Windvale compiler** even before it passes self-hosting qualification; it lives in `Compiler/Windvale`. The C# implementation is the independent **reference/recovery compiler** and lives in `Compiler/Reference`. Bootstrap provenance and recovery instructions remain explicitly documented.
+“Bootstrap” names the staged process that starts from an existing host toolchain and reaches a reproducible Windvale-built stack. It is not the durable product name of either compiler implementation. The Windvale-written implementation is the **Windvale compiler** even before it passes self-hosting qualification; it lives in `Compiler/Windvale`. The C# implementation is the independent **reference/recovery compiler** and lives in `Compiler/Reference`. Bootstrap provenance and recovery instructions remain explicitly documented. This role layout is cross-host qualified at `4fdc6bf` under Decision 0043.
 
 ## Two different choices
 
