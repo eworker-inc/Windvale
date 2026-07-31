@@ -103,6 +103,12 @@ Decision 0037 adds the interleaved static-data/text fixture to the existing sour
 
 This preserves the intended cost split: canonical remapping, text interning, intrinsic lowering, exact Stage 0 differential comparison, mandatory WVB verification, and runtime execution remain available in a seconds-scale focused loop, while only milestone qualification pays for the full native and cross-host gates.
 
+## Nominal backend measurements
+
+Decision 0038 adds the interleaved record/enum fixture to the same source-to-WVB test and adds its Windvale and Stage 0 outputs to native evidence without adding another complete-suite case. On exact commit `f39ff73`, the focused test took 7.382 seconds on Windows. The complete 48-test Standard suite took 434.111 seconds.
+
+Windows Qualification completed in 906.282 seconds with a 458.742-second suite; Debian Qualification completed in 913.811 seconds with a 465.247-second suite. Both hosts passed the complete native verifier and zero-warning Release builds, and all 57 portable artifacts matched byte for byte. Nominal metadata and all six nominal operations therefore remain in the seconds-scale focused loop, while exact-host process evidence remains confined to the milestone gate.
+
 ## Qualification evidence
 
 The optimized verifier was qualified from the exact pre-normalization commit `de88007b4716c88604321baaad4c4d5c417d317e`, archived as `windvale-verification-speed-de88007.tar.gz`, 362,715 bytes with SHA-256 `dc5fab40a06a3f19706923fa3f569178297cd97bda5b9a8dc9e2b9c128942b92`. The attribution migration ledger maps it to tree-identical normalized commit `00466fd9e9feaac4655cdf9748ac1dc56b586a84`.

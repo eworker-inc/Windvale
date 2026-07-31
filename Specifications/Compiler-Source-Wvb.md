@@ -92,13 +92,13 @@ The focused conformance test compiles the backend core, runs its portable accept
 
 `Tests/Fixtures/Source-Wvb/Nominal-Types.wv` deliberately interleaves records, enums, data, and unsorted functions. It covers canonical record/enum grouping and ordering, every primitive record field plus enum fields, nominal parameters/results/locals/temporaries, and all six nominal WVIR operations. Both backends produce the exact 1,781-byte WVB module with SHA-256 `1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a`; it executes with result `11`.
 
-The current candidate bootstrap artifacts are:
+The cross-host-qualified bootstrap artifacts are:
 
 - `Source-Wvb-Core.wvb`: 564,844 bytes, SHA-256 `fc08eb2cf97b9e67ca7393300fb2e0e3e743d65d12c01642dd650c669abfcbb4`.
 - `Source-Wvb-Demo.wvb`: 565,332 bytes, SHA-256 `28370090024ee90672b1270e2392cacbbfb7b26c5e449285ecc49a2af2c575ad`.
 - `Source-Wvb-Tool.wvb`: 565,221 bytes, SHA-256 `433f4f5249c7995a2582d8e8c89cc4289b1eec539929a21c9cf7882ecbc9816f`.
 
-The preceding primitive/static-data implementation was qualified from exact commit `636627cfd6d5e81094c0b8b076c0391ee00eb228`. The nominal candidate identities above require exact-commit Windows and Debian qualification before they are called cross-host-qualified.
+These identities were qualified from exact commit `f39ff73913177de9e0f03896074262001d4eee00` on Windows x64 and Debian GNU/Linux 12 x64. Both hosts passed all 48 tests and the complete native verifier with zero-warning Release builds; their normalized reports matched, and all 57 retrieved portable artifacts were byte-identical.
 
 ## Expansion path
 

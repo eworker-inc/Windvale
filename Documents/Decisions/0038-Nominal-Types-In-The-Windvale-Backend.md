@@ -1,7 +1,7 @@
 # Decision 0038: Nominal types in the Windvale backend
 
 - Date: 2026-07-31
-- Status: Accepted; cross-host qualification pending
+- Status: Accepted and cross-host qualified at `f39ff73913177de9e0f03896074262001d4eee00`
 
 ## Context
 
@@ -41,4 +41,4 @@ The candidate must pass:
 - the complete Standard suite and native verifier on Windows; and
 - exact-commit Debian qualification with matching normalized reports and byte-identical retrieved portable artifacts.
 
-The implementation remains pending cross-host qualification until all gates are recorded in `Documents/Project/Seed-Verification-Evidence.md`.
+Exact commit `f39ff73913177de9e0f03896074262001d4eee00` passed every gate on Windows x64 and Debian Linux x64. Both hosts passed all 48 tests and the complete native verifier with zero-warning Release builds; their normalized contracts matched, and all 57 retrieved portable artifacts were byte-identical. The exact evidence is recorded in `Documents/Project/Seed-Verification-Evidence.md`.
