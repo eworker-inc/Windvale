@@ -11,6 +11,9 @@
   <Folder Name="/Object-Model/">
     <Project Path="Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
   </Folder>
+  <Folder Name="/Operating-System/">
+    <Project Path="Operating-System/Windvale.Bootstrap/Windvale.Bootstrap.csproj" />
+  </Folder>
   <Folder Name="/Runtime/">
     <Project Path="Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
     <Project Path="Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
@@ -19,6 +22,7 @@
     <Project Path="Tools/Windvale.Tool/Windvale.Tool.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="Tests/Windvale.Os.Tests/Windvale.Os.Tests.csproj" />
     <Project Path="Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj" />
   </Folder>
 </Solution>

@@ -45,6 +45,8 @@ pwsh -NoProfile -File Tools/Verify/Verify-Os-Environment.ps1
 
 Explicit `-QemuPath`, `-FirmwareCodePath`, and `-FirmwareVariablesTemplatePath` values override discovery without changing report contents.
 
+With `-PassThru`, the verifier also supplies resolved native paths to the boot harness in process. Those host-only launch values are not fields in the canonical report and are not portable evidence.
+
 ## Canonical preflight report
 
 Successful preflight writes UTF-8 text in this exact field order:
@@ -89,4 +91,4 @@ Preflight fails without a success report when:
 
 ## Deliberate limits
 
-Version 1 does not launch QEMU, create or mutate a variable store, build a FAT image, encode PE32+, validate a UEFI application, capture serial output, define completion status, or execute Windvale code. Those are later boot contracts. The environment report is dependency evidence and cannot be cited as a successful boot.
+This environment contract does not itself launch QEMU, create or mutate a variable store, encode PE32+, capture serial output, define completion status, or execute Windvale code. The separate [firmware boot probe](Windvale-Os-Boot-Probe.md) now owns those bounded actions. The environment report alone remains dependency evidence and cannot be cited as a successful boot.

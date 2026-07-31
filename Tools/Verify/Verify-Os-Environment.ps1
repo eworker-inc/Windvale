@@ -202,6 +202,9 @@ $Report = [pscustomobject][ordered]@{
     FirmwareCodeSha256 = $FirmwareCodeIdentity.Sha256
     FirmwareVariablesTemplateBytes = $FirmwareVariablesIdentity.Bytes
     FirmwareVariablesTemplateSha256 = $FirmwareVariablesIdentity.Sha256
+    QemuPath = $ResolvedQemu
+    FirmwareCodePath = $ResolvedFirmwareCode
+    FirmwareVariablesTemplatePath = $ResolvedFirmwareVariables
 }
 
 if ($PassThru) {
