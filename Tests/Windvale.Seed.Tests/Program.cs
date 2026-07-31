@@ -29,6 +29,8 @@ internal static class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "d69ab30a34a7281ff9911ab89220b405ad0944ede5130dd6f07c44baac1b9d6a";
+    private const string NATIVE_ARITHMETIC_CODE_SHA256 = "9ab91125f773fc56f6aafc4ac66ebb4596d2dc93f7eec713d13aaf1053558bf6";
+    private const string NATIVE_ARITHMETIC_WVO_SHA256 = "ef8bb7e4322ef7bce4ad9de0710a441f617bfb6dbc5e7d05b3e883fce1319cbc";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
@@ -126,6 +128,14 @@ internal static class Program
 
         export fn Main() -> i32 {
             return 42;
+        }
+        """;
+
+    private const string NATIVE_ARITHMETIC_SOURCE = """
+        module Nativeˉarithmetic profile portable;
+
+        export fn Main() -> i32 {
+            return -(((2 + 2) - (7 * 6)) - 4);
         }
         """;
 
@@ -1095,6 +1105,127 @@ internal static class Program
         Equal(Interpreted.Exitˉcode, Jitˉresult);
         Equal(Interpreted.Exitˉcode, Aotˉresult);
 
+        var Arithmeticˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_ARITHMETIC_SOURCE));
+        var Arithmeticˉinterpreted = new Referenceˉruntime(
+            Arithmeticˉverified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Arithmeticˉinterpreted.Exitˉcode);
+        var Arithmeticˉfirst = X64ˉnativeˉbackend.Compile(Arithmeticˉverified);
+        var Arithmeticˉsecond = X64ˉnativeˉbackend.Compile(Arithmeticˉverified);
+        True(
+            Arithmeticˉfirst.Module.Functions[0].Operations.OfType<Nativeˉi32ˉbinary>()
+                .Any(Operation => Operation.Kind == Nativeˉi32ˉbinaryˉkind.Add),
+            "Native machine IR did not retain checked i32 addition.");
+        True(
+            Arithmeticˉfirst.Module.Functions[0].Operations.OfType<Nativeˉi32ˉbinary>()
+                .Any(Operation => Operation.Kind == Nativeˉi32ˉbinaryˉkind.Subtract),
+            "Native machine IR did not retain checked i32 subtraction.");
+        True(
+            Arithmeticˉfirst.Module.Functions[0].Operations.OfType<Nativeˉi32ˉbinary>()
+                .Any(Operation => Operation.Kind == Nativeˉi32ˉbinaryˉkind.Multiply),
+            "Native machine IR did not retain checked i32 multiplication.");
+        True(
+            Arithmeticˉfirst.Module.Functions[0].Operations.Any(Operation => Operation is Nativeˉi32ˉnegate),
+            "Native machine IR did not retain checked i32 negation.");
+        Sequenceˉequal(Arithmeticˉfirst.Fragment.Code, Arithmeticˉsecond.Fragment.Code);
+        Equal(2, Arithmeticˉfirst.Fragment.Symbols.Length);
+        Equal("$overflow", Arithmeticˉfirst.Fragment.Symbols[0].Name);
+        _ = Nativeˉfragmentˉverifier.Verify(Arithmeticˉfirst.Fragment);
+        var Arithmeticˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉfirst.Fragment);
+        var Arithmeticˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉsecond.Fragment);
+        Sequenceˉequal(Arithmeticˉfirstˉobject, Arithmeticˉsecondˉobject);
+        Equal(239, Arithmeticˉfirst.Fragment.Code.Length);
+        Equal(
+            NATIVE_ARITHMETIC_CODE_SHA256,
+            Objectˉdigest.Calculateˉsha256(Arithmeticˉfirst.Fragment.Code.AsSpan()));
+        Equal(341, Arithmeticˉfirstˉobject.Length);
+        Equal(
+            NATIVE_ARITHMETIC_WVO_SHA256,
+            Objectˉdigest.Calculateˉsha256(Arithmeticˉfirstˉobject.AsSpan()));
+        var Arithmeticˉlinked = Linkˉsuccess(
+            [Arithmeticˉfirstˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Sequenceˉequal(Arithmeticˉfirst.Fragment.Code, Arithmeticˉlinked.Imageˉbytes);
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(Arithmeticˉfirst.Fragment));
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(
+            Arithmeticˉfirst.Fragment with { Code = Arithmeticˉlinked.Imageˉbytes }));
+
+        var Minimumˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉminimum profile portable; export fn Main() -> i32 { return -2147483647 - 1; }"));
+        var Minimumˉinterpreted = new Referenceˉruntime(
+            Minimumˉverified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(int.MinValue, Minimumˉinterpreted.Exitˉcode);
+        Equal(
+            int.MinValue,
+            X64ˉnativeˉexecutor.Executeˉi32(X64ˉnativeˉbackend.Compile(Minimumˉverified).Fragment));
+
+        var Corruptedˉarithmeticˉcode = Arithmeticˉfirst.Fragment.Code.ToArray();
+        var Overflowˉbranch = Corruptedˉarithmeticˉcode.AsSpan().IndexOf(new byte[] { 0x0F, 0x80 });
+        True(Overflowˉbranch >= 0, "Native checked arithmetic did not contain an overflow branch.");
+        BinaryPrimitives.WriteInt32LittleEndian(
+            Corruptedˉarithmeticˉcode.AsSpan(Overflowˉbranch + 2, sizeof(int)),
+            0);
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Arithmeticˉfirst.Fragment with { Code = Corruptedˉarithmeticˉcode.ToImmutableArray() }));
+
+        var Trapˉoffset = checked((int)Arithmeticˉfirst.Fragment.Symbols[0].Offset);
+        var Structuralˉcorruptions = new Action<byte[]>[]
+        {
+            Code => Code[0] = 0x90,
+            Code => BinaryPrimitives.WriteInt32LittleEndian(
+                Code.AsSpan(3, sizeof(int)),
+                Nativeˉcontract.MAXIMUM_FRAME_BYTES + 16),
+            Code => Code[Trapˉoffset - 1] = 0x90,
+            Code => Code[Trapˉoffset + 9] ^= 0x01,
+        };
+        foreach (var Corrupt in Structuralˉcorruptions)
+        {
+            var Corruptedˉcode = Arithmeticˉfirst.Fragment.Code.ToArray();
+            Corrupt(Corruptedˉcode);
+            Throwsˉnative(
+                "WVN3030",
+                () => _ = Nativeˉfragmentˉverifier.Verify(
+                    Arithmeticˉfirst.Fragment with { Code = Corruptedˉcode.ToImmutableArray() }));
+        }
+
+        var Overflowˉsources = new[]
+        {
+            "module Nativeˉaddˉoverflow profile portable; export fn Main() -> i32 { return 2147483647 + 1; }",
+            "module Nativeˉsubtractˉoverflow profile portable; export fn Main() -> i32 { return -2147483647 - 2; }",
+            "module Nativeˉmultiplyˉoverflow profile portable; export fn Main() -> i32 { return 50000 * 50000; }",
+            "module Nativeˉnegateˉoverflow profile portable; export fn Main() -> i32 { return -(-2147483647 - 1); }",
+        };
+        foreach (var Overflowˉsource in Overflowˉsources)
+        {
+            var Overflowˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Overflowˉsource));
+            Throwsˉruntime(
+                "WVR3007",
+                () => _ = new Referenceˉruntime(
+                    Overflowˉverified,
+                    new Referenceˉcapabilityˉhost(TextWriter.Null),
+                    Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+            var Overflowˉnative = X64ˉnativeˉbackend.Compile(Overflowˉverified);
+            Throwsˉnativeˉtrap(
+                "WVR3007",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(Overflowˉnative.Fragment));
+        }
+
+        var Aotˉoverflowˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Overflowˉsources[0]));
+        var Aotˉoverflow = X64ˉnativeˉbackend.Compile(Aotˉoverflowˉverified);
+        var Aotˉoverflowˉobject = Nativeˉobjectˉsink.Writeˉwvo(Aotˉoverflow.Fragment);
+        var Aotˉoverflowˉlinked = Linkˉsuccess(
+            [Aotˉoverflowˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Throwsˉnativeˉtrap(
+            "WVR3007",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                Aotˉoverflow.Fragment with { Code = Aotˉoverflowˉlinked.Imageˉbytes }));
+
         var Invalidˉfragment = First.Fragment with
         {
             Patches = [new(Nativeˉpatchˉkind.Relativeˉi32, 4, "Main", -4)],
@@ -1108,7 +1239,7 @@ internal static class Program
         Throwsˉnative("WVN3030", () => _ = X64ˉnativeˉexecutor.Executeˉi32(Invalidˉcode));
 
         var Unsupported = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
-            "module Nativeˉarithmetic profile portable; export fn Main() -> i32 { return 40 + 2; }"));
+            "module Nativeˉcalls profile portable; export fn Main() -> i32 { return Answer(); } fn Answer() -> i32 { return 42; }"));
         Throwsˉnative("WVN2002", () => _ = X64ˉnativeˉbackend.Compile(Unsupported));
     }
 
@@ -6671,6 +6802,21 @@ internal static class Program
         }
 
         throw new InvalidOperationException($"Expected native backend failure {expectedˉcode}.");
+    }
+
+    private static void Throwsˉnativeˉtrap(string expectedˉcode, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Nativeˉtrapˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+
+        throw new InvalidOperationException($"Expected native trap {expectedˉcode}.");
     }
 
     private static void Writeˉreport(string path)

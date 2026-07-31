@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decision 0059 cross-host qualifies the first general Stage 0 shared-backend slice for one verified portable constant-return function: explicit native machine IR, one verified fragment used by WVO/AOT and in-memory sinks, and a Windows/Linux W^X adapter. This document defines the larger native destination and migration boundaries; it does not claim a general native runtime, broad JIT or AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
+Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decision 0059 cross-host qualifies the first general Stage 0 shared-backend slice for one verified portable constant-return function: explicit native machine IR, one verified fragment used by WVO/AOT and in-memory sinks, and a Windows/Linux W^X adapter. Decision 0060 implements checked straight-line `i32` arithmetic and a packed recoverable overflow result on Windows; exact-commit Debian qualification is pending. This document defines the larger native destination and migration boundaries; it does not claim a general native runtime, broad JIT or AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
 
 ## Destination
 
@@ -95,11 +95,13 @@ The WVB path serves portable deployed modules. The WIR path allows source AOT wi
 
 Architecture-specific selection, register assignment, encoding, relocation, and ABI policy stay behind explicit contracts. The initial x86-64 backend must not prevent a later AArch64 backend.
 
-### Initial implemented slice
+### Implemented slices
 
-`Compiler/Native` now accepts only a `Verifiedˉmodule` and lowers the first canonical portable WVB shape into explicit `Nativeˉi32ˉconstant` and `Nativeˉreturn` operations. The `x86-64-wvb-baseline-v1` selector emits one versioned fragment containing code, ordered symbols, and typed patch records. The same independently verified fragment is serialized to WVO for the existing linker or handed to `Runtime/Windvale.Native` for checked in-memory linking and W^X publication.
+`Compiler/Native` accepts only a `Verifiedˉmodule`. Decision 0059's qualified `x86-64-wvb-baseline-v1` slice lowers the first canonical portable WVB shape into explicit `Nativeˉi32ˉconstant` and `Nativeˉreturn` operations. The same independently verified fragment is serialized to WVO for the existing linker or handed to `Runtime/Windvale.Native` for checked in-memory linking and W^X publication.
 
 The accepted program is deliberately only one exported `Main() -> i32` returning a constant. Its exact `return 42` code is `B8 2A 00 00 00 C3`; interpreter, JIT-fragment, and WVO-linked-image execution agree on Windows and Debian x64 at exact commit `962bb85`. This proves the ownership and publication seam, not general WVB coverage. Arithmetic, branches, internal calls, data, capabilities, imports, traps, values, heap ownership, PE/ELF containers, and Windvale-written implementation remain later gates.
+
+Decision 0060 advances the experimental current target to `x86-64-wvb-baseline-v2`. It lowers verified single-assignment straight-line `i32` add, subtract, multiply, and negate into a bounded one-page frame, branches on x86 overflow to one checked epilogue, and returns a packed value/status word without host signals. The runtime maps overflow status to `WVR3007`. The fragment verifier independently decodes every allowed instruction, slot, branch target, epilogue, and status before WVO or W^X publication. Windows interpreter/JIT/AOT evidence exists; Debian qualification is pending. Comparisons, control flow, calls, data, capabilities, other traps, heap ownership, PE/ELF containers, and Windvale-written implementation remain later gates.
 
 ## Native runtime ABI
 

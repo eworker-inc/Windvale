@@ -5,14 +5,31 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 1;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v1";
+    public const int ABI_VERSION = 2;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v2";
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
+    public const int MAXIMUM_VALUE_SLOTS = 1024;
+    public const int MAXIMUM_FRAME_BYTES = MAXIMUM_VALUE_SLOTS * sizeof(int);
 }
 
 public abstract record Nativeˉoperation;
 
 public sealed record Nativeˉi32ˉconstant(int Result, int Value) : Nativeˉoperation;
+
+public enum Nativeˉi32ˉbinaryˉkind : byte
+{
+    Add = 1,
+    Subtract = 2,
+    Multiply = 3,
+}
+
+public sealed record Nativeˉi32ˉbinary(
+    int Result,
+    Nativeˉi32ˉbinaryˉkind Kind,
+    int Left,
+    int Right) : Nativeˉoperation;
+
+public sealed record Nativeˉi32ˉnegate(int Result, int Value) : Nativeˉoperation;
 
 public sealed record Nativeˉreturn(int Value) : Nativeˉoperation;
 

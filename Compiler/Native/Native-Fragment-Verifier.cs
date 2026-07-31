@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using Windvale.ObjectModel;
 
@@ -5,6 +6,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉfragmentˉverifier
 {
+    private const ulong INTEGER_OVERFLOW_STATUS = 0x0000_0001_0000_0000UL;
+
     public static Nativeˉfragment Verify(Nativeˉfragment fragment)
     {
         ArgumentNullException.ThrowIfNull(fragment);
@@ -86,7 +89,7 @@ public static class Nativeˉfragmentˉverifier
             }
             if (Symbol.Kind != Nativeˉsymbolˉkind.Function)
             {
-                Fail("WVN3014", "The first native fragment supports only code function symbols.");
+                Fail("WVN3014", "The baseline native fragment supports only code function symbols.");
             }
         }
     }
@@ -124,25 +127,193 @@ public static class Nativeˉfragmentˉverifier
 
     private static void Verifyˉtargetˉshape(Nativeˉfragment fragment)
     {
-        if (fragment.Code.Length != 6 ||
-            fragment.Code[0] != 0xB8 ||
-            fragment.Code[5] != 0xC3 ||
-            fragment.Symbols.Length != 1 ||
+        if (!fragment.Patches.IsEmpty ||
+            (!Isˉconstantˉshape(fragment) && !Isˉcheckedˉarithmeticˉshape(fragment)))
+        {
+            Fail(
+                "WVN3030",
+                "The x86-64 baseline fragment is outside the independently decoded constant/checked-i32 target shapes.");
+        }
+    }
+
+    private static bool Isˉconstantˉshape(Nativeˉfragment fragment) =>
+        fragment.Code.Length == 6 &&
+        fragment.Code[0] == 0xB8 &&
+        fragment.Code[5] == 0xC3 &&
+        fragment.Symbols.Length == 1 &&
+        fragment.Symbols[0] is
+        {
+            Name: "Main",
+            Binding: Nativeˉsymbolˉbinding.Export,
+            Kind: Nativeˉsymbolˉkind.Function,
+            Offset: 0,
+            Size: 6,
+        };
+
+    private static bool Isˉcheckedˉarithmeticˉshape(Nativeˉfragment fragment)
+    {
+        if (fragment.Symbols.Length != 2 ||
             fragment.Symbols[0] is not
+            {
+                Name: "$overflow",
+                Binding: Nativeˉsymbolˉbinding.Local,
+                Kind: Nativeˉsymbolˉkind.Function,
+            } Trapˉsymbol ||
+            fragment.Symbols[1] is not
             {
                 Name: "Main",
                 Binding: Nativeˉsymbolˉbinding.Export,
                 Kind: Nativeˉsymbolˉkind.Function,
                 Offset: 0,
-                Size: 6,
-            } ||
-            !fragment.Patches.IsEmpty)
+            } Mainˉsymbol)
         {
-            Fail(
-                "WVN3030",
-                "The first x86-64 baseline fragment must be one exact mov-eax-i32/return Main function without patches.");
+            return false;
         }
+
+        var Code = fragment.Code.AsSpan();
+        var Trapˉoffset = checked((int)Trapˉsymbol.Offset);
+        if (Trapˉoffset < 7 ||
+            Trapˉoffset > Code.Length - 18 ||
+            Mainˉsymbol.Size != Trapˉsymbol.Offset ||
+            Trapˉsymbol.Size != (uint)(Code.Length - Trapˉoffset) ||
+            !Matches(Code, 0, 0x48, 0x81, 0xEC))
+        {
+            return false;
+        }
+        var Frameˉbytes = BinaryPrimitives.ReadInt32LittleEndian(Code.Slice(3, sizeof(int)));
+        if (Frameˉbytes is < 16 or > Nativeˉcontract.MAXIMUM_FRAME_BYTES ||
+            (Frameˉbytes & 15) != 0 ||
+            !Matches(Code, Trapˉoffset, 0x48, 0x81, 0xC4) ||
+            BinaryPrimitives.ReadInt32LittleEndian(Code.Slice(Trapˉoffset + 3, sizeof(int))) != Frameˉbytes ||
+            !Matches(Code, Trapˉoffset + 7, 0x48, 0xB8) ||
+            BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Trapˉoffset + 9, sizeof(ulong))) != INTEGER_OVERFLOW_STATUS ||
+            Code[Trapˉoffset + 17] != 0xC3 ||
+            Trapˉoffset + 18 != Code.Length)
+        {
+            return false;
+        }
+
+        var Initialized = new HashSet<int>();
+        var Checkedˉoperations = 0;
+        var Index = 7;
+        var Returned = false;
+        while (Index < Trapˉoffset)
+        {
+            if (Index + 15 == Trapˉoffset &&
+                Matches(Code, Index, 0x8B, 0x84, 0x24) &&
+                Tryˉreadˉslot(Code, Index + 3, Frameˉbytes, out var Returnˉslot) &&
+                Initialized.Contains(Returnˉslot) &&
+                Matches(Code, Index + 7, 0x48, 0x81, 0xC4) &&
+                BinaryPrimitives.ReadInt32LittleEndian(Code.Slice(Index + 10, sizeof(int))) == Frameˉbytes &&
+                Code[Index + 14] == 0xC3)
+            {
+                Returned = true;
+                Index = Trapˉoffset;
+                break;
+            }
+
+            if (Index + 12 <= Trapˉoffset &&
+                Code[Index] == 0xB8 &&
+                Matches(Code, Index + 5, 0x89, 0x84, 0x24) &&
+                Tryˉreadˉslot(Code, Index + 8, Frameˉbytes, out var Constantˉslot) &&
+                Constantˉslot == Initialized.Count &&
+                Initialized.Add(Constantˉslot))
+            {
+                Index += 12;
+                continue;
+            }
+
+            if (Index + 7 > Trapˉoffset ||
+                !Matches(Code, Index, 0x8B, 0x84, 0x24) ||
+                !Tryˉreadˉslot(Code, Index + 3, Frameˉbytes, out var Leftˉslot) ||
+                !Initialized.Contains(Leftˉslot))
+            {
+                return false;
+            }
+            var Cursor = Index + 7;
+            if (Cursor + 7 <= Trapˉoffset && Matches(Code, Cursor, 0x8B, 0x8C, 0x24))
+            {
+                if (!Tryˉreadˉslot(Code, Cursor + 3, Frameˉbytes, out var Rightˉslot) ||
+                    !Initialized.Contains(Rightˉslot))
+                {
+                    return false;
+                }
+                Cursor += 7;
+                if (Matches(Code, Cursor, 0x01, 0xC8) || Matches(Code, Cursor, 0x29, 0xC8))
+                {
+                    Cursor += 2;
+                }
+                else if (Matches(Code, Cursor, 0x0F, 0xAF, 0xC1))
+                {
+                    Cursor += 3;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (Matches(Code, Cursor, 0xF7, 0xD8))
+            {
+                Cursor += 2;
+            }
+            else
+            {
+                return false;
+            }
+
+            if (!Matches(Code, Cursor, 0x0F, 0x80) || Cursor + 13 > Trapˉoffset)
+            {
+                return false;
+            }
+            var Displacementˉoffset = Cursor + 2;
+            var Displacement = BinaryPrimitives.ReadInt32LittleEndian(
+                Code.Slice(Displacementˉoffset, sizeof(int)));
+            if ((long)Displacementˉoffset + sizeof(int) + Displacement != Trapˉoffset)
+            {
+                return false;
+            }
+            Cursor += 6;
+            if (!Matches(Code, Cursor, 0x89, 0x84, 0x24) ||
+                !Tryˉreadˉslot(Code, Cursor + 3, Frameˉbytes, out var Resultˉslot) ||
+                Resultˉslot != Initialized.Count ||
+                !Initialized.Add(Resultˉslot))
+            {
+                return false;
+            }
+            Checkedˉoperations++;
+            Index = Cursor + 7;
+        }
+
+        var Requiredˉframe = checked((Initialized.Count * sizeof(int) + 15) & ~15);
+        return Returned && Checkedˉoperations > 0 && Requiredˉframe == Frameˉbytes;
     }
+
+    private static bool Tryˉreadˉslot(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        out int slot)
+    {
+        slot = 0;
+        if (offset < 0 || offset > code.Length - sizeof(int))
+        {
+            return false;
+        }
+        var Displacement = BinaryPrimitives.ReadInt32LittleEndian(code.Slice(offset, sizeof(int)));
+        if (Displacement < 0 ||
+            (Displacement & (sizeof(int) - 1)) != 0 ||
+            Displacement > frameˉbytes - sizeof(int))
+        {
+            return false;
+        }
+        slot = Displacement / sizeof(int);
+        return true;
+    }
+
+    private static bool Matches(ReadOnlySpan<byte> code, int offset, params byte[] expected) =>
+        offset >= 0 &&
+        offset <= code.Length - expected.Length &&
+        code.Slice(offset, expected.Length).SequenceEqual(expected);
 
     [DoesNotReturn]
     private static void Fail(string code, string message) =>

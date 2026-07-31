@@ -37,6 +37,7 @@ public static class X64ˉnativeˉexecutor
         }
 
         var Address = Allocateˉwritable((nuint)fragment.Code.Length);
+        ulong Outcome;
         try
         {
             var Linkedˉcode = fragment.Code.ToArray();
@@ -45,12 +46,27 @@ public static class X64ˉnativeˉexecutor
             Finalizeˉexecutable(Address, (nuint)Linkedˉcode.Length);
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
             var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉi32ˉentry>(new(Entryˉaddress));
-            return Function();
+            Outcome = Function();
         }
         finally
         {
             Release(Address, (nuint)fragment.Code.Length);
         }
+
+        var Status = (uint)(Outcome >> 32);
+        if (Status == 0)
+        {
+            return unchecked((int)(uint)Outcome);
+        }
+        if (Status == 1)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3007",
+                $"Integer overflow in native entry '{entry}'.");
+        }
+        throw new Nativeˉbackendˉexception(
+            "WVN4005",
+            $"Native entry '{entry}' returned unknown status {Status}.");
     }
 
     private static void Applyˉpatches(Nativeˉfragment fragment, IntPtr address, byte[] code)
@@ -148,7 +164,7 @@ public static class X64ˉnativeˉexecutor
         new(Marshal.GetLastPInvokeError(), $"{operation} failed.");
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate int Nativeˉi32ˉentry();
+    private delegate ulong Nativeˉi32ˉentry();
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr VirtualAlloc(IntPtr address, nuint size, uint allocationˉtype, uint protection);
