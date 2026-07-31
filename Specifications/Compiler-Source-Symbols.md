@@ -117,10 +117,10 @@ Failure evidence names the current module, a related prior/target module when ap
 - `Source-Symbols-Demo.wvb`: 283,038 bytes, SHA-256 `9e7826d354d80d06702555e857f348e08a6e396cca64b11c5eda4895e7294a25`.
 - `Source-Symbols-Tool.wvb`: 273,580 bytes, SHA-256 `54289a4ebfe778c6c2b6ebfb7cb7afaf3d4899af41e68a989eaa26b9dd2f28c4`.
 
-The current candidate passes a zero-warning Release build and all 48 Windows Standard conformance tests; exact Windows/Debian Qualification remains pending. The demo exercises valid and rejected namespaces/signatures plus corrupted directories and both directions of the nominal map. The hosted tool validates the real eight-module, 303,873-byte compiler closure as:
+Exact commit `e37204f` passes zero-warning Release builds, all 48 conformance tests, and complete Windows/Debian Qualification with matching normalized contracts and byte-identical portable artifacts. The demo exercises valid and rejected namespaces/signatures plus corrupted directories and both directions of the nominal map. The hosted tool validates the real eight-module, 303,873-byte compiler closure as:
 
 ```text
 source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=291 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64
 ```
 
-The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0044's current candidate preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`.
+The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0044's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`.

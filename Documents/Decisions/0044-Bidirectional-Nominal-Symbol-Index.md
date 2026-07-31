@@ -1,7 +1,7 @@
 # Decision 0044: Bidirectional nominal symbol index
 
 - Date: 2026-07-31
-- Status: Candidate
+- Status: Qualified at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`
 
 ## Context
 
@@ -36,4 +36,4 @@ The exact ten-module typed-WVIR closure still reaches bounded diagnostic `WVR301
 
 ## Verification
 
-The candidate passes the focused 24-test compiler area and the complete 48-test Windows Standard suite. Exact Windows and Debian Qualification, normalized-report comparison, and direct portable-artifact comparison remain required before this decision becomes qualified.
+Exact commit `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`, tree `8b2fa783637e46872cc783dd22f3f8ee975f4e7f`, passed the focused 24-test compiler area, the complete Standard suite, and full Windows and Debian Qualification. Both hosts completed zero-warning Release builds and all 48 tests, their normalized contracts matched, and all 61 portable artifacts totaling 7,546,823 bytes were byte-identical. The complete evidence is recorded in [Seed verification evidence](../Project/Seed-Verification-Evidence.md#bidirectional-nominal-symbol-index-qualification).

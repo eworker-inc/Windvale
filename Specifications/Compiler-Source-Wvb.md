@@ -110,7 +110,7 @@ The current candidate compiler artifacts are:
 - `Source-Wvb-Demo.wvb`: 587,553 bytes, SHA-256 `426fcdba5267db8390dfa301d16ea93f5391f25a4fd139ba17268736aefb306e`.
 - `Source-Wvb-Tool.wvb`: 587,057 bytes, SHA-256 `d68581ed1e89e22eee9c59d051cd1e79e2e75104287f401697528380198c0527`.
 
-The static multi-module behavior was first qualified at `cb1db235`, and the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`. Decision 0044's current artifacts incorporate the bidirectional nominal index and await exact Windows/Debian Qualification. All five differential fixture outputs remain byte-identical to Stage 0.
+The static multi-module behavior was first qualified at `cb1db235`, the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0044's bidirectional nominal-index artifact set at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. All five differential fixture outputs remain byte-identical to Stage 0.
 
 ## Expansion path
 

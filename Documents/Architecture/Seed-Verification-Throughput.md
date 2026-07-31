@@ -109,6 +109,8 @@ The exact ten-module typed-WVIR workload still reaches `WVR3011` at the unchange
 
 Inlining ASCII whitespace and identifier-continuation logic into the lexer was measured and rejected: it increased the focused typed-WVIR fixture to 5,986,551 instructions. The helper boundaries remain cheaper in the current runtime. The next source-level experiment should share or retain validated lexical/parse evidence rather than repeat local lexer micro-inlining.
 
+Exact Decision 0044 commit `e37204f` completed Qualification in 724.8 seconds on Windows and 738.0 seconds on Debian, with complete-suite times of 366.914 and 379.640 seconds. Both hosts passed zero-warning builds, all 48 tests, and the complete native verifier. Their normalized contracts matched, and all 61 portable artifacts totaling 7,546,823 bytes were byte-identical. This qualifies the symbol-index improvement while leaving the exact ten-module experiment outside routine verification.
+
 ## Canonical backend measurements
 
 Decision 0037 adds the interleaved static-data/text fixture to the existing source-to-WVB focused test without adding another complete-suite case. On exact commit `636627c`, that focused test took 4.585 seconds on Windows and 4.701 seconds on Debian. Windows Qualification completed in 902.4 seconds with a 457.742-second suite; Debian Qualification completed in 916.4 seconds with a 471.285-second suite. Both hosts passed all 48 tests, the complete native verifier, and zero-warning Release builds.
