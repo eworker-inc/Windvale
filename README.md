@@ -38,7 +38,7 @@ Windvale assembly -> verified WVO object -> deterministic linked x86-64 image
 System-profile Hello-World.wv -> verified WVO -> linked UEFI image -> post-firmware serial output
 ```
 
-**First kernel-owned memory:** [`Hello-World.wv`](Operating-System/Kernel/Hello-World.wv) passes through the ordinary frontend and typed WIR, becomes a verified x86-64 WVO object, and runs only after the loader exits UEFI boot services, validates the retained map, claims and clears a 64 KiB conventional-memory arena, exercises its page allocator, copies the handoff, and switches to an 8 KiB kernel stack. The accepted QEMU/OVMF serial transcript is:
+**First kernel-owned memory:** [`Hello-World.wv`](Operating-System/Kernel/Hello-World.wv) passes through the ordinary frontend and typed WIR, becomes a verified x86-64 WVO object, and runs through an independently assembled [WVA machine shim](Operating-System/Kernel/X64-Main-Shim.wva) only after the loader exits UEFI boot services, validates the retained map, claims and clears a 64 KiB conventional-memory arena, exercises its page allocator, copies the handoff, and switches to an 8 KiB kernel stack. The accepted QEMU/OVMF serial transcript is:
 
 ```text
 windvale-os-boot 6
@@ -54,7 +54,7 @@ windvale-source=pass
 status=pass
 ```
 
-The exact ownership, allocator, target, and evidence limits are recorded in [Decision 0052](Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md), the [kernel-memory specification](Specifications/Windvale-Kernel-Memory.md), and the [x86-64 kernel-target specification](Specifications/Windvale-X64-Kernel-Target.md).
+The exact ownership, allocator, implementation seam, target, and evidence limits are recorded in [Decision 0052](Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md), [Decision 0054](Documents/Decisions/0054-First-Wva-To-Windvale-Kernel-Seam.md), the [kernel-memory specification](Specifications/Windvale-Kernel-Memory.md), and the [kernel native-seam specification](Specifications/Windvale-Kernel-Native-Seam.md).
 
 **Current focus:** Windvale compiler source -> reproducible self-hosting.
 

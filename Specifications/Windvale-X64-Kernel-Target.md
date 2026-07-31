@@ -34,7 +34,7 @@ The compiler emits canonical WVO 1.0 with:
 - imported function `Windvale_kernel_write_byte`; and
 - one `relative-i32` relocation with addend `-4` for the memory-entry call and every generated `call rel32` byte-output call.
 
-There is no static data section or absolute address. Text is materialized as immediate byte arguments, which is acceptable only because of the 4 KiB target limit. The existing linker resolves the imported adapter and the loader's independent import of `Windvale_kernel_entry` before the UEFI PE32+ adapter accepts the all-code link.
+There is no static data section or absolute address. Text is materialized as immediate byte arguments, which is acceptable only because of the 4 KiB target limit. The existing linker resolves the imported adapter, the loader's import of `Windvale_kernel_entry`, and the WVA shim's import of `Windvale_kernel_main` before the UEFI PE32+ adapter accepts the all-code link.
 
 ## Entry and adapter ABI
 
@@ -63,6 +63,6 @@ Frontend and semantic diagnostics retain their existing `WVC` codes and phases. 
 
 ## Determinism and current evidence
 
-Identical source and target version produce identical WVO bytes. The canonical `Hello-World.wv` input produces a 1,574-byte WVO object with SHA-256 `05c04cf7e7167850d954ca36d135e68065478301c20819ad27d0d2f10ce51133`, 39 relative relocations, and no absolute relocation. Firmware probe version 6 links that object with the independent memory layer and executes Main on the kernel-owned stack after successful `ExitBootServices`.
+Identical source and target version produce identical WVO bytes. The canonical `Hello-World.wv` input produces a 1,574-byte WVO object with SHA-256 `05c04cf7e7167850d954ca36d135e68065478301c20819ad27d0d2f10ce51133`, 39 relative relocations, and no absolute relocation. Firmware probe version 6 links that object with the independent memory layer and WVA machine shim, then executes Main on the kernel-owned stack after successful `ExitBootServices`.
 
 This target does not support general expressions, locals, calls, branches, Unicode console output, static-data addressing, multiple functions, a general native calling convention, optimization, unwind information, Windows or Linux executable production, compiler self-hosting, or portable bytecode execution in the OS. Each expansion requires focused semantics, encoding, relocation, and differential evidence rather than silent fallback.

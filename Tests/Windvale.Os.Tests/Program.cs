@@ -19,6 +19,7 @@ internal static class Program
         new("kernel memory planner selects one bounded conventional arena", Memoryˉplannerˉselectsˉboundedˉarena),
         new("kernel memory planner rejects malformed and hostile maps", Memoryˉplannerˉrejectsˉmalformedˉmaps),
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
+        new("kernel WVA shim deterministically bridges to Windvale Main", Kernelˉassemblyˉshimˉbridgesˉmain),
         new("x86-64 kernel compiler emits deterministic verified WVO", Kernelˉcompilerˉemitsˉverifiedˉobject),
         new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
@@ -323,7 +324,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(7_168, First.Length);
         Equal(
-            "9b58992e480536e9fcf1d4715da04417200cf923388b262aab474abdbf140868",
+            "b4f557fdd39d44858ce05fd6a99b0128a791053a5d3c2aa9e68dc5b5c34a3808",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -386,6 +387,38 @@ internal static class Program
             BinaryPrimitives.WriteUInt64LittleEndian(Descriptor[24..], descriptors[Index].Pages);
         }
         return Result;
+    }
+
+    private static void Kernelˉassemblyˉshimˉbridgesˉmain()
+    {
+        var First = Kernelˉassemblyˉshim.Buildˉobject();
+        var Second = Kernelˉassemblyˉshim.Buildˉobject();
+        Sequenceˉequal(First, Second);
+        Equal(158, First.Length);
+        Equal(
+            "f7525da5e8365b75adc68bd2174ad5763ed05b774d861c2a0cd6aad6c0e8e1b7",
+            Objectˉdigest.Calculateˉsha256(First.AsSpan()));
+
+        var Object = Objectˉcodec.Readˉandˉverify(First.AsSpan()).Value;
+        Equal(1, Object.Sections.Length);
+        True(Object.Sections[0].Kind == Objectˉsectionˉkind.Code, "The WVA shim is not code.");
+        Sequenceˉequal([(byte)0xE9, 0, 0, 0, 0], Object.Sections[0].Data);
+        Equal(2, Object.Symbols.Length);
+        Equal(Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL, Object.Symbols[0].Name);
+        True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The WVA shim is not exported.");
+        Equal(X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL, Object.Symbols[1].Name);
+        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Import, "Windvale Main is not imported by WVA.");
+        Equal(1, Object.Relocations.Length);
+        True(
+            Object.Relocations[0] is
+            {
+                Kind: Objectˉrelocationˉkind.Relativeˉi32,
+                Sectionˉindex: 0,
+                Offset: 1,
+                Symbolˉindex: 1,
+                Addend: -4,
+            },
+            "The WVA-to-WV transfer does not use the canonical relative relocation.");
     }
 
     private static void Memoryˉplanˉfails(

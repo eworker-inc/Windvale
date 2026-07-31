@@ -148,14 +148,14 @@ public static class Firmwareˉprobe
                     0,
                     Memory.Enterˉbytes),
                 new(
-                    X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL,
+                    WRITE_BYTE_SYMBOL,
                     Objectˉsymbolˉbinding.Import,
                     Objectˉsymbolˉkind.Function,
                     Objectˉlimits.UNDEFINED_SECTION,
                     0,
                     0),
                 new(
-                    WRITE_BYTE_SYMBOL,
+                    Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL,
                     Objectˉsymbolˉbinding.Import,
                     Objectˉsymbolˉkind.Function,
                     Objectˉlimits.UNDEFINED_SECTION,
@@ -170,12 +170,14 @@ public static class Firmwareˉprobe
                 -4))]);
         var Loaderˉobjectˉbytes = Objectˉcodec.Write(Loaderˉobject).ToImmutableArray();
         var Memoryˉobjectˉbytes = Objectˉcodec.Write(Memoryˉobject).ToImmutableArray();
+        var Assemblyˉshimˉobjectˉbytes = Kernelˉassemblyˉshim.Buildˉobject();
         var Supportˉobjectˉbytes = Objectˉcodec.Write(Supportˉobject).ToImmutableArray();
         var Link = Linkˉcompiler.Link(
             [
                 new(Loaderˉobjectˉbytes),
                 new(Kernel.Objectˉbytes),
                 new(Memoryˉobjectˉbytes),
+                new(Assemblyˉshimˉobjectˉbytes),
                 new(Supportˉobjectˉbytes),
             ],
             new(Uefiˉapplicationˉcontract.REQUIRED_LINK_BASE_ADDRESS, ENTRY_SYMBOL));

@@ -47,7 +47,7 @@ The handoff includes no valid boot-services pointer. Code reached through this A
 
 ## Current evidence and limit
 
-Firmware probe version 6 constructs the loader, compiler-generated kernel entry/Main, kernel memory layer, and OS byte adapter as four independent WVO objects. It links their imports and relative calls, enters the kernel object after firmware shutdown, and requires this serial suffix:
+Firmware probe version 6 constructs the loader, compiler-generated kernel entry/Main, kernel memory layer, WVA Main shim, and OS byte adapter as five independent WVO objects. It links their imports and relative calls, enters the kernel object after firmware shutdown, and requires this serial suffix:
 
 ```text
 memory-map=pass
@@ -60,4 +60,4 @@ windvale-source=pass
 status=pass
 ```
 
-The memory layer emits the first two new lines only after initializing owned state and completing a zeroing allocation. `kernel-stack=pass` and `Hello from Windvale` originate in calls selected from typed WIR and encoded in compiler export `Windvale_kernel_main`, after the memory layer changes `RSP`. `windvale-source=pass` originates in the loader only after the complete generated entry returns zero. This proves a bounded page-ownership, allocator, copied-handoff, and stack boundary, but does not claim a stable general ABI, general physical-memory management, paging, interrupts, or a kernel runtime.
+The memory layer emits the first two new lines only after initializing owned state and completing a zeroing allocation. It then calls WVA export `Windvale_kernel_wva_main`, which tail-transfers to compiler export `Windvale_kernel_main`. `kernel-stack=pass` and `Hello from Windvale` originate in calls selected from typed WIR after that transfer. `windvale-source=pass` originates in the loader only after the complete generated entry returns zero. This proves a bounded page-ownership, allocator, copied-handoff, WVA-to-WV, and stack boundary, but does not claim a stable general ABI, general physical-memory management, paging, interrupts, or a kernel runtime.

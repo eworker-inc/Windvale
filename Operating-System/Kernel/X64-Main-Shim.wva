@@ -1,0 +1,10 @@
+windvale-assembly 1
+
+symbol export function Windvale_kernel_wva_main in .text
+symbol import function Windvale_kernel_main
+
+section code .text align 16
+define Windvale_kernel_wva_main
+jump Windvale_kernel_main
+end define
+end section

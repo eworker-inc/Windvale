@@ -195,7 +195,7 @@ internal static class Kernelˉmemoryˉx64
         output.Emitˉu32((uint)((Kernelˉmemoryˉcontract.STATE_PAGES + Kernelˉmemoryˉcontract.STACK_PAGES) * Kernelˉmemoryˉcontract.PAGE_BYTES));
         output.Emit(0x48, 0x83, 0xEC, 0x20);
         output.Emit(0x49, 0x8D, 0x4E, (byte)Kernelˉmemoryˉcontract.HANDOFF_COPY_OFFSET);
-        Emitˉexternalˉcall(output, relocations, 2);
+        Emitˉexternalˉcall(output, relocations, 3);
         output.Emit(0x49, 0x89, 0xC7, 0x4C, 0x89, 0xE4, 0x4C, 0x89, 0xF8);
         output.Jump(RESTORE_LABEL);
 
@@ -250,7 +250,7 @@ internal static class Kernelˉmemoryˉx64
         {
             output.Emit(0xB9);
             output.Emitˉu32(Value);
-            Emitˉexternalˉcall(output, relocations, 3);
+            Emitˉexternalˉcall(output, relocations, 2);
         }
     }
 
