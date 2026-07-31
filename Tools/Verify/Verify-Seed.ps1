@@ -145,6 +145,9 @@ $SourceWvbNominalFixtureModule = Join-Path $Artifacts 'Source-Wvb-Nominal-Types.
 $SourceWvbNominalFixtureOracle = Join-Path $Artifacts 'Source-Wvb-Nominal-Types-Stage0.wvb'
 $SourceWvbHostedFixtureModule = Join-Path $Artifacts 'Source-Wvb-Hosted-Capabilities.wvb'
 $SourceWvbHostedFixtureOracle = Join-Path $Artifacts 'Source-Wvb-Hosted-Capabilities-Stage0.wvb'
+$SourceWvbCompositionModule = Join-Path $Artifacts 'Source-Wvb-Composition.wvb'
+$SourceWvbCompositionOracle = Join-Path $Artifacts 'Source-Wvb-Composition-Stage0.wvb'
+$InvalidSourceWvbCompositionModule = Join-Path $Artifacts '__windvale_invalid_source_wvb_composition_output__.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -1032,7 +1035,7 @@ $SourceWvbDependencies = @(
 dotnet $ToolDll compile $SourceWvbSource @SourceWvbDependencies -o $SourceWvbModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend core.' }
 $SourceWvbHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbModule).Hash.ToLowerInvariant()
-if ($SourceWvbHash -ne '4f8738e60e152e8cb20b8aa85792536303c5a05c42636205b426d826f65f3aa6') {
+if ($SourceWvbHash -ne 'b00677d82b90c7aa5dfe486cf7c8675658fd37a9fc560a3631004056f28b5cbf') {
     throw "The Windvale WVB backend core has an unexpected digest: $SourceWvbHash"
 }
 $SourceWvbInspection = (dotnet $ToolDll inspect $SourceWvbModule) -join "`n"
@@ -1040,7 +1043,7 @@ if (
     $LASTEXITCODE -ne 0 -or
     $SourceWvbInspection -notmatch 'Compilerˉsourceˉwvbˉsummary' -or
     $SourceWvbInspection -notmatch 'Compilerˉcompileˉsourceˉwvb' -or
-    $SourceWvbInspection -notmatch 'Exports \(52\)'
+    $SourceWvbInspection -notmatch 'Exports \(55\)'
 ) {
     throw 'The Windvale WVB backend inspection is incomplete.'
 }
@@ -1050,7 +1053,7 @@ dotnet $ToolDll `
     -o $SourceWvbDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend demo.' }
 $SourceWvbDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbDemoModule).Hash.ToLowerInvariant()
-if ($SourceWvbDemoHash -ne '34c08767a264b75bf552583dd868720306a04b99a03e7324b93c96bc6046eead') {
+if ($SourceWvbDemoHash -ne '19da326967e17a06f149efbb9cbd35c89ad9ec156f7f74833ea8287141cb419e') {
     throw "The Windvale WVB backend demo has an unexpected digest: $SourceWvbDemoHash"
 }
 $SourceWvbDemoOutput = dotnet $ToolDll run $SourceWvbDemoModule --max-steps 4000000000
@@ -1063,7 +1066,7 @@ dotnet $ToolDll `
     -o $SourceWvbToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend tool.' }
 $SourceWvbToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbToolModule).Hash.ToLowerInvariant()
-if ($SourceWvbToolHash -ne '3862a74e7f0b1a3fc42dc043a6dcbe14651bec15b264fe7b4c65574f1a4c16c7') {
+if ($SourceWvbToolHash -ne 'ce3ae94685c07b025e8cd8ea95f53df01819cb1946eaf3cf442e3fa38ad8cb5d') {
     throw "The Windvale WVB backend tool has an unexpected digest: $SourceWvbToolHash"
 }
 $SourceWvbFixture = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Function-Only.wv'
@@ -1242,6 +1245,96 @@ if (-not [System.Linq.Enumerable]::SequenceEqual(
     [IO.File]::ReadAllBytes($SourceWvbHostedFixtureOracle)
 )) {
     throw 'The Windvale-written hosted-capabilities fixture differs from the Stage 0 oracle.'
+}
+
+$SourceWvbCompositionRoot = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Composition-Root.wv'
+$SourceWvbCompositionLeaf = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Composition-Leaf.wv'
+$SourceWvbCompositionMiddle = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Composition-Middle.wv'
+Remove-Item -LiteralPath `
+    $SourceWvbCompositionModule, `
+    $SourceWvbCompositionOracle, `
+    $InvalidSourceWvbCompositionModule `
+    -Force -ErrorAction SilentlyContinue
+$SourceWvbCompositionOutput = dotnet $ToolDll `
+    run $SourceWvbToolModule `
+    --allow console.write_line `
+    --allow diagnostic.write_line `
+    --allow file.read_bytes `
+    --allow file.write_bytes `
+    --allow process.argument `
+    --allow process.argument_count `
+    --max-steps 4000000000 -- `
+    $SourceWvbCompositionRoot `
+    $SourceWvbCompositionLeaf `
+    $SourceWvbCompositionMiddle `
+    $SourceWvbCompositionModule
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceWvbCompositionOutput -notcontains 'source wvb status=Valid functions=5 code-bytes=451 module-bytes=1030' -or
+    $SourceWvbCompositionOutput -notcontains 'Result: 0'
+) {
+    throw 'The Windvale WVB backend tool did not lower the multi-module fixture.'
+}
+$SourceWvbCompositionVerifyOutput = dotnet $ToolDll verify $SourceWvbCompositionModule
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceWvbCompositionVerifyOutput -notcontains 'Verified: Compositionˉdemo'
+) {
+    throw 'The Windvale-written multi-module WVB fixture did not pass verification.'
+}
+$SourceWvbCompositionInspection = (dotnet $ToolDll inspect $SourceWvbCompositionModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceWvbCompositionInspection -notmatch 'Data \(3\)' -or
+    $SourceWvbCompositionInspection -notmatch '\[2\] __Text_000001: text' -or
+    $SourceWvbCompositionInspection -notmatch 'Nominal types \(2\)' -or
+    $SourceWvbCompositionInspection -notmatch 'Functions \(5\)' -or
+    $SourceWvbCompositionInspection -notmatch 'Exports \(1\)' -or
+    $SourceWvbCompositionInspection -notmatch 'Main -> function\[4\]'
+) {
+    throw 'The Windvale-written multi-module WVB inspection is incomplete.'
+}
+$SourceWvbCompositionRunOutput = dotnet $ToolDll run $SourceWvbCompositionModule
+if ($LASTEXITCODE -ne 0 -or $SourceWvbCompositionRunOutput -notcontains 'Result: 42') {
+    throw 'The Windvale-written multi-module WVB fixture did not execute with Result: 42.'
+}
+dotnet $ToolDll `
+    compile $SourceWvbCompositionRoot `
+    --module $SourceWvbCompositionLeaf `
+    --module $SourceWvbCompositionMiddle `
+    -o $SourceWvbCompositionOracle
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Stage 0 multi-module oracle.' }
+$SourceWvbCompositionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbCompositionModule).Hash.ToLowerInvariant()
+if ($SourceWvbCompositionHash -ne '7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f') {
+    throw "The Windvale-written multi-module fixture has an unexpected digest: $SourceWvbCompositionHash"
+}
+if (-not [System.Linq.Enumerable]::SequenceEqual(
+    [IO.File]::ReadAllBytes($SourceWvbCompositionModule),
+    [IO.File]::ReadAllBytes($SourceWvbCompositionOracle)
+)) {
+    throw 'The Windvale-written multi-module fixture differs from the Stage 0 oracle.'
+}
+$RejectedSourceWvbCompositionOutput = dotnet $ToolDll `
+    run $SourceWvbToolModule `
+    --allow console.write_line `
+    --allow diagnostic.write_line `
+    --allow file.read_bytes `
+    --allow file.write_bytes `
+    --allow process.argument `
+    --allow process.argument_count `
+    --max-steps 4000000000 -- `
+    $SourceWvbCompositionRoot `
+    $SourceWvbCompositionMiddle `
+    $SourceWvbCompositionLeaf `
+    $InvalidSourceWvbCompositionModule 2>&1
+$RejectedSourceWvbCompositionExit = $LASTEXITCODE
+if (
+    $RejectedSourceWvbCompositionExit -ne 0 -or
+    -not ($RejectedSourceWvbCompositionOutput -match 'source wvb status=Sourceˉwir') -or
+    -not ($RejectedSourceWvbCompositionOutput -match 'Result: 1') -or
+    (Test-Path -LiteralPath $InvalidSourceWvbCompositionModule)
+) {
+    throw 'The Windvale WVB backend did not reject noncanonical dependency order without output.'
 }
 
 dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule

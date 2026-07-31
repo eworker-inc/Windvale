@@ -148,5 +148,14 @@
     <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Hosted-Capabilities.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Hosted-Capabilities.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Composition-Root.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Composition-Root.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Composition-Leaf.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Composition-Leaf.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Composition-Middle.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Composition-Middle.wv" />
   </ItemGroup>
 </Project>

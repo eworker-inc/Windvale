@@ -144,6 +144,9 @@ SOURCE_WVB_NOMINAL_FIXTURE_MODULE="$ARTIFACTS/Source-Wvb-Nominal-Types.wvb"
 SOURCE_WVB_NOMINAL_FIXTURE_ORACLE="$ARTIFACTS/Source-Wvb-Nominal-Types-Stage0.wvb"
 SOURCE_WVB_HOSTED_FIXTURE_MODULE="$ARTIFACTS/Source-Wvb-Hosted-Capabilities.wvb"
 SOURCE_WVB_HOSTED_FIXTURE_ORACLE="$ARTIFACTS/Source-Wvb-Hosted-Capabilities-Stage0.wvb"
+SOURCE_WVB_COMPOSITION_MODULE="$ARTIFACTS/Source-Wvb-Composition.wvb"
+SOURCE_WVB_COMPOSITION_ORACLE="$ARTIFACTS/Source-Wvb-Composition-Stage0.wvb"
+INVALID_SOURCE_WVB_COMPOSITION_MODULE="$ARTIFACTS/__windvale_invalid_source_wvb_composition_output__.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -900,17 +903,17 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WVB_MODULE"
 SOURCE_WVB_HASH=$(sha256sum "$SOURCE_WVB_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_HASH" != '4f8738e60e152e8cb20b8aa85792536303c5a05c42636205b426d826f65f3aa6' ]; then
+if [ "$SOURCE_WVB_HASH" != 'b00677d82b90c7aa5dfe486cf7c8675658fd37a9fc560a3631004056f28b5cbf' ]; then
     echo "The Windvale WVB backend core has an unexpected digest: $SOURCE_WVB_HASH" >&2
     exit 1
 fi
 SOURCE_WVB_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_WVB_MODULE")
 printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉsourceˉwvbˉsummary' >/dev/null
 printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉcompileˉsourceˉwvb' >/dev/null
-printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Exports (52)' >/dev/null
+printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Exports (55)' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Demo.wv" "$SOURCE_WVB_DEMO_MODULE"
 SOURCE_WVB_DEMO_HASH=$(sha256sum "$SOURCE_WVB_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_DEMO_HASH" != '34c08767a264b75bf552583dd868720306a04b99a03e7324b93c96bc6046eead' ]; then
+if [ "$SOURCE_WVB_DEMO_HASH" != '19da326967e17a06f149efbb9cbd35c89ad9ec156f7f74833ea8287141cb419e' ]; then
     echo "The Windvale WVB backend demo has an unexpected digest: $SOURCE_WVB_DEMO_HASH" >&2
     exit 1
 fi
@@ -918,7 +921,7 @@ SOURCE_WVB_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_DEMO_MODULE" --max-
 printf '%s\n' "$SOURCE_WVB_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Tool.wv" "$SOURCE_WVB_TOOL_MODULE"
 SOURCE_WVB_TOOL_HASH=$(sha256sum "$SOURCE_WVB_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_TOOL_HASH" != '3862a74e7f0b1a3fc42dc043a6dcbe14651bec15b264fe7b4c65574f1a4c16c7' ]; then
+if [ "$SOURCE_WVB_TOOL_HASH" != 'ce3ae94685c07b025e8cd8ea95f53df01819cb1946eaf3cf442e3fa38ad8cb5d' ]; then
     echo "The Windvale WVB backend tool has an unexpected digest: $SOURCE_WVB_TOOL_HASH" >&2
     exit 1
 fi
@@ -1038,6 +1041,78 @@ if [ "$SOURCE_WVB_HOSTED_FIXTURE_HASH" != '1df4503a21abf5f2c0b0307ac2dc79402bc85
     exit 1
 fi
 cmp -s "$SOURCE_WVB_HOSTED_FIXTURE_MODULE" "$SOURCE_WVB_HOSTED_FIXTURE_ORACLE"
+
+SOURCE_WVB_COMPOSITION_ROOT="$REPOSITORY_ROOT/Tests/Fixtures/Source-Wvb/Composition-Root.wv"
+SOURCE_WVB_COMPOSITION_LEAF="$REPOSITORY_ROOT/Tests/Fixtures/Source-Wvb/Composition-Leaf.wv"
+SOURCE_WVB_COMPOSITION_MIDDLE="$REPOSITORY_ROOT/Tests/Fixtures/Source-Wvb/Composition-Middle.wv"
+rm -f -- \
+    "$SOURCE_WVB_COMPOSITION_MODULE" \
+    "$SOURCE_WVB_COMPOSITION_ORACLE" \
+    "$INVALID_SOURCE_WVB_COMPOSITION_MODULE"
+SOURCE_WVB_COMPOSITION_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$SOURCE_WVB_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 4000000000 \
+    -- "$SOURCE_WVB_COMPOSITION_ROOT" \
+    "$SOURCE_WVB_COMPOSITION_LEAF" \
+    "$SOURCE_WVB_COMPOSITION_MIDDLE" \
+    "$SOURCE_WVB_COMPOSITION_MODULE")
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_OUTPUT" | grep -F 'source wvb status=Valid functions=5 code-bytes=451 module-bytes=1030' >/dev/null
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_OUTPUT" | grep -F 'Result: 0' >/dev/null
+SOURCE_WVB_COMPOSITION_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$SOURCE_WVB_COMPOSITION_MODULE")
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_VERIFY_OUTPUT" | grep -F 'Verified: Compositionˉdemo' >/dev/null
+SOURCE_WVB_COMPOSITION_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_WVB_COMPOSITION_MODULE")
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_INSPECTION" | grep -F 'Data (3)' >/dev/null
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_INSPECTION" | grep -F '[2] __Text_000001: text' >/dev/null
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_INSPECTION" | grep -F 'Nominal types (2)' >/dev/null
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_INSPECTION" | grep -F 'Functions (5)' >/dev/null
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_INSPECTION" | grep -F 'Main -> function[4]' >/dev/null
+SOURCE_WVB_COMPOSITION_RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_COMPOSITION_MODULE")
+printf '%s\n' "$SOURCE_WVB_COMPOSITION_RUN_OUTPUT" | grep -F 'Result: 42' >/dev/null
+dotnet "$TOOL_DLL" \
+    compile "$SOURCE_WVB_COMPOSITION_ROOT" \
+    --module "$SOURCE_WVB_COMPOSITION_LEAF" \
+    --module "$SOURCE_WVB_COMPOSITION_MIDDLE" \
+    -o "$SOURCE_WVB_COMPOSITION_ORACLE"
+SOURCE_WVB_COMPOSITION_HASH=$(sha256sum "$SOURCE_WVB_COMPOSITION_MODULE" | awk '{print $1}')
+if [ "$SOURCE_WVB_COMPOSITION_HASH" != '7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f' ]; then
+    echo "The Windvale-written multi-module fixture has an unexpected digest: $SOURCE_WVB_COMPOSITION_HASH" >&2
+    exit 1
+fi
+cmp -s "$SOURCE_WVB_COMPOSITION_MODULE" "$SOURCE_WVB_COMPOSITION_ORACLE"
+
+set +e
+REJECTED_SOURCE_WVB_COMPOSITION_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$SOURCE_WVB_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 4000000000 \
+    -- "$SOURCE_WVB_COMPOSITION_ROOT" \
+    "$SOURCE_WVB_COMPOSITION_MIDDLE" \
+    "$SOURCE_WVB_COMPOSITION_LEAF" \
+    "$INVALID_SOURCE_WVB_COMPOSITION_MODULE" 2>&1)
+REJECTED_SOURCE_WVB_COMPOSITION_EXIT=$?
+set -e
+if [ "$REJECTED_SOURCE_WVB_COMPOSITION_EXIT" -ne 0 ]; then
+    echo "Expected the runtime command to complete, found exit $REJECTED_SOURCE_WVB_COMPOSITION_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$REJECTED_SOURCE_WVB_COMPOSITION_OUTPUT" | grep -F 'source wvb status=Sourceˉwir' >/dev/null
+printf '%s\n' "$REJECTED_SOURCE_WVB_COMPOSITION_OUTPUT" | grep -F 'Result: 1' >/dev/null
+if [ -e "$INVALID_SOURCE_WVB_COMPOSITION_MODULE" ]; then
+    echo 'The rejected source-WVB composition created an output file.' >&2
+    exit 1
+fi
 
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet "$TOOL_DLL" \

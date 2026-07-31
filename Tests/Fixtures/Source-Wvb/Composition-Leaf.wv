@@ -1,0 +1,22 @@
+module Compositionˉleaf profile portable;
+
+enum Compositionˉstatus {
+    Ready = 1;
+}
+
+record Compositionˉvalue {
+    Value: i32;
+    Status: Compositionˉstatus;
+}
+
+export fn Compositionˉmake(Value: i32) -> Compositionˉvalue {
+    return Compositionˉvalue(Value, Compositionˉstatus.Ready);
+}
+
+export fn Compositionˉincrement(Value: i32) -> i32 {
+    return Value + 1;
+}
+
+export fn Compositionˉlabel() -> text {
+    return "dependency";
+}

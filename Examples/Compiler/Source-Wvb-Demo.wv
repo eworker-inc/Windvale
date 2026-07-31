@@ -23,6 +23,28 @@ fn Compilerˉsourceˉwvbˉdemoˉstatus(
     return Summary.Status;
 }
 
+fn Compilerˉsourceˉwvbˉdemoˉpair(Root: text, Dependency: text) -> bytes {
+    let Rootˉbytes: bytes = Textˉtoˉutf8(Root);
+    let Dependencyˉbytes: bytes = Textˉtoˉutf8(Dependency);
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(2u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(16u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(32u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Rootˉbytes)));
+    Header = Bytesˉconcat(
+        Header,
+        Bytesˉfromˉu32ˉlittle(32u32 + Bytesˉlength(Rootˉbytes))
+    );
+    Header = Bytesˉconcat(
+        Header, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Dependencyˉbytes))
+    );
+    return Bytesˉconcat(
+        Bytesˉconcat(Header, Rootˉbytes), Dependencyˉbytes
+    );
+}
+
 export fn Main() -> i32 {
     let Valid: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉdemoˉinput(
@@ -52,5 +74,13 @@ export fn Main() -> i32 {
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉsystem profile system; capability process.argument_count; export fn Main() -> i32 { return 0; }"
     ) != Compilerˉsourceˉwvbˉstatus.Valid { return 13; }
+    let Composed: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
+        Compilerˉsourceˉwvbˉdemoˉpair(
+            "module Wvbˉroot profile portable; import Wvbˉdependency; export fn Main() -> i32 { return Wvbˉvalue(); }",
+            "module Wvbˉdependency profile portable; export fn Wvbˉvalue() -> i32 { return 42; }"
+        )
+    );
+    if Composed.Status != Compilerˉsourceˉwvbˉstatus.Valid { return 14; }
+    if Composed.Functions != 2u32 { return 15; }
     return 0;
 }

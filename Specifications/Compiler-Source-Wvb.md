@@ -4,7 +4,7 @@
 
 `Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated WVSS 1 source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to a complete canonical WVB 1.6 module, and returns the bytes without using hosted capabilities.
 
-The current slice proves the complete source → symbols/bindings → typed WVIR → canonical identity remapping → static data, nominal and capability metadata, and code → WVB → verifier → runtime path. Multi-module translation remains a later bounded extension.
+The current slice proves the complete source set → symbols/bindings → typed WVIR → canonical cross-module identity flattening → static data, nominal and capability metadata, and code → WVB → verifier → runtime path. It emits one self-contained module and does not introduce runtime linkage.
 
 ## Public result
 
@@ -15,13 +15,13 @@ Compilerˉcompileˉsourceˉwvb(Input: bytes)
 
 On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete WVB 1.6 module, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved.
 
-The status contract distinguishes upstream WVIR rejection, unsupported module counts, declarations, shapes and operations, invalid data, and WVB limits. Its existing profile status remains reserved for stable diagnostic numbering; every currently validated profile is accepted.
+The status contract distinguishes upstream WVIR rejection, declarations, shapes and operations, invalid data, and WVB limits. Its existing module-count and profile statuses remain reserved for stable diagnostic numbering; every currently validated WVSS module count and root profile is accepted.
 
 ## Accepted subset
 
 The backend accepts:
 
-- exactly one `portable`, `hosted`, or `system` source module;
+- one complete validated WVSS graph containing a `portable`, `hosted`, or `system` root plus as many as 63 portable dependencies;
 - zero capabilities for a portable module or declarations from the complete current Seed capability catalog for hosted/system modules;
 - private or exported functions, static data, records, and enums in any valid source declaration order;
 - `[i32]`, `text`, and `bytes` static data;
@@ -34,19 +34,19 @@ The backend accepts:
 - signed and unsigned arithmetic, comparisons, equality, signed negation, and boolean negation; and
 - explicit jump, branch, and return terminators produced by `if`, `else`, and `while`.
 
-It deterministically rejects imports and multi-module input. Unknown, repeated, or portable-profile capabilities remain upstream semantic failures rather than being silently omitted.
+The root owns the emitted module name, profile, capabilities, static data, and exports. Dependencies follow the WVSS contract: imports, records, enums, and exported functions only. Their functions become internal WVB functions. Invalid graph topology, dependency order/profile/shape, unknown or repeated capabilities, and portable-profile capabilities remain upstream semantic failures rather than being silently omitted.
 
 ## Canonical identity translation
 
 WVSD entries are source-declaration identities. WVIR preserves those identities for function calls and data references. WVB instead numbers its function and data sections in strict ordinal name order.
 
-The backend derives canonical function and data ranks from the independently validated WVSD directory. It emits functions, code, exports, and data in canonical order and translates each WVIR target during emission. Source declaration order is therefore semantically irrelevant, including when functions and data are interleaved.
+The backend derives canonical function and data ranks from the independently validated global WVSD directory. Each directory entry names its owner module, so comparisons and declaration reads resolve the corresponding WVSS source first. It emits functions, code, exports, and data in canonical order and translates each WVIR target during emission. Source declaration order and owner module are therefore irrelevant to final indices.
 
-Function exports are emitted in the same canonical function order and target the translated WVB function index. Explicit and synthetic data share one canonical ordinal namespace.
+Only root function exports are emitted, in canonical function order, and they target translated global WVB function indices. Dependency exports are internalized. Explicit and synthetic data share one canonical ordinal namespace.
 
 ## Nominal type translation
 
-WVSD assigns canonical nominal indices independently of source order: records sorted by ordinal name first, then enums sorted by ordinal name. That order is already the WVB Types index space, so the backend serializes it directly rather than introducing another remapping directory.
+WVSD assigns canonical nominal indices independently of source order or module ownership: records sorted by ordinal name first, then enums sorted by ordinal name. That order is already the WVB Types index space, so the backend serializes it directly rather than introducing another remapping directory.
 
 Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern.
 
@@ -56,7 +56,7 @@ WVIR operations `17` through `22` lower to the established WVB record constructi
 
 ## Capability translation
 
-The validated source profile maps directly to the existing WVB profile byte. Capability declarations are emitted by ordinal name, independently of source declaration order. Their parameter/result tags come from the fixed seven-entry Seed catalog and therefore reproduce Stage 0's canonical Capabilities section exactly.
+The validated root profile maps directly to the existing WVB profile byte. Root capability declarations are emitted by ordinal name, independently of source declaration order. Dependencies cannot declare capabilities. Parameter/result tags come from the fixed seven-entry Seed catalog and therefore reproduce Stage 0's canonical Capabilities section exactly.
 
 WVIR operation `63` carries a validated WVSD capability directory entry. The backend ranks that entry among capability declarations by ordinal name and emits WVB `call.capability` with the resulting index. No capability is inferred, removed, or authorized by compilation; host support and runtime authorization remain separate required boundaries.
 
@@ -66,7 +66,7 @@ Integer-array elements are serialized as exact 32-bit little-endian two's-comple
 
 The portable backend decodes the source escape set `\"`, `\\`, `\n`, `\r`, `\t`, and `\uXXXX`. A UTF-16 high-surrogate escape must be followed by its low-surrogate escape and is emitted as one Unicode scalar value.
 
-Explicit text declarations register decoded values in source order. A string literal first reuses a matching explicit declaration, then a prior synthetic value. New literal values receive the first available six-digit name beginning at `__Text_000000`; explicit data-name collisions are skipped. Literal discovery traverses functions in canonical function order and operations in WVIR order. The final merged data section is sorted by ordinal name.
+Root explicit text declarations register decoded values in source order. A string literal from any module first reuses a matching explicit declaration, then a prior synthetic value. New literal values receive the first available six-digit name beginning at `__Text_000000`; root data-name collisions are skipped. Literal discovery traverses global functions in canonical function order and operations in WVIR order. The final merged data section is sorted by ordinal name.
 
 The combined explicit and synthetic data count is bounded to 4,096 entries. Synthetic names are bounded by `__Text_999999`. Any limit or invalid data condition fails before a WVB value is published.
 
@@ -92,7 +92,7 @@ The encoder writes the fixed WVB 1.6 header followed by canonical Module, Capabi
 
 ## Verification
 
-The focused conformance test compiles the backend core, runs its profile/acceptance demo, and runs the hosted tool over four differential fixtures. Each returned WVB passes the mandatory Stage 0 verifier, executes in the reference runtime, and compares byte for byte with Stage 0 compiler output.
+The focused conformance test compiles the backend core, runs its profile/acceptance demo, and runs the hosted tool over five differential fixtures. Each returned WVB passes the mandatory Stage 0 verifier, executes in the reference runtime, and compares byte for byte with Stage 0 compiler output.
 
 `Tests/Fixtures/Source-Wvb/Function-Only.wv` retains the original four-function primitive/control-flow baseline. Both backends produce the exact 815-byte WVB module with SHA-256 `9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761`; it executes with result `6`.
 
@@ -102,16 +102,18 @@ The focused conformance test compiles the backend core, runs its profile/accepta
 
 `Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv` deliberately declares all seven catalog capabilities out of order. Its seven functions cover every capability call, parameter shape, and result shape. Both backends produce the exact 849-byte hosted WVB module with SHA-256 `1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528`; the authorized no-argument path executes with result `0` and performs no file read or write.
 
-The current qualified bootstrap artifacts are:
+The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical flattening across a root and two transitive dependencies. Dependency-owned functions, records, enums, and a text literal combine with root static data and a synthetic-name collision. Only `Main` remains exported. Both backends produce the exact 1,030-byte WVB module with SHA-256 `7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f`; it executes with result `42`. Reversed dependency order is rejected before output publication.
 
-- `Source-Wvb-Core.wvb`: 567,387 bytes, SHA-256 `4f8738e60e152e8cb20b8aa85792536303c5a05c42636205b426d826f65f3aa6`.
-- `Source-Wvb-Demo.wvb`: 567,964 bytes, SHA-256 `34c08767a264b75bf552583dd868720306a04b99a03e7324b93c96bc6046eead`.
-- `Source-Wvb-Tool.wvb`: 567,620 bytes, SHA-256 `3862a74e7f0b1a3fc42dc043a6dcbe14651bec15b264fe7b4c65574f1a4c16c7`.
+The current candidate bootstrap artifacts are:
 
-The capability/profile implementation and the identities above are cross-host qualified from exact commit `98117c15255ce5a95d41ca13e43f92a4af77ef98`.
+- `Source-Wvb-Core.wvb`: 571,555 bytes, SHA-256 `b00677d82b90c7aa5dfe486cf7c8675658fd37a9fc560a3631004056f28b5cbf`.
+- `Source-Wvb-Demo.wvb`: 573,282 bytes, SHA-256 `19da326967e17a06f149efbb9cbd35c89ad9ec156f7f74833ea8287141cb419e`.
+- `Source-Wvb-Tool.wvb`: 572,786 bytes, SHA-256 `ce3ae94685c07b025e8cd8ea95f53df01819cb1946eaf3cf442e3fa38ad8cb5d`.
+
+The preceding capability/profile implementation was qualified from exact commit `98117c15255ce5a95d41ca13e43f92a4af77ef98`. The multi-module candidate identities above require exact-commit Windows and Debian qualification before they are called cross-host-qualified.
 
 ## Expansion path
 
-The next backend slice should add multi-module input and canonical flattening. Full bootstrap closure remains separate and still requires closing the current source-envelope and repeated-body-traversal performance gaps.
+Full bootstrap closure remains separate and still requires closing the current source-envelope and repeated-body-traversal performance gaps.
 
 Optimization, native code, object emission, executable containers, and OS-specific lowering are not part of this contract.

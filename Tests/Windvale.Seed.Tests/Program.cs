@@ -58,12 +58,13 @@ internal static class Program
     private const string SOURCE_WIR_SHA256 = "89e2590e99ea96ebea5995491bc13d9497b2b5c41b566c3653acfc4713b6414b";
     private const string SOURCE_WIR_DEMO_SHA256 = "2d58a05a5ad7e39fda20e4706f52d365f15fe53d3cfae998431024fa1c1edada";
     private const string SOURCE_WIR_TOOL_SHA256 = "8bbca67184db5d8d980e61268021771d25b20f47624878abec6b9e54afbd6c4d";
-    private const string SOURCE_WVB_SHA256 = "4f8738e60e152e8cb20b8aa85792536303c5a05c42636205b426d826f65f3aa6";
-    private const string SOURCE_WVB_DEMO_SHA256 = "34c08767a264b75bf552583dd868720306a04b99a03e7324b93c96bc6046eead";
-    private const string SOURCE_WVB_TOOL_SHA256 = "3862a74e7f0b1a3fc42dc043a6dcbe14651bec15b264fe7b4c65574f1a4c16c7";
+    private const string SOURCE_WVB_SHA256 = "b00677d82b90c7aa5dfe486cf7c8675658fd37a9fc560a3631004056f28b5cbf";
+    private const string SOURCE_WVB_DEMO_SHA256 = "19da326967e17a06f149efbb9cbd35c89ad9ec156f7f74833ea8287141cb419e";
+    private const string SOURCE_WVB_TOOL_SHA256 = "ce3ae94685c07b025e8cd8ea95f53df01819cb1946eaf3cf442e3fa38ad8cb5d";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
+    private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -360,6 +361,15 @@ internal static class Program
 
     private static readonly string SOURCE_WVB_HOSTED_CAPABILITIES_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Hosted-Capabilities.wv");
+
+    private static readonly string SOURCE_WVB_COMPOSITION_ROOT_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Composition-Root.wv");
+
+    private static readonly string SOURCE_WVB_COMPOSITION_LEAF_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Composition-Leaf.wv");
+
+    private static readonly string SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Composition-Middle.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -2187,6 +2197,114 @@ internal static class Program
         Equal(string.Empty, Runtimeˉdiagnostics.ToString());
         Equal(0, Runtimeˉreader.Readˉcount);
         Equal(0, Runtimeˉwriter.Writeˉcount);
+
+        var Compositionˉsources = new Dictionary<string, ImmutableArray<byte>>(
+            StringComparer.Ordinal)
+        {
+            ["composition-root.wv"] = System.Text.Encoding.UTF8.GetBytes(
+                SOURCE_WVB_COMPOSITION_ROOT_SOURCE).ToImmutableArray(),
+            ["composition-leaf.wv"] = System.Text.Encoding.UTF8.GetBytes(
+                SOURCE_WVB_COMPOSITION_LEAF_SOURCE).ToImmutableArray(),
+            ["composition-middle.wv"] = System.Text.Encoding.UTF8.GetBytes(
+                SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE).ToImmutableArray(),
+        };
+        var Compositionˉoutput = new StringWriter();
+        var Compositionˉdiagnostics = new StringWriter();
+        var Compositionˉwriter = new Capturingˉfileˉwriter();
+        var Compositionˉreader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            True(Compositionˉsources.TryGetValue(Name, out var Source),
+                $"Unexpected multi-module source resource '{Name}'.");
+            True(Source.Length <= Maximumˉbytes,
+                "The source-to-WVB hosted byte limit was too small for composition.");
+            return Source;
+        });
+        var Compositionˉtoolˉresult = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [
+                    "composition-root.wv",
+                    "composition-leaf.wv",
+                    "composition-middle.wv",
+                    "composition.wvb",
+                ],
+                Compositionˉoutput,
+                Compositionˉdiagnostics,
+                Compositionˉreader,
+                Compositionˉwriter)),
+            new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+        Equal(0, Compositionˉtoolˉresult.Exitˉcode);
+        Equal(string.Empty, Compositionˉdiagnostics.ToString());
+        Equal(
+            "source wvb status=Valid functions=5 code-bytes=451 module-bytes=1030\n",
+            Compositionˉoutput.ToString().Replace("\r\n", "\n", StringComparison.Ordinal));
+        Equal(3, Compositionˉreader.Readˉcount);
+        Equal(1, Compositionˉwriter.Writeˉcount);
+        Equal("composition.wvb", Compositionˉwriter.Resourceˉname);
+
+        var Compositionˉstageˉzero = Seedˉcompiler.Compileˉmodules(
+            new("composition-root.wv", SOURCE_WVB_COMPOSITION_ROOT_SOURCE),
+            [
+                new("composition-leaf.wv", SOURCE_WVB_COMPOSITION_LEAF_SOURCE),
+                new("composition-middle.wv", SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE),
+            ]);
+        True(
+            Compositionˉstageˉzero.Success,
+            "Stage 0 composition failed: " +
+                string.Join(" | ", Compositionˉstageˉzero.Diagnostics));
+        Equal(
+            SOURCE_WVB_COMPOSITION_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Compositionˉstageˉzero.Moduleˉbytes.AsSpan()));
+        Sequenceˉequal(Compositionˉstageˉzero.Moduleˉbytes, Compositionˉwriter.Bytes);
+        var Compositionˉgenerated = Moduleˉcodec.Readˉandˉverify(
+            Compositionˉwriter.Bytes.AsSpan());
+        Sequenceˉequal(
+            [
+                "Compositionˉanswer",
+                "Compositionˉincrement",
+                "Compositionˉlabel",
+                "Compositionˉmake",
+                "Main",
+            ],
+            Compositionˉgenerated.Module.Functions.Select(Function => Function.Name));
+        Sequenceˉequal(
+            ["Compositionˉoffset", "__Text_000000", "__Text_000001"],
+            Compositionˉgenerated.Module.Data.Select(Data => Data.Name));
+        Sequenceˉequal(
+            ["Compositionˉvalue", "Compositionˉstatus"],
+            Compositionˉgenerated.Module.Types.Select(Type => Type.Name));
+        Sequenceˉequal(
+            ["Main"],
+            Compositionˉgenerated.Module.Exports.Select(Export => Export.Name));
+        Equal(
+            42,
+            new Referenceˉruntime(
+                Compositionˉgenerated,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        var Rejectedˉdiagnostics = new StringWriter();
+        var Rejectedˉwriter = new Capturingˉfileˉwriter();
+        var Rejectedˉreader = new Testˉfileˉreader((Name, _) =>
+            Compositionˉsources[Name]);
+        var Rejectedˉresult = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [
+                    "composition-root.wv",
+                    "composition-middle.wv",
+                    "composition-leaf.wv",
+                    "rejected.wvb",
+                ],
+                new StringWriter(),
+                Rejectedˉdiagnostics,
+                Rejectedˉreader,
+                Rejectedˉwriter)),
+            new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+        Equal(1, Rejectedˉresult.Exitˉcode);
+        Contains(Rejectedˉdiagnostics.ToString(), "source wvb status=Sourceˉwir");
+        Equal(3, Rejectedˉreader.Readˉcount);
+        Equal(0, Rejectedˉwriter.Writeˉcount);
     }
 
     private static void Moduleˉroundˉtrip()

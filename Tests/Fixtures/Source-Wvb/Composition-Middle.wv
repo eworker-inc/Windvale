@@ -1,0 +1,11 @@
+module Compositionˉmiddle profile portable;
+
+import Compositionˉleaf;
+
+export fn Compositionˉanswer() -> i32 {
+    let Label: text = Compositionˉlabel();
+    if Bytesˉlength(Textˉtoˉutf8(Label)) != 10u32 { return 0; }
+    let Candidate: Compositionˉvalue = Compositionˉmake(41);
+    if Candidate.Status != Compositionˉstatus.Ready { return 0; }
+    return Compositionˉincrement(Candidate.Value);
+}

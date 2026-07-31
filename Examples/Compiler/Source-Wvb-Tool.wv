@@ -9,15 +9,38 @@ capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
 
-fn Compilerˉsourceˉwvbˉtoolˉinput(Source: bytes) -> bytes {
+fn Compilerˉsourceˉwvbˉtoolˉheader(Modules: u32) -> bytes {
     var Header: bytes = Textˉtoˉutf8("WVSS");
     Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
     Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(24u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Source)));
-    return Bytesˉconcat(Header, Source);
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Compilerˉsourceˉwvbˉtoolˉinput(Modules: u32) -> bytes {
+    let Empty: bytes = Textˉtoˉutf8("");
+    var Directory: bytes = Empty;
+    var Sourceˉoffset: u32 = 16u32 + Modules * 8u32;
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        let Source: bytes = file.read_bytes(process.argument(Index));
+        let Length: u32 = Bytesˉlength(Source);
+        if Length == 0u32 { return Empty; }
+        if Length > 4194304u32 - Sourceˉoffset { return Empty; }
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Sourceˉoffset));
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Length));
+        Sourceˉoffset = Sourceˉoffset + Length;
+        Index = Index + 1u32;
+    }
+    var Result: bytes = Bytesˉconcat(
+        Compilerˉsourceˉwvbˉtoolˉheader(Modules), Directory
+    );
+    Index = 0u32;
+    while Index < Modules {
+        Result = Bytesˉconcat(Result, file.read_bytes(process.argument(Index)));
+        Index = Index + 1u32;
+    }
+    return Result;
 }
 
 fn Compilerˉsourceˉwvbˉtoolˉreport(
@@ -47,19 +70,26 @@ fn Compilerˉsourceˉwvbˉtoolˉfailure(
 }
 
 export fn Main() -> i32 {
-    if process.argument_count() != 2u32 {
-        diagnostic.write_line("Usage: source-wvb <source.wv> <output.wvb>");
+    let Arguments: u32 = process.argument_count();
+    if Arguments < 2u32 {
+        diagnostic.write_line(
+            "Usage: source-wvb <root.wv> [sorted-dependency.wv ...] <output.wvb>"
+        );
         return 64;
     }
-    let Source: bytes = file.read_bytes(process.argument(0u32));
+    let Modules: u32 = Arguments - 1u32;
+    if Modules > 64u32 {
+        diagnostic.write_line("source wvb status=Sourceˉwir wir-status=Sourceˉbindings");
+        return 64;
+    }
     let Summary: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
-        Compilerˉsourceˉwvbˉtoolˉinput(Source)
+        Compilerˉsourceˉwvbˉtoolˉinput(Modules)
     );
     if Summary.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉwvbˉtoolˉfailure(Summary));
         return 1;
     }
-    file.write_bytes(process.argument(1u32), Summary.Bytecode);
+    file.write_bytes(process.argument(Modules), Summary.Bytecode);
     console.write_line(Compilerˉsourceˉwvbˉtoolˉreport(Summary));
     return 0;
 }
