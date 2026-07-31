@@ -38,6 +38,17 @@ The first telemetry-enabled Windows x64 Standard run on 2026-07-30 completed all
 
 The consistent allocation rate across the large closures makes allocation reduction in the reference interpreter the next measured optimization target. Artifact compilation took only 1.97 seconds in the same golden run, so compiler-output caching cannot materially address the current bottleneck.
 
+The first allocation reduction removes ordinary function-call argument arrays and rents bounded locals and operand storage from managed pools. A golden-only checkpoint preserved the same 6,697,386,493 executed instructions while reducing cumulative allocation from 939.11 GiB to 565.15 GiB, a 39.8% reduction. Golden elapsed time fell from 448.328 to 411.003 seconds, an 8.3% improvement. The source-bindings phase fell from 253.11 to 226.41 seconds and from 517.17 to 319.98 GiB of allocation traffic.
+
+The final telemetry-enabled Standard run passed all 47 tests in 481.156 seconds, down from 525.956 seconds, an 8.5% improvement. Its golden phase completed in 413.716 seconds, down 7.7%, while retaining the same instruction count and 565.14 GiB allocation total.
+
+Runtime optimization does not require the entire suite on every edit. Use the focused `bodies, locals` compiler test for the seconds-scale correctness loop, run the `golden` area alone with a timing report for occasional performance checkpoints, and reserve Standard plus Qualification for the final candidate:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea compiler -TestFilter 'bodies, locals' -FailFast
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea golden -FailFast -TimingReportPath artifacts/seed-timing-golden.json
+```
+
 GitHub runs the Windows and Linux qualification jobs concurrently. Exact milestone qualification still uses the committed source archive on Windows and the real Debian QA host and compares their normalized reports and direct artifacts.
 
 GitHub keeps the required `Windows verifier` and `Linux verifier` jobs present on every workflow run, but classifies the changed paths before installing .NET or executing Seed. Markdown outside `Specifications/`, the root license, and editor-only changes use a lightweight `git diff --check` path. Editor verification runs for editor files and source-language compiler or specification changes. Specifications, implementation, tests, build configuration, workflows, verifier code, and any unrecognized path fail closed to complete dual-host Qualification. Manual workflow dispatch always selects Qualification and editor verification. The workflow does not use top-level path filters because a skipped required workflow can leave its checks pending.

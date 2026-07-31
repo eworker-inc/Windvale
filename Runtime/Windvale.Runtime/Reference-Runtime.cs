@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Globalization;
@@ -68,13 +69,14 @@ public sealed class Referenceˉruntime
         }
 
         Executedˉinstructions = 0;
-        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, [], 1);
+        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, null, 0, 1);
         return new(Result!.Value.I32ˉvalue, Executedˉinstructions);
     }
 
     private Runtimeˉvalue? Executeˉfunction(
         int functionˉindex,
-        ImmutableArray<Runtimeˉvalue> arguments,
+        Runtimeˉstack? argumentˉstack,
+        int argumentˉcount,
         int callˉdepth)
     {
         if (callˉdepth > Options.Maximumˉcallˉdepth)
@@ -84,19 +86,52 @@ public sealed class Referenceˉruntime
 
         var Verifiedˉfunction = Verifiedˉmodule.Functions[functionˉindex];
         var Function = Verifiedˉfunction.Declaration;
-        var Localˉtypes = Function.Allˉlocalˉtypes;
-        var Locals = new Runtimeˉvalue[Localˉtypes.Length];
-        for (var Index = 0; Index < Locals.Length; Index++)
+        if (argumentˉcount != Function.Parameterˉtypes.Length)
         {
-            Locals[Index] = Runtimeˉvalue.Default(Localˉtypes[Index], Verifiedˉmodule.Module.Types);
+            throw new InvalidOperationException(
+                $"Function '{Function.Name}' received {argumentˉcount} arguments; " +
+                $"expected {Function.Parameterˉtypes.Length}.");
         }
 
-        for (var Index = 0; Index < arguments.Length; Index++)
+        var Localˉcount = checked(Function.Parameterˉtypes.Length + Function.Localˉtypes.Length);
+        // Frame storage is bounded by verified declarations and cleared before it returns to the pool.
+        var Locals = ArrayPool<Runtimeˉvalue>.Shared.Rent(Math.Max(1, Localˉcount));
+        try
         {
-            Locals[Index] = arguments[Index];
-        }
+            if (argumentˉcount != 0)
+            {
+                if (argumentˉstack is null)
+                {
+                    throw new InvalidOperationException(
+                        $"Function '{Function.Name}' has no argument source.");
+                }
 
-        var Stack = new List<Runtimeˉvalue>(Function.Maximumˉstackˉdepth);
+                argumentˉstack.Popˉargumentsˉto(Locals, argumentˉcount);
+            }
+
+            for (var Index = 0; Index < Function.Localˉtypes.Length; Index++)
+            {
+                Locals[Function.Parameterˉtypes.Length + Index] = Runtimeˉvalue.Default(
+                    Function.Localˉtypes[Index],
+                    Verifiedˉmodule.Module.Types);
+            }
+
+            return Executeˉfunctionˉbody(functionˉindex, Locals, callˉdepth);
+        }
+        finally
+        {
+            ArrayPool<Runtimeˉvalue>.Shared.Return(Locals, clearArray: true);
+        }
+    }
+
+    private Runtimeˉvalue? Executeˉfunctionˉbody(
+        int functionˉindex,
+        Runtimeˉvalue[] Locals,
+        int callˉdepth)
+    {
+        var Verifiedˉfunction = Verifiedˉmodule.Functions[functionˉindex];
+        var Function = Verifiedˉfunction.Declaration;
+        using var Stack = new Runtimeˉstack(Function.Maximumˉstackˉdepth);
         var Instructionˉindex = 0;
         while (true)
         {
@@ -109,38 +144,38 @@ public sealed class Referenceˉruntime
                 switch (Instruction.Opcode)
                 {
                     case Opcode.I32ˉconst:
-                        Stack.Add(Runtimeˉvalue.Fromˉi32(Instruction.Signedˉoperand));
+                        Stack.Push(Runtimeˉvalue.Fromˉi32(Instruction.Signedˉoperand));
                         break;
                     case Opcode.Boolˉconst:
-                        Stack.Add(Runtimeˉvalue.Fromˉbool(Instruction.Unsignedˉoperand == 1));
+                        Stack.Push(Runtimeˉvalue.Fromˉbool(Instruction.Unsignedˉoperand == 1));
                         break;
                     case Opcode.U8ˉconst:
-                        Stack.Add(Runtimeˉvalue.Fromˉu8(checked((byte)Instruction.Unsignedˉoperand)));
+                        Stack.Push(Runtimeˉvalue.Fromˉu8(checked((byte)Instruction.Unsignedˉoperand)));
                         break;
                     case Opcode.U32ˉconst:
-                        Stack.Add(Runtimeˉvalue.Fromˉu32(Instruction.Unsignedˉoperand));
+                        Stack.Push(Runtimeˉvalue.Fromˉu32(Instruction.Unsignedˉoperand));
                         break;
                     case Opcode.Textˉconst:
                         var Text = (Textˉdataˉdeclaration)Verifiedˉmodule.Module.Data[(int)Instruction.Unsignedˉoperand];
-                        Stack.Add(Runtimeˉvalue.Fromˉtext(Text.Value));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(Text.Value));
                         break;
                     case Opcode.Bytesˉconst:
                         var Bytes = (Bytesˉdataˉdeclaration)Verifiedˉmodule.Module.Data[(int)Instruction.Unsignedˉoperand];
-                        Stack.Add(Runtimeˉvalue.Fromˉbytes(Bytes.Values));
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(Bytes.Values));
                         break;
                     case Opcode.Localˉload:
-                        Stack.Add(Locals[(int)Instruction.Unsignedˉoperand]);
+                        Stack.Push(Locals[(int)Instruction.Unsignedˉoperand]);
                         break;
                     case Opcode.Localˉstore:
-                        Locals[(int)Instruction.Unsignedˉoperand] = Pop(Stack);
+                        Locals[(int)Instruction.Unsignedˉoperand] = Stack.Pop();
                         break;
                     case Opcode.Dataˉlength:
                         var Lengthˉdata = (I32ˉarrayˉdataˉdeclaration)Verifiedˉmodule.Module.Data[(int)Instruction.Unsignedˉoperand];
-                        Stack.Add(Runtimeˉvalue.Fromˉi32(Lengthˉdata.Values.Length));
+                        Stack.Push(Runtimeˉvalue.Fromˉi32(Lengthˉdata.Values.Length));
                         break;
                     case Opcode.Dataˉloadˉi32:
                         var Array = (I32ˉarrayˉdataˉdeclaration)Verifiedˉmodule.Module.Data[(int)Instruction.Unsignedˉoperand];
-                        var Elementˉindex = Pop(Stack).I32ˉvalue;
+                        var Elementˉindex = Stack.Pop().I32ˉvalue;
                         if ((uint)Elementˉindex >= (uint)Array.Values.Length)
                         {
                             throw new Runtimeˉexception(
@@ -148,46 +183,46 @@ public sealed class Referenceˉruntime
                                 $"Index {Elementˉindex} is outside data '{Array.Name}' with length {Array.Values.Length}.");
                         }
 
-                        Stack.Add(Runtimeˉvalue.Fromˉi32(Array.Values[Elementˉindex]));
+                        Stack.Push(Runtimeˉvalue.Fromˉi32(Array.Values[Elementˉindex]));
                         break;
                     case Opcode.Bytesˉlength:
-                        Stack.Add(Runtimeˉvalue.Fromˉu32(checked((uint)Pop(Stack).Bytesˉvalue.Length)));
+                        Stack.Push(Runtimeˉvalue.Fromˉu32(checked((uint)Stack.Pop().Bytesˉvalue.Length)));
                         break;
                     case Opcode.Bytesˉslice:
-                        var Sliceˉlength = Pop(Stack).U32ˉvalue;
-                        var Sliceˉoffset = Pop(Stack).U32ˉvalue;
-                        var Sliceˉsource = Pop(Stack).Bytesˉvalue;
-                        Stack.Add(Runtimeˉvalue.Fromˉbytes(Sliceˉbytes(Sliceˉsource, Sliceˉoffset, Sliceˉlength)));
+                        var Sliceˉlength = Stack.Pop().U32ˉvalue;
+                        var Sliceˉoffset = Stack.Pop().U32ˉvalue;
+                        var Sliceˉsource = Stack.Pop().Bytesˉvalue;
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(Sliceˉbytes(Sliceˉsource, Sliceˉoffset, Sliceˉlength)));
                         break;
                     case Opcode.Bytesˉreadˉu8:
-                        var U8ˉoffset = Pop(Stack).U32ˉvalue;
-                        var U8ˉsource = Pop(Stack).Bytesˉvalue;
-                        Stack.Add(Runtimeˉvalue.Fromˉu8(
+                        var U8ˉoffset = Stack.Pop().U32ˉvalue;
+                        var U8ˉsource = Stack.Pop().Bytesˉvalue;
+                        Stack.Push(Runtimeˉvalue.Fromˉu8(
                             U8ˉsource.Storage.Read(Requireˉbyteˉrange(
                                 U8ˉsource,
                                 U8ˉoffset,
                                 sizeof(byte)))));
                         break;
                     case Opcode.Bytesˉreadˉu16ˉlittle:
-                        var U16ˉoffset = Pop(Stack).U32ˉvalue;
-                        var U16ˉsource = Pop(Stack).Bytesˉvalue;
+                        var U16ˉoffset = Stack.Pop().U32ˉvalue;
+                        var U16ˉsource = Stack.Pop().Bytesˉvalue;
                         var U16ˉabsolute = Requireˉbyteˉrange(U16ˉsource, U16ˉoffset, sizeof(ushort));
-                        Stack.Add(Runtimeˉvalue.Fromˉu32(Readˉu16(U16ˉsource.Storage, U16ˉabsolute)));
+                        Stack.Push(Runtimeˉvalue.Fromˉu32(Readˉu16(U16ˉsource.Storage, U16ˉabsolute)));
                         break;
                     case Opcode.Bytesˉreadˉu32ˉlittle:
-                        var U32ˉoffset = Pop(Stack).U32ˉvalue;
-                        var U32ˉsource = Pop(Stack).Bytesˉvalue;
+                        var U32ˉoffset = Stack.Pop().U32ˉvalue;
+                        var U32ˉsource = Stack.Pop().Bytesˉvalue;
                         var U32ˉabsolute = Requireˉbyteˉrange(U32ˉsource, U32ˉoffset, sizeof(uint));
-                        Stack.Add(Runtimeˉvalue.Fromˉu32(Readˉu32(U32ˉsource.Storage, U32ˉabsolute)));
+                        Stack.Push(Runtimeˉvalue.Fromˉu32(Readˉu32(U32ˉsource.Storage, U32ˉabsolute)));
                         break;
                     case Opcode.Bytesˉreadˉi32ˉlittle:
-                        var Readˉi32ˉoffset = Pop(Stack).U32ˉvalue;
-                        var Readˉi32ˉsource = Pop(Stack).Bytesˉvalue;
+                        var Readˉi32ˉoffset = Stack.Pop().U32ˉvalue;
+                        var Readˉi32ˉsource = Stack.Pop().Bytesˉvalue;
                         var Readˉi32ˉabsolute = Requireˉbyteˉrange(
                             Readˉi32ˉsource,
                             Readˉi32ˉoffset,
                             sizeof(int));
-                        Stack.Add(Runtimeˉvalue.Fromˉi32(Readˉi32(
+                        Stack.Push(Runtimeˉvalue.Fromˉi32(Readˉi32(
                             Readˉi32ˉsource.Storage,
                             Readˉi32ˉabsolute)));
                         break;
@@ -201,7 +236,7 @@ public sealed class Referenceˉruntime
                         Applyˉi32ˉbinary(Stack, (Left, Right) => checked(Left * Right));
                         break;
                     case Opcode.I32ˉnegate:
-                        Stack.Add(Runtimeˉvalue.Fromˉi32(checked(-Pop(Stack).I32ˉvalue)));
+                        Stack.Push(Runtimeˉvalue.Fromˉi32(checked(-Stack.Pop().I32ˉvalue)));
                         break;
                     case Opcode.U32ˉadd:
                         Applyˉu32ˉbinary(Stack, (Left, Right) => checked(Left + Right));
@@ -237,7 +272,7 @@ public sealed class Referenceˉruntime
                         Applyˉboolˉcomparison(Stack, (Left, Right) => Left != Right);
                         break;
                     case Opcode.Boolˉnot:
-                        Stack.Add(Runtimeˉvalue.Fromˉbool(!Pop(Stack).Boolˉvalue));
+                        Stack.Push(Runtimeˉvalue.Fromˉbool(!Stack.Pop().Boolˉvalue));
                         break;
                     case Opcode.U32ˉequal:
                         Applyˉu32ˉcomparison(Stack, (Left, Right) => Left == Right);
@@ -266,7 +301,7 @@ public sealed class Referenceˉruntime
                     case Opcode.Enumˉconst:
                         var Enumˉtype = (Enumˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
                             (int)Instruction.Unsignedˉoperand];
-                        Stack.Add(Runtimeˉvalue.Fromˉenum(
+                        Stack.Push(Runtimeˉvalue.Fromˉenum(
                             (int)Instruction.Unsignedˉoperand,
                             Enumˉtype.Members[(int)Instruction.Secondˉunsignedˉoperand].Value));
                         break;
@@ -277,30 +312,30 @@ public sealed class Referenceˉruntime
                         Applyˉenumˉcomparison(Stack, (Left, Right) => Left != Right);
                         break;
                     case Opcode.Enumˉname:
-                        var Enumˉvalue = Pop(Stack);
+                        var Enumˉvalue = Stack.Pop();
                         var Namedˉenum = (Enumˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
                             Enumˉvalue.Type.Nominalˉtypeˉindex];
-                        Stack.Add(Runtimeˉvalue.Fromˉtext(Namedˉenum.Members.Single(
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(Namedˉenum.Members.Single(
                             Member => Member.Value == Enumˉvalue.Enumˉvalue).Name));
                         break;
                     case Opcode.I32ˉformat:
-                        Stack.Add(Runtimeˉvalue.Fromˉtext(
-                            Pop(Stack).I32ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(
+                            Stack.Pop().I32ˉvalue.ToString(CultureInfo.InvariantCulture)));
                         break;
                     case Opcode.U8ˉformat:
-                        Stack.Add(Runtimeˉvalue.Fromˉtext(
-                            Pop(Stack).U8ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(
+                            Stack.Pop().U8ˉvalue.ToString(CultureInfo.InvariantCulture)));
                         break;
                     case Opcode.U32ˉformat:
-                        Stack.Add(Runtimeˉvalue.Fromˉtext(
-                            Pop(Stack).U32ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(
+                            Stack.Pop().U32ˉvalue.ToString(CultureInfo.InvariantCulture)));
                         break;
                     case Opcode.U32ˉfromˉu8:
-                        Stack.Add(Runtimeˉvalue.Fromˉu32(Pop(Stack).U8ˉvalue));
+                        Stack.Push(Runtimeˉvalue.Fromˉu32(Stack.Pop().U8ˉvalue));
                         break;
                     case Opcode.Textˉconcat:
-                        var Rightˉtext = Pop(Stack).Textˉvalue!;
-                        var Leftˉtext = Pop(Stack).Textˉvalue!;
+                        var Rightˉtext = Stack.Pop().Textˉvalue!;
+                        var Leftˉtext = Stack.Pop().Textˉvalue!;
                         var Utf8ˉlength = checked(
                             Encoding.UTF8.GetByteCount(Leftˉtext) + Encoding.UTF8.GetByteCount(Rightˉtext));
                         if (Utf8ˉlength > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
@@ -310,14 +345,14 @@ public sealed class Referenceˉruntime
                                 $"Text concatenation result {Utf8ˉlength} exceeds the UTF-8 value limit.");
                         }
 
-                        Stack.Add(Runtimeˉvalue.Fromˉtext(string.Concat(Leftˉtext, Rightˉtext)));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(string.Concat(Leftˉtext, Rightˉtext)));
                         break;
                     case Opcode.Textˉutf8ˉisˉvalid:
-                        var Utf8ˉcandidate = Pop(Stack).Bytesˉvalue;
-                        Stack.Add(Runtimeˉvalue.Fromˉbool(Isˉvalidˉutf8(Utf8ˉcandidate)));
+                        var Utf8ˉcandidate = Stack.Pop().Bytesˉvalue;
+                        Stack.Push(Runtimeˉvalue.Fromˉbool(Isˉvalidˉutf8(Utf8ˉcandidate)));
                         break;
                     case Opcode.Textˉfromˉutf8:
-                        var Utf8ˉsource = Pop(Stack).Bytesˉvalue;
+                        var Utf8ˉsource = Stack.Pop().Bytesˉvalue;
                         if (Utf8ˉsource.Length > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
                         {
                             throw new Runtimeˉexception(
@@ -327,7 +362,7 @@ public sealed class Referenceˉruntime
 
                         try
                         {
-                            Stack.Add(Runtimeˉvalue.Fromˉtext(STRICT_UTF8.GetString(Utf8ˉsource.Toˉarray())));
+                            Stack.Push(Runtimeˉvalue.Fromˉtext(STRICT_UTF8.GetString(Utf8ˉsource.Toˉarray())));
                         }
                         catch (DecoderFallbackException)
                         {
@@ -338,18 +373,18 @@ public sealed class Referenceˉruntime
 
                         break;
                     case Opcode.Textˉquote:
-                        Stack.Add(Runtimeˉvalue.Fromˉtext(Quoteˉtext(Pop(Stack).Textˉvalue!)));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(Quoteˉtext(Stack.Pop().Textˉvalue!)));
                         break;
                     case Opcode.Bytesˉconcat:
-                        var Rightˉbytes = Pop(Stack).Bytesˉvalue;
-                        var Leftˉbytes = Pop(Stack).Bytesˉvalue;
-                        Stack.Add(Runtimeˉvalue.Fromˉbytes(Concatˉbytes(Leftˉbytes, Rightˉbytes)));
+                        var Rightˉbytes = Stack.Pop().Bytesˉvalue;
+                        var Leftˉbytes = Stack.Pop().Bytesˉvalue;
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(Concatˉbytes(Leftˉbytes, Rightˉbytes)));
                         break;
                     case Opcode.Bytesˉfromˉu8:
-                        Stack.Add(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(Pop(Stack).U8ˉvalue)));
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(Stack.Pop().U8ˉvalue)));
                         break;
                     case Opcode.Bytesˉfromˉu16ˉlittle:
-                        var U16ˉvalue = Pop(Stack).U32ˉvalue;
+                        var U16ˉvalue = Stack.Pop().U32ˉvalue;
                         if (U16ˉvalue > ushort.MaxValue)
                         {
                             throw new Runtimeˉexception(
@@ -359,27 +394,27 @@ public sealed class Referenceˉruntime
 
                         var U16ˉbytes = new byte[sizeof(ushort)];
                         BinaryPrimitives.WriteUInt16LittleEndian(U16ˉbytes, (ushort)U16ˉvalue);
-                        Stack.Add(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U16ˉbytes)));
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U16ˉbytes)));
                         break;
                     case Opcode.Bytesˉfromˉu32ˉlittle:
                         var U32ˉbytes = new byte[sizeof(uint)];
-                        BinaryPrimitives.WriteUInt32LittleEndian(U32ˉbytes, Pop(Stack).U32ˉvalue);
-                        Stack.Add(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U32ˉbytes)));
+                        BinaryPrimitives.WriteUInt32LittleEndian(U32ˉbytes, Stack.Pop().U32ˉvalue);
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U32ˉbytes)));
                         break;
                     case Opcode.Bytesˉfromˉi32ˉlittle:
                         var I32ˉbytes = new byte[sizeof(int)];
-                        BinaryPrimitives.WriteInt32LittleEndian(I32ˉbytes, Pop(Stack).I32ˉvalue);
-                        Stack.Add(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(I32ˉbytes)));
+                        BinaryPrimitives.WriteInt32LittleEndian(I32ˉbytes, Stack.Pop().I32ˉvalue);
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(I32ˉbytes)));
                         break;
                     case Opcode.Bytesˉsha256ˉhex:
-                        Stack.Add(Runtimeˉvalue.Fromˉtext(
-                            Convert.ToHexStringLower(SHA256.HashData(Pop(Stack).Bytesˉvalue.Toˉarray()))));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(
+                            Convert.ToHexStringLower(SHA256.HashData(Stack.Pop().Bytesˉvalue.Toˉarray()))));
                         break;
                     case Opcode.Textˉtoˉutf8:
                         try
                         {
-                            Stack.Add(Runtimeˉvalue.Fromˉbytes(
-                                ImmutableArray.Create(STRICT_UTF8.GetBytes(Pop(Stack).Textˉvalue!))));
+                            Stack.Push(Runtimeˉvalue.Fromˉbytes(
+                                ImmutableArray.Create(STRICT_UTF8.GetBytes(Stack.Pop().Textˉvalue!))));
                         }
                         catch (EncoderFallbackException)
                         {
@@ -393,20 +428,20 @@ public sealed class Referenceˉruntime
                         var Recordˉtype = (Recordˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
                             (int)Instruction.Unsignedˉoperand];
                         var Recordˉfields = Popˉarguments(Stack, Recordˉtype.Fields.Length);
-                        Stack.Add(Runtimeˉvalue.Fromˉrecord(
+                        Stack.Push(Runtimeˉvalue.Fromˉrecord(
                             (int)Instruction.Unsignedˉoperand,
                             Recordˉfields));
                         break;
                     case Opcode.Recordˉfield:
-                        var Record = Pop(Stack).Recordˉvalue!;
-                        Stack.Add(Record.Fields[(int)Instruction.Unsignedˉoperand]);
+                        var Record = Stack.Pop().Recordˉvalue!;
+                        Stack.Push(Record.Fields[(int)Instruction.Unsignedˉoperand]);
                         break;
                     case Opcode.Jump:
                         Instructionˉindex = Instructionˉindices[functionˉindex][(int)Instruction.Unsignedˉoperand];
                         Advance = false;
                         break;
                     case Opcode.Branchˉfalse:
-                        if (!Pop(Stack).Boolˉvalue)
+                        if (!Stack.Pop().Boolˉvalue)
                         {
                             Instructionˉindex = Instructionˉindices[functionˉindex][(int)Instruction.Unsignedˉoperand];
                             Advance = false;
@@ -415,14 +450,14 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.Call:
                         var Calledˉfunction = Verifiedˉmodule.Module.Functions[(int)Instruction.Unsignedˉoperand];
-                        var Callˉarguments = Popˉarguments(Stack, Calledˉfunction.Parameterˉtypes.Length);
                         var Callˉresult = Executeˉfunction(
                             (int)Instruction.Unsignedˉoperand,
-                            Callˉarguments,
+                            Stack,
+                            Calledˉfunction.Parameterˉtypes.Length,
                             callˉdepth + 1);
                         if (Callˉresult is not null)
                         {
-                            Stack.Add(Callˉresult.Value);
+                            Stack.Push(Callˉresult.Value);
                         }
 
                         break;
@@ -437,15 +472,15 @@ public sealed class Referenceˉruntime
                             Instruction.Offset);
                         if (Capabilityˉresult is not null)
                         {
-                            Stack.Add(Capabilityˉresult.Value);
+                            Stack.Push(Capabilityˉresult.Value);
                         }
 
                         break;
                     case Opcode.Pop:
-                        Pop(Stack);
+                        Stack.Pop();
                         break;
                     case Opcode.Return:
-                        return Function.Returnˉtype == Valueˉtype.Void ? null : Pop(Stack);
+                        return Function.Returnˉtype == Valueˉtype.Void ? null : Stack.Pop();
                     default:
                         throw new Runtimeˉexception(
                             "WVR3006",
@@ -579,88 +614,149 @@ public sealed class Referenceˉruntime
         Executedˉinstructions++;
     }
 
-    private static Runtimeˉvalue Pop(List<Runtimeˉvalue> stack)
-    {
-        var Index = stack.Count - 1;
-        var Value = stack[Index];
-        stack.RemoveAt(Index);
-        return Value;
-    }
-
     private static ImmutableArray<Runtimeˉvalue> Popˉarguments(
-        List<Runtimeˉvalue> stack,
+        Runtimeˉstack stack,
         int count)
     {
         var Arguments = new Runtimeˉvalue[count];
         for (var Index = count - 1; Index >= 0; Index--)
         {
-            Arguments[Index] = Pop(stack);
+            Arguments[Index] = stack.Pop();
         }
 
         return [.. Arguments];
     }
 
     private static void Applyˉi32ˉbinary(
-        List<Runtimeˉvalue> stack,
+        Runtimeˉstack stack,
         Func<int, int, int> operation)
     {
-        var Right = Pop(stack).I32ˉvalue;
-        var Left = Pop(stack).I32ˉvalue;
-        stack.Add(Runtimeˉvalue.Fromˉi32(operation(Left, Right)));
+        var Right = stack.Pop().I32ˉvalue;
+        var Left = stack.Pop().I32ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉi32(operation(Left, Right)));
     }
 
     private static void Applyˉi32ˉcomparison(
-        List<Runtimeˉvalue> stack,
+        Runtimeˉstack stack,
         Func<int, int, bool> operation)
     {
-        var Right = Pop(stack).I32ˉvalue;
-        var Left = Pop(stack).I32ˉvalue;
-        stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+        var Right = stack.Pop().I32ˉvalue;
+        var Left = stack.Pop().I32ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
     }
 
     private static void Applyˉu32ˉbinary(
-        List<Runtimeˉvalue> stack,
+        Runtimeˉstack stack,
         Func<uint, uint, uint> operation)
     {
-        var Right = Pop(stack).U32ˉvalue;
-        var Left = Pop(stack).U32ˉvalue;
-        stack.Add(Runtimeˉvalue.Fromˉu32(operation(Left, Right)));
+        var Right = stack.Pop().U32ˉvalue;
+        var Left = stack.Pop().U32ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉu32(operation(Left, Right)));
     }
 
     private static void Applyˉu32ˉcomparison(
-        List<Runtimeˉvalue> stack,
+        Runtimeˉstack stack,
         Func<uint, uint, bool> operation)
     {
-        var Right = Pop(stack).U32ˉvalue;
-        var Left = Pop(stack).U32ˉvalue;
-        stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+        var Right = stack.Pop().U32ˉvalue;
+        var Left = stack.Pop().U32ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
     }
 
     private static void Applyˉu8ˉcomparison(
-        List<Runtimeˉvalue> stack,
+        Runtimeˉstack stack,
         Func<byte, byte, bool> operation)
     {
-        var Right = Pop(stack).U8ˉvalue;
-        var Left = Pop(stack).U8ˉvalue;
-        stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+        var Right = stack.Pop().U8ˉvalue;
+        var Left = stack.Pop().U8ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
     }
 
     private static void Applyˉboolˉcomparison(
-        List<Runtimeˉvalue> stack,
+        Runtimeˉstack stack,
         Func<bool, bool, bool> operation)
     {
-        var Right = Pop(stack).Boolˉvalue;
-        var Left = Pop(stack).Boolˉvalue;
-        stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+        var Right = stack.Pop().Boolˉvalue;
+        var Left = stack.Pop().Boolˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
     }
 
     private static void Applyˉenumˉcomparison(
-        List<Runtimeˉvalue> stack,
+        Runtimeˉstack stack,
         Func<int, int, bool> operation)
     {
-        var Right = Pop(stack).Enumˉvalue;
-        var Left = Pop(stack).Enumˉvalue;
-        stack.Add(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+        var Right = stack.Pop().Enumˉvalue;
+        var Left = stack.Pop().Enumˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+    }
+
+    private sealed class Runtimeˉstack : IDisposable
+    {
+        private Runtimeˉvalue[] Values;
+        private readonly int Capacity;
+        private int Count;
+
+        public Runtimeˉstack(int capacity)
+        {
+            if (capacity < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(capacity));
+            }
+
+            Capacity = capacity;
+            Values = ArrayPool<Runtimeˉvalue>.Shared.Rent(Math.Max(1, capacity));
+        }
+
+        public void Push(Runtimeˉvalue value)
+        {
+            if (Count >= Capacity)
+            {
+                throw new InvalidOperationException("The verified operand stack exceeded its declared depth.");
+            }
+
+            Values[Count++] = value;
+        }
+
+        public Runtimeˉvalue Pop()
+        {
+            if (Count == 0)
+            {
+                throw new InvalidOperationException("The verified operand stack underflowed.");
+            }
+
+            var Index = --Count;
+            var Value = Values[Index];
+            Values[Index] = default;
+            return Value;
+        }
+
+        public void Popˉargumentsˉto(Runtimeˉvalue[] destination, int count)
+        {
+            ArgumentNullException.ThrowIfNull(destination);
+            if (count < 0 || count > Count || count > destination.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            var Start = Count - count;
+            // Arguments already occupy canonical left-to-right order below the stack top.
+            Array.Copy(Values, Start, destination, 0, count);
+            Array.Clear(Values, Start, count);
+            Count = Start;
+        }
+
+        public void Dispose()
+        {
+            var Rentedˉvalues = Values;
+            if (Rentedˉvalues.Length == 0)
+            {
+                return;
+            }
+
+            Values = [];
+            Count = 0;
+            ArrayPool<Runtimeˉvalue>.Shared.Return(Rentedˉvalues, clearArray: true);
+        }
     }
 
     private static Runtimeˉbyteˉslice Sliceˉbytes(

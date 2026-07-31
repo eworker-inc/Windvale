@@ -116,6 +116,8 @@ The available areas are `assembler`, `bytecode`, `compiler`, `foundation`, `gold
 
 When a timing report includes the golden test, its `goldenPhases` array separates artifact compilation, baseline runtime work, compiler closures, inspection tools, assembler, linker, and contract assembly. Each phase reports elapsed time, executed VM instructions, current-thread allocated bytes, and garbage-collection deltas. These metrics are diagnostic and do not enter the conformance report.
 
+Runtime performance work should iterate with a narrow compiler or runtime filter, use `-TestArea golden` alone for periodic measured checkpoints, and run Standard only for the final candidate. The complete suite is not required after every optimization edit.
+
 `-Level Standard` builds and runs the complete 47-test in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
 
 On Linux:
