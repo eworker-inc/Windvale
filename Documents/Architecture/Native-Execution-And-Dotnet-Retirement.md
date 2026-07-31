@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). The current execution implementations relevant to this direction remain the C#/.NET reference interpreter and a deliberately bounded Stage 0 x86-64 kernel target. This document defines the destination and migration boundaries; it does not claim a general native runtime, JIT, AOT compiler, PE host, ELF host, garbage collector, or completed self-hosting chain.
+Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction, while the current execution implementations relevant to this direction remain the C#/.NET reference interpreter and a deliberately bounded Stage 0 x86-64 kernel target. This document defines the native destination and migration boundaries; it does not claim a general native runtime, JIT, AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
 
 ## Destination
 

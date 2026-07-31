@@ -1,7 +1,7 @@
 # Decision 0057: Windvale-native execution and .NET retirement
 
 - Date: 2026-07-31
-- Status: Accepted direction; implementation remains future work beyond the current reference interpreter and bounded native kernel target
+- Status: Accepted direction; retirement condition 1 is qualified by Decision 0058, while the native implementation and remaining conditions are future work
 - Refines: [Decision 0002](0002-Windvale-Seed-Bootstrap.md)'s long-term bootstrap and recovery role
 
 ## Context
@@ -42,6 +42,8 @@ Portable WVB and native execution solve different problems. WVB remains the veri
 8. The final .NET-based recovery release is archived with source, dependency inventory, build instructions, and exact qualification evidence before removal from normal automation.
 
 This gate retires a dependency; it does not erase bootstrap history or claim that every optional optimizer is complete.
+
+Decision 0058 qualifies condition 1 on Windows and Debian with an exact committed 12-module inventory, byte-identical Stage 1 and Stage 2 compilers, and a clean recovery procedure. Conditions 2 through 8 remain open; this does not retire .NET or qualify any native execution path.
 
 ## Consequences
 

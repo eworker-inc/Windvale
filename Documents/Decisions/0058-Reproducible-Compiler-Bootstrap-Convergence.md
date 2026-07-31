@@ -1,7 +1,7 @@
 # Decision 0058: Reproducible compiler bootstrap convergence
 
 - Date: 2026-07-31
-- Status: Accepted; exact-commit Windows and Debian qualification pending
+- Status: Qualified on Windows and Debian at `5c1654726f0288808d2c1d3918d65ec1c59b4635`
 
 ## Context
 
@@ -55,6 +55,10 @@ The real closure fits comfortably inside WVSS 1's 4 MiB envelope. Parity with St
 
 ## Verification
 
-Before exact-commit qualification, the candidate passed the focused source-set and canonical-WVB conformance tests. The current local bootstrap experiment produced the instruction count, size, digest, independent verification, and complete byte equality recorded above.
+Before exact-commit qualification, the candidate passed focused source-set, canonical-WVB, and golden-contract tests. Windows Qualification then completed in 427.3 seconds with a 210.018-second 48-test suite; the dedicated bootstrap verifier completed in 386.8 seconds. The zero-warning build, all tests, complete native CLI verifier, independent Stage 2 verification, and exact Stage 1/Stage 2 comparison passed.
 
-Final qualification requires the dedicated bootstrap verifier plus the ordinary complete qualification suite from the same exact commit on Windows x64 and the isolated Debian Linux x64 QA environment. The evidence record will then capture the exact commit, archive identity, host/runtime details, report identities, bootstrap identities, and clean-environment recovery procedure.
+Exact candidate commit `5c1654726f0288808d2c1d3918d65ec1c59b4635`, tree `b00666be6a8b31d8868934e66751d8c6d8011cc7`, was archived as `windvale-bootstrap-5c1654726f02.tar.gz`, 2,764,889 bytes with SHA-256 `b8c7cc0193b149d5fab84b60c1d751f74f495a77090994fea6a57e4524b73051`. The same digest was verified after transfer, and the executable Linux verifier was checked before running from `/tmp/windvale-bootstrap-5c1654726f02-20260731` on the isolated E-Worker Debian QA host. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`; both reports identify .NET `10.0.10`.
+
+Debian Qualification completed in 442.4 seconds with a 223.751-second 48-test suite; the dedicated bootstrap verifier completed in 423.3 seconds. It reproduced the exact 6,700,562,174 instruction count, 599,868-byte compiler size, and SHA-256 recorded above. The 15,563-byte Windows report has SHA-256 `6780bd68cfcf7dacea10d34f5a4b9d7eeb6cdc2c2c4a70cf055c6830429330f`; the 15,473-byte Debian report has SHA-256 `1fec4c222425f2737a7f41c415b1841f88aab0a8e7458b40d4e7d170e1d9c35d`. Their normalized contracts match.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,612 bytes, matched Windows byte for byte. The Debian evidence bundle is 2,293,322 bytes with SHA-256 `ce0555ded58b2dd1abcd3c4301dca7b45461efb0fd3d842d31fbb19d5cccdbbc`. The separately retrieved Debian Stage 2 compiler also has the canonical bootstrap SHA-256. After retrieval and comparison, the resolved exact QA directory, source archive, and evidence bundle were removed and confirmed absent. This qualifies bytecode compiler self-reproduction and roadmap Phase 8 without claiming any Decision 0057 native-runtime or .NET-retirement gate.

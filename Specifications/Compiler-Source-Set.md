@@ -66,4 +66,4 @@ The Windows x64 and Debian Linux x64 conformance runners each pass all 43 tests 
 source set status=Valid modules=5 source-bytes=205658 imports=4 records=16 enums=11 functions=92
 ```
 
-The source-set contract was originally cross-host qualified at `00ef0b1`. Decision 0042's artifacts and aggregate source-byte report were requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's declaration-summary reuse implementation is cross-host qualified at `1a4fca7`. Decision 0058 adds the equality-only span helper and uses the unchanged WVSS 1 format for the first exact Stage 1 to Stage 2 compiler convergence candidate.
+The source-set contract was originally cross-host qualified at `00ef0b1`. Decision 0042's artifacts and aggregate source-byte report were requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's declaration-summary reuse implementation is cross-host qualified at `1a4fca7`. Decision 0058 adds the equality-only span helper and uses the unchanged WVSS 1 format for exact Stage 1 to Stage 2 compiler convergence, cross-host qualified at `5c16547`.

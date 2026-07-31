@@ -45,11 +45,10 @@ This list records unresolved decisions without presenting them as implementation
 
 ## First decision sequence
 
-The recommended next decisions are:
+Decision 0058 completes reproducible Stage 0 → Stage 1 → Stage 2 bytecode compiler convergence. The recommended next decisions are:
 
-1. Complete reproducible Stage 0 → Stage 1 → Stage 2 compiler convergence and close any source-envelope gap exposed by the real graph.
-2. Define the smallest native value representation, calling convention, runtime-service table, allocation/reclamation boundary, and platform thunk ABI required by representative WVB programs.
-3. Define one structured machine-fragment and typed-patch boundary shared by verified WVB lowering, typed-WIR lowering, WVO/AOT, and in-memory linking.
-4. Qualify a WVA-generated copy-and-patch baseline-JIT slice with strict writable-or-executable publication and interpreter/JIT/AOT differential evidence.
-5. Add native PE/COFF and ELF adapters plus Windows/Linux capability and process hosts without leaking their rules into portable modules.
-6. Satisfy Decision 0057's native-retirement gate, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.
+1. Define the smallest native value representation, calling convention, runtime-service table, allocation/reclamation boundary, and platform thunk ABI required by representative WVB programs.
+2. Define one structured machine-fragment and typed-patch boundary shared by verified WVB lowering, typed-WIR lowering, WVO/AOT, and in-memory linking.
+3. Qualify a WVA-generated copy-and-patch baseline-JIT slice with strict writable-or-executable publication and interpreter/JIT/AOT differential evidence.
+4. Add native PE/COFF and ELF adapters plus Windows/Linux capability and process hosts without leaking their rules into portable modules.
+5. Satisfy the remaining Decision 0057 native-retirement conditions, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.

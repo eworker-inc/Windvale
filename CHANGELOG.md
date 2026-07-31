@@ -18,6 +18,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - The first verified WVA-to-Windvale kernel execution seam, linking an assembled machine shim to compiler-generated `.wv` Main on kernel-owned memory.
 - Windvale-owned post-memory boot evidence and a bidirectional WVA seam for Main entry and console-byte output.
 - The accepted Windvale-native interpreter/JIT/AOT direction and explicit qualification gate for retiring .NET from the normal Windows and Linux workflow.
+- Qualified exact Windvale bytecode compiler self-reproduction: Stage 0 builds Stage 1, and Stage 1 builds a byte-identical Stage 2 from the same committed 12-module inventory on Windows and Debian.
 
 ### Changed
 
@@ -28,5 +29,5 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Current development status
 
-- Windvale Seed, its runtime and bytecode foundation, the object model, assembler, linker, Foundation modules, compiler frontend, and portable WVIR-to-WVB backend have qualification evidence.
-- Compiler self-hosting qualification, the native toolchain, and Windvale OS remain active or planned milestones rather than completed releases; the first OS environment is accepted, but no boot image or kernel is claimed, and the C# reference/recovery compiler remains intentional.
+- Windvale Seed, its runtime and bytecode foundation, the object model, assembler, linker, Foundation modules, complete portable compiler, and exact bytecode compiler self-reproduction have Windows/Debian qualification evidence.
+- Native compiler execution, the shared JIT/AOT backend, .NET retirement, and Windvale OS remain active or planned milestones rather than completed releases; the bounded boot path and kernel-owned memory evidence do not yet constitute a functioning kernel runtime.

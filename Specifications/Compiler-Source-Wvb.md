@@ -106,7 +106,7 @@ The focused conformance test compiles the backend core, runs its profile/accepta
 
 The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical flattening across a root and two transitive dependencies. Dependency-owned functions, records, enums, and a text literal combine with root static data and a synthetic-name collision. Only `Main` remains exported. Both backends produce the exact 1,030-byte WVB module with SHA-256 `7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f`; it executes with result `42`. Reversed dependency order is rejected before output publication.
 
-The current bootstrap-convergence candidate compiler artifacts are:
+The qualified bootstrap-convergence compiler artifacts are:
 
 - `Source-Wvb-Core.wvb`: 599,061 bytes, SHA-256 `9c3f4f6839274766a3633784716147e03e3bce47ec1103dac0eb0d998a1b4b9a`.
 - `Source-Wvb-Demo.wvb`: 600,364 bytes, SHA-256 `acf1f5cbde6e2ba3d831ed8390dac85f812d13525847619b3c85903bb7a44c8f`.
@@ -114,10 +114,10 @@ The current bootstrap-convergence candidate compiler artifacts are:
 
 The static multi-module behavior was first qualified at `cb1db235`, the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index artifact set at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055 changes embedded compiler implementation bytes but preserves all five differential fixture outputs byte-identical to Stage 0 and is cross-host qualified at `1a4fca7`.
 
-For the Decision 0058 candidate, Stage 0 compiled the canonical 12-module source inventory into the 599,868-byte Stage 1 tool above. Stage 1 then compiled the same inventory in 6,700,562,174 VM instructions and produced an independently verified 599,868-byte Stage 2 module with the same SHA-256. Stage 1 and Stage 2 compare byte for byte. The dedicated bootstrap verifier reconstructs both stages from the explicit inventory and refuses any verification, size, digest, or byte-identity mismatch.
+For Decision 0058, Stage 0 compiled the canonical 12-module source inventory into the 599,868-byte Stage 1 tool above. Stage 1 then compiled the same inventory in 6,700,562,174 VM instructions and produced an independently verified 599,868-byte Stage 2 module with the same SHA-256. Stage 1 and Stage 2 compare byte for byte. The dedicated bootstrap verifier reconstructs both stages from the explicit inventory and refuses any verification, size, digest, or byte-identity mismatch. This proof and the complete artifact set are cross-host qualified at `5c16547`.
 
 ## Expansion path
 
-Exact bytecode compiler self-reproduction is implemented by the Decision 0058 candidate. Cross-host qualification and clean-environment recovery evidence are the remaining acceptance work for this candidate. The 4 MiB WVSS envelope is sufficient for the real compiler closure, while parity with Stage 0's larger input limit remains a separate future contract decision.
+Exact bytecode compiler self-reproduction is cross-host qualified under Decision 0058. The 4 MiB WVSS envelope is sufficient for the real compiler closure, while parity with Stage 0's larger input limit remains a separate future contract decision.
 
 The C# Stage 0 compiler remains the independent recovery/reference implementation, and the C# runtime remains the host for this bytecode proof. Native compiler execution, native code, object emission, executable containers, and OS-specific lowering are not part of this contract.
