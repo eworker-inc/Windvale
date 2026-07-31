@@ -27,7 +27,7 @@ At its center is a **new programming language**, together with its compiler, por
 | Editor support | ✅ Working now | Windvale syntax highlighting and language configuration work locally in Visual Studio Code | Package it publicly and pursue GitHub language recognition when eligible |
 | Tests, specifications, and reproducibility | ✅ Working now | Valid, malformed, boundary, random-input, deterministic-output, and cross-host checks protect the current contracts | Extend the same evidence discipline to self-hosting, native code, and the operating system |
 | Native compiler and host programs | 🚧 In progress | A bounded Stage 0 target lowers one system-profile WIR shape to verified x86-64 WVO for the kernel handoff | Define the general native ABI and add bytecode/native differential programs |
-| Windvale operating system | 🚧 In progress | A deterministic UEFI/QEMU probe exits firmware and boots a compiler-generated `.wv` Hello World through a versioned handoff | Add memory ownership, traps, a runtime, clean shutdown, and Hyper-V evidence |
+| Windvale operating system | 🚧 In progress | A deterministic UEFI/QEMU probe exits firmware, claims a bounded physical arena, and runs compiler-generated `.wv` code on a kernel-owned stack | Add traps, a runtime, clean shutdown, and Hyper-V evidence |
 | Open-source project foundation | 🚧 In progress | MIT licensing, contribution, security, governance, support, and authorship policies exist | Complete the publication baseline and establish public project operations |
 
 **Working end to end today:**
@@ -38,20 +38,23 @@ Windvale assembly -> verified WVO object -> deterministic linked x86-64 image
 System-profile Hello-World.wv -> verified WVO -> linked UEFI image -> post-firmware serial output
 ```
 
-**First compiler-generated boot:** [`Hello-World.wv`](Operating-System/Kernel/Hello-World.wv) passes through the ordinary frontend and typed WIR, becomes a verified x86-64 WVO object, and runs only after the loader exits UEFI boot services. The accepted QEMU/OVMF serial transcript is:
+**First kernel-owned memory:** [`Hello-World.wv`](Operating-System/Kernel/Hello-World.wv) passes through the ordinary frontend and typed WIR, becomes a verified x86-64 WVO object, and runs only after the loader exits UEFI boot services, validates the retained map, claims and clears a 64 KiB conventional-memory arena, exercises its page allocator, copies the handoff, and switches to an 8 KiB kernel stack. The accepted QEMU/OVMF serial transcript is:
 
 ```text
-windvale-os-boot 5
+windvale-os-boot 6
 entry=pass
 system-table=pass
 memory-map=pass
 boot-services=exited
+memory-owned=pass
+allocator=pass
+kernel-stack=pass
 Hello from Windvale
 windvale-source=pass
 status=pass
 ```
 
-The exact target limits and evidence are recorded in [Decision 0049](Documents/Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) and the [x86-64 kernel-target specification](Specifications/Windvale-X64-Kernel-Target.md).
+The exact ownership, allocator, target, and evidence limits are recorded in [Decision 0052](Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md), the [kernel-memory specification](Specifications/Windvale-Kernel-Memory.md), and the [x86-64 kernel-target specification](Specifications/Windvale-X64-Kernel-Target.md).
 
 **Current focus:** Windvale compiler source -> reproducible self-hosting.
 

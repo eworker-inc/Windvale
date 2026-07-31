@@ -245,28 +245,35 @@ internal static class Program
         True(First.Success, First.Diagnostics.IsEmpty ? "Native compilation failed." : First.Diagnostics[0].ToString());
         True(Second.Success, "Repeated native compilation failed.");
         Sequenceˉequal(First.Objectˉbytes, Second.Objectˉbytes);
-        Equal(905, First.Objectˉbytes.Length);
+        Equal(1_574, First.Objectˉbytes.Length);
         Equal(
-            "22ccc0d50b6170bc53fb6844d2fb7ec76b8a87e720dac8d7dacf2f2a71256cb9",
+            "05c04cf7e7167850d954ca36d135e68065478301c20819ad27d0d2f10ce51133",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.Objectˉbytes.AsSpan()).Value;
         True(Object.Architecture == Objectˉarchitecture.X86ˉ64, "The native object architecture is not x86-64.");
         Equal(1, Object.Sections.Length);
         True(Object.Sections[0].Kind == Objectˉsectionˉkind.Code, "The native object section is not code.");
-        Equal(2, Object.Symbols.Length);
+        Equal(4, Object.Symbols.Length);
         Equal(X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL, Object.Symbols[0].Name);
         True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The kernel entry is not exported.");
-        Equal(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Object.Symbols[1].Name);
-        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Import, "The byte writer is not imported.");
-        Equal(20, Object.Relocations.Length);
+        Equal(X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL, Object.Symbols[1].Name);
+        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Export, "The kernel Main body is not exported.");
+        Equal(X64ˉkernelˉcontract.MEMORY_ENTER_SYMBOL, Object.Symbols[2].Name);
+        True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Import, "The memory entry is not imported.");
+        Equal(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Object.Symbols[3].Name);
+        True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Import, "The byte writer is not imported.");
+        Equal(39, Object.Relocations.Length);
         True(
             Object.Relocations.All(Relocation =>
                 Relocation.Kind == Objectˉrelocationˉkind.Relativeˉi32 &&
                 Relocation.Sectionˉindex == 0 &&
-                Relocation.Symbolˉindex == 1 &&
                 Relocation.Addend == -4),
             "The generated output calls do not use the canonical relative relocation contract.");
+        Equal(2u, Object.Relocations[0].Symbolˉindex);
+        True(
+            Object.Relocations.Skip(1).All(Relocation => Relocation.Symbolˉindex == 3),
+            "The generated Main body does not call only the imported byte writer.");
         Equal(1, Countˉsequence(Object.Sections[0].Data, [0xB9, (byte)'H', 0, 0, 0, 0xE8]));
 
         var Changed = X64ˉkernelˉcompiler.Compile(
@@ -276,7 +283,7 @@ internal static class Program
         True(
             !Changed.Objectˉbytes.AsSpan().SequenceEqual(First.Objectˉbytes.AsSpan()),
             "Changing source output did not change the native object.");
-        Equal(3, Objectˉcodec.Readˉandˉverify(Changed.Objectˉbytes.AsSpan()).Value.Relocations.Length);
+        Equal(22, Objectˉcodec.Readˉandˉverify(Changed.Objectˉbytes.AsSpan()).Value.Relocations.Length);
     }
 
     private static void Kernelˉcompilerˉrejectsˉunsupportedˉsource()
@@ -314,9 +321,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(5_632, First.Length);
+        Equal(7_168, First.Length);
         Equal(
-            "6f3a77b6d769ed157d92dc2da95c4bb7c01f19ec704d8223c3396584a75c0ccb",
+            "9b58992e480536e9fcf1d4715da04417200cf923388b262aab474abdbf140868",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -326,7 +333,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 5\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nHello from Windvale\nwindvale-source=pass\nstatus=pass\n",
+            "windvale-os-boot 6\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nwindvale-source=pass\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -342,9 +349,12 @@ internal static class Program
         Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x40]));
         Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x48]));
         Equal(1, Countˉsequence(Code, [0xFF, 0x90, 0xE8, 0x00, 0x00, 0x00]));
-        Equal(2, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x48, 0x41, 0x4E, 0x44, 0x31]));
+        Equal(3, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x48, 0x41, 0x4E, 0x44, 0x31]));
+        Equal(2, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x30, 0x31]));
         Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x2C, 0x30, 0x00, 0x00, 0x00]));
-        Equal(1, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
+        Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
+        Equal(1, Countˉsequence(Code, [0x49, 0x8D, 0xA6, 0x00, 0x30, 0x00, 0x00]));
+        Equal(2, Countˉsequence(Code, [0xFC, 0xF3, 0x48, 0xAB]));
         Equal(1, Countˉsequence(Code, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
         Equal(2, Countˉsequence(Code, [0xFA, 0xF4, 0xE9]));
     }
@@ -355,8 +365,10 @@ internal static class Program
         capability console.write_line;
 
         data Greeting: text = "Hello from Windvale";
+        data Stackˉmarker: text = "kernel-stack=pass";
 
         export fn Main() -> i32 {
+            console.write_line(Stackˉmarker);
             console.write_line(Greeting);
             return 0;
         }

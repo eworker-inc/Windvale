@@ -1,7 +1,7 @@
 # Decision 0052: First kernel-owned memory foundation
 
 - Date: 2026-07-31
-- Status: Accepted; host oracle implemented, boot integration in progress
+- Status: Accepted, implemented, and qualified on the first Windows QEMU environment
 
 ## Context
 
@@ -24,7 +24,7 @@ Claiming every memory type that may become reclaimable would require image, runt
 
 The host oracle makes ownership policy executable without presenting it as boot evidence. It selects the same arena regardless of descriptor order, rejects contradictory overlaps, never claims loader/runtime/platform memory, and provides a deterministic zeroing allocator model.
 
-The final implementation must still prove that equivalent machine code initializes and uses the arena under QEMU. Until that evidence exists, this decision does not claim a kernel-owned stack at runtime.
+Firmware probe version 6 now provides that matching machine-code evidence. Its exact QEMU transcript proves arena selection and clearing, one successful zeroing allocation, a copied handoff, and compiler-generated source output after the stack switch. The deterministic 7,168-byte EFI application has SHA-256 `9b58992e480536e9fcf1d4715da04417200cf923388b262aab474abdbf140868`.
 
 The 4 GiB ceiling, fixed 64 KiB arena, allocate-only policy, restored loader stack, and conservative type policy are deliberate first-version limits. They avoid silently becoming the general physical-memory manager.
 

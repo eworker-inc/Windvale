@@ -8,20 +8,24 @@ namespace Windvale.Bootstrap;
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 5;
+    public const int FORMAT_VERSION = 6;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 5\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 6\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
+    public const string MEMORY_OWNED_MARKER = Kernelˉmemoryˉx64.MEMORY_OWNED_MARKER;
+    public const string ALLOCATOR_MARKER = Kernelˉmemoryˉx64.ALLOCATOR_MARKER;
+    public const string KERNEL_STACK_MARKER = "kernel-stack=pass\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string WINDVALE_SOURCE_MARKER = "windvale-source=pass\n";
     public const string SUCCESS_MARKER = "status=pass\n";
     public const string SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
-        HELLO_WORLD_MARKER + WINDVALE_SOURCE_MARKER + SUCCESS_MARKER;
+        MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + HELLO_WORLD_MARKER +
+        WINDVALE_SOURCE_MARKER + SUCCESS_MARKER;
 
     private const string FAILURE_MARKER = "status=fail\n";
     private const string FAILURE_LABEL = "failure";
@@ -124,10 +128,56 @@ public static class Firmwareˉprobe
                 0,
                 (uint)Supportˉcode.Length)],
             []);
+        var Memory = Kernelˉmemoryˉx64.Build();
+        var Memoryˉobject = new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 16, (uint)Memory.Bytes.Length, Memory.Bytes)],
+            [
+                new(
+                    Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL,
+                    Objectˉsymbolˉbinding.Export,
+                    Objectˉsymbolˉkind.Function,
+                    0,
+                    Memory.Allocatorˉoffset,
+                    checked((uint)Memory.Bytes.Length - Memory.Allocatorˉoffset)),
+                new(
+                    Kernelˉmemoryˉcontract.MEMORY_ENTER_SYMBOL,
+                    Objectˉsymbolˉbinding.Export,
+                    Objectˉsymbolˉkind.Function,
+                    0,
+                    0,
+                    Memory.Enterˉbytes),
+                new(
+                    X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL,
+                    Objectˉsymbolˉbinding.Import,
+                    Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
+                    0,
+                    0),
+                new(
+                    WRITE_BYTE_SYMBOL,
+                    Objectˉsymbolˉbinding.Import,
+                    Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
+                    0,
+                    0),
+            ],
+            [.. Memory.Relocations.Select(Relocation => new Objectˉrelocation(
+                Objectˉrelocationˉkind.Relativeˉi32,
+                0,
+                Relocation.Offset,
+                Relocation.Symbolˉindex,
+                -4))]);
         var Loaderˉobjectˉbytes = Objectˉcodec.Write(Loaderˉobject).ToImmutableArray();
+        var Memoryˉobjectˉbytes = Objectˉcodec.Write(Memoryˉobject).ToImmutableArray();
         var Supportˉobjectˉbytes = Objectˉcodec.Write(Supportˉobject).ToImmutableArray();
         var Link = Linkˉcompiler.Link(
-            [new(Loaderˉobjectˉbytes), new(Kernel.Objectˉbytes), new(Supportˉobjectˉbytes)],
+            [
+                new(Loaderˉobjectˉbytes),
+                new(Kernel.Objectˉbytes),
+                new(Memoryˉobjectˉbytes),
+                new(Supportˉobjectˉbytes),
+            ],
             new(Uefiˉapplicationˉcontract.REQUIRED_LINK_BASE_ADDRESS, ENTRY_SYMBOL));
         if (!Link.Success)
         {

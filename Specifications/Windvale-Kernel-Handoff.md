@@ -37,24 +37,27 @@ The record is 48 little-endian bytes:
 | `0x28` | 4 | Descriptor version | `1` |
 | `0x2C` | 4 | Reserved | Zero |
 
-Memory-map bytes must be an exact multiple of descriptor bytes. Every descriptor is validated by firmware probe version 5 before the exit call; the compiler-generated kernel wrapper independently revalidates the record envelope and divisibility before accepting it.
+Memory-map bytes must be an exact multiple of descriptor bytes. Every descriptor is validated by firmware probe version 6 before the exit call; the compiler-generated kernel wrapper independently revalidates the record envelope and divisibility before accepting it. The memory object then independently revalidates the envelope and every descriptor before making an ownership decision.
 
 ## Lifetime and ownership
 
-The record currently occupies the loader's live stack frame and is immutable for the duration of the kernel-entry call. The retained memory-map buffer remains live after boot services terminate. A later kernel that changes stacks must copy the complete record first; a later memory manager must preserve the map until it establishes and documents ownership of every descriptor range.
+The original record occupies the loader's live stack frame and is immutable for the duration of the kernel-entry call. Kernel memory version 1 copies all 48 bytes into its owned state page before changing stacks and passes that copy to compiler-generated `Windvale_kernel_main`. The retained memory-map buffer remains borrowed loader data and live after boot services terminate; later reclamation must preserve it until another ownership decision replaces this contract.
 
 The handoff includes no valid boot-services pointer. Code reached through this ABI must not call a boot service, firmware device-handle protocol, or invalidated system-table field.
 
 ## Current evidence and limit
 
-Firmware probe version 5 constructs the loader, compiler-generated kernel entry, and OS byte adapter as three independent WVO objects. It links their imports and relative calls, enters the kernel object after firmware shutdown, and requires this serial suffix:
+Firmware probe version 6 constructs the loader, compiler-generated kernel entry/Main, kernel memory layer, and OS byte adapter as four independent WVO objects. It links their imports and relative calls, enters the kernel object after firmware shutdown, and requires this serial suffix:
 
 ```text
 memory-map=pass
 boot-services=exited
+memory-owned=pass
+allocator=pass
+kernel-stack=pass
 Hello from Windvale
 windvale-source=pass
 status=pass
 ```
 
-The `Hello from Windvale` line originates in calls selected from typed WIR and encoded in the compiler-produced WVO object. `windvale-source=pass` originates in the loader only after the generated entry returns zero. This proves the source/object/link/handoff boundary but does not claim a stable general ABI, a functioning kernel, a kernel stack, page ownership, paging, interrupts, or a kernel runtime.
+The memory layer emits the first two new lines only after initializing owned state and completing a zeroing allocation. `kernel-stack=pass` and `Hello from Windvale` originate in calls selected from typed WIR and encoded in compiler export `Windvale_kernel_main`, after the memory layer changes `RSP`. `windvale-source=pass` originates in the loader only after the complete generated entry returns zero. This proves a bounded page-ownership, allocator, copied-handoff, and stack boundary, but does not claim a stable general ABI, general physical-memory management, paging, interrupts, or a kernel runtime.

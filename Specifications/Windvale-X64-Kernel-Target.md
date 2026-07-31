@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`x86-64-kernel-entry-wvo-v1` is the first compiler-native target over Windvale's typed WIR. It exists to produce one verified, position-independent WVO kernel-entry object for the UEFI boot path. It is a bounded integration target, not the general Windvale native ABI or completion of the native-backend phase. [Decision 0049](../Documents/Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) owns this boundary.
+`x86-64-kernel-entry-wvo-v2` is the first compiler-native target over Windvale's typed WIR with a separate validated entry wrapper and source-derived Main export. It produces one verified, position-independent WVO object for the UEFI boot path. It is a bounded integration target, not the general Windvale native ABI or completion of the native-backend phase. [Decision 0049](../Documents/Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) owns the original source-to-boot boundary; [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the version 2 split used for the kernel stack.
 
-The C# reference/recovery compiler implements version 1 as `X64ˉkernelˉcompiler`. It uses the ordinary source lexer, parser, module composition, and semantic compiler before examining typed WIR. A successful result is serialized by `Objectˉcodec` and decoded and verified again before publication. Source or WIR that falls outside this specification fails explicitly; it is never interpreted as a similar supported program.
+The C# reference/recovery compiler implements version 2 as `X64ˉkernelˉcompiler`. It uses the ordinary source lexer, parser, module composition, and semantic compiler before examining typed WIR. A successful result is serialized by `Objectˉcodec` and decoded and verified again before publication. Source or WIR that falls outside this specification fails explicitly; it is never interpreted as a similar supported program.
 
 ## Source and WIR subset
 
@@ -29,8 +29,10 @@ The compiler emits canonical WVO 1.0 with:
 - architecture `x86-64`;
 - one 16-byte-aligned code-only `.text` section;
 - exported function `Windvale_kernel_entry` at offset zero;
+- exported function `Windvale_kernel_main` at a later 16-byte-aligned offset;
+- imported function `Windvale_kernel_memory_enter`;
 - imported function `Windvale_kernel_write_byte`; and
-- one `relative-i32` relocation with addend `-4` for every generated `call rel32` byte-output call.
+- one `relative-i32` relocation with addend `-4` for the memory-entry call and every generated `call rel32` byte-output call.
 
 There is no static data section or absolute address. Text is materialized as immediate byte arguments, which is acceptable only because of the 4 KiB target limit. The existing linker resolves the imported adapter and the loader's independent import of `Windvale_kernel_entry` before the UEFI PE32+ adapter accepts the all-code link.
 
@@ -38,7 +40,9 @@ There is no static data section or absolute address. Text is materialized as imm
 
 `Windvale_kernel_entry` implements [kernel handoff version 1](Windvale-Kernel-Handoff.md). Before source-derived output, its compiler-generated wrapper independently validates the handoff pointer, magic, version, record size, retained-map pointer and length, 1 MiB map bound, descriptor stride, descriptor version, reserved field, and map-byte divisibility. Invalid input returns `1` without invoking the adapter.
 
-After validation, the generated entry reserves 32 bytes of x64 shadow space plus 8 alignment bytes. For each source-derived ASCII byte it places the zero-extended value in `ECX` and calls `Windvale_kernel_write_byte`. The OS adapter may clobber standard x64 volatile registers and returns no value. The generated entry restores its stack, returns the source `Main` constant through `EAX`, and preserves every nonvolatile register because it uses none.
+After validation, the generated entry reserves 32 bytes of x64 shadow space plus 8 alignment bytes and calls `Windvale_kernel_memory_enter` with the accepted handoff pointer still in `RCX`. That memory layer owns map selection, state initialization, handoff copying, and the stack switch before invoking `Windvale_kernel_main`.
+
+For each source-derived ASCII byte, `Windvale_kernel_main` places the zero-extended value in `ECX` and calls `Windvale_kernel_write_byte`. The OS adapter may clobber standard x64 volatile registers and returns no value. Main restores its stack and returns the source constant through `EAX`. The generated functions preserve every nonvolatile register because they use none.
 
 The first adapter polls legacy COM1 transmitter readiness and writes the low byte of `ECX`. That implementation is an OS bootstrap device choice, not Windvale source semantics, a portable capability implementation, or a general console driver contract.
 
@@ -59,6 +63,6 @@ Frontend and semantic diagnostics retain their existing `WVC` codes and phases. 
 
 ## Determinism and current evidence
 
-Identical source and target version produce identical WVO bytes. The canonical `Hello-World.wv` input produces a 905-byte WVO object with SHA-256 `22ccc0d50b6170bc53fb6844d2fb7ec76b8a87e720dac8d7dacf2f2a71256cb9`, 20 relative relocations, and no absolute relocation. Firmware probe version 5 links and executes that object after successful `ExitBootServices`.
+Identical source and target version produce identical WVO bytes. The canonical `Hello-World.wv` input produces a 1,574-byte WVO object with SHA-256 `05c04cf7e7167850d954ca36d135e68065478301c20819ad27d0d2f10ce51133`, 39 relative relocations, and no absolute relocation. Firmware probe version 6 links that object with the independent memory layer and executes Main on the kernel-owned stack after successful `ExitBootServices`.
 
 This target does not support general expressions, locals, calls, branches, Unicode console output, static-data addressing, multiple functions, a general native calling convention, optimization, unwind information, Windows or Linux executable production, compiler self-hosting, or portable bytecode execution in the OS. Each expansion requires focused semantics, encoding, relocation, and differential evidence rather than silent fallback.

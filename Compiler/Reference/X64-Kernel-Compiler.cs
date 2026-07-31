@@ -14,9 +14,11 @@ public sealed record X64ˉkernelˉcompilationˉresult(
 
 public static class X64ˉkernelˉcontract
 {
-    public const int FORMAT_VERSION = 1;
-    public const string TARGET_NAME = "x86-64-kernel-entry-wvo-v1";
+    public const int FORMAT_VERSION = 2;
+    public const string TARGET_NAME = "x86-64-kernel-entry-wvo-v2";
     public const string KERNEL_ENTRY_SYMBOL = "Windvale_kernel_entry";
+    public const string KERNEL_MAIN_SYMBOL = "Windvale_kernel_main";
+    public const string MEMORY_ENTER_SYMBOL = "Windvale_kernel_memory_enter";
     public const string WRITE_BYTE_SYMBOL = "Windvale_kernel_write_byte";
     public const ulong HANDOFF_MAGIC = 0x3144_4E41_484B_5657;
     public const uint HANDOFF_VERSION = 1;
@@ -233,19 +235,25 @@ public static class X64ˉkernelˉcompiler
         var Output = new Nativeˉcodeˉbuilder();
         Emitˉhandoffˉvalidation(Output);
         Output.Emit(0x48, 0x83, 0xEC, 0x28);
+        Output.Emitˉexternalˉcall(2);
+        Output.Emit(0x48, 0x83, 0xC4, 0x28, 0xC3);
+
+        Output.Mark(FAILURE_LABEL);
+        Output.Emit(0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
+        Output.Align(16);
+        var Mainˉoffset = Output.Position;
+        Output.Emit(0x48, 0x83, 0xEC, 0x28);
         foreach (var Value in plan.Output)
         {
             Output.Emit(0xB9);
             Output.Emitˉu32(Value);
-            Output.Emitˉexternalˉcall();
+            Output.Emitˉexternalˉcall(3);
         }
         Output.Emit(0x48, 0x83, 0xC4, 0x28);
         Output.Emit(0xB8);
         Output.Emitˉu32(unchecked((uint)plan.Returnˉvalue));
         Output.Emit(0xC3);
 
-        Output.Mark(FAILURE_LABEL);
-        Output.Emit(0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
         var Code = Output.Build();
         return new(
             Objectˉarchitecture.X86ˉ64,
@@ -257,7 +265,21 @@ public static class X64ˉkernelˉcompiler
                     Objectˉsymbolˉkind.Function,
                     0,
                     0,
-                    (uint)Code.Bytes.Length),
+                    Mainˉoffset),
+                new(
+                    X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL,
+                    Objectˉsymbolˉbinding.Export,
+                    Objectˉsymbolˉkind.Function,
+                    0,
+                    Mainˉoffset,
+                    checked((uint)Code.Bytes.Length - Mainˉoffset)),
+                new(
+                    X64ˉkernelˉcontract.MEMORY_ENTER_SYMBOL,
+                    Objectˉsymbolˉbinding.Import,
+                    Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
+                    0,
+                    0),
                 new(
                     X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL,
                     Objectˉsymbolˉbinding.Import,
@@ -266,11 +288,11 @@ public static class X64ˉkernelˉcompiler
                     0,
                     0),
             ],
-            [.. Code.Externalˉcallˉoffsets.Select(Offset => new Objectˉrelocation(
+            [.. Code.Relocations.Select(Relocation => new Objectˉrelocation(
                 Objectˉrelocationˉkind.Relativeˉi32,
                 0,
-                Offset,
-                1,
+                Relocation.Offset,
+                Relocation.Symbolˉindex,
                 -4))]);
     }
 
@@ -327,7 +349,9 @@ public static class X64ˉkernelˉcompiler
         private readonly List<byte> Output = [];
         private readonly Dictionary<string, int> Labels = new(StringComparer.Ordinal);
         private readonly List<Relativeˉfixup> Fixups = [];
-        private readonly List<uint> Externalˉcallˉoffsets = [];
+        private readonly List<Nativeˉrelocation> Relocations = [];
+
+        public uint Position => checked((uint)Output.Count);
 
         public void Emit(params byte[] bytes) => Output.AddRange(bytes);
 
@@ -345,11 +369,19 @@ public static class X64ˉkernelˉcompiler
             Output.AddRange(Bytes);
         }
 
-        public void Emitˉexternalˉcall()
+        public void Emitˉexternalˉcall(uint symbolˉindex)
         {
             Output.Add(0xE8);
-            Externalˉcallˉoffsets.Add(checked((uint)Output.Count));
+            Relocations.Add(new(checked((uint)Output.Count), symbolˉindex));
             Output.AddRange([0, 0, 0, 0]);
+        }
+
+        public void Align(int alignment)
+        {
+            while (Output.Count % alignment != 0)
+            {
+                Output.Add(0x90);
+            }
         }
 
         public void Mark(string label)
@@ -384,7 +416,7 @@ public static class X64ˉkernelˉcompiler
                     Bytes.AsSpan(Fixup.Displacementˉoffset, sizeof(int)),
                     Displacement);
             }
-            return new(Bytes.ToImmutableArray(), Externalˉcallˉoffsets.ToImmutableArray());
+            return new(Bytes.ToImmutableArray(), Relocations.ToImmutableArray());
         }
 
         private sealed record Relativeˉfixup(int Displacementˉoffset, string Label);
@@ -392,5 +424,7 @@ public static class X64ˉkernelˉcompiler
 
     private sealed record Nativeˉcode(
         ImmutableArray<byte> Bytes,
-        ImmutableArray<uint> Externalˉcallˉoffsets);
+        ImmutableArray<Nativeˉrelocation> Relocations);
+
+    private sealed record Nativeˉrelocation(uint Offset, uint Symbolˉindex);
 }

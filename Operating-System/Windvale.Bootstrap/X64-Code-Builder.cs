@@ -9,6 +9,8 @@ internal sealed class X64ˉcodeˉbuilder
     private readonly Dictionary<string, int> Labels = new(StringComparer.Ordinal);
     private readonly List<Relativeˉfixup> Fixups = [];
 
+    public uint Position => checked((uint)Output.Count);
+
     public void Emit(params byte[] bytes) => Output.AddRange(bytes);
 
     public void Emitˉu32(uint value)
@@ -58,6 +60,15 @@ internal sealed class X64ˉcodeˉbuilder
         var Displacementˉoffset = checked((uint)Output.Count);
         Output.AddRange([0, 0, 0, 0]);
         return Displacementˉoffset;
+    }
+
+    public void Align(int alignment)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(alignment, 1);
+        while (Output.Count % alignment != 0)
+        {
+            Output.Add(0x90);
+        }
     }
 
     public ImmutableArray<byte> Build()

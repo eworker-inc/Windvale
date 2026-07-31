@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 1 defines the first bounded ownership transition after successful `ExitBootServices`. The host planner and allocator oracle are implemented; boot-machine integration and QEMU qualification remain in progress. [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns this boundary.
+Kernel memory version 1 defines the first bounded ownership transition after successful `ExitBootServices`. The host planner, simulated allocator, matching x86-64 memory object, and QEMU qualification are implemented. [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns this boundary.
 
 This contract deliberately establishes one small arena rather than claiming all reclaimable firmware memory. It supplies enough owned memory for copied handoff state, a kernel stack, and an allocate-only page allocator while leaving paging, general physical-memory management, and reclamation for later evidence.
 
@@ -89,6 +89,17 @@ The independent host planner reports:
 
 Malformed and random bytes must produce a bounded result or one of these failures; they must not escape an index, arithmetic, or allocation exception.
 
-## Current limit
+## Current evidence and limit
 
-The host oracle does not prove that the boot image has switched stacks. Qualification requires matching machine-code invariants plus exact QEMU serial evidence from compiler-generated code on the new stack. Version 1 does not claim all physical memory, free pages, paging, guard pages, NX/W^X enforcement, interrupts, multiple CPUs, processes, runtime allocation policy, or graphical output.
+Firmware probe version 6 links the memory object independently, finds and clears the arena after firmware shutdown, records a successful one-page allocation, copies the handoff, and invokes compiler export `Windvale_kernel_main` on the owned stack. The `kernel-stack=pass` line originates in that compiler-generated function. The accepted QEMU run requires the exact memory suffix:
+
+```text
+memory-owned=pass
+allocator=pass
+kernel-stack=pass
+Hello from Windvale
+windvale-source=pass
+status=pass
+```
+
+Version 1 does not claim all physical memory, reclamation of the retained map or loader ranges, page release, paging, guard pages, NX/W^X enforcement, interrupts, multiple CPUs, processes, runtime allocation policy, or graphical output.
