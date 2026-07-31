@@ -1,7 +1,7 @@
 # Decision 0042: Bounded lexical dispatch and function profiling
 
 - Date: 2026-07-31
-- Status: Implemented; cross-host qualification pending
+- Status: Qualified at `5d67463d42fc81ca82825da7c3894e16193391f7`
 
 ## Context
 
@@ -40,4 +40,6 @@ Two broader experiments are rejected from this slice:
 
 The candidate must preserve every existing lexical, parser, symbol, binding, WVIR, WVB, diagnostic, and differential fixture; prove deterministic function counts with profiling both disabled and enabled; keep default CLI output stable; retain the fixed experimental ceiling; pass Standard and Qualification on Windows; and pass exact-commit Debian qualification with matching normalized reports and byte-identical portable artifacts.
 
-Completing the exact ten-module input below the ceiling remains the entry gate for the later compiler bootstrap-closure milestone.
+Exact commit `5d67463d42fc81ca82825da7c3894e16193391f7`, tree `bee0468d61f7d700989b16ffabcc180a1e961b0d`, passed Standard and complete Qualification on Windows x64 and exact-archive Qualification on Debian GNU/Linux 12 x64. Both hosts completed zero-warning Release builds, all 48 tests, and the native CLI verifier. Their normalized contracts match, and all 61 portable artifacts are byte-identical. The complete evidence is recorded in [Seed verification evidence](../Project/Seed-Verification-Evidence.md#bounded-lexical-dispatch-and-function-profiling-qualification).
+
+Completing the exact ten-module input below the ceiling remains the entry gate for the later compiler self-hosting milestone.
