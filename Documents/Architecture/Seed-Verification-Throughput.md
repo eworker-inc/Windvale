@@ -119,7 +119,9 @@ On the Windows development host, the focused typed-WVIR fixture falls from Decis
 
 The exact ten-module typed-WVIR workload completes in 3,912,239,584 instructions, leaving 87,760,416 instructions under the unchanged four-billion acceptance ceiling. It reports 10 modules, 315 functions, 5,658 blocks, 27,377 operations, 25,094 temporaries, 21,869 operands, and 1,720,804 directory bytes. The exact case remains outside Fast and Standard; it is milestone evidence for the next Stage 0 → Stage 1 → Stage 2 convergence work.
 
-Measured binary nominal search and record-return identifier-tail helpers were removed because they regressed the focused workload. Long shared compiler-name prefixes made midpoint ordinal comparison more expensive than the retained bounded range scan. Exact cross-host Qualification timings remain pending.
+Measured binary nominal search and record-return identifier-tail helpers were removed because they regressed the focused workload. Long shared compiler-name prefixes made midpoint ordinal comparison more expensive than the retained bounded range scan.
+
+Exact commit `1a4fca7` completed Qualification in approximately 449.0 seconds on Windows and 469.5 seconds on Debian, with complete-suite times of 220.663 and 227.434 seconds. Both hosts passed zero-warning builds, all 48 tests, and the complete native verifier. Their normalized contracts matched, and all 61 portable artifacts totaling 7,733,603 bytes were byte-identical. The lower elapsed time is diagnostic host evidence; the portable acceptance evidence remains the unchanged instruction ceiling and exact cross-host artifacts.
 
 ## Canonical backend measurements
 

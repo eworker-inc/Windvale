@@ -94,7 +94,7 @@ Candidate artifacts are:
 - `Source-Wir-Demo.wvb`: 521,508 bytes, SHA-256 `0fcf0bf2a6eda1ae271bbe83169af9acfb339e24436c5e76e77b5e273b54301b`.
 - `Source-Wir-Tool.wvb`: 517,659 bytes, SHA-256 `cf1421565f9888b23864253b722feac9fa3aa053a0dccfd06d695ca10162ff87`.
 
-The original typed-WVIR candidate was cross-host qualified at `bf77f70`, the fused local-discovery/typed-WVIR implementation at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index implementation at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055's validated-scan reuse candidate is awaiting exact cross-host Qualification.
+The original typed-WVIR candidate was cross-host qualified at `bf77f70`, the fused local-discovery/typed-WVIR implementation at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index implementation at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055's validated-scan reuse implementation is cross-host qualified at `1a4fca7e295545b3b815bbf187fc048f1a885c74`.
 
 The ten-module compiler closure is intentionally not in the fast loop. Decision 0042 reduced the focused typed-WVIR fixture from 8,074,045 to 5,735,695 instructions; Decision 0050 reduced it again to 5,715,847 and removed directory-entry construction and nominal-rank derivation as dominant costs. Decision 0055's candidate falls to 3,626,693 focused instructions and completes the exact ten-module input in 3,912,239,584 instructions under the unchanged 4,000,000,000 ceiling. That clears the typed-WVIR performance entry gate; Stage 0 → Stage 1 → Stage 2 convergence remains separate.
 

@@ -125,4 +125,4 @@ Exact commit `e37204f` passes zero-warning Release builds, all 48 conformance te
 source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=140 fields=291 members=181 parameters=613 directory-bytes=4288 visibility-bytes=64
 ```
 
-The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 preserves both byte formats and adds the bounded reverse-table lookup; exact cross-host Qualification is pending.
+The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 preserves both byte formats, adds the bounded reverse-table lookup, and is cross-host qualified at `1a4fca7`.

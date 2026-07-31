@@ -466,7 +466,7 @@ All 61 directly retrieved portable artifacts, totaling 7,546,823 bytes, matched 
 
 This qualifies Decision 0050 and completes the structural symbol-directory/name-ranking slice of roadmap Phase 8. It does not complete Phase 7 or Phase 8, close the 4 MiB source envelope, complete the exact typed-WVIR input below its fixed ceiling, qualify compiler self-hosting, produce native Windvale tools, advance the native backend gate, or implement any Windvale OS layer.
 
-## Validated scan reuse and ten-module closure candidate
+## Validated scan reuse and ten-module closure qualification
 
 Decision 0055 retains checked standalone lexer/parser entry points while letting compiler loops consume already established full-source scan and cursor evidence. Source-set validation reuses its declaration summary for the body pass. A bounded byte scanner skips lexically valid function bodies while tracking strings, escapes, comments, braces, line/column coordinates, and the existing depth limit; rejected or ambiguous shapes fall back to the qualified token scanner. The checked body-span boundary adds an iterative nesting preflight so adversarial depth returns `Nestingˉlimit` without host-stack exhaustion. Nominal lookup uses the existing WVSI reverse table and first-byte canonical ranges.
 
@@ -480,7 +480,13 @@ Result: 0
 Instructions: 3912239584
 ```
 
-The retained margin is 87,760,416 instructions. This clears the performance entry gate for Stage 0 → Stage 1 → Stage 2 convergence but does not itself prove compiler self-hosting, byte-for-byte bootstrap convergence, closure of the 4 MiB source envelope, completion of Phase 8, native tooling, or any OS layer. Exact Windows and Debian Qualification, normalized contract comparison, and portable artifact comparison remain pending.
+The retained margin is 87,760,416 instructions. This clears the performance entry gate for Stage 0 → Stage 1 → Stage 2 convergence but does not itself prove compiler self-hosting, byte-for-byte bootstrap convergence, closure of the 4 MiB source envelope, completion of Phase 8, native tooling, or any OS layer.
+
+Exact candidate commit `1a4fca7e295545b3b815bbf187fc048f1a885c74`, tree `00eef5249581f48e57e20a92b4524af1e2b54420`, was archived as `windvale-scan-reuse-1a4fca7e2955.tar.gz`, 2,744,521 bytes with SHA-256 `767906a4f4e114c595ae92bfab3dbb6caf1914dc29ec25b213eec6413c092158`. The same digest was verified before extraction on the isolated E-Worker Debian QA host. Windows x64 and Debian GNU/Linux 12 x64 with .NET SDK `10.0.302` both completed zero-warning Release builds, all 48 tests, and the complete native verifier.
+
+Windows Qualification completed in approximately 449.0 seconds with a 220.663-second suite; Debian completed in approximately 469.5 seconds with a 227.434-second suite. The 15,563-byte Windows report has SHA-256 `24a1b6eb0096e9fba642b0f1284f287e3d43c1d0e4a49f27157b71bae04f7efa`; the 15,473-byte Debian report has SHA-256 `2fa2b75b8e6def4183925850fb0a4df8b9da751e0d966f147b5609e1afc3f4f3`. Their normalized contracts matched exactly with canonical SHA-256 `3e0d97b8a3d68c150545f69e7c7761be61bd39443dde27b83d8288f9e7dd93d5`.
+
+All 61 directly retrieved portable artifacts, totaling 7,733,603 bytes, matched Windows byte for byte. The Debian evidence bundle was 2,287,803 bytes with SHA-256 `7aa03b7145ca5777ab646d4a7043ea4c391ecf81638fea7a32f1722b6e2bb760`. After retrieval and comparison, the exact Debian QA directory, source archive, and evidence bundle were removed and confirmed absent. This qualifies Decision 0055 and makes Stage 0 → Stage 1 → Stage 2 convergence the next Phase 8 slice.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 

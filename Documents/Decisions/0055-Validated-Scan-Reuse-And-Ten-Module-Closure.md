@@ -1,7 +1,7 @@
 # Decision 0055: Validated scan reuse and ten-module closure
 
 - Date: 2026-07-31
-- Status: Candidate; exact Windows and Debian Qualification pending
+- Status: Qualified on Windows and Debian at `1a4fca7e295545b3b815bbf187fc048f1a885c74`
 
 ## Context
 
@@ -45,4 +45,10 @@ This completes the exact typed-WVIR performance entry gate. It does not yet prov
 
 ## Verification
 
-Before the exact-commit qualification, the candidate passed the focused 24-test compiler area, focused nesting-containment and golden-contract reruns, and the complete 48-test Windows Standard suite. The exact ten-module run completed successfully at the instruction count above. Exact Windows and Debian Qualification, normalized report comparison, and portable artifact comparison remain mandatory before this decision becomes qualified.
+Before the exact-commit qualification, the candidate passed the focused 24-test compiler area, focused nesting-containment and golden-contract reruns, and the complete 48-test Windows Standard suite. The exact ten-module run completed successfully at the instruction count above.
+
+Exact candidate commit `1a4fca7e295545b3b815bbf187fc048f1a885c74`, tree `00eef5249581f48e57e20a92b4524af1e2b54420`, was archived as `windvale-scan-reuse-1a4fca7e2955.tar.gz`, 2,744,521 bytes with SHA-256 `767906a4f4e114c595ae92bfab3dbb6caf1914dc29ec25b213eec6413c092158`. The same digest was verified on the isolated Debian QA host. Windows x64 and Debian GNU/Linux 12 x64 with .NET SDK `10.0.302` both completed zero-warning Release builds, all 48 tests, and the complete native verifier.
+
+Windows Qualification completed in approximately 449.0 seconds with a 220.663-second suite; Debian completed in approximately 469.5 seconds with a 227.434-second suite. The 15,563-byte Windows report has SHA-256 `24a1b6eb0096e9fba642b0f1284f287e3d43c1d0e4a49f27157b71bae04f7efa`; the 15,473-byte Debian report has SHA-256 `2fa2b75b8e6def4183925850fb0a4df8b9da751e0d966f147b5609e1afc3f4f3`. Their normalized contracts matched exactly with canonical SHA-256 `3e0d97b8a3d68c150545f69e7c7761be61bd39443dde27b83d8288f9e7dd93d5`.
+
+All 61 directly retrieved portable artifacts, totaling 7,733,603 bytes, matched Windows byte for byte. The Debian evidence bundle was 2,287,803 bytes with SHA-256 `7aa03b7145ca5777ab646d4a7043ea4c391ecf81638fea7a32f1722b6e2bb760`. After retrieval and comparison, the exact Debian QA directory, source archive, and evidence bundle were removed and confirmed absent. This qualifies the performance entry gate without claiming compiler self-hosting or Stage 1/Stage 2 convergence.

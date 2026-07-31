@@ -4,7 +4,7 @@
 
 `Compilerˉsourceˉlexer` is the first Windvale-written self-hosted compiler slice. It tokenizes the complete implemented Seed lexical surface over immutable UTF-8 bytes. The module is portable, capability-free, and depends only on `Foundationˉdecimalˉparsing`.
 
-The original streaming implementation is cross-host qualified at `d91dbfb` under Decision 0025. Decision 0042's bounded dispatch is cross-host qualified, and Decision 0055's validated-scan reuse is the current candidate. It does not replace the Stage 0 compiler yet.
+The original streaming implementation is cross-host qualified at `d91dbfb` under Decision 0025. Decision 0042's bounded dispatch and Decision 0055's validated-scan reuse are cross-host qualified, with the latter qualified at `1a4fca7`. It does not replace the Stage 0 compiler yet.
 
 ## Limits and coordinates
 
@@ -77,4 +77,4 @@ Compilerˉlexˉtokenˉat(Input, Wanted) -> Compilerˉsourceˉtoken
 
 ## Qualified implementation
 
-`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 38,973-byte WVB with SHA-256 `ca91d5aa9889540250be552b5563dacba8deba2abb70ea557d0e4f8089ee749f`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 45,319-byte WVB with SHA-256 `2a7a2f8c1276c252fa8ddb53a362c6560dfa06ba8c2a8be0fb56f507e820df87` and returns `0` under the 10,000,000-instruction ceiling. The Decision 0042 implementation passed exact Windows/Debian qualification at `5d67463`, and the role-based path passed at `4fdc6bf`. Decision 0055's candidate retains the lexical contract while changing implementation bytes; exact cross-host Qualification is pending.
+`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 38,973-byte WVB with SHA-256 `ca91d5aa9889540250be552b5563dacba8deba2abb70ea557d0e4f8089ee749f`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 45,319-byte WVB with SHA-256 `2a7a2f8c1276c252fa8ddb53a362c6560dfa06ba8c2a8be0fb56f507e820df87` and returns `0` under the 10,000,000-instruction ceiling. The Decision 0042 implementation passed exact Windows/Debian qualification at `5d67463`, and the role-based path passed at `4fdc6bf`. Decision 0055 retains the lexical contract while changing implementation bytes and is cross-host qualified at `1a4fca7`.

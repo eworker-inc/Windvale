@@ -110,7 +110,7 @@ The current candidate compiler artifacts are:
 - `Source-Wvb-Demo.wvb`: 595,588 bytes, SHA-256 `c6e6fcbfd674df8d5e147b7c3bb52dfbdd4e26fcae4089ccb6c6fb00ffbb26db`.
 - `Source-Wvb-Tool.wvb`: 595,092 bytes, SHA-256 `db0b76432f531da40cfb91617673ea0df2981102f294765e7e60c544a8129d0e`.
 
-The static multi-module behavior was first qualified at `cb1db235`, the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index artifact set at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055 changes embedded compiler implementation bytes but preserves all five differential fixture outputs byte-identical to Stage 0; exact cross-host Qualification is pending.
+The static multi-module behavior was first qualified at `cb1db235`, the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index artifact set at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055 changes embedded compiler implementation bytes but preserves all five differential fixture outputs byte-identical to Stage 0 and is cross-host qualified at `1a4fca7`.
 
 ## Expansion path
 
