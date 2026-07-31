@@ -6,6 +6,41 @@ AI systems produce the source and prose. Humans define the objectives, direct th
 
 At its center is a **new programming language**, together with its compiler, portable bytecode, verified runtime, assembler, object model, linker, and Foundation library. The long-term integration goal is a **new small operating system** capable of loading and running the same verified Windvale programs that run on Windows and Linux. The language and tools remain independently useful before the operating system is complete.
 
+## Progress at a glance
+
+**Status key:** ✅ Working now · 🚧 Working but incomplete · ○ Planned
+
+*“Working now” means implemented and tested for the current experimental Windvale Seed scope. It does not mean permanently finished or production-stable.*
+
+| Project area | Status | What works today | Next major milestone |
+| --- | :---: | --- | --- |
+| Windvale language | ✅ Working now | Typed portable and hosted programs with modules, functions, control flow, records, enums, text, bytes, and explicit capabilities | Expand the language only as compiler, library, and operating-system work requires |
+| C# Stage 0 toolchain | ✅ Working now | Compiles Windvale source and provides the current recovery and reference implementation on Windows and Linux | Remain as an independent oracle after self-hosting |
+| Compiler written in Windvale | 🚧 In progress | Runs from source parsing through typed IR and static multi-module bytecode generation | Compile its complete source graph and reproduce itself |
+| Portable bytecode and verifier | ✅ Working now | Deterministic `.wvb` modules can be decoded, inspected, disassembled, and safety-checked before execution | Evolve the format from implementation evidence without weakening its safety boundary |
+| Runtime on Windows and Linux | ✅ Working now | The same verified module runs through the portable reference interpreter with bounded resources and explicit host services | Improve performance and later port the runtime to Windvale OS |
+| Foundation library | 🚧 In progress | Shared machine, byte-ordering, decimal-parsing, and byte-construction modules are used by real Windvale tools | Add collections, text, diagnostics, and other facilities demanded by self-hosting |
+| Assembler | ✅ Working now | C# and Windvale assemblers turn textual WVA assembly into matching verified WVO objects | Add instructions and addressing required by native compilation and the kernel |
+| Object-file model | ✅ Working now | WVO defines verified sections, symbols, and relocations shared by the assembler and linker | Support richer object requirements discovered by the native backend |
+| Linker | ✅ Working now | C# and Windvale linkers resolve symbols and relocations into the same deterministic flat x86-64 image and map | Produce executable and bootable target formats |
+| CLI and inspection tools | ✅ Working now | One CLI can compile, verify, inspect, run, assemble, link, and inspect or verify objects | Move more command implementations into Windvale and add broader developer tooling |
+| Editor support | ✅ Working now | Windvale syntax highlighting and language configuration work locally in Visual Studio Code | Package it publicly and pursue GitHub language recognition when eligible |
+| Tests, specifications, and reproducibility | ✅ Working now | Valid, malformed, boundary, random-input, deterministic-output, and cross-host checks protect the current contracts | Extend the same evidence discipline to self-hosting, native code, and the operating system |
+| Native compiler and host programs | ○ Planned | The assembler, object model, and linker provide much of the required foundation | Lower typed Windvale IR to x86-64 objects and produce controlled Windows and Linux programs |
+| Windvale operating system | ○ Planned | Architecture and platform boundaries are documented; no operating-system implementation is claimed yet | Boot a minimal kernel and run the same verified module used on Windows and Linux |
+| Open-source project foundation | 🚧 In progress | MIT licensing, contribution, security, governance, support, and authorship policies exist | Complete the publication baseline and establish public project operations |
+
+**Working end to end today:**
+
+```text
+Windvale source -> compiled WVB -> verification -> execution on Windows or Linux
+Windvale assembly -> verified WVO object -> deterministic linked x86-64 image
+```
+
+**Current focus:** Windvale compiler source -> reproducible self-hosting.
+
+**Latest qualified evidence:** 48 conformance tests, 61 byte-identical portable artifacts, and matching Windows and Debian results. See the [qualification evidence](Documents/Project/Seed-Verification-Evidence.md) and [development roadmap](Documents/Project/Roadmap.md) for the complete scope and remaining gates.
+
 Today, Windvale uses dependency-free C# and .NET as its Stage 0 bootstrap. C# is a transition and reference implementation: it makes the compiler, bytecode verifier, runtime, assembler, object model, linker, and CLI executable, testable, and recoverable on Windows and Linux while those components are progressively implemented in Windvale itself. C# does not define Windvale's language semantics or the final self-hosted path, although it may remain as an independent recovery and comparison oracle.
 
 E-Worker Inc initiated and stewards the project. Windvale is model- and vendor-neutral. A particular system or provider is recorded only when technically, legally, or operationally material; such a record does not imply sponsorship, affiliation, endorsement, or ownership by its provider.
@@ -32,7 +67,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A Windvale-written body parser that reproduces the complete implemented statement/expression grammar as flat child-span views without a syntax tree collection
 - A canonical Windvale Source Set (`WVSS 1`) reader that gives the portable semantic pipeline bounded random access to a root plus ordered dependency sources without host objects or native paths
 - A Windvale-written import graph and declaration/signature binder with independently validated packed symbol evidence, transitive visibility, and deterministic nominal identities
-- A cross-host-qualified Windvale-written body binder with canonical parameter/local evidence and a typed WVIR producer with explicit blocks, temporaries, operations, source spans, and independent binary validation
+- A cross-host-qualified Windvale-written body binder with canonical parameter/local evidence and a typed WVIR producer with explicit blocks, temporaries, operations, source spans, independent binary validation, and fused successful-path local discovery
 - A Windvale-written WVIR-to-WVB backend with static multi-module flattening, canonical function/data/type/capability ordering, all three root profiles, primitive static data, immutable records, nominal enums, explicit capabilities, text/bytes and Foundation intrinsics, exact Stage 0 byte equality, mandatory verification, and runtime execution
 - A Windvale-written import-graph phase that resolves the complete WVSS root closure and rejects duplicate, missing, cyclic, and unreachable imports without host collections
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
@@ -331,7 +366,7 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Set-Tool.wvb `
      Foundation/Decimal-Parsing.wv
 ```
 
-WVSS 1 keeps the root first and dependencies in declared-module-name order, validates every source through the qualified syntax frontend, and exposes immutable source slices by index. `Compilerˉsourceˉgraph` resolves import topology over that boundary. `Compilerˉsourceˉsymbols` validates global declaration namespaces and signatures, creates an independently checked `WVSD 1` declaration directory, computes transitive module visibility once, and assigns canonical nominal indices. `Compilerˉsourceˉbindings` assigns parameter/local slots and scopes, resolves body reads, assignments, constructors, functions, capabilities, and Foundation intrinsics, and publishes an independently checked `WVLB 1` binding directory. `Compilerˉsourceˉwir` performs complete implemented expression typing, field/operator checks, control-flow construction, and independent `WVIR 1` validation. `Compilerˉsourceˉwvb` lowers that complete graph to one canonical WVB 1.6 module: it preserves the portable, hosted, or system root and statically internalizes portable dependency functions and nominal types. It translates owner-aware WVSD identities to ordinal WVB function/data/capability indices, emits only root exports, serializes canonical Types and Capabilities metadata, interns escaped Unicode literals across modules deterministically, and is byte-identical to Stage 0 for all five differential fixtures. Full bootstrap closure remains a later backend milestone. The current 4 MiB aggregate envelope is an explicit Seed limitation while later memory/collection evidence determines how to close parity with Stage 0's 16 MiB aggregate input contract.
+WVSS 1 keeps the root first and dependencies in declared-module-name order, validates every source through the qualified syntax frontend, and exposes immutable source slices by index. `Compilerˉsourceˉgraph` resolves import topology over that boundary. `Compilerˉsourceˉsymbols` validates global declaration namespaces and signatures, creates an independently checked `WVSD 1` declaration directory, computes transitive module visibility once, and assigns canonical nominal indices. `Compilerˉsourceˉbindings` assigns parameter/local slots and scopes, resolves body reads, assignments, constructors, functions, capabilities, and Foundation intrinsics, and publishes an independently checked `WVLB 1` binding directory. `Compilerˉsourceˉwir` performs complete implemented expression typing, field/operator checks, control-flow construction, and independent `WVIR 1` validation. Its successful path now constructs parameter/local evidence and typed WVIR in one statement traversal while retaining the standalone binding pass as the diagnostic oracle. `Compilerˉsourceˉwvb` lowers that complete graph to one canonical WVB 1.6 module: it preserves the portable, hosted, or system root and statically internalizes portable dependency functions and nominal types. It translates owner-aware WVSD identities to ordinal WVB function/data/capability indices, emits only root exports, serializes canonical Types and Capabilities metadata, interns escaped Unicode literals across modules deterministically, and is byte-identical to Stage 0 for all five differential fixtures. Full bootstrap closure remains a later backend milestone: the exact ten-module typed-IR input still reaches the fixed instruction ceiling, and the current 4 MiB aggregate envelope remains an explicit Seed limitation while later memory/collection evidence determines how to close parity with Stage 0's 16 MiB aggregate input contract.
 
 Compile and run the first Windvale-written `wvdump` core:
 
@@ -550,6 +585,8 @@ export fn Main() -> i32 {
 - [Canonical backend remapping and static-data decision](Documents/Decisions/0037-Canonical-Backend-Remapping-And-Static-Data.md)
 - [Nominal types in the Windvale backend decision](Documents/Decisions/0038-Nominal-Types-In-The-Windvale-Backend.md)
 - [Capability profiles in the Windvale backend decision](Documents/Decisions/0039-Capability-Profiles-In-The-Windvale-Backend.md)
+- [Static multi-module Windvale backend decision](Documents/Decisions/0040-Static-Multi-Module-Windvale-Backend.md)
+- [Fused local discovery and typed WVIR decision](Documents/Decisions/0041-Fused-Local-Discovery-And-Typed-Wvir.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 
