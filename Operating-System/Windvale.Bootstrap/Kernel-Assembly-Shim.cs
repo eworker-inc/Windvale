@@ -8,14 +8,15 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉassemblyˉcontract
 {
-    public const int FORMAT_VERSION = 1;
-    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v1";
+    public const int FORMAT_VERSION = 2;
+    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v2";
     public const string MAIN_SHIM_SYMBOL = "Windvale_kernel_wva_main";
+    public const string X64_WRITE_BYTE_SYMBOL = "Windvale_kernel_x64_write_byte";
 }
 
 public static class Kernelˉassemblyˉshim
 {
-    private const string RESOURCE_NAME = "Windvale.Os.Kernel.X64-Main-Shim.wva";
+    private const string RESOURCE_NAME = "Windvale.Os.Kernel.X64-Kernel-Shims.wva";
 
     public static ImmutableArray<byte> Buildˉobject()
     {
@@ -32,11 +33,12 @@ public static class Kernelˉassemblyˉshim
             Object.Sections.Length != 1 ||
             Object.Sections[0].Kind != Objectˉsectionˉkind.Code ||
             Object.Sections[0].Alignment != 16 ||
-            !Object.Sections[0].Data.AsSpan().SequenceEqual(new byte[] { 0xE9, 0, 0, 0, 0 }) ||
-            Object.Symbols.Length != 2 ||
+            !Object.Sections[0].Data.AsSpan().SequenceEqual(
+                new byte[] { 0xE9, 0, 0, 0, 0, 0xE9, 0, 0, 0, 0 }) ||
+            Object.Symbols.Length != 4 ||
             Object.Symbols[0] is not
             {
-                Name: Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL,
+                Name: X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Export,
                 Kind: Objectˉsymbolˉkind.Function,
                 Sectionˉindex: 0,
@@ -45,17 +47,40 @@ public static class Kernelˉassemblyˉshim
             } ||
             Object.Symbols[1] is not
             {
+                Name: Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL,
+                Binding: Objectˉsymbolˉbinding.Export,
+                Kind: Objectˉsymbolˉkind.Function,
+                Sectionˉindex: 0,
+                Offset: 5,
+                Size: 5,
+            } ||
+            Object.Symbols[2] is not
+            {
                 Name: X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Import,
                 Kind: Objectˉsymbolˉkind.Function,
             } ||
-            Object.Relocations.Length != 1 ||
+            Object.Symbols[3] is not
+            {
+                Name: Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL,
+                Binding: Objectˉsymbolˉbinding.Import,
+                Kind: Objectˉsymbolˉkind.Function,
+            } ||
+            Object.Relocations.Length != 2 ||
             Object.Relocations[0] is not
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 1,
-                Symbolˉindex: 1,
+                Symbolˉindex: 3,
+                Addend: -4,
+            } ||
+            Object.Relocations[1] is not
+            {
+                Kind: Objectˉrelocationˉkind.Relativeˉi32,
+                Sectionˉindex: 0,
+                Offset: 6,
+                Symbolˉindex: 2,
                 Addend: -4,
             })
         {

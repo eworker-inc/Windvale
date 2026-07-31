@@ -19,7 +19,7 @@ internal static class Program
         new("kernel memory planner selects one bounded conventional arena", Memoryˉplannerˉselectsˉboundedˉarena),
         new("kernel memory planner rejects malformed and hostile maps", Memoryˉplannerˉrejectsˉmalformedˉmaps),
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
-        new("kernel WVA shim deterministically bridges to Windvale Main", Kernelˉassemblyˉshimˉbridgesˉmain),
+        new("kernel WVA shims bridge Windvale Main and console output", Kernelˉassemblyˉshimˉbridgesˉmain),
         new("x86-64 kernel compiler emits deterministic verified WVO", Kernelˉcompilerˉemitsˉverifiedˉobject),
         new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
@@ -246,9 +246,9 @@ internal static class Program
         True(First.Success, First.Diagnostics.IsEmpty ? "Native compilation failed." : First.Diagnostics[0].ToString());
         True(Second.Success, "Repeated native compilation failed.");
         Sequenceˉequal(First.Objectˉbytes, Second.Objectˉbytes);
-        Equal(1_574, First.Objectˉbytes.Length);
+        Equal(2_564, First.Objectˉbytes.Length);
         Equal(
-            "05c04cf7e7167850d954ca36d135e68065478301c20819ad27d0d2f10ce51133",
+            "f2c28eb5f020f59b8acb480fc8dc62e393ebb14405b3c12ecb05076176d44420",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.Objectˉbytes.AsSpan()).Value;
@@ -264,7 +264,7 @@ internal static class Program
         True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Import, "The memory entry is not imported.");
         Equal(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Object.Symbols[3].Name);
         True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Import, "The byte writer is not imported.");
-        Equal(39, Object.Relocations.Length);
+        Equal(72, Object.Relocations.Length);
         True(
             Object.Relocations.All(Relocation =>
                 Relocation.Kind == Objectˉrelocationˉkind.Relativeˉi32 &&
@@ -284,7 +284,7 @@ internal static class Program
         True(
             !Changed.Objectˉbytes.AsSpan().SequenceEqual(First.Objectˉbytes.AsSpan()),
             "Changing source output did not change the native object.");
-        Equal(22, Objectˉcodec.Readˉandˉverify(Changed.Objectˉbytes.AsSpan()).Value.Relocations.Length);
+        Equal(55, Objectˉcodec.Readˉandˉverify(Changed.Objectˉbytes.AsSpan()).Value.Relocations.Length);
     }
 
     private static void Kernelˉcompilerˉrejectsˉunsupportedˉsource()
@@ -324,7 +324,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(7_168, First.Length);
         Equal(
-            "b4f557fdd39d44858ce05fd6a99b0128a791053a5d3c2aa9e68dc5b5c34a3808",
+            "92ad46700b058cd3a8846c59c227a33ef3832b080fb408e8eee42dc301336d9a",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -366,9 +366,13 @@ internal static class Program
         capability console.write_line;
 
         data Greeting: text = "Hello from Windvale";
+        data Memoryˉmarker: text = "memory-owned=pass";
+        data Allocatorˉmarker: text = "allocator=pass";
         data Stackˉmarker: text = "kernel-stack=pass";
 
         export fn Main() -> i32 {
+            console.write_line(Memoryˉmarker);
+            console.write_line(Allocatorˉmarker);
             console.write_line(Stackˉmarker);
             console.write_line(Greeting);
             return 0;
@@ -394,31 +398,47 @@ internal static class Program
         var First = Kernelˉassemblyˉshim.Buildˉobject();
         var Second = Kernelˉassemblyˉshim.Buildˉobject();
         Sequenceˉequal(First, Second);
-        Equal(158, First.Length);
+        Equal(279, First.Length);
         Equal(
-            "f7525da5e8365b75adc68bd2174ad5763ed05b774d861c2a0cd6aad6c0e8e1b7",
+            "36ea8c6ebcd5e1ef51ff332344aa549a8ec7aadaf485d44306ee63d5b41d4123",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.AsSpan()).Value;
         Equal(1, Object.Sections.Length);
         True(Object.Sections[0].Kind == Objectˉsectionˉkind.Code, "The WVA shim is not code.");
-        Sequenceˉequal([(byte)0xE9, 0, 0, 0, 0], Object.Sections[0].Data);
-        Equal(2, Object.Symbols.Length);
-        Equal(Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL, Object.Symbols[0].Name);
-        True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The WVA shim is not exported.");
-        Equal(X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL, Object.Symbols[1].Name);
-        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Import, "Windvale Main is not imported by WVA.");
-        Equal(1, Object.Relocations.Length);
+        Sequenceˉequal(
+            [(byte)0xE9, 0, 0, 0, 0, 0xE9, 0, 0, 0, 0],
+            Object.Sections[0].Data);
+        Equal(4, Object.Symbols.Length);
+        Equal(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Object.Symbols[0].Name);
+        True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The WVA console shim is not exported.");
+        Equal(Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL, Object.Symbols[1].Name);
+        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Export, "The WVA Main shim is not exported.");
+        Equal(X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL, Object.Symbols[2].Name);
+        True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Import, "Windvale Main is not imported by WVA.");
+        Equal(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL, Object.Symbols[3].Name);
+        True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Import, "The x64 byte writer is not imported by WVA.");
+        Equal(2, Object.Relocations.Length);
         True(
             Object.Relocations[0] is
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 1,
-                Symbolˉindex: 1,
+                Symbolˉindex: 3,
                 Addend: -4,
             },
-            "The WVA-to-WV transfer does not use the canonical relative relocation.");
+            "The WV-to-WVA console transfer does not use the canonical relative relocation.");
+        True(
+            Object.Relocations[1] is
+            {
+                Kind: Objectˉrelocationˉkind.Relativeˉi32,
+                Sectionˉindex: 0,
+                Offset: 6,
+                Symbolˉindex: 2,
+                Addend: -4,
+            },
+            "The WVA-to-WV Main transfer does not use the canonical relative relocation.");
     }
 
     private static void Memoryˉplanˉfails(

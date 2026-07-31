@@ -63,6 +63,6 @@ Frontend and semantic diagnostics retain their existing `WVC` codes and phases. 
 
 ## Determinism and current evidence
 
-Identical source and target version produce identical WVO bytes. The canonical `Hello-World.wv` input produces a 1,574-byte WVO object with SHA-256 `05c04cf7e7167850d954ca36d135e68065478301c20819ad27d0d2f10ce51133`, 39 relative relocations, and no absolute relocation. Firmware probe version 6 links that object with the independent memory layer and WVA machine shim, then executes Main on the kernel-owned stack after successful `ExitBootServices`.
+Identical source and target version produce identical WVO bytes. The canonical `Hello-World.wv` input produces a 2,564-byte WVO object with SHA-256 `f2c28eb5f020f59b8acb480fc8dc62e393ebb14405b3c12ecb05076176d44420`, 72 relative relocations, and no absolute relocation. Firmware probe version 6 links that object with the independent memory layer and bidirectional WVA machine seam, then executes Main on the kernel-owned stack after successful `ExitBootServices`.
 
 This target does not support general expressions, locals, calls, branches, Unicode console output, static-data addressing, multiple functions, a general native calling convention, optimization, unwind information, Windows or Linux executable production, compiler self-hosting, or portable bytecode execution in the OS. Each expansion requires focused semantics, encoding, relocation, and differential evidence rather than silent fallback.

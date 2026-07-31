@@ -72,7 +72,7 @@ The memory object exports ASCII symbol `Windvale_kernel_allocate_pages`:
 - Allocation is contiguous, monotonically increasing, and deterministic.
 - Version 1 provides no release operation and no allocation outside its one arena.
 
-The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocator probe, emits memory evidence through the existing byte adapter, switches stacks, and calls WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. That exact shim tail-transfers to compiler export `Windvale_kernel_main` under the [kernel native seam](Windvale-Kernel-Native-Seam.md).
+The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocator probe, switches stacks, and calls WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. That exact shim tail-transfers to compiler export `Windvale_kernel_main` under the [kernel native seam](Windvale-Kernel-Native-Seam.md). Main owns the success markers and can be reached only after every preceding memory operation succeeds.
 
 ## Diagnostics and limits
 
@@ -91,7 +91,7 @@ Malformed and random bytes must produce a bounded result or one of these failure
 
 ## Current evidence and limit
 
-Firmware probe version 6 links the memory object and WVA shim independently, finds and clears the arena after firmware shutdown, records a successful one-page allocation, copies the handoff, and reaches compiler export `Windvale_kernel_main` through the WVA tail transfer on the owned stack. The `kernel-stack=pass` line originates in that compiler-generated function. The accepted QEMU run requires the exact memory suffix:
+Firmware probe version 6 links the memory object and WVA shims independently, finds and clears the arena after firmware shutdown, records a successful one-page allocation, copies the handoff, and reaches compiler export `Windvale_kernel_main` through the WVA tail transfer on the owned stack. Every line through Hello World in the suffix originates in that compiler-generated function and returns through the WVA console adapter. The accepted QEMU run requires the exact memory suffix:
 
 ```text
 memory-owned=pass

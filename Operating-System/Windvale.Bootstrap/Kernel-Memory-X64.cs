@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Text;
 
 namespace Windvale.Bootstrap;
 
@@ -13,9 +12,6 @@ internal sealed record Kernelˉmemoryˉcode(
 
 internal static class Kernelˉmemoryˉx64
 {
-    public const string MEMORY_OWNED_MARKER = "memory-owned=pass\n";
-    public const string ALLOCATOR_MARKER = "allocator=pass\n";
-
     private const string FAILURE_LABEL = "memory_failure";
     private const string RESTORE_LABEL = "memory_restore";
     private const string SCAN_LABEL = "memory_scan";
@@ -187,15 +183,12 @@ internal static class Kernelˉmemoryˉx64
         output.Jumpˉif(CONDITION_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x89, 0x46, 0x38);
 
-        Emitˉserialˉtext(output, relocations, MEMORY_OWNED_MARKER);
-        Emitˉserialˉtext(output, relocations, ALLOCATOR_MARKER);
-
         // Call compiler-generated Main on the two-page kernel-owned stack.
         output.Emit(0x49, 0x8D, 0xA6);
         output.Emitˉu32((uint)((Kernelˉmemoryˉcontract.STATE_PAGES + Kernelˉmemoryˉcontract.STACK_PAGES) * Kernelˉmemoryˉcontract.PAGE_BYTES));
         output.Emit(0x48, 0x83, 0xEC, 0x20);
         output.Emit(0x49, 0x8D, 0x4E, (byte)Kernelˉmemoryˉcontract.HANDOFF_COPY_OFFSET);
-        Emitˉexternalˉcall(output, relocations, 3);
+        Emitˉexternalˉcall(output, relocations, 2);
         output.Emit(0x49, 0x89, 0xC7, 0x4C, 0x89, 0xE4, 0x4C, 0x89, 0xF8);
         output.Jump(RESTORE_LABEL);
 
@@ -239,19 +232,6 @@ internal static class Kernelˉmemoryˉx64
         output.Emit(0x4C, 0x89, 0xD0, 0x5F, 0xC3);
         output.Mark(ALLOCATOR_FAILURE_LABEL);
         output.Emit(0x31, 0xC0, 0x5F, 0xC3);
-    }
-
-    private static void Emitˉserialˉtext(
-        X64ˉcodeˉbuilder output,
-        ImmutableArray<Kernelˉmemoryˉrelocation>.Builder relocations,
-        string value)
-    {
-        foreach (var Value in Encoding.ASCII.GetBytes(value))
-        {
-            output.Emit(0xB9);
-            output.Emitˉu32(Value);
-            Emitˉexternalˉcall(output, relocations, 2);
-        }
     }
 
     private static void Emitˉexternalˉcall(

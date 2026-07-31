@@ -12,12 +12,13 @@ public static class Firmwareˉprobe
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
+    public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
     public const string ENTRY_MARKER = "windvale-os-boot 6\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
-    public const string MEMORY_OWNED_MARKER = Kernelˉmemoryˉx64.MEMORY_OWNED_MARKER;
-    public const string ALLOCATOR_MARKER = Kernelˉmemoryˉx64.ALLOCATOR_MARKER;
+    public const string MEMORY_OWNED_MARKER = "memory-owned=pass\n";
+    public const string ALLOCATOR_MARKER = "allocator=pass\n";
     public const string KERNEL_STACK_MARKER = "kernel-stack=pass\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string WINDVALE_SOURCE_MARKER = "windvale-source=pass\n";
@@ -121,7 +122,7 @@ public static class Firmwareˉprobe
             Objectˉarchitecture.X86ˉ64,
             [new(".text", Objectˉsectionˉkind.Code, 16, (uint)Supportˉcode.Length, Supportˉcode)],
             [new(
-                WRITE_BYTE_SYMBOL,
+                X64_WRITE_BYTE_SYMBOL,
                 Objectˉsymbolˉbinding.Export,
                 Objectˉsymbolˉkind.Function,
                 0,
@@ -147,13 +148,6 @@ public static class Firmwareˉprobe
                     0,
                     0,
                     Memory.Enterˉbytes),
-                new(
-                    WRITE_BYTE_SYMBOL,
-                    Objectˉsymbolˉbinding.Import,
-                    Objectˉsymbolˉkind.Function,
-                    Objectˉlimits.UNDEFINED_SECTION,
-                    0,
-                    0),
                 new(
                     Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL,
                     Objectˉsymbolˉbinding.Import,
