@@ -104,13 +104,13 @@ The focused conformance test compiles the backend core, runs its profile/accepta
 
 The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical flattening across a root and two transitive dependencies. Dependency-owned functions, records, enums, and a text literal combine with root static data and a synthetic-name collision. Only `Main` remains exported. Both backends produce the exact 1,030-byte WVB module with SHA-256 `7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f`; it executes with result `42`. Reversed dependency order is rejected before output publication.
 
-The current candidate bootstrap artifacts are:
+The current cross-host-qualified bootstrap artifacts are:
 
 - `Source-Wvb-Core.wvb`: 571,555 bytes, SHA-256 `b00677d82b90c7aa5dfe486cf7c8675658fd37a9fc560a3631004056f28b5cbf`.
 - `Source-Wvb-Demo.wvb`: 573,282 bytes, SHA-256 `19da326967e17a06f149efbb9cbd35c89ad9ec156f7f74833ea8287141cb419e`.
 - `Source-Wvb-Tool.wvb`: 572,786 bytes, SHA-256 `ce3ae94685c07b025e8cd8ea95f53df01819cb1946eaf3cf442e3fa38ad8cb5d`.
 
-The preceding capability/profile implementation was qualified from exact commit `98117c15255ce5a95d41ca13e43f92a4af77ef98`. The multi-module candidate identities above require exact-commit Windows and Debian qualification before they are called cross-host-qualified.
+The static multi-module implementation and artifact identities above were qualified from exact commit `cb1db235ef1ecf9697693f260516d0e241ced012` on Windows x64 and Debian Linux x64. Both hosts passed all 48 tests and the complete native verifier, their normalized reports matched, and all 61 retrieved portable artifacts were byte-identical.
 
 ## Expansion path
 

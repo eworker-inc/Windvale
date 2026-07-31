@@ -3,7 +3,7 @@
 - Evidence date: 2026-07-31
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Qualified commit: `98117c15255ce5a95d41ca13e43f92a4af77ef98`
+- Qualified commit: `cb1db235ef1ecf9697693f260516d0e241ced012`
 
 ## Requirement evidence
 
@@ -29,7 +29,7 @@
 | Windvale-written declaration/signature binding | `Compilerˉsourceˉsymbols` enforces namespaces and capability policy, resolves visible nominal signature types, assigns canonical nominal identities, and publishes independently validated `WVSD 1` plus transitive-visibility evidence. |
 | Windvale-written body binding | `Compilerˉsourceˉbindings` assigns canonical parameter/local slots and lexical scopes, binds reads, assignments, constructors, functions, capabilities, and Foundation intrinsics, checks arity, and publishes independently validated `WVLB 1` evidence. |
 | Canonical typed source IR | `Compilerˉsourceˉwir` performs complete implemented expression typing, field/operator/call validation, explicit basic-block and temporary construction, return/reachability proof, and publication only after independent validation of all five packed `WVIR 1` sections and their semantic relationships. |
-| Windvale-written WVB backend | `Compilerˉsourceˉwvb` canonically remaps WVSD function/data/capability identities, preserves portable/hosted/system profiles, and serializes canonical nominal Types and catalog-derived Capabilities identities. It lowers primitive and nominal functions plus `[i32]`, text, bytes, escaped-Unicode literals, immutable record construction/fields, enum operations, capability calls, and Foundation intrinsics into a complete seven-section WVB 1.6 module, computes exact branch offsets and maximum stack in a separate pass, and rejects unsupported module families explicitly. |
+| Windvale-written WVB backend | `Compilerˉsourceˉwvb` resolves global WVSD identities through their owning WVSS source and statically flattens the complete validated graph into one WVB 1.6 module. It preserves root profiles, capabilities, data, and exports; internalizes dependency functions and nominal types; canonically remaps every function/data/type/capability identity; lowers the complete implemented primitive, nominal, capability, and Foundation surface; computes exact branch offsets and maximum stack in a separate pass; and rejects invalid graphs before publication. |
 | Immutable nominal records | Record declarations, positional construction, named field reads, nominal function signatures, canonical WVB schemas, verifier rejection cases, runtime values, and inspector output are exercised end to end. |
 | Nominal enums and bounded formatting | Explicit enum declarations, exact nominal equality, enum-valued record fields, member naming, invariant `i32`/`u8`/`u32` formatting, bounded text concatenation, verifier rejection cases, and deterministic runtime output are exercised end to end. |
 | Windvale-written inspection | `Wvˉdumpˉcore` reads an explicit real file through hosted resources while pure Windvale functions validate all seven envelopes, decode every declaration payload and value shape, walk every instruction, reject malformed lengths/UTF-8/opcodes without escaping diagnostic boundaries, and emit a versioned ASCII-safe line report. |
@@ -391,6 +391,20 @@ The focused backend test took 8.695 seconds on Windows. Standard verification co
 All 59 directly retrieved portable artifacts, totaling 7,353,902 bytes, matched Windows byte for byte. The transferred Debian evidence bundle was 2,160,660 bytes with SHA-256 `773b5694ae9085cebe26a4093db22f8296f418bc4e79040c6cf259ef2a02a5d5`. After retrieval and comparison, the resolved exact Debian QA directory, source archive, and evidence bundle were removed and confirmed absent.
 
 This qualifies Decision 0039 and the capability/profile slice of roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not qualify imports, multi-module backend translation, closure of the source-envelope or repeated-body-traversal limits, full compiler bootstrap closure, native tooling, or any OS layer. Those boundaries remain explicit deterministic rejections or separately measured closure work.
+
+## Static multi-module backend qualification
+
+Exact candidate commit `cb1db235ef1ecf9697693f260516d0e241ced012`, tree `32fb95efd3ff656b846c92c843973bacafbf9de1`, was archived as `windvale-wvb-modules-cb1db235ef1e.tar.gz`, 2,658,772 bytes with SHA-256 `dc8ae327e7ca56f7f0d4025ee4b7fa09dfc8e64b51f05d972ec735becac8cd97`. The digest and size were retained across transfer, the Linux verifier passed `/bin/sh -n`, and the exact archive was extracted to `/tmp/windvale-wvb-modules-cb1db235ef1e` on the isolated Debian QA host. Windows x64 and Debian GNU/Linux 12 x64 with .NET SDK `10.0.302` both completed zero-warning Release builds, all 48 tests, and the complete native verifier.
+
+The backend now lowers all one to 64 modules admitted by the existing WVSS/WVSD/WVLB/WVIR contracts. The three-module differential fixture covers cross-module calls and nominal values, a dependency-owned text literal, root explicit data, synthetic-name collision avoidance, global canonical function/data/type order, and root-only exports. Windvale and Stage 0 both emit its exact 1,030-byte WVB module with SHA-256 `7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f`; it passes mandatory verification, exposes only `Main`, and executes with result `42`. Reversing the canonical dependency order returns `Sourceˉwir` and result `1` without creating an output file.
+
+Both hosts produced the exact 571,555-byte `Source-Wvb-Core.wvb` SHA-256 `b00677d82b90c7aa5dfe486cf7c8675658fd37a9fc560a3631004056f28b5cbf`, 573,282-byte demo SHA-256 `19da326967e17a06f149efbb9cbd35c89ad9ec156f7f74833ea8287141cb419e`, and 572,786-byte hosted tool SHA-256 `ce3ae94685c07b025e8cd8ea95f53df01819cb1946eaf3cf442e3fa38ad8cb5d`.
+
+The focused backend test took 10.354 seconds on Windows. Standard verification completed in 441.8 seconds, with 435.850 seconds in the complete 48-test suite and 8.956 seconds in the backend test. Windows Qualification completed in 916.6 seconds with a 465.074-second suite and 9.203-second backend test; Debian Qualification completed in 927.5 seconds with a 477.445-second suite and 9.682-second backend test. The 15,561-byte Windows report has SHA-256 `a61946c88aee3c2509b5300af938a7503c9af11bd024ceb1aa2ae5edc881c450`; the 15,471-byte Debian report has SHA-256 `6f1c3002b5f4937cd50127a6c2fe1cd366f8a4a4063001dc12b5fa8cec5ba409`. Their normalized contracts matched exactly with canonical SHA-256 `c7889bc7535d1cba8363589ff8f61db4fe3aded469161b82fbf818071b4a8015`.
+
+All 61 directly retrieved portable artifacts, totaling 7,370,614 bytes, matched Windows byte for byte. The transferred Debian evidence bundle was 2,165,744 bytes with SHA-256 `7aa65463230eca2d418efa8b05c57acee6bcdc6226f1da55019de8929011b7c0`. After retrieval and comparison, the resolved exact Debian QA directory, source archive, failed-candidate directory/archive, and evidence bundle were removed and confirmed absent.
+
+This qualifies Decision 0040 and the static multi-module backend slice of roadmap Phase 8. It does not complete Phase 7 or Phase 8 and does not close the 4 MiB WVSS envelope, repeated local/body traversal costs, full compiler bootstrap closure, native tooling, or any OS layer. Those remain explicit later slices.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 

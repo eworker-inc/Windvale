@@ -1,7 +1,7 @@
 # Decision 0040: Static multi-module Windvale backend
 
 - Date: 2026-07-31
-- Status: Accepted; cross-host qualification pending
+- Status: Accepted and cross-host qualified
 
 ## Context
 
@@ -31,7 +31,7 @@ This closes the backend's module-count restriction but does not complete compile
 
 ## Verification gate
 
-The candidate must pass:
+The implementation must pass:
 
 - the focused source-to-WVB test with all existing single-module fixtures unchanged;
 - a three-module Stage 0 differential fixture covering cross-module calls and nominal values, dependency-owned text literals, root data, synthetic-name collision avoidance, canonical global function/data/type ordering, root-only exports, mandatory verification, and runtime result `42`;
@@ -39,4 +39,4 @@ The candidate must pass:
 - the complete Standard suite and native verifier on Windows; and
 - exact-commit Debian qualification with matching normalized reports and byte-identical retrieved portable artifacts.
 
-The implementation remains pending cross-host qualification until all gates are recorded in `Documents/Project/Seed-Verification-Evidence.md`.
+Exact implementation commit `cb1db235ef1ecf9697693f260516d0e241ced012` passed every gate on Windows x64 and Debian Linux x64. The complete evidence is recorded in `Documents/Project/Seed-Verification-Evidence.md`.

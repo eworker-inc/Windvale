@@ -115,6 +115,12 @@ Decision 0039 adds the hosted all-capabilities fixture to the same source-to-WVB
 
 Windows Qualification completed in 908.170 seconds with a 458.146-second suite; Debian Qualification completed in 926.189 seconds with a 474.315-second suite. Both hosts passed the complete native verifier and zero-warning Release builds, and all 59 portable artifacts matched byte for byte. Profile preservation, canonical capability metadata, all seven call signatures, verifier inspection, authorization, and runtime execution therefore remain in the seconds-scale focused loop, while exact-host process evidence remains confined to the milestone gate.
 
+## Static multi-module backend measurements
+
+Decision 0040 adds one three-module differential fixture to the same source-to-WVB test and adds its Windvale and Stage 0 outputs to native evidence without adding another complete-suite case. On exact commit `cb1db23`, the focused test took 10.354 seconds on Windows. Standard verification completed in 441.8 seconds, with 435.850 seconds in the complete 48-test suite and 8.956 seconds in the backend test.
+
+Windows Qualification completed in 916.6 seconds with a 465.074-second suite and 9.203-second backend test; Debian Qualification completed in 927.5 seconds with a 477.445-second suite and 9.682-second backend test. Both hosts passed the complete native verifier and zero-warning Release builds, and all 61 portable artifacts matched byte for byte. Owner-aware static flattening, cross-module calls and nominal values, global text/data/type/function ordering, root-only exports, rejection without publication, verification, and runtime result `42` therefore remain in the seconds-scale focused loop, while exact-host process evidence remains confined to the milestone gate.
+
 ## Qualification evidence
 
 The optimized verifier was qualified from the exact pre-normalization commit `de88007b4716c88604321baaad4c4d5c417d317e`, archived as `windvale-verification-speed-de88007.tar.gz`, 362,715 bytes with SHA-256 `dc5fab40a06a3f19706923fa3f569178297cd97bda5b9a8dc9e2b9c128942b92`. The attribution migration ledger maps it to tree-identical normalized commit `00466fd9e9feaac4655cdf9748ac1dc56b586a84`.
