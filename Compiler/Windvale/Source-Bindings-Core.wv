@@ -744,20 +744,22 @@ export fn Compilerˉsourceˉbindingsˉfindˉlocal(
         let Entry: u32 = Index * 36u32;
         let Priorˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 16u32);
         let Priorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 20u32);
-        if Compilerˉsourceˉspansˉcompare(
-            Source, Nameˉoffset, Nameˉlength,
-            Source, Priorˉoffset, Priorˉlength
-        ) == 0 {
-            let Scopeˉstart: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 28u32);
-            let Scopeˉend: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 32u32);
-            if Useˉoffset >= Scopeˉstart {
-                if Useˉoffset < Scopeˉend {
-                    return Compilerˉsourceˉlocalˉmatch(
-                        true,
-                        Compilerˉsourceˉbindingsˉkind(Bytesˉreadˉu32ˉlittle(Payload, Entry + 8u32)),
-                        Bytesˉreadˉu32ˉlittle(Payload, Entry + 12u32),
-                        Bytesˉreadˉu32ˉlittle(Payload, Entry + 24u32)
-                    );
+        if Priorˉlength == Nameˉlength {
+            if Compilerˉsourceˉspansˉcompare(
+                Source, Nameˉoffset, Nameˉlength,
+                Source, Priorˉoffset, Priorˉlength
+            ) == 0 {
+                let Scopeˉstart: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 28u32);
+                let Scopeˉend: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 32u32);
+                if Useˉoffset >= Scopeˉstart {
+                    if Useˉoffset < Scopeˉend {
+                        return Compilerˉsourceˉlocalˉmatch(
+                            true,
+                            Compilerˉsourceˉbindingsˉkind(Bytesˉreadˉu32ˉlittle(Payload, Entry + 8u32)),
+                            Bytesˉreadˉu32ˉlittle(Payload, Entry + 12u32),
+                            Bytesˉreadˉu32ˉlittle(Payload, Entry + 24u32)
+                        );
+                    }
                 }
             }
         }
@@ -798,7 +800,7 @@ export fn Compilerˉsourceˉbindingsˉfindˉdeclaration(
             let Targetˉsourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
             let Targetˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 12u32);
             let Targetˉlength: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 16u32);
-            if Bytesˉreadˉu8(Input, Targetˉsourceˉoffset + Targetˉoffset) == Queryˉfirst {
+            if Targetˉlength == Nameˉlength {
                 if Compilerˉsourceˉspansˉcompare(
                     Source, Nameˉoffset, Nameˉlength,
                     Input, Targetˉsourceˉoffset + Targetˉoffset, Targetˉlength
@@ -926,7 +928,7 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
             let Targetˉsourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
             let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 12u32);
             let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 16u32);
-            if Bytesˉreadˉu8(Input, Targetˉsourceˉoffset + Nameˉoffset) == Queryˉfirst {
+            if Nameˉlength == Length {
                 if Compilerˉsourceˉspansˉcompare(
                     Source, Offset, Length,
                     Input, Targetˉsourceˉoffset + Nameˉoffset, Nameˉlength

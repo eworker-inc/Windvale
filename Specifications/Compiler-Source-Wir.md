@@ -78,7 +78,7 @@ The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified
 - prior-temporary use, local slots, data identities, record/enum identities, field/member indices, call targets, arity, and dynamic parameter/result shapes; and
 - rejection of trailing bytes and corrupted function, block, operation, temporary, or operand entries.
 
-Construction uses function-private payloads and merges each completed function once. Symbol lookup uses a deterministic first-byte index over absolute WVSS spans. Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible, and the growing binding state is carried through nested blocks. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
+Construction uses function-private payloads and merges each completed function once. Symbol lookup uses a deterministic first-byte index over absolute WVSS spans. Canonical record/enum shapes and directory identities use the private WVSI bidirectional nominal tables rather than repeated ordinal rescans. Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible, and the growing binding state is carried through nested blocks. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
 
 ## Verification tiers and current boundary
 
@@ -90,12 +90,12 @@ source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporarie
 
 Candidate artifacts are:
 
-- `Source-Wir-Core.wvb`: 504,104 bytes, SHA-256 `735f2d682312f6cbad1345a183eb47fcf9b2efffcc9a645fc164749ec2971cca`.
-- `Source-Wir-Demo.wvb`: 509,805 bytes, SHA-256 `24f1e0a5edf94f1befb27e29606b9f406ff4493f5e51ff99323caeb16d632bcf`.
-- `Source-Wir-Tool.wvb`: 505,956 bytes, SHA-256 `0dafd3cda7d73152f4fffdd2ad9a6b6bf2e41611312ac504845764ee33501009`.
+- `Source-Wir-Core.wvb`: 507,772 bytes, SHA-256 `e11a017226c8b357732f02f5bdc6ff581c876276165e267b1875a2daa247cef0`.
+- `Source-Wir-Demo.wvb`: 513,473 bytes, SHA-256 `1af3a5d7523ce5ace0091e4892e35c54a4835487186c4e49e653a8af98ecc721`.
+- `Source-Wir-Tool.wvb`: 509,624 bytes, SHA-256 `3096f68bd7c1ab9e08b5112937d75ef6481b724ba84a9571fd4ce9076156cfa2`.
 
-The original typed-WVIR candidate was cross-host qualified at `bf77f70`, and the fused local-discovery/typed-WVIR implementation at `b1241157310bc597dbdf0d24146f4d81f0128712`. The current artifacts embed Decision 0042's lexer and await exact requalification.
+The original typed-WVIR candidate was cross-host qualified at `bf77f70`, and the fused local-discovery/typed-WVIR implementation at `b1241157310bc597dbdf0d24146f4d81f0128712`. Decision 0044's bidirectional nominal-index candidate has passed Windows Standard verification and awaits exact Windows/Debian Qualification.
 
-The ten-module compiler closure is intentionally not in the fast loop. Decision 0042 reduces the focused typed-WVIR fixture from 8,074,045 to 5,735,695 instructions, but the exact input still exceeds the fixed 4,000,000,000-instruction ceiling. Raising the ceiling is not the remedy; profiling now points to repeated symbol-directory decoding and ordinal span comparison as the next structural gate.
+The ten-module compiler closure is intentionally not in the fast loop. Decision 0042 reduced the focused typed-WVIR fixture from 8,074,045 to 5,735,695 instructions; Decision 0044 reduces it again to 5,715,847 and removes directory-entry construction and nominal-rank derivation as dominant exact-closure costs. The exact input still exceeds the fixed 4,000,000,000-instruction ceiling, and a diagnostic six-billion run also remained bounded. Raising the ceiling is not the remedy; profiling now points to repeated lexical and parser traversal as the next structural gate.
 
 WVIR-to-WVB lowering is specified separately in the initial [source-to-WVB backend contract](Compiler-Source-Wvb.md). WVIR execution, optimization, native IR, and OS-specific lowering are not part of this contract.

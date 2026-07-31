@@ -44,6 +44,7 @@ record Compilerˉsourceˉsymbolˉmatch {
     Declarationˉoffset: u32;
     Nameˉoffset: u32;
     Nameˉlength: u32;
+    Directoryˉindex: u32;
 }
 
 record Compilerˉsourceˉenumˉduplicate {
@@ -99,6 +100,7 @@ export fn Compilerˉsourceˉsymbolsˉmatchˉnone(Modules: u32) -> Compilerˉsour
         false,
         Modules,
         Compilerˉsourceˉdeclarationˉkind.End,
+        0u32,
         0u32,
         0u32,
         0u32
@@ -371,11 +373,96 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
     }
     var Result: bytes = Textˉtoˉutf8("WVSI");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entries));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(256u32));
     Result = Bytesˉconcat(Result, Ranges);
-    return Bytesˉconcat(Result, Payload);
+    Result = Bytesˉconcat(Result, Payload);
+    var Nominalˉkind: Compilerˉsourceˉdeclarationˉkind = Compilerˉsourceˉdeclarationˉkind.Record;
+    var Nominalˉkinds: u32 = 0u32;
+    var Priorˉnameˉoffset: u32 = 0u32;
+    var Priorˉnameˉlength: u32 = 0u32;
+    var Hasˉpriorˉname: bool = false;
+    while Nominalˉkinds < 2u32 {
+        var Count: u32 = Priorˉrecords;
+        if Nominalˉkind == Compilerˉsourceˉdeclarationˉkind.Enum { Count = Priorˉenums; }
+        let Kindˉvalue: u32 = Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(Nominalˉkind);
+        Priorˉnameˉoffset = 0u32;
+        Priorˉnameˉlength = 0u32;
+        Hasˉpriorˉname = false;
+        var Nominal: u32 = 0u32;
+        while Nominal < Count {
+            var Directoryˉindex: u32 = 0u32;
+            var Found: bool = false;
+            var Selectedˉdirectory: u32 = Entries;
+            var Selectedˉnameˉoffset: u32 = 0u32;
+            var Selectedˉnameˉlength: u32 = 0u32;
+            while Directoryˉindex < Entries {
+                let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
+                if Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32) == Kindˉvalue {
+                    let Module: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
+                    let Nominalˉsourceˉentry: u32 = Scan.Directoryˉoffset + Module * 8u32;
+                    let Nominalˉsourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                        Input, Nominalˉsourceˉentry
+                    );
+                    let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
+                    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
+                    let Absoluteˉnameˉoffset: u32 = Nominalˉsourceˉoffset + Nameˉoffset;
+                    var Afterˉprior: bool = !Hasˉpriorˉname;
+                    if Hasˉpriorˉname {
+                        Afterˉprior = Compilerˉsourceˉspansˉcompare(
+                            Input, Absoluteˉnameˉoffset, Nameˉlength,
+                            Input, Priorˉnameˉoffset, Priorˉnameˉlength
+                        ) > 0;
+                    }
+                    if Afterˉprior {
+                        var Beforeˉselected: bool = !Found;
+                        if Found {
+                            Beforeˉselected = Compilerˉsourceˉspansˉcompare(
+                                Input, Absoluteˉnameˉoffset, Nameˉlength,
+                                Input, Selectedˉnameˉoffset, Selectedˉnameˉlength
+                            ) < 0;
+                        }
+                        if Beforeˉselected {
+                            Found = true;
+                            Selectedˉdirectory = Directoryˉindex;
+                            Selectedˉnameˉoffset = Absoluteˉnameˉoffset;
+                            Selectedˉnameˉlength = Nameˉlength;
+                        }
+                    }
+                }
+                Directoryˉindex = Directoryˉindex + 1u32;
+            }
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Selectedˉdirectory));
+            if Found {
+                Priorˉnameˉoffset = Selectedˉnameˉoffset;
+                Priorˉnameˉlength = Selectedˉnameˉlength;
+                Hasˉpriorˉname = true;
+            }
+            Nominal = Nominal + 1u32;
+        }
+        Nominalˉkind = Compilerˉsourceˉdeclarationˉkind.Enum;
+        Nominalˉkinds = Nominalˉkinds + 1u32;
+    }
+    let Nominals: u32 = Priorˉrecords + Priorˉenums;
+    let Reverseˉoffset: u32 = 4112u32 + Entries * 4u32;
+    var Forwardˉdirectory: u32 = 0u32;
+    while Forwardˉdirectory < Entries {
+        var Forwardˉnominal: u32 = 0u32;
+        var Directoryˉnominal: u32 = Nominals;
+        while Forwardˉnominal < Nominals {
+            if Bytesˉreadˉu32ˉlittle(
+                Result, Reverseˉoffset + Forwardˉnominal * 4u32
+            ) == Forwardˉdirectory {
+                Directoryˉnominal = Forwardˉnominal;
+                Forwardˉnominal = Nominals;
+            }
+            Forwardˉnominal = Forwardˉnominal + 1u32;
+        }
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Directoryˉnominal));
+        Forwardˉdirectory = Forwardˉdirectory + 1u32;
+    }
+    return Result;
 }
 
 export fn Compilerˉsourceˉsymbolsˉlookupˉrange(
@@ -421,7 +508,8 @@ export fn Compilerˉsourceˉsymbolsˉdirectoryˉentry(
         ),
         Bytesˉreadˉu32ˉlittle(Directory, Offset + 8u32),
         Bytesˉreadˉu32ˉlittle(Directory, Offset + 12u32),
-        Bytesˉreadˉu32ˉlittle(Directory, Offset + 16u32)
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 16u32),
+        Index
     );
 }
 
@@ -462,16 +550,18 @@ export fn Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
             } else {
                 if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Import {
                     if Entryˉindex >= Expectedˉentries { return false; }
-                    let Entry: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-                        Directory, Scan.Modules, Entryˉindex
-                    );
-                    if !Entry.Found { return false; }
-                    if Entry.Module != Module { return false; }
-                    if Entry.Kind != Declaration.Kind { return false; }
-                    if Entry.Declarationˉoffset != Declaration.Declarationˉoffset { return false; }
-                    if Entry.Nameˉoffset != Declaration.Nameˉoffset { return false; }
-                    if Entry.Nameˉlength != Declaration.Nameˉlength { return false; }
                     let Entryˉoffset: u32 = 16u32 + Entryˉindex * 24u32;
+                    if Bytesˉreadˉu32ˉlittle(Directory, Entryˉoffset) != Module { return false; }
+                    if Bytesˉreadˉu32ˉlittle(Directory, Entryˉoffset + 4u32) !=
+                        Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(Declaration.Kind) {
+                        return false;
+                    }
+                    if Bytesˉreadˉu32ˉlittle(Directory, Entryˉoffset + 8u32) !=
+                        Declaration.Declarationˉoffset { return false; }
+                    if Bytesˉreadˉu32ˉlittle(Directory, Entryˉoffset + 12u32) !=
+                        Declaration.Nameˉoffset { return false; }
+                    if Bytesˉreadˉu32ˉlittle(Directory, Entryˉoffset + 16u32) !=
+                        Declaration.Nameˉlength { return false; }
                     if Bytesˉreadˉu32ˉlittle(Directory, Entryˉoffset + 20u32) != Declaration.Items {
                         return false;
                     }
@@ -547,24 +637,50 @@ export fn Compilerˉsourceˉsymbolsˉfindˉpriorˉinˉdirectory(
         let Directoryˉindex: u32 = Bytesˉreadˉu32ˉlittle(
             Lookup, 4112u32 + (Range.Offset + Index) * 4u32
         );
-        let Entry: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-            Directory, Scan.Modules, Directoryˉindex
-        );
-        if Entry.Module > Currentˉmodule {
+        let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
+        let Entryˉmodule: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
+        if Entryˉmodule > Currentˉmodule {
             return Compilerˉsourceˉsymbolsˉmatchˉnone(Scan.Modules);
         }
-        if Entry.Module == Currentˉmodule {
-            if Entry.Declarationˉoffset >= Currentˉdeclaration {
+        if Entryˉmodule == Currentˉmodule {
+            if Bytesˉreadˉu32ˉlittle(Directory, Entry + 8u32) >= Currentˉdeclaration {
                 return Compilerˉsourceˉsymbolsˉmatchˉnone(Scan.Modules);
             }
         }
-        if Compilerˉsourceˉsymbolsˉkindˉisˉinˉnamespace(Entry.Kind, Namespace) {
-            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entry.Module * 8u32;
+        let Entryˉkind: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32);
+        var Isˉinˉnamespace: bool = false;
+        if Namespace == Compilerˉsourceˉnamespaceˉkind.Capability {
+            Isˉinˉnamespace = Entryˉkind == 2u32;
+        }
+        if Namespace == Compilerˉsourceˉnamespaceˉkind.Data {
+            Isˉinˉnamespace = Entryˉkind == 3u32;
+        }
+        if Namespace == Compilerˉsourceˉnamespaceˉkind.Nominal {
+            Isˉinˉnamespace = Entryˉkind == 4u32;
+            if Entryˉkind == 5u32 { Isˉinˉnamespace = true; }
+        }
+        if Namespace == Compilerˉsourceˉnamespaceˉkind.Function {
+            Isˉinˉnamespace = Entryˉkind == 6u32;
+        }
+        if Namespace == Compilerˉsourceˉnamespaceˉkind.Constructor {
+            Isˉinˉnamespace = Entryˉkind == 4u32;
+            if Entryˉkind == 6u32 { Isˉinˉnamespace = true; }
+        }
+        if Isˉinˉnamespace {
+            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entryˉmodule * 8u32;
             let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
-            if Compilerˉsourceˉspansˉcompare(
-                Input, Sourceˉoffset + Entry.Nameˉoffset, Entry.Nameˉlength,
-                Nameˉsource, Nameˉoffset, Nameˉlength
-            ) == 0 { return Entry; }
+            let Entryˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
+            let Entryˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
+            if Entryˉnameˉlength == Nameˉlength {
+                if Compilerˉsourceˉspansˉcompare(
+                    Input, Sourceˉoffset + Entryˉnameˉoffset, Entryˉnameˉlength,
+                    Nameˉsource, Nameˉoffset, Nameˉlength
+                ) == 0 {
+                    return Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+                        Directory, Scan.Modules, Directoryˉindex
+                    );
+                }
+            }
         }
         Index = Index + 1u32;
     }
@@ -588,18 +704,26 @@ export fn Compilerˉsourceˉsymbolsˉfindˉnominalˉinˉdirectory(
         let Directoryˉindex: u32 = Bytesˉreadˉu32ˉlittle(
             Lookup, 4112u32 + (Range.Offset + Index) * 4u32
         );
-        let Entry: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-            Directory, Scan.Modules, Directoryˉindex
-        );
-        var Isˉnominal: bool = Entry.Kind == Compilerˉsourceˉdeclarationˉkind.Record;
-        if Entry.Kind == Compilerˉsourceˉdeclarationˉkind.Enum { Isˉnominal = true; }
+        let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
+        let Entryˉkind: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32);
+        var Isˉnominal: bool = Entryˉkind == 4u32;
+        if Entryˉkind == 5u32 { Isˉnominal = true; }
         if Isˉnominal {
-            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entry.Module * 8u32;
+            let Entryˉmodule: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
+            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entryˉmodule * 8u32;
             let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
-            if Compilerˉsourceˉspansˉcompare(
-                Input, Sourceˉoffset + Entry.Nameˉoffset, Entry.Nameˉlength,
-                Nameˉsource, Nameˉoffset, Nameˉlength
-            ) == 0 { return Entry; }
+            let Entryˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
+            let Entryˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
+            if Entryˉnameˉlength == Nameˉlength {
+                if Compilerˉsourceˉspansˉcompare(
+                    Input, Sourceˉoffset + Entryˉnameˉoffset, Entryˉnameˉlength,
+                    Nameˉsource, Nameˉoffset, Nameˉlength
+                ) == 0 {
+                    return Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+                        Directory, Scan.Modules, Directoryˉindex
+                    );
+                }
+            }
         }
         Index = Index + 1u32;
     }
@@ -627,20 +751,22 @@ export fn Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
             Lookup, First, Kind
         );
     }
+    let Kindˉvalue: u32 = Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(Kind);
     let Range: Compilerˉsourceˉposition = Compilerˉsourceˉsymbolsˉlookupˉrange(Lookup, First);
     var Index: u32 = 0u32;
     while Index < Range.Line {
         let Directoryˉindex: u32 = Bytesˉreadˉu32ˉlittle(
             Lookup, 4112u32 + (Range.Offset + Index) * 4u32
         );
-        let Entry: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-            Directory, Scan.Modules, Directoryˉindex
-        );
-        if Entry.Kind == Kind {
-            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entry.Module * 8u32;
+        let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
+        if Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32) == Kindˉvalue {
+            let Entryˉmodule: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
+            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entryˉmodule * 8u32;
             let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
+            let Entryˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
+            let Entryˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
             if Compilerˉsourceˉspansˉcompare(
-                Input, Sourceˉoffset + Entry.Nameˉoffset, Entry.Nameˉlength,
+                Input, Sourceˉoffset + Entryˉnameˉoffset, Entryˉnameˉlength,
                 Nameˉsource, Nameˉoffset, Nameˉlength
             ) < 0 { Result = Result + 1u32; }
         }
@@ -821,16 +947,11 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
             Token
         );
     }
-    let Nominalˉindex: u32 = Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
-        Input,
-        Scan,
-        Directory,
+    let Directoryˉentries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    let Nominals: u32 = Records + Enums;
+    let Nominalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
         Lookup,
-        Match.Kind,
-        Source,
-        Token.Offset,
-        Token.Length,
-        Records
+        4112u32 + Directoryˉentries * 4u32 + Nominals * 4u32 + Match.Directoryˉindex * 4u32
     );
     if !Compilerˉsourceˉsymbolsˉisˉvisible(Visibility, Scan.Modules, Owner, Match.Module) {
         return Compilerˉsourceˉsymbolsˉtypeˉfailure(

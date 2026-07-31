@@ -64,4 +64,4 @@ The Windows x64 and Debian Linux x64 conformance runners each pass all 43 tests 
 source set status=Valid modules=5 source-bytes=194697 imports=4 records=16 enums=11 functions=86
 ```
 
-The source-set contract was originally cross-host qualified at `00ef0b1`. The current artifacts and updated aggregate source-byte report embed Decision 0042's lexer and await exact requalification.
+The source-set contract was originally cross-host qualified at `00ef0b1`. The current Decision 0042 artifacts and aggregate source-byte report were requalified byte for byte with the role-based compiler layout at `4fdc6bf`.

@@ -106,7 +106,7 @@ Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks th
 
 The phase validates source symbols first, then traverses modules, declarations, statements, and expression children in canonical source order. A local initializer is bound before its declaration is appended. Call arguments are bound before the call target and arity. The first failure under this order is returned with current module, related module or sentinel, WVSD function entry, byte offset, and one-based line/column.
 
-One combined full pass constructs local evidence and binds body references. The parameter phase and final publication step are also explicit so typed WVIR construction can carry the same function-private binding state while it lowers statements, then publish canonical WVLB evidence without a second successful-path body traversal. Hot lookups pass the immutable binding payload plus the current function range directly. Global lookup uses the prepared symbol index and compares names against absolute offsets in the packed WVSS input. Each function constructs its binding payload privately and merges it once, avoiding quadratic global byte-buffer growth.
+One combined full pass constructs local evidence and binds body references. The parameter phase and final publication step are also explicit so typed WVIR construction can carry the same function-private binding state while it lowers statements, then publish canonical WVLB evidence without a second successful-path body traversal. Hot lookups pass the immutable binding payload plus the current function range directly. Global lookup uses the prepared symbol index, rejects unequal UTF-8 byte lengths before ordinal comparison, and compares names against absolute offsets in the packed WVSS input. Nominal shapes use the WVSI forward directory-to-ordinal table rather than rescanning and reranking WVSD. Each function constructs its binding payload privately and merges it once, avoiding quadratic global byte-buffer growth.
 
 Intrinsic-call lookup dispatches candidates by exact UTF-8 byte length, checks the most common compiler intrinsics first within each length group, and returns on the first match. A nonmatching length does not materialize the candidate text as bytes.
 
@@ -114,16 +114,16 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 ## Candidate artifacts and evidence
 
-- `Source-Bindings-Core.wvb`: 340,557 bytes, SHA-256 `1d4f55b2eb7abaccf103efcebe7cc86b54546a70679cc330b931049bf658f5bb`.
-- `Source-Bindings-Demo.wvb`: 347,442 bytes, SHA-256 `5b7c59e5d3b0529e666e7f0b253f19edf753de624f941fbf0a310462cd8492aa`.
-- `Source-Bindings-Tool.wvb`: 343,039 bytes, SHA-256 `786bf46c4b410ce6e16cd456aea3e9337e34127292088b23aa9b7a68576f3228`.
+- `Source-Bindings-Core.wvb`: 345,074 bytes, SHA-256 `2c253a188c96d5bbdf7e8b81d44dbd776c27c043ba9df7cc6230972c278335e5`.
+- `Source-Bindings-Demo.wvb`: 351,959 bytes, SHA-256 `11621f87f3fe198c97ea141f41ac1a4d69bd34e03f10c17d4bd23083b3087b18`.
+- `Source-Bindings-Tool.wvb`: 347,556 bytes, SHA-256 `2e7f2885da27a5ba12f15a831bb2429a21acb7e23ad46061009b4b2209b713f4`.
 
 The focused demo covers valid parameters/locals/data/calls; mutable and immutable assignment; nested scope and initializer visibility; duplicate locals; primitive, visible, unknown, and inaccessible local types; unknown and inaccessible names/calls; undeclared capabilities; arity; upstream symbol failures; and corrupted header, range, entry, and trailing-data evidence.
 
 The hosted tool binds the current real closure as:
 
 ```text
-source bindings status=Valid modules=9 functions=189 parameters=827 locals=945 reads=8335 assignments=612 calls=1479 directory-bytes=65704
+source bindings status=Valid modules=9 functions=189 parameters=827 locals=986 reads=8451 assignments=643 calls=1508 directory-bytes=67180
 ```
 
-The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. The current artifacts and source-derived counts include Decision 0042's lexer and await exact requalification. The nine-module hosted tool completes in 2,972,056,275 instructions under the unchanged four-billion ceiling.
+The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. Decision 0044's current candidate uses the bidirectional nominal map and length-filtered equality paths. The nine-module hosted tool completes in 2,600,859,185 instructions under the unchanged four-billion ceiling, down 12.5% from Decision 0042's 2,972,056,275-instruction closure despite the larger current source.

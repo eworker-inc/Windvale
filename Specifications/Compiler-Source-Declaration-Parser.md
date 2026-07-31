@@ -90,4 +90,4 @@ source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums
 
 The real lexer completes under 30,000,000 instructions. The larger self-declaration pass completes under 45,000,000. These are compiler-front-end qualification ceilings and do not change assembler or linker ceilings.
 
-The declaration pass was originally cross-host qualified at `fc87a3e`. The current artifacts embed Decision 0042's lexer and await exact Windows/Debian requalification. This remains a declaration-pass contract only; statement/expression parsing, binding, WIR construction, and WVB encoding are separate slices.
+The declaration pass was originally cross-host qualified at `fc87a3e`. The current Decision 0042 artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`. This remains a declaration-pass contract only; statement/expression parsing, binding, WIR construction, and WVB encoding are separate slices.

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current WVIR candidate adds deterministic indexed lookup evidence while preserving the qualified namespace, signature, and WVSD contracts. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes evidence for later semantic phases.
+`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current implementation adds bidirectional nominal identity evidence under Decision 0044 while preserving the qualified namespace, signature, and WVSD contracts. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes evidence for later semantic phases.
 
 It does not bind function bodies, locals, calls, expressions, control flow, construct WIR, or emit WVB.
 
@@ -95,7 +95,11 @@ The directory length must be exactly `16 + EntryCount * 24`. `Compilerˉsourceˉ
 
 ## Internal lookup index
 
-`Lookup` is a private `WVSI 1` acceleration index. It groups WVSD entry indices by the first UTF-8 byte of the declaration name and stores record/enum rank prefixes for each of the 256 byte buckets. Name equality remains exact ordinal UTF-8 comparison over validated absolute WVSS spans. The index never changes namespace semantics and is not a separately published compatibility format.
+`Lookup` is a private `WVSI 1.1` acceleration index. Its 16-byte header contains magic `WVSI`, major/minor version `1.1`, the WVSD entry count, and bucket count `256`. The header is followed by 256 16-byte ranges. Each range contains the first payload index, entry count, prior-record count, and prior-enum count for one possible first UTF-8 byte. The bucket payload then stores every WVSD directory index exactly once.
+
+Two tables follow the bucket payload. The reverse table contains one `u32` for each record and enum in canonical nominal order and maps that ordinal to its WVSD directory index. The forward table contains one `u32` for each WVSD entry and maps nominal declarations to their canonical ordinal; the total nominal count is the nonnominal sentinel. The complete length is `4112 + EntryCount * 8 + NominalCount * 4` bytes.
+
+Name equality remains exact ordinal UTF-8 comparison over validated absolute WVSS spans. Construction is deterministic and total even before duplicate-name rejection. The index never changes namespace semantics and is not a separately published compatibility format.
 
 ## Visibility matrix
 
@@ -109,14 +113,14 @@ Failure evidence names the current module, a related prior/target module when ap
 
 ## Candidate artifacts and evidence
 
-- `Source-Symbols-Core.wvb`: 265,234 bytes, SHA-256 `2ef006de077c9e9d25d9c5a88a79ecbd5fbd9d7f2d77a7acd0173b25eba01ca6`.
-- `Source-Symbols-Demo.wvb`: 277,785 bytes, SHA-256 `f3d17ec178a7edbbec43448fc06d29db07f3426c49c63d27231610879434e4a4`.
-- `Source-Symbols-Tool.wvb`: 269,015 bytes, SHA-256 `3b0e1dd6f21fa0b8d135fea1eed31bfc3e33c97d3827dc0cf9c997a2b8c51d34`.
+- `Source-Symbols-Core.wvb`: 269,799 bytes, SHA-256 `063a9ff3cb37196b1e6d9c8fb5be39916fe9fc21fab8032b0415d5f8ab0677d2`.
+- `Source-Symbols-Demo.wvb`: 283,038 bytes, SHA-256 `9e7826d354d80d06702555e857f348e08a6e396cca64b11c5eda4895e7294a25`.
+- `Source-Symbols-Tool.wvb`: 273,580 bytes, SHA-256 `54289a4ebfe778c6c2b6ebfb7cb7afaf3d4899af41e68a989eaa26b9dd2f28c4`.
 
-The Windows and Debian verifiers each pass a zero-warning Release build, all 47 conformance tests, and the complete native CLI checks. The demo exercises valid and rejected namespaces/signatures plus corrupted directories. The hosted tool validates the real eight-module, 283,765-byte compiler closure as:
+The current candidate passes a zero-warning Release build and all 48 Windows Standard conformance tests; exact Windows/Debian Qualification remains pending. The demo exercises valid and rejected namespaces/signatures plus corrupted directories and both directions of the nominal map. The hosted tool validates the real eight-module, 303,873-byte compiler closure as:
 
 ```text
-source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=290 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64
+source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=291 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64
 ```
 
-The pre-index implementation was qualified at `d57a6d8`, and the indexed implementation at `bf77f70`. The current artifacts embed Decision 0042's lexer and await exact Windows/Debian requalification; symbol counts and the private `WVSI 1` contract are unchanged.
+The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0044's current candidate preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`.

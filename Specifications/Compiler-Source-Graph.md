@@ -65,4 +65,4 @@ The Windows and Debian conformance runners each pass all 44 tests with zero buil
 source graph status=Valid modules=7 imports=6 reachable=7
 ```
 
-The graph contract was originally cross-host qualified at `09c6f54`. The current artifacts embed Decision 0042's lexer and await exact requalification; the graph summary itself is unchanged.
+The graph contract was originally cross-host qualified at `09c6f54`. The current Decision 0042 artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`; the graph summary itself is unchanged.

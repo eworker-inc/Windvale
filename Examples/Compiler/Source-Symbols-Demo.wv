@@ -149,6 +149,11 @@ export fn Main() -> i32 {
         Validˉinput, Scan, Valid.Directory, Valid.Lookup, Leafˉmatch.Kind,
         Leafˉname, 0u32, Bytesˉlength(Leafˉname), Valid.Records
     ) != 3u32 { return 25; }
+    if Bytesˉlength(Valid.Lookup) != 4244u32 { return 26; }
+    if Bytesˉreadˉu16ˉlittle(Valid.Lookup, 6u32) != 1u32 { return 27; }
+    if Leafˉmatch.Directoryˉindex != 10u32 { return 28; }
+    if Bytesˉreadˉu32ˉlittle(Valid.Lookup, 4164u32 + 3u32 * 4u32) != 10u32 { return 29; }
+    if Bytesˉreadˉu32ˉlittle(Valid.Lookup, 4192u32 + 10u32 * 4u32) != 3u32 { return 53; }
 
     if Sourceˉsymbolsˉstatus("module Duplicateˉcapability profile hosted; capability console.write; capability console.write; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉcapability { return 30; }
     if Sourceˉsymbolsˉstatus("module Unknownˉcapability profile hosted; capability console.unknown; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Unknownˉcapability { return 31; }

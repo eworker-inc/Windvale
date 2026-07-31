@@ -1152,10 +1152,11 @@ export fn Compilerˉsourceˉwirˉrecordˉsignature(
     let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 12u32);
     let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 16u32);
     let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Callable.Module);
-    let Nominalˉindex: u32 = Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
-        Input, Scan, Symbols.Directory, Symbols.Lookup,
-        Compilerˉsourceˉdeclarationˉkind.Record,
-        View.Source, Nameˉoffset, Nameˉlength, Symbols.Records
+    let Directoryˉentries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+    let Nominals: u32 = Symbols.Records + Symbols.Enums;
+    let Nominalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Lookup,
+        4112u32 + Directoryˉentries * 4u32 + Nominals * 4u32 + Callable.Directoryˉentry * 4u32
     );
     let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
         View.Source, Declarationˉoffset, 1u32, 1u32
@@ -1262,29 +1263,18 @@ export fn Compilerˉsourceˉwirˉnominalˉbyˉshape(
     Symbols: Compilerˉsourceˉsymbolˉsummary,
     Shape: u32
 ) -> Compilerˉsourceˉsymbolˉmatch {
-    var Wantedˉkind: Compilerˉsourceˉdeclarationˉkind = Compilerˉsourceˉdeclarationˉkind.Record;
     var Wanted: u32 = Shape - 65536u32;
-    if Shape >= 131072u32 {
-        Wantedˉkind = Compilerˉsourceˉdeclarationˉkind.Enum;
-        Wanted = Shape - 131072u32;
+    if Shape >= 131072u32 { Wanted = Shape - 131072u32; }
+    if Wanted >= Symbols.Records + Symbols.Enums {
+        return Compilerˉsourceˉsymbolsˉmatchˉnone(Scan.Modules);
     }
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
-    var Index: u32 = 0u32;
-    while Index < Entries {
-        let Match: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-            Symbols.Directory, Scan.Modules, Index
-        );
-        if Match.Kind == Wantedˉkind {
-            let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Match.Module);
-            let Nominal: u32 = Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
-                Input, Scan, Symbols.Directory, Symbols.Lookup, Match.Kind,
-                View.Source, Match.Nameˉoffset, Match.Nameˉlength, Symbols.Records
-            );
-            if Nominal == Wanted { return Match; }
-        }
-        Index = Index + 1u32;
-    }
-    return Compilerˉsourceˉsymbolsˉmatchˉnone(Scan.Modules);
+    let Directoryˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Lookup, 4112u32 + Entries * 4u32 + Wanted * 4u32
+    );
+    return Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+        Symbols.Directory, Scan.Modules, Directoryˉindex
+    );
 }
 
 export fn Compilerˉsourceˉwirˉnominalˉmember(
@@ -1325,9 +1315,12 @@ export fn Compilerˉsourceˉwirˉnominalˉmember(
                     Queryˉsource, Queryˉoffset, Queryˉlength
                 ) == 0 {
                 if Nominal.Kind == Compilerˉsourceˉdeclarationˉkind.Enum {
-                    let Shape: u32 = 131072u32 + Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
-                        Input, Scan, Symbols.Directory, Symbols.Lookup, Nominal.Kind,
-                        View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength, Symbols.Records
+                    let Directoryˉentries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+                    let Nominals: u32 = Symbols.Records + Symbols.Enums;
+                    let Shape: u32 = 131072u32 + Bytesˉreadˉu32ˉlittle(
+                        Symbols.Lookup,
+                        4112u32 + Directoryˉentries * 4u32 + Nominals * 4u32 +
+                            Nominal.Directoryˉindex * 4u32
                     );
                     return Compilerˉsourceˉwirˉmember(true, Index, Shape);
                 }
@@ -3184,43 +3177,22 @@ export fn Compilerˉsourceˉwirˉfunctionˉblocksˉareˉvalid(
 }
 
 export fn Compilerˉsourceˉwirˉnominalˉdirectoryˉentry(
-    Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
     Nominal: u32,
     Kind: u32
 ) -> u32 {
-    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
-    var Symbolˉindex: u32 = 0u32;
-    while Symbolˉindex < Symbolˉentries {
-        let Symbolˉentry: u32 = 16u32 + Symbolˉindex * 24u32;
-        let Symbolˉkind: u32 = Bytesˉreadˉu32ˉlittle(
-            Symbols.Directory, Symbolˉentry + 4u32
-        );
-        if Symbolˉkind == Kind {
-            let Symbolˉmodule: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Symbolˉentry);
-            let Symbolˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Symbolˉentry + 12u32
-            );
-            let Symbolˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Symbolˉentry + 16u32
-            );
-            let Symbolˉview: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(
-                Input, Scan, Symbolˉmodule
-            );
-            let Candidateˉnominal: u32 = Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
-                Input, Scan, Symbols.Directory, Symbols.Lookup,
-                Compilerˉsourceˉsymbolsˉdeclarationˉkind(Kind),
-                Symbolˉview.Source, Symbolˉnameˉoffset, Symbolˉnameˉlength,
-                Symbols.Records
-            );
-            if Candidateˉnominal == Nominal {
-                return Symbolˉindex;
-            }
-        }
-        Symbolˉindex = Symbolˉindex + 1u32;
+    if Nominal >= Symbols.Records + Symbols.Enums {
+        return Compilerˉsourceˉwirˉsentinel();
     }
-    return Compilerˉsourceˉwirˉsentinel();
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+    let Symbolˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Lookup, 4112u32 + Symbolˉentries * 4u32 + Nominal * 4u32
+    );
+    let Symbolˉentry: u32 = 16u32 + Symbolˉindex * 24u32;
+    if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Symbolˉentry + 4u32) != Kind {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    return Symbolˉindex;
 }
 
 export fn Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
@@ -3311,13 +3283,13 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             return false;
         }
         return Compilerˉsourceˉwirˉnominalˉdirectoryˉentry(
-            Input, Scan, Symbols, Target, 4u32
+            Symbols, Target, 4u32
         ) == Auxiliary;
     }
     if Operation == 18u32 {
         if Target >= Symbols.Records { return false; }
         let Fieldˉrecordˉentry: u32 = Compilerˉsourceˉwirˉnominalˉdirectoryˉentry(
-            Input, Scan, Symbols, Target, 4u32
+            Symbols, Target, 4u32
         );
         if Fieldˉrecordˉentry == Compilerˉsourceˉwirˉsentinel() { return false; }
         let Fieldˉsymbolˉentry: u32 = 16u32 + Fieldˉrecordˉentry * 24u32;
@@ -3340,7 +3312,7 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
         let Enumˉnominal: u32 = Shape - 131072u32;
         if Target != Enumˉnominal { return false; }
         let Enumˉentry: u32 = Compilerˉsourceˉwirˉnominalˉdirectoryˉentry(
-            Input, Scan, Symbols, Enumˉnominal, 5u32
+            Symbols, Enumˉnominal, 5u32
         );
         if Enumˉentry == Compilerˉsourceˉwirˉsentinel() { return false; }
         let Enumˉsymbolˉentry: u32 = 16u32 + Enumˉentry * 24u32;

@@ -104,13 +104,13 @@ The focused conformance test compiles the backend core, runs its profile/accepta
 
 The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical flattening across a root and two transitive dependencies. Dependency-owned functions, records, enums, and a text literal combine with root static data and a synthetic-name collision. Only `Main` remains exported. Both backends produce the exact 1,030-byte WVB module with SHA-256 `7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f`; it executes with result `42`. Reversed dependency order is rejected before output publication.
 
-The current candidate bootstrap artifacts are:
+The current candidate compiler artifacts are:
 
-- `Source-Wvb-Core.wvb`: 582,158 bytes, SHA-256 `c2ab348e59134e5e724adee45d21829e95088ab21f722ccc68e1b6913c4d3c0c`.
-- `Source-Wvb-Demo.wvb`: 583,885 bytes, SHA-256 `519bf0f646dadfd369ef75679c339264cf8fb66721bdf7adb05dd69613f00b07`.
-- `Source-Wvb-Tool.wvb`: 583,389 bytes, SHA-256 `0113c2c640172e2c57791c4da0827c7ebaa395e43bba1a34a1334f458bdaa0de`.
+- `Source-Wvb-Core.wvb`: 585,826 bytes, SHA-256 `32c739a08fd70e3df8551a4c15571f5f53da8d661300f55500eb15cc2c909468`.
+- `Source-Wvb-Demo.wvb`: 587,553 bytes, SHA-256 `426fcdba5267db8390dfa301d16ea93f5391f25a4fd139ba17268736aefb306e`.
+- `Source-Wvb-Tool.wvb`: 587,057 bytes, SHA-256 `d68581ed1e89e22eee9c59d051cd1e79e2e75104287f401697528380198c0527`.
 
-The static multi-module behavior was first qualified at `cb1db235`, and the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`. The current artifacts embed Decision 0042's lexer and await exact Windows/Debian requalification. All five differential fixture outputs remain byte-identical to Stage 0.
+The static multi-module behavior was first qualified at `cb1db235`, and the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`. Decision 0044's current artifacts incorporate the bidirectional nominal index and await exact Windows/Debian Qualification. All five differential fixture outputs remain byte-identical to Stage 0.
 
 ## Expansion path
 

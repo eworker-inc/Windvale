@@ -84,4 +84,4 @@ source bodies status=Valid functions=24 top-level=232 statements=527 expression-
 source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023
 ```
 
-These correspond to the lexer, declaration parser, and body parser. Their ceilings remain respectively 100,000,000, 160,000,000, and 160,000,000 instructions. The body parser was originally cross-host qualified at `ddfa9e3`; the current artifacts embed Decision 0042's lexer and await exact requalification.
+These correspond to the lexer, declaration parser, and body parser. Their ceilings remain respectively 100,000,000, 160,000,000, and 160,000,000 instructions. The body parser was originally cross-host qualified at `ddfa9e3`; the current Decision 0042 artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`.
