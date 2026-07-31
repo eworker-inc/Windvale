@@ -93,17 +93,28 @@ Every function is checked for valid branch boundaries, index and type use, match
 
 The object verifier returns a `Verifiedˉobject`; both CLI object commands decode and verify before reporting. This Stage 0 project is an independent oracle for Windvale-written producers and is not a linker or a host object-format adapter.
 
-### Assembler
+### Windvale assembler
 
-`Assembler/Windvale.Assembler/` owns:
+`Assembler/Windvale/` owns the assembler implementation written in Windvale:
+
+- Bounded WVA 1 line and token scanning over immutable source bytes
+- Complete initial grammar, declaration, ordering, context, reference, and limit validation
+- Named-definition offset and size derivation
+- The first explicit x86-64 instruction and data encodings
+- Canonical WVO relocation and object-byte construction
+- Hosted input/output composition with publication only after complete success
+
+### Reference assembler
+
+`Assembler/Reference/` owns the independent C# Stage 0 and recovery implementation:
 
 - WVA 1 line/token parsing and stable source diagnostics
 - Canonical symbol and section declaration validation
 - Named-definition offset and size derivation
-- The first explicit x86-64 instruction and data encodings
-- WVO relocation creation and verified object production
+- The same explicit x86-64 instruction and data encodings
+- WVO relocation creation and production through the independent object verifier
 
-The assembler depends only on the object model. It returns no bytes until the resulting object passes `Objectˉverifier`. It does not resolve symbols, choose final addresses, apply relocations, define an ABI, or produce an executable image. The C# project remains the Stage 0 recovery oracle for the qualified Windvale-written assembler and must not become a parallel permanent object path.
+Both implementations own the same WVA contract and remain byte-for-byte differential oracles. The reference assembler depends only on the object model and returns no bytes until the resulting object passes `Objectˉverifier`; qualification routes Windvale-written output through that independently owned verifier. Neither implementation resolves symbols, chooses final addresses, applies relocations, defines an ABI, or produces an executable image.
 
 ### Linker
 

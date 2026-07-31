@@ -1370,7 +1370,7 @@ fi
 printf '%s\n' "$WVO_MISSING_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
 
 dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Assembler/Wva-Assembler-Core.wv" \
+    compile "$REPOSITORY_ROOT/Assembler/Windvale/Wva-Assembler-Core.wv" \
     --module "$MACHINE_CONTRACTS_SOURCE" \
     --module "$BYTE_ORDERING_SOURCE" \
     --module "$DECIMAL_PARSING_SOURCE" \

@@ -438,7 +438,7 @@ Compile and run the Windvale-written WVA assembler against that source:
 
 ```powershell
 dotnet run --project Tools/Windvale.Tool -- compile `
-  Examples/Assembler/Wva-Assembler-Core.wv `
+  Assembler/Windvale/Wva-Assembler-Core.wv `
   --module Foundation/Machine-Contracts.wv `
   --module Foundation/Byte-Ordering.wv `
   --module Foundation/Decimal-Parsing.wv `
@@ -500,7 +500,8 @@ export fn Main() -> i32 {
 
 - `Compiler/` — source lexer, parser, semantic analysis, typed WIR, and bytecode lowering
 - `Foundation/` — portable Windvale source modules with explicit multi-consumer contracts
-- `Assembler/Windvale.Assembler/` — WVA parser, semantic validation, x86-64 encoding, and WVO production
+- `Assembler/Windvale/` — Windvale-written WVA parser, semantic validation, x86-64 encoding, and WVO production
+- `Assembler/Reference/` — independent C# Stage 0 assembler and recovery oracle
 - `Linker/Windvale.Linker/` — global symbol resolution, flat-image layout, relocation, independent verification, and canonical maps
 - `Runtime/Windvale.Bytecode/` — module contracts, codec, verifier, digest, and inspector
 - `Runtime/Windvale.Runtime/` — verified-bytecode reference interpreter and capability host
@@ -511,7 +512,7 @@ export fn Main() -> i32 {
 - `.github/` — public issue, pull-request, dependency-update, and verification automation
 - `Examples/Seed/` — portable and hosted example programs
 - `Examples/Foundation/` — incremental programs that exercise self-hosting prerequisites
-- `Examples/Assembler/` — canonical WVA sources for assembler and object-production coverage
+- `Examples/Assembler/` — canonical WVA input examples and object-production coverage
 - `Examples/Linker/` — multi-object providers and the Windvale-written linker core
 - `Specifications/` — implemented source, bytecode, CLI, and conformance contracts
 - `Documents/` — architecture, decisions, project direction, and open questions
@@ -613,6 +614,7 @@ export fn Main() -> i32 {
 - [Bounded ExitBootServices transition decision](Documents/Decisions/0047-Bounded-Exit-Boot-Services-Transition.md)
 - [First kernel handoff and relative UEFI link decision](Documents/Decisions/0048-First-Kernel-Handoff-And-Relative-Uefi-Link.md)
 - [Bidirectional nominal symbol index decision](Documents/Decisions/0050-Bidirectional-Nominal-Symbol-Index.md)
+- [Assembler implementation role layout decision](Documents/Decisions/0051-Assembler-Implementation-Role-Layout.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

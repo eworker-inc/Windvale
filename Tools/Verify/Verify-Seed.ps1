@@ -1530,7 +1530,7 @@ if ($LASTEXITCODE -ne 3 -or ($WvoMissingParentOutput -join "`n") -notmatch 'WVR3
 }
 
 dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Assembler/Wva-Assembler-Core.wv') `
+    compile (Join-Path $RepositoryRoot 'Assembler/Windvale/Wva-Assembler-Core.wv') `
     --module $MachineContractsSource `
     --module $ByteOrderingSource `
     --module $DecimalParsingSource `

@@ -5,7 +5,7 @@
     <Description>Windvale Seed command-line tool.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../Assembler/Windvale.Assembler/Windvale.Assembler.csproj" />
+    <ProjectReference Include="../../Assembler/Reference/Windvale.Assembler.csproj" />
     <ProjectReference Include="../../Compiler/Reference/Windvale.Compiler.csproj" />
     <ProjectReference Include="../../Linker/Windvale.Linker/Windvale.Linker.csproj" />
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
