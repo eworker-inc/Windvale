@@ -43,6 +43,8 @@ Windvale assembly -> verified WVO object -> deterministic linked x86-64 image
 
 Today, Windvale uses dependency-free C# and .NET as its Stage 0 bootstrap. C# is a transition and reference implementation: it makes the compiler, bytecode verifier, runtime, assembler, object model, linker, and CLI executable, testable, and recoverable on Windows and Linux while those components are progressively implemented in Windvale itself. C# does not define Windvale's language semantics or the final self-hosted path, although it may remain as an independent recovery and comparison oracle.
 
+The Windvale-written compiler lives under `Compiler/Windvale`; the independent C# reference/recovery compiler lives under `Compiler/Reference`. “Bootstrap” describes the staged and reproducible process between them, not the product name of either implementation.
+
 [E-Worker Inc](https://eworker.ca) initiated and stewards the project. Windvale is model- and vendor-neutral. A particular system or provider is recorded only when technically, legally, or operationally material; such a record does not imply sponsorship, affiliation, endorsement, or ownership by its provider.
 
 As of July 2026, Windvale is among the earliest known open-source efforts to build this full breadth as one coherent, AI-authored stack from an empty project: its own source-language semantics, compiler, verified bytecode, runtime, assembler, object model, linker, Foundation library, native path, and operating system. Earlier AI-authored operating systems and language/toolchain projects exist; this claim concerns the combined scope, not priority for any one component. The scope, search method, and close comparisons are recorded in the [earliest-known claim evidence](Documents/Project/Earliest-Known-Claim-Evidence.md).
@@ -267,12 +269,12 @@ Compile and run the first Windvale-written compiler slice:
 
 ```powershell
 dotnet run --project Tools/Windvale.Tool -- compile `
-  Compiler/Bootstrap/Source-Lexer-Core.wv `
+  Compiler/Windvale/Source-Lexer-Core.wv `
   --module Foundation/Decimal-Parsing.wv `
   -o artifacts/Source-Lexer-Core.wvb
 dotnet run --project Tools/Windvale.Tool -- compile `
   Examples/Compiler/Source-Lexer-Demo.wv `
-  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Compiler/Windvale/Source-Lexer-Core.wv `
   --module Foundation/Decimal-Parsing.wv `
   -o artifacts/Source-Lexer-Demo.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Lexer-Demo.wvb --max-steps 10000000
@@ -284,14 +286,14 @@ Compile the streaming declaration pass and make it parse its own source:
 
 ```powershell
 dotnet run --project Tools/Windvale.Tool -- compile `
-  Compiler/Bootstrap/Source-Declaration-Parser.wv `
-  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  Compiler/Windvale/Source-Declaration-Parser.wv `
+  --module Compiler/Windvale/Source-Lexer-Core.wv `
   --module Foundation/Decimal-Parsing.wv `
   -o artifacts/Source-Declaration-Parser.wvb
 dotnet run --project Tools/Windvale.Tool -- compile `
   Examples/Compiler/Source-Declaration-Parser-Tool.wv `
-  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
-  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Compiler/Windvale/Source-Declaration-Parser.wv `
+  --module Compiler/Windvale/Source-Lexer-Core.wv `
   --module Foundation/Decimal-Parsing.wv `
   -o artifacts/Source-Declaration-Parser-Tool.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Declaration-Parser-Tool.wvb `
@@ -301,7 +303,7 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Declaration-Par
   --allow process.argument `
   --allow process.argument_count `
   --max-steps 45000000 `
-  -- Compiler/Bootstrap/Source-Declaration-Parser.wv
+  -- Compiler/Windvale/Source-Declaration-Parser.wv
 ```
 
 The declaration pass parses signatures and balanced body spans so later passes can bind declarations first and parse bodies from exact immutable views. The hosted shell only supplies an explicit file snapshot and report sink.
@@ -310,16 +312,16 @@ Compile the statement/expression pass and make it parse its own source:
 
 ```powershell
 dotnet run --project Tools/Windvale.Tool -- compile `
-  Compiler/Bootstrap/Source-Body-Parser.wv `
-  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
-  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  Compiler/Windvale/Source-Body-Parser.wv `
+  --module Compiler/Windvale/Source-Declaration-Parser.wv `
+  --module Compiler/Windvale/Source-Lexer-Core.wv `
   --module Foundation/Decimal-Parsing.wv `
   -o artifacts/Source-Body-Parser.wvb
 dotnet run --project Tools/Windvale.Tool -- compile `
   Examples/Compiler/Source-Body-Parser-Tool.wv `
-  --module Compiler/Bootstrap/Source-Body-Parser.wv `
-  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
-  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Compiler/Windvale/Source-Body-Parser.wv `
+  --module Compiler/Windvale/Source-Declaration-Parser.wv `
+  --module Compiler/Windvale/Source-Lexer-Core.wv `
   --module Foundation/Decimal-Parsing.wv `
   -o artifacts/Source-Body-Parser-Tool.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Body-Parser-Tool.wvb `
@@ -329,7 +331,7 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Body-Parser-Too
   --allow process.argument `
   --allow process.argument_count `
   --max-steps 160000000 `
-  -- Compiler/Bootstrap/Source-Body-Parser.wv
+  -- Compiler/Windvale/Source-Body-Parser.wv
 ```
 
 The body pass returns flat statement and expression views with bounded child spans, counts, and depths. It validates the lexer, declaration parser, and itself without retaining tokens or a syntax tree; semantic binding is the next compiler slice.
@@ -338,18 +340,18 @@ Compile the packed source-set reader and validate the real compiler frontend set
 
 ```powershell
 dotnet run --project Tools/Windvale.Tool -- compile `
-  Compiler/Bootstrap/Source-Set-Core.wv `
-  --module Compiler/Bootstrap/Source-Body-Parser.wv `
-  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
-  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  Compiler/Windvale/Source-Set-Core.wv `
+  --module Compiler/Windvale/Source-Body-Parser.wv `
+  --module Compiler/Windvale/Source-Declaration-Parser.wv `
+  --module Compiler/Windvale/Source-Lexer-Core.wv `
   --module Foundation/Decimal-Parsing.wv `
   -o artifacts/Source-Set-Core.wvb
 dotnet run --project Tools/Windvale.Tool -- compile `
   Examples/Compiler/Source-Set-Tool.wv `
-  --module Compiler/Bootstrap/Source-Set-Core.wv `
-  --module Compiler/Bootstrap/Source-Body-Parser.wv `
-  --module Compiler/Bootstrap/Source-Declaration-Parser.wv `
-  --module Compiler/Bootstrap/Source-Lexer-Core.wv `
+  --module Compiler/Windvale/Source-Set-Core.wv `
+  --module Compiler/Windvale/Source-Body-Parser.wv `
+  --module Compiler/Windvale/Source-Declaration-Parser.wv `
+  --module Compiler/Windvale/Source-Lexer-Core.wv `
   --module Foundation/Decimal-Parsing.wv `
   -o artifacts/Source-Set-Tool.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Set-Tool.wvb `
@@ -359,10 +361,10 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Set-Tool.wvb `
   --allow process.argument `
   --allow process.argument_count `
   --max-steps 800000000 `
-  -- Compiler/Bootstrap/Source-Set-Core.wv `
-     Compiler/Bootstrap/Source-Body-Parser.wv `
-     Compiler/Bootstrap/Source-Declaration-Parser.wv `
-     Compiler/Bootstrap/Source-Lexer-Core.wv `
+  -- Compiler/Windvale/Source-Set-Core.wv `
+     Compiler/Windvale/Source-Body-Parser.wv `
+     Compiler/Windvale/Source-Declaration-Parser.wv `
+     Compiler/Windvale/Source-Lexer-Core.wv `
      Foundation/Decimal-Parsing.wv
 ```
 

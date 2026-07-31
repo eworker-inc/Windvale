@@ -403,7 +403,7 @@ if ($LASTEXITCODE -ne 0 -or $ByteConstructionDemoOutput -notcontains 'Result: 0'
     throw 'The Foundation byte-construction demo did not return Result: 0.'
 }
 
-$SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Lexer-Core.wv'
+$SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Lexer-Core.wv'
 dotnet $ToolDll `
     compile $SourceLexerSource `
     --module $DecimalParsingSource `
@@ -440,7 +440,7 @@ if ($LASTEXITCODE -ne 0 -or $SourceLexerDemoOutput -notcontains 'Result: 0') {
     throw 'The Windvale source-lexer demo did not return Result: 0.'
 }
 
-$SourceDeclarationParserSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Declaration-Parser.wv'
+$SourceDeclarationParserSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Declaration-Parser.wv'
 dotnet $ToolDll `
     compile $SourceDeclarationParserSource `
     --module $SourceLexerSource `
@@ -516,7 +516,7 @@ if (
     throw 'The declaration-parser tool did not parse its own declaration source.'
 }
 
-$SourceBodyParserSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Body-Parser.wv'
+$SourceBodyParserSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Body-Parser.wv'
 dotnet $ToolDll `
     compile $SourceBodyParserSource `
     --module $SourceDeclarationParserSource `
@@ -605,7 +605,7 @@ if (
     throw 'The body-parser tool did not parse its own statement and expression source.'
 }
 
-$SourceSetSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Set-Core.wv'
+$SourceSetSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Set-Core.wv'
 dotnet $ToolDll `
     compile $SourceSetSource `
     --module $SourceBodyParserSource `
@@ -684,7 +684,7 @@ if (
     throw 'The source-set tool did not validate the real compiler frontend set.'
 }
 
-$SourceGraphSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Graph-Core.wv'
+$SourceGraphSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Graph-Core.wv'
 dotnet $ToolDll `
     compile $SourceGraphSource `
     --module $SourceSetSource `
@@ -770,7 +770,7 @@ if (
     throw 'The source-graph tool did not validate the real compiler graph.'
 }
 
-$SourceSymbolsSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Symbols-Core.wv'
+$SourceSymbolsSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Symbols-Core.wv'
 dotnet $ToolDll `
     compile $SourceSymbolsSource `
     --module $SourceGraphSource `
@@ -861,7 +861,7 @@ if (
     throw 'The source-symbol tool did not bind the real compiler closure.'
 }
 
-$SourceBindingsSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Bindings-Core.wv'
+$SourceBindingsSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Bindings-Core.wv'
 dotnet $ToolDll `
     compile $SourceBindingsSource `
     --module $SourceSymbolsSource `
@@ -956,7 +956,7 @@ if (
     throw 'The source-binding tool did not bind the real compiler closure.'
 }
 
-$SourceWirSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Wir-Core.wv'
+$SourceWirSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Wir-Core.wv'
 dotnet $ToolDll `
     compile $SourceWirSource `
     --module $SourceBindingsSource `
@@ -1042,7 +1042,7 @@ if (
     throw 'The typed-WVIR tool did not lower and validate the control-heavy fixture.'
 }
 
-$SourceWvbSource = Join-Path $RepositoryRoot 'Compiler/Bootstrap/Source-Wvb-Core.wv'
+$SourceWvbSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Wvb-Core.wv'
 $SourceWvbDependencies = @(
     '--module', $SourceWirSource,
     '--module', $SourceBindingsSource,

@@ -36,12 +36,10 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 
 ## Ownership
 
-### Compiler
+### Windvale compiler
 
-`Compiler/Windvale.Compiler/` owns:
+`Compiler/Windvale/` owns the compiler implementation written in Windvale:
 
-- Source locations and stable compiler diagnostics
-- Tokenization and strict string-literal handling
 - The first Windvale-written streaming lexer over strict UTF-8 bytes, with Stage 0 token identities and bounded source/failure coordinates
 - A Windvale-written declaration pass exposing module/declaration/body byte spans and counts through streaming cursors without token or declaration collections
 - A compiler-owned canonical packed source-set reader that gives portable semantic phases indexed immutable views over the root and ordered dependencies
@@ -49,14 +47,23 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - A Windvale-written declaration/signature symbol phase with independently validated packed declaration evidence, transitive visibility, deterministic nominal indices, and stable namespace/type failures
 - A Windvale-written parameter/local and body-reference binder with independently validated packed WVLB evidence
 - A Windvale-written typed WVIR producer with explicit blocks, temporaries, source spans, and an independent packed-directory validator
+- A Windvale-written WVIR-to-WVB backend that emits one canonical verified module from a validated source graph
+
+This implementation is correctly named as a compiler even before it completes self-hosting qualification.
+
+### Reference compiler
+
+`Compiler/Reference/` owns the independent C# Stage 0 and recovery implementation:
+
+- Source locations and stable compiler diagnostics
+- Tokenization and strict string-literal handling
 - Recursive-descent and precedence parsing
 - Explicit bounded source-module graph validation and deterministic static composition of dependency records, enums, and functions
-- Portable Foundation source contracts used by multiple Windvale-written tools
 - Module, capability, data, record, enum, function, local, and nominal type binding
 - Typed, stack-independent WIR with explicit blocks and terminators
 - Deterministic lowering from WIR into stack bytecode
 
-WIR uses virtual temporaries and local slots. The Stage 0 C# compiler lowers its typed WIR to bytecode, and the portable Windvale-written front end publishes the separate WVIR 1 contract. The Windvale-written backend assigns every WIR temporary a bytecode local and emits one complete WVB 1.6 module from a validated WVSS graph whose root is portable, hosted, or system. It statically internalizes portable dependency functions and nominal types while preserving root static data, explicit catalog capabilities, profile, and exports. WVIR retains stable WVSD declaration identities; the backend resolves each identity through its owner source, translates it to ordinal WVB function, data, and capability indices, uses canonical nominal identities as Types indices, and emits canonical functions, root exports, types, capabilities, explicit data, and cross-module interned text literals. The operand stack stays empty between WIR operations and at block boundaries. This intentionally verbose form remains easy to inspect, verify, and compare byte for byte with Stage 0. Runtime linkage remains separate and is not required by static source composition.
+WIR uses virtual temporaries and local slots. The C# reference compiler lowers its typed WIR to bytecode, and the portable Windvale compiler publishes the separate WVIR 1 contract. The Windvale-written backend assigns every WIR temporary a bytecode local and emits one complete WVB 1.6 module from a validated WVSS graph whose root is portable, hosted, or system. It statically internalizes portable dependency functions and nominal types while preserving root static data, explicit catalog capabilities, profile, and exports. WVIR retains stable WVSD declaration identities; the backend resolves each identity through its owner source, translates it to ordinal WVB function, data, and capability indices, uses canonical nominal identities as Types indices, and emits canonical functions, root exports, types, capabilities, explicit data, and cross-module interned text literals. The operand stack stays empty between WIR operations and at block boundaries. This intentionally verbose form remains easy to inspect, verify, and compare byte for byte with the reference compiler. Runtime linkage remains separate and is not required by static source composition.
 
 ### Bytecode
 

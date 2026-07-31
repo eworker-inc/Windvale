@@ -6120,7 +6120,7 @@ internal static class Program
         var Result = Seedˉcompiler.Compileˉmodules(
             new(sourceˉname, source),
             [
-                new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+                new("Compiler/Windvale/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
                 new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ]);
         if (!Result.Success)
@@ -6139,8 +6139,8 @@ internal static class Program
         var Result = Seedˉcompiler.Compileˉmodules(
             new(sourceˉname, source),
             [
-                new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
-                new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+                new("Compiler/Windvale/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
+                new("Compiler/Windvale/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
                 new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ]);
         if (!Result.Success)
@@ -6159,9 +6159,9 @@ internal static class Program
         var Result = Seedˉcompiler.Compileˉmodules(
             new(sourceˉname, source),
             [
-                new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
-                new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
-                new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+                new("Compiler/Windvale/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
+                new("Compiler/Windvale/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
+                new("Compiler/Windvale/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
                 new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ]);
         if (!Result.Success)
@@ -6181,11 +6181,11 @@ internal static class Program
         var Dependencies = new List<Sourceˉmoduleˉinput>();
         if (includeˉsourceˉset)
         {
-            Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+            Dependencies.Add(new("Compiler/Windvale/Source-Set-Core.wv", SOURCE_SET_SOURCE));
         }
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
         Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
         var Result = Seedˉcompiler.Compileˉmodules(
             new(sourceˉname, source),
@@ -6207,12 +6207,12 @@ internal static class Program
         var Dependencies = new List<Sourceˉmoduleˉinput>();
         if (includeˉsourceˉgraph)
         {
-            Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+            Dependencies.Add(new("Compiler/Windvale/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
         }
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Set-Core.wv", SOURCE_SET_SOURCE));
         Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
         Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
         var Result = Seedˉcompiler.Compileˉmodules(
@@ -6235,13 +6235,13 @@ internal static class Program
         var Dependencies = new List<Sourceˉmoduleˉinput>();
         if (includeˉsourceˉsymbols)
         {
-            Dependencies.Add(new("Compiler/Bootstrap/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
+            Dependencies.Add(new("Compiler/Windvale/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
         }
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Set-Core.wv", SOURCE_SET_SOURCE));
         Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
         Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
         var Result = Seedˉcompiler.Compileˉmodules(
@@ -6264,14 +6264,14 @@ internal static class Program
         var Dependencies = new List<Sourceˉmoduleˉinput>();
         if (includeˉsourceˉbindings)
         {
-            Dependencies.Add(new("Compiler/Bootstrap/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
+            Dependencies.Add(new("Compiler/Windvale/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
         }
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Set-Core.wv", SOURCE_SET_SOURCE));
         Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
         Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
         var Result = Seedˉcompiler.Compileˉmodules(
@@ -6294,15 +6294,15 @@ internal static class Program
         var Dependencies = new List<Sourceˉmoduleˉinput>();
         if (includeˉsourceˉwir)
         {
-            Dependencies.Add(new("Compiler/Bootstrap/Source-Wir-Core.wv", SOURCE_WIR_SOURCE));
+            Dependencies.Add(new("Compiler/Windvale/Source-Wir-Core.wv", SOURCE_WIR_SOURCE));
         }
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Set-Core.wv", SOURCE_SET_SOURCE));
         Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
         Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
         var Result = Seedˉcompiler.Compileˉmodules(
@@ -6325,16 +6325,16 @@ internal static class Program
         var Dependencies = new List<Sourceˉmoduleˉinput>();
         if (includeˉsourceˉwvb)
         {
-            Dependencies.Add(new("Compiler/Bootstrap/Source-Wvb-Core.wv", SOURCE_WVB_SOURCE));
+            Dependencies.Add(new("Compiler/Windvale/Source-Wvb-Core.wv", SOURCE_WVB_SOURCE));
         }
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Wir-Core.wv", SOURCE_WIR_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
-        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Wir-Core.wv", SOURCE_WIR_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Windvale/Source-Set-Core.wv", SOURCE_SET_SOURCE));
         Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
         Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
         var Result = Seedˉcompiler.Compileˉmodules(

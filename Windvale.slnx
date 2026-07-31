@@ -3,7 +3,7 @@
     <Project Path="Assembler/Windvale.Assembler/Windvale.Assembler.csproj" />
   </Folder>
   <Folder Name="/Compiler/">
-    <Project Path="Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
+    <Project Path="Compiler/Reference/Windvale.Compiler.csproj" />
   </Folder>
   <Folder Name="/Linker/">
     <Project Path="Linker/Windvale.Linker/Windvale.Linker.csproj" />

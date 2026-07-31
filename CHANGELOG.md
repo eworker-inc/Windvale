@@ -18,6 +18,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 ### Changed
 
 - The Windvale-written lexer uses bounded keyword, identifier, and Unicode-whitespace dispatch while preserving the Seed lexical contract.
+- Compiler folders now describe implementation roles: `Compiler/Windvale` contains the Windvale-written compiler, while `Compiler/Reference` contains the independent C# reference/recovery compiler.
 
 ### Current development status
 

@@ -74,6 +74,6 @@ Compilerˉlexˉtokenˉat(Input, Wanted) -> Compilerˉsourceˉtoken
 
 `Compilerˉsourceˉscan` reports final status, accepted token count, failure coordinates, and end cursor. It never stores a token sequence. `Compilerˉlexˉtokenˉat` exists for tests and inspection and is not the parser iteration contract.
 
-## Current candidate
+## Qualified implementation
 
-`Compiler/Bootstrap/Source-Lexer-Core.wv` composes to a 36,741-byte WVB with SHA-256 `4d48af0c208e88d9e84d48c80324f35bed1985a799bd275b65b6a07f70111706`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 43,250-byte WVB with SHA-256 `5422673a70ecf92f99f9a2db144f9b7a691d6281a98284dde6c6bc796ada60a4`, returns `0`, and executes 1,438,364 instructions under the 10,000,000-instruction ceiling. Exact Windows/Debian qualification is pending under Decision 0042.
+`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 36,741-byte WVB with SHA-256 `4d48af0c208e88d9e84d48c80324f35bed1985a799bd275b65b6a07f70111706`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 43,250-byte WVB with SHA-256 `5422673a70ecf92f99f9a2db144f9b7a691d6281a98284dde6c6bc796ada60a4`, returns `0`, and executes 1,438,364 instructions under the 10,000,000-instruction ceiling. These implementation bytes passed exact Windows/Debian qualification at `5d67463` under Decision 0042; the role-based path move is a separate qualification candidate.

@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Assembler/Windvale.Assembler/Windvale.Assembler.csproj" />
-    <ProjectReference Include="../../Compiler/Windvale.Compiler/Windvale.Compiler.csproj" />
+    <ProjectReference Include="../../Compiler/Reference/Windvale.Compiler.csproj" />
     <ProjectReference Include="../../Linker/Windvale.Linker/Windvale.Linker.csproj" />
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
@@ -56,13 +56,13 @@
       Include="../../Examples/Foundation/Byte-Construction-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Byte-Construction-Demo.wv" />
     <EmbeddedResource
-      Include="../../Compiler/Bootstrap/Source-Lexer-Core.wv"
+      Include="../../Compiler/Windvale/Source-Lexer-Core.wv"
       LogicalName="Windvale.Seed.Tests.Source-Lexer-Core.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Lexer-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Source-Lexer-Demo.wv" />
     <EmbeddedResource
-      Include="../../Compiler/Bootstrap/Source-Declaration-Parser.wv"
+      Include="../../Compiler/Windvale/Source-Declaration-Parser.wv"
       LogicalName="Windvale.Seed.Tests.Source-Declaration-Parser.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Declaration-Parser-Demo.wv"
@@ -71,7 +71,7 @@
       Include="../../Examples/Compiler/Source-Declaration-Parser-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Declaration-Parser-Tool.wv" />
     <EmbeddedResource
-      Include="../../Compiler/Bootstrap/Source-Body-Parser.wv"
+      Include="../../Compiler/Windvale/Source-Body-Parser.wv"
       LogicalName="Windvale.Seed.Tests.Source-Body-Parser.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Body-Parser-Demo.wv"
@@ -80,7 +80,7 @@
       Include="../../Examples/Compiler/Source-Body-Parser-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Body-Parser-Tool.wv" />
     <EmbeddedResource
-      Include="../../Compiler/Bootstrap/Source-Set-Core.wv"
+      Include="../../Compiler/Windvale/Source-Set-Core.wv"
       LogicalName="Windvale.Seed.Tests.Source-Set-Core.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Set-Demo.wv"
@@ -89,7 +89,7 @@
       Include="../../Examples/Compiler/Source-Set-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Set-Tool.wv" />
     <EmbeddedResource
-      Include="../../Compiler/Bootstrap/Source-Graph-Core.wv"
+      Include="../../Compiler/Windvale/Source-Graph-Core.wv"
       LogicalName="Windvale.Seed.Tests.Source-Graph-Core.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Graph-Demo.wv"
@@ -98,7 +98,7 @@
       Include="../../Examples/Compiler/Source-Graph-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Graph-Tool.wv" />
     <EmbeddedResource
-      Include="../../Compiler/Bootstrap/Source-Symbols-Core.wv"
+      Include="../../Compiler/Windvale/Source-Symbols-Core.wv"
       LogicalName="Windvale.Seed.Tests.Source-Symbols-Core.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Symbols-Demo.wv"
@@ -107,7 +107,7 @@
       Include="../../Examples/Compiler/Source-Symbols-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Symbols-Tool.wv" />
     <EmbeddedResource
-      Include="../../Compiler/Bootstrap/Source-Bindings-Core.wv"
+      Include="../../Compiler/Windvale/Source-Bindings-Core.wv"
       LogicalName="Windvale.Seed.Tests.Source-Bindings-Core.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Bindings-Demo.wv"
@@ -116,7 +116,7 @@
       Include="../../Examples/Compiler/Source-Bindings-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Bindings-Tool.wv" />
     <EmbeddedResource
-      Include="../../Compiler/Bootstrap/Source-Wir-Core.wv"
+      Include="../../Compiler/Windvale/Source-Wir-Core.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wir-Core.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Wir-Demo.wv"
@@ -128,7 +128,7 @@
       Include="../Fixtures/Source-Wir/Valid.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wir-Valid.wv" />
     <EmbeddedResource
-      Include="../../Compiler/Bootstrap/Source-Wvb-Core.wv"
+      Include="../../Compiler/Windvale/Source-Wvb-Core.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Core.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/Source-Wvb-Demo.wv"

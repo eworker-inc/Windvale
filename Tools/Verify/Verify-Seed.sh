@@ -341,7 +341,7 @@ BYTE_CONSTRUCTION_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$BYTE_CONSTRUCTION_DEMO_MODULE")
 printf '%s\n' "$BYTE_CONSTRUCTION_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Lexer-Core.wv"
+SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Lexer-Core.wv"
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_LEXER_SOURCE" \
     --module "$DECIMAL_PARSING_SOURCE" \
@@ -371,7 +371,7 @@ SOURCE_LEXER_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_LEXER_DEMO_MODULE" --max-steps 10000000)
 printf '%s\n' "$SOURCE_LEXER_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_DECLARATION_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Declaration-Parser.wv"
+SOURCE_DECLARATION_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Declaration-Parser.wv"
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_DECLARATION_PARSER_SOURCE" \
     --module "$SOURCE_LEXER_SOURCE" \
@@ -436,7 +436,7 @@ SOURCE_PARSER_SELF_DECLARATION_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=24 tokens=8876 offset=64950' >/dev/null
 printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_BODY_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Body-Parser.wv"
+SOURCE_BODY_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Body-Parser.wv"
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_BODY_PARSER_SOURCE" \
     --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
@@ -516,7 +516,7 @@ SOURCE_BODY_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023' >/dev/null
 printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_SET_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Set-Core.wv"
+SOURCE_SET_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Set-Core.wv"
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_SET_SOURCE" \
     --module "$SOURCE_BODY_PARSER_SOURCE" \
@@ -581,7 +581,7 @@ SOURCE_SET_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'source set status=Valid modules=5 source-bytes=194697 imports=4 records=16 enums=11 functions=86' >/dev/null
 printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_GRAPH_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Graph-Core.wv"
+SOURCE_GRAPH_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Graph-Core.wv"
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_GRAPH_SOURCE" \
     --module "$SOURCE_SET_SOURCE" \
@@ -653,7 +653,7 @@ SOURCE_GRAPH_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'source graph status=Valid modules=7 imports=6 reachable=7' >/dev/null
 printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_SYMBOLS_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Symbols-Core.wv"
+SOURCE_SYMBOLS_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Symbols-Core.wv"
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_SYMBOLS_SOURCE" \
     --module "$SOURCE_GRAPH_SOURCE" \
@@ -730,7 +730,7 @@ SOURCE_SYMBOLS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=290 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64' >/dev/null
 printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_BINDINGS_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Bindings-Core.wv"
+SOURCE_BINDINGS_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Bindings-Core.wv"
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_BINDINGS_SOURCE" \
     --module "$SOURCE_SYMBOLS_SOURCE" \
@@ -811,7 +811,7 @@ SOURCE_BINDINGS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$SOURCE_BINDINGS_SELF_OUTPUT" | grep -F 'source bindings status=Valid modules=9 functions=189 parameters=827 locals=945 reads=8335 assignments=612 calls=1479 directory-bytes=65704' >/dev/null
 printf '%s\n' "$SOURCE_BINDINGS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_WIR_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Wir-Core.wv"
+SOURCE_WIR_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Wir-Core.wv"
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_WIR_SOURCE" \
     --module "$SOURCE_BINDINGS_SOURCE" \
@@ -885,7 +885,7 @@ SOURCE_WIR_FIXTURE_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$SOURCE_WIR_FIXTURE_OUTPUT" | grep -F 'source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporaries=36 operands=29 directory-bytes=3200' >/dev/null
 printf '%s\n' "$SOURCE_WIR_FIXTURE_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_WVB_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Wvb-Core.wv"
+SOURCE_WVB_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Wvb-Core.wv"
 compile_source_wvb() {
     dotnet "$TOOL_DLL" \
         compile "$1" \

@@ -30,7 +30,7 @@ $Cases = @(
     },
     @{
         Name = 'mixed documentation and compiler implementation'
-        Paths = @('README.md', 'Compiler/Windvale.Compiler/Source-Lexer.cs')
+        Paths = @('README.md', 'Compiler/Reference/Source-Lexer.cs')
         Scope = 'qualification'
         Editor = $true
     },

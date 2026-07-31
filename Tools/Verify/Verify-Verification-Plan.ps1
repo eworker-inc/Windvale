@@ -7,7 +7,7 @@ $AllAreas = @('assembler', 'bytecode', 'compiler', 'foundation', 'golden', 'link
 $Cases = @(
     @{ Name = 'documentation'; Paths = @('README.md'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'editor'; Paths = @('Tools/Editors/Windvale/package.json'); Scope = 'lightweight'; Editor = $true; Areas = @() },
-    @{ Name = 'compiler'; Paths = @('Compiler/Windvale.Compiler/Seed-Compiler.cs'); Scope = 'qualification'; Editor = $true; Areas = @('compiler') },
+    @{ Name = 'compiler'; Paths = @('Compiler/Reference/Seed-Compiler.cs'); Scope = 'qualification'; Editor = $true; Areas = @('compiler') },
     @{ Name = 'bytecode'; Paths = @('Runtime/Windvale.Bytecode/Module-Codec.cs'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode') },
     @{ Name = 'runtime'; Paths = @('Runtime/Windvale.Runtime/Reference-Runtime.cs'); Scope = 'qualification'; Editor = $false; Areas = @('runtime') },
     @{ Name = 'object model'; Paths = @('Object-Model/Windvale.ObjectModel/Object-Codec.cs'); Scope = 'qualification'; Editor = $false; Areas = @('object-model') },
