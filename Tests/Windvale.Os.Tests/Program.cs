@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.Immutable;
 using Windvale.Bootstrap;
 using Windvale.Compiler;
@@ -15,6 +16,9 @@ internal static class Program
         new("UEFI writer rejects unsupported link shapes", Writerˉrejectsˉunsupportedˉlinks),
         new("UEFI verifier rejects malformed and noncanonical images", Verifierˉrejectsˉmalformedˉimages),
         new("UEFI verifier contains bounded hostile input", Verifierˉcontainsˉhostileˉinput),
+        new("kernel memory planner selects one bounded conventional arena", Memoryˉplannerˉselectsˉboundedˉarena),
+        new("kernel memory planner rejects malformed and hostile maps", Memoryˉplannerˉrejectsˉmalformedˉmaps),
+        new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
         new("x86-64 kernel compiler emits deterministic verified WVO", Kernelˉcompilerˉemitsˉverifiedˉobject),
         new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
@@ -170,6 +174,70 @@ internal static class Program
         }
     }
 
+    private static void Memoryˉplannerˉselectsˉboundedˉarena()
+    {
+        var Map = Buildˉmemoryˉmap(
+            new Memoryˉdescriptorˉinput(7, 0x0030_0000, 32),
+            new Memoryˉdescriptorˉinput(2, 0x0010_0000, 8),
+            new Memoryˉdescriptorˉinput(7, 0x0020_0000, 16));
+        var Result = Kernelˉmemoryˉplanner.Plan(Map, 40);
+        True(Result.Success, Result.Diagnostics.IsEmpty ? "Memory planning failed." : Result.Diagnostics[0].Message);
+        var Plan = Result.Plan!;
+        Equal(0x0020_0000UL, Plan.Arenaˉaddress);
+        Equal(16UL, Plan.Arenaˉpages);
+        Equal(0x0020_0000UL, Plan.Stateˉaddress);
+        Equal(0x0020_0040UL, Plan.Handoffˉcopyˉaddress);
+        Equal(0x0020_1000UL, Plan.Stackˉaddress);
+        Equal(8_192UL, Plan.Stackˉbytes);
+        Equal(0x0020_3000UL, Plan.Stackˉtop);
+        Equal(3UL, Plan.Firstˉfreeˉpage);
+        Equal(13UL, Plan.Freeˉpages);
+    }
+
+    private static void Memoryˉplannerˉrejectsˉmalformedˉmaps()
+    {
+        Memoryˉplanˉfails([], 40, "WVOS4001");
+        Memoryˉplanˉfails(new byte[40], 39, "WVOS4001");
+        Memoryˉplanˉfails(new byte[41], 40, "WVOS4001");
+        Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0010_0001, 16)), 40, "WVOS4002");
+        Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0010_0000, 0)), 40, "WVOS4003");
+        Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0xFFFF_FFFF_FFFF_F000, 2)), 40, "WVOS4004");
+        Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(2, 0x0010_0000, 32)), 40, "WVOS4005");
+        Memoryˉplanˉfails(
+            Buildˉmemoryˉmap(
+                new Memoryˉdescriptorˉinput(7, 0x0020_0000, 16),
+                new Memoryˉdescriptorˉinput(2, 0x0020_8000, 1)),
+            40,
+            "WVOS4006");
+
+        var Random = new Random(0x4D454D);
+        for (var Case = 0; Case < 256; Case++)
+        {
+            var Bytes = new byte[Random.Next(0, 4_097)];
+            Random.NextBytes(Bytes);
+            _ = Kernelˉmemoryˉplanner.Plan(Bytes, (ulong)Random.Next(0, 300));
+        }
+    }
+
+    private static void Pageˉallocatorˉisˉboundedˉandˉzeroing()
+    {
+        var Plan = Kernelˉmemoryˉplanner.Plan(
+            Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0020_0000, 32)),
+            40).Plan!;
+        var Arena = Enumerable.Repeat((byte)0xA5, checked((int)Kernelˉmemoryˉcontract.ARENA_BYTES)).ToArray();
+        var Allocator = new Kernelˉpageˉallocator(Plan, Arena);
+        True(Arena.All(Value => Value == 0), "Kernel arena initialization did not clear every byte.");
+
+        Array.Fill(Arena, (byte)0x5A, 3 * 4_096, 4_096);
+        Equal(0x0020_3000UL, Allocator.Allocateˉpages(1)!.Value);
+        True(Arena.AsSpan(3 * 4_096, 4_096).IndexOfAnyExcept((byte)0) < 0, "Allocated page was not zeroed.");
+        Equal(12UL, Allocator.Remainingˉpages);
+        True(Allocator.Allocateˉpages(0) is null, "A zero-page allocation succeeded.");
+        Equal(0x0020_4000UL, Allocator.Allocateˉpages(12)!.Value);
+        Equal(0UL, Allocator.Remainingˉpages);
+        True(Allocator.Allocateˉpages(1) is null, "An exhausted allocator returned a page.");
+    }
+
     private static void Kernelˉcompilerˉemitsˉverifiedˉobject()
     {
         var First = X64ˉkernelˉcompiler.Compile(HELLO_WORLD_SOURCE, "Hello-World.wv");
@@ -294,6 +362,30 @@ internal static class Program
         }
         """;
 
+    private static byte[] Buildˉmemoryˉmap(params Memoryˉdescriptorˉinput[] descriptors)
+    {
+        const int DESCRIPTOR_BYTES = 40;
+        var Result = new byte[checked(descriptors.Length * DESCRIPTOR_BYTES)];
+        for (var Index = 0; Index < descriptors.Length; Index++)
+        {
+            var Descriptor = Result.AsSpan(Index * DESCRIPTOR_BYTES, DESCRIPTOR_BYTES);
+            BinaryPrimitives.WriteUInt32LittleEndian(Descriptor, descriptors[Index].Type);
+            BinaryPrimitives.WriteUInt64LittleEndian(Descriptor[8..], descriptors[Index].Physicalˉaddress);
+            BinaryPrimitives.WriteUInt64LittleEndian(Descriptor[24..], descriptors[Index].Pages);
+        }
+        return Result;
+    }
+
+    private static void Memoryˉplanˉfails(
+        byte[] memoryˉmap,
+        ulong descriptorˉbytes,
+        string expectedˉcode)
+    {
+        var Result = Kernelˉmemoryˉplanner.Plan(memoryˉmap, descriptorˉbytes);
+        True(!Result.Success, "A malformed memory map produced a kernel arena.");
+        Equal(expectedˉcode, Result.Diagnostics[0].Code);
+    }
+
     private static Linkˉresult Linkˉcode(ImmutableArray<byte> code, uint baseˉaddress = 0)
     {
         var Objectˉbytes = Objectˉcodec.Write(new(
@@ -366,4 +458,9 @@ internal static class Program
     }
 
     private sealed record Testˉcase(string Name, Action Body);
+
+    private sealed record Memoryˉdescriptorˉinput(
+        uint Type,
+        ulong Physicalˉaddress,
+        ulong Pages);
 }
