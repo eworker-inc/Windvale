@@ -1,7 +1,7 @@
 # Decision 0041: Fused local discovery and typed WVIR construction
 
 - Date: 2026-07-31
-- Status: Accepted; implementation candidate passes focused verification; cross-host qualification pending
+- Status: Qualified on Windows x64 and Debian Linux x64 at `b1241157310bc597dbdf0d24146f4d81f0128712`
 
 ## Context
 
@@ -47,3 +47,9 @@ The candidate must:
 - pass exact-commit Debian qualification with matching normalized reports and byte-identical portable artifacts.
 
 Completing the exact ten-module input below the ceiling remains the entry gate for the later bootstrap-closure milestone, not the acceptance gate for this narrower traversal-fusion improvement.
+
+## Qualification
+
+Exact commit `b1241157310bc597dbdf0d24146f4d81f0128712`, tree `eda80c98a2706ddb22abcc50deb5e60961cd2981`, passed the focused compiler suite, complete Standard verification, and exact-archive Qualification on Windows x64 and Debian GNU/Linux 12 x64. Both hosts completed zero-warning Release builds, all 48 tests, and the complete native verifier. Their normalized conformance contracts matched, and all 61 retrieved portable artifacts were byte-identical.
+
+The retained ten-module experiment still returns bounded runtime diagnostic `WVR3011` at exactly 4,000,000,000 instructions. This qualification therefore accepts the traversal-fusion improvement and its unchanged semantic evidence, not full compiler self-hosting.

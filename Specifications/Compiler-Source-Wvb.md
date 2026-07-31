@@ -110,7 +110,7 @@ The current cross-host-qualified bootstrap artifacts are:
 - `Source-Wvb-Demo.wvb`: 580,914 bytes, SHA-256 `a873e870d005fb49cd48043d5f8d3f54c33d889bc2ab5f118f7c09b0f90f5fa0`.
 - `Source-Wvb-Tool.wvb`: 580,418 bytes, SHA-256 `b85ff9d1be9815304617be13d532636ab0a5a3ce2d018a610565ca067e52245c`.
 
-The static multi-module implementation and artifact identities above were qualified from exact commit `cb1db235ef1ecf9697693f260516d0e241ced012` on Windows x64 and Debian Linux x64. Both hosts passed all 48 tests and the complete native verifier, their normalized reports matched, and all 61 retrieved portable artifacts were byte-identical.
+The static multi-module behavior was first qualified at `cb1db235`. The current artifact identities above, rebuilt through the fused typed-WVIR path, are cross-host qualified from exact commit `b1241157310bc597dbdf0d24146f4d81f0128712`. Both hosts passed all 48 tests and the complete native verifier, their normalized reports matched, and all 61 retrieved portable artifacts were byte-identical.
 
 ## Expansion path
 

@@ -126,4 +126,4 @@ The hosted tool binds the current real closure as:
 source bindings status=Valid modules=9 functions=189 parameters=827 locals=942 reads=8277 assignments=609 calls=1475 directory-bytes=65596
 ```
 
-The pre-preparation implementation was qualified at `9185b28`. The prepared-symbol/local-only baseline was requalified as part of the exact `bf77f70` typed-WVIR candidate on Windows and Debian; all 48 portable artifacts compared for that historical candidate were byte-identical.
+The pre-preparation implementation was qualified at `9185b28`, and the prepared-symbol/local-only baseline was requalified with typed WVIR at `bf77f70`. Decision 0041's explicit parameter/finalization phases and fused consumer path are cross-host qualified at exact commit `b124115`; both hosts passed all 48 tests and the complete native verifier, and all 61 retrieved portable artifacts were byte-identical.

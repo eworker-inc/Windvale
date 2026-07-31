@@ -94,7 +94,7 @@ Candidate artifacts are:
 - `Source-Wir-Demo.wvb`: 506,834 bytes, SHA-256 `23da120afffa4f450f703fc17a9719f1ed6c9a080ced67fbcd23bb7aa232f42e`.
 - `Source-Wir-Tool.wvb`: 502,985 bytes, SHA-256 `2d8cbae0f87e2043eb18e43b6e6659044ada2f8c453cc17ca1b406efb6df517e`.
 
-The prior typed-WVIR candidate at exact commit `bf77f70b08f332deda9ea3a1691e262e1426c1c1` was cross-host qualified on Windows x64 and Debian GNU/Linux 12 x64. Both hosts passed all 47 tests and the complete native verifier, and all 48 portable artifacts compared for that historical candidate were byte-identical.
+The original typed-WVIR candidate was cross-host qualified at `bf77f70`. The fused local-discovery/typed-WVIR implementation and artifact identities above are cross-host qualified at exact commit `b1241157310bc597dbdf0d24146f4d81f0128712`: both hosts passed all 48 tests and the complete native verifier, their normalized contracts matched, and all 61 retrieved portable artifacts were byte-identical.
 
 The ten-module compiler closure is intentionally not in the fast loop. Decision 0041 removes the separate successful-path local-discovery traversal, but the exact input still exceeds the fixed 4,000,000,000-instruction ceiling. Raising the ceiling is not the remedy; a later measured slice must reduce the remaining lookup/typed-lowering work or publish more reusable typed evidence before the full self-lowering case becomes a required gate.
 
