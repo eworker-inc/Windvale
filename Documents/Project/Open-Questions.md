@@ -34,7 +34,7 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Operating system
 
-- What deterministic FAT and PE32+ target-adapter contract should carry the accepted `BOOTX64.EFI` payload?
+- Which minimal read-only data and address-materialization rules will the first compiler-produced kernel WVO require beyond the accepted code-only relative-call adapter?
 - What counts as “from scratch” at each bootstrap stage?
 - What is the first process, protection, filesystem, driver, and application model?
 - Does the first Windvale OS host bytecode inside the kernel, in a privileged runtime process, or in ordinary isolated processes?
@@ -48,5 +48,5 @@ The recommended next decisions are:
 2. Use that semantic and WIR pressure to define only the memory, collection, and aggregate-type facilities actually needed by the compiler.
 3. Define the restricted C bridge without changing Windvale semantics.
 4. Extend WVA labels and address materialization only when native-backend evidence supplies exact requirements.
-5. Define the deterministic boot-image adapter and firmware-entry evidence for the accepted x86-64 UEFI/QEMU environment.
+5. Replace the accepted Stage 0 kernel-entry object with compiler-produced Windvale WVO while preserving the bounded post-firmware handoff evidence.
 6. Import the complete history into a private `eworker-inc/Windvale` repository, inspect the initial publication baseline, and configure DCO, security, branch, and automation settings before public visibility.

@@ -27,15 +27,16 @@ public static class Uefiˉapplicationˉwriter
         }
         if (
             linkˉresult.Baseˉaddress != Uefiˉapplicationˉcontract.REQUIRED_LINK_BASE_ADDRESS ||
-            linkˉresult.Sectionˉcount != 1 ||
-            linkˉresult.Importˉcount != 0 ||
-            linkˉresult.Relocationˉcount != 0 ||
+            linkˉresult.Sectionˉcount < 1 ||
+            linkˉresult.Codeˉsectionˉcount != linkˉresult.Sectionˉcount ||
+            linkˉresult.Absoluteˉrelocationˉcount != 0 ||
+            linkˉresult.Relativeˉrelocationˉcount != linkˉresult.Relocationˉcount ||
             linkˉresult.Imageˉbytes.IsDefaultOrEmpty ||
             linkˉresult.Entryˉaddress >= (uint)linkˉresult.Imageˉbytes.Length)
         {
             return Uefiˉapplicationˉresult.Failed(
                 "WVU1002",
-                "Version 1 requires one non-empty base-zero code section, no imports or relocations, and an entry inside the section.");
+                "Version 2 requires non-empty base-zero code-only input, only resolved relative-i32 relocations, and an entry inside the linked image.");
         }
         if (linkˉresult.Imageˉbytes.Length > Uefiˉapplicationˉcontract.MAX_CODE_BYTES)
         {

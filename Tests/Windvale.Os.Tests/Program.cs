@@ -10,11 +10,12 @@ internal static class Program
     private static readonly ImmutableArray<Testˉcase> TESTS =
     [
         new("UEFI writer emits deterministic verified PE32+", Writerˉemitsˉdeterministicˉimage),
+        new("UEFI writer accepts linked relative-only code", Writerˉacceptsˉlinkedˉrelativeˉcode),
         new("UEFI writer rejects unsupported link shapes", Writerˉrejectsˉunsupportedˉlinks),
         new("UEFI verifier rejects malformed and noncanonical images", Verifierˉrejectsˉmalformedˉimages),
         new("UEFI verifier contains bounded hostile input", Verifierˉcontainsˉhostileˉinput),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
-        new("firmware probe carries the bounded ExitBootServices transition", Firmwareˉprobeˉcarriesˉexitˉtransition),
+        new("firmware probe carries the bounded exit and kernel handoff", Firmwareˉprobeˉcarriesˉexitˉtransition),
     ];
 
     public static int Main()
@@ -88,6 +89,45 @@ internal static class Program
         Equal("WVU1002", Uefiˉapplicationˉwriter.Write(Relocating).Diagnostics[0].Code);
     }
 
+    private static void Writerˉacceptsˉlinkedˉrelativeˉcode()
+    {
+        var Caller = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 16, 6, [0xE8, 0, 0, 0, 0, 0xC3])],
+            [
+                new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 6),
+                new(
+                    "Worker",
+                    Objectˉsymbolˉbinding.Import,
+                    Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
+                    0,
+                    0),
+            ],
+            [new(Objectˉrelocationˉkind.Relativeˉi32, 0, 1, 1, -4)])).ToImmutableArray();
+        var Worker = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 16, 3, [0x31, 0xC0, 0xC3])],
+            [new("Worker", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 3)],
+            [])).ToImmutableArray();
+        var Link = Linkˉcompiler.Link([new(Caller), new(Worker)], new(0, "Main"));
+        True(Link.Success, "The relative-only multi-object link failed.");
+        Equal(2, Link.Sectionˉcount);
+        Equal(2, Link.Codeˉsectionˉcount);
+        Equal(1, Link.Importˉcount);
+        Equal(1, Link.Relocationˉcount);
+        Equal(0, Link.Absoluteˉrelocationˉcount);
+        Equal(1, Link.Relativeˉrelocationˉcount);
+
+        var Application = Uefiˉapplicationˉwriter.Write(Link);
+        True(Application.Success, "The UEFI adapter rejected resolved relative-only code.");
+        var Verified = Uefiˉapplicationˉverifier.Verify(Application.Imageˉbytes.AsSpan());
+        Equal(0u, Verified.Entryˉcodeˉoffset);
+        Equal(19, Verified.Codeˉbytes.Length);
+        Sequenceˉequal([0xE8, 0x0B, 0, 0, 0, 0xC3], Verified.Codeˉbytes[..6]);
+        Sequenceˉequal([0x31, 0xC0, 0xC3], Verified.Codeˉbytes[16..]);
+    }
+
     private static void Verifierˉrejectsˉmalformedˉimages()
     {
         var Canonical = Uefiˉapplicationˉwriter.Write(Linkˉcode([0x31, 0xC0, 0xC3])).Imageˉbytes;
@@ -98,6 +138,7 @@ internal static class Program
         Reject(Mutate(Canonical, 0x80), "WVU2003");
         Reject(Mutate(Canonical, 0x84), "WVU2003");
         Reject(Mutate(Canonical, 0x98), "WVU2004");
+        Reject(Mutate(Canonical, 0x9A), "WVU2004");
         Reject(Mutate(Canonical, 0xDC), "WVU2004");
         Reject(Mutate(Canonical, 0x188), "WVU2005");
         Reject(Mutate(Canonical, 0x1B0), "WVU2005");
@@ -131,9 +172,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(4_608, First.Length);
+        Equal(5_632, First.Length);
         Equal(
-            "8ced62215ec394eedeb4f6e38ea0c963fe249417ff0f8c19113295445138fbfc",
+            "b476be4d19238ba637b3d8df0b0d0a67e7b8b4e15f8c2b83529b847832cb3e1a",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -143,7 +184,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉexitˉtransition()
     {
         Equal(
-            "windvale-os-boot 3\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nstatus=pass\n",
+            "windvale-os-boot 4\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nkernel-entry=pass\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -159,6 +200,8 @@ internal static class Program
         Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x40]));
         Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x48]));
         Equal(1, Countˉsequence(Code, [0xFF, 0x90, 0xE8, 0x00, 0x00, 0x00]));
+        Equal(2, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x48, 0x41, 0x4E, 0x44, 0x31]));
+        Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x2C, 0x30, 0x00, 0x00, 0x00]));
         Equal(2, Countˉsequence(Code, [0xFA, 0xF4, 0xE9]));
     }
 
