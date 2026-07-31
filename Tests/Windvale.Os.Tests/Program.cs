@@ -14,7 +14,7 @@ internal static class Program
         new("UEFI verifier rejects malformed and noncanonical images", Verifierˉrejectsˉmalformedˉimages),
         new("UEFI verifier contains bounded hostile input", Verifierˉcontainsˉhostileˉinput),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
-        new("firmware probe carries the bounded UEFI memory-map call shape", Firmwareˉprobeˉcarriesˉmemoryˉmapˉcalls),
+        new("firmware probe carries the bounded ExitBootServices transition", Firmwareˉprobeˉcarriesˉexitˉtransition),
     ];
 
     public static int Main()
@@ -131,29 +131,35 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(4_096, First.Length);
+        Equal(4_608, First.Length);
         Equal(
-            "2fd7372854e549040108eea2327c0e1b384625f40914bf50dc711e127953f6cf",
+            "8ced62215ec394eedeb4f6e38ea0c963fe249417ff0f8c19113295445138fbfc",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
         Equal(0u, Verified.Entryˉcodeˉoffset);
     }
 
-    private static void Firmwareˉprobeˉcarriesˉmemoryˉmapˉcalls()
+    private static void Firmwareˉprobeˉcarriesˉexitˉtransition()
     {
         Equal(
-            "windvale-os-boot 2\nentry=pass\nsystem-table=pass\nmemory-map=pass\nstatus=pass\n",
+            "windvale-os-boot 3\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
         Equal(1, Countˉsequence(Code, [0x48, 0x81, 0xEC, 0x88, 0x00, 0x00, 0x00]));
         Equal(1, Countˉsequence(Code, [0x49, 0x42, 0x49, 0x20, 0x53, 0x59, 0x53, 0x54]));
         Equal(1, Countˉsequence(Code, [0x42, 0x4F, 0x4F, 0x54, 0x53, 0x45, 0x52, 0x56]));
+        Equal(1, Countˉsequence(Code, [0x81, 0x79, 0x0C, 0xF0, 0x00, 0x00, 0x00]));
+        Equal(1, Countˉsequence(Code, [0x48, 0x83, 0xB9, 0xE8, 0x00, 0x00, 0x00, 0x00]));
         Equal(1, Countˉsequence(Code, [0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80]));
-        Equal(2, Countˉsequence(Code, [0xFF, 0x50, 0x38]));
+        Equal(1, Countˉsequence(Code, [0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80]));
+        Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x70, 0x03, 0x00, 0x00, 0x00]));
+        Equal(3, Countˉsequence(Code, [0xFF, 0x50, 0x38]));
         Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x40]));
-        Equal(2, Countˉsequence(Code, [0xFF, 0x50, 0x48]));
+        Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x48]));
+        Equal(1, Countˉsequence(Code, [0xFF, 0x90, 0xE8, 0x00, 0x00, 0x00]));
+        Equal(2, Countˉsequence(Code, [0xFA, 0xF4, 0xE9]));
     }
 
     private static Linkˉresult Linkˉcode(ImmutableArray<byte> code, uint baseˉaddress = 0)

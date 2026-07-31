@@ -7,19 +7,25 @@ namespace Windvale.Bootstrap;
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 2;
+    public const int FORMAT_VERSION = 3;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
-    public const string ENTRY_MARKER = "windvale-os-boot 2\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 3\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
+    public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
     public const string SUCCESS_MARKER = "status=pass\n";
     public const string SERIAL_MARKER =
-        ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + SUCCESS_MARKER;
+        ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER + SUCCESS_MARKER;
 
     private const string FAILURE_MARKER = "status=fail\n";
     private const string FAILURE_LABEL = "failure";
     private const string CLEANUP_FAILURE_LABEL = "cleanup_failure";
+    private const string TERMINAL_FAILURE_LABEL = "terminal_failure";
+    private const string TERMINAL_HALT_LABEL = "terminal_halt";
+    private const string MAP_VALIDATE_LABEL = "map_validate";
     private const string DESCRIPTOR_LOOP_LABEL = "descriptor_loop";
+    private const string EXIT_SUCCESS_LABEL = "exit_success";
+    private const string SUCCESS_HALT_LABEL = "success_halt";
 
     private const byte CONDITION_BELOW = 0x82;
     private const byte CONDITION_EQUAL = 0x84;
@@ -37,23 +43,28 @@ public static class Firmwareˉprobe
     private const byte BOOT_SERVICES_OFFSET = 0x58;
     private const byte MAP_ALLOCATION_SIZE_OFFSET = 0x60;
     private const byte IMAGE_HANDLE_OFFSET = 0x68;
+    private const byte EXIT_ATTEMPTS_OFFSET = 0x70;
+    private const byte EXIT_ATTEMPTED_OFFSET = 0x74;
 
     private const ulong EFI_SYSTEM_TABLE_SIGNATURE = 0x5453_5953_2049_4249;
     private const ulong EFI_BOOT_SERVICES_SIGNATURE = 0x5652_4553_544F_4F42;
     private const ulong EFI_BUFFER_TOO_SMALL = 0x8000_0000_0000_0005;
     private const ulong EFI_DEVICE_ERROR = 0x8000_0000_0000_0007;
+    private const ulong EFI_INVALID_PARAMETER = 0x8000_0000_0000_0002;
     private const uint EFI_1_02_REVISION = 0x0001_0002;
     private const uint EFI_SYSTEM_TABLE_MINIMUM_BYTES = 120;
-    private const uint EFI_BOOT_SERVICES_MINIMUM_BYTES = 80;
+    private const uint EFI_BOOT_SERVICES_MINIMUM_BYTES = 240;
     private const uint EFI_MEMORY_DESCRIPTOR_VERSION = 1;
     private const uint EFI_MEMORY_DESCRIPTOR_MINIMUM_BYTES = 40;
     private const uint EFI_MEMORY_DESCRIPTOR_MAXIMUM_BYTES = 256;
     private const uint MAX_MEMORY_MAP_BYTES = 1024 * 1024;
     private const uint EFI_LOADER_DATA = 2;
+    private const uint EXIT_BOOT_SERVICES_MAX_ATTEMPTS = 3;
 
-    private const byte GET_MEMORY_MAP_OFFSET = 0x38;
-    private const byte ALLOCATE_POOL_OFFSET = 0x40;
-    private const byte FREE_POOL_OFFSET = 0x48;
+    private const uint GET_MEMORY_MAP_OFFSET = 0x38;
+    private const uint ALLOCATE_POOL_OFFSET = 0x40;
+    private const uint FREE_POOL_OFFSET = 0x48;
+    private const uint EXIT_BOOT_SERVICES_OFFSET = 0xE8;
 
     public static ImmutableArray<byte> Buildˉapplication()
     {
@@ -125,13 +136,15 @@ public static class Firmwareˉprobe
         Output.Emit(0x81, 0x79, 0x08);
         Output.Emitˉu32(EFI_1_02_REVISION);
         Output.Jumpˉif(CONDITION_BELOW, FAILURE_LABEL);
-        Output.Emit(0x83, 0x79, 0x0C, (byte)EFI_BOOT_SERVICES_MINIMUM_BYTES);
+        Output.Emit(0x81, 0x79, 0x0C);
+        Output.Emitˉu32(EFI_BOOT_SERVICES_MINIMUM_BYTES);
         Output.Jumpˉif(CONDITION_BELOW, FAILURE_LABEL);
         Output.Emit(0x83, 0x79, 0x14, 0x00);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉrequireˉpointer(Output, GET_MEMORY_MAP_OFFSET, FAILURE_LABEL);
         Emitˉrequireˉpointer(Output, ALLOCATE_POOL_OFFSET, FAILURE_LABEL);
         Emitˉrequireˉpointer(Output, FREE_POOL_OFFSET, FAILURE_LABEL);
+        Emitˉrequireˉpointer(Output, EXIT_BOOT_SERVICES_OFFSET, FAILURE_LABEL);
         Emitˉserialˉtext(Output, SYSTEM_TABLE_MARKER);
 
         Output.Emit(0x31, 0xC0);
@@ -140,6 +153,7 @@ public static class Firmwareˉprobe
         Emitˉstoreˉstackˉrax(Output, DESCRIPTOR_SIZE_OFFSET);
         Emitˉstoreˉstackˉrax(Output, DESCRIPTOR_VERSION_OFFSET);
         Emitˉstoreˉstackˉrax(Output, MAP_BUFFER_OFFSET);
+        Output.Emit(0x89, 0x44, 0x24, EXIT_ATTEMPTED_OFFSET);
 
         Emitˉaddressˉstackˉrcx(Output, MAP_SIZE_OFFSET);
         Output.Emit(0x31, 0xD2);
@@ -190,6 +204,10 @@ public static class Firmwareˉprobe
         Emitˉcallˉbootˉservice(Output, GET_MEMORY_MAP_OFFSET);
         Output.Emit(0x48, 0x85, 0xC0);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, CLEANUP_FAILURE_LABEL);
+        Output.Emit(0xC7, 0x44, 0x24, EXIT_ATTEMPTS_OFFSET);
+        Output.Emitˉu32(EXIT_BOOT_SERVICES_MAX_ATTEMPTS);
+
+        Output.Mark(MAP_VALIDATE_LABEL);
         Emitˉvalidateˉdescriptorˉmetadata(Output, CLEANUP_FAILURE_LABEL);
 
         Emitˉloadˉstackˉrax(Output, MAP_SIZE_OFFSET);
@@ -228,20 +246,51 @@ public static class Firmwareˉprobe
         Output.Emit(0x4D, 0x01, 0xC2);
         Output.Emit(0x49, 0xFF, 0xCB);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, DESCRIPTOR_LOOP_LABEL);
-        Emitˉloadˉstackˉrcx(Output, MAP_BUFFER_OFFSET);
-        Emitˉcallˉbootˉservice(Output, FREE_POOL_OFFSET);
+
+        Output.Emit(0xC7, 0x44, 0x24, EXIT_ATTEMPTED_OFFSET, 0x01, 0x00, 0x00, 0x00);
+        Emitˉloadˉstackˉrcx(Output, IMAGE_HANDLE_OFFSET);
+        Emitˉloadˉstackˉrdx(Output, MAP_KEY_OFFSET);
+        Emitˉcallˉbootˉservice(Output, EXIT_BOOT_SERVICES_OFFSET);
         Output.Emit(0x48, 0x85, 0xC0);
-        Output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Output.Jumpˉif(CONDITION_EQUAL, EXIT_SUCCESS_LABEL);
+        Output.Emit(0x48, 0xB9);
+        Output.Emitˉu64(EFI_INVALID_PARAMETER);
+        Output.Emit(0x48, 0x39, 0xC8);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, CLEANUP_FAILURE_LABEL);
+        Output.Emit(0xFF, 0x4C, 0x24, EXIT_ATTEMPTS_OFFSET);
+        Output.Jumpˉif(CONDITION_EQUAL, CLEANUP_FAILURE_LABEL);
+
+        Emitˉloadˉstackˉrax(Output, MAP_ALLOCATION_SIZE_OFFSET);
+        Emitˉstoreˉstackˉrax(Output, MAP_SIZE_OFFSET);
+        Emitˉaddressˉstackˉrcx(Output, MAP_SIZE_OFFSET);
+        Emitˉloadˉstackˉrdx(Output, MAP_BUFFER_OFFSET);
+        Emitˉaddressˉstackˉr8(Output, MAP_KEY_OFFSET);
+        Emitˉaddressˉstackˉr9(Output, DESCRIPTOR_SIZE_OFFSET);
+        Emitˉaddressˉstackˉrax(Output, DESCRIPTOR_VERSION_OFFSET);
+        Emitˉstoreˉstackˉrax(Output, FIFTH_ARGUMENT_OFFSET);
+        Emitˉcallˉbootˉservice(Output, GET_MEMORY_MAP_OFFSET);
+        Output.Emit(0x48, 0x85, 0xC0);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, CLEANUP_FAILURE_LABEL);
+        Output.Jump(MAP_VALIDATE_LABEL);
+
+        Output.Mark(EXIT_SUCCESS_LABEL);
         Emitˉserialˉtext(Output, MEMORY_MAP_MARKER);
+        Emitˉserialˉtext(Output, BOOT_SERVICES_MARKER);
         Emitˉserialˉtext(Output, SUCCESS_MARKER);
         Emitˉdebugˉexit(Output, 0);
-        Output.Emit(0x31, 0xC0);
-        Emitˉrestoreˉstackˉandˉreturn(Output);
+        Emitˉhaltˉloop(Output, SUCCESS_HALT_LABEL);
 
         Output.Mark(CLEANUP_FAILURE_LABEL);
         Emitˉloadˉstackˉrcx(Output, MAP_BUFFER_OFFSET);
         Emitˉcallˉbootˉservice(Output, FREE_POOL_OFFSET);
+        Output.Emit(0x83, 0x7C, 0x24, EXIT_ATTEMPTED_OFFSET, 0x00);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, TERMINAL_FAILURE_LABEL);
         Output.Jump(FAILURE_LABEL);
+
+        Output.Mark(TERMINAL_FAILURE_LABEL);
+        Emitˉserialˉtext(Output, FAILURE_MARKER);
+        Emitˉdebugˉexit(Output, 1);
+        Emitˉhaltˉloop(Output, TERMINAL_HALT_LABEL);
 
         Output.Mark(FAILURE_LABEL);
         Emitˉserialˉtext(Output, FAILURE_MARKER);
@@ -268,17 +317,34 @@ public static class Firmwareˉprobe
 
     private static void Emitˉrequireˉpointer(
         X64ˉcodeˉbuilder output,
-        byte offset,
+        uint offset,
         string failureˉlabel)
     {
-        output.Emit(0x48, 0x83, 0x79, offset, 0x00);
+        if (offset <= sbyte.MaxValue)
+        {
+            output.Emit(0x48, 0x83, 0x79, (byte)offset, 0x00);
+        }
+        else
+        {
+            output.Emit(0x48, 0x83, 0xB9);
+            output.Emitˉu32(offset);
+            output.Emit(0x00);
+        }
         output.Jumpˉif(CONDITION_EQUAL, failureˉlabel);
     }
 
-    private static void Emitˉcallˉbootˉservice(X64ˉcodeˉbuilder output, byte offset)
+    private static void Emitˉcallˉbootˉservice(X64ˉcodeˉbuilder output, uint offset)
     {
         Emitˉloadˉstackˉrax(output, BOOT_SERVICES_OFFSET);
-        output.Emit(0xFF, 0x50, offset);
+        if (offset <= sbyte.MaxValue)
+        {
+            output.Emit(0xFF, 0x50, (byte)offset);
+        }
+        else
+        {
+            output.Emit(0xFF, 0x90);
+            output.Emitˉu32(offset);
+        }
     }
 
     private static void Emitˉserialˉinitialization(X64ˉcodeˉbuilder output)
@@ -309,6 +375,14 @@ public static class Firmwareˉprobe
         Emitˉmoveˉedx(output, 0x00F4);
         Emitˉmoveˉeax(output, value);
         output.Emit(0xEF);
+    }
+
+    private static void Emitˉhaltˉloop(X64ˉcodeˉbuilder output, string label)
+    {
+        output.Emit(0xFA);
+        output.Mark(label);
+        output.Emit(0xF4);
+        output.Jump(label);
     }
 
     private static void Emitˉoutˉbyte(X64ˉcodeˉbuilder output, uint port, byte value)
