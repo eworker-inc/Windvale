@@ -20,6 +20,24 @@ The conformance runner assigns every registered test to one or more stable areas
 
 Changed-file selection is an inner-loop optimization only. It never writes a conformance report or supplies Standard or Qualification evidence.
 
+## Golden phase telemetry
+
+When `--timing-report` is active and the golden test runs, the diagnostic report includes canonical phases for artifact compilation, baseline runtime execution, parser closures, source-set, graph, symbol, and binding closures, inspection tools, the Windvale assembler, the Windvale linker, and final contract assembly. Each phase records elapsed milliseconds, aggregated executed VM instructions, bytes allocated by the executing managed thread, and generation 0, 1, and 2 collection-count deltas. The phase order is validated before the report is written.
+
+Allocation values are current-thread observations and collection counts are process-wide observations. They are suitable for comparing repeated runs on a controlled host, not for cross-host conformance. Phase telemetry is never serialized into the conformance report and does not change its portable contract.
+
+The first telemetry-enabled Windows x64 Standard run on 2026-07-30 completed all 47 tests in 525.957 seconds. The golden test accounted for 448.328 seconds, while its phase measurements accounted for 448.318 seconds. Those phases executed 6,697,386,493 VM instructions and cumulatively allocated 939.11 GiB on the executing thread; this is allocation traffic, not peak live memory.
+
+| Golden phase | Elapsed | VM instructions | Allocated | Bytes per instruction |
+| --- | ---: | ---: | ---: | ---: |
+| Parser closures | 26.65 seconds | 400.9 million | 58.21 GiB | 155.9 |
+| Source-set closure | 38.33 seconds | 563.2 million | 80.43 GiB | 153.3 |
+| Source-graph closure | 42.47 seconds | 643.4 million | 91.65 GiB | 152.9 |
+| Source-symbols closure | 85.25 seconds | 1,358.2 million | 185.26 GiB | 146.5 |
+| Source-bindings closure | 253.11 seconds | 3,722.8 million | 517.17 GiB | 149.2 |
+
+The consistent allocation rate across the large closures makes allocation reduction in the reference interpreter the next measured optimization target. Artifact compilation took only 1.97 seconds in the same golden run, so compiler-output caching cannot materially address the current bottleneck.
+
 GitHub runs the Windows and Linux qualification jobs concurrently. Exact milestone qualification still uses the committed source archive on Windows and the real Debian QA host and compares their normalized reports and direct artifacts.
 
 GitHub keeps the required `Windows verifier` and `Linux verifier` jobs present on every workflow run, but classifies the changed paths before installing .NET or executing Seed. Markdown outside `Specifications/`, the root license, and editor-only changes use a lightweight `git diff --check` path. Editor verification runs for editor files and source-language compiler or specification changes. Specifications, implementation, tests, build configuration, workflows, verifier code, and any unrecognized path fail closed to complete dual-host Qualification. Manual workflow dispatch always selects Qualification and editor verification. The workflow does not use top-level path filters because a skipped required workflow can leave its checks pending.

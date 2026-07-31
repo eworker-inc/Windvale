@@ -354,6 +354,7 @@ internal static class Program
     private const string TEST_AREA_LINKER = "linker";
     private const string TEST_AREA_OBJECT_MODEL = "object-model";
     private const string TEST_AREA_RUNTIME = "runtime";
+    private const string GOLDEN_TEST_NAME = "golden hashes identify the cross-host contract";
 
     private static readonly ImmutableHashSet<string> TEST_AREAS = ImmutableHashSet.Create(
         StringComparer.Ordinal,
@@ -365,6 +366,21 @@ internal static class Program
         TEST_AREA_LINKER,
         TEST_AREA_OBJECT_MODEL,
         TEST_AREA_RUNTIME);
+
+    private static readonly ImmutableArray<string> GOLDEN_PHASE_NAMES =
+    [
+        "artifact-compilation",
+        "baseline-runtime",
+        "parser-closures",
+        "source-set-closure",
+        "source-graph-closure",
+        "source-symbols-closure",
+        "source-bindings-closure",
+        "inspection-tools",
+        "assembler-closure",
+        "linker-closure",
+        "contract-assembly",
+    ];
 
     private static readonly List<Testˉcase> TESTS =
     [
@@ -414,10 +430,12 @@ internal static class Program
         new("runtime traps overflow and data bounds", [TEST_AREA_RUNTIME], Runtimeˉtrapsˉareˉdeterministic),
         new("runtime enforces instruction and call-depth limits", [TEST_AREA_RUNTIME], Runtimeˉlimitsˉareˉenforced),
         new("bounded random input never escapes diagnostic boundaries", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_ASSEMBLER], Randomˉinputˉisˉcontained),
-        new("golden hashes identify the cross-host contract", [TEST_AREA_GOLDEN], Goldenˉhashesˉmatch),
+        new(GOLDEN_TEST_NAME, [TEST_AREA_GOLDEN], Goldenˉhashesˉmatch),
     ];
 
     private static Conformanceˉcontract? Contract;
+    private static readonly List<Goldenˉphaseˉtimingˉentry> GOLDEN_PHASE_TIMINGS = [];
+    private static bool Collectˉgoldenˉphaseˉtimings;
 
     public static int Main(string[] arguments)
     {
@@ -476,6 +494,9 @@ internal static class Program
             Console.Error.WriteLine($"No tests match {Selectionˉdescription}.");
             return 64;
         }
+
+        GOLDEN_PHASE_TIMINGS.Clear();
+        Collectˉgoldenˉphaseˉtimings = Options.Timingˉreportˉpath is not null;
 
         var Failures = 0;
         var Timings = new List<Testˉtimingˉentry>(Selectedˉtests.Count);
@@ -4642,6 +4663,10 @@ internal static class Program
 
     private static void Goldenˉhashesˉmatch()
     {
+        using var Phases = new Goldenˉphaseˉrecorder(
+            Collectˉgoldenˉphaseˉtimings ? GOLDEN_PHASE_TIMINGS : null);
+        Phases.Start("artifact-compilation");
+
         var Sumˉbytes = Compileˉsuccess(SUM_SOURCE);
         var Helloˉbytes = Compileˉsuccess(HELLO_SOURCE);
         var Foundationˉbytes = Compileˉsuccess(FOUNDATION_SOURCE);
@@ -4833,6 +4858,7 @@ internal static class Program
         Equal(LINK_MAP_SHA256, Linkˉmapˉhash);
         _ = Objectˉcodec.Readˉandˉverify(Assemblyˉobjectˉbytes);
 
+        Phases.Start("baseline-runtime");
         var Sumˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sumˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
@@ -4880,6 +4906,19 @@ internal static class Program
             new Referenceˉcapabilityˉhost(new StringWriter()),
             new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
                 Maximumˉinstructions: 20_000_000)).Runˉmain();
+        Phases.Addˉexecutedˉinstructions(checked(
+            Sumˉresult.Executedˉinstructions +
+            Helloˉresult.Executedˉinstructions +
+            Foundationˉresult.Executedˉinstructions +
+            Sourceˉcompositionˉresult.Executedˉinstructions +
+            Machineˉcontractsˉdemoˉresult.Executedˉinstructions +
+            Byteˉorderingˉdemoˉresult.Executedˉinstructions +
+            Decimalˉparsingˉdemoˉresult.Executedˉinstructions +
+            Byteˉconstructionˉdemoˉresult.Executedˉinstructions +
+            Sourceˉlexerˉdemoˉresult.Executedˉinstructions +
+            Sourceˉdeclarationˉparserˉdemoˉresult.Executedˉinstructions));
+
+        Phases.Start("parser-closures");
         var Sourceˉdeclarationˉparserˉtool = Moduleˉcodec.Readˉandˉverify(
             Sourceˉdeclarationˉparserˉtoolˉbytes);
         var Sourceˉlexerˉdeclarationˉresult = Runˉsourceˉdeclarationˉparser(
@@ -4914,6 +4953,15 @@ internal static class Program
             "Source-Body-Parser.wv",
             SOURCE_BODY_PARSER_SOURCE,
             160_000_000);
+        Phases.Addˉexecutedˉinstructions(checked(
+            Sourceˉlexerˉdeclarationˉresult.Executedˉinstructions +
+            Sourceˉparserˉselfˉdeclarationˉresult.Executedˉinstructions +
+            Sourceˉbodyˉparserˉdemoˉresult.Executedˉinstructions +
+            Sourceˉlexerˉbodyˉresult.Executedˉinstructions +
+            Sourceˉdeclarationˉbodyˉresult.Executedˉinstructions +
+            Sourceˉbodyˉselfˉresult.Executedˉinstructions));
+
+        Phases.Start("source-set-closure");
         var Sourceˉsetˉdemoˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sourceˉsetˉdemoˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
@@ -4930,6 +4978,11 @@ internal static class Program
                 new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ],
             800_000_000);
+        Phases.Addˉexecutedˉinstructions(checked(
+            Sourceˉsetˉdemoˉresult.Executedˉinstructions +
+            Sourceˉsetˉselfˉresult.Executedˉinstructions));
+
+        Phases.Start("source-graph-closure");
         var Sourceˉgraphˉdemoˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sourceˉgraphˉdemoˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
@@ -4948,6 +5001,11 @@ internal static class Program
                 new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ],
             1_500_000_000);
+        Phases.Addˉexecutedˉinstructions(checked(
+            Sourceˉgraphˉdemoˉresult.Executedˉinstructions +
+            Sourceˉgraphˉselfˉresult.Executedˉinstructions));
+
+        Phases.Start("source-symbols-closure");
         var Sourceˉsymbolsˉdemoˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sourceˉsymbolsˉdemoˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
@@ -4967,6 +5025,11 @@ internal static class Program
                 new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ],
             4_000_000_000);
+        Phases.Addˉexecutedˉinstructions(checked(
+            Sourceˉsymbolsˉdemoˉresult.Executedˉinstructions +
+            Sourceˉsymbolsˉselfˉresult.Executedˉinstructions));
+
+        Phases.Start("source-bindings-closure");
         var Sourceˉbindingsˉdemoˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sourceˉbindingsˉdemoˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
@@ -4987,6 +5050,11 @@ internal static class Program
                 new("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
             ],
             4_000_000_000);
+        Phases.Addˉexecutedˉinstructions(checked(
+            Sourceˉbindingsˉdemoˉresult.Executedˉinstructions +
+            Sourceˉbindingsˉselfˉresult.Executedˉinstructions));
+
+        Phases.Start("inspection-tools");
         var Wvˉdumpˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉdumpˉbytes);
         var Wvˉdumpˉcapabilities = Wvˉdumpˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -5047,6 +5115,13 @@ internal static class Program
         var Normalizedˉwvoˉoutput = Wvoˉhostedˉoutput.ToString()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
+        Phases.Addˉexecutedˉinstructions(checked(
+            Wvˉdumpˉresult.Executedˉinstructions +
+            Wvˉdumpˉhostedˉresult.Executedˉinstructions +
+            Wvoˉselfˉtestˉresult.Executedˉinstructions +
+            Wvoˉhostedˉresult.Executedˉinstructions));
+
+        Phases.Start("assembler-closure");
         var Wvaˉassemblerˉmodule = Moduleˉcodec.Readˉandˉverify(Wvaˉassemblerˉbytes);
         var Wvaˉassemblerˉcapabilities = Wvaˉassemblerˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -5085,6 +5160,11 @@ internal static class Program
             .Replace('\r', '\n');
         var Wvaˉassemblerˉobjectˉhash = Objectˉdigest.Calculateˉsha256(
             Wvaˉassemblerˉwriter.Bytes.AsSpan());
+        Phases.Addˉexecutedˉinstructions(checked(
+            Wvaˉassemblerˉselfˉtestˉresult.Executedˉinstructions +
+            Wvaˉassemblerˉhostedˉresult.Executedˉinstructions));
+
+        Phases.Start("linker-closure");
         var Wvˉlinkerˉmodule = Moduleˉcodec.Readˉandˉverify(Wvˉlinkerˉbytes);
         var Wvˉlinkerˉcapabilities = Wvˉlinkerˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -5114,6 +5194,12 @@ internal static class Program
         var Normalizedˉwvˉlinkerˉanalysisˉoutput = Wvˉlinkerˉanalysis.Output
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
+        Phases.Addˉexecutedˉinstructions(checked(
+            Wvˉlinkerˉselfˉtestˉresult.Executedˉinstructions +
+            Wvˉlinkerˉhosted.Executedˉinstructions +
+            Wvˉlinkerˉanalysis.Executedˉinstructions));
+
+        Phases.Start("contract-assembly");
         Equal(29, Sumˉresult.Exitˉcode);
         Equal("Hello from Windvale\n", Normalizedˉhelloˉoutput);
         Equal(0, Helloˉresult.Exitˉcode);
@@ -5368,7 +5454,8 @@ internal static class Program
             Result.Exitˉcode,
             Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'),
             Diagnostics.ToString().Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'),
-            Reader.Readˉcount);
+            Reader.Readˉcount,
+            Result.Executedˉinstructions);
     }
 
     private static Compilerˉsourceˉparserˉrunˉresult Runˉsourceˉsetˉtool(
@@ -5405,7 +5492,8 @@ internal static class Program
             Result.Exitˉcode,
             Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'),
             Diagnostics.ToString().Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'),
-            Reader.Readˉcount);
+            Reader.Readˉcount,
+            Result.Executedˉinstructions);
     }
 
     private static Wvˉlinkerˉscanˉresult Runˉwvˉlinkerˉscan(
@@ -5433,7 +5521,11 @@ internal static class Program
                 }),
                 new Capturingˉfileˉwriter())),
             new(Authorized, Maximumˉinstructions: 20_000_000)).Runˉmain();
-        return new(Result.Exitˉcode, Output.ToString(), Diagnostics.ToString());
+        return new(
+            Result.Exitˉcode,
+            Output.ToString(),
+            Diagnostics.ToString(),
+            Result.Executedˉinstructions);
     }
 
     private static Wvˉlinkerˉanalysisˉresult Runˉwvˉlinkerˉanalysis(
@@ -6052,6 +6144,7 @@ internal static class Program
         long elapsedˉmilliseconds,
         List<Testˉtimingˉentry> tests)
     {
+        Validateˉgoldenˉphaseˉtimings(tests);
         var Report = new Testˉtimingˉreport(
             filter,
             [.. areas.Order(StringComparer.Ordinal)],
@@ -6059,12 +6152,55 @@ internal static class Program
             selected,
             tests.Count,
             elapsedˉmilliseconds,
-            tests);
+            tests,
+            [.. GOLDEN_PHASE_TIMINGS]);
         var Options = new JsonSerializerOptions { WriteIndented = true };
         var Fullˉpath = Path.GetFullPath(path);
         Directory.CreateDirectory(Path.GetDirectoryName(Fullˉpath)!);
         File.WriteAllText(Fullˉpath, JsonSerializer.Serialize(Report, Options) + Environment.NewLine);
         Console.WriteLine($"Timing report: {Fullˉpath}");
+    }
+
+    private static void Validateˉgoldenˉphaseˉtimings(List<Testˉtimingˉentry> tests)
+    {
+        var Goldenˉtest = tests.SingleOrDefault(
+            Test => StringComparer.Ordinal.Equals(Test.Name, GOLDEN_TEST_NAME));
+        if (Goldenˉtest is null)
+        {
+            if (GOLDEN_PHASE_TIMINGS.Count != 0)
+            {
+                throw new InvalidOperationException(
+                    "Golden phase timings were recorded without executing the golden test.");
+            }
+
+            return;
+        }
+
+        if (
+            GOLDEN_PHASE_TIMINGS.Count > GOLDEN_PHASE_NAMES.Length ||
+            !GOLDEN_PHASE_TIMINGS
+                .Select(Phase => Phase.Name)
+                .SequenceEqual(GOLDEN_PHASE_NAMES.Take(GOLDEN_PHASE_TIMINGS.Count), StringComparer.Ordinal)
+        )
+        {
+            throw new InvalidOperationException("Golden phase timings are incomplete or out of canonical order.");
+        }
+
+        if (Goldenˉtest.Outcome == "passed" && GOLDEN_PHASE_TIMINGS.Count != GOLDEN_PHASE_NAMES.Length)
+        {
+            throw new InvalidOperationException("A passing golden test did not record every timing phase.");
+        }
+
+        if (GOLDEN_PHASE_TIMINGS.Any(Phase =>
+            Phase.Elapsedˉmilliseconds < 0 ||
+            Phase.Executedˉinstructions < 0 ||
+            Phase.Allocatedˉbytes < 0 ||
+            Phase.Generation0ˉcollections < 0 ||
+            Phase.Generation1ˉcollections < 0 ||
+            Phase.Generation2ˉcollections < 0))
+        {
+            throw new InvalidOperationException("Golden phase timings contain a negative metric.");
+        }
     }
 
     private static int Compareˉreports(string firstˉpath, string secondˉpath)
@@ -6178,12 +6314,14 @@ internal static class Program
         int Exitˉcode,
         string Output,
         string Diagnostics,
-        int Readˉcount);
+        int Readˉcount,
+        long Executedˉinstructions);
 
     private sealed record Wvˉlinkerˉscanˉresult(
         int Exitˉcode,
         string Output,
-        string Diagnostics);
+        string Diagnostics,
+        long Executedˉinstructions);
 
     private sealed record Wvˉlinkerˉanalysisˉresult(
         int Exitˉcode,
@@ -6230,6 +6368,76 @@ internal static class Program
         }
     }
 
+    private sealed class Goldenˉphaseˉrecorder(
+        List<Goldenˉphaseˉtimingˉentry>? entries) : IDisposable
+    {
+        private string? Currentˉname;
+        private long Startedˉtimestamp;
+        private long Startedˉallocatedˉbytes;
+        private int Startedˉgeneration0ˉcollections;
+        private int Startedˉgeneration1ˉcollections;
+        private int Startedˉgeneration2ˉcollections;
+        private long Executedˉinstructions;
+
+        public void Start(string name)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            Finishˉcurrent();
+            if (entries is null)
+            {
+                return;
+            }
+
+            Currentˉname = name;
+            Startedˉtimestamp = Stopwatch.GetTimestamp();
+            Startedˉallocatedˉbytes = GC.GetAllocatedBytesForCurrentThread();
+            Startedˉgeneration0ˉcollections = GC.CollectionCount(0);
+            Startedˉgeneration1ˉcollections = GC.CollectionCount(1);
+            Startedˉgeneration2ˉcollections = GC.CollectionCount(2);
+            Executedˉinstructions = 0;
+        }
+
+        public void Addˉexecutedˉinstructions(long count)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            if (Currentˉname is not null)
+            {
+                Executedˉinstructions = checked(Executedˉinstructions + count);
+            }
+        }
+
+        public void Dispose()
+        {
+            Finishˉcurrent();
+        }
+
+        private void Finishˉcurrent()
+        {
+            if (entries is null || Currentˉname is null)
+            {
+                return;
+            }
+
+            var Elapsedˉmilliseconds =
+                Stopwatch.GetElapsedTime(Startedˉtimestamp).Ticks / TimeSpan.TicksPerMillisecond;
+            var Allocatedˉbytes =
+                GC.GetAllocatedBytesForCurrentThread() - Startedˉallocatedˉbytes;
+            entries.Add(new(
+                Currentˉname,
+                Elapsedˉmilliseconds,
+                Executedˉinstructions,
+                Allocatedˉbytes,
+                GC.CollectionCount(0) - Startedˉgeneration0ˉcollections,
+                GC.CollectionCount(1) - Startedˉgeneration1ˉcollections,
+                GC.CollectionCount(2) - Startedˉgeneration2ˉcollections));
+            Currentˉname = null;
+        }
+    }
+
     private sealed record Testˉcase(
         string Name,
         ImmutableArray<string> Areas,
@@ -6259,6 +6467,15 @@ internal static class Program
         [property: JsonPropertyName("outcome")] string Outcome,
         [property: JsonPropertyName("elapsedMilliseconds")] long Elapsedˉmilliseconds);
 
+    private sealed record Goldenˉphaseˉtimingˉentry(
+        [property: JsonPropertyName("name")] string Name,
+        [property: JsonPropertyName("elapsedMilliseconds")] long Elapsedˉmilliseconds,
+        [property: JsonPropertyName("executedInstructions")] long Executedˉinstructions,
+        [property: JsonPropertyName("allocatedBytes")] long Allocatedˉbytes,
+        [property: JsonPropertyName("generation0Collections")] int Generation0ˉcollections,
+        [property: JsonPropertyName("generation1Collections")] int Generation1ˉcollections,
+        [property: JsonPropertyName("generation2Collections")] int Generation2ˉcollections);
+
     private sealed record Testˉtimingˉreport(
         [property: JsonPropertyName("filter")] string? Filter,
         [property: JsonPropertyName("areas")] ImmutableArray<string> Areas,
@@ -6266,7 +6483,8 @@ internal static class Program
         [property: JsonPropertyName("selected")] int Selected,
         [property: JsonPropertyName("executed")] int Executed,
         [property: JsonPropertyName("elapsedMilliseconds")] long Elapsedˉmilliseconds,
-        [property: JsonPropertyName("tests")] List<Testˉtimingˉentry> Tests);
+        [property: JsonPropertyName("tests")] List<Testˉtimingˉentry> Tests,
+        [property: JsonPropertyName("goldenPhases")] ImmutableArray<Goldenˉphaseˉtimingˉentry> Goldenˉphases);
 
     private sealed record Conformanceˉcontract(
         [property: JsonPropertyName("moduleFormat")] string Moduleˉformat,
