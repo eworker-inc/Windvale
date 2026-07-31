@@ -52,15 +52,15 @@ internal static class Program
     private const string SOURCE_SYMBOLS_SHA256 = "624fd35749645c0cf269c6d298303b614efad1e112e86cb045016485386d58f6";
     private const string SOURCE_SYMBOLS_DEMO_SHA256 = "ca513e0ea10a84f6c5ccc630927b3c18793b6c2e3d1badabffab08fdcdd2146c";
     private const string SOURCE_SYMBOLS_TOOL_SHA256 = "840492af48d93af014fb12c59b6711752e80519d50ec45dbecee4483b42dce05";
-    private const string SOURCE_BINDINGS_SHA256 = "7f0317cf91401b963885db94abe1c640461f31086daabe02231d888c89afa8bd";
-    private const string SOURCE_BINDINGS_DEMO_SHA256 = "bcaf22c63edcf538a68eb725caa13ed75db96b962d791da843449a25f8a46df3";
-    private const string SOURCE_BINDINGS_TOOL_SHA256 = "30b7300141b5712e90c020bb53abc629961b20d6c0364ff09f0920b68bbc1bd3";
-    private const string SOURCE_WIR_SHA256 = "89e2590e99ea96ebea5995491bc13d9497b2b5c41b566c3653acfc4713b6414b";
-    private const string SOURCE_WIR_DEMO_SHA256 = "2d58a05a5ad7e39fda20e4706f52d365f15fe53d3cfae998431024fa1c1edada";
-    private const string SOURCE_WIR_TOOL_SHA256 = "8bbca67184db5d8d980e61268021771d25b20f47624878abec6b9e54afbd6c4d";
-    private const string SOURCE_WVB_SHA256 = "b00677d82b90c7aa5dfe486cf7c8675658fd37a9fc560a3631004056f28b5cbf";
-    private const string SOURCE_WVB_DEMO_SHA256 = "19da326967e17a06f149efbb9cbd35c89ad9ec156f7f74833ea8287141cb419e";
-    private const string SOURCE_WVB_TOOL_SHA256 = "ce3ae94685c07b025e8cd8ea95f53df01819cb1946eaf3cf442e3fa38ad8cb5d";
+    private const string SOURCE_BINDINGS_SHA256 = "5440db53fa42f819321d91f67a2440cf128a8685e564b057d61d1b7ee9a2e1c3";
+    private const string SOURCE_BINDINGS_DEMO_SHA256 = "1dabd3cb09339e63f2d8495eb27258fce1054c5163f92a5afd3258995d5bb8e5";
+    private const string SOURCE_BINDINGS_TOOL_SHA256 = "47dab8589a4ca5a7c460be981fc183a5efcdb551174e1bb734b415f4f4198cb8";
+    private const string SOURCE_WIR_SHA256 = "95b63f627f05efbdc95d65da7654a69dde89a7e7ec38e2ed80d3f5cfbff5c17f";
+    private const string SOURCE_WIR_DEMO_SHA256 = "23da120afffa4f450f703fc17a9719f1ed6c9a080ced67fbcd23bb7aa232f42e";
+    private const string SOURCE_WIR_TOOL_SHA256 = "2d8cbae0f87e2043eb18e43b6e6659044ada2f8c453cc17ca1b406efb6df517e";
+    private const string SOURCE_WVB_SHA256 = "bb259fe85c6593e3e13091faf77252468fd85ad5d0d2f73e4d6f450bacbd83a6";
+    private const string SOURCE_WVB_DEMO_SHA256 = "a873e870d005fb49cd48043d5f8d3f54c33d889bc2ab5f118f7c09b0f90f5fa0";
+    private const string SOURCE_WVB_TOOL_SHA256 = "b85ff9d1be9815304617be13d532636ab0a5a3ce2d018a610565ca067e52245c";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
@@ -1816,7 +1816,7 @@ internal static class Program
         Equal("Compilerˉsourceˉbindings", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
         Equal(47, Library.Module.Types.Length);
-        Equal(52, Library.Module.Exports.Length);
+        Equal(54, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉsourceˉbindingˉkind",
@@ -1899,7 +1899,7 @@ internal static class Program
         var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
         Equal("Compilerˉsourceˉwir", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
-        Equal(62, Library.Module.Exports.Length);
+        Equal(64, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉsourceˉwirˉoperation",
@@ -5688,7 +5688,7 @@ internal static class Program
         Equal(string.Empty, Sourceˉbindingsˉselfˉresult.Diagnostics);
         Equal(9, Sourceˉbindingsˉselfˉresult.Readˉcount);
         Equal(
-            "source bindings status=Valid modules=9 functions=187 parameters=813 locals=942 reads=8260 assignments=609 calls=1473 directory-bytes=65076\n",
+            "source bindings status=Valid modules=9 functions=189 parameters=827 locals=942 reads=8277 assignments=609 calls=1475 directory-bytes=65596\n",
             Sourceˉbindingsˉselfˉresult.Output);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",

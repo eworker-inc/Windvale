@@ -154,6 +154,11 @@ record Compilerˉsourceˉwirˉbuild {
     Currentˉblock: u32;
     Currentˉblockˉfirstˉoperation: u32;
     Hasˉcurrentˉblock: bool;
+    Bindingˉpayload: bytes;
+    Bindingˉentries: u32;
+    Bindingˉparameters: u32;
+    Bindingˉlocals: u32;
+    Bindingˉnextˉslot: u32;
     Failureˉmodule: u32;
     Failureˉrelatedˉmodule: u32;
     Failureˉfunction: u32;
@@ -184,6 +189,11 @@ record Compilerˉsourceˉwirˉvalue {
     Currentˉblock: u32;
     Currentˉblockˉfirstˉoperation: u32;
     Hasˉcurrentˉblock: bool;
+    Bindingˉpayload: bytes;
+    Bindingˉentries: u32;
+    Bindingˉparameters: u32;
+    Bindingˉlocals: u32;
+    Bindingˉnextˉslot: u32;
     Failureˉmodule: u32;
     Failureˉrelatedˉmodule: u32;
     Failureˉfunction: u32;
@@ -214,6 +224,52 @@ record Compilerˉsourceˉwirˉsummary {
 
 export fn Compilerˉsourceˉwirˉempty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Compilerˉsourceˉwirˉbuildˉbindings(
+    Input: bytes,
+    Build: Compilerˉsourceˉwirˉbuild
+) -> Compilerˉsourceˉbindingˉphase {
+    let Bindingˉbuild: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingˉbuild(
+        Compilerˉsourceˉbindingˉstatus.Valid,
+        Build.Bindingˉpayload,
+        Build.Bindingˉentries,
+        Build.Bindingˉparameters,
+        Build.Bindingˉlocals,
+        Build.Bindingˉnextˉslot,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+    return Compilerˉsourceˉbindingsˉphaseˉfrom(
+        Bindingˉbuild, Compilerˉsourceˉbindingsˉbodyˉempty()
+    );
+}
+
+export fn Compilerˉsourceˉwirˉfusedˉfrom(
+    Build: Compilerˉsourceˉwirˉbuild,
+    Bindings: Compilerˉsourceˉbindingˉphase
+) -> Compilerˉsourceˉwirˉbuild {
+    return Compilerˉsourceˉwirˉbuild(
+        Build.Status,
+        Build.Functionˉpayload, Build.Blockˉpayload, Build.Operationˉpayload,
+        Build.Temporaryˉpayload, Build.Operandˉpayload,
+        Build.Functionˉentries, Build.Blocks, Build.Operations,
+        Build.Temporaries, Build.Operands,
+        Build.Currentˉmodule, Build.Currentˉfunction,
+        Build.Functionˉfirstˉblock, Build.Functionˉfirstˉoperation,
+        Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
+        Build.Nextˉblock, Build.Currentˉblock,
+        Build.Currentˉblockˉfirstˉoperation, Build.Hasˉcurrentˉblock,
+        Bindings.Payload, Bindings.Entries, Bindings.Parameters,
+        Bindings.Locals, Bindings.Nextˉslot,
+        Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
+        Build.Failureˉfunction, Build.Failureˉoffset,
+        Build.Failureˉline, Build.Failureˉcolumn
+    );
 }
 
 export fn Compilerˉsourceˉwirˉsentinel() -> u32 {
@@ -327,6 +383,7 @@ export fn Compilerˉsourceˉwirˉbuildˉempty(
         Modules, Functions,
         0u32, 0u32, 0u32, 0u32,
         0u32, 0u32, 0u32, false,
+        Empty, 0u32, 0u32, 0u32, 0u32,
         Modules, Modules, Functions, Bytesˉlength(Input), 0u32, 0u32
     );
 }
@@ -352,6 +409,8 @@ export fn Compilerˉsourceˉwirˉbuildˉfailure(
         Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
         Build.Nextˉblock, Build.Currentˉblock,
         Build.Currentˉblockˉfirstˉoperation, Build.Hasˉcurrentˉblock,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Module, Relatedˉmodule, Function, Offset, Line, Column
     );
 }
@@ -372,6 +431,8 @@ export fn Compilerˉsourceˉwirˉvalueˉfrom(
         Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
         Build.Nextˉblock, Build.Currentˉblock,
         Build.Currentˉblockˉfirstˉoperation, Build.Hasˉcurrentˉblock,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn,
@@ -393,6 +454,8 @@ export fn Compilerˉsourceˉwirˉvalueˉbuild(
         Value.Functionˉfirstˉtemporary, Value.Functionˉfirstˉoperand,
         Value.Nextˉblock, Value.Currentˉblock,
         Value.Currentˉblockˉfirstˉoperation, Value.Hasˉcurrentˉblock,
+        Value.Bindingˉpayload, Value.Bindingˉentries,
+        Value.Bindingˉparameters, Value.Bindingˉlocals, Value.Bindingˉnextˉslot,
         Value.Failureˉmodule, Value.Failureˉrelatedˉmodule,
         Value.Failureˉfunction, Value.Failureˉoffset,
         Value.Failureˉline, Value.Failureˉcolumn
@@ -424,6 +487,8 @@ export fn Compilerˉsourceˉwirˉstartˉfunction(
         Module, Function,
         Build.Blocks, Build.Operations, Build.Temporaries, Build.Operands,
         1u32, 0u32, Build.Operations, true,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -444,6 +509,8 @@ export fn Compilerˉsourceˉwirˉwithoutˉcurrentˉblock(
         Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
         Build.Nextˉblock, Build.Currentˉblock,
         Build.Currentˉblockˉfirstˉoperation, false,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -469,6 +536,8 @@ export fn Compilerˉsourceˉwirˉreserveˉblocks(
                 Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
                 Build.Nextˉblock + Added, Build.Currentˉblock,
                 Build.Currentˉblockˉfirstˉoperation, Build.Hasˉcurrentˉblock,
+                Build.Bindingˉpayload, Build.Bindingˉentries,
+                Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
                 Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
                 Build.Failureˉfunction, Build.Failureˉoffset,
                 Build.Failureˉline, Build.Failureˉcolumn
@@ -497,6 +566,8 @@ export fn Compilerˉsourceˉwirˉreserveˉblocks(
         Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
         Build.Nextˉblock + Count, Build.Currentˉblock,
         Build.Currentˉblockˉfirstˉoperation, Build.Hasˉcurrentˉblock,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -517,6 +588,8 @@ export fn Compilerˉsourceˉwirˉbeginˉreservedˉblock(
         Build.Functionˉfirstˉblock, Build.Functionˉfirstˉoperation,
         Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
         Build.Nextˉblock, Block, Build.Operations, true,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -582,6 +655,8 @@ export fn Compilerˉsourceˉwirˉappendˉblock(
         Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
         Build.Nextˉblock, Build.Currentˉblock,
         Build.Currentˉblockˉfirstˉoperation, Build.Hasˉcurrentˉblock,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -660,6 +735,8 @@ export fn Compilerˉsourceˉwirˉappendˉfunctionˉentry(
         Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
         Build.Nextˉblock, Build.Currentˉblock,
         Build.Currentˉblockˉfirstˉoperation, Build.Hasˉcurrentˉblock,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -724,6 +801,8 @@ export fn Compilerˉsourceˉwirˉmergeˉfunction(
         Function.Functionˉfirstˉtemporary, Function.Functionˉfirstˉoperand,
         Function.Nextˉblock, Function.Currentˉblock,
         Function.Currentˉblockˉfirstˉoperation, Function.Hasˉcurrentˉblock,
+        Function.Bindingˉpayload, Function.Bindingˉentries,
+        Function.Bindingˉparameters, Function.Bindingˉlocals, Function.Bindingˉnextˉslot,
         Function.Failureˉmodule, Function.Failureˉrelatedˉmodule,
         Function.Failureˉfunction, Function.Failureˉoffset,
         Function.Failureˉline, Function.Failureˉcolumn
@@ -806,6 +885,8 @@ export fn Compilerˉsourceˉwirˉemit(
         Build.Functionˉfirstˉtemporary, Build.Functionˉfirstˉoperand,
         Build.Nextˉblock, Build.Currentˉblock,
         Build.Currentˉblockˉfirstˉoperation, Build.Hasˉcurrentˉblock,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -1238,10 +1319,11 @@ export fn Compilerˉsourceˉwirˉnominalˉmember(
         if Member.Kind == Compilerˉtokenˉkind.Rightˉbrace {
             Reading = false;
         } else {
-            if Compilerˉsourceˉspansˉcompare(
-                View.Source, Member.Offset, Member.Length,
-                Queryˉsource, Queryˉoffset, Queryˉlength
-            ) == 0 {
+            if Member.Length == Queryˉlength {
+                if Compilerˉsourceˉspansˉcompare(
+                    View.Source, Member.Offset, Member.Length,
+                    Queryˉsource, Queryˉoffset, Queryˉlength
+                ) == 0 {
                 if Nominal.Kind == Compilerˉsourceˉdeclarationˉkind.Enum {
                     let Shape: u32 = 131072u32 + Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
                         Input, Scan, Symbols.Directory, Symbols.Lookup, Nominal.Kind,
@@ -1261,6 +1343,7 @@ export fn Compilerˉsourceˉwirˉnominalˉmember(
                 return Compilerˉsourceˉwirˉmember(
                     true, Index, Compilerˉsourceˉbindingsˉshape(Matchedˉtype)
                 );
+                }
             }
             if Nominal.Kind == Compilerˉsourceˉdeclarationˉkind.Record {
                 let Recordˉcolon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
@@ -1963,9 +2046,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
-    Bindingˉpayload: bytes,
-    Bindingˉfirst: u32,
-    Bindingˉentries: u32,
+    Bindings: Compilerˉsourceˉbindingˉphase,
     Source: bytes,
     Offset: u32,
     Line: u32,
@@ -1980,7 +2061,9 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
     var Cursor: u32 = Start.Nextˉoffset;
     var Currentˉline: u32 = Start.Nextˉline;
     var Currentˉcolumn: u32 = Start.Nextˉcolumn;
-    var Result: Compilerˉsourceˉwirˉbuild = Build;
+    var Result: Compilerˉsourceˉwirˉbuild =
+        Compilerˉsourceˉwirˉfusedˉfrom(Build, Bindings);
+    var Bindingˉphase: Compilerˉsourceˉbindingˉphase = Bindings;
     var Reading: bool = true;
     while Reading {
         let Current: Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
@@ -1990,20 +2073,28 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
             Reading = false;
         } else {
             if !Result.Hasˉcurrentˉblock {
-                return Compilerˉsourceˉwirˉbuildˉfailure(
-                    Result,
-                    Compilerˉsourceˉwirˉstatus.Unreachableˉstatement,
-                    Result.Currentˉmodule,
-                    Result.Currentˉmodule,
-                    Result.Currentˉfunction,
-                    Current.Offset,
-                    Current.Line,
-                    Current.Column
+                return Compilerˉsourceˉwirˉfusedˉfrom(
+                    Compilerˉsourceˉwirˉbuildˉfailure(
+                        Result,
+                        Compilerˉsourceˉwirˉstatus.Unreachableˉstatement,
+                        Result.Currentˉmodule,
+                        Result.Currentˉmodule,
+                        Result.Currentˉfunction,
+                        Current.Offset,
+                        Current.Line,
+                        Current.Column
+                    ),
+                    Bindingˉphase
                 );
             }
             let Statement: Compilerˉsourceˉstatement = Compilerˉparseˉnextˉstatementˉvalidated(
                 Source, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset, 0u32
             );
+            let Bindingˉbuild: Compilerˉsourceˉbindingˉbuild =
+                Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Bindingˉphase);
+            let Bindingˉpayload: bytes = Bindingˉbuild.Payload;
+            let Bindingˉfirst: u32 = Bindingˉbuild.Entries - Bindingˉbuild.Nextˉslot;
+            let Bindingˉentries: u32 = Bindingˉbuild.Entries;
             if Statement.Kind == Compilerˉsourceˉstatementˉkind.Local {
                 let Localˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
                     Source, Statement.Offset, Statement.Line, Statement.Column,
@@ -2018,18 +2109,47 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Result
                 );
                 if Localˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                    return Compilerˉsourceˉwirˉvalueˉbuild(Localˉvalue);
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉvalueˉbuild(Localˉvalue), Bindingˉphase
+                    );
                 }
+                Bindingˉphase = Compilerˉsourceˉbindingsˉphaseˉbuild(
+                    Bindingˉphase,
+                    Compilerˉsourceˉbindingsˉcollectˉlocal(
+                        Input, Scan, Symbols,
+                        Result.Currentˉmodule, Result.Currentˉfunction,
+                        Source, Statement, Endˉoffset, Bindingˉbuild
+                    )
+                );
+                if Bindingˉphase.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
+                    return Compilerˉsourceˉwirˉbuildˉfailure(
+                        Compilerˉsourceˉwirˉvalueˉbuild(Localˉvalue),
+                        Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+                        Bindingˉphase.Buildˉfailureˉmodule,
+                        Bindingˉphase.Buildˉfailureˉrelatedˉmodule,
+                        Bindingˉphase.Buildˉfailureˉfunction,
+                        Bindingˉphase.Buildˉfailureˉoffset,
+                        Bindingˉphase.Buildˉfailureˉline,
+                        Bindingˉphase.Buildˉfailureˉcolumn
+                    );
+                }
+                let Localˉbindings: Compilerˉsourceˉbindingˉbuild =
+                    Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Bindingˉphase);
                 let Localˉbinding: Compilerˉsourceˉlocalˉmatch = Compilerˉsourceˉbindingsˉfindˉlocal(
-                    Source, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                    Source, Localˉbindings.Payload,
+                    Localˉbindings.Entries - Localˉbindings.Nextˉslot,
+                    Localˉbindings.Entries,
                     Statement.Nameˉoffset, Statement.Nameˉlength, Statement.Nextˉoffset
                 );
                 if Localˉvalue.Shape != Localˉbinding.Shape {
-                    return Compilerˉsourceˉwirˉbuildˉfailure(
-                        Compilerˉsourceˉwirˉvalueˉbuild(Localˉvalue),
-                        Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                        Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                        Statement.Expressionˉoffset, Localˉposition.Line, Localˉposition.Column
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉbuildˉfailure(
+                            Compilerˉsourceˉwirˉvalueˉbuild(Localˉvalue),
+                            Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
+                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
+                            Statement.Expressionˉoffset, Localˉposition.Line, Localˉposition.Column
+                        ),
+                        Bindingˉphase
                     );
                 }
                 let Localˉstored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
@@ -2040,7 +2160,9 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Localˉbinding.Slot, 0u32,
                     Statement.Offset, Statement.Length
                 );
-                Result = Compilerˉsourceˉwirˉvalueˉbuild(Localˉstored);
+                Result = Compilerˉsourceˉwirˉfusedˉfrom(
+                    Compilerˉsourceˉwirˉvalueˉbuild(Localˉstored), Bindingˉphase
+                );
             }
             if Statement.Kind == Compilerˉsourceˉstatementˉkind.Assignment {
                 let Assignmentˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
@@ -2056,34 +2178,45 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Result
                 );
                 if Assignmentˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                    return Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue);
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue), Bindingˉphase
+                    );
                 }
                 let Assignmentˉbinding: Compilerˉsourceˉlocalˉmatch = Compilerˉsourceˉbindingsˉfindˉlocal(
                     Source, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
                     Statement.Nameˉoffset, Statement.Nameˉlength, Statement.Offset
                 );
                 if !Assignmentˉbinding.Found {
-                    return Compilerˉsourceˉwirˉbuildˉfailure(
-                        Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue),
-                        Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                        Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                        Statement.Offset, Statement.Line, Statement.Column
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉbuildˉfailure(
+                            Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue),
+                            Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
+                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
+                            Statement.Offset, Statement.Line, Statement.Column
+                        ),
+                        Bindingˉphase
                     );
                 }
                 if Assignmentˉbinding.Kind != Compilerˉsourceˉbindingˉkind.Var {
-                    return Compilerˉsourceˉwirˉbuildˉfailure(
-                        Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue),
-                        Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                        Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                        Statement.Offset, Statement.Line, Statement.Column
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉbuildˉfailure(
+                            Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue),
+                            Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
+                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
+                            Statement.Offset, Statement.Line, Statement.Column
+                        ),
+                        Bindingˉphase
                     );
                 }
                 if Assignmentˉvalue.Shape != Assignmentˉbinding.Shape {
-                    return Compilerˉsourceˉwirˉbuildˉfailure(
-                        Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue),
-                        Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                        Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                        Statement.Expressionˉoffset, Assignmentˉposition.Line, Assignmentˉposition.Column
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉbuildˉfailure(
+                            Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue),
+                            Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
+                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
+                            Statement.Expressionˉoffset, Assignmentˉposition.Line, Assignmentˉposition.Column
+                        ),
+                        Bindingˉphase
                     );
                 }
                 let Assignmentˉstored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
@@ -2110,7 +2243,9 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Result
                 );
                 if Expressionˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                    return Compilerˉsourceˉwirˉvalueˉbuild(Expressionˉvalue);
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉvalueˉbuild(Expressionˉvalue), Bindingˉphase
+                    );
                 }
                 Result = Compilerˉsourceˉwirˉvalueˉbuild(Expressionˉvalue);
             }
@@ -2130,13 +2265,20 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                             Result
                         );
                         if Voidˉreturnˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                            return Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue);
+                            return Compilerˉsourceˉwirˉfusedˉfrom(
+                                Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue),
+                                Bindingˉphase
+                            );
                         }
-                        return Compilerˉsourceˉwirˉbuildˉfailure(
-                            Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue),
-                            Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
-                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                            Statement.Expressionˉoffset, Voidˉreturnˉposition.Line, Voidˉreturnˉposition.Column
+                        return Compilerˉsourceˉwirˉfusedˉfrom(
+                            Compilerˉsourceˉwirˉbuildˉfailure(
+                                Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue),
+                                Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
+                                Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
+                                Statement.Expressionˉoffset,
+                                Voidˉreturnˉposition.Line, Voidˉreturnˉposition.Column
+                            ),
+                            Bindingˉphase
                         );
                     }
                     Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
@@ -2148,11 +2290,14 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     );
                 } else {
                     if Statement.Expressionˉlength == 0u32 {
-                        return Compilerˉsourceˉwirˉbuildˉfailure(
-                            Result,
-                            Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
-                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                            Statement.Offset, Statement.Line, Statement.Column
+                        return Compilerˉsourceˉwirˉfusedˉfrom(
+                            Compilerˉsourceˉwirˉbuildˉfailure(
+                                Result,
+                                Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
+                                Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
+                                Statement.Offset, Statement.Line, Statement.Column
+                            ),
+                            Bindingˉphase
                         );
                     }
                     let Returnˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
@@ -2168,14 +2313,19 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                         Result
                     );
                     if Returnˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                        return Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue);
+                        return Compilerˉsourceˉwirˉfusedˉfrom(
+                            Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue), Bindingˉphase
+                        );
                     }
                     if Returnˉvalue.Shape != Returnˉshape {
-                        return Compilerˉsourceˉwirˉbuildˉfailure(
-                            Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue),
-                            Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                            Statement.Expressionˉoffset, Returnˉposition.Line, Returnˉposition.Column
+                        return Compilerˉsourceˉwirˉfusedˉfrom(
+                            Compilerˉsourceˉwirˉbuildˉfailure(
+                                Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue),
+                                Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
+                                Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
+                                Statement.Expressionˉoffset, Returnˉposition.Line, Returnˉposition.Column
+                            ),
+                            Bindingˉphase
                         );
                     }
                     Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
@@ -2202,15 +2352,20 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Result
                 );
                 if Ifˉcondition.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                    return Compilerˉsourceˉwirˉvalueˉbuild(Ifˉcondition);
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉvalueˉbuild(Ifˉcondition), Bindingˉphase
+                    );
                 }
                 if Ifˉcondition.Shape != 4u32 {
-                    return Compilerˉsourceˉwirˉbuildˉfailure(
-                        Compilerˉsourceˉwirˉvalueˉbuild(Ifˉcondition),
-                        Compilerˉsourceˉwirˉstatus.Invalidˉcondition,
-                        Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                        Statement.Expressionˉoffset,
-                        Ifˉconditionˉposition.Line, Ifˉconditionˉposition.Column
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉbuildˉfailure(
+                            Compilerˉsourceˉwirˉvalueˉbuild(Ifˉcondition),
+                            Compilerˉsourceˉwirˉstatus.Invalidˉcondition,
+                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
+                            Statement.Expressionˉoffset,
+                            Ifˉconditionˉposition.Line, Ifˉconditionˉposition.Column
+                        ),
+                        Bindingˉphase
                     );
                 }
                 var Branch: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉvalueˉbuild(Ifˉcondition);
@@ -2228,20 +2383,23 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Source, Statement.Offset, Statement.Line, Statement.Column,
                     Statement.Firstˉblockˉoffset
                 );
-                var Thenˉresult: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉbeginˉreservedˉblock(
+                let Thenˉstart: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉbeginˉreservedˉblock(
                     Branch, Thenˉblock
                 );
-                Thenˉresult = Compilerˉsourceˉwirˉcompileˉblock(
+                let Thenˉresult: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉcompileˉblock(
                     Input, Scan, Symbols,
-                    Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                    Bindingˉphase,
                     Source,
                     Statement.Firstˉblockˉoffset,
                     Thenˉposition.Line, Thenˉposition.Column,
                     Statement.Firstˉblockˉoffset + Statement.Firstˉblockˉlength,
                     Returnˉshape,
-                    Thenˉresult
+                    Thenˉstart
                 );
-                if Thenˉresult.Status != Compilerˉsourceˉwirˉstatus.Valid { return Thenˉresult; }
+                if Thenˉresult.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                    return Thenˉresult;
+                }
+                Bindingˉphase = Compilerˉsourceˉwirˉbuildˉbindings(Input, Thenˉresult);
                 let Thenˉhasˉcurrent: bool = Thenˉresult.Hasˉcurrentˉblock;
                 let Thenˉcurrent: u32 = Thenˉresult.Currentˉblock;
                 let Thenˉfirst: u32 = Thenˉresult.Currentˉblockˉfirstˉoperation;
@@ -2255,17 +2413,22 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                         Source, Statement.Offset, Statement.Line, Statement.Column,
                         Statement.Secondˉblockˉoffset
                     );
-                    Elseˉresult = Compilerˉsourceˉwirˉcompileˉblock(
-                        Input, Scan, Symbols,
-                        Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-                        Source,
-                        Statement.Secondˉblockˉoffset,
-                        Elseˉposition.Line, Elseˉposition.Column,
-                        Statement.Secondˉblockˉoffset + Statement.Secondˉblockˉlength,
-                        Returnˉshape,
-                        Elseˉresult
-                    );
-                    if Elseˉresult.Status != Compilerˉsourceˉwirˉstatus.Valid { return Elseˉresult; }
+                    let Elseˉcompiled: Compilerˉsourceˉwirˉbuild =
+                        Compilerˉsourceˉwirˉcompileˉblock(
+                            Input, Scan, Symbols,
+                            Bindingˉphase,
+                            Source,
+                            Statement.Secondˉblockˉoffset,
+                            Elseˉposition.Line, Elseˉposition.Column,
+                            Statement.Secondˉblockˉoffset + Statement.Secondˉblockˉlength,
+                            Returnˉshape,
+                            Elseˉresult
+                        );
+                    if Elseˉcompiled.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                        return Elseˉcompiled;
+                    }
+                    Bindingˉphase = Compilerˉsourceˉwirˉbuildˉbindings(Input, Elseˉcompiled);
+                    Elseˉresult = Elseˉcompiled;
                 }
                 let Elseˉhasˉcurrent: bool = Elseˉresult.Hasˉcurrentˉblock;
                 let Elseˉcurrent: u32 = Elseˉresult.Currentˉblock;
@@ -2336,15 +2499,20 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Result
                 );
                 if Whileˉcondition.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                    return Compilerˉsourceˉwirˉvalueˉbuild(Whileˉcondition);
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉvalueˉbuild(Whileˉcondition), Bindingˉphase
+                    );
                 }
                 if Whileˉcondition.Shape != 4u32 {
-                    return Compilerˉsourceˉwirˉbuildˉfailure(
-                        Compilerˉsourceˉwirˉvalueˉbuild(Whileˉcondition),
-                        Compilerˉsourceˉwirˉstatus.Invalidˉcondition,
-                        Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                        Statement.Expressionˉoffset,
-                        Whileˉconditionˉposition.Line, Whileˉconditionˉposition.Column
+                    return Compilerˉsourceˉwirˉfusedˉfrom(
+                        Compilerˉsourceˉwirˉbuildˉfailure(
+                            Compilerˉsourceˉwirˉvalueˉbuild(Whileˉcondition),
+                            Compilerˉsourceˉwirˉstatus.Invalidˉcondition,
+                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
+                            Statement.Expressionˉoffset,
+                            Whileˉconditionˉposition.Line, Whileˉconditionˉposition.Column
+                        ),
+                        Bindingˉphase
                     );
                 }
                 Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
@@ -2359,9 +2527,9 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Source, Statement.Offset, Statement.Line, Statement.Column,
                     Statement.Firstˉblockˉoffset
                 );
-                Result = Compilerˉsourceˉwirˉcompileˉblock(
+                let Bodyˉcompiled: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉcompileˉblock(
                     Input, Scan, Symbols,
-                    Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                    Bindingˉphase,
                     Source,
                     Statement.Firstˉblockˉoffset,
                     Bodyˉposition.Line, Bodyˉposition.Column,
@@ -2369,7 +2537,11 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Returnˉshape,
                     Result
                 );
-                if Result.Status != Compilerˉsourceˉwirˉstatus.Valid { return Result; }
+                if Bodyˉcompiled.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                    return Bodyˉcompiled;
+                }
+                Result = Bodyˉcompiled;
+                Bindingˉphase = Compilerˉsourceˉwirˉbuildˉbindings(Input, Bodyˉcompiled);
                 if Result.Hasˉcurrentˉblock {
                     Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
                         Result,
@@ -2386,9 +2558,9 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Source, Statement.Offset, Statement.Line, Statement.Column,
                     Statement.Firstˉblockˉoffset
                 );
-                Result = Compilerˉsourceˉwirˉcompileˉblock(
+                let Nestedˉcompiled: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉcompileˉblock(
                     Input, Scan, Symbols,
-                    Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                    Bindingˉphase,
                     Source,
                     Statement.Firstˉblockˉoffset,
                     Nestedˉposition.Line, Nestedˉposition.Column,
@@ -2396,23 +2568,25 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Returnˉshape,
                     Result
                 );
+                if Nestedˉcompiled.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                    return Nestedˉcompiled;
+                }
+                Result = Nestedˉcompiled;
+                Bindingˉphase = Compilerˉsourceˉwirˉbuildˉbindings(Input, Nestedˉcompiled);
             }
-            if Result.Status != Compilerˉsourceˉwirˉstatus.Valid { return Result; }
             Cursor = Statement.Nextˉoffset;
             Currentˉline = Statement.Nextˉline;
             Currentˉcolumn = Statement.Nextˉcolumn;
         }
     }
-    return Result;
+    return Compilerˉsourceˉwirˉfusedˉfrom(Result, Bindingˉphase);
 }
 
 export fn Compilerˉsourceˉwirˉcompileˉfunction(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
-    Bindingˉpayload: bytes,
-    Bindingˉfirst: u32,
-    Bindingˉentries: u32,
+    Bindings: Compilerˉsourceˉbindingˉphase,
     Module: u32,
     Function: u32,
     Source: bytes,
@@ -2421,10 +2595,31 @@ export fn Compilerˉsourceˉwirˉcompileˉfunction(
     Declarationˉcolumn: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉbuild {
-    var Result: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉstartˉfunction(
-        Build, Module, Function
+    var Bindingˉphase: Compilerˉsourceˉbindingˉphase =
+        Compilerˉsourceˉbindingsˉphaseˉparameters(
+            Input, Scan, Symbols, Module, Function, Source,
+            Declaration, Declarationˉline, Declarationˉcolumn, Bindings
     );
-    if Result.Status != Compilerˉsourceˉwirˉstatus.Valid { return Result; }
+    if Bindingˉphase.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
+        return Compilerˉsourceˉwirˉbuildˉfailure(
+            Build,
+            Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            Bindingˉphase.Buildˉfailureˉmodule,
+            Bindingˉphase.Buildˉfailureˉrelatedˉmodule,
+            Bindingˉphase.Buildˉfailureˉfunction,
+            Bindingˉphase.Buildˉfailureˉoffset,
+            Bindingˉphase.Buildˉfailureˉline,
+            Bindingˉphase.Buildˉfailureˉcolumn
+        );
+    }
+    var Result: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉstartˉfunction(
+        Compilerˉsourceˉwirˉfusedˉfrom(Build, Bindingˉphase),
+        Module,
+        Function
+    );
+    if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
+        return Result;
+    }
     let Signature: Compilerˉsourceˉwirˉsignature = Compilerˉsourceˉwirˉfunctionˉsignature(
         Input, Scan, Symbols, Module, Source, Declaration.Declarationˉoffset,
         Compilerˉsourceˉwirˉsentinel()
@@ -2438,7 +2633,7 @@ export fn Compilerˉsourceˉwirˉcompileˉfunction(
     );
     Result = Compilerˉsourceˉwirˉcompileˉblock(
         Input, Scan, Symbols,
-        Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+        Bindingˉphase,
         Source,
         Declaration.Bodyˉoffset,
         Bodyˉposition.Line,
@@ -2448,6 +2643,7 @@ export fn Compilerˉsourceˉwirˉcompileˉfunction(
         Result
     );
     if Result.Status != Compilerˉsourceˉwirˉstatus.Valid { return Result; }
+    Bindingˉphase = Compilerˉsourceˉwirˉbuildˉbindings(Input, Result);
     if Result.Hasˉcurrentˉblock {
         if Signature.Returnˉshape != 0u32 {
             let Failureˉoffset: u32 = Declaration.Bodyˉoffset + Declaration.Bodyˉlength - 1u32;
@@ -2458,13 +2654,16 @@ export fn Compilerˉsourceˉwirˉcompileˉfunction(
                 Declarationˉcolumn,
                 Failureˉoffset
             );
-            return Compilerˉsourceˉwirˉbuildˉfailure(
-                Result,
-                Compilerˉsourceˉwirˉstatus.Missingˉreturn,
-                Module, Module, Function,
-                Failureˉoffset,
-                Failureˉposition.Line,
-                Failureˉposition.Column
+            return Compilerˉsourceˉwirˉfusedˉfrom(
+                Compilerˉsourceˉwirˉbuildˉfailure(
+                    Result,
+                    Compilerˉsourceˉwirˉstatus.Missingˉreturn,
+                    Module, Module, Function,
+                    Failureˉoffset,
+                    Failureˉposition.Line,
+                    Failureˉposition.Column
+                ),
+                Bindingˉphase
             );
         }
         Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
@@ -2475,33 +2674,31 @@ export fn Compilerˉsourceˉwirˉcompileˉfunction(
             Compilerˉsourceˉwirˉsentinel()
         );
     }
+    let Bindingˉbuild: Compilerˉsourceˉbindingˉbuild =
+        Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Bindingˉphase);
     let Completed: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉappendˉfunctionˉentry(
         Result,
         true,
-        Declaration.Items,
-        (Bindingˉentries - Bindingˉfirst) - Declaration.Items,
+        Bindingˉbuild.Parameters,
+        Bindingˉbuild.Locals,
         Signature.Returnˉshape
     );
-    if Completed.Status != Compilerˉsourceˉwirˉstatus.Valid { return Completed; }
+    if Completed.Status != Compilerˉsourceˉwirˉstatus.Valid {
+        return Completed;
+    }
     return Compilerˉsourceˉwirˉmergeˉfunction(Build, Completed);
 }
 
 export fn Compilerˉsourceˉwirˉphase(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
-    Bindings: Compilerˉsourceˉbindingˉsummary
+    Symbols: Compilerˉsourceˉsymbolˉsummary
 ) -> Compilerˉsourceˉwirˉbuild {
-    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
-    let Bindingˉpayloadˉoffset: u32 = 24u32 + Symbolˉentries * 8u32;
-    let Bindingˉpayload: bytes = Bytesˉslice(
-        Bindings.Directory,
-        Bindingˉpayloadˉoffset,
-        Bytesˉlength(Bindings.Directory) - Bindingˉpayloadˉoffset
-    );
     var Result: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉbuildˉempty(
         Input, Scan.Modules, Symbols.Functions
     );
+    var Bindings: Compilerˉsourceˉbindingˉphase =
+        Compilerˉsourceˉbindingsˉphaseˉempty(Input);
     var Module: u32 = 0u32;
     while Module < Scan.Modules {
         let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
@@ -2525,18 +2722,10 @@ export fn Compilerˉsourceˉwirˉphase(
                             Declaration.Declarationˉoffset
                         );
                         let Function: u32 = Result.Functionˉentries;
-                        let Bindingˉrange: u32 = 24u32 + Function * 8u32;
-                        let Bindingˉfirst: u32 = Bytesˉreadˉu32ˉlittle(
-                            Bindings.Directory, Bindingˉrange
-                        );
-                        let Bindingˉentries: u32 = Bytesˉreadˉu32ˉlittle(
-                            Bindings.Directory, Bindingˉrange + 4u32
-                        );
-                        Result = Compilerˉsourceˉwirˉcompileˉfunction(
+                        let Functionˉresult: Compilerˉsourceˉwirˉbuild =
+                            Compilerˉsourceˉwirˉcompileˉfunction(
                             Input, Scan, Symbols,
-                            Bindingˉpayload,
-                            Bindingˉfirst,
-                            Bindingˉfirst + Bindingˉentries,
+                            Compilerˉsourceˉbindingsˉphaseˉempty(Input),
                             Module,
                             Function,
                             View.Source,
@@ -2545,7 +2734,16 @@ export fn Compilerˉsourceˉwirˉphase(
                             Position.Column,
                             Result
                         );
-                        if Result.Status != Compilerˉsourceˉwirˉstatus.Valid { return Result; }
+                        if Functionˉresult.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                            return Functionˉresult;
+                        }
+                        Result = Functionˉresult;
+                        let Functionˉbindings: Compilerˉsourceˉbindingˉphase =
+                            Compilerˉsourceˉwirˉbuildˉbindings(Input, Functionˉresult);
+                        Bindings = Compilerˉsourceˉbindingsˉphaseˉmerge(
+                            Bindings, Functionˉbindings
+                        );
+                        Result = Compilerˉsourceˉwirˉfusedˉfrom(Result, Bindings);
                     } else {
                         Result = Compilerˉsourceˉwirˉappendˉfunctionˉentry(
                             Result, false, 0u32, 0u32, 0u32
@@ -2560,7 +2758,7 @@ export fn Compilerˉsourceˉwirˉphase(
         }
         Module = Module + 1u32;
     }
-    return Result;
+    return Compilerˉsourceˉwirˉfusedˉfrom(Result, Bindings);
 }
 
 export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> bytes {
@@ -3568,23 +3766,32 @@ export fn Compilerˉvalidateˉsourceˉwir(Input: bytes) -> Compilerˉsourceˉwir
         return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Failedˉbindings);
     }
     let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Input);
-    let Bindings: Compilerˉsourceˉbindingˉsummary = Compilerˉsourceˉbindingsˉlocalsˉfromˉsymbols(
+    var Build: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉphase(
         Input, Scan, Symbols
     );
-    if Bindings.Status != Compilerˉsourceˉbindingˉstatus.Valid {
-        return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Bindings);
-    }
-    var Build: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉphase(
-        Input, Scan, Symbols, Bindings
-    );
     if Build.Status != Compilerˉsourceˉwirˉstatus.Valid {
+        let Localˉbindings: Compilerˉsourceˉbindingˉsummary =
+            Compilerˉsourceˉbindingsˉlocalsˉfromˉsymbols(
+                Input, Scan, Symbols
+            );
+        if Localˉbindings.Status != Compilerˉsourceˉbindingˉstatus.Valid {
+            return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Localˉbindings);
+        }
         let Completeˉbindings: Compilerˉsourceˉbindingˉsummary = Compilerˉsourceˉbindingsˉfromˉsymbols(
             Input, Scan, Symbols
         );
         if Completeˉbindings.Status != Compilerˉsourceˉbindingˉstatus.Valid {
             return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Completeˉbindings);
         }
-        return Compilerˉsourceˉwirˉsummaryˉfromˉbuild(Input, Bindings, Build);
+        return Compilerˉsourceˉwirˉsummaryˉfromˉbuild(Input, Localˉbindings, Build);
+    }
+    let Bindings: Compilerˉsourceˉbindingˉsummary =
+        Compilerˉsourceˉbindingsˉfinishˉphase(
+            Input, Scan, Symbols,
+            Compilerˉsourceˉwirˉbuildˉbindings(Input, Build)
+        );
+    if Bindings.Status != Compilerˉsourceˉbindingˉstatus.Valid {
+        return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Bindings);
     }
     if !Compilerˉsourceˉwirˉevidenceˉfits(Build) {
         Build = Compilerˉsourceˉwirˉbuildˉfailure(

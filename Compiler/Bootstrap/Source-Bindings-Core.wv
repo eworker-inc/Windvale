@@ -1609,7 +1609,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
     return Result;
 }
 
-export fn Compilerˉsourceˉbindingsˉphaseˉfunction(
+export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
@@ -1619,7 +1619,6 @@ export fn Compilerˉsourceˉbindingsˉphaseˉfunction(
     Declaration: Compilerˉsourceˉdeclaration,
     Declarationˉline: u32,
     Declarationˉcolumn: u32,
-    Bindˉbody: bool,
     Phase: Compilerˉsourceˉbindingˉphase
 ) -> Compilerˉsourceˉbindingˉphase {
     var Result: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉbuild(
@@ -1715,6 +1714,30 @@ export fn Compilerˉsourceˉbindingsˉphaseˉfunction(
             Currentˉcolumn = Separator.Column;
         }
         Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉsourceˉbindingsˉphaseˉfunction(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Module: u32,
+    Function: u32,
+    Source: bytes,
+    Declaration: Compilerˉsourceˉdeclaration,
+    Declarationˉline: u32,
+    Declarationˉcolumn: u32,
+    Bindˉbody: bool,
+    Phase: Compilerˉsourceˉbindingˉphase
+) -> Compilerˉsourceˉbindingˉphase {
+    let Result: Compilerˉsourceˉbindingˉphase =
+        Compilerˉsourceˉbindingsˉphaseˉparameters(
+            Input, Scan, Symbols, Module, Function, Source,
+            Declaration, Declarationˉline, Declarationˉcolumn, Phase
+        );
+    if Result.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
+        return Result;
     }
     let Bodyˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
         Source, Declaration.Declarationˉoffset, Declarationˉline, Declarationˉcolumn,
@@ -1903,15 +1926,12 @@ export fn Compilerˉsourceˉbindingsˉsummaryˉsuccess(
     );
 }
 
-export fn Compilerˉsourceˉbindingsˉfromˉsymbolsˉwithˉbody(
+export fn Compilerˉsourceˉbindingsˉfinishˉphase(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
-    Bindˉbody: bool
+    Phase: Compilerˉsourceˉbindingˉphase
 ) -> Compilerˉsourceˉbindingˉsummary {
-    let Phase: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
-        Input, Scan, Symbols, Bindˉbody
-    );
     let Build: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase);
     let Body: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉphaseˉbodyˉvalue(Phase);
     if Build.Status != Compilerˉsourceˉbindingˉstatus.Valid {
@@ -1951,6 +1971,20 @@ export fn Compilerˉsourceˉbindingsˉfromˉsymbolsˉwithˉbody(
     }
     return Compilerˉsourceˉbindingsˉsummaryˉsuccess(
         Input, Symbols, Build, Body, Directory
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉfromˉsymbolsˉwithˉbody(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Bindˉbody: bool
+) -> Compilerˉsourceˉbindingˉsummary {
+    return Compilerˉsourceˉbindingsˉfinishˉphase(
+        Input, Scan, Symbols,
+        Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
+            Input, Scan, Symbols, Bindˉbody
+        )
     );
 }
 

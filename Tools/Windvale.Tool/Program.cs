@@ -358,13 +358,15 @@ internal static class Program
         if (arguments.Length == 0)
         {
             return Usageˉerror(
-                "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [-- <argument>...]");
+                "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
+                "[--report-steps] [-- <argument>...]");
         }
 
         var Moduleˉpath = arguments[0];
         var Authorized = ImmutableHashSet.CreateBuilder<string>(StringComparer.Ordinal);
         var Programˉarguments = ImmutableArray.CreateBuilder<string>();
         long Maximumˉsteps = 1_000_000;
+        var Reportˉsteps = false;
         for (var Index = 1; Index < arguments.Length; Index++)
         {
             switch (arguments[Index])
@@ -384,6 +386,9 @@ internal static class Program
                         return Usageˉerror("--max-steps requires a positive integer.");
                     }
 
+                    break;
+                case "--report-steps":
+                    Reportˉsteps = true;
                     break;
                 case "--":
                     Programˉarguments.AddRange(arguments[(Index + 1)..]);
@@ -407,6 +412,10 @@ internal static class Program
             new(Authorized.ToImmutable(), Maximumˉsteps));
         var Result = Runtime.Runˉmain();
         Console.WriteLine($"Result: {Result.Exitˉcode}");
+        if (Reportˉsteps)
+        {
+            Console.WriteLine($"Instructions: {Result.Executedˉinstructions}");
+        }
         return EXIT_SUCCESS;
     }
 
@@ -482,7 +491,9 @@ internal static class Program
         output.WriteLine("  windvale verify <module.wvb>");
         output.WriteLine("  windvale object-inspect <object.wvo>");
         output.WriteLine("  windvale object-verify <object.wvo>");
-        output.WriteLine("  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [-- <argument>...]");
+        output.WriteLine(
+            "  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
+            "[--report-steps] [-- <argument>...]");
         output.WriteLine("  windvale help");
     }
 }

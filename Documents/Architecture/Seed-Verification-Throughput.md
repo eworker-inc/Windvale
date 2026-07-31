@@ -95,7 +95,7 @@ The typed-WVIR slice adds a focused test that compiles the portable core, runs s
 
 Exact commit `bf77f70` completed Qualification in approximately 1,090.7 seconds on Windows and 1,118.8 seconds on Debian QA. Both hosts passed zero-warning Release builds, all 47 tests, and the complete native verifier. Their normalized reports matched, and all 48 portable artifacts totaling 5,624,431 bytes were byte-identical. This preserves the tier split: the milestone gate pays for process-level repetition and direct cross-host evidence, while the focused WVIR loop remains measured in seconds.
 
-The ten-module compiler self-lowering experiment remains outside Fast and Standard. Symbol preparation alone is substantial, and the separate local-discovery plus IR body traversals currently exceed the unchanged 4,000,000,000-instruction ceiling. This is recorded as a body-traversal fusion target, not addressed by increasing limits or putting an unstable multi-minute case in every development loop.
+The ten-module compiler self-lowering experiment remains outside Fast and Standard. Decision 0041 fuses local discovery with typed-WVIR construction on the successful path, but the exact closure still reaches the unchanged 4,000,000,000-instruction ceiling. On the Windows development host, the retained candidate reached the bounded limit after 209.130 seconds versus 222.393 seconds for the separate-pass baseline. Because both runs execute the full ceiling, elapsed time is diagnostic host evidence rather than portable semantics. The remaining target is algorithmic lookup/typed-lowering work, not a higher limit or an unstable multi-minute case in every development loop.
 
 ## Canonical backend measurements
 

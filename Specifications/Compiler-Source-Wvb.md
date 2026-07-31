@@ -106,14 +106,14 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 The current cross-host-qualified bootstrap artifacts are:
 
-- `Source-Wvb-Core.wvb`: 571,555 bytes, SHA-256 `b00677d82b90c7aa5dfe486cf7c8675658fd37a9fc560a3631004056f28b5cbf`.
-- `Source-Wvb-Demo.wvb`: 573,282 bytes, SHA-256 `19da326967e17a06f149efbb9cbd35c89ad9ec156f7f74833ea8287141cb419e`.
-- `Source-Wvb-Tool.wvb`: 572,786 bytes, SHA-256 `ce3ae94685c07b025e8cd8ea95f53df01819cb1946eaf3cf442e3fa38ad8cb5d`.
+- `Source-Wvb-Core.wvb`: 579,187 bytes, SHA-256 `bb259fe85c6593e3e13091faf77252468fd85ad5d0d2f73e4d6f450bacbd83a6`.
+- `Source-Wvb-Demo.wvb`: 580,914 bytes, SHA-256 `a873e870d005fb49cd48043d5f8d3f54c33d889bc2ab5f118f7c09b0f90f5fa0`.
+- `Source-Wvb-Tool.wvb`: 580,418 bytes, SHA-256 `b85ff9d1be9815304617be13d532636ab0a5a3ce2d018a610565ca067e52245c`.
 
 The static multi-module implementation and artifact identities above were qualified from exact commit `cb1db235ef1ecf9697693f260516d0e241ced012` on Windows x64 and Debian Linux x64. Both hosts passed all 48 tests and the complete native verifier, their normalized reports matched, and all 61 retrieved portable artifacts were byte-identical.
 
 ## Expansion path
 
-Full bootstrap closure remains separate and still requires closing the current source-envelope and repeated-body-traversal performance gaps.
+Full bootstrap closure remains separate and still requires closing the current source-envelope and remaining lookup/typed-lowering performance gaps.
 
 Optimization, native code, object emission, executable containers, and OS-specific lowering are not part of this contract.

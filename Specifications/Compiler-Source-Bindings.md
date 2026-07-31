@@ -106,7 +106,7 @@ Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks th
 
 The phase validates source symbols first, then traverses modules, declarations, statements, and expression children in canonical source order. A local initializer is bound before its declaration is appended. Call arguments are bound before the call target and arity. The first failure under this order is returned with current module, related module or sentinel, WVSD function entry, byte offset, and one-based line/column.
 
-One combined full pass constructs local evidence and binds body references. Hot lookups pass the immutable binding payload plus the current function range directly. Global lookup uses the prepared symbol index and compares names against absolute offsets in the packed WVSS input. Each function constructs its binding payload privately and merges it once, avoiding quadratic global byte-buffer growth.
+One combined full pass constructs local evidence and binds body references. The parameter phase and final publication step are also explicit so typed WVIR construction can carry the same function-private binding state while it lowers statements, then publish canonical WVLB evidence without a second successful-path body traversal. Hot lookups pass the immutable binding payload plus the current function range directly. Global lookup uses the prepared symbol index and compares names against absolute offsets in the packed WVSS input. Each function constructs its binding payload privately and merges it once, avoiding quadratic global byte-buffer growth.
 
 Intrinsic-call lookup dispatches candidates by exact UTF-8 byte length, checks the most common compiler intrinsics first within each length group, and returns on the first match. A nonmatching length does not materialize the candidate text as bytes.
 
@@ -114,16 +114,16 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 ## Candidate artifacts and evidence
 
-- `Source-Bindings-Core.wvb`: 336,890 bytes, SHA-256 `7f0317cf91401b963885db94abe1c640461f31086daabe02231d888c89afa8bd`.
-- `Source-Bindings-Demo.wvb`: 343,879 bytes, SHA-256 `bcaf22c63edcf538a68eb725caa13ed75db96b962d791da843449a25f8a46df3`.
-- `Source-Bindings-Tool.wvb`: 339,476 bytes, SHA-256 `30b7300141b5712e90c020bb53abc629961b20d6c0364ff09f0920b68bbc1bd3`.
+- `Source-Bindings-Core.wvb`: 337,586 bytes, SHA-256 `5440db53fa42f819321d91f67a2440cf128a8685e564b057d61d1b7ee9a2e1c3`.
+- `Source-Bindings-Demo.wvb`: 344,471 bytes, SHA-256 `1dabd3cb09339e63f2d8495eb27258fce1054c5163f92a5afd3258995d5bb8e5`.
+- `Source-Bindings-Tool.wvb`: 340,068 bytes, SHA-256 `47dab8589a4ca5a7c460be981fc183a5efcdb551174e1bb734b415f4f4198cb8`.
 
 The focused demo covers valid parameters/locals/data/calls; mutable and immutable assignment; nested scope and initializer visibility; duplicate locals; primitive, visible, unknown, and inaccessible local types; unknown and inaccessible names/calls; undeclared capabilities; arity; upstream symbol failures; and corrupted header, range, entry, and trailing-data evidence.
 
 The hosted tool binds the current real closure as:
 
 ```text
-source bindings status=Valid modules=9 functions=187 parameters=813 locals=942 reads=8260 assignments=609 calls=1473 directory-bytes=65076
+source bindings status=Valid modules=9 functions=189 parameters=827 locals=942 reads=8277 assignments=609 calls=1475 directory-bytes=65596
 ```
 
 The pre-preparation implementation was qualified at `9185b28`. The prepared-symbol/local-only baseline was requalified as part of the exact `bf77f70` typed-WVIR candidate on Windows and Debian; all 48 portable artifacts compared for that historical candidate were byte-identical.
