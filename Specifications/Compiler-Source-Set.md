@@ -22,7 +22,7 @@ All integers are unsigned little-endian. Offsets are from the beginning of the W
 
 The first source offset must equal `16 + directory length`. Every later offset must equal the preceding offset plus length. Lengths are nonzero. The last source must end exactly at the WVSS length. Gaps, overlap, padding, reordered payloads, and trailing bytes are noncanonical and rejected.
 
-The complete WVSS value is currently limited to 4,194,304 bytes by the Seed immutable-`bytes` contract. This means directory bytes reduce the maximum aggregate source payload. This first version does not claim parity with Stage 0's 16 MiB aggregate character limit; that gap must close before complete bootstrap qualification.
+The complete WVSS value is currently limited to 4,194,304 bytes by the Seed immutable-`bytes` contract. This means directory bytes reduce the maximum aggregate source payload. This first version does not claim parity with Stage 0's 16 MiB aggregate character limit. The complete 12-module compiler closure occupies 677,073 source bytes and proves that the present envelope is sufficient for bytecode self-hosting; envelope parity remains a separate future contract decision rather than a blocker to that achieved closure.
 
 ## Portable contracts
 
@@ -46,6 +46,8 @@ The validator runs the qualified declaration and body passes over every source, 
 
 `Compilerˉsourceˉspansˉcompare` compares two already validated spans from possibly different immutable byte values using unsigned ordinal byte order. Callers own both range checks.
 
+`Compilerˉsourceˉspansˉequal` compares two already validated spans for exact byte equality. It rejects unequal lengths immediately and scans equal-length spans from the end so the compiler's long shared identifier prefixes do not force a complete forward ordinal comparison when suffixes differ. Callers own both range checks.
+
 ## Boundary and ownership
 
 WVSS is a compiler input container, not a source package, archive, module-distribution format, general collection API, or runtime linker. It does not resolve imports, prove reachability or acyclicity, bind symbols, decode strings, retain syntax nodes or diagnostics, construct WIR, or emit WVB.
@@ -54,14 +56,14 @@ The hosted source-set tool accepts explicit root/dependency resource names, cons
 
 ## Current candidate artifacts and evidence
 
-- `Source-Set-Core.wvb`: 187,266 bytes, SHA-256 `ab6a6afc5cc90e8db508a9ce4d22acc42cf2cbc5293afad977881a71c3b2658a`.
-- `Source-Set-Demo.wvb`: 196,239 bytes, SHA-256 `dda97ec276bc2c56552e765854322b1177f5b6c27d36fec25d9360f39451b7e1`.
-- `Source-Set-Tool.wvb`: 191,495 bytes, SHA-256 `58d29de0ea3b92a83f0cd84bba22910c2c826e7f01d93d0aa5a04f8d0a029322`.
+- `Source-Set-Core.wvb`: 187,767 bytes, SHA-256 `bb671df781acb049c513f9504abf00069a3fff1cdb9affb8706340b9e02fefda`.
+- `Source-Set-Demo.wvb`: 197,409 bytes, SHA-256 `5b334b0ead653bc043e244a60e2e36bc32d66aa0211f715329434c0447a539c9`.
+- `Source-Set-Tool.wvb`: 191,957 bytes, SHA-256 `3ecb611599ee51799799ead54288259569a1b0a092d24c216caa703b578d55e4`.
 
 The Windows x64 and Debian Linux x64 conformance runners each pass all 43 tests with zero build warnings/errors. The hosted tool validates the real source-set core plus body parser, declaration parser, lexer, and decimal parser as:
 
 ```text
-source set status=Valid modules=5 source-bytes=205110 imports=4 records=16 enums=11 functions=91
+source set status=Valid modules=5 source-bytes=205658 imports=4 records=16 enums=11 functions=92
 ```
 
-The source-set contract was originally cross-host qualified at `00ef0b1`. Decision 0042's artifacts and aggregate source-byte report were requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's declaration-summary reuse implementation is cross-host qualified at `1a4fca7`.
+The source-set contract was originally cross-host qualified at `00ef0b1`. Decision 0042's artifacts and aggregate source-byte report were requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's declaration-summary reuse implementation is cross-host qualified at `1a4fca7`. Decision 0058 adds the equality-only span helper and uses the unchanged WVSS 1 format for the first exact Stage 1 to Stage 2 compiler convergence candidate.

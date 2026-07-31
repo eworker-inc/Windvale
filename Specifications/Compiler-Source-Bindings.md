@@ -114,16 +114,16 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 ## Candidate artifacts and evidence
 
-- `Source-Bindings-Core.wvb`: 353,109 bytes, SHA-256 `3922ca780b11162a9a331b7ca2fc6d3bb070e89134190eabbb978640a05ca128`.
-- `Source-Bindings-Demo.wvb`: 359,994 bytes, SHA-256 `26c778d4676d9dfa969cfebe41593d7733a6c5ad8fc54c0ee7b1b9a2dc6a5880`.
-- `Source-Bindings-Tool.wvb`: 355,591 bytes, SHA-256 `d989caa9573ca0b69df46b6a5cf0bd385011d65311463043bcc0b74e25b5a28c`.
+- `Source-Bindings-Core.wvb`: 353,191 bytes, SHA-256 `4e1e5d7f0029d15abaaadc3c2d84d966db6b33bb7b11c8b222bc5336b32cdae6`.
+- `Source-Bindings-Demo.wvb`: 360,076 bytes, SHA-256 `261d3497883a1920ebc523b252b91b1ee5efbbd4a5ad7a0d81255e3908959014`.
+- `Source-Bindings-Tool.wvb`: 355,673 bytes, SHA-256 `b5c0663ba414a913f0e64e611a8619ecb0dc95c763dfb2c2d12e02f65919e0b3`.
 
 The focused demo covers valid parameters/locals/data/calls; mutable and immutable assignment; nested scope and initializer visibility; duplicate locals; primitive, visible, unknown, and inaccessible local types; unknown and inaccessible names/calls; undeclared capabilities; arity; upstream symbol failures; and corrupted header, range, entry, and trailing-data evidence.
 
 The hosted tool binds the current real closure as:
 
 ```text
-source bindings status=Valid modules=9 functions=194 parameters=843 locals=1016 reads=8630 assignments=683 calls=1538 directory-bytes=68876
+source bindings status=Valid modules=9 functions=195 parameters=849 locals=1018 reads=8642 assignments=684 calls=1540 directory-bytes=69172
 ```
 
-The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. Decision 0050's bidirectional nominal map and length-filtered equality paths are qualified at `e37204f`. Decision 0055's artifacts consume validated lexer cursors and the bounded nominal range and are cross-host qualified at `1a4fca7`.
+The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. Decision 0050's bidirectional nominal map and length-filtered equality paths are qualified at `e37204f`. Decision 0055's artifacts consume validated lexer cursors and the bounded nominal range and are cross-host qualified at `1a4fca7`. Decision 0058 uses the reverse equality helper on exact-name paths without changing WVLB format or binding semantics.

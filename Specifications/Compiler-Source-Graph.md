@@ -55,9 +55,9 @@ Headers and leading import declarations are rescanned from accepted immutable so
 
 ## Current candidate artifacts and evidence
 
-- `Source-Graph-Core.wvb`: 203,731 bytes, SHA-256 `a6ef5896e45593f45b136cc73f3e8c57dd33274ff4736eff18795276fb0c8885`.
-- `Source-Graph-Demo.wvb`: 210,131 bytes, SHA-256 `7c0e191c6a931617aee23fbc91dac61648ebc2f8f2a40a1690ff648a6b9d60de`.
-- `Source-Graph-Tool.wvb`: 207,412 bytes, SHA-256 `ffbbea564754c667961680497d3b077f38626a4993ed9c1e1a0d5966e5378aba`.
+- `Source-Graph-Core.wvb`: 204,109 bytes, SHA-256 `5d266d834c5cde77efa4046dfc9c8a8c0eed7c2df1dd254f98c4e338d76cccda`.
+- `Source-Graph-Demo.wvb`: 210,509 bytes, SHA-256 `2d2fa7ae2cca012834fb340253a551f9332a764200bb8f6449158b8dad4b30b2`.
+- `Source-Graph-Tool.wvb`: 207,790 bytes, SHA-256 `4558a7c6ba1c1632bb2d46747d31dfd1be0480e93fc4eec8340d0ea39db702f1`.
 
 The Windows and Debian conformance runners each pass all 44 tests with zero build warnings/errors. The demo covers valid and rejected topology, and the hosted tool validates the real compiler closure as:
 
@@ -65,4 +65,4 @@ The Windows and Debian conformance runners each pass all 44 tests with zero buil
 source graph status=Valid modules=7 imports=6 reachable=7
 ```
 
-The graph contract was originally cross-host qualified at `09c6f54`. Decision 0042's artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`; the graph summary itself remains unchanged. Decision 0055 changes only embedded frontend implementation bytes in these artifacts and is cross-host qualified at `1a4fca7`.
+The graph contract was originally cross-host qualified at `09c6f54`. Decision 0042's artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`; the graph summary itself remains unchanged. Decision 0055 changes only embedded frontend implementation bytes in these artifacts and is cross-host qualified at `1a4fca7`. Decision 0058 uses exact span equality on graph identity paths without changing graph semantics or its report.

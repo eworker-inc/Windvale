@@ -1310,10 +1310,10 @@ export fn Compilerˉsourceˉwirˉnominalˉmember(
             Reading = false;
         } else {
             if Member.Length == Queryˉlength {
-                if Compilerˉsourceˉspansˉcompare(
+                if Compilerˉsourceˉspansˉequal(
                     View.Source, Member.Offset, Member.Length,
                     Queryˉsource, Queryˉoffset, Queryˉlength
-                ) == 0 {
+                ) {
                 if Nominal.Kind == Compilerˉsourceˉdeclarationˉkind.Enum {
                     let Directoryˉentries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
                     let Nominals: u32 = Symbols.Records + Symbols.Enums;
@@ -3579,9 +3579,9 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     if Directoryˉlength < 48u32 { return false; }
     if Directoryˉlength > 4194304u32 { return false; }
     let Magic: bytes = Textˉtoˉutf8("WVIR");
-    if Compilerˉsourceˉspansˉcompare(
+    if !Compilerˉsourceˉspansˉequal(
         Directory, 0u32, 4u32, Magic, 0u32, 4u32
-    ) != 0 { return false; }
+    ) { return false; }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     if Bytesˉreadˉu16ˉlittle(Directory, 6u32) != 0u32 { return false; }
     let Functionˉentries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);

@@ -117,14 +117,14 @@ export fn Compilerˉsourceˉgraphˉfind(
     while Index < Scan.Modules {
         let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
         let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(View.Source);
-        if Compilerˉsourceˉspansˉcompare(
+        if Compilerˉsourceˉspansˉequal(
             Nameˉsource,
             Nameˉoffset,
             Nameˉlength,
             View.Source,
             Header.Nameˉoffset,
             Header.Nameˉlength
-        ) == 0 {
+        ) {
             return Compilerˉsourceˉgraphˉmatch(true, Index);
         }
         Index = Index + 1u32;
@@ -150,14 +150,14 @@ export fn Compilerˉsourceˉgraphˉimportˉisˉduplicate(
         );
         if Prior.Kind != Compilerˉsourceˉdeclarationˉkind.Import { return false; }
         if Prior.Declarationˉoffset >= Current.Declarationˉoffset { return false; }
-        if Compilerˉsourceˉspansˉcompare(
+        if Compilerˉsourceˉspansˉequal(
             Source,
             Prior.Nameˉoffset,
             Prior.Nameˉlength,
             Source,
             Current.Nameˉoffset,
             Current.Nameˉlength
-        ) == 0 {
+        ) {
             return true;
         }
         Cursor = Prior.Nextˉoffset;
@@ -326,14 +326,14 @@ export fn Compilerˉsourceˉgraphˉhasˉincoming(
                 if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Import {
                     Reading = false;
                 } else {
-                    if Compilerˉsourceˉspansˉcompare(
+                    if Compilerˉsourceˉspansˉequal(
                         Source,
                         Declaration.Nameˉoffset,
                         Declaration.Nameˉlength,
                         Candidateˉview.Source,
                         Candidateˉheader.Nameˉoffset,
                         Candidateˉheader.Nameˉlength
-                    ) == 0 {
+                    ) {
                         return true;
                     }
                     Cursor = Declaration.Nextˉoffset;

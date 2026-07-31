@@ -379,14 +379,14 @@ export fn Compilerˉsourceˉbindingsˉpriorˉlocal(
             if Bytesˉreadˉu32ˉlittle(Payload, Entry + 4u32) == Function {
                 let Priorˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 16u32);
                 let Priorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 20u32);
-                if Compilerˉsourceˉspansˉcompare(
+                if Compilerˉsourceˉspansˉequal(
                     Source,
                     Nameˉoffset,
                     Nameˉlength,
                     Source,
                     Priorˉoffset,
                     Priorˉlength
-                ) == 0 { return true; }
+                ) { return true; }
             }
         }
         Index = Index + 1u32;
@@ -623,7 +623,7 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
     let Length: u32 = Bytesˉlength(Directory);
     if Length < 24u32 { return false; }
     let Magic: bytes = Textˉtoˉutf8("WVLB");
-    if Compilerˉsourceˉspansˉcompare(Directory, 0u32, 4u32, Magic, 0u32, 4u32) != 0 {
+    if !Compilerˉsourceˉspansˉequal(Directory, 0u32, 4u32, Magic, 0u32, 4u32) {
         return false;
     }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
@@ -745,10 +745,10 @@ export fn Compilerˉsourceˉbindingsˉfindˉlocal(
         let Priorˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 16u32);
         let Priorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 20u32);
         if Priorˉlength == Nameˉlength {
-            if Compilerˉsourceˉspansˉcompare(
+            if Compilerˉsourceˉspansˉequal(
                 Source, Nameˉoffset, Nameˉlength,
                 Source, Priorˉoffset, Priorˉlength
-            ) == 0 {
+            ) {
                 let Scopeˉstart: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 28u32);
                 let Scopeˉend: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 32u32);
                 if Useˉoffset >= Scopeˉstart {
@@ -801,10 +801,10 @@ export fn Compilerˉsourceˉbindingsˉfindˉdeclaration(
             let Targetˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 12u32);
             let Targetˉlength: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 16u32);
             if Targetˉlength == Nameˉlength {
-                if Compilerˉsourceˉspansˉcompare(
+                if Compilerˉsourceˉspansˉequal(
                     Source, Nameˉoffset, Nameˉlength,
                     Input, Targetˉsourceˉoffset + Targetˉoffset, Targetˉlength
-                ) == 0 {
+                ) {
                     return Compilerˉsourceˉbindingˉmatch(
                         true,
                         Compilerˉsourceˉsymbolsˉisˉvisible(Symbols.Visibility, Symbols.Modules, Owner, Target),
@@ -929,10 +929,10 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
             let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 12u32);
             let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 16u32);
             if Nameˉlength == Length {
-                if Compilerˉsourceˉspansˉcompare(
+                if Compilerˉsourceˉspansˉequal(
                     Source, Offset, Length,
                     Input, Targetˉsourceˉoffset + Nameˉoffset, Nameˉlength
-                ) == 0 {
+                ) {
                     var Items: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 20u32);
                     if Callableˉkind == Compilerˉsourceˉcallableˉkind.Capability {
                         Items = Compilerˉsourceˉbindingsˉcapabilityˉarity(Source, Offset, Length);

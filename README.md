@@ -56,7 +56,7 @@ status=pass
 
 The exact ownership, allocator, implementation seam, target, and evidence limits are recorded in [Decision 0052](Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md), [Decision 0056](Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md), the [kernel-memory specification](Specifications/Windvale-Kernel-Memory.md), and the [kernel native-seam specification](Specifications/Windvale-Kernel-Native-Seam.md).
 
-**Current focus:** Windvale compiler source -> reproducible self-hosting.
+**Current focus:** qualify exact compiler self-reproduction on Windows and Debian, then expand the shared native backend.
 
 **Latest qualified evidence:** 48 conformance tests, 61 byte-identical portable artifacts, and matching Windows and Debian results. See the [qualification evidence](Documents/Project/Seed-Verification-Evidence.md) and [development roadmap](Documents/Project/Roadmap.md) for the complete scope and remaining gates.
 
@@ -70,7 +70,7 @@ The Windvale-written compiler lives under `Compiler/Windvale`; the independent C
 
 As of July 2026, Windvale is among the earliest known open-source efforts to build this full breadth as one coherent, AI-authored stack from an empty project: its own source-language semantics, compiler, verified bytecode, runtime, assembler, object model, linker, Foundation library, native path, and operating system. Earlier AI-authored operating systems and language/toolchain projects exist; this claim concerns the combined scope, not priority for any one component. The scope, search method, and close comparisons are recorded in the [earliest-known claim evidence](Documents/Project/Earliest-Known-Claim-Evidence.md).
 
-Windvale is experimental and not yet stable. The assembler, object model, linker, bytecode/runtime foundation, and Windvale-written compiler frontend have reproducible evidence; the self-hosted compiler, native toolchain, and Windvale OS remain active milestones. Development contracts may change without backward compatibility until they are explicitly stabilized.
+Windvale is experimental and not yet stable. The assembler, object model, linker, bytecode/runtime foundation, and complete Windvale-written bytecode compiler have reproducible evidence. Exact Stage 1 to Stage 2 self-reproduction is implemented and awaiting final cross-host qualification; native compiler execution, the general native toolchain, and Windvale OS remain active milestones. Development contracts may change without backward compatibility until they are explicitly stabilized.
 
 ## Project overview
 
@@ -91,7 +91,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A canonical Windvale Source Set (`WVSS 1`) reader that gives the portable semantic pipeline bounded random access to a root plus ordered dependency sources without host objects or native paths
 - A Windvale-written import graph and declaration/signature binder with independently validated packed symbol evidence, transitive visibility, and deterministic nominal identities
 - A cross-host-qualified Windvale-written body binder with canonical parameter/local evidence and a typed WVIR producer with explicit blocks, temporaries, operations, source spans, independent binary validation, and fused successful-path local discovery
-- A Windvale-written WVIR-to-WVB backend with static multi-module flattening, canonical function/data/type/capability ordering, all three root profiles, primitive static data, immutable records, nominal enums, explicit capabilities, text/bytes and Foundation intrinsics, exact Stage 0 byte equality, mandatory verification, and runtime execution
+- A Windvale-written WVIR-to-WVB backend with static multi-module flattening, canonical function/data/type/capability ordering, all three root profiles, primitive static data, immutable records, nominal enums, explicit capabilities, text/bytes and Foundation intrinsics, exact Stage 0 byte equality, mandatory verification, runtime execution, and an exact Stage 1 to Stage 2 self-reproduction candidate
 - A Windvale-written import-graph phase that resolves the complete WVSS root closure and rejects duplicate, missing, cyclic, and unreachable imports without host collections
 - Foundation `u8`, `u32`, immutable byte slices and concatenation, bounded signed/unsigned little-endian reads and writes, exact SHA-256 identity, and explicit byte widening
 - Strict UTF-8 validation/encoding/decoding, safe ASCII quoting, deterministic enum names, invariant integer formatting, and bounded text construction
@@ -186,6 +186,18 @@ On Linux:
 ```
 
 Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`. GitHub runs the default qualification level on Windows and Linux concurrently.
+
+Compiler bootstrap convergence is intentionally separate from the normal development suite because it executes billions of verified VM instructions. Run it once for a final compiler candidate:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Bootstrap.ps1
+```
+
+```sh
+./Tools/Verify/Verify-Bootstrap.sh
+```
+
+The verifier builds Stage 1 with the C# recovery compiler, asks that Windvale bytecode compiler to build Stage 2 from the exact canonical source inventory, independently verifies both modules, and requires complete byte equality.
 
 Compile, verify, inspect, and run the portable example:
 
@@ -389,7 +401,7 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Source-Set-Tool.wvb `
      Foundation/Decimal-Parsing.wv
 ```
 
-WVSS 1 keeps the root first and dependencies in declared-module-name order, validates every source through the qualified syntax frontend, and exposes immutable source slices by index. `Compilerˉsourceˉgraph` resolves import topology over that boundary. `Compilerˉsourceˉsymbols` validates global declaration namespaces and signatures, creates an independently checked `WVSD 1` declaration directory, computes transitive module visibility once, and assigns canonical nominal indices. Its private `WVSI 1.1` evidence maps source-order directory identities to canonical record/enum ordinals in both directions without changing public WVSD bytes. `Compilerˉsourceˉbindings` assigns parameter/local slots and scopes, resolves body reads, assignments, constructors, functions, capabilities, and Foundation intrinsics, and publishes an independently checked `WVLB 1` binding directory. `Compilerˉsourceˉwir` performs complete implemented expression typing, field/operator checks, control-flow construction, and independent `WVIR 1` validation. Its successful path constructs parameter/local evidence and typed WVIR in one statement traversal, reuses validated lexical/declaration evidence across compiler phases, and retains checked standalone boundaries and diagnostic oracles. The exact ten-module typed-WVIR input now completes in 3,912,239,584 instructions under the unchanged four-billion ceiling. `Compilerˉsourceˉwvb` lowers a complete graph to one canonical WVB 1.6 module: it preserves the portable, hosted, or system root and statically internalizes portable dependency functions and nominal types. It translates owner-aware WVSD identities to ordinal WVB function/data/capability indices, emits only root exports, serializes canonical Types and Capabilities metadata, interns escaped Unicode literals across modules deterministically, and is byte-identical to Stage 0 for all five differential fixtures. Full bootstrap closure remains a later backend milestone: Stage 0 → Stage 1 → Stage 2 convergence is not yet proven, and the current 4 MiB aggregate envelope remains an explicit Seed limitation while later memory/collection evidence determines how to close parity with Stage 0's 16 MiB aggregate input contract.
+WVSS 1 keeps the root first and dependencies in declared-module-name order, validates every source through the qualified syntax frontend, and exposes immutable source slices by index. `Compilerˉsourceˉgraph` resolves import topology over that boundary. `Compilerˉsourceˉsymbols` validates global declaration namespaces and signatures, creates an independently checked `WVSD 1` declaration directory, computes transitive module visibility once, and assigns canonical nominal indices. Its private `WVSI 1.1` evidence maps source-order directory identities to canonical record/enum ordinals in both directions without changing public WVSD bytes. `Compilerˉsourceˉbindings` assigns parameter/local slots and scopes, resolves body reads, assignments, constructors, functions, capabilities, and Foundation intrinsics, and publishes an independently checked `WVLB 1` binding directory. `Compilerˉsourceˉwir` performs complete implemented expression typing, field/operator checks, control-flow construction, and independent `WVIR 1` validation. Its successful path constructs parameter/local evidence and typed WVIR in one statement traversal, reuses validated lexical/declaration evidence across compiler phases, and retains checked standalone boundaries and diagnostic oracles. The exact ten-module typed-WVIR input completes in 3,912,239,584 instructions under the unchanged four-billion ceiling. `Compilerˉsourceˉwvb` lowers a complete graph to one canonical WVB 1.6 module: it preserves the portable, hosted, or system root, statically internalizes portable dependency functions and nominal types, precomputes immutable canonical order tables, and avoids reparsing accepted source merely to recover emission coordinates. It translates owner-aware WVSD identities to ordinal WVB function/data/capability indices, emits only root exports, serializes canonical Types and Capabilities metadata, interns escaped Unicode literals across modules deterministically, and remains byte-identical to Stage 0 for all five differential fixtures. Over the real 12-module, 677,073-source-byte compiler closure, Stage 0 produces a 599,868-byte Stage 1 compiler and Stage 1 produces a byte-identical Stage 2 compiler in 6,700,562,174 verified VM instructions. Both artifacts have SHA-256 `9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066`. The current 4 MiB WVSS envelope is therefore sufficient for this real bootstrap; parity with Stage 0's 16 MiB input limit remains a separate future contract decision.
 
 Compile and run the first Windvale-written `wvdump` core:
 
@@ -625,6 +637,7 @@ export fn Main() -> i32 {
 - [Linker implementation role layout decision](Documents/Decisions/0053-Linker-Implementation-Role-Layout.md)
 - [Validated scan reuse and ten-module closure decision](Documents/Decisions/0055-Validated-Scan-Reuse-And-Ten-Module-Closure.md)
 - [Windvale-native execution and .NET retirement decision](Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
+- [Reproducible compiler bootstrap convergence decision](Documents/Decisions/0058-Reproducible-Compiler-Bootstrap-Convergence.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

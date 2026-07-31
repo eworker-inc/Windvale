@@ -229,6 +229,27 @@ export fn Compilerˉsourceˉspansˉcompare(
     return 0;
 }
 
+export fn Compilerˉsourceˉspansˉequal(
+    Left: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Right: bytes,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> bool {
+    if Leftˉlength != Rightˉlength { return false; }
+    var Remaining: u32 = Leftˉlength;
+    while Remaining > 0u32 {
+        let Index: u32 = Remaining - 1u32;
+        if Bytesˉreadˉu8(Left, Leftˉoffset + Index) !=
+            Bytesˉreadˉu8(Right, Rightˉoffset + Index) {
+            return false;
+        }
+        Remaining = Index;
+    }
+    return true;
+}
+
 export fn Compilerˉsourceˉsetˉsummaryˉfailure(
     Status: Compilerˉsourceˉsetˉstatus,
     Modules: u32,
@@ -329,14 +350,14 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
         while Previous < Index {
             let Previousˉview: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Previous);
             let Previousˉheader: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Previousˉview.Source);
-            if Compilerˉsourceˉspansˉcompare(
+            if Compilerˉsourceˉspansˉequal(
                 Previousˉview.Source,
                 Previousˉheader.Nameˉoffset,
                 Previousˉheader.Nameˉlength,
                 Source,
                 Header.Nameˉoffset,
                 Header.Nameˉlength
-            ) == 0 {
+            ) {
                 return Compilerˉsourceˉsetˉsummaryˉfailure(
                     Compilerˉsourceˉsetˉstatus.Duplicateˉmodule,
                     Scan.Modules,

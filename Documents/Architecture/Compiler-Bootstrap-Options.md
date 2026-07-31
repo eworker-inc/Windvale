@@ -2,7 +2,7 @@
 
 ## Status
 
-C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Decision 0002. Decision 0049 implements the first bounded direct x86-64 target for one kernel-entry source shape. [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) accepts the general destination: canonical WVB, a shared Windvale-native JIT/AOT backend and runtime on Windows, Linux, and Windvale OS, and retirement of .NET from the normal workflow after an explicit qualification gate. The bounded target does not settle the future ABI or backend design.
+C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Decision 0002. Decision 0049 implements the first bounded direct x86-64 target for one kernel-entry source shape. [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) accepts the general destination: canonical WVB, a shared Windvale-native JIT/AOT backend and runtime on Windows, Linux, and Windvale OS, and retirement of .NET from the normal workflow after an explicit qualification gate. Decision 0058 implements exact Stage 1 to Stage 2 reproduction by the Windvale bytecode compiler; final cross-host recovery qualification is in progress. Neither the bounded target nor bytecode self-reproduction settles the future ABI or backend design.
 
 “Bootstrap” names the staged process that starts from an existing host toolchain and reaches a reproducible Windvale-built stack. It is not the durable product name of either compiler implementation. The Windvale-written implementation is the **Windvale compiler** even before it passes self-hosting qualification; it lives in `Compiler/Windvale`. The C# implementation is the independent **reference/recovery compiler** and lives in `Compiler/Reference`. Bootstrap provenance and recovery instructions remain explicitly documented. This role layout is cross-host qualified at `4fdc6bf` under Decision 0043.
 
@@ -52,7 +52,7 @@ Costs:
 
 - Requires the .NET SDK for the bootstrap toolchain.
 - Cannot serve directly as the Windvale kernel implementation.
-- Must eventually become a reference/recovery implementation or be replaced by a self-hosted Windvale compiler.
+- Remains required for documented recovery and as an independent comparison oracle even after the Windvale bytecode compiler reproduces itself.
 
 ### TypeScript — strongest rapid-prototype alternative
 
@@ -164,6 +164,8 @@ A direct native backend is necessary for a self-owned kernel and host toolchain.
 11. Rebuild and run the compiler, verifier, assembler, linker, runtime, tests, and packaging through Windvale-native tools, then retire .NET from the normal workflow under Decision 0057's gate.
 12. Run the same verified WVB modules through equivalent Windvale-native execution paths on Windows, Linux, and Windvale OS.
 
+Stages 1 through 4 are qualified. Decision 0049 supplies the first bounded evidence for stage 5, and increasing compiler/tool portions of stage 6 are implemented. Decision 0058 closes the compiler convergence work in stage 7 in bytecode: Stage 0 builds Stage 1, and Stage 1 builds a byte-identical Stage 2 from the same explicit 12-module inventory. Stages 8 through 12 still require the shared native runtime/backend, native host tools, and Windvale OS execution. The optional restricted C experiment is not a prerequisite for the accepted bytecode bootstrap proof or Decision 0057's owned native destination.
+
 ## Why this minimizes loops
 
 - One frontend feeds all execution forms.
@@ -187,4 +189,4 @@ A direct native backend is necessary for a self-owned kernel and host toolchain.
 - Tier thresholds, native-cache policy, and which resource counters are execution-mode-independent
 - The minimum native allocator/reclamation strategy needed before .NET retirement
 - Cross-target policy after the accepted x86-64/UEFI first boundary
-- Criteria for calling the compiler self-hosting
+- The boundary between bytecode self-hosting, native self-hosting, and removal of any recovery dependency

@@ -198,14 +198,14 @@ export fn Compilerˉsourceˉsymbolsˉnameˉequals(
 ) -> bool {
     let Candidateˉbytes: bytes = Textˉtoˉutf8(Candidate);
     if Length != Bytesˉlength(Candidateˉbytes) { return false; }
-    return Compilerˉsourceˉspansˉcompare(
+    return Compilerˉsourceˉspansˉequal(
         Source,
         Offset,
         Length,
         Candidateˉbytes,
         0u32,
         Length
-    ) == 0;
+    );
 }
 
 export fn Compilerˉsourceˉsymbolsˉisˉreserved(
@@ -672,10 +672,10 @@ export fn Compilerˉsourceˉsymbolsˉfindˉpriorˉinˉdirectory(
             let Entryˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
             let Entryˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
             if Entryˉnameˉlength == Nameˉlength {
-                if Compilerˉsourceˉspansˉcompare(
+                if Compilerˉsourceˉspansˉequal(
                     Input, Sourceˉoffset + Entryˉnameˉoffset, Entryˉnameˉlength,
                     Nameˉsource, Nameˉoffset, Nameˉlength
-                ) == 0 {
+                ) {
                     return Compilerˉsourceˉsymbolsˉdirectoryˉentry(
                         Directory, Scan.Modules, Directoryˉindex
                     );
@@ -722,10 +722,10 @@ export fn Compilerˉsourceˉsymbolsˉfindˉnominalˉinˉdirectory(
             let Entryˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
             let Entryˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
             if Entryˉnameˉlength == Nameˉlength {
-                if Compilerˉsourceˉspansˉcompare(
+                if Compilerˉsourceˉspansˉequal(
                     Input, Sourceˉoffset + Entryˉnameˉoffset, Entryˉnameˉlength,
                     Nameˉsource, Nameˉoffset, Nameˉlength
-                ) == 0 {
+                ) {
                     return Compilerˉsourceˉsymbolsˉdirectoryˉentry(
                         Directory, Scan.Modules, Directoryˉindex
                     );
@@ -1477,10 +1477,10 @@ export fn Compilerˉsourceˉsymbolsˉfieldˉisˉduplicate(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
         if Name.Offset >= Current.Offset { return false; }
-        if Compilerˉsourceˉspansˉcompare(
+        if Compilerˉsourceˉspansˉequal(
             Source, Name.Offset, Name.Length,
             Source, Current.Offset, Current.Length
-        ) == 0 { return true; }
+        ) { return true; }
         let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
         );
@@ -1517,10 +1517,10 @@ export fn Compilerˉsourceˉsymbolsˉenumˉduplicate(
         if Name.Offset >= Currentˉname.Offset {
             return Compilerˉsourceˉenumˉduplicate(Duplicateˉname, Duplicateˉvalue);
         }
-        if Compilerˉsourceˉspansˉcompare(
+        if Compilerˉsourceˉspansˉequal(
             Source, Name.Offset, Name.Length,
             Source, Currentˉname.Offset, Currentˉname.Length
-        ) == 0 { Duplicateˉname = true; }
+        ) { Duplicateˉname = true; }
         let Equals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
         );
@@ -1553,10 +1553,10 @@ export fn Compilerˉsourceˉsymbolsˉparameterˉisˉduplicate(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
         if Name.Offset >= Current.Offset { return false; }
-        if Compilerˉsourceˉspansˉcompare(
+        if Compilerˉsourceˉspansˉequal(
             Source, Name.Offset, Name.Length,
             Source, Current.Offset, Current.Length
-        ) == 0 { return true; }
+        ) { return true; }
         let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
         );

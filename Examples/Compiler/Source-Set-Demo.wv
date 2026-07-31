@@ -151,5 +151,19 @@ export fn Main() -> i32 {
     );
     let Privateˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Privateˉdependency);
     if Privateˉsummary.Status != Compilerˉsourceˉsetˉstatus.Privateˉdependencyˉfunction { return 32; }
+    let Sharedˉprefix: bytes = Textˉtoˉutf8("Compilerˉsourceˉbindings");
+    let Differentˉsuffix: bytes = Textˉtoˉutf8("Compilerˉsourceˉbindingx");
+    if !Compilerˉsourceˉspansˉequal(
+        Sharedˉprefix, 0u32, Bytesˉlength(Sharedˉprefix),
+        Sharedˉprefix, 0u32, Bytesˉlength(Sharedˉprefix)
+    ) { return 33; }
+    if Compilerˉsourceˉspansˉequal(
+        Sharedˉprefix, 0u32, Bytesˉlength(Sharedˉprefix),
+        Differentˉsuffix, 0u32, Bytesˉlength(Differentˉsuffix)
+    ) { return 34; }
+    if Compilerˉsourceˉspansˉequal(
+        Sharedˉprefix, 0u32, Bytesˉlength(Sharedˉprefix),
+        Differentˉsuffix, 0u32, Bytesˉlength(Differentˉsuffix) - 1u32
+    ) { return 35; }
     return 0;
 }

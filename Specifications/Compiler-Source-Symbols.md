@@ -115,14 +115,14 @@ Failure evidence names the current module, a related prior/target module when ap
 
 ## Candidate artifacts and evidence
 
-- `Source-Symbols-Core.wvb`: 277,834 bytes, SHA-256 `230701dc73c8b18e4beedbaad1ce09fa02e83ab5d65e1152ed9ad945e0846105`.
-- `Source-Symbols-Demo.wvb`: 291,073 bytes, SHA-256 `02ca6d2b9d3dd18efe5aafaf329f787226fc68051a10e63cfb053dd51e4654d0`.
-- `Source-Symbols-Tool.wvb`: 281,615 bytes, SHA-256 `6c83cd9813efb88e86252ce428248245a3f1c0c5d9f8cdb7eeefef4172b126c3`.
+- `Source-Symbols-Core.wvb`: 278,044 bytes, SHA-256 `7769def20aef89bac982d896a5fa791f7ae3cea744b70fc199583ed97aef40e4`.
+- `Source-Symbols-Demo.wvb`: 291,283 bytes, SHA-256 `6ce17cdcd140cd686c0975e30a9be173d09deff4eb8d4dbb8d972ed1b8440158`.
+- `Source-Symbols-Tool.wvb`: 281,825 bytes, SHA-256 `0d09379e35df8af7d3239badc4a50a71ecb4638255f28f3a40421491d35a6529`.
 
-Exact commit `e37204f` passes zero-warning Release builds, all 48 conformance tests, and complete Windows/Debian Qualification with matching normalized contracts and byte-identical portable artifacts. The demo exercises valid and rejected namespaces/signatures plus corrupted directories and both directions of the nominal map. The hosted tool validates the real eight-module, 303,873-byte compiler closure as:
+The demo exercises valid and rejected namespaces/signatures plus corrupted directories and both directions of the nominal map. The hosted tool validates the current real eight-module, 315,465-byte compiler closure as:
 
 ```text
-source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=140 fields=291 members=181 parameters=613 directory-bytes=4288 visibility-bytes=64
+source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=141 fields=291 members=181 parameters=619 directory-bytes=4312 visibility-bytes=64
 ```
 
-The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 preserves both byte formats, adds the bounded reverse-table lookup, and is cross-host qualified at `1a4fca7`.
+The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 preserves both byte formats, adds the bounded reverse-table lookup, and is cross-host qualified at `1a4fca7`. Decision 0058 changes equality-only implementation paths and embedded artifact bytes while preserving WVSD and WVSI formats.

@@ -77,6 +77,24 @@ record Compilerˉsourceˉwvbˉfunctionˉencoding {
     Failureˉoperation: u32;
 }
 
+record Compilerˉsourceˉwvbˉsymbolˉorder {
+    Entries: bytes;
+    Ranks: bytes;
+}
+
+record Compilerˉsourceˉwvbˉsymbolˉorders {
+    Capabilityˉentries: bytes;
+    Capabilityˉranks: bytes;
+    Dataˉentries: bytes;
+    Dataˉranks: bytes;
+    Recordˉentries: bytes;
+    Recordˉranks: bytes;
+    Enumˉentries: bytes;
+    Enumˉranks: bytes;
+    Functionˉentries: bytes;
+    Functionˉranks: bytes;
+}
+
 record Compilerˉsourceˉwvbˉsummary {
     Status: Compilerˉsourceˉwvbˉstatus;
     Wirˉstatus: Compilerˉsourceˉwirˉstatus;
@@ -438,14 +456,13 @@ export fn Compilerˉsourceˉwvbˉcapabilityˉsignature(
 export fn Compilerˉsourceˉwvbˉencodeˉcapabilities(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary
+    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Order: Compilerˉsourceˉwvbˉsymbolˉorder
 ) -> Compilerˉsourceˉwvbˉcapabilityˉencoding {
     var Payload: bytes = Bytesˉfromˉu32ˉlittle(Symbols.Capabilities);
     var Rank: u32 = 0u32;
     while Rank < Symbols.Capabilities {
-        let Entry: u32 = Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
-            Input, Scan, Symbols, 2u32, Rank
-        );
+        let Entry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(Order, Rank);
         let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
             Input, Scan, Symbols, Entry
         );
@@ -541,6 +558,166 @@ export fn Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
     return Compilerˉsourceˉwirˉsentinel();
 }
 
+export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Kind: u32
+) -> Compilerˉsourceˉwvbˉsymbolˉorder {
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+    var Ordered: bytes = Compilerˉsourceˉwvbˉempty(Input);
+    var Count: u32 = 0u32;
+    var Candidate: u32 = 0u32;
+    while Candidate < Entries {
+        let Candidateˉentry: u32 = 16u32 + Candidate * 24u32;
+        if Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Candidateˉentry + 4u32
+        ) == Kind {
+            let Candidateˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, Candidateˉentry + 12u32
+            );
+            let Candidateˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, Candidateˉentry + 16u32
+            );
+            let Candidateˉview: Compilerˉsourceˉsetˉview =
+                Compilerˉsourceˉwvbˉsymbolˉsource(
+                    Input, Scan, Symbols, Candidate
+                );
+            var Position: u32 = 0u32;
+            var Insertˉat: u32 = Count;
+            while Position < Count {
+                if Insertˉat == Count {
+                    let Existing: u32 = Bytesˉreadˉu32ˉlittle(
+                        Ordered, Position * 4u32
+                    );
+                    let Existingˉentry: u32 = 16u32 + Existing * 24u32;
+                    let Existingˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                        Symbols.Directory, Existingˉentry + 12u32
+                    );
+                    let Existingˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                        Symbols.Directory, Existingˉentry + 16u32
+                    );
+                    let Existingˉview: Compilerˉsourceˉsetˉview =
+                        Compilerˉsourceˉwvbˉsymbolˉsource(
+                            Input, Scan, Symbols, Existing
+                        );
+                    if Compilerˉsourceˉspansˉcompare(
+                        Candidateˉview.Source,
+                        Candidateˉnameˉoffset, Candidateˉnameˉlength,
+                        Existingˉview.Source,
+                        Existingˉnameˉoffset, Existingˉnameˉlength
+                    ) < 0 { Insertˉat = Position; }
+                }
+                Position = Position + 1u32;
+            }
+            let Inserted: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+                Ordered,
+                Insertˉat * 4u32,
+                0u32,
+                Bytesˉfromˉu32ˉlittle(Candidate)
+            );
+            Ordered = Inserted.Value;
+            Count = Count + 1u32;
+        }
+        Candidate = Candidate + 1u32;
+    }
+    let Repeated: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(
+        0u8, Entries * 4u32
+    );
+    var Ranks: bytes = Repeated.Value;
+    var Rank: u32 = 0u32;
+    while Rank < Count {
+        let Entry: u32 = Bytesˉreadˉu32ˉlittle(Ordered, Rank * 4u32);
+        let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+            Ranks,
+            Entry * 4u32,
+            4u32,
+            Bytesˉfromˉu32ˉlittle(Rank)
+        );
+        Ranks = Replaced.Value;
+        Rank = Rank + 1u32;
+    }
+    return Compilerˉsourceˉwvbˉsymbolˉorder(Ordered, Ranks);
+}
+
+export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Symbols: Compilerˉsourceˉsymbolˉsummary
+) -> Compilerˉsourceˉwvbˉsymbolˉorders {
+    let Capabilities: Compilerˉsourceˉwvbˉsymbolˉorder =
+        Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 2u32);
+    let Data: Compilerˉsourceˉwvbˉsymbolˉorder =
+        Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 3u32);
+    let Records: Compilerˉsourceˉwvbˉsymbolˉorder =
+        Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 4u32);
+    let Enums: Compilerˉsourceˉwvbˉsymbolˉorder =
+        Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 5u32);
+    let Functions: Compilerˉsourceˉwvbˉsymbolˉorder =
+        Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 6u32);
+    return Compilerˉsourceˉwvbˉsymbolˉorders(
+        Capabilities.Entries, Capabilities.Ranks,
+        Data.Entries, Data.Ranks,
+        Records.Entries, Records.Ranks,
+        Enums.Entries, Enums.Ranks,
+        Functions.Entries, Functions.Ranks
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉcapabilityˉorder(
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> Compilerˉsourceˉwvbˉsymbolˉorder {
+    return Compilerˉsourceˉwvbˉsymbolˉorder(
+        Orders.Capabilityˉentries, Orders.Capabilityˉranks
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉdataˉorder(
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> Compilerˉsourceˉwvbˉsymbolˉorder {
+    return Compilerˉsourceˉwvbˉsymbolˉorder(
+        Orders.Dataˉentries, Orders.Dataˉranks
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉrecordˉorder(
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> Compilerˉsourceˉwvbˉsymbolˉorder {
+    return Compilerˉsourceˉwvbˉsymbolˉorder(
+        Orders.Recordˉentries, Orders.Recordˉranks
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉenumˉorder(
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> Compilerˉsourceˉwvbˉsymbolˉorder {
+    return Compilerˉsourceˉwvbˉsymbolˉorder(
+        Orders.Enumˉentries, Orders.Enumˉranks
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉfunctionˉorder(
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> Compilerˉsourceˉwvbˉsymbolˉorder {
+    return Compilerˉsourceˉwvbˉsymbolˉorder(
+        Orders.Functionˉentries, Orders.Functionˉranks
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉorderedˉsymbol(
+    Order: Compilerˉsourceˉwvbˉsymbolˉorder,
+    Rank: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Order.Entries, Rank * 4u32);
+}
+
+export fn Compilerˉsourceˉwvbˉorderedˉrank(
+    Order: Compilerˉsourceˉwvbˉsymbolˉorder,
+    Entry: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Order.Ranks, Entry * 4u32);
+}
+
 export fn Compilerˉsourceˉwvbˉdeclaration(
     Source: bytes,
     Header: Compilerˉsourceˉheader,
@@ -551,15 +728,8 @@ export fn Compilerˉsourceˉwvbˉdeclaration(
     let Declarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
         Symbols.Directory, Entryˉoffset + 8u32
     );
-    let Position: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
-        Source,
-        Header.Nextˉoffset,
-        Header.Nextˉline,
-        Header.Nextˉcolumn,
-        Declarationˉoffset
-    );
     return Compilerˉparseˉnextˉdeclarationˉvalidated(
-        Source, Declarationˉoffset, Position.Line, Position.Column, true
+        Source, Declarationˉoffset, 1u32, 1u32, true
     );
 }
 
@@ -861,10 +1031,10 @@ export fn Compilerˉsourceˉwvbˉdataˉnameˉexists(
                 Compilerˉsourceˉwvbˉsymbolˉsource(
                     Input, Scan, Symbols, Entry
                 );
-            if Compilerˉsourceˉspansˉcompare(
+            if Compilerˉsourceˉspansˉequal(
                 View.Source, Nameˉoffset, Nameˉlength,
                 Name, 0u32, Bytesˉlength(Name)
-            ) == 0 { return true; }
+            ) { return true; }
         }
         Entry = Entry + 1u32;
     }
@@ -902,10 +1072,10 @@ export fn Compilerˉsourceˉwvbˉexplicitˉtextˉentry(
                         Declaration.Bodyˉoffset, Declaration.Bodyˉlength
                     );
                 if Decoded.Status == Compilerˉsourceˉwvbˉstatus.Valid {
-                    if Compilerˉsourceˉspansˉcompare(
+                    if Compilerˉsourceˉspansˉequal(
                         Decoded.Value, 0u32, Bytesˉlength(Decoded.Value),
                         Value, 0u32, Bytesˉlength(Value)
-                    ) == 0 { return Entry; }
+                    ) { return Entry; }
                 }
             }
         }
@@ -932,10 +1102,10 @@ export fn Compilerˉsourceˉwvbˉtextˉplanˉfind(
         let Entry: u32 = Index * 12u32;
         let Offset: u32 = Bytesˉreadˉu32ˉlittle(Plan.Directory, Entry + 4u32);
         let Length: u32 = Bytesˉreadˉu32ˉlittle(Plan.Directory, Entry + 8u32);
-        if Compilerˉsourceˉspansˉcompare(
+        if Compilerˉsourceˉspansˉequal(
             Plan.Values, Offset, Length,
             Value, 0u32, Bytesˉlength(Value)
-        ) == 0 { return Index; }
+        ) { return Index; }
         Index = Index + 1u32;
     }
     return Compilerˉsourceˉwirˉsentinel();
@@ -988,6 +1158,7 @@ export fn Compilerˉsourceˉwvbˉcollectˉtextˉplan(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Wir: bytes
 ) -> Compilerˉsourceˉwvbˉtextˉplan {
     var Plan: Compilerˉsourceˉwvbˉtextˉplan =
@@ -995,9 +1166,7 @@ export fn Compilerˉsourceˉwvbˉcollectˉtextˉplan(
     let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
     var Rank: u32 = 0u32;
     while Rank < Symbols.Functions {
-        let Function: u32 = Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
-            Input, Scan, Symbols, 6u32, Rank
-        );
+        let Function: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(Order, Rank);
         let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
             Input, Scan, Symbols, Function
         );
@@ -1059,11 +1228,10 @@ export fn Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
     Scan: Compilerˉsourceˉsetˉscan,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
+    Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Entry: u32
 ) -> u32 {
-    var Result: u32 = Compilerˉsourceˉwvbˉsymbolˉrank(
-        Input, Scan, Symbols, Entry, 3u32
-    );
+    var Result: u32 = Compilerˉsourceˉwvbˉorderedˉrank(Order, Entry);
     let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
     let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
         Symbols.Directory, Entryˉoffset + 12u32
@@ -1093,33 +1261,32 @@ export fn Compilerˉsourceˉwvbˉsyntheticˉdataˉindex(
     Scan: Compilerˉsourceˉsetˉscan,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
+    Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Synthetic: u32
 ) -> u32 {
     let Name: bytes = Compilerˉsourceˉwvbˉsyntheticˉname(
         Bytesˉreadˉu32ˉlittle(Plan.Directory, Synthetic * 12u32)
     );
     var Result: u32 = Synthetic;
-    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
-    var Entry: u32 = 0u32;
-    while Entry < Entries {
+    var Rank: u32 = 0u32;
+    while Rank < Symbols.Data {
+        let Entry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(Order, Rank);
         let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
-        if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entryˉoffset + 4u32) == 3u32 {
-            let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Entryˉoffset + 12u32
+        let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Entryˉoffset + 12u32
+        );
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Entryˉoffset + 16u32
+        );
+        let View: Compilerˉsourceˉsetˉview =
+            Compilerˉsourceˉwvbˉsymbolˉsource(
+                Input, Scan, Symbols, Entry
             );
-            let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Entryˉoffset + 16u32
-            );
-            let View: Compilerˉsourceˉsetˉview =
-                Compilerˉsourceˉwvbˉsymbolˉsource(
-                    Input, Scan, Symbols, Entry
-                );
-            if Compilerˉsourceˉspansˉcompare(
-                View.Source, Nameˉoffset, Nameˉlength,
-                Name, 0u32, Bytesˉlength(Name)
-            ) < 0 { Result = Result + 1u32; }
-        }
-        Entry = Entry + 1u32;
+        if Compilerˉsourceˉspansˉcompare(
+            View.Source, Nameˉoffset, Nameˉlength,
+            Name, 0u32, Bytesˉlength(Name)
+        ) < 0 { Result = Result + 1u32; }
+        Rank = Rank + 1u32;
     }
     return Result;
 }
@@ -1245,15 +1412,16 @@ export fn Compilerˉsourceˉwvbˉencodeˉdata(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
-    Plan: Compilerˉsourceˉwvbˉtextˉplan
+    Plan: Compilerˉsourceˉwvbˉtextˉplan,
+    Order: Compilerˉsourceˉwvbˉsymbolˉorder
 ) -> Compilerˉsourceˉwvbˉdataˉencoding {
     var Payload: bytes = Bytesˉfromˉu32ˉlittle(Symbols.Data + Plan.Count);
     var Explicit: u32 = 0u32;
     var Synthetic: u32 = 0u32;
     while Explicit < Symbols.Data {
         var Useˉexplicit: bool = Synthetic >= Plan.Count;
-        let Explicitˉentry: u32 = Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
-            Input, Scan, Symbols, 3u32, Explicit
+        let Explicitˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Order, Explicit
         );
         let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
             Input, Scan, Symbols, Explicitˉentry
@@ -1445,13 +1613,15 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
 export fn Compilerˉsourceˉwvbˉencodeˉtypes(
     Input: bytes,
     Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary
+    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Recordˉorder: Compilerˉsourceˉwvbˉsymbolˉorder,
+    Enumˉorder: Compilerˉsourceˉwvbˉsymbolˉorder
 ) -> Compilerˉsourceˉwvbˉtypeˉencoding {
     var Payload: bytes = Bytesˉfromˉu32ˉlittle(Symbols.Records + Symbols.Enums);
     var Rank: u32 = 0u32;
     while Rank < Symbols.Records {
-        let Entry: u32 = Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
-            Input, Scan, Symbols, 4u32, Rank
+        let Entry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Recordˉorder, Rank
         );
         let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
             Input, Scan, Symbols, Entry
@@ -1469,8 +1639,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
     }
     Rank = 0u32;
     while Rank < Symbols.Enums {
-        let Enumˉentry: u32 = Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
-            Input, Scan, Symbols, 5u32, Rank
+        let Enumˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Enumˉorder, Rank
         );
         let Enumˉview: Compilerˉsourceˉsetˉview =
             Compilerˉsourceˉwvbˉsymbolˉsource(
@@ -1499,6 +1669,7 @@ export fn Compilerˉsourceˉwvbˉtextˉoperationˉdataˉindex(
     Source: bytes,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
+    Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Wir: bytes,
     Operationˉentry: u32
 ) -> u32 {
@@ -1506,7 +1677,7 @@ export fn Compilerˉsourceˉwvbˉtextˉoperationˉdataˉindex(
     let Length: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 36u32);
     if Length == 0u32 {
         return Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
-            Input, Scan, Symbols, Plan, Target
+            Input, Scan, Symbols, Plan, Order, Target
         );
     }
     let Decoded: Compilerˉsourceˉwvbˉtextˉvalue =
@@ -1516,7 +1687,7 @@ export fn Compilerˉsourceˉwvbˉtextˉoperationˉdataˉindex(
     );
     if Explicit != Compilerˉsourceˉwirˉsentinel() {
         return Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
-            Input, Scan, Symbols, Plan, Explicit
+            Input, Scan, Symbols, Plan, Order, Explicit
         );
     }
     return Compilerˉsourceˉwvbˉsyntheticˉdataˉindex(
@@ -1524,6 +1695,7 @@ export fn Compilerˉsourceˉwvbˉtextˉoperationˉdataˉindex(
         Scan,
         Symbols,
         Plan,
+        Order,
         Compilerˉsourceˉwvbˉtextˉplanˉfind(Plan, Decoded.Value)
     );
 }
@@ -1684,6 +1856,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     Scan: Compilerˉsourceˉsetˉscan,
     Source: bytes,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Wir: bytes,
     Operationˉentry: u32,
@@ -1740,7 +1913,9 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             Compilerˉsourceˉwvbˉinstructionˉu32(
                 3u8,
                 Compilerˉsourceˉwvbˉtextˉoperationˉdataˉindex(
-                    Input, Scan, Source, Symbols, Plan, Wir, Operationˉentry
+                    Input, Scan, Source, Symbols, Plan,
+                    Compilerˉsourceˉwvbˉdataˉorder(Orders),
+                    Wir, Operationˉentry
                 )
             )
         );
@@ -1751,7 +1926,8 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             Compilerˉsourceˉwvbˉinstructionˉu32(
                 10u8,
                 Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
-                    Input, Scan, Symbols, Plan, Target
+                    Input, Scan, Symbols, Plan,
+                    Compilerˉsourceˉwvbˉdataˉorder(Orders), Target
                 )
             )
         );
@@ -1772,7 +1948,8 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             Compilerˉsourceˉwvbˉinstructionˉu32(
                 6u8,
                 Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
-                    Input, Scan, Symbols, Plan, Target
+                    Input, Scan, Symbols, Plan,
+                    Compilerˉsourceˉwvbˉdataˉorder(Orders), Target
                 )
             )
         );
@@ -1783,7 +1960,8 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             Compilerˉsourceˉwvbˉinstructionˉu32(
                 7u8,
                 Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
-                    Input, Scan, Symbols, Plan, Target
+                    Input, Scan, Symbols, Plan,
+                    Compilerˉsourceˉwvbˉdataˉorder(Orders), Target
                 )
             )
         );
@@ -1809,8 +1987,8 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             Result,
             Compilerˉsourceˉwvbˉinstructionˉu32(
                 64u8,
-                Compilerˉsourceˉwvbˉsymbolˉrank(
-                    Input, Scan, Symbols, Target, 6u32
+                Compilerˉsourceˉwvbˉorderedˉrank(
+                    Compilerˉsourceˉwvbˉfunctionˉorder(Orders), Target
                 )
             )
         );
@@ -1820,8 +1998,8 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             Result,
             Compilerˉsourceˉwvbˉinstructionˉu32(
                 65u8,
-                Compilerˉsourceˉwvbˉsymbolˉrank(
-                    Input, Scan, Symbols, Target, 2u32
+                Compilerˉsourceˉwvbˉorderedˉrank(
+                    Compilerˉsourceˉwvbˉcapabilityˉorder(Orders), Target
                 )
             )
         );
@@ -1923,6 +2101,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     Header: Compilerˉsourceˉheader,
     Symbols: Compilerˉsourceˉsymbolˉsummary,
     Bindings: Compilerˉsourceˉbindingˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Wir: bytes,
     Function: u32,
@@ -2062,7 +2241,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Code = Bytesˉconcat(
                 Code,
                 Compilerˉsourceˉwvbˉemitˉoperation(
-                    Input, Scan, Source, Symbols, Plan, Wir,
+                    Input, Scan, Source, Symbols, Orders, Plan, Wir,
                     Operationˉentry, Parameters, Locals
                 )
             );
@@ -2146,9 +2325,13 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
         );
     }
 
+    let Orders: Compilerˉsourceˉwvbˉsymbolˉorders =
+        Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(Input, Scan, Symbols);
+
     let Capabilityˉencoding: Compilerˉsourceˉwvbˉcapabilityˉencoding =
         Compilerˉsourceˉwvbˉencodeˉcapabilities(
-            Input, Scan, Symbols
+            Input, Scan, Symbols,
+            Compilerˉsourceˉwvbˉcapabilityˉorder(Orders)
         );
     if Capabilityˉencoding.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         return Compilerˉsourceˉwvbˉsummaryˉfailure(
@@ -2162,7 +2345,9 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
 
     let Textˉplan: Compilerˉsourceˉwvbˉtextˉplan =
         Compilerˉsourceˉwvbˉcollectˉtextˉplan(
-            Input, Scan, Symbols, Wirˉsummary.Directory
+            Input, Scan, Symbols,
+            Compilerˉsourceˉwvbˉfunctionˉorder(Orders),
+            Wirˉsummary.Directory
         );
     if Textˉplan.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         return Compilerˉsourceˉwvbˉsummaryˉfailure(
@@ -2175,7 +2360,8 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     }
     let Dataˉencoding: Compilerˉsourceˉwvbˉdataˉencoding =
         Compilerˉsourceˉwvbˉencodeˉdata(
-            Input, Scan, Symbols, Textˉplan
+            Input, Scan, Symbols, Textˉplan,
+            Compilerˉsourceˉwvbˉdataˉorder(Orders)
         );
     if Dataˉencoding.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         return Compilerˉsourceˉwvbˉsummaryˉfailure(
@@ -2188,7 +2374,9 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     }
     let Typeˉencoding: Compilerˉsourceˉwvbˉtypeˉencoding =
         Compilerˉsourceˉwvbˉencodeˉtypes(
-            Input, Scan, Symbols
+            Input, Scan, Symbols,
+            Compilerˉsourceˉwvbˉrecordˉorder(Orders),
+            Compilerˉsourceˉwvbˉenumˉorder(Orders)
         );
     if Typeˉencoding.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         return Compilerˉsourceˉwvbˉsummaryˉfailure(
@@ -2206,8 +2394,8 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     var Codeˉoffset: u32 = 0u32;
     var Functionˉrank: u32 = 0u32;
     while Functionˉrank < Symbols.Functions {
-        let Functionˉentry: u32 = Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
-            Input, Scan, Symbols, 6u32, Functionˉrank
+        let Functionˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Compilerˉsourceˉwvbˉfunctionˉorder(Orders), Functionˉrank
         );
         let Functionˉview: Compilerˉsourceˉsetˉview =
             Compilerˉsourceˉwvbˉsymbolˉsource(
@@ -2221,7 +2409,7 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
         let Encoded: Compilerˉsourceˉwvbˉfunctionˉencoding =
             Compilerˉsourceˉwvbˉencodeˉfunction(
                 Input, Scan, Functionˉview.Source, Functionˉheader,
-                Symbols, Bindings, Textˉplan,
+                Symbols, Bindings, Orders, Textˉplan,
                 Wirˉsummary.Directory, Functionˉentry, Codeˉoffset
             );
         if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid {
