@@ -27,7 +27,7 @@ At its center is a **new programming language**, together with its compiler, por
 | Editor support | ✅ Working now | Windvale syntax highlighting and language configuration work locally in Visual Studio Code | Package it publicly and pursue GitHub language recognition when eligible |
 | Tests, specifications, and reproducibility | ✅ Working now | Valid, malformed, boundary, random-input, deterministic-output, and cross-host checks protect the current contracts | Extend the same evidence discipline to self-hosting, native code, and the operating system |
 | Native compiler and host programs | ○ Planned | The assembler, object model, and linker provide much of the required foundation | Lower typed Windvale IR to x86-64 objects and produce controlled Windows and Linux programs |
-| Windvale operating system | ○ Planned | Architecture and platform boundaries are documented; no operating-system implementation is claimed yet | Boot a minimal kernel and run the same verified module used on Windows and Linux |
+| Windvale operating system | ○ Planned | The first x86-64 UEFI/QEMU environment and exact firmware inputs are accepted; no boot image or operating-system implementation is claimed yet | Produce a deterministic UEFI image and boot the first firmware probe |
 | Open-source project foundation | 🚧 In progress | MIT licensing, contribution, security, governance, support, and authorship policies exist | Complete the publication baseline and establish public project operations |
 
 **Working end to end today:**
@@ -506,7 +506,7 @@ export fn Main() -> i32 {
 - Portable Windvale modules run through Windvale-defined contracts instead of inheriting host semantics.
 - Source syntax, typed WIR, distributable bytecode, and future native IR remain distinct contracts.
 - Portable, hosted, and system programming have explicit capability profiles.
-- The OS should begin as a small vertical system running in virtual machines, with QEMU as the likely automation environment and Hyper-V as an important Windows compatibility target.
+- The OS begins with the [accepted x86-64 UEFI 2.11 environment](Documents/Decisions/0044-First-X64-Uefi-Boot-Environment.md): pinned QEMU Q35/TCG automation first, then Hyper-V Generation 2 compatibility, without making either host define Windvale semantics.
 - Bootstrap dependencies and AI contributions must be documented honestly and reproducibly.
 
 ## Documents
@@ -591,7 +591,11 @@ export fn Main() -> i32 {
 - [Fused local discovery and typed WVIR decision](Documents/Decisions/0041-Fused-Local-Discovery-And-Typed-Wvir.md)
 - [Bounded lexical dispatch and function profiling decision](Documents/Decisions/0042-Bounded-Lexical-Dispatch-And-Function-Profiling.md)
 - [Compiler implementation role layout decision](Documents/Decisions/0043-Compiler-Implementation-Role-Layout.md)
-- [Bidirectional nominal symbol index decision](Documents/Decisions/0044-Bidirectional-Nominal-Symbol-Index.md)
+- [First x86-64 UEFI boot environment decision](Documents/Decisions/0044-First-X64-Uefi-Boot-Environment.md)
+- [First UEFI application and boot probe decision](Documents/Decisions/0045-First-Uefi-Application-And-Boot-Probe.md)
+- [Bounded UEFI memory map probe decision](Documents/Decisions/0046-Bounded-Uefi-Memory-Map-Probe.md)
+- [Bounded ExitBootServices transition decision](Documents/Decisions/0047-Bounded-Exit-Boot-Services-Transition.md)
+- [Bidirectional nominal symbol index decision](Documents/Decisions/0048-Bidirectional-Nominal-Symbol-Index.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

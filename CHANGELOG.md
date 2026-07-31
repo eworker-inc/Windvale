@@ -14,6 +14,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Windows and Linux repository verification workflows.
 - Repository-owned Windvale syntax highlighting and Visual Studio Code language support for `.wv` source files.
 - Opt-in deterministic per-function instruction reporting in the C# reference runtime and Seed CLI.
+- The accepted first x86-64 UEFI/QEMU boot environment and a path-independent dependency preflight over exact EDK II firmware inputs.
 
 ### Changed
 
@@ -23,4 +24,4 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 ### Current development status
 
 - Windvale Seed, its runtime and bytecode foundation, the object model, assembler, linker, Foundation modules, compiler frontend, and portable WVIR-to-WVB backend have qualification evidence.
-- Compiler self-hosting qualification, the native toolchain, and Windvale OS remain active or planned milestones rather than completed releases; the C# reference/recovery compiler remains intentional.
+- Compiler self-hosting qualification, the native toolchain, and Windvale OS remain active or planned milestones rather than completed releases; the first OS environment is accepted, but no boot image or kernel is claimed, and the C# reference/recovery compiler remains intentional.

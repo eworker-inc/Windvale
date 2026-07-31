@@ -19,6 +19,7 @@ public sealed class Linkˉresult
     private Linkˉresult(
         ImmutableArray<byte> imageˉbytes,
         ImmutableArray<byte> mapˉbytes,
+        uint baseˉaddress,
         uint entryˉaddress,
         int sectionˉcount,
         int definedˉsymbolˉcount,
@@ -28,6 +29,7 @@ public sealed class Linkˉresult
     {
         Imageˉbytes = imageˉbytes;
         Mapˉbytes = mapˉbytes;
+        Baseˉaddress = baseˉaddress;
         Entryˉaddress = entryˉaddress;
         Sectionˉcount = sectionˉcount;
         Definedˉsymbolˉcount = definedˉsymbolˉcount;
@@ -41,6 +43,8 @@ public sealed class Linkˉresult
     public ImmutableArray<byte> Imageˉbytes { get; }
 
     public ImmutableArray<byte> Mapˉbytes { get; }
+
+    public uint Baseˉaddress { get; }
 
     public uint Entryˉaddress { get; }
 
@@ -58,6 +62,7 @@ public sealed class Linkˉresult
         new(
             candidate.Imageˉbytes,
             mapˉbytes,
+            candidate.Options.Baseˉaddress,
             candidate.Entryˉaddress,
             candidate.Sections.Length,
             candidate.Definitions.Length,
@@ -66,7 +71,7 @@ public sealed class Linkˉresult
             []);
 
     internal static Linkˉresult Failed(Linkˉdiagnostic diagnostic) =>
-        new([], [], 0, 0, 0, 0, 0, [diagnostic]);
+        new([], [], 0, 0, 0, 0, 0, 0, [diagnostic]);
 }
 
 public static class Linkˉcontract

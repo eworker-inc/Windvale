@@ -38,7 +38,7 @@ The initial environment used a shared Windows bare repository and isolated devel
 - x86-64 with UEFI as the first OS target
 - QEMU as the primary automated VM and Hyper-V as a compatibility target
 
-Decision 0002 subsequently accepted C#, typed WIR, custom verified bytecode, and the first Seed semantic subset. The remaining native and OS choices above are still proposals.
+Decision 0002 subsequently accepted C#, typed WIR, custom verified bytecode, and the first Seed semantic subset. Decision 0044 subsequently accepted x86-64 UEFI as the first boot environment, QEMU as its primary automated VM, and Hyper-V as the compatibility target. The restricted C bridge and later native-backend details remain proposals.
 
 ## Consequences
 

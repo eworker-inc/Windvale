@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Windvale.Os.Tests</AssemblyName>
+    <Description>Focused deterministic UEFI image and bootstrap probe tests.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Linker/Windvale.Linker/Windvale.Linker.csproj" />
+    <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
+    <ProjectReference Include="../../Operating-System/Windvale.Bootstrap/Windvale.Bootstrap.csproj" />
+  </ItemGroup>
+</Project>

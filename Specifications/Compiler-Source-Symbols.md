@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current implementation adds bidirectional nominal identity evidence under Decision 0044 while preserving the qualified namespace, signature, and WVSD contracts. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes evidence for later semantic phases.
+`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current implementation adds bidirectional nominal identity evidence under Decision 0048 while preserving the qualified namespace, signature, and WVSD contracts. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes evidence for later semantic phases.
 
 It does not bind function bodies, locals, calls, expressions, control flow, construct WIR, or emit WVB.
 
@@ -123,4 +123,4 @@ Exact commit `e37204f` passes zero-warning Release builds, all 48 conformance te
 source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=291 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64
 ```
 
-The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0044's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`.
+The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0048's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`.

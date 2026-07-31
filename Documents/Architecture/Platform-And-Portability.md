@@ -31,6 +31,14 @@ Windvale source is expected to support two primary forms:
 
 The frontend and semantic model should be shared. Backend differences must not silently alter defined behavior.
 
+## First OS boot environment
+
+[Decision 0044](../Decisions/0044-First-X64-Uefi-Boot-Environment.md) accepts x86-64 with UEFI 2.11 as the first Windvale OS boot environment. QEMU `pc-q35-11.0` with exact EDK II firmware bytes and TCG acceleration is the primary automated VM; Hyper-V Generation 2 is the later Windows compatibility target. This fixes a reproducible experiment boundary without making QEMU devices, UEFI services, PE32+, or the x64 firmware convention part of portable language behavior.
+
+[Decision 0045](../Decisions/0045-First-Uefi-Application-And-Boot-Probe.md) adds a narrow deterministic PE32+ target adapter and first firmware-entry probe. [Decision 0046](../Decisions/0046-Bounded-Uefi-Memory-Map-Probe.md) validates the exercised system/boot-services structure and acquires, walks, and frees a bounded UEFI memory map through ABI-correct calls. [Decision 0047](../Decisions/0047-Bounded-Exit-Boot-Services-Transition.md) retains the current map, bounds stale-key recovery, terminates boot services, and proves continued direct serial execution. These remain system-profile bootstrap boundaries. The QEMU exit port and raw Stage 0 instruction builder are test implementation details, not portable or hosted Windvale capabilities.
+
+The accepted environment now boots a deterministic OS-loader probe through firmware shutdown, but it is not yet a kernel. A stable memory handoff, internal native ABI, page ownership, paging, interrupts, kernel entry, platform shutdown, and the kernel/process boundary remain separately specified and verified slices.
+
 ## Capability profiles
 
 ### Portable

@@ -126,4 +126,4 @@ The hosted tool binds the current real closure as:
 source bindings status=Valid modules=9 functions=189 parameters=827 locals=986 reads=8451 assignments=643 calls=1508 directory-bytes=67180
 ```
 
-The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. Decision 0044's bidirectional nominal map and length-filtered equality paths are qualified at `e37204f`. The nine-module hosted tool completes in 2,600,859,185 instructions under the unchanged four-billion ceiling, down 12.5% from Decision 0042's 2,972,056,275-instruction closure despite the larger current source.
+The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. Decision 0048's bidirectional nominal map and length-filtered equality paths are qualified at `e37204f`. The nine-module hosted tool completes in 2,600,859,185 instructions under the unchanged four-billion ceiling, down 12.5% from Decision 0042's 2,972,056,275-instruction closure despite the larger current source.

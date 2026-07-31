@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Windvale.Bootstrap</AssemblyName>
+    <Description>Windvale's bounded x86-64 UEFI bootstrap probes.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Linker/Windvale.Linker/Windvale.Linker.csproj" />
+    <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
+  </ItemGroup>
+</Project>
