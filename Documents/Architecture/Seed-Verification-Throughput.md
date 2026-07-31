@@ -161,6 +161,12 @@ Windows x64 completed Qualification in 481.3 seconds with a 253.025-second suite
 
 The binding candidate commit `9185b28af7a7a7802d8606162ef7a5413d82dc33` was archived as `windvale-source-bindings-9185b28.tar.gz`, 2,583,180 bytes with SHA-256 `4f6c8d12ea80a52ad9d9cf989b80ac1e6cb1d2f9d266ad9e71effa3afb81c2ef`. Both hosts passed all 46 tests, the complete native CLI verifier, and zero-warning Release builds. The Windows report is 15,561 bytes with SHA-256 `cb17433f772f0336208e39623be65726b3b9d57525afa5fc7a53a80f93af9972`; the Debian report is 15,471 bytes with SHA-256 `f25adeb591fa8547ffadbd38c61f1a1f667cbbf57f1e909e9e48a520fb3e54e8`. Their normalized contracts matched, and all 45 directly compared artifacts, totaling 4,076,491 bytes, were byte-identical. The retrieved Debian artifact bundle was 1,188,300 bytes with SHA-256 `a91577a01962854ee7f0f5f806f860adfd77698c43ecea2c32cd8e03c098b7b5`. After retrieval, the resolved Debian QA directory, source archive, and artifact bundle were removed and confirmed absent.
 
+## First shared native slice measurements
+
+Decision 0059 adds one differential case whose focused execution takes approximately 0.1 seconds on both Windows and Debian x64. The Windows Development tier passes all 48 regular tests in 49.190 seconds; Standard passes all 49 tests in 211.924 seconds. Exact commit `962bb85` completes Qualification in 432.4 seconds on Windows and approximately 464.3 seconds on Debian, with suite times of 219.563 and 235.420 seconds. Both hosts pass zero-warning builds, all 49 tests, and the complete CLI verifier; normalized reports and all 61 portable artifacts match.
+
+The native case itself is not a new throughput bottleneck. Keeping the golden compiler closure out of Development continues to provide the useful broad loop. Windows and Debian qualification may run concurrently, but each host must retain its normal UTF-8 console contract: a hidden redirected Windows process decoded a macron name with a replacement character even though the CLI exited successfully, and was discarded in favor of the clean foreground qualification rather than weakening the output check.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.

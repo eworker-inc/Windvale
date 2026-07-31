@@ -1,7 +1,7 @@
 # Decision 0059: First shared native WVB slice
 
 - Date: 2026-07-31
-- Status: Implemented and validated on Windows x64; exact-commit Debian qualification pending
+- Status: Qualified at `962bb854fd8af195ec859c89355bae0e6f85ff33`
 - Refines: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)'s shared native backend and differential-execution direction
 
 ## Context
@@ -21,9 +21,9 @@ The next step must establish the shared seam before adding a broad instruction s
 - Emit the same verified native fragment to both sinks. The in-memory path executes it directly; the AOT path serializes it as WVO, passes it through the existing verified linker, reconstructs an executable fragment from the linked image, and executes that image through the same W^X adapter.
 - Keep typed patch records in the fragment contract now even though the first accepted function has no patches. Fragment validation checks symbol ordering, ranges, patch targets, non-overlap, bounds, and zero placeholders, then independently restricts the executable first target to the exact safe `mov eax, imm32; ret` shape with one `Main` symbol and no patches. The executor implements checked internal absolute-u32 and relative-i32 patch application for future accepted target shapes and rejects unresolved imports.
 
-## Initial evidence
+## Qualification evidence
 
-The Windows x64 focused differential test compiles a portable function returning `42`. The reference interpreter, in-memory native fragment, and WVO-linked AOT image all return `42`. Selection produces the exact six code bytes:
+The Windows and Debian x64 focused differential test compiles a portable function returning `42`. The reference interpreter, in-memory native fragment, and WVO-linked AOT image all return `42` on both hosts. Selection produces the exact six code bytes:
 
 ```text
 B8 2A 00 00 00 C3
@@ -31,7 +31,7 @@ B8 2A 00 00 00 C3
 
 The WVO is 79 bytes with SHA-256 `d69ab30a34a7281ff9911ab89220b405ad0944ede5130dd6f07c44baac1b9d6a`. Two independent compilations and WVO serializations are byte-identical. The focused test also rejects an out-of-range patch, a non-accepted machine-code shape before publication, and an unsupported arithmetic program. The complete solution builds with zero warnings and errors.
 
-This is implementation evidence, not cross-host qualification. The decision remains pending until the exact committed candidate passes the focused native differential test on Debian x64 and the broader required Windows/Linux verification is complete.
+Exact commit `962bb854fd8af195ec859c89355bae0e6f85ff33`, tree `f617e322bd01d533f3e139131f9dfded74037ccb`, was archived as `windvale-native-962bb854fd8a.tar.gz`, 2,776,515 bytes with SHA-256 `8f8641289dcbd00092e598b6f5977e0a0eb0ef70e9957c5a5d792c92bc205c3f`. The same digest was verified before extraction on the isolated E-Worker Debian QA host. Windows x64 and Debian GNU/Linux 12 x64 with .NET SDK `10.0.302` both passed zero-warning Release builds, all 49 tests, and the complete native CLI verifier. Their normalized conformance contracts matched, and all 61 directly retrieved portable artifacts totaling 7,752,612 bytes were byte-identical. Complete evidence is recorded in [Seed verification evidence](../Project/Seed-Verification-Evidence.md#first-shared-native-wvb-slice-qualification).
 
 ## Consequences
 
