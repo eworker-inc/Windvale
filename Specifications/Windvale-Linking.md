@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Windvale Linking version 1 defines the first deterministic multi-object link contract and the `flat-x86-64-v1` output target. The C# implementation under `Linker/Windvale.Linker/` is the Stage 0 oracle and is cross-host qualified at `9c4b9f5`: the exact committed archive passed the 31-test suite and real CLI flow on Windows and Debian, with identical input objects, complete image bytes, canonical map bytes, and normalized conformance contracts.
+Windvale Linking version 1 defines the first deterministic multi-object link contract and the `flat-x86-64-v1` output target. The C# implementation under `Linker/Reference/` is the Stage 0 oracle and is cross-host qualified at `9c4b9f5`: the exact committed archive passed the 31-test suite and real CLI flow on Windows and Debian, with identical input objects, complete image bytes, canonical map bytes, and normalized conformance contracts. The complete Windvale-written implementation is owned by `Linker/Windvale/`.
 
 The flat target is a raw memory image, not an executable container. It proves input validation, global symbol resolution, address-aware alignment, checked relocation arithmetic, zero-fill materialization, independent output verification, and canonical map evidence without importing PE, ELF, UEFI, loader, ABI, or operating-system policy. The assembler continues to own WVA parsing and WVO construction; the linker consumes only complete verified WVO objects. A separate narrow UEFI target adapter now consumes a successful flat result under [Windvale-Uefi-Application.md](Windvale-Uefi-Application.md); it does not change this flat-image contract.
 

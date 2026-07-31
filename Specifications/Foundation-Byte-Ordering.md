@@ -34,7 +34,7 @@ The three current consumers are:
 
 - `Examples/Foundation/Wvo-Object-Core.wv`, for canonical section and symbol order;
 - `Assembler/Windvale/Wva-Assembler-Core.wv`, for declaration equality, lookup, and canonical order; and
-- `Examples/Linker/Wv-Linker-Core.wv`, for same-object name equality and canonical order.
+- `Linker/Windvale/Wv-Linker-Core.wv`, for same-object name equality and canonical order.
 
 Each consumer validates its spans at its parser boundary before comparison. The linker continues to own cross-object ordering and complete-image equality because those contracts accept two independent byte values and are not duplicated by the other tools.
 

@@ -473,7 +473,7 @@ dotnet run --project Tools/Windvale.Tool -- link `
   artifacts/Console-Provider.wvo
 ```
 
-The Stage 0 linker verifies both WVO inputs, resolves `Console_write`, places actual section addresses with alignment, materializes zero padding, applies the relative call and absolute data relocation, independently reconstructs every output byte, and writes a 24-byte image. The Windvale-written `Wvˉlinkerˉcore` now implements the same contract as verified bytecode: it validates each immutable input snapshot, independently reconstructs the image, constructs the complete bounded canonical map, and invokes the host writer once only after every deterministic step succeeds. The two implementations produce byte-identical images and maps. The raw image SHA-256 is `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a`; it is a memory-layout experiment, not yet a Windows, Linux, UEFI, or Windvale OS executable.
+The Stage 0 linker verifies both WVO inputs, resolves `Console_write`, places actual section addresses with alignment, materializes zero padding, applies the relative call and absolute data relocation, independently reconstructs every output byte, and writes a 24-byte image. The Windvale-written `Wvˉlinkerˉcore` under `Linker/Windvale/` implements the same contract as verified bytecode: it validates each immutable input snapshot, independently reconstructs the image, constructs the complete bounded canonical map, and invokes the host writer once only after every deterministic step succeeds. The two implementations produce byte-identical images and maps. The raw image SHA-256 is `0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a`; it is a memory-layout experiment, not itself a Windows, Linux, UEFI, or Windvale OS executable. The separate UEFI adapter under `Linker/Reference/` consumes verified flat link evidence for the accepted boot path.
 
 ## Seed language example
 
@@ -505,7 +505,8 @@ export fn Main() -> i32 {
 - `Foundation/` — portable Windvale source modules with explicit multi-consumer contracts
 - `Assembler/Windvale/` — Windvale-written WVA parser, semantic validation, x86-64 encoding, and WVO production
 - `Assembler/Reference/` — independent C# Stage 0 assembler and recovery oracle
-- `Linker/Windvale.Linker/` — global symbol resolution, flat-image layout, relocation, independent verification, and canonical maps
+- `Linker/Windvale/` — Windvale-written global symbol resolution, flat-image layout, relocation, independent verification, and canonical maps
+- `Linker/Reference/` — independent C# Stage 0 linker, recovery oracle, and currently C#-only UEFI target adapter
 - `Runtime/Windvale.Bytecode/` — module contracts, codec, verifier, digest, and inspector
 - `Runtime/Windvale.Runtime/` — verified-bytecode reference interpreter and capability host
 - `Object-Model/Windvale.ObjectModel/` — WVO contracts, codec, verifier, digest, and inspector
@@ -516,7 +517,7 @@ export fn Main() -> i32 {
 - `Examples/Seed/` — portable and hosted example programs
 - `Examples/Foundation/` — incremental programs that exercise self-hosting prerequisites
 - `Examples/Assembler/` — canonical WVA input examples and object-production coverage
-- `Examples/Linker/` — multi-object providers and the Windvale-written linker core
+- `Examples/Linker/` — canonical WVA provider inputs for multi-object linking
 - `Specifications/` — implemented source, bytecode, CLI, and conformance contracts
 - `Documents/` — architecture, decisions, project direction, and open questions
 
@@ -618,6 +619,7 @@ export fn Main() -> i32 {
 - [First kernel handoff and relative UEFI link decision](Documents/Decisions/0048-First-Kernel-Handoff-And-Relative-Uefi-Link.md)
 - [Bidirectional nominal symbol index decision](Documents/Decisions/0050-Bidirectional-Nominal-Symbol-Index.md)
 - [Assembler implementation role layout decision](Documents/Decisions/0051-Assembler-Implementation-Role-Layout.md)
+- [Linker implementation role layout decision](Documents/Decisions/0053-Linker-Implementation-Role-Layout.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

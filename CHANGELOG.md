@@ -21,6 +21,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - The Windvale-written lexer uses bounded keyword, identifier, and Unicode-whitespace dispatch while preserving the Seed lexical contract.
 - Compiler folders now describe implementation roles: `Compiler/Windvale` contains the Windvale-written compiler, while `Compiler/Reference` contains the independent C# reference/recovery compiler.
 - Assembler folders now describe implementation roles: `Assembler/Windvale` contains the Windvale-written assembler, while `Assembler/Reference` contains the independent C# Stage 0 reference/recovery assembler. Canonical WVA inputs remain under `Examples/Assembler`.
+- Linker folders now describe implementation roles: `Linker/Windvale` contains the Windvale-written flat-image linker, while `Linker/Reference` contains the independent C# Stage 0 reference/recovery linker and its currently C#-only UEFI target adapter. Canonical WVA provider inputs remain under `Examples/Linker`.
 
 ### Current development status
 

@@ -6,7 +6,7 @@
     <Project Path="Compiler/Reference/Windvale.Compiler.csproj" />
   </Folder>
   <Folder Name="/Linker/">
-    <Project Path="Linker/Windvale.Linker/Windvale.Linker.csproj" />
+    <Project Path="Linker/Reference/Windvale.Linker.csproj" />
   </Folder>
   <Folder Name="/Object-Model/">
     <Project Path="Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />

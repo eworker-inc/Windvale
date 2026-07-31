@@ -1418,7 +1418,7 @@ WVA_ASSEMBLER_SELF_TEST_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$WVA_ASSEMBLER_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Linker/Wv-Linker-Core.wv" \
+    compile "$REPOSITORY_ROOT/Linker/Windvale/Wv-Linker-Core.wv" \
     --module "$MACHINE_CONTRACTS_SOURCE" \
     --module "$BYTE_ORDERING_SOURCE" \
     --module "$DECIMAL_PARSING_SOURCE" \

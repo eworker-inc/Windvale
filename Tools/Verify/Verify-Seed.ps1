@@ -1585,7 +1585,7 @@ if ($LASTEXITCODE -ne 0 -or $WvaAssemblerSelfTestOutput -notcontains 'Result: 0'
 }
 
 dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Linker/Wv-Linker-Core.wv') `
+    compile (Join-Path $RepositoryRoot 'Linker/Windvale/Wv-Linker-Core.wv') `
     --module $MachineContractsSource `
     --module $ByteOrderingSource `
     --module $DecimalParsingSource `

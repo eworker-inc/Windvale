@@ -26,7 +26,7 @@ The module owns only the Boolean semantic predicates. The assembler owns source 
 The two required consumers are:
 
 - `Assembler/Windvale/Wva-Assembler-Core.wv`, for WVA symbol, section, definition, reference, and alignment validation.
-- `Examples/Linker/Wv-Linker-Core.wv`, for WVO section alignment and link entry-name validation.
+- `Linker/Windvale/Wv-Linker-Core.wv`, for WVO section alignment and link entry-name validation.
 
 Both import the module through bounded static source composition. Dependency exports become internal functions in the composed tool WVB; they do not expand either tool's runtime export surface.
 

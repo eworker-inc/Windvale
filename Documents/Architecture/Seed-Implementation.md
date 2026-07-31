@@ -116,19 +116,28 @@ The object verifier returns a `Verifiedˉobject`; both CLI object commands decod
 
 Both implementations own the same WVA contract and remain byte-for-byte differential oracles. The reference assembler depends only on the object model and returns no bytes until the resulting object passes `Objectˉverifier`; qualification routes Windvale-written output through that independently owned verifier. Neither implementation resolves symbols, chooses final addresses, applies relocations, defines an ABI, or produces an executable image.
 
-### Linker
+### Windvale linker
 
-`Linker/Windvale.Linker/` owns:
+`Linker/Windvale/` owns the linker implementation written in Windvale:
 
-- Link-wide WVO input validation and aggregate limits
+- Complete immutable WVO validation and link-wide aggregate limits
 - Object-private locals plus unique global export/import resolution
 - Actual-address alignment and deterministic section contribution order
 - Bounded flat-image construction with zero padding and materialized BSS
 - Checked `absolute-u32` and `relative-i32` relocation application
 - Independent complete-image reconstruction before publication
-- Path-free canonical map construction and SHA-256 image evidence
+- Path-free canonical map construction and hosted publish-after-success composition
 
-The linker depends only on the object model. It does not parse WVA, encode instructions, mutate objects, select a host executable format, or define an ABI. The raw flat image is a deterministic memory snapshot; later PE, ELF, UEFI, and Windvale OS adapters remain explicit targets over verified link evidence.
+### Reference linker and target adapters
+
+`Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:
+
+- WVO decoding through the independently verified object-model boundary
+- The same symbol resolution, layout, relocation, reconstruction, and canonical map contract
+- SHA-256 flat-image evidence and deterministic failure diagnostics
+- The currently C#-only deterministic UEFI PE32+ application adapter and its independent verifier
+
+Both linker implementations own the same `flat-x86-64-v1` contract and remain byte-for-byte differential oracles. They do not parse WVA, encode instructions, mutate input objects, or define an ABI. The raw flat image remains a deterministic memory snapshot; the narrow UEFI adapter consumes successful flat link evidence without changing portable link semantics. Later PE host, ELF, and Windvale OS target adapters remain explicit contracts.
 
 ### Runtime
 
