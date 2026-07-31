@@ -38,6 +38,21 @@ Windvale assembly -> verified WVO object -> deterministic linked x86-64 image
 System-profile Hello-World.wv -> verified WVO -> linked UEFI image -> post-firmware serial output
 ```
 
+**First compiler-generated boot:** [`Hello-World.wv`](Operating-System/Kernel/Hello-World.wv) passes through the ordinary frontend and typed WIR, becomes a verified x86-64 WVO object, and runs only after the loader exits UEFI boot services. The accepted QEMU/OVMF serial transcript is:
+
+```text
+windvale-os-boot 5
+entry=pass
+system-table=pass
+memory-map=pass
+boot-services=exited
+Hello from Windvale
+windvale-source=pass
+status=pass
+```
+
+The exact target limits and evidence are recorded in [Decision 0049](Documents/Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) and the [x86-64 kernel-target specification](Specifications/Windvale-X64-Kernel-Target.md).
+
 **Current focus:** Windvale compiler source -> reproducible self-hosting.
 
 **Latest qualified evidence:** 48 conformance tests, 61 byte-identical portable artifacts, and matching Windows and Debian results. See the [qualification evidence](Documents/Project/Seed-Verification-Evidence.md) and [development roadmap](Documents/Project/Roadmap.md) for the complete scope and remaining gates.
