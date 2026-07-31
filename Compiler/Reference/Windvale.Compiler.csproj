@@ -3,6 +3,7 @@
     <Description>Windvale Seed C# reference/recovery compiler and typed intermediate representation.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
   </ItemGroup>
 </Project>

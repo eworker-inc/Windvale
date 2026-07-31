@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Windvale.Bootstrap;
+using Windvale.Compiler;
 using Windvale.Linker;
 using Windvale.ObjectModel;
 
@@ -14,8 +15,10 @@ internal static class Program
         new("UEFI writer rejects unsupported link shapes", Writerˉrejectsˉunsupportedˉlinks),
         new("UEFI verifier rejects malformed and noncanonical images", Verifierˉrejectsˉmalformedˉimages),
         new("UEFI verifier contains bounded hostile input", Verifierˉcontainsˉhostileˉinput),
+        new("x86-64 kernel compiler emits deterministic verified WVO", Kernelˉcompilerˉemitsˉverifiedˉobject),
+        new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
-        new("firmware probe carries the bounded exit and kernel handoff", Firmwareˉprobeˉcarriesˉexitˉtransition),
+        new("firmware probe carries compiled Windvale past the kernel handoff", Firmwareˉprobeˉcarriesˉcompiledˉsource),
     ];
 
     public static int Main()
@@ -167,6 +170,77 @@ internal static class Program
         }
     }
 
+    private static void Kernelˉcompilerˉemitsˉverifiedˉobject()
+    {
+        var First = X64ˉkernelˉcompiler.Compile(HELLO_WORLD_SOURCE, "Hello-World.wv");
+        var Second = X64ˉkernelˉcompiler.Compile(HELLO_WORLD_SOURCE, "Hello-World.wv");
+        True(First.Success, First.Diagnostics.IsEmpty ? "Native compilation failed." : First.Diagnostics[0].ToString());
+        True(Second.Success, "Repeated native compilation failed.");
+        Sequenceˉequal(First.Objectˉbytes, Second.Objectˉbytes);
+        Equal(905, First.Objectˉbytes.Length);
+        Equal(
+            "22ccc0d50b6170bc53fb6844d2fb7ec76b8a87e720dac8d7dacf2f2a71256cb9",
+            Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
+
+        var Object = Objectˉcodec.Readˉandˉverify(First.Objectˉbytes.AsSpan()).Value;
+        True(Object.Architecture == Objectˉarchitecture.X86ˉ64, "The native object architecture is not x86-64.");
+        Equal(1, Object.Sections.Length);
+        True(Object.Sections[0].Kind == Objectˉsectionˉkind.Code, "The native object section is not code.");
+        Equal(2, Object.Symbols.Length);
+        Equal(X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL, Object.Symbols[0].Name);
+        True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The kernel entry is not exported.");
+        Equal(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Object.Symbols[1].Name);
+        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Import, "The byte writer is not imported.");
+        Equal(20, Object.Relocations.Length);
+        True(
+            Object.Relocations.All(Relocation =>
+                Relocation.Kind == Objectˉrelocationˉkind.Relativeˉi32 &&
+                Relocation.Sectionˉindex == 0 &&
+                Relocation.Symbolˉindex == 1 &&
+                Relocation.Addend == -4),
+            "The generated output calls do not use the canonical relative relocation contract.");
+        Equal(1, Countˉsequence(Object.Sections[0].Data, [0xB9, (byte)'H', 0, 0, 0, 0xE8]));
+
+        var Changed = X64ˉkernelˉcompiler.Compile(
+            HELLO_WORLD_SOURCE.Replace("Hello from Windvale", "Hi", StringComparison.Ordinal),
+            "Changed.wv");
+        True(Changed.Success, "The supported source variation did not compile.");
+        True(
+            !Changed.Objectˉbytes.AsSpan().SequenceEqual(First.Objectˉbytes.AsSpan()),
+            "Changing source output did not change the native object.");
+        Equal(3, Objectˉcodec.Readˉandˉverify(Changed.Objectˉbytes.AsSpan()).Value.Relocations.Length);
+    }
+
+    private static void Kernelˉcompilerˉrejectsˉunsupportedˉsource()
+    {
+        var Hosted = X64ˉkernelˉcompiler.Compile(
+            HELLO_WORLD_SOURCE.Replace("profile system", "profile hosted", StringComparison.Ordinal),
+            "hosted.wv");
+        True(!Hosted.Success, "A hosted module was accepted by the system-profile kernel target.");
+        True(
+            Hosted.Diagnostics.Any(Diagnostic => Diagnostic.Code == "WVN1001"),
+            "A hosted kernel target did not produce WVN1001.");
+
+        var Unicode = X64ˉkernelˉcompiler.Compile(
+            HELLO_WORLD_SOURCE.Replace("Hello from Windvale", "Héllo from Windvale", StringComparison.Ordinal),
+            "unicode.wv");
+        True(!Unicode.Success, "Non-ASCII kernel console output was accepted.");
+        True(
+            Unicode.Diagnostics.Any(Diagnostic => Diagnostic.Code == "WVN1005"),
+            "Non-ASCII kernel output did not produce WVN1005.");
+
+        var Branch = X64ˉkernelˉcompiler.Compile(
+            HELLO_WORLD_SOURCE.Replace(
+                "console.write_line(Greeting);",
+                "if true { console.write_line(Greeting); }",
+                StringComparison.Ordinal),
+            "branch.wv");
+        True(!Branch.Success, "A branching kernel entry was accepted by the linear target.");
+        True(
+            Branch.Diagnostics.Any(Diagnostic => Diagnostic.Code == "WVN1003"),
+            "A branching kernel entry did not produce WVN1003.");
+    }
+
     private static void Firmwareˉprobeˉbuildsˉreproducibly()
     {
         var First = Firmwareˉprobe.Buildˉapplication();
@@ -174,17 +248,17 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(5_632, First.Length);
         Equal(
-            "b476be4d19238ba637b3d8df0b0d0a67e7b8b4e15f8c2b83529b847832cb3e1a",
+            "6f3a77b6d769ed157d92dc2da95c4bb7c01f19ec704d8223c3396584a75c0ccb",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
         Equal(0u, Verified.Entryˉcodeˉoffset);
     }
 
-    private static void Firmwareˉprobeˉcarriesˉexitˉtransition()
+    private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 4\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nkernel-entry=pass\nstatus=pass\n",
+            "windvale-os-boot 5\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nHello from Windvale\nwindvale-source=pass\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -202,8 +276,23 @@ internal static class Program
         Equal(1, Countˉsequence(Code, [0xFF, 0x90, 0xE8, 0x00, 0x00, 0x00]));
         Equal(2, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x48, 0x41, 0x4E, 0x44, 0x31]));
         Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x2C, 0x30, 0x00, 0x00, 0x00]));
+        Equal(1, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
+        Equal(1, Countˉsequence(Code, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
         Equal(2, Countˉsequence(Code, [0xFA, 0xF4, 0xE9]));
     }
+
+    private const string HELLO_WORLD_SOURCE = """
+        module Helloˉwindvale profile system;
+
+        capability console.write_line;
+
+        data Greeting: text = "Hello from Windvale";
+
+        export fn Main() -> i32 {
+            console.write_line(Greeting);
+            return 0;
+        }
+        """;
 
     private static Linkˉresult Linkˉcode(ImmutableArray<byte> code, uint baseˉaddress = 0)
     {

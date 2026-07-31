@@ -5,7 +5,11 @@
     <Description>Windvale's bounded x86-64 UEFI bootstrap probes.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../Compiler/Reference/Windvale.Compiler.csproj" />
     <ProjectReference Include="../../Linker/Windvale.Linker/Windvale.Linker.csproj" />
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../Kernel/Hello-World.wv" LogicalName="Windvale.Os.Kernel.Hello-World.wv" />
   </ItemGroup>
 </Project>

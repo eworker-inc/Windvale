@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text;
+using Windvale.Compiler;
 using Windvale.Linker;
 using Windvale.ObjectModel;
 
@@ -7,18 +8,20 @@ namespace Windvale.Bootstrap;
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 4;
+    public const int FORMAT_VERSION = 5;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
-    public const string KERNEL_ENTRY_SYMBOL = "Windvale_kernel_entry";
-    public const string ENTRY_MARKER = "windvale-os-boot 4\nentry=pass\n";
+    public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
+    public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
+    public const string ENTRY_MARKER = "windvale-os-boot 5\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
-    public const string KERNEL_ENTRY_MARKER = "kernel-entry=pass\n";
+    public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
+    public const string WINDVALE_SOURCE_MARKER = "windvale-source=pass\n";
     public const string SUCCESS_MARKER = "status=pass\n";
     public const string SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
-        KERNEL_ENTRY_MARKER + SUCCESS_MARKER;
+        HELLO_WORLD_MARKER + WINDVALE_SOURCE_MARKER + SUCCESS_MARKER;
 
     private const string FAILURE_MARKER = "status=fail\n";
     private const string FAILURE_LABEL = "failure";
@@ -29,7 +32,8 @@ public static class Firmwareˉprobe
     private const string DESCRIPTOR_LOOP_LABEL = "descriptor_loop";
     private const string EXIT_SUCCESS_LABEL = "exit_success";
     private const string SUCCESS_HALT_LABEL = "success_halt";
-    private const string KERNEL_FAILURE_LABEL = "kernel_failure";
+    private const string WRITE_BYTE_WAIT_LABEL = "write_byte_wait";
+    private const string HELLO_WORLD_RESOURCE = "Windvale.Os.Kernel.Hello-World.wv";
 
     private const byte CONDITION_BELOW = 0x82;
     private const byte CONDITION_EQUAL = 0x84;
@@ -73,10 +77,6 @@ public static class Firmwareˉprobe
     private const uint MAX_MEMORY_MAP_BYTES = 1024 * 1024;
     private const uint EFI_LOADER_DATA = 2;
     private const uint EXIT_BOOT_SERVICES_MAX_ATTEMPTS = 3;
-    private const ulong KERNEL_HANDOFF_MAGIC = 0x3144_4E41_484B_5657;
-    private const uint KERNEL_HANDOFF_VERSION = 1;
-    private const uint KERNEL_HANDOFF_BYTES = 48;
-
     private const uint GET_MEMORY_MAP_OFFSET = 0x38;
     private const uint ALLOCATE_POOL_OFFSET = 0x40;
     private const uint FREE_POOL_OFFSET = 0x48;
@@ -84,6 +84,13 @@ public static class Firmwareˉprobe
 
     public static ImmutableArray<byte> Buildˉapplication()
     {
+        var Kernel = X64ˉkernelˉcompiler.Compile(Loadˉhelloˉworldˉsource(), "Hello-World.wv");
+        if (!Kernel.Success)
+        {
+            throw new InvalidOperationException(
+                $"The Windvale kernel source did not compile: {Kernel.Diagnostics[0]}");
+        }
+
         var Loader = Buildˉloaderˉmachineˉcode();
         var Loaderˉobject = new Objectˉfile(
             Objectˉarchitecture.X86ˉ64,
@@ -105,22 +112,22 @@ public static class Firmwareˉprobe
                     0),
             ],
             [new(Objectˉrelocationˉkind.Relativeˉi32, 0, Loader.Kernelˉcallˉoffset, 1, -4)]);
-        var Kernelˉcode = Buildˉkernelˉmachineˉcode();
-        var Kernelˉobject = new Objectˉfile(
+        var Supportˉcode = Buildˉwriteˉbyteˉmachineˉcode();
+        var Supportˉobject = new Objectˉfile(
             Objectˉarchitecture.X86ˉ64,
-            [new(".text", Objectˉsectionˉkind.Code, 16, (uint)Kernelˉcode.Length, Kernelˉcode)],
+            [new(".text", Objectˉsectionˉkind.Code, 16, (uint)Supportˉcode.Length, Supportˉcode)],
             [new(
-                KERNEL_ENTRY_SYMBOL,
+                WRITE_BYTE_SYMBOL,
                 Objectˉsymbolˉbinding.Export,
                 Objectˉsymbolˉkind.Function,
                 0,
                 0,
-                (uint)Kernelˉcode.Length)],
+                (uint)Supportˉcode.Length)],
             []);
         var Loaderˉobjectˉbytes = Objectˉcodec.Write(Loaderˉobject).ToImmutableArray();
-        var Kernelˉobjectˉbytes = Objectˉcodec.Write(Kernelˉobject).ToImmutableArray();
+        var Supportˉobjectˉbytes = Objectˉcodec.Write(Supportˉobject).ToImmutableArray();
         var Link = Linkˉcompiler.Link(
-            [new(Loaderˉobjectˉbytes), new(Kernelˉobjectˉbytes)],
+            [new(Loaderˉobjectˉbytes), new(Kernel.Objectˉbytes), new(Supportˉobjectˉbytes)],
             new(Uefiˉapplicationˉcontract.REQUIRED_LINK_BASE_ADDRESS, ENTRY_SYMBOL));
         if (!Link.Success)
         {
@@ -321,12 +328,12 @@ public static class Firmwareˉprobe
         Emitˉloadˉstackˉr8(Output, DESCRIPTOR_SIZE_OFFSET);
         Emitˉloadˉstackˉr9(Output, DESCRIPTOR_VERSION_OFFSET);
         Output.Emit(0x48, 0xB8);
-        Output.Emitˉu64(KERNEL_HANDOFF_MAGIC);
+        Output.Emitˉu64(X64ˉkernelˉcontract.HANDOFF_MAGIC);
         Emitˉstoreˉstackˉrax(Output, HANDOFF_OFFSET);
         Output.Emit(0xC7, 0x44, 0x24, HANDOFF_VERSION_OFFSET);
-        Output.Emitˉu32(KERNEL_HANDOFF_VERSION);
+        Output.Emitˉu32(X64ˉkernelˉcontract.HANDOFF_VERSION);
         Output.Emit(0xC7, 0x44, 0x24, HANDOFF_SIZE_OFFSET);
-        Output.Emitˉu32(KERNEL_HANDOFF_BYTES);
+        Output.Emitˉu32(X64ˉkernelˉcontract.HANDOFF_BYTES);
         Emitˉstoreˉstackˉr10(Output, HANDOFF_MAP_BUFFER_OFFSET);
         Emitˉstoreˉstackˉr11(Output, HANDOFF_MAP_BYTES_OFFSET);
         Emitˉstoreˉstackˉr8(Output, HANDOFF_DESCRIPTOR_BYTES_OFFSET);
@@ -336,6 +343,7 @@ public static class Firmwareˉprobe
         Kernelˉcallˉoffset = Output.Emitˉcallˉplaceholder();
         Output.Emit(0x48, 0x85, 0xC0);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, TERMINAL_FAILURE_LABEL);
+        Emitˉserialˉtext(Output, WINDVALE_SOURCE_MARKER);
         Emitˉserialˉtext(Output, SUCCESS_MARKER);
         Emitˉdebugˉexit(Output, 0);
         Emitˉhaltˉloop(Output, SUCCESS_HALT_LABEL);
@@ -361,48 +369,24 @@ public static class Firmwareˉprobe
         return new(Output.Build(), Kernelˉcallˉoffset);
     }
 
-    private static ImmutableArray<byte> Buildˉkernelˉmachineˉcode()
+    private static ImmutableArray<byte> Buildˉwriteˉbyteˉmachineˉcode()
     {
         var Output = new X64ˉcodeˉbuilder();
-        Output.Emit(0x48, 0x85, 0xC9);
-        Output.Jumpˉif(CONDITION_EQUAL, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x48, 0xB8);
-        Output.Emitˉu64(KERNEL_HANDOFF_MAGIC);
-        Output.Emit(0x48, 0x39, 0x01);
-        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x83, 0x79, 0x08, (byte)KERNEL_HANDOFF_VERSION);
-        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x83, 0x79, 0x0C, (byte)KERNEL_HANDOFF_BYTES);
-        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x48, 0x83, 0x79, 0x10, 0x00);
-        Output.Jumpˉif(CONDITION_EQUAL, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x48, 0x8B, 0x41, 0x18);
-        Output.Emit(0x48, 0x85, 0xC0);
-        Output.Jumpˉif(CONDITION_EQUAL, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x48, 0x3D);
-        Output.Emitˉu32(MAX_MEMORY_MAP_BYTES);
-        Output.Jumpˉif(CONDITION_ABOVE, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x48, 0x8B, 0x41, 0x20);
-        Output.Emit(0x48, 0x83, 0xF8, (byte)EFI_MEMORY_DESCRIPTOR_MINIMUM_BYTES);
-        Output.Jumpˉif(CONDITION_BELOW, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x48, 0x3D);
-        Output.Emitˉu32(EFI_MEMORY_DESCRIPTOR_MAXIMUM_BYTES);
-        Output.Jumpˉif(CONDITION_ABOVE, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x83, 0x79, 0x28, (byte)EFI_MEMORY_DESCRIPTOR_VERSION);
-        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x83, 0x79, 0x2C, 0x00);
-        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
-        Output.Emit(0x48, 0x8B, 0x41, 0x18);
-        Output.Emit(0x31, 0xD2);
-        Output.Emit(0x48, 0xF7, 0x71, 0x20);
-        Output.Emit(0x48, 0x85, 0xD2);
-        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
-        Emitˉserialˉtext(Output, KERNEL_ENTRY_MARKER);
-        Output.Emit(0x31, 0xC0, 0xC3);
-
-        Output.Mark(KERNEL_FAILURE_LABEL);
-        Output.Emit(0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
+        Emitˉmoveˉedx(Output, 0x03FD);
+        Output.Mark(WRITE_BYTE_WAIT_LABEL);
+        Output.Emit(0xEC, 0xA8, 0x20);
+        Output.Jumpˉif(CONDITION_EQUAL, WRITE_BYTE_WAIT_LABEL);
+        Emitˉmoveˉedx(Output, 0x03F8);
+        Output.Emit(0x8B, 0xC1, 0xEE, 0xC3);
         return Output.Build();
+    }
+
+    private static string Loadˉhelloˉworldˉsource()
+    {
+        using var Stream = typeof(Firmwareˉprobe).Assembly.GetManifestResourceStream(HELLO_WORLD_RESOURCE) ??
+            throw new InvalidOperationException($"Embedded Windvale source '{HELLO_WORLD_RESOURCE}' is missing.");
+        using var Reader = new StreamReader(Stream, new UTF8Encoding(false, true), false);
+        return Reader.ReadToEnd();
     }
 
     private static void Emitˉvalidateˉdescriptorˉmetadata(

@@ -2,7 +2,7 @@
 
 ## Status
 
-C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Decision 0002. Restricted C and native backend choices remain proposals for later milestones.
+C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Decision 0002. Decision 0049 implements the first bounded direct x86-64 target for one kernel-entry source shape. Restricted C and the general native backend remain later choices; the bounded target does not settle their complete design.
 
 “Bootstrap” names the staged process that starts from an existing host toolchain and reaches a reproducible Windvale-built stack. It is not the durable product name of either compiler implementation. The Windvale-written implementation is the **Windvale compiler** even before it passes self-hosting qualification; it lives in `Compiler/Windvale`. The C# implementation is the independent **reference/recovery compiler** and lives in `Compiler/Reference`. Bootstrap provenance and recovery instructions remain explicitly documented. This role layout is cross-host qualified at `4fdc6bf` under Decision 0043.
 
@@ -24,8 +24,8 @@ Stage 0 tools: C#
         |
 Windvale source --> AST --> typed Windvale IR (WIR)
                               |-- Windvale bytecode (WBC)
-                              |-- restricted C bridge
-                              `-- native machine backend, later
+                              |-- restricted C bridge, proposed
+                              `-- bounded x86-64 kernel target
 
 Assembly source --> instruction model --> shared native object model
 Native backend --------------------------^             |
@@ -143,9 +143,9 @@ LLVM can provide optimization, architecture coverage, debug information, and mat
 
 .NET IL would make early hosted execution convenient but would couple language semantics to the CLR type, metadata, runtime, and object models. It does not provide the intended route to a small freestanding OS. It may be an interoperability target later.
 
-### Direct machine code — necessary later, expensive first
+### Direct machine code — first bounded target implemented
 
-A direct native backend is ultimately necessary for a self-owned kernel toolchain. Building it before the frontend, semantic model, reference execution, and conformance tests stabilize would lengthen the first feedback loop.
+A direct native backend is ultimately necessary for a self-owned kernel toolchain. Decision 0049 adds the first intentionally narrow implementation only after typed WIR, verified WVO, linking, and the kernel handoff exist: one linear system-profile entry, constant ASCII line output through an imported adapter, and a constant return. This proves that WIR can reach booted native code through the shared object model. Register allocation, general control flow, data addressing, a stable native ABI, host executables, and differential semantic coverage remain Phase 9 work.
 
 ## Proposed bootstrap stages
 
@@ -176,6 +176,6 @@ A direct native backend is ultimately necessary for a self-owned kernel toolchai
 - Error and exception semantics
 - Integer overflow and floating-point reproducibility rules
 - The minimum C bridge subset
-- Native object format strategy during bootstrap
-- First architecture and firmware boundary
+- General native value representation, ABI, and object-layout expansion beyond the accepted WVO kernel subset
+- Cross-target policy after the accepted x86-64/UEFI first boundary
 - Criteria for calling the compiler self-hosting

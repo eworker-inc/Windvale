@@ -26,8 +26,8 @@ At its center is a **new programming language**, together with its compiler, por
 | CLI and inspection tools | ✅ Working now | One CLI can compile, verify, inspect, run, assemble, link, and inspect or verify objects | Move more command implementations into Windvale and add broader developer tooling |
 | Editor support | ✅ Working now | Windvale syntax highlighting and language configuration work locally in Visual Studio Code | Package it publicly and pursue GitHub language recognition when eligible |
 | Tests, specifications, and reproducibility | ✅ Working now | Valid, malformed, boundary, random-input, deterministic-output, and cross-host checks protect the current contracts | Extend the same evidence discipline to self-hosting, native code, and the operating system |
-| Native compiler and host programs | ○ Planned | The assembler, object model, and linker provide much of the required foundation | Lower typed Windvale IR to x86-64 objects and produce controlled Windows and Linux programs |
-| Windvale operating system | ○ Planned | The first x86-64 UEFI/QEMU environment and exact firmware inputs are accepted; no boot image or operating-system implementation is claimed yet | Produce a deterministic UEFI image and boot the first firmware probe |
+| Native compiler and host programs | 🚧 In progress | A bounded Stage 0 target lowers one system-profile WIR shape to verified x86-64 WVO for the kernel handoff | Define the general native ABI and add bytecode/native differential programs |
+| Windvale operating system | 🚧 In progress | A deterministic UEFI/QEMU probe exits firmware and boots a compiler-generated `.wv` Hello World through a versioned handoff | Add memory ownership, traps, a runtime, clean shutdown, and Hyper-V evidence |
 | Open-source project foundation | 🚧 In progress | MIT licensing, contribution, security, governance, support, and authorship policies exist | Complete the publication baseline and establish public project operations |
 
 **Working end to end today:**
@@ -35,6 +35,7 @@ At its center is a **new programming language**, together with its compiler, por
 ```text
 Windvale source -> compiled WVB -> verification -> execution on Windows or Linux
 Windvale assembly -> verified WVO object -> deterministic linked x86-64 image
+System-profile Hello-World.wv -> verified WVO -> linked UEFI image -> post-firmware serial output
 ```
 
 **Current focus:** Windvale compiler source -> reproducible self-hosting.
