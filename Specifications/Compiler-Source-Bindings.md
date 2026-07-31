@@ -114,16 +114,16 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 ## Candidate artifacts and evidence
 
-- `Source-Bindings-Core.wvb`: 337,586 bytes, SHA-256 `5440db53fa42f819321d91f67a2440cf128a8685e564b057d61d1b7ee9a2e1c3`.
-- `Source-Bindings-Demo.wvb`: 344,471 bytes, SHA-256 `1dabd3cb09339e63f2d8495eb27258fce1054c5163f92a5afd3258995d5bb8e5`.
-- `Source-Bindings-Tool.wvb`: 340,068 bytes, SHA-256 `47dab8589a4ca5a7c460be981fc183a5efcdb551174e1bb734b415f4f4198cb8`.
+- `Source-Bindings-Core.wvb`: 340,557 bytes, SHA-256 `1d4f55b2eb7abaccf103efcebe7cc86b54546a70679cc330b931049bf658f5bb`.
+- `Source-Bindings-Demo.wvb`: 347,442 bytes, SHA-256 `5b7c59e5d3b0529e666e7f0b253f19edf753de624f941fbf0a310462cd8492aa`.
+- `Source-Bindings-Tool.wvb`: 343,039 bytes, SHA-256 `786bf46c4b410ce6e16cd456aea3e9337e34127292088b23aa9b7a68576f3228`.
 
 The focused demo covers valid parameters/locals/data/calls; mutable and immutable assignment; nested scope and initializer visibility; duplicate locals; primitive, visible, unknown, and inaccessible local types; unknown and inaccessible names/calls; undeclared capabilities; arity; upstream symbol failures; and corrupted header, range, entry, and trailing-data evidence.
 
 The hosted tool binds the current real closure as:
 
 ```text
-source bindings status=Valid modules=9 functions=189 parameters=827 locals=942 reads=8277 assignments=609 calls=1475 directory-bytes=65596
+source bindings status=Valid modules=9 functions=189 parameters=827 locals=945 reads=8335 assignments=612 calls=1479 directory-bytes=65704
 ```
 
-The pre-preparation implementation was qualified at `9185b28`, and the prepared-symbol/local-only baseline was requalified with typed WVIR at `bf77f70`. Decision 0041's explicit parameter/finalization phases and fused consumer path are cross-host qualified at exact commit `b124115`; both hosts passed all 48 tests and the complete native verifier, and all 61 retrieved portable artifacts were byte-identical.
+The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. The current artifacts and source-derived counts include Decision 0042's lexer and await exact requalification. The nine-module hosted tool completes in 2,972,056,275 instructions under the unchanged four-billion ceiling.

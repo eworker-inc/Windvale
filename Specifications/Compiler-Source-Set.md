@@ -52,16 +52,16 @@ WVSS is a compiler input container, not a source package, archive, module-distri
 
 The hosted source-set tool accepts explicit root/dependency resource names, constructs WVSS in argument order, and passes it to the portable validator. Dependency order is therefore checked rather than inherited from host enumeration. Repeated reads of the same exact resource use the hosted first-successful-read snapshot.
 
-## Qualified artifacts and evidence
+## Current candidate artifacts and evidence
 
-- `Source-Set-Core.wvb`: 177,057 bytes, SHA-256 `c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa766b19b1bfa2b8`.
-- `Source-Set-Demo.wvb`: 186,030 bytes, SHA-256 `0054138c6e39f3c99e5cd4751c796cd599b495880d7db174323342fb7b687488`.
-- `Source-Set-Tool.wvb`: 181,286 bytes, SHA-256 `dc290826985f66f80d469b99235ca290dc617997edee0aab2ea0d4227984aab6`.
+- `Source-Set-Core.wvb`: 180,028 bytes, SHA-256 `c2a420a984a9bd39754a9e842d14e1e94030cd8ff6a0e313cc1703ae2e244386`.
+- `Source-Set-Demo.wvb`: 189,001 bytes, SHA-256 `960c973b7014b9e77b33b55e9fffa7db0a4a3d0a2b87737d54603f09cec022c0`.
+- `Source-Set-Tool.wvb`: 184,257 bytes, SHA-256 `dc8645c9b73fe8bfe10409e2fbd34fd29f125eea42409617ede5256b36a03e2e`.
 
 The Windows x64 and Debian Linux x64 conformance runners each pass all 43 tests with zero build warnings/errors. The hosted tool validates the real source-set core plus body parser, declaration parser, lexer, and decimal parser as:
 
 ```text
-source set status=Valid modules=5 source-bytes=192171 imports=4 records=16 enums=11 functions=86
+source set status=Valid modules=5 source-bytes=194697 imports=4 records=16 enums=11 functions=86
 ```
 
-The exact `00ef0b1` archive passed the complete native CLI verifier on both hosts. Their normalized reports matched, the three source-set artifacts above were byte-identical, and 14 directly retrieved dependency/downstream compiler, assembler, linker, object, image, and map artifacts also retained exact cross-host identity.
+The source-set contract was originally cross-host qualified at `00ef0b1`. The current artifacts and updated aggregate source-byte report embed Decision 0042's lexer and await exact requalification.

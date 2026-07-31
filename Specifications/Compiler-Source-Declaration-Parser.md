@@ -73,7 +73,7 @@ Input collections cannot exceed the lexer token ceiling. Empty/trailing-comma ar
 The candidate parses the real lexer as:
 
 ```text
-source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=14 tokens=4715 offset=39210
+source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=14 tokens=5061 offset=41736
 ```
 
 It parses its own declaration source as:
@@ -82,12 +82,12 @@ It parses its own declaration source as:
 source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=24 tokens=8876 offset=64950
 ```
 
-## Qualified artifacts
+## Current candidate artifacts
 
-- `Source-Declaration-Parser.wvb`: 95,703 bytes, SHA-256 `b09be82c374636bf0b75a0dcea21afa648d89676e0fb0ffedcef68f9e958ee61`.
-- `Source-Declaration-Parser-Demo.wvb`: 99,847 bytes, SHA-256 `82dd2f72d2b2d148289353045fda861e07638e8fac8ba97164642d185c3b8e9a`, result `0` under 20,000,000 instructions.
-- `Source-Declaration-Parser-Tool.wvb`: 97,660 bytes, SHA-256 `36406acea0ccab9cf9f91cc9723638ae133daa1d5893dcf64454a983427a520c`.
+- `Source-Declaration-Parser.wvb`: 98,674 bytes, SHA-256 `593e841ce9b751015e3de9f3100f4defe83d575b29324784839c38e227ff1276`.
+- `Source-Declaration-Parser-Demo.wvb`: 102,818 bytes, SHA-256 `3ed1fc6ff4453da1cbfb100e6978029c3db2bb9baaec98c230db6ef1f6267e38`, result `0` under 20,000,000 instructions.
+- `Source-Declaration-Parser-Tool.wvb`: 100,631 bytes, SHA-256 `143f9c991de2cc309861aa9ea2beb948bca06cfd22b0f932c8f7abcc41ba9408`.
 
 The real lexer completes under 30,000,000 instructions. The larger self-declaration pass completes under 45,000,000. These are compiler-front-end qualification ceilings and do not change assembler or linker ceilings.
 
-Windows x64 and Debian GNU/Linux 12 x64 produced these exact artifacts, emitted identical real-lexer and self-parse summaries, passed all 41 conformance tests and the complete native verifier, and matched normalized reports. This qualifies the declaration pass only; statement/expression parsing, binding, WIR construction, and WVB encoding remain later slices.
+The declaration pass was originally cross-host qualified at `fc87a3e`. The current artifacts embed Decision 0042's lexer and await exact Windows/Debian requalification. This remains a declaration-pass contract only; statement/expression parsing, binding, WIR construction, and WVB encoding are separate slices.

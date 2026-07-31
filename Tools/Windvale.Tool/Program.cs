@@ -359,7 +359,7 @@ internal static class Program
         {
             return Usageˉerror(
                 "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
-                "[--report-steps] [-- <argument>...]");
+                "[--report-steps] [--report-function-steps] [-- <argument>...]");
         }
 
         var Moduleˉpath = arguments[0];
@@ -367,6 +367,7 @@ internal static class Program
         var Programˉarguments = ImmutableArray.CreateBuilder<string>();
         long Maximumˉsteps = 1_000_000;
         var Reportˉsteps = false;
+        var Reportˉfunctionˉsteps = false;
         for (var Index = 1; Index < arguments.Length; Index++)
         {
             switch (arguments[Index])
@@ -390,6 +391,9 @@ internal static class Program
                 case "--report-steps":
                     Reportˉsteps = true;
                     break;
+                case "--report-function-steps":
+                    Reportˉfunctionˉsteps = true;
+                    break;
                 case "--":
                     Programˉarguments.AddRange(arguments[(Index + 1)..]);
                     Index = arguments.Length;
@@ -409,8 +413,27 @@ internal static class Program
                 Console.Error,
                 new Nativeˉhostedˉfileˉreader(),
                 new Nativeˉhostedˉfileˉwriter())),
-            new(Authorized.ToImmutable(), Maximumˉsteps));
-        var Result = Runtime.Runˉmain();
+            new(
+                Authorized.ToImmutable(),
+                Maximumˉsteps,
+                Collectˉfunctionˉsteps: Reportˉfunctionˉsteps));
+        Runtimeˉresult Result;
+        try
+        {
+            Result = Runtime.Runˉmain();
+        }
+        finally
+        {
+            if (Reportˉfunctionˉsteps)
+            {
+                foreach (var Function in Runtime.Readˉfunctionˉsteps())
+                {
+                    Console.Error.WriteLine(
+                        $"Function instructions={Function.Executedˉinstructions} " +
+                        $"index={Function.Functionˉindex} name={Function.Functionˉname}");
+                }
+            }
+        }
         Console.WriteLine($"Result: {Result.Exitˉcode}");
         if (Reportˉsteps)
         {
@@ -493,7 +516,7 @@ internal static class Program
         output.WriteLine("  windvale object-verify <object.wvo>");
         output.WriteLine(
             "  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
-            "[--report-steps] [-- <argument>...]");
+            "[--report-steps] [--report-function-steps] [-- <argument>...]");
         output.WriteLine("  windvale help");
     }
 }

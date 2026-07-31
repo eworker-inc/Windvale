@@ -40,6 +40,23 @@ export fn Main() -> i32 {
     if Triviaˉtoken.Line != 2u32 { return 18; }
     if Triviaˉtoken.Column != 2u32 { return 19; }
 
+    let Unicodeˉwhitespace: bytes = Textˉtoˉutf8("\u0085\u00A0\u1680\u2000\u2028\u205F\u3000module");
+    let Unicodeˉwhitespaceˉtoken: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Unicodeˉwhitespace, 0u32);
+    if Unicodeˉwhitespaceˉtoken.Kind != Compilerˉtokenˉkind.Module { return 34; }
+    if Unicodeˉwhitespaceˉtoken.Line != 1u32 { return 35; }
+    if Unicodeˉwhitespaceˉtoken.Column != 8u32 { return 36; }
+
+    let Nearˉkeywords: bytes = Textˉtoˉutf8("f fx ix ux i33 lex u33 vex boox date elso enux texx trux vood bytex falsy whilx exporx hostex imporx lengtx modulx recorx returx systex profilx portablx capabilit capabilitx capabilityx");
+    let Nearˉkeywordˉscan: Compilerˉsourceˉscan = Compilerˉlexˉsource(Nearˉkeywords);
+    if Nearˉkeywordˉscan.Status != Compilerˉlexˉstatus.Valid { return 37; }
+    if Nearˉkeywordˉscan.Tokens != 31u32 { return 38; }
+    var Nearˉkeywordˉindex: u32 = 0u32;
+    while Nearˉkeywordˉindex < Nearˉkeywordˉscan.Tokens {
+        let Nearˉkeyword: Compilerˉsourceˉtoken = Compilerˉlexˉtokenˉat(Nearˉkeywords, Nearˉkeywordˉindex);
+        if Nearˉkeyword.Kind != Compilerˉtokenˉkind.Identifier { return 39; }
+        Nearˉkeywordˉindex = Nearˉkeywordˉindex + 1u32;
+    }
+
     let Invalidˉencoding: Compilerˉsourceˉscan = Compilerˉlexˉsource(Invalidˉutf8);
     if Invalidˉencoding.Status != Compilerˉlexˉstatus.Invalidˉutf8 { return 20; }
     let Invalidˉcursor: Compilerˉsourceˉtoken = Compilerˉlexˉnext(Complete, 9999u32, 1u32, 1u32);

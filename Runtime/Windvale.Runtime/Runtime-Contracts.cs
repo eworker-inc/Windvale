@@ -169,13 +169,19 @@ public sealed record Runtimeˉrecordˉvalue(
 public sealed record Runtimeˉoptions(
     ImmutableHashSet<string> Authorizedˉcapabilities,
     long Maximumˉinstructions = 1_000_000,
-    int Maximumˉcallˉdepth = 1024)
+    int Maximumˉcallˉdepth = 1024,
+    bool Collectˉfunctionˉsteps = false)
 {
     public static Runtimeˉoptions Portableˉdefaults { get; } = new(
         ImmutableHashSet.Create<string>(StringComparer.Ordinal));
 }
 
 public sealed record Runtimeˉresult(int Exitˉcode, long Executedˉinstructions);
+
+public sealed record Runtimeˉfunctionˉsteps(
+    int Functionˉindex,
+    string Functionˉname,
+    long Executedˉinstructions);
 
 public static class Hostedˉresourceˉlimits
 {

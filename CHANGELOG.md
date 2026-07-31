@@ -13,8 +13,13 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Public contribution, governance, security, support, conduct, and project-identity policies.
 - Windows and Linux repository verification workflows.
 - Repository-owned Windvale syntax highlighting and Visual Studio Code language support for `.wv` source files.
+- Opt-in deterministic per-function instruction reporting in the C# reference runtime and Seed CLI.
+
+### Changed
+
+- The Windvale-written lexer uses bounded keyword, identifier, and Unicode-whitespace dispatch while preserving the Seed lexical contract.
 
 ### Current development status
 
-- Windvale Seed, its runtime and bytecode foundation, the object model, assembler, linker, Foundation modules, and compiler frontend through canonical typed WVIR have qualification evidence.
-- Portable WVIR-to-WVB lowering, bootstrap closure, the native toolchain, and Windvale OS remain active or planned milestones rather than completed releases.
+- Windvale Seed, its runtime and bytecode foundation, the object model, assembler, linker, Foundation modules, compiler frontend, and portable WVIR-to-WVB backend have qualification evidence.
+- Reproducible compiler bootstrap closure, the native toolchain, and Windvale OS remain active or planned milestones rather than completed releases.

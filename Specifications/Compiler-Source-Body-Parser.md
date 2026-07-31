@@ -70,18 +70,18 @@ The pass enforces:
 
 The first failure is deterministic and includes lexical status, expected/found token kinds, and byte/line/column position. Recoverable multi-error diagnostics remain deferred to semantic compiler pressure.
 
-## Qualified artifacts and evidence
+## Current candidate artifacts and evidence
 
-- `Source-Body-Parser.wvb`: 164,806 bytes, SHA-256 `bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f`.
-- `Source-Body-Parser-Demo.wvb`: 168,718 bytes, SHA-256 `5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba`, result `0` under 30,000,000 instructions.
-- `Source-Body-Parser-Tool.wvb`: 165,942 bytes, SHA-256 `761887d3674833854d976dd394ad3f83f27d2c74748b6dd0f296c97b117140ca`.
+- `Source-Body-Parser.wvb`: 167,777 bytes, SHA-256 `7b56ea4d25f2d13467d19123654bb8d617ae2e1b0dd43f2497e1ff9644cc3839`.
+- `Source-Body-Parser-Demo.wvb`: 171,689 bytes, SHA-256 `07f9b2d94b4ebefaa3260d04b2cc7400b56007f664ef93a8db97207679039005`, result `0` under 30,000,000 instructions.
+- `Source-Body-Parser-Tool.wvb`: 168,913 bytes, SHA-256 `9c8b88f9b6aaa27df5d39fc671319ed4890510535321f637a533cf2f01ddeadc`.
 
 The real-source reports are:
 
 ```text
-source bodies status=Valid functions=14 top-level=138 statements=510 expression-nodes=1432 statement-depth=17 expression-depth=5 offset=39211
+source bodies status=Valid functions=14 top-level=123 statements=567 expression-nodes=1579 statement-depth=17 expression-depth=5 offset=41737
 source bodies status=Valid functions=24 top-level=232 statements=527 expression-nodes=2135 statement-depth=5 expression-depth=3 offset=64951
 source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023
 ```
 
-These correspond to the lexer, declaration parser, and body parser. Their qualification ceilings are respectively 100,000,000, 160,000,000, and 160,000,000 instructions. Windows x64 and Debian GNU/Linux 12 x64 each passed all 42 tests and the native CLI verifier with zero build warnings/errors from candidate `ddfa9e3`; their exact artifacts and normalized conformance contracts matched.
+These correspond to the lexer, declaration parser, and body parser. Their ceilings remain respectively 100,000,000, 160,000,000, and 160,000,000 instructions. The body parser was originally cross-host qualified at `ddfa9e3`; the current artifacts embed Decision 0042's lexer and await exact requalification.

@@ -16,6 +16,7 @@ public sealed class Referenceˉruntime
     private readonly ICapabilityˉhost Capabilityˉhost;
     private readonly Runtimeˉoptions Options;
     private readonly ImmutableArray<Dictionary<int, int>> Instructionˉindices;
+    private readonly long[]? Functionˉsteps;
     private long Executedˉinstructions;
 
     public Referenceˉruntime(
@@ -48,6 +49,27 @@ public sealed class Referenceˉruntime
                 .Select((Instruction, Index) => (Instruction.Offset, Index))
                 .ToDictionary(Item => Item.Offset, Item => Item.Index))
             .ToImmutableArray();
+        Functionˉsteps = options.Collectˉfunctionˉsteps
+            ? new long[verifiedˉmodule.Functions.Length]
+            : null;
+    }
+
+    public ImmutableArray<Runtimeˉfunctionˉsteps> Readˉfunctionˉsteps()
+    {
+        if (Functionˉsteps is null)
+        {
+            return [];
+        }
+
+        return Verifiedˉmodule.Functions
+            .Select((Function, Index) => new Runtimeˉfunctionˉsteps(
+                Index,
+                Function.Declaration.Name,
+                Functionˉsteps[Index]))
+            .Where(Item => Item.Executedˉinstructions > 0)
+            .OrderByDescending(Item => Item.Executedˉinstructions)
+            .ThenBy(Item => Item.Functionˉindex)
+            .ToImmutableArray();
     }
 
     public Runtimeˉresult Runˉmain()
@@ -69,6 +91,10 @@ public sealed class Referenceˉruntime
         }
 
         Executedˉinstructions = 0;
+        if (Functionˉsteps is not null)
+        {
+            Array.Clear(Functionˉsteps);
+        }
         var Result = Executeˉfunction(Mainˉexport.Targetˉindex, null, 0, 1);
         return new(Result!.Value.I32ˉvalue, Executedˉinstructions);
     }
@@ -135,7 +161,7 @@ public sealed class Referenceˉruntime
         var Instructionˉindex = 0;
         while (true)
         {
-            Countˉinstruction();
+            Countˉinstruction(functionˉindex);
             var Instruction = Verifiedˉfunction.Instructions[Instructionˉindex];
             var Advance = true;
 
@@ -602,7 +628,7 @@ public sealed class Referenceˉruntime
             $"Capability '{capability.Name}' {reason} in function '{functionˉname}' at bytecode offset {offset}.");
     }
 
-    private void Countˉinstruction()
+    private void Countˉinstruction(int functionˉindex)
     {
         if (Executedˉinstructions >= Options.Maximumˉinstructions)
         {
@@ -612,6 +638,10 @@ public sealed class Referenceˉruntime
         }
 
         Executedˉinstructions++;
+        if (Functionˉsteps is not null)
+        {
+            Functionˉsteps[functionˉindex]++;
+        }
     }
 
     private static ImmutableArray<Runtimeˉvalue> Popˉarguments(

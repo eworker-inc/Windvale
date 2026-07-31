@@ -109,9 +109,9 @@ Failure evidence names the current module, a related prior/target module when ap
 
 ## Candidate artifacts and evidence
 
-- `Source-Symbols-Core.wvb`: 262,263 bytes, SHA-256 `624fd35749645c0cf269c6d298303b614efad1e112e86cb045016485386d58f6`.
-- `Source-Symbols-Demo.wvb`: 274,814 bytes, SHA-256 `ca513e0ea10a84f6c5ccc630927b3c18793b6c2e3d1badabffab08fdcdd2146c`.
-- `Source-Symbols-Tool.wvb`: 266,044 bytes, SHA-256 `840492af48d93af014fb12c59b6711752e80519d50ec45dbecee4483b42dce05`.
+- `Source-Symbols-Core.wvb`: 265,234 bytes, SHA-256 `2ef006de077c9e9d25d9c5a88a79ecbd5fbd9d7f2d77a7acd0173b25eba01ca6`.
+- `Source-Symbols-Demo.wvb`: 277,785 bytes, SHA-256 `f3d17ec178a7edbbec43448fc06d29db07f3426c49c63d27231610879434e4a4`.
+- `Source-Symbols-Tool.wvb`: 269,015 bytes, SHA-256 `3b0e1dd6f21fa0b8d135fea1eed31bfc3e33c97d3827dc0cf9c997a2b8c51d34`.
 
 The Windows and Debian verifiers each pass a zero-warning Release build, all 47 conformance tests, and the complete native CLI checks. The demo exercises valid and rejected namespaces/signatures plus corrupted directories. The hosted tool validates the real eight-module, 283,765-byte compiler closure as:
 
@@ -119,4 +119,4 @@ The Windows and Debian verifiers each pass a zero-warning Release build, all 47 
 source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=290 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64
 ```
 
-The pre-index implementation was qualified at `d57a6d8`. The indexed implementation and hashes above were requalified as part of the exact `bf77f70` typed-WVIR candidate on Windows and Debian; all 48 directly compared portable artifacts were byte-identical.
+The pre-index implementation was qualified at `d57a6d8`, and the indexed implementation at `bf77f70`. The current artifacts embed Decision 0042's lexer and await exact Windows/Debian requalification; symbol counts and the private `WVSI 1` contract are unchanged.

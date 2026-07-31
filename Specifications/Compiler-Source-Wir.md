@@ -90,12 +90,12 @@ source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporarie
 
 Candidate artifacts are:
 
-- `Source-Wir-Core.wvb`: 501,133 bytes, SHA-256 `95b63f627f05efbdc95d65da7654a69dde89a7e7ec38e2ed80d3f5cfbff5c17f`.
-- `Source-Wir-Demo.wvb`: 506,834 bytes, SHA-256 `23da120afffa4f450f703fc17a9719f1ed6c9a080ced67fbcd23bb7aa232f42e`.
-- `Source-Wir-Tool.wvb`: 502,985 bytes, SHA-256 `2d8cbae0f87e2043eb18e43b6e6659044ada2f8c453cc17ca1b406efb6df517e`.
+- `Source-Wir-Core.wvb`: 504,104 bytes, SHA-256 `735f2d682312f6cbad1345a183eb47fcf9b2efffcc9a645fc164749ec2971cca`.
+- `Source-Wir-Demo.wvb`: 509,805 bytes, SHA-256 `24f1e0a5edf94f1befb27e29606b9f406ff4493f5e51ff99323caeb16d632bcf`.
+- `Source-Wir-Tool.wvb`: 505,956 bytes, SHA-256 `0dafd3cda7d73152f4fffdd2ad9a6b6bf2e41611312ac504845764ee33501009`.
 
-The original typed-WVIR candidate was cross-host qualified at `bf77f70`. The fused local-discovery/typed-WVIR implementation and artifact identities above are cross-host qualified at exact commit `b1241157310bc597dbdf0d24146f4d81f0128712`: both hosts passed all 48 tests and the complete native verifier, their normalized contracts matched, and all 61 retrieved portable artifacts were byte-identical.
+The original typed-WVIR candidate was cross-host qualified at `bf77f70`, and the fused local-discovery/typed-WVIR implementation at `b1241157310bc597dbdf0d24146f4d81f0128712`. The current artifacts embed Decision 0042's lexer and await exact requalification.
 
-The ten-module compiler closure is intentionally not in the fast loop. Decision 0041 removes the separate successful-path local-discovery traversal, but the exact input still exceeds the fixed 4,000,000,000-instruction ceiling. Raising the ceiling is not the remedy; a later measured slice must reduce the remaining lookup/typed-lowering work or publish more reusable typed evidence before the full self-lowering case becomes a required gate.
+The ten-module compiler closure is intentionally not in the fast loop. Decision 0042 reduces the focused typed-WVIR fixture from 8,074,045 to 5,735,695 instructions, but the exact input still exceeds the fixed 4,000,000,000-instruction ceiling. Raising the ceiling is not the remedy; profiling now points to repeated symbol-directory decoding and ordinal span comparison as the next structural gate.
 
 WVIR-to-WVB lowering is specified separately in the initial [source-to-WVB backend contract](Compiler-Source-Wvb.md). WVIR execution, optimization, native IR, and OS-specific lowering are not part of this contract.

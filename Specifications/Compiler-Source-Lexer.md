@@ -4,7 +4,7 @@
 
 `Compilerˉsourceˉlexer` is the first Windvale-written self-hosted compiler slice. It tokenizes the complete implemented Seed lexical surface over immutable UTF-8 bytes. The module is portable, capability-free, and depends only on `Foundationˉdecimalˉparsing`.
 
-The current implementation is cross-host qualified at `d91dbfb` under Decision 0025. It does not replace the Stage 0 compiler yet.
+The original streaming implementation is cross-host qualified at `d91dbfb` under Decision 0025. Decision 0042's bounded-dispatch implementation is the current candidate. It does not replace the Stage 0 compiler yet.
 
 ## Limits and coordinates
 
@@ -50,6 +50,8 @@ Token-kind values are frozen to the Stage 0 ordering:
 
 An identifier begins with an ASCII letter or underscore. Later characters may also be ASCII digits or U+02C9. No other non-ASCII identifier character is accepted.
 
+Keyword classification uses exact byte length and first ASCII byte to select only plausible candidates before full ordinal comparison. Ordinary identifier bytes classify ASCII start characters directly. The complete whitespace routine runs only for byte values that can begin an accepted ASCII or Unicode whitespace scalar. These are bounded dispatch choices, not lexical-contract changes.
+
 ## Numeric and string rules
 
 `Compilerˉnumericˉkind` distinguishes `None`, `I32`, `U8`, and `U32`. Unsuffixed decimal digits are `I32` and cannot exceed 2,147,483,647. The exact suffixes `u8` and `u32` require a non-identifier boundary and enforce 255 and 4,294,967,295 respectively. Digits are parsed by `Foundationˉu32ˉdecimalˉparse`.
@@ -72,6 +74,6 @@ Compilerˉlexˉtokenˉat(Input, Wanted) -> Compilerˉsourceˉtoken
 
 `Compilerˉsourceˉscan` reports final status, accepted token count, failure coordinates, and end cursor. It never stores a token sequence. `Compilerˉlexˉtokenˉat` exists for tests and inspection and is not the parser iteration contract.
 
-## Qualification
+## Current candidate
 
-`Compiler/Bootstrap/Source-Lexer-Core.wv` composes to a 33,770-byte WVB with SHA-256 `0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 39,020-byte WVB with SHA-256 `32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a` and returns `0` under the 10,000,000-instruction ceiling. The exact `d91dbfb` archive passed all 40 tests and both native verifiers; the normalized Windows and Debian contracts and directly retrieved artifacts matched.
+`Compiler/Bootstrap/Source-Lexer-Core.wv` composes to a 36,741-byte WVB with SHA-256 `4d48af0c208e88d9e84d48c80324f35bed1985a799bd275b65b6a07f70111706`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 43,250-byte WVB with SHA-256 `5422673a70ecf92f99f9a2db144f9b7a691d6281a98284dde6c6bc796ada60a4`, returns `0`, and executes 1,438,364 instructions under the 10,000,000-instruction ceiling. Exact Windows/Debian qualification is pending under Decision 0042.

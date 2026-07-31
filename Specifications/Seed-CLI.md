@@ -10,7 +10,7 @@ windvale inspect <module.wvb>
 windvale verify <module.wvb>
 windvale object-inspect <object.wvo>
 windvale object-verify <object.wvo>
-windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [--report-steps] [-- <argument>...]
+windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [--report-steps] [--report-function-steps] [-- <argument>...]
 windvale help
 ```
 
@@ -28,6 +28,7 @@ windvale help
 - Hosted capabilities must be granted individually with `--allow`. Declaring a capability in the module does not authorize it.
 - `--max-steps` is a positive integer and defaults to 1,000,000 executed instructions.
 - `--report-steps` prints the exact executed-instruction count after a successful run. It is opt-in so existing scripts keep stable output.
+- `--report-function-steps` writes one deterministic standard-error line for every executed function, ordered by descending instruction count then function index. It reports partial counts after a runtime failure and is opt-in; the default runtime does not allocate function counters.
 - Arguments after `--` are passed to the module as its immutable hosted argument snapshot. They are not interpreted as launcher options.
 - The native file adapters resolve `file.read_bytes` and `file.write_bytes` resource names with host path rules and enforce the 4 MiB byte-value limit at the boundary. Writing creates or replaces the named file only after an explicit capability grant.
 - `console.write` and `console.write_line` use standard output; `diagnostic.write_line` uses standard error. Windvale line output appends LF on every host.

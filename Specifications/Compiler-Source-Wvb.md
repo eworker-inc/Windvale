@@ -104,13 +104,13 @@ The focused conformance test compiles the backend core, runs its profile/accepta
 
 The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical flattening across a root and two transitive dependencies. Dependency-owned functions, records, enums, and a text literal combine with root static data and a synthetic-name collision. Only `Main` remains exported. Both backends produce the exact 1,030-byte WVB module with SHA-256 `7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f`; it executes with result `42`. Reversed dependency order is rejected before output publication.
 
-The current cross-host-qualified bootstrap artifacts are:
+The current candidate bootstrap artifacts are:
 
-- `Source-Wvb-Core.wvb`: 579,187 bytes, SHA-256 `bb259fe85c6593e3e13091faf77252468fd85ad5d0d2f73e4d6f450bacbd83a6`.
-- `Source-Wvb-Demo.wvb`: 580,914 bytes, SHA-256 `a873e870d005fb49cd48043d5f8d3f54c33d889bc2ab5f118f7c09b0f90f5fa0`.
-- `Source-Wvb-Tool.wvb`: 580,418 bytes, SHA-256 `b85ff9d1be9815304617be13d532636ab0a5a3ce2d018a610565ca067e52245c`.
+- `Source-Wvb-Core.wvb`: 582,158 bytes, SHA-256 `c2ab348e59134e5e724adee45d21829e95088ab21f722ccc68e1b6913c4d3c0c`.
+- `Source-Wvb-Demo.wvb`: 583,885 bytes, SHA-256 `519bf0f646dadfd369ef75679c339264cf8fb66721bdf7adb05dd69613f00b07`.
+- `Source-Wvb-Tool.wvb`: 583,389 bytes, SHA-256 `0113c2c640172e2c57791c4da0827c7ebaa395e43bba1a34a1334f458bdaa0de`.
 
-The static multi-module behavior was first qualified at `cb1db235`. The current artifact identities above, rebuilt through the fused typed-WVIR path, are cross-host qualified from exact commit `b1241157310bc597dbdf0d24146f4d81f0128712`. Both hosts passed all 48 tests and the complete native verifier, their normalized reports matched, and all 61 retrieved portable artifacts were byte-identical.
+The static multi-module behavior was first qualified at `cb1db235`, and the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`. The current artifacts embed Decision 0042's lexer and await exact Windows/Debian requalification. All five differential fixture outputs remain byte-identical to Stage 0.
 
 ## Expansion path
 

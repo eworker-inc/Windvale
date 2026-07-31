@@ -35,32 +35,32 @@ internal static class Program
     private const string DECIMAL_PARSING_DEMO_SHA256 = "16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695";
     private const string BYTE_CONSTRUCTION_SHA256 = "6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207";
     private const string BYTE_CONSTRUCTION_DEMO_SHA256 = "a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abbd81f3481fb0e0bc6c29";
-    private const string SOURCE_LEXER_SHA256 = "0a9d5ff05afbe8598491ca636029fdfc7577dda754a048b93b0529d549019b04";
-    private const string SOURCE_LEXER_DEMO_SHA256 = "32429c56b1b027fc440de14487ac0b5c628cec3c9bded1a98c1c21e6cbeed05a";
-    private const string SOURCE_DECLARATION_PARSER_SHA256 = "b09be82c374636bf0b75a0dcea21afa648d89676e0fb0ffedcef68f9e958ee61";
-    private const string SOURCE_DECLARATION_PARSER_DEMO_SHA256 = "82dd2f72d2b2d148289353045fda861e07638e8fac8ba97164642d185c3b8e9a";
-    private const string SOURCE_DECLARATION_PARSER_TOOL_SHA256 = "36406acea0ccab9cf9f91cc9723638ae133daa1d5893dcf64454a983427a520c";
-    private const string SOURCE_BODY_PARSER_SHA256 = "bb04309dfd4b037c05a4f0d52903d937336e90e64077fbc1b78cf5ea88c1de5f";
-    private const string SOURCE_BODY_PARSER_DEMO_SHA256 = "5c479f4e922852043696a599a7832a4111d326ef54ce8222166caf3570ec28ba";
-    private const string SOURCE_BODY_PARSER_TOOL_SHA256 = "761887d3674833854d976dd394ad3f83f27d2c74748b6dd0f296c97b117140ca";
-    private const string SOURCE_SET_SHA256 = "c03b3e9daa5b20fc2f77a0d1dd15cb1fdc1728e2a6eda021aa766b19b1bfa2b8";
-    private const string SOURCE_SET_DEMO_SHA256 = "0054138c6e39f3c99e5cd4751c796cd599b495880d7db174323342fb7b687488";
-    private const string SOURCE_SET_TOOL_SHA256 = "dc290826985f66f80d469b99235ca290dc617997edee0aab2ea0d4227984aab6";
-    private const string SOURCE_GRAPH_SHA256 = "1617419c838effd80e4ab3f167912f47f4959002a77b0b166970b1d8f30f3133";
-    private const string SOURCE_GRAPH_DEMO_SHA256 = "53c976f867dccf60bf26aa74e3942cf877b048405f57dd42e462dbe0b63c9073";
-    private const string SOURCE_GRAPH_TOOL_SHA256 = "75fdf22e93f154599cdf4530ebcf828eec061458c73f6ab09b00d0765e3ebdc1";
-    private const string SOURCE_SYMBOLS_SHA256 = "624fd35749645c0cf269c6d298303b614efad1e112e86cb045016485386d58f6";
-    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "ca513e0ea10a84f6c5ccc630927b3c18793b6c2e3d1badabffab08fdcdd2146c";
-    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "840492af48d93af014fb12c59b6711752e80519d50ec45dbecee4483b42dce05";
-    private const string SOURCE_BINDINGS_SHA256 = "5440db53fa42f819321d91f67a2440cf128a8685e564b057d61d1b7ee9a2e1c3";
-    private const string SOURCE_BINDINGS_DEMO_SHA256 = "1dabd3cb09339e63f2d8495eb27258fce1054c5163f92a5afd3258995d5bb8e5";
-    private const string SOURCE_BINDINGS_TOOL_SHA256 = "47dab8589a4ca5a7c460be981fc183a5efcdb551174e1bb734b415f4f4198cb8";
-    private const string SOURCE_WIR_SHA256 = "95b63f627f05efbdc95d65da7654a69dde89a7e7ec38e2ed80d3f5cfbff5c17f";
-    private const string SOURCE_WIR_DEMO_SHA256 = "23da120afffa4f450f703fc17a9719f1ed6c9a080ced67fbcd23bb7aa232f42e";
-    private const string SOURCE_WIR_TOOL_SHA256 = "2d8cbae0f87e2043eb18e43b6e6659044ada2f8c453cc17ca1b406efb6df517e";
-    private const string SOURCE_WVB_SHA256 = "bb259fe85c6593e3e13091faf77252468fd85ad5d0d2f73e4d6f450bacbd83a6";
-    private const string SOURCE_WVB_DEMO_SHA256 = "a873e870d005fb49cd48043d5f8d3f54c33d889bc2ab5f118f7c09b0f90f5fa0";
-    private const string SOURCE_WVB_TOOL_SHA256 = "b85ff9d1be9815304617be13d532636ab0a5a3ce2d018a610565ca067e52245c";
+    private const string SOURCE_LEXER_SHA256 = "4d48af0c208e88d9e84d48c80324f35bed1985a799bd275b65b6a07f70111706";
+    private const string SOURCE_LEXER_DEMO_SHA256 = "5422673a70ecf92f99f9a2db144f9b7a691d6281a98284dde6c6bc796ada60a4";
+    private const string SOURCE_DECLARATION_PARSER_SHA256 = "593e841ce9b751015e3de9f3100f4defe83d575b29324784839c38e227ff1276";
+    private const string SOURCE_DECLARATION_PARSER_DEMO_SHA256 = "3ed1fc6ff4453da1cbfb100e6978029c3db2bb9baaec98c230db6ef1f6267e38";
+    private const string SOURCE_DECLARATION_PARSER_TOOL_SHA256 = "143f9c991de2cc309861aa9ea2beb948bca06cfd22b0f932c8f7abcc41ba9408";
+    private const string SOURCE_BODY_PARSER_SHA256 = "7b56ea4d25f2d13467d19123654bb8d617ae2e1b0dd43f2497e1ff9644cc3839";
+    private const string SOURCE_BODY_PARSER_DEMO_SHA256 = "07f9b2d94b4ebefaa3260d04b2cc7400b56007f664ef93a8db97207679039005";
+    private const string SOURCE_BODY_PARSER_TOOL_SHA256 = "9c8b88f9b6aaa27df5d39fc671319ed4890510535321f637a533cf2f01ddeadc";
+    private const string SOURCE_SET_SHA256 = "c2a420a984a9bd39754a9e842d14e1e94030cd8ff6a0e313cc1703ae2e244386";
+    private const string SOURCE_SET_DEMO_SHA256 = "960c973b7014b9e77b33b55e9fffa7db0a4a3d0a2b87737d54603f09cec022c0";
+    private const string SOURCE_SET_TOOL_SHA256 = "dc8645c9b73fe8bfe10409e2fbd34fd29f125eea42409617ede5256b36a03e2e";
+    private const string SOURCE_GRAPH_SHA256 = "4b45616ff0304f59f16c44afea637fabd0f66f68ae4b5d7b149e23a9e8e70662";
+    private const string SOURCE_GRAPH_DEMO_SHA256 = "309c7ca3815c709c759b4673036ffd747d95450c651aa21c3dbf66e59dbe903c";
+    private const string SOURCE_GRAPH_TOOL_SHA256 = "4a07816c65d82b6594270a9b253b999700196d07e10faed0221fc6b1ca7e1e9e";
+    private const string SOURCE_SYMBOLS_SHA256 = "2ef006de077c9e9d25d9c5a88a79ecbd5fbd9d7f2d77a7acd0173b25eba01ca6";
+    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "f3d17ec178a7edbbec43448fc06d29db07f3426c49c63d27231610879434e4a4";
+    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "3b0e1dd6f21fa0b8d135fea1eed31bfc3e33c97d3827dc0cf9c997a2b8c51d34";
+    private const string SOURCE_BINDINGS_SHA256 = "1d4f55b2eb7abaccf103efcebe7cc86b54546a70679cc330b931049bf658f5bb";
+    private const string SOURCE_BINDINGS_DEMO_SHA256 = "5b7c59e5d3b0529e666e7f0b253f19edf753de624f941fbf0a310462cd8492aa";
+    private const string SOURCE_BINDINGS_TOOL_SHA256 = "786bf46c4b410ce6e16cd456aea3e9337e34127292088b23aa9b7a68576f3228";
+    private const string SOURCE_WIR_SHA256 = "735f2d682312f6cbad1345a183eb47fcf9b2efffcc9a645fc164749ec2971cca";
+    private const string SOURCE_WIR_DEMO_SHA256 = "24f1e0a5edf94f1befb27e29606b9f406ff4493f5e51ff99323caeb16d632bcf";
+    private const string SOURCE_WIR_TOOL_SHA256 = "0dafd3cda7d73152f4fffdd2ad9a6b6bf2e41611312ac504845764ee33501009";
+    private const string SOURCE_WVB_SHA256 = "c2ab348e59134e5e724adee45d21829e95088ab21f722ccc68e1b6913c4d3c0c";
+    private const string SOURCE_WVB_DEMO_SHA256 = "519bf0f646dadfd369ef75679c339264cf8fb66721bdf7adb05dd69613f00b07";
+    private const string SOURCE_WVB_TOOL_SHA256 = "0113c2c640172e2c57791c4da0827c7ebaa395e43bba1a34a1334f458bdaa0de";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
@@ -764,6 +764,21 @@ internal static class Program
         Equal(29, Result.Exitˉcode);
         Equal(string.Empty, Output.ToString());
         True(Result.Executedˉinstructions > 0, "The runtime did not count executed instructions.");
+        Equal(0, Runtime.Readˉfunctionˉsteps().Length);
+
+        var Profiledˉruntime = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults with { Collectˉfunctionˉsteps = true });
+        Equal(29, Profiledˉruntime.Runˉmain().Exitˉcode);
+        var Functionˉsteps = Profiledˉruntime.Readˉfunctionˉsteps();
+        Equal(2, Functionˉsteps.Length);
+        Equal(1, Functionˉsteps[0].Functionˉindex);
+        Equal("Main", Functionˉsteps[0].Functionˉname);
+        Equal(163L, Functionˉsteps[0].Executedˉinstructions);
+        Equal(0, Functionˉsteps[1].Functionˉindex);
+        Equal("Add", Functionˉsteps[1].Functionˉname);
+        Equal(40L, Functionˉsteps[1].Executedˉinstructions);
     }
 
     private static void Hostedˉprogramˉruns()
@@ -1428,7 +1443,7 @@ internal static class Program
         Equal(0, Lexerˉresult.Exitˉcode);
         Equal(string.Empty, Lexerˉresult.Diagnostics);
         Equal(
-            "source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=14 tokens=4715 offset=39210\n",
+            "source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=14 tokens=5061 offset=41736\n",
             Lexerˉresult.Output);
 
         var Selfˉresult = Runˉsourceˉdeclarationˉparser(
@@ -1546,7 +1561,7 @@ internal static class Program
         Equal(string.Empty, Lexerˉresult.Diagnostics);
         Equal(1, Lexerˉresult.Readˉcount);
         Equal(
-            "source bodies status=Valid functions=14 top-level=138 statements=510 expression-nodes=1432 statement-depth=17 expression-depth=5 offset=39211\n",
+            "source bodies status=Valid functions=14 top-level=123 statements=567 expression-nodes=1579 statement-depth=17 expression-depth=5 offset=41737\n",
             Lexerˉresult.Output);
         var Declarationˉresult = Runˉsourceˉdeclarationˉparser(
             Tool, "Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE, 160_000_000);
@@ -5044,8 +5059,12 @@ internal static class Program
         var Limited = new Referenceˉruntime(
             Sumˉmodule,
             new Referenceˉcapabilityˉhost(new StringWriter()),
-            new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities, Maximumˉinstructions: 5));
+            new(
+                Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                Maximumˉinstructions: 5,
+                Collectˉfunctionˉsteps: true));
         Throwsˉruntime("WVR3011", () => _ = Limited.Runˉmain());
+        Equal(5L, Limited.Readˉfunctionˉsteps().Sum(Function => Function.Executedˉinstructions));
 
         const string Recursion = """
             module Recursion profile portable;
@@ -5667,7 +5686,7 @@ internal static class Program
         Equal(string.Empty, Sourceˉsetˉselfˉresult.Diagnostics);
         Equal(5, Sourceˉsetˉselfˉresult.Readˉcount);
         Equal(
-            "source set status=Valid modules=5 source-bytes=192171 imports=4 records=16 enums=11 functions=86\n",
+            "source set status=Valid modules=5 source-bytes=194697 imports=4 records=16 enums=11 functions=86\n",
             Sourceˉsetˉselfˉresult.Output);
         Equal(0, Sourceˉgraphˉdemoˉresult.Exitˉcode);
         Equal(0, Sourceˉgraphˉselfˉresult.Exitˉcode);
@@ -5688,7 +5707,7 @@ internal static class Program
         Equal(string.Empty, Sourceˉbindingsˉselfˉresult.Diagnostics);
         Equal(9, Sourceˉbindingsˉselfˉresult.Readˉcount);
         Equal(
-            "source bindings status=Valid modules=9 functions=189 parameters=827 locals=942 reads=8277 assignments=609 calls=1475 directory-bytes=65596\n",
+            "source bindings status=Valid modules=9 functions=189 parameters=827 locals=945 reads=8335 assignments=612 calls=1479 directory-bytes=65704\n",
             Sourceˉbindingsˉselfˉresult.Output);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",
