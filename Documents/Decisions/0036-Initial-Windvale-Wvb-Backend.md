@@ -1,7 +1,7 @@
 # Decision 0036: Initial Windvale-written WVB backend
 
 - Date: 2026-07-30
-- Status: Accepted; cross-host qualification pending
+- Status: Accepted; cross-host qualified
 
 ## Context
 
@@ -37,4 +37,4 @@ The candidate must pass:
 - the complete Standard suite on Windows; and
 - exact-commit Windows and Debian qualification with matching normalized reports and byte-identical retrieved artifacts.
 
-Cross-host qualification evidence will be recorded only after that exact candidate passes the full gate.
+Candidate commit `ca5699617d713b4da3689cd69b0b165abc9c090e` passed the full gate from one exact source archive on Windows x64 and Debian GNU/Linux 12 x64. Both hosts completed zero-warning Release builds, all 48 tests, the complete native verifier, matching normalized conformance contracts, and byte-identical comparison of all 53 retrieved portable artifacts. After the shared verifier-maintenance commit was integrated, published implementation commit `d65d286` retained the exact qualified Git tree `bfe879b67d5f6f197b1ace0cdd9b0ad221f94906`. The detailed archive, report, timing, and artifact identities are retained in `Documents/Project/Seed-Verification-Evidence.md`.

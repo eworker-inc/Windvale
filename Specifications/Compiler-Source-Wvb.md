@@ -55,13 +55,13 @@ The focused conformance test compiles the backend core, runs its portable accept
 
 The fixture contains four functions and exercises all four accepted value shapes, function calls, mutable locals, `while`, `if`, arithmetic, comparisons, and boolean negation. Both backends currently produce the exact 815-byte WVB module with SHA-256 `9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761`; it executes with result `6`.
 
-Current candidate bootstrap artifacts are:
+The cross-host-qualified bootstrap artifacts are:
 
 - `Source-Wvb-Core.wvb`: 517,874 bytes, SHA-256 `d4846b2c0eed11e35a3f715e61efd84c676c1055c340c08acf582a2558bca9db`.
 - `Source-Wvb-Demo.wvb`: 519,338 bytes, SHA-256 `d2477d6de0e90753c3f93b9ffc9db71da02a30472aca0a813ee4b6bf3ef5ec16`.
 - `Source-Wvb-Tool.wvb`: 519,455 bytes, SHA-256 `58a337338aa98a225c563a49cfdffc9133988d332c1000391b99c0ef31e2edac`.
 
-These identities are local candidate evidence until the exact commit passes Windows and Debian qualification.
+These identities were qualified from exact commit `ca5699617d713b4da3689cd69b0b165abc9c090e` on Windows x64 and Debian GNU/Linux 12 x64. Both hosts passed all 48 tests and the complete native verifier; their normalized conformance contracts matched, and all 53 retrieved portable artifacts were byte-identical. Published implementation commit `d65d286` has the same qualified Git tree, `bfe879b67d5f6f197b1ace0cdd9b0ad221f94906`, after rebase over the shared verifier-maintenance commit.
 
 ## Expansion path
 

@@ -119,7 +119,7 @@ When a timing report includes the golden test, its `goldenPhases` array separate
 
 Runtime performance work should iterate with a narrow compiler or runtime filter, use `-TestArea golden` alone for periodic measured checkpoints, and run Standard only for the final candidate. The complete suite is not required after every optimization edit.
 
-`-Level Standard` builds and runs the complete 47-test in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
+`-Level Standard` builds and runs the complete 48-test in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
 
 On Linux:
 
