@@ -39,12 +39,15 @@ export fn Main() -> i32 {
     if Bytesˉreadˉu8(Valid.Bytecode, 3u32) != 49u8 { return 8; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉdata profile portable; data Value: text = \"x\"; export fn Main() -> i32 { return 0; }"
-    ) != Compilerˉsourceˉwvbˉstatus.Unsupportedˉdeclaration { return 9; }
+    ) != Compilerˉsourceˉwvbˉstatus.Valid { return 9; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉhosted profile hosted; export fn Main() -> i32 { return 0; }"
     ) != Compilerˉsourceˉwvbˉstatus.Unsupportedˉprofile { return 10; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉorder profile portable; export fn Zed() -> i32 { return 0; } fn Alpha() -> i32 { return 1; }"
-    ) != Compilerˉsourceˉwvbˉstatus.Noncanonicalˉfunctionˉorder { return 11; }
+    ) != Compilerˉsourceˉwvbˉstatus.Valid { return 11; }
+    if Compilerˉsourceˉwvbˉdemoˉstatus(
+        "module Wvbˉrecord profile portable; record Pair { Value: i32; } export fn Main() -> i32 { return 0; }"
+    ) != Compilerˉsourceˉwvbˉstatus.Unsupportedˉdeclaration { return 12; }
     return 0;
 }

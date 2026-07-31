@@ -58,9 +58,10 @@ internal static class Program
     private const string SOURCE_WIR_SHA256 = "89e2590e99ea96ebea5995491bc13d9497b2b5c41b566c3653acfc4713b6414b";
     private const string SOURCE_WIR_DEMO_SHA256 = "2d58a05a5ad7e39fda20e4706f52d365f15fe53d3cfae998431024fa1c1edada";
     private const string SOURCE_WIR_TOOL_SHA256 = "8bbca67184db5d8d980e61268021771d25b20f47624878abec6b9e54afbd6c4d";
-    private const string SOURCE_WVB_SHA256 = "d4846b2c0eed11e35a3f715e61efd84c676c1055c340c08acf582a2558bca9db";
-    private const string SOURCE_WVB_DEMO_SHA256 = "d2477d6de0e90753c3f93b9ffc9db71da02a30472aca0a813ee4b6bf3ef5ec16";
-    private const string SOURCE_WVB_TOOL_SHA256 = "58a337338aa98a225c563a49cfdffc9133988d332c1000391b99c0ef31e2edac";
+    private const string SOURCE_WVB_SHA256 = "c410f775e6c6e5a8a40678a5caf4e7a07a37c4dcf711b2f272f11cc1796d5d8d";
+    private const string SOURCE_WVB_DEMO_SHA256 = "d376b66312dc9005540482f3adfe6be10b6ec8a2fbd9fcbb86c3a412e70e75fa";
+    private const string SOURCE_WVB_TOOL_SHA256 = "364c47c70f04f0133a35ce07dcdfeb5eedbcaaf8acbedd8e002c8c6d93fa867f";
+    private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -348,6 +349,9 @@ internal static class Program
 
     private static readonly string SOURCE_WVB_FUNCTION_ONLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Function-Only.wv");
+
+    private static readonly string SOURCE_WVB_DATA_AND_TEXT_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Data-And-Text.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -1999,6 +2003,51 @@ internal static class Program
             6,
             new Referenceˉruntime(
                 Generated,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        var Dataˉsourceˉbytes = System.Text.Encoding.UTF8.GetBytes(
+            SOURCE_WVB_DATA_AND_TEXT_SOURCE).ToImmutableArray();
+        var Dataˉoutput = new StringWriter();
+        var Dataˉdiagnostics = new StringWriter();
+        var Dataˉwriter = new Capturingˉfileˉwriter();
+        var Dataˉreader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            Equal("data-and-text.wv", Name);
+            True(Dataˉsourceˉbytes.Length <= Maximumˉbytes,
+                "The source-to-WVB hosted byte limit was too small for data and text.");
+            return Dataˉsourceˉbytes;
+        });
+        var Dataˉtoolˉresult = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["data-and-text.wv", "data-and-text.wvb"],
+                Dataˉoutput,
+                Dataˉdiagnostics,
+                Dataˉreader,
+                Dataˉwriter)),
+            new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+        Equal(0, Dataˉtoolˉresult.Exitˉcode);
+        Equal(string.Empty, Dataˉdiagnostics.ToString());
+        Equal(
+            "source wvb status=Valid functions=3 code-bytes=1210 module-bytes=1651\n",
+            Dataˉoutput.ToString().Replace("\r\n", "\n", StringComparison.Ordinal));
+        Equal(1, Dataˉreader.Readˉcount);
+        Equal(1, Dataˉwriter.Writeˉcount);
+        Equal("data-and-text.wvb", Dataˉwriter.Resourceˉname);
+
+        var Dataˉstageˉzeroˉbytes = Compileˉsuccess(SOURCE_WVB_DATA_AND_TEXT_SOURCE);
+        Equal(
+            SOURCE_WVB_DATA_AND_TEXT_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Dataˉstageˉzeroˉbytes));
+        Sequenceˉequal(Dataˉstageˉzeroˉbytes, Dataˉwriter.Bytes);
+        var Dataˉgenerated = Moduleˉcodec.Readˉandˉverify(Dataˉwriter.Bytes.AsSpan());
+        Equal("Sourceˉwvbˉdataˉandˉtext", Dataˉgenerated.Module.Name);
+        Equal(5, Dataˉgenerated.Module.Data.Length);
+        Equal(
+            13,
+            new Referenceˉruntime(
+                Dataˉgenerated,
                 new Referenceˉcapabilityˉhost(new StringWriter()),
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
     }

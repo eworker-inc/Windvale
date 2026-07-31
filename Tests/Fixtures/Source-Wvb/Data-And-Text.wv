@@ -1,0 +1,37 @@
+module Sourceˉwvbˉdataˉandˉtext profile portable;
+
+fn Zebra(Value: i32) -> i32 {
+    return Value * 2;
+}
+
+data Values: [i32] = [-3, 5, 8];
+data __Text_000000: text = "reserved";
+
+export fn Main() -> i32 {
+    let Count: i32 = length(Values);
+    let Sum: i32 = Values[0] + Values[2];
+    let Escaped: text = "Hello\n\u03A9\uD83D\uDE00";
+    let Escapedˉbytes: bytes = Textˉtoˉutf8(Escaped);
+    let Prefix: bytes = Bytesˉslice(Escapedˉbytes, 0u32, 6u32);
+    let Reused: text = "same";
+    let Joined: text = Textˉconcat(Greeting, Reused);
+    let Roundˉtrip: text = Textˉfromˉutf8(Textˉtoˉutf8(Joined));
+    let Quoted: text = Textˉquote(Reused);
+    let Combined: bytes = Bytesˉconcat(Blob, Prefix);
+    if Count != 3 { return 1; }
+    if Bytesˉlength(Escapedˉbytes) != 12u32 { return 2; }
+    if Bytesˉreadˉu8(Prefix, 5u32) != 10u8 { return 3; }
+    if Bytesˉreadˉi32ˉlittle(Blob, 0u32) != 1 { return 4; }
+    if Bytesˉlength(Textˉtoˉutf8(Roundˉtrip)) != 8u32 { return 5; }
+    if Bytesˉlength(Textˉtoˉutf8(Quoted)) != 6u32 { return 6; }
+    if Bytesˉlength(Combined) != 11u32 { return 7; }
+    if !Textˉutf8ˉisˉvalid(Escapedˉbytes) { return 8; }
+    return Alpha(Zebra(Sum));
+}
+
+data Greeting: text = "same";
+data Blob: bytes = [1, 0, 0, 0, 255];
+
+fn Alpha(Value: i32) -> i32 {
+    return Value + length(Values);
+}

@@ -139,5 +139,8 @@
     <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Function-Only.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Function-Only.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Data-And-Text.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Data-And-Text.wv" />
   </ItemGroup>
 </Project>

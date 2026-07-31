@@ -139,6 +139,8 @@ $SourceWvbDemoModule = Join-Path $Artifacts 'Source-Wvb-Demo.wvb'
 $SourceWvbToolModule = Join-Path $Artifacts 'Source-Wvb-Tool.wvb'
 $SourceWvbFixtureModule = Join-Path $Artifacts 'Source-Wvb-Function-Only.wvb'
 $SourceWvbFixtureOracle = Join-Path $Artifacts 'Source-Wvb-Function-Only-Stage0.wvb'
+$SourceWvbDataFixtureModule = Join-Path $Artifacts 'Source-Wvb-Data-And-Text.wvb'
+$SourceWvbDataFixtureOracle = Join-Path $Artifacts 'Source-Wvb-Data-And-Text-Stage0.wvb'
 $WvDumpCoreModule = Join-Path $Artifacts 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $Artifacts 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
@@ -1026,7 +1028,7 @@ $SourceWvbDependencies = @(
 dotnet $ToolDll compile $SourceWvbSource @SourceWvbDependencies -o $SourceWvbModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend core.' }
 $SourceWvbHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbModule).Hash.ToLowerInvariant()
-if ($SourceWvbHash -ne 'd4846b2c0eed11e35a3f715e61efd84c676c1055c340c08acf582a2558bca9db') {
+if ($SourceWvbHash -ne 'c410f775e6c6e5a8a40678a5caf4e7a07a37c4dcf711b2f272f11cc1796d5d8d') {
     throw "The Windvale WVB backend core has an unexpected digest: $SourceWvbHash"
 }
 $SourceWvbInspection = (dotnet $ToolDll inspect $SourceWvbModule) -join "`n"
@@ -1034,7 +1036,7 @@ if (
     $LASTEXITCODE -ne 0 -or
     $SourceWvbInspection -notmatch 'Compilerˉsourceˉwvbˉsummary' -or
     $SourceWvbInspection -notmatch 'Compilerˉcompileˉsourceˉwvb' -or
-    $SourceWvbInspection -notmatch 'Exports \(24\)'
+    $SourceWvbInspection -notmatch 'Exports \(46\)'
 ) {
     throw 'The Windvale WVB backend inspection is incomplete.'
 }
@@ -1044,7 +1046,7 @@ dotnet $ToolDll `
     -o $SourceWvbDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend demo.' }
 $SourceWvbDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbDemoModule).Hash.ToLowerInvariant()
-if ($SourceWvbDemoHash -ne 'd2477d6de0e90753c3f93b9ffc9db71da02a30472aca0a813ee4b6bf3ef5ec16') {
+if ($SourceWvbDemoHash -ne 'd376b66312dc9005540482f3adfe6be10b6ec8a2fbd9fcbb86c3a412e70e75fa') {
     throw "The Windvale WVB backend demo has an unexpected digest: $SourceWvbDemoHash"
 }
 $SourceWvbDemoOutput = dotnet $ToolDll run $SourceWvbDemoModule --max-steps 4000000000
@@ -1057,7 +1059,7 @@ dotnet $ToolDll `
     -o $SourceWvbToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend tool.' }
 $SourceWvbToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbToolModule).Hash.ToLowerInvariant()
-if ($SourceWvbToolHash -ne '58a337338aa98a225c563a49cfdffc9133988d332c1000391b99c0ef31e2edac') {
+if ($SourceWvbToolHash -ne '364c47c70f04f0133a35ce07dcdfeb5eedbcaaf8acbedd8e002c8c6d93fa867f') {
     throw "The Windvale WVB backend tool has an unexpected digest: $SourceWvbToolHash"
 }
 $SourceWvbFixture = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Function-Only.wv'
@@ -1098,6 +1100,46 @@ if (-not [System.Linq.Enumerable]::SequenceEqual(
     [IO.File]::ReadAllBytes($SourceWvbFixtureOracle)
 )) {
     throw 'The Windvale-written WVB fixture differs from the Stage 0 oracle.'
+}
+
+$SourceWvbDataFixture = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Data-And-Text.wv'
+Remove-Item -LiteralPath $SourceWvbDataFixtureModule, $SourceWvbDataFixtureOracle -Force -ErrorAction SilentlyContinue
+$SourceWvbDataFixtureOutput = dotnet $ToolDll `
+    run $SourceWvbToolModule `
+    --allow console.write_line `
+    --allow diagnostic.write_line `
+    --allow file.read_bytes `
+    --allow file.write_bytes `
+    --allow process.argument `
+    --allow process.argument_count `
+    --max-steps 4000000000 -- `
+    $SourceWvbDataFixture $SourceWvbDataFixtureModule
+if (
+    $LASTEXITCODE -ne 0 -or
+    $SourceWvbDataFixtureOutput -notcontains 'source wvb status=Valid functions=3 code-bytes=1210 module-bytes=1651' -or
+    $SourceWvbDataFixtureOutput -notcontains 'Result: 0'
+) {
+    throw 'The Windvale WVB backend tool did not lower the data-and-text fixture.'
+}
+$SourceWvbDataVerifyOutput = dotnet $ToolDll verify $SourceWvbDataFixtureModule
+if ($LASTEXITCODE -ne 0 -or $SourceWvbDataVerifyOutput -notcontains 'Verified: Sourceˉwvbˉdataˉandˉtext') {
+    throw 'The Windvale-written data-and-text WVB fixture did not pass the Stage 0 verifier.'
+}
+$SourceWvbDataRunOutput = dotnet $ToolDll run $SourceWvbDataFixtureModule
+if ($LASTEXITCODE -ne 0 -or $SourceWvbDataRunOutput -notcontains 'Result: 13') {
+    throw 'The Windvale-written data-and-text WVB fixture did not execute with Result: 13.'
+}
+dotnet $ToolDll compile $SourceWvbDataFixture -o $SourceWvbDataFixtureOracle
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Stage 0 data-and-text oracle.' }
+$SourceWvbDataFixtureHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbDataFixtureModule).Hash.ToLowerInvariant()
+if ($SourceWvbDataFixtureHash -ne '5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704') {
+    throw "The Windvale-written data-and-text fixture has an unexpected digest: $SourceWvbDataFixtureHash"
+}
+if (-not [System.Linq.Enumerable]::SequenceEqual(
+    [IO.File]::ReadAllBytes($SourceWvbDataFixtureModule),
+    [IO.File]::ReadAllBytes($SourceWvbDataFixtureOracle)
+)) {
+    throw 'The Windvale-written data-and-text fixture differs from the Stage 0 oracle.'
 }
 
 dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
