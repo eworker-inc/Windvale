@@ -90,12 +90,12 @@ source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporarie
 
 Candidate artifacts are:
 
-- `Source-Wir-Core.wvb`: 507,772 bytes, SHA-256 `e11a017226c8b357732f02f5bdc6ff581c876276165e267b1875a2daa247cef0`.
-- `Source-Wir-Demo.wvb`: 513,473 bytes, SHA-256 `1af3a5d7523ce5ace0091e4892e35c54a4835487186c4e49e653a8af98ecc721`.
-- `Source-Wir-Tool.wvb`: 509,624 bytes, SHA-256 `3096f68bd7c1ab9e08b5112937d75ef6481b724ba84a9571fd4ce9076156cfa2`.
+- `Source-Wir-Core.wvb`: 515,807 bytes, SHA-256 `f94c96ce84ea05e7802bf4780bb8c0ef5d818303ac83730b50273006aaf6a35e`.
+- `Source-Wir-Demo.wvb`: 521,508 bytes, SHA-256 `0fcf0bf2a6eda1ae271bbe83169af9acfb339e24436c5e76e77b5e273b54301b`.
+- `Source-Wir-Tool.wvb`: 517,659 bytes, SHA-256 `cf1421565f9888b23864253b722feac9fa3aa053a0dccfd06d695ca10162ff87`.
 
-The original typed-WVIR candidate was cross-host qualified at `bf77f70`, the fused local-discovery/typed-WVIR implementation at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index implementation at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`.
+The original typed-WVIR candidate was cross-host qualified at `bf77f70`, the fused local-discovery/typed-WVIR implementation at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index implementation at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055's validated-scan reuse candidate is awaiting exact cross-host Qualification.
 
-The ten-module compiler closure is intentionally not in the fast loop. Decision 0042 reduced the focused typed-WVIR fixture from 8,074,045 to 5,735,695 instructions; Decision 0050 reduces it again to 5,715,847 and removes directory-entry construction and nominal-rank derivation as dominant exact-closure costs. The exact input still exceeds the fixed 4,000,000,000-instruction ceiling, and a diagnostic six-billion run also remained bounded. Raising the ceiling is not the remedy; profiling now points to repeated lexical and parser traversal as the next structural gate.
+The ten-module compiler closure is intentionally not in the fast loop. Decision 0042 reduced the focused typed-WVIR fixture from 8,074,045 to 5,735,695 instructions; Decision 0050 reduced it again to 5,715,847 and removed directory-entry construction and nominal-rank derivation as dominant costs. Decision 0055's candidate falls to 3,626,693 focused instructions and completes the exact ten-module input in 3,912,239,584 instructions under the unchanged 4,000,000,000 ceiling. That clears the typed-WVIR performance entry gate; Stage 0 → Stage 1 → Stage 2 convergence remains separate.
 
 WVIR-to-WVB lowering is specified separately in the initial [source-to-WVB backend contract](Compiler-Source-Wvb.md). WVIR execution, optimization, native IR, and OS-specific lowering are not part of this contract.

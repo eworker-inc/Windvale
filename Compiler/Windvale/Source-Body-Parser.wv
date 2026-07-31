@@ -210,7 +210,7 @@ export fn Compilerˉbodyˉtoken(
     Column: u32,
     Endˉoffset: u32
 ) -> Compilerˉsourceˉtoken {
-    let Token: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(Input, Offset, Line, Column);
+    let Token: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(Input, Offset, Line, Column);
     if Token.Status != Compilerˉlexˉstatus.Valid { return Token; }
     if Token.Offset < Endˉoffset { return Token; }
     return Compilerˉsourceˉtokenˉmake(
@@ -1324,11 +1324,29 @@ export fn Compilerˉparseˉbodyˉspan(
     if Scan.Status != Compilerˉlexˉstatus.Valid {
         return Compilerˉsourceˉbodyˉsummary(Compilerˉbodyˉparseˉstatus.Lexicalˉerror, Scan.Status, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, Scan.Failureˉoffset, Scan.Failureˉline, Scan.Failureˉcolumn, Scan.Failureˉoffset, Scan.Failureˉline, Scan.Failureˉcolumn, Compilerˉtokenˉkind.End, Compilerˉtokenˉkind.Bad);
     }
+    let Shape: Compilerˉparseˉstep = Compilerˉparseˉskipˉblockˉafterˉscan(
+        Input, Offset, Line, Column
+    );
+    if Shape.Status == Compilerˉparseˉstatus.Nestingˉlimit {
+        return Compilerˉbodyˉsummaryˉfailureˉfromˉstep(
+            Compilerˉbodyˉstepˉfailure(
+                Compilerˉbodyˉparseˉstatus.Nestingˉlimit,
+                Shape.Lexicalˉstatus,
+                Shape.Failureˉoffset,
+                Shape.Failureˉline,
+                Shape.Failureˉcolumn,
+                Shape.Expected,
+                Shape.Found
+            )
+        );
+    }
     return Compilerˉparseˉbodyˉspanˉvalidated(Input, Offset, Line, Column, Endˉoffset);
 }
 
-export fn Compilerˉparseˉsourceˉbodies(Input: bytes) -> Compilerˉsourceˉbodyˉsummary {
-    let Declarationˉsummary: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Input);
+export fn Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations(
+    Input: bytes,
+    Declarationˉsummary: Compilerˉsourceˉmoduleˉsummary
+) -> Compilerˉsourceˉbodyˉsummary {
     if Declarationˉsummary.Status != Compilerˉparseˉstatus.Valid { return Compilerˉbodyˉsummaryˉfailureˉfromˉdeclarations(Declarationˉsummary); }
     let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Input);
     var Cursor: u32 = Header.Nextˉoffset;
@@ -1343,7 +1361,7 @@ export fn Compilerˉparseˉsourceˉbodies(Input: bytes) -> Compilerˉsourceˉbod
     var Sawˉnonˉimport: bool = false;
     var Reading: bool = true;
     while Reading {
-        let Current: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(Input, Cursor, Currentˉline, Currentˉcolumn);
+        let Current: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(Input, Cursor, Currentˉline, Currentˉcolumn);
         if Current.Kind == Compilerˉtokenˉkind.End {
             Cursor = Current.Offset;
             Currentˉline = Current.Line;
@@ -1379,4 +1397,9 @@ export fn Compilerˉparseˉsourceˉbodies(Input: bytes) -> Compilerˉsourceˉbod
         }
     }
     return Compilerˉbodyˉsummaryˉmake(Functions, Topˉlevelˉstatements, Statements, Expressions, Maximumˉstatementˉdepth, Maximumˉexpressionˉdepth, Cursor, Currentˉline, Currentˉcolumn);
+}
+
+export fn Compilerˉparseˉsourceˉbodies(Input: bytes) -> Compilerˉsourceˉbodyˉsummary {
+    let Declarationˉsummary: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Input);
+    return Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations(Input, Declarationˉsummary);
 }

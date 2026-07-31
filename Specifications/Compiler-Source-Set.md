@@ -42,7 +42,7 @@ Compilerˉvalidateˉsourceˉset(Input: bytes)
 
 The scanner validates the entire envelope before any view is trusted. A successful view contains an immutable source slice; an invalid scan or out-of-range index returns a failure view with an empty byte value.
 
-The validator runs the qualified declaration and body passes over every source, rejects duplicate declared module names, and requires dependencies to be in strict declared-name order. Each dependency must use `profile portable`, contain no capability or data declaration, and mark every function `export`. The summary reports module/source-byte totals plus aggregate import, record, enum, and function counts and deterministic first-failure evidence.
+The validator runs the qualified declaration and body passes over every source, passing the accepted declaration summary into the body pass so declarations are not parsed twice. It rejects duplicate declared module names and requires dependencies to be in strict declared-name order. Each dependency must use `profile portable`, contain no capability or data declaration, and mark every function `export`. The summary reports module/source-byte totals plus aggregate import, record, enum, and function counts and deterministic first-failure evidence.
 
 `Compilerˉsourceˉspansˉcompare` compares two already validated spans from possibly different immutable byte values using unsigned ordinal byte order. Callers own both range checks.
 
@@ -54,14 +54,14 @@ The hosted source-set tool accepts explicit root/dependency resource names, cons
 
 ## Current candidate artifacts and evidence
 
-- `Source-Set-Core.wvb`: 180,028 bytes, SHA-256 `c2a420a984a9bd39754a9e842d14e1e94030cd8ff6a0e313cc1703ae2e244386`.
-- `Source-Set-Demo.wvb`: 189,001 bytes, SHA-256 `960c973b7014b9e77b33b55e9fffa7db0a4a3d0a2b87737d54603f09cec022c0`.
-- `Source-Set-Tool.wvb`: 184,257 bytes, SHA-256 `dc8645c9b73fe8bfe10409e2fbd34fd29f125eea42409617ede5256b36a03e2e`.
+- `Source-Set-Core.wvb`: 187,266 bytes, SHA-256 `ab6a6afc5cc90e8db508a9ce4d22acc42cf2cbc5293afad977881a71c3b2658a`.
+- `Source-Set-Demo.wvb`: 196,239 bytes, SHA-256 `dda97ec276bc2c56552e765854322b1177f5b6c27d36fec25d9360f39451b7e1`.
+- `Source-Set-Tool.wvb`: 191,495 bytes, SHA-256 `58d29de0ea3b92a83f0cd84bba22910c2c826e7f01d93d0aa5a04f8d0a029322`.
 
 The Windows x64 and Debian Linux x64 conformance runners each pass all 43 tests with zero build warnings/errors. The hosted tool validates the real source-set core plus body parser, declaration parser, lexer, and decimal parser as:
 
 ```text
-source set status=Valid modules=5 source-bytes=194697 imports=4 records=16 enums=11 functions=86
+source set status=Valid modules=5 source-bytes=205110 imports=4 records=16 enums=11 functions=91
 ```
 
-The source-set contract was originally cross-host qualified at `00ef0b1`. The current Decision 0042 artifacts and aggregate source-byte report were requalified byte for byte with the role-based compiler layout at `4fdc6bf`.
+The source-set contract was originally cross-host qualified at `00ef0b1`. Decision 0042's artifacts and aggregate source-byte report were requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's declaration-summary reuse candidate is awaiting exact cross-host Qualification.

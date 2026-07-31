@@ -114,16 +114,16 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 ## Candidate artifacts and evidence
 
-- `Source-Bindings-Core.wvb`: 345,074 bytes, SHA-256 `2c253a188c96d5bbdf7e8b81d44dbd776c27c043ba9df7cc6230972c278335e5`.
-- `Source-Bindings-Demo.wvb`: 351,959 bytes, SHA-256 `11621f87f3fe198c97ea141f41ac1a4d69bd34e03f10c17d4bd23083b3087b18`.
-- `Source-Bindings-Tool.wvb`: 347,556 bytes, SHA-256 `2e7f2885da27a5ba12f15a831bb2429a21acb7e23ad46061009b4b2209b713f4`.
+- `Source-Bindings-Core.wvb`: 353,109 bytes, SHA-256 `3922ca780b11162a9a331b7ca2fc6d3bb070e89134190eabbb978640a05ca128`.
+- `Source-Bindings-Demo.wvb`: 359,994 bytes, SHA-256 `26c778d4676d9dfa969cfebe41593d7733a6c5ad8fc54c0ee7b1b9a2dc6a5880`.
+- `Source-Bindings-Tool.wvb`: 355,591 bytes, SHA-256 `d989caa9573ca0b69df46b6a5cf0bd385011d65311463043bcc0b74e25b5a28c`.
 
 The focused demo covers valid parameters/locals/data/calls; mutable and immutable assignment; nested scope and initializer visibility; duplicate locals; primitive, visible, unknown, and inaccessible local types; unknown and inaccessible names/calls; undeclared capabilities; arity; upstream symbol failures; and corrupted header, range, entry, and trailing-data evidence.
 
 The hosted tool binds the current real closure as:
 
 ```text
-source bindings status=Valid modules=9 functions=189 parameters=827 locals=986 reads=8451 assignments=643 calls=1508 directory-bytes=67180
+source bindings status=Valid modules=9 functions=194 parameters=843 locals=1016 reads=8630 assignments=683 calls=1538 directory-bytes=68876
 ```
 
-The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. Decision 0050's bidirectional nominal map and length-filtered equality paths are qualified at `e37204f`. The nine-module hosted tool completes in 2,600,859,185 instructions under the unchanged four-billion ceiling, down 12.5% from Decision 0042's 2,972,056,275-instruction closure despite the larger current source.
+The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. Decision 0050's bidirectional nominal map and length-filtered equality paths are qualified at `e37204f`. Decision 0055's artifacts consume validated lexer cursors and the bounded nominal range; exact cross-host Qualification is pending.

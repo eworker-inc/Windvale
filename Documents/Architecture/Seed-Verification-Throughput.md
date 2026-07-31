@@ -111,6 +111,16 @@ Inlining ASCII whitespace and identifier-continuation logic into the lexer was m
 
 Exact Decision 0050 commit `e37204f` completed Qualification in 724.8 seconds on Windows and 738.0 seconds on Debian, with complete-suite times of 366.914 and 379.640 seconds. Both hosts passed zero-warning builds, all 48 tests, and the complete native verifier. Their normalized contracts matched, and all 61 portable artifacts totaling 7,546,823 bytes were byte-identical. This qualifies the symbol-index improvement while leaving the exact ten-module experiment outside routine verification.
 
+## Validated-scan reuse measurements
+
+Decision 0055 separates checked public entry points from compiler-internal entry points that consume already established full-source scan and cursor evidence. It also reuses the declaration summary for body validation, skips valid function bodies with one bounded byte scan, and searches nominal records/enums only within their canonical first-byte ranges. Checked deep-body input still returns the established nesting-limit failure without host-stack exhaustion.
+
+On the Windows development host, the focused typed-WVIR fixture falls from Decision 0050's 5,715,847 instructions to 3,626,693, a 36.55% reduction. The focused 24-test compiler area passes in 37.927 seconds. The complete 48-test candidate Standard suite passes in 246.417 seconds.
+
+The exact ten-module typed-WVIR workload completes in 3,912,239,584 instructions, leaving 87,760,416 instructions under the unchanged four-billion acceptance ceiling. It reports 10 modules, 315 functions, 5,658 blocks, 27,377 operations, 25,094 temporaries, 21,869 operands, and 1,720,804 directory bytes. The exact case remains outside Fast and Standard; it is milestone evidence for the next Stage 0 → Stage 1 → Stage 2 convergence work.
+
+Measured binary nominal search and record-return identifier-tail helpers were removed because they regressed the focused workload. Long shared compiler-name prefixes made midpoint ordinal comparison more expensive than the retained bounded range scan. Exact cross-host Qualification timings remain pending.
+
 ## Canonical backend measurements
 
 Decision 0037 adds the interleaved static-data/text fixture to the existing source-to-WVB focused test without adding another complete-suite case. On exact commit `636627c`, that focused test took 4.585 seconds on Windows and 4.701 seconds on Debian. Windows Qualification completed in 902.4 seconds with a 457.742-second suite; Debian Qualification completed in 916.4 seconds with a 471.285-second suite. Both hosts passed all 48 tests, the complete native verifier, and zero-warning Release builds.

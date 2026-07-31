@@ -14,6 +14,17 @@ export fn Main() -> i32 {
     if Summary.Expressions != 27u32 { return 5; }
     if Summary.Maximumˉstatementˉdepth != 3u32 { return 6; }
     if Summary.Maximumˉexpressionˉdepth != 4u32 { return 7; }
+    let Declarations: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Complete);
+    let Reused: Compilerˉsourceˉbodyˉsummary =
+        Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations(Complete, Declarations);
+    if Reused.Status != Summary.Status { return 33; }
+    if Reused.Functions != Summary.Functions { return 34; }
+    if Reused.Topˉlevelˉstatements != Summary.Topˉlevelˉstatements { return 35; }
+    if Reused.Statements != Summary.Statements { return 36; }
+    if Reused.Expressions != Summary.Expressions { return 37; }
+    if Reused.Maximumˉstatementˉdepth != Summary.Maximumˉstatementˉdepth { return 38; }
+    if Reused.Maximumˉexpressionˉdepth != Summary.Maximumˉexpressionˉdepth { return 39; }
+    if Reused.Endˉoffset != Summary.Endˉoffset { return 40; }
 
     let Body: bytes = Textˉtoˉutf8("{ var Total: i32 = -Value + 2 * 3; return Total; }");
     let Bodyˉsummary: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉbodyˉspan(Body, 0u32, 1u32, 1u32, Bytesˉlength(Body));

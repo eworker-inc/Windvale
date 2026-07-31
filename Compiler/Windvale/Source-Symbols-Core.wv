@@ -696,19 +696,26 @@ export fn Compilerˉsourceˉsymbolsˉfindˉnominalˉinˉdirectory(
     Nameˉoffset: u32,
     Nameˉlength: u32
 ) -> Compilerˉsourceˉsymbolˉmatch {
-    let Range: Compilerˉsourceˉposition = Compilerˉsourceˉsymbolsˉlookupˉrange(
-        Lookup, Bytesˉreadˉu8(Nameˉsource, Nameˉoffset)
-    );
-    var Index: u32 = 0u32;
-    while Index < Range.Line {
-        let Directoryˉindex: u32 = Bytesˉreadˉu32ˉlittle(
-            Lookup, 4112u32 + (Range.Offset + Index) * 4u32
-        );
-        let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
-        let Entryˉkind: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32);
-        var Isˉnominal: bool = Entryˉkind == 4u32;
-        if Entryˉkind == 5u32 { Isˉnominal = true; }
-        if Isˉnominal {
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    let Reverseˉoffset: u32 = 4112u32 + Entries * 4u32;
+    let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Nameˉsource, Nameˉoffset));
+    let Rangeˉentry: u32 = 16u32 + First * 16u32;
+    let Totalˉrange: u32 = 16u32 + 255u32 * 16u32;
+    let Records: u32 = Bytesˉreadˉu32ˉlittle(Lookup, Totalˉrange + 8u32);
+    let Enums: u32 = Bytesˉreadˉu32ˉlittle(Lookup, Totalˉrange + 12u32);
+    var Begin: u32 = Bytesˉreadˉu32ˉlittle(Lookup, Rangeˉentry + 8u32);
+    var End: u32 = Records;
+    if First < 255u32 {
+        End = Bytesˉreadˉu32ˉlittle(Lookup, Rangeˉentry + 24u32);
+    }
+    var Pass: u32 = 0u32;
+    while Pass < 2u32 {
+        var Index: u32 = Begin;
+        while Index < End {
+            let Directoryˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Lookup, Reverseˉoffset + Index * 4u32
+            );
+            let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
             let Entryˉmodule: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
             let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entryˉmodule * 8u32;
             let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
@@ -724,8 +731,14 @@ export fn Compilerˉsourceˉsymbolsˉfindˉnominalˉinˉdirectory(
                     );
                 }
             }
+            Index = Index + 1u32;
         }
-        Index = Index + 1u32;
+        Begin = Records + Bytesˉreadˉu32ˉlittle(Lookup, Rangeˉentry + 12u32);
+        End = Records + Enums;
+        if First < 255u32 {
+            End = Records + Bytesˉreadˉu32ˉlittle(Lookup, Rangeˉentry + 28u32);
+        }
+        Pass = Pass + 1u32;
     }
     return Compilerˉsourceˉsymbolsˉmatchˉnone(Scan.Modules);
 }
@@ -900,7 +913,7 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
     Enums: u32,
     Forˉfield: bool
 ) -> Compilerˉsourceˉtypeˉbinding {
-    let Token: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(Source, Offset, Line, Column);
+    let Token: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(Source, Offset, Line, Column);
     var Kind: Compilerˉsourceˉtypeˉkind = Compilerˉsourceˉtypeˉkind.Unknown;
     if Token.Kind == Compilerˉtokenˉkind.I32 { Kind = Compilerˉsourceˉtypeˉkind.I32; }
     if Token.Kind == Compilerˉtokenˉkind.U8 { Kind = Compilerˉsourceˉtypeˉkind.U8; }
@@ -1460,7 +1473,7 @@ export fn Compilerˉsourceˉsymbolsˉfieldˉisˉduplicate(
     var Currentˉline: u32 = Firstˉline;
     var Currentˉcolumn: u32 = Firstˉcolumn;
     while Cursor < Current.Offset {
-        let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
         if Name.Offset >= Current.Offset { return false; }
@@ -1468,13 +1481,13 @@ export fn Compilerˉsourceˉsymbolsˉfieldˉisˉduplicate(
             Source, Name.Offset, Name.Length,
             Source, Current.Offset, Current.Length
         ) == 0 { return true; }
-        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
         );
-        let Type: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Type: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn
         );
-        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
         );
         Cursor = End.Nextˉoffset;
@@ -1498,7 +1511,7 @@ export fn Compilerˉsourceˉsymbolsˉenumˉduplicate(
     var Currentˉline: u32 = Firstˉline;
     var Currentˉcolumn: u32 = Firstˉcolumn;
     while Cursor < Currentˉname.Offset {
-        let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
         if Name.Offset >= Currentˉname.Offset {
@@ -1508,14 +1521,14 @@ export fn Compilerˉsourceˉsymbolsˉenumˉduplicate(
             Source, Name.Offset, Name.Length,
             Source, Currentˉname.Offset, Currentˉname.Length
         ) == 0 { Duplicateˉname = true; }
-        let Equals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Equals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
         );
-        let Value: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Value: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Equals.Nextˉoffset, Equals.Nextˉline, Equals.Nextˉcolumn
         );
         if Value.Numericˉvalue == Currentˉvalue { Duplicateˉvalue = true; }
-        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
         );
         Cursor = End.Nextˉoffset;
@@ -1536,7 +1549,7 @@ export fn Compilerˉsourceˉsymbolsˉparameterˉisˉduplicate(
     var Currentˉline: u32 = Firstˉline;
     var Currentˉcolumn: u32 = Firstˉcolumn;
     while Cursor < Current.Offset {
-        let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
         if Name.Offset >= Current.Offset { return false; }
@@ -1544,13 +1557,13 @@ export fn Compilerˉsourceˉsymbolsˉparameterˉisˉduplicate(
             Source, Name.Offset, Name.Length,
             Source, Current.Offset, Current.Length
         ) == 0 { return true; }
-        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
         );
-        let Type: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Type: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn
         );
-        let Separator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Separator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
         );
         Cursor = Separator.Nextˉoffset;
@@ -1609,13 +1622,13 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉrecord(
             Nameˉposition.Line, Nameˉposition.Column
         );
     }
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Declarationˉoffset, Declarationˉline, Declarationˉcolumn
     );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
     );
-    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
     let Firstˉoffset: u32 = Brace.Nextˉoffset;
@@ -1626,7 +1639,7 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉrecord(
     var Currentˉcolumn: u32 = Firstˉcolumn;
     var Index: u32 = 0u32;
     while Index < Declaration.Items {
-        let Field: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Field: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
         if Compilerˉsourceˉsymbolsˉfieldˉisˉduplicate(
@@ -1637,7 +1650,7 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉrecord(
                 Module, Module, Declaration.Kind, Field.Offset, Field.Line, Field.Column
             );
         }
-        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Field.Nextˉoffset, Field.Nextˉline, Field.Nextˉcolumn
         );
         let Binding: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
@@ -1650,7 +1663,7 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉrecord(
                 Input, Counts, Scan, Module, Declaration.Kind, Binding
             );
         }
-        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn
         );
         Cursor = End.Nextˉoffset;
@@ -1685,13 +1698,13 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉenum(
             Nameˉposition.Line, Nameˉposition.Column
         );
     }
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Declarationˉoffset, Declarationˉline, Declarationˉcolumn
     );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
     );
-    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
     let Firstˉoffset: u32 = Brace.Nextˉoffset;
@@ -1702,13 +1715,13 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉenum(
     var Currentˉcolumn: u32 = Firstˉcolumn;
     var Index: u32 = 0u32;
     while Index < Declaration.Items {
-        let Member: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Member: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
-        let Equals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Equals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Member.Nextˉoffset, Member.Nextˉline, Member.Nextˉcolumn
         );
-        let Value: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Value: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Equals.Nextˉoffset, Equals.Nextˉline, Equals.Nextˉcolumn
         );
         let Duplicate: Compilerˉsourceˉenumˉduplicate = Compilerˉsourceˉsymbolsˉenumˉduplicate(
@@ -1726,7 +1739,7 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉenum(
                 Module, Module, Declaration.Kind, Value.Offset, Value.Line, Value.Column
             );
         }
-        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
         );
         Cursor = End.Nextˉoffset;
@@ -1749,19 +1762,19 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
     Declarationˉline: u32,
     Declarationˉcolumn: u32
 ) -> Compilerˉsourceˉsymbolˉsummary {
-    let First: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let First: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Declarationˉoffset, Declarationˉline, Declarationˉcolumn
     );
     var Functionˉtoken: Compilerˉsourceˉtoken = First;
     if First.Kind == Compilerˉtokenˉkind.Export {
-        Functionˉtoken = Compilerˉlexˉnextˉvalidated(
+        Functionˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn
         );
     }
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Functionˉtoken.Nextˉoffset, Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
     );
-    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
     let Firstˉoffset: u32 = Left.Nextˉoffset;
@@ -1772,7 +1785,7 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
     var Currentˉcolumn: u32 = Firstˉcolumn;
     var Index: u32 = 0u32;
     while Index < Declaration.Items {
-        let Parameter: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Parameter: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
         if Compilerˉsourceˉsymbolsˉparameterˉisˉduplicate(
@@ -1784,7 +1797,7 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
                 Parameter.Offset, Parameter.Line, Parameter.Column
             );
         }
-        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Parameter.Nextˉoffset, Parameter.Nextˉline, Parameter.Nextˉcolumn
         );
         let Binding: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
@@ -1797,7 +1810,7 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
                 Input, Counts, Scan, Module, Declaration.Kind, Binding
             );
         }
-        let Separator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Separator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn
         );
         if Separator.Kind == Compilerˉtokenˉkind.Comma {
@@ -1811,10 +1824,10 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
         }
         Index = Index + 1u32;
     }
-    let Right: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Right: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Cursor, Currentˉline, Currentˉcolumn
     );
-    let Arrow: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Arrow: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn
     );
     let Returnˉtype: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(

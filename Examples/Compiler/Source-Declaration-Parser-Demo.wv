@@ -5,7 +5,7 @@ import Compilerˉsourceˉdeclarationˉparser;
 data Invalidˉutf8: bytes = [195, 40];
 
 export fn Main() -> i32 {
-    let Complete: bytes = Textˉtoˉutf8("module Exampleˉcompiler profile hosted; import Foundationˉdecimalˉparsing; capability console.write_line; data Message: text = \"hello\"; data Values: [i32] = [-1, 2]; data Blob: bytes = [0, 255u8]; record Pair { Left: u32; Ready: bool; } enum State { Ready = 1; Done = 2; } fn Helper(Value: Pair, Stateˉvalue: State) -> void { if true { return; } } export fn Main() -> i32 { return 0; }");
+    let Complete: bytes = Textˉtoˉutf8("module Exampleˉcompiler profile hosted; import Foundationˉdecimalˉparsing; capability console.write_line; data Message: text = \"hello\"; data Values: [i32] = [-1, 2]; data Blob: bytes = [0, 255u8]; record Pair { Left: u32; Ready: bool; } enum State { Ready = 1; Done = 2; } fn Helper(Value: Pair, Stateˉvalue: State) -> void { console.write_line(\"{\\\"}\"); if true { return; } } export fn Main() -> i32 { return 0; }");
     let Summary: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Complete);
     if Summary.Status != Compilerˉparseˉstatus.Valid { return 1; }
     if Summary.Profile != Compilerˉsourceˉprofile.Hosted { return 2; }

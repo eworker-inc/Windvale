@@ -128,14 +128,22 @@ export fn Compilerˉsourceˉcolumnˉwidth(Input: bytes, Offset: u32) -> u32 {
 
 export fn Compilerˉsourceˉwhitespaceˉlength(Input: bytes, Offset: u32) -> u32 {
     let Total: u32 = Bytesˉlength(Input);
+    return Compilerˉsourceˉwhitespaceˉlengthˉafterˉscan(Input, Offset, Total);
+}
+
+export fn Compilerˉsourceˉwhitespaceˉlengthˉafterˉscan(
+    Input: bytes,
+    Offset: u32,
+    Total: u32
+) -> u32 {
     if Offset >= Total { return 0u32; }
     let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
-    if First == 9u32 { return 1u32; }
+    if First == 32u32 { return 1u32; }
     if First == 10u32 { return 1u32; }
+    if First == 9u32 { return 1u32; }
     if First == 11u32 { return 1u32; }
     if First == 12u32 { return 1u32; }
     if First == 13u32 { return 1u32; }
-    if First == 32u32 { return 1u32; }
 
     if Total - Offset >= 2u32 {
         let Second: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32));
@@ -175,35 +183,43 @@ export fn Compilerˉsourceˉwhitespaceˉlength(Input: bytes, Offset: u32) -> u32
 
 export fn Compilerˉsourceˉidentifierˉstart(Value: u8) -> bool {
     let Character: u32 = U32ˉfromˉu8(Value);
-    if Character >= 65u32 {
-        if Character <= 90u32 { return true; }
-    }
     if Character >= 97u32 {
         if Character <= 122u32 { return true; }
+    }
+    if Character >= 65u32 {
+        if Character <= 90u32 { return true; }
     }
     return Character == 95u32;
 }
 
 export fn Compilerˉsourceˉidentifierˉpartˉlength(Input: bytes, Offset: u32) -> u32 {
     let Total: u32 = Bytesˉlength(Input);
+    return Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, Offset, Total);
+}
+
+export fn Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(
+    Input: bytes,
+    Offset: u32,
+    Total: u32
+) -> u32 {
     if Offset >= Total { return 0u32; }
     let First: u8 = Bytesˉreadˉu8(Input, Offset);
     let Character: u32 = U32ˉfromˉu8(First);
-    if Character >= 65u32 {
-        if Character <= 90u32 { return 1u32; }
-    }
     if Character >= 97u32 {
         if Character <= 122u32 { return 1u32; }
-    }
-    if Character == 95u32 { return 1u32; }
-    if Character >= 48u32 {
-        if Character <= 57u32 { return 1u32; }
     }
     if Character == 203u32 {
         if Total - Offset >= 2u32 {
             if Bytesˉreadˉu8(Input, Offset + 1u32) == 137u8 { return 2u32; }
         }
     }
+    if Character >= 48u32 {
+        if Character <= 57u32 { return 1u32; }
+    }
+    if Character >= 65u32 {
+        if Character <= 90u32 { return 1u32; }
+    }
+    if Character == 95u32 { return 1u32; }
     return 0u32;
 }
 
@@ -461,7 +477,16 @@ export fn Compilerˉlexˉnextˉvalidated(
             }
         }
     }
+    return Compilerˉlexˉnextˉafterˉscan(Input, Start, Startˉline, Startˉcolumn);
+}
 
+export fn Compilerˉlexˉnextˉafterˉscan(
+    Input: bytes,
+    Start: u32,
+    Startˉline: u32,
+    Startˉcolumn: u32
+) -> Compilerˉsourceˉtoken {
+    let Total: u32 = Bytesˉlength(Input);
     var Cursor: u32 = Start;
     var Line: u32 = Startˉline;
     var Column: u32 = Startˉcolumn;
@@ -474,18 +499,26 @@ export fn Compilerˉlexˉnextˉvalidated(
             let Cursorˉvalue: u32 = U32ˉfromˉu8(Cursorˉbyte);
             var Whiteˉlength: u32 = 0u32;
             if Cursorˉvalue <= 32u32 {
-                Whiteˉlength = Compilerˉsourceˉwhitespaceˉlength(Input, Cursor);
-            }
-            if Cursorˉvalue == 194u32 {
-                Whiteˉlength = Compilerˉsourceˉwhitespaceˉlength(Input, Cursor);
-            }
-            if Cursorˉvalue >= 225u32 {
-                if Cursorˉvalue <= 227u32 {
-                    Whiteˉlength = Compilerˉsourceˉwhitespaceˉlength(Input, Cursor);
+                if Cursorˉvalue == 32u32 {
+                    Whiteˉlength = 1u32;
+                } else {
+                    if Cursorˉvalue >= 9u32 {
+                        if Cursorˉvalue <= 13u32 { Whiteˉlength = 1u32; }
+                    }
+                }
+            } else {
+                if Cursorˉvalue == 194u32 {
+                    Whiteˉlength = Compilerˉsourceˉwhitespaceˉlengthˉafterˉscan(Input, Cursor, Total);
+                } else {
+                    if Cursorˉvalue >= 225u32 {
+                        if Cursorˉvalue <= 227u32 {
+                            Whiteˉlength = Compilerˉsourceˉwhitespaceˉlengthˉafterˉscan(Input, Cursor, Total);
+                        }
+                    }
                 }
             }
             if Whiteˉlength > 0u32 {
-                if Bytesˉreadˉu8(Input, Cursor) == 10u8 {
+                if Cursorˉbyte == 10u8 {
                     Line = Line + 1u32;
                     Column = 1u32;
                 } else {
@@ -493,7 +526,7 @@ export fn Compilerˉlexˉnextˉvalidated(
                 }
                 Cursor = Cursor + Whiteˉlength;
             } else {
-                if Bytesˉreadˉu8(Input, Cursor) == 47u8 {
+                if Cursorˉbyte == 47u8 {
                     if Total - Cursor >= 2u32 {
                         if Bytesˉreadˉu8(Input, Cursor + 1u32) == 47u8 {
                             Cursor = Cursor + 2u32;
@@ -550,11 +583,45 @@ export fn Compilerˉlexˉnextˉvalidated(
     if Compilerˉsourceˉidentifierˉstart(First) {
         Cursor = Cursor + 1u32;
         Column = Column + 1u32;
-        var Partˉlength: u32 = Compilerˉsourceˉidentifierˉpartˉlength(Input, Cursor);
-        while Partˉlength > 0u32 {
-            Cursor = Cursor + Partˉlength;
-            Column = Column + 1u32;
-            Partˉlength = Compilerˉsourceˉidentifierˉpartˉlength(Input, Cursor);
+        var Readingˉidentifier: bool = true;
+        while Readingˉidentifier {
+            if Cursor >= Total {
+                Readingˉidentifier = false;
+            } else {
+                let Identifierˉcharacter: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+                var Partˉlength: u32 = 0u32;
+                if Identifierˉcharacter >= 97u32 {
+                    if Identifierˉcharacter <= 122u32 {
+                        Partˉlength = 1u32;
+                    } else {
+                        if Identifierˉcharacter == 203u32 {
+                            if Total - Cursor >= 2u32 {
+                                if Bytesˉreadˉu8(Input, Cursor + 1u32) == 137u8 {
+                                    Partˉlength = 2u32;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if Identifierˉcharacter >= 65u32 {
+                        if Identifierˉcharacter <= 90u32 {
+                            Partˉlength = 1u32;
+                        } else {
+                            if Identifierˉcharacter == 95u32 { Partˉlength = 1u32; }
+                        }
+                    } else {
+                        if Identifierˉcharacter >= 48u32 {
+                            if Identifierˉcharacter <= 57u32 { Partˉlength = 1u32; }
+                        }
+                    }
+                }
+                if Partˉlength == 0u32 {
+                    Readingˉidentifier = false;
+                } else {
+                    Cursor = Cursor + Partˉlength;
+                    Column = Column + 1u32;
+                }
+            }
         }
         let Identifierˉkind: Compilerˉtokenˉkind = Compilerˉsourceˉkeywordˉkind(
             Input,
@@ -606,7 +673,7 @@ export fn Compilerˉlexˉnextˉvalidated(
             if Total - Cursor >= 2u32 {
                 if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 2u32, "u8") {
                     let U8ˉfollowing: u32 = Cursor + 2u32;
-                    if Compilerˉsourceˉidentifierˉpartˉlength(Input, U8ˉfollowing) == 0u32 {
+                    if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U8ˉfollowing, Total) == 0u32 {
                         Numericˉkind = Compilerˉnumericˉkind.U8;
                         Cursor = U8ˉfollowing;
                         Column = Column + 2u32;
@@ -617,7 +684,7 @@ export fn Compilerˉlexˉnextˉvalidated(
                 if Total - Cursor >= 3u32 {
                     if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u32") {
                         let U32ˉfollowing: u32 = Cursor + 3u32;
-                        if Compilerˉsourceˉidentifierˉpartˉlength(Input, U32ˉfollowing) == 0u32 {
+                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U32ˉfollowing, Total) == 0u32 {
                             Numericˉkind = Compilerˉnumericˉkind.U32;
                             Cursor = U32ˉfollowing;
                             Column = Column + 3u32;
@@ -859,60 +926,80 @@ export fn Compilerˉlexˉnextˉvalidated(
 
     var Kind: Compilerˉtokenˉkind = Compilerˉtokenˉkind.Bad;
     var Width: u32 = 1u32;
-    if First == 40u8 { Kind = Compilerˉtokenˉkind.Leftˉparenthesis; }
-    if First == 41u8 { Kind = Compilerˉtokenˉkind.Rightˉparenthesis; }
-    if First == 123u8 { Kind = Compilerˉtokenˉkind.Leftˉbrace; }
-    if First == 125u8 { Kind = Compilerˉtokenˉkind.Rightˉbrace; }
-    if First == 91u8 { Kind = Compilerˉtokenˉkind.Leftˉbracket; }
-    if First == 93u8 { Kind = Compilerˉtokenˉkind.Rightˉbracket; }
-    if First == 59u8 { Kind = Compilerˉtokenˉkind.Semicolon; }
-    if First == 58u8 { Kind = Compilerˉtokenˉkind.Colon; }
-    if First == 44u8 { Kind = Compilerˉtokenˉkind.Comma; }
-    if First == 46u8 { Kind = Compilerˉtokenˉkind.Dot; }
-    if First == 43u8 { Kind = Compilerˉtokenˉkind.Plus; }
-    if First == 42u8 { Kind = Compilerˉtokenˉkind.Star; }
-    if First == 45u8 {
-        Kind = Compilerˉtokenˉkind.Minus;
-        if Total - Cursor >= 2u32 {
-            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 62u8 {
-                Kind = Compilerˉtokenˉkind.Arrow;
-                Width = 2u32;
+    if Firstˉvalue < 40u32 {
+        if First == 33u8 {
+            Kind = Compilerˉtokenˉkind.Bang;
+            if Total - Cursor >= 2u32 {
+                if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
+                    Kind = Compilerˉtokenˉkind.Bangˉequals;
+                    Width = 2u32;
+                }
             }
         }
-    }
-    if First == 33u8 {
-        Kind = Compilerˉtokenˉkind.Bang;
-        if Total - Cursor >= 2u32 {
-            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
-                Kind = Compilerˉtokenˉkind.Bangˉequals;
-                Width = 2u32;
+    } else {
+        if Firstˉvalue <= 46u32 {
+            if Firstˉvalue <= 42u32 {
+                if First == 40u8 { Kind = Compilerˉtokenˉkind.Leftˉparenthesis; }
+                if First == 41u8 { Kind = Compilerˉtokenˉkind.Rightˉparenthesis; }
+                if First == 42u8 { Kind = Compilerˉtokenˉkind.Star; }
+            } else {
+                if First == 43u8 { Kind = Compilerˉtokenˉkind.Plus; }
+                if First == 44u8 { Kind = Compilerˉtokenˉkind.Comma; }
+                if First == 45u8 {
+                    Kind = Compilerˉtokenˉkind.Minus;
+                    if Total - Cursor >= 2u32 {
+                        if Bytesˉreadˉu8(Input, Cursor + 1u32) == 62u8 {
+                            Kind = Compilerˉtokenˉkind.Arrow;
+                            Width = 2u32;
+                        }
+                    }
+                }
+                if First == 46u8 { Kind = Compilerˉtokenˉkind.Dot; }
             }
-        }
-    }
-    if First == 61u8 {
-        Kind = Compilerˉtokenˉkind.Equals;
-        if Total - Cursor >= 2u32 {
-            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
-                Kind = Compilerˉtokenˉkind.Equalsˉequals;
-                Width = 2u32;
-            }
-        }
-    }
-    if First == 60u8 {
-        Kind = Compilerˉtokenˉkind.Less;
-        if Total - Cursor >= 2u32 {
-            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
-                Kind = Compilerˉtokenˉkind.Lessˉequals;
-                Width = 2u32;
-            }
-        }
-    }
-    if First == 62u8 {
-        Kind = Compilerˉtokenˉkind.Greater;
-        if Total - Cursor >= 2u32 {
-            if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
-                Kind = Compilerˉtokenˉkind.Greaterˉequals;
-                Width = 2u32;
+        } else {
+            if Firstˉvalue >= 58u32 {
+                if Firstˉvalue <= 62u32 {
+                    if Firstˉvalue <= 59u32 {
+                        if First == 58u8 { Kind = Compilerˉtokenˉkind.Colon; }
+                        if First == 59u8 { Kind = Compilerˉtokenˉkind.Semicolon; }
+                    } else {
+                        if First == 60u8 {
+                            Kind = Compilerˉtokenˉkind.Less;
+                            if Total - Cursor >= 2u32 {
+                                if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
+                                    Kind = Compilerˉtokenˉkind.Lessˉequals;
+                                    Width = 2u32;
+                                }
+                            }
+                        }
+                        if First == 61u8 {
+                            Kind = Compilerˉtokenˉkind.Equals;
+                            if Total - Cursor >= 2u32 {
+                                if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
+                                    Kind = Compilerˉtokenˉkind.Equalsˉequals;
+                                    Width = 2u32;
+                                }
+                            }
+                        }
+                        if First == 62u8 {
+                            Kind = Compilerˉtokenˉkind.Greater;
+                            if Total - Cursor >= 2u32 {
+                                if Bytesˉreadˉu8(Input, Cursor + 1u32) == 61u8 {
+                                    Kind = Compilerˉtokenˉkind.Greaterˉequals;
+                                    Width = 2u32;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if Firstˉvalue < 100u32 {
+                        if First == 91u8 { Kind = Compilerˉtokenˉkind.Leftˉbracket; }
+                        if First == 93u8 { Kind = Compilerˉtokenˉkind.Rightˉbracket; }
+                    } else {
+                        if First == 123u8 { Kind = Compilerˉtokenˉkind.Leftˉbrace; }
+                        if First == 125u8 { Kind = Compilerˉtokenˉkind.Rightˉbrace; }
+                    }
+                }
             }
         }
     }
@@ -1044,7 +1131,7 @@ export fn Compilerˉlexˉsourceˉbounded(
             );
         }
         Tokens = Tokens + 1u32;
-        Token = Compilerˉlexˉnextˉvalidated(
+        Token = Compilerˉlexˉnextˉafterˉscan(
             Input,
             Token.Nextˉoffset,
             Token.Nextˉline,
@@ -1073,7 +1160,7 @@ export fn Compilerˉlexˉtokenˉat(Input: bytes, Wanted: u32) -> Compilerˉsourc
     while Index < Wanted {
         if Token.Status != Compilerˉlexˉstatus.Valid { return Token; }
         if Token.Kind == Compilerˉtokenˉkind.End { return Token; }
-        Token = Compilerˉlexˉnextˉvalidated(
+        Token = Compilerˉlexˉnextˉafterˉscan(
             Input,
             Token.Nextˉoffset,
             Token.Nextˉline,

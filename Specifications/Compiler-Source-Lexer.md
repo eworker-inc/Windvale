@@ -4,7 +4,7 @@
 
 `Compilerˉsourceˉlexer` is the first Windvale-written self-hosted compiler slice. It tokenizes the complete implemented Seed lexical surface over immutable UTF-8 bytes. The module is portable, capability-free, and depends only on `Foundationˉdecimalˉparsing`.
 
-The original streaming implementation is cross-host qualified at `d91dbfb` under Decision 0025. Decision 0042's bounded-dispatch implementation is the current candidate. It does not replace the Stage 0 compiler yet.
+The original streaming implementation is cross-host qualified at `d91dbfb` under Decision 0025. Decision 0042's bounded dispatch is cross-host qualified, and Decision 0055's validated-scan reuse is the current candidate. It does not replace the Stage 0 compiler yet.
 
 ## Limits and coordinates
 
@@ -65,15 +65,16 @@ The token preserves the original quoted source span. Decoded string construction
 ```text
 Compilerˉlexˉnext(Input, Start, Startˉline, Startˉcolumn) -> Compilerˉsourceˉtoken
 Compilerˉlexˉnextˉvalidated(Input, Start, Startˉline, Startˉcolumn) -> Compilerˉsourceˉtoken
+Compilerˉlexˉnextˉafterˉscan(Input, Start, Startˉline, Startˉcolumn) -> Compilerˉsourceˉtoken
 Compilerˉlexˉsourceˉbounded(Input, Maximumˉtokens) -> Compilerˉsourceˉscan
 Compilerˉlexˉsource(Input) -> Compilerˉsourceˉscan
 Compilerˉlexˉtokenˉat(Input, Wanted) -> Compilerˉsourceˉtoken
 ```
 
-`Compilerˉlexˉnext` is the safe standalone entry and validates strict UTF-8. `Compilerˉlexˉnextˉvalidated` is for a caller that already validated the complete byte value; it still validates cursor shape. A parser should call the first entry once and advance with the second.
+`Compilerˉlexˉnext` is the safe standalone entry and validates strict UTF-8. `Compilerˉlexˉnextˉvalidated` is for a caller that already validated the complete byte value; it still validates cursor shape. `Compilerˉlexˉnextˉafterˉscan` is the narrower compiler-internal boundary for a cursor returned by an accepted token or validated parser/symbol record. It does not repeat cursor-shape checks, so callers must hold both complete-scan and cursor-provenance evidence. The checked whitespace and identifier-part helpers similarly retain their original signatures while internal `afterˉscan` variants accept the already known total byte length.
 
 `Compilerˉsourceˉscan` reports final status, accepted token count, failure coordinates, and end cursor. It never stores a token sequence. `Compilerˉlexˉtokenˉat` exists for tests and inspection and is not the parser iteration contract.
 
 ## Qualified implementation
 
-`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 36,741-byte WVB with SHA-256 `4d48af0c208e88d9e84d48c80324f35bed1985a799bd275b65b6a07f70111706`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 43,250-byte WVB with SHA-256 `5422673a70ecf92f99f9a2db144f9b7a691d6281a98284dde6c6bc796ada60a4`, returns `0`, and executes 1,438,364 instructions under the 10,000,000-instruction ceiling. The implementation bytes passed exact Windows/Debian qualification at `5d67463` under Decision 0042, and the role-based path passed exact qualification at `4fdc6bf` under Decision 0043 without changing those bytes.
+`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 38,973-byte WVB with SHA-256 `ca91d5aa9889540250be552b5563dacba8deba2abb70ea557d0e4f8089ee749f`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 45,319-byte WVB with SHA-256 `2a7a2f8c1276c252fa8ddb53a362c6560dfa06ba8c2a8be0fb56f507e820df87` and returns `0` under the 10,000,000-instruction ceiling. The Decision 0042 implementation passed exact Windows/Debian qualification at `5d67463`, and the role-based path passed at `4fdc6bf`. Decision 0055's candidate retains the lexical contract while changing implementation bytes; exact cross-host Qualification is pending.

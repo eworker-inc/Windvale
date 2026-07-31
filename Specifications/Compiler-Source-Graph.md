@@ -55,9 +55,9 @@ Headers and leading import declarations are rescanned from accepted immutable so
 
 ## Current candidate artifacts and evidence
 
-- `Source-Graph-Core.wvb`: 196,493 bytes, SHA-256 `4b45616ff0304f59f16c44afea637fabd0f66f68ae4b5d7b149e23a9e8e70662`.
-- `Source-Graph-Demo.wvb`: 202,893 bytes, SHA-256 `309c7ca3815c709c759b4673036ffd747d95450c651aa21c3dbf66e59dbe903c`.
-- `Source-Graph-Tool.wvb`: 200,174 bytes, SHA-256 `4a07816c65d82b6594270a9b253b999700196d07e10faed0221fc6b1ca7e1e9e`.
+- `Source-Graph-Core.wvb`: 203,731 bytes, SHA-256 `a6ef5896e45593f45b136cc73f3e8c57dd33274ff4736eff18795276fb0c8885`.
+- `Source-Graph-Demo.wvb`: 210,131 bytes, SHA-256 `7c0e191c6a931617aee23fbc91dac61648ebc2f8f2a40a1690ff648a6b9d60de`.
+- `Source-Graph-Tool.wvb`: 207,412 bytes, SHA-256 `ffbbea564754c667961680497d3b077f38626a4993ed9c1e1a0d5966e5378aba`.
 
 The Windows and Debian conformance runners each pass all 44 tests with zero build warnings/errors. The demo covers valid and rejected topology, and the hosted tool validates the real compiler closure as:
 
@@ -65,4 +65,4 @@ The Windows and Debian conformance runners each pass all 44 tests with zero buil
 source graph status=Valid modules=7 imports=6 reachable=7
 ```
 
-The graph contract was originally cross-host qualified at `09c6f54`. The current Decision 0042 artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`; the graph summary itself is unchanged.
+The graph contract was originally cross-host qualified at `09c6f54`. Decision 0042's artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`; the graph summary itself remains unchanged. Decision 0055 changes only embedded frontend implementation bytes in these artifacts and is awaiting exact cross-host Qualification.

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current implementation adds bidirectional nominal identity evidence under Decision 0050 while preserving the qualified namespace, signature, and WVSD contracts. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes evidence for later semantic phases.
+`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current implementation adds bidirectional nominal identity evidence under Decision 0050 and bounded nominal-range lookup under Decision 0055 while preserving the qualified namespace, signature, and WVSD contracts. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes evidence for later semantic phases.
 
 It does not bind function bodies, locals, calls, expressions, control flow, construct WIR, or emit WVB.
 
@@ -99,6 +99,8 @@ The directory length must be exactly `16 + EntryCount * 24`. `Compilerˉsourceˉ
 
 Two tables follow the bucket payload. The reverse table contains one `u32` for each record and enum in canonical nominal order and maps that ordinal to its WVSD directory index. The forward table contains one `u32` for each WVSD entry and maps nominal declarations to their canonical ordinal; the total nominal count is the nonnominal sentinel. The complete length is `4112 + EntryCount * 8 + NominalCount * 4` bytes.
 
+Exact nominal lookup searches the reverse table in two bounded passes: first the record range for the requested first UTF-8 byte, then the corresponding enum range. Unequal byte lengths are rejected before ordinal comparison. This preserves record-then-enum identity and avoids scanning unrelated WVSD entries.
+
 Name equality remains exact ordinal UTF-8 comparison over validated absolute WVSS spans. Construction is deterministic and total even before duplicate-name rejection. The index never changes namespace semantics and is not a separately published compatibility format.
 
 ## Visibility matrix
@@ -113,14 +115,14 @@ Failure evidence names the current module, a related prior/target module when ap
 
 ## Candidate artifacts and evidence
 
-- `Source-Symbols-Core.wvb`: 269,799 bytes, SHA-256 `063a9ff3cb37196b1e6d9c8fb5be39916fe9fc21fab8032b0415d5f8ab0677d2`.
-- `Source-Symbols-Demo.wvb`: 283,038 bytes, SHA-256 `9e7826d354d80d06702555e857f348e08a6e396cca64b11c5eda4895e7294a25`.
-- `Source-Symbols-Tool.wvb`: 273,580 bytes, SHA-256 `54289a4ebfe778c6c2b6ebfb7cb7afaf3d4899af41e68a989eaa26b9dd2f28c4`.
+- `Source-Symbols-Core.wvb`: 277,834 bytes, SHA-256 `230701dc73c8b18e4beedbaad1ce09fa02e83ab5d65e1152ed9ad945e0846105`.
+- `Source-Symbols-Demo.wvb`: 291,073 bytes, SHA-256 `02ca6d2b9d3dd18efe5aafaf329f787226fc68051a10e63cfb053dd51e4654d0`.
+- `Source-Symbols-Tool.wvb`: 281,615 bytes, SHA-256 `6c83cd9813efb88e86252ce428248245a3f1c0c5d9f8cdb7eeefef4172b126c3`.
 
 Exact commit `e37204f` passes zero-warning Release builds, all 48 conformance tests, and complete Windows/Debian Qualification with matching normalized contracts and byte-identical portable artifacts. The demo exercises valid and rejected namespaces/signatures plus corrupted directories and both directions of the nominal map. The hosted tool validates the real eight-module, 303,873-byte compiler closure as:
 
 ```text
-source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=291 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64
+source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=140 fields=291 members=181 parameters=613 directory-bytes=4288 visibility-bytes=64
 ```
 
-The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`.
+The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 preserves both byte formats and adds the bounded reverse-table lookup; exact cross-host Qualification is pending.

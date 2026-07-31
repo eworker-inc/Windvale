@@ -466,6 +466,22 @@ All 61 directly retrieved portable artifacts, totaling 7,546,823 bytes, matched 
 
 This qualifies Decision 0050 and completes the structural symbol-directory/name-ranking slice of roadmap Phase 8. It does not complete Phase 7 or Phase 8, close the 4 MiB source envelope, complete the exact typed-WVIR input below its fixed ceiling, qualify compiler self-hosting, produce native Windvale tools, advance the native backend gate, or implement any Windvale OS layer.
 
+## Validated scan reuse and ten-module closure candidate
+
+Decision 0055 retains checked standalone lexer/parser entry points while letting compiler loops consume already established full-source scan and cursor evidence. Source-set validation reuses its declaration summary for the body pass. A bounded byte scanner skips lexically valid function bodies while tracking strings, escapes, comments, braces, line/column coordinates, and the existing depth limit; rejected or ambiguous shapes fall back to the qualified token scanner. The checked body-span boundary adds an iterative nesting preflight so adversarial depth returns `Nestingˉlimit` without host-stack exhaustion. Nominal lookup uses the existing WVSI reverse table and first-byte canonical ranges.
+
+The focused typed-WVIR fixture falls from Decision 0050's 5,715,847 instructions to 3,626,693, a reduction of 2,089,154 instructions or 36.55%. The focused 24-test compiler area passed in 37.927 seconds. The complete candidate Windows Standard suite passed all 48 tests in 246.417 seconds, and focused nesting-containment and golden-contract reruns also passed.
+
+The exact ten-module typed-WVIR input now completes below the unchanged 4,000,000,000-instruction ceiling:
+
+```text
+source wir status=Valid modules=10 functions=315 blocks=5658 operations=27377 temporaries=25094 operands=21869 directory-bytes=1720804
+Result: 0
+Instructions: 3912239584
+```
+
+The retained margin is 87,760,416 instructions. This clears the performance entry gate for Stage 0 → Stage 1 → Stage 2 convergence but does not itself prove compiler self-hosting, byte-for-byte bootstrap convergence, closure of the 4 MiB source envelope, completion of Phase 8, native tooling, or any OS layer. Exact Windows and Debian Qualification, normalized contract comparison, and portable artifact comparison remain pending.
+
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
 Commit `9c4b9f5` was archived and transferred with matching SHA-256 `44565d0f6366eb418dc1a4555d1f7b355df63ec2ea836440de54639087fc335a`, then verified in the uniquely named disposable directory `/tmp/windvale-linker-9c4b9f5-20260730` on the isolated E-Worker QA host. The archive contained the canonical WVA fixture as 403 bytes plus the linker project, provider fixture, and shell verifier. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`. The verification did not use E-Worker release, configuration, service, or durable-data paths. The Debian report was retrieved with SHA-256 `b84cd3a180e8cb167dca3cf909457de91a8643f19911628c426c6e52c6fe5fc0`; the provider WVO, linked image, and canonical map were retrieved separately and each matched the Windows artifact byte for byte; then the resolved exact temporary directory and transferred archive were removed.

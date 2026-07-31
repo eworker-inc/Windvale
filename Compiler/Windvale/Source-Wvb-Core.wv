@@ -567,16 +567,16 @@ export fn Compilerˉsourceˉwvbˉdataˉtype(
     Source: bytes,
     Declaration: Compilerˉsourceˉdeclaration
 ) -> Compilerˉsourceˉtypeˉkind {
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Declarationˉoffset, 1u32, 1u32
     );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
     );
-    let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
-    let Type: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Type: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn
     );
     if Type.Kind == Compilerˉtokenˉkind.Text {
@@ -1156,7 +1156,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉexplicitˉdata(
             Bytesˉconcat(Payload, Decoded.Value)
         );
     }
-    let Start: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Start: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Bodyˉoffset, 1u32, 1u32
     );
     var Cursor: u32 = Start.Nextˉoffset;
@@ -1169,13 +1169,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉexplicitˉdata(
         );
         var Arrayˉindex: u32 = 0u32;
         while Arrayˉindex < Declaration.Items {
-            var Arrayˉitem: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+            var Arrayˉitem: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                 Source, Cursor, Line, Column
             );
             var Negative: bool = false;
             if Arrayˉitem.Kind == Compilerˉtokenˉkind.Minus {
                 Negative = true;
-                Arrayˉitem = Compilerˉlexˉnextˉvalidated(
+                Arrayˉitem = Compilerˉlexˉnextˉafterˉscan(
                     Source, Arrayˉitem.Nextˉoffset, Arrayˉitem.Nextˉline, Arrayˉitem.Nextˉcolumn
                 );
             }
@@ -1186,7 +1186,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉexplicitˉdata(
                 }
             }
             Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Arrayˉvalue));
-            let Arrayˉseparator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+            let Arrayˉseparator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                 Source, Arrayˉitem.Nextˉoffset, Arrayˉitem.Nextˉline, Arrayˉitem.Nextˉcolumn
             );
             Cursor = Arrayˉseparator.Nextˉoffset;
@@ -1204,13 +1204,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉexplicitˉdata(
     );
     var Byteˉindex: u32 = 0u32;
     while Byteˉindex < Declaration.Items {
-        let Byteˉitem: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Byteˉitem: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Line, Column
         );
         Payload = Bytesˉconcat(
             Payload, Compilerˉsourceˉwvbˉlowˉbyte(Byteˉitem.Numericˉvalue)
         );
-        let Byteˉseparator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Byteˉseparator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Byteˉitem.Nextˉoffset, Byteˉitem.Nextˉline, Byteˉitem.Nextˉcolumn
         );
         Cursor = Byteˉseparator.Nextˉoffset;
@@ -1329,13 +1329,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
         )
     );
     Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Declaration.Items));
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Declarationˉoffset, 1u32, 1u32
     );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
     );
-    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
     var Cursor: u32 = Brace.Nextˉoffset;
@@ -1343,10 +1343,10 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
     var Column: u32 = Brace.Nextˉcolumn;
     var Fieldˉindex: u32 = 0u32;
     while Fieldˉindex < Declaration.Items {
-        let Field: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Field: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Line, Column
         );
-        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Field.Nextˉoffset, Field.Nextˉline, Field.Nextˉcolumn
         );
         let Binding: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
@@ -1372,7 +1372,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
             Payload, Compilerˉsourceˉwvbˉstring(Source, Field.Offset, Field.Length)
         );
         Payload = Bytesˉconcat(Payload, Compilerˉsourceˉwvbˉshape(Shape));
-        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn
         );
         Cursor = End.Nextˉoffset;
@@ -1402,13 +1402,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
         )
     );
     Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Declaration.Items));
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Declarationˉoffset, 1u32, 1u32
     );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
     );
-    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
     var Cursor: u32 = Brace.Nextˉoffset;
@@ -1416,20 +1416,20 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
     var Column: u32 = Brace.Nextˉcolumn;
     var Memberˉindex: u32 = 0u32;
     while Memberˉindex < Declaration.Items {
-        let Member: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Member: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Line, Column
         );
-        let Equals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Equals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Member.Nextˉoffset, Member.Nextˉline, Member.Nextˉcolumn
         );
-        let Value: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Value: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Equals.Nextˉoffset, Equals.Nextˉline, Equals.Nextˉcolumn
         );
         Payload = Bytesˉconcat(
             Payload, Compilerˉsourceˉwvbˉstring(Source, Member.Offset, Member.Length)
         );
         Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Value.Numericˉvalue));
-        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
         );
         Cursor = End.Nextˉoffset;

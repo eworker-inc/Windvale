@@ -347,7 +347,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_LEXER_MODULE"
 SOURCE_LEXER_HASH=$(sha256sum "$SOURCE_LEXER_MODULE" | awk '{print $1}')
-if [ "$SOURCE_LEXER_HASH" != '4d48af0c208e88d9e84d48c80324f35bed1985a799bd275b65b6a07f70111706' ]; then
+if [ "$SOURCE_LEXER_HASH" != 'ca91d5aa9889540250be552b5563dacba8deba2abb70ea557d0e4f8089ee749f' ]; then
     echo "The Windvale source lexer has an unexpected digest: $SOURCE_LEXER_HASH" >&2
     exit 1
 fi
@@ -356,14 +356,14 @@ printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Nominal types (6)' >/dev/nul
 printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉsourceˉtoken' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉtokenˉkind' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉlexˉsourceˉbounded' >/dev/null
-printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Exports (14)' >/dev/null
+printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Exports (17)' >/dev/null
 dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Lexer-Demo.wv" \
     --module "$SOURCE_LEXER_SOURCE" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_LEXER_DEMO_MODULE"
 SOURCE_LEXER_DEMO_HASH=$(sha256sum "$SOURCE_LEXER_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_LEXER_DEMO_HASH" != '5422673a70ecf92f99f9a2db144f9b7a691d6281a98284dde6c6bc796ada60a4' ]; then
+if [ "$SOURCE_LEXER_DEMO_HASH" != '2a7a2f8c1276c252fa8ddb53a362c6560dfa06ba8c2a8be0fb56f507e820df87' ]; then
     echo "The Windvale source-lexer demo has an unexpected digest: $SOURCE_LEXER_DEMO_HASH" >&2
     exit 1
 fi
@@ -378,7 +378,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_DECLARATION_PARSER_MODULE"
 SOURCE_DECLARATION_PARSER_HASH=$(sha256sum "$SOURCE_DECLARATION_PARSER_MODULE" | awk '{print $1}')
-if [ "$SOURCE_DECLARATION_PARSER_HASH" != '593e841ce9b751015e3de9f3100f4defe83d575b29324784839c38e227ff1276' ]; then
+if [ "$SOURCE_DECLARATION_PARSER_HASH" != '4bbaaaa6293ab1fb5a4eb92c3e8a52c078943ba88652b27f69fdc3c5ab76fda7' ]; then
     echo "The Windvale declaration parser has an unexpected digest: $SOURCE_DECLARATION_PARSER_HASH" >&2
     exit 1
 fi
@@ -387,7 +387,7 @@ printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Nominal types (
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉdeclaration' >/dev/null
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉmoduleˉsummary' >/dev/null
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉnextˉdeclarationˉvalidated' >/dev/null
-printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Exports (24)' >/dev/null
+printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Exports (25)' >/dev/null
 dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Declaration-Parser-Demo.wv" \
     --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
@@ -395,7 +395,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_DECLARATION_PARSER_DEMO_MODULE"
 SOURCE_DECLARATION_PARSER_DEMO_HASH=$(sha256sum "$SOURCE_DECLARATION_PARSER_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_DECLARATION_PARSER_DEMO_HASH" != '3ed1fc6ff4453da1cbfb100e6978029c3db2bb9baaec98c230db6ef1f6267e38' ]; then
+if [ "$SOURCE_DECLARATION_PARSER_DEMO_HASH" != 'ab28936fe0961261a0f243009d5c9b93af52069326618e03e428d1cc024fea11' ]; then
     echo "The declaration-parser demo has an unexpected digest: $SOURCE_DECLARATION_PARSER_DEMO_HASH" >&2
     exit 1
 fi
@@ -409,7 +409,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_DECLARATION_PARSER_TOOL_MODULE"
 SOURCE_DECLARATION_PARSER_TOOL_HASH=$(sha256sum "$SOURCE_DECLARATION_PARSER_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_DECLARATION_PARSER_TOOL_HASH" != '143f9c991de2cc309861aa9ea2beb948bca06cfd22b0f932c8f7abcc41ba9408' ]; then
+if [ "$SOURCE_DECLARATION_PARSER_TOOL_HASH" != '94134e28bef9544b0fbb4b4ae6dfd3deb3aa52598475023d37b01a5de8686d45' ]; then
     echo "The declaration-parser tool has an unexpected digest: $SOURCE_DECLARATION_PARSER_TOOL_HASH" >&2
     exit 1
 fi
@@ -422,7 +422,7 @@ SOURCE_LEXER_DECLARATION_OUTPUT=$(dotnet "$TOOL_DLL" \
     --allow process.argument_count \
     --max-steps 30000000 \
     -- "$SOURCE_LEXER_SOURCE")
-printf '%s\n' "$SOURCE_LEXER_DECLARATION_OUTPUT" | grep -F 'source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=14 tokens=5061 offset=41736' >/dev/null
+printf '%s\n' "$SOURCE_LEXER_DECLARATION_OUTPUT" | grep -F 'source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=17 tokens=5384 offset=45588' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_DECLARATION_OUTPUT" | grep -F 'Result: 0' >/dev/null
 SOURCE_PARSER_SELF_DECLARATION_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_DECLARATION_PARSER_TOOL_MODULE" \
@@ -433,7 +433,7 @@ SOURCE_PARSER_SELF_DECLARATION_OUTPUT=$(dotnet "$TOOL_DLL" \
     --allow process.argument_count \
     --max-steps 45000000 \
     -- "$SOURCE_DECLARATION_PARSER_SOURCE")
-printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=24 tokens=8876 offset=64950' >/dev/null
+printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=25 tokens=9561 offset=70591' >/dev/null
 printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_BODY_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Body-Parser.wv"
@@ -444,7 +444,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_BODY_PARSER_MODULE"
 SOURCE_BODY_PARSER_HASH=$(sha256sum "$SOURCE_BODY_PARSER_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BODY_PARSER_HASH" != '7b56ea4d25f2d13467d19123654bb8d617ae2e1b0dd43f2497e1ff9644cc3839' ]; then
+if [ "$SOURCE_BODY_PARSER_HASH" != '3df42c7b6e81343194340b8f6f44e44fb83f3d6f18c249c9d9ed4e58df69ec73' ]; then
     echo "The Windvale body parser has an unexpected digest: $SOURCE_BODY_PARSER_HASH" >&2
     exit 1
 fi
@@ -454,7 +454,7 @@ printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉexpr
 printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉstatement' >/dev/null
 printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉexpressionˉvalidated' >/dev/null
 printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉsourceˉbodies' >/dev/null
-printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Exports (38)' >/dev/null
+printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Exports (39)' >/dev/null
 dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Body-Parser-Demo.wv" \
     --module "$SOURCE_BODY_PARSER_SOURCE" \
@@ -463,7 +463,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_BODY_PARSER_DEMO_MODULE"
 SOURCE_BODY_PARSER_DEMO_HASH=$(sha256sum "$SOURCE_BODY_PARSER_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BODY_PARSER_DEMO_HASH" != '07f9b2d94b4ebefaa3260d04b2cc7400b56007f664ef93a8db97207679039005' ]; then
+if [ "$SOURCE_BODY_PARSER_DEMO_HASH" != 'afa07f843679e89f84a5a55887af834575d43d4a3ac3f1a76cd4395a103e62b6' ]; then
     echo "The body-parser demo has an unexpected digest: $SOURCE_BODY_PARSER_DEMO_HASH" >&2
     exit 1
 fi
@@ -478,7 +478,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_BODY_PARSER_TOOL_MODULE"
 SOURCE_BODY_PARSER_TOOL_HASH=$(sha256sum "$SOURCE_BODY_PARSER_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BODY_PARSER_TOOL_HASH" != '9c8b88f9b6aaa27df5d39fc671319ed4890510535321f637a533cf2f01ddeadc' ]; then
+if [ "$SOURCE_BODY_PARSER_TOOL_HASH" != '342fadc0886e5b8b2910cb65c8495730a902364a526fd34df58c574a32a91890' ]; then
     echo "The body-parser tool has an unexpected digest: $SOURCE_BODY_PARSER_TOOL_HASH" >&2
     exit 1
 fi
@@ -491,7 +491,7 @@ SOURCE_LEXER_BODY_OUTPUT=$(dotnet "$TOOL_DLL" \
     --allow process.argument_count \
     --max-steps 100000000 \
     -- "$SOURCE_LEXER_SOURCE")
-printf '%s\n' "$SOURCE_LEXER_BODY_OUTPUT" | grep -F 'source bodies status=Valid functions=14 top-level=123 statements=567 expression-nodes=1579 statement-depth=17 expression-depth=5 offset=41737' >/dev/null
+printf '%s\n' "$SOURCE_LEXER_BODY_OUTPUT" | grep -F 'source bodies status=Valid functions=17 top-level=111 statements=602 expression-nodes=1670 statement-depth=17 expression-depth=5 offset=45589' >/dev/null
 printf '%s\n' "$SOURCE_LEXER_BODY_OUTPUT" | grep -F 'Result: 0' >/dev/null
 SOURCE_DECLARATION_BODY_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BODY_PARSER_TOOL_MODULE" \
@@ -502,7 +502,7 @@ SOURCE_DECLARATION_BODY_OUTPUT=$(dotnet "$TOOL_DLL" \
     --allow process.argument_count \
     --max-steps 160000000 \
     -- "$SOURCE_DECLARATION_PARSER_SOURCE")
-printf '%s\n' "$SOURCE_DECLARATION_BODY_OUTPUT" | grep -F 'source bodies status=Valid functions=24 top-level=232 statements=527 expression-nodes=2135 statement-depth=5 expression-depth=3 offset=64951' >/dev/null
+printf '%s\n' "$SOURCE_DECLARATION_BODY_OUTPUT" | grep -F 'source bodies status=Valid functions=25 top-level=245 statements=615 expression-nodes=2366 statement-depth=12 expression-depth=4 offset=70592' >/dev/null
 printf '%s\n' "$SOURCE_DECLARATION_BODY_OUTPUT" | grep -F 'Result: 0' >/dev/null
 SOURCE_BODY_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BODY_PARSER_TOOL_MODULE" \
@@ -513,7 +513,7 @@ SOURCE_BODY_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     --allow process.argument_count \
     --max-steps 160000000 \
     -- "$SOURCE_BODY_PARSER_SOURCE")
-printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023' >/dev/null
+printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'source bodies status=Valid functions=39 top-level=237 statements=523 expression-nodes=2520 statement-depth=5 expression-depth=3 offset=69903' >/dev/null
 printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_SET_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Set-Core.wv"
@@ -525,7 +525,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_SET_MODULE"
 SOURCE_SET_HASH=$(sha256sum "$SOURCE_SET_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SET_HASH" != 'c2a420a984a9bd39754a9e842d14e1e94030cd8ff6a0e313cc1703ae2e244386' ]; then
+if [ "$SOURCE_SET_HASH" != 'ab6a6afc5cc90e8db508a9ce4d22acc42cf2cbc5293afad977881a71c3b2658a' ]; then
     echo "The Windvale source-set core has an unexpected digest: $SOURCE_SET_HASH" >&2
     exit 1
 fi
@@ -545,7 +545,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_SET_DEMO_MODULE"
 SOURCE_SET_DEMO_HASH=$(sha256sum "$SOURCE_SET_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SET_DEMO_HASH" != '960c973b7014b9e77b33b55e9fffa7db0a4a3d0a2b87737d54603f09cec022c0' ]; then
+if [ "$SOURCE_SET_DEMO_HASH" != 'dda97ec276bc2c56552e765854322b1177f5b6c27d36fec25d9360f39451b7e1' ]; then
     echo "The source-set demo has an unexpected digest: $SOURCE_SET_DEMO_HASH" >&2
     exit 1
 fi
@@ -561,7 +561,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_SET_TOOL_MODULE"
 SOURCE_SET_TOOL_HASH=$(sha256sum "$SOURCE_SET_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SET_TOOL_HASH" != 'dc8645c9b73fe8bfe10409e2fbd34fd29f125eea42409617ede5256b36a03e2e' ]; then
+if [ "$SOURCE_SET_TOOL_HASH" != '58d29de0ea3b92a83f0cd84bba22910c2c826e7f01d93d0aa5a04f8d0a029322' ]; then
     echo "The source-set tool has an unexpected digest: $SOURCE_SET_TOOL_HASH" >&2
     exit 1
 fi
@@ -578,7 +578,7 @@ SOURCE_SET_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     "$SOURCE_DECLARATION_PARSER_SOURCE" \
     "$SOURCE_LEXER_SOURCE" \
     "$DECIMAL_PARSING_SOURCE")
-printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'source set status=Valid modules=5 source-bytes=194697 imports=4 records=16 enums=11 functions=86' >/dev/null
+printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'source set status=Valid modules=5 source-bytes=205110 imports=4 records=16 enums=11 functions=91' >/dev/null
 printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_GRAPH_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Graph-Core.wv"
@@ -592,7 +592,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_GRAPH_MODULE"
 SOURCE_GRAPH_HASH=$(sha256sum "$SOURCE_GRAPH_MODULE" | awk '{print $1}')
-if [ "$SOURCE_GRAPH_HASH" != '4b45616ff0304f59f16c44afea637fabd0f66f68ae4b5d7b149e23a9e8e70662' ]; then
+if [ "$SOURCE_GRAPH_HASH" != 'a6ef5896e45593f45b136cc73f3e8c57dd33274ff4736eff18795276fb0c8885' ]; then
     echo "The Windvale source-graph core has an unexpected digest: $SOURCE_GRAPH_HASH" >&2
     exit 1
 fi
@@ -613,7 +613,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_GRAPH_DEMO_MODULE"
 SOURCE_GRAPH_DEMO_HASH=$(sha256sum "$SOURCE_GRAPH_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_GRAPH_DEMO_HASH" != '309c7ca3815c709c759b4673036ffd747d95450c651aa21c3dbf66e59dbe903c' ]; then
+if [ "$SOURCE_GRAPH_DEMO_HASH" != '7c0e191c6a931617aee23fbc91dac61648ebc2f8f2a40a1690ff648a6b9d60de' ]; then
     echo "The source-graph demo has an unexpected digest: $SOURCE_GRAPH_DEMO_HASH" >&2
     exit 1
 fi
@@ -631,7 +631,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_GRAPH_TOOL_MODULE"
 SOURCE_GRAPH_TOOL_HASH=$(sha256sum "$SOURCE_GRAPH_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_GRAPH_TOOL_HASH" != '4a07816c65d82b6594270a9b253b999700196d07e10faed0221fc6b1ca7e1e9e' ]; then
+if [ "$SOURCE_GRAPH_TOOL_HASH" != 'ffbbea564754c667961680497d3b077f38626a4993ed9c1e1a0d5966e5378aba' ]; then
     echo "The source-graph tool has an unexpected digest: $SOURCE_GRAPH_TOOL_HASH" >&2
     exit 1
 fi
@@ -665,7 +665,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_SYMBOLS_MODULE"
 SOURCE_SYMBOLS_HASH=$(sha256sum "$SOURCE_SYMBOLS_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SYMBOLS_HASH" != '063a9ff3cb37196b1e6d9c8fb5be39916fe9fc21fab8032b0415d5f8ab0677d2' ]; then
+if [ "$SOURCE_SYMBOLS_HASH" != '230701dc73c8b18e4beedbaad1ce09fa02e83ab5d65e1152ed9ad945e0846105' ]; then
     echo "The Windvale source-symbol core has an unexpected digest: $SOURCE_SYMBOLS_HASH" >&2
     exit 1
 fi
@@ -688,7 +688,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_SYMBOLS_DEMO_MODULE"
 SOURCE_SYMBOLS_DEMO_HASH=$(sha256sum "$SOURCE_SYMBOLS_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SYMBOLS_DEMO_HASH" != '9e7826d354d80d06702555e857f348e08a6e396cca64b11c5eda4895e7294a25' ]; then
+if [ "$SOURCE_SYMBOLS_DEMO_HASH" != '02ca6d2b9d3dd18efe5aafaf329f787226fc68051a10e63cfb053dd51e4654d0' ]; then
     echo "The source-symbol demo has an unexpected digest: $SOURCE_SYMBOLS_DEMO_HASH" >&2
     exit 1
 fi
@@ -707,7 +707,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_SYMBOLS_TOOL_MODULE"
 SOURCE_SYMBOLS_TOOL_HASH=$(sha256sum "$SOURCE_SYMBOLS_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SYMBOLS_TOOL_HASH" != '54289a4ebfe778c6c2b6ebfb7cb7afaf3d4899af41e68a989eaa26b9dd2f28c4' ]; then
+if [ "$SOURCE_SYMBOLS_TOOL_HASH" != '6c83cd9813efb88e86252ce428248245a3f1c0c5d9f8cdb7eeefef4172b126c3' ]; then
     echo "The source-symbol tool has an unexpected digest: $SOURCE_SYMBOLS_TOOL_HASH" >&2
     exit 1
 fi
@@ -727,7 +727,7 @@ SOURCE_SYMBOLS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     "$SOURCE_SET_SOURCE" \
     "$BYTE_CONSTRUCTION_SOURCE" \
     "$DECIMAL_PARSING_SOURCE")
-printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=135 fields=291 members=181 parameters=597 directory-bytes=4168 visibility-bytes=64' >/dev/null
+printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=140 fields=291 members=181 parameters=613 directory-bytes=4288 visibility-bytes=64' >/dev/null
 printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_BINDINGS_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Bindings-Core.wv"
@@ -743,7 +743,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_BINDINGS_MODULE"
 SOURCE_BINDINGS_HASH=$(sha256sum "$SOURCE_BINDINGS_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BINDINGS_HASH" != '2c253a188c96d5bbdf7e8b81d44dbd776c27c043ba9df7cc6230972c278335e5' ]; then
+if [ "$SOURCE_BINDINGS_HASH" != '3922ca780b11162a9a331b7ca2fc6d3bb070e89134190eabbb978640a05ca128' ]; then
     echo "The Windvale source-binding core has an unexpected digest: $SOURCE_BINDINGS_HASH" >&2
     exit 1
 fi
@@ -767,7 +767,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_BINDINGS_DEMO_MODULE"
 SOURCE_BINDINGS_DEMO_HASH=$(sha256sum "$SOURCE_BINDINGS_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BINDINGS_DEMO_HASH" != '11621f87f3fe198c97ea141f41ac1a4d69bd34e03f10c17d4bd23083b3087b18' ]; then
+if [ "$SOURCE_BINDINGS_DEMO_HASH" != '26c778d4676d9dfa969cfebe41593d7733a6c5ad8fc54c0ee7b1b9a2dc6a5880' ]; then
     echo "The source-binding demo has an unexpected digest: $SOURCE_BINDINGS_DEMO_HASH" >&2
     exit 1
 fi
@@ -787,7 +787,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_BINDINGS_TOOL_MODULE"
 SOURCE_BINDINGS_TOOL_HASH=$(sha256sum "$SOURCE_BINDINGS_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BINDINGS_TOOL_HASH" != '2e7f2885da27a5ba12f15a831bb2429a21acb7e23ad46061009b4b2209b713f4' ]; then
+if [ "$SOURCE_BINDINGS_TOOL_HASH" != 'd989caa9573ca0b69df46b6a5cf0bd385011d65311463043bcc0b74e25b5a28c' ]; then
     echo "The source-binding tool has an unexpected digest: $SOURCE_BINDINGS_TOOL_HASH" >&2
     exit 1
 fi
@@ -808,7 +808,7 @@ SOURCE_BINDINGS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     "$SOURCE_SYMBOLS_SOURCE" \
     "$BYTE_CONSTRUCTION_SOURCE" \
     "$DECIMAL_PARSING_SOURCE")
-printf '%s\n' "$SOURCE_BINDINGS_SELF_OUTPUT" | grep -F 'source bindings status=Valid modules=9 functions=189 parameters=827 locals=986 reads=8451 assignments=643 calls=1508 directory-bytes=67180' >/dev/null
+printf '%s\n' "$SOURCE_BINDINGS_SELF_OUTPUT" | grep -F 'source bindings status=Valid modules=9 functions=194 parameters=843 locals=1016 reads=8630 assignments=683 calls=1538 directory-bytes=68876' >/dev/null
 printf '%s\n' "$SOURCE_BINDINGS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_WIR_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Wir-Core.wv"
@@ -825,7 +825,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WIR_MODULE"
 SOURCE_WIR_HASH=$(sha256sum "$SOURCE_WIR_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WIR_HASH" != 'e11a017226c8b357732f02f5bdc6ff581c876276165e267b1875a2daa247cef0' ]; then
+if [ "$SOURCE_WIR_HASH" != 'f94c96ce84ea05e7802bf4780bb8c0ef5d818303ac83730b50273006aaf6a35e' ]; then
     echo "The Windvale typed-WVIR core has an unexpected digest: $SOURCE_WIR_HASH" >&2
     exit 1
 fi
@@ -849,7 +849,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WIR_DEMO_MODULE"
 SOURCE_WIR_DEMO_HASH=$(sha256sum "$SOURCE_WIR_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WIR_DEMO_HASH" != '1af3a5d7523ce5ace0091e4892e35c54a4835487186c4e49e653a8af98ecc721' ]; then
+if [ "$SOURCE_WIR_DEMO_HASH" != '0fcf0bf2a6eda1ae271bbe83169af9acfb339e24436c5e76e77b5e273b54301b' ]; then
     echo "The typed-WVIR demo has an unexpected digest: $SOURCE_WIR_DEMO_HASH" >&2
     exit 1
 fi
@@ -869,7 +869,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WIR_TOOL_MODULE"
 SOURCE_WIR_TOOL_HASH=$(sha256sum "$SOURCE_WIR_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WIR_TOOL_HASH" != '3096f68bd7c1ab9e08b5112937d75ef6481b724ba84a9571fd4ce9076156cfa2' ]; then
+if [ "$SOURCE_WIR_TOOL_HASH" != 'cf1421565f9888b23864253b722feac9fa3aa053a0dccfd06d695ca10162ff87' ]; then
     echo "The typed-WVIR tool has an unexpected digest: $SOURCE_WIR_TOOL_HASH" >&2
     exit 1
 fi
@@ -916,7 +916,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WVB_MODULE"
 SOURCE_WVB_HASH=$(sha256sum "$SOURCE_WVB_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_HASH" != '32c739a08fd70e3df8551a4c15571f5f53da8d661300f55500eb15cc2c909468' ]; then
+if [ "$SOURCE_WVB_HASH" != 'eee0cbffcd6f615d1d7805ece8dfc1a8747d265de4c8fe6cae0b426e0770178f' ]; then
     echo "The Windvale WVB backend core has an unexpected digest: $SOURCE_WVB_HASH" >&2
     exit 1
 fi
@@ -926,7 +926,7 @@ printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉcompileˉsourceˉwvb
 printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Exports (55)' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Demo.wv" "$SOURCE_WVB_DEMO_MODULE"
 SOURCE_WVB_DEMO_HASH=$(sha256sum "$SOURCE_WVB_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_DEMO_HASH" != '426fcdba5267db8390dfa301d16ea93f5391f25a4fd139ba17268736aefb306e' ]; then
+if [ "$SOURCE_WVB_DEMO_HASH" != 'c6e6fcbfd674df8d5e147b7c3bb52dfbdd4e26fcae4089ccb6c6fb00ffbb26db' ]; then
     echo "The Windvale WVB backend demo has an unexpected digest: $SOURCE_WVB_DEMO_HASH" >&2
     exit 1
 fi
@@ -934,7 +934,7 @@ SOURCE_WVB_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_DEMO_MODULE" --max-
 printf '%s\n' "$SOURCE_WVB_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Tool.wv" "$SOURCE_WVB_TOOL_MODULE"
 SOURCE_WVB_TOOL_HASH=$(sha256sum "$SOURCE_WVB_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_TOOL_HASH" != 'd68581ed1e89e22eee9c59d051cd1e79e2e75104287f401697528380198c0527' ]; then
+if [ "$SOURCE_WVB_TOOL_HASH" != 'db0b76432f531da40cfb91617673ea0df2981102f294765e7e60c544a8129d0e' ]; then
     echo "The Windvale WVB backend tool has an unexpected digest: $SOURCE_WVB_TOOL_HASH" >&2
     exit 1
 fi

@@ -1629,19 +1629,19 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
             Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase)
         )
     );
-    let First: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let First: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Declarationˉoffset, Declarationˉline, Declarationˉcolumn
     );
     var Functionˉtoken: Compilerˉsourceˉtoken = First;
     if First.Kind == Compilerˉtokenˉkind.Export {
-        Functionˉtoken = Compilerˉlexˉnextˉvalidated(
+        Functionˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn
         );
     }
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Functionˉtoken.Nextˉoffset, Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
     );
-    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
     var Cursor: u32 = Left.Nextˉoffset;
@@ -1649,10 +1649,10 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
     var Currentˉcolumn: u32 = Left.Nextˉcolumn;
     var Index: u32 = 0u32;
     while Index < Declaration.Items {
-        let Parameter: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Parameter: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
-        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Parameter.Nextˉoffset, Parameter.Nextˉline, Parameter.Nextˉcolumn
         );
         let Type: Compilerˉparseˉstep = Compilerˉparseˉtype(
@@ -1703,7 +1703,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
                 Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Result), Entry, true
             )
         );
-        let Separator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Separator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
         );
         if Separator.Kind == Compilerˉtokenˉkind.Comma {

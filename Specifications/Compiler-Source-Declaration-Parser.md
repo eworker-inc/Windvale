@@ -73,21 +73,21 @@ Input collections cannot exceed the lexer token ceiling. Empty/trailing-comma ar
 The candidate parses the real lexer as:
 
 ```text
-source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=14 tokens=5061 offset=41736
+source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=17 tokens=5384 offset=45588
 ```
 
 It parses its own declaration source as:
 
 ```text
-source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=24 tokens=8876 offset=64950
+source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=25 tokens=9561 offset=70591
 ```
 
 ## Current candidate artifacts
 
-- `Source-Declaration-Parser.wvb`: 98,674 bytes, SHA-256 `593e841ce9b751015e3de9f3100f4defe83d575b29324784839c38e227ff1276`.
-- `Source-Declaration-Parser-Demo.wvb`: 102,818 bytes, SHA-256 `3ed1fc6ff4453da1cbfb100e6978029c3db2bb9baaec98c230db6ef1f6267e38`, result `0` under 20,000,000 instructions.
-- `Source-Declaration-Parser-Tool.wvb`: 100,631 bytes, SHA-256 `143f9c991de2cc309861aa9ea2beb948bca06cfd22b0f932c8f7abcc41ba9408`.
+- `Source-Declaration-Parser.wvb`: 105,321 bytes, SHA-256 `4bbaaaa6293ab1fb5a4eb92c3e8a52c078943ba88652b27f69fdc3c5ab76fda7`.
+- `Source-Declaration-Parser-Demo.wvb`: 109,443 bytes, SHA-256 `ab28936fe0961261a0f243009d5c9b93af52069326618e03e428d1cc024fea11`, result `0` under 20,000,000 instructions.
+- `Source-Declaration-Parser-Tool.wvb`: 107,228 bytes, SHA-256 `94134e28bef9544b0fbb4b4ae6dfd3deb3aa52598475023d37b01a5de8686d45`.
 
 The real lexer completes under 30,000,000 instructions. The larger self-declaration pass completes under 45,000,000. These are compiler-front-end qualification ceilings and do not change assembler or linker ceilings.
 
-The declaration pass was originally cross-host qualified at `fc87a3e`. The current Decision 0042 artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`. This remains a declaration-pass contract only; statement/expression parsing, binding, WIR construction, and WVB encoding are separate slices.
+The declaration pass was originally cross-host qualified at `fc87a3e`. Decision 0042's artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's candidate uses the validated lexer boundary and a bounded string/comment/brace scanner to locate function-body ends after complete lexical validation; it falls back to the token scanner for rejected or ambiguous shapes. Exact cross-host Qualification is pending. This remains a declaration-pass contract only; statement/expression parsing, binding, WIR construction, and WVB encoding are separate slices.

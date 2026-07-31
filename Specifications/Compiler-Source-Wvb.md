@@ -106,11 +106,11 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 The current candidate compiler artifacts are:
 
-- `Source-Wvb-Core.wvb`: 585,826 bytes, SHA-256 `32c739a08fd70e3df8551a4c15571f5f53da8d661300f55500eb15cc2c909468`.
-- `Source-Wvb-Demo.wvb`: 587,553 bytes, SHA-256 `426fcdba5267db8390dfa301d16ea93f5391f25a4fd139ba17268736aefb306e`.
-- `Source-Wvb-Tool.wvb`: 587,057 bytes, SHA-256 `d68581ed1e89e22eee9c59d051cd1e79e2e75104287f401697528380198c0527`.
+- `Source-Wvb-Core.wvb`: 593,861 bytes, SHA-256 `eee0cbffcd6f615d1d7805ece8dfc1a8747d265de4c8fe6cae0b426e0770178f`.
+- `Source-Wvb-Demo.wvb`: 595,588 bytes, SHA-256 `c6e6fcbfd674df8d5e147b7c3bb52dfbdd4e26fcae4089ccb6c6fb00ffbb26db`.
+- `Source-Wvb-Tool.wvb`: 595,092 bytes, SHA-256 `db0b76432f531da40cfb91617673ea0df2981102f294765e7e60c544a8129d0e`.
 
-The static multi-module behavior was first qualified at `cb1db235`, the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index artifact set at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. All five differential fixture outputs remain byte-identical to Stage 0.
+The static multi-module behavior was first qualified at `cb1db235`, the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index artifact set at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055 changes embedded compiler implementation bytes but preserves all five differential fixture outputs byte-identical to Stage 0; exact cross-host Qualification is pending.
 
 ## Expansion path
 

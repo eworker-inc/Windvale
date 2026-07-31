@@ -51,9 +51,12 @@ Compilerˉparseˉbodyˉspan(Input, Offset, Line, Column, Endˉoffset)
 
 Compilerˉparseˉsourceˉbodies(Input)
     -> Compilerˉsourceˉbodyˉsummary
+
+Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations(Input, Declarationˉsummary)
+    -> Compilerˉsourceˉbodyˉsummary
 ```
 
-Safe `span`/whole-source entries lexically preflight input. Validated entries are for a compiler pipeline that already performed the complete lexical/declaration pass. Every end offset is exclusive; an exact body span includes both braces and must end immediately after the closing brace.
+Safe `span`/whole-source entries lexically preflight input. The checked body-span boundary also performs an iterative block-shape preflight so an over-deep span returns `Nestingˉlimit` without recursive host-stack exhaustion. Validated entries are for a compiler pipeline that already performed the complete lexical/declaration pass. `Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations` reuses the caller's accepted declaration summary and does not repeat that pass. Every end offset is exclusive; an exact body span includes both braces and must end immediately after the closing brace.
 
 ## Status and limits
 
@@ -72,16 +75,16 @@ The first failure is deterministic and includes lexical status, expected/found t
 
 ## Current candidate artifacts and evidence
 
-- `Source-Body-Parser.wvb`: 167,777 bytes, SHA-256 `7b56ea4d25f2d13467d19123654bb8d617ae2e1b0dd43f2497e1ff9644cc3839`.
-- `Source-Body-Parser-Demo.wvb`: 171,689 bytes, SHA-256 `07f9b2d94b4ebefaa3260d04b2cc7400b56007f664ef93a8db97207679039005`, result `0` under 30,000,000 instructions.
-- `Source-Body-Parser-Tool.wvb`: 168,913 bytes, SHA-256 `9c8b88f9b6aaa27df5d39fc671319ed4890510535321f637a533cf2f01ddeadc`.
+- `Source-Body-Parser.wvb`: 175,055 bytes, SHA-256 `3df42c7b6e81343194340b8f6f44e44fb83f3d6f18c249c9d9ed4e58df69ec73`.
+- `Source-Body-Parser-Demo.wvb`: 179,955 bytes, SHA-256 `afa07f843679e89f84a5a55887af834575d43d4a3ac3f1a76cd4395a103e62b6`, result `0` under 30,000,000 instructions.
+- `Source-Body-Parser-Tool.wvb`: 176,131 bytes, SHA-256 `342fadc0886e5b8b2910cb65c8495730a902364a526fd34df58c574a32a91890`.
 
 The real-source reports are:
 
 ```text
-source bodies status=Valid functions=14 top-level=123 statements=567 expression-nodes=1579 statement-depth=17 expression-depth=5 offset=41737
-source bodies status=Valid functions=24 top-level=232 statements=527 expression-nodes=2135 statement-depth=5 expression-depth=3 offset=64951
-source bodies status=Valid functions=38 top-level=234 statements=519 expression-nodes=2500 statement-depth=5 expression-depth=3 offset=69023
+source bodies status=Valid functions=17 top-level=111 statements=602 expression-nodes=1670 statement-depth=17 expression-depth=5 offset=45589
+source bodies status=Valid functions=25 top-level=245 statements=615 expression-nodes=2366 statement-depth=12 expression-depth=4 offset=70592
+source bodies status=Valid functions=39 top-level=237 statements=523 expression-nodes=2520 statement-depth=5 expression-depth=3 offset=69903
 ```
 
-These correspond to the lexer, declaration parser, and body parser. Their ceilings remain respectively 100,000,000, 160,000,000, and 160,000,000 instructions. The body parser was originally cross-host qualified at `ddfa9e3`; the current Decision 0042 artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`.
+These correspond to the lexer, declaration parser, and body parser. Their ceilings remain respectively 100,000,000, 160,000,000, and 160,000,000 instructions. The body parser was originally cross-host qualified at `ddfa9e3`; Decision 0042's artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's reuse and containment candidate is awaiting exact cross-host Qualification.

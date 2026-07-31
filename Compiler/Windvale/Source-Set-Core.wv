@@ -301,7 +301,8 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                 Compilerˉbodyˉparseˉstatus.Valid
             );
         }
-        let Bodies: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉsourceˉbodies(Source);
+        let Bodies: Compilerˉsourceˉbodyˉsummary =
+            Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations(Source, Parsed);
         if Bodies.Status != Compilerˉbodyˉparseˉstatus.Valid {
             return Compilerˉsourceˉsetˉsummaryˉfailure(
                 Compilerˉsourceˉsetˉstatus.Bodyˉsyntax,

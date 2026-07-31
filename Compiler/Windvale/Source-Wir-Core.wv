@@ -1037,9 +1037,9 @@ export fn Compilerˉsourceˉwirˉdataˉkind(
     let Entry: u32 = 16u32 + Match.Directoryˉentry * 24u32;
     let Declarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 8u32);
     let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Match.Module);
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(View.Source, Declarationˉoffset, 1u32, 1u32);
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(View.Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn);
-    let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(View.Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn);
+    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(View.Source, Declarationˉoffset, 1u32, 1u32);
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(View.Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn);
+    let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(View.Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn);
     let Type: Compilerˉparseˉstep = Compilerˉparseˉtype(
         View.Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn, false, true
     );
@@ -1064,19 +1064,19 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignature(
     Declarationˉoffset: u32,
     Argument: u32
 ) -> Compilerˉsourceˉwirˉsignature {
-    let First: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let First: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Declarationˉoffset, 1u32, 1u32
     );
     var Functionˉtoken: Compilerˉsourceˉtoken = First;
     if First.Kind == Compilerˉtokenˉkind.Export {
-        Functionˉtoken = Compilerˉlexˉnextˉvalidated(
+        Functionˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn
         );
     }
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Functionˉtoken.Nextˉoffset, Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
     );
-    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
     var Cursor: u32 = Left.Nextˉoffset;
@@ -1086,7 +1086,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignature(
     var Index: u32 = 0u32;
     var Reading: bool = true;
     while Reading {
-        let Current: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Current: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Currentˉline, Currentˉcolumn
         );
         if Current.Kind == Compilerˉtokenˉkind.Rightˉparenthesis {
@@ -1095,7 +1095,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignature(
             Currentˉline = Current.Nextˉline;
             Currentˉcolumn = Current.Nextˉcolumn;
         } else {
-            let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+            let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                 Source, Current.Nextˉoffset, Current.Nextˉline, Current.Nextˉcolumn
             );
             let Type: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
@@ -1107,7 +1107,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignature(
             if Index == Argument {
                 Parameterˉshape = Compilerˉsourceˉbindingsˉshape(Type);
             }
-            let Separator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+            let Separator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                 Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
             );
             if Separator.Kind == Compilerˉtokenˉkind.Comma {
@@ -1123,7 +1123,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignature(
             Index = Index + 1u32;
         }
     }
-    let Arrow: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Arrow: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         Source, Cursor, Currentˉline, Currentˉcolumn
     );
     let Returnˉtype: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
@@ -1158,13 +1158,13 @@ export fn Compilerˉsourceˉwirˉrecordˉsignature(
         Symbols.Lookup,
         4112u32 + Directoryˉentries * 4u32 + Nominals * 4u32 + Callable.Directoryˉentry * 4u32
     );
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         View.Source, Declarationˉoffset, 1u32, 1u32
     );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         View.Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
     );
-    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         View.Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
     var Cursor: u32 = Left.Nextˉoffset;
@@ -1173,10 +1173,10 @@ export fn Compilerˉsourceˉwirˉrecordˉsignature(
     var Parameterˉshape: u32 = 0u32;
     var Index: u32 = 0u32;
     while Index <= Argument {
-        let Field: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Field: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             View.Source, Cursor, Currentˉline, Currentˉcolumn
         );
-        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             View.Source, Field.Nextˉoffset, Field.Nextˉline, Field.Nextˉcolumn
         );
         let Type: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
@@ -1188,7 +1188,7 @@ export fn Compilerˉsourceˉwirˉrecordˉsignature(
         if Index == Argument {
             Parameterˉshape = Compilerˉsourceˉbindingsˉshape(Type);
         }
-        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             View.Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
         );
         Cursor = End.Nextˉoffset;
@@ -1288,13 +1288,13 @@ export fn Compilerˉsourceˉwirˉnominalˉmember(
 ) -> Compilerˉsourceˉwirˉmember {
     if !Nominal.Found { return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32); }
     let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Nominal.Module);
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         View.Source, Nominal.Declarationˉoffset, 1u32, 1u32
     );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         View.Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
     );
-    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+    let Left: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
         View.Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
     var Cursor: u32 = Left.Nextˉoffset;
@@ -1303,7 +1303,7 @@ export fn Compilerˉsourceˉwirˉnominalˉmember(
     var Index: u32 = 0u32;
     var Reading: bool = true;
     while Reading {
-        let Member: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+        let Member: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
             View.Source, Cursor, Currentˉline, Currentˉcolumn
         );
         if Member.Kind == Compilerˉtokenˉkind.Rightˉbrace {
@@ -1324,7 +1324,7 @@ export fn Compilerˉsourceˉwirˉnominalˉmember(
                     );
                     return Compilerˉsourceˉwirˉmember(true, Index, Shape);
                 }
-                let Matchedˉcolon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+                let Matchedˉcolon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                     View.Source, Member.Nextˉoffset, Member.Nextˉline, Member.Nextˉcolumn
                 );
                 let Matchedˉtype: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
@@ -1339,26 +1339,26 @@ export fn Compilerˉsourceˉwirˉnominalˉmember(
                 }
             }
             if Nominal.Kind == Compilerˉsourceˉdeclarationˉkind.Record {
-                let Recordˉcolon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+                let Recordˉcolon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                     View.Source, Member.Nextˉoffset, Member.Nextˉline, Member.Nextˉcolumn
                 );
                 let Recordˉtype: Compilerˉparseˉstep = Compilerˉparseˉtype(
                     View.Source, Recordˉcolon.Nextˉoffset, Recordˉcolon.Nextˉline, Recordˉcolon.Nextˉcolumn, false, false
                 );
-                let Recordˉend: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+                let Recordˉend: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                     View.Source, Recordˉtype.Nextˉoffset, Recordˉtype.Nextˉline, Recordˉtype.Nextˉcolumn
                 );
                 Cursor = Recordˉend.Nextˉoffset;
                 Currentˉline = Recordˉend.Nextˉline;
                 Currentˉcolumn = Recordˉend.Nextˉcolumn;
             } else {
-                let Enumˉequals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+                let Enumˉequals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                     View.Source, Member.Nextˉoffset, Member.Nextˉline, Member.Nextˉcolumn
                 );
-                let Enumˉvalue: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+                let Enumˉvalue: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                     View.Source, Enumˉequals.Nextˉoffset, Enumˉequals.Nextˉline, Enumˉequals.Nextˉcolumn
                 );
-                let Enumˉend: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉvalidated(
+                let Enumˉend: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
                     View.Source, Enumˉvalue.Nextˉoffset, Enumˉvalue.Nextˉline, Enumˉvalue.Nextˉcolumn
                 );
                 Cursor = Enumˉend.Nextˉoffset;
