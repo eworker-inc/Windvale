@@ -140,6 +140,8 @@ SOURCE_WVB_FIXTURE_MODULE="$ARTIFACTS/Source-Wvb-Function-Only.wvb"
 SOURCE_WVB_FIXTURE_ORACLE="$ARTIFACTS/Source-Wvb-Function-Only-Stage0.wvb"
 SOURCE_WVB_DATA_FIXTURE_MODULE="$ARTIFACTS/Source-Wvb-Data-And-Text.wvb"
 SOURCE_WVB_DATA_FIXTURE_ORACLE="$ARTIFACTS/Source-Wvb-Data-And-Text-Stage0.wvb"
+SOURCE_WVB_NOMINAL_FIXTURE_MODULE="$ARTIFACTS/Source-Wvb-Nominal-Types.wvb"
+SOURCE_WVB_NOMINAL_FIXTURE_ORACLE="$ARTIFACTS/Source-Wvb-Nominal-Types-Stage0.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -896,17 +898,17 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WVB_MODULE"
 SOURCE_WVB_HASH=$(sha256sum "$SOURCE_WVB_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_HASH" != 'c410f775e6c6e5a8a40678a5caf4e7a07a37c4dcf711b2f272f11cc1796d5d8d' ]; then
+if [ "$SOURCE_WVB_HASH" != 'fc08eb2cf97b9e67ca7393300fb2e0e3e743d65d12c01642dd650c669abfcbb4' ]; then
     echo "The Windvale WVB backend core has an unexpected digest: $SOURCE_WVB_HASH" >&2
     exit 1
 fi
 SOURCE_WVB_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_WVB_MODULE")
 printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉsourceˉwvbˉsummary' >/dev/null
 printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉcompileˉsourceˉwvb' >/dev/null
-printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Exports (46)' >/dev/null
+printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Exports (49)' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Demo.wv" "$SOURCE_WVB_DEMO_MODULE"
 SOURCE_WVB_DEMO_HASH=$(sha256sum "$SOURCE_WVB_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_DEMO_HASH" != 'd376b66312dc9005540482f3adfe6be10b6ec8a2fbd9fcbb86c3a412e70e75fa' ]; then
+if [ "$SOURCE_WVB_DEMO_HASH" != '28370090024ee90672b1270e2392cacbbfb7b26c5e449285ecc49a2af2c575ad' ]; then
     echo "The Windvale WVB backend demo has an unexpected digest: $SOURCE_WVB_DEMO_HASH" >&2
     exit 1
 fi
@@ -914,7 +916,7 @@ SOURCE_WVB_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_DEMO_MODULE" --max-
 printf '%s\n' "$SOURCE_WVB_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Tool.wv" "$SOURCE_WVB_TOOL_MODULE"
 SOURCE_WVB_TOOL_HASH=$(sha256sum "$SOURCE_WVB_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_TOOL_HASH" != '364c47c70f04f0133a35ce07dcdfeb5eedbcaaf8acbedd8e002c8c6d93fa867f' ]; then
+if [ "$SOURCE_WVB_TOOL_HASH" != '433f4f5249c7995a2582d8e8c89cc4289b1eec539929a21c9cf7882ecbc9816f' ]; then
     echo "The Windvale WVB backend tool has an unexpected digest: $SOURCE_WVB_TOOL_HASH" >&2
     exit 1
 fi
@@ -969,6 +971,32 @@ if [ "$SOURCE_WVB_DATA_FIXTURE_HASH" != '5d0779925bee06b8e27afb5ccedd995fc83cbd6
     exit 1
 fi
 cmp -s "$SOURCE_WVB_DATA_FIXTURE_MODULE" "$SOURCE_WVB_DATA_FIXTURE_ORACLE"
+
+SOURCE_WVB_NOMINAL_FIXTURE="$REPOSITORY_ROOT/Tests/Fixtures/Source-Wvb/Nominal-Types.wv"
+rm -f -- "$SOURCE_WVB_NOMINAL_FIXTURE_MODULE" "$SOURCE_WVB_NOMINAL_FIXTURE_ORACLE"
+SOURCE_WVB_NOMINAL_FIXTURE_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$SOURCE_WVB_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 4000000000 \
+    -- "$SOURCE_WVB_NOMINAL_FIXTURE" "$SOURCE_WVB_NOMINAL_FIXTURE_MODULE")
+printf '%s\n' "$SOURCE_WVB_NOMINAL_FIXTURE_OUTPUT" | grep -F 'source wvb status=Valid functions=3 code-bytes=1097 module-bytes=1781' >/dev/null
+printf '%s\n' "$SOURCE_WVB_NOMINAL_FIXTURE_OUTPUT" | grep -F 'Result: 0' >/dev/null
+SOURCE_WVB_NOMINAL_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$SOURCE_WVB_NOMINAL_FIXTURE_MODULE")
+printf '%s\n' "$SOURCE_WVB_NOMINAL_VERIFY_OUTPUT" | grep -F 'Verified: Sourceˉwvbˉnominalˉtypes' >/dev/null
+SOURCE_WVB_NOMINAL_RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_NOMINAL_FIXTURE_MODULE")
+printf '%s\n' "$SOURCE_WVB_NOMINAL_RUN_OUTPUT" | grep -F 'Result: 11' >/dev/null
+dotnet "$TOOL_DLL" compile "$SOURCE_WVB_NOMINAL_FIXTURE" -o "$SOURCE_WVB_NOMINAL_FIXTURE_ORACLE"
+SOURCE_WVB_NOMINAL_FIXTURE_HASH=$(sha256sum "$SOURCE_WVB_NOMINAL_FIXTURE_MODULE" | awk '{print $1}')
+if [ "$SOURCE_WVB_NOMINAL_FIXTURE_HASH" != '1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a' ]; then
+    echo "The Windvale-written nominal-types fixture has an unexpected digest: $SOURCE_WVB_NOMINAL_FIXTURE_HASH" >&2
+    exit 1
+fi
+cmp -s "$SOURCE_WVB_NOMINAL_FIXTURE_MODULE" "$SOURCE_WVB_NOMINAL_FIXTURE_ORACLE"
 
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet "$TOOL_DLL" \

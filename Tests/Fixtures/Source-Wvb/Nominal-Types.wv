@@ -1,0 +1,53 @@
+module Sourceˉwvbˉnominalˉtypes profile portable;
+
+enum Weather {
+    Calm = 3;
+    Windy = 7;
+    Storm = 11;
+}
+
+fn Keep(Value: Reading) -> Reading {
+    return Value;
+}
+
+record Reading {
+    Count: i32;
+    State: Weather;
+    Ready: bool;
+    Label: text;
+    Code: u8;
+    Size: u32;
+    Payload: bytes;
+}
+
+data Blob: bytes = [9, 8, 7];
+
+enum Signal {
+    Stop = 2;
+    Go = 5;
+}
+
+export fn Main() -> i32 {
+    let Sample: Reading = Reading(7, Weather.Windy, true, "ridge", 5u8, 8u32, Blob);
+    let Copy: Reading = Keep(Sample);
+    let Box: Envelope = Envelope(4, Signal.Go);
+    if Copy.State != Weather.Windy { return 1; }
+    if Copy.State == Weather.Calm { return 2; }
+    if Box.State != Signal.Go { return 3; }
+    if !Copy.Ready { return 4; }
+    if Copy.Code != 5u8 { return 5; }
+    if Copy.Size != 8u32 { return 6; }
+    if Bytesˉlength(Copy.Payload) != 3u32 { return 7; }
+    let Weatherˉname: text = Enumˉname(Copy.State);
+    if Bytesˉreadˉu8(Textˉtoˉutf8(Weatherˉname), 0u32) != 87u8 { return 8; }
+    return Measure(Copy) + Box.Value;
+}
+
+record Envelope {
+    Value: i32;
+    State: Signal;
+}
+
+fn Measure(Value: Reading) -> i32 {
+    return Value.Count;
+}

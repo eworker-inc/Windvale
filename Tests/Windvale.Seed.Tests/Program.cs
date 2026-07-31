@@ -58,10 +58,11 @@ internal static class Program
     private const string SOURCE_WIR_SHA256 = "89e2590e99ea96ebea5995491bc13d9497b2b5c41b566c3653acfc4713b6414b";
     private const string SOURCE_WIR_DEMO_SHA256 = "2d58a05a5ad7e39fda20e4706f52d365f15fe53d3cfae998431024fa1c1edada";
     private const string SOURCE_WIR_TOOL_SHA256 = "8bbca67184db5d8d980e61268021771d25b20f47624878abec6b9e54afbd6c4d";
-    private const string SOURCE_WVB_SHA256 = "c410f775e6c6e5a8a40678a5caf4e7a07a37c4dcf711b2f272f11cc1796d5d8d";
-    private const string SOURCE_WVB_DEMO_SHA256 = "d376b66312dc9005540482f3adfe6be10b6ec8a2fbd9fcbb86c3a412e70e75fa";
-    private const string SOURCE_WVB_TOOL_SHA256 = "364c47c70f04f0133a35ce07dcdfeb5eedbcaaf8acbedd8e002c8c6d93fa867f";
+    private const string SOURCE_WVB_SHA256 = "fc08eb2cf97b9e67ca7393300fb2e0e3e743d65d12c01642dd650c669abfcbb4";
+    private const string SOURCE_WVB_DEMO_SHA256 = "28370090024ee90672b1270e2392cacbbfb7b26c5e449285ecc49a2af2c575ad";
+    private const string SOURCE_WVB_TOOL_SHA256 = "433f4f5249c7995a2582d8e8c89cc4289b1eec539929a21c9cf7882ecbc9816f";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
+    private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -352,6 +353,9 @@ internal static class Program
 
     private static readonly string SOURCE_WVB_DATA_AND_TEXT_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Data-And-Text.wv");
+
+    private static readonly string SOURCE_WVB_NOMINAL_TYPES_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Nominal-Types.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -2048,6 +2052,55 @@ internal static class Program
             13,
             new Referenceˉruntime(
                 Dataˉgenerated,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        var Nominalˉsourceˉbytes = System.Text.Encoding.UTF8.GetBytes(
+            SOURCE_WVB_NOMINAL_TYPES_SOURCE).ToImmutableArray();
+        var Nominalˉoutput = new StringWriter();
+        var Nominalˉdiagnostics = new StringWriter();
+        var Nominalˉwriter = new Capturingˉfileˉwriter();
+        var Nominalˉreader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            Equal("nominal-types.wv", Name);
+            True(Nominalˉsourceˉbytes.Length <= Maximumˉbytes,
+                "The source-to-WVB hosted byte limit was too small for nominal types.");
+            return Nominalˉsourceˉbytes;
+        });
+        var Nominalˉtoolˉresult = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["nominal-types.wv", "nominal-types.wvb"],
+                Nominalˉoutput,
+                Nominalˉdiagnostics,
+                Nominalˉreader,
+                Nominalˉwriter)),
+            new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+        Equal(0, Nominalˉtoolˉresult.Exitˉcode);
+        Equal(string.Empty, Nominalˉdiagnostics.ToString());
+        Equal(
+            "source wvb status=Valid functions=3 code-bytes=1097 module-bytes=1781\n",
+            Nominalˉoutput.ToString().Replace("\r\n", "\n", StringComparison.Ordinal));
+        Equal(1, Nominalˉreader.Readˉcount);
+        Equal(1, Nominalˉwriter.Writeˉcount);
+        Equal("nominal-types.wvb", Nominalˉwriter.Resourceˉname);
+
+        var Nominalˉstageˉzeroˉbytes = Compileˉsuccess(SOURCE_WVB_NOMINAL_TYPES_SOURCE);
+        Equal(
+            SOURCE_WVB_NOMINAL_TYPES_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Nominalˉstageˉzeroˉbytes));
+        Sequenceˉequal(Nominalˉstageˉzeroˉbytes, Nominalˉwriter.Bytes);
+        var Nominalˉgenerated = Moduleˉcodec.Readˉandˉverify(Nominalˉwriter.Bytes.AsSpan());
+        Equal("Sourceˉwvbˉnominalˉtypes", Nominalˉgenerated.Module.Name);
+        Equal(4, Nominalˉgenerated.Module.Types.Length);
+        Equal("Envelope", Nominalˉgenerated.Module.Types[0].Name);
+        Equal("Reading", Nominalˉgenerated.Module.Types[1].Name);
+        Equal("Signal", Nominalˉgenerated.Module.Types[2].Name);
+        Equal("Weather", Nominalˉgenerated.Module.Types[3].Name);
+        Equal(
+            11,
+            new Referenceˉruntime(
+                Nominalˉgenerated,
                 new Referenceˉcapabilityˉhost(new StringWriter()),
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
     }
