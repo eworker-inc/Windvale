@@ -9,7 +9,7 @@ public static class Uefiˉapplicationˉverifier
     {
         if (bytes.Length is < 1_536 or > Uefiˉapplicationˉcontract.MAX_APPLICATION_BYTES)
         {
-            Fail("WVU2001", "The application length is outside the version 1 bounds.");
+            Fail("WVU2001", "The application length is outside the version 2 bounds.");
         }
 
         Requireˉu16(bytes, 0x00, 0x5A4D, "WVU2002", "The DOS signature is invalid.");
@@ -27,7 +27,12 @@ public static class Uefiˉapplicationˉverifier
         Requireˉu16(bytes, 0x96, 0x0022, "WVU2003", "The COFF characteristics are noncanonical.");
 
         Requireˉu16(bytes, 0x98, 0x020B, "WVU2004", "The image is not PE32+.");
-        Requireˉbyte(bytes, 0x9A, 1, "WVU2004", "The Windvale writer version is invalid.");
+        Requireˉbyte(
+            bytes,
+            0x9A,
+            Uefiˉapplicationˉcontract.FORMAT_VERSION,
+            "WVU2004",
+            "The Windvale writer version is invalid.");
         Requireˉbyte(bytes, 0x9B, 0, "WVU2004", "The Windvale writer minor version is invalid.");
         var Textˉrawˉbytes = Readˉu32(bytes, 0x9C);
         Require(Textˉrawˉbytes is >= 0x200 and <= Uefiˉapplicationˉcontract.MAX_CODE_BYTES,
@@ -102,7 +107,7 @@ public static class Uefiˉapplicationˉverifier
         Requireˉu32(bytes, (int)Expectedˉrelocationˉraw + 4, 12,
             "WVU2006", "The relocation block size is invalid.");
         Requireˉu32(bytes, (int)Expectedˉrelocationˉraw + 8, 0,
-            "WVU2006", "Only absolute relocation padding is permitted in version 1.");
+            "WVU2006", "Only absolute relocation padding is permitted in version 2.");
         Requireˉzero(
             bytes,
             (int)Expectedˉrelocationˉraw + 12,

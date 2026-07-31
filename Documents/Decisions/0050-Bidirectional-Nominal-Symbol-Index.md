@@ -1,9 +1,9 @@
-# Decision 0048: Bidirectional nominal symbol index
+# Decision 0050: Bidirectional nominal symbol index
 
 - Date: 2026-07-31
 - Status: Qualified at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`
 
-The exact qualified candidate carried provisional number 0044. Concurrent OS work reached `main` first with Decisions 0044 through 0047, so integration renumbered this document to 0048 without changing the qualified compiler source or evidence.
+The exact qualified candidate carried provisional number 0044. Concurrent OS work reached `main` first with Decisions 0044 through 0048, so integration renumbered this document to 0050 and left 0049 available to that active sequence. This changes no qualified compiler source or evidence.
 
 ## Context
 

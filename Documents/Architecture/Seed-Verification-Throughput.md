@@ -101,7 +101,7 @@ Exact Decision 0041 commit `b124115` completed Qualification in 896.1 seconds on
 
 ## Bidirectional symbol-index measurements
 
-Decision 0048 keeps the public WVSD directory in module/source order and adds private WVSI maps in both directions between WVSD directory indices and canonical record-then-enum ordinals. Consumers also read packed directory fields directly and reject unequal name lengths before ordinal comparison. This removes repeated nominal reranking and most temporary symbol-match construction without changing public semantic or serialization contracts.
+Decision 0050 keeps the public WVSD directory in module/source order and adds private WVSI maps in both directions between WVSD directory indices and canonical record-then-enum ordinals. Consumers also read packed directory fields directly and reject unequal name lengths before ordinal comparison. This removes repeated nominal reranking and most temporary symbol-match construction without changing public semantic or serialization contracts.
 
 On the Windows development host, the focused typed-WVIR fixture falls from Decision 0042's 5,735,695 instructions to 5,715,847, a 0.35% reduction. The real nine-module binding closure is the more representative result: it falls from 2,972,056,275 to 2,600,859,185 instructions, a 12.5% reduction, even though the current closure contains 41 more locals, 116 more reads, 31 more assignments, and 29 more calls. The focused 24-test compiler area passes in 47.920 seconds. The complete 48-test Standard suite passes in 369.044 seconds; its golden test takes 297.265 seconds, including 56.969 seconds and 982,519,944 instructions for the symbol closure and 165.039 seconds and 2,600,859,185 instructions for the binding closure.
 
@@ -109,7 +109,7 @@ The exact ten-module typed-WVIR workload still reaches `WVR3011` at the unchange
 
 Inlining ASCII whitespace and identifier-continuation logic into the lexer was measured and rejected: it increased the focused typed-WVIR fixture to 5,986,551 instructions. The helper boundaries remain cheaper in the current runtime. The next source-level experiment should share or retain validated lexical/parse evidence rather than repeat local lexer micro-inlining.
 
-Exact Decision 0048 commit `e37204f` completed Qualification in 724.8 seconds on Windows and 738.0 seconds on Debian, with complete-suite times of 366.914 and 379.640 seconds. Both hosts passed zero-warning builds, all 48 tests, and the complete native verifier. Their normalized contracts matched, and all 61 portable artifacts totaling 7,546,823 bytes were byte-identical. This qualifies the symbol-index improvement while leaving the exact ten-module experiment outside routine verification.
+Exact Decision 0050 commit `e37204f` completed Qualification in 724.8 seconds on Windows and 738.0 seconds on Debian, with complete-suite times of 366.914 and 379.640 seconds. Both hosts passed zero-warning builds, all 48 tests, and the complete native verifier. Their normalized contracts matched, and all 61 portable artifacts totaling 7,546,823 bytes were byte-identical. This qualifies the symbol-index improvement while leaving the exact ten-module experiment outside routine verification.
 
 ## Canonical backend measurements
 

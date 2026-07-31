@@ -595,7 +595,8 @@ export fn Main() -> i32 {
 - [First UEFI application and boot probe decision](Documents/Decisions/0045-First-Uefi-Application-And-Boot-Probe.md)
 - [Bounded UEFI memory map probe decision](Documents/Decisions/0046-Bounded-Uefi-Memory-Map-Probe.md)
 - [Bounded ExitBootServices transition decision](Documents/Decisions/0047-Bounded-Exit-Boot-Services-Transition.md)
-- [Bidirectional nominal symbol index decision](Documents/Decisions/0048-Bidirectional-Nominal-Symbol-Index.md)
+- [First kernel handoff and relative UEFI link decision](Documents/Decisions/0048-First-Kernel-Handoff-And-Relative-Uefi-Link.md)
+- [Bidirectional nominal symbol index decision](Documents/Decisions/0050-Bidirectional-Nominal-Symbol-Index.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

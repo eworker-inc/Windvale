@@ -52,6 +52,14 @@ internal sealed class X64ˉcodeˉbuilder
         Addˉfixup(label);
     }
 
+    public uint Emitˉcallˉplaceholder()
+    {
+        Output.Add(0xE8);
+        var Displacementˉoffset = checked((uint)Output.Count);
+        Output.AddRange([0, 0, 0, 0]);
+        return Displacementˉoffset;
+    }
+
     public ImmutableArray<byte> Build()
     {
         var Result = Output.ToArray();

@@ -22,9 +22,12 @@ public sealed class Linkˉresult
         uint baseˉaddress,
         uint entryˉaddress,
         int sectionˉcount,
+        int codeˉsectionˉcount,
         int definedˉsymbolˉcount,
         int importˉcount,
         int relocationˉcount,
+        int absoluteˉrelocationˉcount,
+        int relativeˉrelocationˉcount,
         ImmutableArray<Linkˉdiagnostic> diagnostics)
     {
         Imageˉbytes = imageˉbytes;
@@ -32,9 +35,12 @@ public sealed class Linkˉresult
         Baseˉaddress = baseˉaddress;
         Entryˉaddress = entryˉaddress;
         Sectionˉcount = sectionˉcount;
+        Codeˉsectionˉcount = codeˉsectionˉcount;
         Definedˉsymbolˉcount = definedˉsymbolˉcount;
         Importˉcount = importˉcount;
         Relocationˉcount = relocationˉcount;
+        Absoluteˉrelocationˉcount = absoluteˉrelocationˉcount;
+        Relativeˉrelocationˉcount = relativeˉrelocationˉcount;
         Diagnostics = diagnostics;
     }
 
@@ -50,11 +56,17 @@ public sealed class Linkˉresult
 
     public int Sectionˉcount { get; }
 
+    public int Codeˉsectionˉcount { get; }
+
     public int Definedˉsymbolˉcount { get; }
 
     public int Importˉcount { get; }
 
     public int Relocationˉcount { get; }
+
+    public int Absoluteˉrelocationˉcount { get; }
+
+    public int Relativeˉrelocationˉcount { get; }
 
     public ImmutableArray<Linkˉdiagnostic> Diagnostics { get; }
 
@@ -65,13 +77,18 @@ public sealed class Linkˉresult
             candidate.Options.Baseˉaddress,
             candidate.Entryˉaddress,
             candidate.Sections.Length,
+            candidate.Sections.Count(Section => Section.Section.Kind == Objectˉsectionˉkind.Code),
             candidate.Definitions.Length,
             candidate.Imports.Length,
             candidate.Relocations.Length,
+            candidate.Relocations.Count(
+                Relocation => Relocation.Relocation.Kind == Objectˉrelocationˉkind.Absoluteˉu32),
+            candidate.Relocations.Count(
+                Relocation => Relocation.Relocation.Kind == Objectˉrelocationˉkind.Relativeˉi32),
             []);
 
     internal static Linkˉresult Failed(Linkˉdiagnostic diagnostic) =>
-        new([], [], 0, 0, 0, 0, 0, 0, [diagnostic]);
+        new([], [], 0, 0, 0, 0, 0, 0, 0, 0, 0, [diagnostic]);
 }
 
 public static class Linkˉcontract

@@ -7,15 +7,18 @@ namespace Windvale.Bootstrap;
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 3;
+    public const int FORMAT_VERSION = 4;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
-    public const string ENTRY_MARKER = "windvale-os-boot 3\nentry=pass\n";
+    public const string KERNEL_ENTRY_SYMBOL = "Windvale_kernel_entry";
+    public const string ENTRY_MARKER = "windvale-os-boot 4\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
+    public const string KERNEL_ENTRY_MARKER = "kernel-entry=pass\n";
     public const string SUCCESS_MARKER = "status=pass\n";
     public const string SERIAL_MARKER =
-        ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER + SUCCESS_MARKER;
+        ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
+        KERNEL_ENTRY_MARKER + SUCCESS_MARKER;
 
     private const string FAILURE_MARKER = "status=fail\n";
     private const string FAILURE_LABEL = "failure";
@@ -26,6 +29,7 @@ public static class Firmwareˉprobe
     private const string DESCRIPTOR_LOOP_LABEL = "descriptor_loop";
     private const string EXIT_SUCCESS_LABEL = "exit_success";
     private const string SUCCESS_HALT_LABEL = "success_halt";
+    private const string KERNEL_FAILURE_LABEL = "kernel_failure";
 
     private const byte CONDITION_BELOW = 0x82;
     private const byte CONDITION_EQUAL = 0x84;
@@ -46,6 +50,15 @@ public static class Firmwareˉprobe
     private const byte EXIT_ATTEMPTS_OFFSET = 0x70;
     private const byte EXIT_ATTEMPTED_OFFSET = 0x74;
 
+    private const byte HANDOFF_OFFSET = 0x20;
+    private const byte HANDOFF_VERSION_OFFSET = 0x28;
+    private const byte HANDOFF_SIZE_OFFSET = 0x2C;
+    private const byte HANDOFF_MAP_BUFFER_OFFSET = 0x30;
+    private const byte HANDOFF_MAP_BYTES_OFFSET = 0x38;
+    private const byte HANDOFF_DESCRIPTOR_BYTES_OFFSET = 0x40;
+    private const byte HANDOFF_DESCRIPTOR_VERSION_OFFSET = 0x48;
+    private const byte HANDOFF_RESERVED_OFFSET = 0x4C;
+
     private const ulong EFI_SYSTEM_TABLE_SIGNATURE = 0x5453_5953_2049_4249;
     private const ulong EFI_BOOT_SERVICES_SIGNATURE = 0x5652_4553_544F_4F42;
     private const ulong EFI_BUFFER_TOO_SMALL = 0x8000_0000_0000_0005;
@@ -60,6 +73,9 @@ public static class Firmwareˉprobe
     private const uint MAX_MEMORY_MAP_BYTES = 1024 * 1024;
     private const uint EFI_LOADER_DATA = 2;
     private const uint EXIT_BOOT_SERVICES_MAX_ATTEMPTS = 3;
+    private const ulong KERNEL_HANDOFF_MAGIC = 0x3144_4E41_484B_5657;
+    private const uint KERNEL_HANDOFF_VERSION = 1;
+    private const uint KERNEL_HANDOFF_BYTES = 48;
 
     private const uint GET_MEMORY_MAP_OFFSET = 0x38;
     private const uint ALLOCATE_POOL_OFFSET = 0x40;
@@ -68,21 +84,43 @@ public static class Firmwareˉprobe
 
     public static ImmutableArray<byte> Buildˉapplication()
     {
-        var Code = Buildˉmachineˉcode();
-        var Object = new Objectˉfile(
+        var Loader = Buildˉloaderˉmachineˉcode();
+        var Loaderˉobject = new Objectˉfile(
             Objectˉarchitecture.X86ˉ64,
-            [new(".text", Objectˉsectionˉkind.Code, 16, (uint)Code.Length, Code)],
+            [new(".text", Objectˉsectionˉkind.Code, 16, (uint)Loader.Bytes.Length, Loader.Bytes)],
+            [
+                new(
+                    ENTRY_SYMBOL,
+                    Objectˉsymbolˉbinding.Export,
+                    Objectˉsymbolˉkind.Function,
+                    0,
+                    0,
+                    (uint)Loader.Bytes.Length),
+                new(
+                    KERNEL_ENTRY_SYMBOL,
+                    Objectˉsymbolˉbinding.Import,
+                    Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
+                    0,
+                    0),
+            ],
+            [new(Objectˉrelocationˉkind.Relativeˉi32, 0, Loader.Kernelˉcallˉoffset, 1, -4)]);
+        var Kernelˉcode = Buildˉkernelˉmachineˉcode();
+        var Kernelˉobject = new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text", Objectˉsectionˉkind.Code, 16, (uint)Kernelˉcode.Length, Kernelˉcode)],
             [new(
-                ENTRY_SYMBOL,
+                KERNEL_ENTRY_SYMBOL,
                 Objectˉsymbolˉbinding.Export,
                 Objectˉsymbolˉkind.Function,
                 0,
                 0,
-                (uint)Code.Length)],
+                (uint)Kernelˉcode.Length)],
             []);
-        var Objectˉbytes = Objectˉcodec.Write(Object).ToImmutableArray();
+        var Loaderˉobjectˉbytes = Objectˉcodec.Write(Loaderˉobject).ToImmutableArray();
+        var Kernelˉobjectˉbytes = Objectˉcodec.Write(Kernelˉobject).ToImmutableArray();
         var Link = Linkˉcompiler.Link(
-            [new(Objectˉbytes)],
+            [new(Loaderˉobjectˉbytes), new(Kernelˉobjectˉbytes)],
             new(Uefiˉapplicationˉcontract.REQUIRED_LINK_BASE_ADDRESS, ENTRY_SYMBOL));
         if (!Link.Success)
         {
@@ -99,9 +137,10 @@ public static class Firmwareˉprobe
         return Application.Imageˉbytes;
     }
 
-    private static ImmutableArray<byte> Buildˉmachineˉcode()
+    private static Bootstrapˉcode Buildˉloaderˉmachineˉcode()
     {
         var Output = new X64ˉcodeˉbuilder();
+        uint Kernelˉcallˉoffset;
 
         Output.Emit(0x48, 0x81, 0xEC);
         Output.Emitˉu32(FRAME_BYTES);
@@ -276,6 +315,27 @@ public static class Firmwareˉprobe
         Output.Mark(EXIT_SUCCESS_LABEL);
         Emitˉserialˉtext(Output, MEMORY_MAP_MARKER);
         Emitˉserialˉtext(Output, BOOT_SERVICES_MARKER);
+
+        Emitˉloadˉstackˉr10(Output, MAP_BUFFER_OFFSET);
+        Emitˉloadˉstackˉr11(Output, MAP_SIZE_OFFSET);
+        Emitˉloadˉstackˉr8(Output, DESCRIPTOR_SIZE_OFFSET);
+        Emitˉloadˉstackˉr9(Output, DESCRIPTOR_VERSION_OFFSET);
+        Output.Emit(0x48, 0xB8);
+        Output.Emitˉu64(KERNEL_HANDOFF_MAGIC);
+        Emitˉstoreˉstackˉrax(Output, HANDOFF_OFFSET);
+        Output.Emit(0xC7, 0x44, 0x24, HANDOFF_VERSION_OFFSET);
+        Output.Emitˉu32(KERNEL_HANDOFF_VERSION);
+        Output.Emit(0xC7, 0x44, 0x24, HANDOFF_SIZE_OFFSET);
+        Output.Emitˉu32(KERNEL_HANDOFF_BYTES);
+        Emitˉstoreˉstackˉr10(Output, HANDOFF_MAP_BUFFER_OFFSET);
+        Emitˉstoreˉstackˉr11(Output, HANDOFF_MAP_BYTES_OFFSET);
+        Emitˉstoreˉstackˉr8(Output, HANDOFF_DESCRIPTOR_BYTES_OFFSET);
+        Output.Emit(0x44, 0x89, 0x4C, 0x24, HANDOFF_DESCRIPTOR_VERSION_OFFSET);
+        Output.Emit(0xC7, 0x44, 0x24, HANDOFF_RESERVED_OFFSET, 0x00, 0x00, 0x00, 0x00);
+        Emitˉaddressˉstackˉrcx(Output, HANDOFF_OFFSET);
+        Kernelˉcallˉoffset = Output.Emitˉcallˉplaceholder();
+        Output.Emit(0x48, 0x85, 0xC0);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, TERMINAL_FAILURE_LABEL);
         Emitˉserialˉtext(Output, SUCCESS_MARKER);
         Emitˉdebugˉexit(Output, 0);
         Emitˉhaltˉloop(Output, SUCCESS_HALT_LABEL);
@@ -298,6 +358,50 @@ public static class Firmwareˉprobe
         Output.Emit(0x48, 0xB8);
         Output.Emitˉu64(EFI_DEVICE_ERROR);
         Emitˉrestoreˉstackˉandˉreturn(Output);
+        return new(Output.Build(), Kernelˉcallˉoffset);
+    }
+
+    private static ImmutableArray<byte> Buildˉkernelˉmachineˉcode()
+    {
+        var Output = new X64ˉcodeˉbuilder();
+        Output.Emit(0x48, 0x85, 0xC9);
+        Output.Jumpˉif(CONDITION_EQUAL, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x48, 0xB8);
+        Output.Emitˉu64(KERNEL_HANDOFF_MAGIC);
+        Output.Emit(0x48, 0x39, 0x01);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x83, 0x79, 0x08, (byte)KERNEL_HANDOFF_VERSION);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x83, 0x79, 0x0C, (byte)KERNEL_HANDOFF_BYTES);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x48, 0x83, 0x79, 0x10, 0x00);
+        Output.Jumpˉif(CONDITION_EQUAL, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x48, 0x8B, 0x41, 0x18);
+        Output.Emit(0x48, 0x85, 0xC0);
+        Output.Jumpˉif(CONDITION_EQUAL, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x48, 0x3D);
+        Output.Emitˉu32(MAX_MEMORY_MAP_BYTES);
+        Output.Jumpˉif(CONDITION_ABOVE, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x48, 0x8B, 0x41, 0x20);
+        Output.Emit(0x48, 0x83, 0xF8, (byte)EFI_MEMORY_DESCRIPTOR_MINIMUM_BYTES);
+        Output.Jumpˉif(CONDITION_BELOW, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x48, 0x3D);
+        Output.Emitˉu32(EFI_MEMORY_DESCRIPTOR_MAXIMUM_BYTES);
+        Output.Jumpˉif(CONDITION_ABOVE, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x83, 0x79, 0x28, (byte)EFI_MEMORY_DESCRIPTOR_VERSION);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x83, 0x79, 0x2C, 0x00);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
+        Output.Emit(0x48, 0x8B, 0x41, 0x18);
+        Output.Emit(0x31, 0xD2);
+        Output.Emit(0x48, 0xF7, 0x71, 0x20);
+        Output.Emit(0x48, 0x85, 0xD2);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, KERNEL_FAILURE_LABEL);
+        Emitˉserialˉtext(Output, KERNEL_ENTRY_MARKER);
+        Output.Emit(0x31, 0xC0, 0xC3);
+
+        Output.Mark(KERNEL_FAILURE_LABEL);
+        Output.Emit(0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
         return Output.Build();
     }
 
@@ -416,8 +520,14 @@ public static class Firmwareˉprobe
     private static void Emitˉloadˉstackˉr8(X64ˉcodeˉbuilder output, byte offset) =>
         output.Emit(0x4C, 0x8B, 0x44, 0x24, offset);
 
+    private static void Emitˉloadˉstackˉr9(X64ˉcodeˉbuilder output, byte offset) =>
+        output.Emit(0x4C, 0x8B, 0x4C, 0x24, offset);
+
     private static void Emitˉloadˉstackˉr10(X64ˉcodeˉbuilder output, byte offset) =>
         output.Emit(0x4C, 0x8B, 0x54, 0x24, offset);
+
+    private static void Emitˉloadˉstackˉr11(X64ˉcodeˉbuilder output, byte offset) =>
+        output.Emit(0x4C, 0x8B, 0x5C, 0x24, offset);
 
     private static void Emitˉstoreˉstackˉrax(X64ˉcodeˉbuilder output, byte offset) =>
         output.Emit(0x48, 0x89, 0x44, 0x24, offset);
@@ -427,6 +537,15 @@ public static class Firmwareˉprobe
 
     private static void Emitˉstoreˉstackˉrdx(X64ˉcodeˉbuilder output, byte offset) =>
         output.Emit(0x48, 0x89, 0x54, 0x24, offset);
+
+    private static void Emitˉstoreˉstackˉr8(X64ˉcodeˉbuilder output, byte offset) =>
+        output.Emit(0x4C, 0x89, 0x44, 0x24, offset);
+
+    private static void Emitˉstoreˉstackˉr10(X64ˉcodeˉbuilder output, byte offset) =>
+        output.Emit(0x4C, 0x89, 0x54, 0x24, offset);
+
+    private static void Emitˉstoreˉstackˉr11(X64ˉcodeˉbuilder output, byte offset) =>
+        output.Emit(0x4C, 0x89, 0x5C, 0x24, offset);
 
     private static void Emitˉaddressˉstackˉrax(X64ˉcodeˉbuilder output, byte offset) =>
         output.Emit(0x48, 0x8D, 0x44, 0x24, offset);
@@ -446,4 +565,8 @@ public static class Firmwareˉprobe
         output.Emitˉu32(FRAME_BYTES);
         output.Emit(0xC3);
     }
+
+    private sealed record Bootstrapˉcode(
+        ImmutableArray<byte> Bytes,
+        uint Kernelˉcallˉoffset);
 }

@@ -51,7 +51,7 @@ The first Windvale OS milestone should be a small vertical system rather than a 
 - Demonstrate the same bytecode module on Windows, Linux, and Windvale OS.
 - Shut down cleanly and produce machine-readable test evidence.
 
-The accepted first boot environment is x86-64 with UEFI 2.11, QEMU as the primary automated VM, and Hyper-V Generation 2 as the later Windows compatibility target. [Decision 0044](../Decisions/0044-First-X64-Uefi-Boot-Environment.md), [Decision 0045](../Decisions/0045-First-Uefi-Application-And-Boot-Probe.md), [Decision 0046](../Decisions/0046-Bounded-Uefi-Memory-Map-Probe.md), and [Decision 0047](../Decisions/0047-Bounded-Exit-Boot-Services-Transition.md) now fix the environment, deterministic PE32+ application boundary, firmware-entry evidence, bounded memory-map acquisition, and post-firmware execution. These probes are vertical evidence and do not claim a kernel or `.wv` execution.
+The accepted first boot environment is x86-64 with UEFI 2.11, QEMU as the primary automated VM, and Hyper-V Generation 2 as the later Windows compatibility target. [Decisions 0044](../Decisions/0044-First-X64-Uefi-Boot-Environment.md) through [0048](../Decisions/0048-First-Kernel-Handoff-And-Relative-Uefi-Link.md) now fix the environment, deterministic PE32+ application boundary, firmware-entry evidence, bounded memory-map acquisition, post-firmware execution, and the first separately linked kernel-entry handoff. These probes are vertical evidence and do not yet claim compiler-generated `.wv` execution or a functioning kernel.
 
 ## Non-goals for the first stages
 
