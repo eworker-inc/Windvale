@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Windvale native fragment validation and Windows/Linux W^X execution adapter.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Compiler/Native/Windvale.NativeCompiler.csproj" />
+  </ItemGroup>
+</Project>

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction, while the current execution implementations relevant to this direction remain the C#/.NET reference interpreter and a deliberately bounded Stage 0 x86-64 kernel target. This document defines the native destination and migration boundaries; it does not claim a general native runtime, JIT, AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
+Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decision 0059 implements the first general Stage 0 shared-backend slice for one verified portable constant-return function: explicit native machine IR, one verified fragment used by WVO/AOT and in-memory sinks, and a Windows/Linux W^X adapter. Windows x64 differential evidence exists; exact-commit Debian qualification is pending. This document defines the larger native destination and migration boundaries; it does not claim a general native runtime, broad JIT or AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
 
 ## Destination
 
@@ -94,6 +94,12 @@ PE/ELF/OS AOT image        finalized JIT pages
 The WVB path serves portable deployed modules. The WIR path allows source AOT without round-tripping through a distributable stack format when richer compiler evidence is available. Both must implement the same defined operations and share differential programs.
 
 Architecture-specific selection, register assignment, encoding, relocation, and ABI policy stay behind explicit contracts. The initial x86-64 backend must not prevent a later AArch64 backend.
+
+### Initial implemented slice
+
+`Compiler/Native` now accepts only a `Verifiedˉmodule` and lowers the first canonical portable WVB shape into explicit `Nativeˉi32ˉconstant` and `Nativeˉreturn` operations. The `x86-64-wvb-baseline-v1` selector emits one versioned fragment containing code, ordered symbols, and typed patch records. The same independently verified fragment is serialized to WVO for the existing linker or handed to `Runtime/Windvale.Native` for checked in-memory linking and W^X publication.
+
+The accepted program is deliberately only one exported `Main() -> i32` returning a constant. Its exact `return 42` code is `B8 2A 00 00 00 C3`; interpreter, JIT-fragment, and WVO-linked-image execution agree on Windows x64. This proves the ownership and publication seam, not general WVB coverage. Arithmetic, branches, internal calls, data, capabilities, imports, traps, values, heap ownership, PE/ELF containers, and Windvale-written implementation remain later gates.
 
 ## Native runtime ABI
 

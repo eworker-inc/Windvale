@@ -3,6 +3,7 @@
     <Project Path="Assembler/Reference/Windvale.Assembler.csproj" />
   </Folder>
   <Folder Name="/Compiler/">
+    <Project Path="Compiler/Native/Windvale.NativeCompiler.csproj" />
     <Project Path="Compiler/Reference/Windvale.Compiler.csproj" />
   </Folder>
   <Folder Name="/Linker/">
@@ -16,6 +17,7 @@
   </Folder>
   <Folder Name="/Runtime/">
     <Project Path="Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
+    <Project Path="Runtime/Windvale.Native/Windvale.Native.csproj" />
     <Project Path="Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
   </Folder>
   <Folder Name="/Tools/">

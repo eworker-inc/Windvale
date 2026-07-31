@@ -27,7 +27,7 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 | 6. Assembler and linker | Windvale-written assembler and linker running first as verified bytecode on Windows and Linux. | Qualified |
 | 7. Foundation modules | Compact reusable collections, text, binary-format, diagnostics, testing, and I/O-adapter modules driven by tool needs. | Current focus |
 | 8. Self-hosted compiler | Windvale-written lexer, parser, semantics, and code generation for a meaningful subset, followed by a reproducible bootstrap closure. | Qualified bytecode self-reproduction on Windows and Debian |
-| 9. Shared native backend | Native WIR/WVB lowering, x86-64 ABI, WVO/AOT output, baseline JIT, and interpreter/JIT/AOT differential tests. | First bounded kernel-entry WVO target implemented; general subset and differential evidence next |
+| 9. Shared native backend | Native WIR/WVB lowering, x86-64 ABI, WVO/AOT output, baseline JIT, and interpreter/JIT/AOT differential tests. | First general verified-WVB constant slice runs through shared WVO/AOT and W^X JIT sinks on Windows; Debian qualification and broader operations next |
 | 10. Native host tools and .NET retirement | Produce and qualify native Windvale tools, runtime, JIT/AOT execution, and bootstrap recovery on Windows and Linux without a normal .NET dependency. | Planned |
 | 11. Boot path and kernel | x86-64 UEFI/QEMU boot, diagnostics, memory foundation, minimal kernel boundary, and Hyper-V qualification. | Compiler-generated `.wv` runs on a bounded kernel-owned stack; traps, runtime, shutdown, and Hyper-V remain |
 | 12. Runtime on Windvale OS | Load, verify, and run one identical WVB through equivalent Windvale-native execution contracts across Windows, Linux, and Windvale OS. | Planned |
@@ -123,6 +123,8 @@ The completion gate is reproducible compiler self-hosting on Windows and Debian,
 9. Expand through integers, calls, aggregates, memory, text, bytes, hosted bridges, and reclamation only after each preceding slice is qualified.
 
 [Decision 0049](../Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) supplies an early bounded instance of steps 1, 3, and 4 for the special kernel-entry target: typed WIR lowers to verified code-only WVO, obeys handoff version 1, and links into the explicit UEFI adapter. It deliberately does not satisfy this phase's general ABI or bytecode/native differential gate.
+
+[Decision 0059](../Decisions/0059-First-Shared-Native-Wvb-Slice.md) implements the first general instance of steps 2, 4, 5, and 7 for one constant-return program. A verified portable WVB lowers to explicit native operations, one versioned x86-64 fragment feeds both WVO/AOT and in-memory sinks, the runtime publishes memory writable-then-executable, and interpreter/JIT/AOT results agree on Windows x64. The 79-byte WVO and six code bytes are deterministic. Exact-commit Debian qualification and every wider operation remain open, so Phase 9 is not complete.
 
 The completion gate is deterministic native AOT output, a qualified baseline-JIT path, and interpreter/JIT/AOT semantic agreement for a documented WVB subset on Windows and Linux. Full language coverage and an optimizing tier are not required yet.
 

@@ -73,6 +73,8 @@ foreach ($Path in $Paths) {
         Add-Area 'compiler'
     } elseif ($Path.StartsWith('Runtime/Windvale.Bytecode/', [StringComparison]::Ordinal)) {
         Add-Area 'bytecode'
+    } elseif ($Path.StartsWith('Runtime/Windvale.Native/', [StringComparison]::Ordinal)) {
+        Add-Area 'runtime'
     } elseif ($Path.StartsWith('Runtime/Windvale.Runtime/', [StringComparison]::Ordinal)) {
         Add-Area 'runtime'
     } elseif ($Path.StartsWith('Object-Model/', [StringComparison]::Ordinal)) {

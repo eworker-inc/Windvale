@@ -7,9 +7,11 @@ using System.Text.Json.Serialization;
 using Windvale.Assembler;
 using Windvale.Bytecode;
 using Windvale.Compiler;
+using Windvale.Compiler.Native;
 using Windvale.Linker;
 using Windvale.ObjectModel;
 using Windvale.Runtime;
+using Windvale.Runtime.Native;
 
 namespace Windvale.Seed.Tests;
 
@@ -26,6 +28,7 @@ internal static class Program
     private const string WVLINK_CORE_SHA256 = "091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
+    private const string NATIVE_CONSTANT_WVO_SHA256 = "d69ab30a34a7281ff9911ab89220b405ad0944ede5130dd6f07c44baac1b9d6a";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
@@ -115,6 +118,14 @@ internal static class Program
             }
 
             return Total;
+        }
+        """;
+
+    private const string NATIVE_CONSTANT_SOURCE = """
+        module Nativeˉconstant profile portable;
+
+        export fn Main() -> i32 {
+            return 42;
         }
         """;
 
@@ -425,6 +436,7 @@ internal static class Program
         new("hosted source requires authorization and writes text", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Hostedˉprogramˉruns),
         new("hosted resources are explicit, separated, and bounded", [TEST_AREA_RUNTIME], Hostedˉresourcesˉareˉbounded),
         new("compiler output is deterministic and canonical", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Compilerˉisˉdeterministic),
+        new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Foundation machine contracts are shared, bounded, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉmachineˉcontractsˉrun),
         new("Foundation byte ordering is shared, ordinal, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉorderingˉruns),
@@ -1023,6 +1035,81 @@ internal static class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Reorderedˉsource));
         Sequenceˉequal(["Alpha", "Zed"], Module.Module.Data.Select(Data => Data.Name));
         Sequenceˉequal(["Main", "Zebra"], Module.Module.Functions.Select(Function => Function.Name));
+    }
+
+    private static void Nativeˉbackendˉconstantˉagrees()
+    {
+        var Wvbˉbytes = Compileˉsuccess(NATIVE_CONSTANT_SOURCE);
+        var Verified = Moduleˉcodec.Readˉandˉverify(Wvbˉbytes);
+        var Interpreted = new Referenceˉruntime(
+            Verified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+
+        var First = X64ˉnativeˉbackend.Compile(Verified);
+        var Second = X64ˉnativeˉbackend.Compile(Verified);
+        Equal(1, First.Module.Functions.Length);
+        Equal(2, First.Module.Functions[0].Operations.Length);
+        True(First.Module.Functions[0].Operations[0] is Nativeˉi32ˉconstant { Result: 0, Value: 42 },
+            "Native machine IR did not retain the constant definition.");
+        True(First.Module.Functions[0].Operations[1] is Nativeˉreturn { Value: 0 },
+            "Native machine IR did not retain the return use.");
+        Sequenceˉequal(new byte[] { 0xB8, 0x2A, 0x00, 0x00, 0x00, 0xC3 }, First.Fragment.Code);
+        Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Equal(Nativeˉcontract.X64_BASELINE_TARGET, First.Fragment.Target);
+        Equal(Nativeˉcontract.ABI_VERSION, First.Fragment.Abiˉversion);
+        Equal(0, First.Fragment.Patches.Length);
+        _ = Nativeˉfragmentˉverifier.Verify(First.Fragment);
+
+        var Firstˉobject = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+        var Secondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment);
+        Sequenceˉequal(Firstˉobject, Secondˉobject);
+        Equal(79, Firstˉobject.Length);
+        Equal(NATIVE_CONSTANT_WVO_SHA256, Objectˉdigest.Calculateˉsha256(Firstˉobject.AsSpan()));
+        var Verifiedˉobject = Objectˉcodec.Readˉandˉverify(Firstˉobject.AsSpan()).Value;
+        Equal(1, Verifiedˉobject.Sections.Length);
+        Equal(1, Verifiedˉobject.Symbols.Length);
+        Equal("Main", Verifiedˉobject.Symbols[0].Name);
+        Equal(0, Verifiedˉobject.Relocations.Length);
+
+        var Linked = Linkˉsuccess(
+            [Firstˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Equal(Linkˉcontract.DEFAULT_BASE_ADDRESS, Linked.Entryˉaddress);
+        Sequenceˉequal(First.Fragment.Code, Linked.Imageˉbytes);
+
+        var Jitˉresult = X64ˉnativeˉexecutor.Executeˉi32(First.Fragment);
+        var Aotˉfragment = First.Fragment with
+        {
+            Code = Linked.Imageˉbytes,
+            Symbols = [new(
+                "Main",
+                Nativeˉsymbolˉbinding.Export,
+                Nativeˉsymbolˉkind.Function,
+                Linked.Entryˉaddress - Linked.Baseˉaddress,
+                (uint)Linked.Imageˉbytes.Length)],
+            Patches = [],
+        };
+        var Aotˉresult = X64ˉnativeˉexecutor.Executeˉi32(Aotˉfragment);
+        Equal(Interpreted.Exitˉcode, Jitˉresult);
+        Equal(Interpreted.Exitˉcode, Aotˉresult);
+
+        var Invalidˉfragment = First.Fragment with
+        {
+            Patches = [new(Nativeˉpatchˉkind.Relativeˉi32, 4, "Main", -4)],
+        };
+        Throwsˉnative("WVN3022", () => _ = Nativeˉfragmentˉverifier.Verify(Invalidˉfragment));
+
+        var Invalidˉcode = First.Fragment with
+        {
+            Code = new byte[] { 0x90, 0x2A, 0x00, 0x00, 0x00, 0xC3 }.ToImmutableArray(),
+        };
+        Throwsˉnative("WVN3030", () => _ = X64ˉnativeˉexecutor.Executeˉi32(Invalidˉcode));
+
+        var Unsupported = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉarithmetic profile portable; export fn Main() -> i32 { return 40 + 2; }"));
+        Throwsˉnative("WVN2002", () => _ = X64ˉnativeˉbackend.Compile(Unsupported));
     }
 
     private static void Sourceˉmodulesˉcompose()
@@ -6569,6 +6656,21 @@ internal static class Program
         }
 
         throw new InvalidOperationException($"Expected runtime failure {expectedˉcode}.");
+    }
+
+    private static void Throwsˉnative(string expectedˉcode, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Nativeˉbackendˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+
+        throw new InvalidOperationException($"Expected native backend failure {expectedˉcode}.");
     }
 
     private static void Writeˉreport(string path)
