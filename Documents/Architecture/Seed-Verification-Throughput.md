@@ -2,11 +2,12 @@
 
 ## Purpose
 
-Windvale keeps the complete cross-host qualification gate, but ordinary development should pay only for the narrowest evidence relevant to the current edit. Verification therefore has three explicit levels rather than one expensive all-purpose command.
+Windvale keeps the complete cross-host qualification gate, but ordinary development should pay only for the narrowest evidence relevant to the current edit. Verification therefore has four explicit levels rather than one expensive all-purpose command.
 
 ## Levels
 
 - `Fast` builds once and runs an explicit selection of one or more test areas, a case-insensitive displayed-name substring, or their intersection. It may fail fast and may write a local timing report. It does not produce conformance evidence.
+- `Development` builds once and runs every regular in-process test. It excludes only the qualification-only golden cross-host contract, does not write a conformance report, and is the broad check for a coherent development batch.
 - `Standard` builds once, runs all registered in-process conformance tests, and writes the normal host report. It stops before native CLI qualification.
 - `Qualification` is the default and remains the milestone gate. It adds every native CLI, hosted-boundary, deterministic-artifact, and failure-preservation check.
 
@@ -19,6 +20,10 @@ The conformance runner assigns every registered test to one or more stable areas
 `Tools/Verify/Verify-Changed.ps1` maps changed paths to those areas and invokes the Fast verifier. Compiler, runtime, bytecode, assembler, object-model, linker, and Foundation paths select their owned areas. Specification paths select the areas that implement the named contract. Tests, build configuration, workflows, verification tooling, broad Seed examples, unknown specifications, and unrecognized implementation paths fail closed to all areas. Documentation outside `Specifications/`, the root license, and editor-only changes do not run Seed; editor-relevant paths still run the editor verifier.
 
 Changed-file selection is an inner-loop optimization only. It never writes a conformance report or supplies Standard or Qualification evidence.
+
+`Development` is deliberately broader than changed-file or Fast selection. It selects every area except `golden`, so a test shared by several regular areas still runs once. It does not cache generated artifacts, runtime outcomes, or passing assertions. Standard and Qualification continue to execute the golden contract cold, preserving the deterministic-byte, real-closure, and cross-host evidence boundary.
+
+The first Windows x64 validation on 2026-07-31 passed all 47 regular tests in 65.270 seconds. The immediately following cold Standard validation passed all 48 tests in 224.121 seconds, including 171.206 seconds in the golden contract. Development therefore removed 158.851 seconds, or 70.9% of suite elapsed time, from the broad development check without removing any test from Standard or Qualification.
 
 ## Golden phase telemetry
 
@@ -46,10 +51,11 @@ The next source-level optimization groups intrinsic-call candidates by UTF-8 byt
 
 This is a CPU-throughput trade rather than another allocation reduction. The changed bootstrap source increased source-bindings instructions from 3,722,805,908 to 3,746,501,967, or 0.6%, and allocation traffic from 319.98 to 322.46 GiB, or 0.8%, while replacing expensive candidate text conversions with cheaper length and branch instructions. Runtime byte-value allocation therefore remains the next measured allocation target.
 
-Runtime optimization does not require the entire suite on every edit. Use the focused `bodies, locals` compiler test for the seconds-scale correctness loop, run the `golden` area alone with a timing report for occasional performance checkpoints, and reserve Standard plus Qualification for the final candidate:
+Runtime optimization does not require the entire suite on every edit. Use the focused `bodies, locals` compiler test for the seconds-scale correctness loop, use Development after a coherent batch, run the `golden` area alone with a timing report for occasional performance checkpoints, and reserve Standard plus Qualification for the final candidate:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea compiler -TestFilter 'bodies, locals' -FailFast
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Development
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea golden -FailFast -TimingReportPath artifacts/seed-timing-golden.json
 ```
 

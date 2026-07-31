@@ -91,7 +91,7 @@ Carry the established [E-Worker](https://eworker.ca) host-code convention into W
 ## Testing and verification
 
 - Run the narrowest reliable verifier for the changed behavior, then broaden only in proportion to risk.
-- Prefer `Tools/Verify/Verify-Changed.ps1` for the Windows inner loop. Use `Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea <area> [-TestFilter '<displayed-name substring>'] -FailFast` when selecting explicitly. Use `-Level Standard` for the complete in-process suite. The default `Qualification` level retains the complete native CLI gate.
+- Prefer `Tools/Verify/Verify-Changed.ps1` for the Windows inner loop. Use `Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea <area> [-TestFilter '<displayed-name substring>'] -FailFast` when selecting explicitly. Use `-Level Development` for every regular in-process test without the multi-billion-instruction golden contract, and `-Level Standard` for the complete in-process suite. The default `Qualification` level retains the complete native CLI gate.
 - Every parser and binary reader needs valid, boundary, truncated, oversized, inconsistent, and malicious-input coverage.
 - Use golden byte fixtures only where exact bytes are part of the contract. Pair them with structural assertions so failures remain diagnosable.
 - Use differential tests when a temporary C backend, reference VM, native backend, or host adapter should implement the same semantics.

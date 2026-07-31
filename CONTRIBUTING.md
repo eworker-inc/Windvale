@@ -54,7 +54,7 @@ When selecting explicitly, use one or more test areas and optionally narrow them
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea compiler,runtime -TestFilter '<substring>' -FailFast
 ```
 
-The available areas are `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. Area selections form a union; an accompanying filter intersects with that union. Use `-Level Standard` for the complete in-process conformance suite without the native CLI qualification pass. Changed-file, Fast, and Standard results are development feedback, not milestone qualification. The default `Qualification` level remains the complete Windows or Linux gate.
+The available areas are `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. Area selections form a union; an accompanying filter intersects with that union. Use `-Level Development` for every regular in-process test while deferring the multi-billion-instruction golden cross-host contract. Use `-Level Standard` for the complete in-process conformance suite without the native CLI qualification pass. Changed-file, Fast, Development, and Standard results are development feedback, not milestone qualification. The default `Qualification` level remains the complete Windows or Linux gate.
 
 Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require evidence from Windows and real Debian before cross-host qualification is claimed. GitHub-hosted CI is a review gate, not a substitute for the exact cross-host qualification procedure.
 

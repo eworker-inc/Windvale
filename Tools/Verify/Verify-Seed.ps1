@@ -3,7 +3,7 @@ param(
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Release',
     [string]$ReportPath,
-    [ValidateSet('Fast', 'Standard', 'Qualification')]
+    [ValidateSet('Fast', 'Development', 'Standard', 'Qualification')]
     [string]$Level = 'Qualification',
     [string]$TestFilter,
     [ValidateSet('assembler', 'bytecode', 'compiler', 'foundation', 'golden', 'linker', 'object-model', 'runtime')]
@@ -18,6 +18,15 @@ $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net
 $TestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj'
 $Artifacts = Join-Path $RepositoryRoot 'artifacts'
 New-Item -ItemType Directory -Force -Path $Artifacts | Out-Null
+$DevelopmentAreas = @(
+    'assembler',
+    'bytecode',
+    'compiler',
+    'foundation',
+    'linker',
+    'object-model',
+    'runtime'
+)
 $SelectedAreas = @($TestArea | Where-Object { ![string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
 if (
     $Level -eq 'Fast' -and
@@ -30,12 +39,15 @@ if (
     $Level -ne 'Fast' -and
     (![string]::IsNullOrWhiteSpace($TestFilter) -or $SelectedAreas.Count -ne 0)
 ) {
-    throw 'Test selection is available only with -Level Fast; Standard and Qualification require all tests.'
+    throw 'Test selection is available only with -Level Fast; other levels have fixed suites.'
 }
 if ($Level -ne 'Fast' -and $FailFast) {
-    throw '-FailFast is available only with -Level Fast; Standard and Qualification require the complete suite.'
+    throw '-FailFast is available only with -Level Fast; other levels have fixed suites.'
 }
-if ($Level -ne 'Fast' -and [string]::IsNullOrWhiteSpace($ReportPath)) {
+if ($Level -eq 'Development' -and ![string]::IsNullOrWhiteSpace($ReportPath)) {
+    throw '-ReportPath is available only with Standard or Qualification; Development is not conformance evidence.'
+}
+if ($Level -in @('Standard', 'Qualification') -and [string]::IsNullOrWhiteSpace($ReportPath)) {
     $Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
     $ReportPath = Join-Path $RepositoryRoot "artifacts/seed-conformance-windows-$Architecture.json"
 }
@@ -55,6 +67,10 @@ if ($Level -eq 'Fast') {
     }
     if ($FailFast) {
         $TestArguments += '--fail-fast'
+    }
+} elseif ($Level -eq 'Development') {
+    foreach ($Area in $DevelopmentAreas) {
+        $TestArguments += @('--area', $Area)
     }
 } else {
     $TestArguments += @('--report', $ReportPath)
@@ -77,6 +93,11 @@ if ($Level -eq 'Fast') {
         $Selection += "areas [$($SelectedAreas -join ', ')]"
     }
     Write-Host "Windvale Seed fast verification passed for $($Selection -join ' and ')."
+    return
+}
+if ($Level -eq 'Development') {
+    Write-Host 'Windvale Seed development verification passed for every regular in-process test.'
+    Write-Host 'The qualification-only golden cross-host contract was not executed.'
     return
 }
 if ($Level -eq 'Standard') {

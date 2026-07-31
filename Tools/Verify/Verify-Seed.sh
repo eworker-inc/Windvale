@@ -23,7 +23,7 @@ case "$VERIFY_LEVEL" in
             exit 64
         fi
         ;;
-    standard|qualification)
+    development|standard|qualification)
         if [ -n "$TEST_FILTER" ] || [ -n "$TEST_AREAS" ]; then
             echo 'Test selection is available only with VERIFY_LEVEL=fast.' >&2
             exit 64
@@ -61,6 +61,15 @@ if [ "$VERIFY_LEVEL" = 'fast' ]; then
     if [ "$FAIL_FAST" = '1' ]; then
         set -- "$@" --fail-fast
     fi
+elif [ "$VERIFY_LEVEL" = 'development' ]; then
+    set -- \
+        --area assembler \
+        --area bytecode \
+        --area compiler \
+        --area foundation \
+        --area linker \
+        --area object-model \
+        --area runtime
 else
     set -- --report "$REPORT_PATH"
 fi
@@ -88,6 +97,11 @@ if [ "$VERIFY_LEVEL" = 'fast' ]; then
         fi
     fi
     echo "Windvale Seed fast verification passed for $SELECTION_DESCRIPTION."
+    exit 0
+fi
+if [ "$VERIFY_LEVEL" = 'development' ]; then
+    echo 'Windvale Seed development verification passed for every regular in-process test.'
+    echo 'The qualification-only golden cross-host contract was not executed.'
     exit 0
 fi
 if [ "$VERIFY_LEVEL" = 'standard' ]; then
