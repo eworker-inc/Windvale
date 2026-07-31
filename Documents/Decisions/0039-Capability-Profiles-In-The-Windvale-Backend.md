@@ -1,7 +1,7 @@
 # Decision 0039: Capability profiles in the Windvale backend
 
 - Date: 2026-07-31
-- Status: Accepted; cross-host qualification pending
+- Status: Accepted and cross-host qualified
 
 ## Context
 
@@ -39,4 +39,4 @@ The candidate must pass:
 - the complete Standard suite and native verifier on Windows; and
 - exact-commit Debian qualification with matching normalized reports and byte-identical retrieved portable artifacts.
 
-The implementation remains pending cross-host qualification until all gates are recorded in `Documents/Project/Seed-Verification-Evidence.md`.
+Exact implementation commit `98117c15255ce5a95d41ca13e43f92a4af77ef98` passed every gate on Windows x64 and Debian Linux x64. The complete evidence is recorded in `Documents/Project/Seed-Verification-Evidence.md`.

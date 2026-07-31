@@ -88,7 +88,7 @@ Primitive WVIR shapes map to WVB shapes as follows:
 | 5 | `text` | 3 |
 | 6 | `bytes` | 6 |
 
-The encoder writes the fixed WVB 1.6 header followed by canonical Module, Capabilities, Data, Functions, Code, Exports, and Types section envelopes. Capabilities and Types contain canonical zero counts in this subset. Function metadata includes user locals followed by temporary locals, contiguous code offsets, exact code lengths, and the computed maximum stack depth.
+The encoder writes the fixed WVB 1.6 header followed by canonical Module, Capabilities, Data, Functions, Code, Exports, and Types section envelopes. Capabilities and Types contain canonical zero counts when absent and canonical entries when their accepted declarations are present. Function metadata includes user locals followed by temporary locals, contiguous code offsets, exact code lengths, and the computed maximum stack depth.
 
 ## Verification
 
@@ -102,13 +102,13 @@ The focused conformance test compiles the backend core, runs its profile/accepta
 
 `Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv` deliberately declares all seven catalog capabilities out of order. Its seven functions cover every capability call, parameter shape, and result shape. Both backends produce the exact 849-byte hosted WVB module with SHA-256 `1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528`; the authorized no-argument path executes with result `0` and performs no file read or write.
 
-The current candidate bootstrap artifacts are:
+The current qualified bootstrap artifacts are:
 
 - `Source-Wvb-Core.wvb`: 567,387 bytes, SHA-256 `4f8738e60e152e8cb20b8aa85792536303c5a05c42636205b426d826f65f3aa6`.
 - `Source-Wvb-Demo.wvb`: 567,964 bytes, SHA-256 `34c08767a264b75bf552583dd868720306a04b99a03e7324b93c96bc6046eead`.
 - `Source-Wvb-Tool.wvb`: 567,620 bytes, SHA-256 `3862a74e7f0b1a3fc42dc043a6dcbe14651bec15b264fe7b4c65574f1a4c16c7`.
 
-The preceding nominal implementation was qualified from exact commit `f39ff73913177de9e0f03896074262001d4eee00`. The capability/profile candidate identities above require exact-commit Windows and Debian qualification before they are called cross-host-qualified.
+The capability/profile implementation and the identities above are cross-host qualified from exact commit `98117c15255ce5a95d41ca13e43f92a4af77ef98`.
 
 ## Expansion path
 
