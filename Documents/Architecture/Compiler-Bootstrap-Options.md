@@ -2,7 +2,7 @@
 
 ## Status
 
-C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Decision 0002. Decision 0049 implements the first bounded direct x86-64 target for one kernel-entry source shape. Restricted C and the general native backend remain later choices; the bounded target does not settle their complete design.
+C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Decision 0002. Decision 0049 implements the first bounded direct x86-64 target for one kernel-entry source shape. [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) accepts the general destination: canonical WVB, a shared Windvale-native JIT/AOT backend and runtime on Windows, Linux, and Windvale OS, and retirement of .NET from the normal workflow after an explicit qualification gate. The bounded target does not settle the future ABI or backend design.
 
 “Bootstrap” names the staged process that starts from an existing host toolchain and reaches a reproducible Windvale-built stack. It is not the durable product name of either compiler implementation. The Windvale-written implementation is the **Windvale compiler** even before it passes self-hosting qualification; it lives in `Compiler/Windvale`. The C# implementation is the independent **reference/recovery compiler** and lives in `Compiler/Reference`. Bootstrap provenance and recovery instructions remain explicitly documented. This role layout is cross-host qualified at `4fdc6bf` under Decision 0043.
 
@@ -17,22 +17,24 @@ Keeping these decisions separate prevents the bootstrap implementation from beco
 
 ## Recommended short path
 
-The current strongest candidate is:
+The accepted staged path is:
 
 ```text
 Stage 0 tools: C#
         |
 Windvale source --> AST --> typed Windvale IR (WIR)
-                              |-- Windvale bytecode (WBC)
-                              |-- restricted C bridge, proposed
-                              `-- bounded x86-64 kernel target
+                              |-- canonical Windvale bytecode (WVB)
+                              |             |-- verified interpreter
+                              |             |-- baseline/optimizing JIT
+                              |             `-- cached or install-time native code
+                              `-- shared native backend --> WVO/AOT
 
 Assembly source --> instruction model --> shared native object model
 Native backend --------------------------^             |
                                                        `--> Windvale linker
 ```
 
-This path uses existing compilers to reach useful milestones quickly while preserving a small, owned Windvale stack as the destination.
+This path uses the current Stage 0 to reach useful milestones quickly while preserving a small, owned Windvale stack as the destination. JIT and AOT share verified semantics, a native ABI, machine lowering, structured patches, and platform adapters rather than becoming parallel compilers. The complete execution architecture is in [Native-Execution-And-Dotnet-Retirement.md](Native-Execution-And-Dotnet-Retirement.md).
 
 ## Bootstrap implementation languages
 
@@ -117,9 +119,9 @@ Bytecode is the portable application and tool format. It should be versioned, ty
 
 Bytecode is not merely a serialized compiler IR. Compiler IR changes with optimization needs; distributable bytecode needs a durable compatibility and security contract.
 
-### Restricted C — recommended temporary native bridge
+### Restricted C — optional bootstrap or recovery bridge
 
-Generating simple C provides the quickest path from a young Windvale frontend to native Windows, Linux, firmware, and freestanding experiments through existing C compilers.
+Generating simple C can provide a contingency path from a young Windvale frontend to native hosts through existing C compilers. Decision 0057 no longer makes it a required step: the shared owned WVO/JIT/AOT backend is the accepted destination, and the existing bounded x86-64 target has already proved direct native publication.
 
 The bridge must use a controlled subset:
 
@@ -129,7 +131,7 @@ The bridge must use a controlled subset:
 - No reliance on signed overflow, evaluation order, native `long` width, or host text behavior
 - Differential tests against the reference VM
 
-C must remain a backend, not the definition of Windvale semantics. Once the native backend is trustworthy, the C path can remain as a bootstrap recovery and conformance backend.
+C must remain an optional backend, not the definition of Windvale semantics or a permanent retirement dependency. Adding it requires a concrete recovery or differential need and must not delay the owned backend.
 
 ### WebAssembly — optional experimental backend
 
@@ -143,21 +145,24 @@ LLVM can provide optimization, architecture coverage, debug information, and mat
 
 .NET IL would make early hosted execution convenient but would couple language semantics to the CLR type, metadata, runtime, and object models. It does not provide the intended route to a small freestanding OS. It may be an interoperability target later.
 
-### Direct machine code — first bounded target implemented
+### Direct machine code — first bounded target implemented, shared backend accepted
 
-A direct native backend is ultimately necessary for a self-owned kernel toolchain. Decision 0049 adds the first intentionally narrow implementation only after typed WIR, verified WVO, linking, and the kernel handoff exist: one linear system-profile entry, constant ASCII line output through an imported adapter, and a constant return. This proves that WIR can reach booted native code through the shared object model. Register allocation, general control flow, data addressing, a stable native ABI, host executables, and differential semantic coverage remain Phase 9 work.
+A direct native backend is necessary for a self-owned kernel and host toolchain. Decision 0049 adds the first intentionally narrow implementation only after typed WIR, verified WVO, linking, and the kernel handoff exist: one linear system-profile entry, constant ASCII line output through an imported adapter, and a constant return. This proves that WIR can reach booted native code through the shared object model. Decision 0057 requires the general backend to serve both deterministic WVO/AOT and in-memory JIT publication. Register allocation, general control flow, data addressing, a stable native ABI, host executables, native WVB lowering, and differential semantic coverage remain Phase 9 work.
 
 ## Proposed bootstrap stages
 
 1. Specify a minimal source subset, WIR, bytecode, and observable semantics.
 2. Implement the Stage 0 compiler and a simple reference VM in C#.
 3. Run the same bytecode modules on Windows and Linux.
-4. Add the restricted C backend and compare its behavior with the reference VM.
-5. Implement the assembler, object model, object inspector, and linker as independently testable tools.
-6. Add a direct x86-64 native backend that writes through the shared object model.
-7. Implement increasing portions of the compiler and tools in Windvale itself.
-8. Run the same self-hosted bytecode tools on Windows, Linux, and Windvale OS.
-9. Use native Windvale compilation for the kernel and selected runtime layers.
+4. Implement the assembler, object model, object inspector, and linker as independently testable tools.
+5. Add a direct x86-64 native backend that writes through the shared object model.
+6. Implement increasing portions of the compiler and tools in Windvale itself.
+7. Prove Stage 0, Stage 1, and Stage 2 compiler convergence and archive the recovery inputs.
+8. Define the native ABI, compact values, runtime services, memory ownership, and host thunks.
+9. Lower verified WVB and typed WIR through one structured native backend.
+10. Qualify deterministic WVO/AOT and a low-latency baseline JIT on Windows and Linux, with interpreter/JIT/AOT differential evidence.
+11. Rebuild and run the compiler, verifier, assembler, linker, runtime, tests, and packaging through Windvale-native tools, then retire .NET from the normal workflow under Decision 0057's gate.
+12. Run the same verified WVB modules through equivalent Windvale-native execution paths on Windows, Linux, and Windvale OS.
 
 ## Why this minimizes loops
 
@@ -165,9 +170,11 @@ A direct native backend is ultimately necessary for a self-owned kernel toolchai
 - One WIR preserves semantics across backends.
 - One object model serves both assembler and compiler output.
 - The reference VM supplies executable semantics before native code generation is complete.
-- C provides early native reach without becoming a permanent required application format.
+- WVA, WVO, and the linker provide owned native reach without requiring C, LLVM, or CLR formats as semantic contracts.
 - Windows and Linux ports remain useful when the OS arrives.
-- Self-hosted tools cross into Windvale OS as existing bytecode modules instead of being rewritten for it.
+- Self-hosted tools cross into Windvale OS as existing bytecode modules or shared-backend AOT artifacts instead of being rewritten for it.
+- One native backend supports baseline JIT, cached/install-time code, AOT host tools, and AOT system components.
+- The retirement gate replaces an implicit indefinite .NET dependency with an explicit reproducible native bootstrap.
 
 ## Decisions still needed
 
@@ -175,7 +182,9 @@ A direct native backend is ultimately necessary for a self-owned kernel toolchai
 - Memory management and object representation
 - Error and exception semantics
 - Integer overflow and floating-point reproducibility rules
-- The minimum C bridge subset
 - General native value representation, ABI, and object-layout expansion beyond the accepted WVO kernel subset
+- The first baseline-JIT stencil and typed patch contract
+- Tier thresholds, native-cache policy, and which resource counters are execution-mode-independent
+- The minimum native allocator/reclamation strategy needed before .NET retirement
 - Cross-target policy after the accepted x86-64/UEFI first boundary
 - Criteria for calling the compiler self-hosting

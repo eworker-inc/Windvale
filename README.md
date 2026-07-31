@@ -15,10 +15,10 @@ At its center is a **new programming language**, together with its compiler, por
 | Project area | Status | What works today | Next major milestone |
 | --- | :---: | --- | --- |
 | Windvale language | ✅ Working now | Typed portable and hosted programs with modules, functions, control flow, records, enums, text, bytes, and explicit capabilities | Expand the language only as compiler, library, and operating-system work requires |
-| C# Stage 0 toolchain | ✅ Working now | Compiles Windvale source and provides the current recovery and reference implementation on Windows and Linux | Remain as an independent oracle after self-hosting |
+| C# Stage 0 toolchain | ✅ Working now | Compiles Windvale source and provides the current recovery and reference implementation on Windows and Linux | Retire from the normal workflow after the native Windows/Linux bootstrap gate; preserve final recovery evidence |
 | Compiler written in Windvale | 🚧 In progress | Runs from source parsing through typed IR and static multi-module bytecode generation | Compile its complete source graph and reproduce itself |
 | Portable bytecode and verifier | ✅ Working now | Deterministic `.wvb` modules can be decoded, inspected, disassembled, and safety-checked before execution | Evolve the format from implementation evidence without weakening its safety boundary |
-| Runtime on Windows and Linux | ✅ Working now | The same verified module runs through the portable reference interpreter with bounded resources and explicit host services | Improve performance and later port the runtime to Windvale OS |
+| Runtime on Windows and Linux | ✅ Working now | The same verified module runs through the .NET-hosted portable reference interpreter with bounded resources and explicit host services | Build Windvale-native interpreter, baseline JIT, AOT, memory, and host adapters |
 | Foundation library | 🚧 In progress | Shared machine, byte-ordering, decimal-parsing, and byte-construction modules are used by real Windvale tools | Add collections, text, diagnostics, and other facilities demanded by self-hosting |
 | Assembler | ✅ Working now | C# and Windvale assemblers turn textual WVA assembly into matching verified WVO objects | Add instructions and addressing required by native compilation and the kernel |
 | Object-file model | ✅ Working now | WVO defines verified sections, symbols, and relocations shared by the assembler and linker | Support richer object requirements discovered by the native backend |
@@ -26,7 +26,7 @@ At its center is a **new programming language**, together with its compiler, por
 | CLI and inspection tools | ✅ Working now | One CLI can compile, verify, inspect, run, assemble, link, and inspect or verify objects | Move more command implementations into Windvale and add broader developer tooling |
 | Editor support | ✅ Working now | Windvale syntax highlighting and language configuration work locally in Visual Studio Code | Package it publicly and pursue GitHub language recognition when eligible |
 | Tests, specifications, and reproducibility | ✅ Working now | Valid, malformed, boundary, random-input, deterministic-output, and cross-host checks protect the current contracts | Extend the same evidence discipline to self-hosting, native code, and the operating system |
-| Native compiler and host programs | 🚧 In progress | A bounded Stage 0 target lowers one system-profile WIR shape to verified x86-64 WVO for the kernel handoff | Define the general native ABI and add bytecode/native differential programs |
+| Native compiler and host programs | 🚧 In progress | A bounded Stage 0 target lowers one system-profile WIR shape to verified x86-64 WVO for the kernel handoff | Define the shared native ABI/backend and qualify WVO AOT plus a baseline WVB JIT on Windows and Linux |
 | Windvale operating system | 🚧 In progress | A deterministic UEFI/QEMU probe exits firmware, claims a bounded physical arena, and runs compiler-generated `.wv` code on a kernel-owned stack | Add traps, a runtime, clean shutdown, and Hyper-V evidence |
 | Open-source project foundation | 🚧 In progress | MIT licensing, contribution, security, governance, support, and authorship policies exist | Complete the publication baseline and establish public project operations |
 
@@ -60,7 +60,9 @@ The exact ownership, allocator, implementation seam, target, and evidence limits
 
 **Latest qualified evidence:** 48 conformance tests, 61 byte-identical portable artifacts, and matching Windows and Debian results. See the [qualification evidence](Documents/Project/Seed-Verification-Evidence.md) and [development roadmap](Documents/Project/Roadmap.md) for the complete scope and remaining gates.
 
-Today, Windvale uses dependency-free C# and .NET as its Stage 0 bootstrap. C# is a transition and reference implementation: it makes the compiler, bytecode verifier, runtime, assembler, object model, linker, and CLI executable, testable, and recoverable on Windows and Linux while those components are progressively implemented in Windvale itself. C# does not define Windvale's language semantics or the final self-hosted path, although it may remain as an independent recovery and comparison oracle.
+Today, Windvale uses dependency-free C# and .NET as its Stage 0 bootstrap. C# is a transition and reference implementation: it makes the compiler, bytecode verifier, runtime, assembler, object model, linker, and CLI executable, testable, and recoverable on Windows and Linux while those components are progressively implemented in Windvale itself. C# does not define Windvale's language semantics or the final self-hosted path. After the native-retirement gate, .NET leaves the normal build, test, packaging, and execution workflow; the final Stage 0 release may remain only as archived recovery and provenance evidence.
+
+The accepted native destination keeps canonical WVB as the portable program identity while a Windvale-written execution stack supplies a verified interpreter, low-latency baseline JIT, optional measured optimizing tier, deterministic AOT, native memory management, and narrow Windows, Linux, and Windvale OS adapters. JIT and AOT share one native ABI, backend, and relocation model. The direction, safety boundary, proposed WVA copy-and-patch tier, and exact .NET retirement conditions are defined by [Decision 0057](Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and the [native-execution architecture](Documents/Architecture/Native-Execution-And-Dotnet-Retirement.md); none of those future components is claimed as implemented today.
 
 The Windvale-written compiler lives under `Compiler/Windvale`; the independent C# reference/recovery compiler lives under `Compiler/Reference`. “Bootstrap” describes the staged and reproducible process between them, not the product name of either implementation.
 
@@ -537,6 +539,7 @@ export fn Main() -> i32 {
 - [Seed implementation](Documents/Architecture/Seed-Implementation.md)
 - [Platform and portability model](Documents/Architecture/Platform-And-Portability.md)
 - [Compiler bootstrap options](Documents/Architecture/Compiler-Bootstrap-Options.md)
+- [Native execution and .NET retirement](Documents/Architecture/Native-Execution-And-Dotnet-Retirement.md)
 - [Seed language specification](Specifications/Seed-Language.md)
 - [Seed immutable records](Specifications/Seed-Records.md)
 - [Seed enums and bounded formatting](Specifications/Seed-Enums-And-Formatting.md)
@@ -621,6 +624,7 @@ export fn Main() -> i32 {
 - [Assembler implementation role layout decision](Documents/Decisions/0051-Assembler-Implementation-Role-Layout.md)
 - [Linker implementation role layout decision](Documents/Decisions/0053-Linker-Implementation-Role-Layout.md)
 - [Validated scan reuse and ten-module closure decision](Documents/Decisions/0055-Validated-Scan-Reuse-And-Ten-Module-Closure.md)
+- [Windvale-native execution and .NET retirement decision](Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

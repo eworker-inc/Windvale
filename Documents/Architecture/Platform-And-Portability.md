@@ -2,7 +2,7 @@
 
 ## Status
 
-Initial architecture direction. Details remain subject to format and capability specifications.
+Accepted architecture direction, refined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Current implementation status remains governed by the corresponding format, runtime, native-target, and OS specifications.
 
 ## Central distinction
 
@@ -24,12 +24,12 @@ This keeps early host work useful after the new OS can run programs. It also pre
 
 ## Execution forms
 
-Windvale source is expected to support two primary forms:
+Windvale source supports two durable publication levels and several execution times:
 
-- Portable bytecode for applications, tools, packages, and experimentation.
-- Native code for the kernel, drivers, runtime internals, low-level libraries, and selected performance-sensitive programs.
+- Canonical verified bytecode for portable applications, tools, packages, caching, and experimentation. It may be interpreted, JIT-compiled, install-time compiled, or compiled ahead of time without changing its identity or semantics.
+- Native code produced through the shared native backend for kernels, drivers, runtime internals, host tools, low-level libraries, and selected applications. Deterministic WVO/AOT and in-memory JIT publication share ABI, lowering, and typed relocation rules.
 
-The frontend and semantic model should be shared. Backend differences must not silently alter defined behavior.
+The frontend and semantic model are shared. Backend and execution-tier differences must not silently alter defined behavior. [Native-Execution-And-Dotnet-Retirement.md](Native-Execution-And-Dotnet-Retirement.md) owns the accepted interpreter/JIT/AOT continuum and .NET retirement boundary.
 
 ## First OS boot environment
 
@@ -95,11 +95,13 @@ Portable code should consume Windvale contracts for these concepts. When a host-
 
 Windows and Linux should remain first-class environments for:
 
-- The Windvale SDK and build tools
-- The bytecode runtime and application launcher
+- The Windvale-native SDK and build tools
+- The verified interpreter, JIT/AOT runtime, and application launcher
 - Editors, debuggers, inspectors, and package tools
 - Continuous integration and fuzzing
 - Cross-host conformance tests
 - Development of Windvale OS itself
 
 The OS port adds another implementation of Windvale platform contracts; it does not replace the host ecosystem.
+
+C# and .NET provide the current Stage 0 implementation on both hosts. They are not permanent host requirements. Normal development moves to qualified Windvale-native tools only after the explicit cross-host native-retirement gate; bootstrap history and the final recovery release remain documented rather than silently discarded.

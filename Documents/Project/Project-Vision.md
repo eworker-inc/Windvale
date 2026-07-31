@@ -15,12 +15,16 @@ As of July 2026, Windvale is among the earliest known open-source efforts to bui
 ```text
 Windvale source language
         |
-        +-- portable bytecode and modules --> Windvale runtime
-        |                                      |-- Windows host
-        |                                      |-- Linux host
-        |                                      `-- Windvale OS
+        +-- portable verified bytecode --> Windvale-native execution
+        |                                  |-- interpreter
+        |                                  |-- baseline/optimizing JIT
+        |                                  `-- cached or install-time compilation
         |
-        `-- native code --> object model --> linker --> native programs and kernel
+        `-- shared native backend --> object model/linker --> AOT programs and kernel
+
+Windows adapter ---------+
+Linux adapter -----------+--> runtime capabilities and process services
+Windvale OS adapter -----+
 
 Foundation library --> portable contracts --> host and OS adapters
 ```
@@ -33,6 +37,8 @@ The umbrella project is named **Windvale**. Its major tools should initially use
 - Preserve the Windows and Linux runtime ports after Windvale OS exists.
 - Keep one source-language semantic model across bytecode and native execution.
 - Make the bytecode/module contract portable, versioned, inspectable, and verifiable.
+- Share native ABI, machine lowering, typed relocation, and runtime contracts across JIT and AOT rather than building parallel native compilers.
+- Retire C#/.NET from the normal Windows and Linux workflow only after a reproducible Windvale-native compiler, verifier, runtime, toolchain, and recovery seed are qualified; preserve the final Stage 0 evidence as bootstrap history.
 - Keep platform differences behind explicit contracts and capabilities.
 - Reuse compiler, assembler, object, and linker infrastructure instead of building parallel pipelines.
 - Reach self-hosting through documented stages rather than obscuring existing-tool dependencies.
@@ -62,6 +68,8 @@ The accepted first boot environment is x86-64 with UEFI 2.11, QEMU as the primar
 - A new CPU architecture
 - A replacement for every existing compiler backend or debugger
 - Claims that the stack has no external bootstrap dependencies
+
+The accepted native execution and retirement direction is defined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Native execution and .NET retirement](../Architecture/Native-Execution-And-Dotnet-Retirement.md). It is a destination and qualification plan, not current implementation status.
 
 ## Open-source intent
 

@@ -18,11 +18,14 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Compiler and runtime
 
-- Which portions of the accepted C# Stage 0 implementation should remain in the permanent recovery bootstrap after self-hosting?
+- What exact source, binaries, manifests, and instructions belong in the final archived .NET Stage 0 recovery release, and should a later smaller from-zero path supplement it?
 - Should distributable bytecode be stack-based, register-based, or a hybrid?
 - What is the boundary between compiler IR and stable bytecode?
 - Which memory-management model works for both native system code and managed application code?
-- How will deterministic and differential execution be tested across the VM, C bridge, and native backend?
+- What compact native value, text, bytes, root, heap, and reclamation contracts are sufficient for the first Windvale-native runtime?
+- Which WVA stencil and typed patch shape should implement the first copy-and-patch baseline JIT experiment?
+- Which tier thresholds, native-cache identities, and resource counters remain deterministic across interpretation, JIT, and AOT?
+- How will deterministic and differential execution be tested across the reference interpreter, Windvale-native interpreter, baseline JIT, and AOT backend?
 - How small can the runtime remain while supporting useful libraries and diagnostics?
 
 ## Native toolchain
@@ -44,9 +47,9 @@ This list records unresolved decisions without presenting them as implementation
 
 The recommended next decisions are:
 
-1. Define typed expression and control-flow semantics above the qualified WVSD/WVLB evidence, then introduce the smallest independently validated WIR boundary.
-2. Use that semantic and WIR pressure to define only the memory, collection, and aggregate-type facilities actually needed by the compiler.
-3. Define the restricted C bridge without changing Windvale semantics.
-4. Extend WVA labels and address materialization only when native-backend evidence supplies exact requirements.
-5. Replace the accepted Stage 0 kernel-entry object with compiler-produced Windvale WVO while preserving the bounded post-firmware handoff evidence.
-6. Import the complete history into a private `eworker-inc/Windvale` repository, inspect the initial publication baseline, and configure DCO, security, branch, and automation settings before public visibility.
+1. Complete reproducible Stage 0 → Stage 1 → Stage 2 compiler convergence and close any source-envelope gap exposed by the real graph.
+2. Define the smallest native value representation, calling convention, runtime-service table, allocation/reclamation boundary, and platform thunk ABI required by representative WVB programs.
+3. Define one structured machine-fragment and typed-patch boundary shared by verified WVB lowering, typed-WIR lowering, WVO/AOT, and in-memory linking.
+4. Qualify a WVA-generated copy-and-patch baseline-JIT slice with strict writable-or-executable publication and interpreter/JIT/AOT differential evidence.
+5. Add native PE/COFF and ELF adapters plus Windows/Linux capability and process hosts without leaking their rules into portable modules.
+6. Satisfy Decision 0057's native-retirement gate, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.

@@ -22,6 +22,8 @@ Windvale is an open-source experiment in constructing a small computing stack: l
 - Windows and Linux are permanent Windvale hosts. They are not the semantic definition of the language.
 - Windvale defines its own source semantics, bytecode, module format, runtime contracts, capability profiles, and standard-library behavior.
 - The same source language should eventually support portable bytecode and native compilation.
+- Canonical WVB remains the portable distribution contract while a shared Windvale-native backend serves interpreter, JIT, cached/install-time, and AOT execution without changing semantics.
+- C# and .NET are the active Stage 0 bootstrap, not permanent product dependencies. Retire them from the normal build, test, packaging, and execution path only after the documented native-retirement gate is qualified on Windows and Linux; preserve recovery provenance explicitly.
 - Portable applications target Windvale contracts. Host adapters map those contracts to Windows, Linux, and Windvale OS.
 - Host-specific capabilities remain explicit and must not leak into portable modules.
 - The OS is a vertical integration target, not a reason to postpone useful host tools and libraries.
@@ -50,6 +52,7 @@ Create these source areas only when implementation begins; do not add empty dire
 ## Compiler and format rules
 
 - Treat source syntax, semantic IR, distributable bytecode, native machine IR, object files, and executable images as different contracts.
+- Keep JIT and AOT as output modes over shared verified semantics, native ABI rules, machine lowering, and typed relocation contracts rather than parallel compilers.
 - Do not use a backend format such as C, LLVM IR, WebAssembly, PE, or ELF as the implicit definition of Windvale semantics.
 - Give every serialized format an explicit version, validation boundary, size limits, and malformed-input tests.
 - Bytecode verification happens before execution. Revalidate indices, offsets, lengths, types, capabilities, imports, and control-flow targets.

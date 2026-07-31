@@ -17,6 +17,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - The accepted first x86-64 UEFI/QEMU boot environment and a path-independent dependency preflight over exact EDK II firmware inputs.
 - The first verified WVA-to-Windvale kernel execution seam, linking an assembled machine shim to compiler-generated `.wv` Main on kernel-owned memory.
 - Windvale-owned post-memory boot evidence and a bidirectional WVA seam for Main entry and console-byte output.
+- The accepted Windvale-native interpreter/JIT/AOT direction and explicit qualification gate for retiring .NET from the normal Windows and Linux workflow.
 
 ### Changed
 

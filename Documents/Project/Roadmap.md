@@ -2,7 +2,7 @@
 
 ## Active goal
 
-Evolve Windvale from the qualified C# Stage 0 and portable bytecode foundation into a small, understandable, increasingly self-hosted computing stack. Build useful Windvale-written binary tools and an explicit Foundation library first; then grow the language, compiler, assembler, object model, linker, native backend, and reproducible bootstrap; finally boot a minimal virtual-machine operating system that can load and run the same verified Windvale modules used on Windows and Linux.
+Evolve Windvale from the qualified C# Stage 0 and portable bytecode foundation into a small, understandable, self-hosted computing stack whose normal Windows, Linux, and Windvale OS workflows require no .NET dependency. Build useful Windvale-written binary tools and an explicit Foundation library first; then grow the language, compiler, assembler, object model, linker, shared JIT/AOT native backend, runtime, memory system, and reproducible bootstrap; finally boot a minimal virtual-machine operating system that can load and run the same verified Windvale modules used on native Windows and Linux hosts.
 
 The destination is stable, but the route is not frozen. An intermediate design may be revised or replaced when implementation evidence shows that it is impractical or that a materially better alternative is available. Consequential changes require an updated specification or an accepted decision, preserved verification evidence, and a clear migration of current fixtures. Adaptability must not weaken deterministic semantics, mandatory verification, explicit platform boundaries, or the end-to-end portability proof.
 
@@ -12,7 +12,7 @@ This roadmap expresses the active long-term goal and its current best route. The
 
 ## Sequencing principle
 
-Windvale remains bytecode-first for as long as that reduces bootstrap loops. A new Windvale-written tool should become useful and reproducible on Windows and Linux before Windvale OS depends on it. Portable logic remains separate from hosted I/O, and each qualified phase requires deterministic artifacts, mandatory verification, adversarial coverage, and real cross-host evidence.
+Windvale remains bytecode-first for as long as that reduces bootstrap loops. A new Windvale-written tool should become useful and reproducible on Windows and Linux before Windvale OS depends on it. Portable logic remains separate from hosted I/O, and each qualified phase requires deterministic artifacts, mandatory verification, adversarial coverage, and real cross-host evidence. C#/.NET remains the active reference and recovery path until [Decision 0057's native-retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate); after that gate it leaves normal automation rather than becoming a permanent host dependency.
 
 ## Phases
 
@@ -27,10 +27,10 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 | 6. Assembler and linker | Windvale-written assembler and linker running first as verified bytecode on Windows and Linux. | Qualified |
 | 7. Foundation modules | Compact reusable collections, text, binary-format, diagnostics, testing, and I/O-adapter modules driven by tool needs. | Current focus |
 | 8. Self-hosted compiler | Windvale-written lexer, parser, semantics, and code generation for a meaningful subset, followed by a reproducible bootstrap closure. | Static multi-module backend qualified; source-envelope/performance and compiler closure next |
-| 9. Native backend | Native WIR lowering, first x86-64 subset, calling convention, object output, and bytecode/native differential tests. | First bounded kernel-entry WVO target implemented; general subset and differential evidence next |
-| 10. Native host tools | Produce and qualify native Windvale programs in controlled Windows and Linux environments. | Planned |
+| 9. Shared native backend | Native WIR/WVB lowering, x86-64 ABI, WVO/AOT output, baseline JIT, and interpreter/JIT/AOT differential tests. | First bounded kernel-entry WVO target implemented; general subset and differential evidence next |
+| 10. Native host tools and .NET retirement | Produce and qualify native Windvale tools, runtime, JIT/AOT execution, and bootstrap recovery on Windows and Linux without a normal .NET dependency. | Planned |
 | 11. Boot path and kernel | x86-64 UEFI/QEMU boot, diagnostics, memory foundation, minimal kernel boundary, and Hyper-V qualification. | Compiler-generated `.wv` runs on a bounded kernel-owned stack; traps, runtime, shutdown, and Hyper-V remain |
-| 12. Runtime on Windvale OS | Load, verify, and run one identical Windvale module across Windows, Linux, and Windvale OS. | Planned |
+| 12. Runtime on Windvale OS | Load, verify, and run one identical WVB through equivalent Windvale-native execution contracts across Windows, Linux, and Windvale OS. | Planned |
 | 13. Public foundation | Reproducible recovery bootstrap, security limits, licensing, governance, contribution rules, and public-release criteria. | Repository policies prepared; private GitHub import, settings, and initial publication baseline pending |
 
 ## Detailed execution plan
@@ -104,39 +104,44 @@ Decision 0055 reuses complete-source lexical and declaration evidence inside the
 4. Build name/type/control-flow semantics and typed WIR construction with independent validation.
 5. Emit canonical WVB and compare decoded structure, verifier results, runtime behavior, and exact bytes where canonicalization promises equality.
 6. Compile the compiler with Stage 0, compile it again with the Windvale compiler, and compare the defined self-hosting artifacts.
-7. Preserve the C# implementation as a documented reference/recovery compiler until a separate decision proves that removing it improves recoverability.
+7. Preserve the C# implementation as the active reference/recovery compiler through convergence and the native-retirement gate. Archive its final source, dependencies, instructions, and exact evidence before it leaves normal automation under Decision 0057.
 
 The completion gate is reproducible compiler self-hosting on Windows and Debian, including a clean-environment recovery procedure and exact dependency inventory.
 
-### Phase 9 - native backend
+### Phase 9 - shared native backend
 
 1. Define the x86-64 calling convention, value representation, stack discipline, register ownership, traps, and portable/native semantic equivalence rules.
-2. Extend WIR and WVA only with operations demanded by measured native lowering cases, including internal control flow and address materialization.
-3. Lower a small pure subset to WVO through the same object contract used by handwritten assembly.
-4. Add executable layout or platform-container output in the linker through explicit target adapters rather than host conditionals in portable code.
-5. Differentially run the same programs in the verified bytecode runtime and native sandbox, comparing results, diagnostics, traps, and resource-boundary behavior.
-6. Expand the subset through integers, calls, aggregates, memory, and hosted bridges only after each preceding slice is qualified.
+2. Define a structured native machine-IR or fragment boundary whose instruction selection, register assignment, encoding, and typed patches can serve WVO/AOT and in-memory JIT sinks.
+3. Extend WIR, WVB lowering, and WVA only with operations demanded by measured native cases, including internal control flow, calls, data addressing, runtime services, and address materialization.
+4. Lower a small verified pure WVB subset and the matching typed-WIR subset to WVO through the same object contract used by handwritten assembly.
+5. Implement the first low-latency baseline-JIT experiment with WVA-generated machine stencils or another explicitly accepted mechanism, writable-or-executable publication, checked in-memory relocation, and bounded code-cache accounting.
+6. Add PE/COFF, ELF, and later Windvale-native container output through explicit linker/loader target adapters rather than host conditionals in portable code.
+7. Differentially run the same programs in the verified interpreter, baseline JIT, native sandbox, and AOT image, comparing acceptance, results, output, diagnostics, traps, capabilities, and defined resource counters.
+8. Add content-addressed native caching, lazy compilation, compact micro-operations, an optimizing tier, or profile-guided AOT only after the preceding baseline supplies measurements and stable safety boundaries.
+9. Expand through integers, calls, aggregates, memory, text, bytes, hosted bridges, and reclamation only after each preceding slice is qualified.
 
 [Decision 0049](../Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) supplies an early bounded instance of steps 1, 3, and 4 for the special kernel-entry target: typed WIR lowers to verified code-only WVO, obeys handoff version 1, and links into the explicit UEFI adapter. It deliberately does not satisfy this phase's general ABI or bytecode/native differential gate.
 
-The completion gate is deterministic native output and semantic agreement for a documented subset; full language coverage is not required yet.
+The completion gate is deterministic native AOT output, a qualified baseline-JIT path, and interpreter/JIT/AOT semantic agreement for a documented WVB subset on Windows and Linux. Full language coverage and an optimizing tier are not required yet.
 
-### Phase 10 - native host tools
+### Phase 10 - native host tools and .NET retirement
 
-1. Produce native assembler, linker, inspector, and selected compiler artifacts from the qualified backend.
-2. Define narrow Windows and Linux host adapters for files, arguments, diagnostics, memory, and process exit behavior.
-3. Keep portable tool cores identical and test adapters through shared capability contracts.
-4. Rebuild representative artifacts with bytecode-hosted and native-hosted tools and compare the promised outputs.
-5. Document every remaining dependency on .NET, system libraries, platform loaders, firmware tooling, or external build utilities.
+1. Produce native compiler, semantic WVB verifier, interpreter/baseline JIT, assembler, linker, inspector, test runner, and build-driver artifacts from the qualified backend.
+2. Define the native value representation, allocation/reclamation boundary, runtime-service table, traps, process entry, and narrow Windows/Linux adapters for executable memory, files, arguments, diagnostics, and exit behavior.
+3. Keep portable tool cores identical and test adapters through shared capability contracts and a Windvale-owned internal ABI with small platform thunks.
+4. Rebuild representative artifacts with the .NET-hosted reference path and native Windvale tools, comparing every promised output; then prove Stage 1 and Stage 2 through the native path.
+5. Run repository verification, packaging, and clean-environment recovery on both hosts without invoking .NET. Inventory every remaining system library, platform loader, firmware tool, or external build utility.
+6. Archive the final qualified .NET Stage 0 release and publish the native seed identity, provenance, previous-compiler bootstrap procedure, and rollback path.
+7. Remove .NET from the normal build, test, packaging, release, and execution automation only when every Decision 0057 retirement condition passes from one committed source state.
 
-The completion gate is a controlled native toolchain on both hosts with no silent semantic fork from the bytecode implementation.
+The completion gate is a controlled and recoverable Windvale-native toolchain on Windows and Linux with no silent semantic fork, no normal .NET invocation, and matching native bootstrap evidence. This retires .NET as a dependency without erasing the Stage 0 historical record.
 
 ### Phase 11 - boot path and minimal kernel
 
 1. Use the accepted Decision 0044 x86-64 UEFI 2.11, pinned QEMU Q35/TCG, and exact EDK II environment; record the first deterministic image and internal calling-convention decisions from boot evidence.
 2. Make the linker produce the smallest bootable image format through a dedicated target adapter.
 3. Boot to deterministic serial diagnostics, then add memory-map capture, page allocation, traps, and shutdown one bounded slice at a time.
-4. Port the verifier and bytecode runtime behind system-profile capabilities rather than adding a kernel-specific language dialect.
+4. Port the semantic WVB verifier and initial native interpreter behind system-profile capabilities rather than adding a kernel-specific language dialect. Keep later JIT compilation in user space or an isolated system service; kernel and driver code remain AOT.
 5. Define the first package/resource source and load one embedded or image-contained verified module.
 6. Automate QEMU success, failure, timeout, serial transcript, and image-digest evidence.
 7. Qualify the accepted image under Hyper-V after QEMU automation is stable, documenting firmware or device differences explicitly.
@@ -149,8 +154,8 @@ The completion gate is a reproducible VM image that boots, reports machine-reada
 
 1. Select one non-trivial portable module with deterministic inputs, output, failure behavior, and bounded resource use.
 2. Package the exact same verified WVB bytes for Windows, Linux, and Windvale OS.
-3. Run the module through equivalent capability contracts and capture machine-readable reports.
-4. Compare module digest, verifier result, return value, output bytes, diagnostics, and defined resource counters.
+3. Run the module through equivalent Windvale-native capability contracts. Record interpreter, baseline-JIT, cached/install-time, or AOT mode explicitly rather than allowing the tier to change observable semantics.
+4. Compare module digest, verifier result, return value, output bytes, diagnostics, native ABI/runtime versions, and defined resource counters.
 5. Treat any host-specific observable difference as either a defect or a proposed contract change requiring a recorded decision.
 
 The completion gate is the central Windvale portability proof: one module artifact, three environments, one specified result.
@@ -189,8 +194,8 @@ The following choices are intentionally deferred until the preceding experiment 
 - The ergonomic assembly layer waits until canonical WVA and linker pressure reveal whether sorting, expressions, labels, or macros belong in WVA or in a source layer above it.
 - Collection and memory facilities wait for concrete assembler, linker, and compiler algorithms rather than being designed as an abstract standard library exercise.
 - The permanent bytecode shape waits for self-hosted compiler experience; versioned development formats may break before the public stability decision.
-- The native ABI waits for bytecode/native differential cases and the first linked image requirements.
-- Compiler folder names describe implementation roles rather than lifecycle status. `Compiler/Windvale` owns the Windvale-written implementation, `Compiler/Reference` owns the independent C# reference/recovery implementation, and `Bootstrap` is reserved for the staged transition, provenance, and recovery process. This layout is cross-host qualified at `4fdc6bf`; calling the Windvale implementation a compiler does not claim that it is already self-hosting.
+- Decision 0057 accepts one shared native ABI/backend family for JIT and AOT. Its exact value layout, calling convention, machine IR, runtime table, memory system, stencil shape, tier policy, and cache contract still wait for measured bytecode/native cases and linked-image requirements.
+- Compiler folder names describe implementation roles rather than lifecycle status. `Compiler/Windvale` owns the Windvale-written implementation, `Compiler/Reference` owns the active C# Stage 0 reference/recovery implementation, and `Bootstrap` is reserved for the staged transition, provenance, and recovery process. This layout is cross-host qualified at `4fdc6bf`; calling the Windvale implementation a compiler does not claim that it is already self-hosting. After Decision 0057's retirement gate, a separate implementation change may archive or remove the C# project from normal automation without renaming Windvale's owned compiler around another lifecycle label.
 - Assembler folder names describe implementation roles rather than maturity. `Assembler/Windvale` owns the qualified Windvale-written WVA implementation, `Assembler/Reference` owns the independent C# Stage 0 reference/recovery implementation, and `Examples/Assembler` retains only canonical WVA inputs. Decision 0051 changes ownership paths without changing WVA, WVO, assembly names, namespaces, module identities, or artifact contracts.
 - Linker folder names describe implementation roles rather than target parity. `Linker/Windvale` owns the qualified Windvale-written flat-image implementation, `Linker/Reference` owns the independent C# Stage 0 reference/recovery implementation plus the currently C#-only UEFI target adapter, and `Examples/Linker` retains canonical WVA inputs. Decision 0053 changes ownership paths without changing linking, UEFI, assembly, namespace, module, or artifact contracts.
 - UEFI PE32+ is the accepted first boot-container family. Its exact deterministic adapter waits for boot evidence; later PE host, ELF, and flat-image priorities must not redefine portable language behavior.
@@ -201,4 +206,4 @@ At each checkpoint the project may keep, revise, or replace the proposed mechani
 
 ## Current focus
 
-Phase 6 is qualified. Its WVA 1 Stage 0 contract is qualified at `3bfc6bb`, Windvale scanner at `e5fd109`, semantic inspector at `cc57bf9`, object encoder and hosted assembler at `a689617`, and Stage 0 link oracle at `9c4b9f5`. The complete Windvale linker is qualified at `40ac57d` after the prerequisite, object-view, layout, image, relocation, and independent-reconstruction slices. Windows and Debian produced the same WVB, exact 24-byte image, exact 1,721-byte map, and normalized contract while exercising maximum image/map boundaries and publish-after-success failures. Phase 7 remains active: its source-module prerequisite and four evidence-driven Foundation modules are cross-host qualified through `26e2fd1`. In parallel, Phase 8's Windvale-written lexer, declaration/body parsers, source set and graph, symbol and binding phases, typed WVIR, and static multi-module WVB backend are qualified through Decision 0055 at `1a4fca7`. The exact ten-module typed-WVIR workload now completes below its fixed ceiling, so reproducible Stage 0 → Stage 1 → Stage 2 convergence is the next active compiler slice; the 4 MiB source envelope remains open and must be raised if real bootstrap evidence requires it. Phase 7 and Phase 8 are not complete. In parallel, Decisions 0044 through 0056 establish the first x86-64 UEFI/QEMU environment, deterministic PE32+ adapter, firmware-entry and memory-map probes, bounded `ExitBootServices`, a separately linked handoff, bounded kernel-owned memory and stack, compiler-generated `.wv` execution, and a bidirectional WVA/Windvale seam with source-owned post-memory evidence. No functioning kernel runtime, general native backend, paging or traps, bytecode execution in the OS, cross-host boot qualification, or Phase 11 qualification is claimed yet.
+Phase 6 is qualified. Its WVA 1 Stage 0 contract is qualified at `3bfc6bb`, Windvale scanner at `e5fd109`, semantic inspector at `cc57bf9`, object encoder and hosted assembler at `a689617`, and Stage 0 link oracle at `9c4b9f5`. The complete Windvale linker is qualified at `40ac57d` after the prerequisite, object-view, layout, image, relocation, and independent-reconstruction slices. Windows and Debian produced the same WVB, exact 24-byte image, exact 1,721-byte map, and normalized contract while exercising maximum image/map boundaries and publish-after-success failures. Phase 7 remains active: its source-module prerequisite and four evidence-driven Foundation modules are cross-host qualified through `26e2fd1`. In parallel, Phase 8's Windvale-written lexer, declaration/body parsers, source set and graph, symbol and binding phases, typed WVIR, and static multi-module WVB backend are qualified through Decision 0055 at `1a4fca7`. The exact ten-module typed-WVIR workload now completes below its fixed ceiling, so reproducible Stage 0 → Stage 1 → Stage 2 convergence is the next active compiler slice; the 4 MiB source envelope remains open and must be raised if real bootstrap evidence requires it. Phase 7 and Phase 8 are not complete. In parallel, Decisions 0044 through 0056 establish the first x86-64 UEFI/QEMU environment, deterministic PE32+ adapter, firmware-entry and memory-map probes, bounded `ExitBootServices`, a separately linked handoff, bounded kernel-owned memory and stack, compiler-generated `.wv` execution, and a bidirectional WVA/Windvale seam with source-owned post-memory evidence. Decision 0057 now fixes the later Windvale-native interpreter/JIT/AOT and .NET-retirement destination but implements none of those components. No functioning kernel runtime, general native backend, baseline JIT, native host toolchain, .NET-independent workflow, paging or traps, bytecode execution in the OS, cross-host boot qualification, or Phase 11 qualification is claimed yet.

@@ -1,0 +1,233 @@
+# Native execution and .NET retirement
+
+## Status
+
+Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). The current execution implementations relevant to this direction remain the C#/.NET reference interpreter and a deliberately bounded Stage 0 x86-64 kernel target. This document defines the destination and migration boundaries; it does not claim a general native runtime, JIT, AOT compiler, PE host, ELF host, garbage collector, or completed self-hosting chain.
+
+## Destination
+
+Windvale source has one semantic frontend and two durable publication levels:
+
+```text
+Windvale source
+      |
+      +--> typed Windvale IR --> canonical verified WVB
+      |                                |
+      |                                +--> verified interpreter
+      |                                +--> baseline JIT
+      |                                +--> optimizing JIT
+      |                                `--> install-time or cached native compilation
+      |
+      `--> typed Windvale IR --> shared native backend --> WVO/AOT image
+```
+
+WVB is the portable distributable contract. WIR and the future native machine IR are compiler contracts. WVO, PE/COFF, ELF, in-memory linked code, and Windvale OS process images are target artifacts. None silently defines source semantics for another layer.
+
+Windows and Linux remain permanent Windvale hosts after .NET retirement. Windvale OS adds another platform implementation; it does not absorb or replace the host tool and application ecosystem.
+
+## Compilation is a continuum
+
+JIT and AOT describe when native compilation occurs, not competing language definitions:
+
+| Time | Form | Primary use |
+| --- | --- | --- |
+| Build time | Deterministic AOT | Kernel, drivers, core tools, release applications |
+| Install time | Target-local AOT or cache population | Portable packages deployed to a known machine |
+| Load time | Eager JIT | Small complete modules where predictable latency matters |
+| First call | Lazy baseline JIT | Ordinary portable applications |
+| Hot execution | Selective optimizing JIT | Measured long-running functions |
+| Post-link/profile rebuild | Profile-guided AOT | Qualified release performance |
+
+A target may support only a safe subset of these forms. Environments that prohibit dynamic executable memory remain valid AOT/interpreter hosts.
+
+## Execution tiers
+
+### Tier 0: verified interpreter
+
+The interpreter is the simplest executable semantic oracle. Its Windvale-native successor should favor transparent behavior, bounded resource accounting, and useful diagnostics over peak speed. It remains valuable after JIT/AOT qualification for differential tests, debugging, hostile-input containment, and architectures without a native backend.
+
+### Tier 1: baseline copy-and-patch JIT
+
+The first proposed JIT maps verified WVB operations or typed micro-operations to prebuilt machine stencils. A stencil contains instruction bytes plus typed holes for constants, branches, runtime services, data, and calls. The JIT copies selected stencils, lays them out, applies checked patches, independently validates the result, and finalizes executable permissions.
+
+Windvale already has useful ingredients:
+
+- WVA owns explicit machine operations and encodings;
+- WVO owns sections, symbols, and typed relocations;
+- the linker owns checked layout and patch application; and
+- WVB supplies verified types, branch targets, stack depths, and resource limits.
+
+The experiment should reuse those contracts without serializing and rereading a complete WVO for every function when an in-memory link graph is sufficient. AOT and JIT sinks may share the same structured machine fragment and relocation model.
+
+Initial stencils may use fixed register conventions and conservative runtime calls. Superinstructions or fused micro-operations may later reduce dispatch-shaped overhead without weakening verification.
+
+### Tier 2: optimizing JIT
+
+Only measured hot functions justify a slower optimizing tier. It may introduce SSA-like native IR, register allocation, inlining, constant propagation, branch layout, bounds-check elimination supported by proof, and target-specific scheduling. Windvale's static types should avoid much of the speculative type guarding and deoptimization required by dynamic languages.
+
+Speculation, tracing, deoptimization, and on-stack replacement are not baseline requirements. Each adds live-frame maps, state reconstruction, invalidation, concurrency, and debugging obligations. They remain later decisions driven by evidence.
+
+### AOT and profile-guided AOT
+
+The shared backend writes WVO for deterministic linking into PE/COFF, ELF, UEFI, or Windvale-native containers. Kernel and driver code is always AOT. Core tools should prefer AOT once the native backend covers them because it minimizes startup, executable-memory policy, and code-cache state.
+
+Profile-guided optimization is allowed only when the complete profile, target, tool versions, and options are explicit, reproducible inputs. Post-link layout may reorder functions and blocks or split cold code, but it must preserve verified semantics and publish independently checkable output.
+
+## Shared native backend
+
+The backend should have one semantic input and multiple publication sinks:
+
+```text
+verified WVB or typed WIR
+          |
+     native machine IR
+          |
+     instruction selection
+          |
+  structured code + data + patches
+       /                       \
+WVO serialization         in-memory link graph
+       |                       |
+PE/ELF/OS AOT image        finalized JIT pages
+```
+
+The WVB path serves portable deployed modules. The WIR path allows source AOT without round-tripping through a distributable stack format when richer compiler evidence is available. Both must implement the same defined operations and share differential programs.
+
+Architecture-specific selection, register assignment, encoding, relocation, and ABI policy stay behind explicit contracts. The initial x86-64 backend must not prevent a later AArch64 backend.
+
+## Native runtime ABI
+
+Generated code targets a Windvale-owned internal ABI rather than emitting host calls throughout ordinary functions. The ABI must eventually define:
+
+- value tags and payload layouts;
+- parameter, return, stack, and register rules;
+- text, bytes, record, enum, and future collection layouts;
+- allocation, roots, safe points, reclamation, and out-of-memory behavior;
+- checked arithmetic, bounds, invalid UTF-8, traps, and diagnostics;
+- capability request and return conventions;
+- module, function, type, and data identity;
+- thread, synchronization, unwind, and debugging boundaries when introduced; and
+- runtime-service-table versioning.
+
+Small WVA thunks translate this internal ABI to Windows x64, System V x86-64, UEFI, or Windvale OS boundaries. PE/COFF and ELF container differences do not belong in portable code generation.
+
+## Memory and size direction
+
+The C# reference runtime is a semantic oracle, not a memory oracle. It currently benefits from a mature CLR but retains managed object headers, a broad value structure, decoded instruction objects, UTF-16 host strings, original code plus decoded forms, garbage-collector metadata, and the CLR/JIT process footprint.
+
+The native design should measure and minimize:
+
+- packed tagged values rather than one field for every possible value kind;
+- packed decoded operations or direct verified byte views;
+- immutable UTF-8 text where compatible with source semantics;
+- shared module pages and zero-copy slices;
+- phase or request arenas for compiler and linker temporary state;
+- bounded per-process heaps and native-code caches;
+- explicit roots and reclamation; and
+- duplicate static runtime code across applications.
+
+Small host applications may use a shared Windvale runtime to minimize individual image size or static linking to eliminate installed dependencies. Windvale OS may share runtime services while keeping application heaps and authorization isolated.
+
+No fixed size or speed ratio is an architectural promise. Qualification reports should distinguish file size, installed shared-runtime size, cold-start committed memory, peak working set, live Windvale heap, code-cache bytes, allocations, reclamation pauses, compilation latency, and execution throughput.
+
+## Platform boundary
+
+| Concern | Windows | Linux | Windvale OS |
+| --- | --- | --- | --- |
+| Native container | PE/COFF | ELF | Windvale-defined process image or WVO-derived container |
+| External calling convention | Windows x64 | System V x86-64 | Windvale kernel/user ABI |
+| Executable memory | Narrow virtual-memory adapter | Narrow virtual-memory adapter | Kernel virtual-memory service |
+| Capabilities | Windows adapters | Linux adapters | Native Windvale services |
+| JIT placement | Process or isolated compiler service | Process or isolated compiler service | User process or isolated system service |
+| Kernel/driver code | Not applicable | Not applicable | AOT only |
+
+Portable and hosted WVB must not observe which native container, page API, or external calling convention supplied execution.
+
+## JIT safety and publication
+
+Every JIT path follows a fail-closed publication sequence:
+
+1. Decode the complete bounded WVB module.
+2. Perform mandatory semantic verification.
+3. Lower only verified functions through a versioned backend.
+4. Measure code, data, patches, metadata, and cache impact before allocation.
+5. Allocate writable, non-executable working pages.
+6. Emit bytes and apply checked typed patches.
+7. Independently reconstruct or validate code ranges, targets, runtime entries, and metadata.
+8. Publish instruction-cache changes required by the architecture.
+9. Transition final code to read/execute and remove writable access.
+10. Register the function atomically only after all prior steps succeed.
+
+Compilation may occur in a separate process with a narrower privilege set. The executor must distrust returned code metadata and repeat every boundary check it owns. Permanently writable/executable pages are outside the accepted design.
+
+## Native-code cache
+
+Cached code is a derived optimization rather than the portable program identity. A cache entry includes or is keyed by:
+
+- complete canonical WVB SHA-256;
+- module profile and authorized capability shape where material;
+- JIT/compiler and native-IR versions;
+- native ABI and runtime-service-table versions;
+- architecture, operating environment, and CPU feature baseline;
+- optimization tier and explicit profile identity; and
+- code, relocation, metadata, and final-image digests.
+
+Unknown, partial, mismatched, truncated, or unauthorized entries are rejected and regenerated. Reproducible baseline code should remain available even when profile-guided cached code is machine-specific.
+
+## Bootstrap and retirement sequence
+
+```text
+C# Stage 0 compiler/runtime
+        |
+        +--> Windvale compiler WVB
+        |          |
+        |          `--> Stage 1 and Stage 2 convergence
+        |
+        `--> Windvale native verifier/backend/JIT WVB
+                         |
+                         `--> native Windvale tools on Windows/Linux
+                                      |
+                                      `--> normal workflow without .NET
+```
+
+The normal post-retirement bootstrap uses a documented previous native Windvale release to rebuild the next. Exact source, seed binaries, manifests, signatures or digests, target identities, and Stage comparisons form the trust record. The final .NET Stage 0 release remains recoverable historical evidence unless a later decision selects and qualifies another minimal from-zero path.
+
+Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
+
+## Qualification matrix
+
+Representative programs must compare all supported execution forms:
+
+| Evidence | Interpreter | Baseline JIT | Optimizing JIT | AOT |
+| --- | :---: | :---: | :---: | :---: |
+| Module accepted or rejected identically | required | required | required | required |
+| Return value and output bytes | required | required | required | required |
+| Traps and diagnostics | required | required | required | required |
+| Capability authorization | required | required | required | required |
+| Defined resource counters | required | required | required | required |
+| Deterministic artifact bytes | runtime report | baseline target | only with fixed inputs | required |
+| W^X and cache rejection | not applicable | required | required | container policy |
+
+Windows and Linux require matching semantic reports. Windvale OS joins the same matrix when its process/runtime boundary exists.
+
+## Technique adoption order
+
+Adopt early when the prerequisite exists:
+
+1. compact typed micro-operations;
+2. WVA-generated copy-and-patch baseline stencils;
+3. lazy per-function compilation;
+4. persistent content-addressed native caches;
+5. a shared AOT/JIT backend and in-memory linker;
+6. isolated compilation and strict W^X publication; and
+7. explicit profile-guided AOT.
+
+Defer until measurements justify their complexity:
+
+- speculative optimization and deoptimization;
+- tracing JIT compilation and on-stack replacement;
+- a large general-purpose external compiler framework in the runtime;
+- machine-learned inlining or register-allocation heuristics; and
+- hardware-specific code that lacks a portable baseline fallback.
+
+These external systems provide useful design evidence without becoming Windvale dependencies: CPython's [copy-and-patch JIT direction](https://peps.python.org/pep-0744/), Wasmtime's [baseline Winch and optimizing Cranelift split](https://bytecodealliance.org/articles/winch-aarch64-support), LLVM's [ORC](https://llvm.org/docs/ORCv2.html) and [JITLink](https://llvm.org/docs/JITLink.html) separation, [BOLT post-link optimization](https://llvm.org/docs/AdvancedBuilds.html#bolt), and [ML-guided optimization facilities](https://llvm.org/docs/MLGO.html).
