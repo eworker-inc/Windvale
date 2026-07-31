@@ -127,5 +127,17 @@
     <EmbeddedResource
       Include="../Fixtures/Source-Wir/Valid.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wir-Valid.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Bootstrap/Source-Wvb-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Wvb-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Demo.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Source-Wvb-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Tool.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Function-Only.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Function-Only.wv" />
   </ItemGroup>
 </Project>

@@ -56,7 +56,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - Typed, stack-independent WIR with explicit blocks and terminators
 - Deterministic lowering from WIR into stack bytecode
 
-WIR uses virtual temporaries and local slots. The Stage 0 C# compiler already lowers its typed WIR to bytecode. The portable Windvale-written front end now publishes the separate WVIR 1 contract; connecting that evidence to a Windvale-written WVB backend is the next compiler stage. The intended backend assigns every WIR temporary a bytecode local, keeping the operand stack empty between WIR operations and at block boundaries. This is intentionally verbose but makes the first backend easy to inspect and verify.
+WIR uses virtual temporaries and local slots. The Stage 0 C# compiler lowers its typed WIR to bytecode, and the portable Windvale-written front end publishes the separate WVIR 1 contract. The initial Windvale-written backend now assigns every WIR temporary a bytecode local and emits a complete WVB 1.6 module for the function-only primitive subset. The operand stack stays empty between WIR operations and at block boundaries. This is intentionally verbose and makes the first executable backend easy to inspect, verify, and compare byte for byte with Stage 0. Data, nominal metadata, capabilities, imports, and their index remapping remain explicit later slices.
 
 ### Bytecode
 

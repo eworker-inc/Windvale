@@ -98,4 +98,4 @@ The prior typed-WVIR candidate at exact commit `bf77f70b08f332deda9ea3a1691e262e
 
 The ten-module compiler closure is intentionally not in the fast loop. Its current separate local-discovery and IR body traversals still exceed the fixed 4,000,000,000-instruction qualification ceiling. Raising the ceiling is not the remedy; a later slice must fuse those traversals or publish reusable typed body evidence before the full self-lowering case becomes a required gate.
 
-WVIR-to-WVB lowering, execution of WVIR itself, optimization, native IR, and OS-specific lowering are not part of this contract.
+WVIR-to-WVB lowering is specified separately in the initial [source-to-WVB backend contract](Compiler-Source-Wvb.md). WVIR execution, optimization, native IR, and OS-specific lowering are not part of this contract.

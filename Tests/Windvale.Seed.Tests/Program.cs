@@ -58,6 +58,9 @@ internal static class Program
     private const string SOURCE_WIR_SHA256 = "89e2590e99ea96ebea5995491bc13d9497b2b5c41b566c3653acfc4713b6414b";
     private const string SOURCE_WIR_DEMO_SHA256 = "2d58a05a5ad7e39fda20e4706f52d365f15fe53d3cfae998431024fa1c1edada";
     private const string SOURCE_WIR_TOOL_SHA256 = "8bbca67184db5d8d980e61268021771d25b20f47624878abec6b9e54afbd6c4d";
+    private const string SOURCE_WVB_SHA256 = "d4846b2c0eed11e35a3f715e61efd84c676c1055c340c08acf582a2558bca9db";
+    private const string SOURCE_WVB_DEMO_SHA256 = "d2477d6de0e90753c3f93b9ffc9db71da02a30472aca0a813ee4b6bf3ef5ec16";
+    private const string SOURCE_WVB_TOOL_SHA256 = "58a337338aa98a225c563a49cfdffc9133988d332c1000391b99c0ef31e2edac";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -334,6 +337,18 @@ internal static class Program
     private static readonly string SOURCE_WIR_VALID_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wir-Valid.wv");
 
+    private static readonly string SOURCE_WVB_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Core.wv");
+
+    private static readonly string SOURCE_WVB_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Demo.wv");
+
+    private static readonly string SOURCE_WVB_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Tool.wv");
+
+    private static readonly string SOURCE_WVB_FUNCTION_ONLY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Function-Only.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -401,6 +416,7 @@ internal static class Program
         new("Windvale compiler declaration namespaces and signatures bind portably", [TEST_AREA_COMPILER], Compilerˉsourceˉsymbolsˉrun),
         new("Windvale compiler bodies, locals, and calls bind portably", [TEST_AREA_COMPILER], Compilerˉsourceˉbindingsˉrun),
         new("Windvale compiler lowers typed source into canonical validated WVIR", [TEST_AREA_COMPILER], Compilerˉsourceˉwirˉruns),
+        new("Windvale compiler emits canonical executable WVB from validated WVIR", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉsourceˉwvbˉruns),
         new("module codec round-trips exact canonical bytes", [TEST_AREA_BYTECODE], Moduleˉroundˉtrip),
         new("inspector exposes module metadata and disassembly", [TEST_AREA_BYTECODE], Inspectorˉisˉuseful),
         new("bool, if, text literals, and calls execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Additionalˉsemanticsˉrun),
@@ -1906,6 +1922,85 @@ internal static class Program
         Equal(
             "source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporaries=36 operands=29 directory-bytes=3200\n",
             Valid.Output);
+    }
+
+    private static void Compilerˉsourceˉwvbˉruns()
+    {
+        var Libraryˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
+            SOURCE_WVB_SOURCE,
+            "Source-Wvb-Core.wv",
+            includeˉsourceˉwvb: false);
+        Equal(SOURCE_WVB_SHA256, Moduleˉdigest.Calculateˉsha256(Libraryˉbytes));
+        var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
+        Equal("Compilerˉsourceˉwvb", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        True(
+            Library.Module.Exports.Any(Export => Export.Name == "Compilerˉcompileˉsourceˉwvb"),
+            "The source-to-WVB entry point was not emitted.");
+        True(
+            Library.Module.Types.Any(Type => Type.Name == "Compilerˉsourceˉwvbˉsummary"),
+            "The source-to-WVB summary record was not emitted.");
+
+        var Demoˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
+            SOURCE_WVB_DEMO_SOURCE,
+            "Source-Wvb-Demo.wv");
+        Equal(SOURCE_WVB_DEMO_SHA256, Moduleˉdigest.Calculateˉsha256(Demoˉbytes));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Demoˉbytes),
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                    Maximumˉinstructions: 4_000_000_000)).Runˉmain().Exitˉcode);
+
+        var Toolˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
+            SOURCE_WVB_TOOL_SOURCE,
+            "Source-Wvb-Tool.wv");
+        Equal(SOURCE_WVB_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Sourceˉbytes = System.Text.Encoding.UTF8.GetBytes(
+            SOURCE_WVB_FUNCTION_ONLY_SOURCE).ToImmutableArray();
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Writer = new Capturingˉfileˉwriter();
+        var Reader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            Equal("function-only.wv", Name);
+            True(Sourceˉbytes.Length <= Maximumˉbytes,
+                "The source-to-WVB hosted byte limit was too small.");
+            return Sourceˉbytes;
+        });
+        var Authorized = Tool.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Toolˉresult = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["function-only.wv", "function-only.wvb"],
+                Output,
+                Diagnostics,
+                Reader,
+                Writer)),
+            new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Diagnostics.ToString());
+        Equal(
+            "source wvb status=Valid functions=4 code-bytes=532 module-bytes=815\n",
+            Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal));
+        Equal(1, Reader.Readˉcount);
+        Equal(1, Writer.Writeˉcount);
+        Equal("function-only.wvb", Writer.Resourceˉname);
+
+        var Stageˉzeroˉbytes = Compileˉsuccess(SOURCE_WVB_FUNCTION_ONLY_SOURCE);
+        Sequenceˉequal(Stageˉzeroˉbytes, Writer.Bytes);
+        var Generated = Moduleˉcodec.Readˉandˉverify(Writer.Bytes.AsSpan());
+        Equal("Sourceˉwvbˉfixture", Generated.Module.Name);
+        Equal(
+            6,
+            new Referenceˉruntime(
+                Generated,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
     }
 
     private static void Moduleˉroundˉtrip()
@@ -5894,6 +5989,38 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Compiler WVIR composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉsourceˉwvbˉsuccess(
+        string source,
+        string sourceˉname,
+        bool includeˉsourceˉwvb = true)
+    {
+        var Dependencies = new List<Sourceˉmoduleˉinput>();
+        if (includeˉsourceˉwvb)
+        {
+            Dependencies.Add(new("Compiler/Bootstrap/Source-Wvb-Core.wv", SOURCE_WVB_SOURCE));
+        }
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Wir-Core.wv", SOURCE_WIR_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE));
+        Dependencies.Add(new("Compiler/Bootstrap/Source-Set-Core.wv", SOURCE_SET_SOURCE));
+        Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
+        Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            Dependencies);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler WVB composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();

@@ -133,6 +133,11 @@ SOURCE_BINDINGS_TOOL_MODULE="$ARTIFACTS/Source-Bindings-Tool.wvb"
 SOURCE_WIR_MODULE="$ARTIFACTS/Source-Wir-Core.wvb"
 SOURCE_WIR_DEMO_MODULE="$ARTIFACTS/Source-Wir-Demo.wvb"
 SOURCE_WIR_TOOL_MODULE="$ARTIFACTS/Source-Wir-Tool.wvb"
+SOURCE_WVB_MODULE="$ARTIFACTS/Source-Wvb-Core.wvb"
+SOURCE_WVB_DEMO_MODULE="$ARTIFACTS/Source-Wvb-Demo.wvb"
+SOURCE_WVB_TOOL_MODULE="$ARTIFACTS/Source-Wvb-Tool.wvb"
+SOURCE_WVB_FIXTURE_MODULE="$ARTIFACTS/Source-Wvb-Function-Only.wvb"
+SOURCE_WVB_FIXTURE_ORACLE="$ARTIFACTS/Source-Wvb-Function-Only-Stage0.wvb"
 WVDUMP_CORE_MODULE="$ARTIFACTS/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$ARTIFACTS/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
@@ -857,6 +862,85 @@ SOURCE_WIR_FIXTURE_OUTPUT=$(dotnet "$TOOL_DLL" \
     -- "$REPOSITORY_ROOT/Tests/Fixtures/Source-Wir/Valid.wv")
 printf '%s\n' "$SOURCE_WIR_FIXTURE_OUTPUT" | grep -F 'source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporaries=36 operands=29 directory-bytes=3200' >/dev/null
 printf '%s\n' "$SOURCE_WIR_FIXTURE_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+SOURCE_WVB_SOURCE="$REPOSITORY_ROOT/Compiler/Bootstrap/Source-Wvb-Core.wv"
+compile_source_wvb() {
+    dotnet "$TOOL_DLL" \
+        compile "$1" \
+        --module "$SOURCE_WVB_SOURCE" \
+        --module "$SOURCE_WIR_SOURCE" \
+        --module "$SOURCE_BINDINGS_SOURCE" \
+        --module "$SOURCE_SYMBOLS_SOURCE" \
+        --module "$SOURCE_GRAPH_SOURCE" \
+        --module "$SOURCE_SET_SOURCE" \
+        --module "$SOURCE_BODY_PARSER_SOURCE" \
+        --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+        --module "$SOURCE_LEXER_SOURCE" \
+        --module "$BYTE_CONSTRUCTION_SOURCE" \
+        --module "$DECIMAL_PARSING_SOURCE" \
+        -o "$2"
+}
+dotnet "$TOOL_DLL" \
+    compile "$SOURCE_WVB_SOURCE" \
+    --module "$SOURCE_WIR_SOURCE" \
+    --module "$SOURCE_BINDINGS_SOURCE" \
+    --module "$SOURCE_SYMBOLS_SOURCE" \
+    --module "$SOURCE_GRAPH_SOURCE" \
+    --module "$SOURCE_SET_SOURCE" \
+    --module "$SOURCE_BODY_PARSER_SOURCE" \
+    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
+    --module "$SOURCE_LEXER_SOURCE" \
+    --module "$BYTE_CONSTRUCTION_SOURCE" \
+    --module "$DECIMAL_PARSING_SOURCE" \
+    -o "$SOURCE_WVB_MODULE"
+SOURCE_WVB_HASH=$(sha256sum "$SOURCE_WVB_MODULE" | awk '{print $1}')
+if [ "$SOURCE_WVB_HASH" != 'd4846b2c0eed11e35a3f715e61efd84c676c1055c340c08acf582a2558bca9db' ]; then
+    echo "The Windvale WVB backend core has an unexpected digest: $SOURCE_WVB_HASH" >&2
+    exit 1
+fi
+SOURCE_WVB_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_WVB_MODULE")
+printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉsourceˉwvbˉsummary' >/dev/null
+printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉcompileˉsourceˉwvb' >/dev/null
+printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Exports (24)' >/dev/null
+compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Demo.wv" "$SOURCE_WVB_DEMO_MODULE"
+SOURCE_WVB_DEMO_HASH=$(sha256sum "$SOURCE_WVB_DEMO_MODULE" | awk '{print $1}')
+if [ "$SOURCE_WVB_DEMO_HASH" != 'd2477d6de0e90753c3f93b9ffc9db71da02a30472aca0a813ee4b6bf3ef5ec16' ]; then
+    echo "The Windvale WVB backend demo has an unexpected digest: $SOURCE_WVB_DEMO_HASH" >&2
+    exit 1
+fi
+SOURCE_WVB_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_DEMO_MODULE" --max-steps 4000000000)
+printf '%s\n' "$SOURCE_WVB_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Tool.wv" "$SOURCE_WVB_TOOL_MODULE"
+SOURCE_WVB_TOOL_HASH=$(sha256sum "$SOURCE_WVB_TOOL_MODULE" | awk '{print $1}')
+if [ "$SOURCE_WVB_TOOL_HASH" != '58a337338aa98a225c563a49cfdffc9133988d332c1000391b99c0ef31e2edac' ]; then
+    echo "The Windvale WVB backend tool has an unexpected digest: $SOURCE_WVB_TOOL_HASH" >&2
+    exit 1
+fi
+SOURCE_WVB_FIXTURE="$REPOSITORY_ROOT/Tests/Fixtures/Source-Wvb/Function-Only.wv"
+rm -f -- "$SOURCE_WVB_FIXTURE_MODULE" "$SOURCE_WVB_FIXTURE_ORACLE"
+SOURCE_WVB_FIXTURE_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$SOURCE_WVB_TOOL_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow file.write_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 4000000000 \
+    -- "$SOURCE_WVB_FIXTURE" "$SOURCE_WVB_FIXTURE_MODULE")
+printf '%s\n' "$SOURCE_WVB_FIXTURE_OUTPUT" | grep -F 'source wvb status=Valid functions=4 code-bytes=532 module-bytes=815' >/dev/null
+printf '%s\n' "$SOURCE_WVB_FIXTURE_OUTPUT" | grep -F 'Result: 0' >/dev/null
+SOURCE_WVB_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$SOURCE_WVB_FIXTURE_MODULE")
+printf '%s\n' "$SOURCE_WVB_VERIFY_OUTPUT" | grep -F 'Verified: Sourceˉwvbˉfixture' >/dev/null
+SOURCE_WVB_RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_FIXTURE_MODULE")
+printf '%s\n' "$SOURCE_WVB_RUN_OUTPUT" | grep -F 'Result: 6' >/dev/null
+dotnet "$TOOL_DLL" compile "$SOURCE_WVB_FIXTURE" -o "$SOURCE_WVB_FIXTURE_ORACLE"
+SOURCE_WVB_FIXTURE_HASH=$(sha256sum "$SOURCE_WVB_FIXTURE_MODULE" | awk '{print $1}')
+if [ "$SOURCE_WVB_FIXTURE_HASH" != '9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761' ]; then
+    echo "The Windvale-written WVB fixture has an unexpected digest: $SOURCE_WVB_FIXTURE_HASH" >&2
+    exit 1
+fi
+cmp -s "$SOURCE_WVB_FIXTURE_MODULE" "$SOURCE_WVB_FIXTURE_ORACLE"
 
 set +e
 MISSING_COMPOSITION_OUTPUT=$(dotnet "$TOOL_DLL" \

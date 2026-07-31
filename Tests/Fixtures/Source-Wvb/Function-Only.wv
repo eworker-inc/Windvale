@@ -1,0 +1,32 @@
+module Sourceˉwvbˉfixture profile portable;
+
+fn Add(Left: i32, Right: i32) -> i32 {
+    return Left + Right;
+}
+
+export fn Main() -> i32 {
+    var Index: u32 = 0u32;
+    var Total: i32 = 0;
+    while Index < 3u32 {
+        Total = Add(Total, 2);
+        Index = Index + 1u32;
+    }
+    if Probe(255u8, true) {
+        return Select(Total);
+    }
+    return 1;
+}
+
+fn Probe(Byte: u8, Enabled: bool) -> bool {
+    if Byte == 255u8 {
+        return !(!Enabled);
+    }
+    return false;
+}
+
+fn Select(Value: i32) -> i32 {
+    if Value >= 6 {
+        return Value;
+    }
+    return 0;
+}

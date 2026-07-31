@@ -1,0 +1,50 @@
+module Compilerˉsourceˉwvbˉdemo profile portable;
+
+import Compilerˉsourceˉwvb;
+
+fn Compilerˉsourceˉwvbˉdemoˉinput(Source: text) -> bytes {
+    let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(24u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes)));
+    return Bytesˉconcat(Header, Sourceˉbytes);
+}
+
+fn Compilerˉsourceˉwvbˉdemoˉstatus(
+    Source: text
+) -> Compilerˉsourceˉwvbˉstatus {
+    let Summary: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
+        Compilerˉsourceˉwvbˉdemoˉinput(Source)
+    );
+    return Summary.Status;
+}
+
+export fn Main() -> i32 {
+    let Valid: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
+        Compilerˉsourceˉwvbˉdemoˉinput(
+            "module Wvbˉdemo profile portable; fn Add(Value: i32) -> i32 { return Value + 1; } export fn Main() -> i32 { return Add(41); }"
+        )
+    );
+    if Valid.Status != Compilerˉsourceˉwvbˉstatus.Valid { return 1; }
+    if Valid.Wirˉstatus != Compilerˉsourceˉwirˉstatus.Valid { return 2; }
+    if Valid.Functions != 2u32 { return 3; }
+    if Bytesˉlength(Valid.Bytecode) == 0u32 { return 4; }
+    if Bytesˉreadˉu8(Valid.Bytecode, 0u32) != 87u8 { return 5; }
+    if Bytesˉreadˉu8(Valid.Bytecode, 1u32) != 86u8 { return 6; }
+    if Bytesˉreadˉu8(Valid.Bytecode, 2u32) != 66u8 { return 7; }
+    if Bytesˉreadˉu8(Valid.Bytecode, 3u32) != 49u8 { return 8; }
+    if Compilerˉsourceˉwvbˉdemoˉstatus(
+        "module Wvbˉdata profile portable; data Value: text = \"x\"; export fn Main() -> i32 { return 0; }"
+    ) != Compilerˉsourceˉwvbˉstatus.Unsupportedˉdeclaration { return 9; }
+    if Compilerˉsourceˉwvbˉdemoˉstatus(
+        "module Wvbˉhosted profile hosted; export fn Main() -> i32 { return 0; }"
+    ) != Compilerˉsourceˉwvbˉstatus.Unsupportedˉprofile { return 10; }
+    if Compilerˉsourceˉwvbˉdemoˉstatus(
+        "module Wvbˉorder profile portable; export fn Zed() -> i32 { return 0; } fn Alpha() -> i32 { return 1; }"
+    ) != Compilerˉsourceˉwvbˉstatus.Noncanonicalˉfunctionˉorder { return 11; }
+    return 0;
+}

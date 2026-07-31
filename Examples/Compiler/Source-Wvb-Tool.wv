@@ -1,0 +1,65 @@
+module Compilerˉsourceˉwvbˉtool profile hosted;
+
+import Compilerˉsourceˉwvb;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Compilerˉsourceˉwvbˉtoolˉinput(Source: bytes) -> bytes {
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(24u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Source)));
+    return Bytesˉconcat(Header, Source);
+}
+
+fn Compilerˉsourceˉwvbˉtoolˉreport(
+    Summary: Compilerˉsourceˉwvbˉsummary
+) -> text {
+    var Report: text = "source wvb status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " functions=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Functions));
+    Report = Textˉconcat(Report, " code-bytes=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Codeˉbytes));
+    Report = Textˉconcat(Report, " module-bytes=");
+    return Textˉconcat(Report, U32ˉformat(Bytesˉlength(Summary.Bytecode)));
+}
+
+fn Compilerˉsourceˉwvbˉtoolˉfailure(
+    Summary: Compilerˉsourceˉwvbˉsummary
+) -> text {
+    var Report: text = "source wvb status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " wir-status=");
+    Report = Textˉconcat(Report, Enumˉname(Summary.Wirˉstatus));
+    Report = Textˉconcat(Report, " function=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉfunction));
+    Report = Textˉconcat(Report, " operation=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Failureˉoperation));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line("Usage: source-wvb <source.wv> <output.wvb>");
+        return 64;
+    }
+    let Source: bytes = file.read_bytes(process.argument(0u32));
+    let Summary: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
+        Compilerˉsourceˉwvbˉtoolˉinput(Source)
+    );
+    if Summary.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+        diagnostic.write_line(Compilerˉsourceˉwvbˉtoolˉfailure(Summary));
+        return 1;
+    }
+    file.write_bytes(process.argument(1u32), Summary.Bytecode);
+    console.write_line(Compilerˉsourceˉwvbˉtoolˉreport(Summary));
+    return 0;
+}
