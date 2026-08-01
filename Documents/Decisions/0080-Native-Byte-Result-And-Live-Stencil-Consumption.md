@@ -1,7 +1,7 @@
 # Decision 0080: Native byte result and live stencil consumption
 
 - Date: 2026-08-01
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified
 - Extends: [Decision 0079](0079-First-Windvale-Native-Stencil-Consumer.md)
 - Preserves: Native ABI 14, execution-context version 6, service-table version 4, WVB 1.6, WVO 1.0, kernel bridge 9, firmware probe 16, and both final process-input leaf identities
 
@@ -34,7 +34,19 @@ This change does not reinterpret a previously valid descriptor entry: the backen
 - Reference interpreter, W^X JIT fragment, and linked WVO/AOT must return the same bytes on Windows and Debian x64.
 - The exact retained WVB must reproduce from source in both CLI qualification scripts. Descriptor-prologue corruption, wrong executor selection, static-data return, dynamic-arena return, and live service-table consumption have focused coverage.
 
-Cross-host commit, report, artifact-manifest, OS-suite, GitHub, and pinned-QEMU evidence will be appended after the exact candidate completes Qualification.
+## Qualification
+
+Exact commit `f547af8dcf8e257ab8ad8a76a49bbdd1b9136677`, tree `76de4b2d0956230ed4526fa0a7ef4f502168ae2c`, is cross-host qualified. Its 6,789,120-byte archive has SHA-256 `4b646bcbaa24e6737e21c4b252d94b4097081552bd2c7dd788a4d2e1633bc45e`; the archive retained the same size and digest after transfer to the isolated Debian GNU/Linux 12 x64 QA host with .NET SDK `10.0.302`.
+
+Windows and Debian pass zero-warning Release builds, all 62 Seed tests, exact bridge reproduction, and the complete native CLI/reproduction gate. Complete Qualification takes approximately 491.5 and 499.6 seconds, with suite times of 234.260 and 250.804 seconds. The new descriptor-bridge case takes 0.214 and 0.233 seconds; the existing Windvale stencil-consumer case takes 0.605 and 0.531 seconds; the assembled-stencil case takes 1.852 and 2.099 seconds.
+
+The 15,798-byte Windows report has SHA-256 `9196b6f7049cd810c8bfd09037886e6c8628c1631c053543250290bc2acd50d7`; its 12,922-byte timing report has SHA-256 `e84dc5059468b178e5fc04ade2536e9af7bbddf1e441711609a22d17d5e10942`. The 15,705-byte Debian report has SHA-256 `c05f408eeb3d356e719382321705918bb6f9e6da803cd8e4efd5ddcfb1ebcc1f`; its 12,497-byte timing report has SHA-256 `ebd00af20567ea0f9f5d053c0f74aaf9e84cb1a118d437501d9e13cc222c20aa`. Their normalized contracts match exactly with SHA-256 `77cd1d742509fc235f23b2dd743518a5694bd94c80d4bb6d81340dfe37e506e4`.
+
+All 65 portable artifacts, totaling 7,822,433 bytes, match byte for byte. The new 21,447-byte `Native-Stencil-Bridge.wvb` accounts for the increase from 64 and has SHA-256 `5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9`. The canonical name/size/SHA-256 manifest has SHA-256 `125a13fd20da4a8b94440854bb7984f3724c2d3859068122b30994ac3c80764a`. The retrieved 2,327,039-byte Debian evidence bundle has SHA-256 `430a8ab6cf6a18f0902a7b2e1352d4363209c94bfcba48cdf1c3acdf5a62d9bb`.
+
+Both hosts pass all 15 OS tests. Pinned QEMU boots the unchanged 15,872-byte probe-16 image with SHA-256 `206a036f8cbe3198544b6878bf52c80ef8d489c14d5437c6c7004ff1d6599504`, emits the complete success transcript, and returns guest-controlled host exit code 1. GitHub [Verify run 30712510080](https://github.com/eworker-inc/Windvale/actions/runs/30712510080) independently passes classification plus Windows and Linux verification for the exact candidate.
+
+The Windows verifier now sets native-process input, output, and pipeline encodings to UTF-8 inside the launcher. This candidate passed the complete detached and redirected gate with the exact macron-bearing CLI identifiers intact, turning the repeated launcher-only decoding issue into a permanent verifier invariant rather than another one-off invocation workaround.
 
 ## Consequences
 
