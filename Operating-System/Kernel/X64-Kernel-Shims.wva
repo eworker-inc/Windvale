@@ -8,15 +8,15 @@ symbol export function Windvale_kernel_x64_page_protection_enable in .text
 symbol export function Windvale_kernel_x64_page_table_activate in .text
 symbol export function Windvale_kernel_x64_q35_shutdown in .text
 symbol import function Windvale_kernel_x64_exception_terminal
-symbol import function Windvale_kernel_x64_native_probe
 symbol import function Windvale_kernel_x64_write_byte
+symbol import function Windvale_kernel_x64_wvb_admission
 
 section code .text align 16
 define Windvale_kernel_write_byte
 jump Windvale_kernel_x64_write_byte
 end define
 define Windvale_kernel_wva_main
-jump Windvale_kernel_x64_native_probe
+jump Windvale_kernel_x64_wvb_admission
 end define
 define Windvale_kernel_x64_exception_13_entry
 push_i32 13

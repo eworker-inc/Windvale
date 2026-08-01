@@ -24,6 +24,7 @@ internal static class Program
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
         new("kernel paging planner enforces bounded W^X identity tables", Pagingˉplannerˉenforcesˉboundedˉidentityˉtables),
         new("kernel WVA shims bridge Main, normalized traps, and Q35 shutdown", Kernelˉassemblyˉshimˉbridgesˉmain),
+        new("AOT Windvale admission rejects changed WVB before execution", Kernelˉwvbˉadmissionˉisˉbounded),
         new("portable WVB lowers into the bounded kernel native probe", Kernelˉnativeˉprobeˉisˉportableˉandˉbounded),
         new("x86-64 kernel compiler emits deterministic verified WVO", Kernelˉcompilerˉemitsˉverifiedˉobject),
         new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
@@ -557,9 +558,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(22_016, First.Length);
+        Equal(47_104, First.Length);
         Equal(
-            "392a2801bd8d8895bd9c34213336a69057c1ae81675269056c60b8c3e974ab01",
+            "c3a07e1a6c8f162720a3dcd690fdb945bd862b360b26665c53e5be0642a87c38",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -571,9 +572,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(22_016, First.Length);
+        Equal(47_104, First.Length);
         Equal(
-            "aa610e6ac00ed43466a87521bb4cebb2934d0885acb960db8913f025ced9cce9",
+            "0bbc0b6eedbd21aef853a2233d3fa3dbaa9564eca36f3344067b1c9b240237fc",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -594,9 +595,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         Sequenceˉequal(First, Second);
-        Equal(22_016, First.Length);
+        Equal(47_104, First.Length);
         Equal(
-            "74632fcde4873f2d46e18b1b77c5cc8b495e83f0f750930e039da27dd67cd0ee",
+            "724907ffd0963f015003c91431b79b728109ed861de73f3c1b0bf5e7b58568b6",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -621,7 +622,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 20\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 21\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -641,7 +642,7 @@ internal static class Program
         Equal(3, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x30, 0x31]));
         Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x2C, 0x30, 0x00, 0x00, 0x00]));
         Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
-        Equal(1, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x78]));
+        Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x78]));
         Equal(1, Countˉsequence(Code, [0x49, 0x8D, 0xA6, 0x00, 0x30, 0x00, 0x00]));
         Equal(3, Countˉsequence(Code, [0xFC, 0xF3, 0x48, 0xAB]));
         Equal(
@@ -699,9 +700,9 @@ internal static class Program
         var First = Kernelˉassemblyˉshim.Buildˉobject();
         var Second = Kernelˉassemblyˉshim.Buildˉobject();
         Sequenceˉequal(First, Second);
-        Equal(773, First.Length);
+        Equal(774, First.Length);
         Equal(
-            "5c4b0bcfa1c6463ebbe631562deb7714aa510dfbc2418b1544b0df6c8df6bedb",
+            "2ef94f867226059e858e874d1260743e411bd1fd22887a84d35c2e508d410393",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.AsSpan()).Value;
@@ -741,10 +742,10 @@ internal static class Program
         Equal(19u, Object.Symbols[6].Size);
         Equal(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL, Object.Symbols[7].Name);
         True(Object.Symbols[7].Binding == Objectˉsymbolˉbinding.Import, "The normalized terminal handler is not imported by WVA.");
-        Equal(Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL, Object.Symbols[8].Name);
-        True(Object.Symbols[8].Binding == Objectˉsymbolˉbinding.Import, "The native WVB bridge is not imported by WVA.");
-        Equal(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL, Object.Symbols[9].Name);
-        True(Object.Symbols[9].Binding == Objectˉsymbolˉbinding.Import, "The x64 byte writer is not imported by WVA.");
+        Equal(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL, Object.Symbols[8].Name);
+        True(Object.Symbols[8].Binding == Objectˉsymbolˉbinding.Import, "The x64 byte writer is not imported by WVA.");
+        Equal(Kernelˉwvbˉadmissionˉcontract.BRIDGE_SYMBOL, Object.Symbols[9].Name);
+        True(Object.Symbols[9].Binding == Objectˉsymbolˉbinding.Import, "The WVB admission bridge is not imported by WVA.");
         Equal(5, Object.Relocations.Length);
         True(
             Object.Relocations[0] is
@@ -752,7 +753,7 @@ internal static class Program
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 1,
-                Symbolˉindex: 9,
+                Symbolˉindex: 8,
                 Addend: -4,
             },
             "The WV-to-WVA console transfer does not use the canonical relative relocation.");
@@ -762,7 +763,7 @@ internal static class Program
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 6,
-                Symbolˉindex: 8,
+                Symbolˉindex: 9,
                 Addend: -4,
             },
             "The WVA-to-native-WVB transfer does not use the canonical relative relocation.");
@@ -839,6 +840,109 @@ internal static class Program
         Equal(
             "bfa2b522b2bf22b3681b523c66c2986b1af366ba042adeddd8a106b5a96a5225",
             Objectˉdigest.Calculateˉsha256(First.Bridgeˉobjectˉbytes.AsSpan()));
+    }
+
+    private static void Kernelˉwvbˉadmissionˉisˉbounded()
+    {
+        var First = Kernelˉwvbˉadmission.Build();
+        var Second = Kernelˉwvbˉadmission.Build();
+        Sequenceˉequal(First.Embeddedˉmoduleˉbytes, Second.Embeddedˉmoduleˉbytes);
+        Sequenceˉequal(First.Admissionˉmoduleˉbytes, Second.Admissionˉmoduleˉbytes);
+        Sequenceˉequal(First.Embeddedˉnativeˉobjectˉbytes, Second.Embeddedˉnativeˉobjectˉbytes);
+        Sequenceˉequal(First.Admissionˉnativeˉobjectˉbytes, Second.Admissionˉnativeˉobjectˉbytes);
+        Sequenceˉequal(First.Bridgeˉobjectˉbytes, Second.Bridgeˉobjectˉbytes);
+
+        Equal(174, First.Embeddedˉmoduleˉbytes.Length);
+        Equal(
+            "7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2",
+            Objectˉdigest.Calculateˉsha256(First.Embeddedˉmoduleˉbytes.AsSpan()));
+        Equal(2_786, First.Admissionˉmoduleˉbytes.Length);
+        Equal(
+            "231a4001dc316ae965a851aa27eabacaba7ef57d4f72d18ee0e7eaa4d90d2e54",
+            Objectˉdigest.Calculateˉsha256(First.Admissionˉmoduleˉbytes.AsSpan()));
+        Equal(504, First.Embeddedˉnativeˉobjectˉbytes.Length);
+        Equal(
+            "461361ba8853faa59d7b8f841308fd88b5e7ee837a2654ab3e534771c189a834",
+            Objectˉdigest.Calculateˉsha256(First.Embeddedˉnativeˉobjectˉbytes.AsSpan()));
+        Equal(24_445, First.Admissionˉnativeˉobjectˉbytes.Length);
+        Equal(
+            "5b11e97e5bb9746daa911559ea9a7a204419fe2cded44977163430185e7d150d",
+            Objectˉdigest.Calculateˉsha256(First.Admissionˉnativeˉobjectˉbytes.AsSpan()));
+        Equal(481, First.Bridgeˉobjectˉbytes.Length);
+        Equal(
+            "eb229f4fbf104c67e3402280016355da87a3bda51ffcb361c07d709815060f39",
+            Objectˉdigest.Calculateˉsha256(First.Bridgeˉobjectˉbytes.AsSpan()));
+
+        var Admission = Runˉportableˉmain(First.Admissionˉmoduleˉbytes);
+        Equal(Kernelˉwvbˉadmissionˉcontract.ADMISSION_TOKEN, Admission.Exitˉcode);
+        Equal(
+            (long)Kernelˉwvbˉadmissionˉcontract.EXACT_INSTRUCTION_BUDGET - 4,
+            Admission.Executedˉinstructions);
+        var Embedded = Runˉportableˉmain(First.Embeddedˉmoduleˉbytes);
+        Equal(Kernelˉwvbˉadmissionˉcontract.EXPECTED_RESULT, Embedded.Exitˉcode);
+        Equal(4L, Embedded.Executedˉinstructions);
+
+        var Changedˉmagic = Mutate(First.Embeddedˉmoduleˉbytes, 0).ToImmutableArray();
+        var Changedˉsection = Mutate(First.Embeddedˉmoduleˉbytes, 16).ToImmutableArray();
+        var Changedˉcode = Mutate(First.Embeddedˉmoduleˉbytes, 122).ToImmutableArray();
+        var Truncated = First.Embeddedˉmoduleˉbytes[..^1];
+        Assertˉadmissionˉresult(Changedˉmagic, 0);
+        Assertˉadmissionˉresult(Changedˉsection, 0);
+        Assertˉadmissionˉresult(Changedˉcode, 0);
+        Assertˉadmissionˉresult(Truncated, 0);
+        Rejectˉwvb(Changedˉmagic);
+        Rejectˉwvb(Changedˉsection);
+        Rejectˉwvb(Truncated);
+        Equal(28, Runˉportableˉmain(Changedˉcode).Exitˉcode);
+
+        var Admissionˉobject = Objectˉcodec.Readˉandˉverify(
+            First.Admissionˉnativeˉobjectˉbytes.AsSpan()).Value;
+        var Embeddedˉobject = Objectˉcodec.Readˉandˉverify(
+            First.Embeddedˉnativeˉobjectˉbytes.AsSpan()).Value;
+        Equal(1, Admissionˉobject.Symbols.Count(Symbol =>
+            Symbol.Binding == Objectˉsymbolˉbinding.Export &&
+            Symbol.Name == Kernelˉwvbˉadmissionˉcontract.ADMISSION_SYMBOL));
+        Equal(1, Embeddedˉobject.Symbols.Count(Symbol =>
+            Symbol.Binding == Objectˉsymbolˉbinding.Export &&
+            Symbol.Name == Kernelˉwvbˉadmissionˉcontract.EMBEDDED_MAIN_SYMBOL));
+        True(
+            Admissionˉobject.Symbols.Concat(Embeddedˉobject.Symbols).All(Symbol =>
+                Symbol.Binding != Objectˉsymbolˉbinding.Export || Symbol.Name != "Main"),
+            "A renamed admission object leaked the source-level Main symbol.");
+
+        var Bridge = Objectˉcodec.Readˉandˉverify(First.Bridgeˉobjectˉbytes.AsSpan()).Value;
+        Equal(163u, Bridge.Sections[0].Memoryˉsize);
+        Equal(3, Bridge.Relocations.Length);
+    }
+
+    private static Runtimeˉresult Runˉportableˉmain(ImmutableArray<byte> moduleˉbytes)
+    {
+        return new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(moduleˉbytes.AsSpan()),
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+    }
+
+    private static void Assertˉadmissionˉresult(
+        ImmutableArray<byte> embeddedˉmoduleˉbytes,
+        int expectedˉresult)
+    {
+        var Admissionˉmoduleˉbytes = Kernelˉwvbˉadmission.Compileˉadmissionˉmodule(
+            embeddedˉmoduleˉbytes);
+        Equal(expectedˉresult, Runˉportableˉmain(Admissionˉmoduleˉbytes).Exitˉcode);
+    }
+
+    private static void Rejectˉwvb(ImmutableArray<byte> moduleˉbytes)
+    {
+        try
+        {
+            _ = Moduleˉcodec.Readˉandˉverify(moduleˉbytes.AsSpan());
+        }
+        catch (Bytecodeˉexception)
+        {
+            return;
+        }
+        throw new InvalidOperationException("Malformed WVB was accepted by the reference decoder.");
     }
 
     private static void Memoryˉplanˉfails(

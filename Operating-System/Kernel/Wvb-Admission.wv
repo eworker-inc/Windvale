@@ -1,0 +1,46 @@
+module Wvbˉadmission profile portable;
+
+// Canonical WVB 1.6 for Embedded-Wvb-Program.wv. The Stage 0 packager
+// requires Embeddedˉmodule to retain this byte-for-byte identity.
+data Embeddedˉmodule: bytes = [87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0, 1, 0, 0, 0, 27, 0, 0, 0, 1, 22, 0, 0, 0, 69, 109, 98, 101, 100, 100, 101, 100, 203, 137, 119, 118, 98, 203, 137, 112, 114, 111, 103, 114, 97, 109, 2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 29, 0, 0, 0, 5, 0, 0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 0, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0];
+data Expectedˉmodule: bytes = [87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0, 1, 0, 0, 0, 27, 0, 0, 0, 1, 22, 0, 0, 0, 69, 109, 98, 101, 100, 100, 101, 100, 203, 137, 119, 118, 98, 203, 137, 112, 114, 111, 103, 114, 97, 109, 2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 29, 0, 0, 0, 5, 0, 0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 0, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0];
+
+fn Hasˉsection(Input: bytes, Offset: u32, Kind: u32, Payloadˉbytes: u32) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) != Kind { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != Payloadˉbytes { return false; }
+    return true;
+}
+
+fn Hasˉcanonicalˉidentity(Input: bytes, Expected: bytes) -> bool {
+    var Offset: u32 = 0u32;
+    while Offset < Bytesˉlength(Expected) {
+        if Bytesˉreadˉu8(Input, Offset) != Bytesˉreadˉu8(Expected, Offset) { return false; }
+        Offset = Offset + 1u32;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    let Input: bytes = Embeddedˉmodule;
+    let Expected: bytes = Expectedˉmodule;
+
+    if Bytesˉlength(Input) != 174u32 { return 0; }
+    if Bytesˉlength(Expected) != 174u32 { return 0; }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 826431063u32 { return 0; }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return 0; }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 { return 0; }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return 0; }
+
+    // The first admission profile accepts exactly the seven canonical section
+    // envelopes of the deliberately tiny portable module.
+    if !Hasˉsection(Input, 12u32, 1u32, 27u32) { return 0; }
+    if !Hasˉsection(Input, 47u32, 2u32, 4u32) { return 0; }
+    if !Hasˉsection(Input, 59u32, 3u32, 4u32) { return 0; }
+    if !Hasˉsection(Input, 71u32, 4u32, 34u32) { return 0; }
+    if !Hasˉsection(Input, 113u32, 5u32, 16u32) { return 0; }
+    if !Hasˉsection(Input, 137u32, 6u32, 17u32) { return 0; }
+    if !Hasˉsection(Input, 162u32, 7u32, 4u32) { return 0; }
+
+    if !Hasˉcanonicalˉidentity(Input, Expected) { return 0; }
+    return 73;
+}

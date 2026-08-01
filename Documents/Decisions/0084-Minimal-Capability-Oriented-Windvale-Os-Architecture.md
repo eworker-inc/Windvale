@@ -58,6 +58,8 @@ System-profile Windvale will need explicit unsafe, memory, atomic, concurrency, 
 6. Move the interpreter and later JIT to user or isolated service space behind verified W^X publication.
 7. Add device and resource services one qualified boundary at a time, then prove one exact WVB across all three environments.
 
+Candidate [Decision 0090](0090-First-In-Guest-Wvb-Admission.md) implements the deliberately fixed first part of step 3: AOT Windvale code validates one exact WVB 1.6 identity before its separately AOT-compiled form executes. General semantic verification, loading, and isolation remain open. The next architecture slice is step 4.
+
 ## Reconsider when
 
 - Capability identity, reduction, transfer, or revocation cannot meet a measured sharing requirement without ambient authority.

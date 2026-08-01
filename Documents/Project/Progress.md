@@ -27,8 +27,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
 | 9. Shared native backend | 🎯 Current transfer | ABI 15/context 7 and all 12 native service leaves are qualified; exact compiler preflight advances beyond `file.write_bytes`. | Admit the compiler's bounded record-shaped function workload. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
-| 11. Boot path and kernel | 🚧 In progress | The pre-paging probe-20 baseline is qualified; the current candidate adds a kernel-owned W^X identity root. | Cross-host qualify the page-table candidate, then boot the AOT Windvale verifier in-guest. |
-| 12. Runtime on Windvale OS | ○ Planned | The portability contract is defined; the guest does not yet load and verify WVB itself. | Run one identical verified WVB through equivalent Windows, Linux, and Windvale OS contracts. |
+| 11. Boot path and kernel | 🚧 In progress | The pre-paging probe-20 baseline is qualified; current candidates add a kernel-owned W^X root and Windvale-owned admission of one embedded WVB before its AOT form executes. | Cross-host qualify both candidates, then add one protected process/thread/capability/IPC boundary. |
+| 12. Runtime on Windvale OS | 🚧 In progress | One fixed WVB identity is now checked by AOT Windvale code in-guest before its derived native object executes; there is no general loader or isolated runtime yet. | Generalize semantic admission and run one identical WVB through equivalent Windows, Linux, and Windvale OS contracts. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 
 ## Working end to end
@@ -44,7 +44,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - 🎯 Qualified compiler WVB → bounded record-shaped function admission
 - ✅ WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
 - 🚧 WVA paging mechanics → kernel-owned low-1-GiB W^X identity root
-- ○ One identical WVB → Windows + Linux + in-guest Windvale OS verification and execution
+- 🚧 One embedded WVB → in-guest Windvale admission → its AOT form; cross-host identity and an isolated runtime remain
 
 ## Reading the evidence
 

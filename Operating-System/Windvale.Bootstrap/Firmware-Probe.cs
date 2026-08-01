@@ -15,12 +15,12 @@ public enum Firmwareˉprobeˉscenario
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 20;
+    public const int FORMAT_VERSION = 21;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 20\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 21\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -28,6 +28,7 @@ public static class Firmwareˉprobe
     public const string ALLOCATOR_MARKER = "allocator=pass\n";
     public const string KERNEL_STACK_MARKER = "kernel-stack=pass\n";
     public const string PAGING_OWNED_MARKER = "paging=owned\n";
+    public const string WVB_ADMISSION_MARKER = "wvb-admission=pass\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string CPU_EXCEPTIONS_MARKER = "cpu-exceptions=armed\n";
     public const string INVALID_OPCODE_PANIC_MARKER = Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER;
@@ -40,7 +41,8 @@ public static class Firmwareˉprobe
     public const string SHUTDOWN_MARKER = "shutdown=poweroff\n";
     public const string SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
-        MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER + HELLO_WORLD_MARKER +
+        MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
+        WVB_ADMISSION_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
         WINDVALE_SOURCE_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
 
@@ -118,6 +120,7 @@ public static class Firmwareˉprobe
             throw new InvalidOperationException(
                 $"The Windvale kernel source did not compile: {Kernel.Diagnostics[0]}");
         }
+        var Admission = Kernelˉwvbˉadmission.Build();
         var Nativeˉprobe = Kernelˉnativeˉprobe.Build();
         var Exceptions = Kernelˉexceptionˉx64.Build();
         var Paging = Kernelˉpagingˉx64.Build();
@@ -220,11 +223,14 @@ public static class Firmwareˉprobe
             [
                 new(Loaderˉobjectˉbytes),
                 new(Kernel.Objectˉbytes),
+                new(Admission.Admissionˉnativeˉobjectˉbytes),
+                new(Admission.Embeddedˉnativeˉobjectˉbytes),
                 new(Nativeˉprobe.Nativeˉobjectˉbytes),
                 new(Memoryˉobjectˉbytes),
                 new(Exceptions.Objectˉbytes),
                 new(Paging.Objectˉbytes),
                 new(Assemblyˉshimˉobjectˉbytes),
+                new(Admission.Bridgeˉobjectˉbytes),
                 new(Nativeˉprobe.Bridgeˉobjectˉbytes),
                 new(Supportˉobjectˉbytes),
             ],

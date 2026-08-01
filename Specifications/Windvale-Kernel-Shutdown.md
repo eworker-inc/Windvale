@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel shutdown version 1 is cross-host qualified at exact commit `12e9e2e`. It was introduced by Windvale OS firmware probe 18, retained unchanged by the pre-paging probe-20 baseline and current page-table candidate, and defines one deterministic clean-poweroff path for the pinned QEMU `pc-q35-11.0` machine after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; [Decision 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) records its qualification, and candidate [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) records the later paging composition.
+Kernel shutdown version 1 is cross-host qualified at exact commit `12e9e2e`. It was introduced by Windvale OS firmware probe 18, retained unchanged by the pre-paging probe-20 baseline and current page-table/WVB-admission candidates, and defines one deterministic clean-poweroff path for the pinned QEMU `pc-q35-11.0` machine after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; [Decision 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) records its qualification; and candidate [Decisions 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) and [0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md) record the later compositions.
 
 This is a target-specific machine adapter, not a portable Windvale capability, general ACPI discovery, a Hyper-V shutdown contract, or a process/service shutdown policy.
 
@@ -48,9 +48,9 @@ The operation runs at the existing privileged x86-64 boot level after `ExitBootS
 
 ## Normal and fault evidence
 
-Probe 20 retains the normal path and admits two explicit terminal fault scenarios under the kernel-owned root:
+Probe 21 retains the normal path and admits two explicit terminal fault scenarios under the kernel-owned root after WVB admission:
 
-- `normal` completes the existing ABI-14 portable-WVB AOT path and system-profile Main, emits the exact success and shutdown markers once, executes the WVA Q35 poweroff request, and requires QEMU process exit code `0`.
+- `normal` completes the Windvale-owned admission path, the retained ABI-15 portable-WVB AOT path, and system-profile Main, emits the exact success and shutdown markers once, executes the WVA Q35 poweroff request, and requires QEMU process exit code `0`.
 - `invalid-opcode` executes `UD2` after Main, emits the exact normalized vector-6 terminal panic suffix, and uses the test-only `isa-debug-exit` path with host code `3`.
 - `general-protection` dereferences a noncanonical address after Main, emits the exact normalized vector-13 terminal panic suffix, and uses the same test-only host code `3`.
 

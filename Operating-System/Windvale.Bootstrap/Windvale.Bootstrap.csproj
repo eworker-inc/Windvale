@@ -12,8 +12,10 @@
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="../Kernel/Embedded-Wvb-Program.wv" LogicalName="Windvale.Os.Kernel.Embedded-Wvb-Program.wv" />
     <EmbeddedResource Include="../Kernel/Hello-World.wv" LogicalName="Windvale.Os.Kernel.Hello-World.wv" />
     <EmbeddedResource Include="../Kernel/Native-Wvb-Probe.wv" LogicalName="Windvale.Os.Kernel.Native-Wvb-Probe.wv" />
+    <EmbeddedResource Include="../Kernel/Wvb-Admission.wv" LogicalName="Windvale.Os.Kernel.Wvb-Admission.wv" />
     <EmbeddedResource Include="../Kernel/X64-Kernel-Shims.wva" LogicalName="Windvale.Os.Kernel.X64-Kernel-Shims.wva" />
   </ItemGroup>
 </Project>

@@ -45,7 +45,7 @@ Windvale no longer relies on firmware's page-table root after the bounded transi
 
 The construction emitter remains C# Stage 0 and is therefore intentionally temporary. Its named export, four imports, independent table oracle, exact object identity, and WVA-owned privileged calls make the replacement boundary explicit. Moving the constructor into `.wv` requires checked 64-bit integers, bounded unsafe memory operations, and enough control flow; moving more of it into WVA requires equivalent semantic validation rather than raw bytes.
 
-The fixed low-1-GiB identity map is not the future process layout. It is a coherent bridge to the next Decision 0084 slice: boot an AOT Windvale decoder/verifier and validate one embedded canonical WVB inside the guest. Process-specific address spaces and page-fault policy come later.
+The fixed low-1-GiB identity map is not the future process layout. It is the bridge used by candidate [Decision 0090](0090-First-In-Guest-Wvb-Admission.md): AOT Windvale code validates one embedded canonical WVB inside the guest before its native derivative executes. Process-specific address spaces and page-fault policy come later.
 
 ## Reconsider when
 

@@ -8,8 +8,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉassemblyˉcontract
 {
-    public const int FORMAT_VERSION = 6;
-    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v6";
+    public const int FORMAT_VERSION = 7;
+    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v7";
     public const string MAIN_SHIM_SYMBOL = "Windvale_kernel_wva_main";
     public const string Q35_SHUTDOWN_SYMBOL = "Windvale_kernel_x64_q35_shutdown";
     public const string X64_WRITE_BYTE_SYMBOL = "Windvale_kernel_x64_write_byte";
@@ -127,13 +127,13 @@ public static class Kernelˉassemblyˉshim
             } ||
             Object.Symbols[8] is not
             {
-                Name: Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL,
+                Name: Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Import,
                 Kind: Objectˉsymbolˉkind.Function,
             } ||
             Object.Symbols[9] is not
             {
-                Name: Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL,
+                Name: Kernelˉwvbˉadmissionˉcontract.BRIDGE_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Import,
                 Kind: Objectˉsymbolˉkind.Function,
             } ||
@@ -143,7 +143,7 @@ public static class Kernelˉassemblyˉshim
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 1,
-                Symbolˉindex: 9,
+                Symbolˉindex: 8,
                 Addend: -4,
             } ||
             Object.Relocations[1] is not
@@ -151,7 +151,7 @@ public static class Kernelˉassemblyˉshim
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 6,
-                Symbolˉindex: 8,
+                Symbolˉindex: 9,
                 Addend: -4,
             } ||
             Object.Relocations[2] is not
