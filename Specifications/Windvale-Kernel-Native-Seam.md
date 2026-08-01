@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel native seam version 3 defines how the shared portable-WVB native backend, reference host tools, Windvale Assembly, and system-profile Windvale source divide responsibility while the native runtime grows. The first shared ABI-5 WVB consumer is implemented under firmware probe version 7 and [Decision 0064](../Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md); exact-candidate qualification remains pending. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
+Kernel native seam version 3 defines how the shared portable-WVB native backend, reference host tools, Windvale Assembly, and system-profile Windvale source divide responsibility while the native runtime grows. The first shared ABI-5 WVB consumer is qualified under firmware probe version 7 and [Decision 0064](../Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md) at exact candidate `708242e`. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 
@@ -67,4 +67,4 @@ The seam does not move the UEFI loader, memory-map scanner, arena initializer, a
 
 The portable WVB is 502 bytes with SHA-256 `1f384f77c4e1c718a331aaa1a3c1f1e4173bbae9d870ec9023d70c7b15c1f7ef`. Its 2,296-byte ABI-5 WVO has SHA-256 `338d05395502cc34dc5ac1a99626e0507faf3503ae7d5a3016c52ac140139ee5`. The native bridge object is 269 bytes with SHA-256 `b345f42813fb5a20829a28882e03820a05e815982689478dc2b17ac593dca88d`. The version-3 WVA shim object is 291 bytes with SHA-256 `332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc`.
 
-Firmware probe version 7 links seven WVO objects and produces a deterministic 9,728-byte EFI application with SHA-256 `16c225916be855ca0aa27bcdacb56e38c08b79e2270f12e9040bffe343873fb3`. The pinned QEMU run emits `native-wvb=pass` only after the ABI-5 result and existing system-profile Main both succeed. Exact-candidate qualification remains pending.
+Firmware probe version 7 links seven WVO objects and produces a deterministic 9,728-byte EFI application with SHA-256 `16c225916be855ca0aa27bcdacb56e38c08b79e2270f12e9040bffe343873fb3`. Exact candidate `708242e` passes all 15 OS tests, both selected Seed regression tiers, the pinned QEMU/OVMF environment check, and a real boot that emits `native-wvb=pass` only after the ABI-5 result and existing system-profile Main both succeed.

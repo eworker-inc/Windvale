@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decisions 0059 through 0063 cross-host qualify the shared Stage 0 seam through constants, checked arithmetic/traps, typed control, dynamic instruction budgets, backward control, internal calls, bounded recursion, and immutable i32 data through WVO/AOT and Windows/Linux W^X paths. Provisional Decision 0064 implements the first downstream Windvale OS AOT consumer of that same ABI. This document defines the larger native destination and migration boundaries; it does not claim capabilities, an in-guest WVB loader, a general native runtime, broad JIT or AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
+Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decisions 0059 through 0063 cross-host qualify the shared Stage 0 seam through constants, checked arithmetic/traps, typed control, dynamic instruction budgets, backward control, internal calls, bounded recursion, and immutable i32 data through WVO/AOT and Windows/Linux W^X paths. Decision 0064 qualifies the first downstream Windvale OS AOT consumer of that same ABI at exact candidate `708242e`. This document defines the larger native destination and migration boundaries; it does not claim capabilities, an in-guest WVB loader, a general native runtime, broad JIT or AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
 
 ## Destination
 

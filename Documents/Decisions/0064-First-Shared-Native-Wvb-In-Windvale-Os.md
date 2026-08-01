@@ -1,7 +1,7 @@
 # Decision 0064: First shared native WVB in Windvale OS
 
 - Date: 2026-07-31
-- Status: Implemented on the pinned Windows QEMU environment; exact-candidate qualification pending
+- Status: Qualified on the pinned Windows QEMU environment
 - Depends on: [Decision 0063](0063-Shared-Budget-Native-Calls-And-Static-Data.md)'s cross-host ABI-5 call/data boundary
 - Refines: [Decision 0056](0056-Windvale-Owned-Post-Memory-Evidence.md)'s special kernel-native seam
 
@@ -22,11 +22,27 @@ The next proof must execute the selected code, not merely link unused bytes. It 
 - Advance the firmware probe to version 7. Link the loader, special kernel object, ABI-5 native object, kernel memory object, WVA seam, native bridge, and x64 byte adapter as seven independently verified WVO inputs. Emit `native-wvb=pass` only after the aggregate kernel call returns zero; that return is unreachable unless the native probe produced packed result 29 and the existing system-profile Main also succeeded.
 - Keep the existing pinned QEMU/OVMF environment, post-firmware failure path, deterministic PE verification, exact serial transcript, and guest-controlled completion gate.
 
-## Initial evidence
+## Qualification evidence
 
 The portable probe is a deterministic 502-byte WVB with SHA-256 `1f384f77c4e1c718a331aaa1a3c1f1e4173bbae9d870ec9023d70c7b15c1f7ef`. Its ABI-5 object is 2,296 bytes with SHA-256 `338d05395502cc34dc5ac1a99626e0507faf3503ae7d5a3016c52ac140139ee5`; it has separate `.text` and `.rodata`, one data relocation, internal calls, and bounded loops. The 269-byte bridge object has SHA-256 `b345f42813fb5a20829a28882e03820a05e815982689478dc2b17ac593dca88d`. The version-3 WVA seam is 291 bytes with SHA-256 `332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc`.
 
-All 15 focused OS tests pass with a zero-warning Release build, including deterministic WVB/WVO/bridge evidence, exact interpreter instruction count, UEFI read-only-data acceptance, unsupported-section rejection, and complete firmware-image reconstruction. The pinned QEMU 11.0 environment boots the 9,728-byte EFI image with SHA-256 `16c225916be855ca0aa27bcdacb56e38c08b79e2270f12e9040bffe343873fb3` and emits the complete version-7 success transcript. Exact candidate identity and final qualification evidence remain to be recorded.
+Exact candidate commit `708242e2ad84f5fe9337588de5c2d02bc3f50a38`, tree `7ce94ee13aa0110d616a2adb2767c5b8e9ac0da4`, is published to both the shared local remote and GitHub. Its zero-warning Release build and all 15 focused OS tests pass, including deterministic WVB/WVO/bridge evidence, exact interpreter instruction count, UEFI read-only-data acceptance, unsupported-section rejection, and complete firmware-image reconstruction. The regular Development tier passes all 48 tests in 61.8 seconds, and Standard passes all 49 tests including the qualification-only golden contract in 237.4 seconds.
+
+The pinned environment verifier accepts QEMU `11.0.0`, machine `pc-q35-11.0`, TCG, and the exact OVMF code/variables digests. A real boot completes in 14.276 seconds with guest-controlled QEMU exit code 1 and this path-free report:
+
+```text
+windvale-os-boot-report 7
+status=pass
+architecture=x86-64
+application-format=pe32-plus-uefi-application-v3
+probe-version=7
+efi-bytes=9728
+efi-sha256=16c225916be855ca0aa27bcdacb56e38c08b79e2270f12e9040bffe343873fb3
+serial-marker=windvale-os-boot-7-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-native-wvb-windvale-source-status-pass
+qemu-exit-code=1
+```
+
+This qualifies the first downstream Windvale OS use of the already cross-host-qualified ABI-5 backend. The OS evidence is intentionally the pinned Windows QEMU environment rather than a new Windows/Debian host-runtime qualification; Decision 0063 remains the cross-host proof for the backend itself.
 
 ## Consequences
 
