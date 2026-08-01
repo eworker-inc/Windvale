@@ -13,6 +13,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Public contribution, governance, security, support, conduct, and project-identity policies.
 - Windows and Linux repository verification workflows.
 - Repository-owned Windvale syntax highlighting and Visual Studio Code language support for `.wv` source files.
+- A GitHub-rendered visual progress dashboard with evidence-based roadmap indicators and a dated SVG phase map.
 - Opt-in deterministic per-function instruction reporting in the C# reference runtime and Seed CLI.
 - The accepted first x86-64 UEFI/QEMU boot environment and a path-independent dependency preflight over exact EDK II firmware inputs.
 - The first verified WVA-to-Windvale kernel execution seam, linking an assembled machine shim to compiler-generated `.wv` Main on kernel-owned memory.

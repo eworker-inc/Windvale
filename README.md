@@ -12,6 +12,8 @@ At its center is a **new programming language**, together with its compiler, por
 
 *“Working now” means implemented and tested for the current experimental Windvale Seed scope. It does not mean permanently finished or production-stable.*
 
+See the [visual progress dashboard](Documents/Project/Progress.md) for the roadmap phase map, current transfer, and working end-to-end paths.
+
 | Project area | Status | What works today | Next major milestone |
 | --- | :---: | --- | --- |
 | Windvale language | ✅ Working now | Typed portable and hosted programs with modules, functions, control flow, records, enums, text, bytes, and explicit capabilities | Expand the language only as compiler, library, and operating-system work requires |
@@ -693,6 +695,7 @@ export fn Main() -> i32 {
 - [Native argument table and process-input services decision](Documents/Decisions/0073-Native-Argument-Table-And-Process-Input-Services.md)
 - [Minimal deterministic Windvale projects decision](Documents/Decisions/0075-Minimal-Deterministic-Windvale-Projects.md)
 - [Open questions](Documents/Project/Open-Questions.md)
+- [Visual progress dashboard](Documents/Project/Progress.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 
 ## Development
