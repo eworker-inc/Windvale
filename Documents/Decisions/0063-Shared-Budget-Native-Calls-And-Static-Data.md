@@ -1,7 +1,7 @@
 # Decision 0063: Shared-budget native calls and static data
 
 - Date: 2026-07-31
-- Status: Implemented on Windows x64; cross-host qualification pending
+- Status: Cross-host qualified on Windows x64 and Debian x64
 - Refines: [Decision 0062](0062-Dynamic-Native-Instruction-Budgets-And-Backward-Control-Flow.md)'s single-function budget boundary
 
 ## Context
@@ -23,7 +23,15 @@ Decision 0062 admits bounded native loops but deliberately retains one `Main() -
 
 The focused Windows differential case passes with a zero-warning Release build. It covers zero- through four-parameter calls, Boolean returns, nested and noncommutative calls, local preservation, recursive success and exact depth exhaustion, immutable data length/load, data passed through functions, data loops, bounds traps, WVO `.text`/`.rodata` separation, linked-image equality, and hostile patch rejection.
 
-The primary data/call program loops over an immutable array, invokes a two-parameter `Add` function for every element, and returns `29` through the reference interpreter, W^X JIT fragment, and WVO-linked AOT image at the same exact instruction and call-depth boundaries. Qualification evidence will be recorded only after the exact candidate passes the full Windows and isolated Debian gates.
+The primary data/call program loops over an immutable array, invokes a two-parameter `Add` function for every element, and returns `29` through the reference interpreter, W^X JIT fragment, and WVO-linked AOT image at the same exact instruction and call-depth boundaries.
+
+## Qualification evidence
+
+Exact candidate commit `1af2eca1e3ef8443daa3354ddfe03935821ae23d`, tree `bcdc8a138767a34866514720bc721032759a2dc3`, was archived as `windvale-native-calls-1af2eca.tar.gz`, 2,810,114 bytes with SHA-256 `07163bdb75b6573bd5c9a67dde6390430502bd2e39552e1073b611f90d8578ee`. The digest matched after transfer to the isolated E-Worker Debian QA host, where the focused native case passed through Linux `mmap`/`mprotect` in 219 milliseconds with a zero-warning build.
+
+Windows Qualification completed in 490.3 seconds with a 251.091-second suite; Debian Qualification completed in 481 seconds with a 236.437-second suite. Both hosts used .NET SDK `10.0.302`, passed zero-warning Release builds, all 49 tests, and the complete native CLI verifier. The 15,563-byte Windows conformance report has SHA-256 `6780bd68cfcf7dacea10d34f5a4b9d7eeb6cdc2c2c4a70cf055c6830429330f`; the 15,473-byte Debian report has SHA-256 `1fec4c222425f2737a7f41c415b1841f88aab0a8e7458b40d4e7d170e1d9c35d`. Their normalized contracts match exactly.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,612 bytes, matched Windows byte for byte. The 2,298,177-byte Debian evidence bundle has SHA-256 `32dc646999aca8925730d2840db8c389040bdc15982224f5976f8fd26d48173e`. After retrieval and comparison, the resolved exact QA directory, transferred source archive, and evidence bundle were removed and confirmed absent.
 
 ## Consequences
 
