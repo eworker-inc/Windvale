@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Windvale.ObjectModel;
 
 namespace Windvale.Compiler.Native;
@@ -10,7 +11,10 @@ public static class Nativeˉfragmentˉverifier
     private const ulong INSTRUCTION_LIMIT_STATUS = 0x0000_0002_0000_0000UL;
     private const ulong CALL_DEPTH_STATUS = 0x0000_0003_0000_0000UL;
     private const ulong DATA_BOUNDS_STATUS = 0x0000_0004_0000_0000UL;
-    private const int FUNCTION_SUFFIX_BYTES = 88;
+    private const ulong RUNTIME_SERVICE_STATUS = 0x0000_0005_0000_0000UL;
+    private const int INTERNAL_FUNCTION_SUFFIX_BYTES = 109;
+    private const int MAIN_FUNCTION_SUFFIX_BYTES = 121;
+    private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public static Nativeˉfragment Verify(Nativeˉfragment fragment)
     {
@@ -27,7 +31,10 @@ public static class Nativeˉfragmentˉverifier
         {
             Fail("WVN3003", "The baseline native fragment must target x86-64.");
         }
-        if (fragment.Code.IsDefault || fragment.Symbols.IsDefault || fragment.Patches.IsDefault)
+        if (fragment.Code.IsDefault ||
+            fragment.Symbols.IsDefault ||
+            fragment.Patches.IsDefault ||
+            fragment.Requiredˉservices.IsDefault)
         {
             Fail("WVN3004", "Native fragment collections must be initialized.");
         }
@@ -46,6 +53,12 @@ public static class Nativeˉfragmentˉverifier
         if (fragment.Patches.Length > Objectˉlimits.MAX_RELOCATIONS)
         {
             Fail("WVN3008", "The native fragment exceeds the patch-count limit.");
+        }
+        if (fragment.Requiredˉservices.Length > 1 ||
+            (fragment.Requiredˉservices.Length == 1 &&
+                fragment.Requiredˉservices[0] != Nativeˉservice.Consoleˉwriteˉline))
+        {
+            Fail("WVN3009", "The native fragment requires unsupported or noncanonical runtime services.");
         }
 
         Verifyˉsymbols(fragment);
@@ -181,8 +194,7 @@ public static class Nativeˉfragmentˉverifier
         {
             for (var Index = 0; Index < Data.Length; Index++)
             {
-                if (!StringComparer.Ordinal.Equals(Data[Index].Name, $"$data_{Index:D4}") ||
-                    (Data[Index].Size & 3) != 0)
+                if (!StringComparer.Ordinal.Equals(Data[Index].Name, $"$data_{Index:D4}"))
                 {
                     Failˉshape();
                 }
@@ -221,6 +233,7 @@ public static class Nativeˉfragmentˉverifier
         var Patchˉlookup = fragment.Patches.ToDictionary(Patch => checked((int)Patch.Offset));
         var Usedˉpatches = new HashSet<int>();
         var Functionˉstarts = Functions.ToDictionary(Symbol => checked((int)Symbol.Offset));
+        var Dataˉsymbols = Data.ToDictionary(Symbol => Symbol.Name, StringComparer.Ordinal);
         var Decoded = new Dictionary<int, Decodedˉfunction>();
         foreach (var Function in Functions)
         {
@@ -232,7 +245,8 @@ public static class Nativeˉfragmentˉverifier
                     Function,
                     Patchˉlookup,
                     Usedˉpatches,
-                    Functionˉstarts));
+                    Functionˉstarts,
+                    Dataˉsymbols));
         }
         if (Usedˉpatches.Count != fragment.Patches.Length)
         {
@@ -256,24 +270,32 @@ public static class Nativeˉfragmentˉverifier
         Nativeˉsymbol symbol,
         Dictionary<int, Nativeˉpatch> patches,
         HashSet<int> usedˉpatches,
-        Dictionary<int, Nativeˉsymbol> functions)
+        Dictionary<int, Nativeˉsymbol> functions,
+        Dictionary<string, Nativeˉsymbol> dataˉsymbols)
     {
         var Code = fragment.Code.AsSpan();
         var Start = checked((int)symbol.Offset);
         var End = checked(Start + (int)symbol.Size);
-        if (End - Start <= FUNCTION_SUFFIX_BYTES + 20)
+        var Isˉmain = symbol.Binding == Nativeˉsymbolˉbinding.Export;
+        var Suffixˉbytes = Isˉmain ? MAIN_FUNCTION_SUFFIX_BYTES : INTERNAL_FUNCTION_SUFFIX_BYTES;
+        if (End - Start <= Suffixˉbytes + 20)
         {
             Failˉshape();
         }
         var Index = Start;
-        var Isˉmain = symbol.Binding == Nativeˉsymbolˉbinding.Export;
         if (Isˉmain)
         {
-            if (!Matches(Code, Index, 0x49, 0x89, 0xD3, 0x4D, 0x89, 0xCA))
+            if (!Matches(
+                Code,
+                Index,
+                0x41, 0x57,
+                0x49, 0x89, 0xD7,
+                0x4D, 0x8B, 0x5F, Nativeˉexecutionˉcontextˉcontract.INSTRUCTION_BUDGET_OFFSET,
+                0x4D, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.CALL_DEPTH_BUDGET_OFFSET))
             {
                 Failˉshape();
             }
-            Index += 6;
+            Index += 13;
         }
         if (!Matches(Code, Index, 0x49, 0x83, 0xEA, 0x01, 0x0F, 0x82))
         {
@@ -321,19 +343,24 @@ public static class Nativeˉfragmentˉverifier
             Failˉshape();
         }
 
-        var Propagate = End - FUNCTION_SUFFIX_BYTES;
-        var Overflow = Propagate + 11;
-        var Instructionˉlimit = Overflow + 21;
-        var Bounds = Instructionˉlimit + 21;
-        var Depth = Bounds + 21;
+        var Restoreˉbytes = Isˉmain ? 13 : 11;
+        var Statusˉbytes = Isˉmain ? 23 : 21;
+        var Propagate = End - Suffixˉbytes;
+        var Overflow = Propagate + Restoreˉbytes;
+        var Instructionˉlimit = Overflow + Statusˉbytes;
+        var Bounds = Instructionˉlimit + Statusˉbytes;
+        var Runtimeˉservice = Bounds + Statusˉbytes;
+        var Depth = Runtimeˉservice + Statusˉbytes;
         if (Depthˉtarget != Depth ||
-            !Matchesˉpropagate(Code, Propagate, Frameˉbytes) ||
-            !Matchesˉstatusˉtrap(Code, Overflow, Frameˉbytes, INTEGER_OVERFLOW_STATUS) ||
-            !Matchesˉstatusˉtrap(Code, Instructionˉlimit, Frameˉbytes, INSTRUCTION_LIMIT_STATUS) ||
-            !Matchesˉstatusˉtrap(Code, Bounds, Frameˉbytes, DATA_BOUNDS_STATUS) ||
+            !Matchesˉpropagate(Code, Propagate, Frameˉbytes, Isˉmain) ||
+            !Matchesˉstatusˉtrap(Code, Overflow, Frameˉbytes, INTEGER_OVERFLOW_STATUS, Isˉmain) ||
+            !Matchesˉstatusˉtrap(Code, Instructionˉlimit, Frameˉbytes, INSTRUCTION_LIMIT_STATUS, Isˉmain) ||
+            !Matchesˉstatusˉtrap(Code, Bounds, Frameˉbytes, DATA_BOUNDS_STATUS, Isˉmain) ||
+            !Matchesˉstatusˉtrap(Code, Runtimeˉservice, Frameˉbytes, RUNTIME_SERVICE_STATUS, Isˉmain) ||
             !Matches(Code, Depth, 0x49, 0xFF, 0xC2, 0x48, 0xB8) ||
             BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Depth + 5, sizeof(ulong))) != CALL_DEPTH_STATUS ||
-            Code[Depth + 13] != 0xC3)
+            (Isˉmain && !Matches(Code, Depth + 13, 0x41, 0x5F, 0xC3)) ||
+            (!Isˉmain && Code[Depth + 13] != 0xC3))
         {
             Failˉshape();
         }
@@ -356,9 +383,9 @@ public static class Nativeˉfragmentˉverifier
             if (Tryˉloadˉeax(Code, Index, Frameˉbytes, out _) &&
                 Matches(Code, Index + 7, 0x48, 0x81, 0xC4) &&
                 Readˉi32(Code, Index + 10) == Frameˉbytes &&
-                Matches(Code, Index + 14, 0x49, 0xFF, 0xC2, 0xC3))
+                Matchesˉrestoreˉdepthˉandˉreturn(Code, Index + 14, Isˉmain))
             {
-                Index += 18;
+                Index += Isˉmain ? 20 : 18;
                 Returns++;
                 Groups.Add(new(Groupˉstart, false, true, false, []));
                 continue;
@@ -385,7 +412,22 @@ public static class Nativeˉfragmentˉverifier
                 Frameˉbytes,
                 Bounds,
                 patches,
-                usedˉpatches))
+                usedˉpatches,
+                dataˉsymbols))
+            {
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉconsoleˉwriteˉline(
+                fragment,
+                Code,
+                ref Index,
+                Propagate,
+                Runtimeˉservice,
+                patches,
+                usedˉpatches,
+                dataˉsymbols))
             {
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
@@ -534,7 +576,8 @@ public static class Nativeˉfragmentˉverifier
         int frameˉbytes,
         int bounds,
         Dictionary<int, Nativeˉpatch> patches,
-        HashSet<int> usedˉpatches)
+        HashSet<int> usedˉpatches,
+        Dictionary<string, Nativeˉsymbol> dataˉsymbols)
     {
         var Cursor = index;
         if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out _) ||
@@ -549,13 +592,70 @@ public static class Nativeˉfragmentˉverifier
         var Patchˉoffset = Cursor + 21;
         if (!patches.TryGetValue(Patchˉoffset, out var Patch) ||
             !usedˉpatches.Add(Patchˉoffset) ||
+            !dataˉsymbols.TryGetValue(Patch.Symbol, out var Data) ||
+            (Data.Size & 3) != 0 ||
+            BinaryPrimitives.ReadUInt32LittleEndian(code.Slice(Cursor + 8, sizeof(uint))) !=
+                Data.Size / sizeof(int) ||
             !Matches(code, Cursor + 25, 0x8B, 0x04, 0x82) ||
             !Tryˉstoreˉeax(code, Cursor + 28, frameˉbytes, out _))
         {
             return false;
         }
-        _ = Patch;
         Cursor += 35;
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉconsoleˉwriteˉline(
+        Nativeˉfragment fragment,
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int runtimeˉservice,
+        Dictionary<int, Nativeˉpatch> patches,
+        HashSet<int> usedˉpatches,
+        Dictionary<string, Nativeˉsymbol> dataˉsymbols)
+    {
+        var Cursor = index;
+        if (!fragment.Requiredˉservices.Contains(Nativeˉservice.Consoleˉwriteˉline) ||
+            !Matches(code, Cursor, 0x4C, 0x8D, 0x05))
+        {
+            return false;
+        }
+        var Patchˉoffset = Cursor + 3;
+        if (!patches.TryGetValue(Patchˉoffset, out var Patch) ||
+            !usedˉpatches.Add(Patchˉoffset) ||
+            !dataˉsymbols.TryGetValue(Patch.Symbol, out var Data) ||
+            !Matches(code, Cursor + 7, 0x41, 0xB9) ||
+            BinaryPrimitives.ReadUInt32LittleEndian(code.Slice(Cursor + 9, sizeof(uint))) != Data.Size ||
+            !Matches(
+                code,
+                Cursor + 13,
+                0x49, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET,
+                0x48, 0x8B, 0x40, Nativeˉserviceˉtableˉcontract.CONSOLE_WRITE_LINE_POINTER_OFFSET,
+                0xFF, 0xD0,
+                0x85, 0xC0,
+                0x0F, 0x85) ||
+            !Tryˉreadˉtarget(code, Cursor + 27, out var Runtimeˉtarget) ||
+            Runtimeˉtarget != runtimeˉservice)
+        {
+            return false;
+        }
+        try
+        {
+            _ = STRICT_UTF8.GetCharCount(fragment.Code.AsSpan(
+                checked((int)Data.Offset),
+                checked((int)Data.Size)));
+        }
+        catch (DecoderFallbackException)
+        {
+            return false;
+        }
+        Cursor += 31;
         if (Cursor > end)
         {
             return false;
@@ -633,21 +733,41 @@ public static class Nativeˉfragmentˉverifier
         return false;
     }
 
-    private static bool Matchesˉpropagate(ReadOnlySpan<byte> code, int offset, int frameˉbytes) =>
+    private static bool Matchesˉpropagate(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        bool restoreˉcontext) =>
         Matches(code, offset, 0x48, 0x81, 0xC4) &&
         Readˉi32(code, offset + 3) == frameˉbytes &&
-        Matches(code, offset + 7, 0x49, 0xFF, 0xC2, 0xC3);
+        Matchesˉrestoreˉdepthˉandˉreturn(code, offset + 7, restoreˉcontext);
 
     private static bool Matchesˉstatusˉtrap(
         ReadOnlySpan<byte> code,
         int offset,
         int frameˉbytes,
-        ulong status) =>
+        ulong status,
+        bool restoreˉcontext) =>
         Matches(code, offset, 0x48, 0x81, 0xC4) &&
         Readˉi32(code, offset + 3) == frameˉbytes &&
         Matches(code, offset + 7, 0x49, 0xFF, 0xC2, 0x48, 0xB8) &&
         BinaryPrimitives.ReadUInt64LittleEndian(code.Slice(offset + 12, sizeof(ulong))) == status &&
-        code[offset + 20] == 0xC3;
+        Matchesˉcontextˉrestoreˉandˉreturn(code, offset + 20, restoreˉcontext);
+
+    private static bool Matchesˉrestoreˉdepthˉandˉreturn(
+        ReadOnlySpan<byte> code,
+        int offset,
+        bool restoreˉcontext) =>
+        Matches(code, offset, 0x49, 0xFF, 0xC2) &&
+        Matchesˉcontextˉrestoreˉandˉreturn(code, offset + 3, restoreˉcontext);
+
+    private static bool Matchesˉcontextˉrestoreˉandˉreturn(
+        ReadOnlySpan<byte> code,
+        int offset,
+        bool restoreˉcontext) =>
+        restoreˉcontext
+            ? Matches(code, offset, 0x41, 0x5F, 0xC3)
+            : Matches(code, offset, 0xC3);
 
     private static bool Tryˉloadˉeax(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
     {
@@ -780,7 +900,7 @@ public static class Nativeˉfragmentˉverifier
 
     [DoesNotReturn]
     private static void Failˉshape() =>
-        Fail("WVN3030", "The x86-64 baseline fragment is outside the independently decoded shared-budget call/data target shape.");
+        Fail("WVN3030", "The x86-64 baseline fragment is outside the independently decoded context, service, call, and data target shape.");
 
     [DoesNotReturn]
     private static void Fail(string code, string message) =>

@@ -9,8 +9,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉnativeˉprobeˉcontract
 {
-    public const int FORMAT_VERSION = 1;
-    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v1";
+    public const int FORMAT_VERSION = 2;
+    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v2";
     public const string BRIDGE_SYMBOL = "Windvale_kernel_x64_native_probe";
     public const string NATIVE_MAIN_SYMBOL = "Main";
     public const int EXPECTED_RESULT = 29;
@@ -42,6 +42,8 @@ public static class Kernelˉnativeˉprobe
         var Native = X64ˉnativeˉbackend.Compile(Verifiedˉmodule);
         if (Native.Module.Functions.Length != 2 ||
             Native.Module.Data.Length != 1 ||
+            !Native.Module.Requiredˉservices.IsEmpty ||
+            !Native.Fragment.Requiredˉservices.IsEmpty ||
             !Native.Module.Functions
                 .SelectMany(Function => Function.Blocks)
                 .SelectMany(Block => Block.Operations)
@@ -79,20 +81,30 @@ public static class Kernelˉnativeˉprobe
     private static ImmutableArray<byte> Buildˉbridgeˉobject()
     {
         var Output = new X64ˉcodeˉbuilder();
-        Output.Emit(0x48, 0x83, 0xEC, 0x08);
+        Output.Emit(0x48, 0x83, 0xEC, 0x28);
         Output.Emit(0x48, 0x89, 0x0C, 0x24);
-        Output.Emit(0xBA);
+        Output.Emit(0x48, 0xB8);
+        Output.Emitˉu64(
+            ((ulong)Nativeˉexecutionˉcontextˉcontract.SIZE << 32) |
+            Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
+        Output.Emit(0x48, 0x89, 0x44, 0x24, 0x08);
+        Output.Emit(0xB8);
         Output.Emitˉu32(Kernelˉnativeˉprobeˉcontract.EXACT_INSTRUCTION_BUDGET);
-        Output.Emit(0x41, 0xB9);
+        Output.Emit(0x48, 0x89, 0x44, 0x24, 0x10);
+        Output.Emit(0xB8);
         Output.Emitˉu32(Kernelˉnativeˉprobeˉcontract.EXACT_CALL_DEPTH_BUDGET);
+        Output.Emit(0x48, 0x89, 0x44, 0x24, 0x18);
+        Output.Emit(0x31, 0xC0);
+        Output.Emit(0x48, 0x89, 0x44, 0x24, 0x20);
+        Output.Emit(0x48, 0x8D, 0x54, 0x24, 0x08);
         var Nativeˉcallˉoffset = Output.Emitˉcallˉplaceholder();
         Output.Emit(0x48, 0x83, 0xF8, Kernelˉnativeˉprobeˉcontract.EXPECTED_RESULT);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Output.Emit(0x48, 0x8B, 0x0C, 0x24);
-        Output.Emit(0x48, 0x83, 0xC4, 0x08);
+        Output.Emit(0x48, 0x83, 0xC4, 0x28);
         var Kernelˉjumpˉoffset = Output.Emitˉjumpˉplaceholder();
         Output.Mark(FAILURE_LABEL);
-        Output.Emit(0x48, 0x83, 0xC4, 0x08);
+        Output.Emit(0x48, 0x83, 0xC4, 0x28);
         Output.Emit(0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
         var Code = Output.Build();
 
@@ -135,13 +147,18 @@ public static class Kernelˉnativeˉprobe
         var Object = Objectˉcodec.Readˉandˉverify(objectˉbytes.AsSpan()).Value;
         ReadOnlySpan<byte> Expectedˉcode =
         [
-            0x48, 0x83, 0xEC, 0x08, 0x48, 0x89, 0x0C, 0x24,
-            0xBA, 0xCB, 0x00, 0x00, 0x00, 0x41, 0xB9, 0x02, 0x00, 0x00, 0x00,
+            0x48, 0x83, 0xEC, 0x28, 0x48, 0x89, 0x0C, 0x24,
+            0x48, 0xB8, 0x01, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+            0x48, 0x89, 0x44, 0x24, 0x08,
+            0xB8, 0xCB, 0x00, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x10,
+            0xB8, 0x02, 0x00, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x18,
+            0x31, 0xC0, 0x48, 0x89, 0x44, 0x24, 0x20,
+            0x48, 0x8D, 0x54, 0x24, 0x08,
             0xE8, 0x00, 0x00, 0x00, 0x00, 0x48, 0x83, 0xF8, 0x1D,
             0x0F, 0x85, 0x0D, 0x00, 0x00, 0x00,
-            0x48, 0x8B, 0x0C, 0x24, 0x48, 0x83, 0xC4, 0x08,
+            0x48, 0x8B, 0x0C, 0x24, 0x48, 0x83, 0xC4, 0x28,
             0xE9, 0x00, 0x00, 0x00, 0x00,
-            0x48, 0x83, 0xC4, 0x08, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3,
+            0x48, 0x83, 0xC4, 0x28, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3,
         ];
         if (Object.Sections.Length != 1 ||
             Object.Sections[0] is not
@@ -159,7 +176,7 @@ public static class Kernelˉnativeˉprobe
                 Kind: Objectˉsymbolˉkind.Function,
                 Sectionˉindex: 0,
                 Offset: 0,
-                Size: 57,
+                Size: 93,
             } ||
             Object.Symbols[1] is not
             {
@@ -178,7 +195,7 @@ public static class Kernelˉnativeˉprobe
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
-                Offset: 20,
+                Offset: 56,
                 Symbolˉindex: 1,
                 Addend: -4,
             } ||
@@ -186,7 +203,7 @@ public static class Kernelˉnativeˉprobe
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
-                Offset: 43,
+                Offset: 79,
                 Symbolˉindex: 2,
                 Addend: -4,
             })

@@ -5,8 +5,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 5;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v5";
+    public const int ABI_VERSION = 6;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v6";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
@@ -14,6 +14,31 @@ public static class Nativeˉcontract
     public const int MAXIMUM_FRAME_BYTES = MAXIMUM_FRAME_SLOTS * sizeof(int);
     public const int MAXIMUM_BLOCKS = 4096;
     public const int MAXIMUM_CALL_PARAMETERS = 4;
+}
+
+public static class Nativeˉexecutionˉcontextˉcontract
+{
+    public const uint FORMAT_VERSION = 1;
+    public const uint SIZE = 32;
+    public const int FORMAT_VERSION_OFFSET = 0;
+    public const int SIZE_OFFSET = 4;
+    public const int INSTRUCTION_BUDGET_OFFSET = 8;
+    public const int CALL_DEPTH_BUDGET_OFFSET = 16;
+    public const int SERVICE_TABLE_POINTER_OFFSET = 24;
+}
+
+public static class Nativeˉserviceˉtableˉcontract
+{
+    public const uint FORMAT_VERSION = 1;
+    public const uint SIZE = 16;
+    public const int FORMAT_VERSION_OFFSET = 0;
+    public const int SIZE_OFFSET = 4;
+    public const int CONSOLE_WRITE_LINE_POINTER_OFFSET = 8;
+}
+
+public enum Nativeˉservice : byte
+{
+    Consoleˉwriteˉline = 1,
 }
 
 public abstract record Nativeˉoperation;
@@ -24,6 +49,7 @@ public enum Nativeˉvalueˉtype : byte
 {
     I32 = 1,
     Bool = 2,
+    Staticˉtext = 3,
 }
 
 public sealed record Nativeˉi32ˉconstant(int Result, int Value) : Nativeˉoperation;
@@ -101,6 +127,14 @@ public sealed record Nativeˉdataˉloadˉi32(
     int Data,
     int Index) : Nativeˉoperation;
 
+public sealed record Nativeˉstaticˉtextˉconstant(
+    int Result,
+    int Data) : Nativeˉoperation;
+
+public sealed record Nativeˉconsoleˉwriteˉline(
+    int Text,
+    int Data) : Nativeˉoperation;
+
 public abstract record Nativeˉterminator;
 
 public sealed record Nativeˉjump(int Targetˉblock) : Nativeˉterminator;
@@ -128,11 +162,18 @@ public sealed record Nativeˉfunction(
     public ImmutableArray<Nativeˉvalueˉtype> Allˉlocalˉtypes => [.. Parameterˉtypes, .. Localˉtypes];
 }
 
-public sealed record Nativeˉi32ˉdata(string Name, ImmutableArray<int> Values);
+public abstract record Nativeˉdata(string Name);
+
+public sealed record Nativeˉi32ˉdata(string Name, ImmutableArray<int> Values)
+    : Nativeˉdata(Name);
+
+public sealed record Nativeˉutf8ˉdata(string Name, ImmutableArray<byte> Bytes)
+    : Nativeˉdata(Name);
 
 public sealed record Nativeˉmodule(
     ImmutableArray<Nativeˉfunction> Functions,
-    ImmutableArray<Nativeˉi32ˉdata> Data);
+    ImmutableArray<Nativeˉdata> Data,
+    ImmutableArray<Nativeˉservice> Requiredˉservices);
 
 public enum Nativeˉsymbolˉbinding : byte
 {
@@ -173,7 +214,8 @@ public sealed record Nativeˉfragment(
     uint Alignment,
     ImmutableArray<byte> Code,
     ImmutableArray<Nativeˉsymbol> Symbols,
-    ImmutableArray<Nativeˉpatch> Patches);
+    ImmutableArray<Nativeˉpatch> Patches,
+    ImmutableArray<Nativeˉservice> Requiredˉservices);
 
 public sealed record Nativeˉcompilation(
     Nativeˉmodule Module,

@@ -1,12 +1,15 @@
 using System.Buffers.Binary;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Text;
+using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 
 namespace Windvale.Runtime.Native;
 
 public static class X64ˉnativeˉexecutor
 {
+    private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
     private const uint MEM_COMMIT = 0x0000_1000;
     private const uint MEM_RESERVE = 0x0000_2000;
     private const uint MEM_RELEASE = 0x0000_8000;
@@ -23,7 +26,8 @@ public static class X64ˉnativeˉexecutor
         Nativeˉfragment fragment,
         string entry = "Main",
         long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS,
-        int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH)
+        int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH,
+        Nativeˉhostˉservices? hostˉservices = null)
     {
         Nativeˉfragmentˉverifier.Verify(fragment);
         ArgumentNullException.ThrowIfNull(entry);
@@ -43,6 +47,7 @@ public static class X64ˉnativeˉexecutor
         {
             throw new PlatformNotSupportedException("The first native executor requires an x86-64 process.");
         }
+        Requireˉservices(fragment, hostˉservices);
         var Entry = fragment.Symbols.SingleOrDefault(Symbol =>
             Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
             Symbol.Kind == Nativeˉsymbolˉkind.Function &&
@@ -52,23 +57,101 @@ public static class X64ˉnativeˉexecutor
             throw new Nativeˉbackendˉexception("WVN4001", $"Native entry '{entry}' is missing or empty.");
         }
 
-        var Address = Allocateˉwritable((nuint)fragment.Code.Length);
+        Nativeˉconsoleˉwriteˉlineˉcallback? Consoleˉcallback = null;
+        string? Serviceˉfailure = null;
+        var Serviceˉthunk = Array.Empty<byte>();
+        var Address = IntPtr.Zero;
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Consoleˉwriteˉline))
+        {
+            Consoleˉcallback = (textˉaddress, textˉlength) =>
+            {
+                try
+                {
+                    Invokeˉconsoleˉwriteˉline(
+                        textˉaddress,
+                        textˉlength,
+                        Address,
+                        fragment.Code.Length,
+                        hostˉservices!.Standardˉoutput!);
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Exception.Message;
+                    return 1;
+                }
+            };
+            Serviceˉthunk = Buildˉconsoleˉwriteˉlineˉthunk(
+                Marshal.GetFunctionPointerForDelegate(Consoleˉcallback));
+        }
+
+        var Serviceˉthunkˉoffset = checked((fragment.Code.Length + 15) & ~15);
+        var Allocationˉbytes = checked(Serviceˉthunkˉoffset + Serviceˉthunk.Length);
+        Address = Allocateˉwritable((nuint)Allocationˉbytes);
+        var Serviceˉtable = IntPtr.Zero;
+        var Context = IntPtr.Zero;
         ulong Outcome;
         try
         {
-            var Linkedˉcode = fragment.Code.ToArray();
+            var Linkedˉcode = new byte[Allocationˉbytes];
+            fragment.Code.CopyTo(Linkedˉcode);
             Applyˉpatches(fragment, Address, Linkedˉcode);
+            Serviceˉthunk.CopyTo(Linkedˉcode, Serviceˉthunkˉoffset);
             Marshal.Copy(Linkedˉcode, 0, Address, Linkedˉcode.Length);
             Finalizeˉexecutable(Address, (nuint)Linkedˉcode.Length);
+
+            if (Serviceˉthunk.Length != 0)
+            {
+                Serviceˉtable = Marshal.AllocHGlobal(checked((int)Nativeˉserviceˉtableˉcontract.SIZE));
+                var Tableˉbytes = new byte[checked((int)Nativeˉserviceˉtableˉcontract.SIZE)];
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Tableˉbytes.AsSpan(Nativeˉserviceˉtableˉcontract.FORMAT_VERSION_OFFSET),
+                    Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Tableˉbytes.AsSpan(Nativeˉserviceˉtableˉcontract.SIZE_OFFSET),
+                    Nativeˉserviceˉtableˉcontract.SIZE);
+                BinaryPrimitives.WriteUInt64LittleEndian(
+                    Tableˉbytes.AsSpan(Nativeˉserviceˉtableˉcontract.CONSOLE_WRITE_LINE_POINTER_OFFSET),
+                    checked((ulong)(Address.ToInt64() + Serviceˉthunkˉoffset)));
+                Marshal.Copy(Tableˉbytes, 0, Serviceˉtable, Tableˉbytes.Length);
+            }
+
+            Context = Marshal.AllocHGlobal(checked((int)Nativeˉexecutionˉcontextˉcontract.SIZE));
+            var Contextˉbytes = new byte[checked((int)Nativeˉexecutionˉcontextˉcontract.SIZE)];
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION_OFFSET),
+                Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.SIZE_OFFSET),
+                Nativeˉexecutionˉcontextˉcontract.SIZE);
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.INSTRUCTION_BUDGET_OFFSET),
+                checked((ulong)maximumˉinstructions));
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.CALL_DEPTH_BUDGET_OFFSET),
+                checked((ulong)maximumˉcallˉdepth));
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET),
+                Serviceˉtable == IntPtr.Zero ? 0 : checked((ulong)Serviceˉtable.ToInt64()));
+            Marshal.Copy(Contextˉbytes, 0, Context, Contextˉbytes.Length);
+
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
             var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉi32ˉentry>(new(Entryˉaddress));
-            var Budget = checked((ulong)maximumˉinstructions);
-            var Callˉdepth = checked((ulong)maximumˉcallˉdepth);
-            Outcome = Function(0, Budget, Budget, Callˉdepth, 0, Callˉdepth);
+            var Contextˉpointer = checked((ulong)Context.ToInt64());
+            Outcome = Function(0, Contextˉpointer, Contextˉpointer, 0, 0, 0);
+            GC.KeepAlive(Consoleˉcallback);
         }
         finally
         {
-            Release(Address, (nuint)fragment.Code.Length);
+            if (Context != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(Context);
+            }
+            if (Serviceˉtable != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(Serviceˉtable);
+            }
+            Release(Address, (nuint)Allocationˉbytes);
         }
 
         var Status = (uint)(Outcome >> 32);
@@ -100,9 +183,152 @@ public static class X64ˉnativeˉexecutor
                 "WVR3005",
                 $"A native static-data index was outside its immutable array in entry '{entry}'.");
         }
+        if (Status == 5)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3013",
+                Serviceˉfailure is null
+                    ? $"A native runtime service rejected its request in entry '{entry}'."
+                    : $"A native runtime service failed in entry '{entry}': {Serviceˉfailure}");
+        }
         throw new Nativeˉbackendˉexception(
             "WVN4005",
             $"Native entry '{entry}' returned unknown status {Status}.");
+    }
+
+    private static void Requireˉservices(
+        Nativeˉfragment fragment,
+        Nativeˉhostˉservices? hostˉservices)
+    {
+        foreach (var Service in fragment.Requiredˉservices)
+        {
+            if (hostˉservices is null || !hostˉservices.Isˉauthorized(Service))
+            {
+                throw new Nativeˉtrapˉexception(
+                    "WVR3010",
+                    $"Native service '{Service}' was required but not authorized.");
+            }
+            if (!hostˉservices.Supports(Service))
+            {
+                throw new Nativeˉtrapˉexception(
+                    "WVR3001",
+                    $"The host does not implement native service '{Service}'.");
+            }
+        }
+    }
+
+    private static void Invokeˉconsoleˉwriteˉline(
+        IntPtr textˉaddress,
+        uint textˉlength,
+        IntPtr codeˉaddress,
+        int codeˉlength,
+        TextWriter output)
+    {
+        if (textˉlength > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
+        {
+            throw new InvalidOperationException("The native console request exceeds the UTF-8 text limit.");
+        }
+        var Codeˉstart = codeˉaddress.ToInt64();
+        var Codeˉend = checked(Codeˉstart + codeˉlength);
+        var Textˉstart = textˉaddress.ToInt64();
+        var Textˉend = checked(Textˉstart + textˉlength);
+        if (Textˉstart < Codeˉstart || Textˉend > Codeˉend)
+        {
+            throw new InvalidOperationException("The native console request is outside verified fragment data.");
+        }
+        var Bytes = new byte[checked((int)textˉlength)];
+        if (Bytes.Length != 0)
+        {
+            Marshal.Copy(textˉaddress, Bytes, 0, Bytes.Length);
+        }
+        var Text = STRICT_UTF8.GetString(Bytes);
+        output.Write(Text);
+        output.Write('\n');
+    }
+
+    private static byte[] Buildˉconsoleˉwriteˉlineˉthunk(IntPtr callbackˉaddress)
+    {
+        var Code = new List<byte>
+        {
+            0x48, 0x89, 0xE0,
+            0x48, 0x83, 0xE4, 0xF0,
+            0x48, 0x83, 0xEC, 0x40,
+            0x48, 0x89, 0x44, 0x24, 0x20,
+            0x4C, 0x89, 0x54, 0x24, 0x28,
+            0x4C, 0x89, 0x5C, 0x24, 0x30,
+            0x4C, 0x89, 0x7C, 0x24, 0x38,
+        };
+        if (OperatingSystem.IsWindows())
+        {
+            Code.AddRange([0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA]);
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            Code.AddRange([0x4C, 0x89, 0xC7, 0x44, 0x89, 0xCE]);
+        }
+        else
+        {
+            throw new PlatformNotSupportedException("The first native service thunk supports Windows and Linux.");
+        }
+        Code.AddRange([0x48, 0xB8]);
+        var Callbackˉoffset = Code.Count;
+        Code.AddRange(new byte[sizeof(ulong)]);
+        BinaryPrimitives.WriteUInt64LittleEndian(
+            CollectionsMarshal.AsSpan(Code).Slice(Callbackˉoffset, sizeof(ulong)),
+            checked((ulong)callbackˉaddress.ToInt64()));
+        Code.AddRange(
+        [
+            0xFF, 0xD0,
+            0x4C, 0x8B, 0x54, 0x24, 0x28,
+            0x4C, 0x8B, 0x5C, 0x24, 0x30,
+            0x4C, 0x8B, 0x7C, 0x24, 0x38,
+            0x48, 0x8B, 0x64, 0x24, 0x20,
+            0xC3,
+        ]);
+        var Bytes = Code.ToArray();
+        Verifyˉconsoleˉwriteˉlineˉthunk(Bytes, callbackˉaddress);
+        return Bytes;
+    }
+
+    private static void Verifyˉconsoleˉwriteˉlineˉthunk(
+        ReadOnlySpan<byte> code,
+        IntPtr callbackˉaddress)
+    {
+        ReadOnlySpan<byte> Prefix =
+        [
+            0x48, 0x89, 0xE0,
+            0x48, 0x83, 0xE4, 0xF0,
+            0x48, 0x83, 0xEC, 0x40,
+            0x48, 0x89, 0x44, 0x24, 0x20,
+            0x4C, 0x89, 0x54, 0x24, 0x28,
+            0x4C, 0x89, 0x5C, 0x24, 0x30,
+            0x4C, 0x89, 0x7C, 0x24, 0x38,
+        ];
+        ReadOnlySpan<byte> Arguments = OperatingSystem.IsWindows()
+            ? [0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA]
+            : [0x4C, 0x89, 0xC7, 0x44, 0x89, 0xCE];
+        ReadOnlySpan<byte> Suffix =
+        [
+            0xFF, 0xD0,
+            0x4C, 0x8B, 0x54, 0x24, 0x28,
+            0x4C, 0x8B, 0x5C, 0x24, 0x30,
+            0x4C, 0x8B, 0x7C, 0x24, 0x38,
+            0x48, 0x8B, 0x64, 0x24, 0x20,
+            0xC3,
+        ];
+        if (code.Length != 70 ||
+            !code[..Prefix.Length].SequenceEqual(Prefix) ||
+            !code.Slice(Prefix.Length, Arguments.Length).SequenceEqual(Arguments) ||
+            code[37] != 0x48 ||
+            code[38] != 0xB8 ||
+            BinaryPrimitives.ReadUInt64LittleEndian(code.Slice(39, sizeof(ulong))) !=
+                checked((ulong)callbackˉaddress.ToInt64()) ||
+            !code[47..].SequenceEqual(Suffix))
+        {
+            throw new Nativeˉbackendˉexception(
+                "WVN4010",
+                "The native console service thunk violated its bounded platform adapter contract.");
+        }
     }
 
     private static void Applyˉpatches(Nativeˉfragment fragment, IntPtr address, byte[] code)
@@ -202,11 +428,16 @@ public static class X64ˉnativeˉexecutor
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate ulong Nativeˉi32ˉentry(
         ulong windowsˉpadding,
-        ulong sharedˉbudget,
-        ulong systemˉvˉbudget,
-        ulong windowsˉcallˉdepth,
+        ulong windowsˉcontext,
+        ulong systemˉvˉcontext,
+        ulong windowsˉpaddingˉfour,
         ulong systemˉvˉpadding,
-        ulong systemˉvˉcallˉdepth);
+        ulong systemˉvˉpaddingˉsix);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉconsoleˉwriteˉlineˉcallback(
+        IntPtr textˉaddress,
+        uint textˉlength);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr VirtualAlloc(IntPtr address, nuint size, uint allocationˉtype, uint protection);

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decisions 0059 through 0063 cross-host qualify the shared Stage 0 seam through constants, checked arithmetic/traps, typed control, dynamic instruction budgets, backward control, internal calls, bounded recursion, and immutable i32 data through WVO/AOT and Windows/Linux W^X paths. Decision 0064 qualifies the first downstream Windvale OS AOT consumer of that same ABI at exact candidate `708242e`. This document defines the larger native destination and migration boundaries; it does not claim capabilities, an in-guest WVB loader, a general native runtime, broad JIT or AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
+Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decisions 0059 through 0063 cross-host qualify the shared Stage 0 seam through constants, checked arithmetic/traps, typed control, dynamic instruction budgets, backward control, internal calls, bounded recursion, and immutable i32 data through WVO/AOT and Windows/Linux W^X paths. Decision 0064 qualifies the first downstream Windvale OS AOT consumer of that same ABI at exact candidate `708242e`. [Decision 0065](../Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) implements ABI 6's versioned execution context and first explicitly authorized static-text console service; regular Windows and pinned development-QEMU evidence passes while exact cross-host qualification is pending. This document defines the larger native destination and migration boundaries; it does not claim general capabilities, an in-guest WVB loader, a general native runtime, broad JIT or AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
 
 ## Destination
 
@@ -111,9 +111,13 @@ Decision 0063 advances the experimental current target to `x86-64-wvb-baseline-v
 
 Decision 0064 uses ABI 5 without adding an OS-specific instruction selector. One ordinary portable source module becomes canonical verified WVB and a deterministic WVO with `.text` plus `.rodata`; an exact bridge supplies the already-defined instruction/depth budgets and accepts only packed result 29 before the existing system-profile kernel Main may run. The module executes on the Windvale OS kernel-owned stack under pinned QEMU. This proves downstream AOT reuse, not an OS runtime: C#/.NET still builds the image on the host, and the guest neither retains nor decodes nor verifies WVB.
 
+Decision 0065 advances the current implementation to `x86-64-wvb-baseline-v6`. `Main` receives one pointer in `RDX` to a 32-byte versioned execution context containing the instruction budget, depth budget, and optional 16-byte versioned service table. The first closed service entry is `console.write_line`: generated code passes one verified static UTF-8 range through an identical `R8`/`R9D` convention, while exact runtime-owned thunks adapt only that call to Windows x64 or System V. Authorization and implementation preflight precede executable allocation; callback failures return packed status 5; and the independent decoder validates the prologue, service call, relocation, UTF-8 target, failure path, and context-register restoration. The current OS bridge constructs the same context with no services for its portable module. The pinned development-QEMU boot passes; exact cross-host qualification remains pending.
+
 ## Native runtime ABI
 
-Generated code targets a Windvale-owned internal ABI rather than emitting host calls throughout ordinary functions. The version-5 entry receives `(0, instruction budget, instruction budget, call-depth budget, 0, call-depth budget)` from the executor. Windows and System V x86-64 therefore both place the instruction budget in `RDX` and call-depth budget in `R9`; one identical `Main` copies them into reserved `R11` and `R10`. Internal functions accept as many as four i32/bool parameters in `R8D`, `R9D`, `ECX`, and `EDX` and return one packed value/status in `RAX`. This is a bounded experimental convention, not the final aggregate, stack-argument, runtime-service, or safe-point ABI.
+Generated code targets a Windvale-owned internal ABI rather than emitting host calls throughout ordinary functions. The version-6 entry receives a pointer in `RDX` to the exact [native execution context](../../Specifications/Windvale-Native-Execution-Context.md). One identical `Main` preserves that pointer in `R15` and loads the versioned instruction/depth budgets into reserved `R11` and `R10`. Internal functions accept as many as four i32/bool parameters in `R8D`, `R9D`, `ECX`, and `EDX` and return one packed value/status in `RAX`.
+
+The context's optional service-table pointer is the only generated-code route to a host service. ABI 6 defines one closed `console.write_line` entry for verified immutable UTF-8 text, explicit authorization, and runtime-owned platform thunks. WVO 1.0 does not serialize fragment service requirements, so a linked hosted image is not independently loadable without its verified fragment metadata. This remains a bounded experimental convention, not the final aggregate, stack-argument, allocation, file/process-service, or safe-point ABI.
 
 The ABI must eventually define:
 
@@ -125,7 +129,7 @@ The ABI must eventually define:
 - capability request and return conventions;
 - module, function, type, and data identity;
 - thread, synchronization, unwind, and debugging boundaries when introduced; and
-- runtime-service-table versioning.
+- runtime-service-table extension and independently loadable service metadata.
 
 Small WVA thunks translate this internal ABI to Windows x64, System V x86-64, UEFI, or Windvale OS boundaries. PE/COFF and ELF container differences do not belong in portable code generation.
 
