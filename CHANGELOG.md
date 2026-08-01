@@ -24,7 +24,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - The cross-host-qualified Windvale Project 1 manifest, `windvale build` command, portable Windvale-written parser, and native hosted shell for selecting and inspecting one root plus explicit source dependencies without changing import, WVSS, or WVB semantics.
 - The cross-host-qualified shared native path through ABI 14/context 6, including all eleven native service leaves, bounded borrowed and arena-backed values, deterministic interpreter/JIT/WVO-AOT agreement, and live Windvale-produced process-input leaves.
 - A cross-host-qualified Windvale publication planner that owns every live executable-image extent and canonical runtime-service placement before the narrow Windows/Linux W^X adapter allocates memory.
-- A Windvale-owned publication-lifetime candidate whose exact state graph gates allocate, copy, seal, invoke, and release operations while one internal C# owner contains raw Windows/Linux executable-memory authority.
+- A cross-host-qualified Windvale publication-lifetime graph that gates allocate, copy, seal, invoke, and release operations while one internal C# owner contains raw Windows/Linux executable-memory authority.
 - A cross-host-qualified probe-17 terminal invalid-opcode boundary with a kernel-owned vector-6 IDT, deterministic panic transcript, and separate pinned-QEMU success and fault images.
 - The accepted capability-oriented Windvale OS architecture: a small kernel written primarily in `.wv`, a bounded `.wva` machine layer, isolated services, AOT system code, and no permanent C#/.NET dependency.
 - A permanent UTF-8 native-process verifier boundary and detached/redirected macron regression check, closing the recurring launcher-only decoding failure.
@@ -39,4 +39,4 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 ### Current development status
 
 - Windvale Seed, its runtime and bytecode foundation, the object model, assembler, linker, Foundation modules, complete portable compiler, and exact bytecode compiler self-reproduction have Windows/Debian qualification evidence.
-- Native compiler execution, complete W^X lifetime ownership, the shared JIT/AOT backend, .NET retirement, and Windvale OS remain active or planned milestones rather than completed releases; the qualified terminal exception boundary and kernel-owned memory evidence do not yet constitute a functioning kernel runtime.
+- Native compiler execution, Windvale-native platform memory authority, complete execution-support lifetime ownership, the shared JIT/AOT backend, .NET retirement, and Windvale OS remain active or planned milestones rather than completed releases; the qualified terminal exception boundary and kernel-owned memory evidence do not yet constitute a functioning kernel runtime.

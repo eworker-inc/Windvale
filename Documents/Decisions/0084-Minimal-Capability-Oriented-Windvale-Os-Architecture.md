@@ -9,7 +9,7 @@
 
 Windvale already has an x86-64 UEFI/QEMU path that exits firmware services, owns a bounded memory arena and stack, runs compiler-generated Windvale code, executes one host-built AOT portable module, and reaches one deterministic terminal CPU-exception destination. The guest does not yet load or verify WVB, own page tables, isolate processes, provide IPC, schedule threads, or shut down cleanly.
 
-[Decision 0083](0083-Windvale-Owned-Native-Publication-Lifetime.md) also implements a candidate Windvale-owned executable-publication state graph for Windows and Linux while isolating raw platform memory authority in one internal C# owner. That is a useful ownership transfer, but it does not make C# a durable OS or runtime layer, and its cross-host qualification remains pending.
+[Decision 0083](0083-Windvale-Owned-Native-Publication-Lifetime.md) cross-host qualifies a Windvale-owned executable-publication state graph for Windows and Linux while isolating raw platform memory authority in one internal C# owner. That is a useful ownership transfer, but it does not make C# a durable OS or runtime layer.
 
 Continuing one hardware slice at a time without a durable destination would risk accidental long-term choices: a C# kernel, a second kernel-only language, JIT compilation in privileged mode, host handles in application contracts, an ever-growing monolith, or a rigid microkernel split chosen before measurement. Conversely, fixing detailed syscall and object encodings now would turn untested guesses into compatibility debt.
 

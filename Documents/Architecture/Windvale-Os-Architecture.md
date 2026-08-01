@@ -139,7 +139,7 @@ Executable publication follows a one-way discipline:
 
 JIT compilation occurs outside the kernel and receives only the minimum capability needed to request checked publication. Kernel code and low-level drivers use deterministic AOT images. No JIT service receives arbitrary kernel-memory access.
 
-The current Windows/Linux bootstrap has already moved the allowed allocate/copy/seal/invoke/release state graph into Windvale under candidate [Decision 0083](../Decisions/0083-Windvale-Owned-Native-Publication-Lifetime.md), while one bounded C# owner still performs the platform memory calls. This is a measured step toward the contract above, not the final OS publication boundary.
+The current Windows/Linux bootstrap has already moved the allowed allocate/copy/seal/invoke/release state graph into Windvale under cross-host-qualified [Decision 0083](../Decisions/0083-Windvale-Owned-Native-Publication-Lifetime.md), while one bounded C# owner still performs the platform memory calls. This is a measured step toward the contract above, not the final OS publication boundary.
 
 ## Boot and trust chain
 
