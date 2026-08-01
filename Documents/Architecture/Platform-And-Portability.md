@@ -31,6 +31,8 @@ Windvale source supports two durable publication levels and several execution ti
 
 The frontend and semantic model are shared. Backend and execution-tier differences must not silently alter defined behavior. [Native-Execution-And-Dotnet-Retirement.md](Native-Execution-And-Dotnet-Retirement.md) owns the accepted interpreter/JIT/AOT continuum and .NET retirement boundary.
 
+[Windvale-Os-Architecture.md](Windvale-Os-Architecture.md) owns the durable boundary for the third environment: a small capability-oriented kernel written primarily in system-profile Windvale, a bounded WVA machine layer, and isolated Windvale services. It fixes trust and ownership without prematurely freezing the syscall, IPC, scheduler, package, filesystem, or public user-ABI encodings.
+
 ## First OS boot environment
 
 [Decision 0044](../Decisions/0044-First-X64-Uefi-Boot-Environment.md) accepts x86-64 with UEFI 2.11 as the first Windvale OS boot environment. QEMU `pc-q35-11.0` with exact EDK II firmware bytes and TCG acceleration is the primary automated VM; Hyper-V Generation 2 is the later Windows compatibility target. This fixes a reproducible experiment boundary without making QEMU devices, UEFI services, PE32+, or the x64 firmware convention part of portable language behavior.

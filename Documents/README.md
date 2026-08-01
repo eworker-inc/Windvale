@@ -14,6 +14,7 @@ Windvale separates current status, enduring architecture, accepted decisions, ex
 
 - [Seed implementation](Architecture/Seed-Implementation.md) — implemented Stage 0, compiler, bytecode, runtime, object, assembler, linker, and native ownership map
 - [Platform and portability](Architecture/Platform-And-Portability.md) — portable, hosted, system, and platform boundaries
+- [Windvale OS architecture](Architecture/Windvale-Os-Architecture.md) — durable kernel, process, capability, service, language-ownership, and bootstrap boundaries
 - [Compiler bootstrap options](Architecture/Compiler-Bootstrap-Options.md) — bootstrap sequence and representation choices
 - [Native execution and .NET retirement](Architecture/Native-Execution-And-Dotnet-Retirement.md) — interpreter/JIT/AOT destination and retirement gate
 - [Seed verification throughput](Architecture/Seed-Verification-Throughput.md) — performance evidence and verification strategy

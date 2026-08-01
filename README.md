@@ -594,6 +594,7 @@ export fn Main() -> i32 {
 - Source syntax, typed WIR, distributable bytecode, and future native IR remain distinct contracts.
 - Portable, hosted, and system programming have explicit capability profiles.
 - The OS begins with the [accepted x86-64 UEFI 2.11 environment](Documents/Decisions/0044-First-X64-Uefi-Boot-Environment.md): pinned QEMU Q35/TCG automation first, then Hyper-V Generation 2 compatibility, without making either host define Windvale semantics.
+- The durable [Windvale OS architecture](Documents/Architecture/Windvale-Os-Architecture.md) uses a small capability-oriented kernel written primarily in `.wv`, a bounded `.wva` machine layer, and isolated Windvale services; C# remains Stage 0 and recovery rather than an OS dependency.
 - Bootstrap dependencies and AI contributions must be documented honestly and reproducibly.
 
 ## Documents

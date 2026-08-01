@@ -39,16 +39,17 @@ This list records unresolved decisions without presenting them as implementation
 
 - Which kernel-owned data, address-materialization, and target-container rules should extend the accepted special kernel WVO without duplicating the shared ABI-14 backend?
 - What counts as “from scratch” at each bootstrap stage?
-- What is the first process, protection, filesystem, driver, and application model?
-- Does the first Windvale OS host bytecode inside the kernel, in a privileged runtime process, or in ordinary isolated processes?
+- Which exact process, thread, capability, syscall, IPC, and resource-budget encodings should implement Decision 0084's accepted conceptual boundary?
+- Which first boot-critical drivers should remain with the kernel temporarily, and which should begin as isolated AOT system services?
+- What are the first package/resource and filesystem contracts, after the in-guest verifier and protected-process boundary exist?
 - Which QEMU and Hyper-V behaviors must be qualified before the first OS milestone is complete?
 
 ## First decision sequence
 
-Decisions 0058 through 0082 establish reproducible bytecode compiler convergence, the bounded shared ABI-14 native path, live Windvale-produced service leaves, Windvale-owned executable-image layout, and the first terminal CPU-exception destination. The recommended next decisions are:
+Decisions 0058 through 0084 establish reproducible bytecode compiler convergence, the bounded shared ABI-14 native path, live Windvale-produced service leaves, Windvale-owned executable-image layout, the first terminal CPU-exception destination, and the durable capability-oriented OS boundary. The recommended next decisions are:
 
-1. Define explicit executable-publication lifetime state and transfer the next measured Windows/Linux allocation, protection, cache-publication, invocation, or teardown boundary into Windvale without weakening W^X.
+1. Cross-host qualify Decision 0083's implemented publication-lifetime candidate, then select the next measured context, service-table, arena, result-cell, or platform-call ownership boundary without weakening W^X.
 2. Execute the qualified Windvale-written compiler through the shared native path and identify the next backend or runtime contract demanded by that real workload.
 3. Add native PE/COFF and ELF containers plus standalone Windows/Linux capability and process hosts without leaking host rules into portable modules.
-4. Extend the kernel from one terminal invalid-opcode destination toward the smallest coherent trap, shutdown, and in-guest WVB loading/verifying path, retaining pinned-QEMU evidence before Hyper-V qualification.
+4. Implement the next bounded Decision 0084 slice: extend the kernel from one terminal invalid-opcode destination toward normalized essential traps, clean shutdown, page-table ownership, and an AOT Windvale verifier that admits one embedded WVB, retaining pinned-QEMU evidence before Hyper-V qualification.
 5. Satisfy the remaining Decision 0057 native-retirement conditions, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.
