@@ -1,6 +1,5 @@
 using System.Buffers.Binary;
 using System.Collections.Immutable;
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Windvale.Bytecode;
 using Windvale.Compiler.Native;
@@ -10,18 +9,6 @@ namespace Windvale.Runtime.Native;
 
 public static class X64ˉnativeˉexecutor
 {
-    private const uint MEM_COMMIT = 0x0000_1000;
-    private const uint MEM_RESERVE = 0x0000_2000;
-    private const uint MEM_RELEASE = 0x0000_8000;
-    private const uint PAGE_READWRITE = 0x04;
-    private const uint PAGE_EXECUTE_READ = 0x20;
-
-    private const int PROT_READ = 0x1;
-    private const int PROT_WRITE = 0x2;
-    private const int PROT_EXEC = 0x4;
-    private const int MAP_PRIVATE = 0x2;
-    private const int MAP_ANONYMOUS = 0x20;
-
     public static int Executeˉi32(
         Nativeˉfragment fragment,
         string entry = "Main",
@@ -177,7 +164,8 @@ public static class X64ˉnativeˉexecutor
         var Serviceˉoffsets = Publicationˉplan.Placements.ToDictionary(
             Placement => Placement.Service,
             Placement => Placement.Offset);
-        Address = Allocateˉwritable((nuint)Allocationˉbytes);
+        using var Executableˉimage = Nativeˉexecutableˉimage.Allocateˉwritable(
+            X64ˉnativeˉpublicationˉlifetime.Plan(Allocationˉbytes));
         var Serviceˉtable = IntPtr.Zero;
         var Serviceˉfailureˉdetail = Nativeˉserviceˉfailureˉdetail.None;
         var Resultˉbytes = ImmutableArray<byte>.Empty;
@@ -201,8 +189,9 @@ public static class X64ˉnativeˉexecutor
                 Serviceˉcode[Index].Code.CopyTo(Linkedˉcode, Placement.Offset);
                 Previousˉserviceˉend = checked(Placement.Offset + Placement.Size);
             }
-            Marshal.Copy(Linkedˉcode, 0, Address, Linkedˉcode.Length);
-            Finalizeˉexecutable(Address, (nuint)Linkedˉcode.Length);
+            Executableˉimage.Copyˉimage(Linkedˉcode);
+            Executableˉimage.Sealˉexecutable();
+            Address = Executableˉimage.Executableˉaddress;
 
             if (Serviceˉcode.Count != 0)
             {
@@ -298,13 +287,13 @@ public static class X64ˉnativeˉexecutor
             var Resultˉpointer = Resultˉcell == IntPtr.Zero
                 ? 0UL
                 : checked((ulong)Resultˉcell.ToInt64());
-            Outcome = Function(
+            Outcome = Executableˉimage.Invoke(_ => Function(
                 Resultˉpointer,
                 Contextˉpointer,
                 Contextˉpointer,
                 Resultˉpointer,
                 0,
-                0);
+                0));
             Fileˉinput.Verifyˉcompleted();
             Serviceˉfailureˉdetail = (Nativeˉserviceˉfailureˉdetail)unchecked((uint)Marshal.ReadInt32(
                 Context,
@@ -335,7 +324,6 @@ public static class X64ˉnativeˉexecutor
             {
                 Marshal.FreeHGlobal(Serviceˉtable);
             }
-            Release(Address, (nuint)Allocationˉbytes);
         }
 
         var Status = (uint)(Outcome >> 32);
@@ -588,64 +576,6 @@ public static class X64ˉnativeˉexecutor
             _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service table entry."),
         };
 
-    private static IntPtr Allocateˉwritable(nuint size)
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            var Address = VirtualAlloc(IntPtr.Zero, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-            return Address != IntPtr.Zero
-                ? Address
-                : throw Lastˉnativeˉerror("VirtualAlloc");
-        }
-        if (OperatingSystem.IsLinux())
-        {
-            var Address = Mmap(IntPtr.Zero, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-            return Address != new IntPtr(-1)
-                ? Address
-                : throw Lastˉnativeˉerror("mmap");
-        }
-        throw new PlatformNotSupportedException("The first native executor supports Windows and Linux.");
-    }
-
-    private static void Finalizeˉexecutable(IntPtr address, nuint size)
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            if (!VirtualProtect(address, size, PAGE_EXECUTE_READ, out _))
-            {
-                throw Lastˉnativeˉerror("VirtualProtect");
-            }
-            if (!FlushInstructionCache(GetCurrentProcess(), address, size))
-            {
-                throw Lastˉnativeˉerror("FlushInstructionCache");
-            }
-            return;
-        }
-        if (Mprotect(address, size, PROT_READ | PROT_EXEC) != 0)
-        {
-            throw Lastˉnativeˉerror("mprotect");
-        }
-    }
-
-    private static void Release(IntPtr address, nuint size)
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            if (!VirtualFree(address, 0, MEM_RELEASE))
-            {
-                throw Lastˉnativeˉerror("VirtualFree");
-            }
-            return;
-        }
-        if (Munmap(address, size) != 0)
-        {
-            throw Lastˉnativeˉerror("munmap");
-        }
-    }
-
-    private static Win32Exception Lastˉnativeˉerror(string operation) =>
-        new(Marshal.GetLastPInvokeError(), $"{operation} failed.");
-
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate ulong Nativeˉentry(
         ulong windowsˉpadding,
@@ -659,36 +589,4 @@ public static class X64ˉnativeˉexecutor
         int Scalar,
         ImmutableArray<byte> Bytes);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern IntPtr VirtualAlloc(IntPtr address, nuint size, uint allocationˉtype, uint protection);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool VirtualProtect(IntPtr address, nuint size, uint protection, out uint oldˉprotection);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool VirtualFree(IntPtr address, nuint size, uint freeˉtype);
-
-    [DllImport("kernel32.dll")]
-    private static extern IntPtr GetCurrentProcess();
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool FlushInstructionCache(IntPtr process, IntPtr address, nuint size);
-
-    [DllImport("libc", EntryPoint = "mmap", SetLastError = true)]
-    private static extern IntPtr Mmap(
-        IntPtr address,
-        nuint length,
-        int protection,
-        int flags,
-        int fileˉdescriptor,
-        nint offset);
-
-    [DllImport("libc", EntryPoint = "mprotect", SetLastError = true)]
-    private static extern int Mprotect(IntPtr address, nuint length, int protection);
-
-    [DllImport("libc", EntryPoint = "munmap", SetLastError = true)]
-    private static extern int Munmap(IntPtr address, nuint length);
 }

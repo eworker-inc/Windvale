@@ -132,6 +132,8 @@ NATIVE_STENCIL_DEMO_MODULE="$ARTIFACTS/Native-Stencil-Demo.wvb"
 NATIVE_STENCIL_BRIDGE_MODULE="$ARTIFACTS/Native-Stencil-Bridge.wvb"
 NATIVE_PUBLICATION_MODULE="$ARTIFACTS/Native-Publication-Core.wvb"
 NATIVE_PUBLICATION_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Bridge.wvb"
+NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
+NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Bridge.wvb"
 SOURCE_LEXER_MODULE="$ARTIFACTS/Source-Lexer-Core.wvb"
 SOURCE_LEXER_DEMO_MODULE="$ARTIFACTS/Source-Lexer-Demo.wvb"
 SOURCE_DECLARATION_PARSER_MODULE="$ARTIFACTS/Source-Declaration-Parser.wvb"
@@ -462,6 +464,40 @@ printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Capabilities (1
 printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'file.read_bytes' >/dev/null
 printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_PUBLICATION_LIFETIME_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime-Core.wv"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_PUBLICATION_LIFETIME_SOURCE" -o "$NATIVE_PUBLICATION_LIFETIME_MODULE"
+NATIVE_PUBLICATION_LIFETIME_HASH=$(sha256sum "$NATIVE_PUBLICATION_LIFETIME_MODULE" | awk '{print $1}')
+if [ "$NATIVE_PUBLICATION_LIFETIME_HASH" != '52b1cb6dd0d7fa9d17c1cba50b527912876e4acf1cd9663846ce915b4c56aed5' ]; then
+    echo "The Windvale native publication-lifetime core has an unexpected digest: $NATIVE_PUBLICATION_LIFETIME_HASH" >&2
+    exit 1
+fi
+NATIVE_PUBLICATION_LIFETIME_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_LIFETIME_MODULE")
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Nativeˉpublicationˉlifetimeˉresult' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Nativeˉpublicationˉlifetimeˉstatus' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Nativeˉpublicationˉlifetimeˉplan' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Exports (7)' >/dev/null
+
+NATIVE_PUBLICATION_LIFETIME_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv"
+NATIVE_PUBLICATION_LIFETIME_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvb"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_SOURCE" \
+    --module "$NATIVE_PUBLICATION_LIFETIME_SOURCE" \
+    -o "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE"
+NATIVE_PUBLICATION_LIFETIME_BRIDGE_HASH=$(sha256sum "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_HASH" != '74dfaf40bb6ea83f0fd72757c9c4cb85f5c8dd28a41f3993325871d348e88d32' ]; then
+    echo "The Windvale native publication-lifetime bridge has an unexpected digest: $NATIVE_PUBLICATION_LIFETIME_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE" "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_RETAINED"
+NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Profile: hosted' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Capabilities (1)' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'file.read_bytes' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Lexer-Core.wv"
 dotnet "$TOOL_DLL" \

@@ -24,6 +24,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - The cross-host-qualified Windvale Project 1 manifest, `windvale build` command, portable Windvale-written parser, and native hosted shell for selecting and inspecting one root plus explicit source dependencies without changing import, WVSS, or WVB semantics.
 - The cross-host-qualified shared native path through ABI 14/context 6, including all eleven native service leaves, bounded borrowed and arena-backed values, deterministic interpreter/JIT/WVO-AOT agreement, and live Windvale-produced process-input leaves.
 - A cross-host-qualified Windvale publication planner that owns every live executable-image extent and canonical runtime-service placement before the narrow Windows/Linux W^X adapter allocates memory.
+- A Windvale-owned publication-lifetime candidate whose exact state graph gates allocate, copy, seal, invoke, and release operations while one internal C# owner contains raw Windows/Linux executable-memory authority.
 - A cross-host-qualified probe-17 terminal invalid-opcode boundary with a kernel-owned vector-6 IDT, deterministic panic transcript, and separate pinned-QEMU success and fault images.
 - A permanent UTF-8 native-process verifier boundary and detached/redirected macron regression check, closing the recurring launcher-only decoding failure.
 

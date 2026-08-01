@@ -96,6 +96,6 @@ Before planning, the native fragment verifier proves that every relative patch f
 5. invokes the verified entry through the qualified ABI; and
 6. releases every execution-owned allocation.
 
-Windows `VirtualAlloc`/`VirtualProtect` and Linux `mmap`/`mprotect` remain narrow platform adapters. Moving those calls or their lifetime state into Windvale requires a later measured decision; `WVPQ 1` and `WVPL 1` do not claim that transfer.
+Windows `VirtualAlloc`/`VirtualProtect` and Linux `mmap`/`mprotect` remain narrow platform adapters. [`WVLQ 1` and `WVLT 1`](Windvale-Native-Publication-Lifetime.md) separately make Windvale the authority for the allowed executable-image lifetime transitions and isolate those calls inside one internal host owner; `WVPQ 1` and `WVPL 1` themselves do not claim that transfer.
 
 Any change to either serialized layout, its limits, service ordering, alignment, or response semantics requires a new accepted contract version, regenerated retained WVB identity, hostile-input coverage, and exact Windows/Debian qualification.

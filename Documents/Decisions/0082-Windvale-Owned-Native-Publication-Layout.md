@@ -50,5 +50,5 @@ All 67 portable artifacts, totaling 7,836,727 bytes, match byte for byte. Their 
 - Windvale now owns executable-image extent and canonical service-leaf placement, and verified fragment code is no longer rewritten after acceptance.
 - C# remains an independent response validator and owns exact leaf reconstruction, platform memory calls, byte copying, W^X transition, instruction-cache flush, context/service/arena ownership, invocation, status mapping, and cleanup.
 - The extra planner evaluation is intentionally kept in the focused runtime path. Its measured development cost determines whether a later qualified cache can reuse plans by exact fragment/service identity without weakening validation.
-- The next measured transfer can define explicit publication-lifetime state and a Windvale-owned platform-adapter contract. It must avoid general FFI or arbitrary pointer escape merely to move source-code ownership.
+- [Decision 0083](0083-Windvale-Owned-Native-Publication-Lifetime.md) performs the next measured transfer by defining explicit publication-lifetime state and isolating the platform adapter without a general FFI or arbitrary pointer escape.
 - This is not native self-hosting, a standalone runtime, a stable executable container, general dynamic linking, or .NET retirement.

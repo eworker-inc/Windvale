@@ -7,11 +7,17 @@
     <ProjectReference Include="../Windvale.Runtime/Windvale.Runtime.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Windvale.Seed.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource
       Include="Consumers/Native-Stencil-Bridge.wvb"
       LogicalName="Windvale.Native.Native-Stencil-Bridge.wvb" />
     <EmbeddedResource
       Include="Consumers/Native-Publication-Bridge.wvb"
       LogicalName="Windvale.Native.Native-Publication-Bridge.wvb" />
+    <EmbeddedResource
+      Include="Consumers/Native-Publication-Lifetime-Bridge.wvb"
+      LogicalName="Windvale.Native.Native-Publication-Lifetime-Bridge.wvb" />
   </ItemGroup>
 </Project>

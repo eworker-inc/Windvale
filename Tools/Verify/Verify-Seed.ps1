@@ -149,6 +149,8 @@ $NativeStencilDemoModule = Join-Path $Artifacts 'Native-Stencil-Demo.wvb'
 $NativeStencilBridgeModule = Join-Path $Artifacts 'Native-Stencil-Bridge.wvb'
 $NativePublicationModule = Join-Path $Artifacts 'Native-Publication-Core.wvb'
 $NativePublicationBridgeModule = Join-Path $Artifacts 'Native-Publication-Bridge.wvb'
+$NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
+$NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
 $SourceLexerDemoModule = Join-Path $Artifacts 'Source-Lexer-Demo.wvb'
 $SourceDeclarationParserModule = Join-Path $Artifacts 'Source-Declaration-Parser.wvb'
@@ -580,6 +582,56 @@ if (
     $NativePublicationBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native-publication bridge inspection is incomplete.'
+}
+
+$NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'
+dotnet $ToolDll `
+    compile $NativePublicationLifetimeSource -o $NativePublicationLifetimeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native publication-lifetime core.' }
+$NativePublicationLifetimeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationLifetimeModule).Hash.ToLowerInvariant()
+if ($NativePublicationLifetimeHash -ne '52b1cb6dd0d7fa9d17c1cba50b527912876e4acf1cd9663846ce915b4c56aed5') {
+    throw "The Windvale native publication-lifetime core has an unexpected digest: $NativePublicationLifetimeHash"
+}
+$NativePublicationLifetimeInspection = (dotnet $ToolDll inspect $NativePublicationLifetimeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativePublicationLifetimeInspection -notmatch 'Profile: portable' -or
+    $NativePublicationLifetimeInspection -notmatch 'Nativeˉpublicationˉlifetimeˉresult' -or
+    $NativePublicationLifetimeInspection -notmatch 'Nativeˉpublicationˉlifetimeˉstatus' -or
+    $NativePublicationLifetimeInspection -notmatch 'Nativeˉpublicationˉlifetimeˉplan' -or
+    $NativePublicationLifetimeInspection -notmatch 'Exports \(7\)'
+) {
+    throw 'The Windvale native publication-lifetime core inspection is incomplete.'
+}
+$NativePublicationLifetimeBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv'
+$NativePublicationLifetimeBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvb'
+dotnet $ToolDll `
+    compile $NativePublicationLifetimeBridgeSource `
+    --module $NativePublicationLifetimeSource `
+    -o $NativePublicationLifetimeBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native publication-lifetime bridge.' }
+$NativePublicationLifetimeBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationLifetimeBridgeModule).Hash.ToLowerInvariant()
+if ($NativePublicationLifetimeBridgeHash -ne '74dfaf40bb6ea83f0fd72757c9c4cb85f5c8dd28a41f3993325871d348e88d32') {
+    throw "The Windvale native publication-lifetime bridge has an unexpected digest: $NativePublicationLifetimeBridgeHash"
+}
+$NativePublicationLifetimeBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationLifetimeBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativePublicationLifetimeBridgeRetainedHash -ne $NativePublicationLifetimeBridgeHash -or
+    (Get-Item -LiteralPath $NativePublicationLifetimeBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativePublicationLifetimeBridgeModule).Length
+) {
+    throw 'The retained Windvale native publication-lifetime bridge does not match its exact source compilation.'
+}
+$NativePublicationLifetimeBridgeInspection = (dotnet $ToolDll inspect $NativePublicationLifetimeBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativePublicationLifetimeBridgeInspection -notmatch 'Profile: hosted' -or
+    $NativePublicationLifetimeBridgeInspection -notmatch 'Capabilities \(1\)' -or
+    $NativePublicationLifetimeBridgeInspection -notmatch 'file\.read_bytes' -or
+    $NativePublicationLifetimeBridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativePublicationLifetimeBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native publication-lifetime bridge inspection is incomplete.'
 }
 
 $SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Lexer-Core.wv'

@@ -1,0 +1,197 @@
+module Compilerˉnativeˉpublicationˉlifetime profile portable;
+
+enum Nativeˉpublicationˉlifetimeˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Invalidˉversion = 3;
+    Invalidˉreserved = 4;
+    Invalidˉimage = 5;
+}
+
+record Nativeˉpublicationˉlifetimeˉresult {
+    Status: Nativeˉpublicationˉlifetimeˉstatus;
+    Value: bytes;
+    Failureˉoffset: u32;
+}
+
+export fn Nativeˉpublicationˉlifetimeˉappendˉu32(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Nativeˉpublicationˉlifetimeˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Nativeˉpublicationˉlifetimeˉstatusˉvalue(
+    Status: Nativeˉpublicationˉlifetimeˉstatus
+) -> u32 {
+    if Status == Nativeˉpublicationˉlifetimeˉstatus.Invalidˉsize { return 1u32; }
+    if Status == Nativeˉpublicationˉlifetimeˉstatus.Invalidˉmagic { return 2u32; }
+    if Status == Nativeˉpublicationˉlifetimeˉstatus.Invalidˉversion { return 3u32; }
+    if Status == Nativeˉpublicationˉlifetimeˉstatus.Invalidˉreserved { return 4u32; }
+    if Status == Nativeˉpublicationˉlifetimeˉstatus.Invalidˉimage { return 5u32; }
+    return 0u32;
+}
+
+export fn Nativeˉpublicationˉlifetimeˉresponseˉheader(
+    Input: bytes,
+    Status: Nativeˉpublicationˉlifetimeˉstatus,
+    Failureˉoffset: u32,
+    Size: u32,
+    Imageˉbytes: u32,
+    Transitionˉcount: u32
+) -> bytes {
+    var Result: bytes = Nativeˉpublicationˉlifetimeˉempty(Input);
+    Result = Nativeˉpublicationˉlifetimeˉappendˉu32(Result, 1414288983u32);
+    Result = Nativeˉpublicationˉlifetimeˉappendˉu32(Result, 1u32);
+    Result = Nativeˉpublicationˉlifetimeˉappendˉu32(Result, Size);
+    Result = Nativeˉpublicationˉlifetimeˉappendˉu32(
+        Result,
+        Nativeˉpublicationˉlifetimeˉstatusˉvalue(Status)
+    );
+    Result = Nativeˉpublicationˉlifetimeˉappendˉu32(Result, Failureˉoffset);
+    Result = Nativeˉpublicationˉlifetimeˉappendˉu32(Result, Imageˉbytes);
+    Result = Nativeˉpublicationˉlifetimeˉappendˉu32(Result, Transitionˉcount);
+    return Nativeˉpublicationˉlifetimeˉappendˉu32(Result, 0u32);
+}
+
+export fn Nativeˉpublicationˉlifetimeˉfailure(
+    Input: bytes,
+    Status: Nativeˉpublicationˉlifetimeˉstatus,
+    Failureˉoffset: u32
+) -> Nativeˉpublicationˉlifetimeˉresult {
+    return Nativeˉpublicationˉlifetimeˉresult(
+        Status,
+        Nativeˉpublicationˉlifetimeˉresponseˉheader(
+            Input,
+            Status,
+            Failureˉoffset,
+            32u32,
+            0u32,
+            0u32
+        ),
+        Failureˉoffset
+    );
+}
+
+export fn Nativeˉpublicationˉlifetimeˉappendˉtransition(
+    Input: bytes,
+    State: u32,
+    Action: u32,
+    Nextˉstate: u32
+) -> bytes {
+    var Result: bytes = Nativeˉpublicationˉlifetimeˉappendˉu32(Input, State);
+    Result = Nativeˉpublicationˉlifetimeˉappendˉu32(Result, Action);
+    return Nativeˉpublicationˉlifetimeˉappendˉu32(Result, Nextˉstate);
+}
+
+export fn Nativeˉpublicationˉlifetimeˉplan(
+    Input: bytes
+) -> Nativeˉpublicationˉlifetimeˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 20u32 {
+        return Nativeˉpublicationˉlifetimeˉfailure(
+            Input,
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉsize,
+            Total
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1363957335u32 {
+        return Nativeˉpublicationˉlifetimeˉfailure(
+            Input,
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉmagic,
+            0u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Nativeˉpublicationˉlifetimeˉfailure(
+            Input,
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉversion,
+            4u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Nativeˉpublicationˉlifetimeˉfailure(
+            Input,
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉsize,
+            8u32
+        );
+    }
+    if Total != 20u32 {
+        return Nativeˉpublicationˉlifetimeˉfailure(
+            Input,
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉsize,
+            8u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) != 0u32 {
+        return Nativeˉpublicationˉlifetimeˉfailure(
+            Input,
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉreserved,
+            16u32
+        );
+    }
+
+    let Imageˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Imageˉbytes == 0u32 {
+        return Nativeˉpublicationˉlifetimeˉfailure(
+            Input,
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉimage,
+            12u32
+        );
+    }
+    if Imageˉbytes > 35651584u32 {
+        return Nativeˉpublicationˉlifetimeˉfailure(
+            Input,
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉimage,
+            12u32
+        );
+    }
+
+    var Transitions: bytes = Nativeˉpublicationˉlifetimeˉempty(Input);
+    Transitions = Nativeˉpublicationˉlifetimeˉappendˉtransition(
+        Transitions, 0u32, 1u32, 1u32
+    );
+    Transitions = Nativeˉpublicationˉlifetimeˉappendˉtransition(
+        Transitions, 1u32, 2u32, 2u32
+    );
+    Transitions = Nativeˉpublicationˉlifetimeˉappendˉtransition(
+        Transitions, 1u32, 5u32, 5u32
+    );
+    Transitions = Nativeˉpublicationˉlifetimeˉappendˉtransition(
+        Transitions, 2u32, 3u32, 3u32
+    );
+    Transitions = Nativeˉpublicationˉlifetimeˉappendˉtransition(
+        Transitions, 2u32, 5u32, 5u32
+    );
+    Transitions = Nativeˉpublicationˉlifetimeˉappendˉtransition(
+        Transitions, 3u32, 4u32, 4u32
+    );
+    Transitions = Nativeˉpublicationˉlifetimeˉappendˉtransition(
+        Transitions, 3u32, 5u32, 5u32
+    );
+    Transitions = Nativeˉpublicationˉlifetimeˉappendˉtransition(
+        Transitions, 4u32, 5u32, 5u32
+    );
+    Transitions = Nativeˉpublicationˉlifetimeˉappendˉtransition(
+        Transitions, 5u32, 6u32, 5u32
+    );
+
+    let Header: bytes = Nativeˉpublicationˉlifetimeˉresponseˉheader(
+        Input,
+        Nativeˉpublicationˉlifetimeˉstatus.Valid,
+        Total,
+        140u32,
+        Imageˉbytes,
+        9u32
+    );
+    return Nativeˉpublicationˉlifetimeˉresult(
+        Nativeˉpublicationˉlifetimeˉstatus.Valid,
+        Bytesˉconcat(Header, Transitions),
+        Total
+    );
+}

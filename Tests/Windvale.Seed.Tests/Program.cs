@@ -44,6 +44,8 @@ internal static class Program
     private const string NATIVE_STENCIL_DEMO_SHA256 = "651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15";
     private const string NATIVE_PUBLICATION_CORE_SHA256 = "9d75d59e4ba0fc689ae9bc4ac3ac019e520db06d21f54d4ee1480a0bb356e967";
     private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "5102fd0119e37bb7e5f83bb3c4d1bff6303f37818bfe48825b320bf28f27eada";
+    private const string NATIVE_PUBLICATION_LIFETIME_CORE_SHA256 = "52b1cb6dd0d7fa9d17c1cba50b527912876e4acf1cd9663846ce915b4c56aed5";
+    private const string NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256 = "74dfaf40bb6ea83f0fd72757c9c4cb85f5c8dd28a41f3993325871d348e88d32";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "b609fb7d442bbe1685c1058c71eb011d43b291df505697a97c233ca7063a2044";
     private const string PROJECT_MANIFEST_TOOL_SHA256 = "50ab9aa5048ab844a816d0f7f12fb691cb69f57c4a71f7eb18ebc7fb4aaf0b0c";
@@ -556,6 +558,12 @@ internal static class Program
     private static readonly string NATIVE_PUBLICATION_BRIDGE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-Publication-Bridge.wv");
 
+    private static readonly string NATIVE_PUBLICATION_LIFETIME_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-Publication-Lifetime-Core.wv");
+
+    private static readonly string NATIVE_PUBLICATION_LIFETIME_BRIDGE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-Publication-Lifetime-Bridge.wv");
+
     private static readonly string NATIVE_STENCIL_DEMO_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-Stencil-Demo.wv");
 
@@ -618,6 +626,7 @@ internal static class Program
         new("Windvale validates and patches its native stencils across every runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉconsumerˉruns),
         new("Windvale returns and publishes native argument leaves through the descriptor bridge", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉbridgeˉruns),
         new("Windvale owns bounded executable-image layout before W^X publication", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlayoutˉruns),
+        new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
@@ -3694,6 +3703,294 @@ internal static class Program
                     Dataˉfragment.Code.AsSpan(checked((int)Patch.Offset), sizeof(int))));
         }
         Equal(13, X64ˉnativeˉexecutor.Executeˉi32(Dataˉfragment));
+    }
+
+    private static void Windvaleˉnativeˉpublicationˉlifetimeˉruns()
+    {
+        var Coreˉresult = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Compiler/Windvale/Native-Publication-Lifetime-Core.wv",
+                NATIVE_PUBLICATION_LIFETIME_CORE_SOURCE),
+            []);
+        True(
+            Coreˉresult.Success,
+            "The Windvale native publication-lifetime core did not compile: " +
+                string.Join(" | ", Coreˉresult.Diagnostics));
+        Equal(4_954, Coreˉresult.Moduleˉbytes.Length);
+        Equal(
+            NATIVE_PUBLICATION_LIFETIME_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Coreˉresult.Moduleˉbytes.AsSpan()));
+
+        var Bridgeˉresult = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv",
+                NATIVE_PUBLICATION_LIFETIME_BRIDGE_SOURCE),
+            [
+                new(
+                    "Compiler/Windvale/Native-Publication-Lifetime-Core.wv",
+                    NATIVE_PUBLICATION_LIFETIME_CORE_SOURCE),
+            ]);
+        True(
+            Bridgeˉresult.Success,
+            "The Windvale native publication-lifetime bridge did not compile: " +
+                string.Join(" | ", Bridgeˉresult.Diagnostics));
+        Equal(
+            X64ˉnativeˉpublicationˉlifetime.PLANNER_CANONICAL_SIZE,
+            Bridgeˉresult.Moduleˉbytes.Length);
+        Equal(
+            NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Bridgeˉresult.Moduleˉbytes.AsSpan()));
+        Equal(
+            X64ˉnativeˉpublicationˉlifetime.PLANNER_CANONICAL_SHA256,
+            NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256);
+
+        using (var Stream = typeof(X64ˉnativeˉpublicationˉlifetime).Assembly
+            .GetManifestResourceStream("Windvale.Native.Native-Publication-Lifetime-Bridge.wvb") ??
+            throw new InvalidOperationException(
+                "The retained native publication-lifetime bridge was not embedded."))
+        {
+            var Retained = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Retained);
+            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
+        }
+
+        var Bridge = Moduleˉcodec.Readˉandˉverify(Bridgeˉresult.Moduleˉbytes.AsSpan());
+        Equal(Moduleˉprofile.Hosted, Bridge.Module.Profile);
+        Equal(Capabilityˉcatalog.FILE_READ_BYTES, Bridge.Module.Capabilities.Single().Name);
+        var Main = Bridge.Module.Exports.Single(Export => Export.Name == "Main");
+        Equal(Valueˉtype.Bytes, Bridge.Module.Functions[Main.Targetˉindex].Returnˉtype.Kind);
+
+        var Expected = ImmutableArray.Create(
+            new Nativeˉpublicationˉtransition(
+                Nativeˉpublicationˉstate.Unallocated,
+                Nativeˉpublicationˉaction.Allocateˉwritable,
+                Nativeˉpublicationˉstate.Writable),
+            new Nativeˉpublicationˉtransition(
+                Nativeˉpublicationˉstate.Writable,
+                Nativeˉpublicationˉaction.Copyˉimage,
+                Nativeˉpublicationˉstate.Copied),
+            new Nativeˉpublicationˉtransition(
+                Nativeˉpublicationˉstate.Writable,
+                Nativeˉpublicationˉaction.Release,
+                Nativeˉpublicationˉstate.Released),
+            new Nativeˉpublicationˉtransition(
+                Nativeˉpublicationˉstate.Copied,
+                Nativeˉpublicationˉaction.Sealˉexecutable,
+                Nativeˉpublicationˉstate.Executable),
+            new Nativeˉpublicationˉtransition(
+                Nativeˉpublicationˉstate.Copied,
+                Nativeˉpublicationˉaction.Release,
+                Nativeˉpublicationˉstate.Released),
+            new Nativeˉpublicationˉtransition(
+                Nativeˉpublicationˉstate.Executable,
+                Nativeˉpublicationˉaction.Invoke,
+                Nativeˉpublicationˉstate.Invoked),
+            new Nativeˉpublicationˉtransition(
+                Nativeˉpublicationˉstate.Executable,
+                Nativeˉpublicationˉaction.Release,
+                Nativeˉpublicationˉstate.Released),
+            new Nativeˉpublicationˉtransition(
+                Nativeˉpublicationˉstate.Invoked,
+                Nativeˉpublicationˉaction.Release,
+                Nativeˉpublicationˉstate.Released),
+            new Nativeˉpublicationˉtransition(
+                Nativeˉpublicationˉstate.Released,
+                Nativeˉpublicationˉaction.Complete,
+                Nativeˉpublicationˉstate.Released));
+        var Plan = X64ˉnativeˉpublicationˉlifetime.Plan(102);
+        Equal(102, Plan.Imageˉbytes);
+        Sequenceˉequal(Expected, Plan.Transitions);
+        Sequenceˉequal(
+            Expected,
+            X64ˉnativeˉpublicationˉlifetime.Plan(102).Transitions);
+        Equal(1, X64ˉnativeˉpublicationˉlifetime.Plan(1).Imageˉbytes);
+        Equal(
+            X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES,
+            X64ˉnativeˉpublicationˉlifetime.Plan(
+                X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES).Imageˉbytes);
+
+        Throwsˉnative(
+            "WVN4015",
+            () => _ = X64ˉnativeˉpublicationˉlifetime.Buildˉrequest(0));
+        Throwsˉnative(
+            "WVN4015",
+            () => _ = X64ˉnativeˉpublicationˉlifetime.Buildˉrequest(
+                X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES + 1));
+
+        var Request = X64ˉnativeˉpublicationˉlifetime.Buildˉrequest(102);
+        var Response = X64ˉnativeˉpublicationˉlifetime.Evaluateˉrequest(Request);
+        Sequenceˉequal(
+            Response,
+            X64ˉnativeˉpublicationˉlifetime.Evaluateˉrequest(Request));
+        Sequenceˉequal(
+            Expected,
+            X64ˉnativeˉpublicationˉlifetime.Verifyˉresponse(102, Response).Transitions);
+
+        static ImmutableArray<byte> Replaceˉu32(
+            ImmutableArray<byte> input,
+            int offset,
+            uint value)
+        {
+            var Result = input.ToArray();
+            BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(offset), value);
+            return Result.ToImmutableArray();
+        }
+
+        static void Expectˉrequestˉfailure(
+            ImmutableArray<byte> request,
+            Nativeˉpublicationˉlifetimeˉstatus status,
+            uint failureˉoffset)
+        {
+            var Result = X64ˉnativeˉpublicationˉlifetime.Evaluateˉrequest(request);
+            Equal(X64ˉnativeˉpublicationˉlifetime.RESPONSE_HEADER_BYTES, Result.Length);
+            Equal(
+                X64ˉnativeˉpublicationˉlifetime.RESPONSE_MAGIC,
+                BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan()));
+            Equal(
+                (uint)status,
+                BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan()[12..]));
+            Equal(
+                failureˉoffset,
+                BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan()[16..]));
+        }
+
+        Expectˉrequestˉfailure([], Nativeˉpublicationˉlifetimeˉstatus.Invalidˉsize, 0);
+        Expectˉrequestˉfailure(
+            Request.AsSpan(0, 19).ToArray().ToImmutableArray(),
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉsize,
+            19);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 0, 0),
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉmagic,
+            0);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 4, 2),
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉversion,
+            4);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 8, 19),
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉsize,
+            8);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 12, 0),
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉimage,
+            12);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(
+                Request,
+                12,
+                X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES + 1u),
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉimage,
+            12);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 16, 1),
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉreserved,
+            16);
+        Expectˉrequestˉfailure(
+            Request.Add(0),
+            Nativeˉpublicationˉlifetimeˉstatus.Invalidˉsize,
+            8);
+
+        Throwsˉnative(
+            "WVN4016",
+            () => _ = X64ˉnativeˉpublicationˉlifetime.Verifyˉresponse(
+                102,
+                Response.AsSpan(0, 31).ToArray().ToImmutableArray()));
+        foreach (var (Offset, Value) in new (int Offset, uint Value)[]
+        {
+            (0, 0),
+            (4, 2),
+            (8, (uint)Response.Length + 1),
+            (12, 99),
+            (16, 0),
+            (20, 103),
+            (24, 8),
+            (28, 1),
+            (32, 1),
+            (36, 2),
+            (40, 2),
+            (44, uint.MaxValue),
+            (48, uint.MaxValue),
+            (52, uint.MaxValue),
+        })
+        {
+            Throwsˉnative(
+                "WVN4016",
+                () => _ = X64ˉnativeˉpublicationˉlifetime.Verifyˉresponse(
+                    102,
+                    Replaceˉu32(Response, Offset, Value)));
+        }
+        Throwsˉnative(
+            "WVN4015",
+            () => _ = X64ˉnativeˉpublicationˉlifetime.Verifyˉresponse(
+                102,
+                Replaceˉu32(
+                    Response,
+                    12,
+                    (uint)Nativeˉpublicationˉlifetimeˉstatus.Invalidˉimage)));
+        Throwsˉnative(
+            "WVN4016",
+            () => _ = Nativeˉexecutableˉimage.Allocateˉwritable(
+                Plan with { Transitions = Plan.Transitions.RemoveAt(0) }));
+        Throwsˉnative(
+            "WVN4016",
+            () => _ = Nativeˉexecutableˉimage.Allocateˉwritable(
+                Plan with
+                {
+                    Transitions = Plan.Transitions.SetItem(
+                        0,
+                        Plan.Transitions[0] with
+                        {
+                            Nextˉstate = Nativeˉpublicationˉstate.Executable,
+                        }),
+                }));
+
+        var Writable = Nativeˉexecutableˉimage.Allocateˉwritable(
+            X64ˉnativeˉpublicationˉlifetime.Plan(1));
+        Equal(Nativeˉpublicationˉstate.Writable, Writable.State);
+        Throwsˉnative("WVN4017", () => _ = Writable.Executableˉaddress);
+        Throwsˉnative("WVN4017", () => Writable.Sealˉexecutable());
+        Throwsˉnative("WVN4017", () => Writable.Copyˉimage([0x90, 0xC3]));
+        Writable.Dispose();
+        Equal(Nativeˉpublicationˉstate.Released, Writable.State);
+
+        var Copied = Nativeˉexecutableˉimage.Allocateˉwritable(
+            X64ˉnativeˉpublicationˉlifetime.Plan(1));
+        Copied.Copyˉimage([0xC3]);
+        Equal(Nativeˉpublicationˉstate.Copied, Copied.State);
+        Copied.Dispose();
+        Equal(Nativeˉpublicationˉstate.Released, Copied.State);
+
+        var Sealed = Nativeˉexecutableˉimage.Allocateˉwritable(
+            X64ˉnativeˉpublicationˉlifetime.Plan(1));
+        Sealed.Copyˉimage([0xC3]);
+        Sealed.Sealˉexecutable();
+        Equal(Nativeˉpublicationˉstate.Executable, Sealed.State);
+        Sealed.Dispose();
+        Equal(Nativeˉpublicationˉstate.Released, Sealed.State);
+
+        var Executable = Nativeˉexecutableˉimage.Allocateˉwritable(
+            X64ˉnativeˉpublicationˉlifetime.Plan(1));
+        try
+        {
+            Executable.Copyˉimage([0xC3]);
+            Executable.Sealˉexecutable();
+            Equal(Nativeˉpublicationˉstate.Executable, Executable.State);
+            Throwsˉnative("WVN4017", () => Executable.Copyˉimage([0xC3]));
+            Equal(29, Executable.Invoke(Address =>
+            {
+                True(Address != IntPtr.Zero, "The executable image exposed a null address.");
+                return 29;
+            }));
+            Equal(Nativeˉpublicationˉstate.Invoked, Executable.State);
+            Throwsˉnative("WVN4017", () => _ = Executable.Invoke(_ => 0));
+        }
+        finally
+        {
+            Executable.Dispose();
+        }
+        Equal(Nativeˉpublicationˉstate.Released, Executable.State);
+        Executable.Dispose();
     }
 
     private static void Nativeˉhostedˉinputˉinspectsˉwvb()
