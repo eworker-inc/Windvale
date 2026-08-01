@@ -6,8 +6,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 9;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v9";
+    public const int ABI_VERSION = 10;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v10";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
@@ -23,6 +23,7 @@ public static class Nativeˉcontract
     public const int MAXIMUM_BLOCKS = 4096;
     public const int MAXIMUM_CALL_PARAMETERS = 4;
     public const int MAXIMUM_RECORD_ARENA_BYTES = 1024 * 1024;
+    public const int MAXIMUM_TEXT_ARENA_BYTES = 16 * 1024 * 1024;
 }
 
 public static class Nativeˉexecutionˉcontextˉcontract
@@ -41,8 +42,8 @@ public static class Nativeˉexecutionˉcontextˉcontract
 
 public static class Nativeˉserviceˉtableˉcontract
 {
-    public const uint FORMAT_VERSION = 3;
-    public const uint SIZE = 48;
+    public const uint FORMAT_VERSION = 4;
+    public const uint SIZE = 96;
     public const int FORMAT_VERSION_OFFSET = 0;
     public const int SIZE_OFFSET = 4;
     public const int CONSOLE_WRITE_LINE_POINTER_OFFSET = 8;
@@ -50,6 +51,12 @@ public static class Nativeˉserviceˉtableˉcontract
     public const int PROCESS_ARGUMENT_POINTER_OFFSET = 24;
     public const int FILE_READ_BYTES_POINTER_OFFSET = 32;
     public const int TEXT_UTF8_IS_VALID_POINTER_OFFSET = 40;
+    public const int DIAGNOSTIC_WRITE_LINE_POINTER_OFFSET = 48;
+    public const int ENUM_NAME_POINTER_OFFSET = 56;
+    public const int TEXT_CONCAT_POINTER_OFFSET = 64;
+    public const int TEXT_QUOTE_POINTER_OFFSET = 72;
+    public const int I32_FORMAT_POINTER_OFFSET = 80;
+    public const int U32_FORMAT_POINTER_OFFSET = 88;
 }
 
 public enum Nativeˉservice : byte
@@ -59,6 +66,12 @@ public enum Nativeˉservice : byte
     Processˉargument = 3,
     Fileˉreadˉbytes = 4,
     Textˉutf8ˉisˉvalid = 5,
+    Diagnosticˉwriteˉline = 6,
+    Enumˉname = 7,
+    Textˉconcat = 8,
+    Textˉquote = 9,
+    I32ˉformat = 10,
+    U32ˉformat = 11,
 }
 
 public abstract record Nativeˉoperation;
@@ -67,6 +80,7 @@ public sealed record Nativeˉinstructionˉcharge : Nativeˉoperation;
 
 public enum Nativeˉvalueˉtype : byte
 {
+    Void = 0,
     I32 = 1,
     Bool = 2,
     Borrowedˉtext = 3,
@@ -253,6 +267,36 @@ public sealed record Nativeˉtextˉutf8ˉisˉvalid(
     int Result,
     int Bytes) : Nativeˉoperation;
 
+public sealed record Nativeˉtextˉfromˉutf8(
+    int Result,
+    int Bytes) : Nativeˉoperation;
+
+public sealed record Nativeˉenumˉname(
+    int Result,
+    int Type,
+    int Value) : Nativeˉoperation;
+
+public enum Nativeˉintegerˉformatˉkind : byte
+{
+    I32 = 1,
+    U8 = 2,
+    U32 = 3,
+}
+
+public sealed record Nativeˉintegerˉformat(
+    int Result,
+    Nativeˉintegerˉformatˉkind Kind,
+    int Value) : Nativeˉoperation;
+
+public sealed record Nativeˉtextˉconcat(
+    int Result,
+    int Left,
+    int Right) : Nativeˉoperation;
+
+public sealed record Nativeˉtextˉquote(
+    int Result,
+    int Text) : Nativeˉoperation;
+
 public sealed record Nativeˉrecordˉcreate(
     int Result,
     int Type,
@@ -267,6 +311,9 @@ public sealed record Nativeˉrecordˉfield(
 public sealed record Nativeˉconsoleˉwriteˉline(
     int Text) : Nativeˉoperation;
 
+public sealed record Nativeˉdiagnosticˉwriteˉline(
+    int Text) : Nativeˉoperation;
+
 public sealed record Nativeˉprocessˉargumentˉcount(int Result) : Nativeˉoperation;
 
 public sealed record Nativeˉprocessˉargument(
@@ -276,6 +323,10 @@ public sealed record Nativeˉprocessˉargument(
 public sealed record Nativeˉfileˉreadˉbytes(
     int Result,
     int Resourceˉname) : Nativeˉoperation;
+
+public sealed record Nativeˉvoidˉcall(
+    int Function,
+    ImmutableArray<int> Arguments) : Nativeˉoperation;
 
 public abstract record Nativeˉterminator;
 
@@ -287,6 +338,8 @@ public sealed record Nativeˉbranch(
     int Falseˉblock) : Nativeˉterminator;
 
 public sealed record Nativeˉreturn(int Value) : Nativeˉterminator;
+
+public sealed record Nativeˉreturnˉvoid : Nativeˉterminator;
 
 public sealed record Nativeˉblock(
     int Id,
@@ -361,6 +414,7 @@ public sealed record Nativeˉfragment(
     ImmutableArray<byte> Code,
     ImmutableArray<Nativeˉsymbol> Symbols,
     ImmutableArray<Nativeˉpatch> Patches,
+    ImmutableArray<Nominalˉtypeˉdeclaration> Types,
     ImmutableArray<Nativeˉservice> Requiredˉservices);
 
 public sealed record Nativeˉcompilation(

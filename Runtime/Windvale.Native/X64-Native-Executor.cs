@@ -1,6 +1,8 @@
 using System.Buffers.Binary;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.InteropServices;
+using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 using Windvale.Runtime;
 
@@ -159,6 +161,133 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉservice.Textˉutf8ˉisˉvalid,
                 Marshal.GetFunctionPointerForDelegate(Callback));
         }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Diagnosticˉwriteˉline))
+        {
+            Nativeˉconsoleˉwriteˉlineˉcallback Callback = (textˉaddress, textˉlength) =>
+            {
+                try
+                {
+                    var Text = Buffers.Readˉtext(textˉaddress, textˉlength, Address, fragment.Code.Length);
+                    hostˉservices!.Diagnosticˉoutput!.Write(Text);
+                    hostˉservices.Diagnosticˉoutput.Write('\n');
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
+                    return 1;
+                }
+            };
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(
+                Nativeˉservice.Diagnosticˉwriteˉline,
+                Marshal.GetFunctionPointerForDelegate(Callback));
+        }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Enumˉname))
+        {
+            Nativeˉenumˉnameˉcallback Callback = (type, value, descriptor) =>
+            {
+                try
+                {
+                    if ((uint)type >= (uint)fragment.Types.Length ||
+                        fragment.Types[type] is not Enumˉtypeˉdeclaration Enum)
+                    {
+                        throw new InvalidOperationException("Native enum-name metadata is invalid.");
+                    }
+                    var Name = Enum.Members.Single(Member => Member.Value == value).Name;
+                    Nativeˉexecutionˉbuffers.Writeˉdescriptor(descriptor, Buffers.Allocateˉtext(Name));
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
+                    return 1;
+                }
+            };
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(Nativeˉservice.Enumˉname, Marshal.GetFunctionPointerForDelegate(Callback));
+        }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Textˉconcat))
+        {
+            Nativeˉtextˉconcatˉcallback Callback = (left, right, descriptor) =>
+            {
+                try
+                {
+                    var Left = Buffers.Readˉtextˉdescriptor(left, Address, fragment.Code.Length);
+                    var Right = Buffers.Readˉtextˉdescriptor(right, Address, fragment.Code.Length);
+                    Nativeˉexecutionˉbuffers.Writeˉdescriptor(
+                        descriptor,
+                        Buffers.Allocateˉtext(string.Concat(Left, Right)));
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
+                    return 1;
+                }
+            };
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(Nativeˉservice.Textˉconcat, Marshal.GetFunctionPointerForDelegate(Callback));
+        }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Textˉquote))
+        {
+            Nativeˉtextˉquoteˉcallback Callback = (value, descriptor) =>
+            {
+                try
+                {
+                    var Text = Buffers.Readˉtextˉdescriptor(value, Address, fragment.Code.Length);
+                    Nativeˉexecutionˉbuffers.Writeˉdescriptor(descriptor, Buffers.Quoteˉtext(Text));
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
+                    return 1;
+                }
+            };
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(Nativeˉservice.Textˉquote, Marshal.GetFunctionPointerForDelegate(Callback));
+        }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.I32ˉformat))
+        {
+            Nativeˉintegerˉformatˉcallback Callback = (value, descriptor) =>
+            {
+                try
+                {
+                    Nativeˉexecutionˉbuffers.Writeˉdescriptor(
+                        descriptor,
+                        Buffers.Allocateˉtext(value.ToString(CultureInfo.InvariantCulture)));
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
+                    return 1;
+                }
+            };
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(Nativeˉservice.I32ˉformat, Marshal.GetFunctionPointerForDelegate(Callback));
+        }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.U32ˉformat))
+        {
+            Nativeˉunsignedˉintegerˉformatˉcallback Callback = (value, descriptor) =>
+            {
+                try
+                {
+                    Nativeˉexecutionˉbuffers.Writeˉdescriptor(
+                        descriptor,
+                        Buffers.Allocateˉtext(value.ToString(CultureInfo.InvariantCulture)));
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
+                    return 1;
+                }
+            };
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(Nativeˉservice.U32ˉformat, Marshal.GetFunctionPointerForDelegate(Callback));
+        }
 
         var Serviceˉthunkˉoffset = checked((fragment.Code.Length + 15) & ~15);
         var Serviceˉthunks = new List<byte>();
@@ -301,6 +430,12 @@ public static class X64ˉnativeˉexecutor
                 "WVR3017",
                 $"The native record arena exhausted its {Nativeˉcontract.MAXIMUM_RECORD_ARENA_BYTES}-byte limit in entry '{entry}'.");
         }
+        if (Status == 8)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3014",
+                $"Textˉfromˉutf8 received an invalid UTF-8 byte sequence in native entry '{entry}'.");
+        }
         throw new Nativeˉbackendˉexception(
             "WVN4005",
             $"Native entry '{entry}' returned unknown status {Status}.");
@@ -312,7 +447,12 @@ public static class X64ˉnativeˉexecutor
     {
         foreach (var Service in fragment.Requiredˉservices)
         {
-            if (Service == Nativeˉservice.Textˉutf8ˉisˉvalid)
+            if (Service is Nativeˉservice.Textˉutf8ˉisˉvalid or
+                Nativeˉservice.Enumˉname or
+                Nativeˉservice.Textˉconcat or
+                Nativeˉservice.Textˉquote or
+                Nativeˉservice.I32ˉformat or
+                Nativeˉservice.U32ˉformat)
             {
                 continue;
             }
@@ -432,6 +572,24 @@ public static class X64ˉnativeˉexecutor
                     0x44, 0x89, 0xCA,
                     0x49, 0x89, 0xC0,
                 ],
+                Nativeˉservice.Diagnosticˉwriteˉline => [0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA],
+                Nativeˉservice.Enumˉname =>
+                [
+                    0x48, 0x89, 0xC8,
+                    0x44, 0x89, 0xC1,
+                    0x44, 0x89, 0xCA,
+                    0x49, 0x89, 0xC0,
+                ],
+                Nativeˉservice.Textˉconcat =>
+                [
+                    0x48, 0x89, 0xC8,
+                    0x4C, 0x89, 0xC1,
+                    0x4C, 0x89, 0xCA,
+                    0x49, 0x89, 0xC0,
+                ],
+                Nativeˉservice.Textˉquote => [0x4C, 0x89, 0xC1, 0x4C, 0x89, 0xCA],
+                Nativeˉservice.I32ˉformat or Nativeˉservice.U32ˉformat =>
+                    [0x44, 0x89, 0xC1, 0x4C, 0x89, 0xCA],
                 _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service thunk."),
             };
         }
@@ -454,6 +612,14 @@ public static class X64ˉnativeˉexecutor
                     0x44, 0x89, 0xCE,
                     0x48, 0x89, 0xCA,
                 ],
+                Nativeˉservice.Diagnosticˉwriteˉline => [0x4C, 0x89, 0xC7, 0x44, 0x89, 0xCE],
+                Nativeˉservice.Enumˉname =>
+                    [0x44, 0x89, 0xC7, 0x44, 0x89, 0xCE, 0x48, 0x89, 0xCA],
+                Nativeˉservice.Textˉconcat =>
+                    [0x4C, 0x89, 0xC7, 0x4C, 0x89, 0xCE, 0x48, 0x89, 0xCA],
+                Nativeˉservice.Textˉquote => [0x4C, 0x89, 0xC7, 0x4C, 0x89, 0xCE],
+                Nativeˉservice.I32ˉformat or Nativeˉservice.U32ˉformat =>
+                    [0x44, 0x89, 0xC7, 0x4C, 0x89, 0xCE],
                 _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service thunk."),
             };
         }
@@ -473,6 +639,13 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET,
             Nativeˉservice.Textˉutf8ˉisˉvalid =>
                 Nativeˉserviceˉtableˉcontract.TEXT_UTF8_IS_VALID_POINTER_OFFSET,
+            Nativeˉservice.Diagnosticˉwriteˉline =>
+                Nativeˉserviceˉtableˉcontract.DIAGNOSTIC_WRITE_LINE_POINTER_OFFSET,
+            Nativeˉservice.Enumˉname => Nativeˉserviceˉtableˉcontract.ENUM_NAME_POINTER_OFFSET,
+            Nativeˉservice.Textˉconcat => Nativeˉserviceˉtableˉcontract.TEXT_CONCAT_POINTER_OFFSET,
+            Nativeˉservice.Textˉquote => Nativeˉserviceˉtableˉcontract.TEXT_QUOTE_POINTER_OFFSET,
+            Nativeˉservice.I32ˉformat => Nativeˉserviceˉtableˉcontract.I32_FORMAT_POINTER_OFFSET,
+            Nativeˉservice.U32ˉformat => Nativeˉserviceˉtableˉcontract.U32_FORMAT_POINTER_OFFSET,
             _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service table entry."),
         };
 
@@ -608,6 +781,21 @@ public static class X64ˉnativeˉexecutor
         IntPtr bytesˉaddress,
         uint bytesˉlength,
         IntPtr result);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉenumˉnameˉcallback(int type, int value, IntPtr descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉtextˉconcatˉcallback(IntPtr left, IntPtr right, IntPtr descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉtextˉquoteˉcallback(IntPtr value, IntPtr descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉintegerˉformatˉcallback(int value, IntPtr descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉunsignedˉintegerˉformatˉcallback(uint value, IntPtr descriptor);
 
     private sealed record Nativeˉserviceˉfailure(string Code, string Message);
 

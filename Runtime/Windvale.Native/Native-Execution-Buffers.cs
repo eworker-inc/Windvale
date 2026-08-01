@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using Windvale.Bytecode;
@@ -14,15 +15,19 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
     private readonly Dictionary<uint, Nativeˉborrowedˉbuffer> Arguments = [];
     private readonly Dictionary<string, Nativeˉborrowedˉbuffer> Files = new(StringComparer.Ordinal);
     private readonly List<Nativeˉborrowedˉbuffer> Allocations = [];
+    private int Textˉarenaˉused;
     private bool Isˉdisposed;
 
     public Nativeˉexecutionˉbuffers(Hostedˉresourceˉcontext? resources)
     {
         Resources = resources;
         Recordˉarena = Allocateˉuninitialized(Nativeˉcontract.MAXIMUM_RECORD_ARENA_BYTES);
+        Textˉarena = Allocateˉuninitialized(Nativeˉcontract.MAXIMUM_TEXT_ARENA_BYTES);
     }
 
     public Nativeˉborrowedˉbuffer Recordˉarena { get; }
+
+    public Nativeˉborrowedˉbuffer Textˉarena { get; }
 
     public uint Argumentˉcount => Requireˉresources().Getˉargumentˉcount();
 
@@ -79,6 +84,88 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
             Marshal.Copy(address, Bytes, 0, Bytes.Length);
         }
         return STRICT_UTF8.GetString(Bytes);
+    }
+
+    public string Readˉtextˉdescriptor(
+        IntPtr descriptor,
+        IntPtr fragmentˉaddress,
+        int fragmentˉlength)
+    {
+        var Address = new IntPtr(Marshal.ReadInt64(descriptor, Nativeˉcontract.BORROWED_TEXT_POINTER_OFFSET));
+        var Length = unchecked((uint)Marshal.ReadInt32(
+            descriptor,
+            Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET));
+        return Readˉtext(Address, Length, fragmentˉaddress, fragmentˉlength);
+    }
+
+    public Nativeˉborrowedˉbuffer Allocateˉtext(string value)
+    {
+        ObjectDisposedException.ThrowIf(Isˉdisposed, this);
+        ArgumentNullException.ThrowIfNull(value);
+        var Bytes = STRICT_UTF8.GetBytes(value);
+        if (Bytes.Length > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
+        {
+            throw new Runtimeˉexception(
+                "WVR3012",
+                $"Native text result {Bytes.Length} exceeds the UTF-8 value limit.");
+        }
+        if (Bytes.Length > Nativeˉcontract.MAXIMUM_TEXT_ARENA_BYTES - Textˉarenaˉused)
+        {
+            throw new Runtimeˉexception(
+                "WVR3018",
+                $"The native text arena exhausted its {Nativeˉcontract.MAXIMUM_TEXT_ARENA_BYTES}-byte limit.");
+        }
+
+        var Address = IntPtr.Add(Textˉarena.Address, Textˉarenaˉused);
+        if (Bytes.Length != 0)
+        {
+            Marshal.Copy(Bytes, 0, Address, Bytes.Length);
+        }
+        Textˉarenaˉused = checked(Textˉarenaˉused + Bytes.Length);
+        return new(Address, Bytes.Length, Math.Max(1, Bytes.Length));
+    }
+
+    public Nativeˉborrowedˉbuffer Quoteˉtext(string value)
+    {
+        var Outputˉlength = 2;
+        foreach (var Character in value)
+        {
+            Outputˉlength = checked(Outputˉlength + Character switch
+            {
+                '"' or '\\' or '\b' or '\f' or '\n' or '\r' or '\t' => 2,
+                >= ' ' and <= '~' => 1,
+                _ => 6,
+            });
+            if (Outputˉlength > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3012",
+                    $"Quoted text result exceeds the UTF-8 value limit {Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES}.");
+            }
+        }
+
+        var Result = new StringBuilder(Outputˉlength);
+        Result.Append('"');
+        foreach (var Character in value)
+        {
+            switch (Character)
+            {
+                case '"': Result.Append("\\\""); break;
+                case '\\': Result.Append("\\\\"); break;
+                case '\b': Result.Append("\\b"); break;
+                case '\f': Result.Append("\\f"); break;
+                case '\n': Result.Append("\\n"); break;
+                case '\r': Result.Append("\\r"); break;
+                case '\t': Result.Append("\\t"); break;
+                case >= ' ' and <= '~': Result.Append(Character); break;
+                default:
+                    Result.Append("\\u");
+                    Result.Append(((ushort)Character).ToString("X4", CultureInfo.InvariantCulture));
+                    break;
+            }
+        }
+        Result.Append('"');
+        return Allocateˉtext(Result.ToString());
     }
 
     public bool Isˉvalidˉutf8(

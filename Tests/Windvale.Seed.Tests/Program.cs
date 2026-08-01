@@ -28,14 +28,14 @@ internal static class Program
     private const string WVLINK_CORE_SHA256 = "091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
-    private const string NATIVE_CONSTANT_CODE_SHA256 = "264a073f144a1f52129ace8ca01cf12b459dc78cfc092bee2703b82c8b76af6d";
-    private const string NATIVE_CONSTANT_WVO_SHA256 = "4d78d532afa31adfb13c29240475b4b6ee1b28a0f3bece0cca60c253cd3d1587";
-    private const string NATIVE_ARITHMETIC_CODE_SHA256 = "e31d608a338a34ff9225f64f97699b0192e4dd446e5f9801cf651998fa163c73";
-    private const string NATIVE_ARITHMETIC_WVO_SHA256 = "7cabbcc89e4ce5ed2d7c86a9bb47f45ad3ca5d7c747c973fe7a6172c30680cc4";
-    private const string NATIVE_CONTROL_CODE_SHA256 = "c8ec824e1cb45e0e77b8aabc82d8b57c2f380359f9a877c4f2c045ccb1d61f00";
-    private const string NATIVE_CONTROL_WVO_SHA256 = "bf32afcae48ecdde1fe54238d53539830b32eb1c1701568a5a85206c625dbfc8";
-    private const string NATIVE_LOOP_CODE_SHA256 = "3a962881522d8d0d100762f8af0a0f9677fd5bc96ffd63c31c355c7b5fd645ce";
-    private const string NATIVE_LOOP_WVO_SHA256 = "12584fba23e5a9dbb7e92597e7f0f841a96431b4b7e9ba46578f2c38f0286e13";
+    private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
+    private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
+    private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
+    private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
+    private const string NATIVE_CONTROL_CODE_SHA256 = "9eada8bde47bd4943806e12a558306d45ae02afeb77b71d196a38e075f200a70";
+    private const string NATIVE_CONTROL_WVO_SHA256 = "3a7f561b7a1c72c9e40f31b8ad755f728e60966957568429eade37963caf6e2f";
+    private const string NATIVE_LOOP_CODE_SHA256 = "3b453983778711cfccca3a495cd5d97eeecd28a041294ef522675582695740b1";
+    private const string NATIVE_LOOP_WVO_SHA256 = "30435304a6d134152ea5fabb889047fb2a1099ef7b4606f552817175022aebc9";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
@@ -570,7 +570,9 @@ internal static class Program
         new("compiler output is deterministic and canonical", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Compilerˉisˉdeterministic),
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
+        new("native dynamic text, descriptor returns, and void calls agree across runtimes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉdynamicˉtextˉagrees),
         new("Windvale-written wvdump structural parser runs through JIT and WVO AOT", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvdumpˉstructuralˉparserˉruns),
+        new("complete Windvale-written wvdump agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvdumpˉcompleteˉruns),
         new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
@@ -1215,9 +1217,9 @@ internal static class Program
         var Firstˉobject = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
         var Secondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment);
         Sequenceˉequal(Firstˉobject, Secondˉobject);
-        Equal(383, First.Fragment.Code.Length);
+        Equal(406, First.Fragment.Code.Length);
         Equal(NATIVE_CONSTANT_CODE_SHA256, Objectˉdigest.Calculateˉsha256(First.Fragment.Code.AsSpan()));
-        Equal(456, Firstˉobject.Length);
+        Equal(479, Firstˉobject.Length);
         Equal(NATIVE_CONSTANT_WVO_SHA256, Objectˉdigest.Calculateˉsha256(Firstˉobject.AsSpan()));
         var Verifiedˉobject = Objectˉcodec.Readˉandˉverify(Firstˉobject.AsSpan()).Value;
         Equal(1, Verifiedˉobject.Sections.Length);
@@ -1288,11 +1290,11 @@ internal static class Program
         var Arithmeticˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉfirst.Fragment);
         var Arithmeticˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉsecond.Fragment);
         Sequenceˉequal(Arithmeticˉfirstˉobject, Arithmeticˉsecondˉobject);
-        Equal(1848, Arithmeticˉfirst.Fragment.Code.Length);
+        Equal(1871, Arithmeticˉfirst.Fragment.Code.Length);
         Equal(
             NATIVE_ARITHMETIC_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirst.Fragment.Code.AsSpan()));
-        Equal(1921, Arithmeticˉfirstˉobject.Length);
+        Equal(1944, Arithmeticˉfirstˉobject.Length);
         Equal(
             NATIVE_ARITHMETIC_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirstˉobject.AsSpan()));
@@ -1344,11 +1346,11 @@ internal static class Program
         var Controlˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉfirst.Fragment);
         var Controlˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉsecond.Fragment);
         Sequenceˉequal(Controlˉfirstˉobject, Controlˉsecondˉobject);
-        Equal(5876, Controlˉfirst.Fragment.Code.Length);
+        Equal(5899, Controlˉfirst.Fragment.Code.Length);
         Equal(
             NATIVE_CONTROL_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Controlˉfirst.Fragment.Code.AsSpan()));
-        Equal(5949, Controlˉfirstˉobject.Length);
+        Equal(5972, Controlˉfirstˉobject.Length);
         Equal(
             NATIVE_CONTROL_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Controlˉfirstˉobject.AsSpan()));
@@ -1594,11 +1596,11 @@ internal static class Program
                 Loopˉaot,
                 maximumˉinstructions: Loopˉinterpreted.Executedˉinstructions - 1));
         Equal(157L, Loopˉinterpreted.Executedˉinstructions);
-        Equal(1978, Loopˉnative.Fragment.Code.Length);
+        Equal(2001, Loopˉnative.Fragment.Code.Length);
         Equal(
             NATIVE_LOOP_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Loopˉnative.Fragment.Code.AsSpan()));
-        Equal(2051, Loopˉobject.Length);
+        Equal(2074, Loopˉobject.Length);
         Equal(
             NATIVE_LOOP_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Loopˉobject.AsSpan()));
@@ -1930,6 +1932,173 @@ internal static class Program
                 maximumˉinstructions: 2_000_000));
     }
 
+    private static void Nativeˉdynamicˉtextˉagrees()
+    {
+        const string Source = """
+            module Nativeˉdynamicˉtext profile hosted;
+            capability console.write_line;
+            capability diagnostic.write_line;
+            enum Nativeˉstate { Ready = 0; Running = 1; }
+            data Euro: bytes = [226, 130, 172];
+
+            fn Compose(State: Nativeˉstate, Delta: i32, Byte: u8, Count: u32) -> text {
+                return Textˉconcat(
+                    Enumˉname(State),
+                    Textˉconcat(
+                        ":",
+                        Textˉconcat(
+                            I32ˉformat(Delta),
+                            Textˉconcat(
+                                ":",
+                                Textˉconcat(U8ˉformat(Byte), Textˉconcat(":", U32ˉformat(Count))))
+                        )
+                    )
+                );
+            }
+
+            fn Emit(Value: text) -> void {
+                console.write_line(Value);
+                diagnostic.write_line(Textˉquote(Textˉconcat(Value, Textˉfromˉutf8(Euro))));
+                return;
+            }
+
+            export fn Main() -> i32 {
+                Emit(Compose(Nativeˉstate.Running, -3, 7u8, 42u32));
+                return 42;
+            }
+            """;
+        var Verified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        var Authorized = ImmutableHashSet.Create(
+            StringComparer.Ordinal,
+            Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+            Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE);
+
+        var Referenceˉoutput = new StringWriter();
+        var Referenceˉdiagnostic = new StringWriter();
+        var Referenceˉresources = new Hostedˉresourceˉcontext(
+            [],
+            Referenceˉoutput,
+            Referenceˉdiagnostic);
+        var Reference = new Referenceˉruntime(
+            Verified,
+            new Referenceˉcapabilityˉhost(Referenceˉresources),
+            new(Authorized)).Runˉmain();
+        Equal(42, Reference.Exitˉcode);
+        Equal("Running:-3:7:42\n", Referenceˉoutput.ToString());
+        Equal("\"Running:-3:7:42\\u20AC\"\n", Referenceˉdiagnostic.ToString());
+
+        var First = X64ˉnativeˉbackend.Compile(Verified);
+        var Second = X64ˉnativeˉbackend.Compile(Verified);
+        Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Sequenceˉequal(First.Fragment.Types, Second.Fragment.Types);
+        var Operations = First.Module.Functions
+            .SelectMany(Function => Function.Blocks)
+            .SelectMany(Block => Block.Operations)
+            .ToImmutableArray();
+        True(Operations.Any(Operation => Operation is Nativeˉenumˉname), "Native IR omitted enum.name.");
+        True(Operations.Count(Operation => Operation is Nativeˉintegerˉformat) == 3,
+            "Native IR omitted integer formatting.");
+        True(Operations.Any(Operation => Operation is Nativeˉtextˉconcat), "Native IR omitted text.concat.");
+        True(Operations.Any(Operation => Operation is Nativeˉtextˉfromˉutf8), "Native IR omitted text.from_utf8.");
+        True(Operations.Any(Operation => Operation is Nativeˉtextˉquote), "Native IR omitted text.quote.");
+        True(Operations.Any(Operation => Operation is Nativeˉvoidˉcall), "Native IR omitted void calls.");
+        True(First.Module.Functions.Any(Function => Function.Returnˉtype == Nativeˉvalueˉtype.Borrowedˉtext),
+            "Native IR omitted a descriptor-returning function.");
+        True(First.Module.Functions.Any(Function => Function.Returnˉtype == Nativeˉvalueˉtype.Void),
+            "Native IR omitted a void function.");
+
+        void Runˉnative(ImmutableArray<byte> code)
+        {
+            var Output = new StringWriter();
+            var Diagnostic = new StringWriter();
+            var Resources = new Hostedˉresourceˉcontext([], Output, Diagnostic);
+            Equal(
+                Reference.Exitˉcode,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment with { Code = code },
+                    maximumˉinstructions: Reference.Executedˉinstructions,
+                    hostˉservices: new(null, Authorized, Resources)));
+            Equal(Referenceˉoutput.ToString(), Output.ToString());
+            Equal(Referenceˉdiagnostic.ToString(), Diagnostic.ToString());
+        }
+
+        Runˉnative(First.Fragment.Code);
+        var Object = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+        var Linked = Linkˉsuccess([Object.ToArray()], new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Runˉnative(Linked.Imageˉbytes);
+
+        var Invalidˉutf8 = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉinvalidˉutf8 profile portable;
+            data Invalid: bytes = [192, 175];
+            export fn Main() -> i32 {
+                let Value: text = Textˉfromˉutf8(Invalid);
+                return 0;
+            }
+            """));
+        Throwsˉruntime(
+            "WVR3014",
+            () => _ = new Referenceˉruntime(
+                Invalidˉutf8,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+        Throwsˉnativeˉtrap(
+            "WVR3014",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Invalidˉutf8).Fragment));
+
+        var Arenaˉexhaustion = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉtextˉarena profile portable;
+            export fn Main() -> i32 {
+                var Value: text = "a";
+                var Power: i32 = 0;
+                while Power < 19 {
+                    Value = Textˉconcat(Value, Value);
+                    Power = Power + 1;
+                }
+                var Copy: text = Value;
+                var Count: i32 = 0;
+                while Count < 40 {
+                    Copy = Textˉconcat(Value, "");
+                    Count = Count + 1;
+                }
+                return 0;
+            }
+            """));
+        Throwsˉnativeˉtrap(
+            "WVR3018",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Arenaˉexhaustion).Fragment,
+                maximumˉinstructions: 10_000));
+
+        var Descriptorˉfunction = First.Module.Functions
+            .Select((Function, Index) => (Function, Index))
+            .First(Item => Item.Function.Returnˉtype == Nativeˉvalueˉtype.Borrowedˉtext);
+        var Descriptorˉsymbol = First.Fragment.Symbols.Single(Symbol =>
+            StringComparer.Ordinal.Equals(Symbol.Name, $"$function_{Descriptorˉfunction.Index:D4}"));
+        var Corruptedˉhiddenˉresult = First.Fragment.Code.ToArray();
+        var Descriptorˉstart = checked((int)Descriptorˉsymbol.Offset);
+        var Frameˉallocation = Corruptedˉhiddenˉresult.AsSpan(
+                Descriptorˉstart,
+                checked((int)Descriptorˉsymbol.Size))
+            .IndexOf(new byte[] { 0x48, 0x81, 0xEC });
+        True(Frameˉallocation >= 0, "Descriptor-returning native function omitted its frame allocation.");
+        Corruptedˉhiddenˉresult[Descriptorˉstart + Frameˉallocation + 8] ^= 0x01;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉhiddenˉresult.ToImmutableArray() }));
+
+        var Invalidˉtypes = First.Fragment.Types.SetItem(
+            0,
+            new Enumˉtypeˉdeclaration(
+                "",
+                [new("Ready", 0), new("Running", 1)]));
+        Throwsˉnative(
+            "WVN3009",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Types = Invalidˉtypes }));
+    }
+
     private static void Nativeˉwvdumpˉstructuralˉparserˉruns()
     {
         const string Reportˉmarker = "fn Stringˉvalue(Input: bytes, Cursor: u32) -> text";
@@ -1995,6 +2164,91 @@ internal static class Program
             X64ˉnativeˉexecutor.Executeˉi32(
                 Native.Fragment with { Code = Linked.Imageˉbytes },
                 maximumˉinstructions: Interpreted.Executedˉinstructions));
+    }
+
+    private static void Nativeˉwvdumpˉcompleteˉruns()
+    {
+        var Input = Compileˉsuccess(NATIVE_CONSTANT_SOURCE).ToImmutableArray();
+        var Verified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(WVDUMP_CORE_SOURCE));
+        var Authorized = ImmutableHashSet.Create(
+            StringComparer.Ordinal,
+            Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+            Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+            Capabilityˉcatalog.FILE_READ_BYTES,
+            Capabilityˉcatalog.PROCESS_ARGUMENT,
+            Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT);
+
+        Testˉfileˉreader Makeˉreader() => new((Name, Maximum) =>
+        {
+            Equal("input.wvb", Name);
+            True(Input.Length <= Maximum, "The complete wvdump fixture exceeded the hosted reader bound.");
+            return Input;
+        });
+
+        Hostedˉresourceˉcontext Makeˉresources(
+            StringWriter output,
+            StringWriter diagnostic,
+            Testˉfileˉreader reader) =>
+            new(["input.wvb"], output, diagnostic, reader);
+
+        var Referenceˉoutput = new StringWriter();
+        var Referenceˉdiagnostic = new StringWriter();
+        var Referenceˉreader = Makeˉreader();
+        var Reference = new Referenceˉruntime(
+            Verified,
+            new Referenceˉcapabilityˉhost(Makeˉresources(
+                Referenceˉoutput,
+                Referenceˉdiagnostic,
+                Referenceˉreader)),
+            new(Authorized)).Runˉmain();
+        Equal(0, Reference.Exitˉcode);
+        Equal(string.Empty, Referenceˉdiagnostic.ToString());
+        True(Referenceˉoutput.ToString().StartsWith("wvdump 1\nmodule version=1.6", StringComparison.Ordinal),
+            "The complete Windvale wvdump report omitted its module header.");
+        True(Referenceˉoutput.ToString().Contains("name=\"Main\"", StringComparison.Ordinal),
+            "The complete Windvale wvdump report omitted its function declaration.");
+        Equal(1, Referenceˉreader.Readˉcount);
+
+        var First = X64ˉnativeˉbackend.Compile(Verified);
+        var Second = X64ˉnativeˉbackend.Compile(Verified);
+        Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Sequenceˉequal(First.Fragment.Types, Second.Fragment.Types);
+        Sequenceˉequal(
+            Enum.GetValues<Nativeˉservice>(),
+            First.Fragment.Requiredˉservices);
+        var Operations = First.Module.Functions
+            .SelectMany(Function => Function.Blocks)
+            .SelectMany(Block => Block.Operations)
+            .ToImmutableArray();
+        True(Operations.Count(Operation => Operation is Nativeˉtextˉconcat) >= 100,
+            "Complete native wvdump omitted its report composition.");
+        True(Operations.Any(Operation => Operation is Nativeˉdiagnosticˉwriteˉline),
+            "Complete native wvdump omitted diagnostics.");
+        True(Operations.Any(Operation => Operation is Nativeˉvoidˉcall),
+            "Complete native wvdump omitted void calls.");
+        True(First.Module.Functions.Any(Function => Function.Returnˉtype == Nativeˉvalueˉtype.Borrowedˉtext),
+            "Complete native wvdump omitted descriptor-returning helpers.");
+
+        void Runˉnative(ImmutableArray<byte> code)
+        {
+            var Output = new StringWriter();
+            var Diagnostic = new StringWriter();
+            var Reader = Makeˉreader();
+            Equal(
+                Reference.Exitˉcode,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment with { Code = code },
+                    maximumˉinstructions: Reference.Executedˉinstructions,
+                    hostˉservices: new(null, Authorized, Makeˉresources(Output, Diagnostic, Reader))));
+            Equal(Referenceˉoutput.ToString(), Output.ToString());
+            Equal(Referenceˉdiagnostic.ToString(), Diagnostic.ToString());
+            Equal(1, Reader.Readˉcount);
+        }
+
+        Runˉnative(First.Fragment.Code);
+        var Object = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+        var Linked = Linkˉsuccess([Object.ToArray()], new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Runˉnative(Linked.Imageˉbytes);
     }
 
     private static void Nativeˉborrowedˉbytesˉagree()

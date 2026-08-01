@@ -2,15 +2,17 @@
 
 ## Status and scope
 
-Version 2 is cross-host qualified by `x86-64-wvb-baseline-v9`. It adds one execution-owned record arena while retaining per-run resource limits and a versioned runtime-service table without making generated code depend on the Windows x64 or System V x86-64 calling convention. [Decision 0065](../Documents/Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) qualifies the context and first service at ABI 6; [Decision 0066](../Documents/Decisions/0066-Borrowed-Bytes-And-Unsigned-Native-Values.md) qualifies the value and call representation at ABI 7; [Decision 0067](../Documents/Decisions/0067-Borrowed-Hosted-Input-And-First-Native-Wvb-Inspector.md) qualifies ABI 8's borrowed hosted-input boundary; [Decision 0068](../Documents/Decisions/0068-Bounded-Native-Nominal-Values-And-Wvdump-Structural-Core.md) qualifies ABI 9's record arena and pure UTF-8 service at exact candidate `7edc243`.
+Execution-context version 2 remains the implemented context for `x86-64-wvb-baseline-v10`. ABI 10 adds bounded dynamic text and generalizes internal return shapes while retaining the qualified record arena, per-run resource limits, and platform-neutral runtime-service boundary. Decisions 0065 through 0068 qualify the seam through ABI 9. [Decision 0069](../Documents/Decisions/0069-Dynamic-Native-Text-And-Complete-Wvdump.md) defines the implemented ABI-10 candidate; its cross-host qualification is pending.
 
-This is an experimental native ABI, not a stable public foreign-function interface. ABI 9 replaces ABI 8 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-9 fragment verifier.
+This is an experimental native ABI, not a stable public foreign-function interface. ABI 10 replaces ABI 9 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-10 fragment verifier.
 
 ## Entry convention
 
 The exported native `Main() -> i32` receives a pointer to one execution context in `RDX`. The Windows executor duplicates that pointer into its second and third bridge arguments so both Windows x64 and System V x86-64 place the same value in `RDX`. Generated `Main` preserves `R15`, copies the context pointer into `R15`, and loads the instruction and call-depth budgets into the shared `R11` and `R10` counters.
 
-Internal functions accept as many as four parameters. `i32`, `bool`, `u8`, `u32`, enums, and record-arena offsets use `R8D`, `R9D`, `ECX`, and `EDX`. A borrowed `text` or `bytes` parameter uses the corresponding 64-bit register as a pointer to the caller's verified 16-byte descriptor; the callee copies the descriptor into its own frame before the call can return. Packed scalar/enum/record value and status returns use `RAX`, and every internal call preserves the shared resource counters. Borrowed descriptors are not function return types in this slice.
+Internal functions accept as many as four parameters. `i32`, `bool`, `u8`, `u32`, enums, and record-arena offsets use `R8D`, `R9D`, `ECX`, and `EDX`. A borrowed `text` or `bytes` parameter uses the corresponding 64-bit register as a pointer to the caller's verified 16-byte descriptor; the callee copies the descriptor into its own frame before the call can return. Packed scalar/enum/record value and status returns use `RAX`, and every internal call preserves the shared resource counters.
+
+For a `text` or `bytes` return, the caller places its verified result-cell address in `RAX` after loading explicit arguments. The callee saves that hidden pointer in one dedicated final frame cell before clearing ordinary locals and temporaries. A successful return copies both descriptor words to the hidden result and returns zero in `RAX`; traps retain their packed nonzero status. A void call uses the same status path but has no hidden result or stored scalar. The independent decoder cross-checks every call shape against the callee's single decoded return kind.
 
 ## Value-slot and borrowed-descriptor layout
 
@@ -18,7 +20,7 @@ Each native local and temporary owns one zero-initialized 16-byte frame slot. Sc
 
 An immutable borrowed `text` or `bytes` value occupies one slot:
 
-| Offset | Bytes | Field | ABI-9 rule |
+| Offset | Bytes | Field | ABI-10 rule |
 | ---: | ---: | --- | --- |
 | 0 | 8 | data pointer | Points into verified fragment data or one execution-owned immutable host buffer |
 | 8 | 4 | byte length | Exact remaining span length |
@@ -28,7 +30,7 @@ Static text and byte constants create descriptors through verified RIP-relative 
 
 An enum occupies the low four bytes and retains its signed member value plus compile-time nominal identity. A record occupies the low four bytes as an offset into the current execution's record arena. Each immutable record field consumes one complete 16-byte arena cell. Record construction checks offset addition and arena capacity before copying typed cells; field access proves the complete selected cell is below the committed used boundary. Packed status 7 becomes `WVR3017` on arena exhaustion.
 
-ABI 9 retains ABI 8's borrowed values and ABI 7's `u8`/`u32` operations and checked arithmetic. Unsigned arithmetic overflow retains packed status 1 / `WVR3007`.
+ABI 10 retains ABI 9's nominal values and ABI 8's borrowed values. Unsigned arithmetic overflow retains packed status 1 / `WVR3007`.
 
 ## Execution-context memory layout
 
@@ -49,23 +51,29 @@ The platform executor or verified OS bridge owns this memory for the complete ca
 
 ## Runtime-service table
 
-Service-table version 3 is exactly 48 bytes:
+Service-table version 4 is exactly 96 bytes:
 
-| Offset | Bytes | Field | Version-3 rule |
+| Offset | Bytes | Field | Version-4 rule |
 | ---: | ---: | --- | --- |
-| 0 | 4 | format version | `3` |
-| 4 | 4 | structure bytes | `48` |
+| 0 | 4 | format version | `4` |
+| 4 | 4 | structure bytes | `96` |
 | 8 | 8 | `console.write_line` entry | Pointer to the runtime-owned adapter thunk |
 | 16 | 8 | `process.argument_count` entry | Pointer to the runtime-owned adapter thunk |
 | 24 | 8 | `process.argument` entry | Pointer to the runtime-owned adapter thunk |
 | 32 | 8 | `file.read_bytes` entry | Pointer to the runtime-owned adapter thunk |
 | 40 | 8 | `Textˉutf8ˉisˉvalid` entry | Pointer to the runtime-owned pure validation thunk |
+| 48 | 8 | `diagnostic.write_line` entry | Pointer to the authorized diagnostic adapter thunk |
+| 56 | 8 | `Enumˉname` entry | Pointer to the runtime-owned pure nominal-name thunk |
+| 64 | 8 | `Textˉconcat` entry | Pointer to the runtime-owned pure concatenation thunk |
+| 72 | 8 | `Textˉquote` entry | Pointer to the runtime-owned pure deterministic-quote thunk |
+| 80 | 8 | `I32ˉformat` entry | Pointer to the runtime-owned invariant signed-format thunk |
+| 88 | 8 | `U32ˉformat` entry | Pointer to the runtime-owned invariant unsigned-format thunk; `u8` is zero-extended |
 
-The table is deliberately closed. A fragment may require any distinct canonical-order subset of these five services; any unknown, duplicate, or noncanonical service list fails verification. The first four entries are capability services and retain explicit authorization. `Textˉutf8ˉisˉvalid` is deterministic runtime support, has no ambient authority, and requires no capability authorization. A later extension requires a new accepted contract, bounds/version handling, and cross-host evidence.
+The table is deliberately closed. A fragment may require any distinct canonical-order subset of these eleven services; any unknown, duplicate, or noncanonical service list fails verification. Console, process, file, and diagnostic entries are capability services and retain explicit authorization. UTF-8 validation, enum naming, concatenation, quoting, and integer formatting are deterministic runtime support with no ambient authority. A later extension requires a new accepted contract, bounds/version handling, and cross-host evidence.
 
 ## `console.write_line` service
 
-The baseline accepts `console.write_line(text) -> void` as one of four exact hosted capabilities. Its argument is a borrowed-text descriptor backed by strict UTF-8 fragment data or an execution-owned host buffer. Text parameters and initialized locals copy descriptors; dynamic concatenation and allocation remain outside ABI 9.
+The baseline accepts `console.write_line(text) -> void` and `diagnostic.write_line(text) -> void` as separate exact hosted capabilities. Their arguments are borrowed-text descriptors backed by strict UTF-8 fragment data or execution-owned immutable buffers. Text parameters, locals, calls, and returns copy complete descriptors.
 
 Generated code calls the service-table entry with this Windvale-owned internal convention:
 
@@ -89,14 +97,22 @@ Service adapters write pointer/length/reserved descriptors only into independent
 
 `Textˉutf8ˉisˉvalid(bytes) -> bool` passes one proven borrowed-byte pointer/length in `R8`/`R9D` and a verified bool output-cell address in `RCX`. The service writes normalized zero or one and returns status in `EAX`; adapter failure therefore follows the ordinary packed-status-5 path instead of allowing a host exception to cross generated code. Exact platform thunks adapt only those registers. The execution owner revalidates that the complete range belongs to fragment data or a registered immutable execution allocation and applies strict UTF-8 decoding. Invalid encoding writes false; it does not allocate text or gain a capability. This Stage 0 callback is replaceable by the same closed service in a future native runtime.
 
+`Textˉfromˉutf8(bytes) -> text` uses that service as a proof step. False branches to packed status 8 / `WVR3014`; true copies the already-bounded borrowed descriptor as text. It does not allocate or silently replace malformed input.
+
+## Dynamic text services and arena
+
+One native run owns one fixed 16 MiB monotonic text arena. `Enumˉname`, integer formatting, `Textˉconcat`, and `Textˉquote` allocate strict UTF-8 results in that arena. Each result is independently limited to the WVB 1 MiB text bound (`WVR3012`). Checked aggregate exhaustion becomes `WVR3018`. Arena descriptors are accepted by the same range validator as immutable argument and file buffers and expire when `Main` returns.
+
+Enum naming receives a verified nominal type index and signed enum value and returns the exact declared member name. Formatting uses invariant decimal with no grouping. Concatenation checks the combined encoded length. Quoting follows the Foundation deterministic ASCII JSON-style contract: printable ASCII is preserved, quote, reverse solidus, and controls are escaped, and every non-ASCII UTF-16 code unit becomes uppercase `\uXXXX`.
+
 ## Verification and publication
 
-The native fragment verifier independently decodes the exact context prologue, `R15` restoration on every exit, typed 16-byte frame access, descriptor construction/copy, descriptor-source provenance, enum operations, record arena allocation/field copies, unsigned bounds branches, fixed-width reads, scalar operations, internal argument forms, all service-table loads, service calls, failure edges, immutable UTF-8/data targets, relocations, and packed statuses. Corrupt instruction bytes, descriptor fields, arena sizes/offsets, argument forms, displacement bytes, service metadata, or immutable data fail before WVO serialization or writable-to-executable publication.
+The native fragment verifier independently decodes the exact context prologue, `R15` restoration on every exit, typed 16-byte frame access, hidden descriptor-result cells, scalar/descriptor/void call and return kinds, descriptor construction/copy and provenance, enum operations, record arena allocation/field copies, unsigned bounds branches, fixed-width reads, all service-table loads and argument forms, UTF-8 and runtime failure edges, immutable data targets, relocations, and packed statuses. Corrupt instruction bytes, descriptor fields, hidden results, arena sizes or offsets, argument forms, displacement bytes, service metadata, or immutable data fail before WVO serialization or writable-to-executable publication.
 
 The current `Nativeˉfragment` carries its required-service list beside code, symbols, and patches. WVO 1.0 does not serialize that list. A service-bearing linked image may therefore execute only while paired with its original verified fragment metadata; it is not yet a standalone native application. A future PE, ELF, or Windvale-native container must preserve and verify capability/service requirements before it can publish independently loadable hosted AOT modules.
 
 ## Windvale OS use
 
-The version-4 native kernel bridge constructs context version 2, while the portable kernel probe supplies exact budgets `271` and `2`, a zero service-table pointer, and a zero-length record arena. The ordinary portable module loops over immutable i32 data, passes borrowed bytes through an internal function, slices and reads them, and checks `u8`/`u32` results. Firmware probe version 11 identifies the ABI-9 rebuild and emits `native-context=pass` only after that service-free path and the special-kernel path both succeed.
+The version-5 native kernel bridge constructs context version 2, while the portable kernel probe supplies exact budgets `271` and `2`, a zero service-table pointer, and a zero-length record arena. The ordinary portable module loops over immutable i32 data, passes borrowed bytes through an internal function, slices and reads them, and checks `u8`/`u32` results. Firmware probe version 12 identifies the ABI-10 rebuild and emits `native-context=pass` only after that service-free path and the special-kernel path both succeed.
 
-This does not give Windvale OS a runtime service table, record allocator, WVB loader, verifier, JIT, or hosted capability implementation. It proves that the ABI-9 compiler still supplies service-free generated code through one explicit versioned context and the borrowed-byte representation in the existing AOT OS path.
+This does not give Windvale OS a runtime service table, record allocator, WVB loader, verifier, JIT, or hosted capability implementation. It proves that the ABI-10 compiler still supplies service-free generated code through one explicit versioned context and the borrowed-byte representation in the existing AOT OS path.

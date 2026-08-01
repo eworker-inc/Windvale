@@ -9,8 +9,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉnativeˉprobeˉcontract
 {
-    public const int FORMAT_VERSION = 4;
-    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v4";
+    public const int FORMAT_VERSION = 5;
+    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v5";
     public const string BRIDGE_SYMBOL = "Windvale_kernel_x64_native_probe";
     public const string NATIVE_MAIN_SYMBOL = "Main";
     public const int EXPECTED_RESULT = 29;

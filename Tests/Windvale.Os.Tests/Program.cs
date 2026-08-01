@@ -350,7 +350,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(15_872, First.Length);
         Equal(
-            "100070e26666bfc97d0fff8da42d996249d072b5771014838a376abfc0a13d6a",
+            "3010bc72b9c26386f062f78481c900cac841321b040b41447a0bbb65a9e392fe",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -360,7 +360,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 11\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
+            "windvale-os-boot 12\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -501,9 +501,9 @@ internal static class Program
         Equal(
             "0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339",
             Objectˉdigest.Calculateˉsha256(First.Moduleˉbytes.AsSpan()));
-        Equal(7_946, First.Nativeˉobjectˉbytes.Length);
+        Equal(8_010, First.Nativeˉobjectˉbytes.Length);
         Equal(
-            "94d10d60f5d37cdab3d0f0c3678ee1e86b312564c06d633baf4736939595fed2",
+            "f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038",
             Objectˉdigest.Calculateˉsha256(First.Nativeˉobjectˉbytes.AsSpan()));
         Equal(315, First.Bridgeˉobjectˉbytes.Length);
         Equal(
