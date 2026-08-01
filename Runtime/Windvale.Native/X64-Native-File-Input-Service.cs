@@ -8,11 +8,11 @@ namespace Windvale.Runtime.Native;
 public static class X64ˉnativeˉfileˉinputˉservice
 {
     public const int WINDOWS_CANONICAL_SIZE = 1218;
-    public const int LINUX_CANONICAL_SIZE = 991;
+    public const int LINUX_CANONICAL_SIZE = 996;
     public const string WINDOWS_CANONICAL_SHA256 =
         "3d2fffc028083cdc4cfd39e553dea603e9a1ae661bb5df3f14ca438c4d3e3cf8";
     public const string LINUX_CANONICAL_SHA256 =
-        "15407274e8a0894f443ea77547175225c1a4327e7642c46903890e16358c8547";
+        "55ae4524c463f064aee0964d7f9b64438701fb4375a97c53d11f2f17902c12cb";
 
     public static ImmutableArray<byte> Build(Nativeˉfileˉinputˉplatform platform) =>
         platform switch
@@ -399,6 +399,7 @@ public static class X64ˉnativeˉfileˉinputˉservice
         Code.Emit(0x8B, 0x4C, 0x24, 0x4C);
         Code.Emit(0xF2, 0xAE);
         Code.Branch(0x84, "failure_invalid");
+        Code.Emit(0x48, 0x8B, 0x44, 0x24, 0x28);
         Code.Emit(0x48, 0x8B, 0x78,
             Nativeˉfileˉinputˉtableˉcontract.SCRATCH_POINTER_OFFSET);
         Code.Emit(0x48, 0x89, 0x7C, 0x24, 0x60);
@@ -436,21 +437,21 @@ public static class X64ˉnativeˉfileˉinputˉservice
         Code.Branch(0x86, "read_request_ready");
         Code.Emit(0xBA, 0x00, 0x00, 0x01, 0x00);
         Code.Mark("read_request_ready");
-        Code.Emit(0x89, 0x54, 0x24, 0x64);
+        Code.Emit(0x89, 0x54, 0x24, 0x68);
         Code.Mark("read_call");
         Code.Emit(0x31, 0xC0);
         Code.Emit(0x48, 0x8B, 0x7C, 0x24, 0x38);
         Code.Emit(0x48, 0x8B, 0x74, 0x24, 0x40);
         Code.Emit(0x8B, 0x4C, 0x24, 0x48);
         Code.Emit(0x48, 0x01, 0xCE);
-        Code.Emit(0x8B, 0x54, 0x24, 0x64);
+        Code.Emit(0x8B, 0x54, 0x24, 0x68);
         Code.Emit(0x0F, 0x05);
         Code.Emit(0x48, 0x83, 0xF8, 0xFC);
         Code.Branch(0x84, "read_call");
         Code.Emit(0x48, 0x85, 0xC0);
         Code.Branch(0x88, "read_error");
         Code.Branch(0x84, "success_close");
-        Code.Emit(0x8B, 0x54, 0x24, 0x64);
+        Code.Emit(0x8B, 0x54, 0x24, 0x68);
         Code.Emit(0x48, 0x39, 0xD0);
         Code.Branch(0x87, "close_unavailable");
         Code.Emit(0x01, 0x44, 0x24, 0x48);
