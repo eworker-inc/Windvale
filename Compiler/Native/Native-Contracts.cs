@@ -5,13 +5,15 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 4;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v4";
+    public const int ABI_VERSION = 5;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v5";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
+    public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
     public const int MAXIMUM_FRAME_SLOTS = 1024;
     public const int MAXIMUM_FRAME_BYTES = MAXIMUM_FRAME_SLOTS * sizeof(int);
     public const int MAXIMUM_BLOCKS = 4096;
+    public const int MAXIMUM_CALL_PARAMETERS = 4;
 }
 
 public abstract record Nativeˉoperation;
@@ -83,6 +85,22 @@ public sealed record Nativeˉboolˉcomparison(
 
 public sealed record Nativeˉboolˉnot(int Result, int Value) : Nativeˉoperation;
 
+public sealed record Nativeˉcall(
+    int Result,
+    Nativeˉvalueˉtype Type,
+    int Function,
+    ImmutableArray<int> Arguments) : Nativeˉoperation;
+
+public sealed record Nativeˉdataˉlength(
+    int Result,
+    int Data,
+    int Length) : Nativeˉoperation;
+
+public sealed record Nativeˉdataˉloadˉi32(
+    int Result,
+    int Data,
+    int Index) : Nativeˉoperation;
+
 public abstract record Nativeˉterminator;
 
 public sealed record Nativeˉjump(int Targetˉblock) : Nativeˉterminator;
@@ -101,11 +119,20 @@ public sealed record Nativeˉblock(
 
 public sealed record Nativeˉfunction(
     string Name,
+    ImmutableArray<Nativeˉvalueˉtype> Parameterˉtypes,
+    Nativeˉvalueˉtype Returnˉtype,
     ImmutableArray<Nativeˉvalueˉtype> Localˉtypes,
     ImmutableArray<Nativeˉvalueˉtype> Valueˉtypes,
-    ImmutableArray<Nativeˉblock> Blocks);
+    ImmutableArray<Nativeˉblock> Blocks)
+{
+    public ImmutableArray<Nativeˉvalueˉtype> Allˉlocalˉtypes => [.. Parameterˉtypes, .. Localˉtypes];
+}
 
-public sealed record Nativeˉmodule(ImmutableArray<Nativeˉfunction> Functions);
+public sealed record Nativeˉi32ˉdata(string Name, ImmutableArray<int> Values);
+
+public sealed record Nativeˉmodule(
+    ImmutableArray<Nativeˉfunction> Functions,
+    ImmutableArray<Nativeˉi32ˉdata> Data);
 
 public enum Nativeˉsymbolˉbinding : byte
 {

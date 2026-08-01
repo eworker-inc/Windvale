@@ -28,14 +28,14 @@ internal static class Program
     private const string WVLINK_CORE_SHA256 = "091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
-    private const string NATIVE_CONSTANT_CODE_SHA256 = "096a8dbfc2967ee3e855eaa6cd93cefd4031eb79944bfec6d1467704badc08dd";
-    private const string NATIVE_CONSTANT_WVO_SHA256 = "188b3871bb48da81624b9473f034796cf15de7782927e7aa6111ca10ca852828";
-    private const string NATIVE_ARITHMETIC_CODE_SHA256 = "58b3bd6607633099d824bea8353d68b20e573e63c7e5b3088c0da0fce17c9f4b";
-    private const string NATIVE_ARITHMETIC_WVO_SHA256 = "64618c2d4c732de005316df3069e3f90da021d8e9c4b75e4aab4ed0837bf6e14";
-    private const string NATIVE_CONTROL_CODE_SHA256 = "77b4328a65fffc424a3b390166ca701701d0812b87cc617e6b99d0ce524c827e";
-    private const string NATIVE_CONTROL_WVO_SHA256 = "df658be2df6e7c337827232191c3037d497ae79f1bda537acb70a77a24b4960d";
-    private const string NATIVE_LOOP_CODE_SHA256 = "8b4cde486874a5dcd7eded18e0d3fcb208e244de0499e868dc8e50501bd21139";
-    private const string NATIVE_LOOP_WVO_SHA256 = "7b0d7898a83eb87818b08dfcb4081ce6ff05e91f5dd2958ba0e869ebcae735ac";
+    private const string NATIVE_CONSTANT_CODE_SHA256 = "912253a4df829eabd80e31e488a027fa42baf8512289e4816f8751eb0cc1ddac";
+    private const string NATIVE_CONSTANT_WVO_SHA256 = "c967092ad3ed52f26004d98d055a40e989d7dbbc71cae1ca183eaa2c2fe2133a";
+    private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0b3d96754151484a3240e9a374018b6b73a381429c2f442ed335b5f263a5e266";
+    private const string NATIVE_ARITHMETIC_WVO_SHA256 = "98dd4f1533023cc8e13649c65eb20a46188f81b062d9bf37cd5893ea0b60d4ff";
+    private const string NATIVE_CONTROL_CODE_SHA256 = "dc8966ce943d7e5114c412d5b00202454839e9a4e090d405c0ebd82ffac5c977";
+    private const string NATIVE_CONTROL_WVO_SHA256 = "f63b1cc233cdb172c73c7192189d2d0f37b3ddae720bc85612a336e458f779e9";
+    private const string NATIVE_LOOP_CODE_SHA256 = "2c37fca010629d530afd94f332110d65609d56222d52051b7e9a29514ffb61d6";
+    private const string NATIVE_LOOP_WVO_SHA256 = "bb281536dafeb64732a1ba5c39bc8ff0af24b99f2e9b000afb9a915bb8643cbc";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
@@ -1111,8 +1111,9 @@ internal static class Program
             "Native machine IR did not retain the constant definition.");
         True(First.Module.Functions[0].Blocks[0].Terminator is Nativeˉreturn { Value: 1 },
             "Native machine IR did not retain the return use.");
-        Sequenceˉequal(new byte[] { 0x48, 0x81, 0xEC }, First.Fragment.Code.Take(3));
-        Sequenceˉequal(new byte[] { 0x49, 0x89, 0xD3 }, First.Fragment.Code.Skip(7).Take(3));
+        Sequenceˉequal(
+            new byte[] { 0x49, 0x89, 0xD3, 0x4D, 0x89, 0xCA },
+            First.Fragment.Code.Take(6));
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
         Equal(Nativeˉcontract.X64_BASELINE_TARGET, First.Fragment.Target);
         Equal(Nativeˉcontract.ABI_VERSION, First.Fragment.Abiˉversion);
@@ -1122,13 +1123,13 @@ internal static class Program
         var Firstˉobject = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
         var Secondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment);
         Sequenceˉequal(Firstˉobject, Secondˉobject);
-        Equal(171, First.Fragment.Code.Length);
+        Equal(239, First.Fragment.Code.Length);
         Equal(NATIVE_CONSTANT_CODE_SHA256, Objectˉdigest.Calculateˉsha256(First.Fragment.Code.AsSpan()));
-        Equal(311, Firstˉobject.Length);
+        Equal(312, Firstˉobject.Length);
         Equal(NATIVE_CONSTANT_WVO_SHA256, Objectˉdigest.Calculateˉsha256(Firstˉobject.AsSpan()));
         var Verifiedˉobject = Objectˉcodec.Readˉandˉverify(Firstˉobject.AsSpan()).Value;
         Equal(1, Verifiedˉobject.Sections.Length);
-        Equal(3, Verifiedˉobject.Symbols.Length);
+        Equal(1, Verifiedˉobject.Symbols.Length);
         True(Verifiedˉobject.Symbols.Any(Symbol => Symbol.Name == "Main"), "Native WVO omitted Main.");
         Equal(0, Verifiedˉobject.Relocations.Length);
 
@@ -1189,18 +1190,17 @@ internal static class Program
             Arithmeticˉoperations.Any(Operation => Operation is Nativeˉi32ˉnegate),
             "Native machine IR did not retain checked i32 negation.");
         Sequenceˉequal(Arithmeticˉfirst.Fragment.Code, Arithmeticˉsecond.Fragment.Code);
-        Equal(3, Arithmeticˉfirst.Fragment.Symbols.Length);
-        Equal("$instruction_limit", Arithmeticˉfirst.Fragment.Symbols[0].Name);
-        Equal("$overflow", Arithmeticˉfirst.Fragment.Symbols[1].Name);
+        Equal(1, Arithmeticˉfirst.Fragment.Symbols.Length);
+        Equal("Main", Arithmeticˉfirst.Fragment.Symbols[0].Name);
         _ = Nativeˉfragmentˉverifier.Verify(Arithmeticˉfirst.Fragment);
         var Arithmeticˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉfirst.Fragment);
         var Arithmeticˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉsecond.Fragment);
         Sequenceˉequal(Arithmeticˉfirstˉobject, Arithmeticˉsecondˉobject);
-        Equal(1076, Arithmeticˉfirst.Fragment.Code.Length);
+        Equal(1144, Arithmeticˉfirst.Fragment.Code.Length);
         Equal(
             NATIVE_ARITHMETIC_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirst.Fragment.Code.AsSpan()));
-        Equal(1216, Arithmeticˉfirstˉobject.Length);
+        Equal(1217, Arithmeticˉfirstˉobject.Length);
         Equal(
             NATIVE_ARITHMETIC_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirstˉobject.AsSpan()));
@@ -1252,11 +1252,11 @@ internal static class Program
         var Controlˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉfirst.Fragment);
         var Controlˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉsecond.Fragment);
         Sequenceˉequal(Controlˉfirstˉobject, Controlˉsecondˉobject);
-        Equal(3699, Controlˉfirst.Fragment.Code.Length);
+        Equal(3770, Controlˉfirst.Fragment.Code.Length);
         Equal(
             NATIVE_CONTROL_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Controlˉfirst.Fragment.Code.AsSpan()));
-        Equal(3839, Controlˉfirstˉobject.Length);
+        Equal(3843, Controlˉfirstˉobject.Length);
         Equal(
             NATIVE_CONTROL_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Controlˉfirstˉobject.AsSpan()));
@@ -1285,14 +1285,16 @@ internal static class Program
             Falseˉnative.Fragment with { Code = Falseˉlinked.Imageˉbytes }));
 
         var Corruptedˉbudgetˉsource = Controlˉfirst.Fragment.Code.ToArray();
-        Corruptedˉbudgetˉsource[7] = 0x90;
+        Corruptedˉbudgetˉsource[0] = 0x90;
         Throwsˉnative(
             "WVN3030",
             () => _ = Nativeˉfragmentˉverifier.Verify(
                 Controlˉfirst.Fragment with { Code = Corruptedˉbudgetˉsource.ToImmutableArray() }));
 
         var Corruptedˉzero = Controlˉfirst.Fragment.Code.ToArray();
-        Corruptedˉzero[10] = 0x90;
+        var Zeroˉinstruction = Corruptedˉzero.AsSpan().IndexOf(new byte[] { 0x31, 0xC0 });
+        True(Zeroˉinstruction >= 0, "Native control fragment did not contain frame zeroing.");
+        Corruptedˉzero[Zeroˉinstruction] = 0x90;
         Throwsˉnative(
             "WVN3030",
             () => _ = Nativeˉfragmentˉverifier.Verify(
@@ -1338,9 +1340,12 @@ internal static class Program
                 Controlˉfirst.Fragment with { Code = Corruptedˉtarget.ToImmutableArray() }));
 
         var Corruptedˉnonˉchargeˉtarget = Controlˉfirst.Fragment.Code.ToArray();
+        var Frameˉprologue = Corruptedˉnonˉchargeˉtarget.AsSpan().IndexOf(
+            new byte[] { 0x48, 0x81, 0xEC });
+        True(Frameˉprologue >= 0, "Native control fragment did not contain a frame prologue.");
         var Frameˉbytes = BinaryPrimitives.ReadInt32LittleEndian(
-            Corruptedˉnonˉchargeˉtarget.AsSpan(3, sizeof(int)));
-        var Bodyˉoffset = 12 + (Frameˉbytes / sizeof(int) * 7);
+            Corruptedˉnonˉchargeˉtarget.AsSpan(Frameˉprologue + 3, sizeof(int)));
+        var Bodyˉoffset = Frameˉprologue + 9 + (Frameˉbytes / sizeof(int) * 7);
         var Falseˉbranchˉdisplacement = Conditionalˉbranch + 7;
         BinaryPrimitives.WriteInt32LittleEndian(
             Corruptedˉnonˉchargeˉtarget.AsSpan(Falseˉbranchˉdisplacement, sizeof(int)),
@@ -1372,16 +1377,20 @@ internal static class Program
             () => _ = Nativeˉfragmentˉverifier.Verify(
                 Arithmeticˉfirst.Fragment with { Code = Corruptedˉarithmeticˉcode.ToImmutableArray() }));
 
-        var Trapˉoffset = checked((int)Arithmeticˉfirst.Fragment.Symbols.Single(
-            Symbol => Symbol.Name == "$overflow").Offset);
+        var Arithmeticˉmain = Arithmeticˉfirst.Fragment.Symbols.Single(Symbol => Symbol.Name == "Main");
+        var Arithmeticˉend = checked((int)(Arithmeticˉmain.Offset + Arithmeticˉmain.Size));
+        var Propagateˉoffset = Arithmeticˉend - 88;
+        var Trapˉoffset = Propagateˉoffset + 11;
+        var Arithmeticˉframeˉprologue = Arithmeticˉfirst.Fragment.Code.AsSpan().IndexOf(
+            new byte[] { 0x48, 0x81, 0xEC });
         var Structuralˉcorruptions = new Action<byte[]>[]
         {
             Code => Code[0] = 0x90,
             Code => BinaryPrimitives.WriteInt32LittleEndian(
-                Code.AsSpan(3, sizeof(int)),
+                Code.AsSpan(Arithmeticˉframeˉprologue + 3, sizeof(int)),
                 Nativeˉcontract.MAXIMUM_FRAME_BYTES + 16),
-            Code => Code[Trapˉoffset - 1] = 0x90,
-            Code => Code[Trapˉoffset + 9] ^= 0x01,
+            Code => Code[Propagateˉoffset - 1] = 0x90,
+            Code => Code[Trapˉoffset + 12] ^= 0x01,
         };
         foreach (var Corrupt in Structuralˉcorruptions)
         {
@@ -1393,10 +1402,9 @@ internal static class Program
                     Arithmeticˉfirst.Fragment with { Code = Corruptedˉcode.ToImmutableArray() }));
         }
 
-        var Instructionˉlimitˉoffset = checked((int)Arithmeticˉfirst.Fragment.Symbols.Single(
-            Symbol => Symbol.Name == "$instruction_limit").Offset);
+        var Instructionˉlimitˉoffset = Trapˉoffset + 21;
         var Corruptedˉlimitˉstatus = Arithmeticˉfirst.Fragment.Code.ToArray();
-        Corruptedˉlimitˉstatus[Instructionˉlimitˉoffset + 9] ^= 0x01;
+        Corruptedˉlimitˉstatus[Instructionˉlimitˉoffset + 12] ^= 0x01;
         Throwsˉnative(
             "WVN3030",
             () => _ = Nativeˉfragmentˉverifier.Verify(
@@ -1439,7 +1447,7 @@ internal static class Program
         {
             Patches = [new(Nativeˉpatchˉkind.Relativeˉi32, (uint)First.Fragment.Code.Length - 2, "Main", -4)],
         };
-        Throwsˉnative("WVN3022", () => _ = Nativeˉfragmentˉverifier.Verify(Invalidˉfragment));
+        Throwsˉnative("WVN3020", () => _ = Nativeˉfragmentˉverifier.Verify(Invalidˉfragment));
 
         var Invalidˉbytes = First.Fragment.Code.ToArray();
         Invalidˉbytes[0] = 0x90;
@@ -1494,11 +1502,11 @@ internal static class Program
                 Loopˉaot,
                 maximumˉinstructions: Loopˉinterpreted.Executedˉinstructions - 1));
         Equal(157L, Loopˉinterpreted.Executedˉinstructions);
-        Equal(1178, Loopˉnative.Fragment.Code.Length);
+        Equal(1246, Loopˉnative.Fragment.Code.Length);
         Equal(
             NATIVE_LOOP_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Loopˉnative.Fragment.Code.AsSpan()));
-        Equal(1318, Loopˉobject.Length);
+        Equal(1319, Loopˉobject.Length);
         Equal(
             NATIVE_LOOP_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Loopˉobject.AsSpan()));
@@ -1518,9 +1526,226 @@ internal static class Program
                 Nonterminatingˉnative.Fragment,
                 maximumˉinstructions: 50));
 
-        var Unsupported = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+        var Callˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
             "module Nativeˉcalls profile portable; export fn Main() -> i32 { return Answer(); } fn Answer() -> i32 { return 42; }"));
-        Throwsˉnative("WVN2002", () => _ = X64ˉnativeˉbackend.Compile(Unsupported));
+        var Callˉinterpreted = new Referenceˉruntime(
+            Callˉverified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        var Callˉnative = X64ˉnativeˉbackend.Compile(Callˉverified);
+        Equal(2, Callˉnative.Module.Functions.Length);
+        True(
+            Callˉnative.Module.Functions
+                .SelectMany(Function => Function.Blocks)
+                .SelectMany(Block => Block.Operations)
+                .Any(Operation => Operation is Nativeˉcall { Function: 0, Arguments.Length: 0 }),
+            "Native machine IR did not retain the zero-argument function call.");
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(
+            Callˉnative.Fragment,
+            maximumˉinstructions: Callˉinterpreted.Executedˉinstructions,
+            maximumˉcallˉdepth: 2));
+        Throwsˉnativeˉtrap(
+            "WVR3011",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                Callˉnative.Fragment,
+                maximumˉinstructions: Callˉinterpreted.Executedˉinstructions - 1,
+                maximumˉcallˉdepth: 2));
+        Throwsˉnativeˉtrap(
+            "WVR3004",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                Callˉnative.Fragment,
+                maximumˉinstructions: Callˉinterpreted.Executedˉinstructions,
+                maximumˉcallˉdepth: 1));
+        var Invalidˉcallˉdepthˉrejected = false;
+        try
+        {
+            _ = X64ˉnativeˉexecutor.Executeˉi32(Callˉnative.Fragment, maximumˉcallˉdepth: 0);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            Invalidˉcallˉdepthˉrejected = true;
+        }
+        True(Invalidˉcallˉdepthˉrejected, "The native executor accepted a non-positive call-depth limit.");
+
+        var Boolˉcallˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉboolˉcall profile portable; fn Isˉanswer(Value: i32) -> bool { return Value == 42; } export fn Main() -> i32 { if Isˉanswer(42) { return 42; } return 0; }"));
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Boolˉcallˉverified).Fragment));
+
+        var Argumentˉcallˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉarguments profile portable; fn Add(Left: i32, Right: i32) -> i32 { return Left + Right; } export fn Main() -> i32 { return Add(20, 22); }"));
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(X64ˉnativeˉbackend.Compile(Argumentˉcallˉverified).Fragment));
+
+        var Nestedˉcallˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉnestedˉcalls profile portable; fn Add(Left: i32, Right: i32) -> i32 { return Left + Right; } export fn Main() -> i32 { return Add(Add(Add(3, 5), 8), 13); }"));
+        var Nestedˉcallˉresult = X64ˉnativeˉexecutor.Executeˉi32(
+            X64ˉnativeˉbackend.Compile(Nestedˉcallˉverified).Fragment);
+        True(Nestedˉcallˉresult == 29, $"Nested call result was {Nestedˉcallˉresult}; expected 29.");
+
+        var Leftˉargumentˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉleftˉargument profile portable; fn First(Left: i32, Right: i32) -> i32 { return Left; } export fn Main() -> i32 { return First(16, 3); }"));
+        var Leftˉargumentˉresult = X64ˉnativeˉexecutor.Executeˉi32(
+            X64ˉnativeˉbackend.Compile(Leftˉargumentˉverified).Fragment);
+        True(Leftˉargumentˉresult == 16, $"First call argument was {Leftˉargumentˉresult}; expected 16.");
+
+        var Directˉdataˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉdirectˉdata profile portable; data Values: [i32] = [3, 5, 8, 13]; export fn Main() -> i32 { return Values[3]; }"));
+        Equal(
+            13,
+            X64ˉnativeˉexecutor.Executeˉi32(X64ˉnativeˉbackend.Compile(Directˉdataˉverified).Fragment));
+
+        var Shiftedˉdataˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉshiftedˉdata profile portable; data Values: [i32] = [3, 5, 8, 13]; fn Add(Left: i32, Right: i32) -> i32 { return Left + Right; } export fn Main() -> i32 { return Values[3]; }"));
+        var Shiftedˉdataˉresult = X64ˉnativeˉexecutor.Executeˉi32(
+            X64ˉnativeˉbackend.Compile(Shiftedˉdataˉverified).Fragment);
+        True(Shiftedˉdataˉresult == 13, $"Shifted static-data result was {Shiftedˉdataˉresult}; expected 13.");
+
+        var Preservedˉlocalˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉpreservedˉlocal profile portable; data Values: [i32] = [3, 5, 8, 13]; export fn Main() -> i32 { let Left: i32 = 16; let Right: i32 = Values[3]; return Left; }"));
+        var Preservedˉlocalˉresult = X64ˉnativeˉexecutor.Executeˉi32(
+            X64ˉnativeˉbackend.Compile(Preservedˉlocalˉverified).Fragment);
+        True(Preservedˉlocalˉresult == 16, $"Static-data load changed an unrelated local to {Preservedˉlocalˉresult}.");
+
+        var Dataˉargumentˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉdataˉargument profile portable; data Values: [i32] = [3, 5, 8, 13]; fn Add(Left: i32, Right: i32) -> i32 { return Left + Right; } export fn Main() -> i32 { return Add(16, Values[3]); }"));
+        Equal(
+            29,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Dataˉargumentˉverified).Fragment));
+
+        var Loopˉdataˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉloopˉdata profile portable;
+            data Values: [i32] = [3, 5, 8, 13];
+            export fn Main() -> i32 {
+                var Index: i32 = 0;
+                var Total: i32 = 0;
+                while Index < length(Values) {
+                    Total = Total + Values[Index];
+                    Index = Index + 1;
+                }
+                return Total;
+            }
+            """));
+        Equal(
+            29,
+            X64ˉnativeˉexecutor.Executeˉi32(X64ˉnativeˉbackend.Compile(Loopˉdataˉverified).Fragment));
+
+        var Unrolledˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉunrolled profile portable;
+            data Values: [i32] = [3, 5, 8, 13];
+            fn Add(Left: i32, Right: i32) -> i32 { return Left + Right; }
+            export fn Main() -> i32 { return Add(Add(Add(Values[0], Values[1]), Values[2]), Values[3]); }
+            """));
+        var Unrolledˉnative = X64ˉnativeˉbackend.Compile(Unrolledˉverified);
+        Equal(29, X64ˉnativeˉexecutor.Executeˉi32(Unrolledˉnative.Fragment));
+
+        var Sumˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(SUM_SOURCE));
+        var Sumˉinterpreted = new Referenceˉruntime(
+            Sumˉverified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(29, Sumˉinterpreted.Exitˉcode);
+        var Sumˉnative = X64ˉnativeˉbackend.Compile(Sumˉverified);
+        Equal(2, Sumˉnative.Module.Functions.Length);
+        Equal(1, Sumˉnative.Module.Data.Length);
+        Sequenceˉequal([3, 5, 8, 13], Sumˉnative.Module.Data[0].Values);
+        True(
+            Sumˉnative.Module.Functions
+                .SelectMany(Function => Function.Blocks)
+                .SelectMany(Block => Block.Operations)
+                .Any(Operation => Operation is Nativeˉcall { Arguments.Length: 2 }),
+            "Native machine IR did not retain typed call arguments.");
+        True(
+            Sumˉnative.Module.Functions
+                .SelectMany(Function => Function.Blocks)
+                .SelectMany(Block => Block.Operations)
+                .Any(Operation => Operation is Nativeˉdataˉloadˉi32),
+            "Native machine IR did not retain the bounds-checked static-data load.");
+        var Sumˉjitˉresult = X64ˉnativeˉexecutor.Executeˉi32(
+            Sumˉnative.Fragment,
+            maximumˉinstructions: Sumˉinterpreted.Executedˉinstructions,
+            maximumˉcallˉdepth: 2);
+        True(Sumˉjitˉresult == 29, $"Looped call/data result was {Sumˉjitˉresult}; expected 29.");
+        Throwsˉnativeˉtrap(
+            "WVR3011",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                Sumˉnative.Fragment,
+                maximumˉinstructions: Sumˉinterpreted.Executedˉinstructions - 1,
+                maximumˉcallˉdepth: 2));
+        var Sumˉobject = Nativeˉobjectˉsink.Writeˉwvo(Sumˉnative.Fragment);
+        var Sumˉverifiedˉobject = Objectˉcodec.Readˉandˉverify(Sumˉobject.AsSpan()).Value;
+        Equal(2, Sumˉverifiedˉobject.Sections.Length);
+        Equal(Objectˉsectionˉkind.Readˉonlyˉdata, Sumˉverifiedˉobject.Sections[1].Kind);
+        Equal(1, Sumˉverifiedˉobject.Relocations.Length);
+        Equal(Objectˉrelocationˉkind.Relativeˉi32, Sumˉverifiedˉobject.Relocations[0].Kind);
+        var Sumˉlinked = Linkˉsuccess(
+            [Sumˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Sequenceˉequal(Sumˉnative.Fragment.Code, Sumˉlinked.Imageˉbytes);
+        Equal(29, X64ˉnativeˉexecutor.Executeˉi32(
+            Sumˉnative.Fragment with { Code = Sumˉlinked.Imageˉbytes },
+            maximumˉinstructions: Sumˉinterpreted.Executedˉinstructions,
+            maximumˉcallˉdepth: 2));
+
+        var Corruptedˉdataˉpatch = Sumˉnative.Fragment.Code.ToArray();
+        var Dataˉpatch = Sumˉnative.Fragment.Patches.Single();
+        Corruptedˉdataˉpatch[checked((int)Dataˉpatch.Offset)] ^= 0x01;
+        Throwsˉnative(
+            "WVN3024",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Sumˉnative.Fragment with { Code = Corruptedˉdataˉpatch.ToImmutableArray() }));
+
+        var Boundsˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉbounds profile portable; data Values: [i32] = [42]; export fn Main() -> i32 { return Values[1]; }"));
+        Throwsˉruntime(
+            "WVR3005",
+            () => _ = new Referenceˉruntime(
+                Boundsˉverified,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+        Throwsˉnativeˉtrap(
+            "WVR3005",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Boundsˉverified).Fragment));
+
+        var Recursiveˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉrecursive profile portable;
+            fn Descend(Value: i32) -> i32 {
+                if Value == 0 { return 42; }
+                return Descend(Value - 1);
+            }
+            export fn Main() -> i32 { return Descend(3); }
+            """));
+        var Recursiveˉinterpreted = new Referenceˉruntime(
+            Recursiveˉverified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        var Recursiveˉnative = X64ˉnativeˉbackend.Compile(Recursiveˉverified);
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(
+            Recursiveˉnative.Fragment,
+            maximumˉinstructions: Recursiveˉinterpreted.Executedˉinstructions,
+            maximumˉcallˉdepth: 5));
+        Throwsˉnativeˉtrap(
+            "WVR3004",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                Recursiveˉnative.Fragment,
+                maximumˉinstructions: Recursiveˉinterpreted.Executedˉinstructions,
+                maximumˉcallˉdepth: 4));
+
+        var Fourˉparameterˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉfourˉparameter profile portable; fn Sum(A: i32, B: i32, C: i32, D: i32) -> i32 { return A + B + C + D; } export fn Main() -> i32 { return Sum(9, 10, 11, 12); }"));
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Fourˉparameterˉverified).Fragment));
+
+        var Tooˉmanyˉparameters = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉwideˉcall profile portable; fn Fifth(A: i32, B: i32, C: i32, D: i32, E: i32) -> i32 { return E; } export fn Main() -> i32 { return Fifth(1, 2, 3, 4, 5); }"));
+        Throwsˉnative("WVN2002", () => _ = X64ˉnativeˉbackend.Compile(Tooˉmanyˉparameters));
     }
 
     private static void Sourceˉmodulesˉcompose()

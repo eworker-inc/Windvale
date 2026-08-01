@@ -11,9 +11,37 @@ public static class Nativeˉobjectˉsink
         var Symbolˉindices = fragment.Symbols
             .Select((Symbol, Index) => (Symbol.Name, Index))
             .ToDictionary(Entry => Entry.Name, Entry => Entry.Index, StringComparer.Ordinal);
+        var Dataˉsymbols = fragment.Symbols
+            .Where(Symbol => Symbol.Kind == Nativeˉsymbolˉkind.Data)
+            .ToImmutableArray();
+        var Dataˉstart = Dataˉsymbols.IsEmpty
+            ? fragment.Code.Length
+            : checked((int)Dataˉsymbols.Min(Symbol => Symbol.Offset));
+        var Text = fragment.Code[..Dataˉstart].ToArray();
+        foreach (var Patch in fragment.Patches)
+        {
+            Text.AsSpan(checked((int)Patch.Offset), sizeof(int)).Clear();
+        }
+        var Sections = ImmutableArray.CreateBuilder<Objectˉsection>();
+        Sections.Add(new(
+            ".text",
+            Objectˉsectionˉkind.Code,
+            fragment.Alignment,
+            (uint)Text.Length,
+            Text.ToImmutableArray()));
+        if (!Dataˉsymbols.IsEmpty)
+        {
+            var Readˉonlyˉdata = fragment.Code[Dataˉstart..];
+            Sections.Add(new(
+                ".rodata",
+                Objectˉsectionˉkind.Readˉonlyˉdata,
+                fragment.Alignment,
+                (uint)Readˉonlyˉdata.Length,
+                Readˉonlyˉdata));
+        }
         var Object = new Objectˉfile(
             fragment.Architecture,
-            [new(".text", Objectˉsectionˉkind.Code, fragment.Alignment, (uint)fragment.Code.Length, fragment.Code)],
+            Sections.ToImmutable(),
             [.. fragment.Symbols.Select(Symbol => new Objectˉsymbol(
                 Symbol.Name,
                 Symbol.Binding switch
@@ -29,8 +57,12 @@ public static class Nativeˉobjectˉsink
                     Nativeˉsymbolˉkind.Data => Objectˉsymbolˉkind.Data,
                     _ => throw new InvalidOperationException("Verified native symbol kind became invalid."),
                 },
-                Symbol.Binding == Nativeˉsymbolˉbinding.Import ? Objectˉlimits.UNDEFINED_SECTION : 0,
-                Symbol.Offset,
+                Symbol.Binding == Nativeˉsymbolˉbinding.Import
+                    ? Objectˉlimits.UNDEFINED_SECTION
+                    : Symbol.Kind == Nativeˉsymbolˉkind.Data ? 1u : 0u,
+                Symbol.Kind == Nativeˉsymbolˉkind.Data
+                    ? checked(Symbol.Offset - (uint)Dataˉstart)
+                    : Symbol.Offset,
                 Symbol.Size))],
             [.. fragment.Patches.Select(Patch => new Objectˉrelocation(
                 Patch.Kind switch

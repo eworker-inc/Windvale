@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decisions 0059 through 0062 cross-host qualify the first shared Stage 0 constant, checked-arithmetic/trap, typed-control, dynamic-budget, and backward-control slices through WVO/AOT and Windows/Linux W^X paths. This document defines the larger native destination and migration boundaries; it does not claim calls, static data, capabilities, a general native runtime, broad JIT or AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
+Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decisions 0059 through 0062 cross-host qualify the first shared Stage 0 constant, checked-arithmetic/trap, typed-control, dynamic-budget, and backward-control slices through WVO/AOT and Windows/Linux W^X paths. Decision 0063 implements the next shared-budget call and immutable-data slice on Windows; Debian qualification is pending. This document defines the larger native destination and migration boundaries; it does not claim capabilities, a general native runtime, broad JIT or AOT compiler, PE host, ELF host, garbage collector, or native self-hosting chain.
 
 ## Destination
 
@@ -107,9 +107,11 @@ Decision 0061 advances the experimental current target to `x86-64-wvb-baseline-v
 
 Decision 0062 advances the experimental current target to `x86-64-wvb-baseline-v4`. Every lowered WVB instruction has an explicit charge; a positive per-run maximum arrives in `RDX` through a three-argument Windows/System V bridge and is held in reserved `R11`. Unsigned underflow returns packed status 2 as `WVR3011`. Backward targets are admitted only at decoded charge boundaries, and the verifier proves exact charge/semantic alternation plus complete cyclic reachability. Windows and Debian interpreter/JIT/AOT success and exhaustion boundaries are cross-host qualified at `2b67c8a`. Calls must later preserve one shared remaining budget explicitly.
 
+Decision 0063 advances the experimental current target to `x86-64-wvb-baseline-v5`. A six-argument host bridge places instruction and depth maxima identically under both supported ABIs; `R11` carries one exact instruction counter and `R10` one depth counter through every internal call. Up to four i32/bool parameters use shared volatile registers, recursion is bounded as `WVR3004`, and callee traps propagate without executing later WVB instructions. Immutable i32 arrays lower through checked RIP-relative reads; bounds failures map to `WVR3005`; the flat JIT tail and WVO `.rodata` relocation resolve to identical bytes. The fragment verifier independently decodes every function, call edge, counter transition, data patch, trap path, and reachable byte. Windows implementation evidence is green; Debian qualification remains pending.
+
 ## Native runtime ABI
 
-Generated code targets a Windvale-owned internal ABI rather than emitting host calls throughout ordinary functions. The current version-4 single-function entry receives `(0, budget, budget)` from the executor. Windows x64 places the second integer argument in `RDX`; System V x86-64 places the third there, so one identical fragment copies `RDX` to reserved `R11`. This is a bounded bridge for the experiment, not the final multi-function parameter convention.
+Generated code targets a Windvale-owned internal ABI rather than emitting host calls throughout ordinary functions. The version-5 entry receives `(0, instruction budget, instruction budget, call-depth budget, 0, call-depth budget)` from the executor. Windows and System V x86-64 therefore both place the instruction budget in `RDX` and call-depth budget in `R9`; one identical `Main` copies them into reserved `R11` and `R10`. Internal functions accept as many as four i32/bool parameters in `R8D`, `R9D`, `ECX`, and `EDX` and return one packed value/status in `RAX`. This is a bounded experimental convention, not the final aggregate, stack-argument, runtime-service, or safe-point ABI.
 
 The ABI must eventually define:
 

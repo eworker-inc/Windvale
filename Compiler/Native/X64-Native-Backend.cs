@@ -10,6 +10,8 @@ public static class X64ˉnativeˉbackend
 {
     private const ulong INTEGER_OVERFLOW_STATUS = 0x0000_0001_0000_0000UL;
     private const ulong INSTRUCTION_LIMIT_STATUS = 0x0000_0002_0000_0000UL;
+    private const ulong CALL_DEPTH_STATUS = 0x0000_0003_0000_0000UL;
+    private const ulong DATA_BOUNDS_STATUS = 0x0000_0004_0000_0000UL;
 
     public static Nativeˉcompilation Compile(Verifiedˉmodule verifiedˉmodule)
     {
@@ -17,45 +19,78 @@ public static class X64ˉnativeˉbackend
         var Module = verifiedˉmodule.Module;
         if (Module.Profile != Moduleˉprofile.Portable ||
             !Module.Capabilities.IsEmpty ||
-            !Module.Data.IsEmpty ||
-            !Module.Types.IsEmpty)
+            !Module.Types.IsEmpty ||
+            Module.Data.Any(Data => Data is not I32ˉarrayˉdataˉdeclaration))
         {
-            Fail("WVN2001", "The baseline native subset requires a portable module without capabilities, data, or nominal types.");
+            Fail(
+                "WVN2001",
+                "The baseline native subset requires a portable module without capabilities or nominal types and with only immutable i32-array data.");
         }
-        if (verifiedˉmodule.Functions.Length != 1 ||
+        if (verifiedˉmodule.Functions.IsEmpty ||
             Module.Exports.Length != 1 ||
-            Module.Exports[0] is not { Name: "Main", Kind: Exportˉkind.Function, Targetˉindex: 0 })
+            Module.Exports[0] is not { Name: "Main", Kind: Exportˉkind.Function } ||
+            (uint)Module.Exports[0].Targetˉindex >= (uint)verifiedˉmodule.Functions.Length)
         {
             Fail("WVN2002", "The baseline native subset requires exactly one exported Main function.");
         }
 
-        var Function = verifiedˉmodule.Functions[0];
-        if (!StringComparer.Ordinal.Equals(Function.Declaration.Name, "Main") ||
-            !Function.Declaration.Parameterˉtypes.IsEmpty ||
-            Function.Declaration.Returnˉtype != Valueˉtype.I32 ||
-            Function.Declaration.Localˉtypes.IsEmpty ||
-            Function.Declaration.Localˉtypes.Length >= Nativeˉcontract.MAXIMUM_FRAME_SLOTS ||
-            Function.Declaration.Localˉtypes.Any(Type => !Isˉnativeˉtype(Type)) ||
-            Function.Declaration.Maximumˉstackˉdepth is < 1 or > Nativeˉcontract.MAXIMUM_FRAME_SLOTS)
+        var Mainˉexport = Module.Exports[0];
+        var Main = verifiedˉmodule.Functions[Mainˉexport.Targetˉindex];
+        if (!StringComparer.Ordinal.Equals(Main.Declaration.Name, "Main") ||
+            !Main.Declaration.Parameterˉtypes.IsEmpty ||
+            Main.Declaration.Returnˉtype != Valueˉtype.I32)
         {
             Fail(
                 "WVN2002",
-                "The baseline native entry must be Main() -> i32 with only bounded i32/bool locals; " +
-                $"found name='{Function.Declaration.Name}', parameters={Function.Declaration.Parameterˉtypes.Length}, " +
-                $"return={Function.Declaration.Returnˉtype}, locals={Function.Declaration.Localˉtypes.Length}, " +
-                $"max-stack={Function.Declaration.Maximumˉstackˉdepth}.");
+                "The baseline native entry must be Main() -> i32; " +
+                $"found name='{Main.Declaration.Name}', parameters={Main.Declaration.Parameterˉtypes.Length}, " +
+                $"return={Main.Declaration.Returnˉtype}.");
+        }
+        foreach (var Function in verifiedˉmodule.Functions)
+        {
+            if (Function.Declaration.Parameterˉtypes.Any(Type => !Isˉnativeˉtype(Type)) ||
+                Function.Declaration.Parameterˉtypes.Length > Nativeˉcontract.MAXIMUM_CALL_PARAMETERS ||
+                Function.Declaration.Returnˉtype.Kind is not (Valueˉtype.I32 or Valueˉtype.Bool) ||
+                !Isˉnativeˉtype(Function.Declaration.Returnˉtype) ||
+                Function.Declaration.Localˉtypes.Any(Type => !Isˉnativeˉtype(Type)) ||
+                Function.Declaration.Allˉlocalˉtypes.Length >= Nativeˉcontract.MAXIMUM_FRAME_SLOTS ||
+                Function.Declaration.Maximumˉstackˉdepth is < 1 or > Nativeˉcontract.MAXIMUM_FRAME_SLOTS)
+            {
+                Fail(
+                    "WVN2002",
+                    $"Native function '{Function.Declaration.Name}' must use only bounded i32/bool parameters, locals, stacks, and a non-void i32/bool return.");
+            }
         }
 
-        var Nativeˉmodule = Lowerˉverifiedˉwvb(Function);
-        var Fragment = Selectˉx64(Nativeˉmodule);
+        var Nativeˉmodule = Lowerˉverifiedˉwvb(verifiedˉmodule);
+        var Fragment = Selectˉx64(Nativeˉmodule, Mainˉexport.Targetˉindex);
         return new(Nativeˉmodule, Fragment);
     }
 
-    private static Nativeˉmodule Lowerˉverifiedˉwvb(Verifiedˉfunction function)
+    private static Nativeˉmodule Lowerˉverifiedˉwvb(Verifiedˉmodule module)
     {
+        var Functions = module.Functions
+            .Select((Function, Functionˉindex) => Lowerˉverifiedˉfunction(module, Function, Functionˉindex))
+            .ToImmutableArray();
+        var Data = module.Module.Data
+            .Cast<I32ˉarrayˉdataˉdeclaration>()
+            .Select(Declaration => new Nativeˉi32ˉdata(Declaration.Name, Declaration.Values))
+            .ToImmutableArray();
+        return new(Functions, Data);
+    }
+
+    private static Nativeˉfunction Lowerˉverifiedˉfunction(
+        Verifiedˉmodule module,
+        Verifiedˉfunction function,
+        int functionˉindex)
+    {
+        var Parameterˉtypes = function.Declaration.Parameterˉtypes
+            .Select(Toˉnativeˉtype)
+            .ToImmutableArray();
         var Localˉtypes = function.Declaration.Localˉtypes
             .Select(Toˉnativeˉtype)
             .ToImmutableArray();
+        var Allˉlocalˉtypes = Parameterˉtypes.AddRange(Localˉtypes);
         var Valueˉtypes = ImmutableArray.CreateBuilder<Nativeˉvalueˉtype>();
         var Instructions = function.Instructions;
         var Leaders = new HashSet<int> { Instructions[0].Offset };
@@ -100,7 +135,7 @@ public static class X64ˉnativeˉbackend
 
             int Newˉvalue(Nativeˉvalueˉtype type)
             {
-                if (Localˉtypes.Length + Valueˉtypes.Count >= Nativeˉcontract.MAXIMUM_FRAME_SLOTS)
+                if (Allˉlocalˉtypes.Length + Valueˉtypes.Count >= Nativeˉcontract.MAXIMUM_FRAME_SLOTS)
                 {
                     Fail("WVN2004", "The baseline native function exceeds its combined local/value frame-slot limit.");
                 }
@@ -142,22 +177,22 @@ public static class X64ˉnativeˉbackend
                         break;
                     case Opcode.Localˉload:
                         var Loadˉindex = checked((int)Instruction.Unsignedˉoperand);
-                        if ((uint)Loadˉindex >= (uint)Localˉtypes.Length)
+                        if ((uint)Loadˉindex >= (uint)Allˉlocalˉtypes.Length)
                         {
                             Fail("WVN2003", "Verified WVB exposed an invalid local load during native lowering.");
                         }
-                        var Loadˉtype = Localˉtypes[Loadˉindex];
+                        var Loadˉtype = Allˉlocalˉtypes[Loadˉindex];
                         var Loadˉresult = Newˉvalue(Loadˉtype);
                         Operations.Add(new Nativeˉlocalˉload(Loadˉresult, Loadˉindex, Loadˉtype));
                         Stack.Push(new(Loadˉresult, Loadˉtype));
                         break;
                     case Opcode.Localˉstore:
                         var Storeˉindex = checked((int)Instruction.Unsignedˉoperand);
-                        if ((uint)Storeˉindex >= (uint)Localˉtypes.Length)
+                        if ((uint)Storeˉindex >= (uint)Allˉlocalˉtypes.Length)
                         {
                             Fail("WVN2003", "Verified WVB exposed an invalid local store during native lowering.");
                         }
-                        var Storeˉtype = Localˉtypes[Storeˉindex];
+                        var Storeˉtype = Allˉlocalˉtypes[Storeˉindex];
                         var Storedˉvalue = Popˉvalue(Storeˉtype);
                         Operations.Add(new Nativeˉlocalˉstore(Storeˉindex, Storeˉtype, Storedˉvalue.Value));
                         break;
@@ -229,6 +264,40 @@ public static class X64ˉnativeˉbackend
                         Operations.Add(new Nativeˉboolˉnot(Notˉresult, Boolˉinput.Value));
                         Stack.Push(new(Notˉresult, Nativeˉvalueˉtype.Bool));
                         break;
+                    case Opcode.Dataˉlength:
+                        var Lengthˉdata = checked((int)Instruction.Unsignedˉoperand);
+                        var Lengthˉresult = Newˉvalue(Nativeˉvalueˉtype.I32);
+                        Operations.Add(new Nativeˉdataˉlength(
+                            Lengthˉresult,
+                            Lengthˉdata,
+                            ((I32ˉarrayˉdataˉdeclaration)module.Module.Data[Lengthˉdata]).Values.Length));
+                        Stack.Push(new(Lengthˉresult, Nativeˉvalueˉtype.I32));
+                        break;
+                    case Opcode.Dataˉloadˉi32:
+                        var Loadˉdata = checked((int)Instruction.Unsignedˉoperand);
+                        var Dataˉindex = Popˉvalue(Nativeˉvalueˉtype.I32);
+                        var Dataˉresult = Newˉvalue(Nativeˉvalueˉtype.I32);
+                        Operations.Add(new Nativeˉdataˉloadˉi32(Dataˉresult, Loadˉdata, Dataˉindex.Value));
+                        Stack.Push(new(Dataˉresult, Nativeˉvalueˉtype.I32));
+                        break;
+                    case Opcode.Call:
+                        var Calledˉfunctionˉindex = checked((int)Instruction.Unsignedˉoperand);
+                        var Calledˉfunction = module.Functions[Calledˉfunctionˉindex].Declaration;
+                        var Arguments = new Nativeˉstackˉvalue[Calledˉfunction.Parameterˉtypes.Length];
+                        for (var Argumentˉindex = Arguments.Length - 1; Argumentˉindex >= 0; Argumentˉindex--)
+                        {
+                            Arguments[Argumentˉindex] = Popˉvalue(Toˉnativeˉtype(
+                                Calledˉfunction.Parameterˉtypes[Argumentˉindex]));
+                        }
+                        var Callˉtype = Toˉnativeˉtype(Calledˉfunction.Returnˉtype);
+                        var Callˉresult = Newˉvalue(Callˉtype);
+                        Operations.Add(new Nativeˉcall(
+                            Callˉresult,
+                            Callˉtype,
+                            Calledˉfunctionˉindex,
+                            Arguments.Select(Argument => Argument.Value).ToImmutableArray()));
+                        Stack.Push(new(Callˉresult, Callˉtype));
+                        break;
                     case Opcode.Jump:
                         Requireˉterminator(Isˉlast, Stack, Instruction.Opcode);
                         Terminator = new Nativeˉjump(Blockˉids[checked((int)Instruction.Unsignedˉoperand)]);
@@ -254,7 +323,7 @@ public static class X64ˉnativeˉbackend
                         {
                             Fail("WVN2003", "A native return must terminate its basic block.");
                         }
-                        var Returnˉvalue = Popˉvalue(Nativeˉvalueˉtype.I32);
+                        var Returnˉvalue = Popˉvalue(Toˉnativeˉtype(function.Declaration.Returnˉtype));
                         if (Stack.Count != 0)
                         {
                             Fail("WVN2003", "The baseline native subset requires an empty operand stack at return.");
@@ -280,165 +349,307 @@ public static class X64ˉnativeˉbackend
             Blocks.Add(new(Blockˉid, Operations.ToImmutable(), Terminator));
         }
 
-        return new([new("Main", Localˉtypes, Valueˉtypes.ToImmutable(), Blocks.ToImmutable())]);
+        return new(
+            function.Declaration.Name,
+            Parameterˉtypes,
+            Toˉnativeˉtype(function.Declaration.Returnˉtype),
+            Localˉtypes,
+            Valueˉtypes.ToImmutable(),
+            Blocks.ToImmutable());
     }
 
-    private static Nativeˉfragment Selectˉx64(Nativeˉmodule module)
+    private static Nativeˉfragment Selectˉx64(Nativeˉmodule module, int mainˉfunction)
     {
-        if (module.Functions.Length != 1 ||
-            module.Functions[0] is not { Name: "Main", Blocks.Length: >= 1 })
+        if (module.Functions.IsDefaultOrEmpty ||
+            (uint)mainˉfunction >= (uint)module.Functions.Length ||
+            module.Functions[mainˉfunction] is not { Name: "Main", Blocks.Length: >= 1 } ||
+            module.Data.IsDefault)
         {
             Fail("WVN2901", "The x86-64 selector received an unsupported native machine-IR shape.");
         }
-        var Function = module.Functions[0];
-        Validateˉfunction(Function);
-        var Usedˉslots = checked(Function.Localˉtypes.Length + Function.Valueˉtypes.Length);
-        var Frameˉbytes = checked((Usedˉslots * sizeof(int) + 15) & ~15);
-        var Code = new List<byte>();
-        var Overflowˉpatches = new List<int>();
-        var Instructionˉlimitˉpatches = new List<int>();
-        var Branchˉpatches = new List<Nativeˉbranchˉpatch>();
-        var Blockˉoffsets = new int[Function.Blocks.Length];
-
-        Emitˉframeˉadjustment(Code, subtract: true, Frameˉbytes);
-        Code.AddRange([0x49, 0x89, 0xD3]);
-        Code.AddRange([0x31, 0xC0]);
-        for (var Slot = 0; Slot < Frameˉbytes / sizeof(int); Slot++)
+        foreach (var Function in module.Functions)
         {
-            Emitˉstoreˉeax(Code, Slot);
+            Validateˉfunction(module, Function);
+        }
+        foreach (var Data in module.Data)
+        {
+            if (Data is null || !Seedˉnames.Isˉidentifier(Data.Name) || Data.Values.IsDefault)
+            {
+                Fail("WVN2901", "The x86-64 selector received invalid immutable data metadata.");
+            }
         }
 
-        foreach (var Block in Function.Blocks)
+        var Code = new List<byte>();
+        var Functionˉoffsets = new int[module.Functions.Length];
+        var Functionˉsizes = new int[module.Functions.Length];
+        var Callˉpatches = new List<Nativeˉcallˉpatch>();
+        var Dataˉreferences = new List<Nativeˉdataˉreference>();
+
+        for (var Functionˉindex = 0; Functionˉindex < module.Functions.Length; Functionˉindex++)
         {
-            Blockˉoffsets[Block.Id] = Code.Count;
-            foreach (var Operation in Block.Operations)
+            var Function = module.Functions[Functionˉindex];
+            Functionˉoffsets[Functionˉindex] = Code.Count;
+            var Allˉlocals = Function.Allˉlocalˉtypes;
+            var Usedˉslots = checked(Allˉlocals.Length + Function.Valueˉtypes.Length);
+            var Frameˉbytes = checked((Usedˉslots * sizeof(int) + 15) & ~15);
+            var Overflowˉpatches = new List<int>();
+            var Instructionˉlimitˉpatches = new List<int>();
+            var Boundsˉpatches = new List<int>();
+            var Propagateˉpatches = new List<int>();
+            var Depthˉpatches = new List<int>();
+            var Branchˉpatches = new List<Nativeˉbranchˉpatch>();
+            var Blockˉoffsets = new int[Function.Blocks.Length];
+
+            if (Functionˉindex == mainˉfunction)
             {
-                switch (Operation)
+                Code.AddRange([0x49, 0x89, 0xD3]); // mov r11, rdx: shared instruction budget
+                Code.AddRange([0x4D, 0x89, 0xCA]); // mov r10, r9: shared call-depth budget
+            }
+            Code.AddRange([0x49, 0x83, 0xEA, 0x01, 0x0F, 0x82]); // sub r10, 1; jb depth trap
+            Depthˉpatches.Add(Code.Count);
+            Addˉi32(Code, 0);
+            Emitˉframeˉadjustment(Code, subtract: true, Frameˉbytes);
+            Code.AddRange([0x31, 0xC0]);
+            for (var Slot = 0; Slot < Frameˉbytes / sizeof(int); Slot++)
+            {
+                Emitˉstoreˉeax(Code, Slot);
+            }
+            for (var Parameter = 0; Parameter < Function.Parameterˉtypes.Length; Parameter++)
+            {
+                Emitˉstoreˉargument(Code, Parameter);
+            }
+
+            foreach (var Block in Function.Blocks)
+            {
+                Blockˉoffsets[Block.Id] = Code.Count;
+                foreach (var Operation in Block.Operations)
                 {
-                    case Nativeˉinstructionˉcharge:
-                        Emitˉinstructionˉcharge(Code, Instructionˉlimitˉpatches);
-                        break;
-                    case Nativeˉi32ˉconstant Constant:
-                        Emitˉconstant(Code, Constant.Value, Valueˉslot(Function, Constant.Result));
-                        break;
-                    case Nativeˉboolˉconstant Constant:
-                        Emitˉconstant(Code, Constant.Value ? 1 : 0, Valueˉslot(Function, Constant.Result));
-                        break;
-                    case Nativeˉlocalˉload Load:
-                        Emitˉcopy(Code, Load.Local, Valueˉslot(Function, Load.Result));
-                        break;
-                    case Nativeˉlocalˉstore Store:
-                        Emitˉcopy(Code, Valueˉslot(Function, Store.Value), Store.Local);
-                        break;
-                    case Nativeˉi32ˉbinary Binary:
-                        Emitˉloadˉeax(Code, Valueˉslot(Function, Binary.Left));
-                        Emitˉloadˉecx(Code, Valueˉslot(Function, Binary.Right));
-                        switch (Binary.Kind)
-                        {
-                            case Nativeˉi32ˉbinaryˉkind.Add:
-                                Code.AddRange([0x01, 0xC8]);
-                                break;
-                            case Nativeˉi32ˉbinaryˉkind.Subtract:
-                                Code.AddRange([0x29, 0xC8]);
-                                break;
-                            case Nativeˉi32ˉbinaryˉkind.Multiply:
-                                Code.AddRange([0x0F, 0xAF, 0xC1]);
-                                break;
-                        }
-                        Emitˉoverflowˉbranch(Code, Overflowˉpatches);
-                        Emitˉstoreˉeax(Code, Valueˉslot(Function, Binary.Result));
-                        break;
-                    case Nativeˉi32ˉnegate Negate:
-                        Emitˉloadˉeax(Code, Valueˉslot(Function, Negate.Value));
-                        Code.AddRange([0xF7, 0xD8]);
-                        Emitˉoverflowˉbranch(Code, Overflowˉpatches);
-                        Emitˉstoreˉeax(Code, Valueˉslot(Function, Negate.Result));
-                        break;
-                    case Nativeˉi32ˉcomparison Comparison:
-                        Emitˉcomparison(
-                            Code,
-                            Valueˉslot(Function, Comparison.Left),
-                            Valueˉslot(Function, Comparison.Right),
-                            Comparison.Kind switch
+                    switch (Operation)
+                    {
+                        case Nativeˉinstructionˉcharge:
+                            Emitˉinstructionˉcharge(Code, Instructionˉlimitˉpatches);
+                            break;
+                        case Nativeˉi32ˉconstant Constant:
+                            Emitˉconstant(Code, Constant.Value, Valueˉslot(Function, Constant.Result));
+                            break;
+                        case Nativeˉboolˉconstant Constant:
+                            Emitˉconstant(Code, Constant.Value ? 1 : 0, Valueˉslot(Function, Constant.Result));
+                            break;
+                        case Nativeˉlocalˉload Load:
+                            Emitˉcopy(Code, Load.Local, Valueˉslot(Function, Load.Result));
+                            break;
+                        case Nativeˉlocalˉstore Store:
+                            Emitˉcopy(Code, Valueˉslot(Function, Store.Value), Store.Local);
+                            break;
+                        case Nativeˉi32ˉbinary Binary:
+                            Emitˉloadˉeax(Code, Valueˉslot(Function, Binary.Left));
+                            Emitˉloadˉecx(Code, Valueˉslot(Function, Binary.Right));
+                            switch (Binary.Kind)
                             {
-                                Nativeˉi32ˉcomparisonˉkind.Equal => 0x94,
-                                Nativeˉi32ˉcomparisonˉkind.Notˉequal => 0x95,
-                                Nativeˉi32ˉcomparisonˉkind.Less => 0x9C,
-                                Nativeˉi32ˉcomparisonˉkind.Lessˉequal => 0x9E,
-                                Nativeˉi32ˉcomparisonˉkind.Greater => 0x9F,
-                                _ => 0x9D,
-                            },
-                            Valueˉslot(Function, Comparison.Result));
+                                case Nativeˉi32ˉbinaryˉkind.Add:
+                                    Code.AddRange([0x01, 0xC8]);
+                                    break;
+                                case Nativeˉi32ˉbinaryˉkind.Subtract:
+                                    Code.AddRange([0x29, 0xC8]);
+                                    break;
+                                case Nativeˉi32ˉbinaryˉkind.Multiply:
+                                    Code.AddRange([0x0F, 0xAF, 0xC1]);
+                                    break;
+                            }
+                            Emitˉoverflowˉbranch(Code, Overflowˉpatches);
+                            Emitˉstoreˉeax(Code, Valueˉslot(Function, Binary.Result));
+                            break;
+                        case Nativeˉi32ˉnegate Negate:
+                            Emitˉloadˉeax(Code, Valueˉslot(Function, Negate.Value));
+                            Code.AddRange([0xF7, 0xD8]);
+                            Emitˉoverflowˉbranch(Code, Overflowˉpatches);
+                            Emitˉstoreˉeax(Code, Valueˉslot(Function, Negate.Result));
+                            break;
+                        case Nativeˉi32ˉcomparison Comparison:
+                            Emitˉcomparison(
+                                Code,
+                                Valueˉslot(Function, Comparison.Left),
+                                Valueˉslot(Function, Comparison.Right),
+                                Comparison.Kind switch
+                                {
+                                    Nativeˉi32ˉcomparisonˉkind.Equal => 0x94,
+                                    Nativeˉi32ˉcomparisonˉkind.Notˉequal => 0x95,
+                                    Nativeˉi32ˉcomparisonˉkind.Less => 0x9C,
+                                    Nativeˉi32ˉcomparisonˉkind.Lessˉequal => 0x9E,
+                                    Nativeˉi32ˉcomparisonˉkind.Greater => 0x9F,
+                                    _ => 0x9D,
+                                },
+                                Valueˉslot(Function, Comparison.Result));
+                            break;
+                        case Nativeˉboolˉcomparison Comparison:
+                            Emitˉcomparison(
+                                Code,
+                                Valueˉslot(Function, Comparison.Left),
+                                Valueˉslot(Function, Comparison.Right),
+                                Comparison.Kind == Nativeˉboolˉcomparisonˉkind.Equal ? (byte)0x94 : (byte)0x95,
+                                Valueˉslot(Function, Comparison.Result));
+                            break;
+                        case Nativeˉboolˉnot Not:
+                            Emitˉloadˉeax(Code, Valueˉslot(Function, Not.Value));
+                            Code.AddRange([0x83, 0xF0, 0x01]);
+                            Emitˉstoreˉeax(Code, Valueˉslot(Function, Not.Result));
+                            break;
+                        case Nativeˉdataˉlength Length:
+                            Emitˉconstant(Code, Length.Length, Valueˉslot(Function, Length.Result));
+                            break;
+                        case Nativeˉdataˉloadˉi32 Load:
+                            Emitˉloadˉeax(Code, Valueˉslot(Function, Load.Index));
+                            Code.Add(0x3D);
+                            Addˉi32(Code, module.Data[Load.Data].Values.Length);
+                            Code.AddRange([0x0F, 0x83]);
+                            Boundsˉpatches.Add(Code.Count);
+                            Addˉi32(Code, 0);
+                            Code.AddRange([0x48, 0x8D, 0x15]);
+                            Dataˉreferences.Add(new(Code.Count, Load.Data));
+                            Addˉi32(Code, 0);
+                            Code.AddRange([0x8B, 0x04, 0x82]);
+                            Emitˉstoreˉeax(Code, Valueˉslot(Function, Load.Result));
+                            break;
+                        case Nativeˉcall Call:
+                            for (var Argument = 0; Argument < Call.Arguments.Length; Argument++)
+                            {
+                                Emitˉloadˉargument(
+                                    Code,
+                                    Argument,
+                                    Valueˉslot(Function, Call.Arguments[Argument]));
+                            }
+                            Code.Add(0xE8);
+                            Callˉpatches.Add(new(Code.Count, Call.Function));
+                            Addˉi32(Code, 0);
+                            Code.AddRange([0x48, 0x89, 0xC2, 0x48, 0xC1, 0xEA, 0x20, 0x48, 0x85, 0xD2, 0x0F, 0x85]);
+                            Propagateˉpatches.Add(Code.Count);
+                            Addˉi32(Code, 0);
+                            Emitˉstoreˉeax(Code, Valueˉslot(Function, Call.Result));
+                            break;
+                    }
+                }
+
+                var Hasˉchargedˉterminator = !Block.Operations.IsEmpty &&
+                    Block.Operations[^1] is Nativeˉinstructionˉcharge;
+                switch (Block.Terminator)
+                {
+                    case Nativeˉjump Jump:
+                        if (Hasˉchargedˉterminator || Jump.Targetˉblock != Block.Id + 1)
+                        {
+                            Emitˉdirectˉbranch(Code, 0xE9, Jump.Targetˉblock, Branchˉpatches);
+                        }
                         break;
-                    case Nativeˉboolˉcomparison Comparison:
-                        Emitˉcomparison(
-                            Code,
-                            Valueˉslot(Function, Comparison.Left),
-                            Valueˉslot(Function, Comparison.Right),
-                            Comparison.Kind == Nativeˉboolˉcomparisonˉkind.Equal ? (byte)0x94 : (byte)0x95,
-                            Valueˉslot(Function, Comparison.Result));
+                    case Nativeˉbranch Branch:
+                        Emitˉloadˉeax(Code, Valueˉslot(Function, Branch.Condition));
+                        Code.AddRange([0x85, 0xC0, 0x0F, 0x85]);
+                        Branchˉpatches.Add(new(Code.Count, Branch.Trueˉblock));
+                        Addˉi32(Code, 0);
+                        Emitˉdirectˉbranch(Code, 0xE9, Branch.Falseˉblock, Branchˉpatches);
                         break;
-                    case Nativeˉboolˉnot Not:
-                        Emitˉloadˉeax(Code, Valueˉslot(Function, Not.Value));
-                        Code.AddRange([0x83, 0xF0, 0x01]);
-                        Emitˉstoreˉeax(Code, Valueˉslot(Function, Not.Result));
+                    case Nativeˉreturn Return:
+                        Emitˉloadˉeax(Code, Valueˉslot(Function, Return.Value));
+                        Emitˉfunctionˉreturn(Code, Frameˉbytes);
                         break;
                 }
             }
 
-            var Hasˉchargedˉterminator = !Block.Operations.IsEmpty &&
-                Block.Operations[^1] is Nativeˉinstructionˉcharge;
-            switch (Block.Terminator)
+            var Propagateˉoffset = Code.Count;
+            Emitˉframeˉadjustment(Code, subtract: false, Frameˉbytes);
+            Emitˉrestoreˉdepthˉandˉreturn(Code);
+            var Overflowˉoffset = Code.Count;
+            Emitˉstatusˉtrap(Code, Frameˉbytes, INTEGER_OVERFLOW_STATUS);
+            var Instructionˉlimitˉoffset = Code.Count;
+            Emitˉstatusˉtrap(Code, Frameˉbytes, INSTRUCTION_LIMIT_STATUS);
+            var Boundsˉoffset = Code.Count;
+            Emitˉstatusˉtrap(Code, Frameˉbytes, DATA_BOUNDS_STATUS);
+            var Depthˉoffset = Code.Count;
+            Code.AddRange([0x49, 0xFF, 0xC2, 0x48, 0xB8]);
+            Addˉu64(Code, CALL_DEPTH_STATUS);
+            Code.Add(0xC3);
+
+            foreach (var Patchˉoffset in Overflowˉpatches)
             {
-                case Nativeˉjump Jump:
-                    if (Hasˉchargedˉterminator || Jump.Targetˉblock != Block.Id + 1)
-                    {
-                        Emitˉdirectˉbranch(Code, 0xE9, Jump.Targetˉblock, Branchˉpatches);
-                    }
-                    break;
-                case Nativeˉbranch Branch:
-                    Emitˉloadˉeax(Code, Valueˉslot(Function, Branch.Condition));
-                    Code.AddRange([0x85, 0xC0, 0x0F, 0x85]);
-                    Branchˉpatches.Add(new(Code.Count, Branch.Trueˉblock));
-                    Addˉi32(Code, 0);
-                    Emitˉdirectˉbranch(Code, 0xE9, Branch.Falseˉblock, Branchˉpatches);
-                    break;
-                case Nativeˉreturn Return:
-                    Emitˉloadˉeax(Code, Valueˉslot(Function, Return.Value));
-                    Emitˉframeˉadjustment(Code, subtract: false, Frameˉbytes);
-                    Code.Add(0xC3);
-                    break;
+                Writeˉrelativeˉi32(Code, Patchˉoffset, Overflowˉoffset);
+            }
+            foreach (var Patchˉoffset in Instructionˉlimitˉpatches)
+            {
+                Writeˉrelativeˉi32(Code, Patchˉoffset, Instructionˉlimitˉoffset);
+            }
+            foreach (var Patchˉoffset in Boundsˉpatches)
+            {
+                Writeˉrelativeˉi32(Code, Patchˉoffset, Boundsˉoffset);
+            }
+            foreach (var Patchˉoffset in Propagateˉpatches)
+            {
+                Writeˉrelativeˉi32(Code, Patchˉoffset, Propagateˉoffset);
+            }
+            foreach (var Patchˉoffset in Depthˉpatches)
+            {
+                Writeˉrelativeˉi32(Code, Patchˉoffset, Depthˉoffset);
+            }
+            foreach (var Patch in Branchˉpatches)
+            {
+                Writeˉrelativeˉi32(Code, Patch.Offset, Blockˉoffsets[Patch.Targetˉblock]);
+            }
+            Functionˉsizes[Functionˉindex] = checked(Code.Count - Functionˉoffsets[Functionˉindex]);
+        }
+
+        foreach (var Patch in Callˉpatches)
+        {
+            Writeˉrelativeˉi32(Code, Patch.Offset, Functionˉoffsets[Patch.Targetˉfunction]);
+        }
+
+        var Dataˉoffsets = new int[module.Data.Length];
+        if (!module.Data.IsEmpty)
+        {
+            while ((Code.Count & 15) != 0)
+            {
+                Code.Add(0x90);
+            }
+            for (var Dataˉindex = 0; Dataˉindex < module.Data.Length; Dataˉindex++)
+            {
+                Dataˉoffsets[Dataˉindex] = Code.Count;
+                foreach (var Value in module.Data[Dataˉindex].Values)
+                {
+                    Addˉi32(Code, Value);
+                }
             }
         }
 
-        var Trapˉoffset = Code.Count;
-        Emitˉframeˉadjustment(Code, subtract: false, Frameˉbytes);
-        Code.AddRange([0x48, 0xB8]);
-        Addˉu64(Code, INTEGER_OVERFLOW_STATUS);
-        Code.Add(0xC3);
+        var Nativeˉpatches = ImmutableArray.CreateBuilder<Nativeˉpatch>(Dataˉreferences.Count);
+        foreach (var Reference in Dataˉreferences)
+        {
+            Writeˉrelativeˉi32(Code, Reference.Offset, Dataˉoffsets[Reference.Data]);
+            Nativeˉpatches.Add(new(
+                Nativeˉpatchˉkind.Relativeˉi32,
+                (uint)Reference.Offset,
+                Dataˉsymbolˉname(Reference.Data),
+                -sizeof(int)));
+        }
 
-        var Instructionˉlimitˉoffset = Code.Count;
-        Emitˉframeˉadjustment(Code, subtract: false, Frameˉbytes);
-        Code.AddRange([0x48, 0xB8]);
-        Addˉu64(Code, INSTRUCTION_LIMIT_STATUS);
-        Code.Add(0xC3);
-
-        var Bytes = Code.ToArray();
-        if (Bytes.Length > Nativeˉcontract.MAXIMUM_CODE_BYTES)
+        if (Code.Count > Nativeˉcontract.MAXIMUM_CODE_BYTES)
         {
             Fail("WVN2902", "The selected x86-64 fragment exceeds its code-size limit.");
         }
-        foreach (var Patchˉoffset in Overflowˉpatches)
+        var Bytes = Code.ToImmutableArray();
+        var Symbols = ImmutableArray.CreateBuilder<Nativeˉsymbol>();
+        for (var Functionˉindex = 0; Functionˉindex < module.Functions.Length; Functionˉindex++)
         {
-            Writeˉrelativeˉi32(Bytes, Patchˉoffset, Trapˉoffset);
+            Symbols.Add(new(
+                Functionˉindex == mainˉfunction ? "Main" : Functionˉsymbolˉname(Functionˉindex),
+                Functionˉindex == mainˉfunction ? Nativeˉsymbolˉbinding.Export : Nativeˉsymbolˉbinding.Local,
+                Nativeˉsymbolˉkind.Function,
+                (uint)Functionˉoffsets[Functionˉindex],
+                (uint)Functionˉsizes[Functionˉindex]));
         }
-        foreach (var Patchˉoffset in Instructionˉlimitˉpatches)
+        for (var Dataˉindex = 0; Dataˉindex < module.Data.Length; Dataˉindex++)
         {
-            Writeˉrelativeˉi32(Bytes, Patchˉoffset, Instructionˉlimitˉoffset);
-        }
-        foreach (var Patch in Branchˉpatches)
-        {
-            Writeˉrelativeˉi32(Bytes, Patch.Offset, Blockˉoffsets[Patch.Targetˉblock]);
+            Symbols.Add(new(
+                Dataˉsymbolˉname(Dataˉindex),
+                Nativeˉsymbolˉbinding.Local,
+                Nativeˉsymbolˉkind.Data,
+                (uint)Dataˉoffsets[Dataˉindex],
+                checked((uint)module.Data[Dataˉindex].Values.Length * sizeof(int))));
         }
 
         var Fragment = new Nativeˉfragment(
@@ -446,26 +657,28 @@ public static class X64ˉnativeˉbackend
             Nativeˉcontract.ABI_VERSION,
             Objectˉarchitecture.X86ˉ64,
             16,
-            Bytes.ToImmutableArray(),
-            [
-                new("$instruction_limit", Nativeˉsymbolˉbinding.Local, Nativeˉsymbolˉkind.Function,
-                    (uint)Instructionˉlimitˉoffset, (uint)(Bytes.Length - Instructionˉlimitˉoffset)),
-                new("$overflow", Nativeˉsymbolˉbinding.Local, Nativeˉsymbolˉkind.Function,
-                    (uint)Trapˉoffset, (uint)(Instructionˉlimitˉoffset - Trapˉoffset)),
-                new("Main", Nativeˉsymbolˉbinding.Export, Nativeˉsymbolˉkind.Function,
-                    0, (uint)Trapˉoffset),
-            ],
-            []);
+            Bytes,
+            Symbols
+                .OrderBy(Symbol => Symbol.Binding)
+                .ThenBy(Symbol => Symbol.Name, StringComparer.Ordinal)
+                .ToImmutableArray(),
+            Nativeˉpatches
+                .OrderBy(Patch => Patch.Offset)
+                .ToImmutableArray());
         return Nativeˉfragmentˉverifier.Verify(Fragment);
     }
 
-    private static void Validateˉfunction(Nativeˉfunction function)
+    private static void Validateˉfunction(Nativeˉmodule module, Nativeˉfunction function)
     {
-        if (function.Localˉtypes.IsDefault ||
+        if (function.Parameterˉtypes.IsDefault ||
+            function.Localˉtypes.IsDefault ||
             function.Valueˉtypes.IsDefault ||
             function.Blocks.IsDefaultOrEmpty ||
             function.Blocks.Length > Nativeˉcontract.MAXIMUM_BLOCKS ||
-            function.Localˉtypes.Length + function.Valueˉtypes.Length is < 1 or > Nativeˉcontract.MAXIMUM_FRAME_SLOTS ||
+            function.Parameterˉtypes.Length > Nativeˉcontract.MAXIMUM_CALL_PARAMETERS ||
+            function.Allˉlocalˉtypes.Length + function.Valueˉtypes.Length is < 1 or > Nativeˉcontract.MAXIMUM_FRAME_SLOTS ||
+            !Enum.IsDefined(function.Returnˉtype) ||
+            function.Parameterˉtypes.Any(Type => !Enum.IsDefined(Type)) ||
             function.Localˉtypes.Any(Type => !Enum.IsDefined(Type)) ||
             function.Valueˉtypes.Any(Type => !Enum.IsDefined(Type)))
         {
@@ -537,6 +750,37 @@ public static class X64ˉnativeˉbackend
                         Requireˉvalue(function, Not.Value, Nativeˉvalueˉtype.Bool, Nextˉvalue);
                         Requireˉresult(function, Not.Result, Nativeˉvalueˉtype.Bool, ref Nextˉvalue);
                         break;
+                    case Nativeˉdataˉlength Length:
+                        Requireˉdata(module, Length.Data);
+                        if (Length.Length != module.Data[Length.Data].Values.Length)
+                        {
+                            Fail("WVN2901", "The x86-64 selector received a noncanonical data length.");
+                        }
+                        Requireˉresult(function, Length.Result, Nativeˉvalueˉtype.I32, ref Nextˉvalue);
+                        break;
+                    case Nativeˉdataˉloadˉi32 Load:
+                        Requireˉdata(module, Load.Data);
+                        Requireˉvalue(function, Load.Index, Nativeˉvalueˉtype.I32, Nextˉvalue);
+                        Requireˉresult(function, Load.Result, Nativeˉvalueˉtype.I32, ref Nextˉvalue);
+                        break;
+                    case Nativeˉcall Call:
+                        if ((uint)Call.Function >= (uint)module.Functions.Length ||
+                            Call.Arguments.IsDefault ||
+                            Call.Type != module.Functions[Call.Function].Returnˉtype ||
+                            Call.Arguments.Length != module.Functions[Call.Function].Parameterˉtypes.Length)
+                        {
+                            Fail("WVN2901", "The x86-64 selector received invalid native call metadata.");
+                        }
+                        for (var Argument = 0; Argument < Call.Arguments.Length; Argument++)
+                        {
+                            Requireˉvalue(
+                                function,
+                                Call.Arguments[Argument],
+                                module.Functions[Call.Function].Parameterˉtypes[Argument],
+                                Nextˉvalue);
+                        }
+                        Requireˉresult(function, Call.Result, Call.Type, ref Nextˉvalue);
+                        break;
                     default:
                         Fail("WVN2901", "The x86-64 selector received an invalid native operation.");
                         break;
@@ -566,7 +810,7 @@ public static class X64ˉnativeˉbackend
                     {
                         Fail("WVN2901", "A native return must consume one instruction charge.");
                     }
-                    Requireˉvalue(function, Return.Value, Nativeˉvalueˉtype.I32, Nextˉvalue);
+                    Requireˉvalue(function, Return.Value, function.Returnˉtype, Nextˉvalue);
                     Returnˉcount++;
                     break;
                 default:
@@ -629,7 +873,8 @@ public static class X64ˉnativeˉbackend
 
     private static void Requireˉlocal(Nativeˉfunction function, int local, Nativeˉvalueˉtype type)
     {
-        if ((uint)local >= (uint)function.Localˉtypes.Length || function.Localˉtypes[local] != type)
+        var Locals = function.Allˉlocalˉtypes;
+        if ((uint)local >= (uint)Locals.Length || Locals[local] != type)
         {
             Fail("WVN2901", "The x86-64 selector received an invalid typed local reference.");
         }
@@ -668,8 +913,16 @@ public static class X64ˉnativeˉbackend
         }
     }
 
+    private static void Requireˉdata(Nativeˉmodule module, int data)
+    {
+        if ((uint)data >= (uint)module.Data.Length)
+        {
+            Fail("WVN2901", "The x86-64 selector received an invalid static-data reference.");
+        }
+    }
+
     private static int Valueˉslot(Nativeˉfunction function, int value) =>
-        checked(function.Localˉtypes.Length + value);
+        checked(function.Allˉlocalˉtypes.Length + value);
 
     private static void Emitˉconstant(List<byte> code, int value, int targetˉslot)
     {
@@ -709,6 +962,32 @@ public static class X64ˉnativeˉbackend
         Addˉi32(code, checked(slot * sizeof(int)));
     }
 
+    private static void Emitˉloadˉargument(List<byte> code, int argument, int slot)
+    {
+        code.AddRange(argument switch
+        {
+            0 => [0x44, 0x8B, 0x84, 0x24],
+            1 => [0x44, 0x8B, 0x8C, 0x24],
+            2 => [0x8B, 0x8C, 0x24],
+            3 => [0x8B, 0x94, 0x24],
+            _ => throw new Nativeˉbackendˉexception("WVN2901", "The native call exceeds its register-argument limit."),
+        });
+        Addˉi32(code, checked(slot * sizeof(int)));
+    }
+
+    private static void Emitˉstoreˉargument(List<byte> code, int argument)
+    {
+        code.AddRange(argument switch
+        {
+            0 => [0x44, 0x89, 0x84, 0x24],
+            1 => [0x44, 0x89, 0x8C, 0x24],
+            2 => [0x89, 0x8C, 0x24],
+            3 => [0x89, 0x94, 0x24],
+            _ => throw new Nativeˉbackendˉexception("WVN2901", "The native function exceeds its register-parameter limit."),
+        });
+        Addˉi32(code, checked(argument * sizeof(int)));
+    }
+
     private static void Emitˉloadˉecx(List<byte> code, int slot)
     {
         code.AddRange([0x8B, 0x8C, 0x24]);
@@ -746,11 +1025,39 @@ public static class X64ˉnativeˉbackend
         Addˉi32(code, 0);
     }
 
-    private static void Writeˉrelativeˉi32(byte[] code, int displacementˉoffset, int targetˉoffset)
+    private static void Emitˉfunctionˉreturn(List<byte> code, int frameˉbytes)
+    {
+        Emitˉframeˉadjustment(code, subtract: false, frameˉbytes);
+        Emitˉrestoreˉdepthˉandˉreturn(code);
+    }
+
+    private static void Emitˉrestoreˉdepthˉandˉreturn(List<byte> code)
+    {
+        code.AddRange([0x49, 0xFF, 0xC2, 0xC3]);
+    }
+
+    private static void Emitˉstatusˉtrap(List<byte> code, int frameˉbytes, ulong status)
+    {
+        Emitˉframeˉadjustment(code, subtract: false, frameˉbytes);
+        code.AddRange([0x49, 0xFF, 0xC2, 0x48, 0xB8]);
+        Addˉu64(code, status);
+        code.Add(0xC3);
+    }
+
+    private static void Writeˉrelativeˉi32(List<byte> code, int displacementˉoffset, int targetˉoffset)
     {
         var Displacement = checked(targetˉoffset - (displacementˉoffset + sizeof(int)));
-        BinaryPrimitives.WriteInt32LittleEndian(code.AsSpan(displacementˉoffset, sizeof(int)), Displacement);
+        Span<byte> Bytes = stackalloc byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32LittleEndian(Bytes, Displacement);
+        for (var Index = 0; Index < Bytes.Length; Index++)
+        {
+            code[displacementˉoffset + Index] = Bytes[Index];
+        }
     }
+
+    private static string Dataˉsymbolˉname(int index) => $"$data_{index:D4}";
+
+    private static string Functionˉsymbolˉname(int index) => $"$function_{index:D4}";
 
     private static void Addˉi32(List<byte> code, int value)
     {
@@ -775,6 +1082,10 @@ public static class X64ˉnativeˉbackend
     private readonly record struct Nativeˉstackˉvalue(int Value, Nativeˉvalueˉtype Type);
 
     private readonly record struct Nativeˉbranchˉpatch(int Offset, int Targetˉblock);
+
+    private readonly record struct Nativeˉcallˉpatch(int Offset, int Targetˉfunction);
+
+    private readonly record struct Nativeˉdataˉreference(int Offset, int Data);
 
     [DoesNotReturn]
     private static void Fail(string code, string message) =>

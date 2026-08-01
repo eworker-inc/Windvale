@@ -22,7 +22,8 @@ public static class X64ˉnativeˉexecutor
     public static int Executeˉi32(
         Nativeˉfragment fragment,
         string entry = "Main",
-        long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS)
+        long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS,
+        int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH)
     {
         Nativeˉfragmentˉverifier.Verify(fragment);
         ArgumentNullException.ThrowIfNull(entry);
@@ -31,6 +32,12 @@ public static class X64ˉnativeˉexecutor
             throw new ArgumentOutOfRangeException(
                 nameof(maximumˉinstructions),
                 "The maximum instruction count must be positive.");
+        }
+        if (maximumˉcallˉdepth <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maximumˉcallˉdepth),
+                "The maximum call depth must be positive.");
         }
         if (RuntimeInformation.ProcessArchitecture != Architecture.X64)
         {
@@ -56,7 +63,8 @@ public static class X64ˉnativeˉexecutor
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
             var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉi32ˉentry>(new(Entryˉaddress));
             var Budget = checked((ulong)maximumˉinstructions);
-            Outcome = Function(0, Budget, Budget);
+            var Callˉdepth = checked((ulong)maximumˉcallˉdepth);
+            Outcome = Function(0, Budget, Budget, Callˉdepth, 0, Callˉdepth);
         }
         finally
         {
@@ -79,6 +87,18 @@ public static class X64ˉnativeˉexecutor
             throw new Nativeˉtrapˉexception(
                 "WVR3011",
                 $"The native instruction limit {maximumˉinstructions} was exceeded in entry '{entry}'.");
+        }
+        if (Status == 3)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3004",
+                $"The native call-depth limit {maximumˉcallˉdepth} was exceeded in entry '{entry}'.");
+        }
+        if (Status == 4)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3005",
+                $"A native static-data index was outside its immutable array in entry '{entry}'.");
         }
         throw new Nativeˉbackendˉexception(
             "WVN4005",
@@ -183,7 +203,10 @@ public static class X64ˉnativeˉexecutor
     private delegate ulong Nativeˉi32ˉentry(
         ulong windowsˉpadding,
         ulong sharedˉbudget,
-        ulong systemˉvˉbudget);
+        ulong systemˉvˉbudget,
+        ulong windowsˉcallˉdepth,
+        ulong systemˉvˉpadding,
+        ulong systemˉvˉcallˉdepth);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr VirtualAlloc(IntPtr address, nuint size, uint allocationˉtype, uint protection);

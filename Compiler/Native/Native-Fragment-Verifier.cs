@@ -8,6 +8,9 @@ public static class Nativeˉfragmentˉverifier
 {
     private const ulong INTEGER_OVERFLOW_STATUS = 0x0000_0001_0000_0000UL;
     private const ulong INSTRUCTION_LIMIT_STATUS = 0x0000_0002_0000_0000UL;
+    private const ulong CALL_DEPTH_STATUS = 0x0000_0003_0000_0000UL;
+    private const ulong DATA_BOUNDS_STATUS = 0x0000_0004_0000_0000UL;
+    private const int FUNCTION_SUFFIX_BYTES = 88;
 
     public static Nativeˉfragment Verify(Nativeˉfragment fragment)
     {
@@ -32,10 +35,9 @@ public static class Nativeˉfragmentˉverifier
         {
             Fail("WVN3005", "The native fragment code size is outside its bounded range.");
         }
-        if (fragment.Alignment is 0 or > Objectˉlimits.MAX_ALIGNMENT ||
-            (fragment.Alignment & (fragment.Alignment - 1)) != 0)
+        if (fragment.Alignment != 16)
         {
-            Fail("WVN3006", "The native fragment alignment is invalid.");
+            Fail("WVN3006", "The x86-64 baseline fragment requires 16-byte alignment.");
         }
         if (fragment.Symbols.Length > Objectˉlimits.MAX_SYMBOLS)
         {
@@ -56,6 +58,7 @@ public static class Nativeˉfragmentˉverifier
     {
         var Names = new HashSet<string>(StringComparer.Ordinal);
         Nativeˉsymbol? Previous = null;
+        var Exportˉcount = 0;
         foreach (var Symbol in fragment.Symbols)
         {
             if (Symbol is null ||
@@ -74,24 +77,40 @@ public static class Nativeˉfragmentˉverifier
                 Fail("WVN3011", "Native symbols must be strictly ordered by binding and name.");
             }
             Previous = Symbol;
-
             if (Symbol.Binding == Nativeˉsymbolˉbinding.Import)
             {
-                if (Symbol.Offset != 0 || Symbol.Size != 0)
-                {
-                    Fail("WVN3012", $"Imported native symbol '{Symbol.Name}' must use a zero range.");
-                }
-                continue;
+                Fail("WVN3012", "The x86-64 baseline fragment does not admit imports.");
             }
             if (Symbol.Offset > (uint)fragment.Code.Length ||
                 Symbol.Size > (uint)fragment.Code.Length - Symbol.Offset)
             {
-                Fail("WVN3013", $"Defined native symbol '{Symbol.Name}' is outside the code fragment.");
+                Fail("WVN3013", $"Defined native symbol '{Symbol.Name}' is outside the fragment.");
             }
-            if (Symbol.Kind != Nativeˉsymbolˉkind.Function)
+            if (Symbol.Kind == Nativeˉsymbolˉkind.Function && Symbol.Size == 0)
             {
-                Fail("WVN3014", "The baseline native fragment supports only code function symbols.");
+                Fail("WVN3014", $"Native function '{Symbol.Name}' is empty.");
             }
+            if (Symbol.Binding == Nativeˉsymbolˉbinding.Export)
+            {
+                Exportˉcount++;
+                if (Symbol is not
+                    {
+                        Name: "Main",
+                        Kind: Nativeˉsymbolˉkind.Function,
+                    })
+                {
+                    Fail("WVN3015", "The sole native export must be the Main function.");
+                }
+            }
+            else if (Symbol.Kind == Nativeˉsymbolˉkind.Data &&
+                Symbol.Binding != Nativeˉsymbolˉbinding.Local)
+            {
+                Fail("WVN3015", "Native static data must be local.");
+            }
+        }
+        if (Exportˉcount != 1)
+        {
+            Fail("WVN3015", "The x86-64 baseline fragment requires exactly one Main export.");
         }
     }
 
@@ -101,340 +120,345 @@ public static class Nativeˉfragmentˉverifier
         Nativeˉpatch? Previous = null;
         foreach (var Patch in fragment.Patches)
         {
-            if (Patch is null || !Enum.IsDefined(Patch.Kind))
+            if (Patch is null ||
+                Patch.Kind != Nativeˉpatchˉkind.Relativeˉi32 ||
+                Patch.Addend != -sizeof(int))
             {
-                Fail("WVN3020", "A native patch kind is invalid.");
+                Fail("WVN3020", "A native patch is outside the canonical RIP-relative static-data form.");
             }
-            if (!Symbols.ContainsKey(Patch.Symbol))
+            if (!Symbols.TryGetValue(Patch.Symbol, out var Symbol) ||
+                Symbol.Kind != Nativeˉsymbolˉkind.Data)
             {
-                Fail("WVN3021", $"Native patch target '{Patch.Symbol}' is undefined.");
+                Fail("WVN3020", "A native patch target is not declared static data.");
             }
             if (Patch.Offset > (uint)fragment.Code.Length ||
-                sizeof(uint) > (uint)fragment.Code.Length - Patch.Offset)
+                sizeof(int) > (uint)fragment.Code.Length - Patch.Offset)
             {
-                Fail("WVN3022", "A native patch range is outside the code fragment.");
+                Fail("WVN3022", "A native patch range is outside the fragment.");
             }
-            if (Previous is not null && Patch.Offset < Previous.Offset + sizeof(uint))
+            if (Previous is not null && Patch.Offset < Previous.Offset + sizeof(int))
             {
                 Fail("WVN3023", "Native patches must be ordered and cannot overlap.");
             }
             Previous = Patch;
-            if (!fragment.Code.AsSpan((int)Patch.Offset, sizeof(uint)).SequenceEqual(new byte[] { 0, 0, 0, 0 }))
+            var Expected = checked((int)Symbol.Offset + Patch.Addend - (int)Patch.Offset);
+            var Actual = BinaryPrimitives.ReadInt32LittleEndian(
+                fragment.Code.AsSpan((int)Patch.Offset, sizeof(int)));
+            if (Actual != Expected)
             {
-                Fail("WVN3024", "Native patch placeholder bytes must be zero.");
+                Fail("WVN3024", "A native static-data patch does not encode its declared target.");
             }
         }
     }
 
     private static void Verifyˉtargetˉshape(Nativeˉfragment fragment)
     {
-        if (!fragment.Patches.IsEmpty || !Isˉstructuredˉshape(fragment))
+        var Functions = fragment.Symbols
+            .Where(Symbol => Symbol.Kind == Nativeˉsymbolˉkind.Function)
+            .OrderBy(Symbol => Symbol.Offset)
+            .ToArray();
+        var Data = fragment.Symbols
+            .Where(Symbol => Symbol.Kind == Nativeˉsymbolˉkind.Data)
+            .OrderBy(Symbol => Symbol.Name, StringComparer.Ordinal)
+            .ToArray();
+        if (Functions.Length == 0 || Functions[0].Offset != 0)
         {
-            Fail(
-                "WVN3030",
-                "The x86-64 baseline fragment is outside the independently decoded budgeted-control target shape.");
+            Failˉshape();
+        }
+
+        var Functionˉend = 0;
+        foreach (var Function in Functions)
+        {
+            if (Function.Offset != (uint)Functionˉend)
+            {
+                Failˉshape();
+            }
+            Functionˉend = checked((int)(Function.Offset + Function.Size));
+        }
+
+        var Dataˉstart = fragment.Code.Length;
+        if (Data.Length != 0)
+        {
+            for (var Index = 0; Index < Data.Length; Index++)
+            {
+                if (!StringComparer.Ordinal.Equals(Data[Index].Name, $"$data_{Index:D4}") ||
+                    (Data[Index].Size & 3) != 0)
+                {
+                    Failˉshape();
+                }
+            }
+            Dataˉstart = checked((int)Data[0].Offset);
+            if ((Dataˉstart & 15) != 0 || Dataˉstart < Functionˉend || Dataˉstart - Functionˉend > 15)
+            {
+                Failˉshape();
+            }
+            for (var Offset = Functionˉend; Offset < Dataˉstart; Offset++)
+            {
+                if (fragment.Code[Offset] != 0x90)
+                {
+                    Failˉshape();
+                }
+            }
+            var Cursor = Dataˉstart;
+            foreach (var Symbol in Data)
+            {
+                if (Symbol.Offset != (uint)Cursor)
+                {
+                    Failˉshape();
+                }
+                Cursor = checked(Cursor + (int)Symbol.Size);
+            }
+            if (Cursor != fragment.Code.Length)
+            {
+                Failˉshape();
+            }
+        }
+        else if (Functionˉend != fragment.Code.Length || !fragment.Patches.IsEmpty)
+        {
+            Failˉshape();
+        }
+
+        var Patchˉlookup = fragment.Patches.ToDictionary(Patch => checked((int)Patch.Offset));
+        var Usedˉpatches = new HashSet<int>();
+        var Functionˉstarts = Functions.ToDictionary(Symbol => checked((int)Symbol.Offset));
+        var Decoded = new Dictionary<int, Decodedˉfunction>();
+        foreach (var Function in Functions)
+        {
+            var Start = checked((int)Function.Offset);
+            Decoded.Add(
+                Start,
+                Decodeˉfunction(
+                    fragment,
+                    Function,
+                    Patchˉlookup,
+                    Usedˉpatches,
+                    Functionˉstarts));
+        }
+        if (Usedˉpatches.Count != fragment.Patches.Length)
+        {
+            Failˉshape();
+        }
+        foreach (var Function in Decoded.Values)
+        {
+            foreach (var Call in Function.Calls)
+            {
+                if (!Decoded.TryGetValue(Call.Target, out var Callee) ||
+                    Call.Argumentˉcount != Callee.Parameterˉcount)
+                {
+                    Failˉshape();
+                }
+            }
         }
     }
 
-    private static bool Isˉstructuredˉshape(Nativeˉfragment fragment)
+    private static Decodedˉfunction Decodeˉfunction(
+        Nativeˉfragment fragment,
+        Nativeˉsymbol symbol,
+        Dictionary<int, Nativeˉpatch> patches,
+        HashSet<int> usedˉpatches,
+        Dictionary<int, Nativeˉsymbol> functions)
     {
-        if (fragment.Symbols.Length != 3 ||
-            fragment.Symbols[0] is not
-            {
-                Name: "$instruction_limit",
-                Binding: Nativeˉsymbolˉbinding.Local,
-                Kind: Nativeˉsymbolˉkind.Function,
-            } Instructionˉlimitˉsymbol ||
-            fragment.Symbols[1] is not
-            {
-                Name: "$overflow",
-                Binding: Nativeˉsymbolˉbinding.Local,
-                Kind: Nativeˉsymbolˉkind.Function,
-            } Trapˉsymbol ||
-            fragment.Symbols[2] is not
-            {
-                Name: "Main",
-                Binding: Nativeˉsymbolˉbinding.Export,
-                Kind: Nativeˉsymbolˉkind.Function,
-                Offset: 0,
-            } Mainˉsymbol)
-        {
-            return false;
-        }
-
         var Code = fragment.Code.AsSpan();
-        var Trapˉoffset = checked((int)Trapˉsymbol.Offset);
-        var Instructionˉlimitˉoffset = checked((int)Instructionˉlimitˉsymbol.Offset);
-        if (Trapˉoffset < 7 ||
-            Trapˉoffset > Code.Length - 36 ||
-            Instructionˉlimitˉoffset != Trapˉoffset + 18 ||
-            Mainˉsymbol.Size != Trapˉsymbol.Offset ||
-            Trapˉsymbol.Size != 18 ||
-            Instructionˉlimitˉsymbol.Size != 18 ||
-            Instructionˉlimitˉoffset + 18 != Code.Length ||
-            !Matches(Code, 0, 0x48, 0x81, 0xEC))
+        var Start = checked((int)symbol.Offset);
+        var End = checked(Start + (int)symbol.Size);
+        if (End - Start <= FUNCTION_SUFFIX_BYTES + 20)
         {
-            return false;
+            Failˉshape();
         }
-        var Frameˉbytes = BinaryPrimitives.ReadInt32LittleEndian(Code.Slice(3, sizeof(int)));
+        var Index = Start;
+        var Isˉmain = symbol.Binding == Nativeˉsymbolˉbinding.Export;
+        if (Isˉmain)
+        {
+            if (!Matches(Code, Index, 0x49, 0x89, 0xD3, 0x4D, 0x89, 0xCA))
+            {
+                Failˉshape();
+            }
+            Index += 6;
+        }
+        if (!Matches(Code, Index, 0x49, 0x83, 0xEA, 0x01, 0x0F, 0x82))
+        {
+            Failˉshape();
+        }
+        if (!Tryˉreadˉtarget(Code, Index + 6, out var Depthˉtarget))
+        {
+            Failˉshape();
+        }
+        Index += 10;
+        if (!Matches(Code, Index, 0x48, 0x81, 0xEC))
+        {
+            Failˉshape();
+        }
+        var Frameˉbytes = Readˉi32(Code, Index + 3);
         if (Frameˉbytes is < 16 or > Nativeˉcontract.MAXIMUM_FRAME_BYTES ||
-            (Frameˉbytes & 15) != 0 ||
-            !Matches(Code, Trapˉoffset, 0x48, 0x81, 0xC4) ||
-            BinaryPrimitives.ReadInt32LittleEndian(Code.Slice(Trapˉoffset + 3, sizeof(int))) != Frameˉbytes ||
-            !Matches(Code, Trapˉoffset + 7, 0x48, 0xB8) ||
-            BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Trapˉoffset + 9, sizeof(ulong))) != INTEGER_OVERFLOW_STATUS ||
-            Code[Trapˉoffset + 17] != 0xC3 ||
-            !Matches(Code, Instructionˉlimitˉoffset, 0x48, 0x81, 0xC4) ||
-            BinaryPrimitives.ReadInt32LittleEndian(Code.Slice(Instructionˉlimitˉoffset + 3, sizeof(int))) != Frameˉbytes ||
-            !Matches(Code, Instructionˉlimitˉoffset + 7, 0x48, 0xB8) ||
-            BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Instructionˉlimitˉoffset + 9, sizeof(ulong))) != INSTRUCTION_LIMIT_STATUS ||
-            Code[Instructionˉlimitˉoffset + 17] != 0xC3)
+            (Frameˉbytes & 15) != 0)
         {
-            return false;
+            Failˉshape();
         }
-
-        var Index = 7;
-        if (!Matches(Code, Index, 0x49, 0x89, 0xD3))
-        {
-            return false;
-        }
-        Index += 3;
+        Index += 7;
         if (!Matches(Code, Index, 0x31, 0xC0))
         {
-            return false;
+            Failˉshape();
         }
         Index += 2;
-        var Frameˉslots = Frameˉbytes / sizeof(int);
-        for (var Slot = 0; Slot < Frameˉslots; Slot++)
+        for (var Slot = 0; Slot < Frameˉbytes / sizeof(int); Slot++)
         {
-            if (!Matches(Code, Index, 0x89, 0x84, 0x24) ||
-                !Tryˉreadˉslot(Code, Index + 3, Frameˉbytes, out var Initializedˉslot) ||
-                Initializedˉslot != Slot)
+            if (!Tryˉstoreˉeax(Code, Index, Frameˉbytes, out var Initialized) || Initialized != Slot)
             {
-                return false;
+                Failˉshape();
             }
             Index += 7;
         }
-        var Bodyˉstart = Index;
-        if (Bodyˉstart >= Trapˉoffset)
+
+        var Parameterˉcount = 0;
+        while (Parameterˉcount < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
+            Tryˉstoreˉargument(Code, Index, Frameˉbytes, Parameterˉcount, out var Parameterˉlength))
         {
-            return false;
+            Parameterˉcount++;
+            Index += Parameterˉlength;
+        }
+        if (Isˉmain && Parameterˉcount != 0)
+        {
+            Failˉshape();
         }
 
-        var Groups = new List<Nativeˉdecodedˉgroup>();
-        var Maximumˉbodyˉslot = -1;
-        var Transformations = 0;
-        var Returns = 0;
-        while (Index < Trapˉoffset)
+        var Propagate = End - FUNCTION_SUFFIX_BYTES;
+        var Overflow = Propagate + 11;
+        var Instructionˉlimit = Overflow + 21;
+        var Bounds = Instructionˉlimit + 21;
+        var Depth = Bounds + 21;
+        if (Depthˉtarget != Depth ||
+            !Matchesˉpropagate(Code, Propagate, Frameˉbytes) ||
+            !Matchesˉstatusˉtrap(Code, Overflow, Frameˉbytes, INTEGER_OVERFLOW_STATUS) ||
+            !Matchesˉstatusˉtrap(Code, Instructionˉlimit, Frameˉbytes, INSTRUCTION_LIMIT_STATUS) ||
+            !Matchesˉstatusˉtrap(Code, Bounds, Frameˉbytes, DATA_BOUNDS_STATUS) ||
+            !Matches(Code, Depth, 0x49, 0xFF, 0xC2, 0x48, 0xB8) ||
+            BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Depth + 5, sizeof(ulong))) != CALL_DEPTH_STATUS ||
+            Code[Depth + 13] != 0xC3)
         {
-            var Start = Index;
+            Failˉshape();
+        }
 
-            if (Index + 10 <= Trapˉoffset &&
-                Matches(Code, Index, 0x49, 0x83, 0xEB, 0x01, 0x0F, 0x82) &&
+        var Groups = new List<Decodedˉgroup>();
+        var Calls = new List<Decodedˉcall>();
+        var Returns = 0;
+        while (Index < Propagate)
+        {
+            var Groupˉstart = Index;
+            if (Matches(Code, Index, 0x49, 0x83, 0xEB, 0x01, 0x0F, 0x82) &&
                 Tryˉreadˉtarget(Code, Index + 6, out var Limitˉtarget) &&
-                Limitˉtarget == Instructionˉlimitˉoffset)
+                Limitˉtarget == Instructionˉlimit)
             {
                 Index += 10;
-                Groups.Add(new(Start, Index - Start, true, false, true, []));
+                Groups.Add(new(Groupˉstart, true, false, true, []));
                 continue;
             }
 
-            if (Index + 15 <= Trapˉoffset &&
-                Tryˉloadˉeax(Code, Index, Frameˉbytes, out var Returnˉslot) &&
+            if (Tryˉloadˉeax(Code, Index, Frameˉbytes, out _) &&
                 Matches(Code, Index + 7, 0x48, 0x81, 0xC4) &&
-                BinaryPrimitives.ReadInt32LittleEndian(Code.Slice(Index + 10, sizeof(int))) == Frameˉbytes &&
-                Code[Index + 14] == 0xC3)
+                Readˉi32(Code, Index + 10) == Frameˉbytes &&
+                Matches(Code, Index + 14, 0x49, 0xFF, 0xC2, 0xC3))
             {
-                Trackˉslot(Returnˉslot, ref Maximumˉbodyˉslot);
-                Index += 15;
-                Groups.Add(new(Start, Index - Start, false, true, false, []));
+                Index += 18;
                 Returns++;
+                Groups.Add(new(Groupˉstart, false, true, false, []));
                 continue;
             }
 
-            if (Index + 20 <= Trapˉoffset &&
-                Tryˉloadˉeax(Code, Index, Frameˉbytes, out var Conditionˉslot) &&
+            if (Tryˉdecodeˉcall(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Propagate,
+                functions,
+                out var Call))
+            {
+                Calls.Add(Call);
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉdataˉload(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Bounds,
+                patches,
+                usedˉpatches))
+            {
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉloadˉeax(Code, Index, Frameˉbytes, out _) &&
                 Matches(Code, Index + 7, 0x85, 0xC0, 0x0F, 0x85) &&
                 Tryˉreadˉtarget(Code, Index + 11, out var Trueˉtarget) &&
                 Code[Index + 15] == 0xE9 &&
                 Tryˉreadˉtarget(Code, Index + 16, out var Falseˉtarget))
             {
-                Trackˉslot(Conditionˉslot, ref Maximumˉbodyˉslot);
                 Index += 20;
-                Groups.Add(new(Start, Index - Start, false, false, false, [Trueˉtarget, Falseˉtarget]));
+                Groups.Add(new(Groupˉstart, false, false, false, [Trueˉtarget, Falseˉtarget]));
                 continue;
             }
-
-            if (Code[Index] == 0xE9 && Index + 5 <= Trapˉoffset &&
-                Tryˉreadˉtarget(Code, Index + 1, out var Jumpˉtarget))
+            if (Code[Index] == 0xE9 && Tryˉreadˉtarget(Code, Index + 1, out var Jumpˉtarget))
             {
                 Index += 5;
-                Groups.Add(new(Start, Index - Start, false, false, false, [Jumpˉtarget]));
+                Groups.Add(new(Groupˉstart, false, false, false, [Jumpˉtarget]));
                 continue;
             }
-
-            if (Index + 12 <= Trapˉoffset && Code[Index] == 0xB8 &&
-                Tryˉstoreˉeax(Code, Index + 5, Frameˉbytes, out var Constantˉslot))
+            if (Code[Index] == 0xB8 &&
+                Tryˉstoreˉeax(Code, Index + 5, Frameˉbytes, out _))
             {
-                Trackˉslot(Constantˉslot, ref Maximumˉbodyˉslot);
                 Index += 12;
-                Groups.Add(new(Start, Index - Start, true, false, false, []));
-                Transformations++;
+                Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
-
-            if (!Tryˉloadˉeax(Code, Index, Frameˉbytes, out var Leftˉslot))
+            if (!Tryˉdecodeˉslotˉtransformation(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Overflow))
             {
-                return false;
+                Failˉshape();
             }
-            Trackˉslot(Leftˉslot, ref Maximumˉbodyˉslot);
-            var Cursor = Index + 7;
-
-            if (Tryˉloadˉecx(Code, Cursor, Frameˉbytes, out var Rightˉslot))
-            {
-                Trackˉslot(Rightˉslot, ref Maximumˉbodyˉslot);
-                Cursor += 7;
-
-                var Arithmeticˉlength = 0;
-                if (Matches(Code, Cursor, 0x01, 0xC8) || Matches(Code, Cursor, 0x29, 0xC8))
-                {
-                    Arithmeticˉlength = 2;
-                }
-                else if (Matches(Code, Cursor, 0x0F, 0xAF, 0xC1))
-                {
-                    Arithmeticˉlength = 3;
-                }
-                if (Arithmeticˉlength != 0)
-                {
-                    Cursor += Arithmeticˉlength;
-                    if (!Matches(Code, Cursor, 0x0F, 0x80) ||
-                        !Tryˉreadˉtarget(Code, Cursor + 2, out var Overflowˉtarget) ||
-                        Overflowˉtarget != Trapˉoffset)
-                    {
-                        return false;
-                    }
-                    Cursor += 6;
-                    if (!Tryˉstoreˉeax(Code, Cursor, Frameˉbytes, out var Resultˉslot))
-                    {
-                        return false;
-                    }
-                    Trackˉslot(Resultˉslot, ref Maximumˉbodyˉslot);
-                    Cursor += 7;
-                    Index = Cursor;
-                    Groups.Add(new(Start, Index - Start, true, false, false, []));
-                    Transformations++;
-                    continue;
-                }
-
-                if (Matches(Code, Cursor, 0x39, 0xC8, 0x0F) &&
-                    Cursor + 15 <= Trapˉoffset &&
-                    Isˉcondition(Code[Cursor + 3]) &&
-                    Matches(Code, Cursor + 4, 0xC0, 0x0F, 0xB6, 0xC0) &&
-                    Tryˉstoreˉeax(Code, Cursor + 8, Frameˉbytes, out var Comparisonˉslot))
-                {
-                    Trackˉslot(Comparisonˉslot, ref Maximumˉbodyˉslot);
-                    Cursor += 15;
-                    Index = Cursor;
-                    Groups.Add(new(Start, Index - Start, true, false, false, []));
-                    Transformations++;
-                    continue;
-                }
-            }
-
-            Cursor = Index + 7;
-            if (Matches(Code, Cursor, 0xF7, 0xD8))
-            {
-                Cursor += 2;
-                if (!Matches(Code, Cursor, 0x0F, 0x80) ||
-                    !Tryˉreadˉtarget(Code, Cursor + 2, out var Overflowˉtarget) ||
-                    Overflowˉtarget != Trapˉoffset)
-                {
-                    return false;
-                }
-                Cursor += 6;
-                if (!Tryˉstoreˉeax(Code, Cursor, Frameˉbytes, out var Negateˉslot))
-                {
-                    return false;
-                }
-                Trackˉslot(Negateˉslot, ref Maximumˉbodyˉslot);
-                Cursor += 7;
-                Index = Cursor;
-                Groups.Add(new(Start, Index - Start, true, false, false, []));
-                Transformations++;
-                continue;
-            }
-
-            if (Matches(Code, Cursor, 0x83, 0xF0, 0x01) &&
-                Tryˉstoreˉeax(Code, Cursor + 3, Frameˉbytes, out var Notˉslot))
-            {
-                Trackˉslot(Notˉslot, ref Maximumˉbodyˉslot);
-                Cursor += 10;
-                Index = Cursor;
-                Groups.Add(new(Start, Index - Start, true, false, false, []));
-                Transformations++;
-                continue;
-            }
-
-            if (Tryˉstoreˉeax(Code, Cursor, Frameˉbytes, out var Copyˉslot))
-            {
-                Trackˉslot(Copyˉslot, ref Maximumˉbodyˉslot);
-                Cursor += 7;
-                Index = Cursor;
-                Groups.Add(new(Start, Index - Start, true, false, false, []));
-                Transformations++;
-                continue;
-            }
-
-            return false;
+            Groups.Add(new(Groupˉstart, true, false, false, []));
         }
 
-        if (Index != Trapˉoffset ||
-            Groups.Count == 0 ||
-            Transformations == 0 ||
-            Returns == 0 ||
-            Maximumˉbodyˉslot < 0)
+        if (Index != Propagate || Groups.Count == 0 || Returns == 0 || !Groups[0].Isˉcharge)
         {
-            return false;
+            Failˉshape();
         }
-        var Requiredˉframe = checked(((Maximumˉbodyˉslot + 1) * sizeof(int) + 15) & ~15);
-        if (Requiredˉframe != Frameˉbytes)
-        {
-            return false;
-        }
-
         var Groupˉindices = Groups
             .Select((Group, Groupˉindex) => (Group.Offset, Groupˉindex))
             .ToDictionary(Item => Item.Offset, Item => Item.Groupˉindex);
-        if (!Groups[0].Isˉinstructionˉcharge)
-        {
-            return false;
-        }
         for (var Groupˉindex = 0; Groupˉindex < Groups.Count; Groupˉindex++)
         {
             var Group = Groups[Groupˉindex];
-            if (Group.Isˉinstructionˉcharge)
+            if (Group.Isˉcharge)
             {
                 if (!Group.Fallsˉthrough || Group.Returns || Group.Targets.Length != 0 ||
-                    Groupˉindex + 1 >= Groups.Count || Groups[Groupˉindex + 1].Isˉinstructionˉcharge)
+                    Groupˉindex + 1 >= Groups.Count || Groups[Groupˉindex + 1].Isˉcharge)
                 {
-                    return false;
+                    Failˉshape();
                 }
             }
-            else if (Groupˉindex == 0 || !Groups[Groupˉindex - 1].Isˉinstructionˉcharge)
+            else if (Groupˉindex == 0 || !Groups[Groupˉindex - 1].Isˉcharge)
             {
-                return false;
+                Failˉshape();
             }
             foreach (var Target in Group.Targets)
             {
                 if (!Groupˉindices.TryGetValue(Target, out var Targetˉindex) ||
-                    !Groups[Targetˉindex].Isˉinstructionˉcharge)
+                    !Groups[Targetˉindex].Isˉcharge)
                 {
-                    return false;
+                    Failˉshape();
                 }
             }
             if (Group.Fallsˉthrough && Groupˉindex + 1 >= Groups.Count)
             {
-                return false;
+                Failˉshape();
             }
         }
 
@@ -454,54 +478,249 @@ public static class Nativeˉfragmentˉverifier
                 Enqueue(Groupˉindices[Target], Reachable, Pending);
             }
         }
-        return Reachable.All(Value => Value);
+        if (Reachable.Any(Value => !Value))
+        {
+            Failˉshape();
+        }
+        return new(Parameterˉcount, Calls.ToArray());
     }
 
-    private static bool Tryˉloadˉeax(
+    private static bool Tryˉdecodeˉcall(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int propagate,
+        Dictionary<int, Nativeˉsymbol> functions,
+        out Decodedˉcall call)
+    {
+        call = new(0, 0);
+        var Cursor = index;
+        var Arguments = 0;
+        while (Arguments < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
+            Tryˉloadˉargument(code, Cursor, frameˉbytes, Arguments, out var Argumentˉlength))
+        {
+            Arguments++;
+            Cursor += Argumentˉlength;
+        }
+        if (Cursor >= end || code[Cursor] != 0xE8 ||
+            !Tryˉreadˉtarget(code, Cursor + 1, out var Target) ||
+            !functions.ContainsKey(Target))
+        {
+            return false;
+        }
+        Cursor += 5;
+        if (!Matches(code, Cursor,
+                0x48, 0x89, 0xC2,
+                0x48, 0xC1, 0xEA, 0x20,
+                0x48, 0x85, 0xD2,
+                0x0F, 0x85) ||
+            !Tryˉreadˉtarget(code, Cursor + 12, out var Propagateˉtarget) ||
+            Propagateˉtarget != propagate ||
+            !Tryˉstoreˉeax(code, Cursor + 16, frameˉbytes, out _))
+        {
+            return false;
+        }
+        Cursor += 23;
+        index = Cursor;
+        call = new(Target, Arguments);
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉdataˉload(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int bounds,
+        Dictionary<int, Nativeˉpatch> patches,
+        HashSet<int> usedˉpatches)
+    {
+        var Cursor = index;
+        if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out _) ||
+            !Matches(code, Cursor + 7, 0x3D) ||
+            !Matches(code, Cursor + 12, 0x0F, 0x83) ||
+            !Tryˉreadˉtarget(code, Cursor + 14, out var Boundsˉtarget) ||
+            Boundsˉtarget != bounds ||
+            !Matches(code, Cursor + 18, 0x48, 0x8D, 0x15))
+        {
+            return false;
+        }
+        var Patchˉoffset = Cursor + 21;
+        if (!patches.TryGetValue(Patchˉoffset, out var Patch) ||
+            !usedˉpatches.Add(Patchˉoffset) ||
+            !Matches(code, Cursor + 25, 0x8B, 0x04, 0x82) ||
+            !Tryˉstoreˉeax(code, Cursor + 28, frameˉbytes, out _))
+        {
+            return false;
+        }
+        _ = Patch;
+        Cursor += 35;
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉslotˉtransformation(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int overflow)
+    {
+        if (!Tryˉloadˉeax(code, index, frameˉbytes, out _))
+        {
+            return false;
+        }
+        var Cursor = index + 7;
+        if (Tryˉloadˉecx(code, Cursor, frameˉbytes, out _))
+        {
+            Cursor += 7;
+            var Arithmetic = Matches(code, Cursor, 0x01, 0xC8) || Matches(code, Cursor, 0x29, 0xC8)
+                ? 2
+                : Matches(code, Cursor, 0x0F, 0xAF, 0xC1) ? 3 : 0;
+            if (Arithmetic != 0)
+            {
+                Cursor += Arithmetic;
+                if (!Matches(code, Cursor, 0x0F, 0x80) ||
+                    !Tryˉreadˉtarget(code, Cursor + 2, out var Overflowˉtarget) ||
+                    Overflowˉtarget != overflow ||
+                    !Tryˉstoreˉeax(code, Cursor + 6, frameˉbytes, out _))
+                {
+                    return false;
+                }
+                Cursor += 13;
+                index = Cursor;
+                return Cursor <= end;
+            }
+            if (Matches(code, Cursor, 0x39, 0xC8, 0x0F) &&
+                Isˉcondition(code[Cursor + 3]) &&
+                Matches(code, Cursor + 4, 0xC0, 0x0F, 0xB6, 0xC0) &&
+                Tryˉstoreˉeax(code, Cursor + 8, frameˉbytes, out _))
+            {
+                Cursor += 15;
+                index = Cursor;
+                return Cursor <= end;
+            }
+        }
+        Cursor = index + 7;
+        if (Matches(code, Cursor, 0xF7, 0xD8) &&
+            Matches(code, Cursor + 2, 0x0F, 0x80) &&
+            Tryˉreadˉtarget(code, Cursor + 4, out var Negateˉoverflow) &&
+            Negateˉoverflow == overflow &&
+            Tryˉstoreˉeax(code, Cursor + 8, frameˉbytes, out _))
+        {
+            Cursor += 15;
+            index = Cursor;
+            return Cursor <= end;
+        }
+        if (Matches(code, Cursor, 0x83, 0xF0, 0x01) &&
+            Tryˉstoreˉeax(code, Cursor + 3, frameˉbytes, out _))
+        {
+            Cursor += 10;
+            index = Cursor;
+            return Cursor <= end;
+        }
+        if (Tryˉstoreˉeax(code, Cursor, frameˉbytes, out _))
+        {
+            Cursor += 7;
+            index = Cursor;
+            return Cursor <= end;
+        }
+        return false;
+    }
+
+    private static bool Matchesˉpropagate(ReadOnlySpan<byte> code, int offset, int frameˉbytes) =>
+        Matches(code, offset, 0x48, 0x81, 0xC4) &&
+        Readˉi32(code, offset + 3) == frameˉbytes &&
+        Matches(code, offset + 7, 0x49, 0xFF, 0xC2, 0xC3);
+
+    private static bool Matchesˉstatusˉtrap(
         ReadOnlySpan<byte> code,
         int offset,
         int frameˉbytes,
-        out int slot)
+        ulong status) =>
+        Matches(code, offset, 0x48, 0x81, 0xC4) &&
+        Readˉi32(code, offset + 3) == frameˉbytes &&
+        Matches(code, offset + 7, 0x49, 0xFF, 0xC2, 0x48, 0xB8) &&
+        BinaryPrimitives.ReadUInt64LittleEndian(code.Slice(offset + 12, sizeof(ulong))) == status &&
+        code[offset + 20] == 0xC3;
+
+    private static bool Tryˉloadˉeax(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
     {
         slot = 0;
         return Matches(code, offset, 0x8B, 0x84, 0x24) &&
             Tryˉreadˉslot(code, offset + 3, frameˉbytes, out slot);
     }
 
-    private static bool Tryˉloadˉecx(
+    private static bool Tryˉloadˉargument(
         ReadOnlySpan<byte> code,
         int offset,
         int frameˉbytes,
-        out int slot)
+        int argument,
+        out int length)
+    {
+        var Prefix = argument switch
+        {
+            0 => new byte[] { 0x44, 0x8B, 0x84, 0x24 },
+            1 => new byte[] { 0x44, 0x8B, 0x8C, 0x24 },
+            2 => new byte[] { 0x8B, 0x8C, 0x24 },
+            3 => new byte[] { 0x8B, 0x94, 0x24 },
+            _ => [],
+        };
+        length = Prefix.Length + sizeof(int);
+        return Prefix.Length != 0 &&
+            Matches(code, offset, Prefix) &&
+            Tryˉreadˉslot(code, offset + Prefix.Length, frameˉbytes, out _);
+    }
+
+    private static bool Tryˉstoreˉargument(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int argument,
+        out int length)
+    {
+        var Prefix = argument switch
+        {
+            0 => new byte[] { 0x44, 0x89, 0x84, 0x24 },
+            1 => new byte[] { 0x44, 0x89, 0x8C, 0x24 },
+            2 => new byte[] { 0x89, 0x8C, 0x24 },
+            3 => new byte[] { 0x89, 0x94, 0x24 },
+            _ => [],
+        };
+        length = Prefix.Length + sizeof(int);
+        return Prefix.Length != 0 &&
+            Matches(code, offset, Prefix) &&
+            Tryˉreadˉslot(code, offset + Prefix.Length, frameˉbytes, out var Slot) &&
+            Slot == argument;
+    }
+
+    private static bool Tryˉloadˉecx(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
     {
         slot = 0;
         return Matches(code, offset, 0x8B, 0x8C, 0x24) &&
             Tryˉreadˉslot(code, offset + 3, frameˉbytes, out slot);
     }
 
-    private static bool Tryˉstoreˉeax(
-        ReadOnlySpan<byte> code,
-        int offset,
-        int frameˉbytes,
-        out int slot)
+    private static bool Tryˉstoreˉeax(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
     {
         slot = 0;
         return Matches(code, offset, 0x89, 0x84, 0x24) &&
             Tryˉreadˉslot(code, offset + 3, frameˉbytes, out slot);
     }
 
-    private static bool Tryˉreadˉslot(
-        ReadOnlySpan<byte> code,
-        int offset,
-        int frameˉbytes,
-        out int slot)
+    private static bool Tryˉreadˉslot(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
     {
         slot = 0;
         if (offset < 0 || offset > code.Length - sizeof(int))
         {
             return false;
         }
-        var Displacement = BinaryPrimitives.ReadInt32LittleEndian(code.Slice(offset, sizeof(int)));
+        var Displacement = Readˉi32(code, offset);
         if (Displacement < 0 ||
             (Displacement & (sizeof(int) - 1)) != 0 ||
             Displacement > frameˉbytes - sizeof(int))
@@ -519,9 +738,7 @@ public static class Nativeˉfragmentˉverifier
         {
             return false;
         }
-        var Displacement = BinaryPrimitives.ReadInt32LittleEndian(
-            code.Slice(displacementˉoffset, sizeof(int)));
-        var Target = (long)displacementˉoffset + sizeof(int) + Displacement;
+        var Target = (long)displacementˉoffset + sizeof(int) + Readˉi32(code, displacementˉoffset);
         if (Target is < int.MinValue or > int.MaxValue)
         {
             return false;
@@ -530,10 +747,11 @@ public static class Nativeˉfragmentˉverifier
         return true;
     }
 
+    private static int Readˉi32(ReadOnlySpan<byte> code, int offset) =>
+        BinaryPrimitives.ReadInt32LittleEndian(code.Slice(offset, sizeof(int)));
+
     private static bool Isˉcondition(byte condition) =>
         condition is 0x94 or 0x95 or 0x9C or 0x9D or 0x9E or 0x9F;
-
-    private static void Trackˉslot(int slot, ref int maximum) => maximum = Math.Max(maximum, slot);
 
     private static void Enqueue(int index, bool[] reachable, Queue<int> pending)
     {
@@ -549,13 +767,20 @@ public static class Nativeˉfragmentˉverifier
         offset <= code.Length - expected.Length &&
         code.Slice(offset, expected.Length).SequenceEqual(expected);
 
-    private sealed record Nativeˉdecodedˉgroup(
+    private sealed record Decodedˉfunction(int Parameterˉcount, Decodedˉcall[] Calls);
+
+    private readonly record struct Decodedˉcall(int Target, int Argumentˉcount);
+
+    private sealed record Decodedˉgroup(
         int Offset,
-        int Length,
         bool Fallsˉthrough,
         bool Returns,
-        bool Isˉinstructionˉcharge,
+        bool Isˉcharge,
         int[] Targets);
+
+    [DoesNotReturn]
+    private static void Failˉshape() =>
+        Fail("WVN3030", "The x86-64 baseline fragment is outside the independently decoded shared-budget call/data target shape.");
 
     [DoesNotReturn]
     private static void Fail(string code, string message) =>
