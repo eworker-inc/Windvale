@@ -2,7 +2,7 @@
 
 ## Status
 
-Experimental bounded contract for the first Windvale-owned native-runtime construction slice. It does not yet define a general stencil container or complete baseline JIT.
+Qualified bounded contract for the first Windvale-owned native-runtime construction slice under Decision 0077. It does not yet define a general stencil container or complete baseline JIT.
 
 ## Purpose
 
