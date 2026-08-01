@@ -22,6 +22,9 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Qualified exact Windvale bytecode compiler self-reproduction: Stage 0 builds Stage 1, and Stage 1 builds a byte-identical Stage 2 from the same committed 12-module inventory on Windows and Debian.
 - The bounded deterministic Windvale Project 1 manifest and `windvale build` command for selecting one root plus explicit source dependencies without changing import, WVSS, or WVB semantics.
 - The ABI-8 hosted-input candidate, with execution-bounded borrowed text/bytes, explicit process argument and file snapshot services, and the first Windvale-written native WVB header inspector.
+- A cross-host-qualified Windvale publication planner that owns every live executable-image extent and canonical runtime-service placement before the narrow Windows/Linux W^X adapter allocates memory.
+- A cross-host-qualified probe-17 terminal invalid-opcode boundary with a kernel-owned vector-6 IDT, deterministic panic transcript, and separate pinned-QEMU success and fault images.
+- A permanent UTF-8 native-process verifier boundary and detached/redirected macron regression check, closing the recurring launcher-only decoding failure.
 
 ### Changed
 
@@ -33,4 +36,4 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 ### Current development status
 
 - Windvale Seed, its runtime and bytecode foundation, the object model, assembler, linker, Foundation modules, complete portable compiler, and exact bytecode compiler self-reproduction have Windows/Debian qualification evidence.
-- Native compiler execution, the shared JIT/AOT backend, .NET retirement, and Windvale OS remain active or planned milestones rather than completed releases; the bounded boot path and kernel-owned memory evidence do not yet constitute a functioning kernel runtime.
+- Native compiler execution, complete W^X lifetime ownership, the shared JIT/AOT backend, .NET retirement, and Windvale OS remain active or planned milestones rather than completed releases; the qualified terminal exception boundary and kernel-owned memory evidence do not yet constitute a functioning kernel runtime.

@@ -25,9 +25,9 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 0–6. Seed through assembler and linker | ✅ Qualified | The Stage 0 foundation, byte primitives, hosted resource boundary, `wvdump`, object model, assembler, and linker have Windows and Debian evidence. | Preserve these contracts as later native and OS work consumes them. |
 | 7. Foundation modules | 🔵 Ongoing | Machine contracts, byte ordering, decimal parsing, and byte construction are shared by real Windvale tools. | Add facilities only when measured compiler, runtime, or tool pressure requires them. |
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
-| 9. Shared native backend | 🎯 Current transfer | ABI 14/context 6, all 11 native service leaves, two WVA-owned stencils, their Windvale validator/patcher, and a bounded byte-result bridge are implemented. | Move a measured part of W^X publication, arena ownership, or execution lifetime into Windvale. |
-| 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the two live process-input leaves used by the native host path. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
-| 11. Boot path and kernel | 🚧 In progress | Probe 16 runs an ordinary portable WVB through the host-built ABI-14 AOT path on a kernel-owned stack under pinned QEMU. | Add in-guest loading and verification, traps, clean shutdown, and Hyper-V evidence. |
+| 9. Shared native backend | 🎯 Current transfer | ABI 14/context 6, all 11 native service leaves, two WVA-owned stencils, their Windvale validator/patcher, bounded byte results, and Windvale-owned executable-image layout are cross-host qualified. | Define explicit publication-lifetime state and move the next measured W^X adapter boundary into Windvale. |
+| 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the two live process-input leaves and plans every live executable-image extent and service placement. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
+| 11. Boot path and kernel | 🚧 In progress | Probe 17 runs the ABI-14 WVB path and owns a terminal vector-6 invalid-opcode boundary under pinned QEMU. | Add broader trap handling, in-guest loading and verification, clean shutdown, and Hyper-V evidence. |
 | 12. Runtime on Windvale OS | ○ Planned | The portability contract is defined; the guest does not yet load and verify WVB itself. | Run one identical verified WVB through equivalent Windows, Linux, and Windvale OS contracts. |
 | 13. Public foundation | 🚧 In progress | Licensing, contribution, security, governance, support, and authorship policies are prepared. | Complete GitHub settings, the publication baseline, and public project operations. |
 
@@ -37,7 +37,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Windvale assembly → verified WVO → deterministic linked x86-64 image
 - ✅ Portable WVB → ABI-14 WVO/AOT → linked UEFI image → kernel-owned execution
 - ✅ Hosted `Wv-Dump-Core.wv` → W^X/WVO execution → deterministic report for a real WVB
-- 🎯 Windvale-produced native bytes → Windvale validation and patching → live host-service consumption
+- ✅ Windvale-produced native bytes → Windvale validation and patching → live host-service consumption
+- 🎯 Verified native fragment → Windvale image layout → narrow host W^X publication and lifetime adapter
 - ○ One identical WVB → Windows + Linux + in-guest Windvale OS verification and execution
 
 ## Reading the evidence

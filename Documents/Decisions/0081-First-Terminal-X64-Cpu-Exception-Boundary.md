@@ -1,7 +1,7 @@
 # Decision 0081: First terminal x86-64 CPU exception boundary
 
 - Date: 2026-08-01
-- Status: Accepted and implemented candidate; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified
 - Extends: [Decision 0052](0052-First-Kernel-Owned-Memory-Foundation.md)'s first allocation and [Decision 0056](0056-Windvale-Owned-Post-Memory-Evidence.md)'s kernel machine seam
 - Preserves: Kernel handoff version 1, kernel memory version 1, native ABI 14, execution-context version 6, WVB 1.6, WVO 1.0, and UEFI application format version 3
 
@@ -39,6 +39,14 @@ status=panic
 - The installer accepts no serialized or caller-shaped gate. Its only runtime input is the already-owned first allocation; null or non-page-aligned addresses fail before the page is cleared or the IDTR is published. Kernel memory's existing below-4-GiB arena contract proves the complete page range. The linked RIP-relative handler address and live `CS` are exercised by the real firmware run rather than guessed by a host-side descriptor fixture.
 - Two builds of each scenario must be byte-identical. The ordinary image must retain the complete success transcript with the added armed marker. The invalid-opcode image must execute after firmware exit and Main completion, terminate through the exact panic transcript and host code 3, and complete without harness timeout.
 - Candidate evidence may be recorded locally. Cross-host qualification, pinned-QEMU artifact identities, exact timings, and final test counts require a later committed qualification record.
+
+## Qualification
+
+Exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`, tree `7ca8f6fdbf5a7caff8300ad4b1dbd490295930d6`, was archived as 3,014,724 bytes with SHA-256 `ef6892d6c37cdc5e1461e66c8f2d5b72d7514f847078950220124b92690daa3c`. The same archive passed zero-warning Qualification on Windows and Debian GNU/Linux 12 x64 with all 63 Seed tests, exact compiler/retained-artifact reproduction, the complete native CLI gate, and all 17 OS tests. Complete Qualification took 485.476 seconds on Windows and 495.249 seconds on Debian; suite time was 241.821 and 247.813 seconds.
+
+Pinned QEMU 11.0/Q35/TCG boots both exact 17,920-byte probe-17 images. The ordinary image has SHA-256 `d2c0a7e4e5e1605fc8639c05ab27ad07ee2b015ad2dc151d8637830b8acb3f18`, emits the complete success transcript including `cpu-exceptions=armed`, and returns guest-controlled host exit code 1. The explicit invalid-opcode image has SHA-256 `26ccfaf862024e022339ca9fa8114c71b4fe601fe59a806d366e1d330b6d106d`, emits the exact terminal panic transcript, emits no later success marker, and returns expected host code 3 without timeout. GitHub [Verify run 30715672194](https://github.com/eworker-inc/Windvale/actions/runs/30715672194) independently passes Windows and Linux verification for the implementation commit.
+
+This qualifies one terminal vector-6 boundary only. It does not qualify recovery, another exception vector, a normalized trap dispatcher, page-fault state, IST/TSS containment, hardware interrupts, clean shutdown, or Hyper-V.
 
 ## Consequences and limits
 

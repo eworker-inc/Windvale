@@ -1,9 +1,9 @@
 # Decision 0082: Windvale-owned native publication layout
 
 - Date: 2026-08-01
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified
 - Extends: [Decision 0080](0080-Native-Byte-Result-And-Live-Stencil-Consumption.md)
-- Preserves: Native ABI 14, execution-context version 6, service-table version 4, WVB 1.6, WVO 1.0, kernel bridge 9, the qualified firmware-probe-16 identity, the separate probe-17 candidate contract, and all final runtime-service leaf identities
+- Preserves: Native ABI 14, execution-context version 6, service-table version 4, WVB 1.6, WVO 1.0, kernel bridge 9, the qualified firmware-probe-17 identities, and all final runtime-service leaf identities
 
 ## Context
 
@@ -34,6 +34,16 @@ The generated fragment, entry convention, execution context, service table, runt
 - The bridge has exactly one capability, `file.read_bytes`, and exactly one `Main() -> bytes` export.
 - Focused coverage must exercise service-free and all-11-service plans, every request status family, size/order/reserved/range/image boundaries, deterministic repeated output, corrupt response envelopes and placements, retained-source reproduction, and live execution of a relative-data fragment whose verified patch bytes remain unchanged.
 - Complete qualification must reproduce both WVBs and the retained bridge on Windows and Debian x64, compare all portable artifacts and normalized contracts, pass both Seed and OS suites, and retain the pinned-QEMU probe unless an applicable contract changes.
+
+## Qualification
+
+Exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`, tree `7ca8f6fdbf5a7caff8300ad4b1dbd490295930d6`, was published to both configured remotes. Its 3,014,724-byte archive has SHA-256 `ef6892d6c37cdc5e1461e66c8f2d5b72d7514f847078950220124b92690daa3c` and retained that exact identity on the isolated Debian GNU/Linux 12 x64 QA host with .NET SDK `10.0.302`.
+
+Windows and Debian pass zero-warning Release builds, all 63 Seed tests, exact reproduction of both publication WVBs and the retained bridge, and the complete native CLI/reproduction gate. Complete Qualification takes 485.476 and 495.249 seconds, with suite times of 241.821 and 247.813 seconds. The new publication-layout case takes 17 and 22 milliseconds; its initial cold Windows development run took 0.565 seconds.
+
+The 15,798-byte Windows report has SHA-256 `9196b6f7049cd810c8bfd09037886e6c8628c1631c053543250290bc2acd50d7`; its 13,084-byte timing report has SHA-256 `4b1bc7a87126bdb5de8961b707f8f03931876760aba1d45faf0144086efef77d`. The 15,705-byte Debian report has SHA-256 `c05f408eeb3d356e719382321705918bb6f9e6da803cd8e4efd5ddcfb1ebcc1f`; its 12,654-byte timing report has SHA-256 `b1b7b7210eebe5dce7465ae2afbed630c018c29bd23fa384148678675f932f72`. Their normalized contracts match exactly with SHA-256 `77cd1d742509fc235f23b2dd743518a5694bd94c80d4bb6d81340dfe37e506e4`.
+
+All 67 portable artifacts, totaling 7,836,727 bytes, match byte for byte. Their canonical name/size/SHA-256 manifest has SHA-256 `527ac023a43dc6ca455c3b79654617138cc0bd5dd8b36d0801ba6f788ae3634c`. The retrieved 2,334,586-byte Debian evidence bundle has SHA-256 `a6a7441b7f790e2d1052e63ecd04f92bec17f8325acc6b7aaeeab74a91fb8e33`. Both hosts pass all 17 OS tests, both pinned-QEMU probe-17 scenarios pass with their exact qualified identities, and GitHub [Verify run 30715672194](https://github.com/eworker-inc/Windvale/actions/runs/30715672194) independently passes Windows and Linux verification.
 
 ## Consequences
 
