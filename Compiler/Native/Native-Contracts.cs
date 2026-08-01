@@ -64,6 +64,7 @@ public enum Nativeˉserviceˉfailureˉdetail : uint
     Fileˉunavailable = 8,
     Fileˉtooˉlarge = 9,
     Fileˉsnapshotˉlimit = 10,
+    Bytesˉvalueˉlimit = 11,
 }
 
 public static class Nativeˉserviceˉtableˉcontract
@@ -289,6 +290,15 @@ public sealed record Nativeˉbytesˉread(
     int Bytes,
     int Offset) : Nativeˉoperation;
 
+public sealed record Nativeˉbytesˉconcat(
+    int Result,
+    int Left,
+    int Right) : Nativeˉoperation;
+
+public sealed record Nativeˉbytesˉfromˉu32ˉlittle(
+    int Result,
+    int Value) : Nativeˉoperation;
+
 public sealed record Nativeˉtextˉutf8ˉisˉvalid(
     int Result,
     int Bytes) : Nativeˉoperation;
@@ -296,6 +306,10 @@ public sealed record Nativeˉtextˉutf8ˉisˉvalid(
 public sealed record Nativeˉtextˉfromˉutf8(
     int Result,
     int Bytes) : Nativeˉoperation;
+
+public sealed record Nativeˉtextˉtoˉutf8(
+    int Result,
+    int Text) : Nativeˉoperation;
 
 public sealed record Nativeˉenumˉname(
     int Result,

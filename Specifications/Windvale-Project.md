@@ -69,6 +69,10 @@ Malformed projects and compiler diagnostics exit as compilation failure `1`. Inv
 
 `Project-Manifest-Tool.wv` is the first hosted shell over that core. It reads exactly one supplied manifest resource and emits a deterministic status/path report. The C# parser remains the reference oracle and the normal `windvale build` implementation while the Windvale core is candidate evidence; focused conformance compares successful path values and exact `WVP` line/column failures between them.
 
+The hosted shell is also the first native project consumer candidate. Under ABI 14 it reads a real `.wvproj` through the native file-input table and produces the same output, diagnostics, and exit code under the interpreter, Windows W^X JIT, and linked WVO/AOT. The native path admits the core's borrowed-byte record fields, `Textˉtoˉutf8`, `Bytesˉfromˉu32ˉlittle`, and bounded `Bytesˉconcat` without adding a capability, service-table slot, execution-context field, or project-format feature. A supplied Stage 0 file reader is required to remain unused during native execution.
+
+This is development-candidate evidence, not cross-host qualification or a standalone executable. The current WVO still requires its verified fragment metadata and Stage 0 publication owner. Project-relative resolution, source reads, compiler invocation, and atomic WVB publication therefore remain in the C# `windvale build` path.
+
 The portable parser deliberately does not resolve a manifest path against a host filesystem. Project-relative native path combination, Windows/Linux identity comparison, duplicate resolved-resource detection, source reads, and publication remain in the host-owned reader. Moving the build driver into Windvale must preserve that boundary rather than teaching portable source about native separators, roots, case rules, or process working directories.
 
 ## Boundary and deferred features

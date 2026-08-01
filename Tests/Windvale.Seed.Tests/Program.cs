@@ -40,8 +40,10 @@ internal static class Program
     private const string NATIVE_LOOP_CODE_SHA256 = "3b453983778711cfccca3a495cd5d97eeecd28a041294ef522675582695740b1";
     private const string NATIVE_LOOP_WVO_SHA256 = "30435304a6d134152ea5fabb889047fb2a1099ef7b4606f552817175022aebc9";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
-    private const string PROJECT_MANIFEST_CORE_SHA256 = "6e905c0fdd9a7d94b64e2b6fd6795c8235aa526634c68f18bdc8c0dd79b26ddc";
-    private const string PROJECT_MANIFEST_TOOL_SHA256 = "82a527541deebaef19be1271946077e1045331475db9346f35558425d406acc1";
+    private const string PROJECT_MANIFEST_CORE_SHA256 = "b609fb7d442bbe1685c1058c71eb011d43b291df505697a97c233ca7063a2044";
+    private const string PROJECT_MANIFEST_TOOL_SHA256 = "50ab9aa5048ab844a816d0f7f12fb691cb69f57c4a71f7eb18ebc7fb4aaf0b0c";
+    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "573e7f4caa398a1806bc414ea9aaf6043e6d3ad6a3299139a08edd022bfa329b";
+    private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "adb012c754e96a2d0c7ec7c17900e4924003d00ba2c102d3342ce5052039471d";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
     private const string BYTE_ORDERING_SHA256 = "194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1";
@@ -594,6 +596,7 @@ internal static class Program
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
         new("Windvale-written project manifests agree with the reference parser", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉprojectˉmanifestsˉagree),
+        new("Windvale-written project manifests agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉprojectˉmanifestsˉagree),
         new("Foundation machine contracts are shared, bounded, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉmachineˉcontractsˉrun),
         new("Foundation byte ordering is shared, ordinal, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉorderingˉruns),
         new("Foundation decimal parsing shares nominal results and boundaries", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉdecimalˉparsingˉruns),
@@ -3831,6 +3834,240 @@ internal static class Program
         Equal(string.Empty, Invalidˉutf8.Output);
         Equal("project status=WVP1002 line=1 column=1\n", Invalidˉutf8.Diagnostics);
         Equal(1, Invalidˉutf8.Readˉcount);
+    }
+
+    private static void Nativeˉprojectˉmanifestsˉagree()
+    {
+        var Toolˉresult = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Tools/Windvale.Project/Project-Manifest-Tool.wv",
+                PROJECT_MANIFEST_TOOL_SOURCE),
+            [
+                new(
+                    "Tools/Windvale.Project/Project-Manifest-Core.wv",
+                    PROJECT_MANIFEST_CORE_SOURCE),
+            ]);
+        True(
+            Toolˉresult.Success,
+            "The Windvale project tool did not compile for native execution: " +
+                string.Join(" | ", Toolˉresult.Diagnostics));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉresult.Moduleˉbytes.AsSpan());
+        var Authorized = Tool.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+
+        var First = X64ˉnativeˉbackend.Compile(Tool);
+        var Second = X64ˉnativeˉbackend.Compile(Tool);
+        Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Sequenceˉequal(First.Fragment.Symbols, Second.Fragment.Symbols);
+        Sequenceˉequal(First.Fragment.Patches, Second.Fragment.Patches);
+        Sequenceˉequal(First.Fragment.Types, Second.Fragment.Types);
+        Sequenceˉequal(
+            [
+                Nativeˉservice.Consoleˉwriteˉline,
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉservice.Processˉargument,
+                Nativeˉservice.Fileˉreadˉbytes,
+                Nativeˉservice.Textˉutf8ˉisˉvalid,
+                Nativeˉservice.Diagnosticˉwriteˉline,
+                Nativeˉservice.Textˉconcat,
+                Nativeˉservice.Textˉquote,
+                Nativeˉservice.U32ˉformat,
+            ],
+            First.Fragment.Requiredˉservices);
+        var Operations = First.Module.Functions
+            .SelectMany(Function => Function.Blocks)
+            .SelectMany(Block => Block.Operations)
+            .ToImmutableArray();
+        True(Operations.Any(Operation => Operation is Nativeˉbytesˉconcat),
+            "The native project tool omitted immutable byte concatenation.");
+        True(Operations.Any(Operation => Operation is Nativeˉbytesˉfromˉu32ˉlittle),
+            "The native project tool omitted little-endian directory construction.");
+        True(Operations.Any(Operation => Operation is Nativeˉtextˉtoˉutf8),
+            "The native project tool omitted borrowed text encoding.");
+        True(
+            Tool.Module.Types
+                .OfType<Recordˉtypeˉdeclaration>()
+                .Any(Record => Record.Fields.Any(Field => Field.Type.Kind == Valueˉtype.Bytes)),
+            "The native project tool omitted its borrowed-byte record boundary.");
+        _ = Nativeˉfragmentˉverifier.Verify(First.Fragment);
+        Equal(
+            PROJECT_MANIFEST_NATIVE_CODE_SHA256,
+            Objectˉdigest.Calculateˉsha256(First.Fragment.Code.AsSpan()));
+
+        var Corruptedˉrecordˉtag = First.Fragment.Code.ToArray();
+        var Recordˉtag = Enumerable
+            .Range(0, Corruptedˉrecordˉtag.Length - 13)
+            .Where(Index =>
+                Corruptedˉrecordˉtag[Index] == 0x41 &&
+                Corruptedˉrecordˉtag[Index + 1] == 0xB8 &&
+                Corruptedˉrecordˉtag[Index + 6] == 0x41 &&
+                Corruptedˉrecordˉtag[Index + 7] == 0x8B &&
+                Corruptedˉrecordˉtag[Index + 8] == 0x47 &&
+                Corruptedˉrecordˉtag[Index + 9] ==
+                    Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET)
+            .DefaultIfEmpty(-1)
+            .First();
+        True(Recordˉtag >= 0, "The native project tool omitted typed record construction.");
+        BinaryPrimitives.WriteInt32LittleEndian(
+            Corruptedˉrecordˉtag.AsSpan(Recordˉtag + 2, sizeof(int)),
+            int.MaxValue);
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉrecordˉtag.ToImmutableArray() }));
+
+        var Corruptedˉbyteˉlimit = First.Fragment.Code.ToArray();
+        var Byteˉlimit = Corruptedˉbyteˉlimit.AsSpan().IndexOf(new byte[]
+        {
+            0x3D, 0x00, 0x00, 0x40, 0x00, 0x0F, 0x87,
+        });
+        True(Byteˉlimit >= 0, "The native project tool omitted the 4 MiB byte-value bound.");
+        Corruptedˉbyteˉlimit[Byteˉlimit + 1] ^= 0x01;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉbyteˉlimit.ToImmutableArray() }));
+
+        var Firstˉobject = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+        var Secondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment);
+        Sequenceˉequal(Firstˉobject, Secondˉobject);
+        Equal(
+            PROJECT_MANIFEST_NATIVE_WVO_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉobject.AsSpan()));
+        var Firstˉlinked = Linkˉsuccess(
+            [Firstˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        var Secondˉlinked = Linkˉsuccess(
+            [Secondˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Sequenceˉequal(Firstˉlinked.Imageˉbytes, Secondˉlinked.Imageˉbytes);
+        Sequenceˉequal(Firstˉlinked.Mapˉbytes, Secondˉlinked.Mapˉbytes);
+        Sequenceˉequal(First.Fragment.Code, Firstˉlinked.Imageˉbytes);
+
+        void Runˉcase(string manifest)
+        {
+            var Manifestˉbytes = Encoding.UTF8.GetBytes(manifest).ToImmutableArray();
+            var Reference = Runˉprojectˉmanifestˉtool(Tool, Manifestˉbytes);
+            Equal(1, Reference.Readˉcount);
+            var Nativeˉpath = Path.Combine(
+                Path.GetTempPath(),
+                $"windvale-native-project-{Guid.NewGuid():N}.wvproj");
+
+            void Runˉnative(ImmutableArray<byte> code)
+            {
+                using var Output = new Nativeˉoutputˉcapture();
+                using var Diagnostic = new Nativeˉoutputˉcapture();
+                var Reader = new Testˉfileˉreader((_, _) =>
+                    throw new InvalidOperationException(
+                        "Native project execution called the Stage 0 file reader."));
+                var Resources = new Hostedˉresourceˉcontext(
+                    [Nativeˉpath],
+                    TextWriter.Null,
+                    TextWriter.Null,
+                    Reader);
+                Equal(
+                    Reference.Exitˉcode,
+                    X64ˉnativeˉexecutor.Executeˉi32(
+                        First.Fragment with { Code = code },
+                        maximumˉinstructions: Reference.Executedˉinstructions,
+                        hostˉservices: new(
+                            Output.Channel,
+                            Authorized,
+                            Resources,
+                            Diagnostic.Channel,
+                            Nativeˉfileˉinput.Hostˉfileˉsystem())));
+                Equal(Reference.Output, Output.Readˉtext());
+                Equal(Reference.Diagnostics, Diagnostic.Readˉtext());
+                Equal(0, Reader.Readˉcount);
+            }
+
+            try
+            {
+                File.WriteAllBytes(Nativeˉpath, Manifestˉbytes.AsSpan());
+                Runˉnative(First.Fragment.Code);
+                Runˉnative(Firstˉlinked.Imageˉbytes);
+            }
+            finally
+            {
+                File.Delete(Nativeˉpath);
+            }
+        }
+
+        Runˉcase(
+            "windvale-project 1\n" +
+            "root \"Source/Main.wv\"\n" +
+            "source \"Source/Leaf.wv\"\n" +
+            "emit wvb\n");
+        Runˉcase(
+            "windvale-project 1\n" +
+            " \n" +
+            "root \"Source/Main.wv\"\n" +
+            "emit wvb\n");
+
+        var Limitˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉprojectˉbyteˉlimit profile hosted;
+            capability file.read_bytes;
+            capability process.argument;
+            export fn Main() -> i32 {
+                let Input: bytes = file.read_bytes(process.argument(0u32));
+                let Combined: bytes = Bytesˉconcat(Input, Input);
+                return 0;
+            }
+            """));
+        var Limitˉinput = new byte[Bytecodeˉlimits.MAX_BYTE_DATA_BYTES / 2 + 1]
+            .ToImmutableArray();
+        var Limitˉreader = new Testˉfileˉreader((Name, Maximum) =>
+        {
+            Equal("input.bin", Name);
+            True(Limitˉinput.Length <= Maximum, "The byte-limit fixture exceeded the hosted bound.");
+            return Limitˉinput;
+        });
+        var Limitˉauthorized = ImmutableHashSet.Create(
+            StringComparer.Ordinal,
+            Capabilityˉcatalog.FILE_READ_BYTES,
+            Capabilityˉcatalog.PROCESS_ARGUMENT);
+        Throwsˉruntime(
+            "WVR3015",
+            () => _ = new Referenceˉruntime(
+                Limitˉverified,
+                new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                    ["input.bin"],
+                    TextWriter.Null,
+                    TextWriter.Null,
+                    Limitˉreader)),
+                new(Limitˉauthorized)).Runˉmain());
+        Equal(1, Limitˉreader.Readˉcount);
+
+        var Limitˉnative = X64ˉnativeˉbackend.Compile(Limitˉverified);
+        var Limitˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-project-limit-{Guid.NewGuid():N}.bin");
+        try
+        {
+            File.WriteAllBytes(Limitˉpath, Limitˉinput.AsSpan());
+            var Reader = new Testˉfileˉreader((_, _) =>
+                throw new InvalidOperationException(
+                    "Native byte-limit execution called the Stage 0 file reader."));
+            Throwsˉnativeˉtrap(
+                "WVR3015",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    Limitˉnative.Fragment,
+                    hostˉservices: new(
+                        null,
+                        Limitˉauthorized,
+                        new Hostedˉresourceˉcontext(
+                            [Limitˉpath],
+                            TextWriter.Null,
+                            TextWriter.Null,
+                            Reader),
+                        fileˉinput: Nativeˉfileˉinput.Hostˉfileˉsystem())));
+            Equal(0, Reader.Readˉcount);
+        }
+        finally
+        {
+            File.Delete(Limitˉpath);
+        }
     }
 
     private static void Foundationˉmachineˉcontractsˉrun()

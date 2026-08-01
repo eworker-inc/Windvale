@@ -486,6 +486,14 @@ public static class X64ˉnativeˉbackend
                         Operations.Add(new Nativeˉtextˉfromˉutf8(Decodedˉtext, Decodedˉbytes.Value));
                         Stack.Push(new(Decodedˉtext, Nativeˉvalueˉtype.Borrowedˉtext));
                         break;
+                    case Opcode.Textˉtoˉutf8:
+                        var Encodedˉtext = Popˉvalue(Nativeˉvalueˉtype.Borrowedˉtext);
+                        var Encodedˉtextˉresult = Newˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
+                        Operations.Add(new Nativeˉtextˉtoˉutf8(
+                            Encodedˉtextˉresult,
+                            Encodedˉtext.Value));
+                        Stack.Push(new(Encodedˉtextˉresult, Nativeˉvalueˉtype.Borrowedˉbytes));
+                        break;
                     case Opcode.Enumˉname:
                         var Namedˉenum = Popˉvalue(Nativeˉvalueˉtype.Enum);
                         if ((uint)Namedˉenum.Nominalˉtypeˉindex >= (uint)module.Module.Types.Length ||
@@ -574,6 +582,24 @@ public static class X64ˉnativeˉbackend
                             Readˉbytes.Value,
                             Readˉoffset.Value));
                         Stack.Push(new(Readˉresult, Readˉtype));
+                        break;
+                    case Opcode.Bytesˉconcat:
+                        var Concatˉbytesˉright = Popˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
+                        var Concatˉbytesˉleft = Popˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
+                        var Concatˉbytesˉresult = Newˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
+                        Operations.Add(new Nativeˉbytesˉconcat(
+                            Concatˉbytesˉresult,
+                            Concatˉbytesˉleft.Value,
+                            Concatˉbytesˉright.Value));
+                        Stack.Push(new(Concatˉbytesˉresult, Nativeˉvalueˉtype.Borrowedˉbytes));
+                        break;
+                    case Opcode.Bytesˉfromˉu32ˉlittle:
+                        var Encodedˉu32 = Popˉvalue(Nativeˉvalueˉtype.U32);
+                        var Encodedˉu32ˉresult = Newˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
+                        Operations.Add(new Nativeˉbytesˉfromˉu32ˉlittle(
+                            Encodedˉu32ˉresult,
+                            Encodedˉu32.Value));
+                        Stack.Push(new(Encodedˉu32ˉresult, Nativeˉvalueˉtype.Borrowedˉbytes));
                         break;
                     case Opcode.Recordˉcreate:
                         var Recordˉtypeˉindex = checked((int)Instruction.Unsignedˉoperand);
@@ -821,6 +847,10 @@ public static class X64ˉnativeˉbackend
                 Fail("WVN2901", "The x86-64 selector received invalid immutable data metadata.");
             }
         }
+        var Usesˉtypedˉrecordˉtags = module.Types
+            .OfType<Recordˉtypeˉdeclaration>()
+            .Any(Record => Record.Fields.Any(Field =>
+                Field.Type.Kind is Valueˉtype.Text or Valueˉtype.Bytes));
 
         var Code = new List<byte>();
         var Functionˉoffsets = new int[module.Functions.Length];
@@ -1060,6 +1090,20 @@ public static class X64ˉnativeˉbackend
                                 Read,
                                 Byteˉboundsˉpatches);
                             break;
+                        case Nativeˉbytesˉconcat Concat:
+                            Emitˉbytesˉconcat(
+                                Code,
+                                Function,
+                                Concat,
+                                Runtimeˉserviceˉpatches);
+                            break;
+                        case Nativeˉbytesˉfromˉu32ˉlittle Encode:
+                            Emitˉbytesˉfromˉu32ˉlittle(
+                                Code,
+                                Function,
+                                Encode,
+                                Runtimeˉserviceˉpatches);
+                            break;
                         case Nativeˉtextˉutf8ˉisˉvalid Validation:
                             Emitˉdescriptorˉserviceˉinput(
                                 Code,
@@ -1094,6 +1138,13 @@ public static class X64ˉnativeˉbackend
                                 Valueˉslot(Function, Decode.Bytes),
                                 Valueˉslot(Function, Decode.Result),
                                 Nativeˉvalueˉtype.Borrowedˉtext);
+                            break;
+                        case Nativeˉtextˉtoˉutf8 Encode:
+                            Emitˉcopy(
+                                Code,
+                                Valueˉslot(Function, Encode.Text),
+                                Valueˉslot(Function, Encode.Result),
+                                Nativeˉvalueˉtype.Borrowedˉbytes);
                             break;
                         case Nativeˉenumˉname Name:
                             Code.Add(0x41);
@@ -1136,10 +1187,20 @@ public static class X64ˉnativeˉbackend
                                 Runtimeˉserviceˉpatches);
                             break;
                         case Nativeˉrecordˉcreate Create:
-                            Emitˉrecordˉcreate(Code, Function, Create, Recordˉarenaˉpatches);
+                            Emitˉrecordˉcreate(
+                                Code,
+                                Function,
+                                Create,
+                                Usesˉtypedˉrecordˉtags,
+                                Recordˉarenaˉpatches);
                             break;
                         case Nativeˉrecordˉfield Field:
-                            Emitˉrecordˉfield(Code, Function, Field, Recordˉarenaˉpatches);
+                            Emitˉrecordˉfield(
+                                Code,
+                                Function,
+                                Field,
+                                Usesˉtypedˉrecordˉtags,
+                                Recordˉarenaˉpatches);
                             break;
                         case Nativeˉdataˉlength Length:
                             Emitˉconstant(Code, Length.Length, Valueˉslot(Function, Length.Result));
@@ -1630,6 +1691,15 @@ public static class X64ˉnativeˉbackend
                             },
                             ref Nextˉvalue);
                         break;
+                    case Nativeˉbytesˉconcat Concat:
+                        Requireˉvalue(function, Concat.Left, Nativeˉvalueˉtype.Borrowedˉbytes, Nextˉvalue);
+                        Requireˉvalue(function, Concat.Right, Nativeˉvalueˉtype.Borrowedˉbytes, Nextˉvalue);
+                        Requireˉresult(function, Concat.Result, Nativeˉvalueˉtype.Borrowedˉbytes, ref Nextˉvalue);
+                        break;
+                    case Nativeˉbytesˉfromˉu32ˉlittle Encode:
+                        Requireˉvalue(function, Encode.Value, Nativeˉvalueˉtype.U32, Nextˉvalue);
+                        Requireˉresult(function, Encode.Result, Nativeˉvalueˉtype.Borrowedˉbytes, ref Nextˉvalue);
+                        break;
                     case Nativeˉtextˉutf8ˉisˉvalid Validation:
                         if (!module.Requiredˉservices.Contains(Nativeˉservice.Textˉutf8ˉisˉvalid))
                         {
@@ -1645,6 +1715,10 @@ public static class X64ˉnativeˉbackend
                         }
                         Requireˉvalue(function, Decode.Bytes, Nativeˉvalueˉtype.Borrowedˉbytes, Nextˉvalue);
                         Requireˉresult(function, Decode.Result, Nativeˉvalueˉtype.Borrowedˉtext, ref Nextˉvalue);
+                        break;
+                    case Nativeˉtextˉtoˉutf8 Encode:
+                        Requireˉvalue(function, Encode.Text, Nativeˉvalueˉtype.Borrowedˉtext, Nextˉvalue);
+                        Requireˉresult(function, Encode.Result, Nativeˉvalueˉtype.Borrowedˉbytes, ref Nextˉvalue);
                         break;
                     case Nativeˉenumˉname Name:
                         if ((uint)Name.Type >= (uint)module.Types.Length ||
@@ -1922,6 +1996,8 @@ public static class X64ˉnativeˉbackend
                     Valueˉtype.Bool or
                     Valueˉtype.U8 or
                     Valueˉtype.U32 or
+                    Valueˉtype.Text or
+                    Valueˉtype.Bytes or
                     Valueˉtype.Record or
                     Valueˉtype.Enum),
             _ => false,
@@ -2172,12 +2248,205 @@ public static class X64ˉnativeˉbackend
         Emitˉstoreˉeax(code, Valueˉslot(function, read.Result));
     }
 
+    private static void Emitˉbytesˉconcat(
+        List<byte> code,
+        Nativeˉfunction function,
+        Nativeˉbytesˉconcat concat,
+        List<int> runtimeˉserviceˉpatches)
+    {
+        var Limitˉpatches = new List<int>();
+        var Arenaˉpatches = new List<int>();
+        Emitˉloadˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Left),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        Emitˉloadˉecxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Right),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x01, 0xC8, 0x0F, 0x82]);
+        Limitˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.Add(0x3D);
+        Addˉi32(code, Bytecodeˉlimits.MAX_BYTE_DATA_BYTES);
+        code.AddRange([0x0F, 0x87]);
+        Limitˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x89, 0xC0,
+            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x41, 0x89, 0xC1,
+            0x89, 0xC1,
+            0x44, 0x01, 0xC1,
+            0x0F, 0x82,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+            0x0F, 0x87,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+            0x4C, 0x01, 0xCA,
+            0x48, 0x89, 0xD0,
+        ]);
+        Emitˉstoreˉrax(code, Valueˉslot(function, concat.Result));
+        code.AddRange([0x44, 0x89, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+
+        code.AddRange([0x49, 0x89, 0xD1]);
+        Emitˉbytesˉcopyˉloop(
+            code,
+            Valueˉslot(function, concat.Left));
+        Emitˉbytesˉcopyˉloop(
+            code,
+            Valueˉslot(function, concat.Right));
+
+        code.Add(0xE9);
+        var Endˉpatch = code.Count;
+        Addˉi32(code, 0);
+        var Limitˉfailure = code.Count;
+        Emitˉruntimeˉfailure(
+            code,
+            Nativeˉserviceˉfailureˉdetail.Bytesˉvalueˉlimit,
+            runtimeˉserviceˉpatches);
+        var Arenaˉfailure = code.Count;
+        Emitˉruntimeˉfailure(
+            code,
+            Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted,
+            runtimeˉserviceˉpatches);
+        var End = code.Count;
+        foreach (var Patch in Limitˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Limitˉfailure);
+        }
+        foreach (var Patch in Arenaˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Arenaˉfailure);
+        }
+        Writeˉrelativeˉi32(code, Endˉpatch, End);
+    }
+
+    private static void Emitˉbytesˉfromˉu32ˉlittle(
+        List<byte> code,
+        Nativeˉfunction function,
+        Nativeˉbytesˉfromˉu32ˉlittle encode,
+        List<int> runtimeˉserviceˉpatches)
+    {
+        var Arenaˉpatches = new List<int>();
+        code.AddRange(
+        [
+            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x41, 0x89, 0xC1,
+            0x89, 0xC1,
+            0x83, 0xC1, 0x04,
+            0x0F, 0x82,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+            0x0F, 0x87,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+            0x4C, 0x01, 0xCA,
+            0x48, 0x89, 0xD0,
+        ]);
+        Emitˉstoreˉrax(code, Valueˉslot(function, encode.Result));
+        code.Add(0xB8);
+        Addˉi32(code, sizeof(uint));
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, encode.Result),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        Emitˉloadˉeax(code, Valueˉslot(function, encode.Value));
+        code.AddRange([0x89, 0x02, 0xE9]);
+        var Endˉpatch = code.Count;
+        Addˉi32(code, 0);
+        var Arenaˉfailure = code.Count;
+        Emitˉruntimeˉfailure(
+            code,
+            Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted,
+            runtimeˉserviceˉpatches);
+        var End = code.Count;
+        foreach (var Patch in Arenaˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Arenaˉfailure);
+        }
+        Writeˉrelativeˉi32(code, Endˉpatch, End);
+    }
+
+    private static void Emitˉbytesˉcopyˉloop(List<byte> code, int sourceˉslot)
+    {
+        Emitˉloadˉrax(code, sourceˉslot);
+        Emitˉloadˉecxˉatˉfield(
+            code,
+            sourceˉslot,
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x85, 0xC9, 0x0F, 0x84]);
+        var Endˉpatch = code.Count;
+        Addˉi32(code, 0);
+        var Loop = code.Count;
+        code.AddRange(
+        [
+            0x44, 0x0F, 0xB6, 0x00,
+            0x45, 0x88, 0x01,
+            0x48, 0xFF, 0xC0,
+            0x49, 0xFF, 0xC1,
+            0xFF, 0xC9,
+            0x0F, 0x85,
+        ]);
+        var Loopˉpatch = code.Count;
+        Addˉi32(code, 0);
+        var End = code.Count;
+        Writeˉrelativeˉi32(code, Endˉpatch, End);
+        Writeˉrelativeˉi32(code, Loopˉpatch, Loop);
+    }
+
+    private static void Emitˉruntimeˉfailure(
+        List<byte> code,
+        Nativeˉserviceˉfailureˉdetail detail,
+        List<int> runtimeˉserviceˉpatches)
+    {
+        code.AddRange(
+        [
+            0x41, 0xC7, 0x47,
+            Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
+        ]);
+        Addˉi32(code, checked((int)detail));
+        code.Add(0xE9);
+        runtimeˉserviceˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+    }
+
     private static void Emitˉrecordˉcreate(
         List<byte> code,
         Nativeˉfunction function,
         Nativeˉrecordˉcreate create,
+        bool emitˉtypeˉtag,
         List<int> arenaˉpatches)
     {
+        if (emitˉtypeˉtag)
+        {
+            code.AddRange([0x41, 0xB8]);
+            Addˉi32(code, create.Type);
+        }
         var Allocationˉbytes = checked(create.Fields.Length * Nativeˉcontract.VALUE_SLOT_BYTES);
         code.AddRange(
         [
@@ -2223,8 +2492,14 @@ public static class X64ˉnativeˉbackend
         List<byte> code,
         Nativeˉfunction function,
         Nativeˉrecordˉfield field,
+        bool emitˉtypeˉtag,
         List<int> arenaˉpatches)
     {
+        if (emitˉtypeˉtag)
+        {
+            code.AddRange([0x41, 0xB8]);
+            Addˉi32(code, field.Type);
+        }
         Emitˉloadˉeax(code, Valueˉslot(function, field.Record));
         code.AddRange([0x89, 0xC1, 0x81, 0xC1]);
         Addˉi32(code, checked((field.Field + 1) * Nativeˉcontract.VALUE_SLOT_BYTES));

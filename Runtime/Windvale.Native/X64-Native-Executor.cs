@@ -354,6 +354,12 @@ public static class X64ˉnativeˉexecutor
                     "WVR3028",
                     $"Native file snapshots exceeded the per-execution limit in entry '{entry}'.");
             }
+            if (Serviceˉfailureˉdetail == Nativeˉserviceˉfailureˉdetail.Bytesˉvalueˉlimit)
+            {
+                throw new Nativeˉtrapˉexception(
+                    "WVR3015",
+                    $"A native byte result exceeded the {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}-byte value limit in entry '{entry}'.");
+            }
             throw new Nativeˉtrapˉexception(
                 "WVR3013",
                 $"A native runtime service rejected its request in entry '{entry}'.");

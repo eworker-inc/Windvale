@@ -172,6 +172,8 @@ public static class Nativeˉfragmentˉverifier
                         Valueˉtype.Bool or
                         Valueˉtype.U8 or
                         Valueˉtype.U32 or
+                        Valueˉtype.Text or
+                        Valueˉtype.Bytes or
                         Valueˉtype.Record or
                         Valueˉtype.Enum) ||
                     (Field.Type.Kind is Valueˉtype.Record or Valueˉtype.Enum
@@ -422,6 +424,10 @@ public static class Nativeˉfragmentˉverifier
             .Select(Item => Item.Slot)
             .ToHashSet();
         var Staticˉdescriptorˉdata = new Dictionary<int, Nativeˉsymbol>();
+        var Usesˉtypedˉrecordˉtags = fragment.Types
+            .OfType<Recordˉtypeˉdeclaration>()
+            .Any(Record => Record.Fields.Any(Field =>
+                Field.Type.Kind is Valueˉtype.Text or Valueˉtype.Bytes));
 
         var Restoreˉbytes = Isˉmain ? 13 : 11;
         var Statusˉbytes = Isˉmain ? 23 : 21;
@@ -737,6 +743,28 @@ public static class Nativeˉfragmentˉverifier
                 continue;
             }
 
+            if (Tryˉdecodeˉbytesˉconcat(
+                    Code,
+                    ref Index,
+                    Propagate,
+                    Frameˉbytes,
+                    Runtimeˉservice,
+                    Borrowedˉbytesˉslots,
+                    out var Concatˉbytesˉslot) ||
+                Tryˉdecodeˉbytesˉfromˉu32ˉlittle(
+                    Code,
+                    ref Index,
+                    Propagate,
+                    Frameˉbytes,
+                    Runtimeˉservice,
+                    Borrowedˉbytesˉslots,
+                    out Concatˉbytesˉslot))
+            {
+                Borrowedˉbytesˉslots.Add(Concatˉbytesˉslot);
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
             if (Tryˉdecodeˉbytesˉcopy(
                 Code,
                 ref Index,
@@ -808,6 +836,9 @@ public static class Nativeˉfragmentˉverifier
                 Propagate,
                 Frameˉbytes,
                 Recordˉarena,
+                fragment.Types,
+                Usesˉtypedˉrecordˉtags,
+                Borrowedˉbytesˉslots,
                 out var Recordˉcreateˉresult))
             {
                 if (Borrowedˉbytesˉslots.Contains(Recordˉcreateˉresult))
@@ -824,9 +855,17 @@ public static class Nativeˉfragmentˉverifier
                 Propagate,
                 Frameˉbytes,
                 Recordˉarena,
-                out var Recordˉfieldˉresult))
+                fragment.Types,
+                Usesˉtypedˉrecordˉtags,
+                Borrowedˉbytesˉslots,
+                out var Recordˉfieldˉresult,
+                out var Recordˉfieldˉisˉdescriptor))
             {
-                if (Borrowedˉbytesˉslots.Contains(Recordˉfieldˉresult))
+                if (Recordˉfieldˉisˉdescriptor)
+                {
+                    Borrowedˉbytesˉslots.Add(Recordˉfieldˉresult);
+                }
+                else if (Borrowedˉbytesˉslots.Contains(Recordˉfieldˉresult))
                 {
                     Failˉshape();
                 }
@@ -1621,6 +1660,250 @@ public static class Nativeˉfragmentˉverifier
         return true;
     }
 
+    private static bool Tryˉdecodeˉbytesˉconcat(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int runtimeˉservice,
+        HashSet<int> borrowedˉbytesˉslots,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (!Tryˉloadˉeaxˉatˉfield(
+                code,
+                Cursor,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Leftˉslot) ||
+            !borrowedˉbytesˉslots.Contains(Leftˉslot) ||
+            !Tryˉloadˉecxˉatˉfield(
+                code,
+                Cursor + 7,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Rightˉslot) ||
+            !borrowedˉbytesˉslots.Contains(Rightˉslot) ||
+            !Matches(code, Cursor + 14, 0x01, 0xC8, 0x0F, 0x82) ||
+            !Tryˉreadˉtarget(code, Cursor + 18, out var Limitˉtarget) ||
+            code[Cursor + 22] != 0x3D ||
+            Readˉi32(code, Cursor + 23) != Bytecodeˉlimits.MAX_BYTE_DATA_BYTES ||
+            !Matches(code, Cursor + 27, 0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 29, out var Secondˉlimitˉtarget) ||
+            Secondˉlimitˉtarget != Limitˉtarget ||
+            !Matches(
+                code,
+                Cursor + 33,
+                0x41, 0x89, 0xC0,
+                0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                0x41, 0x89, 0xC1,
+                0x89, 0xC1,
+                0x44, 0x01, 0xC1,
+                0x0F, 0x82) ||
+            !Tryˉreadˉtarget(code, Cursor + 50, out var Arenaˉtarget) ||
+            !Matches(
+                code,
+                Cursor + 54,
+                0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+                0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 60, out var Secondˉarenaˉtarget) ||
+            Secondˉarenaˉtarget != Arenaˉtarget ||
+            !Matches(
+                code,
+                Cursor + 64,
+                0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+                0x4C, 0x01, 0xCA,
+                0x48, 0x89, 0xD0) ||
+            !Tryˉstoreˉrax(code, Cursor + 78, frameˉbytes, out resultˉslot) ||
+            borrowedˉbytesˉslots.Contains(resultˉslot) ||
+            !Matches(code, Cursor + 86, 0x44, 0x89, 0xC0) ||
+            !Tryˉstoreˉeaxˉatˉfield(
+                code,
+                Cursor + 89,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉresult) ||
+            Lengthˉresult != resultˉslot ||
+            !Matches(code, Cursor + 96, 0x49, 0x89, 0xD1))
+        {
+            return false;
+        }
+        Cursor += 99;
+        if (!Tryˉdecodeˉbytesˉcopyˉloop(
+                code,
+                ref Cursor,
+                frameˉbytes,
+                borrowedˉbytesˉslots,
+                Leftˉslot) ||
+            !Tryˉdecodeˉbytesˉcopyˉloop(
+                code,
+                ref Cursor,
+                frameˉbytes,
+                borrowedˉbytesˉslots,
+                Rightˉslot) ||
+            code[Cursor] != 0xE9 ||
+            !Tryˉreadˉtarget(code, Cursor + 1, out var Endˉtarget))
+        {
+            return false;
+        }
+        Cursor += 5;
+        if (Limitˉtarget != Cursor ||
+            !Tryˉdecodeˉruntimeˉfailure(
+                code,
+                ref Cursor,
+                Nativeˉserviceˉfailureˉdetail.Bytesˉvalueˉlimit,
+                runtimeˉservice) ||
+            Arenaˉtarget != Cursor ||
+            !Tryˉdecodeˉruntimeˉfailure(
+                code,
+                ref Cursor,
+                Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted,
+                runtimeˉservice) ||
+            Endˉtarget != Cursor ||
+            Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉbytesˉfromˉu32ˉlittle(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int runtimeˉservice,
+        HashSet<int> borrowedˉbytesˉslots,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (!Matches(
+                code,
+                Cursor,
+                0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                0x41, 0x89, 0xC1,
+                0x89, 0xC1,
+                0x83, 0xC1, 0x04,
+                0x0F, 0x82) ||
+            !Tryˉreadˉtarget(code, Cursor + 14, out var Arenaˉtarget) ||
+            !Matches(
+                code,
+                Cursor + 18,
+                0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+                0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 24, out var Secondˉarenaˉtarget) ||
+            Secondˉarenaˉtarget != Arenaˉtarget ||
+            !Matches(
+                code,
+                Cursor + 28,
+                0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+                0x4C, 0x01, 0xCA,
+                0x48, 0x89, 0xD0) ||
+            !Tryˉstoreˉrax(code, Cursor + 42, frameˉbytes, out resultˉslot) ||
+            borrowedˉbytesˉslots.Contains(resultˉslot) ||
+            code[Cursor + 50] != 0xB8 ||
+            Readˉi32(code, Cursor + 51) != sizeof(uint) ||
+            !Tryˉstoreˉeaxˉatˉfield(
+                code,
+                Cursor + 55,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉresult) ||
+            Lengthˉresult != resultˉslot ||
+            !Tryˉloadˉeax(code, Cursor + 62, frameˉbytes, out var Valueˉslot) ||
+            borrowedˉbytesˉslots.Contains(Valueˉslot) ||
+            !Matches(code, Cursor + 69, 0x89, 0x02, 0xE9) ||
+            !Tryˉreadˉtarget(code, Cursor + 72, out var Endˉtarget))
+        {
+            return false;
+        }
+        Cursor += 76;
+        if (Arenaˉtarget != Cursor ||
+            !Tryˉdecodeˉruntimeˉfailure(
+                code,
+                ref Cursor,
+                Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted,
+                runtimeˉservice) ||
+            Endˉtarget != Cursor ||
+            Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉbytesˉcopyˉloop(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int frameˉbytes,
+        HashSet<int> borrowedˉbytesˉslots,
+        int expectedˉsource)
+    {
+        var Cursor = index;
+        if (!Tryˉloadˉrax(code, Cursor, frameˉbytes, out var Sourceˉslot) ||
+            Sourceˉslot != expectedˉsource ||
+            !borrowedˉbytesˉslots.Contains(Sourceˉslot) ||
+            !Tryˉloadˉecxˉatˉfield(
+                code,
+                Cursor + 8,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉsource) ||
+            Lengthˉsource != Sourceˉslot ||
+            !Matches(code, Cursor + 15, 0x85, 0xC9, 0x0F, 0x84) ||
+            !Tryˉreadˉtarget(code, Cursor + 19, out var Endˉtarget))
+        {
+            return false;
+        }
+        var Loop = Cursor + 23;
+        if (!Matches(
+                code,
+                Loop,
+                0x44, 0x0F, 0xB6, 0x00,
+                0x45, 0x88, 0x01,
+                0x48, 0xFF, 0xC0,
+                0x49, 0xFF, 0xC1,
+                0xFF, 0xC9,
+                0x0F, 0x85) ||
+            !Tryˉreadˉtarget(code, Loop + 17, out var Loopˉtarget) ||
+            Loopˉtarget != Loop ||
+            Endˉtarget != Loop + 21)
+        {
+            return false;
+        }
+        index = Loop + 21;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉruntimeˉfailure(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        Nativeˉserviceˉfailureˉdetail detail,
+        int runtimeˉservice)
+    {
+        var Cursor = index;
+        if (!Matches(
+                code,
+                Cursor,
+                0x41, 0xC7, 0x47,
+                Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET) ||
+            Readˉi32(code, Cursor + 4) != checked((int)detail) ||
+            code[Cursor + 8] != 0xE9 ||
+            !Tryˉreadˉtarget(code, Cursor + 9, out var Runtimeˉtarget) ||
+            Runtimeˉtarget != runtimeˉservice)
+        {
+            return false;
+        }
+        index = Cursor + 13;
+        return true;
+    }
+
     private static bool Tryˉdecodeˉbytesˉcopy(
         ReadOnlySpan<byte> code,
         ref int index,
@@ -1834,10 +2117,29 @@ public static class Nativeˉfragmentˉverifier
         int end,
         int frameˉbytes,
         int arenaˉtrap,
+        ImmutableArray<Nominalˉtypeˉdeclaration> types,
+        bool usesˉtypedˉrecordˉtags,
+        HashSet<int> borrowedˉdescriptorˉslots,
         out int resultˉslot)
     {
         resultˉslot = 0;
         var Cursor = index;
+        Recordˉtypeˉdeclaration? Record = null;
+        if (usesˉtypedˉrecordˉtags)
+        {
+            if (!Matches(code, Cursor, 0x41, 0xB8))
+            {
+                return false;
+            }
+            var Type = Readˉi32(code, Cursor + 2);
+            if ((uint)Type >= (uint)types.Length ||
+                types[Type] is not Recordˉtypeˉdeclaration Typedˉrecord)
+            {
+                return false;
+            }
+            Record = Typedˉrecord;
+            Cursor += 6;
+        }
         if (!Matches(
                 code,
                 Cursor,
@@ -1877,10 +2179,17 @@ public static class Nativeˉfragmentˉverifier
 
         Cursor += 46;
         var Fieldˉcount = Allocationˉbytes / Nativeˉcontract.VALUE_SLOT_BYTES;
+        if (Record is not null && Record.Fields.Length != Fieldˉcount)
+        {
+            return false;
+        }
         for (var Field = 0; Field < Fieldˉcount; Field++)
         {
             var Fieldˉoffset = Field * Nativeˉcontract.VALUE_SLOT_BYTES;
+            var Isˉdescriptor = Record is not null &&
+                Record.Fields[Field].Type.Kind is (Valueˉtype.Text or Valueˉtype.Bytes);
             if (!Tryˉloadˉrax(code, Cursor, frameˉbytes, out var Sourceˉslot) ||
+                Isˉdescriptor != borrowedˉdescriptorˉslots.Contains(Sourceˉslot) ||
                 !Matches(code, Cursor + 8, 0x48, 0x89, 0x82) ||
                 Readˉi32(code, Cursor + 11) != Fieldˉoffset ||
                 !Tryˉloadˉraxˉatˉfield(
@@ -1911,19 +2220,43 @@ public static class Nativeˉfragmentˉverifier
         int end,
         int frameˉbytes,
         int arenaˉtrap,
-        out int resultˉslot)
+        ImmutableArray<Nominalˉtypeˉdeclaration> types,
+        bool usesˉtypedˉrecordˉtags,
+        HashSet<int> borrowedˉdescriptorˉslots,
+        out int resultˉslot,
+        out bool isˉdescriptor)
     {
         resultˉslot = 0;
+        isˉdescriptor = false;
         var Cursor = index;
-        if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out _) ||
+        Recordˉtypeˉdeclaration? Record = null;
+        if (usesˉtypedˉrecordˉtags)
+        {
+            if (!Matches(code, Cursor, 0x41, 0xB8))
+            {
+                return false;
+            }
+            var Type = Readˉi32(code, Cursor + 2);
+            if ((uint)Type >= (uint)types.Length ||
+                types[Type] is not Recordˉtypeˉdeclaration Typedˉrecord)
+            {
+                return false;
+            }
+            Record = Typedˉrecord;
+            Cursor += 6;
+        }
+        if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out var Recordˉslot) ||
+            borrowedˉdescriptorˉslots.Contains(Recordˉslot) ||
             !Matches(code, Cursor + 7, 0x89, 0xC1, 0x81, 0xC1))
         {
             return false;
         }
         var Endˉoffset = Readˉi32(code, Cursor + 11);
+        var Fieldˉindex = Endˉoffset / Nativeˉcontract.VALUE_SLOT_BYTES - 1;
         if (Endˉoffset is < Nativeˉcontract.VALUE_SLOT_BYTES or
                 > Bytecodeˉlimits.MAX_RECORD_FIELDS * Nativeˉcontract.VALUE_SLOT_BYTES ||
             Endˉoffset % Nativeˉcontract.VALUE_SLOT_BYTES != 0 ||
+            (Record is not null && (uint)Fieldˉindex >= (uint)Record.Fields.Length) ||
             !Matches(code, Cursor + 15, 0x0F, 0x82) ||
             !Tryˉreadˉtarget(code, Cursor + 17, out var Overflowˉtarget) ||
             Overflowˉtarget != arenaˉtrap ||
@@ -1955,6 +2288,8 @@ public static class Nativeˉfragmentˉverifier
             return false;
         }
         Cursor += 68;
+        isˉdescriptor = Record is not null &&
+            Record.Fields[Fieldˉindex].Type.Kind is (Valueˉtype.Text or Valueˉtype.Bytes);
         if (Cursor > end)
         {
             return false;

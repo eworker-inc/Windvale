@@ -54,12 +54,11 @@ record Windvaleˉprojectˉpath {
     Value: bytes;
 }
 
-export fn Windvaleˉprojectˉempty(Input: bytes) -> bytes {
-    return Bytesˉslice(Input, 0u32, 0u32);
+export fn Windvaleˉprojectˉempty() -> bytes {
+    return Textˉtoˉutf8("");
 }
 
 export fn Windvaleˉprojectˉfailure(
-    Input: bytes,
     Status: Windvaleˉprojectˉstatus,
     Offset: u32,
     Line: u32,
@@ -72,7 +71,7 @@ export fn Windvaleˉprojectˉfailure(
         0u32,
         0u32,
         0u32,
-        Windvaleˉprojectˉempty(Input),
+        Windvaleˉprojectˉempty(),
         Offset,
         Line,
         Column
@@ -473,19 +472,18 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
     let Total: u32 = Bytesˉlength(Input);
     if Total > 65536u32 {
         return Windvaleˉprojectˉfailure(
-            Input, Windvaleˉprojectˉstatus.Invalidˉtext, 0u32, 1u32, 1u32
+            Windvaleˉprojectˉstatus.Invalidˉtext, 0u32, 1u32, 1u32
         );
     }
     if !Textˉutf8ˉisˉvalid(Input) {
         return Windvaleˉprojectˉfailure(
-            Input, Windvaleˉprojectˉstatus.Invalidˉtext, 0u32, 1u32, 1u32
+            Windvaleˉprojectˉstatus.Invalidˉtext, 0u32, 1u32, 1u32
         );
     }
 
     let Header: Windvaleˉprojectˉline = Windvaleˉprojectˉreadˉline(Input, 0u32);
     if !Header.Valid {
         return Windvaleˉprojectˉfailure(
-            Input,
             Windvaleˉprojectˉstatus.Malformedˉdirective,
             Header.Failureˉoffset,
             1u32,
@@ -496,7 +494,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
         Input, Header.Offset, Header.Length, "windvale-project 1"
     ) {
         return Windvaleˉprojectˉfailure(
-            Input, Windvaleˉprojectˉstatus.Invalidˉheader, Header.Offset, 1u32, 1u32
+            Windvaleˉprojectˉstatus.Invalidˉheader, Header.Offset, 1u32, 1u32
         );
     }
 
@@ -510,7 +508,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
     var Rootˉcolumn: u32 = 0u32;
     var Hasˉemission: bool = false;
     var Sources: u32 = 0u32;
-    var Sourceˉdirectory: bytes = Windvaleˉprojectˉempty(Input);
+    var Sourceˉdirectory: bytes = Windvaleˉprojectˉempty();
 
     while More {
         Lineˉnumber = Lineˉnumber + 1u32;
@@ -519,7 +517,6 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
         More = Line.Followedˉbyˉlineˉfeed;
         if !Line.Valid {
             return Windvaleˉprojectˉfailure(
-                Input,
                 Windvaleˉprojectˉstatus.Malformedˉdirective,
                 Line.Failureˉoffset,
                 Lineˉnumber,
@@ -533,7 +530,6 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
             ) {
                 if Hasˉroot {
                     return Windvaleˉprojectˉfailure(
-                        Input,
                         Windvaleˉprojectˉstatus.Invalidˉsingleton,
                         Line.Offset,
                         Lineˉnumber,
@@ -545,7 +541,6 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                 );
                 if Rootˉpath.Status != Windvaleˉprojectˉstatus.Valid {
                     return Windvaleˉprojectˉfailure(
-                        Input,
                         Rootˉpath.Status,
                         Rootˉpath.Failureˉoffset,
                         Lineˉnumber,
@@ -563,7 +558,6 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                 ) {
                     if Sources >= 63u32 {
                         return Windvaleˉprojectˉfailure(
-                            Input,
                             Windvaleˉprojectˉstatus.Sourceˉlimit,
                             Line.Offset,
                             Lineˉnumber,
@@ -575,7 +569,6 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                     );
                     if Sourceˉpath.Status != Windvaleˉprojectˉstatus.Valid {
                         return Windvaleˉprojectˉfailure(
-                            Input,
                             Sourceˉpath.Status,
                             Sourceˉpath.Failureˉoffset,
                             Lineˉnumber,
@@ -590,7 +583,6 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                     ) {
                         if Hasˉemission {
                             return Windvaleˉprojectˉfailure(
-                                Input,
                                 Windvaleˉprojectˉstatus.Invalidˉsingleton,
                                 Line.Offset,
                                 Lineˉnumber,
@@ -600,7 +592,6 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                         Hasˉemission = true;
                     } else {
                         return Windvaleˉprojectˉfailure(
-                            Input,
                             Windvaleˉprojectˉstatus.Malformedˉdirective,
                             Line.Offset,
                             Lineˉnumber,
@@ -614,7 +605,6 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
 
     if !Hasˉroot {
         return Windvaleˉprojectˉfailure(
-            Input,
             Windvaleˉprojectˉstatus.Invalidˉsingleton,
             Total,
             Lineˉnumber,
@@ -623,7 +613,6 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
     }
     if !Hasˉemission {
         return Windvaleˉprojectˉfailure(
-            Input,
             Windvaleˉprojectˉstatus.Invalidˉsingleton,
             Total,
             Lineˉnumber,
@@ -650,7 +639,7 @@ export fn Windvaleˉprojectˉpathˉat(
     Scan: Windvaleˉprojectˉscan,
     Index: u32
 ) -> Windvaleˉprojectˉpath {
-    let Empty: bytes = Windvaleˉprojectˉempty(Input);
+    let Empty: bytes = Windvaleˉprojectˉempty();
     let Total: u32 = Bytesˉlength(Input);
     if Scan.Status != Windvaleˉprojectˉstatus.Valid {
         return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
