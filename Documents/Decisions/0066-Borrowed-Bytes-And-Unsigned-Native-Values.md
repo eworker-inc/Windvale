@@ -1,7 +1,7 @@
 # Decision 0066: Borrowed bytes and unsigned native values
 
 - Date: 2026-08-01
-- Status: Implemented; Windows, Debian, and pinned-QEMU qualification pending
+- Status: Cross-host qualified on Windows x64 and Debian x64; OS consumer qualified on pinned Windows QEMU
 - Refines: [Decision 0065](0065-Versioned-Native-Execution-Context-And-Console-Service.md)'s ABI-6 scalar/static-text value boundary
 - Advances: The first byte-decoding requirements of a native Windvale inspection tool
 
@@ -24,11 +24,15 @@ The smallest useful next slice is borrowed immutable bytes. It must work identic
 - Advance the ordinary portable OS probe to version 3. It retains the i32 loop and result 29, adds immutable bytes, passes a borrowed slice through an internal function, checks byte length and `u8`/`u32` values, and requires exact instruction/depth budgets 271/2. Advance the firmware probe to version 9 so the changed native and EFI artifacts do not overwrite version-8 evidence under the same identity.
 - Retain C#/.NET as selector/verifier implementation, host adapter, reference oracle, and recovery path. This slice makes more Windvale programs eligible for native execution; it does not make the compiler self-hosting in native code.
 
-## Development evidence
+## Qualification evidence
 
 The focused differential program exercises all four byte-read forms, slicing, length, a borrowed-byte internal parameter, scalar return, `u8`/`u32` comparisons, conversion, and checked unsigned arithmetic. Interpreter, W^X execution, and linked WVO/AOT return 42 under the exact same WVB instruction/depth limits. Deliberately corrupt data references, descriptor lengths, descriptor slot types, byte argument forms, and bounds targets fail independent verification. Out-of-bounds reads and unsigned overflow agree on `WVR3008` and `WVR3007`.
 
-All 50 development Seed tests and all 15 OS tests pass with zero-warning builds on Windows. Pinned QEMU 11.0/Q35/TCG executes the current deterministic 15,360-byte firmware-probe-9 image with SHA-256 `ac92cd4759961c7a046ede49af8dce7626016fbcf8bb46e7d90027f5974bffa4` and emits the complete version-9 transcript. Cross-host Qualification and exact candidate evidence are still required before this decision becomes qualified.
+Exact candidate commit `8d375bf3fae099e904f4536626b670d640b5e375`, tree `b9d9738ce04c8a011087c5591e69606f7ed03332`, was published to both configured remotes. Its 2,841,701-byte Git archive has SHA-256 `4abf83ea5f6a19f97112defc81afa435a09ea0dbd0851413d49d5b940c3c74af`; Debian computed the same digest before extraction into the isolated E-Worker QA directory. The focused Linux native-byte case then passed the actual System V `mmap`/`mprotect` path in 201 milliseconds.
+
+Windows Qualification completed in 428.9 seconds with a 208.902-second suite. Debian Qualification completed in 428.5 seconds with a 217.291-second suite. Both hosts used .NET SDK `10.0.302`, passed zero-warning Release builds, all 51 tests, exact Stage 1 to Stage 2 compiler reproduction, and the complete native CLI verifier. The 15,563-byte Windows report has SHA-256 `6780bd68cfcf7dacea10d34f5a4b9d7eeb6cdc2c2c4a70cf055c6830429330f5`; its 11,065-byte timing report has SHA-256 `71ae04a67e8cf7ff8a2f0b79071fc704ac6b2f4d9fe680383dbe1f91d7ee17f5`. The 15,473-byte Debian report has SHA-256 `1fec4c222425f2737a7f41c415b1841f88aab0a8e7458b40d4e7d170e1d9c35d`; its 10,698-byte timing report has SHA-256 `5418a3fce6854c594ba5c49d77213685993b002e5e4558cf139b3435b41330a5`. Their normalized contracts match exactly.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,612 bytes, match Windows byte for byte. The 2,298,060-byte Debian evidence bundle has SHA-256 `e6774f3f2495e3cacc17963adc398a8a3ded7bc80d6bcae35d5cc002db513789`. Debian and Windows both pass all 15 deterministic OS tests. Pinned QEMU 11.0/Q35/TCG executes the exact 15,360-byte firmware-probe-9 image with SHA-256 `ac92cd4759961c7a046ede49af8dce7626016fbcf8bb46e7d90027f5974bffa4`, emits the complete version-9 transcript, and returns guest-controlled host exit code 1. After evidence retrieval, the exact QA directory, transferred archive, and remote evidence bundle were removed and confirmed absent.
 
 ## Consequences
 

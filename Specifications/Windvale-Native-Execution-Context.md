@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Version 1 of this context is retained by the current `x86-64-wvb-baseline-v7` implementation. It carries per-run resource limits and a versioned runtime-service table without making generated code depend on the Windows x64 or System V x86-64 calling convention. [Decision 0065](../Documents/Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) cross-host qualifies the context and first service at ABI 6; [Decision 0066](../Documents/Decisions/0066-Borrowed-Bytes-And-Unsigned-Native-Values.md) advances the value and call representation to ABI 7 without changing the context bytes.
+Version 1 of this context is retained by the cross-host-qualified `x86-64-wvb-baseline-v7` implementation at exact candidate `8d375bf`. It carries per-run resource limits and a versioned runtime-service table without making generated code depend on the Windows x64 or System V x86-64 calling convention. [Decision 0065](../Documents/Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) qualifies the context and first service at ABI 6; [Decision 0066](../Documents/Decisions/0066-Borrowed-Bytes-And-Unsigned-Native-Values.md) qualifies the value and call representation at ABI 7 without changing the context bytes.
 
 This is an experimental native ABI, not a stable public foreign-function interface. ABI 7 replaces ABI 6 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-7 fragment verifier.
 
