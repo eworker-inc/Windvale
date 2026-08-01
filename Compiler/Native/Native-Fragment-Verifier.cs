@@ -12,8 +12,9 @@ public static class Nativeˉfragmentˉverifier
     private const ulong CALL_DEPTH_STATUS = 0x0000_0003_0000_0000UL;
     private const ulong DATA_BOUNDS_STATUS = 0x0000_0004_0000_0000UL;
     private const ulong RUNTIME_SERVICE_STATUS = 0x0000_0005_0000_0000UL;
-    private const int INTERNAL_FUNCTION_SUFFIX_BYTES = 109;
-    private const int MAIN_FUNCTION_SUFFIX_BYTES = 121;
+    private const ulong BYTE_BOUNDS_STATUS = 0x0000_0006_0000_0000UL;
+    private const int INTERNAL_FUNCTION_SUFFIX_BYTES = 130;
+    private const int MAIN_FUNCTION_SUFFIX_BYTES = 144;
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public static Nativeˉfragment Verify(Nativeˉfragment fragment)
@@ -257,7 +258,7 @@ public static class Nativeˉfragmentˉverifier
             foreach (var Call in Function.Calls)
             {
                 if (!Decoded.TryGetValue(Call.Target, out var Callee) ||
-                    Call.Argumentˉcount != Callee.Parameterˉcount)
+                    !Call.Argumentˉkinds.SequenceEqual(Callee.Parameterˉkinds))
                 {
                     Failˉshape();
                 }
@@ -322,26 +323,38 @@ public static class Nativeˉfragmentˉverifier
             Failˉshape();
         }
         Index += 2;
-        for (var Slot = 0; Slot < Frameˉbytes / sizeof(int); Slot++)
+        for (var Dword = 0; Dword < Frameˉbytes / sizeof(int); Dword++)
         {
-            if (!Tryˉstoreˉeax(Code, Index, Frameˉbytes, out var Initialized) || Initialized != Slot)
+            if (!Tryˉstoreˉeaxˉdword(Code, Index, Frameˉbytes, out var Initialized) ||
+                Initialized != Dword)
             {
                 Failˉshape();
             }
             Index += 7;
         }
 
-        var Parameterˉcount = 0;
-        while (Parameterˉcount < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
-            Tryˉstoreˉargument(Code, Index, Frameˉbytes, Parameterˉcount, out var Parameterˉlength))
+        var Parameterˉkinds = new List<Decodedˉargumentˉkind>();
+        while (Parameterˉkinds.Count < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
+            Tryˉstoreˉargument(
+                Code,
+                Index,
+                Frameˉbytes,
+                Parameterˉkinds.Count,
+                out var Parameterˉlength,
+                out var Parameterˉkind))
         {
-            Parameterˉcount++;
+            Parameterˉkinds.Add(Parameterˉkind);
             Index += Parameterˉlength;
         }
-        if (Isˉmain && Parameterˉcount != 0)
+        if (Isˉmain && Parameterˉkinds.Count != 0)
         {
             Failˉshape();
         }
+        var Borrowedˉbytesˉslots = Parameterˉkinds
+            .Select((Kind, Slot) => (Kind, Slot))
+            .Where(Item => Item.Kind == Decodedˉargumentˉkind.Borrowedˉbytes)
+            .Select(Item => Item.Slot)
+            .ToHashSet();
 
         var Restoreˉbytes = Isˉmain ? 13 : 11;
         var Statusˉbytes = Isˉmain ? 23 : 21;
@@ -349,13 +362,15 @@ public static class Nativeˉfragmentˉverifier
         var Overflow = Propagate + Restoreˉbytes;
         var Instructionˉlimit = Overflow + Statusˉbytes;
         var Bounds = Instructionˉlimit + Statusˉbytes;
-        var Runtimeˉservice = Bounds + Statusˉbytes;
+        var Byteˉbounds = Bounds + Statusˉbytes;
+        var Runtimeˉservice = Byteˉbounds + Statusˉbytes;
         var Depth = Runtimeˉservice + Statusˉbytes;
         if (Depthˉtarget != Depth ||
             !Matchesˉpropagate(Code, Propagate, Frameˉbytes, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Overflow, Frameˉbytes, INTEGER_OVERFLOW_STATUS, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Instructionˉlimit, Frameˉbytes, INSTRUCTION_LIMIT_STATUS, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Bounds, Frameˉbytes, DATA_BOUNDS_STATUS, Isˉmain) ||
+            !Matchesˉstatusˉtrap(Code, Byteˉbounds, Frameˉbytes, BYTE_BOUNDS_STATUS, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Runtimeˉservice, Frameˉbytes, RUNTIME_SERVICE_STATUS, Isˉmain) ||
             !Matches(Code, Depth, 0x49, 0xFF, 0xC2, 0x48, 0xB8) ||
             BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Depth + 5, sizeof(ulong))) != CALL_DEPTH_STATUS ||
@@ -400,6 +415,18 @@ public static class Nativeˉfragmentˉverifier
                 functions,
                 out var Call))
             {
+                if (Borrowedˉbytesˉslots.Contains(Call.Resultˉslot))
+                {
+                    Failˉshape();
+                }
+                for (var Argument = 0; Argument < Call.Argumentˉkinds.Length; Argument++)
+                {
+                    if (Call.Argumentˉkinds[Argument] == Decodedˉargumentˉkind.Borrowedˉbytes &&
+                        !Borrowedˉbytesˉslots.Contains(Call.Argumentˉslots[Argument]))
+                    {
+                        Failˉshape();
+                    }
+                }
                 Calls.Add(Call);
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
@@ -413,8 +440,13 @@ public static class Nativeˉfragmentˉverifier
                 Bounds,
                 patches,
                 usedˉpatches,
-                dataˉsymbols))
+                dataˉsymbols,
+                out var Dataˉresult))
             {
+                if (Borrowedˉbytesˉslots.Contains(Dataˉresult))
+                {
+                    Failˉshape();
+                }
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -429,6 +461,81 @@ public static class Nativeˉfragmentˉverifier
                 usedˉpatches,
                 dataˉsymbols))
             {
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉstaticˉbytes(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                patches,
+                usedˉpatches,
+                dataˉsymbols,
+                out var Staticˉbytesˉslot))
+            {
+                Borrowedˉbytesˉslots.Add(Staticˉbytesˉslot);
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉbytesˉcopy(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Borrowedˉbytesˉslots,
+                out var Copiedˉbytesˉslot))
+            {
+                Borrowedˉbytesˉslots.Add(Copiedˉbytesˉslot);
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉbytesˉlength(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Borrowedˉbytesˉslots,
+                out var Bytesˉlengthˉresult))
+            {
+                if (Borrowedˉbytesˉslots.Contains(Bytesˉlengthˉresult))
+                {
+                    Failˉshape();
+                }
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉbytesˉslice(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Byteˉbounds,
+                Borrowedˉbytesˉslots,
+                out var Sliceˉslot))
+            {
+                Borrowedˉbytesˉslots.Add(Sliceˉslot);
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉbytesˉread(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Byteˉbounds,
+                Borrowedˉbytesˉslots,
+                out var Bytesˉreadˉresult))
+            {
+                if (Borrowedˉbytesˉslots.Contains(Bytesˉreadˉresult))
+                {
+                    Failˉshape();
+                }
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -450,8 +557,12 @@ public static class Nativeˉfragmentˉverifier
                 continue;
             }
             if (Code[Index] == 0xB8 &&
-                Tryˉstoreˉeax(Code, Index + 5, Frameˉbytes, out _))
+                Tryˉstoreˉeax(Code, Index + 5, Frameˉbytes, out var Constantˉresult))
             {
+                if (Borrowedˉbytesˉslots.Contains(Constantˉresult))
+                {
+                    Failˉshape();
+                }
                 Index += 12;
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
@@ -461,7 +572,12 @@ public static class Nativeˉfragmentˉverifier
                 ref Index,
                 Propagate,
                 Frameˉbytes,
-                Overflow))
+                Overflow,
+                out var Scalarˉresult))
+            {
+                Failˉshape();
+            }
+            if (Borrowedˉbytesˉslots.Contains(Scalarˉresult))
             {
                 Failˉshape();
             }
@@ -524,7 +640,7 @@ public static class Nativeˉfragmentˉverifier
         {
             Failˉshape();
         }
-        return new(Parameterˉcount, Calls.ToArray());
+        return new(Parameterˉkinds.ToArray(), Calls.ToArray());
     }
 
     private static bool Tryˉdecodeˉcall(
@@ -536,13 +652,22 @@ public static class Nativeˉfragmentˉverifier
         Dictionary<int, Nativeˉsymbol> functions,
         out Decodedˉcall call)
     {
-        call = new(0, 0);
+        call = new(0, [], [], 0);
         var Cursor = index;
-        var Arguments = 0;
-        while (Arguments < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
-            Tryˉloadˉargument(code, Cursor, frameˉbytes, Arguments, out var Argumentˉlength))
+        var Argumentˉkinds = new List<Decodedˉargumentˉkind>();
+        var Argumentˉslots = new List<int>();
+        while (Argumentˉkinds.Count < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
+            Tryˉloadˉargument(
+                code,
+                Cursor,
+                frameˉbytes,
+                Argumentˉkinds.Count,
+                out var Argumentˉlength,
+                out var Argumentˉkind,
+                out var Argumentˉslot))
         {
-            Arguments++;
+            Argumentˉkinds.Add(Argumentˉkind);
+            Argumentˉslots.Add(Argumentˉslot);
             Cursor += Argumentˉlength;
         }
         if (Cursor >= end || code[Cursor] != 0xE8 ||
@@ -559,13 +684,13 @@ public static class Nativeˉfragmentˉverifier
                 0x0F, 0x85) ||
             !Tryˉreadˉtarget(code, Cursor + 12, out var Propagateˉtarget) ||
             Propagateˉtarget != propagate ||
-            !Tryˉstoreˉeax(code, Cursor + 16, frameˉbytes, out _))
+            !Tryˉstoreˉeax(code, Cursor + 16, frameˉbytes, out var Resultˉslot))
         {
             return false;
         }
         Cursor += 23;
         index = Cursor;
-        call = new(Target, Arguments);
+        call = new(Target, Argumentˉkinds.ToArray(), Argumentˉslots.ToArray(), Resultˉslot);
         return true;
     }
 
@@ -577,8 +702,10 @@ public static class Nativeˉfragmentˉverifier
         int bounds,
         Dictionary<int, Nativeˉpatch> patches,
         HashSet<int> usedˉpatches,
-        Dictionary<string, Nativeˉsymbol> dataˉsymbols)
+        Dictionary<string, Nativeˉsymbol> dataˉsymbols,
+        out int resultˉslot)
     {
+        resultˉslot = 0;
         var Cursor = index;
         if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out _) ||
             !Matches(code, Cursor + 7, 0x3D) ||
@@ -597,7 +724,7 @@ public static class Nativeˉfragmentˉverifier
             BinaryPrimitives.ReadUInt32LittleEndian(code.Slice(Cursor + 8, sizeof(uint))) !=
                 Data.Size / sizeof(int) ||
             !Matches(code, Cursor + 25, 0x8B, 0x04, 0x82) ||
-            !Tryˉstoreˉeax(code, Cursor + 28, frameˉbytes, out _))
+            !Tryˉstoreˉeax(code, Cursor + 28, frameˉbytes, out resultˉslot))
         {
             return false;
         }
@@ -664,13 +791,262 @@ public static class Nativeˉfragmentˉverifier
         return true;
     }
 
+    private static bool Tryˉdecodeˉstaticˉbytes(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        Dictionary<int, Nativeˉpatch> patches,
+        HashSet<int> usedˉpatches,
+        Dictionary<string, Nativeˉsymbol> dataˉsymbols,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (!Matches(code, Cursor, 0x48, 0x8D, 0x05))
+        {
+            return false;
+        }
+        var Patchˉoffset = Cursor + 3;
+        if (!patches.TryGetValue(Patchˉoffset, out var Patch) ||
+            !usedˉpatches.Add(Patchˉoffset) ||
+            !dataˉsymbols.TryGetValue(Patch.Symbol, out var Data) ||
+            !Tryˉstoreˉrax(code, Cursor + 7, frameˉbytes, out resultˉslot) ||
+            code[Cursor + 15] != 0xB8 ||
+            BinaryPrimitives.ReadUInt32LittleEndian(code.Slice(Cursor + 16, sizeof(uint))) != Data.Size ||
+            !Tryˉstoreˉeaxˉatˉfield(
+                code,
+                Cursor + 20,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉslot) ||
+            Lengthˉslot != resultˉslot)
+        {
+            return false;
+        }
+        Cursor += 27;
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉbytesˉcopy(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        HashSet<int> borrowedˉbytesˉslots,
+        out int targetˉslot)
+    {
+        targetˉslot = 0;
+        var Cursor = index;
+        if (!Tryˉloadˉrax(code, Cursor, frameˉbytes, out var Sourceˉslot) ||
+            !borrowedˉbytesˉslots.Contains(Sourceˉslot) ||
+            !Tryˉstoreˉrax(code, Cursor + 8, frameˉbytes, out targetˉslot) ||
+            !Tryˉloadˉeaxˉatˉfield(
+                code,
+                Cursor + 16,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉsource) ||
+            Lengthˉsource != Sourceˉslot ||
+            !Tryˉstoreˉeaxˉatˉfield(
+                code,
+                Cursor + 23,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉtarget) ||
+            Lengthˉtarget != targetˉslot)
+        {
+            return false;
+        }
+        Cursor += 30;
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉbytesˉlength(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        HashSet<int> borrowedˉbytesˉslots,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (!Tryˉloadˉeaxˉatˉfield(
+                code,
+                Cursor,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Sourceˉslot) ||
+            !borrowedˉbytesˉslots.Contains(Sourceˉslot) ||
+            !Tryˉstoreˉeax(code, Cursor + 7, frameˉbytes, out resultˉslot))
+        {
+            return false;
+        }
+        Cursor += 14;
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉbytesˉslice(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int bounds,
+        HashSet<int> borrowedˉbytesˉslots,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out var Offsetˉslot) ||
+            !Tryˉloadˉecxˉatˉfield(
+                code,
+                Cursor + 7,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Bytesˉslot) ||
+            !borrowedˉbytesˉslots.Contains(Bytesˉslot) ||
+            !Matches(code, Cursor + 14, 0x39, 0xC8, 0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 18, out var Firstˉbounds) ||
+            Firstˉbounds != bounds ||
+            !Matches(code, Cursor + 22, 0x29, 0xC1) ||
+            !Tryˉloadˉedx(code, Cursor + 24, frameˉbytes, out var Lengthˉslot) ||
+            !Matches(code, Cursor + 31, 0x39, 0xCA, 0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 35, out var Secondˉbounds) ||
+            Secondˉbounds != bounds ||
+            !Tryˉloadˉrax(code, Cursor + 39, frameˉbytes, out var Pointerˉslot) ||
+            Pointerˉslot != Bytesˉslot ||
+            !Tryˉloadˉecx(code, Cursor + 47, frameˉbytes, out var Addedˉoffset) ||
+            Addedˉoffset != Offsetˉslot ||
+            !Matches(code, Cursor + 54, 0x48, 0x01, 0xC8) ||
+            !Tryˉstoreˉrax(code, Cursor + 57, frameˉbytes, out resultˉslot) ||
+            !Tryˉloadˉeax(code, Cursor + 65, frameˉbytes, out var Storedˉlength) ||
+            Storedˉlength != Lengthˉslot ||
+            !Tryˉstoreˉeaxˉatˉfield(
+                code,
+                Cursor + 72,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉresult) ||
+            Lengthˉresult != resultˉslot)
+        {
+            return false;
+        }
+        Cursor += 79;
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉbytesˉread(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int bounds,
+        HashSet<int> borrowedˉbytesˉslots,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out var Offsetˉslot))
+        {
+            return false;
+        }
+        Cursor += 7;
+        if (!Tryˉloadˉecxˉatˉfield(
+                code,
+                Cursor,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Bytesˉslot) ||
+            !borrowedˉbytesˉslots.Contains(Bytesˉslot))
+        {
+            return false;
+        }
+        Cursor += 7;
+        if (!Matches(code, Cursor, 0x39, 0xC8, 0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 4, out var Firstˉbounds) ||
+            Firstˉbounds != bounds)
+        {
+            return false;
+        }
+        Cursor += 8;
+        if (!Matches(code, Cursor, 0x29, 0xC1, 0x83, 0xF9) ||
+            code[Cursor + 4] is not (1 or 2 or 4) ||
+            !Matches(code, Cursor + 5, 0x0F, 0x82) ||
+            !Tryˉreadˉtarget(code, Cursor + 7, out var Secondˉbounds) ||
+            Secondˉbounds != bounds)
+        {
+            return false;
+        }
+        var Width = code[Cursor + 4];
+        Cursor += 11;
+        if (!Tryˉloadˉrdx(code, Cursor, frameˉbytes, out var Pointerˉslot) ||
+            Pointerˉslot != Bytesˉslot)
+        {
+            return false;
+        }
+        Cursor += 8;
+        if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out var Addedˉoffset) ||
+            Addedˉoffset != Offsetˉslot ||
+            !Matches(code, Cursor + 7, 0x48, 0x01, 0xC2))
+        {
+            return false;
+        }
+        Cursor += 10;
+        var Readˉlength = Width switch
+        {
+            1 when Matches(code, Cursor, 0x0F, 0xB6, 0x02) => 3,
+            2 when Matches(code, Cursor, 0x0F, 0xB7, 0x02) => 3,
+            4 when Matches(code, Cursor, 0x8B, 0x02) => 2,
+            _ => 0,
+        };
+        if (Readˉlength == 0)
+        {
+            return false;
+        }
+        Cursor += Readˉlength;
+        if (!Tryˉstoreˉeax(code, Cursor, frameˉbytes, out resultˉslot))
+        {
+            return false;
+        }
+        Cursor += 7;
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
     private static bool Tryˉdecodeˉslotˉtransformation(
         ReadOnlySpan<byte> code,
         ref int index,
         int end,
         int frameˉbytes,
-        int overflow)
+        int overflow,
+        out int resultˉslot)
     {
+        resultˉslot = 0;
         if (!Tryˉloadˉeax(code, index, frameˉbytes, out _))
         {
             return false;
@@ -685,10 +1061,11 @@ public static class Nativeˉfragmentˉverifier
             if (Arithmetic != 0)
             {
                 Cursor += Arithmetic;
-                if (!Matches(code, Cursor, 0x0F, 0x80) ||
+                if (!(Matches(code, Cursor, 0x0F, 0x80) ||
+                        Matches(code, Cursor, 0x0F, 0x82)) ||
                     !Tryˉreadˉtarget(code, Cursor + 2, out var Overflowˉtarget) ||
                     Overflowˉtarget != overflow ||
-                    !Tryˉstoreˉeax(code, Cursor + 6, frameˉbytes, out _))
+                    !Tryˉstoreˉeax(code, Cursor + 6, frameˉbytes, out resultˉslot))
                 {
                     return false;
                 }
@@ -696,10 +1073,19 @@ public static class Nativeˉfragmentˉverifier
                 index = Cursor;
                 return Cursor <= end;
             }
+            if (Matches(code, Cursor, 0xF7, 0xE1, 0x85, 0xD2, 0x0F, 0x85) &&
+                Tryˉreadˉtarget(code, Cursor + 6, out var Multiplyˉoverflow) &&
+                Multiplyˉoverflow == overflow &&
+                Tryˉstoreˉeax(code, Cursor + 10, frameˉbytes, out resultˉslot))
+            {
+                Cursor += 17;
+                index = Cursor;
+                return Cursor <= end;
+            }
             if (Matches(code, Cursor, 0x39, 0xC8, 0x0F) &&
                 Isˉcondition(code[Cursor + 3]) &&
                 Matches(code, Cursor + 4, 0xC0, 0x0F, 0xB6, 0xC0) &&
-                Tryˉstoreˉeax(code, Cursor + 8, frameˉbytes, out _))
+                Tryˉstoreˉeax(code, Cursor + 8, frameˉbytes, out resultˉslot))
             {
                 Cursor += 15;
                 index = Cursor;
@@ -711,20 +1097,20 @@ public static class Nativeˉfragmentˉverifier
             Matches(code, Cursor + 2, 0x0F, 0x80) &&
             Tryˉreadˉtarget(code, Cursor + 4, out var Negateˉoverflow) &&
             Negateˉoverflow == overflow &&
-            Tryˉstoreˉeax(code, Cursor + 8, frameˉbytes, out _))
+            Tryˉstoreˉeax(code, Cursor + 8, frameˉbytes, out resultˉslot))
         {
             Cursor += 15;
             index = Cursor;
             return Cursor <= end;
         }
         if (Matches(code, Cursor, 0x83, 0xF0, 0x01) &&
-            Tryˉstoreˉeax(code, Cursor + 3, frameˉbytes, out _))
+            Tryˉstoreˉeax(code, Cursor + 3, frameˉbytes, out resultˉslot))
         {
             Cursor += 10;
             index = Cursor;
             return Cursor <= end;
         }
-        if (Tryˉstoreˉeax(code, Cursor, frameˉbytes, out _))
+        if (Tryˉstoreˉeax(code, Cursor, frameˉbytes, out resultˉslot))
         {
             Cursor += 7;
             index = Cursor;
@@ -776,14 +1162,61 @@ public static class Nativeˉfragmentˉverifier
             Tryˉreadˉslot(code, offset + 3, frameˉbytes, out slot);
     }
 
+    private static bool Tryˉloadˉeaxˉatˉfield(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int field,
+        out int slot)
+    {
+        slot = 0;
+        return Matches(code, offset, 0x8B, 0x84, 0x24) &&
+            Tryˉreadˉslotˉfield(code, offset + 3, frameˉbytes, field, sizeof(int), out slot);
+    }
+
+    private static bool Tryˉloadˉecxˉatˉfield(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int field,
+        out int slot)
+    {
+        slot = 0;
+        return Matches(code, offset, 0x8B, 0x8C, 0x24) &&
+            Tryˉreadˉslotˉfield(code, offset + 3, frameˉbytes, field, sizeof(int), out slot);
+    }
+
+    private static bool Tryˉloadˉedx(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
+    {
+        slot = 0;
+        return Matches(code, offset, 0x8B, 0x94, 0x24) &&
+            Tryˉreadˉslot(code, offset + 3, frameˉbytes, out slot);
+    }
+
+    private static bool Tryˉloadˉrax(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
+    {
+        slot = 0;
+        return Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) &&
+            Tryˉreadˉslot(code, offset + 4, frameˉbytes, out slot);
+    }
+
+    private static bool Tryˉloadˉrdx(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
+    {
+        slot = 0;
+        return Matches(code, offset, 0x48, 0x8B, 0x94, 0x24) &&
+            Tryˉreadˉslot(code, offset + 4, frameˉbytes, out slot);
+    }
+
     private static bool Tryˉloadˉargument(
         ReadOnlySpan<byte> code,
         int offset,
         int frameˉbytes,
         int argument,
-        out int length)
+        out int length,
+        out Decodedˉargumentˉkind kind,
+        out int slot)
     {
-        var Prefix = argument switch
+        var Scalarˉprefix = argument switch
         {
             0 => new byte[] { 0x44, 0x8B, 0x84, 0x24 },
             1 => new byte[] { 0x44, 0x8B, 0x8C, 0x24 },
@@ -791,10 +1224,28 @@ public static class Nativeˉfragmentˉverifier
             3 => new byte[] { 0x8B, 0x94, 0x24 },
             _ => [],
         };
-        length = Prefix.Length + sizeof(int);
-        return Prefix.Length != 0 &&
-            Matches(code, offset, Prefix) &&
-            Tryˉreadˉslot(code, offset + Prefix.Length, frameˉbytes, out _);
+        var Bytesˉprefix = argument switch
+        {
+            0 => new byte[] { 0x4C, 0x8D, 0x84, 0x24 },
+            1 => new byte[] { 0x4C, 0x8D, 0x8C, 0x24 },
+            2 => new byte[] { 0x48, 0x8D, 0x8C, 0x24 },
+            3 => new byte[] { 0x48, 0x8D, 0x94, 0x24 },
+            _ => [],
+        };
+        length = Scalarˉprefix.Length + sizeof(int);
+        kind = Decodedˉargumentˉkind.Scalar;
+        slot = 0;
+        if (Scalarˉprefix.Length != 0 &&
+            Matches(code, offset, Scalarˉprefix) &&
+            Tryˉreadˉslot(code, offset + Scalarˉprefix.Length, frameˉbytes, out slot))
+        {
+            return true;
+        }
+        length = Bytesˉprefix.Length + sizeof(int);
+        kind = Decodedˉargumentˉkind.Borrowedˉbytes;
+        return Bytesˉprefix.Length != 0 &&
+            Matches(code, offset, Bytesˉprefix) &&
+            Tryˉreadˉslot(code, offset + Bytesˉprefix.Length, frameˉbytes, out slot);
     }
 
     private static bool Tryˉstoreˉargument(
@@ -802,7 +1253,8 @@ public static class Nativeˉfragmentˉverifier
         int offset,
         int frameˉbytes,
         int argument,
-        out int length)
+        out int length,
+        out Decodedˉargumentˉkind kind)
     {
         var Prefix = argument switch
         {
@@ -813,10 +1265,55 @@ public static class Nativeˉfragmentˉverifier
             _ => [],
         };
         length = Prefix.Length + sizeof(int);
-        return Prefix.Length != 0 &&
+        kind = Decodedˉargumentˉkind.Scalar;
+        if (Prefix.Length != 0 &&
             Matches(code, offset, Prefix) &&
             Tryˉreadˉslot(code, offset + Prefix.Length, frameˉbytes, out var Slot) &&
-            Slot == argument;
+            Slot == argument)
+        {
+            return true;
+        }
+
+        var Loadˉpointer = argument switch
+        {
+            0 => new byte[] { 0x49, 0x8B, 0x00 },
+            1 => new byte[] { 0x49, 0x8B, 0x01 },
+            2 => new byte[] { 0x48, 0x8B, 0x01 },
+            3 => new byte[] { 0x48, 0x8B, 0x02 },
+            _ => [],
+        };
+        var Loadˉlength = argument switch
+        {
+            0 => new byte[] { 0x41, 0x8B, 0x40, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET },
+            1 => new byte[] { 0x41, 0x8B, 0x41, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET },
+            2 => new byte[] { 0x8B, 0x41, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET },
+            3 => new byte[] { 0x8B, 0x42, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET },
+            _ => [],
+        };
+        var Cursor = offset + Loadˉpointer.Length;
+        if (Loadˉpointer.Length == 0 ||
+            !Matches(code, offset, Loadˉpointer) ||
+            !Tryˉstoreˉrax(code, Cursor, frameˉbytes, out var Pointerˉslot) ||
+            Pointerˉslot != argument)
+        {
+            return false;
+        }
+        Cursor += 8;
+        if (!Matches(code, Cursor, Loadˉlength) ||
+            !Tryˉstoreˉeaxˉatˉfield(
+                code,
+                Cursor + Loadˉlength.Length,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉslot) ||
+            Lengthˉslot != argument)
+        {
+            return false;
+        }
+        Cursor += Loadˉlength.Length + 7;
+        length = Cursor - offset;
+        kind = Decodedˉargumentˉkind.Borrowedˉbytes;
+        return true;
     }
 
     private static bool Tryˉloadˉecx(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
@@ -833,6 +1330,75 @@ public static class Nativeˉfragmentˉverifier
             Tryˉreadˉslot(code, offset + 3, frameˉbytes, out slot);
     }
 
+    private static bool Tryˉstoreˉrax(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
+    {
+        slot = 0;
+        return Matches(code, offset, 0x48, 0x89, 0x84, 0x24) &&
+            Tryˉreadˉslot(code, offset + 4, frameˉbytes, out slot);
+    }
+
+    private static bool Tryˉstoreˉeaxˉatˉfield(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int field,
+        out int slot)
+    {
+        slot = 0;
+        return Matches(code, offset, 0x89, 0x84, 0x24) &&
+            Tryˉreadˉslotˉfield(code, offset + 3, frameˉbytes, field, sizeof(int), out slot);
+    }
+
+    private static bool Tryˉstoreˉeaxˉdword(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        out int dword)
+    {
+        dword = 0;
+        if (!Matches(code, offset, 0x89, 0x84, 0x24) ||
+            offset + 3 > code.Length - sizeof(int))
+        {
+            return false;
+        }
+        var Displacement = Readˉi32(code, offset + 3);
+        if (Displacement < 0 ||
+            (Displacement & (sizeof(int) - 1)) != 0 ||
+            Displacement > frameˉbytes - sizeof(int))
+        {
+            return false;
+        }
+        dword = Displacement / sizeof(int);
+        return true;
+    }
+
+    private static bool Tryˉreadˉslotˉfield(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int field,
+        int width,
+        out int slot)
+    {
+        slot = 0;
+        if (offset < 0 || offset > code.Length - sizeof(int))
+        {
+            return false;
+        }
+        var Displacement = Readˉi32(code, offset);
+        if (field < 0 ||
+            width < 1 ||
+            field > Nativeˉcontract.VALUE_SLOT_BYTES - width ||
+            Displacement < field ||
+            (Displacement - field) % Nativeˉcontract.VALUE_SLOT_BYTES != 0 ||
+            Displacement > frameˉbytes - width)
+        {
+            return false;
+        }
+        slot = (Displacement - field) / Nativeˉcontract.VALUE_SLOT_BYTES;
+        return true;
+    }
+
     private static bool Tryˉreadˉslot(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
     {
         slot = 0;
@@ -842,12 +1408,12 @@ public static class Nativeˉfragmentˉverifier
         }
         var Displacement = Readˉi32(code, offset);
         if (Displacement < 0 ||
-            (Displacement & (sizeof(int) - 1)) != 0 ||
-            Displacement > frameˉbytes - sizeof(int))
+            (Displacement & (Nativeˉcontract.VALUE_SLOT_BYTES - 1)) != 0 ||
+            Displacement > frameˉbytes - Nativeˉcontract.VALUE_SLOT_BYTES)
         {
             return false;
         }
-        slot = Displacement / sizeof(int);
+        slot = Displacement / Nativeˉcontract.VALUE_SLOT_BYTES;
         return true;
     }
 
@@ -871,7 +1437,7 @@ public static class Nativeˉfragmentˉverifier
         BinaryPrimitives.ReadInt32LittleEndian(code.Slice(offset, sizeof(int)));
 
     private static bool Isˉcondition(byte condition) =>
-        condition is 0x94 or 0x95 or 0x9C or 0x9D or 0x9E or 0x9F;
+        condition is 0x92 or 0x93 or 0x94 or 0x95 or 0x96 or 0x97 or 0x9C or 0x9D or 0x9E or 0x9F;
 
     private static void Enqueue(int index, bool[] reachable, Queue<int> pending)
     {
@@ -887,9 +1453,21 @@ public static class Nativeˉfragmentˉverifier
         offset <= code.Length - expected.Length &&
         code.Slice(offset, expected.Length).SequenceEqual(expected);
 
-    private sealed record Decodedˉfunction(int Parameterˉcount, Decodedˉcall[] Calls);
+    private enum Decodedˉargumentˉkind : byte
+    {
+        Scalar = 1,
+        Borrowedˉbytes = 2,
+    }
 
-    private readonly record struct Decodedˉcall(int Target, int Argumentˉcount);
+    private sealed record Decodedˉfunction(
+        Decodedˉargumentˉkind[] Parameterˉkinds,
+        Decodedˉcall[] Calls);
+
+    private readonly record struct Decodedˉcall(
+        int Target,
+        Decodedˉargumentˉkind[] Argumentˉkinds,
+        int[] Argumentˉslots,
+        int Resultˉslot);
 
     private sealed record Decodedˉgroup(
         int Offset,

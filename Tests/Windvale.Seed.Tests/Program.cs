@@ -28,14 +28,14 @@ internal static class Program
     private const string WVLINK_CORE_SHA256 = "091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
-    private const string NATIVE_CONSTANT_CODE_SHA256 = "4b7a3936fccdd120a8c0e78aeabb2938b4876e60dd47086254cafb7d5f46af15";
-    private const string NATIVE_CONSTANT_WVO_SHA256 = "e8f0a128c5f532f64bcb57cfe287580beb4d619b0cbb6e9f096065e66c800513";
-    private const string NATIVE_ARITHMETIC_CODE_SHA256 = "9a29745dc59d7447d9eccbe2e525cee6bc1198adcdb429047fca1836627bbde6";
-    private const string NATIVE_ARITHMETIC_WVO_SHA256 = "fc2adf61eec93efabf5a3716b82333fd55b8fb4e70c9865d74a9947aa823af7f";
-    private const string NATIVE_CONTROL_CODE_SHA256 = "52e5bf3efda31d410523ec926e9f68afa2593d34a102b34fa821dbe76e515b7c";
-    private const string NATIVE_CONTROL_WVO_SHA256 = "b87ad4c63af257e7c0bd6351f4c2f43fa74627ba9ef6ade737f2db14c2fa8737";
-    private const string NATIVE_LOOP_CODE_SHA256 = "06e095e1fb179841a0e58e738757e018d5e52924a0d35a19f2b04014ea1d1785";
-    private const string NATIVE_LOOP_WVO_SHA256 = "149820c3fbf63a86e6abaa1c2cb9110d2632300f4065d160939771ec7bef2fb3";
+    private const string NATIVE_CONSTANT_CODE_SHA256 = "1291ac3a8f986088f50d59ef262135b71f8260b1c973fefb38cbe4dffebb004f";
+    private const string NATIVE_CONSTANT_WVO_SHA256 = "e8558ecb2cbf22b9de327eb190c38c7ab1de16d2de5b412b5898290a457ac231";
+    private const string NATIVE_ARITHMETIC_CODE_SHA256 = "7492f6759200fab4ef7b028ee0950813b51809c2f2cc81f7b5b2d7db77287fe8";
+    private const string NATIVE_ARITHMETIC_WVO_SHA256 = "6d9e584dcbbdabda25dc3f8654720333b4f0a16f093c01f1cb3cd00271003ea0";
+    private const string NATIVE_CONTROL_CODE_SHA256 = "a04e1ee40fdc44eb79cd4cc3186858e0db5abf6dba5a96927b2f35866a22e4e8";
+    private const string NATIVE_CONTROL_WVO_SHA256 = "7656e9607dbd29125096e4524383fc74da99818af10b44fc099584cf96b9f5c5";
+    private const string NATIVE_LOOP_CODE_SHA256 = "2c6d6cd080084feda43275497eb30fe87419b266f4e77e2df4f01cf27382e17d";
+    private const string NATIVE_LOOP_WVO_SHA256 = "95523e89d7b3577ff62050019aa6b2108404d009de73f5409e51648701b98cc8";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
@@ -177,6 +177,47 @@ internal static class Program
                 Value = Value + 1;
             }
             return Value * 7;
+        }
+        """;
+
+    private const string NATIVE_BYTES_SOURCE = """
+        module Nativeˉbytes profile portable;
+
+        data Packet: bytes = [42, 1, 0, 0, 0, 255, 255, 255, 255];
+
+        fn Inspect(Input: bytes, Offset: u32) -> u32 {
+            let Tail: bytes = Bytesˉslice(Input, Offset, 4u32);
+            let Word: u32 = Bytesˉreadˉu32ˉlittle(Tail, 0u32);
+            let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 0u32));
+            return Word + First;
+        }
+
+        export fn Main() -> i32 {
+            let Sum: u32 = Inspect(Packet, 1u32);
+            let First: u8 = Bytesˉreadˉu8(Packet, 0u32);
+            let Short: u32 = Bytesˉreadˉu16ˉlittle(Packet, 1u32);
+            let Negative: i32 = Bytesˉreadˉi32ˉlittle(Packet, 5u32);
+            let Answer: u32 = (Sum - 1u32) * 1u32;
+            if Bytesˉlength(Packet) == 9u32 {
+                if First == 42u8 {
+                    if First != 41u8 {
+                        if Short == 1u32 {
+                            if Negative == -1 {
+                                if Answer != 41u32 {
+                                    if Answer < 43u32 {
+                                        if Answer <= 42u32 {
+                                            if Answer > 41u32 {
+                                                if Answer >= 42u32 { return 42; }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return 0;
         }
         """;
 
@@ -488,6 +529,7 @@ internal static class Program
         new("hosted resources are explicit, separated, and bounded", [TEST_AREA_RUNTIME], Hostedˉresourcesˉareˉbounded),
         new("compiler output is deterministic and canonical", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Compilerˉisˉdeterministic),
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
+        new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Foundation machine contracts are shared, bounded, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉmachineˉcontractsˉrun),
@@ -1130,9 +1172,9 @@ internal static class Program
         var Firstˉobject = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
         var Secondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment);
         Sequenceˉequal(Firstˉobject, Secondˉobject);
-        Equal(281, First.Fragment.Code.Length);
+        Equal(360, First.Fragment.Code.Length);
         Equal(NATIVE_CONSTANT_CODE_SHA256, Objectˉdigest.Calculateˉsha256(First.Fragment.Code.AsSpan()));
-        Equal(354, Firstˉobject.Length);
+        Equal(433, Firstˉobject.Length);
         Equal(NATIVE_CONSTANT_WVO_SHA256, Objectˉdigest.Calculateˉsha256(Firstˉobject.AsSpan()));
         var Verifiedˉobject = Objectˉcodec.Readˉandˉverify(Firstˉobject.AsSpan()).Value;
         Equal(1, Verifiedˉobject.Sections.Length);
@@ -1203,11 +1245,11 @@ internal static class Program
         var Arithmeticˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉfirst.Fragment);
         var Arithmeticˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉsecond.Fragment);
         Sequenceˉequal(Arithmeticˉfirstˉobject, Arithmeticˉsecondˉobject);
-        Equal(1186, Arithmeticˉfirst.Fragment.Code.Length);
+        Equal(1825, Arithmeticˉfirst.Fragment.Code.Length);
         Equal(
             NATIVE_ARITHMETIC_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirst.Fragment.Code.AsSpan()));
-        Equal(1259, Arithmeticˉfirstˉobject.Length);
+        Equal(1898, Arithmeticˉfirstˉobject.Length);
         Equal(
             NATIVE_ARITHMETIC_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirstˉobject.AsSpan()));
@@ -1259,11 +1301,11 @@ internal static class Program
         var Controlˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉfirst.Fragment);
         var Controlˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉsecond.Fragment);
         Sequenceˉequal(Controlˉfirstˉobject, Controlˉsecondˉobject);
-        Equal(3814, Controlˉfirst.Fragment.Code.Length);
+        Equal(5853, Controlˉfirst.Fragment.Code.Length);
         Equal(
             NATIVE_CONTROL_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Controlˉfirst.Fragment.Code.AsSpan()));
-        Equal(3887, Controlˉfirstˉobject.Length);
+        Equal(5926, Controlˉfirstˉobject.Length);
         Equal(
             NATIVE_CONTROL_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Controlˉfirstˉobject.AsSpan()));
@@ -1509,11 +1551,11 @@ internal static class Program
                 Loopˉaot,
                 maximumˉinstructions: Loopˉinterpreted.Executedˉinstructions - 1));
         Equal(157L, Loopˉinterpreted.Executedˉinstructions);
-        Equal(1288, Loopˉnative.Fragment.Code.Length);
+        Equal(1955, Loopˉnative.Fragment.Code.Length);
         Equal(
             NATIVE_LOOP_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Loopˉnative.Fragment.Code.AsSpan()));
-        Equal(1361, Loopˉobject.Length);
+        Equal(2028, Loopˉobject.Length);
         Equal(
             NATIVE_LOOP_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Loopˉobject.AsSpan()));
@@ -1756,6 +1798,173 @@ internal static class Program
         var Tooˉmanyˉparameters = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
             "module Nativeˉwideˉcall profile portable; fn Fifth(A: i32, B: i32, C: i32, D: i32, E: i32) -> i32 { return E; } export fn Main() -> i32 { return Fifth(1, 2, 3, 4, 5); }"));
         Throwsˉnative("WVN2002", () => _ = X64ˉnativeˉbackend.Compile(Tooˉmanyˉparameters));
+    }
+
+    private static void Nativeˉborrowedˉbytesˉagree()
+    {
+        var Verified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_BYTES_SOURCE));
+        var Interpreted = new Referenceˉruntime(
+            Verified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+
+        var First = X64ˉnativeˉbackend.Compile(Verified);
+        var Second = X64ˉnativeˉbackend.Compile(Verified);
+        Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Sequenceˉequal(First.Fragment.Symbols, Second.Fragment.Symbols);
+        Sequenceˉequal(First.Fragment.Patches, Second.Fragment.Patches);
+        True(
+            First.Module.Data.Single() is Nativeˉbytesˉdata,
+            "Native machine IR did not retain immutable byte data.");
+        Sequenceˉequal(
+            new byte[] { 42, 1, 0, 0, 0, 255, 255, 255, 255 },
+            ((Nativeˉbytesˉdata)First.Module.Data.Single()).Bytes);
+        var Operations = First.Module.Functions
+            .SelectMany(Function => Function.Blocks)
+            .SelectMany(Block => Block.Operations)
+            .ToImmutableArray();
+        True(Operations.Any(Operation => Operation is Nativeˉstaticˉbytesˉconstant),
+            "Native machine IR omitted the static borrowed-bytes value.");
+        True(Operations.Any(Operation => Operation is Nativeˉbytesˉslice),
+            "Native machine IR omitted the bounded byte slice.");
+        Sequenceˉequal(
+            Enum.GetValues<Nativeˉbytesˉreadˉkind>(),
+            Operations
+                .OfType<Nativeˉbytesˉread>()
+                .Select(Operation => Operation.Kind)
+                .Distinct()
+                .Order());
+        True(Operations.Any(Operation => Operation is Nativeˉbytesˉlength),
+            "Native machine IR omitted the byte length.");
+        True(Operations.Any(Operation => Operation is Nativeˉu32ˉfromˉu8),
+            "Native machine IR omitted the lossless u8-to-u32 conversion.");
+        True(Operations.Any(Operation => Operation is Nativeˉu32ˉbinary),
+            "Native machine IR omitted checked u32 arithmetic.");
+        True(Operations.Any(Operation => Operation is Nativeˉu32ˉcomparison),
+            "Native machine IR omitted u32 comparisons.");
+        True(Operations.Any(Operation => Operation is Nativeˉu8ˉcomparison),
+            "Native machine IR omitted u8 comparisons.");
+
+        _ = Nativeˉfragmentˉverifier.Verify(First.Fragment);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                First.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions,
+                maximumˉcallˉdepth: 2));
+        var Objectˉbytes = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+        Sequenceˉequal(Objectˉbytes, Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment));
+        var Linked = Linkˉsuccess(
+            [Objectˉbytes.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                First.Fragment with { Code = Linked.Imageˉbytes },
+                maximumˉinstructions: Interpreted.Executedˉinstructions,
+                maximumˉcallˉdepth: 2));
+
+        var Dataˉpatch = First.Fragment.Patches[0];
+        var Corruptedˉdescriptor = First.Fragment.Code.ToArray();
+        Corruptedˉdescriptor[checked((int)Dataˉpatch.Offset - 3)] = 0x90;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉdescriptor.ToImmutableArray() }));
+
+        var Corruptedˉlength = First.Fragment.Code.ToArray();
+        Corruptedˉlength[checked((int)Dataˉpatch.Offset + 13)] ^= 0x01;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉlength.ToImmutableArray() }));
+
+        var Corruptedˉdescriptorˉtype = First.Fragment.Code.ToArray();
+        var Descriptorˉslotˉoffset = BinaryPrimitives.ReadInt32LittleEndian(
+            Corruptedˉdescriptorˉtype.AsSpan(checked((int)Dataˉpatch.Offset + 8), sizeof(int)));
+        var Scalarˉconstant = -1;
+        for (var Offset = checked((int)Dataˉpatch.Offset + 20);
+            Offset <= Corruptedˉdescriptorˉtype.Length - 12;
+            Offset++)
+        {
+            if (Corruptedˉdescriptorˉtype[Offset] == 0xB8 &&
+                Corruptedˉdescriptorˉtype.AsSpan(Offset + 5, 3).SequenceEqual(
+                    new byte[] { 0x89, 0x84, 0x24 }))
+            {
+                Scalarˉconstant = Offset;
+                break;
+            }
+        }
+        True(Scalarˉconstant >= 0, "Native borrowed bytes did not emit a later scalar constant.");
+        BinaryPrimitives.WriteInt32LittleEndian(
+            Corruptedˉdescriptorˉtype.AsSpan(Scalarˉconstant + 8, sizeof(int)),
+            Descriptorˉslotˉoffset);
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉdescriptorˉtype.ToImmutableArray() }));
+
+        var Corruptedˉbyteˉargument = First.Fragment.Code.ToArray();
+        var Byteˉargument = Corruptedˉbyteˉargument.AsSpan().IndexOf(
+            new byte[] { 0x4C, 0x8D, 0x84, 0x24 });
+        True(Byteˉargument >= 0, "Native borrowed bytes did not use the typed first-argument form.");
+        Corruptedˉbyteˉargument[Byteˉargument + 1] = 0x8B;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉbyteˉargument.ToImmutableArray() }));
+
+        var Corruptedˉbyteˉbounds = First.Fragment.Code.ToArray();
+        var Byteˉboundsˉbranch = Corruptedˉbyteˉbounds.AsSpan().IndexOf(
+            new byte[] { 0x0F, 0x87 });
+        True(Byteˉboundsˉbranch >= 0, "Native borrowed bytes did not emit an unsigned bounds branch.");
+        BinaryPrimitives.WriteInt32LittleEndian(
+            Corruptedˉbyteˉbounds.AsSpan(Byteˉboundsˉbranch + 2, sizeof(int)),
+            0);
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉbyteˉbounds.ToImmutableArray() }));
+
+        var Boundsˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉbyteˉbounds profile portable;
+            data Input: bytes = [1, 2, 3, 4];
+            export fn Main() -> i32 {
+                let Value: u32 = Bytesˉreadˉu32ˉlittle(Input, 1u32);
+                if Value == 0u32 { return 0; }
+                return 1;
+            }
+            """));
+        Throwsˉruntime(
+            "WVR3008",
+            () => _ = new Referenceˉruntime(
+                Boundsˉverified,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+        Throwsˉnativeˉtrap(
+            "WVR3008",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Boundsˉverified).Fragment));
+
+        var Overflowˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉu32ˉoverflow profile portable;
+            export fn Main() -> i32 {
+                let Value: u32 = 4294967295u32 + 1u32;
+                if Value == 0u32 { return 0; }
+                return 1;
+            }
+            """));
+        Throwsˉruntime(
+            "WVR3007",
+            () => _ = new Referenceˉruntime(
+                Overflowˉverified,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+        Throwsˉnativeˉtrap(
+            "WVR3007",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Overflowˉverified).Fragment));
     }
 
     private static void Nativeˉruntimeˉserviceˉisˉauthorized()

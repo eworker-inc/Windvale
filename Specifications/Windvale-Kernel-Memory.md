@@ -72,7 +72,7 @@ The memory object exports ASCII symbol `Windvale_kernel_allocate_pages`:
 - Allocation is contiguous, monotonically increasing, and deterministic.
 - Version 1 provides no release operation and no allocation outside its one arena.
 
-The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocator probe, switches stacks, and calls WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. Under [kernel native seam version 4](Windvale-Kernel-Native-Seam.md), that exact shim tail-transfers to the ABI-6 probe bridge; only packed portable result 29 restores the handoff and reaches compiler export `Windvale_kernel_main`. Main owns the source-selected success markers and can be reached only after every preceding memory and native-probe operation succeeds.
+The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocator probe, switches stacks, and calls WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. Under [kernel native seam version 5](Windvale-Kernel-Native-Seam.md), that exact shim tail-transfers to the ABI-7 probe bridge; only packed portable result 29 after the byte-decoding checks restores the handoff and reaches compiler export `Windvale_kernel_main`. Main owns the source-selected success markers and can be reached only after every preceding memory and native-probe operation succeeds.
 
 ## Diagnostics and limits
 
@@ -91,7 +91,7 @@ Malformed and random bytes must produce a bounded result or one of these failure
 
 ## Current evidence and limit
 
-Firmware probe version 8 links the memory object, WVA shims, ABI-6 object, and native bridge independently; finds and clears the arena after firmware shutdown; records a successful one-page allocation; copies the handoff; and runs both the portable native probe and compiler export `Windvale_kernel_main` on the owned stack. Every line through Hello World in the suffix originates in the special compiler-generated function and returns through the WVA console adapter. Continued loader evidence additionally requires the exact ABI-6 context and portable probe result. The qualified QEMU gate requires this memory/native suffix:
+Firmware probe version 9 links the memory object, WVA shims, ABI-7 object, and native bridge independently; finds and clears the arena after firmware shutdown; records a successful one-page allocation; copies the handoff; and runs both the portable native probe and compiler export `Windvale_kernel_main` on the owned stack. Every line through Hello World in the suffix originates in the special compiler-generated function and returns through the WVA console adapter. Continued loader evidence additionally requires the exact ABI-7 context and portable byte-decoding result. The QEMU gate requires this memory/native suffix:
 
 ```text
 memory-owned=pass

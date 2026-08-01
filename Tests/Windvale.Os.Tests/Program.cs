@@ -348,9 +348,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(10_240, First.Length);
+        Equal(15_360, First.Length);
         Equal(
-            "61cd90eac963ed96d1fdd86d447cb7f2cdeffa50a3de2f5306239de27c1be6b0",
+            "ac92cd4759961c7a046ede49af8dce7626016fbcf8bb46e7d90027f5974bffa4",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -360,7 +360,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 8\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
+            "windvale-os-boot 9\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -490,23 +490,23 @@ internal static class Program
         True(
             Nativeˉobject.Sections[1].Kind == Objectˉsectionˉkind.Readˉonlyˉdata,
             "The native probe does not retain read-only data.");
-        Equal(1, Nativeˉobject.Relocations.Length);
+        Equal(4, Nativeˉobject.Relocations.Length);
         Equal(1, Nativeˉobject.Symbols.Count(Symbol => Symbol.Name == "Main"));
 
         var Bridgeˉobject = Objectˉcodec.Readˉandˉverify(First.Bridgeˉobjectˉbytes.AsSpan()).Value;
         Equal(93u, Bridgeˉobject.Sections[0].Memoryˉsize);
         Equal(2, Bridgeˉobject.Relocations.Length);
-        Equal(502, First.Moduleˉbytes.Length);
+        Equal(929, First.Moduleˉbytes.Length);
         Equal(
-            "1f384f77c4e1c718a331aaa1a3c1f1e4173bbae9d870ec9023d70c7b15c1f7ef",
+            "0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339",
             Objectˉdigest.Calculateˉsha256(First.Moduleˉbytes.AsSpan()));
-        Equal(2_360, First.Nativeˉobjectˉbytes.Length);
+        Equal(7_882, First.Nativeˉobjectˉbytes.Length);
         Equal(
-            "712350a395120c42f604966dffe04c397012af3696666f51c1a069cd9db0be61",
+            "24f5359fa5d335eb273e8680c671924dda43d4ee4c6e00c95f1bbebc742dfa99",
             Objectˉdigest.Calculateˉsha256(First.Nativeˉobjectˉbytes.AsSpan()));
         Equal(305, First.Bridgeˉobjectˉbytes.Length);
         Equal(
-            "2e22ee17e52ee8cc2c8fa6547424f0234bd770555b0a75c23d63003b6257331e",
+            "ef8993c59eb816c7983c5b8033922231baf1d897f846a8d5e54d8232677ef75a",
             Objectˉdigest.Calculateˉsha256(First.Bridgeˉobjectˉbytes.AsSpan()));
     }
 

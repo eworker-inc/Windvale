@@ -191,6 +191,12 @@ public static class X64ˉnativeˉexecutor
                     ? $"A native runtime service rejected its request in entry '{entry}'."
                     : $"A native runtime service failed in entry '{entry}': {Serviceˉfailure}");
         }
+        if (Status == 6)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3008",
+                $"A native byte slice or fixed-width read was outside its immutable source in entry '{entry}'.");
+        }
         throw new Nativeˉbackendˉexception(
             "WVN4005",
             $"Native entry '{entry}' returned unknown status {Status}.");

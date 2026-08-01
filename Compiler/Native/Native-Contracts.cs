@@ -5,13 +5,17 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 6;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v6";
+    public const int ABI_VERSION = 7;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v7";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
     public const int MAXIMUM_FRAME_SLOTS = 1024;
-    public const int MAXIMUM_FRAME_BYTES = MAXIMUM_FRAME_SLOTS * sizeof(int);
+    public const int VALUE_SLOT_BYTES = 16;
+    public const int BORROWED_BYTES_POINTER_OFFSET = 0;
+    public const int BORROWED_BYTES_LENGTH_OFFSET = 8;
+    public const int BORROWED_BYTES_RESERVED_OFFSET = 12;
+    public const int MAXIMUM_FRAME_BYTES = MAXIMUM_FRAME_SLOTS * VALUE_SLOT_BYTES;
     public const int MAXIMUM_BLOCKS = 4096;
     public const int MAXIMUM_CALL_PARAMETERS = 4;
 }
@@ -50,11 +54,18 @@ public enum Nativeˉvalueˉtype : byte
     I32 = 1,
     Bool = 2,
     Staticˉtext = 3,
+    U8 = 4,
+    U32 = 5,
+    Borrowedˉbytes = 6,
 }
 
 public sealed record Nativeˉi32ˉconstant(int Result, int Value) : Nativeˉoperation;
 
 public sealed record Nativeˉboolˉconstant(int Result, bool Value) : Nativeˉoperation;
+
+public sealed record Nativeˉu8ˉconstant(int Result, byte Value) : Nativeˉoperation;
+
+public sealed record Nativeˉu32ˉconstant(int Result, uint Value) : Nativeˉoperation;
 
 public sealed record Nativeˉlocalˉload(
     int Result,
@@ -111,6 +122,49 @@ public sealed record Nativeˉboolˉcomparison(
 
 public sealed record Nativeˉboolˉnot(int Result, int Value) : Nativeˉoperation;
 
+public enum Nativeˉu32ˉbinaryˉkind : byte
+{
+    Add = 1,
+    Subtract = 2,
+    Multiply = 3,
+}
+
+public sealed record Nativeˉu32ˉbinary(
+    int Result,
+    Nativeˉu32ˉbinaryˉkind Kind,
+    int Left,
+    int Right) : Nativeˉoperation;
+
+public enum Nativeˉu32ˉcomparisonˉkind : byte
+{
+    Equal = 1,
+    Notˉequal = 2,
+    Less = 3,
+    Lessˉequal = 4,
+    Greater = 5,
+    Greaterˉequal = 6,
+}
+
+public sealed record Nativeˉu32ˉcomparison(
+    int Result,
+    Nativeˉu32ˉcomparisonˉkind Kind,
+    int Left,
+    int Right) : Nativeˉoperation;
+
+public enum Nativeˉu8ˉcomparisonˉkind : byte
+{
+    Equal = 1,
+    Notˉequal = 2,
+}
+
+public sealed record Nativeˉu8ˉcomparison(
+    int Result,
+    Nativeˉu8ˉcomparisonˉkind Kind,
+    int Left,
+    int Right) : Nativeˉoperation;
+
+public sealed record Nativeˉu32ˉfromˉu8(int Result, int Value) : Nativeˉoperation;
+
 public sealed record Nativeˉcall(
     int Result,
     Nativeˉvalueˉtype Type,
@@ -130,6 +184,34 @@ public sealed record Nativeˉdataˉloadˉi32(
 public sealed record Nativeˉstaticˉtextˉconstant(
     int Result,
     int Data) : Nativeˉoperation;
+
+public sealed record Nativeˉstaticˉbytesˉconstant(
+    int Result,
+    int Data) : Nativeˉoperation;
+
+public sealed record Nativeˉbytesˉlength(
+    int Result,
+    int Bytes) : Nativeˉoperation;
+
+public sealed record Nativeˉbytesˉslice(
+    int Result,
+    int Bytes,
+    int Offset,
+    int Length) : Nativeˉoperation;
+
+public enum Nativeˉbytesˉreadˉkind : byte
+{
+    U8 = 1,
+    U16ˉlittle = 2,
+    U32ˉlittle = 3,
+    I32ˉlittle = 4,
+}
+
+public sealed record Nativeˉbytesˉread(
+    int Result,
+    Nativeˉbytesˉreadˉkind Kind,
+    int Bytes,
+    int Offset) : Nativeˉoperation;
 
 public sealed record Nativeˉconsoleˉwriteˉline(
     int Text,
@@ -168,6 +250,9 @@ public sealed record Nativeˉi32ˉdata(string Name, ImmutableArray<int> Values)
     : Nativeˉdata(Name);
 
 public sealed record Nativeˉutf8ˉdata(string Name, ImmutableArray<byte> Bytes)
+    : Nativeˉdata(Name);
+
+public sealed record Nativeˉbytesˉdata(string Name, ImmutableArray<byte> Bytes)
     : Nativeˉdata(Name);
 
 public sealed record Nativeˉmodule(

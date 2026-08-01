@@ -9,12 +9,12 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉnativeˉprobeˉcontract
 {
-    public const int FORMAT_VERSION = 2;
-    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v2";
+    public const int FORMAT_VERSION = 3;
+    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v3";
     public const string BRIDGE_SYMBOL = "Windvale_kernel_x64_native_probe";
     public const string NATIVE_MAIN_SYMBOL = "Main";
     public const int EXPECTED_RESULT = 29;
-    public const uint EXACT_INSTRUCTION_BUDGET = 203;
+    public const uint EXACT_INSTRUCTION_BUDGET = 271;
     public const uint EXACT_CALL_DEPTH_BUDGET = 2;
 }
 
@@ -40,8 +40,8 @@ public static class Kernelˉnativeˉprobe
 
         var Verifiedˉmodule = Moduleˉcodec.Readˉandˉverify(Compilation.Moduleˉbytes.AsSpan());
         var Native = X64ˉnativeˉbackend.Compile(Verifiedˉmodule);
-        if (Native.Module.Functions.Length != 2 ||
-            Native.Module.Data.Length != 1 ||
+        if (Native.Module.Functions.Length != 3 ||
+            Native.Module.Data.Length != 2 ||
             !Native.Module.Requiredˉservices.IsEmpty ||
             !Native.Fragment.Requiredˉservices.IsEmpty ||
             !Native.Module.Functions
@@ -51,7 +51,19 @@ public static class Kernelˉnativeˉprobe
             !Native.Module.Functions
                 .SelectMany(Function => Function.Blocks)
                 .SelectMany(Block => Block.Operations)
-                .Any(Operation => Operation is Nativeˉdataˉloadˉi32))
+                .Any(Operation => Operation is Nativeˉdataˉloadˉi32) ||
+            !Native.Module.Functions
+                .SelectMany(Function => Function.Blocks)
+                .SelectMany(Block => Block.Operations)
+                .Any(Operation => Operation is Nativeˉbytesˉslice) ||
+            !Native.Module.Functions
+                .SelectMany(Function => Function.Blocks)
+                .SelectMany(Block => Block.Operations)
+                .Any(Operation => Operation is Nativeˉbytesˉread) ||
+            !Native.Module.Functions
+                .SelectMany(Function => Function.Blocks)
+                .SelectMany(Block => Block.Operations)
+                .Any(Operation => Operation is Nativeˉbytesˉlength))
         {
             throw new InvalidOperationException(
                 $"The portable kernel probe violated '{Kernelˉnativeˉprobeˉcontract.TARGET_NAME}'.");
@@ -62,7 +74,7 @@ public static class Kernelˉnativeˉprobe
         if (Nativeˉobject.Sections.Length != 2 ||
             Nativeˉobject.Sections[0].Kind != Objectˉsectionˉkind.Code ||
             Nativeˉobject.Sections[1].Kind != Objectˉsectionˉkind.Readˉonlyˉdata ||
-            Nativeˉobject.Relocations.Length != 1 ||
+            Nativeˉobject.Relocations.Length != 4 ||
             Nativeˉobject.Symbols.Count(Symbol =>
                 Symbol.Binding == Objectˉsymbolˉbinding.Export &&
                 Symbol.Kind == Objectˉsymbolˉkind.Function &&
@@ -150,7 +162,7 @@ public static class Kernelˉnativeˉprobe
             0x48, 0x83, 0xEC, 0x28, 0x48, 0x89, 0x0C, 0x24,
             0x48, 0xB8, 0x01, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x48, 0x89, 0x44, 0x24, 0x08,
-            0xB8, 0xCB, 0x00, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x10,
+            0xB8, 0x0F, 0x01, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x10,
             0xB8, 0x02, 0x00, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x18,
             0x31, 0xC0, 0x48, 0x89, 0x44, 0x24, 0x20,
             0x48, 0x8D, 0x54, 0x24, 0x08,
