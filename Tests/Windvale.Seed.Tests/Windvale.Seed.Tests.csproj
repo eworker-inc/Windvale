@@ -29,6 +29,12 @@
       Include="../../Compiler/Native/Stencils/Process-Argument.wva"
       LogicalName="Windvale.Seed.Tests.Process-Argument.wva" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-Stencil-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Stencil-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Native-Stencil-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Stencil-Demo.wv" />
+    <EmbeddedResource
       Include="../../Examples/Linker/Console-Provider.wva"
       LogicalName="Windvale.Seed.Tests.Console-Provider.wva" />
     <EmbeddedResource

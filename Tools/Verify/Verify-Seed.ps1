@@ -135,6 +135,8 @@ $DecimalParsingModule = Join-Path $Artifacts 'Decimal-Parsing.wvb'
 $DecimalParsingDemoModule = Join-Path $Artifacts 'Decimal-Parsing-Demo.wvb'
 $ByteConstructionModule = Join-Path $Artifacts 'Byte-Construction.wvb'
 $ByteConstructionDemoModule = Join-Path $Artifacts 'Byte-Construction-Demo.wvb'
+$NativeStencilModule = Join-Path $Artifacts 'Native-Stencil-Core.wvb'
+$NativeStencilDemoModule = Join-Path $Artifacts 'Native-Stencil-Demo.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
 $SourceLexerDemoModule = Join-Path $Artifacts 'Source-Lexer-Demo.wvb'
 $SourceDeclarationParserModule = Join-Path $Artifacts 'Source-Declaration-Parser.wvb'
@@ -455,6 +457,40 @@ if ($ByteConstructionDemoHash -ne 'a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abb
 $ByteConstructionDemoOutput = dotnet $ToolDll run $ByteConstructionDemoModule
 if ($LASTEXITCODE -ne 0 -or $ByteConstructionDemoOutput -notcontains 'Result: 0') {
     throw 'The Foundation byte-construction demo did not return Result: 0.'
+}
+
+$NativeStencilSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Stencil-Core.wv'
+dotnet $ToolDll `
+    compile $NativeStencilSource -o $NativeStencilModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-stencil core.' }
+$NativeStencilHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeStencilModule).Hash.ToLowerInvariant()
+if ($NativeStencilHash -ne 'd40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f') {
+    throw "The Windvale native-stencil core has an unexpected digest: $NativeStencilHash"
+}
+$NativeStencilInspection = (dotnet $ToolDll inspect $NativeStencilModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeStencilInspection -notmatch 'Nativeˉstencilˉresult' -or
+    $NativeStencilInspection -notmatch 'Nativeˉstencilˉpatchˉkind' -or
+    $NativeStencilInspection -notmatch 'Nativeˉstencilˉprocessˉargumentˉcount' -or
+    $NativeStencilInspection -notmatch 'Nativeˉstencilˉprocessˉargument' -or
+    $NativeStencilInspection -notmatch 'Exports \(20\)'
+) {
+    throw 'The Windvale native-stencil core inspection is incomplete.'
+}
+dotnet $ToolDll `
+    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Native-Stencil-Demo.wv') `
+    --module $NativeStencilSource `
+    -o $NativeStencilDemoModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-stencil demo.' }
+$NativeStencilDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeStencilDemoModule).Hash.ToLowerInvariant()
+if ($NativeStencilDemoHash -ne '651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15') {
+    throw "The Windvale native-stencil demo has an unexpected digest: $NativeStencilDemoHash"
+}
+$NativeStencilDemoOutput = dotnet $ToolDll `
+    run $NativeStencilDemoModule --max-steps 20000000
+if ($LASTEXITCODE -ne 0 -or $NativeStencilDemoOutput -notcontains 'Result: 0') {
+    throw 'The Windvale native-stencil demo did not return Result: 0.'
 }
 
 $SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Lexer-Core.wv'

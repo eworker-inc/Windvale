@@ -127,6 +127,8 @@ DECIMAL_PARSING_MODULE="$ARTIFACTS/Decimal-Parsing.wvb"
 DECIMAL_PARSING_DEMO_MODULE="$ARTIFACTS/Decimal-Parsing-Demo.wvb"
 BYTE_CONSTRUCTION_MODULE="$ARTIFACTS/Byte-Construction.wvb"
 BYTE_CONSTRUCTION_DEMO_MODULE="$ARTIFACTS/Byte-Construction-Demo.wvb"
+NATIVE_STENCIL_MODULE="$ARTIFACTS/Native-Stencil-Core.wvb"
+NATIVE_STENCIL_DEMO_MODULE="$ARTIFACTS/Native-Stencil-Demo.wvb"
 SOURCE_LEXER_MODULE="$ARTIFACTS/Source-Lexer-Core.wvb"
 SOURCE_LEXER_DEMO_MODULE="$ARTIFACTS/Source-Lexer-Demo.wvb"
 SOURCE_DECLARATION_PARSER_MODULE="$ARTIFACTS/Source-Declaration-Parser.wvb"
@@ -380,6 +382,33 @@ fi
 BYTE_CONSTRUCTION_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$BYTE_CONSTRUCTION_DEMO_MODULE")
 printf '%s\n' "$BYTE_CONSTRUCTION_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+NATIVE_STENCIL_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Core.wv"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_STENCIL_SOURCE" -o "$NATIVE_STENCIL_MODULE"
+NATIVE_STENCIL_HASH=$(sha256sum "$NATIVE_STENCIL_MODULE" | awk '{print $1}')
+if [ "$NATIVE_STENCIL_HASH" != 'd40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f' ]; then
+    echo "The Windvale native-stencil core has an unexpected digest: $NATIVE_STENCIL_HASH" >&2
+    exit 1
+fi
+NATIVE_STENCIL_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_STENCIL_MODULE")
+printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Nativeˉstencilˉresult' >/dev/null
+printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Nativeˉstencilˉpatchˉkind' >/dev/null
+printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Nativeˉstencilˉprocessˉargumentˉcount' >/dev/null
+printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Nativeˉstencilˉprocessˉargument' >/dev/null
+printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Exports (20)' >/dev/null
+dotnet "$TOOL_DLL" \
+    compile "$REPOSITORY_ROOT/Examples/Compiler/Native-Stencil-Demo.wv" \
+    --module "$NATIVE_STENCIL_SOURCE" \
+    -o "$NATIVE_STENCIL_DEMO_MODULE"
+NATIVE_STENCIL_DEMO_HASH=$(sha256sum "$NATIVE_STENCIL_DEMO_MODULE" | awk '{print $1}')
+if [ "$NATIVE_STENCIL_DEMO_HASH" != '651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15' ]; then
+    echo "The Windvale native-stencil demo has an unexpected digest: $NATIVE_STENCIL_DEMO_HASH" >&2
+    exit 1
+fi
+NATIVE_STENCIL_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$NATIVE_STENCIL_DEMO_MODULE" --max-steps 20000000)
+printf '%s\n' "$NATIVE_STENCIL_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Lexer-Core.wv"
 dotnet "$TOOL_DLL" \

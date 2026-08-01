@@ -1,0 +1,167 @@
+module Compilerˉnativeˉstencilˉdemo profile portable;
+
+import Compilerˉnativeˉstencil;
+
+data Argumentˉcountˉobject: bytes = [
+    87, 86, 79, 49, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0,
+    2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0,
+    25, 0, 0, 0, 25, 0, 0, 0, 7, 0, 0, 0, 46, 114, 111, 100,
+    97, 116, 97, 87, 86, 83, 80, 1, 0, 0, 0, 3, 0, 0, 0, 1,
+    0, 0, 0, 1, 0, 0, 0, 65, 139, 71, 0, 195, 1, 2, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 20, 0, 0, 0,
+    65, 114, 103, 117, 109, 101, 110, 116, 95, 99, 111, 117, 110, 116, 95, 112,
+    97, 116, 99, 104, 2, 2, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0,
+    5, 0, 0, 0, 30, 0, 0, 0, 80, 114, 111, 99, 101, 115, 115, 95,
+    97, 114, 103, 117, 109, 101, 110, 116, 95, 99, 111, 117, 110, 116, 95, 115,
+    116, 101, 110, 99, 105, 108
+];
+
+data Argumentˉobject: bytes = [
+    87, 86, 79, 49, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0,
+    2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0,
+    182, 0, 0, 0, 182, 0, 0, 0, 7, 0, 0, 0, 46, 114, 111, 100,
+    97, 116, 97, 87, 86, 83, 80, 2, 0, 0, 0, 8, 0, 0, 0, 70,
+    0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 11,
+    0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 21, 0, 0, 0, 1,
+    0, 0, 0, 4, 0, 0, 0, 40, 0, 0, 0, 1, 0, 0, 0, 5,
+    0, 0, 0, 44, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 48,
+    0, 0, 0, 1, 0, 0, 0, 6, 0, 0, 0, 59, 0, 0, 0, 1,
+    0, 0, 0, 2, 0, 0, 0, 60, 0, 0, 0, 1, 0, 0, 0, 7,
+    0, 0, 0, 65, 199, 71, 0, 0, 0, 0, 0, 69, 59, 71, 0, 15,
+    131, 38, 0, 0, 0, 73, 139, 71, 0, 68, 137, 193, 72, 193, 225, 4,
+    72, 1, 200, 72, 139, 8, 73, 137, 9, 139, 72, 0, 65, 137, 73, 0,
+    65, 199, 65, 0, 0, 0, 0, 0, 49, 192, 195, 65, 199, 71, 0, 0,
+    0, 0, 0, 184, 1, 0, 0, 0, 195, 1, 2, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 112, 0, 0, 0, 24, 0, 0, 0, 80, 114, 111,
+    99, 101, 115, 115, 95, 97, 114, 103, 117, 109, 101, 110, 116, 95, 112, 97,
+    116, 99, 104, 101, 115, 2, 2, 0, 0, 0, 0, 0, 0, 112, 0, 0,
+    0, 70, 0, 0, 0, 24, 0, 0, 0, 80, 114, 111, 99, 101, 115, 115,
+    95, 97, 114, 103, 117, 109, 101, 110, 116, 95, 115, 116, 101, 110, 99, 105,
+    108
+];
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 1u32;
+    let Suffix: bytes = Bytesˉslice(
+        Input,
+        Suffixˉoffset,
+        Bytesˉlength(Input) - Suffixˉoffset
+    );
+    let Encoded: bytes = Bytesˉslice(
+        Bytesˉfromˉu32ˉlittle(U32ˉfromˉu8(Value)),
+        0u32,
+        1u32
+    );
+    return Bytesˉconcat(Bytesˉconcat(Prefix, Encoded), Suffix);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Differentˉu8(Value: u8) -> u8 {
+    if Value == 0u8 { return 1u8; }
+    return 0u8;
+}
+
+export fn Main() -> i32 {
+    let Count: Nativeˉstencilˉresult =
+        Nativeˉstencilˉprocessˉargumentˉcount(Argumentˉcountˉobject);
+    if Count.Status != Nativeˉstencilˉstatus.Valid { return 1; }
+    if Bytesˉlength(Count.Value) != 5u32 { return 2; }
+    if Bytesˉreadˉu8(Count.Value, 3u32) != 80u8 { return 3; }
+
+    let Argument: Nativeˉstencilˉresult =
+        Nativeˉstencilˉprocessˉargument(Argumentˉobject);
+    if Argument.Status != Nativeˉstencilˉstatus.Valid { return 4; }
+    if Bytesˉlength(Argument.Value) != 70u32 { return 5; }
+    if Bytesˉreadˉu8(Argument.Value, 3u32) != 64u8 { return 6; }
+    if Bytesˉreadˉu8(Argument.Value, 11u32) != 80u8 { return 7; }
+    if Bytesˉreadˉu8(Argument.Value, 21u32) != 72u8 { return 8; }
+    if Bytesˉreadˉu8(Argument.Value, 40u32) != 8u8 { return 9; }
+    if Bytesˉreadˉu8(Argument.Value, 44u32) != 8u8 { return 10; }
+    if Bytesˉreadˉu8(Argument.Value, 48u32) != 12u8 { return 11; }
+    if Bytesˉreadˉu8(Argument.Value, 59u32) != 64u8 { return 12; }
+    if Bytesˉreadˉu8(Argument.Value, 60u32) != 3u8 { return 13; }
+
+    let Repeated: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargument(Argumentˉobject);
+    if Repeated.Status != Nativeˉstencilˉstatus.Valid { return 14; }
+    if !Same(Argument.Value, Repeated.Value) { return 15; }
+
+    let Short: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+        Bytesˉslice(Argumentˉcountˉobject, 0u32, 165u32)
+    );
+    if Short.Status != Nativeˉstencilˉstatus.Invalidˉsize { return 16; }
+    if Bytesˉlength(Short.Value) != 0u32 { return 17; }
+
+    let Badˉheader: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+        Replaceˉu8(Argumentˉcountˉobject, 0u32, 0u8)
+    );
+    if Badˉheader.Status != Nativeˉstencilˉstatus.Invalidˉobject { return 18; }
+
+    let Badˉsection: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargument(
+        Replaceˉu8(Argumentˉobject, 28u32, 2u8)
+    );
+    if Badˉsection.Status != Nativeˉstencilˉstatus.Invalidˉobject { return 19; }
+
+    let Badˉsymbol: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+        Replaceˉu8(Argumentˉcountˉobject, 96u32, 66u8)
+    );
+    if Badˉsymbol.Status != Nativeˉstencilˉstatus.Invalidˉobject { return 20; }
+
+    let Badˉmetadata: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargument(
+        Replaceˉu8(Argumentˉobject, 59u32, 7u8)
+    );
+    if Badˉmetadata.Status != Nativeˉstencilˉstatus.Invalidˉmetadata { return 21; }
+
+    let Badˉpatch: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+        Replaceˉu8(Argumentˉcountˉobject, 59u32, 4u8)
+    );
+    if Badˉpatch.Status != Nativeˉstencilˉstatus.Invalidˉmetadata { return 22; }
+
+    let Badˉtemplate: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargument(
+        Replaceˉu8(Argumentˉobject, 163u32, 0u8)
+    );
+    if Badˉtemplate.Status != Nativeˉstencilˉstatus.Invalidˉtemplate { return 23; }
+
+    let Filledˉhole: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+        Replaceˉu8(Argumentˉcountˉobject, 74u32, 80u8)
+    );
+    if Filledˉhole.Status != Nativeˉstencilˉstatus.Invalidˉtemplate { return 24; }
+
+    var Countˉindex: u32 = 0u32;
+    while Countˉindex < Bytesˉlength(Argumentˉcountˉobject) {
+        let Mutatedˉcount: Nativeˉstencilˉresult =
+            Nativeˉstencilˉprocessˉargumentˉcount(
+                Replaceˉu8(
+                    Argumentˉcountˉobject,
+                    Countˉindex,
+                    Differentˉu8(Bytesˉreadˉu8(Argumentˉcountˉobject, Countˉindex))
+                )
+            );
+        if Mutatedˉcount.Status == Nativeˉstencilˉstatus.Valid { return 25; }
+        Countˉindex = Countˉindex + 1u32;
+    }
+
+    var Argumentˉindex: u32 = 0u32;
+    while Argumentˉindex < Bytesˉlength(Argumentˉobject) {
+        let Mutatedˉargument: Nativeˉstencilˉresult =
+            Nativeˉstencilˉprocessˉargument(
+                Replaceˉu8(
+                    Argumentˉobject,
+                    Argumentˉindex,
+                    Differentˉu8(Bytesˉreadˉu8(Argumentˉobject, Argumentˉindex))
+                )
+            );
+        if Mutatedˉargument.Status == Nativeˉstencilˉstatus.Valid { return 26; }
+        Argumentˉindex = Argumentˉindex + 1u32;
+    }
+    return 0;
+}

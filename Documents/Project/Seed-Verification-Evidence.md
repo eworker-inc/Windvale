@@ -780,6 +780,14 @@ After evidence retrieval, the exact Debian QA tree, transferred source archive, 
 
 This supersedes Decision 0077 as the latest qualified native-runtime and OS evidence. It qualifies both process-input stencil sources, ordered typed patching through the C# consumer, the portable project parser/native shell, and their live use. It does not claim a general baseline JIT, Windvale-owned WVO loading or patch application, native publication, arenas, a standalone native build driver, in-guest WVB loading, or .NET retirement.
 
+## First Windvale native-stencil consumer candidate
+
+Decision 0079 implements `Compiler/Windvale/Native-Stencil-Core.wv`, the first capability-free Windvale consumer of the two retained WVO/WVSP process-input artifacts. It validates every byte of each complete object shape, derives the six current ABI values from closed semantic patch kinds, constructs immutable output, and reports a typed status plus failure offset. The production-tied demo covers both valid outputs, deterministic repetition, representative malformed families, and one changed value at every byte position of both objects.
+
+The candidate `Native-Stencil-Core.wvb` is 21,295 bytes with SHA-256 `d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f`. The composed `Native-Stencil-Demo.wvb` is 26,330 bytes with SHA-256 `651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15` and returns `0` under the reference interpreter, native JIT, and linked WVO/AOT. The focused Windows test passes in 0.879 seconds and the updated golden contract passes in 174.748 seconds.
+
+This evidence is not yet qualified cross-host evidence. Exact-commit Windows and Debian Qualification, normalized-report comparison, portable-artifact comparison, OS regression, and independent GitHub verification remain pending. C# remains the live loader and oracle because the current native invocation returns only `i32`; this candidate transfers portable acceptance and patch semantics, not yet the live byte-return or W^X publication boundary.
+
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
 Commit `9c4b9f5` was archived and transferred with matching SHA-256 `44565d0f6366eb418dc1a4555d1f7b355df63ec2ea836440de54639087fc335a`, then verified in the uniquely named disposable directory `/tmp/windvale-linker-9c4b9f5-20260730` on the isolated E-Worker QA host. The archive contained the canonical WVA fixture as 403 bytes plus the linker project, provider fixture, and shell verifier. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`. The verification did not use E-Worker release, configuration, service, or durable-data paths. The Debian report was retrieved with SHA-256 `b84cd3a180e8cb167dca3cf909457de91a8643f19911628c426c6e52c6fe5fc0`; the provider WVO, linked image, and canonical map were retrieved separately and each matched the Windows artifact byte for byte; then the resolved exact temporary directory and transferred archive were removed.

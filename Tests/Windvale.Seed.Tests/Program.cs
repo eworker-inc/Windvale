@@ -39,6 +39,8 @@ internal static class Program
     private const string NATIVE_CONTROL_WVO_SHA256 = "3a7f561b7a1c72c9e40f31b8ad755f728e60966957568429eade37963caf6e2f";
     private const string NATIVE_LOOP_CODE_SHA256 = "3b453983778711cfccca3a495cd5d97eeecd28a041294ef522675582695740b1";
     private const string NATIVE_LOOP_WVO_SHA256 = "30435304a6d134152ea5fabb889047fb2a1099ef7b4606f552817175022aebc9";
+    private const string NATIVE_STENCIL_CORE_SHA256 = "d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f";
+    private const string NATIVE_STENCIL_DEMO_SHA256 = "651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "b609fb7d442bbe1685c1058c71eb011d43b291df505697a97c233ca7063a2044";
     private const string PROJECT_MANIFEST_TOOL_SHA256 = "50ab9aa5048ab844a816d0f7f12fb691cb69f57c4a71f7eb18ebc7fb4aaf0b0c";
@@ -539,6 +541,12 @@ internal static class Program
     private static readonly string PROCESS_ARGUMENT_STENCIL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Process-Argument.wva");
 
+    private static readonly string NATIVE_STENCIL_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-Stencil-Core.wv");
+
+    private static readonly string NATIVE_STENCIL_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-Stencil-Demo.wv");
+
     private static readonly string CONSOLE_PROVIDER_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Console-Provider.wva");
 
@@ -595,6 +603,7 @@ internal static class Program
         new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),
         new("Windvale-assembled native stencils reproduce the argument-service leaves", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilsˉreproduceˉargumentˉservices),
+        new("Windvale validates and patches its native stencils across every runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉconsumerˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
@@ -3159,6 +3168,103 @@ internal static class Program
             INVALID_STENCIL,
             () => _ = X64ˉnativeˉstencil.Instantiateˉprocessˉargument(
                 Argumentˉstencil with { Template = Argumentˉinstantiated }));
+    }
+
+    private static void Windvaleˉnativeˉstencilˉconsumerˉruns()
+    {
+        var Coreˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Compiler/Windvale/Native-Stencil-Core.wv", NATIVE_STENCIL_CORE_SOURCE),
+            []);
+        True(
+            Coreˉresult.Success,
+            "The Windvale native-stencil core did not compile: " +
+                string.Join(" | ", Coreˉresult.Diagnostics));
+        Equal(
+            NATIVE_STENCIL_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Coreˉresult.Moduleˉbytes.AsSpan()));
+
+        var Demoˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Examples/Compiler/Native-Stencil-Demo.wv", NATIVE_STENCIL_DEMO_SOURCE),
+            [
+                new("Compiler/Windvale/Native-Stencil-Core.wv", NATIVE_STENCIL_CORE_SOURCE),
+            ]);
+        True(
+            Demoˉresult.Success,
+            "The Windvale native-stencil demo did not compile: " +
+                string.Join(" | ", Demoˉresult.Diagnostics));
+        Equal(
+            NATIVE_STENCIL_DEMO_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Demoˉresult.Moduleˉbytes.AsSpan()));
+        var Demo = Moduleˉcodec.Readˉandˉverify(Demoˉresult.Moduleˉbytes.AsSpan());
+
+        static ImmutableArray<byte> Readˉnativeˉstencilˉresource(string name)
+        {
+            using var Stream = typeof(X64ˉnativeˉstencil).Assembly
+                .GetManifestResourceStream(name) ??
+                throw new InvalidOperationException($"The native-stencil resource {name} was not embedded.");
+            var Bytes = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Bytes);
+            return Bytes.ToImmutableArray();
+        }
+
+        var Countˉdata = (Bytesˉdataˉdeclaration)Demo.Module.Data.Single(
+            Data => Data.Name == "Argumentˉcountˉobject");
+        var Argumentˉdata = (Bytesˉdataˉdeclaration)Demo.Module.Data.Single(
+            Data => Data.Name == "Argumentˉobject");
+        Sequenceˉequal(
+            Readˉnativeˉstencilˉresource(
+                "Windvale.NativeCompiler.Process-Argument-Count.wvo"),
+            Countˉdata.Values);
+        Sequenceˉequal(
+            Readˉnativeˉstencilˉresource("Windvale.NativeCompiler.Process-Argument.wvo"),
+            Argumentˉdata.Values);
+
+        var Interpreted = new Referenceˉruntime(
+            Demo,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 20_000_000 })
+            .Runˉmain();
+        Equal(0, Interpreted.Exitˉcode);
+
+        var First = X64ˉnativeˉbackend.Compile(Demo);
+        var Second = X64ˉnativeˉbackend.Compile(Demo);
+        Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Sequenceˉequal(First.Fragment.Symbols, Second.Fragment.Symbols);
+        Sequenceˉequal(First.Fragment.Patches, Second.Fragment.Patches);
+        Sequenceˉequal(First.Fragment.Types, Second.Fragment.Types);
+        var Operations = First.Module.Functions
+            .SelectMany(Function => Function.Blocks)
+            .SelectMany(Block => Block.Operations)
+            .ToImmutableArray();
+        True(Operations.Any(Operation => Operation is Nativeˉbytesˉslice),
+            "The Windvale native-stencil consumer omitted immutable byte slicing.");
+        True(Operations.Any(Operation => Operation is Nativeˉbytesˉconcat),
+            "The Windvale native-stencil consumer omitted immutable byte replacement.");
+        True(Operations.Any(Operation => Operation is Nativeˉbytesˉfromˉu32ˉlittle),
+            "The Windvale native-stencil consumer omitted typed patch-byte construction.");
+        True(Operations.Any(Operation => Operation is Nativeˉrecordˉcreate),
+            "The Windvale native-stencil consumer omitted typed result construction.");
+        True(Operations.Any(Operation => Operation is Nativeˉenumˉcomparison),
+            "The Windvale native-stencil consumer omitted typed status checks.");
+        _ = Nativeˉfragmentˉverifier.Verify(First.Fragment);
+        Equal(
+            Interpreted.Exitˉcode,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                First.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+
+        var Firstˉobject = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+        var Secondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment);
+        Sequenceˉequal(Firstˉobject, Secondˉobject);
+        var Linked = Linkˉsuccess(
+            [Firstˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Sequenceˉequal(First.Fragment.Code, Linked.Imageˉbytes);
+        Equal(
+            Interpreted.Exitˉcode,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                First.Fragment with { Code = Linked.Imageˉbytes },
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
     }
 
     private static void Nativeˉhostedˉinputˉinspectsˉwvb()
@@ -8079,6 +8185,13 @@ internal static class Program
         var Byteˉconstructionˉdemoˉbytes = Compileˉwithˉbyteˉconstructionˉsuccess(
             BYTE_CONSTRUCTION_DEMO_SOURCE,
             "Byte-Construction-Demo.wv");
+        var Nativeˉstencilˉcoreˉbytes = Compileˉwithˉnativeˉstencilˉsuccess(
+            NATIVE_STENCIL_CORE_SOURCE,
+            "Compiler/Windvale/Native-Stencil-Core.wv",
+            includeˉnativeˉstencil: false);
+        var Nativeˉstencilˉdemoˉbytes = Compileˉwithˉnativeˉstencilˉsuccess(
+            NATIVE_STENCIL_DEMO_SOURCE,
+            "Examples/Compiler/Native-Stencil-Demo.wv");
         var Sourceˉlexerˉbytes = Compileˉwithˉdecimalˉparsingˉsuccess(
             SOURCE_LEXER_SOURCE,
             "Source-Lexer-Core.wv");
@@ -8171,6 +8284,8 @@ internal static class Program
         var Decimalˉparsingˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Decimalˉparsingˉdemoˉbytes);
         var Byteˉconstructionˉhash = Moduleˉdigest.Calculateˉsha256(Byteˉconstructionˉbytes);
         var Byteˉconstructionˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Byteˉconstructionˉdemoˉbytes);
+        var Nativeˉstencilˉcoreˉhash = Moduleˉdigest.Calculateˉsha256(Nativeˉstencilˉcoreˉbytes);
+        var Nativeˉstencilˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Nativeˉstencilˉdemoˉbytes);
         var Sourceˉlexerˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉlexerˉbytes);
         var Sourceˉlexerˉdemoˉhash = Moduleˉdigest.Calculateˉsha256(Sourceˉlexerˉdemoˉbytes);
         var Sourceˉdeclarationˉparserˉhash = Moduleˉdigest.Calculateˉsha256(
@@ -8218,6 +8333,8 @@ internal static class Program
         Equal(DECIMAL_PARSING_DEMO_SHA256, Decimalˉparsingˉdemoˉhash);
         Equal(BYTE_CONSTRUCTION_SHA256, Byteˉconstructionˉhash);
         Equal(BYTE_CONSTRUCTION_DEMO_SHA256, Byteˉconstructionˉdemoˉhash);
+        Equal(NATIVE_STENCIL_CORE_SHA256, Nativeˉstencilˉcoreˉhash);
+        Equal(NATIVE_STENCIL_DEMO_SHA256, Nativeˉstencilˉdemoˉhash);
         Equal(SOURCE_LEXER_SHA256, Sourceˉlexerˉhash);
         Equal(SOURCE_LEXER_DEMO_SHA256, Sourceˉlexerˉdemoˉhash);
         Equal(SOURCE_DECLARATION_PARSER_SHA256, Sourceˉdeclarationˉparserˉhash);
@@ -8286,6 +8403,12 @@ internal static class Program
             Moduleˉcodec.Readˉandˉverify(Byteˉconstructionˉdemoˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        var Nativeˉstencilˉdemoˉresult = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Nativeˉstencilˉdemoˉbytes),
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            new(
+                Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                Maximumˉinstructions: 20_000_000)).Runˉmain();
         var Sourceˉlexerˉdemoˉresult = new Referenceˉruntime(
             Moduleˉcodec.Readˉandˉverify(Sourceˉlexerˉdemoˉbytes),
             new Referenceˉcapabilityˉhost(new StringWriter()),
@@ -8305,6 +8428,7 @@ internal static class Program
             Byteˉorderingˉdemoˉresult.Executedˉinstructions +
             Decimalˉparsingˉdemoˉresult.Executedˉinstructions +
             Byteˉconstructionˉdemoˉresult.Executedˉinstructions +
+            Nativeˉstencilˉdemoˉresult.Executedˉinstructions +
             Sourceˉlexerˉdemoˉresult.Executedˉinstructions +
             Sourceˉdeclarationˉparserˉdemoˉresult.Executedˉinstructions));
 
@@ -8597,6 +8721,7 @@ internal static class Program
         Equal(42, Sourceˉcompositionˉresult.Exitˉcode);
         Equal(0, Machineˉcontractsˉdemoˉresult.Exitˉcode);
         Equal(0, Byteˉorderingˉdemoˉresult.Exitˉcode);
+        Equal(0, Nativeˉstencilˉdemoˉresult.Exitˉcode);
         Equal(0, Wvˉdumpˉresult.Exitˉcode);
         Equal(0, Wvˉdumpˉhostedˉresult.Exitˉcode);
         Equal(string.Empty, Wvˉdumpˉhostedˉdiagnostics.ToString());
@@ -8719,6 +8844,9 @@ internal static class Program
             Byteˉconstructionˉhash,
             Byteˉconstructionˉdemoˉhash,
             Byteˉconstructionˉdemoˉresult.Exitˉcode,
+            Nativeˉstencilˉcoreˉhash,
+            Nativeˉstencilˉdemoˉhash,
+            Nativeˉstencilˉdemoˉresult.Exitˉcode,
             Sourceˉlexerˉhash,
             Sourceˉlexerˉdemoˉhash,
             Sourceˉlexerˉdemoˉresult.Exitˉcode,
@@ -9155,6 +9283,30 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Foundation composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉnativeˉstencilˉsuccess(
+        string source,
+        string sourceˉname,
+        bool includeˉnativeˉstencil = true)
+    {
+        var Dependencies = new List<Sourceˉmoduleˉinput>();
+        if (includeˉnativeˉstencil)
+        {
+            Dependencies.Add(new(
+                "Compiler/Windvale/Native-Stencil-Core.wv",
+                NATIVE_STENCIL_CORE_SOURCE));
+        }
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            Dependencies);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Native-stencil composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();
@@ -10129,6 +10281,9 @@ internal static class Program
         [property: JsonPropertyName("byteConstructionSha256")] string Byteˉconstructionˉsha256,
         [property: JsonPropertyName("byteConstructionDemoSha256")] string Byteˉconstructionˉdemoˉsha256,
         [property: JsonPropertyName("byteConstructionDemoResult")] int Byteˉconstructionˉdemoˉresult,
+        [property: JsonPropertyName("nativeStencilCoreSha256")] string Nativeˉstencilˉcoreˉsha256,
+        [property: JsonPropertyName("nativeStencilDemoSha256")] string Nativeˉstencilˉdemoˉsha256,
+        [property: JsonPropertyName("nativeStencilDemoResult")] int Nativeˉstencilˉdemoˉresult,
         [property: JsonPropertyName("sourceLexerSha256")] string Sourceˉlexerˉsha256,
         [property: JsonPropertyName("sourceLexerDemoSha256")] string Sourceˉlexerˉdemoˉsha256,
         [property: JsonPropertyName("sourceLexerDemoResult")] int Sourceˉlexerˉdemoˉresult,

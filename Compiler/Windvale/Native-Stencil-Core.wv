@@ -1,0 +1,464 @@
+module Compilerˉnativeˉstencil profile portable;
+
+enum Nativeˉstencilˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉobject = 2;
+    Invalidˉmetadata = 3;
+    Invalidˉtemplate = 4;
+    Constructionˉfailed = 5;
+    Invalidˉidentity = 6;
+}
+
+enum Nativeˉstencilˉpatchˉkind {
+    Invalid = 0;
+    Executionˉcontextˉu8ˉoffset = 1;
+    Executionˉcontextˉserviceˉfailureˉdetailˉu8ˉoffset = 2;
+    Executionˉcontextˉargumentˉcountˉu8ˉoffset = 3;
+    Executionˉcontextˉargumentˉtableˉpointerˉu8ˉoffset = 4;
+    Borrowedˉtextˉlengthˉu8ˉoffset = 5;
+    Borrowedˉtextˉreservedˉu8ˉoffset = 6;
+    Argumentˉindexˉoutˉofˉrangeˉu8ˉdetail = 7;
+}
+
+record Nativeˉstencilˉresult {
+    Status: Nativeˉstencilˉstatus;
+    Value: bytes;
+    Failureˉoffset: u32;
+}
+
+record Nativeˉstencilˉsymbolˉcontract {
+    Recordˉoffset: u32;
+    Binding: u8;
+    Offset: u32;
+    Size: u32;
+    Name: text;
+}
+
+export fn Nativeˉstencilˉfailure(
+    Input: bytes,
+    Status: Nativeˉstencilˉstatus,
+    Failureˉoffset: u32
+) -> Nativeˉstencilˉresult {
+    return Nativeˉstencilˉresult(
+        Status,
+        Bytesˉslice(Input, 0u32, 0u32),
+        Failureˉoffset
+    );
+}
+
+export fn Nativeˉstencilˉrangeˉisˉinside(
+    Total: u32,
+    Offset: u32,
+    Length: u32
+) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+export fn Nativeˉstencilˉspanˉequalsˉtext(
+    Input: bytes,
+    Offset: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    let Length: u32 = Bytesˉlength(Expectedˉbytes);
+    if !Nativeˉstencilˉrangeˉisˉinside(Bytesˉlength(Input), Offset, Length) {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) != Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉstencilˉheaderˉisˉexact(Input: bytes) -> bool {
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 { return false; }
+    if Bytesˉreadˉu8(Input, 1u32) != 86u8 { return false; }
+    if Bytesˉreadˉu8(Input, 2u32) != 79u8 { return false; }
+    if Bytesˉreadˉu8(Input, 3u32) != 49u8 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 { return false; }
+    if Bytesˉreadˉu8(Input, 8u32) != 1u8 { return false; }
+    if Bytesˉreadˉu8(Input, 9u32) != 0u8 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Input, 10u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) != 2u32 { return false; }
+    return Bytesˉreadˉu32ˉlittle(Input, 20u32) == 0u32;
+}
+
+export fn Nativeˉstencilˉsectionˉisˉexact(Input: bytes, Size: u32) -> bool {
+    if Bytesˉreadˉu8(Input, 24u32) != 2u8 { return false; }
+    if Bytesˉreadˉu8(Input, 25u32) != 0u8 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Input, 26u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 32u32) != Size { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 36u32) != Size { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 40u32) != 7u32 { return false; }
+    return Nativeˉstencilˉspanˉequalsˉtext(Input, 44u32, ".rodata");
+}
+
+export fn Nativeˉstencilˉsymbolˉisˉexact(
+    Input: bytes,
+    Contract: Nativeˉstencilˉsymbolˉcontract
+) -> bool {
+    let Total: u32 = Bytesˉlength(Input);
+    if !Nativeˉstencilˉrangeˉisˉinside(Total, Contract.Recordˉoffset, 20u32) {
+        return false;
+    }
+    if Bytesˉreadˉu8(Input, Contract.Recordˉoffset) != Contract.Binding { return false; }
+    if Bytesˉreadˉu8(Input, Contract.Recordˉoffset + 1u32) != 2u8 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Input, Contract.Recordˉoffset + 2u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, Contract.Recordˉoffset + 4u32) != 0u32 {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Contract.Recordˉoffset + 8u32) != Contract.Offset {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Contract.Recordˉoffset + 12u32) != Contract.Size {
+        return false;
+    }
+    let Nameˉbytes: bytes = Textˉtoˉutf8(Contract.Name);
+    if Bytesˉreadˉu32ˉlittle(Input, Contract.Recordˉoffset + 16u32) !=
+        Bytesˉlength(Nameˉbytes) {
+        return false;
+    }
+    return Nativeˉstencilˉspanˉequalsˉtext(
+        Input, Contract.Recordˉoffset + 20u32, Contract.Name
+    );
+}
+
+export fn Nativeˉstencilˉargumentˉpatchˉoffset(Index: u32) -> u32 {
+    if Index == 0u32 { return 3u32; }
+    if Index == 1u32 { return 11u32; }
+    if Index == 2u32 { return 21u32; }
+    if Index == 3u32 { return 40u32; }
+    if Index == 4u32 { return 44u32; }
+    if Index == 5u32 { return 48u32; }
+    if Index == 6u32 { return 59u32; }
+    return 60u32;
+}
+
+export fn Nativeˉstencilˉargumentˉpatchˉkind(
+    Index: u32
+) -> Nativeˉstencilˉpatchˉkind {
+    if Index == 0u32 {
+        return Nativeˉstencilˉpatchˉkind.Executionˉcontextˉserviceˉfailureˉdetailˉu8ˉoffset;
+    }
+    if Index == 1u32 {
+        return Nativeˉstencilˉpatchˉkind.Executionˉcontextˉargumentˉcountˉu8ˉoffset;
+    }
+    if Index == 2u32 {
+        return Nativeˉstencilˉpatchˉkind.Executionˉcontextˉargumentˉtableˉpointerˉu8ˉoffset;
+    }
+    if Index == 3u32 { return Nativeˉstencilˉpatchˉkind.Borrowedˉtextˉlengthˉu8ˉoffset; }
+    if Index == 4u32 { return Nativeˉstencilˉpatchˉkind.Borrowedˉtextˉlengthˉu8ˉoffset; }
+    if Index == 5u32 { return Nativeˉstencilˉpatchˉkind.Borrowedˉtextˉreservedˉu8ˉoffset; }
+    if Index == 6u32 {
+        return Nativeˉstencilˉpatchˉkind.Executionˉcontextˉserviceˉfailureˉdetailˉu8ˉoffset;
+    }
+    return Nativeˉstencilˉpatchˉkind.Argumentˉindexˉoutˉofˉrangeˉu8ˉdetail;
+}
+
+export fn Nativeˉstencilˉpatchˉkindˉvalue(Kind: Nativeˉstencilˉpatchˉkind) -> u32 {
+    if Kind == Nativeˉstencilˉpatchˉkind.Executionˉcontextˉu8ˉoffset { return 1u32; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Executionˉcontextˉserviceˉfailureˉdetailˉu8ˉoffset { return 2u32; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Executionˉcontextˉargumentˉcountˉu8ˉoffset { return 3u32; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Executionˉcontextˉargumentˉtableˉpointerˉu8ˉoffset { return 4u32; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Borrowedˉtextˉlengthˉu8ˉoffset { return 5u32; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Borrowedˉtextˉreservedˉu8ˉoffset { return 6u32; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Argumentˉindexˉoutˉofˉrangeˉu8ˉdetail { return 7u32; }
+    return 0u32;
+}
+
+export fn Nativeˉstencilˉpatchˉvalue(Kind: Nativeˉstencilˉpatchˉkind) -> u8 {
+    if Kind == Nativeˉstencilˉpatchˉkind.Executionˉcontextˉu8ˉoffset { return 80u8; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Executionˉcontextˉserviceˉfailureˉdetailˉu8ˉoffset { return 64u8; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Executionˉcontextˉargumentˉcountˉu8ˉoffset { return 80u8; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Executionˉcontextˉargumentˉtableˉpointerˉu8ˉoffset { return 72u8; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Borrowedˉtextˉlengthˉu8ˉoffset { return 8u8; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Borrowedˉtextˉreservedˉu8ˉoffset { return 12u8; }
+    if Kind == Nativeˉstencilˉpatchˉkind.Argumentˉindexˉoutˉofˉrangeˉu8ˉdetail { return 3u8; }
+    return 0u8;
+}
+
+export fn Nativeˉstencilˉoneˉbyte(Value: u8) -> bytes {
+    return Bytesˉslice(
+        Bytesˉfromˉu32ˉlittle(U32ˉfromˉu8(Value)),
+        0u32,
+        1u32
+    );
+}
+
+export fn Nativeˉstencilˉreplaceˉu8(
+    Input: bytes,
+    Offset: u32,
+    Value: u8
+) -> Nativeˉstencilˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset >= Total {
+        return Nativeˉstencilˉfailure(
+            Input, Nativeˉstencilˉstatus.Constructionˉfailed, Offset
+        );
+    }
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 1u32;
+    let Suffix: bytes = Bytesˉslice(Input, Suffixˉoffset, Total - Suffixˉoffset);
+    return Nativeˉstencilˉresult(
+        Nativeˉstencilˉstatus.Valid,
+        Bytesˉconcat(
+            Prefix,
+            Bytesˉconcat(Nativeˉstencilˉoneˉbyte(Value), Suffix)
+        ),
+        Total
+    );
+}
+
+export fn Nativeˉstencilˉargumentˉmetadataˉisˉexact(Input: bytes) -> bool {
+    let Metadataˉoffset: u32 = 51u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Metadataˉoffset) != 1347638871u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, Metadataˉoffset + 4u32) != 2u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, Metadataˉoffset + 8u32) != 8u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, Metadataˉoffset + 12u32) != 70u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        let Recordˉoffset: u32 = Metadataˉoffset + 16u32 + Index * 12u32;
+        if Bytesˉreadˉu32ˉlittle(Input, Recordˉoffset) !=
+            Nativeˉstencilˉargumentˉpatchˉoffset(Index) { return false; }
+        if Bytesˉreadˉu32ˉlittle(Input, Recordˉoffset + 4u32) != 1u32 { return false; }
+        if Bytesˉreadˉu32ˉlittle(Input, Recordˉoffset + 8u32) !=
+            Nativeˉstencilˉpatchˉkindˉvalue(Nativeˉstencilˉargumentˉpatchˉkind(Index)) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉstencilˉargumentˉshellˉbyte(Index: u32) -> u8 {
+    if Index == 0u32 { return 65u8; }
+    if Index == 1u32 { return 199u8; }
+    if Index == 2u32 { return 71u8; }
+    if Index == 8u32 { return 69u8; }
+    if Index == 9u32 { return 59u8; }
+    if Index == 10u32 { return 71u8; }
+    if Index == 12u32 { return 15u8; }
+    if Index == 13u32 { return 131u8; }
+    if Index == 14u32 { return 38u8; }
+    if Index == 18u32 { return 73u8; }
+    if Index == 19u32 { return 139u8; }
+    if Index == 20u32 { return 71u8; }
+    if Index == 22u32 { return 68u8; }
+    if Index == 23u32 { return 137u8; }
+    if Index == 24u32 { return 193u8; }
+    if Index == 25u32 { return 72u8; }
+    if Index == 26u32 { return 193u8; }
+    if Index == 27u32 { return 225u8; }
+    if Index == 28u32 { return 4u8; }
+    if Index == 29u32 { return 72u8; }
+    if Index == 30u32 { return 1u8; }
+    if Index == 31u32 { return 200u8; }
+    if Index == 32u32 { return 72u8; }
+    if Index == 33u32 { return 139u8; }
+    if Index == 34u32 { return 8u8; }
+    if Index == 35u32 { return 73u8; }
+    if Index == 36u32 { return 137u8; }
+    if Index == 37u32 { return 9u8; }
+    if Index == 38u32 { return 139u8; }
+    if Index == 39u32 { return 72u8; }
+    if Index == 41u32 { return 65u8; }
+    if Index == 42u32 { return 137u8; }
+    if Index == 43u32 { return 73u8; }
+    if Index == 45u32 { return 65u8; }
+    if Index == 46u32 { return 199u8; }
+    if Index == 47u32 { return 65u8; }
+    if Index == 53u32 { return 49u8; }
+    if Index == 54u32 { return 192u8; }
+    if Index == 55u32 { return 195u8; }
+    if Index == 56u32 { return 65u8; }
+    if Index == 57u32 { return 199u8; }
+    if Index == 58u32 { return 71u8; }
+    if Index == 64u32 { return 184u8; }
+    if Index == 65u32 { return 1u8; }
+    if Index == 69u32 { return 195u8; }
+    return 0u8;
+}
+
+export fn Nativeˉstencilˉargumentˉtemplateˉisˉexact(Input: bytes) -> bool {
+    var Index: u32 = 0u32;
+    while Index < 70u32 {
+        if Bytesˉreadˉu8(Input, 163u32 + Index) !=
+            Nativeˉstencilˉargumentˉshellˉbyte(Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉstencilˉargumentˉfinalˉisˉexact(Value: bytes) -> bool {
+    if Bytesˉlength(Value) != 70u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 70u32 {
+        var Expected: u8 = Nativeˉstencilˉargumentˉshellˉbyte(Index);
+        var Patchˉindex: u32 = 0u32;
+        while Patchˉindex < 8u32 {
+            if Nativeˉstencilˉargumentˉpatchˉoffset(Patchˉindex) == Index {
+                Expected = Nativeˉstencilˉpatchˉvalue(
+                    Nativeˉstencilˉargumentˉpatchˉkind(Patchˉindex)
+                );
+            }
+            Patchˉindex = Patchˉindex + 1u32;
+        }
+        if Bytesˉreadˉu8(Value, Index) != Expected { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉstencilˉprocessˉargument(Input: bytes) -> Nativeˉstencilˉresult {
+    if Bytesˉlength(Input) != 321u32 {
+        return Nativeˉstencilˉfailure(
+            Input, Nativeˉstencilˉstatus.Invalidˉsize, Bytesˉlength(Input)
+        );
+    }
+    if !Nativeˉstencilˉheaderˉisˉexact(Input) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉobject, 0u32);
+    }
+    if !Nativeˉstencilˉsectionˉisˉexact(Input, 182u32) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉobject, 24u32);
+    }
+    if !Nativeˉstencilˉsymbolˉisˉexact(
+        Input,
+        Nativeˉstencilˉsymbolˉcontract(
+            233u32, 1u8, 0u32, 112u32, "Process_argument_patches"
+        )
+    ) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉobject, 233u32);
+    }
+    if !Nativeˉstencilˉsymbolˉisˉexact(
+        Input,
+        Nativeˉstencilˉsymbolˉcontract(
+            277u32, 2u8, 112u32, 70u32, "Process_argument_stencil"
+        )
+    ) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉobject, 277u32);
+    }
+    if !Nativeˉstencilˉargumentˉmetadataˉisˉexact(Input) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉmetadata, 51u32);
+    }
+    if !Nativeˉstencilˉargumentˉtemplateˉisˉexact(Input) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉtemplate, 163u32);
+    }
+
+    var Value: bytes = Bytesˉslice(Input, 163u32, 70u32);
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        let Replaced: Nativeˉstencilˉresult = Nativeˉstencilˉreplaceˉu8(
+            Value,
+            Nativeˉstencilˉargumentˉpatchˉoffset(Index),
+            Nativeˉstencilˉpatchˉvalue(
+                Nativeˉstencilˉargumentˉpatchˉkind(Index)
+            )
+        );
+        if Replaced.Status != Nativeˉstencilˉstatus.Valid {
+            return Nativeˉstencilˉfailure(
+                Input,
+                Nativeˉstencilˉstatus.Constructionˉfailed,
+                Nativeˉstencilˉargumentˉpatchˉoffset(Index)
+            );
+        }
+        Value = Replaced.Value;
+        Index = Index + 1u32;
+    }
+    if !Nativeˉstencilˉargumentˉfinalˉisˉexact(Value) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉidentity, 0u32);
+    }
+    return Nativeˉstencilˉresult(Nativeˉstencilˉstatus.Valid, Value, 321u32);
+}
+
+export fn Nativeˉstencilˉargumentˉcountˉtemplateˉisˉexact(Input: bytes) -> bool {
+    if Bytesˉreadˉu8(Input, 71u32) != 65u8 { return false; }
+    if Bytesˉreadˉu8(Input, 72u32) != 139u8 { return false; }
+    if Bytesˉreadˉu8(Input, 73u32) != 71u8 { return false; }
+    if Bytesˉreadˉu8(Input, 74u32) != 0u8 { return false; }
+    return Bytesˉreadˉu8(Input, 75u32) == 195u8;
+}
+
+export fn Nativeˉstencilˉargumentˉcountˉfinalˉisˉexact(Value: bytes) -> bool {
+    if Bytesˉlength(Value) != 5u32 { return false; }
+    if Bytesˉreadˉu8(Value, 0u32) != 65u8 { return false; }
+    if Bytesˉreadˉu8(Value, 1u32) != 139u8 { return false; }
+    if Bytesˉreadˉu8(Value, 2u32) != 71u8 { return false; }
+    if Bytesˉreadˉu8(Value, 3u32) != 80u8 { return false; }
+    return Bytesˉreadˉu8(Value, 4u32) == 195u8;
+}
+
+export fn Nativeˉstencilˉprocessˉargumentˉcount(
+    Input: bytes
+) -> Nativeˉstencilˉresult {
+    if Bytesˉlength(Input) != 166u32 {
+        return Nativeˉstencilˉfailure(
+            Input, Nativeˉstencilˉstatus.Invalidˉsize, Bytesˉlength(Input)
+        );
+    }
+    if !Nativeˉstencilˉheaderˉisˉexact(Input) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉobject, 0u32);
+    }
+    if !Nativeˉstencilˉsectionˉisˉexact(Input, 25u32) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉobject, 24u32);
+    }
+    if !Nativeˉstencilˉsymbolˉisˉexact(
+        Input,
+        Nativeˉstencilˉsymbolˉcontract(
+            76u32, 1u8, 0u32, 20u32, "Argument_count_patch"
+        )
+    ) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉobject, 76u32);
+    }
+    if !Nativeˉstencilˉsymbolˉisˉexact(
+        Input,
+        Nativeˉstencilˉsymbolˉcontract(
+            116u32, 2u8, 20u32, 5u32, "Process_argument_count_stencil"
+        )
+    ) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉobject, 116u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 51u32) != 1347638871u32 {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉmetadata, 51u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 55u32) != 1u32 {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉmetadata, 55u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 59u32) != 3u32 {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉmetadata, 59u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 63u32) != 1u32 {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉmetadata, 63u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 67u32) != 1u32 {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉmetadata, 67u32);
+    }
+    if !Nativeˉstencilˉargumentˉcountˉtemplateˉisˉexact(Input) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉtemplate, 71u32);
+    }
+
+    let Replaced: Nativeˉstencilˉresult = Nativeˉstencilˉreplaceˉu8(
+        Bytesˉslice(Input, 71u32, 5u32),
+        3u32,
+        Nativeˉstencilˉpatchˉvalue(
+            Nativeˉstencilˉpatchˉkind.Executionˉcontextˉu8ˉoffset
+        )
+    );
+    if Replaced.Status != Nativeˉstencilˉstatus.Valid {
+        return Nativeˉstencilˉfailure(
+            Input, Nativeˉstencilˉstatus.Constructionˉfailed, 3u32
+        );
+    }
+    if !Nativeˉstencilˉargumentˉcountˉfinalˉisˉexact(Replaced.Value) {
+        return Nativeˉstencilˉfailure(Input, Nativeˉstencilˉstatus.Invalidˉidentity, 0u32);
+    }
+    return Nativeˉstencilˉresult(Nativeˉstencilˉstatus.Valid, Replaced.Value, 166u32);
+}

@@ -95,6 +95,14 @@ The native owner rejects a complete artifact if its architecture, section identi
 
 The repository retains each `.wva` source and its Windvale-assembled WVO. The conformance test compiles the Windvale-written WVA assembler once, runs it twice over each source, compares deterministic outputs, compares them byte for byte with the Stage 0 recovery oracle and embedded object, validates both exact objects, instantiates every patch, and checks the final qualified leaf identities. Malformed header fields, patch records, fixed opcodes, holes, missing values, and duplicate locations are rejected.
 
+## Windvale-owned consumer
+
+`Compiler/Windvale/Native-Stencil-Core.wv` is the portable, capability-free consumer for these two contracts. It exposes closed status and patch-kind enums plus an immutable result containing the accepted bytes and a failure offset. It accepts only the complete 166-byte `WVSP 1` WVO and complete 321-byte `WVSP 2` WVO shapes described above, validates every byte rather than treating a digest as an input predicate, derives patch values from their named ABI meanings, and constructs the output without mutating the input.
+
+`Examples/Compiler/Native-Stencil-Demo.wv` embeds the retained production objects and exercises successful construction, exact output locations, deterministic repetition, truncated input, corrupt object metadata, corrupt symbols, corrupt patch records, changed fixed shell bytes, and nonzero holes. The conformance harness proves that the embedded inputs remain byte-identical to the live production resources and executes the same compiled Windvale module through the reference interpreter, native JIT, and linked WVO/AOT routes.
+
+The current native invocation contract returns an `i32`, not an immutable `bytes` value. C# therefore remains the live loader and independent oracle until a later bounded byte-result bridge or another non-cyclic integration seam lets the accepted Windvale result become the bytes published by the live runtime. This is an integration boundary, not a language-semantics dependency.
+
 ## Deliberate limits
 
 The accepted contracts describe two exact service leaves, one x86-64 architecture, one template per object, at most eight measured patches, and one-byte contract values. They do not admit arbitrary stencil discovery, multiple templates, wider values, branch-target patching, calls, data references, WVO relocations, user-supplied executable code, or an extensible patch-kind namespace. Those shapes require measured follow-up cases and a revised accepted contract rather than permissive parsing.

@@ -207,6 +207,8 @@ Decisions 0077 and 0078 keep both stencil shapes in one focused ownership-bounda
 
 Exact commit `50294d9` completes concurrent Qualification in 459 seconds on Windows and 477 seconds on Debian, with suite times of 224.398 and 242.491 seconds. The exact-host stencil cases take 1.475 and 1.550 seconds, while live hosted input takes 0.123 and 0.101 seconds. Both hosts pass zero-warning builds, all 60 Seed tests, all 15 OS tests, and the complete CLI verifier; normalized reports and all 62 current portable artifacts match. Pinned-QEMU probe 16 and GitHub's independent Windows/Linux gate pass. The multi-patch ownership gain therefore adds roughly one second to the focused loop while leaving complete-suite time dominated by the unchanged golden contract.
 
+Decision 0079 adds one separate full-suite test because execution of the first Windvale-owned native-stencil consumer is a new language/runtime ownership boundary rather than another Stage 0 stencil-parser case. It covers both exact production objects, deterministic immutable construction, representative malformed families, one changed value at every byte position, and agreement across the reference interpreter, native JIT, and linked WVO/AOT. Its focused Windows Release run takes 0.879 seconds and the updated golden contract takes 174.748 seconds. Cross-host Qualification is pending; the focused case remains the normal edit loop, while exact portable-artifact and report comparison remains confined to the milestone gate.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.
