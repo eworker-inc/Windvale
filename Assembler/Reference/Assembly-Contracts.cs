@@ -75,6 +75,7 @@ internal enum Assemblyˉstatementˉkind
     Disableˉinterrupts,
     Halt,
     Outˉu16,
+    Pushˉi32,
     Bytes,
     U32,
     I32,

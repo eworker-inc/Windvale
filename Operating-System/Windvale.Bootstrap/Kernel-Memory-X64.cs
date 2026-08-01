@@ -31,7 +31,9 @@ internal static class Kernelˉmemoryˉx64
 
     public static Kernelˉmemoryˉcode Build(Firmwareˉprobeˉscenario scenario)
     {
-        if (scenario is not Firmwareˉprobeˉscenario.Normal and not Firmwareˉprobeˉscenario.Invalidˉopcode)
+        if (scenario is not Firmwareˉprobeˉscenario.Normal and
+            not Firmwareˉprobeˉscenario.Invalidˉopcode and
+            not Firmwareˉprobeˉscenario.Generalˉprotection)
         {
             throw new ArgumentOutOfRangeException(nameof(scenario));
         }
@@ -207,6 +209,15 @@ internal static class Kernelˉmemoryˉx64
         if (scenario == Firmwareˉprobeˉscenario.Invalidˉopcode)
         {
             output.Emit(0x0F, 0x0B);
+            output.Emit(0x41, 0xBF, 0x01, 0x00, 0x00, 0x00);
+        }
+        else if (scenario == Firmwareˉprobeˉscenario.Generalˉprotection)
+        {
+            // Dereferencing an address that is noncanonical under both four- and five-level
+            // x86-64 paging deterministically raises #GP(0) before translation.
+            output.Emit(0x48, 0xB8);
+            output.Emitˉu64(0x0100_0000_0000_0000);
+            output.Emit(0x8A, 0x00);
             output.Emit(0x41, 0xBF, 0x01, 0x00, 0x00, 0x00);
         }
         output.Jump(OWNED_STACK_RESTORE_LABEL);

@@ -253,7 +253,8 @@ internal static class Assemblyˉparser
                         Assemblyˉstatementˉkind.Jump or Assemblyˉstatementˉkind.Moveˉi32 or
                         Assemblyˉstatementˉkind.Moveˉu32 or
                         Assemblyˉstatementˉkind.Disableˉinterrupts or
-                        Assemblyˉstatementˉkind.Halt or Assemblyˉstatementˉkind.Outˉu16;
+                        Assemblyˉstatementˉkind.Halt or Assemblyˉstatementˉkind.Outˉu16 or
+                        Assemblyˉstatementˉkind.Pushˉi32;
                     var Materializedˉdataˉstatement = Statement.Kind is
                         Assemblyˉstatementˉkind.Bytes or Assemblyˉstatementˉkind.U32 or
                         Assemblyˉstatementˉkind.I32 or Assemblyˉstatementˉkind.Addressˉu32;
@@ -446,6 +447,16 @@ internal static class Assemblyˉparser
                     return (null, Diagnostic("WVA1005", line, tokens[2].Column, "Value is outside the u32 range."));
                 }
                 return (new(Assemblyˉstatementˉkind.Moveˉu32, null, Unsigned, Register, [], Span), null);
+            case "push_i32":
+                if (tokens.Count != 2)
+                {
+                    return (null, Diagnostic("WVA1003", Span, "'push_i32' requires one signed 32-bit integer."));
+                }
+                if (!Tryˉi32(tokens[1].Text, out var Pushˉvalue))
+                {
+                    return (null, Diagnostic("WVA1005", line, tokens[1].Column, "Value is outside the i32 range."));
+                }
+                return (new(Assemblyˉstatementˉkind.Pushˉi32, null, Pushˉvalue, 0, [], Span), null);
             case "bytes":
                 if (tokens.Count is < 2 or > Assemblyˉlimits.MAX_BYTES_PER_STATEMENT + 1)
                 {

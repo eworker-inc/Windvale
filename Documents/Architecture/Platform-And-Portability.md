@@ -43,6 +43,8 @@ The qualified probe now boots through firmware shutdown, owns a 64 KiB arena and
 
 Candidate [Decision 0085](../Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) adds the first real lifecycle adapter without changing portable semantics: a WVA-authored, independently verified function requests poweroff through the pinned Q35 PM control interface after the normal kernel path completes. This is deliberately target-specific; ACPI discovery, Hyper-V and physical-machine adapters, and process/service shutdown policy remain separate contracts.
 
+Candidate [Decision 0086](../Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) adds the first reusable machine-entry shape without changing portable semantics. WVA-authored vector-6 and vector-13 stubs normalize CPU frames with and without error codes into one 40-byte ring-0 prefix. The current common handler remains a bounded Stage 0 terminal-policy seam; recovery, page faults, interrupt routing, and user-mode delivery remain separate contracts.
+
 This is not yet a functioning kernel or general trap system. Other exception frames, page and double faults, TSS/IST, interrupt controllers, recovery, processes, general platform lifecycle coordination, and the in-guest WVB verifier/runtime remain separately specified and verified slices. Windvale `WVR` runtime traps remain packed semantic statuses and are not redefined as CPU faults.
 
 ## Capability profiles

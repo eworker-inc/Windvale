@@ -64,6 +64,7 @@ call <Functionˉsymbol>
 jump <Functionˉsymbol>
 move_i32 <eax|ecx|edx|ebx|esp|ebp|esi|edi> <i32>
 move_u32 <eax|ecx|edx|ebx|esp|ebp|esi|edi> <u32>
+push_i32 <i32>
 disable_interrupts
 halt
 out_u16
@@ -80,11 +81,12 @@ Their encodings are:
 | `jump Name` | `E9 00 00 00 00` | `relative-i32`, field offset after opcode, addend `-4` |
 | `move_i32 Reg Value` | `B8+rd imm32` | none |
 | `move_u32 Reg Value` | `B8+rd imm32` | none |
+| `push_i32 Value` | `68 imm32` | none |
 | `disable_interrupts` | `FA` | none |
 | `halt` | `F4` | none |
 | `out_u16` | `66 EF` | none |
 
-The move instructions write a 32-bit register and carry the exact little-endian bit pattern of the declared value. WVA does not define an ABI, stack discipline, calling convention, or function prologue. Those require a separate contract before generated calls are considered executable across a boundary.
+The move instructions write a 32-bit register and carry the exact little-endian bit pattern of the declared value. In 64-bit mode, `push_i32` decrements `RSP` by eight and stores the immediate sign-extended to one 64-bit stack cell. It exists to construct exact machine-entry records such as normalized exception frames; it does not define a general ABI, stack discipline, calling convention, function prologue, or balanced-stack policy. Those require a separate contract before generated calls are considered executable across a boundary.
 
 `disable_interrupts` clears the x86 interrupt flag. `halt` stops instruction execution until an admitted wake event; it is not a process exit or permanent loop by itself. `out_u16` writes the low 16 bits of `EAX`/`AX` to the I/O port selected by the low 16 bits of `EDX`/`DX`. These statements expose privileged architecture mechanics deliberately. Their caller owns register initialization, authorization, hardware selection, and any terminal fallback loop. Ordinary Windvale source receives no ambient port-I/O authority from their presence in WVA.
 
@@ -125,4 +127,4 @@ Identical WVA text and assembler version produce identical WVO bytes on every ho
 
 ## Deliberate omissions
 
-WVA 1 has no labels inside definitions, conditional branches, memory operands, 64-bit immediates, SIMD, floating point, other privileged operations, macros, includes, expressions, constants, debug records, ABI aliases, automatic section creation, or final-image directives. Add an operation only when the linker, native backend, or boot path provides a concrete use and exact verification rule.
+WVA 1 has no labels inside definitions, conditional branches, memory operands, arbitrary register push/pop, 64-bit immediates, SIMD, floating point, other privileged operations, macros, includes, expressions, constants, debug records, ABI aliases, automatic section creation, or final-image directives. Add an operation only when the linker, native backend, or boot path provides a concrete use and exact verification rule.

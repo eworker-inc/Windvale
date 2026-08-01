@@ -10,16 +10,17 @@ public enum Firmwareˉprobeˉscenario
 {
     Normal,
     Invalidˉopcode,
+    Generalˉprotection,
 }
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 18;
+    public const int FORMAT_VERSION = 19;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 18\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 19\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -29,6 +30,8 @@ public static class Firmwareˉprobe
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string CPU_EXCEPTIONS_MARKER = "cpu-exceptions=armed\n";
     public const string INVALID_OPCODE_PANIC_MARKER = Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER;
+    public const string GENERAL_PROTECTION_PANIC_MARKER =
+        Kernelˉexceptionˉcontract.GENERAL_PROTECTION_PANIC_MARKER;
     public const string NATIVE_CONTEXT_MARKER = "native-context=pass\n";
     public const string NATIVE_WVB_MARKER = "native-wvb=pass\n";
     public const string WINDVALE_SOURCE_MARKER = "windvale-source=pass\n";
@@ -101,7 +104,9 @@ public static class Firmwareˉprobe
     public static ImmutableArray<byte> Buildˉapplication(
         Firmwareˉprobeˉscenario scenario = Firmwareˉprobeˉscenario.Normal)
     {
-        if (scenario is not Firmwareˉprobeˉscenario.Normal and not Firmwareˉprobeˉscenario.Invalidˉopcode)
+        if (scenario is not Firmwareˉprobeˉscenario.Normal and
+            not Firmwareˉprobeˉscenario.Invalidˉopcode and
+            not Firmwareˉprobeˉscenario.Generalˉprotection)
         {
             throw new ArgumentOutOfRangeException(nameof(scenario));
         }

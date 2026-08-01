@@ -170,7 +170,7 @@ Moving a driver out of the kernel is valuable only when the process and IPC boun
 - A kernel invariant failure or uncontainable privileged CPU fault reaches a deterministic terminal panic path.
 - Boot and automated tests retain machine-readable phase, status, and failure evidence with bounded timeouts.
 
-Recovery, retry, restart, and resumable-exception policies must be added deliberately. The current terminal vector-6 proof is evidence for exception entry only, not a general recovery design.
+Recovery, retry, restart, and resumable-exception policies must be added deliberately. Qualified vector-6 and candidate normalized vector-6/vector-13 evidence prove only bounded terminal entry, not a general recovery design.
 
 ## Language and bootstrap ownership
 
@@ -198,6 +198,8 @@ Each step must be useful, bounded, and independently qualified:
 6. Move the interpreter and later JIT into ordinary or isolated processes; enforce verified W^X publication at the kernel boundary.
 7. Add drivers and resource services one measured device and contract at a time.
 8. Prove the exact same WVB bytes, verifier result, outputs, diagnostics, and defined resource counters on Windows, Linux, and Windvale OS.
+
+Candidate [Decision 0086](../Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) completes the first two examples inside step 1: one WVA-owned entry without a CPU error code and one with a CPU error code reach the same explicit ring-0 frame, while candidate Decision 0085 supplies clean Q35 shutdown. Page-table ownership is the next unresolved machine-foundation item; the candidates do not yet make exception policy resumable or move it fully into `.wv`.
 
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 

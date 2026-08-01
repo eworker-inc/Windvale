@@ -111,6 +111,10 @@ internal static class X64ˉobjectˉencoder
                 output.Writeˉu8(0x66, statement.Span);
                 output.Writeˉu8(0xEF, statement.Span);
                 break;
+            case Assemblyˉstatementˉkind.Pushˉi32:
+                output.Writeˉu8(0x68, statement.Span);
+                output.Writeˉi32((int)statement.Number, statement.Span);
+                break;
             case Assemblyˉstatementˉkind.Call:
             case Assemblyˉstatementˉkind.Jump:
                 output.Writeˉu8(

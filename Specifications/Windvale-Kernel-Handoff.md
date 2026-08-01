@@ -6,7 +6,7 @@ Kernel handoff version 1 defines the first internal transition from the UEFI loa
 
 ## Linked symbol boundary
 
-The loader imports the ASCII-safe function symbol `Windvale_kernel_entry`. The special kernel object exports that symbol. Both contain code-only `.text` sections and are linked at base zero through one WVO `relative-i32` relocation with addend `-4` at the x86-64 `call rel32` displacement field. Candidate firmware probe version 18 additionally imports `Windvale_kernel_x64_q35_shutdown` from the WVA object for a separate post-return lifecycle call. The ABI-14 portable native object, kernel-owned exception destination, and shutdown call do not change the handoff record or loader-to-entry call ABI.
+The loader imports the ASCII-safe function symbol `Windvale_kernel_entry`. The special kernel object exports that symbol. Both contain code-only `.text` sections and are linked at base zero through one WVO `relative-i32` relocation with addend `-4` at the x86-64 `call rel32` displacement field. Candidate firmware probe version 19 additionally imports `Windvale_kernel_x64_q35_shutdown` from the WVA object for a separate post-return lifecycle call. The ABI-14 portable native object, two kernel-owned exception destinations, normalized trap frame, and shutdown call do not change the handoff record or loader-to-entry call ABI.
 
 The successful flat link must report only code and read-only-data sections, at least one code section, zero absolute relocations, and no relocation kind other than `relative-i32` before UEFI application format version 3 accepts it. Firmware may relocate the complete PE image because each resolved relative displacement remains invariant when caller, target, and immutable data move together.
 
@@ -37,7 +37,7 @@ The record is 48 little-endian bytes:
 | `0x28` | 4 | Descriptor version | `1` |
 | `0x2C` | 4 | Reserved | Zero |
 
-Memory-map bytes must be an exact multiple of descriptor bytes. Every descriptor is validated by firmware probe version 18 before the exit call; the compiler-generated kernel wrapper independently revalidates the record envelope and divisibility before accepting it. The memory object then independently revalidates the envelope and every descriptor before making an ownership decision.
+Memory-map bytes must be an exact multiple of descriptor bytes. Every descriptor is validated by firmware probe version 19 before the exit call; the compiler-generated kernel wrapper independently revalidates the record envelope and divisibility before accepting it. The memory object then independently revalidates the envelope and every descriptor before making an ownership decision.
 
 ## Lifetime and ownership
 
@@ -47,7 +47,7 @@ The handoff includes no valid boot-services pointer. Code reached through this A
 
 ## Current evidence and limit
 
-Candidate firmware probe version 18 retains the handoff and version-1 memory contracts while linking the compiler-generated special kernel path, shared ABI-14 portable native probe, WVA seams, kernel memory layer, kernel-owned vector-6 exception destination, and WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
+Candidate firmware probe version 19 retains the handoff and version-1 memory contracts while linking the compiler-generated special kernel path, shared ABI-14 portable native probe, WVA seams, kernel memory layer, kernel-owned vector-6/vector-13 exception destinations, and WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
 
 ```text
 memory-map=pass
@@ -64,4 +64,4 @@ status=pass
 shutdown=poweroff
 ```
 
-The memory layer calls WVA export `Windvale_kernel_wva_main` only after initializing owned state, completing a zeroing allocation, copying the handoff, switching stacks, and installing the bounded exception table. WVA tail-transfers first to the native bridge. The bridge constructs the ABI-14/context-6 service-free execution context with exact instruction/depth budgets 271/2, accepts only packed result 29 after the portable source has decoded its immutable bytes, restores the handoff, and tail-transfers to compiler export `Windvale_kernel_main`. On normal return the loader emits final lifecycle evidence and calls the separate WVA Q35 shutdown adapter; a separately selected image executes `UD2` inside the kernel path and reaches the exact terminal invalid-opcode transcript before those final markers. This proves bounded page ownership, allocation, copied handoff, shared-native AOT, borrowed bytes, bidirectional WVA/WV, owned stack, one terminal CPU-exception destination, and a narrow Q35 poweroff adapter, but not in-guest WVB loading, general physical-memory management, paging, interrupts, recovery, or a functioning kernel runtime. Probe 17 remains the cross-host-qualified baseline; probe 18 is a local candidate pending cross-host qualification.
+The memory layer calls WVA export `Windvale_kernel_wva_main` only after initializing owned state, completing a zeroing allocation, copying the handoff, switching stacks, and installing the bounded exception table. WVA tail-transfers first to the native bridge. The bridge constructs the ABI-14/context-6 service-free execution context with exact instruction/depth budgets 271/2, accepts only packed result 29 after the portable source has decoded its immutable bytes, restores the handoff, and tail-transfers to compiler export `Windvale_kernel_main`. On normal return the loader emits final lifecycle evidence and calls the separate WVA Q35 shutdown adapter; separately selected images prove normalized invalid-opcode `(6, 0)` and general-protection `(13, 0)` terminal frames before those final markers. This proves bounded page ownership, allocation, copied handoff, shared-native AOT, borrowed bytes, bidirectional WVA/WV, owned stack, two terminal CPU-exception destinations over one frame prefix, and a narrow Q35 poweroff adapter, but not in-guest WVB loading, general physical-memory management, paging, interrupts, recovery, or a functioning kernel runtime. Probe 17 remains the cross-host-qualified baseline; probe 19 is a local candidate pending cross-host qualification.

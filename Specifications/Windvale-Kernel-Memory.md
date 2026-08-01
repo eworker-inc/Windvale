@@ -4,7 +4,7 @@
 
 Kernel memory version 1 defines the first bounded ownership transition after successful `ExitBootServices`. The host planner, simulated allocator, matching x86-64 memory object, and QEMU qualification are implemented. [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns this boundary.
 
-This contract deliberately establishes one small arena rather than claiming all reclaimable firmware memory. It supplies enough owned memory for copied handoff state, a kernel stack, and an allocate-only page allocator while leaving paging, general physical-memory management, and reclamation for later evidence. Candidate firmware probe 18 retains probe 17's assignment of the already-recorded first allocation to the bounded vector-6 CPU exception table without changing this version-1 layout.
+This contract deliberately establishes one small arena rather than claiming all reclaimable firmware memory. It supplies enough owned memory for copied handoff state, a kernel stack, and an allocate-only page allocator while leaving paging, general physical-memory management, and reclamation for later evidence. Candidate firmware probe 19 retains probe 17's assignment of the already-recorded first allocation to the bounded CPU exception table and adds a second present gate without changing this version-1 layout.
 
 ## Ownership policy
 
@@ -72,7 +72,7 @@ The memory object exports ASCII symbol `Windvale_kernel_allocate_pages`:
 - Allocation is contiguous, monotonically increasing, and deterministic.
 - Version 1 provides no release operation and no allocation outside its one arena.
 
-The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocation, and switches stacks. Probe 18 passes that allocated page to the bounded CPU-exception installer before calling WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. Under candidate [kernel native seam version 13](Windvale-Kernel-Native-Seam.md), that exact shim tail-transfers to the ABI-14 probe bridge; only packed portable result 29 after the borrowed-byte checks restores the handoff and reaches compiler export `Windvale_kernel_main`. Main owns the source-selected success markers and can be reached only after every preceding memory, exception-installation, and native-probe operation succeeds. The explicit invalid-opcode scenario executes `UD2` after Main returns but before control reaches the loader's final success and shutdown path.
+The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocation, and switches stacks. Probe 19 passes that allocated page to the bounded CPU-exception installer before calling WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. Under candidate [kernel native seam version 14](Windvale-Kernel-Native-Seam.md), that exact shim tail-transfers to the ABI-14 probe bridge; only packed portable result 29 after the borrowed-byte checks restores the handoff and reaches compiler export `Windvale_kernel_main`. Main owns the source-selected success markers and can be reached only after every preceding memory, exception-installation, and native-probe operation succeeds. The two explicit fault scenarios execute after Main but before control reaches the loader's final success and shutdown path.
 
 ## Diagnostics and limits
 
@@ -91,7 +91,7 @@ Malformed and random bytes must produce a bounded result or one of these failure
 
 ## Current evidence and limit
 
-Candidate firmware probe version 18 retains the version-1 arena, allocator, copied-handoff, and stack rules while running the ABI-14 portable native probe and compiler export `Windvale_kernel_main`. It retains the first allocated page as the bounded vector-6 exception table. The normal pinned-QEMU gate requires this memory/native suffix:
+Candidate firmware probe version 19 retains the version-1 arena, allocator, copied-handoff, and stack rules while running the ABI-14 portable native probe and compiler export `Windvale_kernel_main`. It retains the first allocated page as the bounded vector-6/vector-13 exception table. The normal pinned-QEMU gate requires this memory/native suffix:
 
 ```text
 memory-owned=pass
@@ -106,6 +106,6 @@ status=pass
 shutdown=poweroff
 ```
 
-The separately selected invalid-opcode image executes `UD2` after Main and reaches the qualified terminal panic contract and QEMU host code 3 without emitting the later success/shutdown evidence. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) records both exact probe-17 artifact identities and their Windows/Debian/GitHub/pinned-QEMU evidence. Candidate [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) records probe 18's unchanged memory contract and local evidence.
+The separately selected invalid-opcode and general-protection images reach their exact normalized terminal panic contracts and QEMU host code 3 without emitting later success/shutdown evidence. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) records both exact probe-17 artifact identities and their Windows/Debian/GitHub/pinned-QEMU evidence. Candidate [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) records probe 19's unchanged memory contract and local evidence.
 
-Version 1 does not claim all physical memory, reclamation of the retained map or loader ranges, page release, paging, guard pages, NX/W^X enforcement, general interrupts, multiple CPUs, processes, runtime allocation policy, or graphical output. The exception allocation does not add page-fault, double-fault, interrupt-controller, recovery, or general lifecycle policy; probe 18's separate target adapter adds only narrow Q35 poweroff.
+Version 1 does not claim all physical memory, reclamation of the retained map or loader ranges, page release, paging, guard pages, NX/W^X enforcement, general interrupts, multiple CPUs, processes, runtime allocation policy, or graphical output. The exception allocation does not add page-fault, double-fault, interrupt-controller, recovery, or general lifecycle policy; the separate target adapter adds only narrow Q35 poweroff.

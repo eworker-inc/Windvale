@@ -8,8 +8,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉassemblyˉcontract
 {
-    public const int FORMAT_VERSION = 4;
-    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v4";
+    public const int FORMAT_VERSION = 5;
+    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v5";
     public const string MAIN_SHIM_SYMBOL = "Windvale_kernel_wva_main";
     public const string Q35_SHUTDOWN_SYMBOL = "Windvale_kernel_x64_q35_shutdown";
     public const string X64_WRITE_BYTE_SYMBOL = "Windvale_kernel_x64_write_byte";
@@ -38,6 +38,11 @@ public static class Kernelˉassemblyˉshim
                 new byte[] {
                     0xE9, 0, 0, 0, 0,
                     0xE9, 0, 0, 0, 0,
+                    0x68, 0x0D, 0x00, 0x00, 0x00,
+                    0xE9, 0, 0, 0, 0,
+                    0x68, 0x00, 0x00, 0x00, 0x00,
+                    0x68, 0x06, 0x00, 0x00, 0x00,
+                    0xE9, 0, 0, 0, 0,
                     0xBA, 0x04, 0x06, 0x00, 0x00,
                     0xB8, 0x00, 0x20, 0x00, 0x00,
                     0x66, 0xEF,
@@ -45,7 +50,7 @@ public static class Kernelˉassemblyˉshim
                     0xF4,
                     0xE9, 0, 0, 0, 0,
                 }) ||
-            Object.Symbols.Length != 5 ||
+            Object.Symbols.Length != 8 ||
             Object.Symbols[0] is not
             {
                 Name: X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL,
@@ -66,32 +71,56 @@ public static class Kernelˉassemblyˉshim
             } ||
             Object.Symbols[2] is not
             {
-                Name: Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL,
+                Name: Kernelˉexceptionˉcontract.GENERAL_PROTECTION_ENTRY_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Export,
                 Kind: Objectˉsymbolˉkind.Function,
                 Sectionˉindex: 0,
                 Offset: 10,
-                Size: 19,
+                Size: 10,
             } ||
             Object.Symbols[3] is not
+            {
+                Name: Kernelˉexceptionˉcontract.INVALID_OPCODE_ENTRY_SYMBOL,
+                Binding: Objectˉsymbolˉbinding.Export,
+                Kind: Objectˉsymbolˉkind.Function,
+                Sectionˉindex: 0,
+                Offset: 20,
+                Size: 15,
+            } ||
+            Object.Symbols[4] is not
+            {
+                Name: Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL,
+                Binding: Objectˉsymbolˉbinding.Export,
+                Kind: Objectˉsymbolˉkind.Function,
+                Sectionˉindex: 0,
+                Offset: 35,
+                Size: 19,
+            } ||
+            Object.Symbols[5] is not
+            {
+                Name: Kernelˉexceptionˉcontract.TERMINAL_SYMBOL,
+                Binding: Objectˉsymbolˉbinding.Import,
+                Kind: Objectˉsymbolˉkind.Function,
+            } ||
+            Object.Symbols[6] is not
             {
                 Name: Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Import,
                 Kind: Objectˉsymbolˉkind.Function,
             } ||
-            Object.Symbols[4] is not
+            Object.Symbols[7] is not
             {
                 Name: Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Import,
                 Kind: Objectˉsymbolˉkind.Function,
             } ||
-            Object.Relocations.Length != 3 ||
+            Object.Relocations.Length != 5 ||
             Object.Relocations[0] is not
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 1,
-                Symbolˉindex: 4,
+                Symbolˉindex: 7,
                 Addend: -4,
             } ||
             Object.Relocations[1] is not
@@ -99,15 +128,31 @@ public static class Kernelˉassemblyˉshim
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 6,
-                Symbolˉindex: 3,
+                Symbolˉindex: 6,
                 Addend: -4,
             } ||
             Object.Relocations[2] is not
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
-                Offset: 25,
-                Symbolˉindex: 2,
+                Offset: 16,
+                Symbolˉindex: 5,
+                Addend: -4,
+            } ||
+            Object.Relocations[3] is not
+            {
+                Kind: Objectˉrelocationˉkind.Relativeˉi32,
+                Sectionˉindex: 0,
+                Offset: 31,
+                Symbolˉindex: 5,
+                Addend: -4,
+            } ||
+            Object.Relocations[4] is not
+            {
+                Kind: Objectˉrelocationˉkind.Relativeˉi32,
+                Sectionˉindex: 0,
+                Offset: 50,
+                Symbolˉindex: 4,
                 Addend: -4,
             })
         {

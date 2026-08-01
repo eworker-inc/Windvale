@@ -28,6 +28,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - A cross-host-qualified probe-17 terminal invalid-opcode boundary with a kernel-owned vector-6 IDT, deterministic panic transcript, and separate pinned-QEMU success and fault images.
 - The accepted capability-oriented Windvale OS architecture: a small kernel written primarily in `.wv`, a bounded `.wva` machine layer, isolated services, AOT system code, and no permanent C#/.NET dependency.
 - A qualification-pending WVA-owned Q35 poweroff adapter, with exact assembler parity, clean pinned-QEMU exit after the successful kernel path, and preserved terminal invalid-opcode evidence.
+- Qualification-pending WVA-owned normalized x86-64 entries for invalid opcode and general protection, one explicit ring-0 trap-frame prefix, and three deterministic pinned-QEMU boot scenarios.
 - A permanent UTF-8 native-process verifier boundary and detached/redirected macron regression check, closing the recurring launcher-only decoding failure.
 
 ### Changed

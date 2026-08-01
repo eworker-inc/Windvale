@@ -716,7 +716,7 @@ fn Statementˉsuccess(
 fn Statementˉisˉallowed(Sectionˉkind: u32, Statementˉkind: u32) -> bool {
     if Sectionˉkind == 1u32 {
         if Statementˉkind <= 7u32 { return true; }
-        if Statementˉkind >= 13u32 { return Statementˉkind <= 15u32; }
+        if Statementˉkind >= 13u32 { return Statementˉkind <= 16u32; }
         return false;
     }
     if Sectionˉkind == 2u32 {
@@ -852,16 +852,27 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
                                                     Size = 2u32;
                                                     if Line.Tokens != 1u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
                                                 } else {
-                                                    if Tokenˉequalsˉtext(Input, First, "zero") {
-                                                        Kind = 12u32;
-                                                        if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
-                                                        let Zeroˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
-                                                        let Zeroˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Zeroˉnumber);
-                                                        if !Zeroˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
-                                                        if Zeroˉparsed.Value == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
-                                                        Size = Zeroˉparsed.Value;
+                                                    if Tokenˉequalsˉtext(Input, First, "push_i32") {
+                                                        Kind = 16u32;
+                                                        Size = 5u32;
+                                                        if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+                                                        let Pushˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+                                                        let Pushˉparsed: Wvaˉi32ˉparse = Parseˉi32(Input, Pushˉnumber);
+                                                        if !Pushˉparsed.Valid {
+                                                            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Pushˉnumber);
+                                                        }
                                                     } else {
-                                                        return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1002, First);
+                                                        if Tokenˉequalsˉtext(Input, First, "zero") {
+                                                            Kind = 12u32;
+                                                            if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                                            let Zeroˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+                                                            let Zeroˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Zeroˉnumber);
+                                                            if !Zeroˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                                            if Zeroˉparsed.Value == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                                            Size = Zeroˉparsed.Value;
+                                                        } else {
+                                                            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1002, First);
+                                                        }
                                                     }
                                                 }
                                             }
@@ -2131,6 +2142,10 @@ fn Encodeˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> bytes
     if Statement.Kind == 14u32 { return Singleˉbyte(244u32); }
     if Statement.Kind == 15u32 {
         return Appendˉbytes(Singleˉbyte(102u32), Singleˉbyte(239u32));
+    }
+    if Statement.Kind == 16u32 {
+        let Pushˉnumber: Wvaˉi32ˉparse = Parseˉi32(Input, Lineˉtoken(Input, Line, 1u32));
+        return Appendˉbytes(Singleˉbyte(104u32), Bytesˉfromˉi32ˉlittle(Pushˉnumber.Value));
     }
     return Emptyˉbytes;
 }

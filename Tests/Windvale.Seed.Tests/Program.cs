@@ -27,7 +27,7 @@ internal static class Program
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_ASSEMBLER_CORE_SHA256 = "d9c055cf9a38ab1af5426d723f7acecddea24dbaa50c959daad57ca7417c0540";
+    private const string WVA_ASSEMBLER_CORE_SHA256 = "e1869d1ca62196328d0311fb0c42dc8789e00f2a90e041db2872e155128f4173";
     private const string WVLINK_CORE_SHA256 = "091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
@@ -125,6 +125,7 @@ internal static class Program
         symbol export function Main in .text
         section code .text align 16
         define Main
+        push_i32 -1
         move_u32 edx 1540
         move_u32 eax 8192
         out_u16
@@ -6951,12 +6952,13 @@ internal static class Program
         var Mechanics = Objectˉcodec.Readˉandˉverify(
             Assembleˉsuccess(KERNEL_MECHANICS_ASSEMBLY_SOURCE)).Value;
         Sequenceˉequal<byte>(
-            [0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
+            [0x68, 0xFF, 0xFF, 0xFF, 0xFF,
+                0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
                 0x66, 0xEF, 0xFA, 0xF4, 0xE9, 0x00, 0x00, 0x00, 0x00],
             Mechanics.Sections[0].Data);
-        Equal(19u, Mechanics.Symbols[0].Size);
+        Equal(24u, Mechanics.Symbols[0].Size);
         Equal(
-            new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 15, 0, -4),
+            new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 20, 0, -4),
             Mechanics.Relocations.Single());
     }
 
@@ -7033,6 +7035,15 @@ internal static class Program
             end define
             end section
             """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            push_i32 2147483648
+            end define
+            end section
+            """, "WVA1005");
     }
 
     private static void Linkerˉproducesˉcanonicalˉflatˉimage()
@@ -7895,7 +7906,8 @@ internal static class Program
         Sequenceˉequal(Assembleˉsuccess(KERNEL_MECHANICS_ASSEMBLY_SOURCE), Mechanics.Writer.Bytes);
         var Mechanicsˉobject = Objectˉcodec.Readˉandˉverify(Mechanics.Writer.Bytes.AsSpan()).Value;
         Sequenceˉequal<byte>(
-            [0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
+            [0x68, 0xFF, 0xFF, 0xFF, 0xFF,
+                0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
                 0x66, 0xEF, 0xFA, 0xF4, 0xE9, 0x00, 0x00, 0x00, 0x00],
             Mechanicsˉobject.Sections[0].Data);
 
@@ -8120,6 +8132,24 @@ internal static class Program
                 section code .text align 16
                 define Main
                 move_u32 eax 4294967296
+                end define
+                end section
+                """, "WVA1005"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                push_i32
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                push_i32 -2147483649
                 end define
                 end section
                 """, "WVA1005"),
