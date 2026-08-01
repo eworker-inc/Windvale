@@ -6,8 +6,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 14;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v14";
+    public const int ABI_VERSION = 15;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v15";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
@@ -29,8 +29,8 @@ public static class Nativeˉcontract
 
 public static class Nativeˉexecutionˉcontextˉcontract
 {
-    public const uint FORMAT_VERSION = 6;
-    public const uint SIZE = 104;
+    public const uint FORMAT_VERSION = 7;
+    public const uint SIZE = 112;
     public const int FORMAT_VERSION_OFFSET = 0;
     public const int SIZE_OFFSET = 4;
     public const int INSTRUCTION_BUDGET_OFFSET = 8;
@@ -49,6 +49,7 @@ public static class Nativeˉexecutionˉcontextˉcontract
     public const int ARGUMENT_RESERVED_OFFSET = 84;
     public const int OUTPUT_TABLE_POINTER_OFFSET = 88;
     public const int FILE_INPUT_TABLE_POINTER_OFFSET = 96;
+    public const int FILE_OUTPUT_TABLE_POINTER_OFFSET = 104;
 }
 
 public enum Nativeˉserviceˉfailureˉdetail : uint
@@ -69,8 +70,8 @@ public enum Nativeˉserviceˉfailureˉdetail : uint
 
 public static class Nativeˉserviceˉtableˉcontract
 {
-    public const uint FORMAT_VERSION = 4;
-    public const uint SIZE = 96;
+    public const uint FORMAT_VERSION = 5;
+    public const uint SIZE = 104;
     public const int FORMAT_VERSION_OFFSET = 0;
     public const int SIZE_OFFSET = 4;
     public const int CONSOLE_WRITE_LINE_POINTER_OFFSET = 8;
@@ -84,6 +85,7 @@ public static class Nativeˉserviceˉtableˉcontract
     public const int TEXT_QUOTE_POINTER_OFFSET = 72;
     public const int I32_FORMAT_POINTER_OFFSET = 80;
     public const int U32_FORMAT_POINTER_OFFSET = 88;
+    public const int FILE_WRITE_BYTES_POINTER_OFFSET = 96;
 }
 
 public enum Nativeˉservice : byte
@@ -99,6 +101,7 @@ public enum Nativeˉservice : byte
     Textˉquote = 9,
     I32ˉformat = 10,
     U32ˉformat = 11,
+    Fileˉwriteˉbytes = 12,
 }
 
 public abstract record Nativeˉoperation;
@@ -363,6 +366,10 @@ public sealed record Nativeˉprocessˉargument(
 public sealed record Nativeˉfileˉreadˉbytes(
     int Result,
     int Resourceˉname) : Nativeˉoperation;
+
+public sealed record Nativeˉfileˉwriteˉbytes(
+    int Resourceˉname,
+    int Bytes) : Nativeˉoperation;
 
 public sealed record Nativeˉvoidˉcall(
     int Function,

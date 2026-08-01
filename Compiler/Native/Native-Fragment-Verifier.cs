@@ -67,7 +67,7 @@ public static class Nativeˉfragmentˉverifier
         {
             Fail("WVN3008", "The native fragment exceeds the patch-count limit.");
         }
-        if (fragment.Requiredˉservices.Length > 11 ||
+        if (fragment.Requiredˉservices.Length > 12 ||
             fragment.Requiredˉservices.Any(Service => !Enum.IsDefined(Service)) ||
             fragment.Requiredˉservices.Distinct().Count() != fragment.Requiredˉservices.Length ||
             !fragment.Requiredˉservices.SequenceEqual(fragment.Requiredˉservices.Order()))
@@ -734,6 +734,20 @@ public static class Nativeˉfragmentˉverifier
                 continue;
             }
 
+            if (Tryˉdecodeˉfileˉwriteˉbytes(
+                    fragment,
+                    Code,
+                    ref Index,
+                    Propagate,
+                    Frameˉbytes,
+                    Runtimeˉservice,
+                    Borrowedˉbytesˉslots,
+                    Staticˉdescriptorˉdata))
+            {
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
             if (Tryˉdecodeˉfileˉreadˉbytes(
                 fragment,
                 Code,
@@ -1281,6 +1295,58 @@ public static class Nativeˉfragmentˉverifier
                 code,
                 ref Cursor,
                 Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET,
+                runtimeˉservice) ||
+            Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉfileˉwriteˉbytes(
+        Nativeˉfragment fragment,
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int runtimeˉservice,
+        HashSet<int> borrowedˉdescriptorˉslots,
+        Dictionary<int, Nativeˉsymbol> staticˉdescriptorˉdata)
+    {
+        var Cursor = index;
+        if (!fragment.Requiredˉservices.Contains(Nativeˉservice.Fileˉwriteˉbytes) ||
+            !Tryˉdecodeˉdescriptorˉserviceˉinput(
+                code,
+                ref Cursor,
+                frameˉbytes,
+                borrowedˉdescriptorˉslots,
+                out var Nameˉslot) ||
+            !Matches(code, Cursor, 0x48, 0x8B, 0x8C, 0x24) ||
+            !Tryˉreadˉslot(code, Cursor + 4, frameˉbytes, out var Bytesˉslot) ||
+            !borrowedˉdescriptorˉslots.Contains(Bytesˉslot) ||
+            !Matches(code, Cursor + 8, 0x8B, 0x94, 0x24) ||
+            !Tryˉreadˉslotˉfield(
+                code,
+                Cursor + 11,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                sizeof(int),
+                out var Lengthˉslot) ||
+            Lengthˉslot != Bytesˉslot)
+        {
+            return false;
+        }
+        if (staticˉdescriptorˉdata.TryGetValue(Nameˉslot, out var Nameˉdata) &&
+            !Isˉvalidˉutf8(fragment.Code, Nameˉdata))
+        {
+            return false;
+        }
+        Cursor += 15;
+        if (!Tryˉdecodeˉserviceˉcall(
+                code,
+                ref Cursor,
+                Nativeˉserviceˉtableˉcontract.FILE_WRITE_BYTES_POINTER_OFFSET,
                 runtimeˉservice) ||
             Cursor > end)
         {

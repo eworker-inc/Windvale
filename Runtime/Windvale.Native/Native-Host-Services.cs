@@ -14,11 +14,13 @@ public sealed class Nativeˉhostˉservices
         IEnumerable<string>? authorizedˉcapabilities = null,
         Hostedˉresourceˉcontext? resources = null,
         Nativeˉoutputˉchannel? diagnosticˉoutput = null,
-        Nativeˉfileˉinput? fileˉinput = null)
+        Nativeˉfileˉinput? fileˉinput = null,
+        Nativeˉfileˉoutput? fileˉoutput = null)
     {
         Standardˉoutput = standardˉoutput;
         Diagnosticˉoutput = diagnosticˉoutput;
         Fileˉinput = fileˉinput;
+        Fileˉoutput = fileˉoutput;
         Resources = resources;
         Authorizedˉcapabilities = (authorizedˉcapabilities ?? [])
             .ToImmutableHashSet(StringComparer.Ordinal);
@@ -29,6 +31,8 @@ public sealed class Nativeˉhostˉservices
     public Nativeˉoutputˉchannel? Diagnosticˉoutput { get; }
 
     public Nativeˉfileˉinput? Fileˉinput { get; }
+
+    public Nativeˉfileˉoutput? Fileˉoutput { get; }
 
     public Hostedˉresourceˉcontext? Resources { get; }
 
@@ -45,6 +49,8 @@ public sealed class Nativeˉhostˉservices
                 Authorizedˉcapabilities.Contains(Capabilityˉcatalog.PROCESS_ARGUMENT),
             Nativeˉservice.Fileˉreadˉbytes =>
                 Authorizedˉcapabilities.Contains(Capabilityˉcatalog.FILE_READ_BYTES),
+            Nativeˉservice.Fileˉwriteˉbytes =>
+                Authorizedˉcapabilities.Contains(Capabilityˉcatalog.FILE_WRITE_BYTES),
             Nativeˉservice.Diagnosticˉwriteˉline =>
                 Authorizedˉcapabilities.Contains(Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE),
             Nativeˉservice.Textˉutf8ˉisˉvalid or
@@ -63,6 +69,7 @@ public sealed class Nativeˉhostˉservices
             Nativeˉservice.Processˉargumentˉcount or
                 Nativeˉservice.Processˉargument => Resources is not null,
             Nativeˉservice.Fileˉreadˉbytes => Fileˉinput?.Isˉavailable == true,
+            Nativeˉservice.Fileˉwriteˉbytes => Fileˉoutput?.Isˉavailable == true,
             Nativeˉservice.Diagnosticˉwriteˉline => Diagnosticˉoutput?.Isˉavailable == true,
             Nativeˉservice.Textˉutf8ˉisˉvalid or
                 Nativeˉservice.Enumˉname or
@@ -106,6 +113,21 @@ public sealed class Nativeˉfileˉinput
         throw new PlatformNotSupportedException(
             "The native file-input boundary supports Windows and Linux.");
     }
+}
+
+public sealed class Nativeˉfileˉoutput
+{
+    private Nativeˉfileˉoutput(Nativeˉfileˉinputˉplatform platform)
+    {
+        Platform = platform;
+    }
+
+    internal Nativeˉfileˉinputˉplatform Platform { get; }
+
+    internal bool Isˉavailable => Platform == Nativeˉfileˉinput.Currentˉplatform();
+
+    public static Nativeˉfileˉoutput Hostˉfileˉsystem() =>
+        new(Nativeˉfileˉinput.Currentˉplatform());
 }
 
 public enum Nativeˉoutputˉplatform : uint

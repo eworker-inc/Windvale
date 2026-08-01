@@ -443,7 +443,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(20_992, First.Length);
         Equal(
-            "4f3566379fd55aa1707ac6182c5ec0dee176b35b5e17f8b74687374eb995de0f",
+            "d4a9e3625779dd3ef2a03fd71ecfe1502c1ad39378da7adbcf7e4b55636eed8c",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -457,7 +457,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(20_992, First.Length);
         Equal(
-            "23ff09ee1d7b0fb20d770edbb76a7acb0bfc3b7a9b3c88571644092dc88ca9f2",
+            "705670b1054589b80e3c918c03e9f751304e3f4b5bda77485f606433db68a757",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -480,7 +480,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(20_992, First.Length);
         Equal(
-            "75b48804f0803a5c747158ed77a71942237d376af48d0276933c69c44ef60562",
+            "df45d8e0f69581e5ed3b46608598e6170413f80c5c1bbba9233e9842cdd7a04d",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -505,7 +505,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 19\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 20\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -697,7 +697,7 @@ internal static class Program
         Equal(1, Nativeˉobject.Symbols.Count(Symbol => Symbol.Name == "Main"));
 
         var Bridgeˉobject = Objectˉcodec.Readˉandˉverify(First.Bridgeˉobjectˉbytes.AsSpan()).Value;
-        Equal(138u, Bridgeˉobject.Sections[0].Memoryˉsize);
+        Equal(143u, Bridgeˉobject.Sections[0].Memoryˉsize);
         Equal(2, Bridgeˉobject.Relocations.Length);
         Equal(929, First.Moduleˉbytes.Length);
         Equal(
@@ -707,9 +707,9 @@ internal static class Program
         Equal(
             "f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038",
             Objectˉdigest.Calculateˉsha256(First.Nativeˉobjectˉbytes.AsSpan()));
-        Equal(350, First.Bridgeˉobjectˉbytes.Length);
+        Equal(355, First.Bridgeˉobjectˉbytes.Length);
         Equal(
-            "3cbf50a4828a1a69ca7441a667cb95e569055468c345ed26b8a580fda3facfc5",
+            "bfa2b522b2bf22b3681b523c66c2986b1af366ba042adeddd8a106b5a96a5225",
             Objectˉdigest.Calculateˉsha256(First.Bridgeˉobjectˉbytes.AsSpan()));
     }
 

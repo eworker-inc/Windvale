@@ -4,7 +4,7 @@
 
 `WVPQ 1` and `WVPL 1` are versioned internal contracts between the Stage 0 native executor and the retained Windvale publication planner. They describe the bounded layout of one independently verified native fragment and its canonical runtime-service leaves before writable memory is allocated and before the image becomes executable.
 
-[Decision 0082](../Documents/Decisions/0082-Windvale-Owned-Native-Publication-Layout.md) cross-host qualifies both contracts and their live use at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. The portable core is 7,189 bytes with SHA-256 `9d75d59e4ba0fc689ae9bc4ac3ac019e520db06d21f54d4ee1480a0bb356e967`; the retained hosted bridge is 7,105 bytes with SHA-256 `5102fd0119e37bb7e5f83bb3c4d1bff6303f37818bfe48825b320bf28f27eada`.
+[Decision 0082](../Documents/Decisions/0082-Windvale-Owned-Native-Publication-Layout.md) cross-host qualifies both contracts and their live use at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. [Decision 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) extends the closed planner domain from 11 to 12 service IDs without changing either serialized contract version. The current portable core is 7,189 bytes with SHA-256 `b25fa550518caa4ef43c7ae886cce328148777782f70e3faa25ac19821b6d439`; the current retained hosted bridge is 7,105 bytes with SHA-256 `750b6134395c46c9e1c703ae2a56449bd1710f517e516397e10a1ccc951c503e`. Exact Decision 0087 cross-host qualification remains pending.
 
 This contract is not a public application format, a native object format, a code cache, or a general linker input. It does not contain machine bytes, absolute addresses, relocations, operating-system handles, or executable-memory policy. WVB remains the portable program identity and WVO remains the serialized native object format.
 
@@ -20,14 +20,14 @@ The request is exactly `24 + service_count * 12` bytes.
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | Exact request length |
 | 12 | 4 | fragment bytes | `1` through `1,048,576` |
-| 16 | 4 | service count | `0` through `11` |
+| 16 | 4 | service count | `0` through `12` |
 | 20 | 4 | reserved | Zero |
 
 Each service record is exactly 12 bytes:
 
 | Relative offset | Bytes | Field | Rule |
 | ---: | ---: | --- | --- |
-| 0 | 4 | service ID | `1` through `11`, matching the closed ABI-14 service table |
+| 0 | 4 | service ID | `1` through `12`, matching the closed ABI-15 service table |
 | 4 | 4 | leaf bytes | Positive |
 | 8 | 4 | reserved | Zero |
 

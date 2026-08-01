@@ -98,6 +98,11 @@ public static class X64ˉnativeˉexecutor
         using var Fileˉinput = new Nativeˉfileˉinputˉcontext(
             hostˉservices,
             Requiresˉfileˉinput);
+        var Requiresˉfileˉoutput = fragment.Requiredˉservices.Contains(
+            Nativeˉservice.Fileˉwriteˉbytes);
+        using var Fileˉoutput = new Nativeˉfileˉoutputˉcontext(
+            hostˉservices,
+            Requiresˉfileˉoutput);
         var Address = IntPtr.Zero;
         var Context = IntPtr.Zero;
         var Resultˉcell = IntPtr.Zero;
@@ -133,6 +138,14 @@ public static class X64ˉnativeˉexecutor
                     Fileˉinput.Platform);
                 X64ˉnativeˉfileˉinputˉservice.Verify(
                     Fileˉinput.Platform,
+                    Nativeˉserviceˉcode.AsSpan());
+            }
+            else if (Service == Nativeˉservice.Fileˉwriteˉbytes)
+            {
+                Nativeˉserviceˉcode = X64ˉnativeˉfileˉoutputˉservice.Build(
+                    Fileˉoutput.Platform);
+                X64ˉnativeˉfileˉoutputˉservice.Verify(
+                    Fileˉoutput.Platform,
                     Nativeˉserviceˉcode.AsSpan());
             }
             else if (Service is Nativeˉservice.Enumˉname or
@@ -274,6 +287,12 @@ public static class X64ˉnativeˉexecutor
                 Fileˉinput.Address == IntPtr.Zero
                     ? 0
                     : checked((ulong)Fileˉinput.Address.ToInt64()));
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Contextˉbytes.AsSpan(
+                    Nativeˉexecutionˉcontextˉcontract.FILE_OUTPUT_TABLE_POINTER_OFFSET),
+                Fileˉoutput.Address == IntPtr.Zero
+                    ? 0
+                    : checked((ulong)Fileˉoutput.Address.ToInt64()));
             Marshal.Copy(Contextˉbytes, 0, Context, Contextˉbytes.Length);
 
             if (expectedˉresult == Nativeˉentryˉresultˉkind.Descriptor)
@@ -295,6 +314,7 @@ public static class X64ˉnativeˉexecutor
                 0,
                 0));
             Fileˉinput.Verifyˉcompleted();
+            Fileˉoutput.Verifyˉcompleted();
             Serviceˉfailureˉdetail = (Nativeˉserviceˉfailureˉdetail)unchecked((uint)Marshal.ReadInt32(
                 Context,
                 Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET));
@@ -564,6 +584,8 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_POINTER_OFFSET,
             Nativeˉservice.Fileˉreadˉbytes =>
                 Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET,
+            Nativeˉservice.Fileˉwriteˉbytes =>
+                Nativeˉserviceˉtableˉcontract.FILE_WRITE_BYTES_POINTER_OFFSET,
             Nativeˉservice.Textˉutf8ˉisˉvalid =>
                 Nativeˉserviceˉtableˉcontract.TEXT_UTF8_IS_VALID_POINTER_OFFSET,
             Nativeˉservice.Diagnosticˉwriteˉline =>

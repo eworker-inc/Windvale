@@ -43,8 +43,8 @@ internal static class Program
     private const string NATIVE_STENCIL_CORE_SHA256 = "d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f";
     private const string NATIVE_STENCIL_BRIDGE_SHA256 = "5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9";
     private const string NATIVE_STENCIL_DEMO_SHA256 = "651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15";
-    private const string NATIVE_PUBLICATION_CORE_SHA256 = "9d75d59e4ba0fc689ae9bc4ac3ac019e520db06d21f54d4ee1480a0bb356e967";
-    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "5102fd0119e37bb7e5f83bb3c4d1bff6303f37818bfe48825b320bf28f27eada";
+    private const string NATIVE_PUBLICATION_CORE_SHA256 = "b25fa550518caa4ef43c7ae886cce328148777782f70e3faa25ac19821b6d439";
+    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "750b6134395c46c9e1c703ae2a56449bd1710f517e516397e10a1ccc951c503e";
     private const string NATIVE_PUBLICATION_LIFETIME_CORE_SHA256 = "52b1cb6dd0d7fa9d17c1cba50b527912876e4acf1cd9663846ce915b4c56aed5";
     private const string NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256 = "74dfaf40bb6ea83f0fd72757c9c4cb85f5c8dd28a41f3993325871d348e88d32";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
@@ -646,6 +646,7 @@ internal static class Program
         new("Windvale owns bounded executable-image layout before W^X publication", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlayoutˉruns),
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
+        new("native file output publishes bounded bytes and advances compiler preflight", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
         new("Windvale-written project manifests agree with the reference parser", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉprojectˉmanifestsˉagree),
@@ -2592,7 +2593,8 @@ internal static class Program
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
         Sequenceˉequal(First.Fragment.Types, Second.Fragment.Types);
         Sequenceˉequal(
-            Enum.GetValues<Nativeˉservice>(),
+            Enum.GetValues<Nativeˉservice>()
+                .Where(Service => Service != Nativeˉservice.Fileˉwriteˉbytes),
             First.Fragment.Requiredˉservices);
         var Operations = First.Module.Functions
             .SelectMany(Function => Function.Blocks)
@@ -3658,9 +3660,9 @@ internal static class Program
             .Select(Value => new Nativeˉpublicationˉservice((Nativeˉservice)Value, 1))
             .ToImmutableArray();
         var Allˉplan = X64ˉnativeˉpublicationˉlayout.Plan(1, Allˉservices);
-        Equal(177, Allˉplan.Imageˉbytes);
+        Equal(193, Allˉplan.Imageˉbytes);
         Equal(16, Allˉplan.Placements[0].Offset);
-        Equal(176, Allˉplan.Placements[^1].Offset);
+        Equal(192, Allˉplan.Placements[^1].Offset);
 
         Throwsˉnative(
             "WVN4013",
@@ -3674,7 +3676,7 @@ internal static class Program
             "WVN4013",
             () => _ = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(
                 1,
-                [new((Nativeˉservice)12, 1)]));
+                [new((Nativeˉservice)13, 1)]));
         Throwsˉnative(
             "WVN4013",
             () => _ = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(
@@ -3760,7 +3762,7 @@ internal static class Program
             Nativeˉpublicationˉstatus.Invalidˉfragment,
             12);
         Expectˉrequestˉfailure(
-            Replaceˉu32(Request, 16, 12),
+            Replaceˉu32(Request, 16, 13),
             Nativeˉpublicationˉstatus.Invalidˉservice,
             16);
         Expectˉrequestˉfailure(
@@ -4518,6 +4520,250 @@ internal static class Program
             Directory.Delete(Snapshotˉdirectory, recursive: true);
         }
         Equal(0, Missingˉfileˉreader.Readˉcount);
+    }
+
+    private static void Nativeˉfileˉoutputˉpublishes()
+    {
+        const string Source = """
+            module Nativeˉfileˉoutput profile hosted;
+
+            capability file.write_bytes;
+            capability process.argument;
+
+            data Payload: bytes = [0, 65, 226, 130, 172, 240, 159, 152, 128, 255];
+            data Empty: bytes = [];
+
+            export fn Main() -> i32 {
+                file.write_bytes(process.argument(0u32), Payload);
+                file.write_bytes(process.argument(1u32), Empty);
+                return 0;
+            }
+            """;
+        var First = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source)));
+        var Second = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source)));
+        Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Sequenceˉequal(
+            [Nativeˉservice.Processˉargument, Nativeˉservice.Fileˉwriteˉbytes],
+            First.Fragment.Requiredˉservices);
+        Equal(2, First.Module.Functions[0].Blocks
+            .SelectMany(Block => Block.Operations)
+            .OfType<Nativeˉfileˉwriteˉbytes>()
+            .Count());
+        _ = Nativeˉfragmentˉverifier.Verify(First.Fragment);
+        var Corruptedˉcall = First.Fragment.Code.ToArray();
+        var Fileˉwriteˉload = Corruptedˉcall.AsSpan().IndexOf(new byte[]
+        {
+            0x49, 0x8B, 0x47,
+            Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET,
+            0x48, 0x8B, 0x40,
+            Nativeˉserviceˉtableˉcontract.FILE_WRITE_BYTES_POINTER_OFFSET,
+        });
+        True(Fileˉwriteˉload >= 0, "Native code omitted the file.write_bytes service-table load.");
+        Corruptedˉcall[Fileˉwriteˉload + 7] ^= 0x01;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉcall.ToImmutableArray() }));
+
+        foreach (var Platform in Enum.GetValues<Nativeˉfileˉinputˉplatform>())
+        {
+            var Leaf = X64ˉnativeˉfileˉoutputˉservice.Build(Platform);
+            Equal(X64ˉnativeˉfileˉoutputˉservice.Canonicalˉsize(Platform), Leaf.Length);
+            Equal(
+                X64ˉnativeˉfileˉoutputˉservice.Canonicalˉsha256(Platform),
+                Convert.ToHexString(SHA256.HashData(Leaf.AsSpan())).ToLowerInvariant());
+            X64ˉnativeˉfileˉoutputˉservice.Verify(Platform, Leaf.AsSpan());
+            var Corrupted = Leaf.ToArray();
+            Corrupted[^1] ^= 0x01;
+            Throwsˉinvalidˉoperation(
+                $"Native {Platform} file-output service identity",
+                () => X64ˉnativeˉfileˉoutputˉservice.Verify(Platform, Corrupted));
+        }
+
+        var Authorized = ImmutableHashSet.Create(
+            StringComparer.Ordinal,
+            Capabilityˉcatalog.FILE_WRITE_BYTES,
+            Capabilityˉcatalog.PROCESS_ARGUMENT);
+        var Directoryˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-file-output-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Directoryˉpath);
+        var Payloadˉpath = Path.Combine(Directoryˉpath, "published-ǣ-😀.bin");
+        var Emptyˉpath = Path.Combine(Directoryˉpath, "empty.bin");
+        var Expected = new byte[] { 0, 65, 226, 130, 172, 240, 159, 152, 128, 255 };
+        try
+        {
+            File.WriteAllBytes(Payloadˉpath, Enumerable.Repeat((byte)0xCC, 128).ToArray());
+            var Resources = new Hostedˉresourceˉcontext(
+                [Payloadˉpath, Emptyˉpath],
+                TextWriter.Null,
+                TextWriter.Null);
+            var Host = new Nativeˉhostˉservices(
+                null,
+                Authorized,
+                Resources,
+                fileˉoutput: Nativeˉfileˉoutput.Hostˉfileˉsystem());
+
+            using (var Corruptedˉtable = new Nativeˉfileˉoutputˉcontext(Host, required: true))
+            {
+                Marshal.WriteByte(
+                    Corruptedˉtable.Address,
+                    Nativeˉfileˉoutputˉtableˉcontract.RESERVED_OFFSET,
+                    1);
+                Throwsˉinvalidˉoperation(
+                    "The native file-output table violated its independently verified static layout.",
+                    Corruptedˉtable.Verifyˉcompleted);
+            }
+
+            Throwsˉnativeˉtrap(
+                "WVR3010",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment,
+                    hostˉservices: new(
+                        null,
+                        [Capabilityˉcatalog.PROCESS_ARGUMENT],
+                        Resources,
+                        fileˉoutput: Nativeˉfileˉoutput.Hostˉfileˉsystem())));
+            Throwsˉnativeˉtrap(
+                "WVR3001",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment,
+                    hostˉservices: new(null, Authorized, Resources)));
+
+            Equal(0, X64ˉnativeˉexecutor.Executeˉi32(First.Fragment, hostˉservices: Host));
+            Sequenceˉequal(Expected, File.ReadAllBytes(Payloadˉpath));
+            Equal(0L, new FileInfo(Emptyˉpath).Length);
+
+            var Object = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+            var Linked = Linkˉsuccess(
+                [Object.ToArray()],
+                new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+            File.WriteAllBytes(Payloadˉpath, Enumerable.Repeat((byte)0xDD, 64).ToArray());
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment with { Code = Linked.Imageˉbytes },
+                    hostˉservices: Host));
+            Sequenceˉequal(Expected, File.ReadAllBytes(Payloadˉpath));
+
+            const string Copyˉsource = """
+                module Nativeˉfileˉcopy profile hosted;
+                capability file.read_bytes;
+                capability file.write_bytes;
+                capability process.argument;
+                export fn Main() -> i32 {
+                    file.write_bytes(
+                        process.argument(1u32),
+                        file.read_bytes(process.argument(0u32))
+                    );
+                    return 0;
+                }
+                """;
+            var Copyˉfragment = X64ˉnativeˉbackend.Compile(
+                Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Copyˉsource))).Fragment;
+            var Maximumˉinputˉpath = Path.Combine(Directoryˉpath, "maximum-input.bin");
+            var Maximumˉoutputˉpath = Path.Combine(Directoryˉpath, "maximum-output.bin");
+            var Maximumˉbytes = new byte[Bytecodeˉlimits.MAX_BYTE_DATA_BYTES];
+            for (var Index = 0; Index < Maximumˉbytes.Length; Index++)
+            {
+                Maximumˉbytes[Index] = unchecked((byte)(Index * 131));
+            }
+            File.WriteAllBytes(Maximumˉinputˉpath, Maximumˉbytes);
+            var Copyˉresources = new Hostedˉresourceˉcontext(
+                [Maximumˉinputˉpath, Maximumˉoutputˉpath],
+                TextWriter.Null,
+                TextWriter.Null);
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    Copyˉfragment,
+                    hostˉservices: new(
+                        null,
+                        [
+                            Capabilityˉcatalog.FILE_READ_BYTES,
+                            Capabilityˉcatalog.FILE_WRITE_BYTES,
+                            Capabilityˉcatalog.PROCESS_ARGUMENT,
+                        ],
+                        Copyˉresources,
+                        fileˉinput: Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                        fileˉoutput: Nativeˉfileˉoutput.Hostˉfileˉsystem())));
+            Sequenceˉequal(Maximumˉbytes, File.ReadAllBytes(Maximumˉoutputˉpath));
+
+            var Missingˉparent = Path.Combine(Directoryˉpath, "missing", "output.bin");
+            var Missingˉresources = new Hostedˉresourceˉcontext(
+                [Missingˉparent, Emptyˉpath],
+                TextWriter.Null,
+                TextWriter.Null);
+            Throwsˉnativeˉtrap(
+                "WVR3022",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment,
+                    hostˉservices: new(
+                        null,
+                        Authorized,
+                        Missingˉresources,
+                        fileˉoutput: Nativeˉfileˉoutput.Hostˉfileˉsystem())));
+
+            var Deniedˉresources = new Hostedˉresourceˉcontext(
+                [Directoryˉpath, Emptyˉpath],
+                TextWriter.Null,
+                TextWriter.Null);
+            Throwsˉnativeˉtrap(
+                "WVR3023",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment,
+                    hostˉservices: new(
+                        null,
+                        Authorized,
+                        Deniedˉresources,
+                        fileˉoutput: Nativeˉfileˉoutput.Hostˉfileˉsystem())));
+
+            var Invalidˉresources = new Hostedˉresourceˉcontext(
+                ["", Emptyˉpath],
+                TextWriter.Null,
+                TextWriter.Null);
+            Throwsˉnativeˉtrap(
+                "WVR3021",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment,
+                    hostˉservices: new(
+                        null,
+                        Authorized,
+                        Invalidˉresources,
+                        fileˉoutput: Nativeˉfileˉoutput.Hostˉfileˉsystem())));
+        }
+        finally
+        {
+            Directory.Delete(Directoryˉpath, recursive: true);
+        }
+
+        var Compilerˉtoolˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
+            SOURCE_WVB_TOOL_SOURCE,
+            "Source-Wvb-Tool.wv");
+        Equal(SOURCE_WVB_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉbytes));
+        try
+        {
+            _ = X64ˉnativeˉbackend.Compile(Moduleˉcodec.Readˉandˉverify(Compilerˉtoolˉbytes));
+        }
+        catch (Nativeˉbackendˉexception Exception)
+        {
+            Equal("WVN2002", Exception.Code);
+            True(
+                Exception.Message.Contains(
+                    "Compilerˉbodyˉblockˉstepˉvalid",
+                    StringComparison.Ordinal),
+                $"Compiler native preflight did not identify the next exact function: {Exception.Message}");
+            True(
+                Exception.Message.Contains(
+                    "bounded scalar/borrowed descriptor parameters and locals",
+                    StringComparison.Ordinal),
+                $"Compiler native preflight did not identify the next function-shape blocker: {Exception.Message}");
+            return;
+        }
+        throw new InvalidOperationException(
+            "The compiler native preflight unexpectedly completed; update this evidence to the newly observed execution result.");
     }
 
     private static void Sourceˉmodulesˉcompose()

@@ -103,6 +103,7 @@ public static class X64ˉnativeˉbackend
                 Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT => Nativeˉservice.Processˉargumentˉcount,
                 Capabilityˉcatalog.PROCESS_ARGUMENT => Nativeˉservice.Processˉargument,
                 Capabilityˉcatalog.FILE_READ_BYTES => Nativeˉservice.Fileˉreadˉbytes,
+                Capabilityˉcatalog.FILE_WRITE_BYTES => Nativeˉservice.Fileˉwriteˉbytes,
                 Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE => Nativeˉservice.Diagnosticˉwriteˉline,
                 _ => throw new Nativeˉbackendˉexception(
                     "WVN2001",
@@ -712,6 +713,13 @@ public static class X64ˉnativeˉbackend
                                 Operations.Add(new Nativeˉfileˉreadˉbytes(Fileˉbytes, Resourceˉname.Value));
                                 Stack.Push(new(Fileˉbytes, Nativeˉvalueˉtype.Borrowedˉbytes));
                                 break;
+                            case Capabilityˉcatalog.FILE_WRITE_BYTES:
+                                var Outputˉbytes = Popˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
+                                var Outputˉname = Popˉvalue(Nativeˉvalueˉtype.Borrowedˉtext);
+                                Operations.Add(new Nativeˉfileˉwriteˉbytes(
+                                    Outputˉname.Value,
+                                    Outputˉbytes.Value));
+                                break;
                         }
                         break;
                     case Opcode.Call:
@@ -819,7 +827,7 @@ public static class X64ˉnativeˉbackend
             module.Data.IsDefault ||
             module.Types.IsDefault ||
             module.Requiredˉservices.IsDefault ||
-            module.Requiredˉservices.Length > 11 ||
+            module.Requiredˉservices.Length > 12 ||
             module.Requiredˉservices.Any(Service => !Enum.IsDefined(Service)) ||
             module.Requiredˉservices.Distinct().Count() != module.Requiredˉservices.Length ||
             !module.Requiredˉservices.SequenceEqual(module.Requiredˉservices.Order()))
@@ -1271,6 +1279,19 @@ public static class X64ˉnativeˉbackend
                             Emitˉserviceˉcall(
                                 Code,
                                 Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET,
+                                Runtimeˉserviceˉpatches);
+                            break;
+                        case Nativeˉfileˉwriteˉbytes Write:
+                            Emitˉdescriptorˉserviceˉinput(
+                                Code,
+                                Valueˉslot(Function, Write.Resourceˉname),
+                                Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
+                            Emitˉdescriptorˉserviceˉbytes(
+                                Code,
+                                Valueˉslot(Function, Write.Bytes));
+                            Emitˉserviceˉcall(
+                                Code,
+                                Nativeˉserviceˉtableˉcontract.FILE_WRITE_BYTES_POINTER_OFFSET,
                                 Runtimeˉserviceˉpatches);
                             break;
                         case Nativeˉcall Call:
@@ -1865,6 +1886,14 @@ public static class X64ˉnativeˉbackend
                         Requireˉvalue(function, Read.Resourceˉname, Nativeˉvalueˉtype.Borrowedˉtext, Nextˉvalue);
                         Requireˉresult(function, Read.Result, Nativeˉvalueˉtype.Borrowedˉbytes, ref Nextˉvalue);
                         break;
+                    case Nativeˉfileˉwriteˉbytes Write:
+                        if (!module.Requiredˉservices.Contains(Nativeˉservice.Fileˉwriteˉbytes))
+                        {
+                            Fail("WVN2901", "The x86-64 selector received invalid file.write_bytes metadata.");
+                        }
+                        Requireˉvalue(function, Write.Resourceˉname, Nativeˉvalueˉtype.Borrowedˉtext, Nextˉvalue);
+                        Requireˉvalue(function, Write.Bytes, Nativeˉvalueˉtype.Borrowedˉbytes, Nextˉvalue);
+                        break;
                     case Nativeˉcall Call:
                         if ((uint)Call.Function >= (uint)module.Functions.Length ||
                             Call.Arguments.IsDefault ||
@@ -1985,6 +2014,9 @@ public static class X64ˉnativeˉbackend
             Capabilityˉcatalog.FILE_READ_BYTES =>
                 capability.Parameterˉtypes.SequenceEqual([Valueˉtype.Text]) &&
                 capability.Returnˉtype == Valueˉtype.Bytes,
+            Capabilityˉcatalog.FILE_WRITE_BYTES =>
+                capability.Parameterˉtypes.SequenceEqual([Valueˉtype.Text, Valueˉtype.Bytes]) &&
+                capability.Returnˉtype == Valueˉtype.Void,
             Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE =>
                 capability.Parameterˉtypes.SequenceEqual([Valueˉtype.Text]) &&
                 capability.Returnˉtype == Valueˉtype.Void,
@@ -2543,6 +2575,14 @@ public static class X64ˉnativeˉbackend
         Addˉi32(code, Slotˉoffset(slot));
         code.AddRange([0x44, 0x8B, 0x8C, 0x24]);
         Addˉi32(code, checked(Slotˉoffset(slot) + lengthˉoffset));
+    }
+
+    private static void Emitˉdescriptorˉserviceˉbytes(List<byte> code, int slot)
+    {
+        code.AddRange([0x48, 0x8B, 0x8C, 0x24]);
+        Addˉi32(code, Slotˉoffset(slot));
+        code.AddRange([0x8B, 0x94, 0x24]);
+        Addˉi32(code, checked(Slotˉoffset(slot) + Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET));
     }
 
     private static void Emitˉloadˉdescriptorˉoutputˉr9(List<byte> code, int slot)

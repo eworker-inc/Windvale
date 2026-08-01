@@ -37,7 +37,7 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Operating system
 
-- Which kernel-owned data, address-materialization, and target-container rules should extend the accepted special kernel WVO without duplicating the shared ABI-14 backend?
+- Which kernel-owned data, address-materialization, and target-container rules should extend the accepted special kernel WVO without duplicating the shared native backend?
 - What counts as “from scratch” at each bootstrap stage?
 - Which exact process, thread, capability, syscall, IPC, and resource-budget encodings should implement Decision 0084's accepted conceptual boundary?
 - Which first boot-critical drivers should remain with the kernel temporarily, and which should begin as isolated AOT system services?
@@ -57,10 +57,10 @@ The [WebAssembly playground exploration](WebAssembly-Playground-Exploration.md) 
 
 ## First decision sequence
 
-Decisions 0058 through 0084 establish reproducible bytecode compiler convergence, the bounded shared ABI-14 native path, live Windvale-produced service leaves, Windvale-owned executable-image layout, the first terminal CPU-exception destination, and the durable capability-oriented OS boundary. Candidate Decisions 0085 and 0086 add WVA-owned Q35 poweroff plus the first normalized no-error/error-code trap entries. The recommended next decisions are:
+Decisions 0058 through 0084 establish reproducible bytecode compiler convergence, the bounded shared ABI-14 native path, live Windvale-produced service leaves, Windvale-owned executable-image layout and lifetime, the first terminal CPU-exception destination, and the durable capability-oriented OS boundary. Candidate Decisions 0085 and 0086 add WVA-owned Q35 poweroff plus normalized no-error/error-code trap entries; implemented Decision 0087 advances the shared native path to ABI 15 with bounded file publication. The recommended next decisions are:
 
-1. Preflight the qualified compiler WVB through the native backend, then decide whether its first explicit `file.write_bytes` blocker can be closed as one bounded file-publication slice without prematurely widening the platform FFI.
-2. Execute the qualified Windvale-written compiler through the shared native path and identify the next backend or runtime contract demanded by that real workload.
+1. Cross-host qualify Decisions 0085 through 0087 and the composed probe-20 evidence, then admit the smallest record-shaped parameter/local contract demanded by the exact next compiler blocker, `Compilerˉbodyˉblockˉstepˉvalid`, without turning the backend into an unbounded aggregate ABI.
+2. Continue compiling and then execute the qualified Windvale-written compiler through the shared native path, recording each next backend or runtime contract demanded by that real workload.
 3. Add native PE/COFF and ELF containers plus standalone Windows/Linux capability and process hosts without leaking host rules into portable modules.
-4. Cross-host qualify the combined probe-19 candidate, then add page-table ownership and an AOT Windvale verifier that admits one embedded WVB, retaining pinned-QEMU evidence before Hyper-V qualification and treating broader traps and lifecycle adapters as separate contracts.
+4. Cross-host qualify the combined probe-20 candidate, then add page-table ownership and an AOT Windvale verifier that admits one embedded WVB, retaining pinned-QEMU evidence before Hyper-V qualification and treating broader traps and lifecycle adapters as separate contracts.
 5. Satisfy the remaining Decision 0057 native-retirement conditions, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.

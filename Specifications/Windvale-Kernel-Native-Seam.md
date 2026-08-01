@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel native seam version 12 is cross-host qualified for firmware probe 17 at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. Candidate version 13 added probe 18's WVA-owned Q35 poweroff export. Candidate version 14 supersedes that local candidate for firmware probe 19 by adding WVA-owned normalized entries for invalid opcode and general protection while preserving ABI 14, bridge 9, and shutdown version 1. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) owns qualified version 12; candidate [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns version 13; and candidate [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) owns version 14. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
+Kernel native seam version 12 is cross-host qualified for firmware probe 17 at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. Candidate version 13 added probe 18's WVA-owned Q35 poweroff export. Candidate version 14 adds WVA-owned normalized entries for invalid opcode and general protection; [Decision 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) composes bridge 10 and firmware probe 20 for ABI 15/context 7 without changing those WVA exception or shutdown contracts. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) owns qualified version 12; candidate [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns version 13; and candidate [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) owns version 14. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 
@@ -10,14 +10,14 @@ This contract prevents temporary C# machine-code generation from silently becomi
 
 | Layer | Current responsibility | Direction |
 | --- | --- | --- |
-| C# reference/recovery host | Compile WVB, select and verify ABI-14 native code, assemble, link, package PE32+, provide host oracles, and retain bounded loader, memory, exception, and bridge emitters while replacements are unavailable. | Remains an independent recovery and comparison path; does not define kernel policy. |
+| C# reference/recovery host | Compile WVB, select and verify ABI-15 native code, assemble, link, package PE32+, provide host oracles, and retain bounded loader, memory, exception, and bridge emitters while replacements are unavailable. | Remains an independent recovery and comparison path; does not define kernel policy. |
 | Shared portable-WVB backend | Lower verified portable semantics into the same versioned native ABI and WVO object used by host JIT/AOT evidence. | Replaces special OS instruction selection incrementally and becomes Windvale-written. |
 | WVA machine layer | Own explicit entry/exit and capability-adapter shims, register-frame mechanics, and later named privileged instructions that ordinary Windvale code must not execute ambiently. | Grows only from concrete kernel requirements with exact encodings and verification rules. |
 | `.wv` system layer | Own kernel policy, state transitions, diagnostics, allocation decisions, exception dispatch, and later runtime services once the shared native target can lower them. | Becomes the primary kernel implementation. |
 
 New kernel mechanisms should default to WVA for irreducible machine mechanics and `.wv` for policy. Additional raw C# instruction emission requires a documented compiler or assembler blocker and a named replacement seam.
 
-## Executable WVA version 5, bridge version 9, and portable probe version 5 seam
+## Executable WVA version 5, bridge version 10, and portable probe version 5 seam
 
 `Operating-System/Kernel/X64-Kernel-Shims.wva` assembles through the qualified WVA 1 reference/recovery assembler into a canonical WVO object:
 
@@ -33,15 +33,15 @@ New kernel mechanisms should default to WVA for irreducible machine mechanics an
 The kernel memory object calls `Windvale_kernel_wva_main` after switching to the kernel-owned stack. The inbound WVA tail transfer now reaches the verified native bridge. That bridge:
 
 1. reserves 120 aligned stack bytes and preserves the copied-handoff pointer from `RCX`;
-2. constructs the exact 104-byte execution context with version/size, WVB instruction budget 271, call-depth budget 2, zero service-table, record-arena, text-arena, service-failure-detail, argument-table/count, output-table, file-input-table, and reserved fields;
-3. passes the context pointer in `RDX` and calls the ABI-14 portable export `Main`;
+2. constructs the exact 112-byte execution context with version/size, WVB instruction budget 271, call-depth budget 2, zero service-table, record-arena, text-arena, service-failure-detail, argument-table/count, output-table, file-input-table, file-output-table, and reserved fields;
+3. passes the context pointer in `RDX` and calls the ABI-15 portable export `Main`;
 4. accepts only the complete packed result `RAX == 29`;
 5. returns failure 1 on a trap, exhausted budget, or wrong result; and
 6. restores `RCX` and tail-transfers to special compiler export `Windvale_kernel_main` on success.
 
 The compiler object imports `Windvale_kernel_write_byte`, which resolves to the WVA export. WVA tail-transfers each call to explicitly internal symbol `Windvale_kernel_x64_write_byte`. The public kernel capability boundary is therefore WVA-owned even though its current COM1 instruction sequence remains bootstrap code.
 
-The builder independently decodes the assembled WVA object and the bridge object and requires their exact architecture, section, symbol, code, and relocation shapes before linking. On the normal probe-19 path, the loader emits the final success and shutdown markers after the existing Main chain returns, then calls the WVA Q35 adapter. The two fault paths instead enter WVA stubs that normalize a CPU-no-error-code frame and a CPU-error-code frame before reaching one terminal handler. The ABI-14 selector and fragment verifier independently validate the portable module, borrowed-byte descriptors and reads, empty service list, and unused zero-length record/text/argument/output/file resources before its WVO is admitted.
+The builder independently decodes the assembled WVA object and the bridge object and requires their exact architecture, section, symbol, code, and relocation shapes before linking. On the normal probe-20 path, the loader emits the final success and shutdown markers after the existing Main chain returns, then calls the WVA Q35 adapter. That adapter requests poweroff through the fixed target port and enters a disabled-interrupt halt/retry fallback if the machine does not terminate. The two fault paths instead enter WVA stubs that normalize a CPU-no-error-code frame and a CPU-error-code frame before reaching one terminal handler. The ABI-15 selector and fragment verifier independently validate the portable module, borrowed-byte descriptors and reads, empty service list, and unused zero-length record/text/argument/output/file resources before its WVO is admitted.
 
 ## Portable native probe
 
@@ -57,7 +57,7 @@ This raw object is an explicit replacement seam, not new portable semantics or a
 
 ## Native compiler requirements for policy migration
 
-ABI 14 retains those portable semantics and adds exact Windows/Linux file-input leaves to ABI 13's native host boundary. The kernel still passes zero service-table, record/text-arena, argument, output, and file-input fields because its current module uses none of those facilities. Moving an allocator and future exception policy into ordinary `.wv` still requires:
+ABI 15 retains those portable semantics and adds exact Windows/Linux file-output leaves to ABI 14's native host boundary. The kernel still passes zero service-table, record/text-arena, argument, output, file-input, and file-output fields because its current module uses none of those facilities. Moving an allocator and future exception policy into ordinary `.wv` still requires:
 
 - `u64` values and checked address arithmetic;
 - explicit unsafe or system-visible bounded memory loads and stores;
@@ -68,7 +68,7 @@ These are requirements on the native target, not permission to change source sem
 
 ## Safety and migration limits
 
-WVA remains semantically checked assembly. Executable version 5 adds `push_i32` to version 4's named `disable_interrupts`, `halt`, and `out_u16` operations; it does not add arbitrary executable-byte directives, local branch labels, memory operands, or other privileged operations to WVA 1. The current 138-byte raw bridge exists because WVA lacks stack/register moves, comparisons, and conditional branches required by the ABI transition; it has one exact independently decoded shape and a named future replacement seam. The CPU-exception object's publication and terminal-policy portion is similarly bounded and independently checked because WVA and system-profile `.wv` lack the remaining explicit operations named above.
+WVA remains semantically checked assembly. Executable version 5 adds `push_i32` to version 4's named `disable_interrupts`, `halt`, and `out_u16` operations; it does not add arbitrary executable-byte directives, local branch labels, memory operands, or other privileged operations to WVA 1. The current 143-byte raw bridge exists because WVA lacks stack/register moves, comparisons, and conditional branches required by the ABI transition; it has one exact independently decoded shape and a named future replacement seam. The CPU-exception object's publication and terminal-policy portion is similarly bounded and independently checked because WVA and system-profile `.wv` lack the remaining explicit operations named above.
 
 The seam does not move the UEFI loader, memory-map scanner, arena initializer, allocator machine implementation, IDT publication, terminal COM1 policy, PE32+ packaging, or native compiler out of C#. The raw bridge and exception object establish verified link positions through which those pieces can be replaced without changing the loader-to-source evidence chain. Q35 poweroff and the two normalized trap-entry sequences are no longer emitted by C#; Stage 0 assembles, validates, links, and packages the WVA-authored bytes.
 
@@ -97,3 +97,5 @@ Firmware probe 17 retains those WVB, WVO, bridge, context, and WVA contracts whi
 Candidate firmware probe 18 keeps those qualified WVB, WVO, bridge, context, memory, and exception contracts unchanged. Its 382-byte executable-WVA version-4 shim object has SHA-256 `4cbc235de885ab9307974128e55d8c7472cc889349f94ca4b87587ee9399a08c` and adds the exact 19-byte Q35 shutdown function. Both candidate EFI images are 18,432 bytes: normal SHA-256 `035f7a25c263efdd0cec30c081ee36799b04ca85eba57d9f54a98e1ce06a6de5` and invalid-opcode SHA-256 `3d0cd8f66a7cd50826f2b66b3961cb06888956c72e3925d5f2837405f0c9dacf`. All 17 OS tests, focused assembler conformance, and both pinned-QEMU scenarios pass locally; the normal path emits `shutdown=poweroff` and exits QEMU with code 0, while the fault path retains host code 3 and emits no shutdown marker. Cross-host qualification remains pending.
 
 Candidate firmware probe 19 supersedes that local candidate without changing the last cross-host-qualified baseline. Its 620-byte executable-WVA version-5 shim object has SHA-256 `4bb07c28877905de6e57d79454e33402de4ac54048d5ce09a26b49ad0d8347a5` and owns both normalized entry stubs plus the unchanged Q35 adapter. All three EFI images are 20,992 bytes: normal SHA-256 `4f3566379fd55aa1707ac6182c5ec0dee176b35b5e17f8b74687374eb995de0f`, invalid-opcode SHA-256 `23ff09ee1d7b0fb20d770edbb76a7acb0bfc3b7a9b3c88571644092dc88ca9f2`, and general-protection SHA-256 `75b48804f0803a5c747158ed77a71942237d376af48d0276933c69c44ef60562`. All 18 OS tests, all 6 focused assembler tests, and all three pinned-QEMU scenarios pass locally. Cross-host qualification remains pending.
+
+Preliminary probe 20 retains probe 19's 620-byte WVA object, the 929-byte WVB, and the 8,010-byte service-free WVO while advancing to bridge 10 and ABI 15/context 7. Its 143-byte bridge code produces a 355-byte object with SHA-256 `bfa2b522b2bf22b3681b523c66c2986b1af366ba042adeddd8a106b5a96a5225`. All three images are 20,992 bytes: normal SHA-256 `d4a9e3625779dd3ef2a03fd71ecfe1502c1ad39378da7adbcf7e4b55636eed8c`, invalid-opcode SHA-256 `705670b1054589b80e3c918c03e9f751304e3f4b5bda77485f606433db68a757`, and general-protection SHA-256 `df45d8e0f69581e5ed3b46608598e6170413f80c5c1bbba9233e9842cdd7a04d`. These are implementation evidence until Decisions 0085 through 0087 complete exact cross-host and pinned-QEMU qualification.
