@@ -29,8 +29,10 @@ internal static class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "d69ab30a34a7281ff9911ab89220b405ad0944ede5130dd6f07c44baac1b9d6a";
-    private const string NATIVE_ARITHMETIC_CODE_SHA256 = "9ab91125f773fc56f6aafc4ac66ebb4596d2dc93f7eec713d13aaf1053558bf6";
-    private const string NATIVE_ARITHMETIC_WVO_SHA256 = "ef8bb7e4322ef7bce4ad9de0710a441f617bfb6dbc5e7d05b3e883fce1319cbc";
+    private const string NATIVE_ARITHMETIC_CODE_SHA256 = "8876722852c5cae70e61fb3d3f65bfb3c4d0651ec3f8adde63d2e258aaea44e9";
+    private const string NATIVE_ARITHMETIC_WVO_SHA256 = "6740c3d95f8746137d55ad1b339ad0bb772a4c3ccf6f29d0836576959057317a";
+    private const string NATIVE_CONTROL_CODE_SHA256 = "55f7ec906db8c8e06dc89ba0a55556cd1248d3a5491585134bbacbeaa6400d44";
+    private const string NATIVE_CONTROL_WVO_SHA256 = "7442f46a0a03b4870150b34ad75724e44cd9ded8b73e875db84130bb6c42f8f2";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
@@ -136,6 +138,30 @@ internal static class Program
 
         export fn Main() -> i32 {
             return -(((2 + 2) - (7 * 6)) - 4);
+        }
+        """;
+
+    private const string NATIVE_CONTROL_SOURCE = """
+        module Nativeˉcontrol profile portable;
+
+        export fn Main() -> i32 {
+            let Value: i32 = 6 * 7;
+            let Equal: bool = Value == 42;
+            let Accepted: bool = Equal == true;
+            if Accepted != false {
+                if Value != 41 {
+                    if Value < 43 {
+                        if Value <= 42 {
+                            if Value > 41 {
+                                if Value >= 42 {
+                                    if !false { return Value; }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return 0;
         }
         """;
 
@@ -1060,10 +1086,11 @@ internal static class Program
         var First = X64ˉnativeˉbackend.Compile(Verified);
         var Second = X64ˉnativeˉbackend.Compile(Verified);
         Equal(1, First.Module.Functions.Length);
-        Equal(2, First.Module.Functions[0].Operations.Length);
-        True(First.Module.Functions[0].Operations[0] is Nativeˉi32ˉconstant { Result: 0, Value: 42 },
+        Equal(1, First.Module.Functions[0].Blocks.Length);
+        Equal(1, First.Module.Functions[0].Blocks[0].Operations.Length);
+        True(First.Module.Functions[0].Blocks[0].Operations[0] is Nativeˉi32ˉconstant { Result: 0, Value: 42 },
             "Native machine IR did not retain the constant definition.");
-        True(First.Module.Functions[0].Operations[1] is Nativeˉreturn { Value: 0 },
+        True(First.Module.Functions[0].Blocks[0].Terminator is Nativeˉreturn { Value: 0 },
             "Native machine IR did not retain the return use.");
         Sequenceˉequal(new byte[] { 0xB8, 0x2A, 0x00, 0x00, 0x00, 0xC3 }, First.Fragment.Code);
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
@@ -1113,20 +1140,23 @@ internal static class Program
         Equal(42, Arithmeticˉinterpreted.Exitˉcode);
         var Arithmeticˉfirst = X64ˉnativeˉbackend.Compile(Arithmeticˉverified);
         var Arithmeticˉsecond = X64ˉnativeˉbackend.Compile(Arithmeticˉverified);
+        var Arithmeticˉoperations = Arithmeticˉfirst.Module.Functions[0].Blocks
+            .SelectMany(Block => Block.Operations)
+            .ToImmutableArray();
         True(
-            Arithmeticˉfirst.Module.Functions[0].Operations.OfType<Nativeˉi32ˉbinary>()
+            Arithmeticˉoperations.OfType<Nativeˉi32ˉbinary>()
                 .Any(Operation => Operation.Kind == Nativeˉi32ˉbinaryˉkind.Add),
             "Native machine IR did not retain checked i32 addition.");
         True(
-            Arithmeticˉfirst.Module.Functions[0].Operations.OfType<Nativeˉi32ˉbinary>()
+            Arithmeticˉoperations.OfType<Nativeˉi32ˉbinary>()
                 .Any(Operation => Operation.Kind == Nativeˉi32ˉbinaryˉkind.Subtract),
             "Native machine IR did not retain checked i32 subtraction.");
         True(
-            Arithmeticˉfirst.Module.Functions[0].Operations.OfType<Nativeˉi32ˉbinary>()
+            Arithmeticˉoperations.OfType<Nativeˉi32ˉbinary>()
                 .Any(Operation => Operation.Kind == Nativeˉi32ˉbinaryˉkind.Multiply),
             "Native machine IR did not retain checked i32 multiplication.");
         True(
-            Arithmeticˉfirst.Module.Functions[0].Operations.Any(Operation => Operation is Nativeˉi32ˉnegate),
+            Arithmeticˉoperations.Any(Operation => Operation is Nativeˉi32ˉnegate),
             "Native machine IR did not retain checked i32 negation.");
         Sequenceˉequal(Arithmeticˉfirst.Fragment.Code, Arithmeticˉsecond.Fragment.Code);
         Equal(2, Arithmeticˉfirst.Fragment.Symbols.Length);
@@ -1135,11 +1165,11 @@ internal static class Program
         var Arithmeticˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉfirst.Fragment);
         var Arithmeticˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Arithmeticˉsecond.Fragment);
         Sequenceˉequal(Arithmeticˉfirstˉobject, Arithmeticˉsecondˉobject);
-        Equal(239, Arithmeticˉfirst.Fragment.Code.Length);
+        Equal(745, Arithmeticˉfirst.Fragment.Code.Length);
         Equal(
             NATIVE_ARITHMETIC_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirst.Fragment.Code.AsSpan()));
-        Equal(341, Arithmeticˉfirstˉobject.Length);
+        Equal(847, Arithmeticˉfirstˉobject.Length);
         Equal(
             NATIVE_ARITHMETIC_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirstˉobject.AsSpan()));
@@ -1150,6 +1180,118 @@ internal static class Program
         Equal(42, X64ˉnativeˉexecutor.Executeˉi32(Arithmeticˉfirst.Fragment));
         Equal(42, X64ˉnativeˉexecutor.Executeˉi32(
             Arithmeticˉfirst.Fragment with { Code = Arithmeticˉlinked.Imageˉbytes }));
+
+        var Controlˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_CONTROL_SOURCE));
+        var Controlˉinterpreted = new Referenceˉruntime(
+            Controlˉverified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Controlˉinterpreted.Exitˉcode);
+        var Controlˉfirst = X64ˉnativeˉbackend.Compile(Controlˉverified);
+        var Controlˉsecond = X64ˉnativeˉbackend.Compile(Controlˉverified);
+        var Controlˉfunction = Controlˉfirst.Module.Functions[0];
+        var Controlˉoperations = Controlˉfunction.Blocks
+            .SelectMany(Block => Block.Operations)
+            .ToImmutableArray();
+        foreach (var Kind in Enum.GetValues<Nativeˉi32ˉcomparisonˉkind>())
+        {
+            True(
+                Controlˉoperations.OfType<Nativeˉi32ˉcomparison>()
+                    .Any(Operation => Operation.Kind == Kind),
+                $"Native machine IR did not retain i32 comparison '{Kind}'.");
+        }
+        foreach (var Kind in Enum.GetValues<Nativeˉboolˉcomparisonˉkind>())
+        {
+            True(
+                Controlˉoperations.OfType<Nativeˉboolˉcomparison>()
+                    .Any(Operation => Operation.Kind == Kind),
+                $"Native machine IR did not retain bool comparison '{Kind}'.");
+        }
+        True(
+            Controlˉoperations.Any(Operation => Operation is Nativeˉboolˉnot),
+            "Native machine IR did not retain bool negation.");
+        True(
+            Controlˉfunction.Blocks.Any(Block => Block.Terminator is Nativeˉbranch),
+            "Native machine IR did not retain a conditional branch.");
+        True(
+            Controlˉfunction.Blocks.Count(Block => Block.Terminator is Nativeˉreturn) >= 2,
+            "Native machine IR did not retain structured early returns.");
+        Sequenceˉequal(Controlˉfirst.Fragment.Code, Controlˉsecond.Fragment.Code);
+        _ = Nativeˉfragmentˉverifier.Verify(Controlˉfirst.Fragment);
+        var Controlˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉfirst.Fragment);
+        var Controlˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉsecond.Fragment);
+        Sequenceˉequal(Controlˉfirstˉobject, Controlˉsecondˉobject);
+        Equal(2428, Controlˉfirst.Fragment.Code.Length);
+        Equal(
+            NATIVE_CONTROL_CODE_SHA256,
+            Objectˉdigest.Calculateˉsha256(Controlˉfirst.Fragment.Code.AsSpan()));
+        Equal(2530, Controlˉfirstˉobject.Length);
+        Equal(
+            NATIVE_CONTROL_WVO_SHA256,
+            Objectˉdigest.Calculateˉsha256(Controlˉfirstˉobject.AsSpan()));
+        var Controlˉlinked = Linkˉsuccess(
+            [Controlˉfirstˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Sequenceˉequal(Controlˉfirst.Fragment.Code, Controlˉlinked.Imageˉbytes);
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(Controlˉfirst.Fragment));
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(
+            Controlˉfirst.Fragment with { Code = Controlˉlinked.Imageˉbytes }));
+
+        var Falseˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉfalseˉpath profile portable; export fn Main() -> i32 { if 41 == 42 { return 0; } return 42; }"));
+        var Falseˉinterpreted = new Referenceˉruntime(
+            Falseˉverified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Falseˉinterpreted.Exitˉcode);
+        var Falseˉnative = X64ˉnativeˉbackend.Compile(Falseˉverified);
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(Falseˉnative.Fragment));
+        var Falseˉobject = Nativeˉobjectˉsink.Writeˉwvo(Falseˉnative.Fragment);
+        var Falseˉlinked = Linkˉsuccess(
+            [Falseˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(
+            Falseˉnative.Fragment with { Code = Falseˉlinked.Imageˉbytes }));
+
+        var Corruptedˉzero = Controlˉfirst.Fragment.Code.ToArray();
+        Corruptedˉzero[7] = 0x90;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Controlˉfirst.Fragment with { Code = Corruptedˉzero.ToImmutableArray() }));
+
+        var Corruptedˉcondition = Controlˉfirst.Fragment.Code.ToArray();
+        var Comparisonˉinstruction = Corruptedˉcondition.AsSpan().IndexOf(new byte[] { 0x39, 0xC8, 0x0F });
+        True(Comparisonˉinstruction >= 0, "Native control fragment did not contain a comparison instruction.");
+        Corruptedˉcondition[Comparisonˉinstruction + 3] = 0x90;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Controlˉfirst.Fragment with { Code = Corruptedˉcondition.ToImmutableArray() }));
+
+        var Corruptedˉtarget = Controlˉfirst.Fragment.Code.ToArray();
+        var Conditionalˉbranch = Corruptedˉtarget.AsSpan().IndexOf(new byte[] { 0x0F, 0x85 });
+        True(Conditionalˉbranch >= 0, "Native control fragment did not contain a conditional branch.");
+        BinaryPrimitives.WriteInt32LittleEndian(
+            Corruptedˉtarget.AsSpan(Conditionalˉbranch + 2, sizeof(int)),
+            0);
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Controlˉfirst.Fragment with { Code = Corruptedˉtarget.ToImmutableArray() }));
+
+        var Corruptedˉbackward = Controlˉfirst.Fragment.Code.ToArray();
+        var Frameˉbytes = BinaryPrimitives.ReadInt32LittleEndian(
+            Corruptedˉbackward.AsSpan(3, sizeof(int)));
+        var Bodyˉoffset = 9 + (Frameˉbytes / sizeof(int) * 7);
+        var Falseˉbranchˉdisplacement = Conditionalˉbranch + 7;
+        BinaryPrimitives.WriteInt32LittleEndian(
+            Corruptedˉbackward.AsSpan(Falseˉbranchˉdisplacement, sizeof(int)),
+            Bodyˉoffset - (Falseˉbranchˉdisplacement + sizeof(int)));
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Controlˉfirst.Fragment with { Code = Corruptedˉbackward.ToImmutableArray() }));
 
         var Minimumˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
             "module Nativeˉminimum profile portable; export fn Main() -> i32 { return -2147483647 - 1; }"));
@@ -1237,6 +1379,10 @@ internal static class Program
             Code = new byte[] { 0x90, 0x2A, 0x00, 0x00, 0x00, 0xC3 }.ToImmutableArray(),
         };
         Throwsˉnative("WVN3030", () => _ = X64ˉnativeˉexecutor.Executeˉi32(Invalidˉcode));
+
+        var Unsupportedˉloop = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉloop profile portable; export fn Main() -> i32 { var Value: i32 = 0; while Value < 1 { Value = Value + 1; } return Value; }"));
+        Throwsˉnative("WVN2005", () => _ = X64ˉnativeˉbackend.Compile(Unsupportedˉloop));
 
         var Unsupported = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
             "module Nativeˉcalls profile portable; export fn Main() -> i32 { return Answer(); } fn Answer() -> i32 { return 42; }"));
