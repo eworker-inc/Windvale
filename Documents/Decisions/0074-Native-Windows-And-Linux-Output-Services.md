@@ -1,7 +1,7 @@
 # Decision 0074: Native Windows and Linux output services
 
 - Date: 2026-08-01
-- Status: Qualification candidate
+- Status: Qualified on Windows and Debian x64
 - Extends: [Decision 0073](0073-Native-Argument-Table-And-Process-Input-Services.md)'s execution-owned host-input pattern
 - Advances: Native ABI 13, execution-context version 5, kernel native bridge 8, and firmware probe 15
 - Retains: Service-table version 4, WVB 1.6, WVO 1.0, and all generated service-call shapes
@@ -31,10 +31,16 @@ Windvale always writes strict UTF-8 bytes followed by LF. File and pipe behavior
 
 Stage 0 still constructs, verifies, allocates, and publishes executable leaves and the output table. `file.read_bytes` remains the sole managed service callback. This decision does not claim a standalone PE/ELF host, Windvale-owned runtime construction, or .NET retirement.
 
-## Candidate evidence
+## Qualification evidence
 
 Focused Windows execution covers direct JIT and linked WVO/AOT output, separate console and diagnostic handles, empty lines, euro and supplementary-Unicode text, maximum argument-table Unicode output, exact leaf reconstruction and corruption, authorization and missing-channel preflight, and output rejection mapping to `WVR3029` in both the reference and native runtimes. The zero-warning Release build passes, the native-output case takes 43 milliseconds, and Standard passes all 56 tests in 213.076 seconds. All 15 deterministic OS tests pass.
 
 The ABI-13 rebuild keeps the service-free kernel WVB at 929 bytes and WVO at 8,010 bytes. Bridge 8 has 133 code bytes and produces a 345-byte object with SHA-256 `0a0393457200dbf5ecfbb667c6c283510a6eb13a3e7e77537a0b6d8e0f503d68`. Firmware probe 15 remains 15,872 bytes with SHA-256 `d716b77a91646da6b423bacb1faa6d70f5a097241c610fe49291b068f33d5f29`.
 
-Pinned QEMU 11.0/Q35/TCG emits the complete version-15 marker for the exact 15,872-byte image and returns guest-controlled host exit code 1. Exact-commit cross-host Qualification, portable-artifact comparison, and independent GitHub verification are still required before this decision becomes qualified.
+Exact commit `66b273f7e0839c7ebcd504cfdfdb9f0a4aad787e`, tree `278582a0f2f2465738b9ef98dd91df96ce52ec27`, was published to both configured remotes and archived as 2,909,424 bytes with SHA-256 `d36f20e21e78f31e02ac08d13452a7e759fd620a2492565b130080442f99c8ad`. Its size and digest matched after transfer to the isolated Debian GNU/Linux 12 x64 QA host with .NET SDK `10.0.302`.
+
+Windows and Debian pass zero-warning Release builds, all 56 tests, exact compiler reproduction, and the complete native CLI verifier. Their suite times are 232.193 and 247.986 seconds; their native-output cases take 0.042 and 0.037 seconds. The 15,563-byte Windows conformance report has SHA-256 `c34a2199e548631323b2186dda0dcf8ffcb0a3a3c6eb7d53d9a405c314837a4b`; its 11,918-byte timing report has SHA-256 `70fc2082473a3b3c56f74c132f0ad626ae676bf23f3e39c9cf4f8a5c1927341f`. The 15,473-byte Debian report has SHA-256 `0a8116b03185d7344dd47fb0996c1cc9402c3b9583522574a2a77b0e2fa1f5cf`; its 11,526-byte timing report has SHA-256 `10d2dc708d7c43505a8fd52754cea677da0be1197dc6787057312e6a2720015e`. Their normalized contracts match exactly.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,647 bytes, match byte for byte and retain canonical manifest SHA-256 `11ac1d4a57fce3648004d7a6002e6124d6e2fbeefc108b31bfe305523b2de0de`. The 2,299,260-byte Debian evidence bundle has SHA-256 `20f600498fa1257d6586d0e3f33f9e5e1e057850f6c4cfe10547d01b1d9599ef`. Both hosts pass all 15 OS tests. Pinned QEMU 11.0/Q35/TCG emits the complete version-15 marker for the exact image and returns guest-controlled host exit code 1; the Debian QA host does not provide QEMU.
+
+GitHub [Verify run 30701244938](https://github.com/eworker-inc/Windvale/actions/runs/30701244938) passes its independent Windows and Linux jobs for the exact candidate. After evidence retrieval and comparison, the resolved QA directory, transferred source archive, and remote evidence bundle were removed and confirmed absent.
