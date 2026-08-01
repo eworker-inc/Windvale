@@ -41,7 +41,9 @@ The frontend and semantic model are shared. Backend and execution-tier differenc
 
 The qualified probe now boots through firmware shutdown, owns a 64 KiB arena and 8 KiB stack, and runs one ordinary portable WVB module through the shared ABI-14 AOT path before compiler-generated system source completes. [Decision 0081](../Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) cross-host qualifies probe 17 at exact commit `ba2cf69`: the first allocated page owns one vector-6 gate, the ordinary image reports `cpu-exceptions=armed`, and an explicit `UD2` image reaches a fixed terminal panic handler. Both exact images pass pinned QEMU. The handler's QEMU exit is negative test transport, not a platform lifecycle API.
 
-This is not yet a functioning kernel or general trap system. Other exception frames, page and double faults, TSS/IST, interrupt controllers, recovery, processes, clean platform shutdown, and the in-guest WVB verifier/runtime remain separately specified and verified slices. Windvale `WVR` runtime traps remain packed semantic statuses and are not redefined as CPU faults.
+Candidate [Decision 0085](../Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) adds the first real lifecycle adapter without changing portable semantics: a WVA-authored, independently verified function requests poweroff through the pinned Q35 PM control interface after the normal kernel path completes. This is deliberately target-specific; ACPI discovery, Hyper-V and physical-machine adapters, and process/service shutdown policy remain separate contracts.
+
+This is not yet a functioning kernel or general trap system. Other exception frames, page and double faults, TSS/IST, interrupt controllers, recovery, processes, general platform lifecycle coordination, and the in-guest WVB verifier/runtime remain separately specified and verified slices. Windvale `WVR` runtime traps remain packed semantic statuses and are not redefined as CPU faults.
 
 ## Capability profiles
 

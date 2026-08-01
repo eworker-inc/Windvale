@@ -22,7 +22,7 @@ internal static class Program
         new("kernel memory planner selects one bounded conventional arena", Memoryˉplannerˉselectsˉboundedˉarena),
         new("kernel memory planner rejects malformed and hostile maps", Memoryˉplannerˉrejectsˉmalformedˉmaps),
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
-        new("kernel WVA shims bridge Windvale Main and console output", Kernelˉassemblyˉshimˉbridgesˉmain),
+        new("kernel WVA shims bridge Main, console output, and Q35 shutdown", Kernelˉassemblyˉshimˉbridgesˉmain),
         new("portable WVB lowers into the bounded kernel native probe", Kernelˉnativeˉprobeˉisˉportableˉandˉbounded),
         new("x86-64 kernel compiler emits deterministic verified WVO", Kernelˉcompilerˉemitsˉverifiedˉobject),
         new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
@@ -411,9 +411,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(17_920, First.Length);
+        Equal(18_432, First.Length);
         Equal(
-            "d2c0a7e4e5e1605fc8639c05ab27ad07ee2b015ad2dc151d8637830b8acb3f18",
+            "035f7a25c263efdd0cec30c081ee36799b04ca85eba57d9f54a98e1ce06a6de5",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -425,9 +425,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(17_920, First.Length);
+        Equal(18_432, First.Length);
         Equal(
-            "26ccfaf862024e022339ca9fa8114c71b4fe601fe59a806d366e1d330b6d106d",
+            "3d0cd8f66a7cd50826f2b66b3961cb06888956c72e3925d5f2837405f0c9dacf",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -446,7 +446,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 17\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
+            "windvale-os-boot 18\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -472,6 +472,13 @@ internal static class Program
         Equal(
             1 + Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER.Length,
             Countˉsequence(Code, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
+        Equal(1, Countˉsequence(
+            Code,
+            [0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
+                0x66, 0xEF, 0xFA, 0xF4, 0xE9]));
+        Equal(0, Countˉsequence(
+            Code,
+            [0xBA, 0xF4, 0x00, 0x00, 0x00, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xEF]));
         Equal(3, Countˉsequence(Code, [0xFA, 0xF4, 0xE9]));
     }
 
@@ -513,34 +520,39 @@ internal static class Program
         var First = Kernelˉassemblyˉshim.Buildˉobject();
         var Second = Kernelˉassemblyˉshim.Buildˉobject();
         Sequenceˉequal(First, Second);
-        Equal(291, First.Length);
+        Equal(382, First.Length);
         Equal(
-            "332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc",
+            "4cbc235de885ab9307974128e55d8c7472cc889349f94ca4b87587ee9399a08c",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.AsSpan()).Value;
         Equal(1, Object.Sections.Length);
         True(Object.Sections[0].Kind == Objectˉsectionˉkind.Code, "The WVA shim is not code.");
         Sequenceˉequal(
-            [(byte)0xE9, 0, 0, 0, 0, 0xE9, 0, 0, 0, 0],
+            [(byte)0xE9, 0, 0, 0, 0, 0xE9, 0, 0, 0, 0,
+                0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
+                0x66, 0xEF, 0xFA, 0xF4, 0xE9, 0, 0, 0, 0],
             Object.Sections[0].Data);
-        Equal(4, Object.Symbols.Length);
+        Equal(5, Object.Symbols.Length);
         Equal(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Object.Symbols[0].Name);
         True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The WVA console shim is not exported.");
         Equal(Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL, Object.Symbols[1].Name);
         True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Export, "The WVA Main shim is not exported.");
-        Equal(Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL, Object.Symbols[2].Name);
-        True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Import, "The native WVB bridge is not imported by WVA.");
-        Equal(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL, Object.Symbols[3].Name);
-        True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Import, "The x64 byte writer is not imported by WVA.");
-        Equal(2, Object.Relocations.Length);
+        Equal(Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL, Object.Symbols[2].Name);
+        True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Export, "The Q35 shutdown shim is not exported.");
+        Equal(19u, Object.Symbols[2].Size);
+        Equal(Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL, Object.Symbols[3].Name);
+        True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Import, "The native WVB bridge is not imported by WVA.");
+        Equal(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL, Object.Symbols[4].Name);
+        True(Object.Symbols[4].Binding == Objectˉsymbolˉbinding.Import, "The x64 byte writer is not imported by WVA.");
+        Equal(3, Object.Relocations.Length);
         True(
             Object.Relocations[0] is
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 1,
-                Symbolˉindex: 3,
+                Symbolˉindex: 4,
                 Addend: -4,
             },
             "The WV-to-WVA console transfer does not use the canonical relative relocation.");
@@ -550,10 +562,20 @@ internal static class Program
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 6,
-                Symbolˉindex: 2,
+                Symbolˉindex: 3,
                 Addend: -4,
             },
             "The WVA-to-native-WVB transfer does not use the canonical relative relocation.");
+        True(
+            Object.Relocations[2] is
+            {
+                Kind: Objectˉrelocationˉkind.Relativeˉi32,
+                Sectionˉindex: 0,
+                Offset: 25,
+                Symbolˉindex: 2,
+                Addend: -4,
+            },
+            "The Q35 shutdown halt fallback is not a closed WVA-owned loop.");
     }
 
     private static void Kernelˉnativeˉprobeˉisˉportableˉandˉbounded()

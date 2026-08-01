@@ -62,3 +62,4 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Kernel memory](Windvale-Kernel-Memory.md)
 - [Kernel native seam](Windvale-Kernel-Native-Seam.md)
 - [Kernel CPU exceptions](Windvale-Kernel-Exceptions.md)
+- [Kernel shutdown](Windvale-Kernel-Shutdown.md)

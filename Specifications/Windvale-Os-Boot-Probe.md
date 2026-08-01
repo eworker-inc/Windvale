@@ -2,19 +2,21 @@
 
 ## Status and purpose
 
-Firmware boot probe version 17 is cross-host qualified at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. It adds the first kernel-owned terminal x86-64 CPU exception boundary to the ABI-14/context-6 probe while retaining UEFI entry, structural table validation, bounded memory-map acquisition, bounded termination of boot services, a compiler-generated Windvale kernel-entry handoff, one kernel-owned physical arena, a zeroing page allocator, a copied handoff, an owned kernel stack, and one ordinary portable-WVB module AOT-compiled through the shared native backend. It additionally dedicates the first allocated page to a vector-6-only IDT and supplies separately qualified normal and invalid-opcode images.
+Firmware boot probe version 18 is an implemented clean-Q35-shutdown candidate. It retains version 17's UEFI entry, ABI-14/context-6 portable AOT path, kernel handoff, owned memory and stack, and vector-6 terminal exception boundary, then replaces the normal testing-only debug exit with a WVA-owned Q35 poweroff request. Version 17 remains cross-host qualified at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`; version 18 cross-host qualification is pending.
 
-Decisions 0045 through 0076 own the qualified probe progression through version 16 and ABI 14. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) owns qualified probe 17. PE32+ construction remains owned by [Windvale-Uefi-Application.md](Windvale-Uefi-Application.md), the special system subset by [Windvale-X64-Kernel-Target.md](Windvale-X64-Kernel-Target.md), the internal call boundary by [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md), memory ownership by [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md), CPU exception mechanics by [Windvale-Kernel-Exceptions.md](Windvale-Kernel-Exceptions.md), native implementation roles by [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md), the execution context by [Windvale-Native-Execution-Context.md](Windvale-Native-Execution-Context.md), and emulator inputs by [Windvale-Os-Boot-Environment.md](Windvale-Os-Boot-Environment.md).
+Decisions 0045 through 0076 own the qualified probe progression through version 16 and ABI 14. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) owns qualified probe 17; candidate [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns probe 18. PE32+ construction remains owned by [Windvale-Uefi-Application.md](Windvale-Uefi-Application.md), the special system subset by [Windvale-X64-Kernel-Target.md](Windvale-X64-Kernel-Target.md), the internal call boundary by [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md), memory ownership by [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md), CPU exception mechanics by [Windvale-Kernel-Exceptions.md](Windvale-Kernel-Exceptions.md), Q35 poweroff by [Windvale-Kernel-Shutdown.md](Windvale-Kernel-Shutdown.md), native implementation roles by [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md), the execution context by [Windvale-Native-Execution-Context.md](Windvale-Native-Execution-Context.md), and emulator inputs by [Windvale-Os-Boot-Environment.md](Windvale-Os-Boot-Environment.md).
 
 The ABI and table rules follow [UEFI 2.11 x64 calling conventions](https://uefi.org/specs/UEFI/2.11/02_Overview.html#detailed-calling-conventions), the [EFI System Table](https://uefi.org/specs/UEFI/2.11/04_EFI_System_Table.html), the [`GetMemoryMap` memory-allocation contract](https://uefi.org/specs/UEFI/2.11/07_Services_Boot_Services.html#efi-boot-services-getmemorymap), and the [`ExitBootServices` transition contract](https://uefi.org/specs/UEFI/2.11/07_Services_Boot_Services.html#efi-boot-services-exitbootservices).
 
 ## Artifact construction
 
-The bootstrap builder embeds `Operating-System/Kernel/Hello-World.wv`, `Native-Wvb-Probe.wv`, and `X64-Kernel-Shims.wva` as deterministic source inputs. The special kernel source passes through the ordinary frontend/typed WIR and its versioned system target. The portable probe passes through ordinary WVB production, mandatory verification, the shared ABI-14 selector/fragment verifier, and the same WVO sink used for host AOT. It must have an empty native service list. The reference/recovery assembler independently verifies the WVA shims. The builder also creates loader, kernel-memory, CPU-exception, exact native-bridge, and x64 byte-adapter WVO objects. The CPU-exception object has an exact independently validated vector-6 table installer and terminal handler. Both complete images share that object; the explicit `invalid-opcode` image differs at only the specified fault-injection boundary. The existing linker resolves all calls, tail jumps, and RIP-relative data relocations, independently reconstructs the base-zero image, and passes verified code/read-only-data bytes to UEFI application writer version 3. No generated WVB, WVO, EFI application, FAT view, variable store, firmware image, or captured memory map is committed.
+The bootstrap builder embeds `Operating-System/Kernel/Hello-World.wv`, `Native-Wvb-Probe.wv`, and `X64-Kernel-Shims.wva` as deterministic source inputs. The special kernel source passes through the ordinary frontend/typed WIR and its versioned system target. The portable probe passes through ordinary WVB production, mandatory verification, the shared ABI-14 selector/fragment verifier, and the same WVO sink used for host AOT. It must have an empty native service list. The reference/recovery assembler independently verifies the WVA shims, including the exact Q35 shutdown body and self-loop relocation. The builder also creates loader, kernel-memory, CPU-exception, exact native-bridge, and x64 byte-adapter WVO objects. The CPU-exception object has an exact independently validated vector-6 table installer and terminal handler. Both complete images share that object; the explicit `invalid-opcode` image differs at only the specified fault-injection boundary. The existing linker resolves all calls, tail jumps, and RIP-relative data relocations, independently reconstructs the base-zero image, and passes verified code/read-only-data bytes to UEFI application writer version 3. No generated WVB, WVO, EFI application, FAT view, variable store, firmware image, or captured memory map is committed.
 
 The linked image is position-independent. A private OS label builder resolves local loader, adapter, and exact bridge branches and exposes only typed external relocation holes. Shared compiler-native instruction selection remains isolated behind ABI 14 and publishes calls and data through verified WVO relocations; the special system target remains separate pending kernel services and broader value coverage.
 
-The canonical special compiler object remains 2,564 bytes with SHA-256 `f2c28eb5f020f59b8acb480fc8dc62e393ebb14405b3c12ecb05076176d44420`. The portable probe WVB is 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`; its service-free 8,010-byte ABI-14 WVO remains SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`. The qualified 350-byte native bridge has SHA-256 `3cbf50a4828a1a69ca7441a667cb95e569055468c345ed26b8a580fda3facfc5`; the 291-byte WVA seam remains SHA-256 `332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc`. Both probe-17 images are exactly 17,920 bytes. The normal image has SHA-256 `d2c0a7e4e5e1605fc8639c05ab27ad07ee2b015ad2dc151d8637830b8acb3f18`; the invalid-opcode image has SHA-256 `26ccfaf862024e022339ca9fa8114c71b4fe601fe59a806d366e1d330b6d106d`.
+The canonical special compiler object remains 2,564 bytes with SHA-256 `f2c28eb5f020f59b8acb480fc8dc62e393ebb14405b3c12ecb05076176d44420`. The portable probe WVB is 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`; its service-free 8,010-byte ABI-14 WVO remains SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`. The 350-byte native bridge remains SHA-256 `3cbf50a4828a1a69ca7441a667cb95e569055468c345ed26b8a580fda3facfc5`. The candidate version-4 WVA seam is 382 bytes with SHA-256 `4cbc235de885ab9307974128e55d8c7472cc889349f94ca4b87587ee9399a08c`.
+
+Both probe-18 images are exactly 18,432 bytes. The normal clean-shutdown candidate has SHA-256 `035f7a25c263efdd0cec30c081ee36799b04ca85eba57d9f54a98e1ce06a6de5`; the invalid-opcode image has SHA-256 `3d0cd8f66a7cd50826f2b66b3961cb06888956c72e3925d5f2837405f0c9dacf`. The previous exact probe-17 identities remain the cross-host-qualified baseline.
 
 ## Entry and firmware-call frame
 
@@ -29,7 +31,7 @@ On x64 UEFI entry, `RCX` carries the image handle, `RDX` carries the `EFI_SYSTEM
 - a three-attempt exit counter plus a flag that distinguishes pre-exit cleanup from terminal recovery after an attempted exit; and
 - after successful exit, a 48-byte handoff record overlaid on locals no longer needed by firmware calls.
 
-The probe uses only volatile x64 registers and restores the complete frame when a failure safely returns before any `ExitBootServices` attempt. A successful exit cannot return to firmware: if the QEMU completion device is absent, the probe disables interrupts and remains in a halt loop. A failure after the first exit attempt also reports and halts because firmware may have partially shut down boot services. Earlier failures return `EFI_DEVICE_ERROR`.
+The probe uses only volatile x64 registers and restores the complete frame when a failure safely returns before any `ExitBootServices` attempt. A successful exit cannot return to firmware. Probe 18's normal path calls the terminal WVA Q35 poweroff adapter; if Q35 does not power off, that adapter disables interrupts, halts, and retries after an admitted wake. A failure after the first exit attempt also reports through debug-exit and halts because firmware may have partially shut down boot services. Earlier failures return `EFI_DEVICE_ERROR`.
 
 ## Structural table boundary
 
@@ -43,7 +45,7 @@ Before calling firmware, the probe requires:
 - revision at least EFI 1.02, header size at least 240 bytes, and reserved field zero; and
 - non-null `GetMemoryMap`, `AllocatePool`, `FreePool`, and `ExitBootServices` function pointers.
 
-Probe 17 still does not recompute either table CRC and therefore calls this structural validation, not complete table authentication.
+Probe 18 still does not recompute either table CRC and therefore calls this structural validation, not complete table authentication.
 
 ## Bounded memory-map sequence
 
@@ -81,14 +83,14 @@ After successful exit, the loader preserves the retained map values in volatile 
 
 The compiler-generated wrapper validates the `WVKHAND1` envelope, then calls the independent memory object. That object revalidates every descriptor, selects the lowest eligible 16-page `EfiConventionalMemory` arena from 1 MiB through 4 GiB, rejects contradictory overlap, clears all 64 KiB, initializes `WVKMEM01`, copies the handoff, and completes one zeroing page allocation. It dedicates that page to CPU exceptions, switches to the two-page owned stack, disables maskable interrupts, constructs the vector-6-only IDT from live `CS` and the complete terminal-handler address, and publishes it with `LIDT` before calling WVA export `Windvale_kernel_wva_main`.
 
-The WVA tail reaches the exact native bridge, which preserves the handoff, constructs the ABI-14 version-6 execution context with budgets 271/2 and zero service-table, record-arena, text-arena, argument-table/count, output-table, file-input-table, failure-detail, and reserved fields, calls portable `Main`, and accepts only packed result 29 after its immutable-byte checks. Only then does it restore the handoff and tail-transfer to compiler-generated special `Windvale_kernel_main`. After Main returns, the normal image returns to the loader; the explicit invalid-opcode image executes `UD2` and terminates through vector 6. Any runtime trap, wrong result, special-Main failure, or unexpected return from the exception boundary becomes terminal post-firmware failure. [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md) defines the incoming record, [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md) defines ownership and layout, [Windvale-Kernel-Exceptions.md](Windvale-Kernel-Exceptions.md) defines the IDT and terminal handler, and [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md) defines implementation roles.
+The WVA tail reaches the exact native bridge, which preserves the handoff, constructs the ABI-14 version-6 execution context with budgets 271/2 and zero service-table, record-arena, text-arena, argument-table/count, output-table, file-input-table, failure-detail, and reserved fields, calls portable `Main`, and accepts only packed result 29 after its immutable-byte checks. Only then does it restore the handoff and tail-transfer to compiler-generated special `Windvale_kernel_main`. After Main returns, the normal image returns to the loader, which emits final success/shutdown evidence and calls WVA export `Windvale_kernel_x64_q35_shutdown`; the explicit invalid-opcode image executes `UD2` before that return and terminates through vector 6. Any runtime trap, wrong result, special-Main failure, unexpected exception return, or impossible shutdown return becomes terminal post-firmware failure. [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md) defines the incoming record, [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md) defines ownership and layout, [Windvale-Kernel-Exceptions.md](Windvale-Kernel-Exceptions.md) defines the IDT and terminal handler, [Windvale-Kernel-Shutdown.md](Windvale-Kernel-Shutdown.md) defines Q35 poweroff, and [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md) defines implementation roles.
 
 ## Serial and completion evidence
 
 COM1 is initialized at I/O base `0x3F8` for 8-N-1 operation. The transmitter is polled before every byte. Successful execution emits exact ASCII/LF bytes:
 
 ```text
-windvale-os-boot 17
+windvale-os-boot 18
 entry=pass
 system-table=pass
 memory-map=pass
@@ -102,9 +104,10 @@ native-context=pass
 native-wvb=pass
 windvale-source=pass
 status=pass
+shutdown=poweroff
 ```
 
-The `memory-map`, `boot-services`, memory, allocator, stack, Hello World, CPU-exception, native-context, native-WVB, source-pass, and success lines are all emitted only after `ExitBootServices` returns success. `memory-owned=pass`, `allocator=pass`, `kernel-stack=pass`, and Hello World are selected from typed WIR and emitted through relocatable calls in the special compiler-generated Main after the memory transition and stack switch. Each byte crosses the WVA output shim. The loader emits `cpu-exceptions=armed` only after the IDT installation and both Main paths return normally. It then emits `native-context=pass` and `native-wvb=pass` because the ABI-14 module consumed the exact context, validated its borrowed bytes, and returned packed 29; `windvale-source=pass` records aggregate source success.
+The `memory-map`, `boot-services`, memory, allocator, stack, Hello World, CPU-exception, native-context, native-WVB, source-pass, success, and shutdown lines are all emitted only after `ExitBootServices` returns success. `memory-owned=pass`, `allocator=pass`, `kernel-stack=pass`, and Hello World are selected from typed WIR and emitted through relocatable calls in the special compiler-generated Main after the memory transition and stack switch. Each byte crosses the WVA output shim. The loader emits `cpu-exceptions=armed` only after the IDT installation and both Main paths return normally. It then emits `native-context=pass` and `native-wvb=pass` because the ABI-14 module consumed the exact context, validated its borrowed bytes, and returned packed 29; `windvale-source=pass` records aggregate source success. `shutdown=poweroff` is emitted immediately before the terminal WVA target adapter is called.
 
 The explicit invalid-opcode image shares the prefix through Hello World and then terminates with:
 
@@ -115,7 +118,7 @@ error-code=none
 status=panic
 ```
 
-That handler writes value 1 to QEMU test port `0xF4`, producing host code 3, and otherwise enters a CLI/HLT loop. It emits no armed or success marker and does not return with `IRETQ`. Ordinary success writes zero and produces host code 1. Other failures retain `status=fail` and value 1. Port `0xF4` remains test transport rather than a Windvale OS device or clean-shutdown contract. The complete scenario-specific serial marker is required because a host exit code alone is ambiguous.
+That handler writes value 1 to QEMU test port `0xF4`, producing host code 3, and otherwise enters a CLI/HLT loop. It emits no armed, success, or shutdown marker and does not return with `IRETQ`. Ordinary success no longer writes to port `0xF4`; the WVA Q35 adapter writes `0x2000` to port `0x0604` and QEMU exits with code 0. Other failures retain `status=fail` and debug-exit value 1. Port `0xF4` remains test transport rather than a Windvale OS device or shutdown contract. The complete scenario-specific serial marker is required because a host exit code alone is ambiguous.
 
 ## Boot harness
 
@@ -141,19 +144,19 @@ The harness verifies the EFI digest before and after launch and also rechecks in
 Successful execution emits this path-free field order:
 
 ```text
-windvale-os-boot-report 17
+windvale-os-boot-report 18
 status=pass
 scenario=normal
 architecture=x86-64
 application-format=pe32-plus-uefi-application-v3
-probe-version=17
-efi-bytes=17920
-efi-sha256=d2c0a7e4e5e1605fc8639c05ab27ad07ee2b015ad2dc151d8637830b8acb3f18
-serial-marker=windvale-os-boot-17-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass
-qemu-exit-code=1
+probe-version=18
+efi-bytes=18432
+efi-sha256=035f7a25c263efdd0cec30c081ee36799b04ca85eba57d9f54a98e1ce06a6de5
+serial-marker=windvale-os-boot-18-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff
+qemu-exit-code=0
 ```
 
-The invalid-opcode report uses `scenario=invalid-opcode`, `efi-bytes=17920`, `efi-sha256=26ccfaf862024e022339ca9fa8114c71b4fe601fe59a806d366e1d330b6d106d`, the `panic-invalid-opcode-vector-6-error-code-none-status-panic` marker suffix, and `qemu-exit-code=3`. `-KeepRunDirectory` adds a native diagnostic path after the canonical fields, so that invocation is not portable report evidence.
+The invalid-opcode report uses `scenario=invalid-opcode`, `efi-bytes=18432`, `efi-sha256=3d0cd8f66a7cd50826f2b66b3961cb06888956c72e3925d5f2837405f0c9dacf`, the `panic-invalid-opcode-vector-6-error-code-none-status-panic` marker suffix, and `qemu-exit-code=3`. `-KeepRunDirectory` adds a native diagnostic path after the canonical fields, so that invocation is not portable report evidence.
 
 ## Failures
 
@@ -171,4 +174,4 @@ The invalid-opcode report uses `scenario=invalid-opcode`, `efi-bytes=17920`, `ef
 
 The probe does not verify table CRCs, define ownership beyond one conventional-memory arena, reclaim loader memory, configure paging, or discover hardware beyond firmware tables. It does not load, retain, decode, or verify WVB inside the guest: the portable module is AOT-compiled during host image construction. The special system-profile target and temporary COM1 adapter remain.
 
-The CPU exception boundary admits only terminal invalid opcode on the current valid kernel stack. It does not cover another exception or CPU error-code frame, page faults or `CR2`, double faults, TSS/IST stacks, NMI, IRQ, PIC/APIC, interrupt enablement, `IRETQ`, recovery, processes, SMP, or mapping Windvale `WVR` traps to CPU faults. A guest WVB verifier/loader, general memory manager, functioning kernel runtime, general interrupt system, clean platform shutdown, Hyper-V evidence, and a second-host firmware boot remain later bounded slices.
+The CPU exception boundary admits only terminal invalid opcode on the current valid kernel stack. It does not cover another exception or CPU error-code frame, page faults or `CR2`, double faults, TSS/IST stacks, NMI, IRQ, PIC/APIC, interrupt enablement, `IRETQ`, recovery, processes, SMP, or mapping Windvale `WVR` traps to CPU faults. The shutdown candidate is fixed to the pinned Q35 PM control port and performs no process/service coordination or ACPI discovery. A guest WVB verifier/loader, general memory manager, functioning kernel runtime, general interrupt system, Hyper-V shutdown/evidence, physical-hardware shutdown, and a second-host firmware boot remain later bounded slices.

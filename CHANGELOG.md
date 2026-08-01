@@ -27,6 +27,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - A cross-host-qualified Windvale publication-lifetime graph that gates allocate, copy, seal, invoke, and release operations while one internal C# owner contains raw Windows/Linux executable-memory authority.
 - A cross-host-qualified probe-17 terminal invalid-opcode boundary with a kernel-owned vector-6 IDT, deterministic panic transcript, and separate pinned-QEMU success and fault images.
 - The accepted capability-oriented Windvale OS architecture: a small kernel written primarily in `.wv`, a bounded `.wva` machine layer, isolated services, AOT system code, and no permanent C#/.NET dependency.
+- A qualification-pending WVA-owned Q35 poweroff adapter, with exact assembler parity, clean pinned-QEMU exit after the successful kernel path, and preserved terminal invalid-opcode evidence.
 - A permanent UTF-8 native-process verifier boundary and detached/redirected macron regression check, closing the recurring launcher-only decoding failure.
 
 ### Changed

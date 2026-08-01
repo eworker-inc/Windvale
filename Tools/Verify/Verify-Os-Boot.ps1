@@ -13,11 +13,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$ExpectedQemuExitCode = if ($Scenario -eq 'normal') { 1 } else { 3 }
+$ExpectedQemuExitCode = if ($Scenario -eq 'normal') { 0 } else { 3 }
 $ExpectedSerialMarker = if ($Scenario -eq 'normal') {
-    "windvale-os-boot 17`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`n"
+    "windvale-os-boot 18`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`nshutdown=poweroff`n"
 } else {
-    "windvale-os-boot 17`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`nHello from Windvale`npanic=invalid-opcode`nvector=6`nerror-code=none`nstatus=panic`n"
+    "windvale-os-boot 18`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`nHello from Windvale`npanic=invalid-opcode`nvector=6`nerror-code=none`nstatus=panic`n"
 }
 $OppositeTerminalMarker = if ($Scenario -eq 'normal') { "status=panic`n" } else { "status=pass`n" }
 
@@ -199,13 +199,13 @@ try {
         Scenario = $Scenario
         Architecture = 'x86-64'
         ApplicationFormat = 'pe32-plus-uefi-application-v3'
-        ProbeVersion = 17
+        ProbeVersion = 18
         EfiBytes = $EfiIdentity.Length
         EfiSha256 = $EfiSha256
         SerialMarker = if ($Scenario -eq 'normal') {
-            'windvale-os-boot-17-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass'
+            'windvale-os-boot-18-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff'
         } else {
-            'windvale-os-boot-17-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-panic-invalid-opcode-vector-6-error-code-none-status-panic'
+            'windvale-os-boot-18-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-panic-invalid-opcode-vector-6-error-code-none-status-panic'
         }
         QemuExitCode = $Process.ExitCode
         RunDirectory = if ($KeepRunDirectory) { $RunDirectory } else { $null }
@@ -214,7 +214,7 @@ try {
     if ($PassThru) {
         $Report
     } elseif (!$Quiet) {
-        Write-Output 'windvale-os-boot-report 17'
+        Write-Output 'windvale-os-boot-report 18'
         Write-Output "status=$($Report.Status)"
         Write-Output "scenario=$($Report.Scenario)"
         Write-Output "architecture=$($Report.Architecture)"

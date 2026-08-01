@@ -14,12 +14,12 @@ public enum Firmwareˉprobeˉscenario
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 17;
+    public const int FORMAT_VERSION = 18;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 17\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 18\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -33,11 +33,12 @@ public static class Firmwareˉprobe
     public const string NATIVE_WVB_MARKER = "native-wvb=pass\n";
     public const string WINDVALE_SOURCE_MARKER = "windvale-source=pass\n";
     public const string SUCCESS_MARKER = "status=pass\n";
+    public const string SHUTDOWN_MARKER = "shutdown=poweroff\n";
     public const string SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
-        WINDVALE_SOURCE_MARKER + SUCCESS_MARKER;
+        WINDVALE_SOURCE_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
 
     private const string FAILURE_MARKER = "status=fail\n";
     private const string FAILURE_LABEL = "failure";
@@ -47,7 +48,6 @@ public static class Firmwareˉprobe
     private const string MAP_VALIDATE_LABEL = "map_validate";
     private const string DESCRIPTOR_LOOP_LABEL = "descriptor_loop";
     private const string EXIT_SUCCESS_LABEL = "exit_success";
-    private const string SUCCESS_HALT_LABEL = "success_halt";
     private const string WRITE_BYTE_WAIT_LABEL = "write_byte_wait";
     private const string HELLO_WORLD_RESOURCE = "Windvale.Os.Kernel.Hello-World.wv";
 
@@ -134,8 +134,18 @@ public static class Firmwareˉprobe
                     Objectˉlimits.UNDEFINED_SECTION,
                     0,
                     0),
+                new(
+                    Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL,
+                    Objectˉsymbolˉbinding.Import,
+                    Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
+                    0,
+                    0),
             ],
-            [new(Objectˉrelocationˉkind.Relativeˉi32, 0, Loader.Kernelˉcallˉoffset, 1, -4)]);
+            [
+                new(Objectˉrelocationˉkind.Relativeˉi32, 0, Loader.Kernelˉcallˉoffset, 1, -4),
+                new(Objectˉrelocationˉkind.Relativeˉi32, 0, Loader.Shutdownˉcallˉoffset, 2, -4),
+            ]);
         var Supportˉcode = Buildˉwriteˉbyteˉmachineˉcode();
         var Supportˉobject = new Objectˉfile(
             Objectˉarchitecture.X86ˉ64,
@@ -223,6 +233,7 @@ public static class Firmwareˉprobe
     {
         var Output = new X64ˉcodeˉbuilder();
         uint Kernelˉcallˉoffset;
+        uint Shutdownˉcallˉoffset;
 
         Output.Emit(0x48, 0x81, 0xEC);
         Output.Emitˉu32(FRAME_BYTES);
@@ -424,8 +435,9 @@ public static class Firmwareˉprobe
         Emitˉserialˉtext(Output, NATIVE_WVB_MARKER);
         Emitˉserialˉtext(Output, WINDVALE_SOURCE_MARKER);
         Emitˉserialˉtext(Output, SUCCESS_MARKER);
-        Emitˉdebugˉexit(Output, 0);
-        Emitˉhaltˉloop(Output, SUCCESS_HALT_LABEL);
+        Emitˉserialˉtext(Output, SHUTDOWN_MARKER);
+        Shutdownˉcallˉoffset = Output.Emitˉcallˉplaceholder();
+        Output.Jump(TERMINAL_FAILURE_LABEL);
 
         Output.Mark(CLEANUP_FAILURE_LABEL);
         Emitˉloadˉstackˉrcx(Output, MAP_BUFFER_OFFSET);
@@ -445,7 +457,7 @@ public static class Firmwareˉprobe
         Output.Emit(0x48, 0xB8);
         Output.Emitˉu64(EFI_DEVICE_ERROR);
         Emitˉrestoreˉstackˉandˉreturn(Output);
-        return new(Output.Build(), Kernelˉcallˉoffset);
+        return new(Output.Build(), Kernelˉcallˉoffset, Shutdownˉcallˉoffset);
     }
 
     private static ImmutableArray<byte> Buildˉwriteˉbyteˉmachineˉcode()
@@ -631,5 +643,6 @@ public static class Firmwareˉprobe
 
     private sealed record Bootstrapˉcode(
         ImmutableArray<byte> Bytes,
-        uint Kernelˉcallˉoffset);
+        uint Kernelˉcallˉoffset,
+        uint Shutdownˉcallˉoffset);
 }

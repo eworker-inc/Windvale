@@ -46,10 +46,10 @@ This list records unresolved decisions without presenting them as implementation
 
 ## First decision sequence
 
-Decisions 0058 through 0084 establish reproducible bytecode compiler convergence, the bounded shared ABI-14 native path, live Windvale-produced service leaves, Windvale-owned executable-image layout, the first terminal CPU-exception destination, and the durable capability-oriented OS boundary. The recommended next decisions are:
+Decisions 0058 through 0084 establish reproducible bytecode compiler convergence, the bounded shared ABI-14 native path, live Windvale-produced service leaves, Windvale-owned executable-image layout, the first terminal CPU-exception destination, and the durable capability-oriented OS boundary. Candidate Decision 0085 adds the first WVA-owned Q35 poweroff path. The recommended next decisions are:
 
 1. Preflight the qualified compiler WVB through the native backend, then decide whether its first explicit `file.write_bytes` blocker can be closed as one bounded file-publication slice without prematurely widening the platform FFI.
 2. Execute the qualified Windvale-written compiler through the shared native path and identify the next backend or runtime contract demanded by that real workload.
 3. Add native PE/COFF and ELF containers plus standalone Windows/Linux capability and process hosts without leaking host rules into portable modules.
-4. Implement the next bounded Decision 0084 slice: extend the kernel from one terminal invalid-opcode destination toward normalized essential traps, clean shutdown, page-table ownership, and an AOT Windvale verifier that admits one embedded WVB, retaining pinned-QEMU evidence before Hyper-V qualification.
+4. Cross-host qualify Decision 0085's narrow Q35 shutdown candidate, then extend the kernel toward normalized essential traps, page-table ownership, and an AOT Windvale verifier that admits one embedded WVB, retaining pinned-QEMU evidence before Hyper-V qualification and treating broader lifecycle adapters as separate contracts.
 5. Satisfy the remaining Decision 0057 native-retirement conditions, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.

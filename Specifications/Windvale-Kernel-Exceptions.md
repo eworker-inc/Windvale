@@ -4,6 +4,8 @@
 
 Kernel CPU exceptions version 1 is cross-host qualified for Windvale OS firmware probe 17 at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. It establishes one kernel-owned, terminal invalid-opcode boundary after firmware shutdown and on the kernel-owned stack. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) records the exact Windows, Debian, GitHub, and pinned-QEMU evidence.
 
+Candidate firmware probe 18 retains this exception object and contract unchanged. Its normal image reaches a separate WVA Q35 shutdown adapter only after returning from the kernel path; its invalid-opcode image still terminates here and emits no later success or shutdown marker.
+
 This contract covers x86-64 exception vector 6 (`#UD`) only. It is intentionally separate from Windvale runtime traps such as `WVR3007`, which are represented by checked native status returns and do not raise processor faults.
 
 ## Ownership and installation
@@ -81,6 +83,6 @@ The QEMU boundary requires deterministic images for both scenarios, the complete
 
 ## Implementation seam and limits
 
-The current implementation is one bounded Stage 0 x86-64 object because WVA 1 lacks the required descriptor-memory, live-segment, `CLI`, `LIDT`, and terminal-entry operations. Its exact code, symbols, relocations, and scenario-specific `UD2` placement are verified before linking. WVA should eventually own irreducible entry mechanics, while system-profile `.wv` owns dispatch and policy only after explicit unsafe memory and kernel ABI contracts exist.
+The current implementation is one bounded Stage 0 x86-64 object because WVA 1 lacks the required descriptor-memory, live-segment, `LIDT`, and terminal-entry operations. WVA now owns the standalone `CLI`/`HLT` mechanics used by the separate shutdown adapter, but that does not remove the remaining exception-entry blockers. The exception object's exact code, symbols, relocations, and scenario-specific `UD2` placement are verified before linking. WVA should eventually own irreducible entry mechanics, while system-profile `.wv` owns dispatch and policy only after explicit unsafe memory and kernel ABI contracts exist.
 
 Version 1 provides no other exception or error-code shape, page fault or `CR2` reporting, double-fault stack, TSS, IST, NMI, IRQ, PIC/APIC, interrupt enablement, `IRETQ`, recovery, unwinding, process isolation, user mode, SMP, scheduler integration, WVR-to-CPU mapping, clean platform shutdown, Hyper-V evidence, or physical-hardware claim.

@@ -101,6 +101,16 @@ internal static class X64ˉobjectˉencoder
             case Assemblyˉstatementˉkind.Trap:
                 output.Writeˉu8(0xCC, statement.Span);
                 break;
+            case Assemblyˉstatementˉkind.Disableˉinterrupts:
+                output.Writeˉu8(0xFA, statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Halt:
+                output.Writeˉu8(0xF4, statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Outˉu16:
+                output.Writeˉu8(0x66, statement.Span);
+                output.Writeˉu8(0xEF, statement.Span);
+                break;
             case Assemblyˉstatementˉkind.Call:
             case Assemblyˉstatementˉkind.Jump:
                 output.Writeˉu8(
