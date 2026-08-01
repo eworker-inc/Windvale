@@ -61,6 +61,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [OS boot probe](Windvale-Os-Boot-Probe.md)
 - [Kernel handoff](Windvale-Kernel-Handoff.md)
 - [Kernel memory](Windvale-Kernel-Memory.md)
+- [Kernel paging](Windvale-Kernel-Paging.md)
 - [Kernel native seam](Windvale-Kernel-Native-Seam.md)
 - [Kernel trap frame](Windvale-Kernel-Trap-Frame.md)
 - [Kernel CPU exceptions](Windvale-Kernel-Exceptions.md)

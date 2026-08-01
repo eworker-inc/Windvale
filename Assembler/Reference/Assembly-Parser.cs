@@ -254,7 +254,9 @@ internal static class Assemblyˉparser
                         Assemblyˉstatementˉkind.Moveˉu32 or
                         Assemblyˉstatementˉkind.Disableˉinterrupts or
                         Assemblyˉstatementˉkind.Halt or Assemblyˉstatementˉkind.Outˉu16 or
-                        Assemblyˉstatementˉkind.Pushˉi32;
+                        Assemblyˉstatementˉkind.Pushˉi32 or
+                        Assemblyˉstatementˉkind.Enableˉpageˉprotection or
+                        Assemblyˉstatementˉkind.Activateˉpageˉtable;
                     var Materializedˉdataˉstatement = Statement.Kind is
                         Assemblyˉstatementˉkind.Bytes or Assemblyˉstatementˉkind.U32 or
                         Assemblyˉstatementˉkind.I32 or Assemblyˉstatementˉkind.Addressˉu32;
@@ -400,6 +402,8 @@ internal static class Assemblyˉparser
             case "disable_interrupts":
             case "halt":
             case "out_u16":
+            case "enable_page_protection":
+            case "activate_page_table":
                 if (tokens.Count != 1)
                 {
                     return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' takes no operands."));
@@ -411,7 +415,9 @@ internal static class Assemblyˉparser
                     "trap" => Assemblyˉstatementˉkind.Trap,
                     "disable_interrupts" => Assemblyˉstatementˉkind.Disableˉinterrupts,
                     "halt" => Assemblyˉstatementˉkind.Halt,
-                    _ => Assemblyˉstatementˉkind.Outˉu16,
+                    "out_u16" => Assemblyˉstatementˉkind.Outˉu16,
+                    "enable_page_protection" => Assemblyˉstatementˉkind.Enableˉpageˉprotection,
+                    _ => Assemblyˉstatementˉkind.Activateˉpageˉtable,
                 };
                 return (new(Simpleˉkind, null, 0, 0, [], Span), null);
             case "call":

@@ -27,7 +27,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
 | 9. Shared native backend | 🎯 Current transfer | ABI 14/context 6 and publication ownership are qualified; ABI 15/context 7 implements the twelfth native leaf and advances exact compiler preflight beyond `file.write_bytes`. | Qualify native file output, then admit the compiler's bounded record-shaped function workload. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
-| 11. Boot path and kernel | 🚧 In progress | Probe 17 is qualified; candidate probe 20 composes probe 19's WVA-normalized vectors 6/13 and clean Q35 poweroff with the ABI-15/context-7 rebuild. | Cross-host qualify probe 20, then own page tables and add in-guest loading/verification. |
+| 11. Boot path and kernel | 🚧 In progress | Probe 17 is qualified; candidate probe 20 composes ABI 15/context 7, normalized vectors 6/13, clean Q35 poweroff, and a kernel-owned W^X identity root. | Cross-host qualify probe 20, then boot the AOT Windvale verifier in-guest. |
 | 12. Runtime on Windvale OS | ○ Planned | The portability contract is defined; the guest does not yet load and verify WVB itself. | Run one identical verified WVB through equivalent Windows, Linux, and Windvale OS contracts. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 
@@ -41,7 +41,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Verified native fragment → Windvale image layout → narrow host W^X publication adapter
 - ✅ Windvale lifetime graph → internal state owner → allocate/copy/seal/invoke/release
 - 🎯 Qualified compiler WVB → native file publication → bounded record-shaped function admission
-- 🚧 WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
+- 🚧 WVA trap/paging mechanics + Q35 adapter → normalized faults + owned W^X root + clean poweroff
 - ○ One identical WVB → Windows + Linux + in-guest Windvale OS verification and execution
 
 ## Reading the evidence

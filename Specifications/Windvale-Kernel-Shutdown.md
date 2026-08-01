@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel shutdown version 1 is an implemented candidate first introduced by Windvale OS firmware probe 18 and retained unchanged by probe 19. It defines one deterministic clean-poweroff path for the pinned QEMU `pc-q35-11.0` machine after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; probe 19's combined candidate evidence is recorded by [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md). Cross-host qualification is pending.
+Kernel shutdown version 1 is an implemented candidate first introduced by Windvale OS firmware probe 18 and retained unchanged by probe 20. It defines one deterministic clean-poweroff path for the pinned QEMU `pc-q35-11.0` machine after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; probe 20's combined candidate evidence is recorded by [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md). Cross-host qualification is pending.
 
 This is a target-specific machine adapter, not a portable Windvale capability, general ACPI discovery, a Hyper-V shutdown contract, or a process/service shutdown policy.
 
@@ -48,7 +48,7 @@ The operation runs at the existing privileged x86-64 boot level after `ExitBootS
 
 ## Normal and fault evidence
 
-Probe 19 retains the normal path and admits two explicit terminal fault scenarios:
+Probe 20 retains the normal path and admits two explicit terminal fault scenarios under the kernel-owned root:
 
 - `normal` completes the existing ABI-14 portable-WVB AOT path and system-profile Main, emits the exact success and shutdown markers once, executes the WVA Q35 poweroff request, and requires QEMU process exit code `0`.
 - `invalid-opcode` executes `UD2` after Main, emits the exact normalized vector-6 terminal panic suffix, and uses the test-only `isa-debug-exit` path with host code `3`.

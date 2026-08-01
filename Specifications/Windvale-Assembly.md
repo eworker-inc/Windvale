@@ -65,6 +65,8 @@ jump <Functionˉsymbol>
 move_i32 <eax|ecx|edx|ebx|esp|ebp|esi|edi> <i32>
 move_u32 <eax|ecx|edx|ebx|esp|ebp|esi|edi> <u32>
 push_i32 <i32>
+enable_page_protection
+activate_page_table
 disable_interrupts
 halt
 out_u16
@@ -82,11 +84,15 @@ Their encodings are:
 | `move_i32 Reg Value` | `B8+rd imm32` | none |
 | `move_u32 Reg Value` | `B8+rd imm32` | none |
 | `push_i32 Value` | `68 imm32` | none |
+| `enable_page_protection` | `B9 80 00 00 C0 0F 32 0F BA E8 0B 0F 30 0F 20 C0 48 0F BA E8 10 0F 22 C0` | none |
+| `activate_page_table` | `0F 22 D8 0F 20 D8` | none |
 | `disable_interrupts` | `FA` | none |
 | `halt` | `F4` | none |
 | `out_u16` | `66 EF` | none |
 
 The move instructions write a 32-bit register and carry the exact little-endian bit pattern of the declared value. In 64-bit mode, `push_i32` decrements `RSP` by eight and stores the immediate sign-extended to one 64-bit stack cell. It exists to construct exact machine-entry records such as normalized exception frames; it does not define a general ABI, stack discipline, calling convention, function prologue, or balanced-stack policy. Those require a separate contract before generated calls are considered executable across a boundary.
+
+`enable_page_protection` selects EFER MSR `0xC0000080`, sets NXE bit 11, writes EFER, reads CR0, sets WP bit 16, and writes CR0. It clobbers `EAX`/`RAX`, `ECX`/`RCX`, and `EDX`/`RDX`. `activate_page_table` loads CR3 from `RAX` and reads active CR3 back into `RAX`. These are semantic compound operations for [kernel paging version 1](Windvale-Kernel-Paging.md), not general MSR or control-register access. Their caller must prove processor support, table validity, address reachability, and ABI preservation before use.
 
 `disable_interrupts` clears the x86 interrupt flag. `halt` stops instruction execution until an admitted wake event; it is not a process exit or permanent loop by itself. `out_u16` writes the low 16 bits of `EAX`/`AX` to the I/O port selected by the low 16 bits of `EDX`/`DX`. These statements expose privileged architecture mechanics deliberately. Their caller owns register initialization, authorization, hardware selection, and any terminal fallback loop. Ordinary Windvale source receives no ambient port-I/O authority from their presence in WVA.
 

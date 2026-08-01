@@ -4,7 +4,7 @@
 
 Kernel CPU exceptions version 1 remains cross-host qualified for firmware probe 17 at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) records its one kernel-owned terminal invalid-opcode destination.
 
-Version 2 is an implemented candidate for firmware probe 19. It retains vector 6, adds general protection vector 13, and moves both entry-normalization stubs into WVA while one bounded Stage 0 object still owns descriptor publication and terminal policy. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) and [kernel trap frame version 1](Windvale-Kernel-Trap-Frame.md) own the candidate boundary; cross-host qualification is pending.
+Version 2 is an implemented candidate first introduced by firmware probe 19 and retained by probe 20 under its kernel-owned page-table root. It retains vector 6, adds general protection vector 13, and moves both entry-normalization stubs into WVA while one bounded Stage 0 object still owns descriptor publication and terminal policy. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) and [kernel trap frame version 1](Windvale-Kernel-Trap-Frame.md) own the candidate boundary; cross-host qualification is pending.
 
 CPU exceptions remain distinct from Windvale runtime traps such as `WVR3007`. Runtime traps are checked semantic results and do not raise processor faults.
 
@@ -50,7 +50,7 @@ Both use WVA `push_i32`, which creates one sign-extended 64-bit stack cell in x8
 
 ## Deterministic scenarios
 
-Probe 19 supports three explicit construction scenarios:
+Probe 20 supports three explicit construction scenarios after page-table activation:
 
 - `normal` installs both gates, completes both Main paths, emits the success markers, and enters the WVA Q35 shutdown adapter;
 - `invalid-opcode` executes `UD2`, proving delivery of vector 6 without a CPU error code; and

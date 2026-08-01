@@ -6,11 +6,13 @@ data Greeting: text = "Hello from Windvale";
 data Memoryˉmarker: text = "memory-owned=pass";
 data Allocatorˉmarker: text = "allocator=pass";
 data Stackˉmarker: text = "kernel-stack=pass";
+data Pagingˉmarker: text = "paging=owned";
 
 export fn Main() -> i32 {
     console.write_line(Memoryˉmarker);
     console.write_line(Allocatorˉmarker);
     console.write_line(Stackˉmarker);
+    console.write_line(Pagingˉmarker);
     console.write_line(Greeting);
     return 0;
 }

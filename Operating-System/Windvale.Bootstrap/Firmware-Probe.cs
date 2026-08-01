@@ -27,6 +27,7 @@ public static class Firmwareˉprobe
     public const string MEMORY_OWNED_MARKER = "memory-owned=pass\n";
     public const string ALLOCATOR_MARKER = "allocator=pass\n";
     public const string KERNEL_STACK_MARKER = "kernel-stack=pass\n";
+    public const string PAGING_OWNED_MARKER = "paging=owned\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string CPU_EXCEPTIONS_MARKER = "cpu-exceptions=armed\n";
     public const string INVALID_OPCODE_PANIC_MARKER = Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER;
@@ -39,7 +40,7 @@ public static class Firmwareˉprobe
     public const string SHUTDOWN_MARKER = "shutdown=poweroff\n";
     public const string SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
-        MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + HELLO_WORLD_MARKER +
+        MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
         WINDVALE_SOURCE_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
 
@@ -119,6 +120,7 @@ public static class Firmwareˉprobe
         }
         var Nativeˉprobe = Kernelˉnativeˉprobe.Build();
         var Exceptions = Kernelˉexceptionˉx64.Build();
+        var Paging = Kernelˉpagingˉx64.Build();
 
         var Loader = Buildˉloaderˉmachineˉcode();
         var Loaderˉobject = new Objectˉfile(
@@ -196,6 +198,13 @@ public static class Firmwareˉprobe
                     Objectˉlimits.UNDEFINED_SECTION,
                     0,
                     0),
+                new(
+                    Kernelˉpagingˉcontract.INSTALL_SYMBOL,
+                    Objectˉsymbolˉbinding.Import,
+                    Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
+                    0,
+                    0),
             ],
             [.. Memory.Relocations.Select(Relocation => new Objectˉrelocation(
                 Objectˉrelocationˉkind.Relativeˉi32,
@@ -214,6 +223,7 @@ public static class Firmwareˉprobe
                 new(Nativeˉprobe.Nativeˉobjectˉbytes),
                 new(Memoryˉobjectˉbytes),
                 new(Exceptions.Objectˉbytes),
+                new(Paging.Objectˉbytes),
                 new(Assemblyˉshimˉobjectˉbytes),
                 new(Nativeˉprobe.Bridgeˉobjectˉbytes),
                 new(Supportˉobjectˉbytes),
@@ -223,6 +233,11 @@ public static class Firmwareˉprobe
         {
             throw new InvalidOperationException(
                 $"The firmware probe did not link: {Link.Diagnostics[0].Code}: {Link.Diagnostics[0].Message}");
+        }
+        if (Link.Entryˉaddress != 0 || Link.Imageˉbytes.Length > (int)Kernelˉpagingˉcontract.EXECUTABLE_BYTES)
+        {
+            throw new InvalidOperationException(
+                $"The linked firmware payload does not fit the fixed {Kernelˉpagingˉcontract.EXECUTABLE_BYTES}-byte executable window.");
         }
 
         var Application = Uefiˉapplicationˉwriter.Write(Link);

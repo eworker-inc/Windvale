@@ -716,7 +716,7 @@ fn Statementˉsuccess(
 fn Statementˉisˉallowed(Sectionˉkind: u32, Statementˉkind: u32) -> bool {
     if Sectionˉkind == 1u32 {
         if Statementˉkind <= 7u32 { return true; }
-        if Statementˉkind >= 13u32 { return Statementˉkind <= 16u32; }
+        if Statementˉkind >= 13u32 { return Statementˉkind <= 18u32; }
         return false;
     }
     if Sectionˉkind == 2u32 {
@@ -862,16 +862,28 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
                                                             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Pushˉnumber);
                                                         }
                                                     } else {
-                                                        if Tokenˉequalsˉtext(Input, First, "zero") {
-                                                            Kind = 12u32;
-                                                            if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
-                                                            let Zeroˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
-                                                            let Zeroˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Zeroˉnumber);
-                                                            if !Zeroˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
-                                                            if Zeroˉparsed.Value == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
-                                                            Size = Zeroˉparsed.Value;
+                                                        if Tokenˉequalsˉtext(Input, First, "enable_page_protection") {
+                                                            Kind = 17u32;
+                                                            Size = 24u32;
+                                                            if Line.Tokens != 1u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
                                                         } else {
-                                                            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1002, First);
+                                                            if Tokenˉequalsˉtext(Input, First, "activate_page_table") {
+                                                                Kind = 18u32;
+                                                                Size = 6u32;
+                                                                if Line.Tokens != 1u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+                                                            } else {
+                                                                if Tokenˉequalsˉtext(Input, First, "zero") {
+                                                                    Kind = 12u32;
+                                                                    if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                                                    let Zeroˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+                                                                    let Zeroˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Zeroˉnumber);
+                                                                    if !Zeroˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                                                    if Zeroˉparsed.Value == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
+                                                                    Size = Zeroˉparsed.Value;
+                                                                } else {
+                                                                    return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1002, First);
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -2146,6 +2158,25 @@ fn Encodeˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> bytes
     if Statement.Kind == 16u32 {
         let Pushˉnumber: Wvaˉi32ˉparse = Parseˉi32(Input, Lineˉtoken(Input, Line, 1u32));
         return Appendˉbytes(Singleˉbyte(104u32), Bytesˉfromˉi32ˉlittle(Pushˉnumber.Value));
+    }
+    if Statement.Kind == 17u32 {
+        var Protectionˉbytes: bytes = Appendˉbytes(Singleˉbyte(185u32), Bytesˉfromˉu32ˉlittle(3221225600u32));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Appendˉbytes(Singleˉbyte(15u32), Singleˉbyte(50u32)));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Appendˉbytes(Singleˉbyte(15u32), Singleˉbyte(186u32)));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Appendˉbytes(Singleˉbyte(232u32), Singleˉbyte(11u32)));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Appendˉbytes(Singleˉbyte(15u32), Singleˉbyte(48u32)));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Appendˉbytes(Singleˉbyte(15u32), Singleˉbyte(32u32)));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Singleˉbyte(192u32));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Appendˉbytes(Singleˉbyte(72u32), Singleˉbyte(15u32)));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Appendˉbytes(Singleˉbyte(186u32), Singleˉbyte(232u32)));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Appendˉbytes(Singleˉbyte(16u32), Singleˉbyte(15u32)));
+        Protectionˉbytes = Appendˉbytes(Protectionˉbytes, Appendˉbytes(Singleˉbyte(34u32), Singleˉbyte(192u32)));
+        return Protectionˉbytes;
+    }
+    if Statement.Kind == 18u32 {
+        var Activationˉbytes: bytes = Appendˉbytes(Singleˉbyte(15u32), Singleˉbyte(34u32));
+        Activationˉbytes = Appendˉbytes(Activationˉbytes, Appendˉbytes(Singleˉbyte(216u32), Singleˉbyte(15u32)));
+        return Appendˉbytes(Activationˉbytes, Appendˉbytes(Singleˉbyte(32u32), Singleˉbyte(216u32)));
     }
     return Emptyˉbytes;
 }

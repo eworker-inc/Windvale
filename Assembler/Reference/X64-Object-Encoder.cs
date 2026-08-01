@@ -115,6 +115,22 @@ internal static class X64ˉobjectˉencoder
                 output.Writeˉu8(0x68, statement.Span);
                 output.Writeˉi32((int)statement.Number, statement.Span);
                 break;
+            case Assemblyˉstatementˉkind.Enableˉpageˉprotection:
+                output.Writeˉbytes(
+                    [
+                        0xB9, 0x80, 0x00, 0x00, 0xC0,
+                        0x0F, 0x32,
+                        0x0F, 0xBA, 0xE8, 0x0B,
+                        0x0F, 0x30,
+                        0x0F, 0x20, 0xC0,
+                        0x48, 0x0F, 0xBA, 0xE8, 0x10,
+                        0x0F, 0x22, 0xC0,
+                    ],
+                    statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Activateˉpageˉtable:
+                output.Writeˉbytes([0x0F, 0x22, 0xD8, 0x0F, 0x20, 0xD8], statement.Span);
+                break;
             case Assemblyˉstatementˉkind.Call:
             case Assemblyˉstatementˉkind.Jump:
                 output.Writeˉu8(

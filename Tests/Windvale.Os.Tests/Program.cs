@@ -22,10 +22,12 @@ internal static class Program
         new("kernel memory planner selects one bounded conventional arena", Memoryˉplannerˉselectsˉboundedˉarena),
         new("kernel memory planner rejects malformed and hostile maps", Memoryˉplannerˉrejectsˉmalformedˉmaps),
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
+        new("kernel paging planner enforces bounded W^X identity tables", Pagingˉplannerˉenforcesˉboundedˉidentityˉtables),
         new("kernel WVA shims bridge Main, normalized traps, and Q35 shutdown", Kernelˉassemblyˉshimˉbridgesˉmain),
         new("portable WVB lowers into the bounded kernel native probe", Kernelˉnativeˉprobeˉisˉportableˉandˉbounded),
         new("x86-64 kernel compiler emits deterministic verified WVO", Kernelˉcompilerˉemitsˉverifiedˉobject),
         new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
+        new("x86-64 kernel paging boundary emits deterministic verified WVO", Kernelˉpagingˉboundaryˉemitsˉverifiedˉobject),
         new("x86-64 kernel exception boundary emits deterministic verified WVO", Kernelˉexceptionˉboundaryˉemitsˉverifiedˉobject),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
         new("invalid-opcode firmware probe builds reproducibly", Invalidˉopcodeˉfirmwareˉprobeˉbuildsˉreproducibly),
@@ -268,6 +270,77 @@ internal static class Program
         True(Allocator.Allocateˉpages(1) is null, "An exhausted allocator returned a page.");
     }
 
+    private static void Pagingˉplannerˉenforcesˉboundedˉidentityˉtables()
+    {
+        const ulong ROOT = 0x0020_0000;
+        const ulong EXECUTABLE = 0x03FF_C000;
+        var First = Kernelˉpagingˉplanner.Plan(ROOT, EXECUTABLE);
+        var Second = Kernelˉpagingˉplanner.Plan(ROOT, EXECUTABLE);
+        True(First.Success, First.Diagnostics.IsEmpty ? "Paging planning failed." : First.Diagnostics[0].Message);
+        True(Second.Success, "Repeated paging planning failed.");
+        Sequenceˉequal(First.Plan!.Tableˉbytes, Second.Plan!.Tableˉbytes);
+        Sequenceˉequal(First.Plan.Ownershipˉrecord, Second.Plan.Ownershipˉrecord);
+        Equal(24_576, First.Plan.Tableˉbytes.Length);
+        Equal(64, First.Plan.Ownershipˉrecord.Length);
+
+        var Plan = First.Plan;
+        Equal(ROOT + 0x1000UL | 3UL, Kernelˉpagingˉplanner.Readˉentry(Plan, 0, 0));
+        Equal(ROOT + 0x2000UL | 3UL, Kernelˉpagingˉplanner.Readˉentry(Plan, 1, 0));
+        Equal(ROOT + 0x3000UL | 3UL, Kernelˉpagingˉplanner.Readˉentry(Plan, 2, 0));
+        Equal(0UL, Kernelˉpagingˉplanner.Readˉentry(Plan, 3, 0));
+        Equal(
+            0x1000UL | 3UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
+            Kernelˉpagingˉplanner.Readˉentry(Plan, 3, 1));
+        Equal(
+            0x0020_0000UL | 0x83UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
+            Kernelˉpagingˉplanner.Readˉentry(Plan, 2, 1));
+        Equal(ROOT + 0x4000UL | 3UL, Kernelˉpagingˉplanner.Readˉentry(Plan, 2, 31));
+        Equal(ROOT + 0x5000UL | 3UL, Kernelˉpagingˉplanner.Readˉentry(Plan, 2, 32));
+        Equal(
+            EXECUTABLE | Kernelˉpagingˉcontract.ENTRY_PRESENT,
+            Kernelˉpagingˉplanner.Readˉentry(Plan, 4, 508));
+        Equal(
+            (EXECUTABLE - Kernelˉpagingˉcontract.PAGE_BYTES) | 3UL |
+                Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
+            Kernelˉpagingˉplanner.Readˉentry(Plan, 4, 507));
+        Equal(
+            (EXECUTABLE + Kernelˉpagingˉcontract.EXECUTABLE_BYTES) | 3UL |
+                Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
+            Kernelˉpagingˉplanner.Readˉentry(Plan, 5, 12));
+
+        for (ulong Page = 3; Page <= 5; Page++)
+        {
+            for (var Entry = 0; Entry < 512; Entry++)
+            {
+                var Value = Kernelˉpagingˉplanner.Readˉentry(Plan, Page, Entry);
+                True(
+                    (Value & (Kernelˉpagingˉcontract.ENTRY_PRESENT |
+                        Kernelˉpagingˉcontract.ENTRY_WRITABLE |
+                        Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE)) !=
+                    (Kernelˉpagingˉcontract.ENTRY_PRESENT |
+                        Kernelˉpagingˉcontract.ENTRY_WRITABLE),
+                    "The page tables contain a writable executable leaf.");
+            }
+        }
+
+        Equal(Kernelˉpagingˉcontract.RECORD_MAGIC,
+            BinaryPrimitives.ReadUInt64LittleEndian(Plan.Ownershipˉrecord.AsSpan()));
+        Equal(Kernelˉpagingˉcontract.RECORD_VERSION,
+            BinaryPrimitives.ReadUInt32LittleEndian(Plan.Ownershipˉrecord.AsSpan()[8..]));
+        Equal(ROOT, BinaryPrimitives.ReadUInt64LittleEndian(Plan.Ownershipˉrecord.AsSpan()[16..]));
+        Equal(EXECUTABLE, BinaryPrimitives.ReadUInt64LittleEndian(Plan.Ownershipˉrecord.AsSpan()[40..]));
+        Equal(Kernelˉpagingˉcontract.RECORD_FLAGS,
+            BinaryPrimitives.ReadUInt64LittleEndian(Plan.Ownershipˉrecord.AsSpan()[56..]));
+
+        Pagingˉplanˉfails(0, EXECUTABLE, "WVOS5001");
+        Pagingˉplanˉfails(ROOT + 1, EXECUTABLE, "WVOS5001");
+        Pagingˉplanˉfails(Kernelˉpagingˉcontract.IDENTITY_BYTES - 0x5000, EXECUTABLE, "WVOS5001");
+        Pagingˉplanˉfails(ROOT, 0x001F_F000, "WVOS5002");
+        Pagingˉplanˉfails(ROOT, EXECUTABLE + 1, "WVOS5002");
+        Pagingˉplanˉfails(ROOT, Kernelˉpagingˉcontract.IDENTITY_BYTES - 0x200000, "WVOS5002");
+        Pagingˉplanˉfails(ROOT, ROOT, "WVOS5003");
+    }
+
     private static void Kernelˉcompilerˉemitsˉverifiedˉobject()
     {
         var First = X64ˉkernelˉcompiler.Compile(HELLO_WORLD_SOURCE, "Hello-World.wv");
@@ -275,9 +348,9 @@ internal static class Program
         True(First.Success, First.Diagnostics.IsEmpty ? "Native compilation failed." : First.Diagnostics[0].ToString());
         True(Second.Success, "Repeated native compilation failed.");
         Sequenceˉequal(First.Objectˉbytes, Second.Objectˉbytes);
-        Equal(2_564, First.Objectˉbytes.Length);
+        Equal(2_954, First.Objectˉbytes.Length);
         Equal(
-            "f2c28eb5f020f59b8acb480fc8dc62e393ebb14405b3c12ecb05076176d44420",
+            "61df8691c2b1c6eff31a6782cca144669aad32c26294e60fb97b8d5b15ff4de4",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.Objectˉbytes.AsSpan()).Value;
@@ -293,7 +366,7 @@ internal static class Program
         True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Import, "The memory entry is not imported.");
         Equal(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Object.Symbols[3].Name);
         True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Import, "The byte writer is not imported.");
-        Equal(72, Object.Relocations.Length);
+        Equal(85, Object.Relocations.Length);
         True(
             Object.Relocations.All(Relocation =>
                 Relocation.Kind == Objectˉrelocationˉkind.Relativeˉi32 &&
@@ -313,7 +386,7 @@ internal static class Program
         True(
             !Changed.Objectˉbytes.AsSpan().SequenceEqual(First.Objectˉbytes.AsSpan()),
             "Changing source output did not change the native object.");
-        Equal(55, Objectˉcodec.Readˉandˉverify(Changed.Objectˉbytes.AsSpan()).Value.Relocations.Length);
+        Equal(68, Objectˉcodec.Readˉandˉverify(Changed.Objectˉbytes.AsSpan()).Value.Relocations.Length);
     }
 
     private static void Kernelˉcompilerˉrejectsˉunsupportedˉsource()
@@ -344,6 +417,49 @@ internal static class Program
         True(
             Branch.Diagnostics.Any(Diagnostic => Diagnostic.Code == "WVN1003"),
             "A branching kernel entry did not produce WVN1003.");
+    }
+
+    private static void Kernelˉpagingˉboundaryˉemitsˉverifiedˉobject()
+    {
+        var First = Kernelˉpagingˉx64.Build();
+        var Second = Kernelˉpagingˉx64.Build();
+        Sequenceˉequal(First.Objectˉbytes, Second.Objectˉbytes);
+        Sequenceˉequal(First.Codeˉbytes, Second.Codeˉbytes);
+        Equal(1_244, First.Objectˉbytes.Length);
+        Equal(
+            "deeebe592b38890c9964cc4d9736b1d617c0d6b20bed494ba533dcb9b1d4f318",
+            Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
+        Equal(851, First.Codeˉbytes.Length);
+        Equal(
+            "12cbb64dad4558f94fd7075995cb5ac8a788ed5476999d14d2a585b310021678",
+            Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
+
+        var Object = Objectˉcodec.Readˉandˉverify(First.Objectˉbytes.AsSpan()).Value;
+        Equal(1, Object.Sections.Length);
+        True(Object.Sections[0].Kind == Objectˉsectionˉkind.Code, "The paging object is not code.");
+        Sequenceˉequal(First.Codeˉbytes, Object.Sections[0].Data);
+        Equal(5, Object.Symbols.Length);
+        Equal(Kernelˉpagingˉcontract.INSTALL_SYMBOL, Object.Symbols[0].Name);
+        True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The paging installer is not exported.");
+        Equal(Firmwareˉprobe.ENTRY_SYMBOL, Object.Symbols[1].Name);
+        Equal(Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL, Object.Symbols[2].Name);
+        Equal(Kernelˉpagingˉcontract.PROTECTION_ENABLE_SYMBOL, Object.Symbols[3].Name);
+        Equal(Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL, Object.Symbols[4].Name);
+        True(Object.Symbols.Skip(1).All(Symbol => Symbol.Binding == Objectˉsymbolˉbinding.Import),
+            "A paging dependency is not an explicit import.");
+        Equal(4, Object.Relocations.Length);
+        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 254, 1, -4), Object.Relocations[0]);
+        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 306, 2, -4), Object.Relocations[1]);
+        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 667, 3, -4), Object.Relocations[2]);
+        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 675, 4, -4), Object.Relocations[3]);
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0x0F, 0x01, 0x44, 0x24, 0x20]));
+        Equal(2, Countˉsequence(First.Codeˉbytes, [0x0F, 0xA2]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0xB9, 0x00, 0x02, 0x00, 0x00]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0xB9, 0x00, 0x04, 0x00, 0x00]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0xB9, 0x10, 0x00, 0x00, 0x00]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0x57, 0x56, 0x4B, 0x50, 0x41, 0x47, 0x30, 0x31]));
+        Equal(0, Countˉsequence(First.Codeˉbytes, [0x0F, 0x22, 0xD8]));
+        Equal(0, Countˉsequence(First.Codeˉbytes, [0x0F, 0x32]));
     }
 
     private static void Kernelˉexceptionˉboundaryˉemitsˉverifiedˉobject()
@@ -441,9 +557,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(20_992, First.Length);
+        Equal(22_016, First.Length);
         Equal(
-            "d4a9e3625779dd3ef2a03fd71ecfe1502c1ad39378da7adbcf7e4b55636eed8c",
+            "392a2801bd8d8895bd9c34213336a69057c1ae81675269056c60b8c3e974ab01",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -455,9 +571,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(20_992, First.Length);
+        Equal(22_016, First.Length);
         Equal(
-            "705670b1054589b80e3c918c03e9f751304e3f4b5bda77485f606433db68a757",
+            "aa610e6ac00ed43466a87521bb4cebb2934d0885acb960db8913f025ced9cce9",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -478,9 +594,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         Sequenceˉequal(First, Second);
-        Equal(20_992, First.Length);
+        Equal(22_016, First.Length);
         Equal(
-            "df45d8e0f69581e5ed3b46608598e6170413f80c5c1bbba9233e9842cdd7a04d",
+            "74632fcde4873f2d46e18b1b77c5cc8b495e83f0f750930e039da27dd67cd0ee",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -505,7 +621,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 20\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 20\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -522,7 +638,7 @@ internal static class Program
         Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x48]));
         Equal(1, Countˉsequence(Code, [0xFF, 0x90, 0xE8, 0x00, 0x00, 0x00]));
         Equal(3, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x48, 0x41, 0x4E, 0x44, 0x31]));
-        Equal(2, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x30, 0x31]));
+        Equal(3, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x30, 0x31]));
         Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x2C, 0x30, 0x00, 0x00, 0x00]));
         Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
         Equal(1, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x78]));
@@ -552,11 +668,13 @@ internal static class Program
         data Memoryˉmarker: text = "memory-owned=pass";
         data Allocatorˉmarker: text = "allocator=pass";
         data Stackˉmarker: text = "kernel-stack=pass";
+        data Pagingˉmarker: text = "paging=owned";
 
         export fn Main() -> i32 {
             console.write_line(Memoryˉmarker);
             console.write_line(Allocatorˉmarker);
             console.write_line(Stackˉmarker);
+            console.write_line(Pagingˉmarker);
             console.write_line(Greeting);
             return 0;
         }
@@ -581,9 +699,9 @@ internal static class Program
         var First = Kernelˉassemblyˉshim.Buildˉobject();
         var Second = Kernelˉassemblyˉshim.Buildˉobject();
         Sequenceˉequal(First, Second);
-        Equal(620, First.Length);
+        Equal(773, First.Length);
         Equal(
-            "4bb07c28877905de6e57d79454e33402de4ac54048d5ce09a26b49ad0d8347a5",
+            "5c4b0bcfa1c6463ebbe631562deb7714aa510dfbc2418b1544b0df6c8df6bedb",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.AsSpan()).Value;
@@ -594,10 +712,14 @@ internal static class Program
                 0x68, 0x0D, 0x00, 0x00, 0x00, 0xE9, 0, 0, 0, 0,
                 0x68, 0x00, 0x00, 0x00, 0x00, 0x68, 0x06, 0x00, 0x00, 0x00,
                 0xE9, 0, 0, 0, 0,
+                0xB9, 0x80, 0x00, 0x00, 0xC0, 0x0F, 0x32, 0x0F, 0xBA, 0xE8, 0x0B,
+                0x0F, 0x30, 0x0F, 0x20, 0xC0, 0x48, 0x0F, 0xBA, 0xE8, 0x10,
+                0x0F, 0x22, 0xC0, 0xC3,
+                0x0F, 0x22, 0xD8, 0x0F, 0x20, 0xD8, 0xC3,
                 0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
                 0x66, 0xEF, 0xFA, 0xF4, 0xE9, 0, 0, 0, 0],
             Object.Sections[0].Data);
-        Equal(8, Object.Symbols.Length);
+        Equal(10, Object.Symbols.Length);
         Equal(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Object.Symbols[0].Name);
         True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The WVA console shim is not exported.");
         Equal(Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL, Object.Symbols[1].Name);
@@ -608,15 +730,21 @@ internal static class Program
         Equal(Kernelˉexceptionˉcontract.INVALID_OPCODE_ENTRY_SYMBOL, Object.Symbols[3].Name);
         True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Export, "The vector-6 WVA entry is not exported.");
         Equal(15u, Object.Symbols[3].Size);
-        Equal(Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL, Object.Symbols[4].Name);
-        True(Object.Symbols[4].Binding == Objectˉsymbolˉbinding.Export, "The Q35 shutdown shim is not exported.");
-        Equal(19u, Object.Symbols[4].Size);
-        Equal(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL, Object.Symbols[5].Name);
-        True(Object.Symbols[5].Binding == Objectˉsymbolˉbinding.Import, "The normalized terminal handler is not imported by WVA.");
-        Equal(Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL, Object.Symbols[6].Name);
-        True(Object.Symbols[6].Binding == Objectˉsymbolˉbinding.Import, "The native WVB bridge is not imported by WVA.");
-        Equal(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL, Object.Symbols[7].Name);
-        True(Object.Symbols[7].Binding == Objectˉsymbolˉbinding.Import, "The x64 byte writer is not imported by WVA.");
+        Equal(Kernelˉpagingˉcontract.PROTECTION_ENABLE_SYMBOL, Object.Symbols[4].Name);
+        True(Object.Symbols[4].Binding == Objectˉsymbolˉbinding.Export, "The page-protection shim is not exported.");
+        Equal(25u, Object.Symbols[4].Size);
+        Equal(Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL, Object.Symbols[5].Name);
+        True(Object.Symbols[5].Binding == Objectˉsymbolˉbinding.Export, "The page-table activation shim is not exported.");
+        Equal(7u, Object.Symbols[5].Size);
+        Equal(Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL, Object.Symbols[6].Name);
+        True(Object.Symbols[6].Binding == Objectˉsymbolˉbinding.Export, "The Q35 shutdown shim is not exported.");
+        Equal(19u, Object.Symbols[6].Size);
+        Equal(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL, Object.Symbols[7].Name);
+        True(Object.Symbols[7].Binding == Objectˉsymbolˉbinding.Import, "The normalized terminal handler is not imported by WVA.");
+        Equal(Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL, Object.Symbols[8].Name);
+        True(Object.Symbols[8].Binding == Objectˉsymbolˉbinding.Import, "The native WVB bridge is not imported by WVA.");
+        Equal(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL, Object.Symbols[9].Name);
+        True(Object.Symbols[9].Binding == Objectˉsymbolˉbinding.Import, "The x64 byte writer is not imported by WVA.");
         Equal(5, Object.Relocations.Length);
         True(
             Object.Relocations[0] is
@@ -624,7 +752,7 @@ internal static class Program
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 1,
-                Symbolˉindex: 7,
+                Symbolˉindex: 9,
                 Addend: -4,
             },
             "The WV-to-WVA console transfer does not use the canonical relative relocation.");
@@ -634,7 +762,7 @@ internal static class Program
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 6,
-                Symbolˉindex: 6,
+                Symbolˉindex: 8,
                 Addend: -4,
             },
             "The WVA-to-native-WVB transfer does not use the canonical relative relocation.");
@@ -644,7 +772,7 @@ internal static class Program
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 16,
-                Symbolˉindex: 5,
+                Symbolˉindex: 7,
                 Addend: -4,
             },
             "The vector-13 entry does not reach the normalized terminal handler.");
@@ -654,7 +782,7 @@ internal static class Program
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
                 Offset: 31,
-                Symbolˉindex: 5,
+                Symbolˉindex: 7,
                 Addend: -4,
             },
             "The vector-6 entry does not reach the normalized terminal handler.");
@@ -663,8 +791,8 @@ internal static class Program
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
-                Offset: 50,
-                Symbolˉindex: 4,
+                Offset: 82,
+                Symbolˉindex: 6,
                 Addend: -4,
             },
             "The Q35 shutdown halt fallback is not a closed WVA-owned loop.");
@@ -720,6 +848,16 @@ internal static class Program
     {
         var Result = Kernelˉmemoryˉplanner.Plan(memoryˉmap, descriptorˉbytes);
         True(!Result.Success, "A malformed memory map produced a kernel arena.");
+        Equal(expectedˉcode, Result.Diagnostics[0].Code);
+    }
+
+    private static void Pagingˉplanˉfails(
+        ulong rootˉaddress,
+        ulong executableˉaddress,
+        string expectedˉcode)
+    {
+        var Result = Kernelˉpagingˉplanner.Plan(rootˉaddress, executableˉaddress);
+        True(!Result.Success, "An invalid paging request produced a page-table plan.");
         Equal(expectedˉcode, Result.Diagnostics[0].Code);
     }
 

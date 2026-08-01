@@ -193,12 +193,16 @@ internal static class Kernelˉmemoryˉx64
         output.Jumpˉif(CONDITION_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x89, 0x46, 0x38);
 
-        // Install the bounded exception table and call Main on the two-page kernel-owned stack.
+        // Install exceptions and paging, then call Main on the two-page kernel-owned stack.
         output.Emit(0x49, 0x8D, 0xA6);
         output.Emitˉu32((uint)((Kernelˉmemoryˉcontract.STATE_PAGES + Kernelˉmemoryˉcontract.STACK_PAGES) * Kernelˉmemoryˉcontract.PAGE_BYTES));
         output.Emit(0x48, 0x83, 0xEC, 0x20);
         output.Emit(0x49, 0x8B, 0x4E, 0x38);
         Emitˉexternalˉcall(output, relocations, 3);
+        output.Emit(0x48, 0x85, 0xC0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, OWNED_STACK_FAILURE_LABEL);
+        output.Emit(0x4C, 0x89, 0xF1);
+        Emitˉexternalˉcall(output, relocations, 4);
         output.Emit(0x48, 0x85, 0xC0);
         output.Jumpˉif(CONDITION_NOT_EQUAL, OWNED_STACK_FAILURE_LABEL);
         output.Emit(0x49, 0x8D, 0x4E, (byte)Kernelˉmemoryˉcontract.HANDOFF_COPY_OFFSET);

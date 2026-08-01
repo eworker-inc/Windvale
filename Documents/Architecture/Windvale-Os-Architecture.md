@@ -199,7 +199,7 @@ Each step must be useful, bounded, and independently qualified:
 7. Add drivers and resource services one measured device and contract at a time.
 8. Prove the exact same WVB bytes, verifier result, outputs, diagnostics, and defined resource counters on Windows, Linux, and Windvale OS.
 
-Candidate [Decision 0086](../Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) completes the first two examples inside step 1: one WVA-owned entry without a CPU error code and one with a CPU error code reach the same explicit ring-0 frame, while candidate Decision 0085 supplies clean Q35 shutdown. Page-table ownership is the next unresolved machine-foundation item; the candidates do not yet make exception policy resumable or move it fully into `.wv`.
+Candidate [Decision 0088](../Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) completes the bounded page-table-ownership item inside step 1: one kernel-owned low-1-GiB identity root provides a null guard and W^X policy, while Decisions 0085 and 0086 supply clean Q35 shutdown and normalized vector-6/vector-13 entries. The page-table constructor, IDT publication, and terminal policy remain named Stage 0 replacement seams, and exception policy is not yet resumable or fully owned by `.wv`. The next vertical slice is step 3's AOT Windvale decoder/verifier admitting one embedded canonical WVB in the guest.
 
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 

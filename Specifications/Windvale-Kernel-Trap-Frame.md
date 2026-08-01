@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel trap frame version 1 is an implemented candidate for firmware probe 19. It gives x86-64 exception entries with and without CPU error codes one common terminal-handler input. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) owns the candidate and its evidence boundary; cross-host qualification is pending.
+Kernel trap frame version 1 is an implemented candidate first introduced by firmware probe 19 and retained by probe 20 under its kernel-owned page-table root. It gives x86-64 exception entries with and without CPU error codes one common terminal-handler input. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) owns the candidate and its evidence boundary; cross-host qualification is pending.
 
 This is an internal ring-0 machine-entry contract. It is not a Windvale source value, WVB record, public syscall ABI, user-process signal frame, unwind record, or mapping of Windvale `WVR` runtime traps to CPU faults.
 
@@ -42,7 +42,7 @@ After either sequence, the common frame has the same offsets. The stubs do not p
 
 ## Validation and terminal policy
 
-The probe-19 common handler reads only vector and error code. It accepts `(6, 0)` as invalid opcode and `(13, 0)` as the deterministic general-protection scenario. Any other pair reaches a fixed malformed-frame panic. The handler does not decode or modify `RIP`, `CS`, or `RFLAGS`, and it never executes `IRETQ`.
+The probe-20 common handler reads only vector and error code. It accepts `(6, 0)` as invalid opcode and `(13, 0)` as the deterministic general-protection scenario. Any other pair reaches a fixed malformed-frame panic. The handler does not decode or modify `RIP`, `CS`, or `RFLAGS`, and it never executes `IRETQ`.
 
 The object and boot tests independently lock the WVA stub bytes, definition offsets and sizes, relocations to the common handler, IDT targets, frame offsets, exact scenario markers, and QEMU terminal exit. Real QEMU execution is required to prove both a CPU-no-error-code delivery and a CPU-error-code delivery; static object checks alone are insufficient.
 
