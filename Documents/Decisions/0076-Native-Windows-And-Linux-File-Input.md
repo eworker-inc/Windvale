@@ -1,7 +1,7 @@
 # Decision 0076: Native Windows and Linux file input
 
 - Date: 2026-08-01
-- Status: Candidate; Windows development evidence complete, cross-host qualification pending
+- Status: Qualified at exact commit `ef0861980f7309ca7cac709f6930b5e11a4c8208`
 - Extends: [Decision 0074](0074-Native-Windows-And-Linux-Output-Services.md)'s runtime-private host-I/O pattern
 - Advances: Native ABI 14, execution-context version 6, kernel native bridge 9, and firmware probe 16
 - Retains: Service-table version 4, WVB 1.6, WVO 1.0, and all generated service-call shapes
@@ -36,10 +36,18 @@ The fragment verifier proves that the incoming name and destination descriptor u
 
 This completes native execution for all eleven service-table slots, but it does not complete .NET retirement. C# Stage 0 still selects and reconstructs leaves, creates and verifies tables and arenas, allocates W^X memory, applies relocations, invokes `Main`, maps traps, and packages the OS image. It also remains the independent reference/recovery compiler and interpreter. The next ownership step should move construction of one bounded runtime artifact into Windvale while retaining byte-for-byte comparison with this implementation.
 
-## Candidate evidence
+## Qualification evidence
 
 The existing hosted-input test now reconstructs and corrupts both platform leaf identities; runs the WVB inspector through direct JIT and linked WVO/AOT against a real OS file; proves its supplied Stage 0 reader remains at zero calls; verifies first-success cache reuse; and covers invalid, missing, oversized, and 65th-name failures. The complete 1,441-line Windvale `wvdump` also runs through JIT and linked WVO/AOT using the direct host-file boundary.
 
-The focused Windows hosted-input case passes in 0.378 seconds in Debug and 0.134 seconds in the warm Release development run. Windows Development passes all 56 regular tests in 51.813 seconds. The zero-warning Windows Standard build passes all 57 tests in 275.825 suite seconds (280.2 seconds wall time); its cold hosted-input case takes 1.263 seconds. All 15 OS tests pass. Bridge 9 has 138 code bytes and produces a 350-byte object with SHA-256 `3cbf50a4828a1a69ca7441a667cb95e569055468c345ed26b8a580fda3facfc5`. Firmware probe 16 remains 15,872 bytes with candidate SHA-256 `206a036f8cbe3198544b6878bf52c80ef8d489c14d5437c6c7004ff1d6599504`.
+The first Debian run exposed two exact Linux-leaf defects before qualification: the NUL scan cleared the register holding the `WVFI` table, and a four-byte read-request slot overlapped the upper half of the saved scratch pointer. Commit `96ebe70` reloads the table and separates the stack slots. The complete native `wvdump`, a 4 MiB + 1 boundary file, and all other hosted-input cases then pass on Debian. Commit `ef08619` additionally clears the expected `EX_IOERR` result from the final negative Qualification command so PowerShell callers receive the gate's successful exit status.
 
-Exact-commit Debian execution of the Linux leaf, cross-host Qualification, normalized reports, portable-artifact comparison, GitHub verification, and pinned-QEMU probe 16 remain required before this decision becomes qualified.
+Exact commit `ef0861980f7309ca7cac709f6930b5e11a4c8208`, tree `bcafa888e4f9bf470a4c42e3aa0173acd47bd13f`, was published to both configured remotes and archived as 2,931,444 bytes with SHA-256 `d9fdfead5c1d42586d4c9a96102389491553f494059df120df2318d7867fafb7`. The archive retained the same size and digest after transfer to the isolated Debian GNU/Linux 12 x64 QA host with .NET SDK `10.0.302`.
+
+Windows and Debian pass zero-warning Release builds, all 57 Seed tests, exact compiler reproduction, and the complete native CLI verifier. Their suite times are 238.115 and 257.556 seconds; complete Qualification takes 499.037 and approximately 529 seconds wall-clock. Their native hosted-input cases take 0.130 and 0.101 seconds. The 15,563-byte Windows report has SHA-256 `c34a2199e548631323b2186dda0dcf8ffcb0a3a3c6eb7d53d9a405c314837a4b`; its 12,074-byte timing report has SHA-256 `deb25a16aaaadeabaf15395167e58fc435f260c4f792416f80089072deb2a232`. The 15,473-byte Debian report has SHA-256 `0a8116b03185d7344dd47fb0996c1cc9402c3b9583522574a2a77b0e2fa1f5cf`; its 11,675-byte timing report has SHA-256 `0d0de32e961bc112f2f1e03f64b4f87de2cb50a3ab97953e7963d7646c7b6aac`. Their normalized contracts match exactly.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,647 bytes, match byte for byte and retain canonical manifest SHA-256 `11ac1d4a57fce3648004d7a6002e6124d6e2fbeefc108b31bfe305523b2de0de`. The 2,299,009-byte Debian evidence bundle has SHA-256 `2ac389f97d5f94b4ae60a5dd0ee8fee3cf9a62a0851b5fbd20e35fcf7e829a89`.
+
+Both hosts pass all 15 OS tests. Bridge 9 has 138 code bytes and produces a 350-byte object with SHA-256 `3cbf50a4828a1a69ca7441a667cb95e569055468c345ed26b8a580fda3facfc5`. Pinned QEMU 11.0/Q35/TCG boots the exact 15,872-byte firmware-probe-16 image with SHA-256 `206a036f8cbe3198544b6878bf52c80ef8d489c14d5437c6c7004ff1d6599504`, emits the complete version-16 success transcript, and returns guest-controlled host exit code 1. The Debian QA host does not provide QEMU. GitHub [Verify run 30704485295](https://github.com/eworker-inc/Windvale/actions/runs/30704485295) passes its independent Windows and Linux jobs. After retrieval and comparison, every resolved ABI-14 QA directory, transferred source archive, transient trace, and remote evidence bundle was removed and confirmed absent; the temporary diagnostic package was also removed.
+
+This supersedes Decision 0074 as the latest qualified native-runtime and OS evidence. It qualifies native leaves for every closed service slot without claiming Windvale-owned runtime construction, W^X publication, arena ownership, standalone native tools, in-guest WVB loading, or .NET retirement.
