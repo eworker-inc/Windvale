@@ -1,7 +1,7 @@
 # Decision 0065: Versioned native execution context and console service
 
 - Date: 2026-07-31
-- Status: Implemented; exact cross-host qualification pending
+- Status: Cross-host qualified on Windows x64 and Debian x64; OS bridge qualified on pinned Windows QEMU
 - Refines: [Decision 0063](0063-Shared-Budget-Native-Calls-And-Static-Data.md)'s positional ABI-5 resource bridge
 - Updates: [Decision 0064](0064-First-Shared-Native-Wvb-In-Windvale-Os.md)'s OS consumer to the current ABI without changing its portable program
 
@@ -24,13 +24,17 @@ The first service should remain small enough to verify completely. `console.writ
 - Advance the OS native bridge to version 2. Construct the same ABI-6 context on the kernel-owned stack with exact budgets 203/2 and a zero service pointer; reject any required service in the portable probe. Advance the firmware probe to version 8 and add `native-context=pass` to its gated transcript.
 - Retain C#/.NET as the current host adapter, selector/verifier implementation, reference oracle, and recovery path. The qualified Windvale-written bytecode compiler remains real Stage 1/Stage 2 code, but it does not yet own native selection, W^X publication, allocation, or platform services.
 
-## Initial evidence
+## Qualification evidence
 
 The focused Windows service case compiles the canonical hosted Hello module twice, verifies deterministic fragments and WVO, retains immutable UTF-8 `.rodata`, links back to the exact fragment bytes, and produces `Hello from Windvale` plus LF through the actual W^X machine-code callback. Interpreter and native execution agree at the exact instruction boundary. Missing authorization, missing implementation, and deliberate writer failure produce `WVR3010`, `WVR3001`, and `WVR3013`; corrupt service bytes, relocation bytes, service metadata, and UTF-8 data fail before execution.
 
-The ABI-6 portable regression, all 49 regular Seed tests, and all 15 OS tests pass with a zero-warning Release build. The unchanged 502-byte portable OS WVB lowers to a 2,360-byte ABI-6 WVO with SHA-256 `712350a395120c42f604966dffe04c397012af3696666f51c1a069cd9db0be61`. The exact version-2 bridge object is 305 bytes with SHA-256 `2e22ee17e52ee8cc2c8fa6547424f0234bd770555b0a75c23d63003b6257331e`. The development firmware image is 10,240 bytes with SHA-256 `61cd90eac963ed96d1fdd86d447cb7f2cdeffa50a3de2f5306239de27c1be6b0`. A real pinned QEMU 11/OVMF boot emits the complete version-8 transcript including `native-context=pass` and returns the guest-controlled success code.
+Exact candidate commit `2fcf5318acb51bbb76279dca56bdb187c4beeb1b`, tree `cf9bb57f9bb86a8f89cbdadf03a3b4c9b7d9e924`, was published to both configured remotes. Its 2,829,717-byte archive has SHA-256 `3a76147ef24f3932389f83f9e6a36b04a6ab7dbc4cebf90c1fcd54b716447587`; Debian computed the same digest before extraction into the isolated E-Worker QA directory. The Linux-specific native service case then passed the actual System V `mmap`/`mprotect` and callback path in 177 milliseconds with a zero-warning build.
 
-These values are implementation evidence, not qualification claims. The exact committed candidate must still pass the complete Windows and isolated Debian suites, native Linux callback execution, portable-artifact comparison, and an exact-candidate QEMU rerun before this decision becomes qualified.
+Windows Qualification completed in 460.1 seconds with a 227.471-second suite. Debian Qualification completed in 474.8 seconds with a 238.150-second suite. Both hosts used .NET SDK `10.0.302`, passed zero-warning Release builds, all 50 tests including the qualification-only golden contract, the complete CLI verifier, and exact compiler Stage 1 to Stage 2 reproduction. The 15,563-byte Windows report has SHA-256 `6780bd68cfcf7dacea10d34f5a4b9d7eeb6cdc2c2c4a70cf055c6830429330f5`; its 10,898-byte timing report has SHA-256 `cf54c651dbb38ed332c5e0cfe9bd1dadc2341896b72a9a50d6cfe1f161c4a5ba`. The 15,473-byte Debian report has SHA-256 `1fec4c222425f2737a7f41c415b1841f88aab0a8e7458b40d4e7d170e1d9c35d`; its 10,533-byte timing report has SHA-256 `2bc947870ecbefeaf13e2fd2c0ea30039ca86affd3acff20fa16803fb256effc`. Their normalized contracts match exactly.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,612 bytes, match Windows byte for byte. The 2,304,054-byte Debian evidence bundle has SHA-256 `84a26fb6f2eb26da512bc1d193ee02c3a28a119bf97e013c68b5fe1e412208bd`. After retrieval and comparison, the exact QA directory, transferred source archive, and remote evidence bundle were removed and confirmed absent.
+
+The unchanged 502-byte portable OS WVB lowers to a 2,360-byte ABI-6 WVO with SHA-256 `712350a395120c42f604966dffe04c397012af3696666f51c1a069cd9db0be61`. The exact version-2 bridge object is 305 bytes with SHA-256 `2e22ee17e52ee8cc2c8fa6547424f0234bd770555b0a75c23d63003b6257331e`. All 15 OS tests pass. The pinned QEMU `11.0.0`/Q35/TCG and exact OVMF gate boots the deterministic 10,240-byte EFI image with SHA-256 `61cd90eac963ed96d1fdd86d447cb7f2cdeffa50a3de2f5306239de27c1be6b0`, emits the complete version-8 transcript including `native-context=pass`, and returns guest-controlled host exit code 1.
 
 ## Consequences
 

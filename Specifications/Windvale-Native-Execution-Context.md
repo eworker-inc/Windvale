@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Version 1 of this context is the internal contract for `x86-64-wvb-baseline-v6`. It carries per-run resource limits and a versioned runtime-service table without making generated code depend on the Windows x64 or System V x86-64 calling convention. [Decision 0065](../Documents/Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) defines the first implementation slice.
+Version 1 of this context is the cross-host-qualified internal contract for `x86-64-wvb-baseline-v6`. It carries per-run resource limits and a versioned runtime-service table without making generated code depend on the Windows x64 or System V x86-64 calling convention. [Decision 0065](../Documents/Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) qualifies the first implementation slice at exact candidate `2fcf531`.
 
 This is an experimental native ABI, not a stable public foreign-function interface. ABI 6 replaces ABI 5 in the current implementation; qualified ABI-5 artifacts remain historical evidence and are not accepted by the ABI-6 fragment verifier.
 

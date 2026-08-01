@@ -91,7 +91,7 @@ Malformed and random bytes must produce a bounded result or one of these failure
 
 ## Current evidence and limit
 
-Firmware probe version 8 links the memory object, WVA shims, ABI-6 object, and native bridge independently; finds and clears the arena after firmware shutdown; records a successful one-page allocation; copies the handoff; and runs both the portable native probe and compiler export `Windvale_kernel_main` on the owned stack. Every line through Hello World in the suffix originates in the special compiler-generated function and returns through the WVA console adapter. Continued loader evidence additionally requires the exact ABI-6 context and portable probe result. The development QEMU gate requires this memory/native suffix:
+Firmware probe version 8 links the memory object, WVA shims, ABI-6 object, and native bridge independently; finds and clears the arena after firmware shutdown; records a successful one-page allocation; copies the handoff; and runs both the portable native probe and compiler export `Windvale_kernel_main` on the owned stack. Every line through Hello World in the suffix originates in the special compiler-generated function and returns through the WVA console adapter. Continued loader evidence additionally requires the exact ABI-6 context and portable probe result. The qualified QEMU gate requires this memory/native suffix:
 
 ```text
 memory-owned=pass
