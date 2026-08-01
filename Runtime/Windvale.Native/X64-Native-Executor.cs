@@ -114,49 +114,39 @@ public static class X64ˉnativeˉexecutor
         var Address = IntPtr.Zero;
         var Context = IntPtr.Zero;
         var Resultˉcell = IntPtr.Zero;
-        var Serviceˉcodeˉoffset = checked((fragment.Code.Length + 15) & ~15);
-        var Serviceˉcode = new List<byte>();
-        var Serviceˉoffsets = new Dictionary<Nativeˉservice, int>();
+        var Serviceˉcode = new List<(Nativeˉservice Service, ImmutableArray<byte> Code)>();
         foreach (var Service in fragment.Requiredˉservices)
         {
-            while ((Serviceˉcode.Count & 15) != 0)
-            {
-                Serviceˉcode.Add(0x90);
-            }
-            Serviceˉoffsets.Add(Service, checked(Serviceˉcodeˉoffset + Serviceˉcode.Count));
+            ImmutableArray<byte> Nativeˉserviceˉcode;
             if (Service is Nativeˉservice.Consoleˉwriteˉline or
                 Nativeˉservice.Diagnosticˉwriteˉline)
             {
-                var Nativeˉserviceˉcode = X64ˉnativeˉoutputˉservices.Build(
+                Nativeˉserviceˉcode = X64ˉnativeˉoutputˉservices.Build(
                     Service,
                     Output.Platform);
                 X64ˉnativeˉoutputˉservices.Verify(
                     Service,
                     Output.Platform,
                     Nativeˉserviceˉcode.AsSpan());
-                Serviceˉcode.AddRange(Nativeˉserviceˉcode);
             }
             else if (Service is Nativeˉservice.Processˉargumentˉcount or
                 Nativeˉservice.Processˉargument)
             {
-                var Nativeˉserviceˉcode = X64ˉnativeˉargumentˉservices.Build(Service);
+                Nativeˉserviceˉcode = X64ˉnativeˉargumentˉservices.Build(Service);
                 X64ˉnativeˉargumentˉservices.Verify(Service, Nativeˉserviceˉcode.AsSpan());
-                Serviceˉcode.AddRange(Nativeˉserviceˉcode);
             }
             else if (Service == Nativeˉservice.Textˉutf8ˉisˉvalid)
             {
-                var Nativeˉserviceˉcode = X64ˉnativeˉutf8ˉservice.Build();
+                Nativeˉserviceˉcode = X64ˉnativeˉutf8ˉservice.Build();
                 X64ˉnativeˉutf8ˉservice.Verify(Nativeˉserviceˉcode.AsSpan());
-                Serviceˉcode.AddRange(Nativeˉserviceˉcode);
             }
             else if (Service == Nativeˉservice.Fileˉreadˉbytes)
             {
-                var Nativeˉserviceˉcode = X64ˉnativeˉfileˉinputˉservice.Build(
+                Nativeˉserviceˉcode = X64ˉnativeˉfileˉinputˉservice.Build(
                     Fileˉinput.Platform);
                 X64ˉnativeˉfileˉinputˉservice.Verify(
                     Fileˉinput.Platform,
                     Nativeˉserviceˉcode.AsSpan());
-                Serviceˉcode.AddRange(Nativeˉserviceˉcode);
             }
             else if (Service is Nativeˉservice.Enumˉname or
                 Nativeˉservice.Textˉconcat or
@@ -164,12 +154,11 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉservice.I32ˉformat or
                 Nativeˉservice.U32ˉformat)
             {
-                var Nativeˉserviceˉcode = X64ˉnativeˉtextˉservices.Build(Service, fragment.Types);
+                Nativeˉserviceˉcode = X64ˉnativeˉtextˉservices.Build(Service, fragment.Types);
                 X64ˉnativeˉtextˉservices.Verify(
                     Service,
                     Nativeˉserviceˉcode.AsSpan(),
                     fragment.Types);
-                Serviceˉcode.AddRange(Nativeˉserviceˉcode);
             }
             else
             {
@@ -177,8 +166,17 @@ public static class X64ˉnativeˉexecutor
                     "WVN4010",
                     $"Unknown native service implementation '{Service}'.");
             }
+            Serviceˉcode.Add((Service, Nativeˉserviceˉcode));
         }
-        var Allocationˉbytes = checked(Serviceˉcodeˉoffset + Serviceˉcode.Count);
+        var Publicationˉplan = X64ˉnativeˉpublicationˉlayout.Plan(
+            fragment.Code.Length,
+            Serviceˉcode
+                .Select(Item => new Nativeˉpublicationˉservice(Item.Service, Item.Code.Length))
+                .ToImmutableArray());
+        var Allocationˉbytes = Publicationˉplan.Imageˉbytes;
+        var Serviceˉoffsets = Publicationˉplan.Placements.ToDictionary(
+            Placement => Placement.Service,
+            Placement => Placement.Offset);
         Address = Allocateˉwritable((nuint)Allocationˉbytes);
         var Serviceˉtable = IntPtr.Zero;
         var Serviceˉfailureˉdetail = Nativeˉserviceˉfailureˉdetail.None;
@@ -188,8 +186,21 @@ public static class X64ˉnativeˉexecutor
         {
             var Linkedˉcode = new byte[Allocationˉbytes];
             fragment.Code.CopyTo(Linkedˉcode);
-            Applyˉpatches(fragment, Address, Linkedˉcode);
-            Serviceˉcode.CopyTo(Linkedˉcode, Serviceˉcodeˉoffset);
+            var Previousˉserviceˉend = fragment.Code.Length;
+            for (var Index = 0; Index < Serviceˉcode.Count; Index++)
+            {
+                var Placement = Publicationˉplan.Placements[Index];
+                if (Index != 0)
+                {
+                    Array.Fill(
+                        Linkedˉcode,
+                        (byte)0x90,
+                        Previousˉserviceˉend,
+                        Placement.Offset - Previousˉserviceˉend);
+                }
+                Serviceˉcode[Index].Code.CopyTo(Linkedˉcode, Placement.Offset);
+                Previousˉserviceˉend = checked(Placement.Offset + Placement.Size);
+            }
             Marshal.Copy(Linkedˉcode, 0, Address, Linkedˉcode.Length);
             Finalizeˉexecutable(Address, (nuint)Linkedˉcode.Length);
 
@@ -576,42 +587,6 @@ public static class X64ˉnativeˉexecutor
             Nativeˉservice.U32ˉformat => Nativeˉserviceˉtableˉcontract.U32_FORMAT_POINTER_OFFSET,
             _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service table entry."),
         };
-
-    private static void Applyˉpatches(Nativeˉfragment fragment, IntPtr address, byte[] code)
-    {
-        var Symbols = fragment.Symbols.ToDictionary(Symbol => Symbol.Name, StringComparer.Ordinal);
-        foreach (var Patch in fragment.Patches)
-        {
-            var Symbol = Symbols[Patch.Symbol];
-            if (Symbol.Binding == Nativeˉsymbolˉbinding.Import)
-            {
-                throw new Nativeˉbackendˉexception(
-                    "WVN4002",
-                    $"Native entry execution cannot resolve import '{Symbol.Name}' yet.");
-            }
-
-            var Targetˉaddress = checked(address.ToInt64() + Symbol.Offset);
-            var Patchˉaddress = checked(address.ToInt64() + Patch.Offset);
-            if (Patch.Kind == Nativeˉpatchˉkind.Relativeˉi32)
-            {
-                var Value = checked(Targetˉaddress + Patch.Addend - Patchˉaddress);
-                if (Value is < int.MinValue or > int.MaxValue)
-                {
-                    throw new Nativeˉbackendˉexception("WVN4003", "A native relative patch exceeds i32.");
-                }
-                BinaryPrimitives.WriteInt32LittleEndian(code.AsSpan((int)Patch.Offset, sizeof(int)), (int)Value);
-            }
-            else
-            {
-                var Value = checked(Targetˉaddress + Patch.Addend);
-                if (Value is < uint.MinValue or > uint.MaxValue)
-                {
-                    throw new Nativeˉbackendˉexception("WVN4004", "A native absolute patch exceeds u32.");
-                }
-                BinaryPrimitives.WriteUInt32LittleEndian(code.AsSpan((int)Patch.Offset, sizeof(uint)), (uint)Value);
-            }
-        }
-    }
 
     private static IntPtr Allocateˉwritable(nuint size)
     {

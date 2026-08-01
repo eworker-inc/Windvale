@@ -10,5 +10,8 @@
     <EmbeddedResource
       Include="Consumers/Native-Stencil-Bridge.wvb"
       LogicalName="Windvale.Native.Native-Stencil-Bridge.wvb" />
+    <EmbeddedResource
+      Include="Consumers/Native-Publication-Bridge.wvb"
+      LogicalName="Windvale.Native.Native-Publication-Bridge.wvb" />
   </ItemGroup>
 </Project>

@@ -42,6 +42,8 @@ internal static class Program
     private const string NATIVE_STENCIL_CORE_SHA256 = "d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f";
     private const string NATIVE_STENCIL_BRIDGE_SHA256 = "5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9";
     private const string NATIVE_STENCIL_DEMO_SHA256 = "651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15";
+    private const string NATIVE_PUBLICATION_CORE_SHA256 = "9d75d59e4ba0fc689ae9bc4ac3ac019e520db06d21f54d4ee1480a0bb356e967";
+    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "5102fd0119e37bb7e5f83bb3c4d1bff6303f37818bfe48825b320bf28f27eada";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "b609fb7d442bbe1685c1058c71eb011d43b291df505697a97c233ca7063a2044";
     private const string PROJECT_MANIFEST_TOOL_SHA256 = "50ab9aa5048ab844a816d0f7f12fb691cb69f57c4a71f7eb18ebc7fb4aaf0b0c";
@@ -548,6 +550,12 @@ internal static class Program
     private static readonly string NATIVE_STENCIL_BRIDGE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-Stencil-Bridge.wv");
 
+    private static readonly string NATIVE_PUBLICATION_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-Publication-Core.wv");
+
+    private static readonly string NATIVE_PUBLICATION_BRIDGE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-Publication-Bridge.wv");
+
     private static readonly string NATIVE_STENCIL_DEMO_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-Stencil-Demo.wv");
 
@@ -609,6 +617,7 @@ internal static class Program
         new("Windvale-assembled native stencils reproduce the argument-service leaves", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilsˉreproduceˉargumentˉservices),
         new("Windvale validates and patches its native stencils across every runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉconsumerˉruns),
         new("Windvale returns and publishes native argument leaves through the descriptor bridge", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉbridgeˉruns),
+        new("Windvale owns bounded executable-image layout before W^X publication", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlayoutˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
@@ -3406,6 +3415,285 @@ internal static class Program
             export fn Main() -> bytes { return file.read_bytes(Name); }
             """));
         Throwsˉnative("WVN2002", () => _ = X64ˉnativeˉbackend.Compile(Hostedˉbytes));
+    }
+
+    private static void Windvaleˉnativeˉpublicationˉlayoutˉruns()
+    {
+        var Coreˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Compiler/Windvale/Native-Publication-Core.wv", NATIVE_PUBLICATION_CORE_SOURCE),
+            []);
+        True(
+            Coreˉresult.Success,
+            "The Windvale native-publication core did not compile: " +
+                string.Join(" | ", Coreˉresult.Diagnostics));
+        Equal(7_189, Coreˉresult.Moduleˉbytes.Length);
+        Equal(
+            NATIVE_PUBLICATION_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Coreˉresult.Moduleˉbytes.AsSpan()));
+
+        var Bridgeˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Compiler/Windvale/Native-Publication-Bridge.wv", NATIVE_PUBLICATION_BRIDGE_SOURCE),
+            [
+                new("Compiler/Windvale/Native-Publication-Core.wv", NATIVE_PUBLICATION_CORE_SOURCE),
+            ]);
+        True(
+            Bridgeˉresult.Success,
+            "The Windvale native-publication bridge did not compile: " +
+                string.Join(" | ", Bridgeˉresult.Diagnostics));
+        Equal(X64ˉnativeˉpublicationˉlayout.PLANNER_CANONICAL_SIZE, Bridgeˉresult.Moduleˉbytes.Length);
+        Equal(
+            NATIVE_PUBLICATION_BRIDGE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Bridgeˉresult.Moduleˉbytes.AsSpan()));
+        Equal(
+            X64ˉnativeˉpublicationˉlayout.PLANNER_CANONICAL_SHA256,
+            NATIVE_PUBLICATION_BRIDGE_SHA256);
+
+        using (var Stream = typeof(X64ˉnativeˉpublicationˉlayout).Assembly
+            .GetManifestResourceStream("Windvale.Native.Native-Publication-Bridge.wvb") ??
+            throw new InvalidOperationException("The retained native-publication bridge was not embedded."))
+        {
+            var Retained = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Retained);
+            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
+        }
+
+        var Bridge = Moduleˉcodec.Readˉandˉverify(Bridgeˉresult.Moduleˉbytes.AsSpan());
+        Equal(Moduleˉprofile.Hosted, Bridge.Module.Profile);
+        Equal(Capabilityˉcatalog.FILE_READ_BYTES, Bridge.Module.Capabilities.Single().Name);
+        var Main = Bridge.Module.Exports.Single(Export => Export.Name == "Main");
+        Equal(Valueˉtype.Bytes, Bridge.Module.Functions[Main.Targetˉindex].Returnˉtype.Kind);
+
+        var Noˉservices = ImmutableArray<Nativeˉpublicationˉservice>.Empty;
+        var Emptyˉplan = X64ˉnativeˉpublicationˉlayout.Plan(5, Noˉservices);
+        Equal(5, Emptyˉplan.Fragmentˉbytes);
+        Equal(16, Emptyˉplan.Imageˉbytes);
+        True(Emptyˉplan.Placements.IsEmpty, "A service-free image received a service placement.");
+
+        var Services = ImmutableArray.Create(
+            new Nativeˉpublicationˉservice(Nativeˉservice.Processˉargumentˉcount, 5),
+            new Nativeˉpublicationˉservice(Nativeˉservice.Processˉargument, 70));
+        var First = X64ˉnativeˉpublicationˉlayout.Plan(5, Services);
+        var Second = X64ˉnativeˉpublicationˉlayout.Plan(5, Services);
+        Equal(102, First.Imageˉbytes);
+        Sequenceˉequal(
+            new[]
+            {
+                new Nativeˉpublicationˉplacement(
+                    Nativeˉservice.Processˉargumentˉcount,
+                    16,
+                    5),
+                new Nativeˉpublicationˉplacement(
+                    Nativeˉservice.Processˉargument,
+                    32,
+                    70),
+            },
+            First.Placements);
+        Sequenceˉequal(First.Placements, Second.Placements);
+
+        var Maximumˉfragment = X64ˉnativeˉpublicationˉlayout.Plan(
+            Nativeˉcontract.MAXIMUM_CODE_BYTES,
+            Noˉservices);
+        Equal(Nativeˉcontract.MAXIMUM_CODE_BYTES, Maximumˉfragment.Imageˉbytes);
+        var Maximumˉimage = X64ˉnativeˉpublicationˉlayout.Plan(
+            1,
+            [
+                new(
+                    Nativeˉservice.Consoleˉwriteˉline,
+                    X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES - 16),
+            ]);
+        Equal(X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES, Maximumˉimage.Imageˉbytes);
+        var Allˉservices = Enumerable.Range(1, X64ˉnativeˉpublicationˉlayout.MAXIMUM_SERVICES)
+            .Select(Value => new Nativeˉpublicationˉservice((Nativeˉservice)Value, 1))
+            .ToImmutableArray();
+        var Allˉplan = X64ˉnativeˉpublicationˉlayout.Plan(1, Allˉservices);
+        Equal(177, Allˉplan.Imageˉbytes);
+        Equal(16, Allˉplan.Placements[0].Offset);
+        Equal(176, Allˉplan.Placements[^1].Offset);
+
+        Throwsˉnative(
+            "WVN4013",
+            () => _ = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(0, Noˉservices));
+        Throwsˉnative(
+            "WVN4013",
+            () => _ = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(
+                Nativeˉcontract.MAXIMUM_CODE_BYTES + 1,
+                Noˉservices));
+        Throwsˉnative(
+            "WVN4013",
+            () => _ = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(
+                1,
+                [new((Nativeˉservice)12, 1)]));
+        Throwsˉnative(
+            "WVN4013",
+            () => _ = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(
+                1,
+                [new(Nativeˉservice.Consoleˉwriteˉline, 0)]));
+        Throwsˉnative(
+            "WVN4013",
+            () => _ = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(
+                1,
+                [
+                    new(Nativeˉservice.Processˉargument, 1),
+                    new(Nativeˉservice.Processˉargumentˉcount, 1),
+                ]));
+        Throwsˉnative(
+            "WVN4013",
+            () => _ = X64ˉnativeˉpublicationˉlayout.Plan(
+                1,
+                [
+                    new(
+                        Nativeˉservice.Consoleˉwriteˉline,
+                        X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES),
+                ]));
+
+        var Request = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(5, Services);
+        var Response = X64ˉnativeˉpublicationˉlayout.Evaluateˉrequest(Request);
+        var Repeatedˉresponse = X64ˉnativeˉpublicationˉlayout.Evaluateˉrequest(Request);
+        Sequenceˉequal(Response, Repeatedˉresponse);
+        Sequenceˉequal(
+            First.Placements,
+            X64ˉnativeˉpublicationˉlayout.Verifyˉresponse(5, Services, Response).Placements);
+
+        static ImmutableArray<byte> Replaceˉu32(
+            ImmutableArray<byte> input,
+            int offset,
+            uint value)
+        {
+            var Result = input.ToArray();
+            BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(offset), value);
+            return Result.ToImmutableArray();
+        }
+
+        static void Expectˉrequestˉfailure(
+            ImmutableArray<byte> request,
+            Nativeˉpublicationˉstatus status,
+            uint failureˉoffset)
+        {
+            var Result = X64ˉnativeˉpublicationˉlayout.Evaluateˉrequest(request);
+            Equal(X64ˉnativeˉpublicationˉlayout.RESPONSE_HEADER_BYTES, Result.Length);
+            Equal(
+                X64ˉnativeˉpublicationˉlayout.RESPONSE_MAGIC,
+                BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan()));
+            Equal(
+                (uint)status,
+                BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan()[12..]));
+            Equal(
+                failureˉoffset,
+                BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan()[16..]));
+        }
+
+        Expectˉrequestˉfailure([], Nativeˉpublicationˉstatus.Invalidˉsize, 0);
+        Expectˉrequestˉfailure(
+            Request.AsSpan(0, 23).ToArray().ToImmutableArray(),
+            Nativeˉpublicationˉstatus.Invalidˉsize,
+            23);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 0, 0),
+            Nativeˉpublicationˉstatus.Invalidˉmagic,
+            0);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 4, 2),
+            Nativeˉpublicationˉstatus.Invalidˉversion,
+            4);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 8, (uint)Request.Length + 1),
+            Nativeˉpublicationˉstatus.Invalidˉsize,
+            8);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 12, 0),
+            Nativeˉpublicationˉstatus.Invalidˉfragment,
+            12);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 12, Nativeˉcontract.MAXIMUM_CODE_BYTES + 1u),
+            Nativeˉpublicationˉstatus.Invalidˉfragment,
+            12);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 16, 12),
+            Nativeˉpublicationˉstatus.Invalidˉservice,
+            16);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 20, 1),
+            Nativeˉpublicationˉstatus.Invalidˉreserved,
+            20);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 24, 0),
+            Nativeˉpublicationˉstatus.Invalidˉservice,
+            24);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 28, 0),
+            Nativeˉpublicationˉstatus.Invalidˉrange,
+            28);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 32, 1),
+            Nativeˉpublicationˉstatus.Invalidˉreserved,
+            32);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 36, (uint)Nativeˉservice.Processˉargumentˉcount),
+            Nativeˉpublicationˉstatus.Invalidˉorder,
+            36);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(
+                Request,
+                28,
+                X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES),
+            Nativeˉpublicationˉstatus.Imageˉlimit,
+            28);
+        Expectˉrequestˉfailure(
+            Request.Add(0),
+            Nativeˉpublicationˉstatus.Invalidˉsize,
+            8);
+
+        Throwsˉnative(
+            "WVN4014",
+            () => _ = X64ˉnativeˉpublicationˉlayout.Verifyˉresponse(
+                5,
+                Services,
+                Response.AsSpan(0, 31).ToArray().ToImmutableArray()));
+        foreach (var (Offset, Value) in new (int Offset, uint Value)[]
+        {
+            (0, 0),
+            (4, 2),
+            (8, (uint)Response.Length + 1),
+            (12, 99),
+            (16, 0),
+            (20, 6),
+            (24, 103),
+            (28, 1),
+            (32, (uint)Nativeˉservice.Consoleˉwriteˉline),
+            (36, 17),
+            (40, 6),
+            (36, uint.MaxValue),
+            (40, uint.MaxValue),
+        })
+        {
+            Throwsˉnative(
+                "WVN4014",
+                () => _ = X64ˉnativeˉpublicationˉlayout.Verifyˉresponse(
+                    5,
+                    Services,
+                    Replaceˉu32(Response, Offset, Value)));
+        }
+        Throwsˉnative(
+            "WVN4013",
+            () => _ = X64ˉnativeˉpublicationˉlayout.Verifyˉresponse(
+                5,
+                Services,
+                Replaceˉu32(Response, 12, (uint)Nativeˉpublicationˉstatus.Imageˉlimit)));
+
+        var Dataˉfragment = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+                "module Nativeˉpublicationˉdata profile portable; data Values: [i32] = [3, 5, 8, 13]; export fn Main() -> i32 { return Values[3]; }")))
+            .Fragment;
+        True(!Dataˉfragment.Patches.IsEmpty, "The publication fixture omitted its relative data patch.");
+        foreach (var Patch in Dataˉfragment.Patches)
+        {
+            var Symbol = Dataˉfragment.Symbols.Single(Item => Item.Name == Patch.Symbol);
+            Equal(
+                checked((int)Symbol.Offset + Patch.Addend - (int)Patch.Offset),
+                BinaryPrimitives.ReadInt32LittleEndian(
+                    Dataˉfragment.Code.AsSpan(checked((int)Patch.Offset), sizeof(int))));
+        }
+        Equal(13, X64ˉnativeˉexecutor.Executeˉi32(Dataˉfragment));
     }
 
     private static void Nativeˉhostedˉinputˉinspectsˉwvb()

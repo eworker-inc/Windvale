@@ -130,6 +130,8 @@ BYTE_CONSTRUCTION_DEMO_MODULE="$ARTIFACTS/Byte-Construction-Demo.wvb"
 NATIVE_STENCIL_MODULE="$ARTIFACTS/Native-Stencil-Core.wvb"
 NATIVE_STENCIL_DEMO_MODULE="$ARTIFACTS/Native-Stencil-Demo.wvb"
 NATIVE_STENCIL_BRIDGE_MODULE="$ARTIFACTS/Native-Stencil-Bridge.wvb"
+NATIVE_PUBLICATION_MODULE="$ARTIFACTS/Native-Publication-Core.wvb"
+NATIVE_PUBLICATION_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Bridge.wvb"
 SOURCE_LEXER_MODULE="$ARTIFACTS/Source-Lexer-Core.wvb"
 SOURCE_LEXER_DEMO_MODULE="$ARTIFACTS/Source-Lexer-Demo.wvb"
 SOURCE_DECLARATION_PARSER_MODULE="$ARTIFACTS/Source-Declaration-Parser.wvb"
@@ -426,6 +428,40 @@ cmp -s "$NATIVE_STENCIL_BRIDGE_MODULE" "$NATIVE_STENCIL_BRIDGE_RETAINED"
 NATIVE_STENCIL_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_STENCIL_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_PUBLICATION_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Core.wv"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_PUBLICATION_SOURCE" -o "$NATIVE_PUBLICATION_MODULE"
+NATIVE_PUBLICATION_HASH=$(sha256sum "$NATIVE_PUBLICATION_MODULE" | awk '{print $1}')
+if [ "$NATIVE_PUBLICATION_HASH" != '9d75d59e4ba0fc689ae9bc4ac3ac019e520db06d21f54d4ee1480a0bb356e967' ]; then
+    echo "The Windvale native-publication core has an unexpected digest: $NATIVE_PUBLICATION_HASH" >&2
+    exit 1
+fi
+NATIVE_PUBLICATION_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_MODULE")
+printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Nativeˉpublicationˉresult' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Nativeˉpublicationˉstatus' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Nativeˉpublicationˉplan' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Exports (8)' >/dev/null
+
+NATIVE_PUBLICATION_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Bridge.wv"
+NATIVE_PUBLICATION_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvb"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_PUBLICATION_BRIDGE_SOURCE" \
+    --module "$NATIVE_PUBLICATION_SOURCE" \
+    -o "$NATIVE_PUBLICATION_BRIDGE_MODULE"
+NATIVE_PUBLICATION_BRIDGE_HASH=$(sha256sum "$NATIVE_PUBLICATION_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_PUBLICATION_BRIDGE_HASH" != '5102fd0119e37bb7e5f83bb3c4d1bff6303f37818bfe48825b320bf28f27eada' ]; then
+    echo "The Windvale native-publication bridge has an unexpected digest: $NATIVE_PUBLICATION_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_PUBLICATION_BRIDGE_MODULE" "$NATIVE_PUBLICATION_BRIDGE_RETAINED"
+NATIVE_PUBLICATION_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Profile: hosted' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Capabilities (1)' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'file.read_bytes' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Lexer-Core.wv"
 dotnet "$TOOL_DLL" \

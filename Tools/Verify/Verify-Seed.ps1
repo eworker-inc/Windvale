@@ -147,6 +147,8 @@ $ByteConstructionDemoModule = Join-Path $Artifacts 'Byte-Construction-Demo.wvb'
 $NativeStencilModule = Join-Path $Artifacts 'Native-Stencil-Core.wvb'
 $NativeStencilDemoModule = Join-Path $Artifacts 'Native-Stencil-Demo.wvb'
 $NativeStencilBridgeModule = Join-Path $Artifacts 'Native-Stencil-Bridge.wvb'
+$NativePublicationModule = Join-Path $Artifacts 'Native-Publication-Core.wvb'
+$NativePublicationBridgeModule = Join-Path $Artifacts 'Native-Publication-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
 $SourceLexerDemoModule = Join-Path $Artifacts 'Source-Lexer-Demo.wvb'
 $SourceDeclarationParserModule = Join-Path $Artifacts 'Source-Declaration-Parser.wvb'
@@ -528,6 +530,56 @@ if (
     $NativeStencilBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native-stencil bridge inspection is incomplete.'
+}
+
+$NativePublicationSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Core.wv'
+dotnet $ToolDll `
+    compile $NativePublicationSource -o $NativePublicationModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-publication core.' }
+$NativePublicationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationModule).Hash.ToLowerInvariant()
+if ($NativePublicationHash -ne '9d75d59e4ba0fc689ae9bc4ac3ac019e520db06d21f54d4ee1480a0bb356e967') {
+    throw "The Windvale native-publication core has an unexpected digest: $NativePublicationHash"
+}
+$NativePublicationInspection = (dotnet $ToolDll inspect $NativePublicationModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativePublicationInspection -notmatch 'Profile: portable' -or
+    $NativePublicationInspection -notmatch 'Nativeˉpublicationˉresult' -or
+    $NativePublicationInspection -notmatch 'Nativeˉpublicationˉstatus' -or
+    $NativePublicationInspection -notmatch 'Nativeˉpublicationˉplan' -or
+    $NativePublicationInspection -notmatch 'Exports \(8\)'
+) {
+    throw 'The Windvale native-publication core inspection is incomplete.'
+}
+$NativePublicationBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Bridge.wv'
+$NativePublicationBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvb'
+dotnet $ToolDll `
+    compile $NativePublicationBridgeSource `
+    --module $NativePublicationSource `
+    -o $NativePublicationBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-publication bridge.' }
+$NativePublicationBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationBridgeModule).Hash.ToLowerInvariant()
+if ($NativePublicationBridgeHash -ne '5102fd0119e37bb7e5f83bb3c4d1bff6303f37818bfe48825b320bf28f27eada') {
+    throw "The Windvale native-publication bridge has an unexpected digest: $NativePublicationBridgeHash"
+}
+$NativePublicationBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativePublicationBridgeRetainedHash -ne $NativePublicationBridgeHash -or
+    (Get-Item -LiteralPath $NativePublicationBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativePublicationBridgeModule).Length
+) {
+    throw 'The retained Windvale native-publication bridge does not match its exact source compilation.'
+}
+$NativePublicationBridgeInspection = (dotnet $ToolDll inspect $NativePublicationBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativePublicationBridgeInspection -notmatch 'Profile: hosted' -or
+    $NativePublicationBridgeInspection -notmatch 'Capabilities \(1\)' -or
+    $NativePublicationBridgeInspection -notmatch 'file\.read_bytes' -or
+    $NativePublicationBridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativePublicationBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native-publication bridge inspection is incomplete.'
 }
 
 $SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Lexer-Core.wv'

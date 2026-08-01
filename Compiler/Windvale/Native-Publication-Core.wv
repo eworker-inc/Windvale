@@ -1,0 +1,226 @@
+module Compilerˉnativeˉpublication profile portable;
+
+enum Nativeˉpublicationˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Invalidˉversion = 3;
+    Invalidˉreserved = 4;
+    Invalidˉfragment = 5;
+    Invalidˉservice = 6;
+    Invalidˉorder = 7;
+    Invalidˉrange = 8;
+    Imageˉlimit = 9;
+}
+
+record Nativeˉpublicationˉresult {
+    Status: Nativeˉpublicationˉstatus;
+    Value: bytes;
+    Failureˉoffset: u32;
+}
+
+export fn Nativeˉpublicationˉappendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Nativeˉpublicationˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Nativeˉpublicationˉstatusˉvalue(Status: Nativeˉpublicationˉstatus) -> u32 {
+    if Status == Nativeˉpublicationˉstatus.Invalidˉsize { return 1u32; }
+    if Status == Nativeˉpublicationˉstatus.Invalidˉmagic { return 2u32; }
+    if Status == Nativeˉpublicationˉstatus.Invalidˉversion { return 3u32; }
+    if Status == Nativeˉpublicationˉstatus.Invalidˉreserved { return 4u32; }
+    if Status == Nativeˉpublicationˉstatus.Invalidˉfragment { return 5u32; }
+    if Status == Nativeˉpublicationˉstatus.Invalidˉservice { return 6u32; }
+    if Status == Nativeˉpublicationˉstatus.Invalidˉorder { return 7u32; }
+    if Status == Nativeˉpublicationˉstatus.Invalidˉrange { return 8u32; }
+    if Status == Nativeˉpublicationˉstatus.Imageˉlimit { return 9u32; }
+    return 0u32;
+}
+
+export fn Nativeˉpublicationˉresponseˉheader(
+    Input: bytes,
+    Status: Nativeˉpublicationˉstatus,
+    Failureˉoffset: u32,
+    Size: u32,
+    Fragmentˉbytes: u32,
+    Imageˉbytes: u32,
+    Serviceˉcount: u32
+) -> bytes {
+    var Result: bytes = Nativeˉpublicationˉempty(Input);
+    Result = Nativeˉpublicationˉappendˉu32(Result, 1280333399u32);
+    Result = Nativeˉpublicationˉappendˉu32(Result, 1u32);
+    Result = Nativeˉpublicationˉappendˉu32(Result, Size);
+    Result = Nativeˉpublicationˉappendˉu32(
+        Result, Nativeˉpublicationˉstatusˉvalue(Status)
+    );
+    Result = Nativeˉpublicationˉappendˉu32(Result, Failureˉoffset);
+    Result = Nativeˉpublicationˉappendˉu32(Result, Fragmentˉbytes);
+    Result = Nativeˉpublicationˉappendˉu32(Result, Imageˉbytes);
+    return Nativeˉpublicationˉappendˉu32(Result, Serviceˉcount);
+}
+
+export fn Nativeˉpublicationˉfailure(
+    Input: bytes,
+    Status: Nativeˉpublicationˉstatus,
+    Failureˉoffset: u32
+) -> Nativeˉpublicationˉresult {
+    return Nativeˉpublicationˉresult(
+        Status,
+        Nativeˉpublicationˉresponseˉheader(
+            Input,
+            Status,
+            Failureˉoffset,
+            32u32,
+            0u32,
+            0u32,
+            0u32
+        ),
+        Failureˉoffset
+    );
+}
+
+export fn Nativeˉpublicationˉalignmentˉpadding(Value: u32) -> u32 {
+    let Encoded: bytes = Bytesˉfromˉu32ˉlittle(Value);
+    var Remainder: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Encoded, 0u32));
+    while Remainder >= 16u32 {
+        Remainder = Remainder - 16u32;
+    }
+    if Remainder == 0u32 { return 0u32; }
+    return 16u32 - Remainder;
+}
+
+export fn Nativeˉpublicationˉserviceˉisˉvalid(Service: u32) -> bool {
+    if Service < 1u32 { return false; }
+    return Service <= 11u32;
+}
+
+export fn Nativeˉpublicationˉplan(Input: bytes) -> Nativeˉpublicationˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 24u32 {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Invalidˉsize, Total
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1364219479u32 {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Invalidˉmagic, 0u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Invalidˉversion, 4u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Invalidˉsize, 8u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 20u32) != 0u32 {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Invalidˉreserved, 20u32
+        );
+    }
+
+    let Fragmentˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Fragmentˉbytes == 0u32 {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Invalidˉfragment, 12u32
+        );
+    }
+    if Fragmentˉbytes > 1048576u32 {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Invalidˉfragment, 12u32
+        );
+    }
+    let Serviceˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Serviceˉcount > 11u32 {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Invalidˉservice, 16u32
+        );
+    }
+    if Total != 24u32 + Serviceˉcount * 12u32 {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Invalidˉsize, 8u32
+        );
+    }
+
+    let Initialˉpadding: u32 = Nativeˉpublicationˉalignmentˉpadding(Fragmentˉbytes);
+    if Initialˉpadding > 35651584u32 - Fragmentˉbytes {
+        return Nativeˉpublicationˉfailure(
+            Input, Nativeˉpublicationˉstatus.Imageˉlimit, 12u32
+        );
+    }
+    var Cursor: u32 = Fragmentˉbytes + Initialˉpadding;
+    var Records: bytes = Nativeˉpublicationˉempty(Input);
+    var Previousˉservice: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Serviceˉcount {
+        let Recordˉoffset: u32 = 24u32 + Index * 12u32;
+        let Service: u32 = Bytesˉreadˉu32ˉlittle(Input, Recordˉoffset);
+        let Size: u32 = Bytesˉreadˉu32ˉlittle(Input, Recordˉoffset + 4u32);
+        if Bytesˉreadˉu32ˉlittle(Input, Recordˉoffset + 8u32) != 0u32 {
+            return Nativeˉpublicationˉfailure(
+                Input,
+                Nativeˉpublicationˉstatus.Invalidˉreserved,
+                Recordˉoffset + 8u32
+            );
+        }
+        if !Nativeˉpublicationˉserviceˉisˉvalid(Service) {
+            return Nativeˉpublicationˉfailure(
+                Input, Nativeˉpublicationˉstatus.Invalidˉservice, Recordˉoffset
+            );
+        }
+        if Size == 0u32 {
+            return Nativeˉpublicationˉfailure(
+                Input,
+                Nativeˉpublicationˉstatus.Invalidˉrange,
+                Recordˉoffset + 4u32
+            );
+        }
+        if Service <= Previousˉservice {
+            return Nativeˉpublicationˉfailure(
+                Input, Nativeˉpublicationˉstatus.Invalidˉorder, Recordˉoffset
+            );
+        }
+
+        let Padding: u32 = Nativeˉpublicationˉalignmentˉpadding(Cursor);
+        if Padding > 35651584u32 - Cursor {
+            return Nativeˉpublicationˉfailure(
+                Input, Nativeˉpublicationˉstatus.Imageˉlimit, Recordˉoffset + 4u32
+            );
+        }
+        let Offset: u32 = Cursor + Padding;
+        if Size > 35651584u32 - Offset {
+            return Nativeˉpublicationˉfailure(
+                Input, Nativeˉpublicationˉstatus.Imageˉlimit, Recordˉoffset + 4u32
+            );
+        }
+
+        Records = Nativeˉpublicationˉappendˉu32(Records, Service);
+        Records = Nativeˉpublicationˉappendˉu32(Records, Offset);
+        Records = Nativeˉpublicationˉappendˉu32(Records, Size);
+        Cursor = Offset + Size;
+        Previousˉservice = Service;
+        Index = Index + 1u32;
+    }
+
+    let Responseˉsize: u32 = 32u32 + Serviceˉcount * 12u32;
+    let Header: bytes = Nativeˉpublicationˉresponseˉheader(
+        Input,
+        Nativeˉpublicationˉstatus.Valid,
+        Total,
+        Responseˉsize,
+        Fragmentˉbytes,
+        Cursor,
+        Serviceˉcount
+    );
+    return Nativeˉpublicationˉresult(
+        Nativeˉpublicationˉstatus.Valid,
+        Bytesˉconcat(Header, Records),
+        Total
+    );
+}

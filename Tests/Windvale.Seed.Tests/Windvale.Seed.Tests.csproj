@@ -35,6 +35,12 @@
       Include="../../Compiler/Windvale/Native-Stencil-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Stencil-Bridge.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-Publication-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Publication-Core.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-Publication-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Publication-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Examples/Compiler/Native-Stencil-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Native-Stencil-Demo.wv" />
     <EmbeddedResource

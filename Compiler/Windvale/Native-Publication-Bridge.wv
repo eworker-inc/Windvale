@@ -1,0 +1,13 @@
+module Compilerˉnativeˉpublicationˉbridge profile hosted;
+
+import Compilerˉnativeˉpublication;
+
+capability file.read_bytes;
+
+data Requestˉname: text = "native-publication-request.bin";
+
+export fn Main() -> bytes {
+    let Input: bytes = file.read_bytes(Requestˉname);
+    let Plan: Nativeˉpublicationˉresult = Nativeˉpublicationˉplan(Input);
+    return Plan.Value;
+}
