@@ -18,10 +18,7 @@ public static class X64ˉnativeˉargumentˉservices
     public static ImmutableArray<byte> Build(Nativeˉservice service) => service switch
     {
         Nativeˉservice.Processˉargumentˉcount =>
-        [
-            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.ARGUMENT_COUNT_OFFSET,
-            0xC3,
-        ],
+            X64ˉnativeˉstencil.Buildˉprocessˉargumentˉcount(),
         Nativeˉservice.Processˉargument =>
         [
             // Clear the service detail, then reject index >= count before loading the table.

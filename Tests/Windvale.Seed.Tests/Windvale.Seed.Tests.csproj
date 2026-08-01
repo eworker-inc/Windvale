@@ -23,6 +23,9 @@
       Include="../../Assembler/Windvale/Wva-Assembler-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wva-Assembler-Core.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Native/Stencils/Process-Argument-Count.wva"
+      LogicalName="Windvale.Seed.Tests.Process-Argument-Count.wva" />
+    <EmbeddedResource
       Include="../../Examples/Linker/Console-Provider.wva"
       LogicalName="Windvale.Seed.Tests.Console-Provider.wva" />
     <EmbeddedResource

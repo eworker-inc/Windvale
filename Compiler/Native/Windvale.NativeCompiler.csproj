@@ -7,4 +7,9 @@
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource
+      Include="Stencils/Process-Argument-Count.wvo"
+      LogicalName="Windvale.NativeCompiler.Process-Argument-Count.wvo" />
+  </ItemGroup>
 </Project>

@@ -185,7 +185,7 @@ Stages 1 through 4 are qualified. Decision 0049 supplies the first bounded evide
 - Error and exception semantics
 - Integer overflow and floating-point reproducibility rules
 - General native value representation, ABI, and object-layout expansion beyond the accepted WVO kernel subset
-- The first baseline-JIT stencil and typed patch contract
+- The first extension beyond Decision 0077's exact argument-count stencil and one-byte execution-context-offset patch
 - Tier thresholds, native-cache policy, and which resource counters are execution-mode-independent
 - The minimum native allocator/reclamation strategy needed before .NET retirement
 - Cross-target policy after the accepted x86-64/UEFI first boundary

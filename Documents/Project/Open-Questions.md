@@ -23,7 +23,7 @@ This list records unresolved decisions without presenting them as implementation
 - What is the boundary between compiler IR and stable bytecode?
 - Which memory-management model works for both native system code and managed application code?
 - What compact native value, text, bytes, root, heap, and reclamation contracts are sufficient for the first Windvale-native runtime?
-- Which WVA stencil and typed patch shape should implement the first copy-and-patch baseline JIT experiment?
+- Which measured second stencil should extend the deliberately exact `WVSP 1` argument-count experiment, and which additional typed patch kinds does it actually require?
 - Which tier thresholds, native-cache identities, and resource counters remain deterministic across interpretation, JIT, and AOT?
 - How will deterministic and differential execution be tested across the reference interpreter, Windvale-native interpreter, baseline JIT, and AOT backend?
 - How small can the runtime remain while supporting useful libraries and diagnostics?

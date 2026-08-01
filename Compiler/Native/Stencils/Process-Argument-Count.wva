@@ -1,0 +1,19 @@
+windvale-assembly 1
+
+# WVSP 1 describes one typed one-byte execution-context offset patch.
+# The stencil is data until the native owner validates and instantiates it.
+symbol local data Argument_count_patch in .rodata
+symbol export data Process_argument_count_stencil in .rodata
+
+section rodata .rodata align 1
+define Argument_count_patch
+bytes 87 86 83 80
+u32 1
+u32 3
+u32 1
+u32 1
+end define
+define Process_argument_count_stencil
+bytes 65 139 71 0 195
+end define
+end section
