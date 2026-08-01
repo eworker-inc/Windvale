@@ -179,6 +179,10 @@ Decision 0062 adds dynamic success/exhaustion boundaries for a four-instruction 
 
 Budgeted loops therefore preserve the seconds-scale inner loop and add no new complete-suite case. The exact ten-byte charge per WVB instruction increases generated native code size but does not materially affect current verifier throughput because native fixtures remain small; later compaction should be driven by code-size and execution measurements rather than test-suite timing.
 
+Decision 0069 adds two separate full-suite tests because dynamic text/descriptor/void safety and the complete real `wvdump` application form distinct ownership boundaries. Their final focused Windows runs take 0.928 and 0.799 seconds before the warm Release optimization pass, while the shared native case takes 0.253 seconds; the combined edit-time signal remains under two seconds. Exact commit `7979933` completes concurrent Qualification with suite times of 212.675 seconds on Windows and 233.729 seconds on Debian. Both hosts pass zero-warning builds, all 56 tests, all 15 OS tests, and the complete CLI verifier; normalized reports and all 61 portable artifacts match. Pinned QEMU probe 12 passes on Windows; the Debian QA host does not provide QEMU.
+
+The added real-tool coverage therefore does not move the inner loop toward bootstrap-scale time. Focused ABI tests remain the normal development path, Standard provides final in-process integration, and concurrent exact-archive Qualification remains the milestone gate. Native service replacement should extend the focused dynamic-text case unless it introduces a distinct process, container, or recovery boundary.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.

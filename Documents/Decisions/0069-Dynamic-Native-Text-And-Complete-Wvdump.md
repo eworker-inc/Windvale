@@ -1,7 +1,7 @@
 # Decision 0069: Dynamic native text and complete wvdump
 
 - Date: 2026-08-01
-- Status: Implemented; cross-host qualification pending
+- Status: Cross-host qualified at exact commit `79799332deb2d144e9b7557700829f14322a3062`
 - Refines: [Decision 0068](0068-Bounded-Native-Nominal-Values-And-Wvdump-Structural-Core.md)'s ABI-9 structural parser
 - Advances: The complete checked-in Windvale-written `wvdump` through JIT and WVO/AOT
 
@@ -29,9 +29,11 @@ Returning a borrowed descriptor in `RAX` would collide with the packed status co
 
 The focused dynamic-text test covers enum naming, signed/u8/u32 formatting, concatenation, strict UTF-8 conversion, deterministic quoting, text-returning functions, void calls, console output, diagnostics, JIT, linked WVO/AOT, malformed UTF-8 as `WVR3014`, aggregate text-arena exhaustion as `WVR3018`, and corrupted hidden-result prologues rejected as `WVN3030`.
 
-The complete-wvdump test compiles the 1,441-line checked-in source, inspects a real compiler-produced WVB, and compares the full report across the interpreter, JIT, and linked AOT. Windows focused execution currently passes. Both 15 deterministic OS tests pass for probe 12; the reproducible EFI application remains 15,872 bytes with candidate SHA-256 `3010bc72b9c26386f062f78481c900cac841321b040b41447a0bbb65a9e392fe`.
+The complete-wvdump test compiles the 1,441-line checked-in source, inspects a real compiler-produced WVB, and compares the full report across the interpreter, JIT, and linked AOT. The exact archive exercises real Windows and System V x86-64 W^X paths. Both hosts pass all 15 deterministic OS tests for probe 12; the reproducible EFI application remains 15,872 bytes with SHA-256 `3010bc72b9c26386f062f78481c900cac841321b040b41447a0bbb65a9e392fe`.
 
-Cross-host Release qualification, portable-artifact comparison, pinned-QEMU execution, exact candidate commit/archive identity, and evidence report hashes remain pending. This decision must not be described as qualified until those gates complete.
+Exact commit `79799332deb2d144e9b7557700829f14322a3062`, tree `d86080a14f654c26e839fe50574ae5c441670572`, was archived as 2,872,181 bytes with SHA-256 `c9fe842f0f137b523003acd8360196b138cfaae36c73b2ad7d08f0d837c9a57e`. Windows and Debian GNU/Linux 12 x64 pass zero-warning Release builds, all 56 tests, and the complete native CLI verifier. Their normalized contracts match, and all 61 portable artifacts totaling 7,752,647 bytes are byte-identical with the retained canonical manifest SHA-256 `11ac1d4a57fce3648004d7a6002e6124d6e2fbeefc108b31bfe305523b2de0de`.
+
+The Windows suite takes 212.675 seconds and the Debian suite 233.729 seconds. The 15,563-byte Windows report has SHA-256 `c34a2199e548631323b2186dda0dcf8ffcb0a3a3c6eb7d53d9a405c314837a4b`; the 15,473-byte Debian report has SHA-256 `0a8116b03185d7344dd47fb0996c1cc9402c3b9583522574a2a77b0e2fa1f5cf`. Pinned QEMU 11.0/Q35/TCG on Windows emits the complete `windvale-os-boot 12` success transcript and returns guest-controlled host exit code 1. The Debian QA host lacks QEMU, so its OS evidence is the complete 15-test suite rather than a duplicate emulator run. The 2,303,863-byte retrieved evidence bundle has SHA-256 `a6b0962dbaad4b0991f99e9beb523758e192f200334f830cead48dedea1cca38`; after comparison, the exact QA directory and transferred archives were removed and confirmed absent.
 
 ## Consequences
 

@@ -3,8 +3,8 @@
 - Evidence date: 2026-08-01
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified commit: `7edc243f3c6cae8d25234165e3975caaa03ec8ee`
-- Latest pinned Windvale OS qualified candidate: `7edc243f3c6cae8d25234165e3975caaa03ec8ee`
+- Latest cross-host Seed qualified commit: `79799332deb2d144e9b7557700829f14322a3062`
+- Latest pinned Windvale OS qualified candidate: `79799332deb2d144e9b7557700829f14322a3062`
 
 ## Requirement evidence
 
@@ -640,15 +640,21 @@ All 61 portable artifacts, totaling 7,752,647 bytes, match byte for byte; their 
 
 At the ABI-9 qualification point, the remaining full-`wvdump` native gap was bounded dynamic text construction and formatting, descriptor returns, void-return calls, and diagnostic output. The C# Stage 0 selector, decoder, platform adapter, oracle, recovery implementation, and OS image builder remained required.
 
-## Dynamic native text and complete wvdump candidate
+## Dynamic native text and complete wvdump qualification
 
 Decision 0069 advances the implemented target to `x86-64-wvb-baseline-v10` and ABI 10 while retaining execution-context version 2. Service-table version 4 is 96 bytes and adds authorized diagnostics plus pure enum naming, invariant integer formatting, bounded concatenation, and deterministic quoting. One execution-owned 16 MiB text arena backs dynamic results; individual text retains the WVB 1 MiB limit (`WVR3012`) and aggregate exhaustion becomes `WVR3018`. Strict `Textˉfromˉutf8` uses the proven validation service and packed status 8 / `WVR3014` for malformed input.
 
 Descriptor-returning callers pass one verified result-cell address in `RAX`; callees save it in a dedicated final frame cell, copy the complete descriptor on success, and preserve packed trap propagation. Void calls use the same status convention without a result. The independent fragment decoder admits only the exact prologue, call, return, service, provenance, and failure shapes and cross-checks caller/callee return kinds.
 
-The complete 1,441-line checked-in `Examples/Foundation/Wv-Dump-Core.wv` now compiles without slicing, inspects a real compiler-produced WVB, and emits byte-identical full reports and diagnostics under the reference interpreter, Windows W^X JIT, and linked WVO/AOT. Focused negative cases cover invalid UTF-8, aggregate text exhaustion, and corrupt hidden-result metadata. The service-free OS consumer advances to kernel probe version 5 and firmware probe 12. All 15 focused OS tests pass; the 8,010-byte portable WVO has candidate SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`, and the 15,872-byte EFI image has candidate SHA-256 `3010bc72b9c26386f062f78481c900cac841321b040b41447a0bbb65a9e392fe`.
+The complete 1,441-line checked-in `Examples/Foundation/Wv-Dump-Core.wv` now compiles without slicing, inspects a real compiler-produced WVB, and emits byte-identical full reports and diagnostics under the reference interpreter, Windows/Linux W^X JIT, and linked WVO/AOT. Focused negative cases cover invalid UTF-8, aggregate text exhaustion, and corrupt hidden-result metadata. The service-free OS consumer advances to kernel probe version 5 and firmware probe 12. Both hosts pass all 15 OS tests; the 8,010-byte portable WVO has SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`, and the 15,872-byte EFI image has SHA-256 `3010bc72b9c26386f062f78481c900cac841321b040b41447a0bbb65a9e392fe`.
 
-This is implementation evidence, not completed qualification. Exact candidate commit/tree/archive identities, zero-warning Windows and Debian Release runs, normalized conformance comparison, portable-artifact identity, pinned-QEMU probe-12 execution, report hashes, and QA cleanup evidence remain pending. C#/.NET remains the Stage 0 selector, independent decoder, runtime-service provider, oracle, recovery implementation, and OS image builder.
+Exact commit `79799332deb2d144e9b7557700829f14322a3062`, tree `d86080a14f654c26e839fe50574ae5c441670572`, was published to both configured remotes. Its 2,872,181-byte archive has SHA-256 `c9fe842f0f137b523003acd8360196b138cfaae36c73b2ad7d08f0d837c9a57e`; the digest and size matched after transfer to the isolated E-Worker Debian QA host.
+
+Windows and Debian GNU/Linux 12 x64 with .NET SDK `10.0.302` pass zero-warning Release builds, all 56 tests, exact compiler reproduction, and the complete native CLI verifier. The Windows suite takes 212.675 seconds; Debian takes 233.729 seconds. The 15,563-byte Windows report has SHA-256 `c34a2199e548631323b2186dda0dcf8ffcb0a3a3c6eb7d53d9a405c314837a4b`, and its 11,916-byte timing report has SHA-256 `9fe062225e6a0aa61ce78b5aca09731ab890539a5032a86c571846d8c7005f77`. The 15,473-byte Debian report has SHA-256 `0a8116b03185d7344dd47fb0996c1cc9402c3b9583522574a2a77b0e2fa1f5cf`, and its 11,522-byte timing report has SHA-256 `0e28cbaa4868d83a8230ee91afd9bdbe99c9303b416f32263e2d3790c473be5d`. Their normalized contracts match exactly.
+
+All 61 portable artifacts, totaling 7,752,647 bytes, match byte for byte; their retained canonical name/size/SHA-256 manifest has SHA-256 `11ac1d4a57fce3648004d7a6002e6124d6e2fbeefc108b31bfe305523b2de0de`. The 2,303,863-byte Debian evidence bundle has SHA-256 `a6b0962dbaad4b0991f99e9beb523758e192f200334f830cead48dedea1cca38`. Both hosts pass all 15 OS tests. Pinned QEMU 11.0/Q35/TCG on Windows boots the exact probe-12 image, emits the complete `windvale-os-boot 12` success transcript, and returns guest-controlled host exit code 1. The Debian QA host does not provide QEMU, so no Debian emulator run is claimed. After retrieval and comparison, the resolved exact QA directory, source archive, and evidence bundle were removed and confirmed absent.
+
+This supersedes Decision 0068 as the latest qualified native/OS evidence without claiming a Windvale-written native runtime, native compiler execution, a standalone hosted PE/ELF container, in-guest WVB loading, a functioning operating system, or .NET retirement. C#/.NET remains the Stage 0 selector, independent decoder, runtime-service provider, oracle, recovery implementation, and OS image builder.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 

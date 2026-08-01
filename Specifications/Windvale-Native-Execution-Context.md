@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Execution-context version 2 remains the implemented context for `x86-64-wvb-baseline-v10`. ABI 10 adds bounded dynamic text and generalizes internal return shapes while retaining the qualified record arena, per-run resource limits, and platform-neutral runtime-service boundary. Decisions 0065 through 0068 qualify the seam through ABI 9. [Decision 0069](../Documents/Decisions/0069-Dynamic-Native-Text-And-Complete-Wvdump.md) defines the implemented ABI-10 candidate; its cross-host qualification is pending.
+Execution-context version 2 remains the implemented context for `x86-64-wvb-baseline-v10`. ABI 10 adds bounded dynamic text and generalizes internal return shapes while retaining the qualified record arena, per-run resource limits, and platform-neutral runtime-service boundary. Decisions 0065 through 0068 qualify the seam through ABI 9. [Decision 0069](../Documents/Decisions/0069-Dynamic-Native-Text-And-Complete-Wvdump.md) cross-host qualifies ABI 10 at exact commit `7979933`.
 
 This is an experimental native ABI, not a stable public foreign-function interface. ABI 10 replaces ABI 9 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-10 fragment verifier.
 
