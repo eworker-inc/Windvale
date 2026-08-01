@@ -1,15 +1,13 @@
 using System.Buffers.Binary;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
-using System.Text;
-using Windvale.Bytecode;
 using Windvale.Compiler.Native;
+using Windvale.Runtime;
 
 namespace Windvale.Runtime.Native;
 
 public static class X64ˉnativeˉexecutor
 {
-    private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
     private const uint MEM_COMMIT = 0x0000_1000;
     private const uint MEM_RESERVE = 0x0000_2000;
     private const uint MEM_RELEASE = 0x0000_8000;
@@ -57,36 +55,96 @@ public static class X64ˉnativeˉexecutor
             throw new Nativeˉbackendˉexception("WVN4001", $"Native entry '{entry}' is missing or empty.");
         }
 
-        Nativeˉconsoleˉwriteˉlineˉcallback? Consoleˉcallback = null;
-        string? Serviceˉfailure = null;
-        var Serviceˉthunk = Array.Empty<byte>();
+        Nativeˉserviceˉfailure? Serviceˉfailure = null;
+        using var Buffers = new Nativeˉexecutionˉbuffers(hostˉservices?.Resources);
+        var Callbacks = new List<Delegate>();
+        var Callbackˉpointers = new Dictionary<Nativeˉservice, IntPtr>();
         var Address = IntPtr.Zero;
         if (fragment.Requiredˉservices.Contains(Nativeˉservice.Consoleˉwriteˉline))
         {
-            Consoleˉcallback = (textˉaddress, textˉlength) =>
+            Nativeˉconsoleˉwriteˉlineˉcallback Callback = (textˉaddress, textˉlength) =>
             {
                 try
                 {
-                    Invokeˉconsoleˉwriteˉline(
-                        textˉaddress,
-                        textˉlength,
-                        Address,
-                        fragment.Code.Length,
-                        hostˉservices!.Standardˉoutput!);
+                    var Text = Buffers.Readˉtext(textˉaddress, textˉlength, Address, fragment.Code.Length);
+                    hostˉservices!.Standardˉoutput!.Write(Text);
+                    hostˉservices.Standardˉoutput.Write('\n');
                     return 0;
                 }
                 catch (Exception Exception)
                 {
-                    Serviceˉfailure ??= Exception.Message;
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
                     return 1;
                 }
             };
-            Serviceˉthunk = Buildˉconsoleˉwriteˉlineˉthunk(
-                Marshal.GetFunctionPointerForDelegate(Consoleˉcallback));
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(
+                Nativeˉservice.Consoleˉwriteˉline,
+                Marshal.GetFunctionPointerForDelegate(Callback));
+        }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Processˉargumentˉcount))
+        {
+            Nativeˉprocessˉargumentˉcountˉcallback Callback = () => Buffers.Argumentˉcount;
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(
+                Nativeˉservice.Processˉargumentˉcount,
+                Marshal.GetFunctionPointerForDelegate(Callback));
+        }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Processˉargument))
+        {
+            Nativeˉprocessˉargumentˉcallback Callback = (index, descriptor) =>
+            {
+                try
+                {
+                    Nativeˉexecutionˉbuffers.Writeˉdescriptor(descriptor, Buffers.Getˉargument(index));
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
+                    return 1;
+                }
+            };
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(
+                Nativeˉservice.Processˉargument,
+                Marshal.GetFunctionPointerForDelegate(Callback));
+        }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Fileˉreadˉbytes))
+        {
+            Nativeˉfileˉreadˉbytesˉcallback Callback = (nameˉaddress, nameˉlength, descriptor) =>
+            {
+                try
+                {
+                    var Name = Buffers.Readˉtext(nameˉaddress, nameˉlength, Address, fragment.Code.Length);
+                    Nativeˉexecutionˉbuffers.Writeˉdescriptor(descriptor, Buffers.Readˉfile(Name));
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
+                    return 1;
+                }
+            };
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(
+                Nativeˉservice.Fileˉreadˉbytes,
+                Marshal.GetFunctionPointerForDelegate(Callback));
         }
 
         var Serviceˉthunkˉoffset = checked((fragment.Code.Length + 15) & ~15);
-        var Allocationˉbytes = checked(Serviceˉthunkˉoffset + Serviceˉthunk.Length);
+        var Serviceˉthunks = new List<byte>();
+        var Serviceˉoffsets = new Dictionary<Nativeˉservice, int>();
+        foreach (var Service in fragment.Requiredˉservices)
+        {
+            while ((Serviceˉthunks.Count & 15) != 0)
+            {
+                Serviceˉthunks.Add(0x90);
+            }
+            Serviceˉoffsets.Add(Service, checked(Serviceˉthunkˉoffset + Serviceˉthunks.Count));
+            Serviceˉthunks.AddRange(Buildˉserviceˉthunk(Service, Callbackˉpointers[Service]));
+        }
+        var Allocationˉbytes = checked(Serviceˉthunkˉoffset + Serviceˉthunks.Count);
         Address = Allocateˉwritable((nuint)Allocationˉbytes);
         var Serviceˉtable = IntPtr.Zero;
         var Context = IntPtr.Zero;
@@ -96,11 +154,11 @@ public static class X64ˉnativeˉexecutor
             var Linkedˉcode = new byte[Allocationˉbytes];
             fragment.Code.CopyTo(Linkedˉcode);
             Applyˉpatches(fragment, Address, Linkedˉcode);
-            Serviceˉthunk.CopyTo(Linkedˉcode, Serviceˉthunkˉoffset);
+            Serviceˉthunks.CopyTo(Linkedˉcode, Serviceˉthunkˉoffset);
             Marshal.Copy(Linkedˉcode, 0, Address, Linkedˉcode.Length);
             Finalizeˉexecutable(Address, (nuint)Linkedˉcode.Length);
 
-            if (Serviceˉthunk.Length != 0)
+            if (Serviceˉthunks.Count != 0)
             {
                 Serviceˉtable = Marshal.AllocHGlobal(checked((int)Nativeˉserviceˉtableˉcontract.SIZE));
                 var Tableˉbytes = new byte[checked((int)Nativeˉserviceˉtableˉcontract.SIZE)];
@@ -110,9 +168,12 @@ public static class X64ˉnativeˉexecutor
                 BinaryPrimitives.WriteUInt32LittleEndian(
                     Tableˉbytes.AsSpan(Nativeˉserviceˉtableˉcontract.SIZE_OFFSET),
                     Nativeˉserviceˉtableˉcontract.SIZE);
-                BinaryPrimitives.WriteUInt64LittleEndian(
-                    Tableˉbytes.AsSpan(Nativeˉserviceˉtableˉcontract.CONSOLE_WRITE_LINE_POINTER_OFFSET),
-                    checked((ulong)(Address.ToInt64() + Serviceˉthunkˉoffset)));
+                foreach (var Service in fragment.Requiredˉservices)
+                {
+                    BinaryPrimitives.WriteUInt64LittleEndian(
+                        Tableˉbytes.AsSpan(Serviceˉtableˉpointerˉoffset(Service)),
+                        checked((ulong)(Address.ToInt64() + Serviceˉoffsets[Service])));
+                }
                 Marshal.Copy(Tableˉbytes, 0, Serviceˉtable, Tableˉbytes.Length);
             }
 
@@ -139,7 +200,7 @@ public static class X64ˉnativeˉexecutor
             var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉi32ˉentry>(new(Entryˉaddress));
             var Contextˉpointer = checked((ulong)Context.ToInt64());
             Outcome = Function(0, Contextˉpointer, Contextˉpointer, 0, 0, 0);
-            GC.KeepAlive(Consoleˉcallback);
+            GC.KeepAlive(Callbacks);
         }
         finally
         {
@@ -186,10 +247,10 @@ public static class X64ˉnativeˉexecutor
         if (Status == 5)
         {
             throw new Nativeˉtrapˉexception(
-                "WVR3013",
+                Serviceˉfailure?.Code ?? "WVR3013",
                 Serviceˉfailure is null
                     ? $"A native runtime service rejected its request in entry '{entry}'."
-                    : $"A native runtime service failed in entry '{entry}': {Serviceˉfailure}");
+                    : $"A native runtime service failed in entry '{entry}': {Serviceˉfailure.Message}");
         }
         if (Status == 6)
         {
@@ -223,36 +284,9 @@ public static class X64ˉnativeˉexecutor
         }
     }
 
-    private static void Invokeˉconsoleˉwriteˉline(
-        IntPtr textˉaddress,
-        uint textˉlength,
-        IntPtr codeˉaddress,
-        int codeˉlength,
-        TextWriter output)
-    {
-        if (textˉlength > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
-        {
-            throw new InvalidOperationException("The native console request exceeds the UTF-8 text limit.");
-        }
-        var Codeˉstart = codeˉaddress.ToInt64();
-        var Codeˉend = checked(Codeˉstart + codeˉlength);
-        var Textˉstart = textˉaddress.ToInt64();
-        var Textˉend = checked(Textˉstart + textˉlength);
-        if (Textˉstart < Codeˉstart || Textˉend > Codeˉend)
-        {
-            throw new InvalidOperationException("The native console request is outside verified fragment data.");
-        }
-        var Bytes = new byte[checked((int)textˉlength)];
-        if (Bytes.Length != 0)
-        {
-            Marshal.Copy(textˉaddress, Bytes, 0, Bytes.Length);
-        }
-        var Text = STRICT_UTF8.GetString(Bytes);
-        output.Write(Text);
-        output.Write('\n');
-    }
-
-    private static byte[] Buildˉconsoleˉwriteˉlineˉthunk(IntPtr callbackˉaddress)
+    private static byte[] Buildˉserviceˉthunk(
+        Nativeˉservice service,
+        IntPtr callbackˉaddress)
     {
         var Code = new List<byte>
         {
@@ -264,18 +298,8 @@ public static class X64ˉnativeˉexecutor
             0x4C, 0x89, 0x5C, 0x24, 0x30,
             0x4C, 0x89, 0x7C, 0x24, 0x38,
         };
-        if (OperatingSystem.IsWindows())
-        {
-            Code.AddRange([0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA]);
-        }
-        else if (OperatingSystem.IsLinux())
-        {
-            Code.AddRange([0x4C, 0x89, 0xC7, 0x44, 0x89, 0xCE]);
-        }
-        else
-        {
-            throw new PlatformNotSupportedException("The first native service thunk supports Windows and Linux.");
-        }
+        var Arguments = Serviceˉargumentˉadapter(service);
+        Code.AddRange(Arguments);
         Code.AddRange([0x48, 0xB8]);
         var Callbackˉoffset = Code.Count;
         Code.AddRange(new byte[sizeof(ulong)]);
@@ -292,12 +316,13 @@ public static class X64ˉnativeˉexecutor
             0xC3,
         ]);
         var Bytes = Code.ToArray();
-        Verifyˉconsoleˉwriteˉlineˉthunk(Bytes, callbackˉaddress);
+        Verifyˉserviceˉthunk(Bytes, service, callbackˉaddress);
         return Bytes;
     }
 
-    private static void Verifyˉconsoleˉwriteˉlineˉthunk(
+    private static void Verifyˉserviceˉthunk(
         ReadOnlySpan<byte> code,
+        Nativeˉservice service,
         IntPtr callbackˉaddress)
     {
         ReadOnlySpan<byte> Prefix =
@@ -310,9 +335,7 @@ public static class X64ˉnativeˉexecutor
             0x4C, 0x89, 0x5C, 0x24, 0x30,
             0x4C, 0x89, 0x7C, 0x24, 0x38,
         ];
-        ReadOnlySpan<byte> Arguments = OperatingSystem.IsWindows()
-            ? [0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA]
-            : [0x4C, 0x89, 0xC7, 0x44, 0x89, 0xCE];
+        ReadOnlySpan<byte> Arguments = Serviceˉargumentˉadapter(service);
         ReadOnlySpan<byte> Suffix =
         [
             0xFF, 0xD0,
@@ -322,20 +345,79 @@ public static class X64ˉnativeˉexecutor
             0x48, 0x8B, 0x64, 0x24, 0x20,
             0xC3,
         ];
-        if (code.Length != 70 ||
+        var Callbackˉoffset = Prefix.Length + Arguments.Length + 2;
+        var Suffixˉoffset = Callbackˉoffset + sizeof(ulong);
+        if (code.Length != Suffixˉoffset + Suffix.Length ||
             !code[..Prefix.Length].SequenceEqual(Prefix) ||
             !code.Slice(Prefix.Length, Arguments.Length).SequenceEqual(Arguments) ||
-            code[37] != 0x48 ||
-            code[38] != 0xB8 ||
-            BinaryPrimitives.ReadUInt64LittleEndian(code.Slice(39, sizeof(ulong))) !=
+            code[Callbackˉoffset - 2] != 0x48 ||
+            code[Callbackˉoffset - 1] != 0xB8 ||
+            BinaryPrimitives.ReadUInt64LittleEndian(code.Slice(Callbackˉoffset, sizeof(ulong))) !=
                 checked((ulong)callbackˉaddress.ToInt64()) ||
-            !code[47..].SequenceEqual(Suffix))
+            !code[Suffixˉoffset..].SequenceEqual(Suffix))
         {
             throw new Nativeˉbackendˉexception(
                 "WVN4010",
-                "The native console service thunk violated its bounded platform adapter contract.");
+                $"The native '{service}' service thunk violated its bounded platform adapter contract.");
         }
     }
+
+    private static byte[] Serviceˉargumentˉadapter(Nativeˉservice service)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return service switch
+            {
+                Nativeˉservice.Consoleˉwriteˉline => [0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA],
+                Nativeˉservice.Processˉargumentˉcount => [],
+                Nativeˉservice.Processˉargument => [0x44, 0x89, 0xC1, 0x4C, 0x89, 0xCA],
+                Nativeˉservice.Fileˉreadˉbytes =>
+                [
+                    0x48, 0x89, 0xC8,
+                    0x4C, 0x89, 0xC1,
+                    0x44, 0x89, 0xCA,
+                    0x49, 0x89, 0xC0,
+                ],
+                _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service thunk."),
+            };
+        }
+        if (OperatingSystem.IsLinux())
+        {
+            return service switch
+            {
+                Nativeˉservice.Consoleˉwriteˉline => [0x4C, 0x89, 0xC7, 0x44, 0x89, 0xCE],
+                Nativeˉservice.Processˉargumentˉcount => [],
+                Nativeˉservice.Processˉargument => [0x44, 0x89, 0xC7, 0x4C, 0x89, 0xCE],
+                Nativeˉservice.Fileˉreadˉbytes =>
+                [
+                    0x4C, 0x89, 0xC7,
+                    0x44, 0x89, 0xCE,
+                    0x48, 0x89, 0xCA,
+                ],
+                _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service thunk."),
+            };
+        }
+        throw new PlatformNotSupportedException("The native service thunks support Windows and Linux.");
+    }
+
+    private static int Serviceˉtableˉpointerˉoffset(Nativeˉservice service) =>
+        service switch
+        {
+            Nativeˉservice.Consoleˉwriteˉline =>
+                Nativeˉserviceˉtableˉcontract.CONSOLE_WRITE_LINE_POINTER_OFFSET,
+            Nativeˉservice.Processˉargumentˉcount =>
+                Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_COUNT_POINTER_OFFSET,
+            Nativeˉservice.Processˉargument =>
+                Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_POINTER_OFFSET,
+            Nativeˉservice.Fileˉreadˉbytes =>
+                Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET,
+            _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service table entry."),
+        };
+
+    private static Nativeˉserviceˉfailure Toˉserviceˉfailure(Exception exception) =>
+        exception is Runtimeˉexception Runtime
+            ? new(Runtime.Code, Runtime.Message)
+            : new("WVR3013", exception.Message);
 
     private static void Applyˉpatches(Nativeˉfragment fragment, IntPtr address, byte[] code)
     {
@@ -444,6 +526,22 @@ public static class X64ˉnativeˉexecutor
     private delegate uint Nativeˉconsoleˉwriteˉlineˉcallback(
         IntPtr textˉaddress,
         uint textˉlength);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉprocessˉargumentˉcountˉcallback();
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉprocessˉargumentˉcallback(
+        uint index,
+        IntPtr descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉfileˉreadˉbytesˉcallback(
+        IntPtr resourceˉnameˉaddress,
+        uint resourceˉnameˉlength,
+        IntPtr descriptor);
+
+    private sealed record Nativeˉserviceˉfailure(string Code, string Message);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr VirtualAlloc(IntPtr address, nuint size, uint allocationˉtype, uint protection);

@@ -22,17 +22,10 @@ public static class X64ˉnativeˉbackend
         ArgumentNullException.ThrowIfNull(verifiedˉmodule);
         var Module = verifiedˉmodule.Module;
         var Isˉportable = Module.Profile == Moduleˉprofile.Portable && Module.Capabilities.IsEmpty;
-        var Isˉhostedˉconsole = Module.Profile == Moduleˉprofile.Hosted &&
-            Module.Capabilities is
-            [
-                {
-                    Name: Capabilityˉcatalog.CONSOLE_WRITE_LINE,
-                    Parameterˉtypes.Length: 1,
-                    Returnˉtype: Valueˉtype.Void,
-                },
-            ] &&
-            Module.Capabilities[0].Parameterˉtypes[0] == Valueˉtype.Text;
-        if ((!Isˉportable && !Isˉhostedˉconsole) ||
+        var Isˉhosted = Module.Profile == Moduleˉprofile.Hosted &&
+            !Module.Capabilities.IsEmpty &&
+            Module.Capabilities.All(Isˉsupportedˉnativeˉcapability);
+        if ((!Isˉportable && !Isˉhosted) ||
             !Module.Types.IsEmpty ||
             Module.Data.Any(Data => Data is not (
                 I32ˉarrayˉdataˉdeclaration or
@@ -41,7 +34,7 @@ public static class X64ˉnativeˉbackend
         {
             Fail(
                 "WVN2001",
-                "The baseline native subset requires either a capability-free portable module or a hosted module declaring only console.write_line, without nominal types and with only immutable i32-array/text/bytes data.");
+                "The baseline native subset requires either a capability-free portable module or a hosted module declaring only console.write_line, process.argument_count, process.argument, and file.read_bytes, without nominal types and with only immutable i32-array/text/bytes data.");
         }
         if (verifiedˉmodule.Functions.IsEmpty ||
             Module.Exports.Length != 1 ||
@@ -74,7 +67,7 @@ public static class X64ˉnativeˉbackend
             {
                 Fail(
                     "WVN2002",
-                    $"Native function '{Function.Declaration.Name}' must use bounded scalar/bytes parameters and locals, static-text locals, and a non-void scalar return.");
+                    $"Native function '{Function.Declaration.Name}' must use bounded scalar/borrowed descriptor parameters and locals and a non-void scalar return.");
             }
         }
 
@@ -101,9 +94,19 @@ public static class X64ˉnativeˉbackend
                     $"Unsupported native data '{Declaration.Name}'."),
             })
             .ToImmutableArray();
-        var Requiredˉservices = module.Module.Capabilities.IsEmpty
-            ? ImmutableArray<Nativeˉservice>.Empty
-            : [Nativeˉservice.Consoleˉwriteˉline];
+        var Requiredˉservices = module.Module.Capabilities
+            .Select(Capability => Capability.Name switch
+            {
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE => Nativeˉservice.Consoleˉwriteˉline,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT => Nativeˉservice.Processˉargumentˉcount,
+                Capabilityˉcatalog.PROCESS_ARGUMENT => Nativeˉservice.Processˉargument,
+                Capabilityˉcatalog.FILE_READ_BYTES => Nativeˉservice.Fileˉreadˉbytes,
+                _ => throw new Nativeˉbackendˉexception(
+                    "WVN2001",
+                    $"Unsupported native capability '{Capability.Name}'."),
+            })
+            .Order()
+            .ToImmutableArray();
         return new(Functions, Data, Requiredˉservices);
     }
 
@@ -119,10 +122,9 @@ public static class X64ˉnativeˉbackend
             .Select(Toˉnativeˉtype)
             .ToImmutableArray();
         var Allˉlocalˉtypes = Parameterˉtypes.AddRange(Localˉtypes);
-        var Staticˉtextˉlocalˉdata = Enumerable.Repeat(-1, Allˉlocalˉtypes.Length).ToArray();
-        var Bytesˉlocalˉinitialized = Allˉlocalˉtypes
+        var Descriptorˉlocalˉinitialized = Allˉlocalˉtypes
             .Select((Type, Index) =>
-                Index < Parameterˉtypes.Length && Type == Nativeˉvalueˉtype.Borrowedˉbytes)
+                Index < Parameterˉtypes.Length && Isˉnativeˉdescriptorˉtype(Type))
             .ToArray();
         var Valueˉtypes = ImmutableArray.CreateBuilder<Nativeˉvalueˉtype>();
         var Instructions = function.Instructions;
@@ -227,9 +229,9 @@ public static class X64ˉnativeˉbackend
                         {
                             Fail("WVN2003", "Verified WVB exposed invalid static text during native lowering.");
                         }
-                        var Textˉconstant = Newˉvalue(Nativeˉvalueˉtype.Staticˉtext);
+                        var Textˉconstant = Newˉvalue(Nativeˉvalueˉtype.Borrowedˉtext);
                         Operations.Add(new Nativeˉstaticˉtextˉconstant(Textˉconstant, Textˉdata));
-                        Stack.Push(new(Textˉconstant, Nativeˉvalueˉtype.Staticˉtext, Textˉdata));
+                        Stack.Push(new(Textˉconstant, Nativeˉvalueˉtype.Borrowedˉtext));
                         break;
                     case Opcode.Bytesˉconst:
                         var Bytesˉdata = checked((int)Instruction.Unsignedˉoperand);
@@ -249,21 +251,14 @@ public static class X64ˉnativeˉbackend
                             Fail("WVN2003", "Verified WVB exposed an invalid local load during native lowering.");
                         }
                         var Loadˉtype = Allˉlocalˉtypes[Loadˉindex];
-                        var Localˉtextˉdata = Loadˉtype == Nativeˉvalueˉtype.Staticˉtext
-                            ? Staticˉtextˉlocalˉdata[Loadˉindex]
-                            : -1;
-                        if (Loadˉtype == Nativeˉvalueˉtype.Staticˉtext && Localˉtextˉdata < 0)
+                        if (Isˉnativeˉdescriptorˉtype(Loadˉtype) &&
+                            !Descriptorˉlocalˉinitialized[Loadˉindex])
                         {
-                            Fail("WVN2003", "A native static-text local must have one proven immutable data source before use.");
-                        }
-                        if (Loadˉtype == Nativeˉvalueˉtype.Borrowedˉbytes &&
-                            !Bytesˉlocalˉinitialized[Loadˉindex])
-                        {
-                            Fail("WVN2003", "A native borrowed-bytes local must be initialized before use.");
+                            Fail("WVN2003", "A native borrowed-descriptor local must be initialized before use.");
                         }
                         var Loadˉresult = Newˉvalue(Loadˉtype);
                         Operations.Add(new Nativeˉlocalˉload(Loadˉresult, Loadˉindex, Loadˉtype));
-                        Stack.Push(new(Loadˉresult, Loadˉtype, Localˉtextˉdata));
+                        Stack.Push(new(Loadˉresult, Loadˉtype));
                         break;
                     case Opcode.Localˉstore:
                         var Storeˉindex = checked((int)Instruction.Unsignedˉoperand);
@@ -273,19 +268,9 @@ public static class X64ˉnativeˉbackend
                         }
                         var Storeˉtype = Allˉlocalˉtypes[Storeˉindex];
                         var Storedˉvalue = Popˉvalue(Storeˉtype);
-                        if (Storeˉtype == Nativeˉvalueˉtype.Staticˉtext)
+                        if (Isˉnativeˉdescriptorˉtype(Storeˉtype))
                         {
-                            if (Storedˉvalue.Data < 0 ||
-                                (Staticˉtextˉlocalˉdata[Storeˉindex] >= 0 &&
-                                    Staticˉtextˉlocalˉdata[Storeˉindex] != Storedˉvalue.Data))
-                            {
-                                Fail("WVN2003", "A native static-text local must retain one immutable data source.");
-                            }
-                            Staticˉtextˉlocalˉdata[Storeˉindex] = Storedˉvalue.Data;
-                        }
-                        if (Storeˉtype == Nativeˉvalueˉtype.Borrowedˉbytes)
-                        {
-                            Bytesˉlocalˉinitialized[Storeˉindex] = true;
+                            Descriptorˉlocalˉinitialized[Storeˉindex] = true;
                         }
                         Operations.Add(new Nativeˉlocalˉstore(Storeˉindex, Storeˉtype, Storedˉvalue.Value));
                         break;
@@ -499,22 +484,35 @@ public static class X64ˉnativeˉbackend
                     case Opcode.Callˉcapability:
                         var Capabilityˉindex = checked((int)Instruction.Unsignedˉoperand);
                         if ((uint)Capabilityˉindex >= (uint)module.Module.Capabilities.Length ||
-                            module.Module.Capabilities[Capabilityˉindex] is not
-                            {
-                                Name: Capabilityˉcatalog.CONSOLE_WRITE_LINE,
-                                Parameterˉtypes.Length: 1,
-                                Returnˉtype: Valueˉtype.Void,
-                            } ||
-                            module.Module.Capabilities[Capabilityˉindex].Parameterˉtypes[0] != Valueˉtype.Text)
+                            !Isˉsupportedˉnativeˉcapability(module.Module.Capabilities[Capabilityˉindex]))
                         {
                             Fail("WVN2003", "Verified WVB exposed an unsupported native capability call.");
                         }
-                        var Consoleˉtext = Popˉvalue(Nativeˉvalueˉtype.Staticˉtext);
-                        if (Consoleˉtext.Data < 0)
+                        var Capability = module.Module.Capabilities[Capabilityˉindex];
+                        switch (Capability.Name)
                         {
-                            Fail("WVN2003", "The native console slice requires a static text argument.");
+                            case Capabilityˉcatalog.CONSOLE_WRITE_LINE:
+                                var Consoleˉtext = Popˉvalue(Nativeˉvalueˉtype.Borrowedˉtext);
+                                Operations.Add(new Nativeˉconsoleˉwriteˉline(Consoleˉtext.Value));
+                                break;
+                            case Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT:
+                                var Argumentˉcount = Newˉvalue(Nativeˉvalueˉtype.U32);
+                                Operations.Add(new Nativeˉprocessˉargumentˉcount(Argumentˉcount));
+                                Stack.Push(new(Argumentˉcount, Nativeˉvalueˉtype.U32));
+                                break;
+                            case Capabilityˉcatalog.PROCESS_ARGUMENT:
+                                var Argumentˉindex = Popˉvalue(Nativeˉvalueˉtype.U32);
+                                var Argument = Newˉvalue(Nativeˉvalueˉtype.Borrowedˉtext);
+                                Operations.Add(new Nativeˉprocessˉargument(Argument, Argumentˉindex.Value));
+                                Stack.Push(new(Argument, Nativeˉvalueˉtype.Borrowedˉtext));
+                                break;
+                            case Capabilityˉcatalog.FILE_READ_BYTES:
+                                var Resourceˉname = Popˉvalue(Nativeˉvalueˉtype.Borrowedˉtext);
+                                var Fileˉbytes = Newˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
+                                Operations.Add(new Nativeˉfileˉreadˉbytes(Fileˉbytes, Resourceˉname.Value));
+                                Stack.Push(new(Fileˉbytes, Nativeˉvalueˉtype.Borrowedˉbytes));
+                                break;
                         }
-                        Operations.Add(new Nativeˉconsoleˉwriteˉline(Consoleˉtext.Value, Consoleˉtext.Data));
                         break;
                     case Opcode.Call:
                         var Calledˉfunctionˉindex = checked((int)Instruction.Unsignedˉoperand);
@@ -601,9 +599,10 @@ public static class X64ˉnativeˉbackend
             module.Functions[mainˉfunction] is not { Name: "Main", Blocks.Length: >= 1 } ||
             module.Data.IsDefault ||
             module.Requiredˉservices.IsDefault ||
-            module.Requiredˉservices.Length > 1 ||
-            (module.Requiredˉservices.Length == 1 &&
-                module.Requiredˉservices[0] != Nativeˉservice.Consoleˉwriteˉline))
+            module.Requiredˉservices.Length > 4 ||
+            module.Requiredˉservices.Any(Service => !Enum.IsDefined(Service)) ||
+            module.Requiredˉservices.Distinct().Count() != module.Requiredˉservices.Length ||
+            !module.Requiredˉservices.SequenceEqual(module.Requiredˉservices.Order()))
         {
             Fail("WVN2901", "The x86-64 selector received an unsupported native machine-IR shape.");
         }
@@ -691,16 +690,24 @@ public static class X64ˉnativeˉbackend
                             Emitˉconstant(Code, unchecked((int)Constant.Value), Valueˉslot(Function, Constant.Result));
                             break;
                         case Nativeˉstaticˉtextˉconstant Constant:
-                            Emitˉconstant(Code, Constant.Data, Valueˉslot(Function, Constant.Result));
+                            var Staticˉtext = (Nativeˉutf8ˉdata)module.Data[Constant.Data];
+                            Emitˉstaticˉdescriptorˉconstant(
+                                Code,
+                                Valueˉslot(Function, Constant.Result),
+                                Constant.Data,
+                                Staticˉtext.Bytes.Length,
+                                Dataˉreferences,
+                                Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
                             break;
                         case Nativeˉstaticˉbytesˉconstant Constant:
                             var Staticˉbytes = (Nativeˉbytesˉdata)module.Data[Constant.Data];
-                            Emitˉstaticˉbytesˉconstant(
+                            Emitˉstaticˉdescriptorˉconstant(
                                 Code,
                                 Valueˉslot(Function, Constant.Result),
                                 Constant.Data,
                                 Staticˉbytes.Bytes.Length,
-                                Dataˉreferences);
+                                Dataˉreferences,
+                                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
                             break;
                         case Nativeˉlocalˉload Load:
                             Emitˉcopy(Code, Load.Local, Valueˉslot(Function, Load.Result), Load.Type);
@@ -852,24 +859,41 @@ public static class X64ˉnativeˉbackend
                             Emitˉstoreˉeax(Code, Valueˉslot(Function, Load.Result));
                             break;
                         case Nativeˉconsoleˉwriteˉline Write:
-                            var Text = (Nativeˉutf8ˉdata)module.Data[Write.Data];
-                            Code.AddRange([0x4C, 0x8D, 0x05]);
-                            Dataˉreferences.Add(new(Code.Count, Write.Data));
-                            Addˉi32(Code, 0);
-                            Code.AddRange([0x41, 0xB9]);
-                            Addˉi32(Code, Text.Bytes.Length);
-                            Code.AddRange(
-                            [
-                                0x49, 0x8B, 0x47,
-                                Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET,
-                                0x48, 0x8B, 0x40,
+                            Emitˉdescriptorˉserviceˉinput(
+                                Code,
+                                Valueˉslot(Function, Write.Text),
+                                Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
+                            Emitˉserviceˉcall(
+                                Code,
                                 Nativeˉserviceˉtableˉcontract.CONSOLE_WRITE_LINE_POINTER_OFFSET,
-                                0xFF, 0xD0,
-                                0x85, 0xC0,
-                                0x0F, 0x85,
-                            ]);
-                            Runtimeˉserviceˉpatches.Add(Code.Count);
-                            Addˉi32(Code, 0);
+                                Runtimeˉserviceˉpatches);
+                            break;
+                        case Nativeˉprocessˉargumentˉcount Count:
+                            Emitˉserviceˉpointer(
+                                Code,
+                                Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_COUNT_POINTER_OFFSET);
+                            Code.AddRange([0xFF, 0xD0]);
+                            Emitˉstoreˉeax(Code, Valueˉslot(Function, Count.Result));
+                            break;
+                        case Nativeˉprocessˉargument Argument:
+                            Emitˉloadˉeax(Code, Valueˉslot(Function, Argument.Index));
+                            Code.AddRange([0x41, 0x89, 0xC0]);
+                            Emitˉloadˉdescriptorˉoutputˉr9(Code, Valueˉslot(Function, Argument.Result));
+                            Emitˉserviceˉcall(
+                                Code,
+                                Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_POINTER_OFFSET,
+                                Runtimeˉserviceˉpatches);
+                            break;
+                        case Nativeˉfileˉreadˉbytes Read:
+                            Emitˉdescriptorˉserviceˉinput(
+                                Code,
+                                Valueˉslot(Function, Read.Resourceˉname),
+                                Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
+                            Emitˉloadˉdescriptorˉoutputˉrcx(Code, Valueˉslot(Function, Read.Result));
+                            Emitˉserviceˉcall(
+                                Code,
+                                Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET,
+                                Runtimeˉserviceˉpatches);
                             break;
                         case Nativeˉcall Call:
                             for (var Argument = 0; Argument < Call.Arguments.Length; Argument++)
@@ -1075,11 +1099,11 @@ public static class X64ˉnativeˉbackend
             function.Allˉlocalˉtypes.Length + function.Valueˉtypes.Length is < 1 or > Nativeˉcontract.MAXIMUM_FRAME_SLOTS ||
             !Isˉnativeˉscalarˉtype(function.Returnˉtype) ||
             function.Parameterˉtypes.Any(Type =>
-                !Isˉnativeˉscalarˉtype(Type) && Type != Nativeˉvalueˉtype.Borrowedˉbytes) ||
+                !Isˉnativeˉscalarˉtype(Type) && !Isˉnativeˉdescriptorˉtype(Type)) ||
             function.Localˉtypes.Any(Type => Type is not (
                 Nativeˉvalueˉtype.I32 or
                 Nativeˉvalueˉtype.Bool or
-                Nativeˉvalueˉtype.Staticˉtext or
+                Nativeˉvalueˉtype.Borrowedˉtext or
                 Nativeˉvalueˉtype.U8 or
                 Nativeˉvalueˉtype.U32 or
                 Nativeˉvalueˉtype.Borrowedˉbytes)) ||
@@ -1090,8 +1114,6 @@ public static class X64ˉnativeˉbackend
 
         var Nextˉvalue = 0;
         var Returnˉcount = 0;
-        var Staticˉtextˉdata = new Dictionary<int, int>();
-        var Staticˉtextˉlocalˉdata = new Dictionary<int, int>();
         for (var Blockˉindex = 0; Blockˉindex < function.Blocks.Length; Blockˉindex++)
         {
             var Block = function.Blocks[Blockˉindex];
@@ -1139,9 +1161,8 @@ public static class X64ˉnativeˉbackend
                         Requireˉresult(
                             function,
                             Constant.Result,
-                            Nativeˉvalueˉtype.Staticˉtext,
+                            Nativeˉvalueˉtype.Borrowedˉtext,
                             ref Nextˉvalue);
-                        Staticˉtextˉdata.Add(Constant.Result, Constant.Data);
                         break;
                     case Nativeˉstaticˉbytesˉconstant Constant:
                         if ((uint)Constant.Data >= (uint)module.Data.Length ||
@@ -1158,28 +1179,10 @@ public static class X64ˉnativeˉbackend
                     case Nativeˉlocalˉload Load:
                         Requireˉlocal(function, Load.Local, Load.Type);
                         Requireˉresult(function, Load.Result, Load.Type, ref Nextˉvalue);
-                        if (Load.Type == Nativeˉvalueˉtype.Staticˉtext)
-                        {
-                            if (!Staticˉtextˉlocalˉdata.TryGetValue(Load.Local, out var Data))
-                            {
-                                Fail("WVN2901", "The x86-64 selector received an unproven static-text local load.");
-                            }
-                            Staticˉtextˉdata.Add(Load.Result, Data);
-                        }
                         break;
                     case Nativeˉlocalˉstore Store:
                         Requireˉlocal(function, Store.Local, Store.Type);
                         Requireˉvalue(function, Store.Value, Store.Type, Nextˉvalue);
-                        if (Store.Type == Nativeˉvalueˉtype.Staticˉtext)
-                        {
-                            if (!Staticˉtextˉdata.TryGetValue(Store.Value, out var Data) ||
-                                (Staticˉtextˉlocalˉdata.TryGetValue(Store.Local, out var Existing) &&
-                                    Existing != Data))
-                            {
-                                Fail("WVN2901", "The x86-64 selector received an inconsistent static-text local store.");
-                            }
-                            Staticˉtextˉlocalˉdata[Store.Local] = Data;
-                        }
                         break;
                     case Nativeˉi32ˉbinary Binary when Enum.IsDefined(Binary.Kind):
                         Requireˉvalue(function, Binary.Left, Nativeˉvalueˉtype.I32, Nextˉvalue);
@@ -1266,15 +1269,34 @@ public static class X64ˉnativeˉbackend
                         Requireˉresult(function, Load.Result, Nativeˉvalueˉtype.I32, ref Nextˉvalue);
                         break;
                     case Nativeˉconsoleˉwriteˉline Write:
-                        Requireˉvalue(function, Write.Text, Nativeˉvalueˉtype.Staticˉtext, Nextˉvalue);
-                        if (!module.Requiredˉservices.Contains(Nativeˉservice.Consoleˉwriteˉline) ||
-                            (uint)Write.Data >= (uint)module.Data.Length ||
-                            module.Data[Write.Data] is not Nativeˉutf8ˉdata ||
-                            !Staticˉtextˉdata.TryGetValue(Write.Text, out var Definedˉdata) ||
-                            Definedˉdata != Write.Data)
+                        Requireˉvalue(function, Write.Text, Nativeˉvalueˉtype.Borrowedˉtext, Nextˉvalue);
+                        if (!module.Requiredˉservices.Contains(Nativeˉservice.Consoleˉwriteˉline))
                         {
                             Fail("WVN2901", "The x86-64 selector received invalid console.write_line metadata.");
                         }
+                        break;
+                    case Nativeˉprocessˉargumentˉcount Count:
+                        if (!module.Requiredˉservices.Contains(Nativeˉservice.Processˉargumentˉcount))
+                        {
+                            Fail("WVN2901", "The x86-64 selector received invalid process.argument_count metadata.");
+                        }
+                        Requireˉresult(function, Count.Result, Nativeˉvalueˉtype.U32, ref Nextˉvalue);
+                        break;
+                    case Nativeˉprocessˉargument Argument:
+                        if (!module.Requiredˉservices.Contains(Nativeˉservice.Processˉargument))
+                        {
+                            Fail("WVN2901", "The x86-64 selector received invalid process.argument metadata.");
+                        }
+                        Requireˉvalue(function, Argument.Index, Nativeˉvalueˉtype.U32, Nextˉvalue);
+                        Requireˉresult(function, Argument.Result, Nativeˉvalueˉtype.Borrowedˉtext, ref Nextˉvalue);
+                        break;
+                    case Nativeˉfileˉreadˉbytes Read:
+                        if (!module.Requiredˉservices.Contains(Nativeˉservice.Fileˉreadˉbytes))
+                        {
+                            Fail("WVN2901", "The x86-64 selector received invalid file.read_bytes metadata.");
+                        }
+                        Requireˉvalue(function, Read.Resourceˉname, Nativeˉvalueˉtype.Borrowedˉtext, Nextˉvalue);
+                        Requireˉresult(function, Read.Result, Nativeˉvalueˉtype.Borrowedˉbytes, ref Nextˉvalue);
                         break;
                     case Nativeˉcall Call:
                         if ((uint)Call.Function >= (uint)module.Functions.Length ||
@@ -1357,13 +1379,31 @@ public static class X64ˉnativeˉbackend
         }
     }
 
+    private static bool Isˉsupportedˉnativeˉcapability(Capabilityˉdeclaration capability) =>
+        capability.Name switch
+        {
+            Capabilityˉcatalog.CONSOLE_WRITE_LINE =>
+                capability.Parameterˉtypes.SequenceEqual([Valueˉtype.Text]) &&
+                capability.Returnˉtype == Valueˉtype.Void,
+            Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT =>
+                capability.Parameterˉtypes.IsEmpty &&
+                capability.Returnˉtype == Valueˉtype.U32,
+            Capabilityˉcatalog.PROCESS_ARGUMENT =>
+                capability.Parameterˉtypes.SequenceEqual([Valueˉtype.U32]) &&
+                capability.Returnˉtype == Valueˉtype.Text,
+            Capabilityˉcatalog.FILE_READ_BYTES =>
+                capability.Parameterˉtypes.SequenceEqual([Valueˉtype.Text]) &&
+                capability.Returnˉtype == Valueˉtype.Bytes,
+            _ => false,
+        };
+
     private static bool Isˉnativeˉreturnˉtype(Valueˉshape type) =>
         type.Nominalˉtypeˉindex == -1 &&
         type.Kind is Valueˉtype.I32 or Valueˉtype.Bool or Valueˉtype.U8 or Valueˉtype.U32;
 
     private static bool Isˉnativeˉparameterˉtype(Valueˉshape type) =>
         Isˉnativeˉreturnˉtype(type) ||
-        type.Nominalˉtypeˉindex == -1 && type.Kind == Valueˉtype.Bytes;
+        type.Nominalˉtypeˉindex == -1 && type.Kind is Valueˉtype.Text or Valueˉtype.Bytes;
 
     private static bool Isˉnativeˉlocalˉtype(Valueˉshape type) =>
         type.Nominalˉtypeˉindex == -1 &&
@@ -1385,12 +1425,15 @@ public static class X64ˉnativeˉbackend
         {
             Valueˉtype.I32 when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.I32,
             Valueˉtype.Bool when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.Bool,
-            Valueˉtype.Text when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.Staticˉtext,
+            Valueˉtype.Text when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.Borrowedˉtext,
             Valueˉtype.U8 when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.U8,
             Valueˉtype.U32 when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.U32,
             Valueˉtype.Bytes when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.Borrowedˉbytes,
             _ => throw new Nativeˉbackendˉexception("WVN2002", $"Unsupported native local type '{type}'."),
         };
+
+    private static bool Isˉnativeˉdescriptorˉtype(Nativeˉvalueˉtype type) =>
+        type is Nativeˉvalueˉtype.Borrowedˉtext or Nativeˉvalueˉtype.Borrowedˉbytes;
 
     private static IEnumerable<int> Targets(Nativeˉterminator terminator) =>
         terminator switch
@@ -1468,12 +1511,13 @@ public static class X64ˉnativeˉbackend
         Emitˉstoreˉeax(code, targetˉslot);
     }
 
-    private static void Emitˉstaticˉbytesˉconstant(
+    private static void Emitˉstaticˉdescriptorˉconstant(
         List<byte> code,
         int targetˉslot,
         int data,
         int length,
-        List<Nativeˉdataˉreference> references)
+        List<Nativeˉdataˉreference> references,
+        int lengthˉoffset)
     {
         code.AddRange([0x48, 0x8D, 0x05]);
         references.Add(new(code.Count, data));
@@ -1481,7 +1525,7 @@ public static class X64ˉnativeˉbackend
         Emitˉstoreˉrax(code, targetˉslot);
         code.Add(0xB8);
         Addˉi32(code, length);
-        Emitˉstoreˉeaxˉatˉfield(code, targetˉslot, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        Emitˉstoreˉeaxˉatˉfield(code, targetˉslot, lengthˉoffset);
     }
 
     private static void Emitˉcopy(
@@ -1490,12 +1534,15 @@ public static class X64ˉnativeˉbackend
         int targetˉslot,
         Nativeˉvalueˉtype type)
     {
-        if (type == Nativeˉvalueˉtype.Borrowedˉbytes)
+        if (Isˉnativeˉdescriptorˉtype(type))
         {
             Emitˉloadˉrax(code, sourceˉslot);
             Emitˉstoreˉrax(code, targetˉslot);
-            Emitˉloadˉeaxˉatˉfield(code, sourceˉslot, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
-            Emitˉstoreˉeaxˉatˉfield(code, targetˉslot, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+            var Lengthˉoffset = type == Nativeˉvalueˉtype.Borrowedˉtext
+                ? Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET
+                : Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET;
+            Emitˉloadˉeaxˉatˉfield(code, sourceˉslot, Lengthˉoffset);
+            Emitˉstoreˉeaxˉatˉfield(code, targetˉslot, Lengthˉoffset);
             return;
         }
 
@@ -1578,6 +1625,51 @@ public static class X64ˉnativeˉbackend
         Emitˉstoreˉeax(code, Valueˉslot(function, read.Result));
     }
 
+    private static void Emitˉdescriptorˉserviceˉinput(
+        List<byte> code,
+        int slot,
+        int lengthˉoffset)
+    {
+        code.AddRange([0x4C, 0x8B, 0x84, 0x24]);
+        Addˉi32(code, Slotˉoffset(slot));
+        code.AddRange([0x44, 0x8B, 0x8C, 0x24]);
+        Addˉi32(code, checked(Slotˉoffset(slot) + lengthˉoffset));
+    }
+
+    private static void Emitˉloadˉdescriptorˉoutputˉr9(List<byte> code, int slot)
+    {
+        code.AddRange([0x4C, 0x8D, 0x8C, 0x24]);
+        Addˉi32(code, Slotˉoffset(slot));
+    }
+
+    private static void Emitˉloadˉdescriptorˉoutputˉrcx(List<byte> code, int slot)
+    {
+        code.AddRange([0x48, 0x8D, 0x8C, 0x24]);
+        Addˉi32(code, Slotˉoffset(slot));
+    }
+
+    private static void Emitˉserviceˉpointer(List<byte> code, int pointerˉoffset)
+    {
+        code.AddRange(
+        [
+            0x49, 0x8B, 0x47,
+            Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET,
+            0x48, 0x8B, 0x40,
+            checked((byte)pointerˉoffset),
+        ]);
+    }
+
+    private static void Emitˉserviceˉcall(
+        List<byte> code,
+        int pointerˉoffset,
+        List<int> runtimeˉserviceˉpatches)
+    {
+        Emitˉserviceˉpointer(code, pointerˉoffset);
+        code.AddRange([0xFF, 0xD0, 0x85, 0xC0, 0x0F, 0x85]);
+        runtimeˉserviceˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+    }
+
     private static void Emitˉframeˉadjustment(List<byte> code, bool subtract, int bytes)
     {
         code.AddRange([0x48, 0x81, subtract ? (byte)0xEC : (byte)0xC4]);
@@ -1596,7 +1688,7 @@ public static class X64ˉnativeˉbackend
         int slot,
         Nativeˉvalueˉtype type)
     {
-        code.AddRange((argument, type == Nativeˉvalueˉtype.Borrowedˉbytes) switch
+        code.AddRange((argument, Isˉnativeˉdescriptorˉtype(type)) switch
         {
             (0, false) => [0x44, 0x8B, 0x84, 0x24],
             (1, false) => [0x44, 0x8B, 0x8C, 0x24],
@@ -1616,7 +1708,7 @@ public static class X64ˉnativeˉbackend
         int argument,
         Nativeˉvalueˉtype type)
     {
-        if (type == Nativeˉvalueˉtype.Borrowedˉbytes)
+        if (Isˉnativeˉdescriptorˉtype(type))
         {
             code.AddRange(argument switch
             {
@@ -1629,10 +1721,10 @@ public static class X64ˉnativeˉbackend
             Emitˉstoreˉrax(code, argument);
             code.AddRange(argument switch
             {
-                0 => [0x41, 0x8B, 0x40, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
-                1 => [0x41, 0x8B, 0x41, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
-                2 => [0x8B, 0x41, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
-                3 => [0x8B, 0x42, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
+                0 => [0x41, 0x8B, 0x40, (byte)Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
+                1 => [0x41, 0x8B, 0x41, (byte)Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
+                2 => [0x8B, 0x41, (byte)Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
+                3 => [0x8B, 0x42, (byte)Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
                 _ => [],
             });
             Emitˉstoreˉeaxˉatˉfield(code, argument, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
@@ -1814,8 +1906,7 @@ public static class X64ˉnativeˉbackend
 
     private readonly record struct Nativeˉstackˉvalue(
         int Value,
-        Nativeˉvalueˉtype Type,
-        int Data = -1);
+        Nativeˉvalueˉtype Type);
 
     private readonly record struct Nativeˉbranchˉpatch(int Offset, int Targetˉblock);
 

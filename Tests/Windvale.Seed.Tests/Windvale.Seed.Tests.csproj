@@ -31,6 +31,9 @@
       Include="../../Examples/Foundation/Wv-Dump-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wv-Dump-Core.wv" />
     <EmbeddedResource
+      Include="../../Examples/Foundation/Wvb-Header-Inspector.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-Header-Inspector.wv" />
+    <EmbeddedResource
       Include="../../Examples/Foundation/Wvo-Object-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wvo-Object-Core.wv" />
     <EmbeddedResource

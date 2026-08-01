@@ -4,5 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Compiler/Native/Windvale.NativeCompiler.csproj" />
+    <ProjectReference Include="../Windvale.Runtime/Windvale.Runtime.csproj" />
   </ItemGroup>
 </Project>

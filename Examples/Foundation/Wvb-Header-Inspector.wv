@@ -1,0 +1,43 @@
+module Wvbˉheaderˉinspector profile hosted;
+
+capability console.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 {
+        return 10;
+    }
+
+    let Inputˉpath: text = process.argument(0u32);
+    console.write_line(Inputˉpath);
+    let Input: bytes = file.read_bytes(Inputˉpath);
+    let Sameˉinput: bytes = file.read_bytes(Inputˉpath);
+    if Bytesˉlength(Input) != Bytesˉlength(Sameˉinput) {
+        return 11;
+    }
+    if Bytesˉlength(Input) < 8u32 {
+        return 12;
+    }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 {
+        return 13;
+    }
+    if Bytesˉreadˉu8(Input, 1u32) != 86u8 {
+        return 14;
+    }
+    if Bytesˉreadˉu8(Input, 2u32) != 66u8 {
+        return 15;
+    }
+    if Bytesˉreadˉu8(Input, 3u32) != 49u8 {
+        return 16;
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
+        return 17;
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 {
+        return 18;
+    }
+    console.write_line("wvb-header=pass");
+    return 0;
+}

@@ -302,18 +302,74 @@ public sealed class Hostedˉresourceˉcontext
 
     public IHostedˉfileˉwriter? Fileˉwriter { get; }
 
-    internal int Fileˉsnapshotˉcount => Fileˉsnapshots.Count;
+    public uint Getˉargumentˉcount() => checked((uint)Arguments.Length);
 
-    internal bool Tryˉgetˉfileˉsnapshot(
-        string resourceˉname,
-        out ImmutableArray<byte> snapshot)
+    public string Getˉargument(uint index)
     {
-        return Fileˉsnapshots.TryGetValue(resourceˉname, out snapshot);
+        if (index >= (uint)Arguments.Length)
+        {
+            throw new Runtimeˉexception(
+                "WVR3020",
+                $"Hosted argument index {index} is outside the supplied count {Arguments.Length}.");
+        }
+
+        return Arguments[(int)index];
     }
 
-    internal void Addˉfileˉsnapshot(string resourceˉname, ImmutableArray<byte> snapshot)
+    public ImmutableArray<byte> Readˉfileˉbytes(string resourceˉname)
     {
-        Fileˉsnapshots.Add(resourceˉname, snapshot);
+        ArgumentNullException.ThrowIfNull(resourceˉname);
+        if (Fileˉreader is null)
+        {
+            throw new Runtimeˉexception(
+                "WVR3001",
+                $"The host does not implement capability '{Capabilityˉcatalog.FILE_READ_BYTES}'.");
+        }
+
+        if (Fileˉsnapshots.TryGetValue(resourceˉname, out var Snapshot))
+        {
+            return Snapshot;
+        }
+
+        if (Fileˉsnapshots.Count >= Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS)
+        {
+            throw new Runtimeˉexception(
+                "WVR3028",
+                $"The hosted resource context already contains {Fileˉsnapshots.Count} distinct file snapshots; the limit is {Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS}.");
+        }
+
+        try
+        {
+            var Bytes = Fileˉreader.Readˉbytes(resourceˉname, Bytecodeˉlimits.MAX_BYTE_DATA_BYTES);
+            if (Bytes.IsDefault)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3026",
+                    "The file adapter returned an uninitialized byte value.");
+            }
+            if (Bytes.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3025",
+                    $"The file adapter returned {Bytes.Length} bytes; the limit is {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}.");
+            }
+
+            Fileˉsnapshots.Add(resourceˉname, Bytes);
+            return Bytes;
+        }
+        catch (Hostedˉfileˉexception Exception)
+        {
+            var Code = Exception.Error switch
+            {
+                Hostedˉfileˉerror.Invalidˉname => "WVR3021",
+                Hostedˉfileˉerror.Notˉfound => "WVR3022",
+                Hostedˉfileˉerror.Permissionˉdenied => "WVR3023",
+                Hostedˉfileˉerror.Unavailable => "WVR3024",
+                Hostedˉfileˉerror.Tooˉlarge => "WVR3025",
+                _ => "WVR3026",
+            };
+            throw new Runtimeˉexception(Code, Exception.Message);
+        }
     }
 }
 
@@ -374,19 +430,11 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
                 Resources.Diagnosticˉoutput.Write('\n');
                 return null;
             case Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT:
-                return Runtimeˉvalue.Fromˉu32(checked((uint)Resources.Arguments.Length));
+                return Runtimeˉvalue.Fromˉu32(Resources.Getˉargumentˉcount());
             case Capabilityˉcatalog.PROCESS_ARGUMENT:
-                var Index = arguments[0].U32ˉvalue;
-                if (Index >= (uint)Resources.Arguments.Length)
-                {
-                    throw new Runtimeˉexception(
-                        "WVR3020",
-                        $"Hosted argument index {Index} is outside the supplied count {Resources.Arguments.Length}.");
-                }
-
-                return Runtimeˉvalue.Fromˉtext(Resources.Arguments[(int)Index]);
+                return Runtimeˉvalue.Fromˉtext(Resources.Getˉargument(arguments[0].U32ˉvalue));
             case Capabilityˉcatalog.FILE_READ_BYTES:
-                return Readˉfile(arguments[0].Textˉvalue!);
+                return Runtimeˉvalue.Fromˉbytes(Resources.Readˉfileˉbytes(arguments[0].Textˉvalue!));
             case Capabilityˉcatalog.FILE_WRITE_BYTES:
                 Writeˉfile(arguments[0].Textˉvalue!, arguments[1].Bytesˉvalue);
                 return null;
@@ -394,64 +442,6 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
                 throw new Runtimeˉexception(
                     "WVR3001",
                     $"The host does not implement capability '{capability.Name}'.");
-        }
-    }
-
-    private Runtimeˉvalue Readˉfile(string resourceˉname)
-    {
-        if (Resources.Fileˉreader is null)
-        {
-            throw new Runtimeˉexception(
-                "WVR3001",
-                $"The host does not implement capability '{Capabilityˉcatalog.FILE_READ_BYTES}'.");
-        }
-
-        if (Resources.Tryˉgetˉfileˉsnapshot(resourceˉname, out var Snapshot))
-        {
-            return Runtimeˉvalue.Fromˉbytes(Snapshot);
-        }
-
-        if (Resources.Fileˉsnapshotˉcount >= Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS)
-        {
-            throw new Runtimeˉexception(
-                "WVR3028",
-                $"The hosted resource context already contains {Resources.Fileˉsnapshotˉcount} distinct file snapshots; the limit is {Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS}.");
-        }
-
-        try
-        {
-            var Bytes = Resources.Fileˉreader.Readˉbytes(
-                resourceˉname,
-                Bytecodeˉlimits.MAX_BYTE_DATA_BYTES);
-            if (Bytes.IsDefault)
-            {
-                throw new Runtimeˉexception(
-                    "WVR3026",
-                    "The file adapter returned an uninitialized byte value.");
-            }
-
-            if (Bytes.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
-            {
-                throw new Runtimeˉexception(
-                    "WVR3025",
-                    $"The file adapter returned {Bytes.Length} bytes; the limit is {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}.");
-            }
-
-            Resources.Addˉfileˉsnapshot(resourceˉname, Bytes);
-            return Runtimeˉvalue.Fromˉbytes(Bytes);
-        }
-        catch (Hostedˉfileˉexception Exception)
-        {
-            var Code = Exception.Error switch
-            {
-                Hostedˉfileˉerror.Invalidˉname => "WVR3021",
-                Hostedˉfileˉerror.Notˉfound => "WVR3022",
-                Hostedˉfileˉerror.Permissionˉdenied => "WVR3023",
-                Hostedˉfileˉerror.Unavailable => "WVR3024",
-                Hostedˉfileˉerror.Tooˉlarge => "WVR3025",
-                _ => "WVR3026",
-            };
-            throw new Runtimeˉexception(Code, Exception.Message);
         }
     }
 

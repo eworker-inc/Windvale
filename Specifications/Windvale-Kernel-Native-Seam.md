@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel native seam version 5 defines how the shared portable-WVB native backend, reference host tools, Windvale Assembly, and system-profile Windvale source divide responsibility while the native runtime grows. The first shared ABI-5 WVB consumer remains historical qualified evidence under firmware probe version 7 and [Decision 0064](../Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md). [Decision 0065](../Documents/Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) cross-host qualifies ABI 6, native bridge version 2, and firmware probe version 8 at exact candidate `2fcf531`. [Decision 0066](../Documents/Decisions/0066-Borrowed-Bytes-And-Unsigned-Native-Values.md) cross-host qualifies the current ABI 7, portable probe version 3, and firmware probe version 9 at exact candidate `8d375bf`. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
+Kernel native seam version 5 defines how the shared portable-WVB native backend, reference host tools, Windvale Assembly, and system-profile Windvale source divide responsibility while the native runtime grows. The first shared ABI-5 WVB consumer remains historical qualified evidence under firmware probe version 7 and [Decision 0064](../Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md). [Decision 0065](../Documents/Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) cross-host qualifies ABI 6, native bridge version 2, and firmware probe version 8 at exact candidate `2fcf531`. [Decision 0066](../Documents/Decisions/0066-Borrowed-Bytes-And-Unsigned-Native-Values.md) cross-host qualifies ABI 7, portable probe version 3, and firmware probe version 9 at exact candidate `8d375bf`. [Decision 0067](../Documents/Decisions/0067-Borrowed-Hosted-Input-And-First-Native-Wvb-Inspector.md) advances the implemented host candidate to ABI 8 and the rebuilt OS identity to firmware probe version 10; cross-host and pinned-QEMU qualification remain pending. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 
@@ -10,7 +10,7 @@ This contract prevents temporary C# machine-code generation from silently becomi
 
 | Layer | Current responsibility | Direction |
 | --- | --- | --- |
-| C# reference/recovery host | Compile WVB, select and verify ABI-7 native code, assemble, link, package PE32+, provide host oracles, and retain bounded loader/memory/bridge emitters while replacements are unavailable. | Remains an independent recovery and comparison path; does not define kernel policy. |
+| C# reference/recovery host | Compile WVB, select and verify ABI-8 native code, assemble, link, package PE32+, provide host oracles, and retain bounded loader/memory/bridge emitters while replacements are unavailable. | Remains an independent recovery and comparison path; does not define kernel policy. |
 | Shared portable-WVB backend | Lower verified portable semantics into the same versioned native ABI and WVO object used by host JIT/AOT evidence. | Replaces special OS instruction selection incrementally and becomes Windvale-written. |
 | WVA machine layer | Own explicit entry/exit and capability-adapter shims, register-frame mechanics, and later named privileged instructions that ordinary Windvale code must not execute ambiently. | Grows only from concrete kernel requirements with exact encodings and verification rules. |
 | `.wv` system layer | Own kernel policy, state transitions, diagnostics, allocation decisions, exception dispatch, and later runtime services once the shared native target can lower them. | Becomes the primary kernel implementation. |
@@ -31,14 +31,14 @@ The kernel memory object calls `Windvale_kernel_wva_main` after switching to the
 
 1. reserves 40 aligned stack bytes and preserves the copied-handoff pointer from `RCX`;
 2. constructs the exact 32-byte execution context with version/size, WVB instruction budget 271, call-depth budget 2, and a zero service-table pointer;
-3. passes the context pointer in `RDX` and calls the ABI-7 portable export `Main`;
+3. passes the context pointer in `RDX` and calls the ABI-8 portable export `Main`;
 4. accepts only the complete packed result `RAX == 29`;
 5. returns failure 1 on a trap, exhausted budget, or wrong result; and
 6. restores `RCX` and tail-transfers to special compiler export `Windvale_kernel_main` on success.
 
 The compiler object imports `Windvale_kernel_write_byte`, which resolves to the WVA export. WVA tail-transfers each call to explicitly internal symbol `Windvale_kernel_x64_write_byte`. The public kernel capability boundary is therefore WVA-owned even though its current COM1 instruction sequence remains bootstrap code.
 
-The builder independently decodes the assembled WVA object and the bridge object and requires their exact architecture, section, symbol, code, and relocation shapes before linking. The ABI-7 selector and fragment verifier independently validate the portable module, borrowed-byte descriptors and reads, and empty service list before its WVO is admitted.
+The builder independently decodes the assembled WVA object and the bridge object and requires their exact architecture, section, symbol, code, and relocation shapes before linking. The ABI-8 selector and fragment verifier independently validate the portable module, borrowed-byte descriptors and reads, and empty service list before its WVO is admitted.
 
 ## Portable native probe
 
@@ -48,7 +48,7 @@ The probe is compiled and AOT-linked on the host. The guest does not retain, dec
 
 ## Native compiler requirements for policy migration
 
-ABI 7 retains i32/bool internal functions and calls, conditional control, bounded loops, exact resource counters, immutable i32 data, and bounds traps while adding borrowed immutable bytes, `u8`/`u32`, slicing, fixed-width reads, and byte parameters. Its host-side static-text service does not give the kernel a service table. Moving the allocator and future exception policy into ordinary `.wv` still requires:
+ABI 8 retains those portable semantics while adding host-side borrowed text and bounded argument/file services. The kernel still passes a zero service-table pointer and receives none of those hosted capabilities. Moving the allocator and future exception policy into ordinary `.wv` still requires:
 
 - `u64` values and checked address arithmetic;
 - explicit unsafe or system-visible bounded memory loads and stores;
@@ -65,6 +65,8 @@ The seam does not move the UEFI loader, memory-map scanner, arena initializer, a
 
 ## Current evidence
 
-The portable WVB is 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`. Its current 7,882-byte ABI-7 WVO has SHA-256 `24f5359fa5d335eb273e8680c671924dda43d4ee4c6e00c95f1bbebc742dfa99`. The 305-byte native bridge object has SHA-256 `ef8993c59eb816c7983c5b8033922231baf1d897f846a8d5e54d8232677ef75a`; its layout remains version 2, while its exact budget immediate changed. The version-3 WVA shim object remains 291 bytes with SHA-256 `332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc`.
+The portable WVB is 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`. Its 7,882-byte service-free ABI-8 WVO remains byte-identical with SHA-256 `24f5359fa5d335eb273e8680c671924dda43d4ee4c6e00c95f1bbebc742dfa99`. The 305-byte native bridge object has SHA-256 `ef8993c59eb816c7983c5b8033922231baf1d897f846a8d5e54d8232677ef75a`; its layout remains version 2. The version-3 WVA shim object remains 291 bytes with SHA-256 `332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc`.
 
 Firmware probe version 9 links seven WVO objects and produces a deterministic 15,360-byte EFI application with SHA-256 `ac92cd4759961c7a046ede49af8dce7626016fbcf8bb46e7d90027f5974bffa4`. Exact candidate `8d375bf` passes all 15 OS tests on Windows and Debian and a real pinned QEMU/OVMF boot; the gated transcript starts `windvale-os-boot 9`. The shared ABI-7 backend passes complete Windows/Debian qualification at the same candidate.
+
+The implemented firmware-probe-10 candidate rebuilds that service-free module through ABI 8 and produces a deterministic 15,872-byte EFI application with SHA-256 `9228995f3b2522e15bd87ca63dc2637cc290f93b37f3e32b24cd8e3906671b75`. Its 15 Windows OS tests pass; cross-host and pinned-QEMU qualification remain pending.

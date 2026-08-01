@@ -5,8 +5,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 7;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v7";
+    public const int ABI_VERSION = 8;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v8";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
@@ -15,6 +15,9 @@ public static class Nativeˉcontract
     public const int BORROWED_BYTES_POINTER_OFFSET = 0;
     public const int BORROWED_BYTES_LENGTH_OFFSET = 8;
     public const int BORROWED_BYTES_RESERVED_OFFSET = 12;
+    public const int BORROWED_TEXT_POINTER_OFFSET = 0;
+    public const int BORROWED_TEXT_LENGTH_OFFSET = 8;
+    public const int BORROWED_TEXT_RESERVED_OFFSET = 12;
     public const int MAXIMUM_FRAME_BYTES = MAXIMUM_FRAME_SLOTS * VALUE_SLOT_BYTES;
     public const int MAXIMUM_BLOCKS = 4096;
     public const int MAXIMUM_CALL_PARAMETERS = 4;
@@ -33,16 +36,22 @@ public static class Nativeˉexecutionˉcontextˉcontract
 
 public static class Nativeˉserviceˉtableˉcontract
 {
-    public const uint FORMAT_VERSION = 1;
-    public const uint SIZE = 16;
+    public const uint FORMAT_VERSION = 2;
+    public const uint SIZE = 40;
     public const int FORMAT_VERSION_OFFSET = 0;
     public const int SIZE_OFFSET = 4;
     public const int CONSOLE_WRITE_LINE_POINTER_OFFSET = 8;
+    public const int PROCESS_ARGUMENT_COUNT_POINTER_OFFSET = 16;
+    public const int PROCESS_ARGUMENT_POINTER_OFFSET = 24;
+    public const int FILE_READ_BYTES_POINTER_OFFSET = 32;
 }
 
 public enum Nativeˉservice : byte
 {
     Consoleˉwriteˉline = 1,
+    Processˉargumentˉcount = 2,
+    Processˉargument = 3,
+    Fileˉreadˉbytes = 4,
 }
 
 public abstract record Nativeˉoperation;
@@ -53,7 +62,7 @@ public enum Nativeˉvalueˉtype : byte
 {
     I32 = 1,
     Bool = 2,
-    Staticˉtext = 3,
+    Borrowedˉtext = 3,
     U8 = 4,
     U32 = 5,
     Borrowedˉbytes = 6,
@@ -214,8 +223,17 @@ public sealed record Nativeˉbytesˉread(
     int Offset) : Nativeˉoperation;
 
 public sealed record Nativeˉconsoleˉwriteˉline(
-    int Text,
-    int Data) : Nativeˉoperation;
+    int Text) : Nativeˉoperation;
+
+public sealed record Nativeˉprocessˉargumentˉcount(int Result) : Nativeˉoperation;
+
+public sealed record Nativeˉprocessˉargument(
+    int Result,
+    int Index) : Nativeˉoperation;
+
+public sealed record Nativeˉfileˉreadˉbytes(
+    int Result,
+    int Resourceˉname) : Nativeˉoperation;
 
 public abstract record Nativeˉterminator;
 

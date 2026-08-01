@@ -345,6 +345,9 @@ internal static class Program
     private static readonly string WVDUMP_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wv-Dump-Core.wv");
 
+    private static readonly string WVB_HEADER_INSPECTOR_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wvb-Header-Inspector.wv");
+
     private static readonly string WVO_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wvo-Object-Core.wv");
 
@@ -531,6 +534,7 @@ internal static class Program
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
         new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),
+        new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Foundation machine contracts are shared, bounded, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉmachineˉcontractsˉrun),
         new("Foundation byte ordering is shared, ordinal, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉorderingˉruns),
@@ -2086,6 +2090,126 @@ internal static class Program
             "WVN3030",
             () => _ = Nativeˉfragmentˉverifier.Verify(
                 First.Fragment with { Requiredˉservices = [] }));
+    }
+
+    private static void Nativeˉhostedˉinputˉinspectsˉwvb()
+    {
+        var Source = WVB_HEADER_INSPECTOR_SOURCE;
+        var Input = Compileˉsuccess(NATIVE_CONSTANT_SOURCE).ToImmutableArray();
+        var Verified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        var Authorized = ImmutableHashSet.Create(
+            StringComparer.Ordinal,
+            Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+            Capabilityˉcatalog.FILE_READ_BYTES,
+            Capabilityˉcatalog.PROCESS_ARGUMENT,
+            Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT);
+
+        Hostedˉresourceˉcontext Makeˉresources(StringWriter output, Testˉfileˉreader reader) =>
+            new(["input.wvb"], output, TextWriter.Null, reader);
+        Testˉfileˉreader Makeˉreader() => new((Name, Maximum) =>
+        {
+            Equal("input.wvb", Name);
+            True(Input.Length <= Maximum, "The WVB fixture exceeded the hosted reader bound.");
+            return Input;
+        });
+
+        var Referenceˉoutput = new StringWriter();
+        var Referenceˉreader = Makeˉreader();
+        var Referenceˉresources = Makeˉresources(Referenceˉoutput, Referenceˉreader);
+        var Reference = new Referenceˉruntime(
+            Verified,
+            new Referenceˉcapabilityˉhost(Referenceˉresources),
+            new(Authorized)).Runˉmain();
+        Equal(0, Reference.Exitˉcode);
+        Equal("input.wvb\nwvb-header=pass\n", Referenceˉoutput.ToString());
+        Equal(1, Referenceˉreader.Readˉcount);
+
+        var First = X64ˉnativeˉbackend.Compile(Verified);
+        var Second = X64ˉnativeˉbackend.Compile(Verified);
+        Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Sequenceˉequal(
+            [
+                Nativeˉservice.Consoleˉwriteˉline,
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉservice.Processˉargument,
+                Nativeˉservice.Fileˉreadˉbytes,
+            ],
+            First.Fragment.Requiredˉservices);
+        var Operations = First.Module.Functions
+            .SelectMany(Function => Function.Blocks)
+            .SelectMany(Block => Block.Operations)
+            .ToImmutableArray();
+        True(Operations.Any(Operation => Operation is Nativeˉprocessˉargumentˉcount),
+            "Native machine IR omitted process.argument_count.");
+        True(Operations.Any(Operation => Operation is Nativeˉprocessˉargument),
+            "Native machine IR omitted process.argument.");
+        True(Operations.Count(Operation => Operation is Nativeˉfileˉreadˉbytes) == 2,
+            "Native machine IR did not retain both file.read_bytes calls.");
+
+        var Nativeˉoutput = new StringWriter();
+        var Nativeˉreader = Makeˉreader();
+        var Nativeˉresources = Makeˉresources(Nativeˉoutput, Nativeˉreader);
+        Equal(
+            0,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                First.Fragment,
+                hostˉservices: new(null, Authorized, Nativeˉresources)));
+        Equal("input.wvb\nwvb-header=pass\n", Nativeˉoutput.ToString());
+        Equal(1, Nativeˉreader.Readˉcount);
+
+        foreach (var Pointerˉoffset in new[]
+        {
+            Nativeˉserviceˉtableˉcontract.CONSOLE_WRITE_LINE_POINTER_OFFSET,
+            Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_COUNT_POINTER_OFFSET,
+            Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_POINTER_OFFSET,
+            Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET,
+        })
+        {
+            var Corrupted = First.Fragment.Code.ToArray();
+            var Serviceˉload = Corrupted.AsSpan().IndexOf(new byte[]
+            {
+                0x49, 0x8B, 0x47,
+                Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET,
+                0x48, 0x8B, 0x40,
+                checked((byte)Pointerˉoffset),
+            });
+            True(Serviceˉload >= 0, $"Native code omitted service-table offset {Pointerˉoffset}.");
+            Corrupted[Serviceˉload + 7] ^= 0x01;
+            Throwsˉnative(
+                "WVN3030",
+                () => _ = Nativeˉfragmentˉverifier.Verify(
+                    First.Fragment with { Code = Corrupted.ToImmutableArray() }));
+        }
+        Throwsˉnative(
+            "WVN3009",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with
+                {
+                    Requiredˉservices =
+                    [
+                        Nativeˉservice.Processˉargument,
+                        Nativeˉservice.Processˉargumentˉcount,
+                    ],
+                }));
+
+        var Invalidˉargumentˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            Source.Replace("process.argument(0u32)", "process.argument(1u32)", StringComparison.Ordinal)));
+        var Invalidˉargumentˉfragment = X64ˉnativeˉbackend.Compile(Invalidˉargumentˉverified).Fragment;
+        var Missingˉargumentˉresources = Makeˉresources(new StringWriter(), Makeˉreader());
+        Throwsˉnativeˉtrap(
+            "WVR3020",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                Invalidˉargumentˉfragment,
+                hostˉservices: new(TextWriter.Null, Authorized, Missingˉargumentˉresources)));
+
+        var Missingˉfileˉreader = new Testˉfileˉreader((_, _) =>
+            throw new Hostedˉfileˉexception(Hostedˉfileˉerror.Notˉfound, "The WVB fixture is absent."));
+        var Missingˉfileˉresources = Makeˉresources(new StringWriter(), Missingˉfileˉreader);
+        Throwsˉnativeˉtrap(
+            "WVR3022",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                First.Fragment,
+                hostˉservices: new(null, Authorized, Missingˉfileˉresources)));
     }
 
     private static void Sourceˉmodulesˉcompose()
