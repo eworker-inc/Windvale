@@ -88,7 +88,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
 - Bounded deterministic compile-time source-module composition with explicit transitive dependencies, nominal source contracts, and no runtime linkage
-- A bounded deterministic `.wvproj` manifest and `build` command that select one root plus explicit source dependencies without changing import, WVSS, or WVB semantics
+- A bounded deterministic `.wvproj` manifest and `build` command that select one root plus explicit source dependencies, plus a candidate portable Windvale-written manifest parser, without changing import, WVSS, or WVB semantics
 - Portable Foundation modules for bounded machine contracts, ordinal byte-span ordering, structured unsigned decimal parsing, and immutable byte construction, driven by the object core, assembler, linker, and future compiler needs
 - A first Windvale-written compiler lexer that streams the complete implemented Seed token surface over strict UTF-8 bytes without a token collection
 - A Windvale-written declaration parser that discovers module/declaration shapes and balanced function-body spans as immutable source views without a declaration collection
@@ -326,6 +326,8 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Module-Composition-Dem
 
 The manifest identifies one root and the explicit source files available to its imports. It is declarative build input rather than `.wv` source, and the project and repeated-`--module` commands produce the same canonical WVB bytes. [`Windvale-Compiler.wvproj`](Windvale-Compiler.wvproj) is the first full consumer: the bootstrap verifier uses it to select the complete 12-module compiler closure while preserving the exact 599,868-byte Stage 1 artifact.
 
+The candidate Windvale-written parser under `Tools/Windvale.Project/` now validates the same supplied Project 1 bytes and exposes bounded root/source path views. Its hosted shell produces deterministic reports for differential testing. The normal `build` command still owns host-relative path resolution in C#; portable `.wv` code does not inspect Windows/Linux path syntax or ambient working-directory rules.
+
 Compile and run the first Windvale-written compiler slice:
 
 ```powershell
@@ -552,7 +554,7 @@ export fn Main() -> i32 {
 - `Runtime/Windvale.Bytecode/` — module contracts, codec, verifier, digest, and inspector
 - `Runtime/Windvale.Runtime/` — verified-bytecode reference interpreter and capability host
 - `Object-Model/Windvale.ObjectModel/` — WVO contracts, codec, verifier, digest, and inspector
-- `Tools/Windvale.Project/` — bounded deterministic project-manifest parsing and path resolution
+- `Tools/Windvale.Project/` — the C# project reader/resolver plus the portable Windvale-written manifest parser and hosted inspection shell
 - `Tools/Windvale.Tool/` — command-line composition
 - `Tools/Verify/` — Windows and Linux verification entry points
 - `Tests/` — dependency-free Seed conformance runner

@@ -62,6 +62,12 @@
       Include="../../Examples/Foundation/Byte-Construction-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Byte-Construction-Demo.wv" />
     <EmbeddedResource
+      Include="../../Tools/Windvale.Project/Project-Manifest-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Project-Manifest-Core.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.Project/Project-Manifest-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Project-Manifest-Tool.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Source-Lexer-Core.wv"
       LogicalName="Windvale.Seed.Tests.Source-Lexer-Core.wv" />
     <EmbeddedResource

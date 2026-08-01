@@ -63,8 +63,16 @@ Project diagnostics use the `WVP` family and identify the manifest line and colu
 
 Malformed projects and compiler diagnostics exit as compilation failure `1`. Invalid command syntax exits `64`. Host I/O and authorization failures retain exit `74`. Existing compiler failures retain their `WVC` code, phase, and source location.
 
+## Windvale-written parser boundary
+
+`Tools/Windvale.Project/Project-Manifest-Core.wv` is the portable Windvale-owned parser for the Project 1 text contract. `Windvaleˉprojectˉscanˉmanifest(bytes)` performs the manifest byte bound, strict UTF-8, line-ending, directive, singleton, module-count, and canonical-path checks without file access or ambient host state. Its status values map one-to-one to `WVP1001` through `WVP1007`. A successful scan retains the root and dependency path locations as bounded immutable byte spans; `Windvaleˉprojectˉpathˉat` exposes the root at index zero followed by sources in manifest order and rejects an invalid or inconsistent view without reading outside its inputs.
+
+`Project-Manifest-Tool.wv` is the first hosted shell over that core. It reads exactly one supplied manifest resource and emits a deterministic status/path report. The C# parser remains the reference oracle and the normal `windvale build` implementation while the Windvale core is candidate evidence; focused conformance compares successful path values and exact `WVP` line/column failures between them.
+
+The portable parser deliberately does not resolve a manifest path against a host filesystem. Project-relative native path combination, Windows/Linux identity comparison, duplicate resolved-resource detection, source reads, and publication remain in the host-owned reader. Moving the build driver into Windvale must preserve that boundary rather than teaching portable source about native separators, roots, case rules, or process working directories.
+
 ## Boundary and deferred features
 
 Project 1 deliberately excludes source discovery, globs, environment expansion, conditional compilation, arbitrary build actions, capability authorization, packages, versions, lock files, project references, binary libraries, runtime WVB linking, multiple roots, tests, resources, native containers, and workspaces.
 
-The first accepted consumer is the complete 12-module Windvale compiler source closure. Building its project must reproduce the existing verified 599,868-byte WVB with SHA-256 `9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066`. This proves deterministic project input selection; it does not make the Windvale-written compiler parse projects or change the Stage 1 to Stage 2 bootstrap contract.
+The first accepted consumer is the complete 12-module Windvale compiler source closure. Building its project must reproduce the existing verified 599,868-byte WVB with SHA-256 `9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066`. This proves deterministic project input selection. The separate Windvale-written project parser does not make project syntax part of the compiler, move host path resolution into portable code, or change the Stage 1 to Stage 2 bootstrap contract.

@@ -1,0 +1,58 @@
+module Windvaleˉprojectˉtool profile hosted;
+
+import Windvaleˉproject;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Windvaleˉprojectˉtoolˉfailure(Scan: Windvaleˉprojectˉscan) -> text {
+    var Report: text = "project status=";
+    Report = Textˉconcat(Report, Windvaleˉprojectˉdiagnosticˉcode(Scan.Status));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Scan.Failureˉline));
+    Report = Textˉconcat(Report, " column=");
+    return Textˉconcat(Report, U32ˉformat(Scan.Failureˉcolumn));
+}
+
+fn Windvaleˉprojectˉtoolˉpath(Path: Windvaleˉprojectˉpath) -> text {
+    var Report: text = "project path=";
+    Report = Textˉconcat(Report, U32ˉformat(Path.Index));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Path.Line));
+    Report = Textˉconcat(Report, " column=");
+    Report = Textˉconcat(Report, U32ˉformat(Path.Column));
+    Report = Textˉconcat(Report, " value=");
+    return Textˉconcat(Report, Textˉquote(Textˉfromˉutf8(Path.Value)));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 {
+        diagnostic.write_line("Usage: project-manifest <project.wvproj>");
+        return 64;
+    }
+
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Scan: Windvaleˉprojectˉscan = Windvaleˉprojectˉscanˉmanifest(Input);
+    if Scan.Status != Windvaleˉprojectˉstatus.Valid {
+        diagnostic.write_line(Windvaleˉprojectˉtoolˉfailure(Scan));
+        return 1;
+    }
+
+    console.write_line(
+        Textˉconcat("project status=Valid modules=", U32ˉformat(Scan.Modules))
+    );
+    var Index: u32 = 0u32;
+    while Index < Scan.Modules {
+        let Path: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(Input, Scan, Index);
+        if !Path.Found {
+            diagnostic.write_line("project status=Internal");
+            return 70;
+        }
+        console.write_line(Windvaleˉprojectˉtoolˉpath(Path));
+        Index = Index + 1u32;
+    }
+    return 0;
+}

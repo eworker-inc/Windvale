@@ -1,0 +1,715 @@
+module Windvaleˉproject profile portable;
+
+enum Windvaleˉprojectˉstatus {
+    Valid = 0;
+    Invalidˉheader = 1001;
+    Invalidˉtext = 1002;
+    Malformedˉdirective = 1003;
+    Invalidˉsingleton = 1004;
+    Sourceˉlimit = 1005;
+    Invalidˉpath = 1006;
+    Duplicateˉpath = 1007;
+}
+
+record Windvaleˉprojectˉline {
+    Valid: bool;
+    Offset: u32;
+    Length: u32;
+    Nextˉoffset: u32;
+    Followedˉbyˉlineˉfeed: bool;
+    Failureˉoffset: u32;
+    Failureˉcolumn: u32;
+}
+
+record Windvaleˉprojectˉpathˉscan {
+    Status: Windvaleˉprojectˉstatus;
+    Offset: u32;
+    Length: u32;
+    Line: u32;
+    Column: u32;
+    Failureˉoffset: u32;
+    Failureˉcolumn: u32;
+}
+
+record Windvaleˉprojectˉscan {
+    Status: Windvaleˉprojectˉstatus;
+    Modules: u32;
+    Rootˉoffset: u32;
+    Rootˉlength: u32;
+    Rootˉline: u32;
+    Rootˉcolumn: u32;
+    Sourceˉdirectory: bytes;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+record Windvaleˉprojectˉpath {
+    Found: bool;
+    Index: u32;
+    Offset: u32;
+    Length: u32;
+    Line: u32;
+    Column: u32;
+    Value: bytes;
+}
+
+export fn Windvaleˉprojectˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Windvaleˉprojectˉfailure(
+    Input: bytes,
+    Status: Windvaleˉprojectˉstatus,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Windvaleˉprojectˉscan {
+    return Windvaleˉprojectˉscan(
+        Status,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Windvaleˉprojectˉempty(Input),
+        Offset,
+        Line,
+        Column
+    );
+}
+
+export fn Windvaleˉprojectˉutf8ˉwidth(Value: u8) -> u32 {
+    let First: u32 = U32ˉfromˉu8(Value);
+    if First < 128u32 { return 1u32; }
+    if First < 224u32 { return 2u32; }
+    if First < 240u32 { return 3u32; }
+    return 4u32;
+}
+
+export fn Windvaleˉprojectˉcolumn(Input: bytes, Start: u32, Offset: u32) -> u32 {
+    var Cursor: u32 = Start;
+    var Column: u32 = 1u32;
+    while Cursor < Offset {
+        let Width: u32 = Windvaleˉprojectˉutf8ˉwidth(Bytesˉreadˉu8(Input, Cursor));
+        Cursor = Cursor + Width;
+        if Width == 4u32 {
+            Column = Column + 2u32;
+        } else {
+            Column = Column + 1u32;
+        }
+    }
+    return Column;
+}
+
+export fn Windvaleˉprojectˉwhitespaceˉwidth(Input: bytes, Offset: u32, Limit: u32) -> u32 {
+    let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+    if First == 9u32 { return 1u32; }
+    if First == 11u32 { return 1u32; }
+    if First == 12u32 { return 1u32; }
+    if First == 32u32 { return 1u32; }
+
+    if First == 194u32 {
+        if Offset + 2u32 <= Limit {
+            let Twoˉsecond: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32));
+            if Twoˉsecond == 133u32 { return 2u32; }
+            if Twoˉsecond == 160u32 { return 2u32; }
+        }
+        return 0u32;
+    }
+    if First == 225u32 {
+        if Offset + 3u32 <= Limit {
+            if Bytesˉreadˉu8(Input, Offset + 1u32) == 154u8 {
+                if Bytesˉreadˉu8(Input, Offset + 2u32) == 128u8 { return 3u32; }
+            }
+        }
+        return 0u32;
+    }
+    if First == 226u32 {
+        if Offset + 3u32 <= Limit {
+            let Threeˉsecond: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32));
+            let Third: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 2u32));
+            if Threeˉsecond == 128u32 {
+                if Third >= 128u32 {
+                    if Third <= 138u32 { return 3u32; }
+                }
+                if Third == 168u32 { return 3u32; }
+                if Third == 169u32 { return 3u32; }
+                if Third == 175u32 { return 3u32; }
+            }
+            if Threeˉsecond == 129u32 {
+                if Third == 159u32 { return 3u32; }
+            }
+        }
+        return 0u32;
+    }
+    if First == 227u32 {
+        if Offset + 3u32 <= Limit {
+            if Bytesˉreadˉu8(Input, Offset + 1u32) == 128u8 {
+                if Bytesˉreadˉu8(Input, Offset + 2u32) == 128u8 { return 3u32; }
+            }
+        }
+    }
+    return 0u32;
+}
+
+export fn Windvaleˉprojectˉlineˉisˉwhitespace(Input: bytes, Offset: u32, Length: u32) -> bool {
+    if Length == 0u32 { return false; }
+    let Limit: u32 = Offset + Length;
+    var Cursor: u32 = Offset;
+    while Cursor < Limit {
+        let Width: u32 = Windvaleˉprojectˉwhitespaceˉwidth(Input, Cursor, Limit);
+        if Width == 0u32 { return false; }
+        Cursor = Cursor + Width;
+    }
+    return true;
+}
+
+export fn Windvaleˉprojectˉreadˉline(Input: bytes, Start: u32) -> Windvaleˉprojectˉline {
+    let Total: u32 = Bytesˉlength(Input);
+    var End: u32 = Start;
+    while End < Total {
+        if Bytesˉreadˉu8(Input, End) == 10u8 {
+            var Feedˉlength: u32 = End - Start;
+            if Feedˉlength > 0u32 {
+                if Bytesˉreadˉu8(Input, End - 1u32) == 13u8 {
+                    Feedˉlength = Feedˉlength - 1u32;
+                }
+            }
+            var Feedˉcursor: u32 = 0u32;
+            while Feedˉcursor < Feedˉlength {
+                if Bytesˉreadˉu8(Input, Start + Feedˉcursor) == 13u8 {
+                    let Feedˉfailureˉoffset: u32 = Start + Feedˉcursor;
+                    return Windvaleˉprojectˉline(
+                        false,
+                        Start,
+                        0u32,
+                        End + 1u32,
+                        true,
+                        Feedˉfailureˉoffset,
+                        Windvaleˉprojectˉcolumn(Input, Start, Feedˉfailureˉoffset)
+                    );
+                }
+                Feedˉcursor = Feedˉcursor + 1u32;
+            }
+            if Windvaleˉprojectˉlineˉisˉwhitespace(Input, Start, Feedˉlength) {
+                return Windvaleˉprojectˉline(
+                    false, Start, 0u32, End + 1u32, true, Start, 1u32
+                );
+            }
+            return Windvaleˉprojectˉline(
+                true, Start, Feedˉlength, End + 1u32, true, End + 1u32, Feedˉlength + 1u32
+            );
+        }
+        End = End + 1u32;
+    }
+
+    let Finalˉlength: u32 = End - Start;
+    if Finalˉlength > 0u32 {
+        if Bytesˉreadˉu8(Input, End - 1u32) == 13u8 {
+            return Windvaleˉprojectˉline(
+                false,
+                Start,
+                0u32,
+                End,
+                false,
+                End - 1u32,
+                Windvaleˉprojectˉcolumn(Input, Start, End - 1u32)
+            );
+        }
+    }
+    var Finalˉcursor: u32 = 0u32;
+    while Finalˉcursor < Finalˉlength {
+        if Bytesˉreadˉu8(Input, Start + Finalˉcursor) == 13u8 {
+            let Finalˉfailureˉoffset: u32 = Start + Finalˉcursor;
+            return Windvaleˉprojectˉline(
+                false,
+                Start,
+                0u32,
+                End,
+                false,
+                Finalˉfailureˉoffset,
+                Windvaleˉprojectˉcolumn(Input, Start, Finalˉfailureˉoffset)
+            );
+        }
+        Finalˉcursor = Finalˉcursor + 1u32;
+    }
+    if Windvaleˉprojectˉlineˉisˉwhitespace(Input, Start, Finalˉlength) {
+        return Windvaleˉprojectˉline(false, Start, 0u32, End, false, Start, 1u32);
+    }
+    return Windvaleˉprojectˉline(
+        true, Start, Finalˉlength, End, false, End, Finalˉlength + 1u32
+    );
+}
+
+export fn Windvaleˉprojectˉspanˉequalsˉtext(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    if Length != Bytesˉlength(Expectedˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) != Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Windvaleˉprojectˉspanˉstartsˉwithˉtext(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    let Expectedˉlength: u32 = Bytesˉlength(Expectedˉbytes);
+    if Length < Expectedˉlength { return false; }
+    var Index: u32 = 0u32;
+    while Index < Expectedˉlength {
+        if Bytesˉreadˉu8(Input, Offset + Index) != Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Windvaleˉprojectˉasciiˉalphanumeric(Value: u8) -> bool {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Character >= 65u32 {
+        if Character <= 90u32 { return true; }
+    }
+    if Character >= 97u32 {
+        if Character <= 122u32 { return true; }
+    }
+    if Character >= 48u32 {
+        if Character <= 57u32 { return true; }
+    }
+    return false;
+}
+
+export fn Windvaleˉprojectˉpathˉfailure(
+    Status: Windvaleˉprojectˉstatus,
+    Line: u32,
+    Offset: u32,
+    Column: u32
+) -> Windvaleˉprojectˉpathˉscan {
+    return Windvaleˉprojectˉpathˉscan(
+        Status, 0u32, 0u32, Line, 0u32, Offset, Column
+    );
+}
+
+export fn Windvaleˉprojectˉreadˉpath(
+    Input: bytes,
+    Lineˉvalue: Windvaleˉprojectˉline,
+    Line: u32,
+    Prefix: text
+) -> Windvaleˉprojectˉpathˉscan {
+    let Prefixˉlength: u32 = Bytesˉlength(Textˉtoˉutf8(Prefix));
+    if Lineˉvalue.Length <= Prefixˉlength {
+        return Windvaleˉprojectˉpathˉfailure(
+            Windvaleˉprojectˉstatus.Malformedˉdirective,
+            Line,
+            Lineˉvalue.Offset,
+            1u32
+        );
+    }
+    let Lineˉend: u32 = Lineˉvalue.Offset + Lineˉvalue.Length;
+    if Bytesˉreadˉu8(Input, Lineˉend - 1u32) != 34u8 {
+        return Windvaleˉprojectˉpathˉfailure(
+            Windvaleˉprojectˉstatus.Malformedˉdirective,
+            Line,
+            Lineˉvalue.Offset,
+            1u32
+        );
+    }
+
+    let Valueˉoffset: u32 = Lineˉvalue.Offset + Prefixˉlength;
+    let Valueˉlength: u32 = Lineˉvalue.Length - Prefixˉlength - 1u32;
+    var Index: u32 = 0u32;
+    while Index < Valueˉlength {
+        if Bytesˉreadˉu8(Input, Valueˉoffset + Index) == 34u8 {
+            let Quoteˉfailureˉoffset: u32 = Valueˉoffset + Index;
+            return Windvaleˉprojectˉpathˉfailure(
+                Windvaleˉprojectˉstatus.Malformedˉdirective,
+                Line,
+                Quoteˉfailureˉoffset,
+                Windvaleˉprojectˉcolumn(Input, Lineˉvalue.Offset, Quoteˉfailureˉoffset)
+            );
+        }
+        Index = Index + 1u32;
+    }
+
+    if Valueˉlength == 0u32 {
+        return Windvaleˉprojectˉpathˉfailure(
+            Windvaleˉprojectˉstatus.Invalidˉpath,
+            Line,
+            Valueˉoffset,
+            Windvaleˉprojectˉcolumn(Input, Lineˉvalue.Offset, Valueˉoffset)
+        );
+    }
+    if Valueˉlength > 4096u32 {
+        return Windvaleˉprojectˉpathˉfailure(
+            Windvaleˉprojectˉstatus.Invalidˉpath,
+            Line,
+            Valueˉoffset,
+            Windvaleˉprojectˉcolumn(Input, Lineˉvalue.Offset, Valueˉoffset)
+        );
+    }
+
+    var Suffixˉvalid: bool = false;
+    if Valueˉlength >= 3u32 {
+        let Suffix: u32 = Valueˉoffset + Valueˉlength - 3u32;
+        if Bytesˉreadˉu8(Input, Suffix) == 46u8 {
+            if Bytesˉreadˉu8(Input, Suffix + 1u32) == 119u8 {
+                if Bytesˉreadˉu8(Input, Suffix + 2u32) == 118u8 {
+                    Suffixˉvalid = true;
+                }
+            }
+        }
+    }
+    if !Suffixˉvalid {
+        let Suffixˉfailureˉoffset: u32 = Valueˉoffset + Valueˉlength - 1u32;
+        return Windvaleˉprojectˉpathˉfailure(
+            Windvaleˉprojectˉstatus.Invalidˉpath,
+            Line,
+            Suffixˉfailureˉoffset,
+            Windvaleˉprojectˉcolumn(Input, Lineˉvalue.Offset, Suffixˉfailureˉoffset)
+        );
+    }
+
+    var Segmentˉstart: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    while Cursor <= Valueˉlength {
+        var Atˉend: bool = Cursor == Valueˉlength;
+        var Atˉseparator: bool = false;
+        if !Atˉend {
+            Atˉseparator = Bytesˉreadˉu8(Input, Valueˉoffset + Cursor) == 47u8;
+        }
+        var Atˉboundary: bool = Atˉend;
+        if Atˉseparator { Atˉboundary = true; }
+        if Atˉboundary {
+            let Segmentˉlength: u32 = Cursor - Segmentˉstart;
+            if Segmentˉlength == 0u32 {
+                let Segmentˉfailureˉoffset: u32 = Valueˉoffset + Segmentˉstart;
+                return Windvaleˉprojectˉpathˉfailure(
+                    Windvaleˉprojectˉstatus.Invalidˉpath,
+                    Line,
+                    Segmentˉfailureˉoffset,
+                    Windvaleˉprojectˉcolumn(Input, Lineˉvalue.Offset, Segmentˉfailureˉoffset)
+                );
+            }
+            let Firstˉoffset: u32 = Valueˉoffset + Segmentˉstart;
+            let Lastˉoffset: u32 = Firstˉoffset + Segmentˉlength - 1u32;
+            if !Windvaleˉprojectˉasciiˉalphanumeric(Bytesˉreadˉu8(Input, Firstˉoffset)) {
+                return Windvaleˉprojectˉpathˉfailure(
+                    Windvaleˉprojectˉstatus.Invalidˉpath,
+                    Line,
+                    Firstˉoffset,
+                    Windvaleˉprojectˉcolumn(Input, Lineˉvalue.Offset, Firstˉoffset)
+                );
+            }
+            if !Windvaleˉprojectˉasciiˉalphanumeric(Bytesˉreadˉu8(Input, Lastˉoffset)) {
+                return Windvaleˉprojectˉpathˉfailure(
+                    Windvaleˉprojectˉstatus.Invalidˉpath,
+                    Line,
+                    Firstˉoffset,
+                    Windvaleˉprojectˉcolumn(Input, Lineˉvalue.Offset, Firstˉoffset)
+                );
+            }
+
+            Index = 0u32;
+            while Index < Segmentˉlength {
+                let Characterˉoffset: u32 = Firstˉoffset + Index;
+                let Character: u8 = Bytesˉreadˉu8(Input, Characterˉoffset);
+                var Canonical: bool = Windvaleˉprojectˉasciiˉalphanumeric(Character);
+                if Character == 46u8 { Canonical = true; }
+                if Character == 95u8 { Canonical = true; }
+                if Character == 45u8 { Canonical = true; }
+                if !Canonical {
+                    return Windvaleˉprojectˉpathˉfailure(
+                        Windvaleˉprojectˉstatus.Invalidˉpath,
+                        Line,
+                        Characterˉoffset,
+                        Windvaleˉprojectˉcolumn(Input, Lineˉvalue.Offset, Characterˉoffset)
+                    );
+                }
+                Index = Index + 1u32;
+            }
+            Segmentˉstart = Cursor + 1u32;
+        }
+        Cursor = Cursor + 1u32;
+    }
+
+    return Windvaleˉprojectˉpathˉscan(
+        Windvaleˉprojectˉstatus.Valid,
+        Valueˉoffset,
+        Valueˉlength,
+        Line,
+        Windvaleˉprojectˉcolumn(Input, Lineˉvalue.Offset, Valueˉoffset),
+        Valueˉoffset + Valueˉlength,
+        Windvaleˉprojectˉcolumn(
+            Input, Lineˉvalue.Offset, Valueˉoffset + Valueˉlength
+        )
+    );
+}
+
+export fn Windvaleˉprojectˉappendˉsource(
+    Directory: bytes,
+    Path: Windvaleˉprojectˉpathˉscan
+) -> bytes {
+    var Result: bytes = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Path.Offset));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Path.Length));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Path.Line));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Path.Column));
+}
+
+export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉscan {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total > 65536u32 {
+        return Windvaleˉprojectˉfailure(
+            Input, Windvaleˉprojectˉstatus.Invalidˉtext, 0u32, 1u32, 1u32
+        );
+    }
+    if !Textˉutf8ˉisˉvalid(Input) {
+        return Windvaleˉprojectˉfailure(
+            Input, Windvaleˉprojectˉstatus.Invalidˉtext, 0u32, 1u32, 1u32
+        );
+    }
+
+    let Header: Windvaleˉprojectˉline = Windvaleˉprojectˉreadˉline(Input, 0u32);
+    if !Header.Valid {
+        return Windvaleˉprojectˉfailure(
+            Input,
+            Windvaleˉprojectˉstatus.Malformedˉdirective,
+            Header.Failureˉoffset,
+            1u32,
+            Header.Failureˉcolumn
+        );
+    }
+    if !Windvaleˉprojectˉspanˉequalsˉtext(
+        Input, Header.Offset, Header.Length, "windvale-project 1"
+    ) {
+        return Windvaleˉprojectˉfailure(
+            Input, Windvaleˉprojectˉstatus.Invalidˉheader, Header.Offset, 1u32, 1u32
+        );
+    }
+
+    var Cursor: u32 = Header.Nextˉoffset;
+    var More: bool = Header.Followedˉbyˉlineˉfeed;
+    var Lineˉnumber: u32 = 1u32;
+    var Hasˉroot: bool = false;
+    var Rootˉoffset: u32 = 0u32;
+    var Rootˉlength: u32 = 0u32;
+    var Rootˉline: u32 = 0u32;
+    var Rootˉcolumn: u32 = 0u32;
+    var Hasˉemission: bool = false;
+    var Sources: u32 = 0u32;
+    var Sourceˉdirectory: bytes = Windvaleˉprojectˉempty(Input);
+
+    while More {
+        Lineˉnumber = Lineˉnumber + 1u32;
+        let Line: Windvaleˉprojectˉline = Windvaleˉprojectˉreadˉline(Input, Cursor);
+        Cursor = Line.Nextˉoffset;
+        More = Line.Followedˉbyˉlineˉfeed;
+        if !Line.Valid {
+            return Windvaleˉprojectˉfailure(
+                Input,
+                Windvaleˉprojectˉstatus.Malformedˉdirective,
+                Line.Failureˉoffset,
+                Lineˉnumber,
+                Line.Failureˉcolumn
+            );
+        }
+
+        if Line.Length != 0u32 {
+            if Windvaleˉprojectˉspanˉstartsˉwithˉtext(
+                Input, Line.Offset, Line.Length, "root \""
+            ) {
+                if Hasˉroot {
+                    return Windvaleˉprojectˉfailure(
+                        Input,
+                        Windvaleˉprojectˉstatus.Invalidˉsingleton,
+                        Line.Offset,
+                        Lineˉnumber,
+                        1u32
+                    );
+                }
+                let Rootˉpath: Windvaleˉprojectˉpathˉscan = Windvaleˉprojectˉreadˉpath(
+                    Input, Line, Lineˉnumber, "root \""
+                );
+                if Rootˉpath.Status != Windvaleˉprojectˉstatus.Valid {
+                    return Windvaleˉprojectˉfailure(
+                        Input,
+                        Rootˉpath.Status,
+                        Rootˉpath.Failureˉoffset,
+                        Lineˉnumber,
+                        Rootˉpath.Failureˉcolumn
+                    );
+                }
+                Hasˉroot = true;
+                Rootˉoffset = Rootˉpath.Offset;
+                Rootˉlength = Rootˉpath.Length;
+                Rootˉline = Rootˉpath.Line;
+                Rootˉcolumn = Rootˉpath.Column;
+            } else {
+                if Windvaleˉprojectˉspanˉstartsˉwithˉtext(
+                    Input, Line.Offset, Line.Length, "source \""
+                ) {
+                    if Sources >= 63u32 {
+                        return Windvaleˉprojectˉfailure(
+                            Input,
+                            Windvaleˉprojectˉstatus.Sourceˉlimit,
+                            Line.Offset,
+                            Lineˉnumber,
+                            1u32
+                        );
+                    }
+                    let Sourceˉpath: Windvaleˉprojectˉpathˉscan = Windvaleˉprojectˉreadˉpath(
+                        Input, Line, Lineˉnumber, "source \""
+                    );
+                    if Sourceˉpath.Status != Windvaleˉprojectˉstatus.Valid {
+                        return Windvaleˉprojectˉfailure(
+                            Input,
+                            Sourceˉpath.Status,
+                            Sourceˉpath.Failureˉoffset,
+                            Lineˉnumber,
+                            Sourceˉpath.Failureˉcolumn
+                        );
+                    }
+                    Sourceˉdirectory = Windvaleˉprojectˉappendˉsource(Sourceˉdirectory, Sourceˉpath);
+                    Sources = Sources + 1u32;
+                } else {
+                    if Windvaleˉprojectˉspanˉequalsˉtext(
+                        Input, Line.Offset, Line.Length, "emit wvb"
+                    ) {
+                        if Hasˉemission {
+                            return Windvaleˉprojectˉfailure(
+                                Input,
+                                Windvaleˉprojectˉstatus.Invalidˉsingleton,
+                                Line.Offset,
+                                Lineˉnumber,
+                                1u32
+                            );
+                        }
+                        Hasˉemission = true;
+                    } else {
+                        return Windvaleˉprojectˉfailure(
+                            Input,
+                            Windvaleˉprojectˉstatus.Malformedˉdirective,
+                            Line.Offset,
+                            Lineˉnumber,
+                            1u32
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    if !Hasˉroot {
+        return Windvaleˉprojectˉfailure(
+            Input,
+            Windvaleˉprojectˉstatus.Invalidˉsingleton,
+            Total,
+            Lineˉnumber,
+            1u32
+        );
+    }
+    if !Hasˉemission {
+        return Windvaleˉprojectˉfailure(
+            Input,
+            Windvaleˉprojectˉstatus.Invalidˉsingleton,
+            Total,
+            Lineˉnumber,
+            1u32
+        );
+    }
+
+    return Windvaleˉprojectˉscan(
+        Windvaleˉprojectˉstatus.Valid,
+        Sources + 1u32,
+        Rootˉoffset,
+        Rootˉlength,
+        Rootˉline,
+        Rootˉcolumn,
+        Sourceˉdirectory,
+        Total,
+        Lineˉnumber,
+        1u32
+    );
+}
+
+export fn Windvaleˉprojectˉpathˉat(
+    Input: bytes,
+    Scan: Windvaleˉprojectˉscan,
+    Index: u32
+) -> Windvaleˉprojectˉpath {
+    let Empty: bytes = Windvaleˉprojectˉempty(Input);
+    let Total: u32 = Bytesˉlength(Input);
+    if Scan.Status != Windvaleˉprojectˉstatus.Valid {
+        return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
+    }
+    if Scan.Modules == 0u32 {
+        return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
+    }
+    if Scan.Modules > 64u32 {
+        return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
+    }
+    if Index >= Scan.Modules {
+        return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
+    }
+    if Index == 0u32 {
+        if Scan.Rootˉoffset > Total {
+            return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
+        }
+        if Scan.Rootˉlength > Total - Scan.Rootˉoffset {
+            return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
+        }
+        return Windvaleˉprojectˉpath(
+            true,
+            Index,
+            Scan.Rootˉoffset,
+            Scan.Rootˉlength,
+            Scan.Rootˉline,
+            Scan.Rootˉcolumn,
+            Bytesˉslice(Input, Scan.Rootˉoffset, Scan.Rootˉlength)
+        );
+    }
+
+    if Bytesˉlength(Scan.Sourceˉdirectory) != (Scan.Modules - 1u32) * 16u32 {
+        return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
+    }
+    let Entry: u32 = (Index - 1u32) * 16u32;
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Scan.Sourceˉdirectory, Entry);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Scan.Sourceˉdirectory, Entry + 4u32);
+    let Line: u32 = Bytesˉreadˉu32ˉlittle(Scan.Sourceˉdirectory, Entry + 8u32);
+    let Column: u32 = Bytesˉreadˉu32ˉlittle(Scan.Sourceˉdirectory, Entry + 12u32);
+    if Offset > Total {
+        return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
+    }
+    if Length > Total - Offset {
+        return Windvaleˉprojectˉpath(false, Index, 0u32, 0u32, 0u32, 0u32, Empty);
+    }
+    return Windvaleˉprojectˉpath(
+        true, Index, Offset, Length, Line, Column, Bytesˉslice(Input, Offset, Length)
+    );
+}
+
+export fn Windvaleˉprojectˉdiagnosticˉcode(
+    Status: Windvaleˉprojectˉstatus
+) -> text {
+    if Status == Windvaleˉprojectˉstatus.Invalidˉheader { return "WVP1001"; }
+    if Status == Windvaleˉprojectˉstatus.Invalidˉtext { return "WVP1002"; }
+    if Status == Windvaleˉprojectˉstatus.Malformedˉdirective { return "WVP1003"; }
+    if Status == Windvaleˉprojectˉstatus.Invalidˉsingleton { return "WVP1004"; }
+    if Status == Windvaleˉprojectˉstatus.Sourceˉlimit { return "WVP1005"; }
+    if Status == Windvaleˉprojectˉstatus.Invalidˉpath { return "WVP1006"; }
+    if Status == Windvaleˉprojectˉstatus.Duplicateˉpath { return "WVP1007"; }
+    return "";
+}

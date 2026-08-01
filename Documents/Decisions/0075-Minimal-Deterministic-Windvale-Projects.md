@@ -42,13 +42,15 @@ The CLI builds `Examples/Foundation/Module-Composition-Demo.wvproj` to the exist
 
 `Windvale-Compiler.wvproj` selects the exact canonical 12-module, 677,073-source-byte closure and produces the established 599,868-byte Stage 1 compiler with SHA-256 `9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066`.
 
+The first Windvale-owned parser candidate now lives in `Tools/Windvale.Project/Project-Manifest-Core.wv`. It consumes only immutable supplied bytes, returns bounded source-path spans, maps its statuses to the existing `WVP` family, and remains independent of host path behavior. Its hosted inspection shell is `Project-Manifest-Tool.wv`. The focused differential test compiles and verifies both modules, compares valid LF/CRLF path reports and exact invalid code/line/column results with the C# oracle, accepts the exact 64-module boundary, rejects the 65th module, and contains malformed UTF-8. The current candidate core has SHA-256 `6e905c0fdd9a7d94b64e2b6fd6795c8235aa526634c68f18bdc8c0dd79b26ddc`; the composed hosted tool has SHA-256 `82a527541deebaef19be1271946077e1045331475db9346f35558425d406acc1`.
+
 Windows Standard and Qualification, Debian Qualification, portable-artifact comparison, and independent GitHub verification remain required before this decision becomes qualified. OS and QEMU gates are unrelated to the project-input contract and were not run for this candidate.
 
 ## Consequences
 
 Windvale gains a stable project concept without a second dependency graph or a new compiler/runtime format. Developers can check in one bounded build description instead of duplicating long CLI argument lists, and the complete compiler closure becomes the first real project rather than a synthetic example.
 
-The Stage 0 C# tool currently parses and resolves projects. This does not yet prove a Windvale-written project reader, native build driver, package manager, or .NET-free bootstrap. A later Windvale-owned implementation can consume the same manifest only after hosted file input, output, diagnostics, and process entry satisfy the applicable native ownership gate.
+The normal Stage 0 build path still parses and resolves projects through C#. The Windvale-written core now proves portable manifest parsing, but not project-relative host resolution, a native build driver, package management, or a .NET-free bootstrap. A later Windvale-owned build implementation can consume the parsed path spans only through a host-resource boundary that preserves manifest-relative resolution and satisfies the applicable native ownership gate.
 
 Project 1 produces one self-contained WVB. A future need for independently distributed source packages, binary references, multiple targets, or workspaces must define its own identity, version, verification, and resolution boundaries rather than silently expanding this manifest.
 

@@ -40,6 +40,8 @@ internal static class Program
     private const string NATIVE_LOOP_CODE_SHA256 = "3b453983778711cfccca3a495cd5d97eeecd28a041294ef522675582695740b1";
     private const string NATIVE_LOOP_WVO_SHA256 = "30435304a6d134152ea5fabb889047fb2a1099ef7b4606f552817175022aebc9";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
+    private const string PROJECT_MANIFEST_CORE_SHA256 = "6e905c0fdd9a7d94b64e2b6fd6795c8235aa526634c68f18bdc8c0dd79b26ddc";
+    private const string PROJECT_MANIFEST_TOOL_SHA256 = "82a527541deebaef19be1271946077e1045331475db9346f35558425d406acc1";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
     private const string BYTE_ORDERING_SHA256 = "194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1";
@@ -415,6 +417,12 @@ internal static class Program
     private static readonly string BYTE_CONSTRUCTION_DEMO_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Byte-Construction-Demo.wv");
 
+    private static readonly string PROJECT_MANIFEST_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Project-Manifest-Core.wv");
+
+    private static readonly string PROJECT_MANIFEST_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Project-Manifest-Tool.wv");
+
     private static readonly string SOURCE_LEXER_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Lexer-Core.wv");
 
@@ -581,6 +589,7 @@ internal static class Program
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
+        new("Windvale-written project manifests agree with the reference parser", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉprojectˉmanifestsˉagree),
         new("Foundation machine contracts are shared, bounded, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉmachineˉcontractsˉrun),
         new("Foundation byte ordering is shared, ordinal, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉorderingˉruns),
         new("Foundation decimal parsing shares nominal results and boundaries", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉdecimalˉparsingˉruns),
@@ -3599,6 +3608,104 @@ internal static class Program
         {
             Directory.Delete(Temporaryˉdirectory, recursive: true);
         }
+    }
+
+    private static void Windvaleˉprojectˉmanifestsˉagree()
+    {
+        var Coreˉresult = Seedˉcompiler.Compile(
+            PROJECT_MANIFEST_CORE_SOURCE,
+            "Tools/Windvale.Project/Project-Manifest-Core.wv");
+        True(
+            Coreˉresult.Success,
+            "The Windvale project core did not compile: " +
+                string.Join(" | ", Coreˉresult.Diagnostics));
+        var Core = Moduleˉcodec.Readˉandˉverify(Coreˉresult.Moduleˉbytes.AsSpan());
+        Equal(
+            PROJECT_MANIFEST_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Coreˉresult.Moduleˉbytes.AsSpan()));
+        Equal("Windvaleˉproject", Core.Module.Name);
+        Equal(Moduleˉprofile.Portable, Core.Module.Profile);
+        Equal(0, Core.Module.Capabilities.Length);
+        True(
+            Core.Module.Exports.Any(Export => Export.Name == "Windvaleˉprojectˉscanˉmanifest"),
+            "The Windvale project core did not export its manifest scanner.");
+        True(
+            Core.Module.Exports.Any(Export => Export.Name == "Windvaleˉprojectˉpathˉat"),
+            "The Windvale project core did not export its path view.");
+
+        var Toolˉresult = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Tools/Windvale.Project/Project-Manifest-Tool.wv",
+                PROJECT_MANIFEST_TOOL_SOURCE),
+            [
+                new(
+                    "Tools/Windvale.Project/Project-Manifest-Core.wv",
+                    PROJECT_MANIFEST_CORE_SOURCE),
+            ]);
+        True(
+            Toolˉresult.Success,
+            "The Windvale project tool did not compile: " +
+                string.Join(" | ", Toolˉresult.Diagnostics));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉresult.Moduleˉbytes.AsSpan());
+        Equal(
+            PROJECT_MANIFEST_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Toolˉresult.Moduleˉbytes.AsSpan()));
+        Equal("Windvaleˉprojectˉtool", Tool.Module.Name);
+        Equal(Moduleˉprofile.Hosted, Tool.Module.Profile);
+
+        Projectˉparserˉagreesˉwithˉtool(
+            Tool,
+            "windvale-project 1\n" +
+            "root \"Source/Main.wv\"\n" +
+            "source \"Source/Leaf.wv\"\n" +
+            "source \"Source/Middle.wv\"\n" +
+            "emit wvb\n");
+        Projectˉparserˉagreesˉwithˉtool(
+            Tool,
+            "windvale-project 1\r\n" +
+            "emit wvb\r\n" +
+            "source \"Source/Leaf.wv\"\r\n" +
+            "root \"Source/Main.wv\"\r\n");
+
+        foreach (var Invalid in new[]
+        {
+            string.Empty,
+            "windvale-project 2\nroot \"Main.wv\"\nemit wvb\n",
+            "\uFEFFwindvale-project 1\nroot \"Main.wv\"\nemit wvb\n",
+            "windvale-project 1\n \nroot \"Main.wv\"\nemit wvb\n",
+            "windvale-project 1\r",
+            "windvale-project 1\nroot Main.wv\nemit wvb\n",
+            "windvale-project 1\nroot \"Main.wv\"\nroot \"Other.wv\"\nemit wvb\n",
+            "windvale-project 1\nroot \"Main.wv\"\nemit wvb\nemit wvb\n",
+            "windvale-project 1\nemit wvb\n",
+            "windvale-project 1\nroot \"Main.wv\"\n",
+            "windvale-project 1\nroot \"../Main.wv\"\nemit wvb\n",
+            "windvale-project 1\nroot \"Source/Main.WV\"\nemit wvb\n",
+            "windvale-project 1\nroot \"Source/Maïn.wv\"\nemit wvb\n",
+            "windvale-project 1\nroot \"Main.wv\"\nemit wvb\n" +
+                new string('\n', Projectˉlimits.MAX_MANIFEST_BYTES),
+        })
+        {
+            Projectˉparserˉagreesˉwithˉtool(Tool, Invalid);
+        }
+
+        var Maximum = new StringBuilder("windvale-project 1\nroot \"Root.wv\"\n");
+        for (var Index = 0; Index < Projectˉlimits.MAX_SOURCE_MODULES - 1; Index++)
+        {
+            Maximum.AppendLine($"source \"Source/Module-{Index}.wv\"");
+        }
+        Maximum.AppendLine("emit wvb");
+        Projectˉparserˉagreesˉwithˉtool(Tool, Maximum.ToString());
+        Maximum.Insert(
+            Maximum.ToString().LastIndexOf("emit wvb", StringComparison.Ordinal),
+            "source \"Source/Excess.wv\"\n");
+        Projectˉparserˉagreesˉwithˉtool(Tool, Maximum.ToString());
+
+        var Invalidˉutf8 = Runˉprojectˉmanifestˉtool(Tool, [0xFF]);
+        Equal(1, Invalidˉutf8.Exitˉcode);
+        Equal(string.Empty, Invalidˉutf8.Output);
+        Equal("project status=WVP1002 line=1 column=1\n", Invalidˉutf8.Diagnostics);
+        Equal(1, Invalidˉutf8.Readˉcount);
     }
 
     private static void Foundationˉmachineˉcontractsˉrun()
@@ -8232,6 +8339,79 @@ internal static class Program
                 // Rejection through the stable object boundary is the expected result.
             }
         }
+    }
+
+    private static void Projectˉparserˉagreesˉwithˉtool(
+        Verifiedˉmodule tool,
+        string manifest)
+    {
+        var Reference = Projectˉparser.Parse(manifest);
+        var Run = Runˉprojectˉmanifestˉtool(
+            tool,
+            Encoding.UTF8.GetBytes(manifest).ToImmutableArray());
+        Equal(1, Run.Readˉcount);
+
+        if (!Reference.Success)
+        {
+            var Diagnostic = Reference.Diagnostics.Single();
+            Equal(1, Run.Exitˉcode);
+            Equal(string.Empty, Run.Output);
+            Equal(
+                $"project status={Diagnostic.Code} line={Diagnostic.Line} " +
+                    $"column={Diagnostic.Column}\n",
+                Run.Diagnostics);
+            return;
+        }
+
+        Equal(0, Run.Exitˉcode);
+        Equal(string.Empty, Run.Diagnostics);
+        var Manifest = Reference.Manifest!;
+        var Paths = new[] { Manifest.Root }.Concat(Manifest.Sources);
+        var Expected = new StringBuilder(
+            $"project status=Valid modules={Manifest.Sources.Length + 1}\n");
+        var Index = 0;
+        foreach (var Path in Paths)
+        {
+            Expected.AppendLine(
+                $"project path={Index} line={Path.Line} column={Path.Column} " +
+                    $"value=\"{Path.Value}\"");
+            Index++;
+        }
+        Equal(Expected.ToString().Replace("\r\n", "\n", StringComparison.Ordinal), Run.Output);
+    }
+
+    private static Compilerˉsourceˉparserˉrunˉresult Runˉprojectˉmanifestˉtool(
+        Verifiedˉmodule module,
+        ImmutableArray<byte> manifest)
+    {
+        const string Manifestˉname = "input.wvproj";
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Reader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            Equal(Manifestˉname, Name);
+            True(
+                manifest.Length <= Maximumˉbytes,
+                "The hosted project-manifest byte limit was too small.");
+            return manifest;
+        });
+        var Authorized = module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Result = new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [Manifestˉname],
+                Output,
+                Diagnostics,
+                Reader)),
+            new(Authorized, Maximumˉinstructions: 20_000_000)).Runˉmain();
+        return new(
+            Result.Exitˉcode,
+            Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'),
+            Diagnostics.ToString().Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'),
+            Reader.Readˉcount,
+            Result.Executedˉinstructions);
     }
 
     private static Compilerˉsourceˉparserˉrunˉresult Runˉsourceˉdeclarationˉparser(
