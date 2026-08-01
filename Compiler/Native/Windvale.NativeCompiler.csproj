@@ -11,5 +11,8 @@
     <EmbeddedResource
       Include="Stencils/Process-Argument-Count.wvo"
       LogicalName="Windvale.NativeCompiler.Process-Argument-Count.wvo" />
+    <EmbeddedResource
+      Include="Stencils/Process-Argument.wvo"
+      LogicalName="Windvale.NativeCompiler.Process-Argument.wvo" />
   </ItemGroup>
 </Project>

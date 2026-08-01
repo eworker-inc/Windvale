@@ -1,0 +1,51 @@
+windvale-assembly 1
+
+# WVSP 2 describes an exact ordered set of typed one-byte patches.
+# The stencil is data until the native owner validates and instantiates it.
+symbol local data Process_argument_patches in .rodata
+symbol export data Process_argument_stencil in .rodata
+
+section rodata .rodata align 1
+define Process_argument_patches
+bytes 87 86 83 80
+u32 2
+u32 8
+u32 70
+u32 3
+u32 1
+u32 2
+u32 11
+u32 1
+u32 3
+u32 21
+u32 1
+u32 4
+u32 40
+u32 1
+u32 5
+u32 44
+u32 1
+u32 5
+u32 48
+u32 1
+u32 6
+u32 59
+u32 1
+u32 2
+u32 60
+u32 1
+u32 7
+end define
+define Process_argument_stencil
+bytes 65 199 71 0 0 0 0 0
+bytes 69 59 71 0 15 131 38 0 0 0
+bytes 73 139 71 0 68 137 193
+bytes 72 193 225 4 72 1 200
+bytes 72 139 8 73 137 9
+bytes 139 72 0 65 137 73 0
+bytes 65 199 65 0 0 0 0 0
+bytes 49 192 195
+bytes 65 199 71 0 0 0 0 0
+bytes 184 1 0 0 0 195
+end define
+end section

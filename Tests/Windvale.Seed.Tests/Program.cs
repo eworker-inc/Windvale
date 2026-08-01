@@ -536,6 +536,9 @@ internal static class Program
     private static readonly string PROCESS_ARGUMENT_COUNT_STENCIL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Process-Argument-Count.wva");
 
+    private static readonly string PROCESS_ARGUMENT_STENCIL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Process-Argument.wva");
+
     private static readonly string CONSOLE_PROVIDER_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Console-Provider.wva");
 
@@ -591,7 +594,7 @@ internal static class Program
         new("complete Windvale-written wvdump agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvdumpˉcompleteˉruns),
         new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),
-        new("Windvale-assembled native stencil reproduces the argument-count leaf", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉreproducesˉargumentˉcount),
+        new("Windvale-assembled native stencils reproduce the argument-service leaves", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilsˉreproduceˉargumentˉservices),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
@@ -2931,88 +2934,66 @@ internal static class Program
                 First.Fragment with { Requiredˉservices = [] }));
     }
 
-    private static void Windvaleˉnativeˉstencilˉreproducesˉargumentˉcount()
+    private static void Windvaleˉnativeˉstencilsˉreproduceˉargumentˉservices()
     {
         const string INVALID_STENCIL =
-            "The WVA native stencil does not match the bounded process.argument_count contract.";
+            "The WVA native stencil does not match the bounded native-service contract.";
         var Assemblerˉmodule = Moduleˉcodec.Readˉandˉverify(Compileˉwithˉtoolˉfoundationˉsuccess(
             WVA_ASSEMBLER_CORE_SOURCE,
             "Wva-Assembler-Core.wv"));
         var Authorized = Assemblerˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
             .ToImmutableHashSet(StringComparer.Ordinal);
-        var Sourceˉbytes = Encoding.UTF8
-            .GetBytes(PROCESS_ARGUMENT_COUNT_STENCIL_SOURCE)
-            .ToImmutableArray();
 
-        Capturingˉfileˉwriter Runˉwindvaleˉassembler()
+        ImmutableArray<byte> Assembleˉtwice(
+            string source,
+            string sourceˉname,
+            string outputˉname)
         {
-            var Output = new StringWriter();
-            var Diagnostics = new StringWriter();
-            var Writer = new Capturingˉfileˉwriter();
-            var Result = new Referenceˉruntime(
-                Assemblerˉmodule,
-                new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
-                    ["Process-Argument-Count.wva", "Process-Argument-Count.wvo"],
-                    Output,
-                    Diagnostics,
-                    new Testˉfileˉreader((Name, Maximumˉbytes) =>
-                    {
-                        Equal("Process-Argument-Count.wva", Name);
-                        True(
-                            Sourceˉbytes.Length <= Maximumˉbytes,
-                            "The native-stencil source exceeded the Windvale assembler input bound.");
-                        return Sourceˉbytes;
-                    }),
-                    Writer)),
-                new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
-            Equal(0, Result.Exitˉcode);
-            Equal(string.Empty, Diagnostics.ToString());
-            Contains(Output.ToString(), "assembly status=valid");
-            Equal(1, Writer.Writeˉcount);
-            Equal("Process-Argument-Count.wvo", Writer.Resourceˉname);
-            return Writer;
+            var Sourceˉbytes = Encoding.UTF8.GetBytes(source).ToImmutableArray();
+
+            Capturingˉfileˉwriter Runˉwindvaleˉassembler()
+            {
+                var Output = new StringWriter();
+                var Diagnostics = new StringWriter();
+                var Writer = new Capturingˉfileˉwriter();
+                var Result = new Referenceˉruntime(
+                    Assemblerˉmodule,
+                    new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                        [sourceˉname, outputˉname],
+                        Output,
+                        Diagnostics,
+                        new Testˉfileˉreader((Name, Maximumˉbytes) =>
+                        {
+                            Equal(sourceˉname, Name);
+                            True(
+                                Sourceˉbytes.Length <= Maximumˉbytes,
+                                "The native-stencil source exceeded the Windvale assembler input bound.");
+                            return Sourceˉbytes;
+                        }),
+                        Writer)),
+                    new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
+                Equal(0, Result.Exitˉcode);
+                Equal(string.Empty, Diagnostics.ToString());
+                Contains(Output.ToString(), "assembly status=valid");
+                Equal(1, Writer.Writeˉcount);
+                Equal(outputˉname, Writer.Resourceˉname);
+                return Writer;
+            }
+
+            var First = Runˉwindvaleˉassembler();
+            var Second = Runˉwindvaleˉassembler();
+            Sequenceˉequal(First.Bytes, Second.Bytes);
+            Sequenceˉequal(Assembleˉsuccess(source), First.Bytes);
+            return First.Bytes;
         }
 
-        var First = Runˉwindvaleˉassembler();
-        var Second = Runˉwindvaleˉassembler();
-        Sequenceˉequal(First.Bytes, Second.Bytes);
-        Sequenceˉequal(
-            Assembleˉsuccess(PROCESS_ARGUMENT_COUNT_STENCIL_SOURCE),
-            First.Bytes);
-        using (var Embeddedˉstream = typeof(X64ˉnativeˉstencil).Assembly
-            .GetManifestResourceStream("Windvale.NativeCompiler.Process-Argument-Count.wvo") ??
-            throw new InvalidOperationException("The native-stencil resource was not embedded."))
+        static Verifiedˉobject Corruptˉdata(
+            Verifiedˉobject verified,
+            int offset,
+            byte value)
         {
-            var Embeddedˉbytes = new byte[checked((int)Embeddedˉstream.Length)];
-            Embeddedˉstream.ReadExactly(Embeddedˉbytes);
-            Sequenceˉequal(First.Bytes, Embeddedˉbytes);
-            Equal(166, Embeddedˉbytes.Length);
-            Equal(
-                "e2057943b9c79e10a432ea20a77da5ed0a261e3effdd36511cbb34e77e55c10b",
-                Convert.ToHexString(SHA256.HashData(Embeddedˉbytes)).ToLowerInvariant());
-        }
-
-        var Verified = Objectˉcodec.Readˉandˉverify(First.Bytes.AsSpan());
-        var Stencil = X64ˉnativeˉstencil.Readˉprocessˉargumentˉcount(Verified);
-        var Instantiated = X64ˉnativeˉstencil.Instantiateˉu8(
-            Stencil,
-            Nativeˉstencilˉpatchˉkind.Executionˉcontextˉu8ˉoffset,
-            checked((byte)Nativeˉexecutionˉcontextˉcontract.ARGUMENT_COUNT_OFFSET));
-        var Canonical = X64ˉnativeˉargumentˉservices.Build(
-            Nativeˉservice.Processˉargumentˉcount);
-        Sequenceˉequal(Canonical, Instantiated);
-        Equal(X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SIZE, Instantiated.Length);
-        Equal(
-            X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SHA256,
-            Convert.ToHexString(SHA256.HashData(Instantiated.AsSpan())).ToLowerInvariant());
-        X64ˉnativeˉargumentˉservices.Verify(
-            Nativeˉservice.Processˉargumentˉcount,
-            Instantiated.AsSpan());
-
-        Verifiedˉobject Corruptˉdata(int offset, byte value)
-        {
-            var Object = Verified.Value;
+            var Object = verified.Value;
             var Section = Object.Sections.Single();
             var Data = Section.Data.ToArray();
             Data[offset] = value;
@@ -3022,34 +3003,162 @@ internal static class Program
             });
         }
 
+        static void Verifyˉembeddedˉobject(
+            ImmutableArray<byte> expected,
+            string resource,
+            int size,
+            string sha256)
+        {
+            using var Embeddedˉstream = typeof(X64ˉnativeˉstencil).Assembly
+                .GetManifestResourceStream(resource) ??
+                throw new InvalidOperationException($"The native-stencil resource {resource} was not embedded.");
+            var Embeddedˉbytes = new byte[checked((int)Embeddedˉstream.Length)];
+            Embeddedˉstream.ReadExactly(Embeddedˉbytes);
+            Sequenceˉequal(expected, Embeddedˉbytes);
+            Equal(size, Embeddedˉbytes.Length);
+            Equal(
+                sha256,
+                Convert.ToHexString(SHA256.HashData(Embeddedˉbytes)).ToLowerInvariant());
+        }
+
+        var Countˉbytes = Assembleˉtwice(
+            PROCESS_ARGUMENT_COUNT_STENCIL_SOURCE,
+            "Process-Argument-Count.wva",
+            "Process-Argument-Count.wvo");
+        Verifyˉembeddedˉobject(
+            Countˉbytes,
+            "Windvale.NativeCompiler.Process-Argument-Count.wvo",
+            166,
+            "e2057943b9c79e10a432ea20a77da5ed0a261e3effdd36511cbb34e77e55c10b");
+        var Countˉverified = Objectˉcodec.Readˉandˉverify(Countˉbytes.AsSpan());
+        var Countˉstencil = X64ˉnativeˉstencil.Readˉprocessˉargumentˉcount(Countˉverified);
+        var Countˉinstantiated = X64ˉnativeˉstencil.Instantiateˉu8(
+            Countˉstencil,
+            Nativeˉstencilˉpatchˉkind.Executionˉcontextˉu8ˉoffset,
+            checked((byte)Nativeˉexecutionˉcontextˉcontract.ARGUMENT_COUNT_OFFSET));
+        Sequenceˉequal(
+            X64ˉnativeˉargumentˉservices.Build(Nativeˉservice.Processˉargumentˉcount),
+            Countˉinstantiated);
+        Equal(
+            X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SIZE,
+            Countˉinstantiated.Length);
+        Equal(
+            X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SHA256,
+            Convert.ToHexString(SHA256.HashData(Countˉinstantiated.AsSpan())).ToLowerInvariant());
+        X64ˉnativeˉargumentˉservices.Verify(
+            Nativeˉservice.Processˉargumentˉcount,
+            Countˉinstantiated.AsSpan());
+
         Throwsˉinvalidˉoperation(
             INVALID_STENCIL,
             () => _ = X64ˉnativeˉstencil.Readˉprocessˉargumentˉcount(
-                Corruptˉdata(8, 4)));
+                Corruptˉdata(Countˉverified, 8, 4)));
         Throwsˉinvalidˉoperation(
             INVALID_STENCIL,
             () => _ = X64ˉnativeˉstencil.Readˉprocessˉargumentˉcount(
-                Corruptˉdata(12, 2)));
+                Corruptˉdata(Countˉverified, 12, 2)));
         Throwsˉinvalidˉoperation(
             INVALID_STENCIL,
             () => _ = X64ˉnativeˉstencil.Readˉprocessˉargumentˉcount(
-                Corruptˉdata(16, 2)));
+                Corruptˉdata(Countˉverified, 16, 2)));
         Throwsˉinvalidˉoperation(
             INVALID_STENCIL,
             () => _ = X64ˉnativeˉstencil.Readˉprocessˉargumentˉcount(
-                Corruptˉdata(20, 0x40)));
+                Corruptˉdata(Countˉverified, 20, 0x40)));
         Throwsˉinvalidˉoperation(
             INVALID_STENCIL,
             () => _ = X64ˉnativeˉstencil.Instantiateˉu8(
-                Stencil,
-                (Nativeˉstencilˉpatchˉkind)2,
+                Countˉstencil,
+                Nativeˉstencilˉpatchˉkind.Executionˉcontextˉserviceˉfailureˉdetailˉu8ˉoffset,
                 checked((byte)Nativeˉexecutionˉcontextˉcontract.ARGUMENT_COUNT_OFFSET)));
         Throwsˉinvalidˉoperation(
             INVALID_STENCIL,
             () => _ = X64ˉnativeˉstencil.Instantiateˉu8(
-                Stencil with { Template = Instantiated },
+                Countˉstencil with { Template = Countˉinstantiated },
                 Nativeˉstencilˉpatchˉkind.Executionˉcontextˉu8ˉoffset,
                 checked((byte)Nativeˉexecutionˉcontextˉcontract.ARGUMENT_COUNT_OFFSET)));
+
+        var Argumentˉbytes = Assembleˉtwice(
+            PROCESS_ARGUMENT_STENCIL_SOURCE,
+            "Process-Argument.wva",
+            "Process-Argument.wvo");
+        Verifyˉembeddedˉobject(
+            Argumentˉbytes,
+            "Windvale.NativeCompiler.Process-Argument.wvo",
+            321,
+            "307e61dcb2a156eb0d4b77f7d93676d7b1ac24f9bb6fe1f31217837213352bad");
+        var Argumentˉverified = Objectˉcodec.Readˉandˉverify(Argumentˉbytes.AsSpan());
+        var Argumentˉstencil = X64ˉnativeˉstencil.Readˉprocessˉargument(Argumentˉverified);
+        Equal(2u, Argumentˉstencil.Formatˉversion);
+        Equal(8, Argumentˉstencil.Patches.Length);
+        Equal(
+            2,
+            Argumentˉstencil.Patches.Count(Patch =>
+                Patch.Kind ==
+                    Nativeˉstencilˉpatchˉkind.Executionˉcontextˉserviceˉfailureˉdetailˉu8ˉoffset));
+        Equal(
+            2,
+            Argumentˉstencil.Patches.Count(Patch =>
+                Patch.Kind == Nativeˉstencilˉpatchˉkind.Borrowedˉtextˉlengthˉu8ˉoffset));
+        var Argumentˉinstantiated = X64ˉnativeˉstencil.Instantiateˉprocessˉargument(
+            Argumentˉstencil);
+        Sequenceˉequal(
+            X64ˉnativeˉargumentˉservices.Build(Nativeˉservice.Processˉargument),
+            Argumentˉinstantiated);
+        Equal(
+            X64ˉnativeˉargumentˉservices.ARGUMENT_CANONICAL_SIZE,
+            Argumentˉinstantiated.Length);
+        Equal(
+            X64ˉnativeˉargumentˉservices.ARGUMENT_CANONICAL_SHA256,
+            Convert.ToHexString(SHA256.HashData(Argumentˉinstantiated.AsSpan())).ToLowerInvariant());
+        X64ˉnativeˉargumentˉservices.Verify(
+            Nativeˉservice.Processˉargument,
+            Argumentˉinstantiated.AsSpan());
+
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Readˉprocessˉargument(
+                Corruptˉdata(Argumentˉverified, 8, 7)));
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Readˉprocessˉargument(
+                Corruptˉdata(Argumentˉverified, 12, 69)));
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Readˉprocessˉargument(
+                Corruptˉdata(Argumentˉverified, 16, 4)));
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Readˉprocessˉargument(
+                Corruptˉdata(Argumentˉverified, 20, 2)));
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Readˉprocessˉargument(
+                Corruptˉdata(Argumentˉverified, 24, 3)));
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Readˉprocessˉargument(
+                Corruptˉdata(Argumentˉverified, 112, 0x40)));
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Readˉprocessˉargument(
+                Corruptˉdata(Argumentˉverified, 115, 1)));
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Instantiateˉu8(
+                Argumentˉstencil,
+                Nativeˉstencilˉpatchˉkind.Executionˉcontextˉserviceˉfailureˉdetailˉu8ˉoffset,
+                checked((byte)Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET)));
+        var Duplicateˉpatches = Argumentˉstencil.Patches.ToArray();
+        Duplicateˉpatches[1] = Duplicateˉpatches[1] with { Offset = Duplicateˉpatches[0].Offset };
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Instantiateˉprocessˉargument(
+                Argumentˉstencil with { Patches = Duplicateˉpatches.ToImmutableArray() }));
+        Throwsˉinvalidˉoperation(
+            INVALID_STENCIL,
+            () => _ = X64ˉnativeˉstencil.Instantiateˉprocessˉargument(
+                Argumentˉstencil with { Template = Argumentˉinstantiated }));
     }
 
     private static void Nativeˉhostedˉinputˉinspectsˉwvb()
