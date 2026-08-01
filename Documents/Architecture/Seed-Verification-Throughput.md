@@ -215,4 +215,5 @@ Decision 0079 adds one separate full-suite test because execution of the first W
 - A filtered or fail-fast run cannot write a conformance report.
 - Standard and Qualification always run all registered tests.
 - Cached artifacts may accelerate local experiments but cannot replace a clean exact-commit qualification build.
+- The Windows verifier fixes its native-process input/output encoding to UTF-8 internally. Exact macron-bearing CLI checks must not depend on whether the verifier is attached to a console or launched with redirected output.
 - A faster implementation may replace demonstrated overhead; it may not silently remove independent verification, hostile-input coverage, or direct native-boundary checks.

@@ -13,6 +13,15 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Windvale identifiers are emitted as UTF-8 by the CLI. Configure native-process
+# decoding inside the verifier so attached and redirected/detached launches
+# preserve macron identifiers identically instead of inheriting a console code page.
+$Utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
+[Console]::InputEncoding = $Utf8WithoutBom
+[Console]::OutputEncoding = $Utf8WithoutBom
+$OutputEncoding = $Utf8WithoutBom
+
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
 $TestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj'
