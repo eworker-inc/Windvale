@@ -1956,5 +1956,9 @@ if (Test-Path -LiteralPath $MissingLinkOutput) {
     throw 'The failed linker write left a partial image.'
 }
 
+# The final qualification check intentionally observes EX_IOERR from a rejected
+# native command. Clear that verified result so callers receive the gate's
+# successful outcome instead of the expected child-process exit code.
+$global:LASTEXITCODE = 0
 Write-Output "Windvale Seed verification passed."
 Write-Output "Conformance report: $ReportPath"
