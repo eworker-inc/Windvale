@@ -1,7 +1,7 @@
 # Decision 0061: Typed native blocks and forward control flow
 
 - Date: 2026-07-31
-- Status: Implemented and validated on Windows x64; exact-commit Debian qualification pending
+- Status: Cross-host qualified on Windows x64 and Debian x64
 - Refines: [Decision 0060](0060-Checked-Native-I32-Arithmetic-And-Traps.md)'s straight-line machine IR and fragment decoder
 
 ## Context
@@ -27,7 +27,15 @@ The primary differential source computes `42`, exercises all six signed i32 comp
 
 The deterministic control fragment is 2,428 bytes with SHA-256 `55f7ec906db8c8e06dc89ba0a55556cd1248d3a5491585134bbacbeaa6400d44`; its 2,530-byte WVO has SHA-256 `7442f46a0a03b4870150b34ad75724e44cd9ded8b73e875db84130bb6c42f8f2`. The version-3 checked-arithmetic fragment is 745 bytes with SHA-256 `8876722852c5cae70e61fb3d3f65bfb3c4d0651ec3f8adde63d2e258aaea44e9`; its 847-byte WVO has SHA-256 `6740c3d95f8746137d55ad1b339ad0bb772a4c3ccf6f29d0836576959057317a`. The six-byte constant and its 79-byte WVO remain exact.
 
-Corruption evidence rejects a missing zero-initialization prefix, an invalid comparison condition, a target in the middle of a branch group, and a backward target as `WVN3030`. A verified WVB loop fails as `WVN2005`, while calls retain their existing bounded rejection. The focused Windows test passes with a zero-warning build; Development passes all 48 regular tests in 55.008 seconds; Standard passes all 49 cases in 230.225 suite seconds and 234.6 wall-clock seconds. Exact-commit Windows/Debian Qualification remains required.
+Corruption evidence rejects a missing zero-initialization prefix, an invalid comparison condition, a target in the middle of a branch group, and a backward target as `WVN3030`. A verified WVB loop fails as `WVN2005`, while calls retain their existing bounded rejection. The focused Windows test passes with a zero-warning build; Development passes all 48 regular tests in 55.008 seconds; Standard passes all 49 cases in 230.225 suite seconds and 234.6 wall-clock seconds.
+
+## Qualification evidence
+
+Exact candidate commit `f0a53a99b25638cd02acafba81c066be931ef5e4`, tree `e425e9d24f373a1d09694a38910b85a98359725c`, was archived as `windvale-native-control-f0a53a9.tar.gz`, 2,794,632 bytes with SHA-256 `5448e3eab034997b877ab05c7b61dc8337adc7ec78b4f095f54f6b8e898b0603`. The digest matched after transfer to the isolated E-Worker Debian QA host, where the focused native case passed through Linux `mmap`/`mprotect` in 166 milliseconds with a zero-warning build.
+
+Windows Qualification completed in 469.086 seconds with a 224.296-second suite; Debian Qualification completed in approximately 489.6 seconds with a 243.020-second suite. Both hosts used .NET SDK `10.0.302`, passed zero-warning Release builds, all 49 tests, and the complete native CLI verifier. The 15,563-byte Windows conformance report has SHA-256 `6780bd68cfcf7dacea10d34f5a4b9d7eeb6cdc2c2c4a70cf055c6830429330f`; the 15,473-byte Debian report has SHA-256 `1fec4c222425f2737a7f41c415b1841f88aab0a8e7458b40d4e7d170e1d9c35d`. Their normalized contracts match exactly.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,612 bytes, matched Windows byte for byte. The 2,292,663-byte Debian evidence bundle has SHA-256 `afe0d6a69b3a67ddb1af6e7b0214b9899cc18dcd3078b1e7245292439a42196e`. After retrieval and comparison, the resolved exact QA directory, transferred source archive, and evidence bundle were removed and confirmed absent.
 
 ## Consequences
 

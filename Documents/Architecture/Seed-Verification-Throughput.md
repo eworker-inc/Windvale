@@ -171,6 +171,10 @@ Decision 0060 widens that same differential case instead of registering another 
 
 Checked arithmetic therefore remains effectively free in the inner loop relative to the compiler closures. The focused case is the normal edit-time check, Development is the broad coherent-slice check, and exact Standard plus dual-host Qualification remain milestone evidence. The next comparisons/control-flow slice should continue growing this differential case unless it needs a genuinely separate ownership or failure boundary.
 
+Decision 0061 again widens the same differential case, now with typed locals and blocks, all signed i32 comparisons, Boolean operations, nested forward control, an early return, a false-path program, and four new hostile-fragment families. The final focused Windows case passed in 0.223 seconds and the exact-archive Debian case in 0.166 seconds. Windows Development passed all 48 regular tests in 55.008 seconds. Standard passed all 49 tests in 230.225 suite seconds and 234.6 wall-clock seconds. Exact commit `f0a53a9` completed concurrent Qualification in 469.086 seconds on Windows and approximately 489.6 seconds on Debian, with suite times of 224.296 and 243.020 seconds. Both hosts passed zero-warning builds, all 49 tests, and the complete CLI verifier; normalized reports and all 61 portable artifacts matched.
+
+Typed forward control therefore remains a sub-second edit-time test despite substantially wider native semantics and adversarial coverage. Native instruction budgeting and backward branches should stay in this case if their safety boundary can be exercised without adding a separate long-running suite; deliberately terminating loop fixtures must remain bounded so the focused path does not inherit qualification-scale cost.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.
