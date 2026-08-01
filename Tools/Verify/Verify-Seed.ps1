@@ -539,7 +539,7 @@ dotnet $ToolDll `
     compile $NativePublicationSource -o $NativePublicationModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-publication core.' }
 $NativePublicationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationModule).Hash.ToLowerInvariant()
-if ($NativePublicationHash -ne '9d75d59e4ba0fc689ae9bc4ac3ac019e520db06d21f54d4ee1480a0bb356e967') {
+if ($NativePublicationHash -ne 'b25fa550518caa4ef43c7ae886cce328148777782f70e3faa25ac19821b6d439') {
     throw "The Windvale native-publication core has an unexpected digest: $NativePublicationHash"
 }
 $NativePublicationInspection = (dotnet $ToolDll inspect $NativePublicationModule) -join "`n"
@@ -561,7 +561,7 @@ dotnet $ToolDll `
     -o $NativePublicationBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-publication bridge.' }
 $NativePublicationBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationBridgeModule).Hash.ToLowerInvariant()
-if ($NativePublicationBridgeHash -ne '5102fd0119e37bb7e5f83bb3c4d1bff6303f37818bfe48825b320bf28f27eada') {
+if ($NativePublicationBridgeHash -ne '750b6134395c46c9e1c703ae2a56449bd1710f517e516397e10a1ccc951c503e') {
     throw "The Windvale native-publication bridge has an unexpected digest: $NativePublicationBridgeHash"
 }
 $NativePublicationBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationBridgeRetained).Hash.ToLowerInvariant()
