@@ -31,6 +31,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Qualification-pending WVA-owned normalized x86-64 entries for invalid opcode and general protection, one explicit ring-0 trap-frame prefix, and three deterministic pinned-QEMU boot scenarios.
 - A permanent UTF-8 native-process verifier boundary and detached/redirected macron regression check, closing the recurring launcher-only decoding failure.
 - ABI 15/context 7 native whole-file output through exact Windows and Linux leaves, advancing the exact compiler WVB beyond its `file.write_bytes` admission blocker; complete cross-host qualification remains pending.
+- The public [`windvale.ca`](https://windvale.ca/) project home, system-responsive light and dark themes, new Windvale visual identity, and independently deployed [`play.windvale.ca`](https://play.windvale.ca/) browser playground.
 
 ### Changed
 

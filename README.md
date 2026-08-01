@@ -6,6 +6,8 @@ AI systems produce the source and prose. Humans define the objectives, direct th
 
 At its center is a **new programming language**, together with its compiler, portable bytecode, verified runtime, assembler, object model, linker, and Foundation library. The long-term integration goal is a **new small operating system** capable of loading and running the same verified Windvale programs that run on Windows and Linux. The language and tools remain independently useful before the operating system is complete.
 
+**[Visit windvale.ca](https://windvale.ca/)** · **[Try the browser playground](https://play.windvale.ca/)**
+
 ## Project overview
 
 ![Windvale project overview for July 2026](Documents/Project/Images/Windvale-Progress-July-2026.png)

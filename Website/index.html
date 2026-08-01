@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Windvale is an open-source experiment building a language, compiler, verified bytecode runtime, native toolchain, and operating system as one understandable computing stack." />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7f6" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#081113" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Windvale" />
+    <meta property="og:title" content="Windvale — Follow the whole stack" />
+    <meta property="og:description" content="A new language, compiler, verified runtime, native toolchain, and small operating system—built as one understandable stack." />
+    <meta property="og:url" content="https://windvale.ca/" />
+    <meta property="og:image" content="https://windvale.ca/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Windvale — Follow the whole stack" />
+    <meta name="twitter:description" content="A new language, compiler, verified runtime, native toolchain, and small operating system." />
+    <meta name="twitter:image" content="https://windvale.ca/og.png" />
+    <link rel="canonical" href="https://windvale.ca/" />
+    <link rel="icon" href="windvale-logo.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Windvale — An understandable computing stack</title>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Windvale home">
+            <span class="brand-crop" aria-hidden="true"><img src="windvale-logo.png" width="1536" height="1024" alt="" /></span>
+            <span class="brand-name">Windvale</span>
+        </a>
+        <nav aria-label="Primary navigation">
+            <a href="#stack">The stack</a>
+            <a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/Project/Progress.md">Progress</a>
+            <a href="https://github.com/eworker-inc/Windvale">GitHub</a>
+            <a class="nav-action" href="https://play.windvale.ca/">Open playground <span aria-hidden="true">↗</span></a>
+        </nav>
+    </header>
+
+    <main id="main">
+        <section class="hero">
+            <div class="hero-copy">
+                <p class="kicker"><span></span> Language → bytecode → machine → OS</p>
+                <h1>A computing stack you can follow <em>all the way down.</em></h1>
+                <p class="hero-intro">
+                    Windvale is an open-source experiment in building a new language, its compiler,
+                    verified runtime, native toolchain, and a small operating system—one explicit
+                    contract at a time.
+                </p>
+                <div class="hero-actions">
+                    <a class="button primary" href="https://play.windvale.ca/">
+                        Try Windvale in your browser <span aria-hidden="true">→</span>
+                    </a>
+                    <a class="button secondary" href="https://github.com/eworker-inc/Windvale">
+                        Explore the source
+                    </a>
+                </div>
+                <ul class="hero-facts" aria-label="Project facts">
+                    <li><strong>MIT</strong><span>Open source</span></li>
+                    <li><strong>WVB</strong><span>Canonical bytecode</span></li>
+                    <li><strong>Win + Linux</strong><span>Permanent hosts</span></li>
+                </ul>
+            </div>
+
+            <div class="hero-visual">
+                <div class="logo-stage">
+                    <img src="windvale-logo.png" width="1536" height="1024" fetchpriority="high" alt="Windvale logo: a wind spiral rising into two leaves above flowing lines" />
+                </div>
+                <div class="live-note">
+                    <span class="pulse" aria-hidden="true"></span>
+                    <span><strong>Live now</strong> Browser compiler + verified runtime</span>
+                    <a href="https://play.windvale.ca/">Launch <span aria-hidden="true">↗</span></a>
+                </div>
+            </div>
+        </section>
+
+        <section class="signal-strip" aria-label="Windvale principles">
+            <p>Understandable at every layer</p>
+            <span aria-hidden="true">◆</span>
+            <p>Explicit capabilities</p>
+            <span aria-hidden="true">◆</span>
+            <p>Reproducible bytes</p>
+            <span aria-hidden="true">◆</span>
+            <p>Verified before execution</p>
+        </section>
+
+        <section class="stack-section" id="stack">
+            <div class="section-heading">
+                <p class="section-number">01 / THE WHOLE PATH</p>
+                <h2>One stack. No invisible middle.</h2>
+                <p>
+                    Each layer has a named contract, a test boundary, and a reason to exist.
+                    The host helps Windvale run; it does not define what Windvale means.
+                </p>
+            </div>
+
+            <div class="stack-map">
+                <article class="stack-node source-node">
+                    <span class="node-index">01</span>
+                    <p class="node-type">SOURCE</p>
+                    <h3>Windvale language</h3>
+                    <p>Typed modules, immutable data, records, enums, control flow, and explicit capabilities.</p>
+                    <code>.wv</code>
+                </article>
+                <div class="connector"><span>semantic analysis</span></div>
+                <article class="stack-node">
+                    <span class="node-index">02</span>
+                    <p class="node-type">COMPILER</p>
+                    <h3>Typed lowering</h3>
+                    <p>Source becomes explicit typed evidence before any execution target is selected.</p>
+                    <code>WIR</code>
+                </article>
+                <div class="connector"><span>canonical encoding</span></div>
+                <article class="stack-node bytecode-node">
+                    <span class="node-index">03</span>
+                    <p class="node-type">PORTABLE IDENTITY</p>
+                    <h3>Verified bytecode</h3>
+                    <p>Canonical WVB is decoded, bounded, and independently verified before execution.</p>
+                    <code>.wvb</code>
+                </article>
+                <div class="branch-line" aria-hidden="true"><span></span><span></span><span></span></div>
+                <div class="target-grid">
+                    <article><span>HOST</span><h3>Windows + Linux</h3><p>Reference runtime and the advancing shared native execution path.</p></article>
+                    <article class="target-live"><span>BROWSER</span><h3>WebAssembly host</h3><p>The Stage 0 playground compiles, verifies, and runs locally in your browser.</p></article>
+                    <article><span>SYSTEM</span><h3>Windvale OS</h3><p>A small x86-64 operating system as the vertical integration target.</p></article>
+                </div>
+            </div>
+        </section>
+
+        <section class="proof-section">
+            <div class="section-heading compact-heading">
+                <p class="section-number">02 / RUNNING EVIDENCE</p>
+                <h2>Not a slide deck. Working paths.</h2>
+            </div>
+
+            <div class="proof-grid">
+                <article class="code-proof">
+                    <div class="code-toolbar">
+                        <span>Hello-Windvale.wv</span>
+                        <span>PORTABLE SOURCE</span>
+                    </div>
+                    <pre><code><span class="syntax-keyword">module</span> Helloˉwindvale <span class="syntax-keyword">profile</span> hosted;
+
+<span class="syntax-keyword">capability</span> console.write_line;
+
+<span class="syntax-keyword">data</span> Greeting: text =
+    <span class="syntax-string">"Hello from Windvale"</span>;
+
+<span class="syntax-keyword">export fn</span> Main() -&gt; i32 {
+    console.write_line(Greeting);
+    <span class="syntax-keyword">return</span> 0;
+}</code></pre>
+                    <div class="code-result">
+                        <span>VERIFIED OUTPUT</span>
+                        <strong>Hello from Windvale</strong>
+                        <small>Exit 0 · capability explicitly authorized</small>
+                    </div>
+                </article>
+
+                <div class="proof-list">
+                    <article>
+                        <span class="proof-status">WORKING NOW</span>
+                        <h3>Source to verified execution</h3>
+                        <p>The same portable semantics run on Windows, Linux, and inside the browser playground.</p>
+                        <a href="https://play.windvale.ca/">Run it yourself →</a>
+                    </article>
+                    <article>
+                        <span class="proof-status">WORKING NOW</span>
+                        <h3>Assembly to native image</h3>
+                        <p>Windvale assembly becomes verified WVO objects and deterministic linked x86-64 images.</p>
+                        <a href="https://github.com/eworker-inc/Windvale/blob/main/Specifications/Windvale-Object-Format.md">Read the object contract →</a>
+                    </article>
+                    <article>
+                        <span class="proof-status progress">IN PROGRESS</span>
+                        <h3>Language to operating system</h3>
+                        <p>The OS boot path already executes shared portable Windvale evidence after firmware handoff.</p>
+                        <a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/Architecture/Windvale-Os-Architecture.md">Explore the OS architecture →</a>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="profiles-section">
+            <div class="section-heading compact-heading">
+                <p class="section-number">03 / EXPLICIT AUTHORITY</p>
+                <h2>Portable where possible. Powerful where declared.</h2>
+                <p>Windvale does not hide host access behind convenience APIs. A module says what kind of world it expects.</p>
+            </div>
+            <div class="profiles-grid">
+                <article>
+                    <span class="profile-number">P</span>
+                    <h3>Portable</h3>
+                    <p>Deterministic computation without ambient host state. The broadest path across runtimes and machines.</p>
+                </article>
+                <article>
+                    <span class="profile-number">H</span>
+                    <h3>Hosted</h3>
+                    <p>Named services such as console or file access, declared by the module and authorized by the launcher.</p>
+                </article>
+                <article>
+                    <span class="profile-number">S</span>
+                    <h3>System</h3>
+                    <p>Visible machine authority for kernels, drivers, and other code that deliberately crosses the safety boundary.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="direction-section">
+            <div>
+                <p class="section-number">04 / DIRECTION</p>
+                <h2>Build upward without losing sight of the machine.</h2>
+            </div>
+            <ol class="direction-list">
+                <li>
+                    <span>01</span>
+                    <div><strong>Self-host the language</strong><p>Move compiler ownership from the recoverable Stage 0 implementation into qualified Windvale code.</p></div>
+                </li>
+                <li>
+                    <span>02</span>
+                    <div><strong>Own native execution</strong><p>Share verified semantics across interpretation, JIT, cached code, and deterministic AOT.</p></div>
+                </li>
+                <li>
+                    <span>03</span>
+                    <div><strong>Close the vertical loop</strong><p>Load, verify, and execute ordinary Windvale programs inside Windvale OS.</p></div>
+                </li>
+            </ol>
+            <a class="text-link" href="https://github.com/eworker-inc/Windvale/blob/main/Documents/Project/Roadmap.md">Follow the detailed roadmap <span aria-hidden="true">→</span></a>
+        </section>
+
+        <section class="open-section">
+            <div class="open-mark" aria-hidden="true">W</div>
+            <div>
+                <p class="section-number">OPEN SOURCE · BUILT IN PUBLIC</p>
+                <h2>Every contract is there to question.</h2>
+                <p>
+                    Windvale is MIT-licensed and developed as inspectable source, specifications,
+                    decisions, tests, and reproducible evidence. AI systems author the implementation
+                    under human direction and review; humans decide what the project accepts and publishes.
+                </p>
+                <div class="open-links">
+                    <a class="button primary" href="https://github.com/eworker-inc/Windvale">View on GitHub <span aria-hidden="true">↗</span></a>
+                    <a class="button secondary" href="https://github.com/eworker-inc/Windvale/blob/main/CONTRIBUTING.md">How to contribute</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-brand">
+            <span class="brand-crop" aria-hidden="true"><img src="windvale-logo.png" width="1536" height="1024" loading="lazy" alt="" /></span>
+            <div><strong>Windvale</strong><small>An E-Worker Inc open-source experiment</small></div>
+        </div>
+        <div class="footer-links">
+            <div><strong>Explore</strong><a href="https://play.windvale.ca/">Playground</a><a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/README.md">Documentation</a><a href="https://github.com/eworker-inc/Windvale/blob/main/Specifications/README.md">Specifications</a></div>
+            <div><strong>Project</strong><a href="https://github.com/eworker-inc/Windvale">GitHub</a><a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/Project/Progress.md">Progress</a><a href="https://github.com/eworker-inc/Windvale/blob/main/LICENSE">MIT license</a></div>
+        </div>
+        <p class="footer-note">© 2026 E-Worker Inc · Windvale is experimental software.</p>
+    </footer>
+</body>
+</html>
