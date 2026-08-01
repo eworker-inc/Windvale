@@ -183,6 +183,10 @@ Decision 0069 adds two separate full-suite tests because dynamic text/descriptor
 
 The added real-tool coverage therefore does not move the inner loop toward bootstrap-scale time. Focused ABI tests remain the normal development path, Standard provides final in-process integration, and concurrent exact-archive Qualification remains the milestone gate. Native service replacement should extend the focused dynamic-text case unless it introduces a distinct process, container, or recovery boundary.
 
+Decision 0070 follows that rule by widening the existing borrowed-bytes/native case with 23 strict UTF-8 boundary ranges, exact 800-byte service identity, deterministic reconstruction, and corruption rejection. Its focused Release pass remains under one second on Windows. Exact commit `53cee69` completes cross-host Qualification with suite times of 214.004 seconds on Windows and 229.082 seconds on Debian. Both hosts pass zero-warning builds, all 56 tests, all 15 OS tests, and the complete CLI verifier; normalized reports and all 61 portable artifacts match. Pinned QEMU probe 12 remains unchanged and passes on Windows.
+
+The first runtime-native leaf therefore adds no new full-suite test and keeps its edit-time signal inside the existing focused boundary. Native text-arena ownership and later service replacement should continue extending focused cases; a new long-running test is justified only for a genuinely independent process, ownership, recovery, or security boundary.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.
