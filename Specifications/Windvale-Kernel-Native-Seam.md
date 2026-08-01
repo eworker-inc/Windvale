@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel native seam version 8 defines how the shared portable-WVB native backend, reference host tools, Windvale Assembly, and system-profile Windvale source divide responsibility while the native runtime grows. Decisions 0064 through 0068 qualify the shared consumer through ABI 9, bridge 4, and firmware probe 11. [Decision 0069](../Documents/Decisions/0069-Dynamic-Native-Text-And-Complete-Wvdump.md) cross-host qualifies ABI 10, bridge 5, and firmware probe 12 at exact commit `7979933`. [Decision 0071](../Documents/Decisions/0071-Native-Text-Arena-And-Core-Text-Services.md) cross-host qualifies ABI 11, bridge 6, and firmware probe 13 at exact commit `8888951`. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
+Kernel native seam version 9 defines how the shared portable-WVB native backend, reference host tools, Windvale Assembly, and system-profile Windvale source divide responsibility while the native runtime grows. Decisions 0064 through 0068 qualify the shared consumer through ABI 9, bridge 4, and firmware probe 11. [Decision 0069](../Documents/Decisions/0069-Dynamic-Native-Text-And-Complete-Wvdump.md) cross-host qualifies ABI 10, bridge 5, and firmware probe 12 at exact commit `7979933`. [Decision 0071](../Documents/Decisions/0071-Native-Text-Arena-And-Core-Text-Services.md) cross-host qualifies ABI 11, bridge 6, and firmware probe 13 at exact commit `8888951`. [Decision 0073](../Documents/Decisions/0073-Native-Argument-Table-And-Process-Input-Services.md) defines the ABI-12, bridge-7, firmware-probe-14 candidate. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 
@@ -10,14 +10,14 @@ This contract prevents temporary C# machine-code generation from silently becomi
 
 | Layer | Current responsibility | Direction |
 | --- | --- | --- |
-| C# reference/recovery host | Compile WVB, select and verify ABI-11 native code, assemble, link, package PE32+, provide host oracles, and retain bounded loader/memory/bridge emitters while replacements are unavailable. | Remains an independent recovery and comparison path; does not define kernel policy. |
+| C# reference/recovery host | Compile WVB, select and verify ABI-12 native code, assemble, link, package PE32+, provide host oracles, and retain bounded loader/memory/bridge emitters while replacements are unavailable. | Remains an independent recovery and comparison path; does not define kernel policy. |
 | Shared portable-WVB backend | Lower verified portable semantics into the same versioned native ABI and WVO object used by host JIT/AOT evidence. | Replaces special OS instruction selection incrementally and becomes Windvale-written. |
 | WVA machine layer | Own explicit entry/exit and capability-adapter shims, register-frame mechanics, and later named privileged instructions that ordinary Windvale code must not execute ambiently. | Grows only from concrete kernel requirements with exact encodings and verification rules. |
 | `.wv` system layer | Own kernel policy, state transitions, diagnostics, allocation decisions, exception dispatch, and later runtime services once the shared native target can lower them. | Becomes the primary kernel implementation. |
 
 New kernel mechanisms should default to WVA for irreducible machine mechanics and `.wv` for policy. Additional raw C# instruction emission requires a documented compiler or assembler blocker and a named replacement seam.
 
-## Executable WVA version 3, bridge version 6, and portable probe version 5 seam
+## Executable WVA version 3, bridge version 7, and portable probe version 5 seam
 
 `Operating-System/Kernel/X64-Kernel-Shims.wva` assembles through the qualified WVA 1 reference/recovery assembler into a canonical WVO object:
 
@@ -29,16 +29,16 @@ New kernel mechanisms should default to WVA for irreducible machine mechanics an
 
 The kernel memory object calls `Windvale_kernel_wva_main` after switching to the kernel-owned stack. The inbound WVA tail transfer now reaches the verified native bridge. That bridge:
 
-1. reserves 88 aligned stack bytes and preserves the copied-handoff pointer from `RCX`;
-2. constructs the exact 72-byte execution context with version/size, WVB instruction budget 271, call-depth budget 2, zero service-table, record-arena, text-arena, service-failure-detail, and reserved fields;
-3. passes the context pointer in `RDX` and calls the ABI-11 portable export `Main`;
+1. reserves 104 aligned stack bytes and preserves the copied-handoff pointer from `RCX`;
+2. constructs the exact 88-byte execution context with version/size, WVB instruction budget 271, call-depth budget 2, zero service-table, record-arena, text-arena, service-failure-detail, argument-table/count, and reserved fields;
+3. passes the context pointer in `RDX` and calls the ABI-12 portable export `Main`;
 4. accepts only the complete packed result `RAX == 29`;
 5. returns failure 1 on a trap, exhausted budget, or wrong result; and
 6. restores `RCX` and tail-transfers to special compiler export `Windvale_kernel_main` on success.
 
 The compiler object imports `Windvale_kernel_write_byte`, which resolves to the WVA export. WVA tail-transfers each call to explicitly internal symbol `Windvale_kernel_x64_write_byte`. The public kernel capability boundary is therefore WVA-owned even though its current COM1 instruction sequence remains bootstrap code.
 
-The builder independently decodes the assembled WVA object and the bridge object and requires their exact architecture, section, symbol, code, and relocation shapes before linking. The ABI-11 selector and fragment verifier independently validate the portable module, borrowed-byte descriptors and reads, empty service list, and unused zero-length record/text arenas before its WVO is admitted.
+The builder independently decodes the assembled WVA object and the bridge object and requires their exact architecture, section, symbol, code, and relocation shapes before linking. The ABI-12 selector and fragment verifier independently validate the portable module, borrowed-byte descriptors and reads, empty service list, and unused zero-length record/text/argument resources before its WVO is admitted.
 
 ## Portable native probe
 
@@ -48,7 +48,7 @@ The probe is compiled and AOT-linked on the host. The guest does not retain, dec
 
 ## Native compiler requirements for policy migration
 
-ABI 11 retains those portable semantics while making host-side bounded text-arena ownership explicit and moving concatenation and integer formatting into native leaves. The kernel still passes zero service-table and record/text-arena fields because its current module uses none of those facilities. Moving an allocator and future exception policy into ordinary `.wv` still requires:
+ABI 12 retains those portable semantics while adding host-side immutable argument-table ownership and exact native process-input leaves. The kernel still passes zero service-table, record/text-arena, and argument fields because its current module uses none of those facilities. Moving an allocator and future exception policy into ordinary `.wv` still requires:
 
 - `u64` values and checked address arithmetic;
 - explicit unsafe or system-visible bounded memory loads and stores;
@@ -59,9 +59,9 @@ These are requirements on the native target, not permission to change source sem
 
 ## Safety and migration limits
 
-WVA remains semantically checked assembly. Version 3 does not add arbitrary executable-byte directives, local branch labels, memory operands, or privileged instructions to WVA 1. The 118-byte raw bridge exists because WVA lacks stack/register moves, comparisons, and conditional branches required by the ABI transition; it has one exact independently decoded shape and a named future replacement seam.
+WVA remains semantically checked assembly. Version 3 does not add arbitrary executable-byte directives, local branch labels, memory operands, or privileged instructions to WVA 1. The current 128-byte raw bridge exists because WVA lacks stack/register moves, comparisons, and conditional branches required by the ABI transition; it has one exact independently decoded shape and a named future replacement seam.
 
-The seam does not move the UEFI loader, memory-map scanner, arena initializer, allocator machine implementation, COM1 instruction sequence, PE32+ packaging, or native compiler out of C#. It establishes verified link and ABI positions through which those pieces can be replaced without changing the loader-to-source evidence chain.
+The seam does not move the UEFI loader, memory-map scanner, arena initializer, allocator machine implementation, COM1 instruction sequence, PE32+ packaging, or native compiler out of C#. The 128-byte raw bridge exists because WVA still lacks the stack/register moves, comparisons, and conditional branches required by the ABI transition. It establishes verified link and ABI positions through which those pieces can be replaced without changing the loader-to-source evidence chain.
 
 ## Current evidence
 
@@ -76,3 +76,5 @@ Exact candidate `7edc243` rebuilds the portable WVO through ABI 9 to 7,946 bytes
 Exact commit `7979933` rebuilds the portable WVO through ABI 10 to 8,010 bytes with SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`. Its unchanged 315-byte bridge object retains SHA-256 `949c5fdd641722c541e2ed6583a5c28bd681b77d91f28ea5cda2999026d75a23`. Firmware probe 12 remains 15,872 bytes with SHA-256 `3010bc72b9c26386f062f78481c900cac841321b040b41447a0bbb65a9e392fe`; all 15 OS tests pass on Windows and Debian, the shared ABI-10 backend passes complete cross-host qualification, and pinned QEMU/OVMF on Windows emits `windvale-os-boot 12` through `status=pass` before guest-controlled host exit code 1. The Debian QA host does not currently provide QEMU, so no duplicate Debian emulator run is claimed.
 
 Exact commit `8888951` keeps the portable WVB and 8,010-byte service-free WVO byte-identical while rebuilding the context constructor for ABI 11. Its 118-byte bridge code produces a 330-byte object with SHA-256 `8b28ed85af29baa65810e0ed0ce8e2893e9696cebd666ccf72a1a53f68cde2b9`. Firmware probe 13 remains 15,872 bytes with SHA-256 `ceffc3e33bf007e47b109f3b6a71db2fdceac3c0e908d1471f056909ee42532d`; both hosts pass all 15 OS tests, the shared ABI-11 backend passes complete cross-host qualification, and pinned QEMU/OVMF on Windows emits `windvale-os-boot 13` through `status=pass` before guest-controlled host exit code 1. The Debian QA host does not provide QEMU.
+
+The Decision 0073 candidate keeps the portable WVB and 8,010-byte service-free WVO byte-identical while rebuilding the context constructor for ABI 12. Its 128-byte bridge code produces a 340-byte object with SHA-256 `0f6d4f00e6a66c23dedc7c6224cdae3f556c5d1c0ff927e596c927a73fd9829f`. Firmware probe 14 remains 15,872 bytes with SHA-256 `aadfbc5cb56f6afea94605ad31ee6af6a60b1e821403dfb8e1c2550631b6d548`; all 15 OS tests and the pre-commit pinned-QEMU gate pass on Windows. Exact-commit cross-host qualification remains pending.

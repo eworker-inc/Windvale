@@ -2854,6 +2854,29 @@ internal static class Program
             "Native machine IR omitted process.argument.");
         True(Operations.Count(Operation => Operation is Nativeˉfileˉreadˉbytes) == 2,
             "Native machine IR did not retain both file.read_bytes calls.");
+        foreach (var Service in new[]
+        {
+            Nativeˉservice.Processˉargumentˉcount,
+            Nativeˉservice.Processˉargument,
+        })
+        {
+            var Firstˉservice = X64ˉnativeˉargumentˉservices.Build(Service);
+            var Secondˉservice = X64ˉnativeˉargumentˉservices.Build(Service);
+            Sequenceˉequal(Firstˉservice, Secondˉservice);
+            X64ˉnativeˉargumentˉservices.Verify(Service, Firstˉservice.AsSpan());
+            var Corruptedˉservice = Firstˉservice.ToArray();
+            Corruptedˉservice[0] ^= 0x01;
+            Throwsˉinvalidˉoperation(
+                $"Native {Service} service identity",
+                () => X64ˉnativeˉargumentˉservices.Verify(Service, Corruptedˉservice));
+        }
+        Equal(
+            X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SIZE,
+            X64ˉnativeˉargumentˉservices.Build(
+                Nativeˉservice.Processˉargumentˉcount).Length);
+        Equal(
+            X64ˉnativeˉargumentˉservices.ARGUMENT_CANONICAL_SIZE,
+            X64ˉnativeˉargumentˉservices.Build(Nativeˉservice.Processˉargument).Length);
 
         var Nativeˉoutput = new StringWriter();
         var Nativeˉreader = Makeˉreader();
@@ -2865,6 +2888,73 @@ internal static class Program
                 hostˉservices: new(null, Authorized, Nativeˉresources)));
         Equal("input.wvb\nwvb-header=pass\n", Nativeˉoutput.ToString());
         Equal(1, Nativeˉreader.Readˉcount);
+
+        const string Argumentˉtableˉsource = """
+            module Nativeˉargumentˉtable profile hosted;
+
+            capability console.write_line;
+            capability process.argument;
+            capability process.argument_count;
+
+            export fn Main() -> i32 {
+                let Count: u32 = process.argument_count();
+                if Count != 67u32 { return 1; }
+                var Index: u32 = 0u32;
+                while Index < Count {
+                    console.write_line(process.argument(Index));
+                    Index = Index + 1u32;
+                }
+                return 0;
+            }
+            """;
+        var Argumentˉtableˉverified = Moduleˉcodec.Readˉandˉverify(
+            Compileˉsuccess(Argumentˉtableˉsource));
+        var Argumentˉtableˉfragment = X64ˉnativeˉbackend.Compile(
+            Argumentˉtableˉverified).Fragment;
+        var Maximumˉarguments = Enumerable.Range(0, Hostedˉresourceˉlimits.MAX_ARGUMENTS)
+            .Select(Index => Index switch
+            {
+                0 => "",
+                1 => "ascii",
+                2 => "euro-€",
+                3 => "supplementary-😀",
+                _ => $"argument-{Index}",
+            })
+            .ToImmutableArray();
+        var Expectedˉarguments = string.Concat(Maximumˉarguments.Select(Argument => $"{Argument}\n"));
+        var Argumentˉtableˉreferenceˉoutput = new StringWriter();
+        var Argumentˉtableˉreferenceˉresources = new Hostedˉresourceˉcontext(
+            Maximumˉarguments,
+            Argumentˉtableˉreferenceˉoutput,
+            TextWriter.Null);
+        var Argumentˉtableˉreference = new Referenceˉruntime(
+            Argumentˉtableˉverified,
+            new Referenceˉcapabilityˉhost(Argumentˉtableˉreferenceˉresources),
+            new(Authorized)).Runˉmain();
+        Equal(0, Argumentˉtableˉreference.Exitˉcode);
+        Equal(Expectedˉarguments, Argumentˉtableˉreferenceˉoutput.ToString());
+        var Argumentˉtableˉnativeˉoutput = new StringWriter();
+        var Argumentˉtableˉnativeˉresources = new Hostedˉresourceˉcontext(
+            Maximumˉarguments,
+            Argumentˉtableˉnativeˉoutput,
+            TextWriter.Null);
+        Equal(
+            0,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Argumentˉtableˉfragment,
+                maximumˉinstructions: Argumentˉtableˉreference.Executedˉinstructions,
+                hostˉservices: new(null, Authorized, Argumentˉtableˉnativeˉresources)));
+        Equal(Expectedˉarguments, Argumentˉtableˉnativeˉoutput.ToString());
+
+        var Emptyˉargumentˉresources = new Hostedˉresourceˉcontext(
+            [],
+            TextWriter.Null,
+            TextWriter.Null);
+        Equal(
+            1,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Argumentˉtableˉfragment,
+                hostˉservices: new(null, Authorized, Emptyˉargumentˉresources)));
 
         foreach (var Pointerˉoffset in new[]
         {

@@ -57,7 +57,12 @@ public static class X64ˉnativeˉexecutor
         }
 
         Nativeˉserviceˉfailure? Serviceˉfailure = null;
-        using var Buffers = new Nativeˉexecutionˉbuffers(hostˉservices?.Resources);
+        var Requiresˉarguments = fragment.Requiredˉservices.Contains(
+            Nativeˉservice.Processˉargumentˉcount) ||
+            fragment.Requiredˉservices.Contains(Nativeˉservice.Processˉargument);
+        using var Buffers = new Nativeˉexecutionˉbuffers(
+            hostˉservices?.Resources,
+            Requiresˉarguments);
         var Callbacks = new List<Delegate>();
         var Callbackˉpointers = new Dictionary<Nativeˉservice, IntPtr>();
         var Address = IntPtr.Zero;
@@ -82,34 +87,6 @@ public static class X64ˉnativeˉexecutor
             Callbacks.Add(Callback);
             Callbackˉpointers.Add(
                 Nativeˉservice.Consoleˉwriteˉline,
-                Marshal.GetFunctionPointerForDelegate(Callback));
-        }
-        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Processˉargumentˉcount))
-        {
-            Nativeˉprocessˉargumentˉcountˉcallback Callback = () => Buffers.Argumentˉcount;
-            Callbacks.Add(Callback);
-            Callbackˉpointers.Add(
-                Nativeˉservice.Processˉargumentˉcount,
-                Marshal.GetFunctionPointerForDelegate(Callback));
-        }
-        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Processˉargument))
-        {
-            Nativeˉprocessˉargumentˉcallback Callback = (index, descriptor) =>
-            {
-                try
-                {
-                    Nativeˉexecutionˉbuffers.Writeˉdescriptor(descriptor, Buffers.Getˉargument(index));
-                    return 0;
-                }
-                catch (Exception Exception)
-                {
-                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
-                    return 1;
-                }
-            };
-            Callbacks.Add(Callback);
-            Callbackˉpointers.Add(
-                Nativeˉservice.Processˉargument,
                 Marshal.GetFunctionPointerForDelegate(Callback));
         }
         if (fragment.Requiredˉservices.Contains(Nativeˉservice.Fileˉreadˉbytes))
@@ -165,7 +142,14 @@ public static class X64ˉnativeˉexecutor
                 Serviceˉcode.Add(0x90);
             }
             Serviceˉoffsets.Add(Service, checked(Serviceˉcodeˉoffset + Serviceˉcode.Count));
-            if (Service == Nativeˉservice.Textˉutf8ˉisˉvalid)
+            if (Service is Nativeˉservice.Processˉargumentˉcount or
+                Nativeˉservice.Processˉargument)
+            {
+                var Nativeˉserviceˉcode = X64ˉnativeˉargumentˉservices.Build(Service);
+                X64ˉnativeˉargumentˉservices.Verify(Service, Nativeˉserviceˉcode.AsSpan());
+                Serviceˉcode.AddRange(Nativeˉserviceˉcode);
+            }
+            else if (Service == Nativeˉservice.Textˉutf8ˉisˉvalid)
             {
                 var Nativeˉserviceˉcode = X64ˉnativeˉutf8ˉservice.Build();
                 X64ˉnativeˉutf8ˉservice.Verify(Nativeˉserviceˉcode.AsSpan());
@@ -263,6 +247,18 @@ public static class X64ˉnativeˉexecutor
             BinaryPrimitives.WriteUInt32LittleEndian(
                 Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.RESERVED_OFFSET),
                 0);
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Contextˉbytes.AsSpan(
+                    Nativeˉexecutionˉcontextˉcontract.ARGUMENT_TABLE_POINTER_OFFSET),
+                Buffers.Argumentˉtable.Address == IntPtr.Zero
+                    ? 0
+                    : checked((ulong)Buffers.Argumentˉtable.Address.ToInt64()));
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.ARGUMENT_COUNT_OFFSET),
+                Buffers.Argumentˉcount);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.ARGUMENT_RESERVED_OFFSET),
+                0);
             Marshal.Copy(Contextˉbytes, 0, Context, Contextˉbytes.Length);
 
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
@@ -329,6 +325,13 @@ public static class X64ˉnativeˉexecutor
                 throw new Nativeˉtrapˉexception(
                     "WVR3018",
                     $"The native text arena exhausted its {Nativeˉcontract.MAXIMUM_TEXT_ARENA_BYTES}-byte limit in entry '{entry}'.");
+            }
+            if (Serviceˉfailureˉdetail ==
+                Nativeˉserviceˉfailureˉdetail.Argumentˉindexˉoutˉofˉrange)
+            {
+                throw new Nativeˉtrapˉexception(
+                    "WVR3020",
+                    $"A native argument index was outside the supplied execution snapshot in entry '{entry}'.");
             }
             throw new Nativeˉtrapˉexception(
                 Serviceˉfailure?.Code ?? "WVR3013",
@@ -474,8 +477,6 @@ public static class X64ˉnativeˉexecutor
             return service switch
             {
                 Nativeˉservice.Consoleˉwriteˉline => [0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA],
-                Nativeˉservice.Processˉargumentˉcount => [],
-                Nativeˉservice.Processˉargument => [0x44, 0x89, 0xC1, 0x4C, 0x89, 0xCA],
                 Nativeˉservice.Fileˉreadˉbytes =>
                 [
                     0x48, 0x89, 0xC8,
@@ -492,8 +493,6 @@ public static class X64ˉnativeˉexecutor
             return service switch
             {
                 Nativeˉservice.Consoleˉwriteˉline => [0x4C, 0x89, 0xC7, 0x44, 0x89, 0xCE],
-                Nativeˉservice.Processˉargumentˉcount => [],
-                Nativeˉservice.Processˉargument => [0x44, 0x89, 0xC7, 0x4C, 0x89, 0xCE],
                 Nativeˉservice.Fileˉreadˉbytes =>
                 [
                     0x4C, 0x89, 0xC7,
@@ -642,14 +641,6 @@ public static class X64ˉnativeˉexecutor
     private delegate uint Nativeˉconsoleˉwriteˉlineˉcallback(
         IntPtr textˉaddress,
         uint textˉlength);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate uint Nativeˉprocessˉargumentˉcountˉcallback();
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate uint Nativeˉprocessˉargumentˉcallback(
-        uint index,
-        IntPtr descriptor);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate uint Nativeˉfileˉreadˉbytesˉcallback(

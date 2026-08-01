@@ -195,6 +195,10 @@ Decision 0072 again extends the existing native dynamic-text case rather than ad
 
 The final pure-service migration therefore preserves a sub-second focused edit loop. Hosted capability adapters may need separate process/container evidence when their implementation changes, but ordinary semantic and corruption cases should still be attached to the smallest existing owner boundary.
 
+Decision 0073 extends the existing native hosted-input case rather than adding a full-suite test. It reconstructs and corrupts both exact argument leaves, consumes all 67 allowed descriptors including empty, ASCII, euro, and supplementary-Unicode text, proves the zero-count path, and retains exact out-of-range and service-table corruption failures. The warm Windows Standard case takes 20 milliseconds. All 33 runtime-tagged tests pass in 65.794 seconds, pre-commit Standard passes all 56 tests in 220.013 seconds, and all 15 OS tests pass.
+
+The immutable argument-table slice therefore makes the inner loop faster than its one-second target while covering the complete hosted snapshot bound. Exact-commit Standard, dual-host Qualification, portable-artifact comparison, GitHub verification, and pinned-QEMU probe 14 remain the milestone gate. The three remaining output/file callbacks may reuse focused semantic cases, but their first native system-boundary implementation must also retain exact process-level error and capability evidence.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.
