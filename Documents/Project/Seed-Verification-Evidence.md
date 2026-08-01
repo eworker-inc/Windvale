@@ -3,7 +3,7 @@
 - Evidence date: 2026-07-31
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Qualified commit: `2b67c8ac9cceefa3aa78d2e93955b8987a845baa`
+- Qualified commit: `1af2eca1e3ef8443daa3354ddfe03935821ae23d`
 
 ## Requirement evidence
 

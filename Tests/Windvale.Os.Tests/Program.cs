@@ -1,9 +1,11 @@
 using System.Buffers.Binary;
 using System.Collections.Immutable;
+using Windvale.Bytecode;
 using Windvale.Bootstrap;
 using Windvale.Compiler;
 using Windvale.Linker;
 using Windvale.ObjectModel;
+using Windvale.Runtime;
 
 namespace Windvale.Os.Tests;
 
@@ -13,6 +15,7 @@ internal static class Program
     [
         new("UEFI writer emits deterministic verified PE32+", Writerˉemitsˉdeterministicˉimage),
         new("UEFI writer accepts linked relative-only code", Writerˉacceptsˉlinkedˉrelativeˉcode),
+        new("UEFI writer admits linked read-only native data", Writerˉadmitsˉlinkedˉreadˉonlyˉdata),
         new("UEFI writer rejects unsupported link shapes", Writerˉrejectsˉunsupportedˉlinks),
         new("UEFI verifier rejects malformed and noncanonical images", Verifierˉrejectsˉmalformedˉimages),
         new("UEFI verifier contains bounded hostile input", Verifierˉcontainsˉhostileˉinput),
@@ -20,6 +23,7 @@ internal static class Program
         new("kernel memory planner rejects malformed and hostile maps", Memoryˉplannerˉrejectsˉmalformedˉmaps),
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
         new("kernel WVA shims bridge Windvale Main and console output", Kernelˉassemblyˉshimˉbridgesˉmain),
+        new("portable WVB lowers into the bounded kernel native probe", Kernelˉnativeˉprobeˉisˉportableˉandˉbounded),
         new("x86-64 kernel compiler emits deterministic verified WVO", Kernelˉcompilerˉemitsˉverifiedˉobject),
         new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
@@ -77,7 +81,7 @@ internal static class Program
             Objectˉarchitecture.X86ˉ64,
             [
                 new(".text", Objectˉsectionˉkind.Code, 1, 1, [0xC3]),
-                new(".rodata", Objectˉsectionˉkind.Readˉonlyˉdata, 1, 1, [0]),
+                new(".data", Objectˉsectionˉkind.Writableˉdata, 1, 1, [0]),
             ],
             [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 1)],
             []));
@@ -95,6 +99,28 @@ internal static class Program
             [new(Relocatingˉobject.ToImmutableArray())],
             new(0, "Main"));
         Equal("WVU1002", Uefiˉapplicationˉwriter.Write(Relocating).Diagnostics[0].Code);
+    }
+
+    private static void Writerˉadmitsˉlinkedˉreadˉonlyˉdata()
+    {
+        var Objectˉbytes = Objectˉcodec.Write(new(
+            Objectˉarchitecture.X86ˉ64,
+            [
+                new(".text", Objectˉsectionˉkind.Code, 1, 1, [0xC3]),
+                new(".rodata", Objectˉsectionˉkind.Readˉonlyˉdata, 1, 4, [3, 5, 8, 13]),
+            ],
+            [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 1)],
+            [])).ToImmutableArray();
+        var Link = Linkˉcompiler.Link([new(Objectˉbytes)], new(0, "Main"));
+        True(Link.Success, "The code/read-only-data object did not link.");
+        Equal(1, Link.Codeˉsectionˉcount);
+        Equal(1, Link.Readˉonlyˉsectionˉcount);
+
+        var Application = Uefiˉapplicationˉwriter.Write(Link);
+        True(Application.Success, "The UEFI adapter rejected read-only native data.");
+        var Verified = Uefiˉapplicationˉverifier.Verify(Application.Imageˉbytes.AsSpan());
+        Sequenceˉequal([0xC3, 3, 5, 8, 13], Verified.Codeˉbytes);
+        Equal(0u, Verified.Entryˉcodeˉoffset);
     }
 
     private static void Writerˉacceptsˉlinkedˉrelativeˉcode()
@@ -322,9 +348,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(7_168, First.Length);
+        Equal(9_728, First.Length);
         Equal(
-            "92ad46700b058cd3a8846c59c227a33ef3832b080fb408e8eee42dc301336d9a",
+            "16c225916be855ca0aa27bcdacb56e38c08b79e2270f12e9040bffe343873fb3",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -334,7 +360,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 6\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nwindvale-source=pass\nstatus=pass\n",
+            "windvale-os-boot 7\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -398,9 +424,9 @@ internal static class Program
         var First = Kernelˉassemblyˉshim.Buildˉobject();
         var Second = Kernelˉassemblyˉshim.Buildˉobject();
         Sequenceˉequal(First, Second);
-        Equal(279, First.Length);
+        Equal(291, First.Length);
         Equal(
-            "36ea8c6ebcd5e1ef51ff332344aa549a8ec7aadaf485d44306ee63d5b41d4123",
+            "332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.AsSpan()).Value;
@@ -414,8 +440,8 @@ internal static class Program
         True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The WVA console shim is not exported.");
         Equal(Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL, Object.Symbols[1].Name);
         True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Export, "The WVA Main shim is not exported.");
-        Equal(X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL, Object.Symbols[2].Name);
-        True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Import, "Windvale Main is not imported by WVA.");
+        Equal(Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL, Object.Symbols[2].Name);
+        True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Import, "The native WVB bridge is not imported by WVA.");
         Equal(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL, Object.Symbols[3].Name);
         True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Import, "The x64 byte writer is not imported by WVA.");
         Equal(2, Object.Relocations.Length);
@@ -438,7 +464,50 @@ internal static class Program
                 Symbolˉindex: 2,
                 Addend: -4,
             },
-            "The WVA-to-WV Main transfer does not use the canonical relative relocation.");
+            "The WVA-to-native-WVB transfer does not use the canonical relative relocation.");
+    }
+
+    private static void Kernelˉnativeˉprobeˉisˉportableˉandˉbounded()
+    {
+        var First = Kernelˉnativeˉprobe.Build();
+        var Second = Kernelˉnativeˉprobe.Build();
+        Sequenceˉequal(First.Moduleˉbytes, Second.Moduleˉbytes);
+        Sequenceˉequal(First.Nativeˉobjectˉbytes, Second.Nativeˉobjectˉbytes);
+        Sequenceˉequal(First.Bridgeˉobjectˉbytes, Second.Bridgeˉobjectˉbytes);
+
+        var Verifiedˉmodule = Moduleˉcodec.Readˉandˉverify(First.Moduleˉbytes.AsSpan());
+        var Interpreted = new Referenceˉruntime(
+            Verifiedˉmodule,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(Kernelˉnativeˉprobeˉcontract.EXPECTED_RESULT, Interpreted.Exitˉcode);
+        Equal(
+            (long)Kernelˉnativeˉprobeˉcontract.EXACT_INSTRUCTION_BUDGET,
+            Interpreted.Executedˉinstructions);
+
+        var Nativeˉobject = Objectˉcodec.Readˉandˉverify(First.Nativeˉobjectˉbytes.AsSpan()).Value;
+        Equal(2, Nativeˉobject.Sections.Length);
+        True(
+            Nativeˉobject.Sections[1].Kind == Objectˉsectionˉkind.Readˉonlyˉdata,
+            "The native probe does not retain read-only data.");
+        Equal(1, Nativeˉobject.Relocations.Length);
+        Equal(1, Nativeˉobject.Symbols.Count(Symbol => Symbol.Name == "Main"));
+
+        var Bridgeˉobject = Objectˉcodec.Readˉandˉverify(First.Bridgeˉobjectˉbytes.AsSpan()).Value;
+        Equal(57u, Bridgeˉobject.Sections[0].Memoryˉsize);
+        Equal(2, Bridgeˉobject.Relocations.Length);
+        Equal(502, First.Moduleˉbytes.Length);
+        Equal(
+            "1f384f77c4e1c718a331aaa1a3c1f1e4173bbae9d870ec9023d70c7b15c1f7ef",
+            Objectˉdigest.Calculateˉsha256(First.Moduleˉbytes.AsSpan()));
+        Equal(2_296, First.Nativeˉobjectˉbytes.Length);
+        Equal(
+            "338d05395502cc34dc5ac1a99626e0507faf3503ae7d5a3016c52ac140139ee5",
+            Objectˉdigest.Calculateˉsha256(First.Nativeˉobjectˉbytes.AsSpan()));
+        Equal(269, First.Bridgeˉobjectˉbytes.Length);
+        Equal(
+            "b345f42813fb5a20829a28882e03820a05e815982689478dc2b17ac593dca88d",
+            Objectˉdigest.Calculateˉsha256(First.Bridgeˉobjectˉbytes.AsSpan()));
     }
 
     private static void Memoryˉplanˉfails(

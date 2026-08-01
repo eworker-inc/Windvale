@@ -8,8 +8,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉassemblyˉcontract
 {
-    public const int FORMAT_VERSION = 2;
-    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v2";
+    public const int FORMAT_VERSION = 3;
+    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v3";
     public const string MAIN_SHIM_SYMBOL = "Windvale_kernel_wva_main";
     public const string X64_WRITE_BYTE_SYMBOL = "Windvale_kernel_x64_write_byte";
 }
@@ -56,7 +56,7 @@ public static class Kernelˉassemblyˉshim
             } ||
             Object.Symbols[2] is not
             {
-                Name: X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL,
+                Name: Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Import,
                 Kind: Objectˉsymbolˉkind.Function,
             } ||

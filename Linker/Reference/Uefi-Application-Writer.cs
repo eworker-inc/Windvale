@@ -28,7 +28,9 @@ public static class Uefiˉapplicationˉwriter
         if (
             linkˉresult.Baseˉaddress != Uefiˉapplicationˉcontract.REQUIRED_LINK_BASE_ADDRESS ||
             linkˉresult.Sectionˉcount < 1 ||
-            linkˉresult.Codeˉsectionˉcount != linkˉresult.Sectionˉcount ||
+            linkˉresult.Codeˉsectionˉcount < 1 ||
+            linkˉresult.Codeˉsectionˉcount + linkˉresult.Readˉonlyˉsectionˉcount !=
+                linkˉresult.Sectionˉcount ||
             linkˉresult.Absoluteˉrelocationˉcount != 0 ||
             linkˉresult.Relativeˉrelocationˉcount != linkˉresult.Relocationˉcount ||
             linkˉresult.Imageˉbytes.IsDefaultOrEmpty ||
@@ -36,13 +38,13 @@ public static class Uefiˉapplicationˉwriter
         {
             return Uefiˉapplicationˉresult.Failed(
                 "WVU1002",
-                "Version 2 requires non-empty base-zero code-only input, only resolved relative-i32 relocations, and an entry inside the linked image.");
+                "Version 3 requires non-empty base-zero code/read-only-data input, only resolved relative-i32 relocations, and an entry inside the linked image.");
         }
-        if (linkˉresult.Imageˉbytes.Length > Uefiˉapplicationˉcontract.MAX_CODE_BYTES)
+        if (linkˉresult.Imageˉbytes.Length > Uefiˉapplicationˉcontract.MAX_LINKED_IMAGE_BYTES)
         {
             return Uefiˉapplicationˉresult.Failed(
                 "WVU1003",
-                $"The code exceeds the {Uefiˉapplicationˉcontract.MAX_CODE_BYTES}-byte UEFI application limit.");
+                $"The linked image exceeds the {Uefiˉapplicationˉcontract.MAX_LINKED_IMAGE_BYTES}-byte UEFI application limit.");
         }
 
         var Image = Buildˉimage(linkˉresult.Imageˉbytes.AsSpan(), linkˉresult.Entryˉaddress);

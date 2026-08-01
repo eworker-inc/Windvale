@@ -23,6 +23,7 @@ public sealed class Linkˉresult
         uint entryˉaddress,
         int sectionˉcount,
         int codeˉsectionˉcount,
+        int readˉonlyˉsectionˉcount,
         int definedˉsymbolˉcount,
         int importˉcount,
         int relocationˉcount,
@@ -36,6 +37,7 @@ public sealed class Linkˉresult
         Entryˉaddress = entryˉaddress;
         Sectionˉcount = sectionˉcount;
         Codeˉsectionˉcount = codeˉsectionˉcount;
+        Readˉonlyˉsectionˉcount = readˉonlyˉsectionˉcount;
         Definedˉsymbolˉcount = definedˉsymbolˉcount;
         Importˉcount = importˉcount;
         Relocationˉcount = relocationˉcount;
@@ -58,6 +60,8 @@ public sealed class Linkˉresult
 
     public int Codeˉsectionˉcount { get; }
 
+    public int Readˉonlyˉsectionˉcount { get; }
+
     public int Definedˉsymbolˉcount { get; }
 
     public int Importˉcount { get; }
@@ -78,6 +82,8 @@ public sealed class Linkˉresult
             candidate.Entryˉaddress,
             candidate.Sections.Length,
             candidate.Sections.Count(Section => Section.Section.Kind == Objectˉsectionˉkind.Code),
+            candidate.Sections.Count(
+                Section => Section.Section.Kind == Objectˉsectionˉkind.Readˉonlyˉdata),
             candidate.Definitions.Length,
             candidate.Imports.Length,
             candidate.Relocations.Length,
@@ -88,7 +94,7 @@ public sealed class Linkˉresult
             []);
 
     internal static Linkˉresult Failed(Linkˉdiagnostic diagnostic) =>
-        new([], [], 0, 0, 0, 0, 0, 0, 0, 0, 0, [diagnostic]);
+        new([], [], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [diagnostic]);
 }
 
 public static class Linkˉcontract

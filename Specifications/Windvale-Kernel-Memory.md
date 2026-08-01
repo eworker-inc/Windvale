@@ -72,7 +72,7 @@ The memory object exports ASCII symbol `Windvale_kernel_allocate_pages`:
 - Allocation is contiguous, monotonically increasing, and deterministic.
 - Version 1 provides no release operation and no allocation outside its one arena.
 
-The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocator probe, switches stacks, and calls WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. That exact shim tail-transfers to compiler export `Windvale_kernel_main` under the [kernel native seam](Windvale-Kernel-Native-Seam.md). Main owns the success markers and can be reached only after every preceding memory operation succeeds.
+The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocator probe, switches stacks, and calls WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. Under [kernel native seam version 3](Windvale-Kernel-Native-Seam.md), that exact shim tail-transfers to the ABI-5 probe bridge; only packed portable result 29 restores the handoff and reaches compiler export `Windvale_kernel_main`. Main owns the source-selected success markers and can be reached only after every preceding memory and native-probe operation succeeds.
 
 ## Diagnostics and limits
 
@@ -91,13 +91,14 @@ Malformed and random bytes must produce a bounded result or one of these failure
 
 ## Current evidence and limit
 
-Firmware probe version 6 links the memory object and WVA shims independently, finds and clears the arena after firmware shutdown, records a successful one-page allocation, copies the handoff, and reaches compiler export `Windvale_kernel_main` through the WVA tail transfer on the owned stack. Every line through Hello World in the suffix originates in that compiler-generated function and returns through the WVA console adapter. The accepted QEMU run requires the exact memory suffix:
+Firmware probe version 7 links the memory object, WVA shims, ABI-5 object, and native bridge independently; finds and clears the arena after firmware shutdown; records a successful one-page allocation; copies the handoff; and runs both the portable native probe and compiler export `Windvale_kernel_main` on the owned stack. Every line through Hello World in the suffix originates in the special compiler-generated function and returns through the WVA console adapter. Continued loader evidence additionally requires the portable probe's exact packed result. The accepted QEMU run requires the exact memory/native suffix:
 
 ```text
 memory-owned=pass
 allocator=pass
 kernel-stack=pass
 Hello from Windvale
+native-wvb=pass
 windvale-source=pass
 status=pass
 ```

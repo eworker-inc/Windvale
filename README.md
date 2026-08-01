@@ -26,8 +26,8 @@ At its center is a **new programming language**, together with its compiler, por
 | CLI and inspection tools | ✅ Working now | One CLI can compile, verify, inspect, run, assemble, link, and inspect or verify objects | Move more command implementations into Windvale and add broader developer tooling |
 | Editor support | ✅ Working now | Windvale syntax highlighting and language configuration work locally in Visual Studio Code | Package it publicly and pursue GitHub language recognition when eligible |
 | Tests, specifications, and reproducibility | ✅ Working now | Valid, malformed, boundary, random-input, deterministic-output, and cross-host checks protect the current contracts | Extend the same evidence discipline to self-hosting, native code, and the operating system |
-| Native compiler and host programs | 🚧 In progress | Calls, bounded recursion, shared instruction/depth budgets, immutable i32 data, loops, and traps share WVO/AOT and W^X JIT paths on Windows and Linux | Use qualified ABI 5 to advance the first native Windvale tool |
-| Windvale operating system | 🚧 In progress | A deterministic UEFI/QEMU probe exits firmware, claims a bounded physical arena, and runs compiler-generated `.wv` code on a kernel-owned stack | Add traps, a runtime, clean shutdown, and Hyper-V evidence |
+| Native compiler and host programs | 🚧 In progress | Calls, bounded recursion, shared instruction/depth budgets, immutable i32 data, loops, and traps share WVO/AOT and W^X JIT paths on Windows and Linux | Add the first narrow native runtime-service boundary, then advance a real Windvale tool |
+| Windvale operating system | 🚧 In progress | A deterministic UEFI/QEMU probe exits firmware, claims a bounded physical arena, and runs both special system `.wv` and ordinary portable-WVB-derived ABI-5 code on a kernel-owned stack | Add traps, an in-guest WVB verifier/runtime, clean shutdown, and Hyper-V evidence |
 | Open-source project foundation | 🚧 In progress | MIT licensing, contribution, security, governance, support, and authorship policies exist | Complete the publication baseline and establish public project operations |
 
 **Working end to end today:**
@@ -36,12 +36,13 @@ At its center is a **new programming language**, together with its compiler, por
 Windvale source -> compiled WVB -> verification -> execution on Windows or Linux
 Windvale assembly -> verified WVO object -> deterministic linked x86-64 image
 System-profile Hello-World.wv -> verified WVO -> linked UEFI image -> post-firmware serial output
+Portable Native-Wvb-Probe.wv -> verified WVB -> ABI-5 WVO -> linked UEFI image -> kernel-owned execution
 ```
 
-**First kernel-owned memory:** [`Hello-World.wv`](Operating-System/Kernel/Hello-World.wv) passes through the ordinary frontend and typed WIR, becomes a verified x86-64 WVO object, and runs through independently assembled [WVA machine shims](Operating-System/Kernel/X64-Kernel-Shims.wva) only after the loader exits UEFI boot services, validates the retained map, claims and clears a 64 KiB conventional-memory arena, exercises its page allocator, copies the handoff, and switches to an 8 KiB kernel stack. Every line from `memory-owned=pass` through Hello World now originates in `.wv`; every source byte crosses the WVA console adapter before the remaining x86-64 port routine. The accepted QEMU/OVMF serial transcript is:
+**First shared native WVB in the OS:** [`Hello-World.wv`](Operating-System/Kernel/Hello-World.wv) still supplies the special system-profile diagnostics, while ordinary portable [`Native-Wvb-Probe.wv`](Operating-System/Kernel/Native-Wvb-Probe.wv) compiles to canonical verified WVB and then to the same ABI-5 WVO path qualified on Windows and Linux. After the loader exits UEFI boot services, claims and clears a 64 KiB arena, exercises its allocator, copies the handoff, and switches to an 8 KiB kernel stack, the portable module loops over immutable data, calls an internal function, and must return exact result 29 before boot continues. This is host-built AOT evidence; the guest does not yet load or verify WVB. The accepted QEMU/OVMF serial transcript is:
 
 ```text
-windvale-os-boot 6
+windvale-os-boot 7
 entry=pass
 system-table=pass
 memory-map=pass
@@ -50,19 +51,20 @@ memory-owned=pass
 allocator=pass
 kernel-stack=pass
 Hello from Windvale
+native-wvb=pass
 windvale-source=pass
 status=pass
 ```
 
-The exact ownership, allocator, implementation seam, target, and evidence limits are recorded in [Decision 0052](Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md), [Decision 0056](Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md), the [kernel-memory specification](Specifications/Windvale-Kernel-Memory.md), and the [kernel native-seam specification](Specifications/Windvale-Kernel-Native-Seam.md).
+The exact ownership, allocator, implementation seam, target, and evidence limits are recorded in [Decision 0052](Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md), [Decision 0056](Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md), provisional [Decision 0064](Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md), the [kernel-memory specification](Specifications/Windvale-Kernel-Memory.md), and the [kernel native-seam specification](Specifications/Windvale-Kernel-Native-Seam.md).
 
-**Current focus:** select and advance the smallest native Windvale tool that exercises the qualified ABI-5 call and static-data boundary.
+**Current focus:** qualify the exact first OS ABI-5 consumer, then add the smallest narrow runtime-service boundary needed by a useful native Windvale tool without widening the language or retiring .NET prematurely.
 
 **Latest qualified evidence:** the Windvale bytecode compiler reproduces its exact 599,868-byte artifact on Windows and Debian in 6,700,562,174 verified VM instructions; checked computation, typed control, dynamic instruction/depth budgets, backward loops, internal calls, bounded recursion, immutable i32 data, and exact traps now agree across the interpreter, W^X JIT, and WVO-linked AOT paths on both hosts. All 49 tests pass and all 61 portable artifacts remain byte-identical across hosts. See the [qualification evidence](Documents/Project/Seed-Verification-Evidence.md) and [development roadmap](Documents/Project/Roadmap.md) for the complete scope and remaining gates.
 
 Today, Windvale uses dependency-free C# and .NET as its Stage 0 bootstrap. C# is a transition and reference implementation: it makes the compiler, bytecode verifier, runtime, assembler, object model, linker, and CLI executable, testable, and recoverable on Windows and Linux while those components are progressively implemented in Windvale itself. C# does not define Windvale's language semantics or the final self-hosted path. After the native-retirement gate, .NET leaves the normal build, test, packaging, and execution workflow; the final Stage 0 release may remain only as archived recovery and provenance evidence.
 
-The accepted native destination keeps canonical WVB as the portable program identity while a Windvale-written execution stack supplies a verified interpreter, low-latency baseline JIT, optional measured optimizing tier, deterministic AOT, native memory management, and narrow Windows, Linux, and Windvale OS adapters. JIT and AOT share one native ABI, backend, and relocation model. [Decision 0059](Documents/Decisions/0059-First-Shared-Native-Wvb-Slice.md) through [Decision 0062](Documents/Decisions/0062-Dynamic-Native-Instruction-Budgets-And-Backward-Control-Flow.md) cross-host qualify the C# Stage 0 seam through checked arithmetic, typed control, dynamic budgets, and backward loops. [Decision 0063](Documents/Decisions/0063-Shared-Budget-Native-Calls-And-Static-Data.md) cross-host qualifies internal calls, bounded recursion, shared instruction/depth budgets, immutable i32 arrays, bounds traps, and `.rodata` relocation at exact commit `1af2eca`. The larger direction, safety boundary, proposed WVA copy-and-patch tier, and exact .NET retirement conditions remain defined by [Decision 0057](Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and the [native-execution architecture](Documents/Architecture/Native-Execution-And-Dotnet-Retirement.md); broader native components are not claimed as implemented.
+The accepted native destination keeps canonical WVB as the portable program identity while a Windvale-written execution stack supplies a verified interpreter, low-latency baseline JIT, optional measured optimizing tier, deterministic AOT, native memory management, and narrow Windows, Linux, and Windvale OS adapters. JIT and AOT share one native ABI, backend, and relocation model. [Decision 0059](Documents/Decisions/0059-First-Shared-Native-Wvb-Slice.md) through [Decision 0062](Documents/Decisions/0062-Dynamic-Native-Instruction-Budgets-And-Backward-Control-Flow.md) cross-host qualify the C# Stage 0 seam through checked arithmetic, typed control, dynamic budgets, and backward loops. [Decision 0063](Documents/Decisions/0063-Shared-Budget-Native-Calls-And-Static-Data.md) cross-host qualifies internal calls, bounded recursion, shared instruction/depth budgets, immutable i32 arrays, bounds traps, and `.rodata` relocation at exact commit `1af2eca`. Provisional [Decision 0064](Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md) uses that same backend for the first ordinary portable module in the Windvale OS image, while explicitly leaving guest WVB loading and .NET retirement open. The larger direction, safety boundary, proposed WVA copy-and-patch tier, and exact .NET retirement conditions remain defined by [Decision 0057](Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and the [native-execution architecture](Documents/Architecture/Native-Execution-And-Dotnet-Retirement.md); broader native components are not claimed as implemented.
 
 The Windvale-written compiler lives under `Compiler/Windvale`; the independent C# reference/recovery compiler lives under `Compiler/Reference`. “Bootstrap” describes the staged and reproducible process between them, not the product name of either implementation.
 
@@ -642,6 +644,8 @@ export fn Main() -> i32 {
 - [Checked native i32 arithmetic and traps decision](Documents/Decisions/0060-Checked-Native-I32-Arithmetic-And-Traps.md)
 - [Typed native blocks and forward control flow decision](Documents/Decisions/0061-Typed-Native-Blocks-And-Forward-Control-Flow.md)
 - [Dynamic native instruction budgets and backward control flow decision](Documents/Decisions/0062-Dynamic-Native-Instruction-Budgets-And-Backward-Control-Flow.md)
+- [Shared-budget native calls and static data decision](Documents/Decisions/0063-Shared-Budget-Native-Calls-And-Static-Data.md)
+- [First shared native WVB in Windvale OS decision](Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

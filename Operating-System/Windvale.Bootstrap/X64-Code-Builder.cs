@@ -62,6 +62,14 @@ internal sealed class X64ˉcodeˉbuilder
         return Displacementˉoffset;
     }
 
+    public uint Emitˉjumpˉplaceholder()
+    {
+        Output.Add(0xE9);
+        var Displacementˉoffset = checked((uint)Output.Count);
+        Output.AddRange([0, 0, 0, 0]);
+        return Displacementˉoffset;
+    }
+
     public void Align(int alignment)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(alignment, 1);

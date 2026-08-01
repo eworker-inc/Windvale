@@ -2,19 +2,19 @@
 
 ## Status and purpose
 
-Firmware boot probe version 6 is the executable Windvale OS evidence slice for UEFI entry, structural table validation, bounded memory-map acquisition, bounded termination of boot services, a compiler-generated Windvale kernel-entry handoff, one kernel-owned physical arena, a zeroing page allocator, a copied handoff, an owned kernel stack, post-firmware serial observation, and guest-controlled QEMU completion. It is not a functioning kernel or an operating-system qualification.
+Firmware boot probe version 7 is the executable Windvale OS evidence slice for UEFI entry, structural table validation, bounded memory-map acquisition, bounded termination of boot services, a compiler-generated Windvale kernel-entry handoff, one kernel-owned physical arena, a zeroing page allocator, a copied handoff, an owned kernel stack, one ordinary portable-WVB module AOT-compiled through shared ABI 5, post-firmware serial observation, and guest-controlled QEMU completion. It is not a functioning kernel or an operating-system qualification.
 
-[Decision 0045](../Documents/Decisions/0045-First-Uefi-Application-And-Boot-Probe.md) records version 1 firmware entry. [Decision 0046](../Documents/Decisions/0046-Bounded-Uefi-Memory-Map-Probe.md) owns the version 2 memory-map boundary. [Decision 0047](../Documents/Decisions/0047-Bounded-Exit-Boot-Services-Transition.md) owns the version 3 firmware-exit boundary. [Decision 0048](../Documents/Decisions/0048-First-Kernel-Handoff-And-Relative-Uefi-Link.md) owns the version 4 kernel handoff. [Decision 0049](../Documents/Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) owns the version 5 compiler-generated boot item. [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns version 6 kernel memory, and [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) owns its current bidirectional WVA/WV seam. PE32+ construction remains owned by [Windvale-Uefi-Application.md](Windvale-Uefi-Application.md), the native subset by [Windvale-X64-Kernel-Target.md](Windvale-X64-Kernel-Target.md), the internal call boundary by [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md), memory ownership by [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md), native implementation roles by [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md), and emulator inputs by [Windvale-Os-Boot-Environment.md](Windvale-Os-Boot-Environment.md).
+[Decision 0045](../Documents/Decisions/0045-First-Uefi-Application-And-Boot-Probe.md) records version 1 firmware entry. [Decision 0046](../Documents/Decisions/0046-Bounded-Uefi-Memory-Map-Probe.md) owns version 2 memory-map acquisition. [Decision 0047](../Documents/Decisions/0047-Bounded-Exit-Boot-Services-Transition.md) owns version 3 firmware exit. [Decision 0048](../Documents/Decisions/0048-First-Kernel-Handoff-And-Relative-Uefi-Link.md) owns version 4 kernel handoff. [Decision 0049](../Documents/Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) owns version 5 compiler-generated source. [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns version 6 kernel memory, [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) owns its bidirectional WVA/WV seam, and [Decision 0064](../Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md) owns version 7 shared native WVB adoption. PE32+ construction remains owned by [Windvale-Uefi-Application.md](Windvale-Uefi-Application.md), the special system subset by [Windvale-X64-Kernel-Target.md](Windvale-X64-Kernel-Target.md), the internal call boundary by [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md), memory ownership by [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md), native implementation roles by [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md), and emulator inputs by [Windvale-Os-Boot-Environment.md](Windvale-Os-Boot-Environment.md).
 
 The ABI and table rules follow [UEFI 2.11 x64 calling conventions](https://uefi.org/specs/UEFI/2.11/02_Overview.html#detailed-calling-conventions), the [EFI System Table](https://uefi.org/specs/UEFI/2.11/04_EFI_System_Table.html), the [`GetMemoryMap` memory-allocation contract](https://uefi.org/specs/UEFI/2.11/07_Services_Boot_Services.html#efi-boot-services-getmemorymap), and the [`ExitBootServices` transition contract](https://uefi.org/specs/UEFI/2.11/07_Services_Boot_Services.html#efi-boot-services-exitbootservices).
 
 ## Artifact construction
 
-The bootstrap builder embeds `Operating-System/Kernel/Hello-World.wv` and `X64-Kernel-Shims.wva` as deterministic source inputs. The reference compiler runs the ordinary frontend and typed semantic WIR pipeline, then emits and independently verifies a native kernel WVO. The reference/recovery assembler emits and independently verifies the WVA shims. The builder also creates loader, kernel-memory, and x64 byte-adapter WVO objects. The loader imports `Windvale_kernel_entry`; the generated object exports entry and Main while importing memory entry and WVA-owned byte output; the memory object exports memory entry and page allocation while importing WVA Main; the WVA object exports Main entry and byte output while importing compiler Main and the internal x64 writer; the adapter exports only that internal writer. The existing linker resolves 77 `relative-i32` call or tail-jump relocations, independently reconstructs the base-zero image, and passes that verified all-code result to UEFI application writer version 2. No generated WVO, EFI application, FAT view, variable store, firmware image, or captured memory map is committed.
+The bootstrap builder embeds `Operating-System/Kernel/Hello-World.wv`, `Native-Wvb-Probe.wv`, and `X64-Kernel-Shims.wva` as deterministic source inputs. The special kernel source passes through the ordinary frontend/typed WIR and its versioned system target. The portable probe passes through ordinary WVB production, mandatory verification, the shared ABI-5 selector/fragment verifier, and the same WVO sink qualified for host AOT. The reference/recovery assembler independently verifies the WVA shims. The builder also creates loader, kernel-memory, exact native-bridge, and x64 byte-adapter WVO objects. The existing linker resolves all calls, tail jumps, and the RIP-relative data relocation, independently reconstructs the base-zero image, and passes verified code/read-only-data bytes to UEFI application writer version 3. No generated WVB, WVO, EFI application, FAT view, variable store, firmware image, or captured memory map is committed.
 
-The linked code is position-independent. A private OS label builder resolves local loader and adapter branches and exposes the loader's kernel-call placeholder. Compiler-native instruction selection remains isolated in the versioned target and publishes calls only through WVO relocations; neither builder is a general assembler contract.
+The linked image is position-independent. A private OS label builder resolves local loader, adapter, and exact bridge branches and exposes only typed external relocation holes. Shared compiler-native instruction selection remains isolated behind ABI 5 and publishes calls/data through verified WVO relocations; the special system target remains separate pending broader ABI services.
 
-The canonical compiler object is 2,564 bytes with SHA-256 `f2c28eb5f020f59b8acb480fc8dc62e393ebb14405b3c12ecb05076176d44420`. The 279-byte WVA seam has SHA-256 `36ea8c6ebcd5e1ef51ff332344aa549a8ec7aadaf485d44306ee63d5b41d4123`. The canonical probe application is 7,168 bytes with SHA-256 `92ad46700b058cd3a8846c59c227a33ef3832b080fb408e8eee42dc301336d9a`.
+The canonical special compiler object remains 2,564 bytes with SHA-256 `f2c28eb5f020f59b8acb480fc8dc62e393ebb14405b3c12ecb05076176d44420`. The portable probe WVB is 502 bytes with SHA-256 `1f384f77c4e1c718a331aaa1a3c1f1e4173bbae9d870ec9023d70c7b15c1f7ef`; its 2,296-byte ABI-5 WVO has SHA-256 `338d05395502cc34dc5ac1a99626e0507faf3503ae7d5a3016c52ac140139ee5`. The 269-byte native bridge has SHA-256 `b345f42813fb5a20829a28882e03820a05e815982689478dc2b17ac593dca88d`; the 291-byte WVA seam has SHA-256 `332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc`. The canonical probe application is 9,728 bytes with SHA-256 `16c225916be855ca0aa27bcdacb56e38c08b79e2270f12e9040bffe343873fb3`.
 
 ## Entry and firmware-call frame
 
@@ -43,7 +43,7 @@ Before calling firmware, the probe requires:
 - revision at least EFI 1.02, header size at least 240 bytes, and reserved field zero; and
 - non-null `GetMemoryMap`, `AllocatePool`, `FreePool`, and `ExitBootServices` function pointers.
 
-Version 6 does not recompute either table CRC and therefore calls this structural validation, not complete table authentication.
+Version 7 does not recompute either table CRC and therefore calls this structural validation, not complete table authentication.
 
 ## Bounded memory-map sequence
 
@@ -79,14 +79,14 @@ No allocation, release, firmware console operation, or other boot service occurs
 
 After successful exit, the loader preserves the retained map values in volatile registers, overlays a 48-byte handoff record on completed firmware-call locals, and calls the separately linked `Windvale_kernel_entry` symbol with the record address in `RCX`. The caller stack remains 16-byte aligned and its original 32-byte shadow space remains available.
 
-The compiler-generated wrapper validates the `WVKHAND1` envelope, then calls the independent memory object. That object revalidates every descriptor, selects the lowest eligible 16-page `EfiConventionalMemory` arena from 1 MiB through 4 GiB, rejects contradictory overlap, clears all 64 KiB, initializes `WVKMEM01`, copies the handoff, and completes one zeroing page allocation. It then switches to the two-page owned stack and calls WVA export `Windvale_kernel_wva_main`, whose verified tail relocation transfers to compiler-generated `Windvale_kernel_main`. Main returns zero on success; any other result is terminal post-firmware failure. [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md) defines the incoming record, [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md) defines ownership and layout, and [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md) defines implementation roles.
+The compiler-generated wrapper validates the `WVKHAND1` envelope, then calls the independent memory object. That object revalidates every descriptor, selects the lowest eligible 16-page `EfiConventionalMemory` arena from 1 MiB through 4 GiB, rejects contradictory overlap, clears all 64 KiB, initializes `WVKMEM01`, copies the handoff, and completes one zeroing page allocation. It then switches to the two-page owned stack and calls WVA export `Windvale_kernel_wva_main`. The WVA tail reaches the exact native bridge, which preserves the handoff, supplies ABI-5 budgets 203/2, calls portable `Main`, and accepts only packed result 29. Only then does it restore the handoff and tail-transfer to compiler-generated special `Windvale_kernel_main`. Any trap, wrong result, or special-Main failure becomes terminal post-firmware failure. [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md) defines the incoming record, [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md) defines ownership and layout, and [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md) defines implementation roles.
 
 ## Serial and completion evidence
 
 COM1 is initialized at I/O base `0x3F8` for 8-N-1 operation. The transmitter is polled before every byte. Successful execution emits exact ASCII/LF bytes:
 
 ```text
-windvale-os-boot 6
+windvale-os-boot 7
 entry=pass
 system-table=pass
 memory-map=pass
@@ -95,11 +95,12 @@ memory-owned=pass
 allocator=pass
 kernel-stack=pass
 Hello from Windvale
+native-wvb=pass
 windvale-source=pass
 status=pass
 ```
 
-The `memory-map`, `boot-services`, memory, allocator, stack, Hello World, source-pass, and success lines are all emitted only after `ExitBootServices` returns success. `memory-owned=pass`, `allocator=pass`, `kernel-stack=pass`, and Hello World are selected from typed WIR and emitted through relocatable calls in compiler-generated Main after the memory transition and stack switch. Each byte crosses the WVA output shim. `windvale-source=pass` comes from the loader only after the generated entry returns zero. A failure after serial initialization emits `status=fail` and writes value 1 to QEMU test port `0xF4`. Success writes zero. QEMU's `isa-debug-exit` therefore returns host code 3 for probe failure and 1 for success. Port `0xF4` remains test transport rather than a Windvale OS device contract. The complete serial marker is required because a QEMU startup error can also return 1.
+The `memory-map`, `boot-services`, memory, allocator, stack, Hello World, native-WVB, source-pass, and success lines are all emitted only after `ExitBootServices` returns success. `memory-owned=pass`, `allocator=pass`, `kernel-stack=pass`, and Hello World are selected from typed WIR and emitted through relocatable calls in the special compiler-generated Main after the memory transition and stack switch. Each byte crosses the WVA output shim. `native-wvb=pass` comes from the loader only after the ABI-5 module returns exact packed 29 and the special Main returns zero; `windvale-source=pass` then records aggregate source success. A failure after serial initialization emits `status=fail` and writes value 1 to QEMU test port `0xF4`. Success writes zero. QEMU's `isa-debug-exit` therefore returns host code 3 for probe failure and 1 for success. Port `0xF4` remains test transport rather than a Windvale OS device contract. The complete serial marker is required because a QEMU startup error can also return 1.
 
 ## Boot harness
 
@@ -125,14 +126,14 @@ The harness verifies the EFI digest before and after launch and also rechecks in
 Successful execution emits this path-free field order:
 
 ```text
-windvale-os-boot-report 6
+windvale-os-boot-report 7
 status=pass
 architecture=x86-64
-application-format=pe32-plus-uefi-application-v2
-probe-version=6
-efi-bytes=7168
-efi-sha256=92ad46700b058cd3a8846c59c227a33ef3832b080fb408e8eee42dc301336d9a
-serial-marker=windvale-os-boot-6-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-windvale-source-status-pass
+application-format=pe32-plus-uefi-application-v3
+probe-version=7
+efi-bytes=9728
+efi-sha256=16c225916be855ca0aa27bcdacb56e38c08b79e2270f12e9040bffe343873fb3
+serial-marker=windvale-os-boot-7-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-native-wvb-windvale-source-status-pass
 qemu-exit-code=1
 ```
 
@@ -152,4 +153,4 @@ qemu-exit-code=1
 
 ## What this does not prove
 
-The probe does not verify table CRCs, define ownership beyond one conventional-memory arena, reclaim loader memory, configure paging, install interrupt handling, discover hardware beyond firmware tables, run Windvale bytecode, or define a stable general native ABI. Its compiler-generated source is limited to the version 2 kernel target and its byte output uses a temporary COM1 adapter. A general memory manager, functioning kernel runtime, interrupt system, clean platform shutdown, Hyper-V evidence, and cross-host boot qualification remain later bounded slices.
+The probe does not verify table CRCs, define ownership beyond one conventional-memory arena, reclaim loader memory, configure paging, install interrupt handling, or discover hardware beyond firmware tables. It does not load, retain, decode, or verify WVB inside the guest: the portable module is AOT-compiled during host image construction. The special system-profile target and temporary COM1 adapter remain. A guest WVB verifier/loader, general memory manager, functioning kernel runtime, interrupt system, clean platform shutdown, Hyper-V evidence, and cross-host boot qualification remain later bounded slices.

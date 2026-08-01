@@ -60,9 +60,9 @@ public sealed class Uefiˉapplicationˉexception : Exception
 
 public static class Uefiˉapplicationˉcontract
 {
-    public const int FORMAT_VERSION = 2;
-    public const string TARGET_NAME = "pe32-plus-x86-64-uefi-application-v2";
+    public const int FORMAT_VERSION = 3;
+    public const string TARGET_NAME = "pe32-plus-x86-64-uefi-application-v3";
     public const uint REQUIRED_LINK_BASE_ADDRESS = 0;
-    public const int MAX_CODE_BYTES = Linkˉlimits.MAX_IMAGE_BYTES;
+    public const int MAX_LINKED_IMAGE_BYTES = Linkˉlimits.MAX_IMAGE_BYTES;
     public const int MAX_APPLICATION_BYTES = 4_195_328;
 }

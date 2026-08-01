@@ -9,7 +9,7 @@ public static class Uefiˉapplicationˉverifier
     {
         if (bytes.Length is < 1_536 or > Uefiˉapplicationˉcontract.MAX_APPLICATION_BYTES)
         {
-            Fail("WVU2001", "The application length is outside the version 2 bounds.");
+            Fail("WVU2001", "The application length is outside the version 3 bounds.");
         }
 
         Requireˉu16(bytes, 0x00, 0x5A4D, "WVU2002", "The DOS signature is invalid.");
@@ -35,9 +35,9 @@ public static class Uefiˉapplicationˉverifier
             "The Windvale writer version is invalid.");
         Requireˉbyte(bytes, 0x9B, 0, "WVU2004", "The Windvale writer minor version is invalid.");
         var Textˉrawˉbytes = Readˉu32(bytes, 0x9C);
-        Require(Textˉrawˉbytes is >= 0x200 and <= Uefiˉapplicationˉcontract.MAX_CODE_BYTES,
-            "WVU2004", 0x9C, "The code raw size is invalid.");
-        Require(Textˉrawˉbytes % 0x200 == 0, "WVU2004", 0x9C, "The code raw size is not file-aligned.");
+        Require(Textˉrawˉbytes is >= 0x200 and <= Uefiˉapplicationˉcontract.MAX_LINKED_IMAGE_BYTES,
+            "WVU2004", 0x9C, "The linked-image raw size is invalid.");
+        Require(Textˉrawˉbytes % 0x200 == 0, "WVU2004", 0x9C, "The linked-image raw size is not file-aligned.");
         Requireˉu32(bytes, 0xA0, 0x200, "WVU2004", "The initialized-data size is invalid.");
         Requireˉu32(bytes, 0xA4, 0, "WVU2004", "The uninitialized-data size must be zero.");
         var Entryˉrva = Readˉu32(bytes, 0xA8);
@@ -64,8 +64,8 @@ public static class Uefiˉapplicationˉverifier
 
         Requireˉname(bytes, 0x188, ".text", "WVU2005", "The first section is not canonical .text.");
         var Codeˉbytes = Readˉu32(bytes, 0x190);
-        Require(Codeˉbytes is >= 1 and <= Uefiˉapplicationˉcontract.MAX_CODE_BYTES,
-            "WVU2005", 0x190, "The code virtual size is invalid.");
+        Require(Codeˉbytes is >= 1 and <= Uefiˉapplicationˉcontract.MAX_LINKED_IMAGE_BYTES,
+            "WVU2005", 0x190, "The linked-image virtual size is invalid.");
         Requireˉu32(bytes, 0x194, 0x1000, "WVU2005", "The code RVA is invalid.");
         Requireˉu32(bytes, 0x198, Textˉrawˉbytes, "WVU2005", "The code raw size is inconsistent.");
         Requireˉu32(bytes, 0x19C, 0x200, "WVU2005", "The code raw offset is invalid.");
@@ -107,7 +107,7 @@ public static class Uefiˉapplicationˉverifier
         Requireˉu32(bytes, (int)Expectedˉrelocationˉraw + 4, 12,
             "WVU2006", "The relocation block size is invalid.");
         Requireˉu32(bytes, (int)Expectedˉrelocationˉraw + 8, 0,
-            "WVU2006", "Only absolute relocation padding is permitted in version 2.");
+            "WVU2006", "Only absolute relocation padding is permitted in version 3.");
         Requireˉzero(
             bytes,
             (int)Expectedˉrelocationˉraw + 12,

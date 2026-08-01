@@ -1,0 +1,19 @@
+module Nativeˉwvbˉprobe profile portable;
+
+data Values: [i32] = [3, 5, 8, 13];
+
+fn Add(Left: i32, Right: i32) -> i32 {
+    return Left + Right;
+}
+
+export fn Main() -> i32 {
+    var Index: i32 = 0;
+    var Total: i32 = 0;
+
+    while Index < length(Values) {
+        Total = Add(Total, Values[Index]);
+        Index = Index + 1;
+    }
+
+    return Total;
+}
