@@ -1,12 +1,13 @@
 using System.Collections.Immutable;
+using Windvale.Bytecode;
 using Windvale.ObjectModel;
 
 namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 8;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v8";
+    public const int ABI_VERSION = 9;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v9";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
@@ -21,29 +22,34 @@ public static class Nativeˉcontract
     public const int MAXIMUM_FRAME_BYTES = MAXIMUM_FRAME_SLOTS * VALUE_SLOT_BYTES;
     public const int MAXIMUM_BLOCKS = 4096;
     public const int MAXIMUM_CALL_PARAMETERS = 4;
+    public const int MAXIMUM_RECORD_ARENA_BYTES = 1024 * 1024;
 }
 
 public static class Nativeˉexecutionˉcontextˉcontract
 {
-    public const uint FORMAT_VERSION = 1;
-    public const uint SIZE = 32;
+    public const uint FORMAT_VERSION = 2;
+    public const uint SIZE = 48;
     public const int FORMAT_VERSION_OFFSET = 0;
     public const int SIZE_OFFSET = 4;
     public const int INSTRUCTION_BUDGET_OFFSET = 8;
     public const int CALL_DEPTH_BUDGET_OFFSET = 16;
     public const int SERVICE_TABLE_POINTER_OFFSET = 24;
+    public const int RECORD_ARENA_POINTER_OFFSET = 32;
+    public const int RECORD_ARENA_LENGTH_OFFSET = 40;
+    public const int RECORD_ARENA_USED_OFFSET = 44;
 }
 
 public static class Nativeˉserviceˉtableˉcontract
 {
-    public const uint FORMAT_VERSION = 2;
-    public const uint SIZE = 40;
+    public const uint FORMAT_VERSION = 3;
+    public const uint SIZE = 48;
     public const int FORMAT_VERSION_OFFSET = 0;
     public const int SIZE_OFFSET = 4;
     public const int CONSOLE_WRITE_LINE_POINTER_OFFSET = 8;
     public const int PROCESS_ARGUMENT_COUNT_POINTER_OFFSET = 16;
     public const int PROCESS_ARGUMENT_POINTER_OFFSET = 24;
     public const int FILE_READ_BYTES_POINTER_OFFSET = 32;
+    public const int TEXT_UTF8_IS_VALID_POINTER_OFFSET = 40;
 }
 
 public enum Nativeˉservice : byte
@@ -52,6 +58,7 @@ public enum Nativeˉservice : byte
     Processˉargumentˉcount = 2,
     Processˉargument = 3,
     Fileˉreadˉbytes = 4,
+    Textˉutf8ˉisˉvalid = 5,
 }
 
 public abstract record Nativeˉoperation;
@@ -66,6 +73,8 @@ public enum Nativeˉvalueˉtype : byte
     U8 = 4,
     U32 = 5,
     Borrowedˉbytes = 6,
+    Enum = 7,
+    Record = 8,
 }
 
 public sealed record Nativeˉi32ˉconstant(int Result, int Value) : Nativeˉoperation;
@@ -75,6 +84,12 @@ public sealed record Nativeˉboolˉconstant(int Result, bool Value) : Nativeˉop
 public sealed record Nativeˉu8ˉconstant(int Result, byte Value) : Nativeˉoperation;
 
 public sealed record Nativeˉu32ˉconstant(int Result, uint Value) : Nativeˉoperation;
+
+public sealed record Nativeˉenumˉconstant(
+    int Result,
+    int Type,
+    int Member,
+    int Value) : Nativeˉoperation;
 
 public sealed record Nativeˉlocalˉload(
     int Result,
@@ -172,6 +187,18 @@ public sealed record Nativeˉu8ˉcomparison(
     int Left,
     int Right) : Nativeˉoperation;
 
+public enum Nativeˉenumˉcomparisonˉkind : byte
+{
+    Equal = 1,
+    Notˉequal = 2,
+}
+
+public sealed record Nativeˉenumˉcomparison(
+    int Result,
+    Nativeˉenumˉcomparisonˉkind Kind,
+    int Left,
+    int Right) : Nativeˉoperation;
+
 public sealed record Nativeˉu32ˉfromˉu8(int Result, int Value) : Nativeˉoperation;
 
 public sealed record Nativeˉcall(
@@ -221,6 +248,21 @@ public sealed record Nativeˉbytesˉread(
     Nativeˉbytesˉreadˉkind Kind,
     int Bytes,
     int Offset) : Nativeˉoperation;
+
+public sealed record Nativeˉtextˉutf8ˉisˉvalid(
+    int Result,
+    int Bytes) : Nativeˉoperation;
+
+public sealed record Nativeˉrecordˉcreate(
+    int Result,
+    int Type,
+    ImmutableArray<int> Fields) : Nativeˉoperation;
+
+public sealed record Nativeˉrecordˉfield(
+    int Result,
+    int Type,
+    int Field,
+    int Record) : Nativeˉoperation;
 
 public sealed record Nativeˉconsoleˉwriteˉline(
     int Text) : Nativeˉoperation;
@@ -276,6 +318,7 @@ public sealed record Nativeˉbytesˉdata(string Name, ImmutableArray<byte> Bytes
 public sealed record Nativeˉmodule(
     ImmutableArray<Nativeˉfunction> Functions,
     ImmutableArray<Nativeˉdata> Data,
+    ImmutableArray<Nominalˉtypeˉdeclaration> Types,
     ImmutableArray<Nativeˉservice> Requiredˉservices);
 
 public enum Nativeˉsymbolˉbinding : byte

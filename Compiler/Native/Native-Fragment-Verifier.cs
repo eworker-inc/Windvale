@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Windvale.Bytecode;
 using Windvale.ObjectModel;
 
 namespace Windvale.Compiler.Native;
@@ -14,8 +15,9 @@ public static class Nativeˉfragmentˉverifier
     private const ulong DATA_BOUNDS_STATUS = 0x0000_0004_0000_0000UL;
     private const ulong RUNTIME_SERVICE_STATUS = 0x0000_0005_0000_0000UL;
     private const ulong BYTE_BOUNDS_STATUS = 0x0000_0006_0000_0000UL;
-    private const int INTERNAL_FUNCTION_SUFFIX_BYTES = 130;
-    private const int MAIN_FUNCTION_SUFFIX_BYTES = 144;
+    private const ulong RECORD_ARENA_STATUS = 0x0000_0007_0000_0000UL;
+    private const int INTERNAL_FUNCTION_SUFFIX_BYTES = 151;
+    private const int MAIN_FUNCTION_SUFFIX_BYTES = 167;
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public static Nativeˉfragment Verify(Nativeˉfragment fragment)
@@ -56,7 +58,7 @@ public static class Nativeˉfragmentˉverifier
         {
             Fail("WVN3008", "The native fragment exceeds the patch-count limit.");
         }
-        if (fragment.Requiredˉservices.Length > 4 ||
+        if (fragment.Requiredˉservices.Length > 5 ||
             fragment.Requiredˉservices.Any(Service => !Enum.IsDefined(Service)) ||
             fragment.Requiredˉservices.Distinct().Count() != fragment.Requiredˉservices.Length ||
             !fragment.Requiredˉservices.SequenceEqual(fragment.Requiredˉservices.Order()))
@@ -367,7 +369,8 @@ public static class Nativeˉfragmentˉverifier
         var Bounds = Instructionˉlimit + Statusˉbytes;
         var Byteˉbounds = Bounds + Statusˉbytes;
         var Runtimeˉservice = Byteˉbounds + Statusˉbytes;
-        var Depth = Runtimeˉservice + Statusˉbytes;
+        var Recordˉarena = Runtimeˉservice + Statusˉbytes;
+        var Depth = Recordˉarena + Statusˉbytes;
         if (Depthˉtarget != Depth ||
             !Matchesˉpropagate(Code, Propagate, Frameˉbytes, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Overflow, Frameˉbytes, INTEGER_OVERFLOW_STATUS, Isˉmain) ||
@@ -375,6 +378,7 @@ public static class Nativeˉfragmentˉverifier
             !Matchesˉstatusˉtrap(Code, Bounds, Frameˉbytes, DATA_BOUNDS_STATUS, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Byteˉbounds, Frameˉbytes, BYTE_BOUNDS_STATUS, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Runtimeˉservice, Frameˉbytes, RUNTIME_SERVICE_STATUS, Isˉmain) ||
+            !Matchesˉstatusˉtrap(Code, Recordˉarena, Frameˉbytes, RECORD_ARENA_STATUS, Isˉmain) ||
             !Matches(Code, Depth, 0x49, 0xFF, 0xC2, 0x48, 0xB8) ||
             BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Depth + 5, sizeof(ulong))) != CALL_DEPTH_STATUS ||
             (Isˉmain && !Matches(Code, Depth + 13, 0x41, 0x5F, 0xC3)) ||
@@ -499,6 +503,24 @@ public static class Nativeˉfragmentˉverifier
                 continue;
             }
 
+            if (Tryˉdecodeˉtextˉutf8ˉisˉvalid(
+                fragment,
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Runtimeˉservice,
+                Borrowedˉbytesˉslots,
+                out var Utf8ˉresultˉslot))
+            {
+                if (Borrowedˉbytesˉslots.Contains(Utf8ˉresultˉslot))
+                {
+                    Failˉshape();
+                }
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
             if (Tryˉdecodeˉfileˉreadˉbytes(
                 fragment,
                 Code,
@@ -590,6 +612,38 @@ public static class Nativeˉfragmentˉverifier
                 out var Bytesˉreadˉresult))
             {
                 if (Borrowedˉbytesˉslots.Contains(Bytesˉreadˉresult))
+                {
+                    Failˉshape();
+                }
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉrecordˉcreate(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Recordˉarena,
+                out var Recordˉcreateˉresult))
+            {
+                if (Borrowedˉbytesˉslots.Contains(Recordˉcreateˉresult))
+                {
+                    Failˉshape();
+                }
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉrecordˉfield(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                Recordˉarena,
+                out var Recordˉfieldˉresult))
+            {
+                if (Borrowedˉbytesˉslots.Contains(Recordˉfieldˉresult))
                 {
                     Failˉshape();
                 }
@@ -938,6 +992,44 @@ public static class Nativeˉfragmentˉverifier
         return true;
     }
 
+    private static bool Tryˉdecodeˉtextˉutf8ˉisˉvalid(
+        Nativeˉfragment fragment,
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int runtimeˉservice,
+        HashSet<int> borrowedˉdescriptorˉslots,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (!fragment.Requiredˉservices.Contains(Nativeˉservice.Textˉutf8ˉisˉvalid) ||
+            !Tryˉdecodeˉdescriptorˉserviceˉinput(
+                code,
+                ref Cursor,
+                frameˉbytes,
+                borrowedˉdescriptorˉslots,
+                out _) ||
+            !Matches(code, Cursor, 0x48, 0x8D, 0x8C, 0x24) ||
+            !Tryˉreadˉslot(code, Cursor + 4, frameˉbytes, out resultˉslot))
+        {
+            return false;
+        }
+        Cursor += 8;
+        if (!Tryˉdecodeˉserviceˉcall(
+                code,
+                ref Cursor,
+                Nativeˉserviceˉtableˉcontract.TEXT_UTF8_IS_VALID_POINTER_OFFSET,
+                runtimeˉservice) ||
+            Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
     private static bool Tryˉdecodeˉdescriptorˉserviceˉinput(
         ReadOnlySpan<byte> code,
         ref int index,
@@ -1267,6 +1359,141 @@ public static class Nativeˉfragmentˉverifier
         return true;
     }
 
+    private static bool Tryˉdecodeˉrecordˉcreate(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int arenaˉtrap,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (!Matches(
+                code,
+                Cursor,
+                0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
+                0x89, 0xC1,
+                0x81, 0xC1))
+        {
+            return false;
+        }
+        var Allocationˉbytes = Readˉi32(code, Cursor + 8);
+        if (Allocationˉbytes is < Nativeˉcontract.VALUE_SLOT_BYTES or
+                > Bytecodeˉlimits.MAX_RECORD_FIELDS * Nativeˉcontract.VALUE_SLOT_BYTES ||
+            Allocationˉbytes % Nativeˉcontract.VALUE_SLOT_BYTES != 0 ||
+            !Matches(code, Cursor + 12, 0x0F, 0x82) ||
+            !Tryˉreadˉtarget(code, Cursor + 14, out var Overflowˉtarget) ||
+            Overflowˉtarget != arenaˉtrap ||
+            !Matches(
+                code,
+                Cursor + 18,
+                0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET,
+                0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 24, out var Capacityˉtarget) ||
+            Capacityˉtarget != arenaˉtrap ||
+            !Matches(
+                code,
+                Cursor + 28,
+                0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET) ||
+            !Tryˉstoreˉeax(code, Cursor + 32, frameˉbytes, out resultˉslot) ||
+            !Matches(
+                code,
+                Cursor + 39,
+                0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET,
+                0x48, 0x01, 0xC2))
+        {
+            return false;
+        }
+
+        Cursor += 46;
+        var Fieldˉcount = Allocationˉbytes / Nativeˉcontract.VALUE_SLOT_BYTES;
+        for (var Field = 0; Field < Fieldˉcount; Field++)
+        {
+            var Fieldˉoffset = Field * Nativeˉcontract.VALUE_SLOT_BYTES;
+            if (!Tryˉloadˉrax(code, Cursor, frameˉbytes, out var Sourceˉslot) ||
+                !Matches(code, Cursor + 8, 0x48, 0x89, 0x82) ||
+                Readˉi32(code, Cursor + 11) != Fieldˉoffset ||
+                !Tryˉloadˉraxˉatˉfield(
+                    code,
+                    Cursor + 15,
+                    frameˉbytes,
+                    sizeof(ulong),
+                    out var Highˉsource) ||
+                Highˉsource != Sourceˉslot ||
+                !Matches(code, Cursor + 23, 0x48, 0x89, 0x82) ||
+                Readˉi32(code, Cursor + 26) != Fieldˉoffset + sizeof(ulong))
+            {
+                return false;
+            }
+            Cursor += 30;
+        }
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉrecordˉfield(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int arenaˉtrap,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out _) ||
+            !Matches(code, Cursor + 7, 0x89, 0xC1, 0x81, 0xC1))
+        {
+            return false;
+        }
+        var Endˉoffset = Readˉi32(code, Cursor + 11);
+        if (Endˉoffset is < Nativeˉcontract.VALUE_SLOT_BYTES or
+                > Bytecodeˉlimits.MAX_RECORD_FIELDS * Nativeˉcontract.VALUE_SLOT_BYTES ||
+            Endˉoffset % Nativeˉcontract.VALUE_SLOT_BYTES != 0 ||
+            !Matches(code, Cursor + 15, 0x0F, 0x82) ||
+            !Tryˉreadˉtarget(code, Cursor + 17, out var Overflowˉtarget) ||
+            Overflowˉtarget != arenaˉtrap ||
+            !Matches(
+                code,
+                Cursor + 21,
+                0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
+                0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 27, out var Boundsˉtarget) ||
+            Boundsˉtarget != arenaˉtrap ||
+            !Matches(
+                code,
+                Cursor + 31,
+                0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET,
+                0x48, 0x01, 0xC2,
+                0x48, 0x8B, 0x82) ||
+            Readˉi32(code, Cursor + 41) != Endˉoffset - Nativeˉcontract.VALUE_SLOT_BYTES ||
+            !Tryˉstoreˉrax(code, Cursor + 45, frameˉbytes, out resultˉslot) ||
+            !Matches(code, Cursor + 53, 0x48, 0x8B, 0x82) ||
+            Readˉi32(code, Cursor + 56) != Endˉoffset - sizeof(ulong) ||
+            !Tryˉstoreˉraxˉatˉfield(
+                code,
+                Cursor + 60,
+                frameˉbytes,
+                sizeof(ulong),
+                out var Highˉresult) ||
+            Highˉresult != resultˉslot)
+        {
+            return false;
+        }
+        Cursor += 68;
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
     private static bool Tryˉdecodeˉslotˉtransformation(
         ReadOnlySpan<byte> code,
         ref int index,
@@ -1429,6 +1656,18 @@ public static class Nativeˉfragmentˉverifier
             Tryˉreadˉslot(code, offset + 4, frameˉbytes, out slot);
     }
 
+    private static bool Tryˉloadˉraxˉatˉfield(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int field,
+        out int slot)
+    {
+        slot = 0;
+        return Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) &&
+            Tryˉreadˉslotˉfield(code, offset + 4, frameˉbytes, field, sizeof(ulong), out slot);
+    }
+
     private static bool Tryˉloadˉrdx(ReadOnlySpan<byte> code, int offset, int frameˉbytes, out int slot)
     {
         slot = 0;
@@ -1564,6 +1803,18 @@ public static class Nativeˉfragmentˉverifier
         slot = 0;
         return Matches(code, offset, 0x48, 0x89, 0x84, 0x24) &&
             Tryˉreadˉslot(code, offset + 4, frameˉbytes, out slot);
+    }
+
+    private static bool Tryˉstoreˉraxˉatˉfield(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int field,
+        out int slot)
+    {
+        slot = 0;
+        return Matches(code, offset, 0x48, 0x89, 0x84, 0x24) &&
+            Tryˉreadˉslotˉfield(code, offset + 4, frameˉbytes, field, sizeof(ulong), out slot);
     }
 
     private static bool Tryˉstoreˉeaxˉatˉfield(

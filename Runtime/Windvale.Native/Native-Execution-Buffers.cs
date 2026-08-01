@@ -19,7 +19,10 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
     public Nativeˉexecutionˉbuffers(Hostedˉresourceˉcontext? resources)
     {
         Resources = resources;
+        Recordˉarena = Allocateˉuninitialized(Nativeˉcontract.MAXIMUM_RECORD_ARENA_BYTES);
     }
+
+    public Nativeˉborrowedˉbuffer Recordˉarena { get; }
 
     public uint Argumentˉcount => Requireˉresources().Getˉargumentˉcount();
 
@@ -78,6 +81,37 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
         return STRICT_UTF8.GetString(Bytes);
     }
 
+    public bool Isˉvalidˉutf8(
+        IntPtr address,
+        uint length,
+        IntPtr fragmentˉaddress,
+        int fragmentˉlength)
+    {
+        ObjectDisposedException.ThrowIf(Isˉdisposed, this);
+        var Isˉfragment = Contains(fragmentˉaddress, fragmentˉlength, address, length);
+        var Isˉowned = Allocations.Any(Buffer =>
+            Contains(Buffer.Address, Buffer.Allocationˉlength, address, length));
+        if (!Isˉfragment && !Isˉowned)
+        {
+            throw new InvalidOperationException("The native byte descriptor is outside verified immutable storage.");
+        }
+
+        var Bytes = new byte[checked((int)length)];
+        if (Bytes.Length != 0)
+        {
+            Marshal.Copy(address, Bytes, 0, Bytes.Length);
+        }
+        try
+        {
+            _ = STRICT_UTF8.GetCharCount(Bytes);
+            return true;
+        }
+        catch (DecoderFallbackException)
+        {
+            return false;
+        }
+    }
+
     public static void Writeˉdescriptor(IntPtr descriptor, Nativeˉborrowedˉbuffer buffer)
     {
         Marshal.WriteInt64(descriptor, Nativeˉcontract.BORROWED_BYTES_POINTER_OFFSET, buffer.Address.ToInt64());
@@ -108,6 +142,14 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
             Marshal.Copy(bytes.ToArray(), 0, Address, bytes.Length);
         }
         var Buffer = new Nativeˉborrowedˉbuffer(Address, bytes.Length, Allocationˉlength);
+        Allocations.Add(Buffer);
+        return Buffer;
+    }
+
+    private Nativeˉborrowedˉbuffer Allocateˉuninitialized(int length)
+    {
+        var Address = Marshal.AllocHGlobal(length);
+        var Buffer = new Nativeˉborrowedˉbuffer(Address, length, length);
         Allocations.Add(Buffer);
         return Buffer;
     }

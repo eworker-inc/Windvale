@@ -131,6 +131,34 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉservice.Fileˉreadˉbytes,
                 Marshal.GetFunctionPointerForDelegate(Callback));
         }
+        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Textˉutf8ˉisˉvalid))
+        {
+            Nativeˉtextˉutf8ˉisˉvalidˉcallback Callback = (bytesˉaddress, bytesˉlength, result) =>
+            {
+                try
+                {
+                    Marshal.WriteInt32(
+                        result,
+                        Buffers.Isˉvalidˉutf8(
+                            bytesˉaddress,
+                            bytesˉlength,
+                            Address,
+                            fragment.Code.Length)
+                            ? 1
+                            : 0);
+                    return 0;
+                }
+                catch (Exception Exception)
+                {
+                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
+                    return 1;
+                }
+            };
+            Callbacks.Add(Callback);
+            Callbackˉpointers.Add(
+                Nativeˉservice.Textˉutf8ˉisˉvalid,
+                Marshal.GetFunctionPointerForDelegate(Callback));
+        }
 
         var Serviceˉthunkˉoffset = checked((fragment.Code.Length + 15) & ~15);
         var Serviceˉthunks = new List<byte>();
@@ -194,6 +222,15 @@ public static class X64ˉnativeˉexecutor
             BinaryPrimitives.WriteUInt64LittleEndian(
                 Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET),
                 Serviceˉtable == IntPtr.Zero ? 0 : checked((ulong)Serviceˉtable.ToInt64()));
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET),
+                checked((ulong)Buffers.Recordˉarena.Address.ToInt64()));
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET),
+                checked((uint)Buffers.Recordˉarena.Length));
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET),
+                0);
             Marshal.Copy(Contextˉbytes, 0, Context, Contextˉbytes.Length);
 
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
@@ -258,6 +295,12 @@ public static class X64ˉnativeˉexecutor
                 "WVR3008",
                 $"A native byte slice or fixed-width read was outside its immutable source in entry '{entry}'.");
         }
+        if (Status == 7)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3017",
+                $"The native record arena exhausted its {Nativeˉcontract.MAXIMUM_RECORD_ARENA_BYTES}-byte limit in entry '{entry}'.");
+        }
         throw new Nativeˉbackendˉexception(
             "WVN4005",
             $"Native entry '{entry}' returned unknown status {Status}.");
@@ -269,6 +312,10 @@ public static class X64ˉnativeˉexecutor
     {
         foreach (var Service in fragment.Requiredˉservices)
         {
+            if (Service == Nativeˉservice.Textˉutf8ˉisˉvalid)
+            {
+                continue;
+            }
             if (hostˉservices is null || !hostˉservices.Isˉauthorized(Service))
             {
                 throw new Nativeˉtrapˉexception(
@@ -378,6 +425,13 @@ public static class X64ˉnativeˉexecutor
                     0x44, 0x89, 0xCA,
                     0x49, 0x89, 0xC0,
                 ],
+                Nativeˉservice.Textˉutf8ˉisˉvalid =>
+                [
+                    0x48, 0x89, 0xC8,
+                    0x4C, 0x89, 0xC1,
+                    0x44, 0x89, 0xCA,
+                    0x49, 0x89, 0xC0,
+                ],
                 _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service thunk."),
             };
         }
@@ -389,6 +443,12 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉservice.Processˉargumentˉcount => [],
                 Nativeˉservice.Processˉargument => [0x44, 0x89, 0xC7, 0x4C, 0x89, 0xCE],
                 Nativeˉservice.Fileˉreadˉbytes =>
+                [
+                    0x4C, 0x89, 0xC7,
+                    0x44, 0x89, 0xCE,
+                    0x48, 0x89, 0xCA,
+                ],
+                Nativeˉservice.Textˉutf8ˉisˉvalid =>
                 [
                     0x4C, 0x89, 0xC7,
                     0x44, 0x89, 0xCE,
@@ -411,6 +471,8 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_POINTER_OFFSET,
             Nativeˉservice.Fileˉreadˉbytes =>
                 Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET,
+            Nativeˉservice.Textˉutf8ˉisˉvalid =>
+                Nativeˉserviceˉtableˉcontract.TEXT_UTF8_IS_VALID_POINTER_OFFSET,
             _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service table entry."),
         };
 
@@ -540,6 +602,12 @@ public static class X64ˉnativeˉexecutor
         IntPtr resourceˉnameˉaddress,
         uint resourceˉnameˉlength,
         IntPtr descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉtextˉutf8ˉisˉvalidˉcallback(
+        IntPtr bytesˉaddress,
+        uint bytesˉlength,
+        IntPtr result);
 
     private sealed record Nativeˉserviceˉfailure(string Code, string Message);
 

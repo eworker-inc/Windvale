@@ -213,7 +213,7 @@ fn Scanˉstring(Input: bytes, Cursor: u32, End: u32, Maximum: u32) -> Wvbˉscan 
     return Wvbˉscan(Wvbˉstatus.Valid, Valueˉoffset + Length, 1u32, Length);
 }
 
-fn Scanˉshape(Input: bytes, Cursor: u32, End: u32, Allowˉvoid: bool, Allowˉnominal: bool) -> Wvbˉscan {
+fn Scanˉshape(Input: bytes, Cursor: u32, End: u32, Policy: u32) -> Wvbˉscan {
     if !Rangeˉisˉinside(End, Cursor, 1u32) {
         return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
     }
@@ -222,13 +222,15 @@ fn Scanˉshape(Input: bytes, Cursor: u32, End: u32, Allowˉvoid: bool, Allowˉno
     if Raw > 8u32 {
         return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
     }
-    if !Allowˉvoid {
-        if Raw == 0u32 {
-            return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
+    if Policy != 1u32 {
+        if Policy != 3u32 {
+            if Raw == 0u32 {
+                return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
+            }
         }
     }
     if Raw >= 7u32 {
-        if !Allowˉnominal {
+        if Policy < 2u32 {
             return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
         }
         if !Rangeˉisˉinside(End, Cursor + 1u32, 4u32) {
@@ -464,7 +466,7 @@ fn Scanˉcapabilityˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
 
         var Parameterˉindex: u32 = 0u32;
         while Parameterˉindex < Parameterˉcount {
-            let Parameter: Wvbˉscan = Scanˉshape(Input, Cursor, End, false, false);
+            let Parameter: Wvbˉscan = Scanˉshape(Input, Cursor, End, 0u32);
             if Parameter.Status != Wvbˉstatus.Valid {
                 return Parameter;
             }
@@ -472,7 +474,7 @@ fn Scanˉcapabilityˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
             Parameterˉindex = Parameterˉindex + 1u32;
         }
 
-        let Returnˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, true, false);
+        let Returnˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, 1u32);
         if Returnˉtype.Status != Wvbˉstatus.Valid {
             return Returnˉtype;
         }
@@ -594,7 +596,7 @@ fn Scanˉfunctionˉpayload(Input: bytes, Section: Wvbˉsection, Code: Wvbˉsecti
 
         var Parameterˉindex: u32 = 0u32;
         while Parameterˉindex < Parameterˉcount {
-            let Parameter: Wvbˉscan = Scanˉshape(Input, Cursor, End, false, true);
+            let Parameter: Wvbˉscan = Scanˉshape(Input, Cursor, End, 2u32);
             if Parameter.Status != Wvbˉstatus.Valid {
                 return Parameter;
             }
@@ -602,7 +604,7 @@ fn Scanˉfunctionˉpayload(Input: bytes, Section: Wvbˉsection, Code: Wvbˉsecti
             Parameterˉindex = Parameterˉindex + 1u32;
         }
 
-        let Returnˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, true, true);
+        let Returnˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, 3u32);
         if Returnˉtype.Status != Wvbˉstatus.Valid {
             return Returnˉtype;
         }
@@ -622,7 +624,7 @@ fn Scanˉfunctionˉpayload(Input: bytes, Section: Wvbˉsection, Code: Wvbˉsecti
 
         var Localˉindex: u32 = 0u32;
         while Localˉindex < Localˉcount {
-            let Localˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, false, true);
+            let Localˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, 2u32);
             if Localˉtype.Status != Wvbˉstatus.Valid {
                 return Localˉtype;
             }
@@ -771,7 +773,7 @@ fn Scanˉtypeˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
             }
             Cursor = Itemˉname.Cursor;
             if Kind == 1u32 {
-                let Fieldˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, false, true);
+                let Fieldˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, 2u32);
                 if Fieldˉtype.Status != Wvbˉstatus.Valid {
                     return Fieldˉtype;
                 }

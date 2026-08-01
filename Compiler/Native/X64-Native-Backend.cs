@@ -15,6 +15,7 @@ public static class X64ˉnativeˉbackend
     private const ulong DATA_BOUNDS_STATUS = 0x0000_0004_0000_0000UL;
     private const ulong RUNTIME_SERVICE_STATUS = 0x0000_0005_0000_0000UL;
     private const ulong BYTE_BOUNDS_STATUS = 0x0000_0006_0000_0000UL;
+    private const ulong RECORD_ARENA_STATUS = 0x0000_0007_0000_0000UL;
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public static Nativeˉcompilation Compile(Verifiedˉmodule verifiedˉmodule)
@@ -26,7 +27,7 @@ public static class X64ˉnativeˉbackend
             !Module.Capabilities.IsEmpty &&
             Module.Capabilities.All(Isˉsupportedˉnativeˉcapability);
         if ((!Isˉportable && !Isˉhosted) ||
-            !Module.Types.IsEmpty ||
+            Module.Types.Any(Type => !Isˉsupportedˉnativeˉnominalˉtype(Type)) ||
             Module.Data.Any(Data => Data is not (
                 I32ˉarrayˉdataˉdeclaration or
                 Textˉdataˉdeclaration or
@@ -34,7 +35,7 @@ public static class X64ˉnativeˉbackend
         {
             Fail(
                 "WVN2001",
-                "The baseline native subset requires either a capability-free portable module or a hosted module declaring only console.write_line, process.argument_count, process.argument, and file.read_bytes, without nominal types and with only immutable i32-array/text/bytes data.");
+                "The baseline native subset requires either a capability-free portable module or a hosted module declaring only console.write_line, process.argument_count, process.argument, and file.read_bytes, with bounded enum/record metadata and only immutable i32-array/text/bytes data.");
         }
         if (verifiedˉmodule.Functions.IsEmpty ||
             Module.Exports.Length != 1 ||
@@ -105,9 +106,15 @@ public static class X64ˉnativeˉbackend
                     "WVN2001",
                     $"Unsupported native capability '{Capability.Name}'."),
             })
+            .Concat(Functions
+                .SelectMany(Function => Function.Blocks)
+                .SelectMany(Block => Block.Operations)
+                .Where(Operation => Operation is Nativeˉtextˉutf8ˉisˉvalid)
+                .Select(_ => Nativeˉservice.Textˉutf8ˉisˉvalid))
+            .Distinct()
             .Order()
             .ToImmutableArray();
-        return new(Functions, Data, Requiredˉservices);
+        return new(Functions, Data, module.Module.Types, Requiredˉservices);
     }
 
     private static Nativeˉfunction Lowerˉverifiedˉfunction(
@@ -122,9 +129,9 @@ public static class X64ˉnativeˉbackend
             .Select(Toˉnativeˉtype)
             .ToImmutableArray();
         var Allˉlocalˉtypes = Parameterˉtypes.AddRange(Localˉtypes);
-        var Descriptorˉlocalˉinitialized = Allˉlocalˉtypes
+        var Referenceˉlocalˉinitialized = Allˉlocalˉtypes
             .Select((Type, Index) =>
-                Index < Parameterˉtypes.Length && Isˉnativeˉdescriptorˉtype(Type))
+                Index < Parameterˉtypes.Length && Isˉnativeˉrunˉreferenceˉtype(Type))
             .ToArray();
         var Valueˉtypes = ImmutableArray.CreateBuilder<Nativeˉvalueˉtype>();
         var Instructions = function.Instructions;
@@ -222,6 +229,27 @@ public static class X64ˉnativeˉbackend
                         Operations.Add(new Nativeˉu32ˉconstant(U32ˉconstant, Instruction.Unsignedˉoperand));
                         Stack.Push(new(U32ˉconstant, Nativeˉvalueˉtype.U32));
                         break;
+                    case Opcode.Enumˉconst:
+                        var Enumˉtypeˉindex = checked((int)Instruction.Unsignedˉoperand);
+                        var Enumˉmemberˉindex = checked((int)Instruction.Secondˉunsignedˉoperand);
+                        if ((uint)Enumˉtypeˉindex >= (uint)module.Module.Types.Length ||
+                            module.Module.Types[Enumˉtypeˉindex] is not Enumˉtypeˉdeclaration)
+                        {
+                            Fail("WVN2003", "Verified WVB exposed invalid enum metadata during native lowering.");
+                        }
+                        var Enumˉtype = (Enumˉtypeˉdeclaration)module.Module.Types[Enumˉtypeˉindex];
+                        if ((uint)Enumˉmemberˉindex >= (uint)Enumˉtype.Members.Length)
+                        {
+                            Fail("WVN2003", "Verified WVB exposed invalid enum member metadata during native lowering.");
+                        }
+                        var Enumˉconstant = Newˉvalue(Nativeˉvalueˉtype.Enum);
+                        Operations.Add(new Nativeˉenumˉconstant(
+                            Enumˉconstant,
+                            Enumˉtypeˉindex,
+                            Enumˉmemberˉindex,
+                            Enumˉtype.Members[Enumˉmemberˉindex].Value));
+                        Stack.Push(new(Enumˉconstant, Nativeˉvalueˉtype.Enum, Enumˉtypeˉindex));
+                        break;
                     case Opcode.Textˉconst:
                         var Textˉdata = checked((int)Instruction.Unsignedˉoperand);
                         if ((uint)Textˉdata >= (uint)module.Module.Data.Length ||
@@ -251,14 +279,17 @@ public static class X64ˉnativeˉbackend
                             Fail("WVN2003", "Verified WVB exposed an invalid local load during native lowering.");
                         }
                         var Loadˉtype = Allˉlocalˉtypes[Loadˉindex];
-                        if (Isˉnativeˉdescriptorˉtype(Loadˉtype) &&
-                            !Descriptorˉlocalˉinitialized[Loadˉindex])
+                        if (Isˉnativeˉrunˉreferenceˉtype(Loadˉtype) &&
+                            !Referenceˉlocalˉinitialized[Loadˉindex])
                         {
-                            Fail("WVN2003", "A native borrowed-descriptor local must be initialized before use.");
+                            Fail("WVN2003", "A native borrowed-descriptor or record local must be initialized before use.");
                         }
                         var Loadˉresult = Newˉvalue(Loadˉtype);
                         Operations.Add(new Nativeˉlocalˉload(Loadˉresult, Loadˉindex, Loadˉtype));
-                        Stack.Push(new(Loadˉresult, Loadˉtype));
+                        Stack.Push(new(
+                            Loadˉresult,
+                            Loadˉtype,
+                            function.Declaration.Allˉlocalˉtypes[Loadˉindex].Nominalˉtypeˉindex));
                         break;
                     case Opcode.Localˉstore:
                         var Storeˉindex = checked((int)Instruction.Unsignedˉoperand);
@@ -268,9 +299,9 @@ public static class X64ˉnativeˉbackend
                         }
                         var Storeˉtype = Allˉlocalˉtypes[Storeˉindex];
                         var Storedˉvalue = Popˉvalue(Storeˉtype);
-                        if (Isˉnativeˉdescriptorˉtype(Storeˉtype))
+                        if (Isˉnativeˉrunˉreferenceˉtype(Storeˉtype))
                         {
-                            Descriptorˉlocalˉinitialized[Storeˉindex] = true;
+                            Referenceˉlocalˉinitialized[Storeˉindex] = true;
                         }
                         Operations.Add(new Nativeˉlocalˉstore(Storeˉindex, Storeˉtype, Storedˉvalue.Value));
                         break;
@@ -398,6 +429,24 @@ public static class X64ˉnativeˉbackend
                             U8ˉcompareˉright.Value));
                         Stack.Push(new(U8ˉcompareˉresult, Nativeˉvalueˉtype.Bool));
                         break;
+                    case Opcode.Enumˉequal:
+                    case Opcode.Enumˉnotˉequal:
+                        var Enumˉright = Popˉvalue(Nativeˉvalueˉtype.Enum);
+                        var Enumˉleft = Popˉvalue(Nativeˉvalueˉtype.Enum);
+                        if (Enumˉleft.Nominalˉtypeˉindex != Enumˉright.Nominalˉtypeˉindex)
+                        {
+                            Fail("WVN2003", "Verified WVB exposed mismatched enum identities during native lowering.");
+                        }
+                        var Enumˉresult = Newˉvalue(Nativeˉvalueˉtype.Bool);
+                        Operations.Add(new Nativeˉenumˉcomparison(
+                            Enumˉresult,
+                            Instruction.Opcode == Opcode.Enumˉequal
+                                ? Nativeˉenumˉcomparisonˉkind.Equal
+                                : Nativeˉenumˉcomparisonˉkind.Notˉequal,
+                            Enumˉleft.Value,
+                            Enumˉright.Value));
+                        Stack.Push(new(Enumˉresult, Nativeˉvalueˉtype.Bool));
+                        break;
                     case Opcode.U32ˉfromˉu8:
                         var U32ˉfromˉu8ˉvalue = Popˉvalue(Nativeˉvalueˉtype.U8);
                         var U32ˉfromˉu8ˉresult = Newˉvalue(Nativeˉvalueˉtype.U32);
@@ -413,6 +462,12 @@ public static class X64ˉnativeˉbackend
                             Bytesˉlengthˉresult,
                             Bytesˉlengthˉvalue.Value));
                         Stack.Push(new(Bytesˉlengthˉresult, Nativeˉvalueˉtype.U32));
+                        break;
+                    case Opcode.Textˉutf8ˉisˉvalid:
+                        var Utf8ˉbytes = Popˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
+                        var Utf8ˉresult = Newˉvalue(Nativeˉvalueˉtype.Bool);
+                        Operations.Add(new Nativeˉtextˉutf8ˉisˉvalid(Utf8ˉresult, Utf8ˉbytes.Value));
+                        Stack.Push(new(Utf8ˉresult, Nativeˉvalueˉtype.Bool));
                         break;
                     case Opcode.Bytesˉslice:
                         var Sliceˉlength = Popˉvalue(Nativeˉvalueˉtype.U32);
@@ -452,6 +507,53 @@ public static class X64ˉnativeˉbackend
                             Readˉbytes.Value,
                             Readˉoffset.Value));
                         Stack.Push(new(Readˉresult, Readˉtype));
+                        break;
+                    case Opcode.Recordˉcreate:
+                        var Recordˉtypeˉindex = checked((int)Instruction.Unsignedˉoperand);
+                        if ((uint)Recordˉtypeˉindex >= (uint)module.Module.Types.Length ||
+                            module.Module.Types[Recordˉtypeˉindex] is not Recordˉtypeˉdeclaration)
+                        {
+                            Fail("WVN2003", "Verified WVB exposed invalid record metadata during native lowering.");
+                        }
+                        var Recordˉtype = (Recordˉtypeˉdeclaration)module.Module.Types[Recordˉtypeˉindex];
+                        var Recordˉfields = new Nativeˉstackˉvalue[Recordˉtype.Fields.Length];
+                        for (var Fieldˉindex = Recordˉfields.Length - 1; Fieldˉindex >= 0; Fieldˉindex--)
+                        {
+                            Recordˉfields[Fieldˉindex] = Popˉvalue(Toˉnativeˉtype(Recordˉtype.Fields[Fieldˉindex].Type));
+                        }
+                        var Recordˉresult = Newˉvalue(Nativeˉvalueˉtype.Record);
+                        Operations.Add(new Nativeˉrecordˉcreate(
+                            Recordˉresult,
+                            Recordˉtypeˉindex,
+                            Recordˉfields.Select(Field => Field.Value).ToImmutableArray()));
+                        Stack.Push(new(Recordˉresult, Nativeˉvalueˉtype.Record, Recordˉtypeˉindex));
+                        break;
+                    case Opcode.Recordˉfield:
+                        var Recordˉsource = Popˉvalue(Nativeˉvalueˉtype.Record);
+                        if ((uint)Recordˉsource.Nominalˉtypeˉindex >= (uint)module.Module.Types.Length ||
+                            module.Module.Types[Recordˉsource.Nominalˉtypeˉindex] is not Recordˉtypeˉdeclaration)
+                        {
+                            Fail("WVN2003", "Verified WVB exposed a record value without native type identity.");
+                        }
+                        var Fieldˉrecord =
+                            (Recordˉtypeˉdeclaration)module.Module.Types[Recordˉsource.Nominalˉtypeˉindex];
+                        var Recordˉfieldˉindex = checked((int)Instruction.Unsignedˉoperand);
+                        if ((uint)Recordˉfieldˉindex >= (uint)Fieldˉrecord.Fields.Length)
+                        {
+                            Fail("WVN2003", "Verified WVB exposed an invalid record field during native lowering.");
+                        }
+                        var Recordˉfieldˉshape = Fieldˉrecord.Fields[Recordˉfieldˉindex].Type;
+                        var Recordˉfieldˉtype = Toˉnativeˉtype(Recordˉfieldˉshape);
+                        var Recordˉfieldˉresult = Newˉvalue(Recordˉfieldˉtype);
+                        Operations.Add(new Nativeˉrecordˉfield(
+                            Recordˉfieldˉresult,
+                            Recordˉsource.Nominalˉtypeˉindex,
+                            Recordˉfieldˉindex,
+                            Recordˉsource.Value));
+                        Stack.Push(new(
+                            Recordˉfieldˉresult,
+                            Recordˉfieldˉtype,
+                            Recordˉfieldˉshape.Nominalˉtypeˉindex));
                         break;
                     case Opcode.Dataˉlength:
                         var Lengthˉdata = checked((int)Instruction.Unsignedˉoperand);
@@ -523,14 +625,15 @@ public static class X64ˉnativeˉbackend
                             Arguments[Argumentˉindex] = Popˉvalue(Toˉnativeˉtype(
                                 Calledˉfunction.Parameterˉtypes[Argumentˉindex]));
                         }
-                        var Callˉtype = Toˉnativeˉtype(Calledˉfunction.Returnˉtype);
+                        var Callˉshape = Calledˉfunction.Returnˉtype;
+                        var Callˉtype = Toˉnativeˉtype(Callˉshape);
                         var Callˉresult = Newˉvalue(Callˉtype);
                         Operations.Add(new Nativeˉcall(
                             Callˉresult,
                             Callˉtype,
                             Calledˉfunctionˉindex,
                             Arguments.Select(Argument => Argument.Value).ToImmutableArray()));
-                        Stack.Push(new(Callˉresult, Callˉtype));
+                        Stack.Push(new(Callˉresult, Callˉtype, Callˉshape.Nominalˉtypeˉindex));
                         break;
                     case Opcode.Jump:
                         Requireˉterminator(Isˉlast, Stack, Instruction.Opcode);
@@ -598,13 +701,21 @@ public static class X64ˉnativeˉbackend
             (uint)mainˉfunction >= (uint)module.Functions.Length ||
             module.Functions[mainˉfunction] is not { Name: "Main", Blocks.Length: >= 1 } ||
             module.Data.IsDefault ||
+            module.Types.IsDefault ||
             module.Requiredˉservices.IsDefault ||
-            module.Requiredˉservices.Length > 4 ||
+            module.Requiredˉservices.Length > 5 ||
             module.Requiredˉservices.Any(Service => !Enum.IsDefined(Service)) ||
             module.Requiredˉservices.Distinct().Count() != module.Requiredˉservices.Length ||
             !module.Requiredˉservices.SequenceEqual(module.Requiredˉservices.Order()))
         {
             Fail("WVN2901", "The x86-64 selector received an unsupported native machine-IR shape.");
+        }
+        if (module.Types.Any(Type =>
+                Type is null ||
+                !Seedˉnames.Isˉidentifier(Type.Name) ||
+                !Isˉsupportedˉnativeˉnominalˉtype(Type)))
+        {
+            Fail("WVN2901", "The x86-64 selector received invalid nominal type metadata.");
         }
         foreach (var Function in module.Functions)
         {
@@ -639,6 +750,7 @@ public static class X64ˉnativeˉbackend
             var Instructionˉlimitˉpatches = new List<int>();
             var Boundsˉpatches = new List<int>();
             var Byteˉboundsˉpatches = new List<int>();
+            var Recordˉarenaˉpatches = new List<int>();
             var Runtimeˉserviceˉpatches = new List<int>();
             var Propagateˉpatches = new List<int>();
             var Depthˉpatches = new List<int>();
@@ -688,6 +800,9 @@ public static class X64ˉnativeˉbackend
                             break;
                         case Nativeˉu32ˉconstant Constant:
                             Emitˉconstant(Code, unchecked((int)Constant.Value), Valueˉslot(Function, Constant.Result));
+                            break;
+                        case Nativeˉenumˉconstant Constant:
+                            Emitˉconstant(Code, Constant.Value, Valueˉslot(Function, Constant.Result));
                             break;
                         case Nativeˉstaticˉtextˉconstant Constant:
                             var Staticˉtext = (Nativeˉutf8ˉdata)module.Data[Constant.Data];
@@ -813,6 +928,14 @@ public static class X64ˉnativeˉbackend
                                 Comparison.Kind == Nativeˉu8ˉcomparisonˉkind.Equal ? (byte)0x94 : (byte)0x95,
                                 Valueˉslot(Function, Comparison.Result));
                             break;
+                        case Nativeˉenumˉcomparison Comparison:
+                            Emitˉcomparison(
+                                Code,
+                                Valueˉslot(Function, Comparison.Left),
+                                Valueˉslot(Function, Comparison.Right),
+                                Comparison.Kind == Nativeˉenumˉcomparisonˉkind.Equal ? (byte)0x94 : (byte)0x95,
+                                Valueˉslot(Function, Comparison.Result));
+                            break;
                         case Nativeˉu32ˉfromˉu8 Conversion:
                             Emitˉcopy(
                                 Code,
@@ -840,6 +963,25 @@ public static class X64ˉnativeˉbackend
                                 Function,
                                 Read,
                                 Byteˉboundsˉpatches);
+                            break;
+                        case Nativeˉtextˉutf8ˉisˉvalid Validation:
+                            Emitˉdescriptorˉserviceˉinput(
+                                Code,
+                                Valueˉslot(Function, Validation.Bytes),
+                                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+                            Emitˉloadˉdescriptorˉoutputˉrcx(
+                                Code,
+                                Valueˉslot(Function, Validation.Result));
+                            Emitˉserviceˉcall(
+                                Code,
+                                Nativeˉserviceˉtableˉcontract.TEXT_UTF8_IS_VALID_POINTER_OFFSET,
+                                Runtimeˉserviceˉpatches);
+                            break;
+                        case Nativeˉrecordˉcreate Create:
+                            Emitˉrecordˉcreate(Code, Function, Create, Recordˉarenaˉpatches);
+                            break;
+                        case Nativeˉrecordˉfield Field:
+                            Emitˉrecordˉfield(Code, Function, Field, Recordˉarenaˉpatches);
                             break;
                         case Nativeˉdataˉlength Length:
                             Emitˉconstant(Code, Length.Length, Valueˉslot(Function, Length.Result));
@@ -952,6 +1094,8 @@ public static class X64ˉnativeˉbackend
             Emitˉstatusˉtrap(Code, Frameˉbytes, BYTE_BOUNDS_STATUS, Isˉmain);
             var Runtimeˉserviceˉoffset = Code.Count;
             Emitˉstatusˉtrap(Code, Frameˉbytes, RUNTIME_SERVICE_STATUS, Isˉmain);
+            var Recordˉarenaˉoffset = Code.Count;
+            Emitˉstatusˉtrap(Code, Frameˉbytes, RECORD_ARENA_STATUS, Isˉmain);
             var Depthˉoffset = Code.Count;
             Code.AddRange([0x49, 0xFF, 0xC2, 0x48, 0xB8]);
             Addˉu64(Code, CALL_DEPTH_STATUS);
@@ -980,6 +1124,10 @@ public static class X64ˉnativeˉbackend
             foreach (var Patchˉoffset in Runtimeˉserviceˉpatches)
             {
                 Writeˉrelativeˉi32(Code, Patchˉoffset, Runtimeˉserviceˉoffset);
+            }
+            foreach (var Patchˉoffset in Recordˉarenaˉpatches)
+            {
+                Writeˉrelativeˉi32(Code, Patchˉoffset, Recordˉarenaˉoffset);
             }
             foreach (var Patchˉoffset in Propagateˉpatches)
             {
@@ -1106,7 +1254,9 @@ public static class X64ˉnativeˉbackend
                 Nativeˉvalueˉtype.Borrowedˉtext or
                 Nativeˉvalueˉtype.U8 or
                 Nativeˉvalueˉtype.U32 or
-                Nativeˉvalueˉtype.Borrowedˉbytes)) ||
+                Nativeˉvalueˉtype.Borrowedˉbytes or
+                Nativeˉvalueˉtype.Enum or
+                Nativeˉvalueˉtype.Record)) ||
             function.Valueˉtypes.Any(Type => !Enum.IsDefined(Type)))
         {
             Fail("WVN2901", "The x86-64 selector received invalid native function metadata.");
@@ -1151,6 +1301,16 @@ public static class X64ˉnativeˉbackend
                         break;
                     case Nativeˉu32ˉconstant Constant:
                         Requireˉresult(function, Constant.Result, Nativeˉvalueˉtype.U32, ref Nextˉvalue);
+                        break;
+                    case Nativeˉenumˉconstant Constant:
+                        if ((uint)Constant.Type >= (uint)module.Types.Length ||
+                            module.Types[Constant.Type] is not Enumˉtypeˉdeclaration Enumˉmetadata ||
+                            (uint)Constant.Member >= (uint)Enumˉmetadata.Members.Length ||
+                            Constant.Value != Enumˉmetadata.Members[Constant.Member].Value)
+                        {
+                            Fail("WVN2901", "The x86-64 selector received invalid enum constant metadata.");
+                        }
+                        Requireˉresult(function, Constant.Result, Nativeˉvalueˉtype.Enum, ref Nextˉvalue);
                         break;
                     case Nativeˉstaticˉtextˉconstant Constant:
                         if ((uint)Constant.Data >= (uint)module.Data.Length ||
@@ -1222,6 +1382,11 @@ public static class X64ˉnativeˉbackend
                         Requireˉvalue(function, Comparison.Right, Nativeˉvalueˉtype.U8, Nextˉvalue);
                         Requireˉresult(function, Comparison.Result, Nativeˉvalueˉtype.Bool, ref Nextˉvalue);
                         break;
+                    case Nativeˉenumˉcomparison Comparison when Enum.IsDefined(Comparison.Kind):
+                        Requireˉvalue(function, Comparison.Left, Nativeˉvalueˉtype.Enum, Nextˉvalue);
+                        Requireˉvalue(function, Comparison.Right, Nativeˉvalueˉtype.Enum, Nextˉvalue);
+                        Requireˉresult(function, Comparison.Result, Nativeˉvalueˉtype.Bool, ref Nextˉvalue);
+                        break;
                     case Nativeˉu32ˉfromˉu8 Conversion:
                         Requireˉvalue(function, Conversion.Value, Nativeˉvalueˉtype.U8, Nextˉvalue);
                         Requireˉresult(function, Conversion.Result, Nativeˉvalueˉtype.U32, ref Nextˉvalue);
@@ -1248,6 +1413,53 @@ public static class X64ˉnativeˉbackend
                                 Nativeˉbytesˉreadˉkind.I32ˉlittle => Nativeˉvalueˉtype.I32,
                                 _ => Nativeˉvalueˉtype.U32,
                             },
+                            ref Nextˉvalue);
+                        break;
+                    case Nativeˉtextˉutf8ˉisˉvalid Validation:
+                        if (!module.Requiredˉservices.Contains(Nativeˉservice.Textˉutf8ˉisˉvalid))
+                        {
+                            Fail("WVN2901", "The x86-64 selector received invalid UTF-8 validation metadata.");
+                        }
+                        Requireˉvalue(function, Validation.Bytes, Nativeˉvalueˉtype.Borrowedˉbytes, Nextˉvalue);
+                        Requireˉresult(function, Validation.Result, Nativeˉvalueˉtype.Bool, ref Nextˉvalue);
+                        break;
+                    case Nativeˉrecordˉcreate Create:
+                        if ((uint)Create.Type >= (uint)module.Types.Length ||
+                            module.Types[Create.Type] is not Recordˉtypeˉdeclaration)
+                        {
+                            Fail("WVN2901", "The x86-64 selector received invalid record construction metadata.");
+                        }
+                        var Record = (Recordˉtypeˉdeclaration)module.Types[Create.Type];
+                        if (Create.Fields.IsDefault || Create.Fields.Length != Record.Fields.Length)
+                        {
+                            Fail("WVN2901", "The x86-64 selector received noncanonical record fields.");
+                        }
+                        for (var Field = 0; Field < Create.Fields.Length; Field++)
+                        {
+                            Requireˉvalue(
+                                function,
+                                Create.Fields[Field],
+                                Toˉnativeˉtype(Record.Fields[Field].Type),
+                                Nextˉvalue);
+                        }
+                        Requireˉresult(function, Create.Result, Nativeˉvalueˉtype.Record, ref Nextˉvalue);
+                        break;
+                    case Nativeˉrecordˉfield Field:
+                        if ((uint)Field.Type >= (uint)module.Types.Length ||
+                            module.Types[Field.Type] is not Recordˉtypeˉdeclaration)
+                        {
+                            Fail("WVN2901", "The x86-64 selector received invalid record field metadata.");
+                        }
+                        var Fieldˉrecord = (Recordˉtypeˉdeclaration)module.Types[Field.Type];
+                        if ((uint)Field.Field >= (uint)Fieldˉrecord.Fields.Length)
+                        {
+                            Fail("WVN2901", "The x86-64 selector received an invalid record field index.");
+                        }
+                        Requireˉvalue(function, Field.Record, Nativeˉvalueˉtype.Record, Nextˉvalue);
+                        Requireˉresult(
+                            function,
+                            Field.Result,
+                            Toˉnativeˉtype(Fieldˉrecord.Fields[Field.Field].Type),
                             ref Nextˉvalue);
                         break;
                     case Nativeˉdataˉlength Length:
@@ -1397,28 +1609,52 @@ public static class X64ˉnativeˉbackend
             _ => false,
         };
 
+    private static bool Isˉsupportedˉnativeˉnominalˉtype(Nominalˉtypeˉdeclaration type) =>
+        type switch
+        {
+            Enumˉtypeˉdeclaration Enum =>
+                !Enum.Members.IsDefaultOrEmpty && Enum.Members[0].Value == 0,
+            Recordˉtypeˉdeclaration Record =>
+                !Record.Fields.IsDefaultOrEmpty &&
+                Record.Fields.All(Field => Field.Type.Kind is
+                    Valueˉtype.I32 or
+                    Valueˉtype.Bool or
+                    Valueˉtype.U8 or
+                    Valueˉtype.U32 or
+                    Valueˉtype.Record or
+                    Valueˉtype.Enum),
+            _ => false,
+        };
+
     private static bool Isˉnativeˉreturnˉtype(Valueˉshape type) =>
-        type.Nominalˉtypeˉindex == -1 &&
-        type.Kind is Valueˉtype.I32 or Valueˉtype.Bool or Valueˉtype.U8 or Valueˉtype.U32;
+        type.Kind switch
+        {
+            Valueˉtype.I32 or Valueˉtype.Bool or Valueˉtype.U8 or Valueˉtype.U32 =>
+                type.Nominalˉtypeˉindex == -1,
+            Valueˉtype.Record or Valueˉtype.Enum => type.Nominalˉtypeˉindex >= 0,
+            _ => false,
+        };
 
     private static bool Isˉnativeˉparameterˉtype(Valueˉshape type) =>
         Isˉnativeˉreturnˉtype(type) ||
         type.Nominalˉtypeˉindex == -1 && type.Kind is Valueˉtype.Text or Valueˉtype.Bytes;
 
     private static bool Isˉnativeˉlocalˉtype(Valueˉshape type) =>
-        type.Nominalˉtypeˉindex == -1 &&
-        type.Kind is Valueˉtype.I32 or
-            Valueˉtype.Bool or
-            Valueˉtype.Text or
-            Valueˉtype.U8 or
-            Valueˉtype.U32 or
-            Valueˉtype.Bytes;
+        type.Kind switch
+        {
+            Valueˉtype.I32 or Valueˉtype.Bool or Valueˉtype.Text or Valueˉtype.U8 or
+                Valueˉtype.U32 or Valueˉtype.Bytes => type.Nominalˉtypeˉindex == -1,
+            Valueˉtype.Record or Valueˉtype.Enum => type.Nominalˉtypeˉindex >= 0,
+            _ => false,
+        };
 
     private static bool Isˉnativeˉscalarˉtype(Nativeˉvalueˉtype type) =>
         type is Nativeˉvalueˉtype.I32 or
             Nativeˉvalueˉtype.Bool or
             Nativeˉvalueˉtype.U8 or
-            Nativeˉvalueˉtype.U32;
+            Nativeˉvalueˉtype.U32 or
+            Nativeˉvalueˉtype.Enum or
+            Nativeˉvalueˉtype.Record;
 
     private static Nativeˉvalueˉtype Toˉnativeˉtype(Valueˉshape type) =>
         type.Kind switch
@@ -1429,11 +1665,16 @@ public static class X64ˉnativeˉbackend
             Valueˉtype.U8 when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.U8,
             Valueˉtype.U32 when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.U32,
             Valueˉtype.Bytes when type.Nominalˉtypeˉindex == -1 => Nativeˉvalueˉtype.Borrowedˉbytes,
+            Valueˉtype.Enum when type.Nominalˉtypeˉindex >= 0 => Nativeˉvalueˉtype.Enum,
+            Valueˉtype.Record when type.Nominalˉtypeˉindex >= 0 => Nativeˉvalueˉtype.Record,
             _ => throw new Nativeˉbackendˉexception("WVN2002", $"Unsupported native local type '{type}'."),
         };
 
     private static bool Isˉnativeˉdescriptorˉtype(Nativeˉvalueˉtype type) =>
         type is Nativeˉvalueˉtype.Borrowedˉtext or Nativeˉvalueˉtype.Borrowedˉbytes;
+
+    private static bool Isˉnativeˉrunˉreferenceˉtype(Nativeˉvalueˉtype type) =>
+        Isˉnativeˉdescriptorˉtype(type) || type == Nativeˉvalueˉtype.Record;
 
     private static IEnumerable<int> Targets(Nativeˉterminator terminator) =>
         terminator switch
@@ -1625,6 +1866,86 @@ public static class X64ˉnativeˉbackend
         Emitˉstoreˉeax(code, Valueˉslot(function, read.Result));
     }
 
+    private static void Emitˉrecordˉcreate(
+        List<byte> code,
+        Nativeˉfunction function,
+        Nativeˉrecordˉcreate create,
+        List<int> arenaˉpatches)
+    {
+        var Allocationˉbytes = checked(create.Fields.Length * Nativeˉcontract.VALUE_SLOT_BYTES);
+        code.AddRange(
+        [
+            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
+            0x89, 0xC1,
+            0x81, 0xC1,
+        ]);
+        Addˉi32(code, Allocationˉbytes);
+        code.AddRange([0x0F, 0x82]);
+        arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET,
+            0x0F, 0x87,
+        ]);
+        arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
+        ]);
+        Emitˉstoreˉeax(code, Valueˉslot(function, create.Result));
+        code.AddRange(
+        [
+            0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET,
+            0x48, 0x01, 0xC2,
+        ]);
+        for (var Field = 0; Field < create.Fields.Length; Field++)
+        {
+            var Sourceˉslot = Valueˉslot(function, create.Fields[Field]);
+            var Targetˉoffset = checked(Field * Nativeˉcontract.VALUE_SLOT_BYTES);
+            Emitˉloadˉrax(code, Sourceˉslot);
+            code.AddRange([0x48, 0x89, 0x82]);
+            Addˉi32(code, Targetˉoffset);
+            Emitˉloadˉraxˉatˉfield(code, Sourceˉslot, sizeof(ulong));
+            code.AddRange([0x48, 0x89, 0x82]);
+            Addˉi32(code, checked(Targetˉoffset + sizeof(ulong)));
+        }
+    }
+
+    private static void Emitˉrecordˉfield(
+        List<byte> code,
+        Nativeˉfunction function,
+        Nativeˉrecordˉfield field,
+        List<int> arenaˉpatches)
+    {
+        Emitˉloadˉeax(code, Valueˉslot(function, field.Record));
+        code.AddRange([0x89, 0xC1, 0x81, 0xC1]);
+        Addˉi32(code, checked((field.Field + 1) * Nativeˉcontract.VALUE_SLOT_BYTES));
+        code.AddRange([0x0F, 0x82]);
+        arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
+            0x0F, 0x87,
+        ]);
+        arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET,
+            0x48, 0x01, 0xC2,
+        ]);
+        var Sourceˉoffset = checked(field.Field * Nativeˉcontract.VALUE_SLOT_BYTES);
+        code.AddRange([0x48, 0x8B, 0x82]);
+        Addˉi32(code, Sourceˉoffset);
+        Emitˉstoreˉrax(code, Valueˉslot(function, field.Result));
+        code.AddRange([0x48, 0x8B, 0x82]);
+        Addˉi32(code, checked(Sourceˉoffset + sizeof(ulong)));
+        Emitˉstoreˉraxˉatˉfield(code, Valueˉslot(function, field.Result), sizeof(ulong));
+    }
+
     private static void Emitˉdescriptorˉserviceˉinput(
         List<byte> code,
         int slot,
@@ -1778,6 +2099,12 @@ public static class X64ˉnativeˉbackend
         Addˉi32(code, Slotˉoffset(slot));
     }
 
+    private static void Emitˉloadˉraxˉatˉfield(List<byte> code, int slot, int field)
+    {
+        code.AddRange([0x48, 0x8B, 0x84, 0x24]);
+        Addˉi32(code, checked(Slotˉoffset(slot) + field));
+    }
+
     private static void Emitˉloadˉrdx(List<byte> code, int slot)
     {
         code.AddRange([0x48, 0x8B, 0x94, 0x24]);
@@ -1788,6 +2115,12 @@ public static class X64ˉnativeˉbackend
     {
         code.AddRange([0x48, 0x89, 0x84, 0x24]);
         Addˉi32(code, Slotˉoffset(slot));
+    }
+
+    private static void Emitˉstoreˉraxˉatˉfield(List<byte> code, int slot, int field)
+    {
+        code.AddRange([0x48, 0x89, 0x84, 0x24]);
+        Addˉi32(code, checked(Slotˉoffset(slot) + field));
     }
 
     private static void Emitˉstoreˉeaxˉatˉfield(List<byte> code, int slot, int field)
@@ -1906,7 +2239,8 @@ public static class X64ˉnativeˉbackend
 
     private readonly record struct Nativeˉstackˉvalue(
         int Value,
-        Nativeˉvalueˉtype Type);
+        Nativeˉvalueˉtype Type,
+        int Nominalˉtypeˉindex = -1);
 
     private readonly record struct Nativeˉbranchˉpatch(int Offset, int Targetˉblock);
 
