@@ -36,11 +36,13 @@ JSON, XML/MSBuild-style evaluation, and executable Windvale build scripts were r
 
 The focused project conformance test passes in Release and covers valid parsing, exact 64-module acceptance, the 65th-module rejection, manifest/path byte bounds, malformed headers and directives, BOM and malformed UTF-8 rejection, noncanonical paths, duplicate resolved paths, and manifest-relative resolution independent of the process working directory.
 
+After the candidate was rebased over Decision 0074's native-output implementation, the zero-warning Windows Development gate passed all 56 regular tests in 57.472 suite seconds; the focused project case took 24 milliseconds. The complete compiler bootstrap verifier then finished in 416 seconds. Stage 1 was built through `Windvale-Compiler.wvproj`, executed the unchanged 6,700,562,174 verified VM instructions, and produced a separately verified byte-identical Stage 2.
+
 The CLI builds `Examples/Foundation/Module-Composition-Demo.wvproj` to the existing canonical WVB with SHA-256 `0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60`. The project and repeated-`--module` paths produce byte-identical output. A malformed project returns `WVP1004` and preserves an existing output byte for byte.
 
 `Windvale-Compiler.wvproj` selects the exact canonical 12-module, 677,073-source-byte closure and produces the established 599,868-byte Stage 1 compiler with SHA-256 `9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066`.
 
-Windows Standard, the complete bootstrap convergence verifier, Windows Qualification, Debian Qualification, portable-artifact comparison, and independent GitHub verification remain required before this decision becomes qualified.
+Windows Standard and Qualification, Debian Qualification, portable-artifact comparison, and independent GitHub verification remain required before this decision becomes qualified. OS and QEMU gates are unrelated to the project-input contract and were not run for this candidate.
 
 ## Consequences
 
