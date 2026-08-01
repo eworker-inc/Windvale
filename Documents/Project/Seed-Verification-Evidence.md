@@ -3,8 +3,8 @@
 - Evidence date: 2026-08-01
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified commit: `f97d22154d1c7562f72552a617dd912d18943880`
-- Latest pinned Windvale OS qualified candidate: `f97d22154d1c7562f72552a617dd912d18943880`
+- Latest cross-host Seed qualified commit: `328e4552829b236e5baeb1f01447010855842730`
+- Latest pinned Windvale OS qualified candidate: `328e4552829b236e5baeb1f01447010855842730`
 
 ## Requirement evidence
 
@@ -699,6 +699,22 @@ All 61 directly retrieved portable artifacts, totaling 7,752,647 bytes, match by
 GitHub [Verify run 30696841988](https://github.com/eworker-inc/Windvale/actions/runs/30696841988) passes for the exact candidate. After evidence retrieval and comparison, the resolved QA directory, transferred source archive, remote evidence bundle, and temporary QA inputs were removed and confirmed absent.
 
 All six deterministic pure runtime services now execute without managed callbacks or platform adapters. C# still constructs and verifies the service bundles, publishes executable memory, owns the arenas and executor, supplies the five hosted/capability adapters, and remains the reference/recovery implementation. This supersedes Decision 0071 as the latest qualified native-runtime evidence without claiming a Windvale-written native runtime, standalone hosted executable/container, native compiler execution, in-guest WVB loading, or .NET retirement.
+
+## Native argument table and process-input services qualification
+
+Decision 0073 advances the qualified target to ABI 12 and execution-context version 4 while retaining service-table version 4, WVB 1.6, WVO 1.0, and generated service-call shapes. The context appends one execution-owned immutable argument-table pointer and count. Stage 0 packs at most 67 prevalidated strict-UTF-8 arguments, independently rereads every descriptor, range, reserved field, and byte before publication, and releases the snapshot after execution.
+
+`Processˉargumentˉcount` now uses one exact 5-byte platform-neutral x86-64 leaf with SHA-256 `2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829`. `Processˉargument` uses one exact 70-byte checked descriptor-copy leaf with SHA-256 `2253e1435f141df5b68f9f7e9e9aa0de448410c42dcf33ad76dcf131afea65d1`. Differential coverage consumes the complete 67-entry snapshot including empty, ASCII, euro, and supplementary-Unicode text, proves zero arguments, deterministic reconstruction, corruption rejection, and exact out-of-range failure.
+
+Exact commit `328e4552829b236e5baeb1f01447010855842730`, tree `cc5dc70848655e3bc1a403d28c700bf4e3c3f71d`, was published to both configured remotes and archived as 2,900,102 bytes with SHA-256 `692774c8780eeabc30f758aec49373b23685d542252ea80475c04289ec84f3d7`. Its digest and size matched after transfer to the isolated Debian GNU/Linux 12 x64 QA host with .NET SDK `10.0.302`.
+
+Windows and Debian pass zero-warning Release builds, all 56 tests, exact compiler reproduction, and the complete native CLI verifier. Their suite times are 238.075 and 252.295 seconds; their native hosted-input cases take 0.020 and 0.022 seconds. The 15,563-byte Windows conformance report has SHA-256 `c34a2199e548631323b2186dda0dcf8ffcb0a3a3c6eb7d53d9a405c314837a4b`; its 11,916-byte timing report has SHA-256 `aff0fece57fb555ecfad153dbbb9c2745ae305f67826aa2248da10ee6eb98c9f`. The 15,473-byte Debian report has SHA-256 `0a8116b03185d7344dd47fb0996c1cc9402c3b9583522574a2a77b0e2fa1f5cf`; its 11,523-byte timing report has SHA-256 `a0c8e76975837d2bb9f5a1179b58976d9be71990926812258becc0d3421cce7c`. Their normalized contracts match exactly.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,647 bytes, match byte for byte and retain canonical manifest SHA-256 `11ac1d4a57fce3648004d7a6002e6124d6e2fbeefc108b31bfe305523b2de0de`. The 2,299,022-byte Debian evidence bundle has SHA-256 `c9043ab9fdc72241affda5dabd8250adf5d39ecc73b9bf48901e27dc4e056c94`. Both hosts pass all 15 OS tests. The service-free kernel WVB remains 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`; its WVO remains 8,010 bytes with SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`. The bridge object is 340 bytes with SHA-256 `0f6d4f00e6a66c23dedc7c6224cdae3f556c5d1c0ff927e596c927a73fd9829f`; probe 14 is 15,872 bytes with SHA-256 `aadfbc5cb56f6afea94605ad31ee6af6a60b1e821403dfb8e1c2550631b6d548`. Pinned QEMU 11.0/Q35/TCG emits the complete success marker and returns guest-controlled host exit code 1. The Debian QA host does not provide QEMU.
+
+GitHub [Verify run 30698761104](https://github.com/eworker-inc/Windvale/actions/runs/30698761104) passes its independent Windows and Linux jobs for the exact candidate. After evidence retrieval and comparison, the resolved QA directory, transferred source archive, remote evidence bundle, and temporary QA inputs were removed and confirmed absent.
+
+Eight of eleven closed runtime-service slots now execute without managed callbacks or platform adapters. C# still constructs and verifies the service leaves and argument table, publishes executable memory, owns arenas and execution, supplies console, diagnostic, and file-input adapters, and remains the reference/recovery implementation. This supersedes Decision 0072 as the latest qualified native-runtime evidence without claiming a Windvale-written native runtime, standalone hosted executable/container, native compiler execution, in-guest WVB loading, or .NET retirement.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
