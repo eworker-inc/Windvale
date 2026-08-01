@@ -1,7 +1,7 @@
 # Decision 0067: Borrowed hosted input and first native WVB inspector
 
 - Date: 2026-08-01
-- Status: Implemented candidate; cross-host qualification pending
+- Status: Cross-host qualified on Windows x64 and Debian x64; OS consumer qualified under pinned QEMU
 - Refines: [Decision 0066](0066-Borrowed-Bytes-And-Unsigned-Native-Values.md)'s ABI-7 borrowed value boundary
 - Advances: The first useful Windvale-written hosted program through native execution
 
@@ -26,11 +26,17 @@ The input boundary must not introduce ambient process access, native paths or ha
 - Advance the firmware probe identity to version 10 because the OS AOT consumer is rebuilt through ABI 8. The guest continues to use a zero service-table pointer; this decision does not add hosted file/process services to the OS.
 - Retain C#/.NET as the Stage 0 selector, verifier, Windows/Linux adapter, differential oracle, and recovery implementation. Native hosted input is progress toward a self-hosted stack, not permission to retire the reference implementation.
 
-## Candidate evidence
+## Qualification evidence
 
 The focused Windows test compiles the checked-in inspector twice and obtains identical native code. The reference interpreter and W^X executor both read a real compiler-produced WVB, emit the same two output lines, return zero, and call the file adapter only once despite two language-level reads. Independent verification rejects corruption of every service-table load and a noncanonical service list. Native failure tests agree with the reference resource contract on out-of-range arguments (`WVR3020`) and missing files (`WVR3022`).
 
-All 15 deterministic OS tests pass with the 15,872-byte firmware-probe-10 image, SHA-256 `9228995f3b2522e15bd87ca63dc2637cc290f93b37f3e32b24cd8e3906671b75`. Cross-host Qualification, portable-artifact comparison, and pinned-QEMU execution remain required before changing this decision to qualified status.
+Exact candidate commit `d970c2789058d37c7059264fcbd76e164a01a939`, tree `1723f1ee8342e36e3237f14b21927e334c9bddae`, was published to both configured remotes. Its 2,851,048-byte source archive has SHA-256 `1188c5fdf12c71426d4a5735eb533326b739432f75618c2e8aba134ba1862374`; Debian computed the same digest before extracting it into the isolated E-Worker QA directory. The focused Linux native hosted-input case passed the real System V `mmap`/`mprotect` and callback path in 178 milliseconds.
+
+Windows Qualification completed in 408.1 seconds with a 201.569-second suite. Debian Qualification completed in 421.9 seconds with a 213.068-second suite. Both hosts used .NET SDK `10.0.302` and runtime `10.0.10`, passed a zero-warning Release build, all 52 tests, exact Stage 1 to Stage 2 compiler reproduction, and the complete native CLI verifier. The 15,563-byte Windows report has SHA-256 `6780bd68cfcf7dacea10d34f5a4b9d7eeb6cdc2c2c4a70cf055c6830429330f5`; its 11,244-byte timing report has SHA-256 `350a72a7c699a9bde83e330c674fd108e1ae6742c4cc1538082da2951945a4bb`. The 15,473-byte Debian report has SHA-256 `1fec4c222425f2737a7f41c415b1841f88aab0a8e7458b40d4e7d170e1d9c35d`; its 10,869-byte timing report has SHA-256 `66358cacf8220d5b8231c2800961d8ad1546c0267ec0a3b4b8e1e642865ef029`. Their normalized contracts match exactly.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,612 bytes, matched Windows byte for byte. Their canonical name/size/SHA-256 manifest has SHA-256 `723354f893e2bb1c4bfaa6f7a04dc23995a51a2d5444d9a55759710d76b47f39`. The 2,293,338-byte Debian evidence bundle has SHA-256 `d02a98ce1ef1e48998ef4e06d33a58a368233382883068722d766ae9c2e8acca`. After retrieval and comparison, the exact QA directory, transferred source archive, and remote evidence bundle were removed and confirmed absent.
+
+All 15 deterministic OS tests pass on Windows and Debian. Pinned QEMU `11.0.0`/Q35/TCG boots the deterministic 15,872-byte firmware-probe-10 image with SHA-256 `9228995f3b2522e15bd87ca63dc2637cc290f93b37f3e32b24cd8e3906671b75`, emits the complete version-10 success transcript, and returns the guest-controlled host exit code 1.
 
 ## Consequences
 

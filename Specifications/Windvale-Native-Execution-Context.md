@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Version 1 of this context is retained by the implemented `x86-64-wvb-baseline-v8` candidate. It carries per-run resource limits and a versioned runtime-service table without making generated code depend on the Windows x64 or System V x86-64 calling convention. [Decision 0065](../Documents/Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) qualifies the context and first service at ABI 6; [Decision 0066](../Documents/Decisions/0066-Borrowed-Bytes-And-Unsigned-Native-Values.md) qualifies the value and call representation at ABI 7; [Decision 0067](../Documents/Decisions/0067-Borrowed-Hosted-Input-And-First-Native-Wvb-Inspector.md) defines ABI 8's borrowed hosted-input candidate.
+Version 1 of this context is retained by the qualified `x86-64-wvb-baseline-v8` target. It carries per-run resource limits and a versioned runtime-service table without making generated code depend on the Windows x64 or System V x86-64 calling convention. [Decision 0065](../Documents/Decisions/0065-Versioned-Native-Execution-Context-And-Console-Service.md) qualifies the context and first service at ABI 6; [Decision 0066](../Documents/Decisions/0066-Borrowed-Bytes-And-Unsigned-Native-Values.md) qualifies the value and call representation at ABI 7; [Decision 0067](../Documents/Decisions/0067-Borrowed-Hosted-Input-And-First-Native-Wvb-Inspector.md) qualifies ABI 8's borrowed hosted-input boundary on Windows and Debian.
 
 This is an experimental native ABI, not a stable public foreign-function interface. ABI 8 replaces ABI 7 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-8 fragment verifier.
 

@@ -1,10 +1,10 @@
 # Windvale Seed verification evidence
 
-- Evidence date: 2026-07-31
+- Evidence date: 2026-08-01
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified commit: `1af2eca1e3ef8443daa3354ddfe03935821ae23d`
-- Latest pinned Windvale OS qualified candidate: `708242e2ad84f5fe9337588de5c2d02bc3f50a38`
+- Latest cross-host Seed qualified commit: `d970c2789058d37c7059264fcbd76e164a01a939`
+- Latest pinned Windvale OS qualified candidate: `d970c2789058d37c7059264fcbd76e164a01a939`
 
 ## Requirement evidence
 
@@ -607,6 +607,22 @@ All 61 directly retrieved portable artifacts, totaling 7,752,612 bytes, matched 
 Portable kernel probe version 3 adds immutable byte header `[0, 5, 0, 0, 0, 255]`, a borrowed-byte internal function, slicing, and checked `u8`/`u32` reads while retaining result 29. Its 929-byte WVB has SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`; the 7,882-byte ABI-7 WVO has SHA-256 `24f5359fa5d335eb273e8680c671924dda43d4ee4c6e00c95f1bbebc742dfa99`; and the 305-byte exact-budget bridge has SHA-256 `ef8993c59eb816c7983c5b8033922231baf1d897f846a8d5e54d8232677ef75a`. All 15 deterministic OS tests pass on both hosts. Pinned QEMU `11.0.0`/Q35/TCG boots the deterministic 15,360-byte EFI image with SHA-256 `ac92cd4759961c7a046ede49af8dce7626016fbcf8bb46e7d90027f5974bffa4`, emits the complete version-9 marker, and returns guest-controlled host exit code 1.
 
 This qualifies a borrowed immutable binary view, not a native Windvale tool or complete runtime. Native file/argument input, owned or returned bytes, dynamic text, records, allocation, hosted PE/ELF containers, Windvale-written native selection/publication, and .NET retirement remain open.
+
+## Borrowed hosted-input and first native WVB inspector qualification
+
+Decision 0067 advances the experimental shared target to `x86-64-wvb-baseline-v8` and ABI 8. Borrowed text and bytes share a pointer/length/reserved descriptor in zero-initialized 16-byte value cells. Service-table version 2 adds explicitly authorized bounded argument count, argument text, and file snapshot input beside console output. One execution owner validates, caches, and releases every host-returned buffer; the reference and native adapters share file-snapshot limits and exact `WVR302x` failures. Exact Windows/System V thunks preserve one platform-neutral generated-code convention, and the independent decoder validates all descriptor and service-load shapes before WVO or W^X publication.
+
+The checked-in `Examples/Foundation/Wvb-Header-Inspector.wv` accepts one filename, prints the host-returned text, reads a real compiler-produced WVB twice through one adapter snapshot, validates `WVB1` and version `1.6`, prints `wvb-header=pass`, and returns zero under both the reference interpreter and native execution. The focused tests also prove deterministic native code, canonical service metadata, corruption rejection, and agreement for out-of-range arguments (`WVR3020`) and missing files (`WVR3022`).
+
+Exact candidate commit `d970c2789058d37c7059264fcbd76e164a01a939`, tree `1723f1ee8342e36e3237f14b21927e334c9bddae`, was published to both configured remotes. Its 2,851,048-byte archive has SHA-256 `1188c5fdf12c71426d4a5735eb533326b739432f75618c2e8aba134ba1862374`; Debian computed the same digest before extraction into the isolated E-Worker QA directory. The focused Linux native hosted-input case passed the actual System V `mmap`/`mprotect` and callback path in 178 milliseconds.
+
+Windows Qualification completed in 408.1 seconds with a 201.569-second suite. Debian Qualification completed in 421.9 seconds with a 213.068-second suite. Both hosts used .NET SDK `10.0.302` and runtime `10.0.10`, passed zero-warning Release builds, all 52 tests, exact Stage 1 to Stage 2 compiler reproduction, and the complete native CLI verifier. The 15,563-byte Windows report has SHA-256 `6780bd68cfcf7dacea10d34f5a4b9d7eeb6cdc2c2c4a70cf055c6830429330f5`; its 11,244-byte timing report has SHA-256 `350a72a7c699a9bde83e330c674fd108e1ae6742c4cc1538082da2951945a4bb`. The 15,473-byte Debian report has SHA-256 `1fec4c222425f2737a7f41c415b1841f88aab0a8e7458b40d4e7d170e1d9c35d`; its 10,869-byte timing report has SHA-256 `66358cacf8220d5b8231c2800961d8ad1546c0267ec0a3b4b8e1e642865ef029`. Their normalized contracts match exactly.
+
+All 61 directly retrieved portable artifacts, totaling 7,752,612 bytes, matched Windows byte for byte. Their canonical name/size/SHA-256 manifest has SHA-256 `723354f893e2bb1c4bfaa6f7a04dc23995a51a2d5444d9a55759710d76b47f39`. The 2,293,338-byte Debian evidence bundle has SHA-256 `d02a98ce1ef1e48998ef4e06d33a58a368233382883068722d766ae9c2e8acca`. After retrieval and comparison, the resolved exact QA directory, transferred source archive, and remote evidence bundle were removed and confirmed absent.
+
+Firmware probe version 10 rebuilds the service-free portable consumer through ABI 8 while retaining the zero service-table pointer. The portable WVB remains 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`; its 7,882-byte WVO remains SHA-256 `24f5359fa5d335eb273e8680c671924dda43d4ee4c6e00c95f1bbebc742dfa99`. All 15 deterministic OS tests pass on Windows and Debian. Pinned QEMU `11.0.0`/Q35/TCG boots the 15,872-byte EFI image with SHA-256 `9228995f3b2522e15bd87ca63dc2637cc290f93b37f3e32b24cd8e3906671b75`, emits the complete version-10 marker, and returns guest-controlled host exit code 1.
+
+This qualifies the first native Windvale-written file-backed inspector and hosted-input boundary, not full `wvdump`, native self-hosting, or a complete operating system. Dynamic text/bytes, native nominal aggregates, structured diagnostic output, allocation, in-guest WVB loading/verification, hosted PE/ELF containers, and .NET retirement remain open.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
