@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Windvale.Bytecode;
@@ -26,10 +27,45 @@ public static class X64ˉnativeˉexecutor
         string entry = "Main",
         long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS,
         int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH,
+        Nativeˉhostˉservices? hostˉservices = null) =>
+        Executeˉentry(
+            fragment,
+            Nativeˉentryˉresultˉkind.Scalar,
+            entry,
+            maximumˉinstructions,
+            maximumˉcallˉdepth,
+            hostˉservices).Scalar;
+
+    public static ImmutableArray<byte> Executeˉbytes(
+        Nativeˉfragment fragment,
+        string entry = "Main",
+        long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS,
+        int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH,
+        Nativeˉhostˉservices? hostˉservices = null) =>
+        Executeˉentry(
+            fragment,
+            Nativeˉentryˉresultˉkind.Descriptor,
+            entry,
+            maximumˉinstructions,
+            maximumˉcallˉdepth,
+            hostˉservices).Bytes;
+
+    private static Nativeˉexecutionˉoutcome Executeˉentry(
+        Nativeˉfragment fragment,
+        Nativeˉentryˉresultˉkind expectedˉresult,
+        string entry = "Main",
+        long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS,
+        int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH,
         Nativeˉhostˉservices? hostˉservices = null)
     {
-        Nativeˉfragmentˉverifier.Verify(fragment);
+        var Actualˉresult = Nativeˉfragmentˉverifier.Verifyˉentryˉresultˉkind(fragment);
         ArgumentNullException.ThrowIfNull(entry);
+        if (Actualˉresult != expectedˉresult)
+        {
+            throw new Nativeˉbackendˉexception(
+                "WVN4011",
+                $"Native entry '{entry}' returns {Actualˉresult}; the selected executor requires {expectedˉresult}.");
+        }
         if (maximumˉinstructions <= 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -77,6 +113,7 @@ public static class X64ˉnativeˉexecutor
             Requiresˉfileˉinput);
         var Address = IntPtr.Zero;
         var Context = IntPtr.Zero;
+        var Resultˉcell = IntPtr.Zero;
         var Serviceˉcodeˉoffset = checked((fragment.Code.Length + 15) & ~15);
         var Serviceˉcode = new List<byte>();
         var Serviceˉoffsets = new Dictionary<Nativeˉservice, int>();
@@ -145,6 +182,7 @@ public static class X64ˉnativeˉexecutor
         Address = Allocateˉwritable((nuint)Allocationˉbytes);
         var Serviceˉtable = IntPtr.Zero;
         var Serviceˉfailureˉdetail = Nativeˉserviceˉfailureˉdetail.None;
+        var Resultˉbytes = ImmutableArray<byte>.Empty;
         ulong Outcome;
         try
         {
@@ -238,17 +276,46 @@ public static class X64ˉnativeˉexecutor
                     : checked((ulong)Fileˉinput.Address.ToInt64()));
             Marshal.Copy(Contextˉbytes, 0, Context, Contextˉbytes.Length);
 
+            if (expectedˉresult == Nativeˉentryˉresultˉkind.Descriptor)
+            {
+                Resultˉcell = Marshal.AllocHGlobal(Nativeˉcontract.VALUE_SLOT_BYTES);
+                Marshal.Copy(new byte[Nativeˉcontract.VALUE_SLOT_BYTES], 0, Resultˉcell, Nativeˉcontract.VALUE_SLOT_BYTES);
+            }
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
-            var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉi32ˉentry>(new(Entryˉaddress));
+            var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉentry>(new(Entryˉaddress));
             var Contextˉpointer = checked((ulong)Context.ToInt64());
-            Outcome = Function(0, Contextˉpointer, Contextˉpointer, 0, 0, 0);
+            var Resultˉpointer = Resultˉcell == IntPtr.Zero
+                ? 0UL
+                : checked((ulong)Resultˉcell.ToInt64());
+            Outcome = Function(
+                Resultˉpointer,
+                Contextˉpointer,
+                Contextˉpointer,
+                Resultˉpointer,
+                0,
+                0);
             Fileˉinput.Verifyˉcompleted();
             Serviceˉfailureˉdetail = (Nativeˉserviceˉfailureˉdetail)unchecked((uint)Marshal.ReadInt32(
                 Context,
                 Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET));
+            if ((uint)(Outcome >> 32) == 0 &&
+                expectedˉresult == Nativeˉentryˉresultˉkind.Descriptor)
+            {
+                Resultˉbytes = Readˉverifiedˉbyteˉresult(
+                    fragment,
+                    Address,
+                    Context,
+                    Buffers.Textˉarena,
+                    Resultˉcell,
+                    entry);
+            }
         }
         finally
         {
+            if (Resultˉcell != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(Resultˉcell);
+            }
             if (Context != IntPtr.Zero)
             {
                 Marshal.FreeHGlobal(Context);
@@ -263,7 +330,7 @@ public static class X64ˉnativeˉexecutor
         var Status = (uint)(Outcome >> 32);
         if (Status == 0)
         {
-            return unchecked((int)(uint)Outcome);
+            return new(unchecked((int)(uint)Outcome), Resultˉbytes);
         }
         if (Status == 1)
         {
@@ -386,6 +453,76 @@ public static class X64ˉnativeˉexecutor
             "WVN4005",
             $"Native entry '{entry}' returned unknown status {Status}.");
     }
+
+    private static ImmutableArray<byte> Readˉverifiedˉbyteˉresult(
+        Nativeˉfragment fragment,
+        IntPtr executableˉaddress,
+        IntPtr context,
+        Nativeˉborrowedˉbuffer arena,
+        IntPtr resultˉcell,
+        string entry)
+    {
+        var Descriptor = new byte[Nativeˉcontract.VALUE_SLOT_BYTES];
+        Marshal.Copy(resultˉcell, Descriptor, 0, Descriptor.Length);
+        var Pointer = BinaryPrimitives.ReadUInt64LittleEndian(
+            Descriptor.AsSpan(Nativeˉcontract.BORROWED_BYTES_POINTER_OFFSET));
+        var Length = BinaryPrimitives.ReadUInt32LittleEndian(
+            Descriptor.AsSpan(Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET));
+        var Reserved = BinaryPrimitives.ReadUInt32LittleEndian(
+            Descriptor.AsSpan(Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET));
+        if (Reserved != 0 || Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+        {
+            throw Invalidˉbyteˉresult(entry);
+        }
+        if (Length == 0 && Pointer == 0)
+        {
+            return [];
+        }
+
+        var Arenaˉused = unchecked((uint)Marshal.ReadInt32(
+            context,
+            Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET));
+        if (Arenaˉused > arena.Length)
+        {
+            throw Invalidˉbyteˉresult(entry);
+        }
+        var Arenaˉstart = checked((ulong)arena.Address.ToInt64());
+        var Isˉarenaˉresult = Isˉinside(Pointer, Length, Arenaˉstart, Arenaˉused);
+        var Imageˉstart = checked((ulong)executableˉaddress.ToInt64());
+        var Isˉstaticˉresult = fragment.Symbols
+            .Where(Symbol => Symbol.Kind == Nativeˉsymbolˉkind.Data)
+            .Any(Symbol => Isˉinside(
+                Pointer,
+                Length,
+                checked(Imageˉstart + Symbol.Offset),
+                Symbol.Size));
+        if (!Isˉarenaˉresult && !Isˉstaticˉresult)
+        {
+            throw Invalidˉbyteˉresult(entry);
+        }
+
+        var Bytes = new byte[checked((int)Length)];
+        if (Bytes.Length != 0)
+        {
+            Marshal.Copy(new IntPtr(checked((long)Pointer)), Bytes, 0, Bytes.Length);
+        }
+        return Bytes.ToImmutableArray();
+    }
+
+    private static bool Isˉinside(ulong pointer, uint length, ulong start, uint available)
+    {
+        if (pointer < start)
+        {
+            return false;
+        }
+        var Offset = pointer - start;
+        return Offset <= available && length <= available - Offset;
+    }
+
+    private static Nativeˉbackendˉexception Invalidˉbyteˉresult(string entry) =>
+        new(
+            "WVN4012",
+            $"Native entry '{entry}' returned a byte descriptor outside its verified immutable data or execution arena.");
 
     private static void Requireˉservices(
         Nativeˉfragment fragment,
@@ -535,13 +672,17 @@ public static class X64ˉnativeˉexecutor
         new(Marshal.GetLastPInvokeError(), $"{operation} failed.");
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate ulong Nativeˉi32ˉentry(
+    private delegate ulong Nativeˉentry(
         ulong windowsˉpadding,
         ulong windowsˉcontext,
         ulong systemˉvˉcontext,
         ulong windowsˉpaddingˉfour,
         ulong systemˉvˉpadding,
         ulong systemˉvˉpaddingˉsix);
+
+    private readonly record struct Nativeˉexecutionˉoutcome(
+        int Scalar,
+        ImmutableArray<byte> Bytes);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr VirtualAlloc(IntPtr address, nuint size, uint allocationˉtype, uint protection);

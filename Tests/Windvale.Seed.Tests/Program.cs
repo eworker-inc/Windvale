@@ -40,6 +40,7 @@ internal static class Program
     private const string NATIVE_LOOP_CODE_SHA256 = "3b453983778711cfccca3a495cd5d97eeecd28a041294ef522675582695740b1";
     private const string NATIVE_LOOP_WVO_SHA256 = "30435304a6d134152ea5fabb889047fb2a1099ef7b4606f552817175022aebc9";
     private const string NATIVE_STENCIL_CORE_SHA256 = "d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f";
+    private const string NATIVE_STENCIL_BRIDGE_SHA256 = "5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9";
     private const string NATIVE_STENCIL_DEMO_SHA256 = "651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "b609fb7d442bbe1685c1058c71eb011d43b291df505697a97c233ca7063a2044";
@@ -544,6 +545,9 @@ internal static class Program
     private static readonly string NATIVE_STENCIL_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-Stencil-Core.wv");
 
+    private static readonly string NATIVE_STENCIL_BRIDGE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-Stencil-Bridge.wv");
+
     private static readonly string NATIVE_STENCIL_DEMO_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-Stencil-Demo.wv");
 
@@ -604,6 +608,7 @@ internal static class Program
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),
         new("Windvale-assembled native stencils reproduce the argument-service leaves", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilsˉreproduceˉargumentˉservices),
         new("Windvale validates and patches its native stencils across every runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉconsumerˉruns),
+        new("Windvale returns and publishes native argument leaves through the descriptor bridge", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉbridgeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
@@ -3265,6 +3270,142 @@ internal static class Program
             X64ˉnativeˉexecutor.Executeˉi32(
                 First.Fragment with { Code = Linked.Imageˉbytes },
                 maximumˉinstructions: Interpreted.Executedˉinstructions));
+    }
+
+    private static void Windvaleˉnativeˉstencilˉbridgeˉruns()
+    {
+        var Bridgeˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Compiler/Windvale/Native-Stencil-Bridge.wv", NATIVE_STENCIL_BRIDGE_SOURCE),
+            [
+                new("Compiler/Windvale/Native-Stencil-Core.wv", NATIVE_STENCIL_CORE_SOURCE),
+            ]);
+        True(
+            Bridgeˉresult.Success,
+            "The Windvale native-stencil bridge did not compile: " +
+                string.Join(" | ", Bridgeˉresult.Diagnostics));
+        Equal(
+            NATIVE_STENCIL_BRIDGE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Bridgeˉresult.Moduleˉbytes.AsSpan()));
+        Equal(X64ˉnativeˉargumentˉservices.CONSUMER_CANONICAL_SIZE, Bridgeˉresult.Moduleˉbytes.Length);
+        Equal(X64ˉnativeˉargumentˉservices.CONSUMER_CANONICAL_SHA256, NATIVE_STENCIL_BRIDGE_SHA256);
+
+        using (var Stream = typeof(X64ˉnativeˉargumentˉservices).Assembly
+            .GetManifestResourceStream("Windvale.Native.Native-Stencil-Bridge.wvb") ??
+            throw new InvalidOperationException("The retained native-stencil bridge was not embedded."))
+        {
+            var Retained = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Retained);
+            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
+        }
+
+        var Bridge = Moduleˉcodec.Readˉandˉverify(Bridgeˉresult.Moduleˉbytes.AsSpan());
+        var Countˉdata = (Bytesˉdataˉdeclaration)Bridge.Module.Data.Single(
+            Data => Data.Name == "Argumentˉcountˉobject");
+        var Argumentˉdata = (Bytesˉdataˉdeclaration)Bridge.Module.Data.Single(
+            Data => Data.Name == "Argumentˉobject");
+        static ImmutableArray<byte> Readˉobjectˉresource(string name)
+        {
+            using var Stream = typeof(X64ˉnativeˉstencil).Assembly
+                .GetManifestResourceStream(name) ??
+                throw new InvalidOperationException($"The native-stencil object {name} was not embedded.");
+            var Bytes = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Bytes);
+            return Bytes.ToImmutableArray();
+        }
+        Sequenceˉequal(
+            Readˉobjectˉresource("Windvale.NativeCompiler.Process-Argument-Count.wvo"),
+            Countˉdata.Values);
+        Sequenceˉequal(
+            Readˉobjectˉresource("Windvale.NativeCompiler.Process-Argument.wvo"),
+            Argumentˉdata.Values);
+
+        var Expectedˉbuilder = ImmutableArray.CreateBuilder<byte>(
+            X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SIZE +
+            X64ˉnativeˉargumentˉservices.ARGUMENT_CANONICAL_SIZE);
+        Expectedˉbuilder.AddRange(X64ˉnativeˉstencil.Buildˉprocessˉargumentˉcount());
+        Expectedˉbuilder.AddRange(X64ˉnativeˉstencil.Buildˉprocessˉargument());
+        var Expected = Expectedˉbuilder.MoveToImmutable();
+
+        var Reference = new Referenceˉruntime(
+            Bridge,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults);
+        var Interpreted = Reference.Runˉmainˉbytes();
+        Sequenceˉequal(Expected, Interpreted.Bytes);
+        Throwsˉruntime("WVR3003", () => _ = Reference.Runˉmain());
+
+        var First = X64ˉnativeˉbackend.Compile(Bridge);
+        var Second = X64ˉnativeˉbackend.Compile(Bridge);
+        Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Sequenceˉequal(First.Fragment.Symbols, Second.Fragment.Symbols);
+        Sequenceˉequal(First.Fragment.Patches, Second.Fragment.Patches);
+        Equal(
+            Nativeˉentryˉresultˉkind.Descriptor,
+            Nativeˉfragmentˉverifier.Verifyˉentryˉresultˉkind(First.Fragment));
+        Sequenceˉequal(
+            new byte[] { 0x48, 0x89, 0xC8 },
+            First.Fragment.Code.AsSpan(30, 3).ToArray());
+        Sequenceˉequal(
+            Expected,
+            X64ˉnativeˉexecutor.Executeˉbytes(
+                First.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        Throwsˉnative("WVN4011", () => _ = X64ˉnativeˉexecutor.Executeˉi32(First.Fragment));
+
+        var Corruptedˉcode = First.Fragment.Code.ToArray();
+        Corruptedˉcode[32] ^= 0x01;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉcode.ToImmutableArray() }));
+
+        var Firstˉobject = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+        var Secondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment);
+        Sequenceˉequal(Firstˉobject, Secondˉobject);
+        var Linked = Linkˉsuccess(
+            [Firstˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Sequenceˉequal(First.Fragment.Code, Linked.Imageˉbytes);
+        Sequenceˉequal(
+            Expected,
+            X64ˉnativeˉexecutor.Executeˉbytes(
+                First.Fragment with { Code = Linked.Imageˉbytes },
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+
+        Sequenceˉequal(
+            Expected.AsSpan(0, X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SIZE)
+                .ToArray(),
+            X64ˉnativeˉargumentˉservices.Build(Nativeˉservice.Processˉargumentˉcount));
+        Sequenceˉequal(
+            Expected.AsSpan()[X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SIZE..]
+                .ToArray(),
+            X64ˉnativeˉargumentˉservices.Build(Nativeˉservice.Processˉargument));
+
+        var Scalar = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_CONSTANT_SOURCE)));
+        Throwsˉnative("WVN4011", () => _ = X64ˉnativeˉexecutor.Executeˉbytes(Scalar.Fragment));
+        Throwsˉruntime(
+            "WVR3003",
+            () => _ = new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_CONSTANT_SOURCE)),
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes());
+        var Staticˉbytes = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+                module Nativeˉstaticˉbytes profile portable;
+                data Value: bytes = [1, 2, 3, 4];
+                export fn Main() -> bytes { return Value; }
+                """)));
+        Sequenceˉequal(
+            new byte[] { 1, 2, 3, 4 },
+            X64ˉnativeˉexecutor.Executeˉbytes(Staticˉbytes.Fragment));
+        var Hostedˉbytes = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉhostedˉbytes profile hosted;
+            capability file.read_bytes;
+            data Name: text = "input.bin";
+            export fn Main() -> bytes { return file.read_bytes(Name); }
+            """));
+        Throwsˉnative("WVN2002", () => _ = X64ˉnativeˉbackend.Compile(Hostedˉbytes));
     }
 
     private static void Nativeˉhostedˉinputˉinspectsˉwvb()

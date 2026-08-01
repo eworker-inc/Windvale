@@ -23,6 +23,13 @@ public static class Nativeˉfragmentˉverifier
 
     public static Nativeˉfragment Verify(Nativeˉfragment fragment)
     {
+        _ = Verifyˉentryˉresultˉkind(fragment);
+        return fragment;
+    }
+
+    public static Nativeˉentryˉresultˉkind Verifyˉentryˉresultˉkind(
+        Nativeˉfragment fragment)
+    {
         ArgumentNullException.ThrowIfNull(fragment);
         if (!StringComparer.Ordinal.Equals(fragment.Target, Nativeˉcontract.X64_BASELINE_TARGET))
         {
@@ -74,8 +81,7 @@ public static class Nativeˉfragmentˉverifier
 
         Verifyˉsymbols(fragment);
         Verifyˉpatches(fragment);
-        Verifyˉtargetˉshape(fragment);
-        return fragment;
+        return Verifyˉtargetˉshape(fragment);
     }
 
     private static void Verifyˉsymbols(Nativeˉfragment fragment)
@@ -225,7 +231,8 @@ public static class Nativeˉfragmentˉverifier
         }
     }
 
-    private static void Verifyˉtargetˉshape(Nativeˉfragment fragment)
+    private static Nativeˉentryˉresultˉkind Verifyˉtargetˉshape(
+        Nativeˉfragment fragment)
     {
         var Functions = fragment.Symbols
             .Where(Symbol => Symbol.Kind == Nativeˉsymbolˉkind.Function)
@@ -325,6 +332,14 @@ public static class Nativeˉfragmentˉverifier
                 }
             }
         }
+        var Main = Functions.Single(Function => Function.Binding == Nativeˉsymbolˉbinding.Export);
+        return Decoded[checked((int)Main.Offset)].Returnˉkind switch
+        {
+            Decodedˉreturnˉkind.Void => Nativeˉentryˉresultˉkind.Void,
+            Decodedˉreturnˉkind.Scalar => Nativeˉentryˉresultˉkind.Scalar,
+            Decodedˉreturnˉkind.Descriptor => Nativeˉentryˉresultˉkind.Descriptor,
+            _ => throw new InvalidOperationException("Verified native entry result became invalid."),
+        };
     }
 
     private static Decodedˉfunction Decodeˉfunction(
@@ -379,8 +394,17 @@ public static class Nativeˉfragmentˉverifier
             Failˉshape();
         }
         Index += 7;
+        var Hasˉentryˉresultˉbridge = Isˉmain && Matches(Code, Index, 0x48, 0x89, 0xC8);
+        if (Hasˉentryˉresultˉbridge)
+        {
+            Index += 3;
+        }
         var Hasˉhiddenˉresult = Tryˉstoreˉrax(Code, Index, Frameˉbytes, out var Hiddenˉresultˉslot) &&
             Hiddenˉresultˉslot == Frameˉbytes / Nativeˉcontract.VALUE_SLOT_BYTES - 1;
+        if (Isˉmain && Hasˉentryˉresultˉbridge != Hasˉhiddenˉresult)
+        {
+            Failˉshape();
+        }
         if (Hasˉhiddenˉresult)
         {
             Index += 8;

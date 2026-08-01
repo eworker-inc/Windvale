@@ -129,6 +129,7 @@ BYTE_CONSTRUCTION_MODULE="$ARTIFACTS/Byte-Construction.wvb"
 BYTE_CONSTRUCTION_DEMO_MODULE="$ARTIFACTS/Byte-Construction-Demo.wvb"
 NATIVE_STENCIL_MODULE="$ARTIFACTS/Native-Stencil-Core.wvb"
 NATIVE_STENCIL_DEMO_MODULE="$ARTIFACTS/Native-Stencil-Demo.wvb"
+NATIVE_STENCIL_BRIDGE_MODULE="$ARTIFACTS/Native-Stencil-Bridge.wvb"
 SOURCE_LEXER_MODULE="$ARTIFACTS/Source-Lexer-Core.wvb"
 SOURCE_LEXER_DEMO_MODULE="$ARTIFACTS/Source-Lexer-Demo.wvb"
 SOURCE_DECLARATION_PARSER_MODULE="$ARTIFACTS/Source-Declaration-Parser.wvb"
@@ -409,6 +410,22 @@ fi
 NATIVE_STENCIL_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$NATIVE_STENCIL_DEMO_MODULE" --max-steps 20000000)
 printf '%s\n' "$NATIVE_STENCIL_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+
+NATIVE_STENCIL_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Bridge.wv"
+NATIVE_STENCIL_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Stencil-Bridge.wvb"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_STENCIL_BRIDGE_SOURCE" \
+    --module "$NATIVE_STENCIL_SOURCE" \
+    -o "$NATIVE_STENCIL_BRIDGE_MODULE"
+NATIVE_STENCIL_BRIDGE_HASH=$(sha256sum "$NATIVE_STENCIL_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_STENCIL_BRIDGE_HASH" != '5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9' ]; then
+    echo "The Windvale native-stencil bridge has an unexpected digest: $NATIVE_STENCIL_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_STENCIL_BRIDGE_MODULE" "$NATIVE_STENCIL_BRIDGE_RETAINED"
+NATIVE_STENCIL_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_STENCIL_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Lexer-Core.wv"
 dotnet "$TOOL_DLL" \

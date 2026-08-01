@@ -178,6 +178,10 @@ public sealed record Runtimeˉoptions(
 
 public sealed record Runtimeˉresult(int Exitˉcode, long Executedˉinstructions);
 
+public sealed record Runtimeˉbytesˉresult(
+    ImmutableArray<byte> Bytes,
+    long Executedˉinstructions);
+
 public sealed record Runtimeˉfunctionˉsteps(
     int Functionˉindex,
     string Functionˉname,

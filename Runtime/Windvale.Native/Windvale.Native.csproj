@@ -6,4 +6,9 @@
     <ProjectReference Include="../../Compiler/Native/Windvale.NativeCompiler.csproj" />
     <ProjectReference Include="../Windvale.Runtime/Windvale.Runtime.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource
+      Include="Consumers/Native-Stencil-Bridge.wvb"
+      LogicalName="Windvale.Native.Native-Stencil-Bridge.wvb" />
+  </ItemGroup>
 </Project>

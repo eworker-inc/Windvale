@@ -74,6 +74,20 @@ public sealed class Referenceˉruntime
 
     public Runtimeˉresult Runˉmain()
     {
+        var Mainˉexport = Prepareˉmain(Valueˉtype.I32, "fn() -> i32");
+        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, null, 0, 1);
+        return new(Result!.Value.I32ˉvalue, Executedˉinstructions);
+    }
+
+    public Runtimeˉbytesˉresult Runˉmainˉbytes()
+    {
+        var Mainˉexport = Prepareˉmain(Valueˉtype.Bytes, "fn() -> bytes");
+        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, null, 0, 1);
+        return new(Result!.Value.Bytesˉvalue.Toˉimmutableˉarray(), Executedˉinstructions);
+    }
+
+    private Exportˉdeclaration Prepareˉmain(Valueˉshape returnˉtype, string signature)
+    {
         Requireˉauthorizedˉcapabilities();
         var Mainˉexport = Verifiedˉmodule.Module.Exports
             .FirstOrDefault(Export => StringComparer.Ordinal.Equals(Export.Name, "Main"));
@@ -83,11 +97,12 @@ public sealed class Referenceˉruntime
         }
 
         var Mainˉfunction = Verifiedˉmodule.Module.Functions[Mainˉexport.Targetˉindex];
-        if (Mainˉfunction.Parameterˉtypes.Length != 0 || Mainˉfunction.Returnˉtype != Valueˉtype.I32)
+        if (Mainˉfunction.Parameterˉtypes.Length != 0 ||
+            Mainˉfunction.Returnˉtype != returnˉtype)
         {
             throw new Runtimeˉexception(
                 "WVR3003",
-                "The exported Main function must have signature fn() -> i32.");
+                $"The exported Main function must have signature {signature}.");
         }
 
         Executedˉinstructions = 0;
@@ -95,8 +110,7 @@ public sealed class Referenceˉruntime
         {
             Array.Clear(Functionˉsteps);
         }
-        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, null, 0, 1);
-        return new(Result!.Value.I32ˉvalue, Executedˉinstructions);
+        return Mainˉexport;
     }
 
     private Runtimeˉvalue? Executeˉfunction(

@@ -8,11 +8,15 @@ This is an experimental native ABI, not a stable public foreign-function interfa
 
 ## Entry convention
 
-The exported native `Main() -> i32` receives a pointer to one execution context in `RDX`. The Windows executor duplicates that pointer into its second and third bridge arguments so both Windows x64 and System V x86-64 place the same value in `RDX`. Generated `Main` preserves `R15`, copies the context pointer into `R15`, and loads the instruction and call-depth budgets into the shared `R11` and `R10` counters.
+The exported native `Main() -> i32`, or capability-free portable `Main() -> bytes`, receives a pointer to one execution context in `RDX`. Hosted byte entries are not admitted in this slice because their argument/file borrows require additional result-owner validation. The executor duplicates the context pointer into its second Windows and third System V bridge arguments so both Windows x64 and System V x86-64 place the same value in `RDX`. Generated `Main` preserves `R15`, copies the context pointer into `R15`, and loads the instruction and call-depth budgets into the shared `R11` and `R10` counters. Scalar entry code and invocation remain unchanged.
+
+For `Main() -> bytes`, the executor also duplicates one verified 16-byte result-cell pointer into its first Windows and fourth System V bridge arguments; both host conventions therefore place the pointer in physical `RCX`. The generated entry copies `RCX` to `RAX` immediately after frame allocation and then uses the ordinary hidden-result convention below. The independent decoder requires that exact copy when and only when exported `Main` has a descriptor result. The executor classifies the decoded result before W^X publication, so the scalar and byte APIs cannot invoke the wrong entry shape.
 
 Internal functions accept as many as four parameters. `i32`, `bool`, `u8`, `u32`, enums, and record-arena offsets use `R8D`, `R9D`, `ECX`, and `EDX`. A borrowed `text` or `bytes` parameter uses the corresponding 64-bit register as a pointer to the caller's verified 16-byte descriptor; the callee copies the descriptor into its own frame before the call can return. Packed scalar/enum/record value and status returns use `RAX`, and every internal call preserves the shared resource counters.
 
 For a `text` or `bytes` return, the caller places its verified result-cell address in `RAX` after loading explicit arguments. The callee saves that hidden pointer in one dedicated final frame cell before clearing ordinary locals and temporaries. A successful return copies both descriptor words to the hidden result and returns zero in `RAX`; traps retain their packed nonzero status. A void call uses the same status path but has no hidden result or stored scalar. The independent decoder cross-checks every call shape against the callee's single decoded return kind.
+
+After a successful exported byte return, the host requires a zero reserved word, a length no greater than 4 MiB, and a complete pointer range inside either one exact immutable fragment-data symbol or the committed used prefix of the execution arena. It copies the accepted result before releasing the fragment, context, cell, and arena. A null pointer is accepted only for an empty result. Every other descriptor fails as `WVN4012`; a descriptor cannot escape its run.
 
 ## Value-slot and borrowed-descriptor layout
 

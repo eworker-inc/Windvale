@@ -146,6 +146,7 @@ $ByteConstructionModule = Join-Path $Artifacts 'Byte-Construction.wvb'
 $ByteConstructionDemoModule = Join-Path $Artifacts 'Byte-Construction-Demo.wvb'
 $NativeStencilModule = Join-Path $Artifacts 'Native-Stencil-Core.wvb'
 $NativeStencilDemoModule = Join-Path $Artifacts 'Native-Stencil-Demo.wvb'
+$NativeStencilBridgeModule = Join-Path $Artifacts 'Native-Stencil-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
 $SourceLexerDemoModule = Join-Path $Artifacts 'Source-Lexer-Demo.wvb'
 $SourceDeclarationParserModule = Join-Path $Artifacts 'Source-Declaration-Parser.wvb'
@@ -500,6 +501,33 @@ $NativeStencilDemoOutput = dotnet $ToolDll `
     run $NativeStencilDemoModule --max-steps 20000000
 if ($LASTEXITCODE -ne 0 -or $NativeStencilDemoOutput -notcontains 'Result: 0') {
     throw 'The Windvale native-stencil demo did not return Result: 0.'
+}
+$NativeStencilBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Stencil-Bridge.wv'
+$NativeStencilBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Stencil-Bridge.wvb'
+dotnet $ToolDll `
+    compile $NativeStencilBridgeSource `
+    --module $NativeStencilSource `
+    -o $NativeStencilBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-stencil bridge.' }
+$NativeStencilBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeStencilBridgeModule).Hash.ToLowerInvariant()
+if ($NativeStencilBridgeHash -ne '5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9') {
+    throw "The Windvale native-stencil bridge has an unexpected digest: $NativeStencilBridgeHash"
+}
+$NativeStencilBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeStencilBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeStencilBridgeRetainedHash -ne $NativeStencilBridgeHash -or
+    (Get-Item -LiteralPath $NativeStencilBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeStencilBridgeModule).Length
+) {
+    throw 'The retained Windvale native-stencil bridge does not match its exact source compilation.'
+}
+$NativeStencilBridgeInspection = (dotnet $ToolDll inspect $NativeStencilBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeStencilBridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativeStencilBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native-stencil bridge inspection is incomplete.'
 }
 
 $SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Lexer-Core.wv'

@@ -49,11 +49,12 @@ public static class X64ˉnativeˉbackend
         var Main = verifiedˉmodule.Functions[Mainˉexport.Targetˉindex];
         if (!StringComparer.Ordinal.Equals(Main.Declaration.Name, "Main") ||
             !Main.Declaration.Parameterˉtypes.IsEmpty ||
-            Main.Declaration.Returnˉtype != Valueˉtype.I32)
+            Main.Declaration.Returnˉtype.Kind is not (Valueˉtype.I32 or Valueˉtype.Bytes) ||
+            (Main.Declaration.Returnˉtype.Kind == Valueˉtype.Bytes && !Isˉportable))
         {
             Fail(
                 "WVN2002",
-                "The baseline native entry must be Main() -> i32; " +
+                "The baseline native entry must be Main() -> i32, or capability-free portable Main() -> bytes; " +
                 $"found name='{Main.Declaration.Name}', parameters={Main.Declaration.Parameterˉtypes.Length}, " +
                 $"return={Main.Declaration.Returnˉtype}.");
         }
@@ -893,6 +894,12 @@ public static class X64ˉnativeˉbackend
             Emitˉframeˉadjustment(Code, subtract: true, Frameˉbytes);
             if (Hasˉhiddenˉresult)
             {
+                if (Isˉmain)
+                {
+                    // The managed bridge duplicates the result-cell pointer into the
+                    // Windows first and System V fourth arguments, which are both RCX.
+                    Code.AddRange([0x48, 0x89, 0xC8]); // mov rax, rcx
+                }
                 Emitˉstoreˉrax(Code, Usedˉslots);
             }
             Code.AddRange([0x31, 0xC0]);

@@ -457,6 +457,13 @@ public sealed record Nativeˉfragment(
     ImmutableArray<Nominalˉtypeˉdeclaration> Types,
     ImmutableArray<Nativeˉservice> Requiredˉservices);
 
+public enum Nativeˉentryˉresultˉkind : byte
+{
+    Void = 0,
+    Scalar = 1,
+    Descriptor = 2,
+}
+
 public sealed record Nativeˉcompilation(
     Nativeˉmodule Module,
     Nativeˉfragment Fragment);
