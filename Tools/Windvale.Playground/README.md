@@ -4,7 +4,7 @@ This project is the experimental, fully client-side Stage 0 Windvale playground.
 
 The host contract is defined by [`Specifications/Browser-Playground.md`](../../Specifications/Browser-Playground.md). The broader WebAssembly direction remains exploratory.
 
-Public playground: <https://eworker-inc.github.io/Windvale/>
+Public playground: <https://play.windvale.ca/>
 
 ## Run locally
 

@@ -175,7 +175,7 @@ GitHub does not load repository-local grammars, so GitHub file highlighting and 
 
 The experimental Stage 0 playground now compiles, verifies, and runs Windvale entirely in the browser through .NET WebAssembly. It reuses the C# reference compiler and interpreter as the current semantic oracle, produces canonical WVB, exposes only explicitly checked console and diagnostic capabilities, and shows bytecode identity and disassembly alongside execution results.
 
-**[Open the Windvale Playground](https://eworker-inc.github.io/Windvale/)**
+**[Open the Windvale Playground](https://play.windvale.ca/)**
 
 Run it locally:
 
