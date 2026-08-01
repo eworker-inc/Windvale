@@ -61,7 +61,7 @@ Service-table version 4 is exactly 96 bytes:
 | 16 | 8 | `process.argument_count` entry | Pointer to the runtime-owned adapter thunk |
 | 24 | 8 | `process.argument` entry | Pointer to the runtime-owned adapter thunk |
 | 32 | 8 | `file.read_bytes` entry | Pointer to the runtime-owned adapter thunk |
-| 40 | 8 | `Textˉutf8ˉisˉvalid` entry | Pointer to the runtime-owned pure validation thunk |
+| 40 | 8 | `Textˉutf8ˉisˉvalid` entry | Pointer to the runtime-owned pure native validation leaf |
 | 48 | 8 | `diagnostic.write_line` entry | Pointer to the authorized diagnostic adapter thunk |
 | 56 | 8 | `Enumˉname` entry | Pointer to the runtime-owned pure nominal-name thunk |
 | 64 | 8 | `Textˉconcat` entry | Pointer to the runtime-owned pure concatenation thunk |
@@ -95,7 +95,7 @@ Service adapters write pointer/length/reserved descriptors only into independent
 
 ## Pure UTF-8 validation service
 
-`Textˉutf8ˉisˉvalid(bytes) -> bool` passes one proven borrowed-byte pointer/length in `R8`/`R9D` and a verified bool output-cell address in `RCX`. The service writes normalized zero or one and returns status in `EAX`; adapter failure therefore follows the ordinary packed-status-5 path instead of allowing a host exception to cross generated code. Exact platform thunks adapt only those registers. The execution owner revalidates that the complete range belongs to fragment data or a registered immutable execution allocation and applies strict UTF-8 decoding. Invalid encoding writes false; it does not allocate text or gain a capability. This Stage 0 callback is replaceable by the same closed service in a future native runtime.
+`Textˉutf8ˉisˉvalid(bytes) -> bool` passes one proven borrowed-byte pointer/length in `R8`/`R9D` and a verified bool output-cell address in `RCX`. [Decision 0070](../Documents/Decisions/0070-First-Runtime-Native-Utf8-Service.md) replaces its managed callback and platform adapters with one exact 800-byte runtime-native x86-64 leaf shared by Windows and Linux. The leaf writes normalized zero or one, returns status zero in `EAX`, and preserves `R10`, `R11`, and `R15`. Invalid encoding writes false; it does not allocate text or gain a capability. Fragment verification plus immutable execution-allocation ownership proves the range before the call; no arbitrary native pointer is accepted.
 
 `Textˉfromˉutf8(bytes) -> text` uses that service as a proof step. False branches to packed status 8 / `WVR3014`; true copies the already-bounded borrowed descriptor as text. It does not allocate or silently replace malformed input.
 

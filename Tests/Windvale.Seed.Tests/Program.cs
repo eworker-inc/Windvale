@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Windvale.Assembler;
@@ -2318,11 +2319,53 @@ internal static class Program
 
         var Utf8ˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
             module Nativeˉutf8ˉvalidation profile portable;
-            data Valid: bytes = [226, 130, 172];
-            data Invalid: bytes = [192, 175];
+            data Empty: bytes = [];
+            data Ascii: bytes = [0, 65, 127];
+            data Twoˉminimum: bytes = [194, 128];
+            data Twoˉmaximum: bytes = [223, 191];
+            data Threeˉe0: bytes = [224, 160, 128];
+            data Threeˉstandard: bytes = [225, 128, 191, 236, 191, 191, 238, 128, 128, 239, 191, 191];
+            data Threeˉed: bytes = [237, 159, 191];
+            data Fourˉf0: bytes = [240, 144, 128, 128];
+            data Fourˉstandard: bytes = [241, 128, 128, 128, 243, 191, 191, 191];
+            data Fourˉf4: bytes = [244, 143, 191, 191];
+            data Strayˉcontinuation: bytes = [128];
+            data Overlongˉtwo: bytes = [192, 175];
+            data Truncatedˉtwo: bytes = [194];
+            data Badˉtwoˉcontinuation: bytes = [194, 32];
+            data Overlongˉthree: bytes = [224, 159, 191];
+            data Surrogate: bytes = [237, 160, 128];
+            data Truncatedˉthree: bytes = [225, 128];
+            data Badˉthreeˉcontinuation: bytes = [225, 128, 32];
+            data Overlongˉfour: bytes = [240, 143, 191, 191];
+            data Aboveˉunicode: bytes = [244, 144, 128, 128];
+            data Highˉlead: bytes = [245, 128, 128, 128];
+            data Truncatedˉfour: bytes = [241, 128, 128];
+            data Badˉfourˉcontinuation: bytes = [241, 128, 32, 128];
             export fn Main() -> i32 {
-                if !Textˉutf8ˉisˉvalid(Valid) { return 1; }
-                if Textˉutf8ˉisˉvalid(Invalid) { return 2; }
+                if !Textˉutf8ˉisˉvalid(Empty) { return 1; }
+                if !Textˉutf8ˉisˉvalid(Ascii) { return 1; }
+                if !Textˉutf8ˉisˉvalid(Twoˉminimum) { return 1; }
+                if !Textˉutf8ˉisˉvalid(Twoˉmaximum) { return 1; }
+                if !Textˉutf8ˉisˉvalid(Threeˉe0) { return 1; }
+                if !Textˉutf8ˉisˉvalid(Threeˉstandard) { return 1; }
+                if !Textˉutf8ˉisˉvalid(Threeˉed) { return 1; }
+                if !Textˉutf8ˉisˉvalid(Fourˉf0) { return 1; }
+                if !Textˉutf8ˉisˉvalid(Fourˉstandard) { return 1; }
+                if !Textˉutf8ˉisˉvalid(Fourˉf4) { return 1; }
+                if Textˉutf8ˉisˉvalid(Strayˉcontinuation) { return 2; }
+                if Textˉutf8ˉisˉvalid(Overlongˉtwo) { return 2; }
+                if Textˉutf8ˉisˉvalid(Truncatedˉtwo) { return 2; }
+                if Textˉutf8ˉisˉvalid(Badˉtwoˉcontinuation) { return 2; }
+                if Textˉutf8ˉisˉvalid(Overlongˉthree) { return 2; }
+                if Textˉutf8ˉisˉvalid(Surrogate) { return 2; }
+                if Textˉutf8ˉisˉvalid(Truncatedˉthree) { return 2; }
+                if Textˉutf8ˉisˉvalid(Badˉthreeˉcontinuation) { return 2; }
+                if Textˉutf8ˉisˉvalid(Overlongˉfour) { return 2; }
+                if Textˉutf8ˉisˉvalid(Aboveˉunicode) { return 2; }
+                if Textˉutf8ˉisˉvalid(Highˉlead) { return 2; }
+                if Textˉutf8ˉisˉvalid(Truncatedˉfour) { return 2; }
+                if Textˉutf8ˉisˉvalid(Badˉfourˉcontinuation) { return 2; }
                 return 42;
             }
             """));
@@ -2336,8 +2379,20 @@ internal static class Program
         True(
             Utf8ˉnative.Module.Functions.SelectMany(Function => Function.Blocks)
                 .SelectMany(Block => Block.Operations)
-                .Count(Operation => Operation is Nativeˉtextˉutf8ˉisˉvalid) == 2,
+                .Count(Operation => Operation is Nativeˉtextˉutf8ˉisˉvalid) == 23,
             "Native machine IR omitted UTF-8 validation.");
+        var Utf8ˉservice = X64ˉnativeˉutf8ˉservice.Build();
+        Equal(X64ˉnativeˉutf8ˉservice.CANONICAL_SIZE, Utf8ˉservice.Length);
+        Equal(
+            X64ˉnativeˉutf8ˉservice.CANONICAL_SHA256,
+            Convert.ToHexString(SHA256.HashData(Utf8ˉservice.AsSpan())).ToLowerInvariant());
+        Sequenceˉequal(Utf8ˉservice, X64ˉnativeˉutf8ˉservice.Build());
+        X64ˉnativeˉutf8ˉservice.Verify(Utf8ˉservice.AsSpan());
+        var Corruptedˉutf8ˉservice = Utf8ˉservice.ToArray();
+        Corruptedˉutf8ˉservice[0] ^= 0x01;
+        Throwsˉinvalidˉoperation(
+            "Native UTF-8 service identity",
+            () => X64ˉnativeˉutf8ˉservice.Verify(Corruptedˉutf8ˉservice));
         Equal(
             Utf8ˉreference.Exitˉcode,
             X64ˉnativeˉexecutor.Executeˉi32(
@@ -8246,6 +8301,24 @@ internal static class Program
         }
 
         throw new InvalidOperationException($"Expected native backend failure {expectedˉcode}.");
+    }
+
+    private static void Throwsˉinvalidˉoperation(string expectedˉmessage, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (InvalidOperationException Exception)
+        {
+            True(
+                Exception.Message.Contains(expectedˉmessage, StringComparison.Ordinal),
+                $"Invalid-operation message omitted '{expectedˉmessage}': {Exception.Message}");
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"Expected invalid-operation failure containing '{expectedˉmessage}'.");
     }
 
     private static void Throwsˉnativeˉtrap(string expectedˉcode, Action action)

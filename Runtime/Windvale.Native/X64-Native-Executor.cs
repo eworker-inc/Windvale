@@ -133,34 +133,6 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉservice.Fileˉreadˉbytes,
                 Marshal.GetFunctionPointerForDelegate(Callback));
         }
-        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Textˉutf8ˉisˉvalid))
-        {
-            Nativeˉtextˉutf8ˉisˉvalidˉcallback Callback = (bytesˉaddress, bytesˉlength, result) =>
-            {
-                try
-                {
-                    Marshal.WriteInt32(
-                        result,
-                        Buffers.Isˉvalidˉutf8(
-                            bytesˉaddress,
-                            bytesˉlength,
-                            Address,
-                            fragment.Code.Length)
-                            ? 1
-                            : 0);
-                    return 0;
-                }
-                catch (Exception Exception)
-                {
-                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
-                    return 1;
-                }
-            };
-            Callbacks.Add(Callback);
-            Callbackˉpointers.Add(
-                Nativeˉservice.Textˉutf8ˉisˉvalid,
-                Marshal.GetFunctionPointerForDelegate(Callback));
-        }
         if (fragment.Requiredˉservices.Contains(Nativeˉservice.Diagnosticˉwriteˉline))
         {
             Nativeˉconsoleˉwriteˉlineˉcallback Callback = (textˉaddress, textˉlength) =>
@@ -289,19 +261,28 @@ public static class X64ˉnativeˉexecutor
             Callbackˉpointers.Add(Nativeˉservice.U32ˉformat, Marshal.GetFunctionPointerForDelegate(Callback));
         }
 
-        var Serviceˉthunkˉoffset = checked((fragment.Code.Length + 15) & ~15);
-        var Serviceˉthunks = new List<byte>();
+        var Serviceˉcodeˉoffset = checked((fragment.Code.Length + 15) & ~15);
+        var Serviceˉcode = new List<byte>();
         var Serviceˉoffsets = new Dictionary<Nativeˉservice, int>();
         foreach (var Service in fragment.Requiredˉservices)
         {
-            while ((Serviceˉthunks.Count & 15) != 0)
+            while ((Serviceˉcode.Count & 15) != 0)
             {
-                Serviceˉthunks.Add(0x90);
+                Serviceˉcode.Add(0x90);
             }
-            Serviceˉoffsets.Add(Service, checked(Serviceˉthunkˉoffset + Serviceˉthunks.Count));
-            Serviceˉthunks.AddRange(Buildˉserviceˉthunk(Service, Callbackˉpointers[Service]));
+            Serviceˉoffsets.Add(Service, checked(Serviceˉcodeˉoffset + Serviceˉcode.Count));
+            if (Service == Nativeˉservice.Textˉutf8ˉisˉvalid)
+            {
+                var Nativeˉserviceˉcode = X64ˉnativeˉutf8ˉservice.Build();
+                X64ˉnativeˉutf8ˉservice.Verify(Nativeˉserviceˉcode.AsSpan());
+                Serviceˉcode.AddRange(Nativeˉserviceˉcode);
+            }
+            else
+            {
+                Serviceˉcode.AddRange(Buildˉserviceˉthunk(Service, Callbackˉpointers[Service]));
+            }
         }
-        var Allocationˉbytes = checked(Serviceˉthunkˉoffset + Serviceˉthunks.Count);
+        var Allocationˉbytes = checked(Serviceˉcodeˉoffset + Serviceˉcode.Count);
         Address = Allocateˉwritable((nuint)Allocationˉbytes);
         var Serviceˉtable = IntPtr.Zero;
         var Context = IntPtr.Zero;
@@ -311,11 +292,11 @@ public static class X64ˉnativeˉexecutor
             var Linkedˉcode = new byte[Allocationˉbytes];
             fragment.Code.CopyTo(Linkedˉcode);
             Applyˉpatches(fragment, Address, Linkedˉcode);
-            Serviceˉthunks.CopyTo(Linkedˉcode, Serviceˉthunkˉoffset);
+            Serviceˉcode.CopyTo(Linkedˉcode, Serviceˉcodeˉoffset);
             Marshal.Copy(Linkedˉcode, 0, Address, Linkedˉcode.Length);
             Finalizeˉexecutable(Address, (nuint)Linkedˉcode.Length);
 
-            if (Serviceˉthunks.Count != 0)
+            if (Serviceˉcode.Count != 0)
             {
                 Serviceˉtable = Marshal.AllocHGlobal(checked((int)Nativeˉserviceˉtableˉcontract.SIZE));
                 var Tableˉbytes = new byte[checked((int)Nativeˉserviceˉtableˉcontract.SIZE)];
@@ -565,13 +546,6 @@ public static class X64ˉnativeˉexecutor
                     0x44, 0x89, 0xCA,
                     0x49, 0x89, 0xC0,
                 ],
-                Nativeˉservice.Textˉutf8ˉisˉvalid =>
-                [
-                    0x48, 0x89, 0xC8,
-                    0x4C, 0x89, 0xC1,
-                    0x44, 0x89, 0xCA,
-                    0x49, 0x89, 0xC0,
-                ],
                 Nativeˉservice.Diagnosticˉwriteˉline => [0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA],
                 Nativeˉservice.Enumˉname =>
                 [
@@ -601,12 +575,6 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉservice.Processˉargumentˉcount => [],
                 Nativeˉservice.Processˉargument => [0x44, 0x89, 0xC7, 0x4C, 0x89, 0xCE],
                 Nativeˉservice.Fileˉreadˉbytes =>
-                [
-                    0x4C, 0x89, 0xC7,
-                    0x44, 0x89, 0xCE,
-                    0x48, 0x89, 0xCA,
-                ],
-                Nativeˉservice.Textˉutf8ˉisˉvalid =>
                 [
                     0x4C, 0x89, 0xC7,
                     0x44, 0x89, 0xCE,
@@ -775,12 +743,6 @@ public static class X64ˉnativeˉexecutor
         IntPtr resourceˉnameˉaddress,
         uint resourceˉnameˉlength,
         IntPtr descriptor);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate uint Nativeˉtextˉutf8ˉisˉvalidˉcallback(
-        IntPtr bytesˉaddress,
-        uint bytesˉlength,
-        IntPtr result);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate uint Nativeˉenumˉnameˉcallback(int type, int value, IntPtr descriptor);

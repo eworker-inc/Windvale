@@ -168,37 +168,6 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
         return Allocateˉtext(Result.ToString());
     }
 
-    public bool Isˉvalidˉutf8(
-        IntPtr address,
-        uint length,
-        IntPtr fragmentˉaddress,
-        int fragmentˉlength)
-    {
-        ObjectDisposedException.ThrowIf(Isˉdisposed, this);
-        var Isˉfragment = Contains(fragmentˉaddress, fragmentˉlength, address, length);
-        var Isˉowned = Allocations.Any(Buffer =>
-            Contains(Buffer.Address, Buffer.Allocationˉlength, address, length));
-        if (!Isˉfragment && !Isˉowned)
-        {
-            throw new InvalidOperationException("The native byte descriptor is outside verified immutable storage.");
-        }
-
-        var Bytes = new byte[checked((int)length)];
-        if (Bytes.Length != 0)
-        {
-            Marshal.Copy(address, Bytes, 0, Bytes.Length);
-        }
-        try
-        {
-            _ = STRICT_UTF8.GetCharCount(Bytes);
-            return true;
-        }
-        catch (DecoderFallbackException)
-        {
-            return false;
-        }
-    }
-
     public static void Writeˉdescriptor(IntPtr descriptor, Nativeˉborrowedˉbuffer buffer)
     {
         Marshal.WriteInt64(descriptor, Nativeˉcontract.BORROWED_BYTES_POINTER_OFFSET, buffer.Address.ToInt64());
