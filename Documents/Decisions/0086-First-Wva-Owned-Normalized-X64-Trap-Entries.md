@@ -1,9 +1,9 @@
 # Decision 0086: First WVA-owned normalized x86-64 trap entries
 
 - Date: 2026-08-01
-- Status: Accepted and implemented candidate; cross-host qualification pending
+- Status: Accepted and cross-host qualified through firmware probe 20 at exact commit `12e9e2e`
 - Implements: The normalized-exception-frame part of [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
-- Extends: [Decision 0081](0081-First-Terminal-X64-Cpu-Exception-Boundary.md) and candidate [Decision 0085](0085-First-Wva-Owned-Q35-Clean-Shutdown.md)
+- Extends: [Decision 0081](0081-First-Terminal-X64-Cpu-Exception-Boundary.md) and [Decision 0085](0085-First-Wva-Owned-Q35-Clean-Shutdown.md)
 - Contracts: [Kernel CPU exceptions version 2](../../Specifications/Windvale-Kernel-Exceptions.md) and [kernel trap frame version 1](../../Specifications/Windvale-Kernel-Trap-Frame.md)
 
 ## Context
@@ -23,7 +23,7 @@ WVA already owns the bidirectional kernel shims and Q35 shutdown adapter, but ca
 - Require exact panic markers containing numeric `error-code=0` for both faults, exact host exit code 3, absence of the other fault marker, and absence of later success. Preserve the normal WVA-owned Q35 poweroff path and host exit code 0.
 - Do not define recovery, `IRETQ`, a complete saved-register record, nested-fault policy, user-mode delivery, interrupt routing, or a mapping from Windvale runtime traps to CPU faults.
 
-## Candidate evidence
+## Implementation evidence
 
 Local Windows evidence records:
 
@@ -36,7 +36,7 @@ Local Windows evidence records:
 - an exact 20,992-byte invalid-opcode image with SHA-256 `23ff09ee1d7b0fb20d770edbb76a7acb0bfc3b7a9b3c88571644092dc88ca9f2`, normalized `(6, 0)` marker, and expected exit code 3; and
 - an exact 20,992-byte general-protection image with SHA-256 `75b48804f0803a5c747158ed77a71942237d376af48d0276933c69c44ef60562`, normalized `(13, 0)` marker, and expected exit code 3.
 
-This is candidate evidence only. Windows/Debian archive identity, complete Seed qualification, normalized reports, portable-artifact comparison, and independent GitHub verification remain required before cross-host status changes.
+The standalone probe-19 identities above remain useful construction evidence. Exact commit `12e9e2ebcd4960f856b90064f6343ea5856b5b43` cross-host qualifies the unchanged WVA entries and normalized frame through composed firmware probe 20: Windows and Debian pass all 66 Seed tests and all 18 OS tests, normalized contracts and all 69 portable artifacts match, GitHub verification passes, and pinned QEMU reproduces the exact 20,992-byte invalid-opcode and general-protection images with SHA-256 `705670b1054589b80e3c918c03e9f751304e3f4b5bda77485f606433db68a757` and `df45d8e0f69581e5ed3b46608598e6170413f80c5c1bbba9233e9842cdd7a04d`. They emit normalized `(6, 0)` and `(13, 0)` terminal evidence and exit with expected host code 3. Decision 0087 records the complete integrated archive evidence.
 
 ## Consequences and limits
 

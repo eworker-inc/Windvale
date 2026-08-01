@@ -25,9 +25,9 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 0–6. Seed through assembler and linker | ✅ Qualified | The Stage 0 foundation, byte primitives, hosted resource boundary, `wvdump`, object model, assembler, and linker have Windows and Debian evidence. | Preserve these contracts as later native and OS work consumes them. |
 | 7. Foundation modules | 🔵 Ongoing | Machine contracts, byte ordering, decimal parsing, and byte construction are shared by real Windvale tools. | Add facilities only when measured compiler, runtime, or tool pressure requires them. |
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
-| 9. Shared native backend | 🎯 Current transfer | ABI 14/context 6 and publication ownership are qualified; ABI 15/context 7 implements the twelfth native leaf and advances exact compiler preflight beyond `file.write_bytes`. | Qualify native file output, then admit the compiler's bounded record-shaped function workload. |
+| 9. Shared native backend | 🎯 Current transfer | ABI 15/context 7 and all 12 native service leaves are qualified; exact compiler preflight advances beyond `file.write_bytes`. | Admit the compiler's bounded record-shaped function workload. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
-| 11. Boot path and kernel | 🚧 In progress | Probe 17 is qualified; candidate probe 20 composes ABI 15/context 7, normalized vectors 6/13, clean Q35 poweroff, and a kernel-owned W^X identity root. | Cross-host qualify probe 20, then boot the AOT Windvale verifier in-guest. |
+| 11. Boot path and kernel | 🚧 In progress | The pre-paging probe-20 baseline is qualified; the current candidate adds a kernel-owned W^X identity root. | Cross-host qualify the page-table candidate, then boot the AOT Windvale verifier in-guest. |
 | 12. Runtime on Windvale OS | ○ Planned | The portability contract is defined; the guest does not yet load and verify WVB itself. | Run one identical verified WVB through equivalent Windows, Linux, and Windvale OS contracts. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 
@@ -40,8 +40,10 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Windvale-produced native bytes → Windvale validation and patching → live host-service consumption
 - ✅ Verified native fragment → Windvale image layout → narrow host W^X publication adapter
 - ✅ Windvale lifetime graph → internal state owner → allocate/copy/seal/invoke/release
-- 🎯 Qualified compiler WVB → native file publication → bounded record-shaped function admission
-- 🚧 WVA trap/paging mechanics + Q35 adapter → normalized faults + owned W^X root + clean poweroff
+- ✅ Qualified compiler WVB → native file publication
+- 🎯 Qualified compiler WVB → bounded record-shaped function admission
+- ✅ WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
+- 🚧 WVA paging mechanics → kernel-owned low-1-GiB W^X identity root
 - ○ One identical WVB → Windows + Linux + in-guest Windvale OS verification and execution
 
 ## Reading the evidence

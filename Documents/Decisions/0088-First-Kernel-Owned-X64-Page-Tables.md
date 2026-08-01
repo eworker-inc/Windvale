@@ -3,7 +3,7 @@
 - Date: 2026-08-01
 - Status: Accepted and implemented candidate; cross-host qualification pending
 - Implements: The page-table-ownership part of [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
-- Extends: [Decision 0052](0052-First-Kernel-Owned-Memory-Foundation.md) and candidate [Decision 0086](0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md)
+- Extends: [Decision 0052](0052-First-Kernel-Owned-Memory-Foundation.md) and qualified [Decision 0086](0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md)
 - Contract: [Kernel paging version 1](../../Specifications/Windvale-Kernel-Paging.md)
 
 ## Context

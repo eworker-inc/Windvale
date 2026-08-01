@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel shutdown version 1 is an implemented candidate first introduced by Windvale OS firmware probe 18 and retained unchanged by probe 20. It defines one deterministic clean-poweroff path for the pinned QEMU `pc-q35-11.0` machine after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; probe 20's combined candidate evidence is recorded by [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md). Cross-host qualification is pending.
+Kernel shutdown version 1 is cross-host qualified at exact commit `12e9e2e`. It was introduced by Windvale OS firmware probe 18, retained unchanged by the pre-paging probe-20 baseline and current page-table candidate, and defines one deterministic clean-poweroff path for the pinned QEMU `pc-q35-11.0` machine after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; [Decision 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) records its qualification, and candidate [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) records the later paging composition.
 
 This is a target-specific machine adapter, not a portable Windvale capability, general ACPI discovery, a Hyper-V shutdown contract, or a process/service shutdown policy.
 
