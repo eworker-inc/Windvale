@@ -2,7 +2,7 @@
 
 ## Status
 
-`WVSP 1` and the measured multi-patch `WVSP 2` extension are qualified bounded contracts for the two Windvale-owned process-input construction slices under Decisions 0077 and 0078. `WVSP 2` is qualified at exact integrated commit `50294d9d5cc24edc26a3e56994cb3aa28e16352c` on Windows and Debian.
+`WVSP 1` and the measured multi-patch `WVSP 2` extension are qualified bounded contracts for the two Windvale-owned process-input construction slices under Decisions 0077 and 0078. `WVSP 2` is qualified at exact integrated commit `50294d9d5cc24edc26a3e56994cb3aa28e16352c`; their Windvale-written exact consumer is qualified under Decision 0079 at exact commit `f3a4ba4ebf4d2e9de28dfa73e34e14362691919b` on Windows and Debian.
 
 Neither version defines a general stencil container or complete baseline JIT.
 

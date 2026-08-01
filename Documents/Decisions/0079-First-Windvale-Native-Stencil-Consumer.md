@@ -1,7 +1,7 @@
 # Decision 0079: First Windvale native-stencil consumer
 
 - Date: 2026-08-01
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified
 - Extends: [Decision 0078](0078-Multi-Patch-Windvale-Native-Stencil.md)
 - Preserves: Native ABI 14, execution-context version 6, service-table version 4, WVB 1.6, WVO 1.0, kernel bridge 9, firmware probe 16, and both final process-input leaf identities
 
@@ -30,7 +30,7 @@ This is not a general alternative byte-construction library. It exists inside th
 
 ## Evidence contract
 
-The candidate identities are:
+The qualified identities are:
 
 - `Native-Stencil-Core.wvb`: 21,295 bytes, SHA-256 `d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f`.
 - `Native-Stencil-Demo.wvb`: 26,330 bytes, SHA-256 `651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15`.
@@ -39,7 +39,11 @@ The candidate identities are:
 - Final five-byte leaf: SHA-256 `2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829`.
 - Final 70-byte leaf: SHA-256 `2253e1435f141df5b68f9f7e9e9aa0de448410c42dcf33ad76dcf131afea65d1`.
 
-The focused Windows differential test passes in 0.879 seconds. The updated golden contract passes in 174.748 seconds. Cross-host qualification must reproduce both WVBs byte for byte, compare normalized reports, execute the complete CLI gate on Windows and Debian, and retain the existing OS regression evidence before this decision is marked qualified.
+Exact commit `f3a4ba4ebf4d2e9de28dfa73e34e14362691919b`, tree `e0eac295bc42c19bf6a1461b5e32e2c7c5fae33b`, is cross-host qualified. Its 6,727,680-byte archive has SHA-256 `073e3465d0f19516f9c26c6bad55d6bbac0cbfdacb1336eb30589b981e0c6b05` and retained that size and digest on the isolated Debian GNU/Linux 12 x64 QA host with .NET SDK `10.0.302`.
+
+Windows and Debian pass zero-warning Release builds, all 61 Seed tests, exact compiler reproduction, and the complete CLI/reproduction gate in approximately 492.4 and 490.8 seconds. Their suite times are 246.227 and 248.495 seconds; the new consumer case takes 0.390 and 0.358 seconds, and the golden contract takes 184.619 and 187.213 seconds. The 15,798-byte Windows report has SHA-256 `9196b6f7049cd810c8bfd09037886e6c8628c1631c053543250290bc2acd50d7`; its 12,741-byte timing report has SHA-256 `b7b8f6a2b9f71d567cab97188dbaf7c242dcec7ca8afd685d4ab30456439773a`. The 15,705-byte Debian report has SHA-256 `c05f408eeb3d356e719382321705918bb6f9e6da803cd8e4efd5ddcfb1ebcc1f`; its 12,322-byte timing report has SHA-256 `280b039eb7fbd0e08f38847664221b950942d7effc43acccf025dc1f4333348d`. Their normalized contracts match with SHA-256 `77cd1d742509fc235f23b2dd743518a5694bd94c80d4bb6d81340dfe37e506e4`.
+
+All 64 portable artifacts, totaling 7,800,986 bytes, match byte for byte; their canonical manifest has SHA-256 `8ed951d59d31c0f9d2975f5ada128c2ee7faf84f69e76bf930b58482749b3374`. The 2,320,237-byte retrieved Debian evidence bundle has SHA-256 `0c9d142897eee8279a7a4f6ab25f5d051b2c4b604e77b916304f17f46ef6cf15`. Both hosts pass all 15 OS tests, pinned QEMU boots the unchanged 15,872-byte probe-16 image, and GitHub [Verify run 30711006342](https://github.com/eworker-inc/Windvale/actions/runs/30711006342) passes independent Windows and Linux verification. After retrieval, the resolved exact Debian QA directory, source archive, and evidence bundle were removed and confirmed absent.
 
 ## Consequences
 
