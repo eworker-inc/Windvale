@@ -3,8 +3,8 @@
 - Evidence date: 2026-08-01
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified commit: `d970c2789058d37c7059264fcbd76e164a01a939`
-- Latest pinned Windvale OS qualified candidate: `d970c2789058d37c7059264fcbd76e164a01a939`
+- Latest cross-host Seed qualified commit: `7edc243f3c6cae8d25234165e3975caaa03ec8ee`
+- Latest pinned Windvale OS qualified candidate: `7edc243f3c6cae8d25234165e3975caaa03ec8ee`
 
 ## Requirement evidence
 
@@ -624,15 +624,19 @@ Firmware probe version 10 rebuilds the service-free portable consumer through AB
 
 This qualifies the first native Windvale-written file-backed inspector and hosted-input boundary, not full `wvdump`, native self-hosting, or a complete operating system. Dynamic text/bytes, native nominal aggregates, structured diagnostic output, allocation, in-guest WVB loading/verification, hosted PE/ELF containers, and .NET retirement remain open.
 
-## Bounded native nominal values and structural wvdump candidate
+## Bounded native nominal values and structural wvdump qualification
 
 Decision 0068 advances the implemented target to `x86-64-wvb-baseline-v9` and ABI 9. Enums use canonical signed dword values with nominal identity. Immutable records use 32-bit offsets into one checked 1 MiB execution arena and retain one complete 16-byte typed cell per field. Context version 2 carries arena pointer/length/used fields; exhaustion is packed status 7 / `WVR3017`. Service-table version 3 adds capability-free strict `Textˉutf8ˉisˉvalid` support through exact platform thunks.
 
 The existing structural portion of `Examples/Foundation/Wv-Dump-Core.wv`, through `Inspectˉwvbˉpayloads`, now runs as the same verified native fragment under W^X JIT and linked WVO/AOT. It validates the full canonical seven-section fixture and agrees exactly with the reference interpreter. `Scanˉshape` now encodes its two boolean policies in one bounded `u32`, preserving behavior within the existing four-register call ABI. This is the real checked-in parser, not a parallel toy implementation.
 
-The focused enum/record test covers construction, fields, parameters, returns, equality, inequality, deterministic WVO, corruption rejection, zero-default policy, and arena exhaustion. A separate valid/invalid UTF-8 case proves the pure runtime service with no capability authorization. The complete Windows Seed suite passes all 54 tests in 196.743 seconds, including exact compiler self-reproduction and all golden closure phases. All 15 focused OS tests pass: the ABI-9 portable WVO is 7,946 bytes with SHA-256 `94d10d60f5d37cdab3d0f0c3678ee1e86b312564c06d633baf4736939595fed2`; the version-4 bridge object is 315 bytes with SHA-256 `949c5fdd641722c541e2ed6583a5c28bd681b77d91f28ea5cda2999026d75a23`; the firmware-probe-11 image remains 15,872 bytes with SHA-256 `100070e26666bfc97d0fff8da42d996249d072b5771014838a376abfc0a13d6a`.
+The focused enum/record test covers construction, fields, parameters, returns, equality, inequality, deterministic WVO, corruption rejection, zero-default policy, and arena exhaustion. A separate valid/invalid UTF-8 case proves the pure runtime service with no capability authorization. The ABI-9 portable WVO is 7,946 bytes with SHA-256 `94d10d60f5d37cdab3d0f0c3678ee1e86b312564c06d633baf4736939595fed2`; the version-4 bridge object is 315 bytes with SHA-256 `949c5fdd641722c541e2ed6583a5c28bd681b77d91f28ea5cda2999026d75a23`; the firmware-probe-11 image remains 15,872 bytes with SHA-256 `100070e26666bfc97d0fff8da42d996249d072b5771014838a376abfc0a13d6a`.
 
-Exact candidate commit/archive identity, complete Windows/Debian Qualification reports, portable-artifact comparison, isolated QA cleanup, and pinned-QEMU transcript remain pending. This candidate therefore does not supersede Decision 0067's last-qualified evidence yet.
+Exact candidate commit `7edc243f3c6cae8d25234165e3975caaa03ec8ee`, tree `601d25d6107526d17eeaed546149fb10076cf0d3`, was published to both configured remotes. Its 2,861,137-byte archive has SHA-256 `940d41bbf46537da7183d4a387823690fac8c9820379afe041b4193c7ea9c1b2`; Debian verified the same digest before extraction in the isolated E-Worker QA environment.
+
+Windows and Debian GNU/Linux 12 x64 passed zero-warning Release builds, all 54 tests, exact compiler reproduction, and complete CLI reconstruction. The Windows suite took 204.633 seconds; Debian took 213.327 seconds and 430.092 seconds for the complete command. The 15,563-byte Windows report has SHA-256 `c34a2199e548631323b2186dda0dcf8ffcb0a3a3c6eb7d53d9a405c314837a4b`; its 11,569-byte timing report has SHA-256 `778bda75d3d224d297dd5585449aed99612aedd20813d87115b6d5d51f2c4717`. The 15,473-byte Debian report has SHA-256 `0a8116b03185d7344dd47fb0996c1cc9402c3b9583522574a2a77b0e2fa1f5cf`; its 11,186-byte timing report has SHA-256 `9b077e8fcb943fdd5bee7cd6b43c72e09a5579817e41078fc3720ed208144926`. Their normalized contracts match exactly.
+
+All 61 portable artifacts, totaling 7,752,647 bytes, match byte for byte; their canonical manifest has SHA-256 `11ac1d4a57fce3648004d7a6002e6124d6e2fbeefc108b31bfe305523b2de0de`. The 2,299,583-byte Debian evidence bundle has SHA-256 `aad7c14cad307f53c2182ef8bae948dc67e61da677d36d22a930b79e010445b6`. Both hosts pass all 15 OS tests. Pinned QEMU 11.0/Q35/TCG boots the exact probe-11 image, emits the complete `windvale-os-boot 11` success transcript, and returns guest-controlled host exit code 1. After retrieval and comparison, the resolved exact QA directory, source archive, and remote evidence bundle were removed and confirmed absent. This supersedes Decision 0067 as the latest qualified native/OS evidence without claiming dynamic text, full native `wvdump` output, a native runtime, or .NET retirement.
 
 The remaining full-`wvdump` native gap is bounded dynamic text construction and formatting, descriptor returns, void-return calls, and diagnostic output. The C# Stage 0 selector, decoder, platform adapter, oracle, recovery implementation, and OS image builder remain required.
 
