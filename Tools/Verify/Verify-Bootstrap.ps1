@@ -11,6 +11,7 @@ $RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $ToolProject = Join-Path $RepositoryRoot 'Tools/Windvale.Tool/Windvale.Tool.csproj'
 $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
 $Artifacts = Join-Path $RepositoryRoot 'artifacts'
+$ProjectManifest = Join-Path $RepositoryRoot 'Windvale-Compiler.wvproj'
 $RootSource = Join-Path $RepositoryRoot 'Examples/Compiler/Source-Wvb-Tool.wv'
 $Dependencies = @(
     'Compiler/Windvale/Source-Bindings-Core.wv',
@@ -34,13 +35,9 @@ if ($LASTEXITCODE -ne 0) {
     throw "The Stage 0 tool build failed with exit code $LASTEXITCODE."
 }
 
-$ModuleArguments = @()
-foreach ($Dependency in $Dependencies) {
-    $ModuleArguments += @('--module', $Dependency)
-}
-dotnet $ToolDll compile $RootSource @ModuleArguments -o $Stage1
+dotnet $ToolDll build $ProjectManifest -o $Stage1
 if ($LASTEXITCODE -ne 0) {
-    throw 'Stage 0 failed to produce the Stage 1 compiler.'
+    throw 'Stage 0 failed to produce the Stage 1 compiler from Windvale-Compiler.wvproj.'
 }
 
 $CapabilityArguments = @(

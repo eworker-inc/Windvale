@@ -23,7 +23,7 @@ At its center is a **new programming language**, together with its compiler, por
 | Assembler | ✅ Working now | C# and Windvale assemblers turn textual WVA assembly into matching verified WVO objects | Add instructions and addressing required by native compilation and the kernel |
 | Object-file model | ✅ Working now | WVO defines verified sections, symbols, and relocations shared by the assembler and linker | Support richer object requirements discovered by the native backend |
 | Linker | ✅ Working now | C# and Windvale linkers resolve symbols and relocations into the same deterministic flat x86-64 image and map | Produce executable and bootable target formats |
-| CLI and inspection tools | ✅ Working now | One CLI can compile, verify, inspect, run, assemble, link, and inspect or verify objects | Move more command implementations into Windvale and add broader developer tooling |
+| CLI and inspection tools | ✅ Working now | One CLI can build explicit projects; compile, verify, inspect, and run modules; assemble and link; and inspect or verify objects | Move more command implementations into Windvale and add broader developer tooling |
 | Editor support | ✅ Working now | Windvale syntax highlighting and language configuration work locally in Visual Studio Code | Package it publicly and pursue GitHub language recognition when eligible |
 | Tests, specifications, and reproducibility | ✅ Working now | Valid, malformed, boundary, random-input, deterministic-output, and cross-host checks protect the current contracts | Extend the same evidence discipline to self-hosting, native code, and the operating system |
 | Native compiler and host programs | 🚧 In progress | ABI 12/context 4 is cross-host qualified; ABI 13 native console/diagnostic output is the active candidate | Qualify native output, replace the final file-input callback, and move construction/publication ownership into Windvale |
@@ -88,6 +88,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 
 - A small typed source language with modules, functions, locals, control flow, immutable nominal records and enums, immutable text, integer and byte data, and explicit capabilities
 - Bounded deterministic compile-time source-module composition with explicit transitive dependencies, nominal source contracts, and no runtime linkage
+- A bounded deterministic `.wvproj` manifest and `build` command that select one root plus explicit source dependencies without changing import, WVSS, or WVB semantics
 - Portable Foundation modules for bounded machine contracts, ordinal byte-span ordering, structured unsigned decimal parsing, and immutable byte construction, driven by the object core, assembler, linker, and future compiler needs
 - A first Windvale-written compiler lexer that streams the complete implemented Seed token surface over strict UTF-8 bytes without a token collection
 - A Windvale-written declaration parser that discovers module/declaration shapes and balanced function-body spans as immutable source views without a declaration collection
@@ -112,7 +113,7 @@ Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provi
 - A portable .NET reference runtime
 - Explicit hosted arguments, bounded first-read file snapshots and file output, standard output, separate diagnostics, support preflight, and exact capability authorization
 - Conformance, malformed-input, determinism, diagnostics, and runtime-limit coverage
-- One CLI with module `compile`, `inspect`, `verify`, and `run`, textual `assemble`, deterministic `link`, plus object `object-inspect` and `object-verify` commands
+- One CLI with project `build`, module `compile`, `inspect`, `verify`, and `run`, textual `assemble`, deterministic `link`, plus object `object-inspect` and `object-verify` commands
 
 ## License and stewardship
 
@@ -301,6 +302,17 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Module-Composition-Dem
 ```
 
 The compiler resolves only the explicitly supplied portable source modules, internalizes dependency records, enums, and functions into one ordinary WVB, and returns `Result: 42`. The leaf's nominal result crosses the transitive module boundary. Reordering the two `--module` inputs produces identical bytes.
+
+Build the same exact module from its Project 1 manifest:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- build `
+  Examples/Foundation/Module-Composition-Demo.wvproj `
+  -o artifacts/Module-Composition-Demo-Project.wvb
+dotnet run --project Tools/Windvale.Tool -- run artifacts/Module-Composition-Demo-Project.wvb
+```
+
+The manifest identifies one root and the explicit source files available to its imports. It is declarative build input rather than `.wv` source, and the project and repeated-`--module` commands produce the same canonical WVB bytes. [`Windvale-Compiler.wvproj`](Windvale-Compiler.wvproj) is the first full consumer: the bootstrap verifier uses it to select the complete 12-module compiler closure while preserving the exact 599,868-byte Stage 1 artifact.
 
 Compile and run the first Windvale-written compiler slice:
 
@@ -528,6 +540,7 @@ export fn Main() -> i32 {
 - `Runtime/Windvale.Bytecode/` — module contracts, codec, verifier, digest, and inspector
 - `Runtime/Windvale.Runtime/` — verified-bytecode reference interpreter and capability host
 - `Object-Model/Windvale.ObjectModel/` — WVO contracts, codec, verifier, digest, and inspector
+- `Tools/Windvale.Project/` — bounded deterministic project-manifest parsing and path resolution
 - `Tools/Windvale.Tool/` — command-line composition
 - `Tools/Verify/` — Windows and Linux verification entry points
 - `Tests/` — dependency-free Seed conformance runner
@@ -584,6 +597,7 @@ export fn Main() -> i32 {
 - [Compiler body, local, and call binding](Specifications/Compiler-Source-Bindings.md)
 - [Compiler typed source IR](Specifications/Compiler-Source-Wir.md)
 - [Compiler source-to-WVB backend](Specifications/Compiler-Source-Wvb.md)
+- [Windvale project manifest](Specifications/Windvale-Project.md)
 - [Seed CLI specification](Specifications/Seed-CLI.md)
 - [Seed conformance specification](Specifications/Seed-Conformance.md)
 - [Seed verification throughput](Documents/Architecture/Seed-Verification-Throughput.md)
@@ -649,6 +663,7 @@ export fn Main() -> i32 {
 - [Shared-budget native calls and static data decision](Documents/Decisions/0063-Shared-Budget-Native-Calls-And-Static-Data.md)
 - [First shared native WVB in Windvale OS decision](Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md)
 - [Native argument table and process-input services decision](Documents/Decisions/0073-Native-Argument-Table-And-Process-Input-Services.md)
+- [Minimal deterministic Windvale projects decision](Documents/Decisions/0075-Minimal-Deterministic-Windvale-Projects.md)
 - [Open questions](Documents/Project/Open-Questions.md)
 - [Development roadmap](Documents/Project/Roadmap.md)
 

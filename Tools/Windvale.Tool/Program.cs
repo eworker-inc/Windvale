@@ -6,6 +6,7 @@ using Windvale.Bytecode;
 using Windvale.Compiler;
 using Windvale.Linker;
 using Windvale.ObjectModel;
+using Windvale.Project;
 using Windvale.Runtime;
 
 namespace Windvale.Tool;
@@ -37,6 +38,7 @@ internal static class Program
             return arguments[0] switch
             {
                 "compile" => Compile(arguments[1..]),
+                "build" => Build(arguments[1..]),
                 "assemble" => Assemble(arguments[1..]),
                 "link" => Link(arguments[1..]),
                 "inspect" => Inspect(arguments[1..]),
@@ -122,6 +124,58 @@ internal static class Program
         }
 
         var Outputˉpath = Requestedˉoutputˉpath ?? Path.ChangeExtension(Sourceˉpath, ".wvb");
+        return Compileˉsourceˉfiles(Sourceˉpath, Dependencyˉpaths, Outputˉpath);
+    }
+
+    private static int Build(string[] arguments)
+    {
+        const string Usage = "Usage: windvale build <project.wvproj> [-o <module.wvb>]";
+        if (arguments.Length is not (1 or 3) ||
+            arguments[0].StartsWith("-", StringComparison.Ordinal) ||
+            (arguments.Length == 3 && arguments[1] != "-o"))
+        {
+            return Usageˉerror(Usage);
+        }
+
+        var Manifestˉpath = Path.GetFullPath(arguments[0]);
+        if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(Manifestˉpath), ".wvproj"))
+        {
+            return Usageˉerror("The build input must use the .wvproj project extension.");
+        }
+
+        var Outputˉpath = arguments.Length == 3
+            ? Path.GetFullPath(arguments[2])
+            : Path.ChangeExtension(Manifestˉpath, ".wvb");
+        var Project = Projectˉreader.Read(Manifestˉpath);
+        if (!Project.Success)
+        {
+            foreach (var Diagnostic in Project.Diagnostics)
+            {
+                Console.Error.WriteLine(
+                    $"{Manifestˉpath}({Diagnostic.Line},{Diagnostic.Column}): " +
+                    $"error {Diagnostic.Code} [project]: {Diagnostic.Message}");
+            }
+            return EXIT_COMPILATION;
+        }
+
+        var Plan = Project.Plan!;
+        if (Plan.Emission != Projectˉemissionˉkind.Wvb)
+        {
+            Console.Error.WriteLine("The project emission kind is not supported by this tool.");
+            return EXIT_COMPILATION;
+        }
+
+        return Compileˉsourceˉfiles(Plan.Rootˉpath, Plan.Sourceˉpaths, Outputˉpath);
+    }
+
+    private static int Compileˉsourceˉfiles(
+        string sourceˉpath,
+        IReadOnlyList<string> dependencyˉpaths,
+        string outputˉpath)
+    {
+        var Sourceˉpath = Path.GetFullPath(sourceˉpath);
+        var Dependencyˉpaths = dependencyˉpaths.Select(Path.GetFullPath).ToList();
+        var Outputˉpath = Path.GetFullPath(outputˉpath);
         if (Dependencyˉpaths.Count >= Seedˉcompiler.MAX_SOURCE_MODULES)
         {
             Console.Error.WriteLine(
@@ -508,6 +562,7 @@ internal static class Program
         output.WriteLine();
         output.WriteLine("Commands:");
         output.WriteLine("  windvale compile <source.wv> [--module <dependency.wv>]... [-o <module.wvb>]");
+        output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");
         output.WriteLine("  windvale inspect <module.wvb>");

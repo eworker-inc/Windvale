@@ -19,6 +19,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Windvale-owned post-memory boot evidence and a bidirectional WVA seam for Main entry and console-byte output.
 - The accepted Windvale-native interpreter/JIT/AOT direction and explicit qualification gate for retiring .NET from the normal Windows and Linux workflow.
 - Qualified exact Windvale bytecode compiler self-reproduction: Stage 0 builds Stage 1, and Stage 1 builds a byte-identical Stage 2 from the same committed 12-module inventory on Windows and Debian.
+- The bounded deterministic Windvale Project 1 manifest and `windvale build` command for selecting one root plus explicit source dependencies without changing import, WVSS, or WVB semantics.
 - The ABI-8 hosted-input candidate, with execution-bounded borrowed text/bytes, explicit process argument and file snapshot services, and the first Windvale-written native WVB header inspector.
 
 ### Changed

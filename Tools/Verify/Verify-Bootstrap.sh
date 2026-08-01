@@ -8,6 +8,7 @@ MAXIMUM_INSTRUCTIONS=${MAXIMUM_INSTRUCTIONS:-8000000000}
 TOOL_PROJECT="$REPOSITORY_ROOT/Tools/Windvale.Tool/Windvale.Tool.csproj"
 TOOL_DLL="$REPOSITORY_ROOT/Tools/Windvale.Tool/bin/$CONFIGURATION/net10.0/windvale.dll"
 ARTIFACTS="$REPOSITORY_ROOT/artifacts"
+PROJECT_MANIFEST="$REPOSITORY_ROOT/Windvale-Compiler.wvproj"
 ROOT_SOURCE="$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Tool.wv"
 STAGE1="$ARTIFACTS/Bootstrap-Stage1-Source-Wvb-Tool.wvb"
 STAGE2="$ARTIFACTS/Bootstrap-Stage2-Source-Wvb-Tool.wvb"
@@ -28,11 +29,7 @@ set -- \
 mkdir -p "$ARTIFACTS"
 dotnet build "$TOOL_PROJECT" --configuration "$CONFIGURATION" --nologo
 
-dotnet "$TOOL_DLL" compile "$ROOT_SOURCE" \
-    --module "$1" --module "$2" --module "$3" --module "$4" \
-    --module "$5" --module "$6" --module "$7" --module "$8" \
-    --module "$9" --module "${10}" --module "${11}" \
-    -o "$STAGE1"
+dotnet "$TOOL_DLL" build "$PROJECT_MANIFEST" -o "$STAGE1"
 
 RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$STAGE1" \
     --allow console.write_line \

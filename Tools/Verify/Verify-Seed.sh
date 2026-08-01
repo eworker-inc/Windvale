@@ -115,6 +115,9 @@ HELLO_MODULE="$ARTIFACTS/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
 COMPOSITION_MODULE="$ARTIFACTS/Module-Composition-Demo.wvb"
 COMPOSITION_REORDERED_MODULE="$ARTIFACTS/Module-Composition-Demo-Reordered.wvb"
+PROJECT_COMPOSITION_MODULE="$ARTIFACTS/Module-Composition-Demo-Project.wvb"
+INVALID_PROJECT_MANIFEST="$ARTIFACTS/__windvale_invalid_project__.wvproj"
+INVALID_PROJECT_MODULE="$ARTIFACTS/__windvale_invalid_project_output__.wvb"
 INVALID_COMPOSITION_MODULE="$ARTIFACTS/__windvale_invalid_composition_output__.wvb"
 MACHINE_CONTRACTS_MODULE="$ARTIFACTS/Machine-Contracts.wvb"
 MACHINE_CONTRACTS_DEMO_MODULE="$ARTIFACTS/Machine-Contracts-Demo.wvb"
@@ -253,6 +256,29 @@ dotnet "$TOOL_DLL" \
     --module "$COMPOSITION_MIDDLE" \
     -o "$COMPOSITION_REORDERED_MODULE"
 cmp "$COMPOSITION_MODULE" "$COMPOSITION_REORDERED_MODULE"
+COMPOSITION_PROJECT="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Demo.wvproj"
+(cd "$ARTIFACTS" && dotnet "$TOOL_DLL" \
+    build "$COMPOSITION_PROJECT" -o "$PROJECT_COMPOSITION_MODULE")
+cmp "$COMPOSITION_MODULE" "$PROJECT_COMPOSITION_MODULE"
+printf '%s\n' \
+    'windvale-project 1' \
+    'root "Missing.wv"' > "$INVALID_PROJECT_MANIFEST"
+printf '\011\010\007' > "$INVALID_PROJECT_MODULE"
+set +e
+INVALID_PROJECT_OUTPUT=$(dotnet "$TOOL_DLL" \
+    build "$INVALID_PROJECT_MANIFEST" -o "$INVALID_PROJECT_MODULE" 2>&1)
+INVALID_PROJECT_EXIT=$?
+set -e
+if [ "$INVALID_PROJECT_EXIT" -ne 1 ]; then
+    echo "Expected invalid project exit 1, found $INVALID_PROJECT_EXIT." >&2
+    exit 1
+fi
+printf '%s\n' "$INVALID_PROJECT_OUTPUT" | grep -F 'WVP1004' >/dev/null
+if [ "$(od -An -tx1 -v "$INVALID_PROJECT_MODULE" | tr -d ' \n')" != '090807' ]; then
+    echo 'A rejected project build modified its existing output module.' >&2
+    exit 1
+fi
+rm -f "$INVALID_PROJECT_MANIFEST" "$INVALID_PROJECT_MODULE"
 rm -f "$INVALID_COMPOSITION_MODULE"
 
 MACHINE_CONTRACTS_SOURCE="$REPOSITORY_ROOT/Foundation/Machine-Contracts.wv"

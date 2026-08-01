@@ -91,12 +91,16 @@ foreach ($Path in $Paths) {
         Add-Area 'foundation'
     } elseif ($Path.StartsWith('Examples/Compiler/', [StringComparison]::Ordinal)) {
         Add-Area 'compiler'
+    } elseif ($Path.EndsWith('.wvproj', [StringComparison]::Ordinal)) {
+        Add-Area @('bytecode', 'compiler')
     } elseif ($Path.StartsWith('Examples/Assembler/', [StringComparison]::Ordinal)) {
         Add-Area 'assembler'
     } elseif ($Path.StartsWith('Examples/Linker/', [StringComparison]::Ordinal)) {
         Add-Area 'linker'
     } elseif ($Path -match '^Specifications/(Compiler-|Source-Naming|Seed-Language|Seed-Records|Seed-Enums)') {
         Add-Area @('compiler', 'runtime')
+    } elseif ($Path -eq 'Specifications/Windvale-Project.md') {
+        Add-Area @('bytecode', 'compiler')
     } elseif ($Path -eq 'Specifications/Seed-Bytecode.md') {
         Add-Area @('bytecode', 'runtime')
     } elseif ($Path -eq 'Specifications/Hosted-Resources.md') {
@@ -113,6 +117,10 @@ foreach ($Path in $Paths) {
         Add-Area @('linker', 'object-model', 'runtime')
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
         Add-AllAreas
+    } elseif (
+        $Path.StartsWith('Tools/Windvale.Project/', [StringComparison]::Ordinal)
+    ) {
+        Add-Area @('bytecode', 'compiler')
     } elseif (
         $Path.StartsWith('Tests/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tools/Verify/', [StringComparison]::Ordinal) -or

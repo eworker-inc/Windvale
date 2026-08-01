@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Windvale.Assembler;
@@ -11,6 +12,7 @@ using Windvale.Compiler;
 using Windvale.Compiler.Native;
 using Windvale.Linker;
 using Windvale.ObjectModel;
+using Windvale.Project;
 using Windvale.Runtime;
 using Windvale.Runtime.Native;
 
@@ -578,6 +580,7 @@ internal static class Program
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
+        new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
         new("Foundation machine contracts are shared, bounded, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉmachineˉcontractsˉrun),
         new("Foundation byte ordering is shared, ordinal, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉorderingˉruns),
         new("Foundation decimal parsing shares nominal results and boundaries", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉdecimalˉparsingˉruns),
@@ -3300,6 +3303,120 @@ internal static class Program
         Hasˉdiagnostic(
             Seedˉcompiler.Compileˉmodules(new("root.wv", COMPOSITION_ROOT_SOURCE), Excessˉmodules),
             "WVC0002");
+    }
+
+    private static void Projectsˉselectˉsourceˉsets()
+    {
+        const string Valid = """
+            windvale-project 1
+            root "Source/Main.wv"
+            source "Source/Leaf.wv"
+            source "Source/Middle.wv"
+            emit wvb
+            """;
+        var Parsed = Projectˉparser.Parse(Valid);
+        True(Parsed.Success, "The valid project manifest was rejected.");
+        Equal("Source/Main.wv", Parsed.Manifest!.Root.Value);
+        Sequenceˉequal(
+            ["Source/Leaf.wv", "Source/Middle.wv"],
+            Parsed.Manifest.Sources.Select(Source => Source.Value));
+        Equal(Projectˉemissionˉkind.Wvb, Parsed.Manifest.Emission);
+
+        Projectˉhasˉdiagnostic(string.Empty, "WVP1001");
+        Projectˉhasˉdiagnostic("windvale-project 2\nroot \"Main.wv\"\nemit wvb\n", "WVP1001");
+        Projectˉhasˉdiagnostic("\uFEFFwindvale-project 1\nroot \"Main.wv\"\nemit wvb\n", "WVP1001");
+        Projectˉhasˉdiagnostic("windvale-project 1\n \nroot \"Main.wv\"\nemit wvb\n", "WVP1003");
+        Projectˉhasˉdiagnostic("windvale-project 1\r", "WVP1003");
+        Projectˉhasˉdiagnostic("windvale-project 1\n# comment\nroot \"Main.wv\"\nemit wvb\n", "WVP1003");
+        Projectˉhasˉdiagnostic("windvale-project 1\nroot Main.wv\nemit wvb\n", "WVP1003");
+        Projectˉhasˉdiagnostic(
+            "windvale-project 1\nroot \"Main.wv\"\nroot \"Other.wv\"\nemit wvb\n",
+            "WVP1004");
+        Projectˉhasˉdiagnostic(
+            "windvale-project 1\nroot \"Main.wv\"\nemit wvb\nemit wvb\n",
+            "WVP1004");
+        Projectˉhasˉdiagnostic("windvale-project 1\nemit wvb\n", "WVP1004");
+        Projectˉhasˉdiagnostic("windvale-project 1\nroot \"Main.wv\"\n", "WVP1004");
+
+        foreach (var Invalidˉpath in new[]
+        {
+            string.Empty,
+            "/Main.wv",
+            "../Main.wv",
+            "Source/../Main.wv",
+            "Source\\Main.wv",
+            "C:/Main.wv",
+            "Source//Main.wv",
+            "Source/./Main.wv",
+            "Source/Main.WV",
+            "Source/Main File.wv",
+            "Source/Maïn.wv",
+            "Source/Main?.wv",
+        })
+        {
+            Projectˉhasˉdiagnostic(
+                $"windvale-project 1\nroot \"{Invalidˉpath}\"\nemit wvb\n",
+                "WVP1006");
+        }
+        Projectˉhasˉdiagnostic(
+            $"windvale-project 1\nroot \"{new string('a', Projectˉlimits.MAX_PATH_BYTES)}.wv\"\nemit wvb\n",
+            "WVP1006");
+        Projectˉhasˉdiagnostic(
+            "windvale-project 1\nroot \"Main.wv\"\nemit wvb\n" +
+            new string('\n', Projectˉlimits.MAX_MANIFEST_BYTES),
+            "WVP1002");
+        Projectˉhasˉdiagnostic(
+            "windvale-project 1\nroot \"Main.wv\"\nemit wvb\n\uD800",
+            "WVP1002");
+
+        var Maximum = new StringBuilder("windvale-project 1\nroot \"Root.wv\"\n");
+        for (var Index = 0; Index < Projectˉlimits.MAX_SOURCE_MODULES - 1; Index++)
+        {
+            Maximum.AppendLine($"source \"Source/Module-{Index}.wv\"");
+        }
+        Maximum.AppendLine("emit wvb");
+        True(Projectˉparser.Parse(Maximum.ToString()).Success, "The exact project module bound was rejected.");
+        Maximum.Insert(Maximum.ToString().LastIndexOf("emit wvb", StringComparison.Ordinal),
+            "source \"Source/Excess.wv\"\n");
+        Projectˉhasˉdiagnostic(Maximum.ToString(), "WVP1005");
+
+        var Temporaryˉdirectory = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-project-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Temporaryˉdirectory);
+        try
+        {
+            var Projectˉpath = Path.Combine(Temporaryˉdirectory, "Example.wvproj");
+            File.WriteAllText(
+                Projectˉpath,
+                "windvale-project 1\nroot \"Source/Main.wv\"\nsource \"Source/Leaf.wv\"\nemit wvb\n",
+                new UTF8Encoding(false, true));
+            var Read = Projectˉreader.Read(Projectˉpath);
+            True(Read.Success, "The valid project file was not resolved.");
+            Equal(
+                Path.GetFullPath(Path.Combine(Temporaryˉdirectory, "Source", "Main.wv")),
+                Read.Plan!.Rootˉpath);
+            Sequenceˉequal(
+                [Path.GetFullPath(Path.Combine(Temporaryˉdirectory, "Source", "Leaf.wv"))],
+                Read.Plan.Sourceˉpaths);
+
+            File.WriteAllText(
+                Projectˉpath,
+                "windvale-project 1\nroot \"Source/Main.wv\"\nsource \"Source/Main.wv\"\nemit wvb\n",
+                new UTF8Encoding(false, true));
+            var Duplicate = Projectˉreader.Read(Projectˉpath);
+            False(Duplicate.Success, "The project reader accepted a duplicate resolved source path.");
+            Equal("WVP1007", Duplicate.Diagnostics.Single().Code);
+
+            File.WriteAllBytes(Projectˉpath, [0xFF]);
+            var Invalidˉutf8 = Projectˉreader.Read(Projectˉpath);
+            False(Invalidˉutf8.Success, "The project reader accepted malformed UTF-8.");
+            Equal("WVP1002", Invalidˉutf8.Diagnostics.Single().Code);
+        }
+        finally
+        {
+            Directory.Delete(Temporaryˉdirectory, recursive: true);
+        }
     }
 
     private static void Foundationˉmachineˉcontractsˉrun()
@@ -8519,6 +8636,15 @@ internal static class Program
         False(result.Success, $"Source expected to produce {code} compiled successfully.");
         True(result.Diagnostics.Any(Diagnostic => Diagnostic.Code == code),
             $"Expected diagnostic {code}; found {string.Join(", ", result.Diagnostics.Select(Item => Item.Code))}.");
+    }
+
+    private static void Projectˉhasˉdiagnostic(string text, string code)
+    {
+        var Result = Projectˉparser.Parse(text);
+        False(Result.Success, $"Project text expected to produce {code} was accepted.");
+        Equal(code, Result.Diagnostics.Single().Code);
+        True(Result.Diagnostics[0].Line > 0, "A project diagnostic line was not one-based.");
+        True(Result.Diagnostics[0].Column > 0, "A project diagnostic column was not one-based.");
     }
 
     private static void Hasˉassemblyˉdiagnostic(string source, string code)

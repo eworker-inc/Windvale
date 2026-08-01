@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Windvale.Project</AssemblyName>
+    <Description>Bounded deterministic Windvale project-manifest contracts.</Description>
+  </PropertyGroup>
+</Project>

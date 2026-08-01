@@ -1,0 +1,5 @@
+windvale-project 1
+root "Module-Composition-Demo.wv"
+source "Module-Composition-Leaf.wv"
+source "Module-Composition-Middle.wv"
+emit wvb

@@ -19,6 +19,9 @@ $Cases = @(
     @{ Name = 'linker Windvale'; Paths = @('Linker/Windvale/Wv-Linker-Core.wv'); Scope = 'qualification'; Editor = $false; Areas = @('linker') },
     @{ Name = 'Foundation'; Paths = @('Foundation/Byte-Ordering.wv'); Scope = 'qualification'; Editor = $false; Areas = @('foundation') },
     @{ Name = 'Seed example'; Paths = @('Examples/Seed/Sum-Data.wv'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler', 'runtime') },
+    @{ Name = 'project tool'; Paths = @('Tools/Windvale.Project/Project-Parser.cs'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler') },
+    @{ Name = 'project manifest'; Paths = @('Windvale-Compiler.wvproj'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler') },
+    @{ Name = 'project specification'; Paths = @('Specifications/Windvale-Project.md'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler') },
     @{ Name = 'bytecode specification'; Paths = @('Specifications/Seed-Bytecode.md'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'runtime') },
     @{ Name = 'test harness'; Paths = @('Tests/Windvale.Seed.Tests/Program.cs'); Scope = 'qualification'; Editor = $false; Areas = $AllAreas }
 )

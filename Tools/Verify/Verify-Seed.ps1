@@ -123,6 +123,9 @@ $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $CompositionModule = Join-Path $Artifacts 'Module-Composition-Demo.wvb'
 $CompositionReorderedModule = Join-Path $Artifacts 'Module-Composition-Demo-Reordered.wvb'
+$ProjectCompositionModule = Join-Path $Artifacts 'Module-Composition-Demo-Project.wvb'
+$InvalidProjectManifest = Join-Path $Artifacts '__windvale_invalid_project__.wvproj'
+$InvalidProjectModule = Join-Path $Artifacts '__windvale_invalid_project_output__.wvb'
 $InvalidCompositionModule = Join-Path $Artifacts '__windvale_invalid_composition_output__.wvb'
 $MachineContractsModule = Join-Path $Artifacts 'Machine-Contracts.wvb'
 $MachineContractsDemoModule = Join-Path $Artifacts 'Machine-Contracts-Demo.wvb'
@@ -278,6 +281,36 @@ $CompositionReorderedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Compos
 if ($CompositionReorderedHash -ne $CompositionHash) {
     throw 'Reordering explicit source-module inputs changed the composed WVB bytes.'
 }
+$CompositionProject = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Demo.wvproj'
+Push-Location $Artifacts
+try {
+    dotnet $ToolDll build $CompositionProject -o $ProjectCompositionModule
+} finally {
+    Pop-Location
+}
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to build the source-module project.' }
+$ProjectCompositionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ProjectCompositionModule).Hash.ToLowerInvariant()
+if ($ProjectCompositionHash -ne $CompositionHash) {
+    throw "The project build changed the composed WVB digest: $ProjectCompositionHash"
+}
+if (![Linq.Enumerable]::SequenceEqual(
+    [IO.File]::ReadAllBytes($CompositionModule),
+    [IO.File]::ReadAllBytes($ProjectCompositionModule))) {
+    throw 'The project and explicit compile commands produced different WVB bytes.'
+}
+[IO.File]::WriteAllText(
+    $InvalidProjectManifest,
+    "windvale-project 1`nroot `"Missing.wv`"`n",
+    [Text.UTF8Encoding]::new($false, $true))
+[IO.File]::WriteAllBytes($InvalidProjectModule, [byte[]](9, 8, 7))
+$InvalidProjectOutput = dotnet $ToolDll build $InvalidProjectManifest -o $InvalidProjectModule 2>&1
+if ($LASTEXITCODE -ne 1 -or ($InvalidProjectOutput -join "`n") -notmatch 'WVP1004') {
+    throw 'The project builder did not reject a missing emit directive deterministically.'
+}
+if ([Convert]::ToHexString([IO.File]::ReadAllBytes($InvalidProjectModule)) -ne '090807') {
+    throw 'A rejected project build modified its existing output module.'
+}
+Remove-Item -LiteralPath $InvalidProjectManifest, $InvalidProjectModule -Force
 if (Test-Path -LiteralPath $InvalidCompositionModule) {
     Remove-Item -LiteralPath $InvalidCompositionModule -Force
 }

@@ -21,6 +21,7 @@
     <Project Path="Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
   </Folder>
   <Folder Name="/Tools/">
+    <Project Path="Tools/Windvale.Project/Windvale.Project.csproj" />
     <Project Path="Tools/Windvale.Tool/Windvale.Tool.csproj" />
   </Folder>
   <Folder Name="/Tests/">
