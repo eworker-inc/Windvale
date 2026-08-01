@@ -178,6 +178,18 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
 
 The available areas are `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. `Verify-Changed.ps1` fails closed to all areas for broad or unrecognized implementation changes. Changed-file and Fast runs are development feedback only.
 
+Choose verification in proportion to the changed boundary. Do not run a long gate merely because it exists:
+
+| Change or purpose | Usual gate |
+| --- | --- |
+| One implementation area or focused fix | `Verify-Changed.ps1` or a filtered `Fast` run |
+| Coherent cross-area development batch | `Development` |
+| Release/qualification candidate or changed portable artifact identity | `Standard`, then cross-host `Qualification` when the candidate is ready |
+| Compiler inventory, compiler project, or bootstrap-convergence change | `Verify-Bootstrap.ps1` or `.sh` once for the final candidate |
+| OS boot, image, firmware, or kernel-seam change | The focused OS tests and boot gate |
+
+Record which broader gates were not run and why. Skipping an unrelated long gate is expected; skipping a gate that protects the changed contract or a claimed qualification is not.
+
 When a timing report includes the golden test, its `goldenPhases` array separates artifact compilation, baseline runtime work, compiler closures, inspection tools, assembler, linker, and contract assembly. Each phase reports elapsed time, executed VM instructions, current-thread allocated bytes, and garbage-collection deltas. These metrics are diagnostic and do not enter the conformance report.
 
 Runtime performance work should iterate with a narrow compiler or runtime filter, use `-TestArea golden` alone for periodic measured checkpoints, and run Standard only for the final candidate. The complete suite is not required after every optimization edit.

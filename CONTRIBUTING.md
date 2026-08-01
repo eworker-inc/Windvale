@@ -56,6 +56,8 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea compile
 
 The available areas are `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. Area selections form a union; an accompanying filter intersects with that union. Use `-Level Development` for every regular in-process test while deferring the multi-billion-instruction golden cross-host contract. Use `-Level Standard` for the complete in-process conformance suite without the native CLI qualification pass. Changed-file, Fast, Development, and Standard results are development feedback, not milestone qualification. The default `Qualification` level remains the complete Windows or Linux gate.
 
+Testing is proportional to risk. Ordinary edits should not pay for unrelated multi-minute gates: use focused or change-aware checks first, Development for a coherent batch, and reserve Standard/Qualification for final candidates or changed portable contracts. Run the separate compiler-bootstrap or OS-boot gates only when the compiler inventory/bootstrap boundary or boot/image/kernel boundary changed, or when making the corresponding qualification claim. Always state which broader checks were not run and why.
+
 Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require evidence from Windows and real Debian before cross-host qualification is claimed. GitHub-hosted CI is a review gate, not a substitute for the exact cross-host qualification procedure.
 
 ## Pull requests
