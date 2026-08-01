@@ -2371,8 +2371,9 @@ internal static class Program
         Hostedˉresourceˉcontext Makeˉresources(
             TextWriter output,
             TextWriter diagnostic,
-            Testˉfileˉreader reader) =>
-            new(["input.wvb"], output, diagnostic, reader);
+            Testˉfileˉreader reader,
+            string resourceˉname = "input.wvb") =>
+            new([resourceˉname], output, diagnostic, reader);
 
         var Referenceˉoutput = new StringWriter();
         var Referenceˉdiagnostic = new StringWriter();
@@ -2412,11 +2413,15 @@ internal static class Program
         True(First.Module.Functions.Any(Function => Function.Returnˉtype == Nativeˉvalueˉtype.Borrowedˉtext),
             "Complete native wvdump omitted descriptor-returning helpers.");
 
+        var Nativeˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-wvdump-{Guid.NewGuid():N}.wvb");
         void Runˉnative(ImmutableArray<byte> code)
         {
             using var Output = new Nativeˉoutputˉcapture();
             using var Diagnostic = new Nativeˉoutputˉcapture();
-            var Reader = Makeˉreader();
+            var Reader = new Testˉfileˉreader((_, _) =>
+                throw new InvalidOperationException("Native execution called the Stage 0 file reader."));
             Equal(
                 Reference.Exitˉcode,
                 X64ˉnativeˉexecutor.Executeˉi32(
@@ -2425,17 +2430,32 @@ internal static class Program
                     hostˉservices: new(
                         Output.Channel,
                         Authorized,
-                        Makeˉresources(TextWriter.Null, TextWriter.Null, Reader),
-                        Diagnostic.Channel)));
+                        Makeˉresources(
+                            TextWriter.Null,
+                            TextWriter.Null,
+                            Reader,
+                            Nativeˉpath),
+                        Diagnostic.Channel,
+                        Nativeˉfileˉinput.Hostˉfileˉsystem())));
             Equal(Referenceˉoutput.ToString(), Output.Readˉtext());
             Equal(Referenceˉdiagnostic.ToString(), Diagnostic.Readˉtext());
-            Equal(1, Reader.Readˉcount);
+            Equal(0, Reader.Readˉcount);
         }
 
-        Runˉnative(First.Fragment.Code);
-        var Object = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
-        var Linked = Linkˉsuccess([Object.ToArray()], new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
-        Runˉnative(Linked.Imageˉbytes);
+        try
+        {
+            File.WriteAllBytes(Nativeˉpath, Input.AsSpan());
+            Runˉnative(First.Fragment.Code);
+            var Object = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+            var Linked = Linkˉsuccess(
+                [Object.ToArray()],
+                new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+            Runˉnative(Linked.Imageˉbytes);
+        }
+        finally
+        {
+            File.Delete(Nativeˉpath);
+        }
     }
 
     private static void Nativeˉborrowedˉbytesˉagree()
@@ -2907,8 +2927,11 @@ internal static class Program
             Capabilityˉcatalog.PROCESS_ARGUMENT,
             Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT);
 
-        Hostedˉresourceˉcontext Makeˉresources(TextWriter output, Testˉfileˉreader reader) =>
-            new(["input.wvb"], output, TextWriter.Null, reader);
+        Hostedˉresourceˉcontext Makeˉresources(
+            TextWriter output,
+            Testˉfileˉreader reader,
+            string resourceˉname = "input.wvb") =>
+            new([resourceˉname], output, TextWriter.Null, reader);
         Testˉfileˉreader Makeˉreader() => new((Name, Maximum) =>
         {
             Equal("input.wvb", Name);
@@ -2972,16 +2995,74 @@ internal static class Program
             X64ˉnativeˉargumentˉservices.ARGUMENT_CANONICAL_SIZE,
             X64ˉnativeˉargumentˉservices.Build(Nativeˉservice.Processˉargument).Length);
 
+        foreach (var Platform in new[]
+        {
+            Nativeˉfileˉinputˉplatform.Windows,
+            Nativeˉfileˉinputˉplatform.Linux,
+        })
+        {
+            var Firstˉservice = X64ˉnativeˉfileˉinputˉservice.Build(Platform);
+            var Secondˉservice = X64ˉnativeˉfileˉinputˉservice.Build(Platform);
+            Sequenceˉequal(Firstˉservice, Secondˉservice);
+            Equal(X64ˉnativeˉfileˉinputˉservice.Canonicalˉsize(Platform), Firstˉservice.Length);
+            Equal(
+                X64ˉnativeˉfileˉinputˉservice.Canonicalˉsha256(Platform),
+                Convert.ToHexString(SHA256.HashData(Firstˉservice.AsSpan())).ToLowerInvariant());
+            X64ˉnativeˉfileˉinputˉservice.Verify(Platform, Firstˉservice.AsSpan());
+            var Corruptedˉservice = Firstˉservice.ToArray();
+            Corruptedˉservice[0] ^= 0x01;
+            Throwsˉinvalidˉoperation(
+                $"Native {Platform} file-input service identity",
+                () => X64ˉnativeˉfileˉinputˉservice.Verify(Platform, Corruptedˉservice));
+        }
+
         using var Nativeˉoutput = new Nativeˉoutputˉcapture();
-        var Nativeˉreader = Makeˉreader();
-        var Nativeˉresources = Makeˉresources(TextWriter.Null, Nativeˉreader);
-        Equal(
-            0,
-            X64ˉnativeˉexecutor.Executeˉi32(
-                First.Fragment,
-                hostˉservices: new(Nativeˉoutput.Channel, Authorized, Nativeˉresources)));
-        Equal("input.wvb\nwvb-header=pass\n", Nativeˉoutput.Readˉtext());
-        Equal(1, Nativeˉreader.Readˉcount);
+        var Nativeˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-file-input-{Guid.NewGuid():N}.wvb");
+        var Nativeˉreader = new Testˉfileˉreader((_, _) =>
+            throw new InvalidOperationException("Native execution called the Stage 0 file reader."));
+        try
+        {
+            File.WriteAllBytes(Nativeˉpath, Input.AsSpan());
+            var Nativeˉresources = Makeˉresources(
+                TextWriter.Null,
+                Nativeˉreader,
+                Nativeˉpath);
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment,
+                    hostˉservices: new(
+                        Nativeˉoutput.Channel,
+                        Authorized,
+                        Nativeˉresources,
+                        fileˉinput: Nativeˉfileˉinput.Hostˉfileˉsystem())));
+            Equal($"{Nativeˉpath}\nwvb-header=pass\n", Nativeˉoutput.Readˉtext());
+            Equal(0, Nativeˉreader.Readˉcount);
+
+            var Objectˉbytes = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
+            var Linked = Linkˉsuccess(
+                [Objectˉbytes.ToArray()],
+                new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+            Sequenceˉequal(First.Fragment.Code, Linked.Imageˉbytes);
+            using var Linkedˉoutput = new Nativeˉoutputˉcapture();
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment with { Code = Linked.Imageˉbytes },
+                    hostˉservices: new(
+                        Linkedˉoutput.Channel,
+                        Authorized,
+                        Nativeˉresources,
+                        fileˉinput: Nativeˉfileˉinput.Hostˉfileˉsystem())));
+            Equal($"{Nativeˉpath}\nwvb-header=pass\n", Linkedˉoutput.Readˉtext());
+            Equal(0, Nativeˉreader.Readˉcount);
+        }
+        finally
+        {
+            File.Delete(Nativeˉpath);
+        }
 
         const string Argumentˉtableˉsource = """
             module Nativeˉargumentˉtable profile hosted;
@@ -3102,11 +3183,18 @@ internal static class Program
                 hostˉservices: new(
                     Argumentˉtableˉnativeˉoutput.Channel,
                     Authorized,
-                    Missingˉargumentˉresources)));
+                    Missingˉargumentˉresources,
+                    fileˉinput: Nativeˉfileˉinput.Hostˉfileˉsystem())));
 
         var Missingˉfileˉreader = new Testˉfileˉreader((_, _) =>
-            throw new Hostedˉfileˉexception(Hostedˉfileˉerror.Notˉfound, "The WVB fixture is absent."));
-        var Missingˉfileˉresources = Makeˉresources(TextWriter.Null, Missingˉfileˉreader);
+            throw new InvalidOperationException("Native execution called the Stage 0 file reader."));
+        var Missingˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-missing-{Guid.NewGuid():N}.wvb");
+        var Missingˉfileˉresources = Makeˉresources(
+            TextWriter.Null,
+            Missingˉfileˉreader,
+            Missingˉpath);
         Throwsˉnativeˉtrap(
             "WVR3022",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
@@ -3114,7 +3202,101 @@ internal static class Program
                 hostˉservices: new(
                     Argumentˉtableˉnativeˉoutput.Channel,
                     Authorized,
-                    Missingˉfileˉresources)));
+                    Missingˉfileˉresources,
+                    fileˉinput: Nativeˉfileˉinput.Hostˉfileˉsystem())));
+        Equal(0, Missingˉfileˉreader.Readˉcount);
+
+        var Invalidˉnameˉresources = Makeˉresources(
+            TextWriter.Null,
+            Missingˉfileˉreader,
+            "");
+        Throwsˉnativeˉtrap(
+            "WVR3021",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                First.Fragment,
+                hostˉservices: new(
+                    Argumentˉtableˉnativeˉoutput.Channel,
+                    Authorized,
+                    Invalidˉnameˉresources,
+                    fileˉinput: Nativeˉfileˉinput.Hostˉfileˉsystem())));
+
+        var Oversizedˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-oversized-{Guid.NewGuid():N}.bin");
+        try
+        {
+            File.WriteAllBytes(
+                Oversizedˉpath,
+                new byte[Bytecodeˉlimits.MAX_BYTE_DATA_BYTES + 1]);
+            var Oversizedˉresources = Makeˉresources(
+                TextWriter.Null,
+                Missingˉfileˉreader,
+                Oversizedˉpath);
+            Throwsˉnativeˉtrap(
+                "WVR3025",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment,
+                    hostˉservices: new(
+                        Argumentˉtableˉnativeˉoutput.Channel,
+                        Authorized,
+                        Oversizedˉresources,
+                        fileˉinput: Nativeˉfileˉinput.Hostˉfileˉsystem())));
+        }
+        finally
+        {
+            File.Delete(Oversizedˉpath);
+        }
+
+        var Snapshotˉdirectory = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-snapshots-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Snapshotˉdirectory);
+        try
+        {
+            var Snapshotˉpaths = Enumerable
+                .Range(0, Hostedˉresourceˉlimits.MAX_FILE_SNAPSHOTS + 1)
+                .Select(Index => Path.Combine(Snapshotˉdirectory, $"input-{Index}.bin"))
+                .ToImmutableArray();
+            foreach (var Pathˉname in Snapshotˉpaths)
+            {
+                File.WriteAllBytes(Pathˉname, []);
+            }
+            var Snapshotˉcalls = string.Join(
+                Environment.NewLine,
+                Enumerable.Range(0, Snapshotˉpaths.Length).Select(Index =>
+                    $"    file.read_bytes(process.argument({Index}u32));"));
+            var Snapshotˉsource = $$"""
+                module Nativeˉfileˉsnapshotˉlimit profile hosted;
+                capability file.read_bytes;
+                capability process.argument;
+                export fn Main() -> i32 {
+                {{Snapshotˉcalls}}
+                    return 0;
+                }
+                """;
+            var Snapshotˉfragment = X64ˉnativeˉbackend.Compile(
+                Moduleˉcodec.Readˉandˉverify(
+                    Compileˉsuccess(Snapshotˉsource))).Fragment;
+            var Snapshotˉresources = new Hostedˉresourceˉcontext(
+                Snapshotˉpaths,
+                TextWriter.Null,
+                TextWriter.Null,
+                Missingˉfileˉreader);
+            Throwsˉnativeˉtrap(
+                "WVR3028",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    Snapshotˉfragment,
+                    hostˉservices: new(
+                        null,
+                        Authorized,
+                        Snapshotˉresources,
+                        fileˉinput: Nativeˉfileˉinput.Hostˉfileˉsystem())));
+        }
+        finally
+        {
+            Directory.Delete(Snapshotˉdirectory, recursive: true);
+        }
+        Equal(0, Missingˉfileˉreader.Readˉcount);
     }
 
     private static void Sourceˉmodulesˉcompose()

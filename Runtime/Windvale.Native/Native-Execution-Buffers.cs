@@ -2,7 +2,6 @@ using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Text;
-using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 using Windvale.Runtime;
 
@@ -12,7 +11,6 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
 {
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
     private readonly Hostedˉresourceˉcontext? Resources;
-    private readonly Dictionary<string, Nativeˉborrowedˉbuffer> Files = new(StringComparer.Ordinal);
     private readonly List<Nativeˉborrowedˉbuffer> Allocations = [];
     private bool Isˉdisposed;
 
@@ -44,54 +42,6 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
     public Nativeˉborrowedˉbuffer Argumentˉtable { get; private set; }
 
     public uint Argumentˉcount { get; private set; }
-
-    public Nativeˉborrowedˉbuffer Readˉfile(string resourceˉname)
-    {
-        ObjectDisposedException.ThrowIf(Isˉdisposed, this);
-        if (Files.TryGetValue(resourceˉname, out var Existing))
-        {
-            return Existing;
-        }
-
-        var Buffer = Allocate(Requireˉresources().Readˉfileˉbytes(resourceˉname));
-        Files.Add(resourceˉname, Buffer);
-        return Buffer;
-    }
-
-    public string Readˉtext(
-        IntPtr address,
-        uint length,
-        IntPtr fragmentˉaddress,
-        int fragmentˉlength)
-    {
-        ObjectDisposedException.ThrowIf(Isˉdisposed, this);
-        if (length > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
-        {
-            throw new InvalidOperationException("The native text descriptor exceeds the UTF-8 text limit.");
-        }
-
-        var Isˉfragment = Contains(fragmentˉaddress, fragmentˉlength, address, length);
-        var Isˉowned = Allocations.Any(Buffer =>
-            Contains(Buffer.Address, Buffer.Allocationˉlength, address, length));
-        if (!Isˉfragment && !Isˉowned)
-        {
-            throw new InvalidOperationException("The native text descriptor is outside verified immutable storage.");
-        }
-
-        var Bytes = new byte[checked((int)length)];
-        if (Bytes.Length != 0)
-        {
-            Marshal.Copy(address, Bytes, 0, Bytes.Length);
-        }
-        return STRICT_UTF8.GetString(Bytes);
-    }
-
-    public static void Writeˉdescriptor(IntPtr descriptor, Nativeˉborrowedˉbuffer buffer)
-    {
-        Marshal.WriteInt64(descriptor, Nativeˉcontract.BORROWED_BYTES_POINTER_OFFSET, buffer.Address.ToInt64());
-        Marshal.WriteInt32(descriptor, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET, buffer.Length);
-        Marshal.WriteInt32(descriptor, Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET, 0);
-    }
 
     public void Dispose()
     {
@@ -224,14 +174,6 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
     private Hostedˉresourceˉcontext Requireˉresources() =>
         Resources ?? throw new InvalidOperationException("Native hosted resources are unavailable.");
 
-    private static bool Contains(IntPtr owner, int ownerˉlength, IntPtr value, uint valueˉlength)
-    {
-        var Ownerˉstart = owner.ToInt64();
-        var Ownerˉend = checked(Ownerˉstart + ownerˉlength);
-        var Valueˉstart = value.ToInt64();
-        var Valueˉend = checked(Valueˉstart + valueˉlength);
-        return Valueˉstart >= Ownerˉstart && Valueˉend <= Ownerˉend;
-    }
 }
 
 internal readonly record struct Nativeˉborrowedˉbuffer(

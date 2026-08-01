@@ -13,10 +13,12 @@ public sealed class Nativeˉhostˉservices
         Nativeˉoutputˉchannel? standardˉoutput,
         IEnumerable<string>? authorizedˉcapabilities = null,
         Hostedˉresourceˉcontext? resources = null,
-        Nativeˉoutputˉchannel? diagnosticˉoutput = null)
+        Nativeˉoutputˉchannel? diagnosticˉoutput = null,
+        Nativeˉfileˉinput? fileˉinput = null)
     {
         Standardˉoutput = standardˉoutput;
         Diagnosticˉoutput = diagnosticˉoutput;
+        Fileˉinput = fileˉinput;
         Resources = resources;
         Authorizedˉcapabilities = (authorizedˉcapabilities ?? [])
             .ToImmutableHashSet(StringComparer.Ordinal);
@@ -25,6 +27,8 @@ public sealed class Nativeˉhostˉservices
     public Nativeˉoutputˉchannel? Standardˉoutput { get; }
 
     public Nativeˉoutputˉchannel? Diagnosticˉoutput { get; }
+
+    public Nativeˉfileˉinput? Fileˉinput { get; }
 
     public Hostedˉresourceˉcontext? Resources { get; }
 
@@ -58,7 +62,7 @@ public sealed class Nativeˉhostˉservices
             Nativeˉservice.Consoleˉwriteˉline => Standardˉoutput?.Isˉavailable == true,
             Nativeˉservice.Processˉargumentˉcount or
                 Nativeˉservice.Processˉargument => Resources is not null,
-            Nativeˉservice.Fileˉreadˉbytes => Resources?.Fileˉreader is not null,
+            Nativeˉservice.Fileˉreadˉbytes => Fileˉinput?.Isˉavailable == true,
             Nativeˉservice.Diagnosticˉwriteˉline => Diagnosticˉoutput?.Isˉavailable == true,
             Nativeˉservice.Textˉutf8ˉisˉvalid or
                 Nativeˉservice.Enumˉname or
@@ -68,6 +72,40 @@ public sealed class Nativeˉhostˉservices
                 Nativeˉservice.U32ˉformat => true,
             _ => false,
         };
+}
+
+public enum Nativeˉfileˉinputˉplatform : uint
+{
+    Windows = 1,
+    Linux = 2,
+}
+
+public sealed class Nativeˉfileˉinput
+{
+    private Nativeˉfileˉinput(Nativeˉfileˉinputˉplatform platform)
+    {
+        Platform = platform;
+    }
+
+    internal Nativeˉfileˉinputˉplatform Platform { get; }
+
+    internal bool Isˉavailable => Platform == Currentˉplatform();
+
+    public static Nativeˉfileˉinput Hostˉfileˉsystem() => new(Currentˉplatform());
+
+    internal static Nativeˉfileˉinputˉplatform Currentˉplatform()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return Nativeˉfileˉinputˉplatform.Windows;
+        }
+        if (OperatingSystem.IsLinux())
+        {
+            return Nativeˉfileˉinputˉplatform.Linux;
+        }
+        throw new PlatformNotSupportedException(
+            "The native file-input boundary supports Windows and Linux.");
+    }
 }
 
 public enum Nativeˉoutputˉplatform : uint

@@ -9,8 +9,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉnativeˉprobeˉcontract
 {
-    public const int FORMAT_VERSION = 8;
-    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v8";
+    public const int FORMAT_VERSION = 9;
+    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v9";
     public const string BRIDGE_SYMBOL = "Windvale_kernel_x64_native_probe";
     public const string NATIVE_MAIN_SYMBOL = "Main";
     public const int EXPECTED_RESULT = 29;
@@ -93,7 +93,7 @@ public static class Kernelˉnativeˉprobe
     private static ImmutableArray<byte> Buildˉbridgeˉobject()
     {
         var Output = new X64ˉcodeˉbuilder();
-        Output.Emit(0x48, 0x83, 0xEC, 0x68);
+        Output.Emit(0x48, 0x83, 0xEC, 0x78);
         Output.Emit(0x48, 0x89, 0x0C, 0x24);
         Output.Emit(0x48, 0xB8);
         Output.Emitˉu64(
@@ -116,15 +116,16 @@ public static class Kernelˉnativeˉprobe
         Output.Emit(0x48, 0x89, 0x44, 0x24, 0x50);
         Output.Emit(0x48, 0x89, 0x44, 0x24, 0x58);
         Output.Emit(0x48, 0x89, 0x44, 0x24, 0x60);
+        Output.Emit(0x48, 0x89, 0x44, 0x24, 0x68);
         Output.Emit(0x48, 0x8D, 0x54, 0x24, 0x08);
         var Nativeˉcallˉoffset = Output.Emitˉcallˉplaceholder();
         Output.Emit(0x48, 0x83, 0xF8, Kernelˉnativeˉprobeˉcontract.EXPECTED_RESULT);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Output.Emit(0x48, 0x8B, 0x0C, 0x24);
-        Output.Emit(0x48, 0x83, 0xC4, 0x68);
+        Output.Emit(0x48, 0x83, 0xC4, 0x78);
         var Kernelˉjumpˉoffset = Output.Emitˉjumpˉplaceholder();
         Output.Mark(FAILURE_LABEL);
-        Output.Emit(0x48, 0x83, 0xC4, 0x68);
+        Output.Emit(0x48, 0x83, 0xC4, 0x78);
         Output.Emit(0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
         var Code = Output.Build();
 
@@ -167,8 +168,8 @@ public static class Kernelˉnativeˉprobe
         var Object = Objectˉcodec.Readˉandˉverify(objectˉbytes.AsSpan()).Value;
         ReadOnlySpan<byte> Expectedˉcode =
         [
-            0x48, 0x83, 0xEC, 0x68, 0x48, 0x89, 0x0C, 0x24,
-            0x48, 0xB8, 0x05, 0x00, 0x00, 0x00, 0x60, 0x00, 0x00, 0x00,
+            0x48, 0x83, 0xEC, 0x78, 0x48, 0x89, 0x0C, 0x24,
+            0x48, 0xB8, 0x06, 0x00, 0x00, 0x00, 0x68, 0x00, 0x00, 0x00,
             0x48, 0x89, 0x44, 0x24, 0x08,
             0xB8, 0x0F, 0x01, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x10,
             0xB8, 0x02, 0x00, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x18,
@@ -181,12 +182,13 @@ public static class Kernelˉnativeˉprobe
             0x48, 0x89, 0x44, 0x24, 0x50,
             0x48, 0x89, 0x44, 0x24, 0x58,
             0x48, 0x89, 0x44, 0x24, 0x60,
+            0x48, 0x89, 0x44, 0x24, 0x68,
             0x48, 0x8D, 0x54, 0x24, 0x08,
             0xE8, 0x00, 0x00, 0x00, 0x00, 0x48, 0x83, 0xF8, 0x1D,
             0x0F, 0x85, 0x0D, 0x00, 0x00, 0x00,
-            0x48, 0x8B, 0x0C, 0x24, 0x48, 0x83, 0xC4, 0x68,
+            0x48, 0x8B, 0x0C, 0x24, 0x48, 0x83, 0xC4, 0x78,
             0xE9, 0x00, 0x00, 0x00, 0x00,
-            0x48, 0x83, 0xC4, 0x68, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3,
+            0x48, 0x83, 0xC4, 0x78, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3,
         ];
         if (Object.Sections.Length != 1 ||
             Object.Sections[0] is not
@@ -204,7 +206,7 @@ public static class Kernelˉnativeˉprobe
                 Kind: Objectˉsymbolˉkind.Function,
                 Sectionˉindex: 0,
                 Offset: 0,
-                Size: 133,
+                Size: 138,
             } ||
             Object.Symbols[1] is not
             {
@@ -223,7 +225,7 @@ public static class Kernelˉnativeˉprobe
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
-                Offset: 96,
+                Offset: 101,
                 Symbolˉindex: 1,
                 Addend: -4,
             } ||
@@ -231,7 +233,7 @@ public static class Kernelˉnativeˉprobe
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
-                Offset: 119,
+                Offset: 124,
                 Symbolˉindex: 2,
                 Addend: -4,
             })
