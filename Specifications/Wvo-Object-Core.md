@@ -6,7 +6,7 @@
 
 The current module imports `Foundationˉbyteˉordering` for canonical section and symbol name comparison and is cross-host requalified at `4fdea22`. Its composed WVB is 29,863 bytes with SHA-256 `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`. The representative WVO bytes remain unchanged.
 
-This is an object producer and structural inspector, not yet an assembler or linker. Its role is to prove that verified Windvale bytecode can create a useful deterministic binary interchange artifact without borrowing Windows or Linux object semantics.
+This is an object producer and structural inspector, not an assembler or linker. Its role is to prove that verified Windvale bytecode can create a useful deterministic binary interchange artifact without borrowing Windows or Linux object semantics.
 
 ## Pure boundaries
 
@@ -49,6 +49,6 @@ With no arguments, `Main` runs deterministic construction and adversarial self-t
 
 The module must declare and receive grants for `console.write_line`, `diagnostic.write_line`, `file.write_bytes`, `process.argument`, and `process.argument_count`. Path interpretation and native errors remain in the host adapter; the encoder and inspector are host-independent.
 
-## Next boundary
+## Ownership boundary
 
-The assembler reuses the WVO contracts while replacing the fixed representative records with parsed instructions, sections, definitions, exports, and imports. The linker remains the separate owner of layout, symbol resolution, relocation evaluation, and final image adapters.
+The now-qualified assembler reuses the WVO contracts while replacing the fixed representative records with parsed instructions, sections, definitions, exports, and imports. The linker remains the separate owner of layout, symbol resolution, relocation evaluation, and final image adapters.

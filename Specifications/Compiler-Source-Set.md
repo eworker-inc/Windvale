@@ -54,7 +54,7 @@ WVSS is a compiler input container, not a source package, archive, module-distri
 
 The hosted source-set tool accepts explicit root/dependency resource names, constructs WVSS in argument order, and passes it to the portable validator. Dependency order is therefore checked rather than inherited from host enumeration. Repeated reads of the same exact resource use the hosted first-successful-read snapshot.
 
-## Current candidate artifacts and evidence
+## Qualified milestone artifacts and evidence
 
 - `Source-Set-Core.wvb`: 187,767 bytes, SHA-256 `bb671df781acb049c513f9504abf00069a3fff1cdb9affb8706340b9e02fefda`.
 - `Source-Set-Demo.wvb`: 197,409 bytes, SHA-256 `5b334b0ead653bc043e244a60e2e36bc32d66aa0211f715329434c0447a539c9`.

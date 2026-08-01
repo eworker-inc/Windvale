@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel CPU exceptions version 1 is the implemented candidate for Windvale OS firmware probe 17. It establishes one kernel-owned, terminal invalid-opcode boundary after firmware shutdown and on the kernel-owned stack. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) owns the decision. Cross-host and final pinned-QEMU qualification remain pending.
+Kernel CPU exceptions version 1 is cross-host qualified for Windvale OS firmware probe 17 at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. It establishes one kernel-owned, terminal invalid-opcode boundary after firmware shutdown and on the kernel-owned stack. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) records the exact Windows, Debian, GitHub, and pinned-QEMU evidence.
 
 This contract covers x86-64 exception vector 6 (`#UD`) only. It is intentionally separate from Windvale runtime traps such as `WVR3007`, which are represented by checked native status returns and do not raise processor faults.
 

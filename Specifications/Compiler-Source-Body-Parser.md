@@ -73,7 +73,7 @@ The pass enforces:
 
 The first failure is deterministic and includes lexical status, expected/found token kinds, and byte/line/column position. Recoverable multi-error diagnostics remain deferred to semantic compiler pressure.
 
-## Current candidate artifacts and evidence
+## Qualified milestone artifacts and evidence
 
 - `Source-Body-Parser.wvb`: 175,055 bytes, SHA-256 `3df42c7b6e81343194340b8f6f44e44fb83f3d6f18c249c9d9ed4e58df69ec73`.
 - `Source-Body-Parser-Demo.wvb`: 179,955 bytes, SHA-256 `afa07f843679e89f84a5a55887af834575d43d4a3ac3f1a76cd4395a103e62b6`, result `0` under 30,000,000 instructions.

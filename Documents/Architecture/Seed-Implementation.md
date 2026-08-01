@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented by the Windvale Seed milestone.
+The core Seed milestone is implemented and qualified. Later compiler-bootstrap, shared-native, and operating-system slices consume these contracts and are summarized here only where they clarify current ownership.
 
 ## End-to-end path
 
@@ -49,7 +49,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - A Windvale-written typed WVIR producer with explicit blocks, temporaries, source spans, and an independent packed-directory validator
 - A Windvale-written WVIR-to-WVB backend that emits one canonical verified module from a validated source graph
 
-This implementation is correctly named as a compiler even before it completes self-hosting qualification.
+This implementation is the qualified Windvale compiler: Stage 0 builds Stage 1, and Stage 1 reproduces the exact Stage 2 WVB from the committed 12-module inventory on Windows and Debian. Native execution of that compiler remains a later gate.
 
 ### Reference compiler
 
@@ -80,6 +80,10 @@ WIR uses virtual temporaries and local slots. The C# reference compiler lowers i
 - Module inspection, disassembly, and SHA-256 identity
 
 Every function is checked for valid branch boundaries, index and type use, matching stack states at merges, reachable instructions, valid returns, and an exact declared maximum stack.
+
+### Shared native execution
+
+`Runtime/Windvale.Native/` owns the current bounded ABI-14 lowering, strict fragment reconstruction, W^X JIT and WVO/AOT execution, versioned execution context, native service leaves, publication layout, and narrow Windows/Linux adapters. Windvale-written source under `Compiler/Windvale/` validates and constructs the two live process-input leaves and plans every executable-image extent and canonical service placement. C# Stage 0 still owns WVB loading/lowering, OS allocation and protection, cache publication, invocation, arenas, and teardown until the measured transfers and [native-retirement gate](Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) are complete.
 
 ### Object model
 
@@ -240,6 +244,6 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 
 ## Deliberate Seed limits
 
-Seed does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, runtime module linkage, package discovery, a host executable-container writer, native compiler backend, or operating-system code. The qualified Windvale and Stage 0 linkers are deliberately limited to verified WVO inputs and one raw flat-memory-image target.
+The core Seed language/runtime contract does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, runtime module linkage, package discovery, or a host executable-container writer. Later repository layers now provide a bounded shared native backend and an experimental OS probe, but those do not silently broaden Seed semantics. The qualified Windvale and Stage 0 linkers remain deliberately limited to verified WVO inputs and one raw flat-memory-image target; UEFI packaging is a separate target adapter.
 
 These are scope boundaries, not assertions that the current language model is final.

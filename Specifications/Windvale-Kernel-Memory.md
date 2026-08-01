@@ -91,19 +91,20 @@ Malformed and random bytes must produce a bounded result or one of these failure
 
 ## Current evidence and limit
 
-Firmware probe version 9 links the memory object, WVA shims, ABI-7 object, and native bridge independently; finds and clears the arena after firmware shutdown; records a successful one-page allocation; copies the handoff; and runs both the portable native probe and compiler export `Windvale_kernel_main` on the owned stack. Every line through Hello World in the suffix originates in the special compiler-generated function and returns through the WVA console adapter. Continued loader evidence additionally requires the exact ABI-7 context and portable byte-decoding result. The QEMU gate requires this memory/native suffix:
+Firmware probe version 17 retains the version-1 arena, allocator, copied-handoff, and stack rules while running the ABI-14 portable native probe and compiler export `Windvale_kernel_main`. It assigns the first allocated page to the bounded vector-6 exception table. The normal pinned-QEMU gate requires this memory/native suffix:
 
 ```text
 memory-owned=pass
 allocator=pass
 kernel-stack=pass
 Hello from Windvale
+cpu-exceptions=armed
 native-context=pass
 native-wvb=pass
 windvale-source=pass
 status=pass
 ```
 
-Firmware probe 17 retains the version-1 state and allocator rules, gives the first allocated page one durable candidate owner, and installs the vector-6 gate on the owned stack. The normal path adds `cpu-exceptions=armed` only after Main and the exception installer return. The explicit fault path reaches the terminal invalid-opcode handler instead. Candidate artifact identities and qualification evidence remain pending.
+The separately selected invalid-opcode image executes `UD2` after Main and reaches the qualified terminal panic transcript and QEMU host code 3. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) records both exact probe-17 artifact identities and their Windows/Debian/GitHub/pinned-QEMU evidence.
 
 Version 1 does not claim all physical memory, reclamation of the retained map or loader ranges, page release, paging, guard pages, NX/W^X enforcement, general interrupts, multiple CPUs, processes, runtime allocation policy, or graphical output. The exception allocation does not add page-fault, double-fault, interrupt-controller, recovery, or clean-shutdown policy.

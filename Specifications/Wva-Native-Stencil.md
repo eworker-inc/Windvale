@@ -2,7 +2,7 @@
 
 ## Status
 
-`WVSP 1` and the measured multi-patch `WVSP 2` extension are qualified bounded contracts for the two Windvale-owned process-input construction slices under Decisions 0077 and 0078. `WVSP 2` is qualified at exact integrated commit `50294d9d5cc24edc26a3e56994cb3aa28e16352c`; their Windvale-written exact consumer is qualified under Decision 0079 at exact commit `f3a4ba4ebf4d2e9de28dfa73e34e14362691919b` on Windows and Debian.
+`WVSP 1` and the measured multi-patch `WVSP 2` extension are qualified bounded contracts for the two Windvale-owned process-input construction slices under Decisions 0077 and 0078. `WVSP 2` is qualified at exact integrated commit `50294d9d5cc24edc26a3e56994cb3aa28e16352c`; their Windvale-written exact consumer is qualified under Decision 0079 at exact commit `f3a4ba4ebf4d2e9de28dfa73e34e14362691919b`. Decision 0080 qualifies its bounded byte-result bridge and live consumption at exact commit `f547af8dcf8e257ab8ad8a76a49bbdd1b9136677` on Windows and Debian.
 
 Neither version defines a general stencil container or complete baseline JIT.
 
@@ -101,7 +101,7 @@ The repository retains each `.wva` source and its Windvale-assembled WVO. The co
 
 `Examples/Compiler/Native-Stencil-Demo.wv` embeds the retained production objects and exercises successful construction, exact output locations, deterministic repetition, truncated input, corrupt object metadata, corrupt symbols, corrupt patch records, changed fixed shell bytes, and nonzero holes. The conformance harness proves that the embedded inputs remain byte-identical to the live production resources and executes the same compiled Windvale module through the reference interpreter, native JIT, and linked WVO/AOT routes.
 
-The current native invocation contract returns an `i32`, not an immutable `bytes` value. C# therefore remains the live loader and independent oracle until a later bounded byte-result bridge or another non-cyclic integration seam lets the accepted Windvale result become the bytes published by the live runtime. This is an integration boundary, not a language-semantics dependency.
+`Compiler/Windvale/Native-Stencil-Bridge.wv` embeds both retained objects, calls the exact consumer, and returns their instantiated leaves as one immutable 75-byte bundle. Decision 0080's verified descriptor-return entry copies that bounded result before teardown, and the live process-input service path consumes the Windvale-produced bytes. C# remains the WVB loader, native compiler/verifier, publication and lifetime owner, and independent oracle; it no longer supplies the live leaf bytes. This is an integration boundary, not a language-semantics dependency.
 
 ## Deliberate limits
 

@@ -29,7 +29,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the two live process-input leaves and plans every live executable-image extent and service placement. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
 | 11. Boot path and kernel | 🚧 In progress | Probe 17 runs the ABI-14 WVB path and owns a terminal vector-6 invalid-opcode boundary under pinned QEMU. | Add broader trap handling, in-guest loading and verification, clean shutdown, and Hyper-V evidence. |
 | 12. Runtime on Windvale OS | ○ Planned | The portability contract is defined; the guest does not yet load and verify WVB itself. | Run one identical verified WVB through equivalent Windows, Linux, and Windvale OS contracts. |
-| 13. Public foundation | 🚧 In progress | Licensing, contribution, security, governance, support, and authorship policies are prepared. | Complete GitHub settings, the publication baseline, and public project operations. |
+| 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 
 ## Working end to end
 

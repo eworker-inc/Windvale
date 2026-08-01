@@ -147,7 +147,7 @@ LLVM can provide optimization, architecture coverage, debug information, and mat
 
 ### Direct machine code — first bounded target implemented, shared backend accepted
 
-A direct native backend is necessary for a self-owned kernel and host toolchain. Decision 0049 adds the first intentionally narrow implementation only after typed WIR, verified WVO, linking, and the kernel handoff exist: one linear system-profile entry, constant ASCII line output through an imported adapter, and a constant return. This proves that WIR can reach booted native code through the shared object model. Decision 0057 requires the general backend to serve both deterministic WVO/AOT and in-memory JIT publication. Register allocation, general control flow, data addressing, a stable native ABI, host executables, native WVB lowering, and differential semantic coverage remain Phase 9 work.
+A direct native backend is necessary for a self-owned kernel and host toolchain. Decision 0049 adds the first intentionally narrow implementation only after typed WIR, verified WVO, linking, and the kernel handoff exist. Decisions 0059 through 0082 now qualify a broader but still bounded ABI-14 WVB subset through both deterministic WVO/AOT and in-memory W^X publication, including control flow, calls, static data, borrowed and arena-backed values, all eleven native service leaves, live Windvale-produced process-input leaves, and Windvale-owned executable-image layout. Register allocation, broad compiler coverage, standalone host containers, complete publication lifetime, and native self-hosting remain Phase 9 and Phase 10 work.
 
 ## Proposed bootstrap stages
 
@@ -164,7 +164,7 @@ A direct native backend is necessary for a self-owned kernel and host toolchain.
 11. Rebuild and run the compiler, verifier, assembler, linker, runtime, tests, and packaging through Windvale-native tools, then retire .NET from the normal workflow under Decision 0057's gate.
 12. Run the same verified WVB modules through equivalent Windvale-native execution paths on Windows, Linux, and Windvale OS.
 
-Stages 1 through 4 are qualified. Decision 0049 supplies the first bounded evidence for stage 5, and increasing compiler/tool portions of stage 6 are implemented. Decision 0058 qualifies stage 7's compiler convergence in bytecode: Stage 0 builds Stage 1, and Stage 1 builds a byte-identical Stage 2 from the same explicit 12-module inventory on Windows and Debian. Stages 8 through 12 still require the shared native runtime/backend, native host tools, and Windvale OS execution. The optional restricted C experiment is not a prerequisite for the accepted bytecode bootstrap proof or Decision 0057's owned native destination.
+Stages 1 through 4 and stage 7's bytecode compiler convergence are qualified. The Windvale-written compiler and major binary tools satisfy stage 6 in their current portable scopes. Decisions 0059 through 0082 supply bounded qualified evidence for stages 5, 8, 9, and 10: ABI 14, interpreter/JIT/WVO-AOT agreement, all native service leaves, live Windvale-produced leaf bytes, and Windvale-owned publication layout. They do not yet qualify general backend coverage, native compiler execution, standalone native host tools, complete W^X lifetime ownership, .NET retirement, or in-guest WVB execution. The optional restricted C experiment is not a prerequisite for the accepted bytecode bootstrap proof or Decision 0057's owned native destination.
 
 ## Why this minimizes loops
 
@@ -185,7 +185,7 @@ Stages 1 through 4 are qualified. Decision 0049 supplies the first bounded evide
 - Error and exception semantics
 - Integer overflow and floating-point reproducibility rules
 - General native value representation, ABI, and object-layout expansion beyond the accepted WVO kernel subset
-- The first extension beyond Decision 0077's exact argument-count stencil and one-byte execution-context-offset patch
+- The first measured stencil/container extension beyond the two exact qualified service leaves and the Windvale-owned publication-layout contract
 - Tier thresholds, native-cache policy, and which resource counters are execution-mode-independent
 - The minimum native allocator/reclamation strategy needed before .NET retirement
 - Cross-target policy after the accepted x86-64/UEFI first boundary

@@ -8,7 +8,7 @@ Windvale has no stable release or compatibility-support window yet. Security wor
 
 ## Reporting a vulnerability
 
-Use GitHub's **Report a vulnerability** form under the repository's Security tab. This creates a private repository security advisory visible to the project security maintainers. Private vulnerability reporting must be enabled when the public repository is created.
+Use GitHub's **Report a vulnerability** form under the repository's Security tab. Private vulnerability reporting is enabled for the public repository; the form creates a private repository security advisory visible to the project security maintainers.
 
 Include, when available:
 

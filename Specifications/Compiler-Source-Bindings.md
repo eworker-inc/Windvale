@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉbindings` is the portable body-binding phase introduced and cross-host qualified under Decision 0034. The current WVIR candidate adds prepared-symbol and local-only entry points while preserving the qualified full-binding and WVLB contracts. It consumes one complete, valid, acyclic WVSS 1 graph; reuses WVSD 1 declaration evidence; binds function parameters, locals, data reads, assignments, constructors, functions, capabilities, and Foundation intrinsics; and publishes independently validated local-binding evidence.
+`Compilerˉsourceˉbindings` is the portable body-binding phase introduced and cross-host qualified under Decision 0034. The later WVIR integration adds prepared-symbol and local-only entry points while preserving the qualified full-binding and WVLB contracts. It consumes one complete, valid, acyclic WVSS 1 graph; reuses WVSD 1 declaration evidence; binds function parameters, locals, data reads, assignments, constructors, functions, capabilities, and Foundation intrinsics; and publishes independently validated local-binding evidence.
 
 Complete expression types, field ownership, operator/result types, return proof, and WIR construction now belong to `Compilerˉsourceˉwir`; this phase remains the owner of binding identity and diagnostic precedence. It does not emit WVB.
 
@@ -112,7 +112,7 @@ Intrinsic-call lookup dispatches candidates by exact UTF-8 byte length, checks t
 
 The real nine-module compiler closure must complete below the fixed 4,000,000,000-instruction ceiling. Raising that ceiling is not an accepted substitute for correcting repeated materialization or rescan work.
 
-## Candidate artifacts and evidence
+## Qualified milestone artifacts and evidence
 
 - `Source-Bindings-Core.wvb`: 353,191 bytes, SHA-256 `4e1e5d7f0029d15abaaadc3c2d84d966db6b33bb7b11c8b222bc5336b32cdae6`.
 - `Source-Bindings-Demo.wvb`: 360,076 bytes, SHA-256 `261d3497883a1920ebc523b252b91b1ee5efbbd4a5ad7a0d81255e3908959014`.

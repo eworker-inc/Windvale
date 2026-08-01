@@ -67,6 +67,6 @@ The no-argument self-test covers a valid minimal WVB 1.6 module plus short heade
 
 The cross-host contract compiles a real `Sumˉdata` module, passes its exact bytes through the native Windows or Debian file adapter, and compares the complete normalized Windvale-generated report. This proves that declaration decoding, signed and unsigned operands, safe name quoting, and instruction walking agree across hosts.
 
-## Next boundary
+## Downstream use
 
-With useful `wvdump` complete, deterministic byte construction and the WVO 1.0 object foundation are the next qualified boundary. The following tool milestone is an assembler that turns a small source instruction grammar into canonical sections, symbols, and relocations, followed by a linker that owns layout and fixup application.
+Useful `wvdump` supplied the concrete pressure for deterministic byte construction and the WVO 1.0 object foundation. Those downstream contracts, the Windvale-written assembler, and the Windvale-written linker are now qualified. This specification remains the portable structural-inspection core rather than absorbing object production, assembly parsing, or link layout.

@@ -23,7 +23,7 @@ This list records unresolved decisions without presenting them as implementation
 - What is the boundary between compiler IR and stable bytecode?
 - Which memory-management model works for both native system code and managed application code?
 - What compact native value, text, bytes, root, heap, and reclamation contracts are sufficient for the first Windvale-native runtime?
-- What is the smallest Windvale-written object/stencil validator and typed patch applier that can consume the accepted `WVSP 1`/`WVSP 2` artifacts without broadening them into a general executable-input format?
+- What measured branch, call, data-reference, or wider-patch case should justify the first stencil contract beyond the two exact qualified `WVSP 1`/`WVSP 2` service leaves?
 - Which tier thresholds, native-cache identities, and resource counters remain deterministic across interpretation, JIT, and AOT?
 - How will deterministic and differential execution be tested across the reference interpreter, Windvale-native interpreter, baseline JIT, and AOT backend?
 - How small can the runtime remain while supporting useful libraries and diagnostics?
@@ -37,7 +37,7 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Operating system
 
-- Which minimal read-only data and address-materialization rules will the first compiler-produced kernel WVO require beyond the accepted code-only relative-call adapter?
+- Which kernel-owned data, address-materialization, and target-container rules should extend the accepted special kernel WVO without duplicating the shared ABI-14 backend?
 - What counts as “from scratch” at each bootstrap stage?
 - What is the first process, protection, filesystem, driver, and application model?
 - Does the first Windvale OS host bytecode inside the kernel, in a privileged runtime process, or in ordinary isolated processes?
@@ -45,10 +45,10 @@ This list records unresolved decisions without presenting them as implementation
 
 ## First decision sequence
 
-Decision 0058 completes reproducible Stage 0 → Stage 1 → Stage 2 bytecode compiler convergence. The recommended next decisions are:
+Decisions 0058 through 0082 establish reproducible bytecode compiler convergence, the bounded shared ABI-14 native path, live Windvale-produced service leaves, Windvale-owned executable-image layout, and the first terminal CPU-exception destination. The recommended next decisions are:
 
-1. Define the smallest native value representation, calling convention, runtime-service table, allocation/reclamation boundary, and platform thunk ABI required by representative WVB programs.
-2. Define one structured machine-fragment and typed-patch boundary shared by verified WVB lowering, typed-WIR lowering, WVO/AOT, and in-memory linking.
-3. Qualify a WVA-generated copy-and-patch baseline-JIT slice with strict writable-or-executable publication and interpreter/JIT/AOT differential evidence.
-4. Add native PE/COFF and ELF adapters plus Windows/Linux capability and process hosts without leaking their rules into portable modules.
+1. Define explicit executable-publication lifetime state and transfer the next measured Windows/Linux allocation, protection, cache-publication, invocation, or teardown boundary into Windvale without weakening W^X.
+2. Execute the qualified Windvale-written compiler through the shared native path and identify the next backend or runtime contract demanded by that real workload.
+3. Add native PE/COFF and ELF containers plus standalone Windows/Linux capability and process hosts without leaking host rules into portable modules.
+4. Extend the kernel from one terminal invalid-opcode destination toward the smallest coherent trap, shutdown, and in-guest WVB loading/verifying path, retaining pinned-QEMU evidence before Hyper-V qualification.
 5. Satisfy the remaining Decision 0057 native-retirement conditions, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.

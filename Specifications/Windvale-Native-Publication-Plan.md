@@ -4,6 +4,8 @@
 
 `WVPQ 1` and `WVPL 1` are versioned internal contracts between the Stage 0 native executor and the retained Windvale publication planner. They describe the bounded layout of one independently verified native fragment and its canonical runtime-service leaves before writable memory is allocated and before the image becomes executable.
 
+[Decision 0082](../Documents/Decisions/0082-Windvale-Owned-Native-Publication-Layout.md) cross-host qualifies both contracts and their live use at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. The portable core is 7,189 bytes with SHA-256 `9d75d59e4ba0fc689ae9bc4ac3ac019e520db06d21f54d4ee1480a0bb356e967`; the retained hosted bridge is 7,105 bytes with SHA-256 `5102fd0119e37bb7e5f83bb3c4d1bff6303f37818bfe48825b320bf28f27eada`.
+
 This contract is not a public application format, a native object format, a code cache, or a general linker input. It does not contain machine bytes, absolute addresses, relocations, operating-system handles, or executable-memory policy. WVB remains the portable program identity and WVO remains the serialized native object format.
 
 All integers are unsigned 32-bit little-endian values. Every reserved field is zero. Unknown versions, trailing bytes, missing bytes, noncanonical service order, and arithmetic outside the stated limits are rejected.

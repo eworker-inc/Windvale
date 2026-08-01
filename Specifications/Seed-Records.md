@@ -44,4 +44,4 @@ The verifier checks record indices, constructor arity and operand types, field i
 
 ## Deliberate next steps
 
-The next structured-inspection work may add a small enum contract for status names and bounded formatting for report values. Nested aggregates or a broader allocation model should be introduced only when a concrete compiler, assembler, or Foundation data structure requires them.
+Small nominal enums and bounded formatting are now qualified companion contracts. Nested aggregates or a broader allocation model should be introduced only when a concrete compiler, runtime, assembler, or Foundation data structure requires them.

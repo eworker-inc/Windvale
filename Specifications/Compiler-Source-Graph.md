@@ -53,7 +53,7 @@ The graph contains one through 64 modules because WVSS owns that bound. Traversa
 
 Headers and leading import declarations are rescanned from accepted immutable sources. No edge table is retained. The graph phase does not increase the 4 MiB WVSS ceiling or the parser's declaration limits.
 
-## Current candidate artifacts and evidence
+## Qualified milestone artifacts and evidence
 
 - `Source-Graph-Core.wvb`: 204,109 bytes, SHA-256 `5d266d834c5cde77efa4046dfc9c8a8c0eed7c2df1dd254f98c4e338d76cccda`.
 - `Source-Graph-Demo.wvb`: 210,509 bytes, SHA-256 `2d2fa7ae2cca012834fb340253a551f9332a764200bb8f6449158b8dad4b30b2`.

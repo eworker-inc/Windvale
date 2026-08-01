@@ -6,6 +6,12 @@ AI systems produce the source and prose. Humans define the objectives, direct th
 
 At its center is a **new programming language**, together with its compiler, portable bytecode, verified runtime, assembler, object model, linker, and Foundation library. The long-term integration goal is a **new small operating system** capable of loading and running the same verified Windvale programs that run on Windows and Linux. The language and tools remain independently useful before the operating system is complete.
 
+## Project overview
+
+![Windvale project overview for July 2026](Documents/Project/Images/Windvale-Progress-July-2026.png)
+
+*This July 2026 overview was refreshed on 1 August 2026 and is a periodic visual snapshot. The progress table below, accepted decisions, and qualification evidence govern where the project has advanced beyond what the image shows.*
+
 ## Progress at a glance
 
 **Status key:** ✅ Working now · 🚧 Working but incomplete · ○ Planned
@@ -30,7 +36,7 @@ See the [visual progress dashboard](Documents/Project/Progress.md) for the roadm
 | Tests, specifications, and reproducibility | ✅ Working now | Valid, malformed, boundary, random-input, deterministic-output, and cross-host checks protect the current contracts | Extend the same evidence discipline to self-hosting, native code, and the operating system |
 | Native compiler and host programs | 🚧 In progress | ABI 14/context 6 has all 11 native service leaves; Windvale assembles and supplies the live process-input leaves and plans every executable-image extent and service placement | Define publication-lifetime state, then transfer the next measured W^X adapter boundary |
 | Windvale operating system | 🚧 In progress | Qualified probe 17 runs ABI-14 WVB and owns a terminal vector-6 invalid-opcode boundary | Add broader traps, in-guest verification/runtime, clean shutdown, and Hyper-V evidence |
-| Open-source project foundation | 🚧 In progress | MIT licensing, contribution, security, governance, support, and authorship policies exist | Complete the publication baseline and establish public project operations |
+| Open-source project foundation | 🚧 In progress | The public GitHub repository, MIT licensing, contribution, security, governance, support, and authorship policies are live | Record the initial publication baseline and establish ongoing public project operations |
 
 **Working end to end today:**
 
@@ -82,12 +88,6 @@ As of July 2026, Windvale is among the earliest known open-source efforts to bui
 
 Windvale is experimental and not yet stable. The assembler, object model, linker, bytecode/runtime foundation, and complete Windvale-written bytecode compiler have reproducible cross-host evidence. Exact Stage 1 to Stage 2 self-reproduction is qualified on Windows and Debian; native compiler execution, the general native toolchain, and Windvale OS remain active milestones. Development contracts may change without backward compatibility until they are explicitly stabilized.
 
-## Project overview
-
-![Windvale project overview for July 2026](Documents/Project/Images/Windvale-Progress-July-2026.png)
-
-*This July 2026 overview is a periodic visual snapshot. Current repository contracts and qualification evidence govern if the project later advances beyond what the image shows.*
-
 ## Current milestone: Windvale Seed
 
 Windvale Seed is implemented as a dependency-free C# Stage 0 toolchain. It provides:
@@ -137,7 +137,7 @@ Windvale is open source under the [MIT License](LICENSE). Copyright © 2026 [E-W
 - [Support](SUPPORT.md) — public help channels and current support limits
 - [Project identity](TRADEMARKS.md) — permitted reference to Windvale and E-Worker names and visual identity
 - [Changelog](CHANGELOG.md) — unreleased status and initial `0.y.z` versioning policy
-- [GitHub publication runbook](Documents/Project/GitHub-Publication-Runbook.md) — private-first import, initial baseline, and public-visibility checklist
+- [GitHub publication runbook](Documents/Project/GitHub-Publication-Runbook.md) — completed visibility procedure and remaining publication-baseline follow-up
 
 ## Requirements
 
@@ -346,7 +346,7 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Module-Composition-Dem
 
 The manifest identifies one root and the explicit source files available to its imports. It is declarative build input rather than `.wv` source, and the project and repeated-`--module` commands produce the same canonical WVB bytes. [`Windvale-Compiler.wvproj`](Windvale-Compiler.wvproj) is the first full consumer: the bootstrap verifier uses it to select the complete 12-module compiler closure while preserving the exact 599,868-byte Stage 1 artifact.
 
-The candidate Windvale-written parser under `Tools/Windvale.Project/` now validates the same supplied Project 1 bytes and exposes bounded root/source path views. Its hosted shell produces deterministic reports for differential testing. The normal `build` command still owns host-relative path resolution in C#; portable `.wv` code does not inspect Windows/Linux path syntax or ambient working-directory rules.
+The qualified Windvale-written parser under `Tools/Windvale.Project/` validates the same supplied Project 1 bytes and exposes bounded root/source path views. Its hosted shell produces deterministic reports for differential testing. The normal `build` command still owns host-relative path resolution in C#; portable `.wv` code does not inspect Windows/Linux path syntax or ambient working-directory rules.
 
 Compile and run the first Windvale-written compiler slice:
 
@@ -597,113 +597,13 @@ export fn Main() -> i32 {
 
 ## Documents
 
-- [Project vision](Documents/Project/Project-Vision.md)
-- [GitHub publication runbook](Documents/Project/GitHub-Publication-Runbook.md)
-- [Seed implementation](Documents/Architecture/Seed-Implementation.md)
-- [Platform and portability model](Documents/Architecture/Platform-And-Portability.md)
-- [Compiler bootstrap options](Documents/Architecture/Compiler-Bootstrap-Options.md)
-- [Native execution and .NET retirement](Documents/Architecture/Native-Execution-And-Dotnet-Retirement.md)
-- [Seed language specification](Specifications/Seed-Language.md)
-- [Seed immutable records](Specifications/Seed-Records.md)
-- [Seed enums and bounded formatting](Specifications/Seed-Enums-And-Formatting.md)
-- [Hosted resource boundary](Specifications/Hosted-Resources.md)
-- [Foundation byte primitives](Specifications/Foundation-Bytes.md)
-- [Windvale wvdump core](Specifications/Wv-Dump-Core.md)
-- [Windvale wvdump report](Specifications/Wv-Dump-Report.md)
-- [Windvale WVO object core](Specifications/Wvo-Object-Core.md)
-- [Source naming conventions](Specifications/Source-Naming.md)
-- [Seed bytecode specification](Specifications/Seed-Bytecode.md)
-- [Windvale object format](Specifications/Windvale-Object-Format.md)
-- [Windvale textual assembly](Specifications/Windvale-Assembly.md)
-- [Windvale WVA assembler core](Specifications/Wva-Assembler-Core.md)
-- [Windvale linking contract](Specifications/Windvale-Linking.md)
-- [Windvale linker core](Specifications/Wv-Linker-Core.md)
-- [Windvale native publication plan](Specifications/Windvale-Native-Publication-Plan.md)
-- [Foundation machine contracts](Specifications/Foundation-Machine-Contracts.md)
-- [Foundation ordinal byte-span ordering](Specifications/Foundation-Byte-Ordering.md)
-- [Foundation bounded decimal parsing](Specifications/Foundation-Decimal-Parsing.md)
-- [Foundation bounded byte construction](Specifications/Foundation-Byte-Construction.md)
-- [Compiler source lexer](Specifications/Compiler-Source-Lexer.md)
-- [Compiler source declaration parser](Specifications/Compiler-Source-Declaration-Parser.md)
-- [Compiler source body parser](Specifications/Compiler-Source-Body-Parser.md)
-- [Compiler source-set contract](Specifications/Compiler-Source-Set.md)
-- [Compiler source-graph contract](Specifications/Compiler-Source-Graph.md)
-- [Compiler declaration and signature symbols](Specifications/Compiler-Source-Symbols.md)
-- [Compiler body, local, and call binding](Specifications/Compiler-Source-Bindings.md)
-- [Compiler typed source IR](Specifications/Compiler-Source-Wir.md)
-- [Compiler source-to-WVB backend](Specifications/Compiler-Source-Wvb.md)
-- [Windvale project manifest](Specifications/Windvale-Project.md)
-- [Seed CLI specification](Specifications/Seed-CLI.md)
-- [Seed conformance specification](Specifications/Seed-Conformance.md)
-- [Seed verification throughput](Documents/Architecture/Seed-Verification-Throughput.md)
-- [Seed verification evidence](Documents/Project/Seed-Verification-Evidence.md)
-- [Windvale kernel CPU exceptions](Specifications/Windvale-Kernel-Exceptions.md)
-- [Repository foundation decision](Documents/Decisions/0001-Repository-And-Foundation.md)
-- [Seed bootstrap decision](Documents/Decisions/0002-Windvale-Seed-Bootstrap.md)
-- [Source naming and mutation decision](Documents/Decisions/0003-Source-Naming-And-Mutation.md)
-- [Foundation byte primitives decision](Documents/Decisions/0004-Foundation-Byte-Primitives.md)
-- [Immutable nominal records decision](Documents/Decisions/0005-Immutable-Nominal-Records.md)
-- [Nominal enums and bounded formatting decision](Documents/Decisions/0006-Nominal-Enums-And-Bounded-Formatting.md)
-- [Explicit hosted resources decision](Documents/Decisions/0007-Explicit-Hosted-Resources.md)
-- [WvDump payload and report decision](Documents/Decisions/0008-WvDump-Payload-Decoding-And-Safe-Reports.md)
-- [Minimal object foundation decision](Documents/Decisions/0009-Minimal-Windvale-Object-Foundation.md)
-- [Minimal assembly contract decision](Documents/Decisions/0010-Minimal-Windvale-Assembly-Contract.md)
-- [Deterministic flat-image linker decision](Documents/Decisions/0011-Deterministic-Flat-Image-Linker.md)
-- [Windvale linker bootstrap prerequisites decision](Documents/Decisions/0012-Windvale-Linker-Bootstrap-Prerequisites.md)
-- [Balanced persistent byte sequences decision](Documents/Decisions/0013-Balanced-Persistent-Byte-Sequences.md)
-- [Windvale linker object views decision](Documents/Decisions/0014-Windvale-Linker-Object-Views.md)
-- [Windvale linker resolution and layout decision](Documents/Decisions/0015-Windvale-Linker-Resolution-And-Layout.md)
-- [Windvale immutable image and relocations decision](Documents/Decisions/0016-Windvale-Immutable-Image-And-Relocations.md)
-- [Independent Windvale image reconstruction decision](Documents/Decisions/0017-Independent-Windvale-Image-Reconstruction.md)
-- [Canonical Windvale map and publication decision](Documents/Decisions/0018-Canonical-Windvale-Map-And-Publication.md)
-- [Bounded static source-module composition decision](Documents/Decisions/0019-Bounded-Static-Source-Module-Composition.md)
-- [First two-consumer Foundation module decision](Documents/Decisions/0020-First-Two-Consumer-Foundation-Module.md)
-- [Shared ordinal byte-span ordering decision](Documents/Decisions/0021-Shared-Ordinal-Byte-Span-Ordering.md)
-- [Static nominal source contracts decision](Documents/Decisions/0022-Static-Nominal-Source-Contracts.md)
-- [Shared bounded u32 decimal parsing decision](Documents/Decisions/0023-Shared-U32-Decimal-Parsing.md)
-- [Bounded immutable byte construction decision](Documents/Decisions/0024-Bounded-Byte-Construction.md)
-- [Streaming bootstrap source lexer decision](Documents/Decisions/0025-Streaming-Bootstrap-Source-Lexer.md)
-- [Streaming declaration views decision](Documents/Decisions/0026-Streaming-Declaration-Views.md)
-- [Streaming statement and expression views decision](Documents/Decisions/0027-Streaming-Statement-And-Expression-Views.md)
-- [MIT license and E-Worker stewardship decision](Documents/Decisions/0028-MIT-License-And-E-Worker-Stewardship.md)
-- [Canonical packed compiler source sets decision](Documents/Decisions/0029-Canonical-Packed-Compiler-Source-Sets.md)
-- [Portable compiler import graphs decision](Documents/Decisions/0030-Portable-Compiler-Import-Graphs.md)
-- [AI authorship and vendor neutrality decision](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md)
-- [Public contribution and governance foundation decision](Documents/Decisions/0032-Public-Contribution-And-Governance-Foundation.md)
-- [Portable declaration and signature binding decision](Documents/Decisions/0033-Portable-Declaration-And-Signature-Binding.md)
-- [Portable body, local, and call binding decision](Documents/Decisions/0034-Portable-Body-Local-And-Call-Binding.md)
-- [Canonical typed source IR decision](Documents/Decisions/0035-Canonical-Typed-Source-IR.md)
-- [Initial Windvale-written WVB backend decision](Documents/Decisions/0036-Initial-Windvale-Wvb-Backend.md)
-- [Canonical backend remapping and static-data decision](Documents/Decisions/0037-Canonical-Backend-Remapping-And-Static-Data.md)
-- [Nominal types in the Windvale backend decision](Documents/Decisions/0038-Nominal-Types-In-The-Windvale-Backend.md)
-- [Capability profiles in the Windvale backend decision](Documents/Decisions/0039-Capability-Profiles-In-The-Windvale-Backend.md)
-- [Static multi-module Windvale backend decision](Documents/Decisions/0040-Static-Multi-Module-Windvale-Backend.md)
-- [Fused local discovery and typed WVIR decision](Documents/Decisions/0041-Fused-Local-Discovery-And-Typed-Wvir.md)
-- [Bounded lexical dispatch and function profiling decision](Documents/Decisions/0042-Bounded-Lexical-Dispatch-And-Function-Profiling.md)
-- [Compiler implementation role layout decision](Documents/Decisions/0043-Compiler-Implementation-Role-Layout.md)
-- [First x86-64 UEFI boot environment decision](Documents/Decisions/0044-First-X64-Uefi-Boot-Environment.md)
-- [First UEFI application and boot probe decision](Documents/Decisions/0045-First-Uefi-Application-And-Boot-Probe.md)
-- [Bounded UEFI memory map probe decision](Documents/Decisions/0046-Bounded-Uefi-Memory-Map-Probe.md)
-- [Bounded ExitBootServices transition decision](Documents/Decisions/0047-Bounded-Exit-Boot-Services-Transition.md)
-- [First kernel handoff and relative UEFI link decision](Documents/Decisions/0048-First-Kernel-Handoff-And-Relative-Uefi-Link.md)
-- [Bidirectional nominal symbol index decision](Documents/Decisions/0050-Bidirectional-Nominal-Symbol-Index.md)
-- [Assembler implementation role layout decision](Documents/Decisions/0051-Assembler-Implementation-Role-Layout.md)
-- [Linker implementation role layout decision](Documents/Decisions/0053-Linker-Implementation-Role-Layout.md)
-- [Validated scan reuse and ten-module closure decision](Documents/Decisions/0055-Validated-Scan-Reuse-And-Ten-Module-Closure.md)
-- [Windvale-native execution and .NET retirement decision](Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
-- [Reproducible compiler bootstrap convergence decision](Documents/Decisions/0058-Reproducible-Compiler-Bootstrap-Convergence.md)
-- [First shared native WVB slice decision](Documents/Decisions/0059-First-Shared-Native-Wvb-Slice.md)
-- [Checked native i32 arithmetic and traps decision](Documents/Decisions/0060-Checked-Native-I32-Arithmetic-And-Traps.md)
-- [Typed native blocks and forward control flow decision](Documents/Decisions/0061-Typed-Native-Blocks-And-Forward-Control-Flow.md)
-- [Dynamic native instruction budgets and backward control flow decision](Documents/Decisions/0062-Dynamic-Native-Instruction-Budgets-And-Backward-Control-Flow.md)
-- [Shared-budget native calls and static data decision](Documents/Decisions/0063-Shared-Budget-Native-Calls-And-Static-Data.md)
-- [First shared native WVB in Windvale OS decision](Documents/Decisions/0064-First-Shared-Native-Wvb-In-Windvale-Os.md)
-- [Native argument table and process-input services decision](Documents/Decisions/0073-Native-Argument-Table-And-Process-Input-Services.md)
-- [Minimal deterministic Windvale projects decision](Documents/Decisions/0075-Minimal-Deterministic-Windvale-Projects.md)
-- [First terminal x86-64 CPU exception boundary decision](Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md)
-- [Open questions](Documents/Project/Open-Questions.md)
-- [Visual progress dashboard](Documents/Project/Progress.md)
-- [Development roadmap](Documents/Project/Roadmap.md)
+Start with the [documentation guide](Documents/README.md). It separates current project status, enduring architecture, specifications, decisions, historical evidence, and operational records so the root README does not become a second incomplete index.
+
+- [Visual progress dashboard](Documents/Project/Progress.md) and [development roadmap](Documents/Project/Roadmap.md)
+- [Project vision](Documents/Project/Project-Vision.md) and [open questions](Documents/Project/Open-Questions.md)
+- [Architecture documents](Documents/README.md#architecture)
+- [Specification index](Specifications/README.md)
+- [Accepted decisions](Documents/Decisions/) and [latest qualification evidence](Documents/Project/Seed-Verification-Evidence.md)
 
 ## Development
 

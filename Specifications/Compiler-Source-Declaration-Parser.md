@@ -70,7 +70,7 @@ Input collections cannot exceed the lexer token ceiling. Empty/trailing-comma ar
 
 `Source-Declaration-Parser-Tool.wv` owns only explicit argument/file capabilities and line reporting. It does not alter or duplicate parsing. With one path it reads one bounded immutable snapshot, calls `Compilerˉparseˉsource`, emits one path-free summary on success, and emits one deterministic diagnostic line on rejection.
 
-The candidate parses the real lexer as:
+The qualified hosted tool parses the real lexer as:
 
 ```text
 source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=17 tokens=5384 offset=45588
@@ -82,7 +82,7 @@ It parses its own declaration source as:
 source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=25 tokens=9561 offset=70591
 ```
 
-## Current candidate artifacts
+## Qualified milestone artifacts
 
 - `Source-Declaration-Parser.wvb`: 105,321 bytes, SHA-256 `4bbaaaa6293ab1fb5a4eb92c3e8a52c078943ba88652b27f69fdc3c5ab76fda7`.
 - `Source-Declaration-Parser-Demo.wvb`: 109,443 bytes, SHA-256 `ab28936fe0961261a0f243009d5c9b93af52069326618e03e428d1cc024fea11`, result `0` under 20,000,000 instructions.

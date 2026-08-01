@@ -1,10 +1,12 @@
 # GitHub publication runbook
 
+> Status: Initial public visibility is complete. This document retains the completed private-inspection procedure and the still-open publication-baseline follow-up; it is not a request to repeat the import or visibility change.
+
 ## Purpose
 
-This runbook prepares the active Windvale project for initial public visibility. It does not declare the project complete, create a stable compatibility promise, or replace the qualification rules for later changes.
+This runbook records how the active Windvale project was prepared for initial public visibility and what publication-baseline work remains. It does not declare the project complete, create a stable compatibility promise, or replace the qualification rules for later changes.
 
-The official repository is `eworker-inc/Windvale`. It was created privately, is inspected at an identified commit, and is made public only through a separate [E-Worker Inc](https://eworker.ca) approval.
+The official repository is public at [`eworker-inc/Windvale`](https://github.com/eworker-inc/Windvale). It was created and inspected privately, then made public through a separate [E-Worker Inc](https://eworker.ca) approval.
 
 ## Accepted publication choices
 
@@ -12,7 +14,7 @@ The official repository is `eworker-inc/Windvale`. It was created privately, is 
 - Preserve the pre-normalization tip under the evidence tag `evidence/pre-eworkerai-linkage` and publish a [complete old-to-new mapping](Bootstrap-Attribution-Migration.md) with tree-equivalence checks.
 - Keep the currently configured shared development remote named `origin` during preparation.
 - Add GitHub as a separate remote named `github`; do not replace or mirror over `origin`.
-- Keep the existing GitHub repository private during normalization and inspection; do not change its visibility implicitly as part of a push.
+- The existing GitHub repository remained private during normalization and inspection; visibility was not changed implicitly as part of a push.
 - Use `main` as the initial default branch.
 - Use [info@eworker.ca](mailto:info@eworker.ca) as the public business, fallback security, conduct, and project-identity contact.
 - Use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as the descriptive author for new E-Worker project-generated commits.
@@ -41,7 +43,7 @@ Wait for active implementation work to reach a clean committed point, then:
 5. Recheck documentation links, repository paths, licenses, copyright notices, contribution policies, secrets, large files, and the complete reachable Git history.
 6. Review branches and tags explicitly. Push only the branches and tags intended for publication; do not use a mirror push.
 
-The candidate may advance while the repository remains private. Freeze one exact commit only when performing the initial publication baseline.
+The candidate was allowed to advance during private inspection. The still-open initial publication-baseline record must identify one exact commit rather than treating a moving branch as evidence.
 
 ## 3. Confirm GitHub identity and recovery
 
@@ -53,9 +55,9 @@ Before public visibility:
 - Confirm `info@eworker.ca` remains verified and the GitHub-provided ID-based author address remains associated with `EWorkerAI`.
 - Confirm each active checkout uses repository-local author and committer configuration. The account login remains administrative identity, not source authorship.
 
-## 4. Confirm the private repository and remotes
+## 4. Confirm the repository and remotes
 
-Authenticate GitHub CLI, confirm the active account and organization membership, and inspect the existing private `eworker-inc/Windvale` repository. Confirm that the separate remote remains:
+Authenticate GitHub CLI, confirm the active account and organization membership, and inspect the existing `eworker-inc/Windvale` repository. Confirm that the separate remote remains:
 
 ```powershell
 git remote get-url github
@@ -64,9 +66,9 @@ git ls-remote github refs/heads/main
 
 Inspect the existing `github` remote rather than replacing it blindly. Do not push credentials in a remote URL, use `--mirror`, delete the local shared remote, or force-push outside the one authorized identity-normalization step.
 
-## 5. Inspect privately
+## 5. Private inspection completed before visibility
 
-At the private GitHub repository:
+The pre-public inspection covered:
 
 - Confirm `main` is the default branch and its tip matches the selected local commit.
 - Inspect the root README, license, policy files, links, issue forms, pull-request template, workflow, and Dependabot configuration as GitHub renders them.
@@ -81,26 +83,26 @@ At the private GitHub repository:
 
 ## 6. Record the initial publication baseline
 
-The initial publication baseline identifies one exact commit. From clean source archives of that commit:
+This follow-up remains open. The initial publication baseline identifies one exact commit. From clean source archives of that commit:
 
 1. Run the Windows verifier.
 2. Run the Debian verifier from the same committed source archive.
 3. Compare the normalized reports and required artifact digests under the existing qualification procedure.
 4. Record what passed, what was not run, and any known limitations without presenting planned layers as implemented.
-5. Confirm that GitHub's `main` still points at the verified commit before changing visibility.
+5. Record whether GitHub's `main` still points at the verified baseline commit; later development may legitimately have advanced beyond it.
 
 This is a publication snapshot, not a final project verification. Windvale remains experimental and development continues after the repository becomes public.
 
-## 7. Approve public visibility
+## 7. Public visibility completed
 
-Changing repository visibility requires a separate explicit approval from E-Worker Inc. Immediately before that change:
+Changing repository visibility required separate explicit approval from E-Worker Inc. Immediately before that change, the publication owner was required to:
 
 - Review GitHub's visibility-change warning and the repository's effective organization policies.
 - Confirm there are no secrets, private issues, private discussions, unintended collaborators, actions artifacts, caches, or environment values that would be exposed.
 - Confirm the security, conduct, support, license, governance, and project-identity contacts are monitored.
 - Confirm the displayed repository owner, description, website, default branch, and initial baseline commit.
 
-After approval, change visibility to public and verify the repository from a signed-out view. Check cloning, rendered links, Actions visibility, issue forms, private vulnerability reporting, and the commit-history evidence links.
+After approval, the repository was changed to public and verified from a signed-out view. Ongoing checks cover cloning, rendered links, Actions visibility, issue forms, private vulnerability reporting, and commit-history evidence links.
 
 ## 8. Continue normal development
 

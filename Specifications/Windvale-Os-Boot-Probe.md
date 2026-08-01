@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Firmware boot probe version 17 is the implemented candidate that adds the first kernel-owned terminal x86-64 CPU exception boundary to the qualified ABI-14/context-6 probe. It retains UEFI entry, structural table validation, bounded memory-map acquisition, bounded termination of boot services, a compiler-generated Windvale kernel-entry handoff, one kernel-owned physical arena, a zeroing page allocator, a copied handoff, an owned kernel stack, and one ordinary portable-WVB module AOT-compiled through the shared native backend. It additionally dedicates the first allocated page to a vector-6-only IDT and supplies explicit normal and invalid-opcode evidence images. Cross-host and final pinned-QEMU qualification remain pending. Probe 16 remains the latest qualified OS image.
+Firmware boot probe version 17 is cross-host qualified at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. It adds the first kernel-owned terminal x86-64 CPU exception boundary to the ABI-14/context-6 probe while retaining UEFI entry, structural table validation, bounded memory-map acquisition, bounded termination of boot services, a compiler-generated Windvale kernel-entry handoff, one kernel-owned physical arena, a zeroing page allocator, a copied handoff, an owned kernel stack, and one ordinary portable-WVB module AOT-compiled through the shared native backend. It additionally dedicates the first allocated page to a vector-6-only IDT and supplies separately qualified normal and invalid-opcode images.
 
-Decisions 0045 through 0076 own the qualified probe progression through version 16 and ABI 14. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) owns the probe-17 candidate. PE32+ construction remains owned by [Windvale-Uefi-Application.md](Windvale-Uefi-Application.md), the special system subset by [Windvale-X64-Kernel-Target.md](Windvale-X64-Kernel-Target.md), the internal call boundary by [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md), memory ownership by [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md), CPU exception mechanics by [Windvale-Kernel-Exceptions.md](Windvale-Kernel-Exceptions.md), native implementation roles by [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md), the execution context by [Windvale-Native-Execution-Context.md](Windvale-Native-Execution-Context.md), and emulator inputs by [Windvale-Os-Boot-Environment.md](Windvale-Os-Boot-Environment.md).
+Decisions 0045 through 0076 own the qualified probe progression through version 16 and ABI 14. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) owns qualified probe 17. PE32+ construction remains owned by [Windvale-Uefi-Application.md](Windvale-Uefi-Application.md), the special system subset by [Windvale-X64-Kernel-Target.md](Windvale-X64-Kernel-Target.md), the internal call boundary by [Windvale-Kernel-Handoff.md](Windvale-Kernel-Handoff.md), memory ownership by [Windvale-Kernel-Memory.md](Windvale-Kernel-Memory.md), CPU exception mechanics by [Windvale-Kernel-Exceptions.md](Windvale-Kernel-Exceptions.md), native implementation roles by [Windvale-Kernel-Native-Seam.md](Windvale-Kernel-Native-Seam.md), the execution context by [Windvale-Native-Execution-Context.md](Windvale-Native-Execution-Context.md), and emulator inputs by [Windvale-Os-Boot-Environment.md](Windvale-Os-Boot-Environment.md).
 
 The ABI and table rules follow [UEFI 2.11 x64 calling conventions](https://uefi.org/specs/UEFI/2.11/02_Overview.html#detailed-calling-conventions), the [EFI System Table](https://uefi.org/specs/UEFI/2.11/04_EFI_System_Table.html), the [`GetMemoryMap` memory-allocation contract](https://uefi.org/specs/UEFI/2.11/07_Services_Boot_Services.html#efi-boot-services-getmemorymap), and the [`ExitBootServices` transition contract](https://uefi.org/specs/UEFI/2.11/07_Services_Boot_Services.html#efi-boot-services-exitbootservices).
 
@@ -14,7 +14,7 @@ The bootstrap builder embeds `Operating-System/Kernel/Hello-World.wv`, `Native-W
 
 The linked image is position-independent. A private OS label builder resolves local loader, adapter, and exact bridge branches and exposes only typed external relocation holes. Shared compiler-native instruction selection remains isolated behind ABI 14 and publishes calls and data through verified WVO relocations; the special system target remains separate pending kernel services and broader value coverage.
 
-The canonical special compiler object remains 2,564 bytes with SHA-256 `f2c28eb5f020f59b8acb480fc8dc62e393ebb14405b3c12ecb05076176d44420`. The portable probe WVB is 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`; its service-free 8,010-byte ABI-14 WVO remains SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`. The qualified 350-byte native bridge has SHA-256 `3cbf50a4828a1a69ca7441a667cb95e569055468c345ed26b8a580fda3facfc5`; the 291-byte WVA seam remains SHA-256 `332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc`. Qualified probe 16 is 15,872 bytes with SHA-256 `206a036f8cbe3198544b6878bf52c80ef8d489c14d5437c6c7004ff1d6599504`. Probe-17 normal and invalid-opcode identities remain candidate evidence and are not recorded as qualified artifacts here.
+The canonical special compiler object remains 2,564 bytes with SHA-256 `f2c28eb5f020f59b8acb480fc8dc62e393ebb14405b3c12ecb05076176d44420`. The portable probe WVB is 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`; its service-free 8,010-byte ABI-14 WVO remains SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`. The qualified 350-byte native bridge has SHA-256 `3cbf50a4828a1a69ca7441a667cb95e569055468c345ed26b8a580fda3facfc5`; the 291-byte WVA seam remains SHA-256 `332a0158c51e81d1beb5d212f508649c8efe2874af712d6d8ef15929ffd438fc`. Both probe-17 images are exactly 17,920 bytes. The normal image has SHA-256 `d2c0a7e4e5e1605fc8639c05ab27ad07ee2b015ad2dc151d8637830b8acb3f18`; the invalid-opcode image has SHA-256 `26ccfaf862024e022339ca9fa8114c71b4fe601fe59a806d366e1d330b6d106d`.
 
 ## Entry and firmware-call frame
 
@@ -147,13 +147,13 @@ scenario=normal
 architecture=x86-64
 application-format=pe32-plus-uefi-application-v3
 probe-version=17
-efi-bytes=<candidate value>
-efi-sha256=<candidate value>
+efi-bytes=17920
+efi-sha256=d2c0a7e4e5e1605fc8639c05ab27ad07ee2b015ad2dc151d8637830b8acb3f18
 serial-marker=windvale-os-boot-17-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass
 qemu-exit-code=1
 ```
 
-The invalid-opcode report uses `scenario=invalid-opcode`, its separately measured candidate size and digest, the `panic-invalid-opcode-vector-6-error-code-none-status-panic` marker suffix, and `qemu-exit-code=3`. Candidate values are not qualified identities. `-KeepRunDirectory` adds a native diagnostic path after the canonical fields, so that invocation is not portable report evidence.
+The invalid-opcode report uses `scenario=invalid-opcode`, `efi-bytes=17920`, `efi-sha256=26ccfaf862024e022339ca9fa8114c71b4fe601fe59a806d366e1d330b6d106d`, the `panic-invalid-opcode-vector-6-error-code-none-status-panic` marker suffix, and `qemu-exit-code=3`. `-KeepRunDirectory` adds a native diagnostic path after the canonical fields, so that invocation is not portable report evidence.
 
 ## Failures
 

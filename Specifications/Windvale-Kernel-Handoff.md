@@ -6,7 +6,7 @@ Kernel handoff version 1 defines the first internal transition from the UEFI loa
 
 ## Linked symbol boundary
 
-The loader imports the ASCII-safe function symbol `Windvale_kernel_entry`. The special kernel object exports that symbol. Both contain code-only `.text` sections and are linked at base zero through one WVO `relative-i32` relocation with addend `-4` at the x86-64 `call rel32` displacement field. Firmware probe version 9 additionally links one ABI-7 portable native object with code and immutable read-only data; it does not change the handoff record or loader call ABI.
+The loader imports the ASCII-safe function symbol `Windvale_kernel_entry`. The special kernel object exports that symbol. Both contain code-only `.text` sections and are linked at base zero through one WVO `relative-i32` relocation with addend `-4` at the x86-64 `call rel32` displacement field. Firmware probe version 17 additionally links the ABI-14 portable native object and the kernel-owned exception destination; neither changes the handoff record or loader call ABI.
 
 The successful flat link must report only code and read-only-data sections, at least one code section, zero absolute relocations, and no relocation kind other than `relative-i32` before UEFI application format version 3 accepts it. Firmware may relocate the complete PE image because each resolved relative displacement remains invariant when caller, target, and immutable data move together.
 
@@ -37,7 +37,7 @@ The record is 48 little-endian bytes:
 | `0x28` | 4 | Descriptor version | `1` |
 | `0x2C` | 4 | Reserved | Zero |
 
-Memory-map bytes must be an exact multiple of descriptor bytes. Every descriptor is validated by firmware probe version 9 before the exit call; the compiler-generated kernel wrapper independently revalidates the record envelope and divisibility before accepting it. The memory object then independently revalidates the envelope and every descriptor before making an ownership decision.
+Memory-map bytes must be an exact multiple of descriptor bytes. Every descriptor is validated by firmware probe version 17 before the exit call; the compiler-generated kernel wrapper independently revalidates the record envelope and divisibility before accepting it. The memory object then independently revalidates the envelope and every descriptor before making an ownership decision.
 
 ## Lifetime and ownership
 
@@ -47,7 +47,7 @@ The handoff includes no valid boot-services pointer. Code reached through this A
 
 ## Current evidence and limit
 
-Firmware probe version 9 constructs the loader, compiler-generated special kernel entry/Main, shared ABI-7 native probe, kernel memory layer, bidirectional WVA shims, exact native bridge, and x64 byte adapter as seven independent WVO objects. It links their imports and relative calls/data access, enters the kernel object after firmware shutdown, and requires this serial suffix:
+Firmware probe version 17 retains the handoff and version-1 memory contracts while linking the compiler-generated special kernel path, shared ABI-14 portable native probe, WVA seams, kernel memory layer, and kernel-owned vector-6 exception destination. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
 
 ```text
 memory-map=pass
@@ -56,10 +56,11 @@ memory-owned=pass
 allocator=pass
 kernel-stack=pass
 Hello from Windvale
+cpu-exceptions=armed
 native-context=pass
 native-wvb=pass
 windvale-source=pass
 status=pass
 ```
 
-The memory layer calls WVA export `Windvale_kernel_wva_main` only after initializing owned state, completing a zeroing allocation, copying the handoff, and switching stacks. WVA tail-transfers first to the native bridge. The bridge constructs the ABI-7 execution context with exact instruction/depth budgets 271/2 and no service table, accepts only packed result 29 after the portable source has decoded its immutable bytes, restores the handoff, and tail-transfers to compiler export `Windvale_kernel_main`. That special Main selects `memory-owned=pass`, `allocator=pass`, `kernel-stack=pass`, and Hello World from typed WIR; every byte returns through WVA export `Windvale_kernel_write_byte`. `native-context=pass`, `native-wvb=pass`, and `windvale-source=pass` originate in the loader only after the complete generated entry returns zero. This proves a bounded page-ownership, allocator, copied-handoff, shared-native-AOT, borrowed-byte, bidirectional WVA/WV, and stack boundary, but not runtime WVB loading, general physical-memory management, paging, interrupts, or a functioning kernel runtime.
+The memory layer calls WVA export `Windvale_kernel_wva_main` only after initializing owned state, completing a zeroing allocation, copying the handoff, switching stacks, and installing the bounded exception table. WVA tail-transfers first to the native bridge. The bridge constructs the ABI-14/context-6 service-free execution context with exact instruction/depth budgets 271/2, accepts only packed result 29 after the portable source has decoded its immutable bytes, restores the handoff, and tail-transfers to compiler export `Windvale_kernel_main`. A separately selected image executes `UD2` only after Main and reaches the exact terminal invalid-opcode transcript. This proves bounded page ownership, allocation, copied handoff, shared-native AOT, borrowed bytes, bidirectional WVA/WV, owned stack, and one terminal CPU-exception destination, but not in-guest WVB loading, general physical-memory management, paging, interrupts, recovery, or a functioning kernel runtime.

@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Execution-context version 6 is cross-host qualified for ABI-14 target `x86-64-wvb-baseline-v14` at exact commit `ef08619`. It appends one runtime-private file-input-table pointer and removes the final managed native-service callback. [Decision 0076](../Documents/Decisions/0076-Native-Windows-And-Linux-File-Input.md) records the complete Windows, Debian, GitHub, OS-suite, and pinned-QEMU evidence. Decisions 0065 through 0074 retain the qualified history through ABI 13.
+Execution-context version 6 is cross-host qualified for ABI-14 target `x86-64-wvb-baseline-v14` at exact commit `ef08619`. It appends one runtime-private file-input-table pointer and removes the final managed native-service callback. [Decision 0076](../Documents/Decisions/0076-Native-Windows-And-Linux-File-Input.md) records that transition; [Decision 0080](../Documents/Decisions/0080-Native-Byte-Result-And-Live-Stencil-Consumption.md) adds the bounded exported byte-result contract without advancing the context, and [Decision 0082](../Documents/Decisions/0082-Windvale-Owned-Native-Publication-Layout.md) moves executable-image layout into Windvale without changing ABI 14. Decisions 0065 through 0074 retain the qualified history through ABI 13.
 
 This is an experimental native ABI, not a stable public foreign-function interface. ABI 14 replaces ABI 13 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-14 fragment verifier.
 
@@ -181,6 +181,6 @@ The current `Nativeˉfragment` carries its required-service list beside code, sy
 
 ## Windvale OS use
 
-The version-9 native kernel bridge constructs context version 6, while the portable kernel probe supplies exact budgets `271` and `2`, a zero service-table pointer, zero-length record and text arenas, zero argument table/count, zero output and file-input table pointers, and zero failure/reserved fields. The ordinary portable module loops over immutable i32 data, passes borrowed bytes through an internal function, slices and reads them, and checks `u8`/`u32` results. Firmware probe version 16 identifies the ABI-14 rebuild and emits `native-context=pass` only after that service-free path and the special-kernel path both succeed.
+The version-9 native kernel bridge constructs context version 6, while the portable kernel probe supplies exact budgets `271` and `2`, a zero service-table pointer, zero-length record and text arenas, zero argument table/count, zero output and file-input table pointers, and zero failure/reserved fields. The ordinary portable module loops over immutable i32 data, passes borrowed bytes through an internal function, slices and reads them, and checks `u8`/`u32` results. Firmware probe version 17 retains that ABI-14 path, emits `native-context=pass` only after the service-free and special-kernel paths succeed, and adds the separately qualified terminal invalid-opcode scenario without changing this context.
 
 This does not give Windvale OS a runtime service table, output/file table, record or text allocator, WVB loader, verifier, JIT, or hosted capability implementation. It proves that the ABI-14 compiler supplies service-free generated code through one explicit versioned context and the borrowed-byte representation in the qualified AOT OS probe.

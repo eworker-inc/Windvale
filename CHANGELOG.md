@@ -11,6 +11,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - MIT licensing and [E-Worker Inc](https://eworker.ca) stewardship.
 - Vendor-neutral AI-authorship and attribution policy.
 - Public contribution, governance, security, support, conduct, and project-identity policies.
+- The public [`eworker-inc/Windvale`](https://github.com/eworker-inc/Windvale) repository, issue and pull-request templates, private vulnerability reporting, and public development workflow.
 - Windows and Linux repository verification workflows.
 - Repository-owned Windvale syntax highlighting and Visual Studio Code language support for `.wv` source files.
 - A GitHub-rendered visual progress dashboard with evidence-based roadmap indicators and a dated SVG phase map.
@@ -20,8 +21,8 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Windvale-owned post-memory boot evidence and a bidirectional WVA seam for Main entry and console-byte output.
 - The accepted Windvale-native interpreter/JIT/AOT direction and explicit qualification gate for retiring .NET from the normal Windows and Linux workflow.
 - Qualified exact Windvale bytecode compiler self-reproduction: Stage 0 builds Stage 1, and Stage 1 builds a byte-identical Stage 2 from the same committed 12-module inventory on Windows and Debian.
-- The bounded deterministic Windvale Project 1 manifest and `windvale build` command for selecting one root plus explicit source dependencies without changing import, WVSS, or WVB semantics.
-- The ABI-8 hosted-input candidate, with execution-bounded borrowed text/bytes, explicit process argument and file snapshot services, and the first Windvale-written native WVB header inspector.
+- The cross-host-qualified Windvale Project 1 manifest, `windvale build` command, portable Windvale-written parser, and native hosted shell for selecting and inspecting one root plus explicit source dependencies without changing import, WVSS, or WVB semantics.
+- The cross-host-qualified shared native path through ABI 14/context 6, including all eleven native service leaves, bounded borrowed and arena-backed values, deterministic interpreter/JIT/WVO-AOT agreement, and live Windvale-produced process-input leaves.
 - A cross-host-qualified Windvale publication planner that owns every live executable-image extent and canonical runtime-service placement before the narrow Windows/Linux W^X adapter allocates memory.
 - A cross-host-qualified probe-17 terminal invalid-opcode boundary with a kernel-owned vector-6 IDT, deterministic panic transcript, and separate pinned-QEMU success and fault images.
 - A permanent UTF-8 native-process verifier boundary and detached/redirected macron regression check, closing the recurring launcher-only decoding failure.

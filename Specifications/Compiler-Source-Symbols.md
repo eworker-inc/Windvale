@@ -113,7 +113,7 @@ The phase validates in this order: source graph; aggregate counts plus WVSD cons
 
 Failure evidence names the current module, a related prior/target module when applicable, declaration kind, name/token byte offset, and one-based line/column. `Modules` is the sentinel when no related module exists.
 
-## Candidate artifacts and evidence
+## Qualified milestone artifacts and evidence
 
 - `Source-Symbols-Core.wvb`: 278,044 bytes, SHA-256 `7769def20aef89bac982d896a5fa791f7ae3cea744b70fc199583ed97aef40e4`.
 - `Source-Symbols-Demo.wvb`: 291,283 bytes, SHA-256 `6ce17cdcd140cd686c0975e30a9be173d09deff4eb8d4dbb8d972ed1b8440158`.
