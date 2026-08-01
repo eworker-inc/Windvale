@@ -1,7 +1,7 @@
 # Decision 0075: Minimal deterministic Windvale projects
 
 - Date: 2026-08-01
-- Status: Implemented; cross-host qualification pending
+- Status: Qualified as integrated at exact commit `50294d9d5cc24edc26a3e56994cb3aa28e16352c`
 - Preserves: Windvale source imports, WVSS 1, WVB 1.6, source composition, compiler semantics, and runtime behavior
 
 ## Context
@@ -32,7 +32,7 @@ Implicit directory scanning and globs were rejected because host enumeration, ca
 
 JSON, XML/MSBuild-style evaluation, and executable Windvale build scripts were rejected for the first slice. Each would require substantially more syntax, evaluation, or self-hosting machinery than the bounded inventory problem demonstrates.
 
-## Candidate evidence
+## Evidence
 
 The focused project conformance test passes in Release and covers valid parsing, exact 64-module acceptance, the 65th-module rejection, manifest/path byte bounds, malformed headers and directives, BOM and malformed UTF-8 rejection, noncanonical paths, duplicate resolved paths, and manifest-relative resolution independent of the process working directory.
 
@@ -46,7 +46,7 @@ The first Windvale-owned parser candidate now lives in `Tools/Windvale.Project/P
 
 The hosted shell now also runs as a native ABI-14 candidate. Focused Windows evidence feeds real valid and rejected `.wvproj` files through the execution-owned file-input table and requires exact interpreter/JIT/linked-WVO agreement while a supplied Stage 0 reader remains at zero calls. The compiler admits the parser's borrowed-byte record cells plus the three required pure Foundation operations without changing WVB 1.6, WVO 1.0, service-table version 4, or execution-context version 6. The deterministic fragment has SHA-256 `573e7f4caa398a1806bc414ea9aaf6043e6d3ad6a3299139a08edd022bfa329b`; its deterministic WVO has SHA-256 `adb012c754e96a2d0c7ec7c17900e4924003d00ba2c102d3342ce5052039471d`. Corrupt descriptor-record tags and byte bounds are rejected before publication, and the 4 MiB concatenation boundary agrees on `WVR3015`. After rebasing over Decision 0077's first Windvale-assembled native stencil, the zero-warning Windows Development gate passes all 59 regular in-process tests in 57.878 suite seconds; the native project case takes 293 milliseconds. The qualification-only multi-billion-instruction contract was intentionally not run for this inner-loop candidate.
 
-Windows Standard and Qualification, Debian Qualification, portable-artifact comparison, and independent GitHub verification remain required before this decision becomes qualified. OS and QEMU gates are unrelated to the project-input contract and were not run for this candidate.
+Exact integrated commit `50294d9d5cc24edc26a3e56994cb3aa28e16352c` completes the deferred evidence together with Decision 0078. Windows and Debian pass zero-warning Qualification, all 60 integrated Seed tests, and the complete CLI/reproduction gate. The native project-manifest case takes 0.388 and 0.312 seconds and agrees across the interpreter, host-native JIT, and linked WVO/AOT. All 62 current portable artifacts match byte for byte; the added `Module-Composition-Demo-Project.wvb` is 714 bytes with SHA-256 `0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60`, identical to both established composition outputs. GitHub [Verify run 30708475858](https://github.com/eworker-inc/Windvale/actions/runs/30708475858) independently passes Windows and Linux. Both OS suites and pinned-QEMU probe 16 also pass unchanged as integrated regression evidence.
 
 ## Consequences
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-`WVSP 1` is the qualified bounded contract for the first Windvale-owned native-runtime construction slice under Decision 0077. `WVSP 2` is the implemented measured multi-patch extension for `process.argument` under Decision 0078; it remains a candidate until its exact integrated source state completes Windows and Debian qualification.
+`WVSP 1` and the measured multi-patch `WVSP 2` extension are qualified bounded contracts for the two Windvale-owned process-input construction slices under Decisions 0077 and 0078. `WVSP 2` is qualified at exact integrated commit `50294d9d5cc24edc26a3e56994cb3aa28e16352c` on Windows and Debian.
 
 Neither version defines a general stencil container or complete baseline JIT.
 

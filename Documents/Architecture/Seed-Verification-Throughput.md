@@ -203,6 +203,10 @@ Decision 0076 again extends the existing hosted-input and complete-`wvdump` case
 
 The immutable argument-table slice therefore keeps the inner loop faster than its one-second target while covering the complete hosted snapshot bound. The three remaining output/file callbacks may reuse focused semantic cases, but their first native system-boundary implementation must also retain exact process-level error and capability evidence.
 
+Decisions 0077 and 0078 keep both stencil shapes in one focused ownership-boundary case. It compiles the Windvale-written assembler once, runs it twice over each WVA source, compares exact Stage 0 and embedded WVO bytes, validates one and eight typed patch locations, and contains malformed objects and instantiation inputs. Cold focused Windows execution takes 2.906 seconds; the warm pre-commit change-aware run takes 1.155 seconds. The live hosted-input case remains 0.132 seconds in that warm run.
+
+Exact commit `50294d9` completes concurrent Qualification in 459 seconds on Windows and 477 seconds on Debian, with suite times of 224.398 and 242.491 seconds. The exact-host stencil cases take 1.475 and 1.550 seconds, while live hosted input takes 0.123 and 0.101 seconds. Both hosts pass zero-warning builds, all 60 Seed tests, all 15 OS tests, and the complete CLI verifier; normalized reports and all 62 current portable artifacts match. Pinned-QEMU probe 16 and GitHub's independent Windows/Linux gate pass. The multi-patch ownership gain therefore adds roughly one second to the focused loop while leaving complete-suite time dominated by the unchanged golden contract.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.
