@@ -44,6 +44,17 @@ This list records unresolved decisions without presenting them as implementation
 - What are the first package/resource and filesystem contracts, after the in-guest verifier and protected-process boundary exist?
 - Which QEMU and Hyper-V behaviors must be qualified before the first OS milestone is complete?
 
+## Browser and WebAssembly
+
+The [WebAssembly playground exploration](WebAssembly-Playground-Exploration.md) records the current options and proposed demonstrations without accepting a target or implementation route.
+
+- Which evidence and replacement gate should move the implemented C#/.NET WebAssembly experiment toward a Windvale-native WVB interpreter or direct backend?
+- Should direct WebAssembly compilation consume typed WIR, canonical verified WVB, or a later shared machine-independent lowering model?
+- Which browser engines, resource ceilings, capability adapters, and reproducibility evidence define the first browser profile?
+- What is the smallest portable asynchronous UI/event contract that can map coherently to browsers, Windows, Linux, and Windvale OS?
+- Which exact sample should prove equivalent Windvale behavior across Windows, Linux, and WebAssembly?
+- What evidence is required before WebAssembly becomes an accepted permanent host or compiler target?
+
 ## First decision sequence
 
 Decisions 0058 through 0084 establish reproducible bytecode compiler convergence, the bounded shared ABI-14 native path, live Windvale-produced service leaves, Windvale-owned executable-image layout, the first terminal CPU-exception destination, and the durable capability-oriented OS boundary. Candidate Decisions 0085 and 0086 add WVA-owned Q35 poweroff plus the first normalized no-error/error-code trap entries. The recommended next decisions are:

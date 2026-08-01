@@ -12,6 +12,7 @@ using Windvale.Compiler;
 using Windvale.Compiler.Native;
 using Windvale.Linker;
 using Windvale.ObjectModel;
+using Windvale.Playground;
 using Windvale.Project;
 using Windvale.Runtime;
 using Windvale.Runtime.Native;
@@ -627,6 +628,7 @@ internal static class Program
 
     private static readonly List<Testˉcase> TESTS =
     [
+        new("browser playground contains compilation, capabilities, and execution", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Browserˉplaygroundˉcontainsˉexecution),
         new("portable source compiles, verifies, and returns the data sum", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Portableˉprogramˉruns),
         new("hosted source requires authorization and writes text", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Hostedˉprogramˉruns),
         new("hosted resources are explicit, separated, and bounded", [TEST_AREA_RUNTIME], Hostedˉresourcesˉareˉbounded),
@@ -969,6 +971,131 @@ internal static class Program
             "       Windvale.Seed.Tests --list-tests\n" +
             "       Windvale.Seed.Tests --list-areas\n" +
             "       Windvale.Seed.Tests --compare-reports <first> <second>");
+    }
+
+    private static void Browserˉplaygroundˉcontainsˉexecution()
+    {
+        var Examples = Playgroundˉexamples.All;
+        Equal(Examples.Length, Examples.Select(Example => Example.Id).Distinct(StringComparer.Ordinal).Count());
+
+        var Hello = Examples.Single(Example => Example.Id == "hello");
+        var Helloˉresult = Playgroundˉrunner.Run(new(
+            Hello.Source,
+            Hello.Recommendedˉcapabilities));
+        Equal(Playgroundˉstatus.Completed, Helloˉresult.Status);
+        Equal("Hello from Windvale\n", Helloˉresult.Standardˉoutput);
+        Equal(0, Helloˉresult.Exitˉcode);
+        Equal(Moduleˉprofile.Hosted, Helloˉresult.Profile);
+        True(Helloˉresult.Bytecodeˉbytes.Length > 0, "The playground did not retain compiled WVB.");
+        Equal(64, Helloˉresult.Moduleˉsha256!.Length);
+        Contains(Helloˉresult.Bytecodeˉreport!, "call.capability");
+        True(
+            Helloˉresult.Executedˉinstructions > 0,
+            "The playground did not report executed instructions.");
+
+        var Unauthorized = Playgroundˉrunner.Run(new(
+            Hello.Source,
+            ImmutableHashSet.Create<string>(StringComparer.Ordinal)));
+        Equal(Playgroundˉstatus.Runtimeˉfailed, Unauthorized.Status);
+        Equal("WVR3010", Unauthorized.Diagnostics.Single().Code);
+
+        var Sum = Examples.Single(Example => Example.Id == "sum-data");
+        var Sumˉresult = Playgroundˉrunner.Run(new(
+            Sum.Source,
+            Sum.Recommendedˉcapabilities));
+        Equal(Playgroundˉstatus.Completed, Sumˉresult.Status);
+        Equal(29, Sumˉresult.Exitˉcode);
+        Equal(Moduleˉprofile.Portable, Sumˉresult.Profile);
+        Equal(0, Sumˉresult.Requiredˉcapabilities.Length);
+
+        var Twoˉchannels = Examples.Single(Example => Example.Id == "two-channels");
+        var Twoˉchannelˉresult = Playgroundˉrunner.Run(new(
+            Twoˉchannels.Source,
+            Twoˉchannels.Recommendedˉcapabilities));
+        Equal(Playgroundˉstatus.Completed, Twoˉchannelˉresult.Status);
+        Equal("Build complete\n", Twoˉchannelˉresult.Standardˉoutput);
+        Equal("verified: canonical WVB\n", Twoˉchannelˉresult.Diagnosticˉoutput);
+
+        var Nominal = Examples.Single(Example => Example.Id == "records-enums");
+        var Nominalˉresult = Playgroundˉrunner.Run(new(
+            Nominal.Source,
+            Nominal.Recommendedˉcapabilities));
+        Equal(Playgroundˉstatus.Completed, Nominalˉresult.Status);
+        Equal(42, Nominalˉresult.Exitˉcode);
+
+        var Budget = Examples.Single(Example => Example.Id == "instruction-budget");
+        var Budgetˉresult = Playgroundˉrunner.Run(new(
+            Budget.Source,
+            Budget.Recommendedˉcapabilities,
+            50));
+        Equal(Playgroundˉstatus.Runtimeˉfailed, Budgetˉresult.Status);
+        Equal("WVR3011", Budgetˉresult.Diagnostics.Single().Code);
+
+        var Invalid = Playgroundˉrunner.Run(new(
+            "module Invalid profile portable; export fn Main(",
+            ImmutableHashSet.Create<string>(StringComparer.Ordinal)));
+        Equal(Playgroundˉstatus.Compilationˉfailed, Invalid.Status);
+        True(!Invalid.Diagnostics.IsEmpty, "Invalid playground source produced no diagnostic.");
+        Equal(0, Invalid.Bytecodeˉbytes.Length);
+
+        var System = Playgroundˉrunner.Run(new(
+            "module Browserˉsystem profile system; export fn Main() -> i32 { return 0; }",
+            ImmutableHashSet.Create<string>(StringComparer.Ordinal)));
+        Equal(Playgroundˉstatus.Rejected, System.Status);
+        Equal("WVPG1003", System.Diagnostics.Single().Code);
+
+        var Unsupportedˉauthorization = Playgroundˉrunner.Run(new(
+            Sum.Source,
+            ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.FILE_READ_BYTES)));
+        Equal(Playgroundˉstatus.Rejected, Unsupportedˉauthorization.Status);
+        Equal("WVPG1002", Unsupportedˉauthorization.Diagnostics.Single().Code);
+
+        const string Unsupportedˉmodule = """
+            module Unsupportedˉmodule profile hosted;
+            capability file.read_bytes;
+            export fn Main() -> i32 {
+                let Value: bytes = file.read_bytes("input.wvb");
+                return 0;
+            }
+            """;
+        var Unsupportedˉmoduleˉresult = Playgroundˉrunner.Run(new(
+            Unsupportedˉmodule,
+            ImmutableHashSet.Create<string>(StringComparer.Ordinal)));
+        Equal(Playgroundˉstatus.Rejected, Unsupportedˉmoduleˉresult.Status);
+        Equal("WVPG1004", Unsupportedˉmoduleˉresult.Diagnostics.Single().Code);
+
+        var Outputˉchunk = new string('x', 20 * 1024);
+        var Outputˉsource = $$"""
+            module Boundedˉoutput profile hosted;
+            capability console.write;
+            data Chunk: text = "{{Outputˉchunk}}";
+            export fn Main() -> i32 {
+                console.write(Chunk);
+                console.write(Chunk);
+                console.write(Chunk);
+                console.write(Chunk);
+                return 0;
+            }
+            """;
+        var Boundedˉoutput = Playgroundˉrunner.Run(new(
+            Outputˉsource,
+            ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.CONSOLE_WRITE)));
+        Equal(Playgroundˉstatus.Runtimeˉfailed, Boundedˉoutput.Status);
+        Equal("WVR3029", Boundedˉoutput.Diagnostics.Single().Code);
+        Equal(60 * 1024, Boundedˉoutput.Standardˉoutput.Length);
+
+        var Oversized = Playgroundˉrunner.Run(new(
+            new string(' ', Playgroundˉlimits.MAXIMUM_SOURCE_CHARACTERS + 1),
+            ImmutableHashSet.Create<string>(StringComparer.Ordinal)));
+        Equal(Playgroundˉstatus.Rejected, Oversized.Status);
+        Equal("WVPG1001", Oversized.Diagnostics.Single().Code);
+
+        var Invalidˉbudget = Playgroundˉrunner.Run(new(
+            Sum.Source,
+            Sum.Recommendedˉcapabilities,
+            Playgroundˉlimits.MAXIMUM_INSTRUCTIONS + 1));
+        Equal(Playgroundˉstatus.Rejected, Invalidˉbudget.Status);
+        Equal("WVPG1005", Invalidˉbudget.Diagnostics.Single().Code);
     }
 
     private static void Portableˉprogramˉruns()

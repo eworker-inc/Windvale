@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\Compiler\Reference\Windvale.Compiler.csproj" />
+    <ProjectReference Include="..\..\Runtime\Windvale.Runtime\Windvale.Runtime.csproj" />
+  </ItemGroup>
+</Project>

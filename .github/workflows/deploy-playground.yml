@@ -1,0 +1,74 @@
+name: Deploy playground
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/deploy-playground.yml
+      - Compiler/Reference/**
+      - Object-Model/Windvale.ObjectModel/**
+      - Runtime/Windvale.Bytecode/**
+      - Runtime/Windvale.Runtime/**
+      - Tools/Windvale.Playground.Engine/**
+      - Tools/Windvale.Playground/**
+      - Directory.Build.props
+      - global.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+jobs:
+  build:
+    name: Build static playground
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pinned .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Publish standalone WebAssembly application
+        run: >-
+          dotnet publish Tools/Windvale.Playground/Windvale.Playground.csproj
+          --configuration Release
+          --output artifacts/playground
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: artifacts/playground/wwwroot
+
+  deploy:
+    name: Publish playground
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

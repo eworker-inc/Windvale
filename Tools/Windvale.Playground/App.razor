@@ -1,0 +1,14 @@
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="Routeˉdata">
+        <RouteView RouteData="@Routeˉdata" />
+        <FocusOnNavigate RouteData="@Routeˉdata" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Windvale Playground</PageTitle>
+        <main class="not-found">
+            <p class="eyebrow">404 // UNKNOWN MODULE</p>
+            <h1>This path is outside the playground.</h1>
+            <a href="./">Return to the workbench</a>
+        </main>
+    </NotFound>
+</Router>

@@ -13,6 +13,7 @@
     <ProjectReference Include="../../Runtime/Windvale.Bytecode/Windvale.Bytecode.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Native/Windvale.Native.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
+    <ProjectReference Include="../../Tools/Windvale.Playground.Engine/Windvale.Playground.Engine.csproj" />
     <ProjectReference Include="../../Tools/Windvale.Project/Windvale.Project.csproj" />
   </ItemGroup>
   <ItemGroup>

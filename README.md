@@ -163,6 +163,20 @@ code --extensionDevelopmentPath=Tools/Editors/Windvale .
 
 GitHub does not load repository-local grammars, so GitHub file highlighting and the repository language bar will continue to omit Windvale until Linguist accepts the language. The project does not misclassify `.wv` as C# or another existing language in the meantime.
 
+## Browser playground
+
+The experimental Stage 0 playground now compiles, verifies, and runs Windvale entirely in the browser through .NET WebAssembly. It reuses the C# reference compiler and interpreter as the current semantic oracle, produces canonical WVB, exposes only explicitly checked console and diagnostic capabilities, and shows bytecode identity and disassembly alongside execution results.
+
+**[Open the Windvale Playground](https://eworker-inc.github.io/Windvale/)**
+
+Run it locally:
+
+```powershell
+dotnet run --project Tools/Windvale.Playground
+```
+
+The [playground host specification](Specifications/Browser-Playground.md) defines its exact limits and non-claims; the [tool README](Tools/Windvale.Playground/README.md) records static publication through GitHub Pages and the later custom-domain option. This is a browser host for the language, not a browser boot of Windvale OS and not yet an accepted permanent WebAssembly compiler target.
+
 ## Quick start
 
 Build and run the complete Seed verifier on Windows:

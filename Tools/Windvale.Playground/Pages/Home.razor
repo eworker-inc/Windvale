@@ -1,0 +1,335 @@
+@page "/"
+
+<PageTitle>Windvale Playground</PageTitle>
+
+<div class="site-shell">
+    <header class="site-header">
+        <a class="wordmark" href="./" aria-label="Windvale Playground home">
+            <span class="mark" aria-hidden="true">W</span>
+            <span>WINDVALE</span>
+            <span class="wordmark-section">PLAYGROUND</span>
+        </a>
+        <div class="stage-badge"><span aria-hidden="true"></span> STAGE 0 · BROWSER</div>
+    </header>
+
+    <main>
+        <section class="intro" aria-labelledby="page-title">
+            <div>
+                <p class="eyebrow">SOURCE → WVB → VERIFIED RUNTIME</p>
+                <h1 id="page-title">Your browser is the machine.</h1>
+            </div>
+            <p class="intro-copy">
+                Compile and run Windvale without sending source to a server. Inspect the exact portable
+                bytecode, grant capabilities deliberately, and see every execution limit.
+            </p>
+        </section>
+
+        <section class="workbench" aria-label="Windvale workbench">
+            <div class="source-panel panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="panel-index">01</span>
+                        <h2>Source</h2>
+                    </div>
+                    <label class="example-picker">
+                        <span>Example</span>
+                        <select value="@Selectedˉexample.Id" @onchange="Selectˉexample">
+                            @foreach (var Example in Playgroundˉexamples.All)
+                            {
+                                <option value="@Example.Id">@Example.Title</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+
+                <p class="example-description">@Selectedˉexample.Description</p>
+                <label class="sr-only" for="source-editor">Windvale source</label>
+                <textarea id="source-editor"
+                          class="source-editor"
+                          @bind="Source"
+                          @bind:event="oninput"
+                          spellcheck="false"
+                          autocapitalize="off"
+                          autocomplete="off"
+                          aria-describedby="source-meta"></textarea>
+                <div id="source-meta" class="source-meta">
+                    <span>@Source.Length.ToString("N0") / @Playgroundˉlimits.MAXIMUM_SOURCE_CHARACTERS.ToString("N0") chars</span>
+                    <span>Windvale source · UTF-8</span>
+                </div>
+            </div>
+
+            <aside class="control-panel panel" aria-label="Execution controls">
+                <div class="panel-header compact">
+                    <div>
+                        <span class="panel-index">02</span>
+                        <h2>Authority</h2>
+                    </div>
+                </div>
+
+                <p class="control-intro">Only checked capabilities are granted to this run.</p>
+                <fieldset class="capabilities">
+                    <legend class="sr-only">Authorized capabilities</legend>
+                    <label>
+                        <input type="checkbox" @bind="Allowˉconsoleˉwrite" />
+                        <span><strong>console.write</strong><small>Write text without a newline</small></span>
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="Allowˉconsoleˉwriteˉline" />
+                        <span><strong>console.write_line</strong><small>Write one line of text</small></span>
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="Allowˉdiagnosticˉwriteˉline" />
+                        <span><strong>diagnostic.write_line</strong><small>Write to the diagnostic channel</small></span>
+                    </label>
+                </fieldset>
+
+                <div class="budget-control">
+                    <label for="instruction-budget">Instruction budget</label>
+                    <select id="instruction-budget" @bind="Instructionˉbudget">
+                        <option value="10000">10,000 · quick check</option>
+                        <option value="250000">250,000 · standard</option>
+                        <option value="1000000">1,000,000 · maximum</option>
+                    </select>
+                </div>
+
+                <button class="run-button" @onclick="Runˉprogram" disabled="@Isˉrunning">
+                    <span aria-hidden="true">@(Isˉrunning ? "···" : "▶")</span>
+                    @(Isˉrunning ? "RUNNING" : "COMPILE + RUN")
+                </button>
+
+                <div class="limit-note">
+                    <span class="limit-marker">LIMITS</span>
+                    <p>64 KiB source · 64 KiB per output channel · 128 call frames · no files or network</p>
+                </div>
+            </aside>
+
+            <section class="result-panel panel" aria-labelledby="result-title">
+                <div class="panel-header result-heading">
+                    <div>
+                        <span class="panel-index">03</span>
+                        <h2 id="result-title">Evidence</h2>
+                    </div>
+                    @if (Result is not null)
+                    {
+                        <span class="status @Statusˉclass(Result.Status)">@Statusˉlabel(Result.Status)</span>
+                    }
+                    else
+                    {
+                        <span class="status idle">NOT RUN</span>
+                    }
+                </div>
+
+                <nav class="result-tabs" aria-label="Result views">
+                    @foreach (var Tab in Enum.GetValues<Resultˉtab>())
+                    {
+                        <button class="@(Activeˉtab == Tab ? "active" : null)"
+                                @onclick="() => Activeˉtab = Tab"
+                                aria-pressed="@(Activeˉtab == Tab)">
+                            @Tabˉlabel(Tab)
+                            @if (Tab == Resultˉtab.Diagnostics && Result is { Diagnostics.Length: > 0 })
+                            {
+                                <span class="tab-count">@Result.Diagnostics.Length</span>
+                            }
+                        </button>
+                    }
+                </nav>
+
+                <div class="result-body" aria-live="polite">
+                    @if (Result is null)
+                    {
+                        <div class="empty-state">
+                            <span aria-hidden="true">⌁</span>
+                            <p>Choose an example or edit the source, then compile and run it here.</p>
+                        </div>
+                    }
+                    else if (Activeˉtab == Resultˉtab.Output)
+                    {
+                        <div class="channel-heading"><span>STDOUT</span><span>@Utf8ˉcount(Result.Standardˉoutput) bytes</span></div>
+                        <pre class="console-output">@(string.IsNullOrEmpty(Result.Standardˉoutput) ? "[no standard output]" : Result.Standardˉoutput)</pre>
+                        @if (!string.IsNullOrEmpty(Result.Diagnosticˉoutput))
+                        {
+                            <div class="channel-heading diagnostic"><span>DIAGNOSTIC OUTPUT</span><span>@Utf8ˉcount(Result.Diagnosticˉoutput) bytes</span></div>
+                            <pre class="console-output diagnostic">@Result.Diagnosticˉoutput</pre>
+                        }
+                    }
+                    else if (Activeˉtab == Resultˉtab.Diagnostics)
+                    {
+                        @if (Result.Diagnostics.IsEmpty)
+                        {
+                            <div class="empty-state success"><span aria-hidden="true">✓</span><p>No diagnostics. The module passed this pipeline.</p></div>
+                        }
+                        else
+                        {
+                            <ol class="diagnostic-list">
+                                @foreach (var Diagnostic in Result.Diagnostics)
+                                {
+                                    <li>
+                                        <div><code>@Diagnostic.Code</code><span>@Diagnostic.Phase</span></div>
+                                        <p>@Diagnostic.Message</p>
+                                        @if (Diagnostic.Line is not null)
+                                        {
+                                            <small>playground.wv:@Diagnostic.Line:@Diagnostic.Column</small>
+                                        }
+                                        else if (Diagnostic.Byteˉoffset is not null)
+                                        {
+                                            <small>WVB byte @Diagnostic.Byteˉoffset</small>
+                                        }
+                                    </li>
+                                }
+                            </ol>
+                        }
+                    }
+                    else if (Activeˉtab == Resultˉtab.Bytecode)
+                    {
+                        @if (Result.Bytecodeˉreport is null)
+                        {
+                            <div class="empty-state"><span aria-hidden="true">—</span><p>No WVB was produced.</p></div>
+                        }
+                        else
+                        {
+                            <div class="channel-heading"><span>CANONICAL WVB DISASSEMBLY</span><span>@Result.Bytecodeˉbytes.Length.ToString("N0") bytes</span></div>
+                            <pre class="bytecode-output">@Result.Bytecodeˉreport</pre>
+                        }
+                    }
+                    else
+                    {
+                        <dl class="execution-grid">
+                            <div><dt>Pipeline</dt><dd>@Statusˉlabel(Result.Status)</dd></div>
+                            <div><dt>Module profile</dt><dd>@(Result.Profile?.ToString().ToLowerInvariant() ?? "—")</dd></div>
+                            <div><dt>Exit code</dt><dd>@(Result.Exitˉcode?.ToString() ?? "—")</dd></div>
+                            <div><dt>Instructions</dt><dd>@(Result.Executedˉinstructions?.ToString("N0") ?? "—")</dd></div>
+                            <div><dt>WVB size</dt><dd>@Result.Bytecodeˉbytes.Length.ToString("N0") bytes</dd></div>
+                            <div><dt>Budget</dt><dd>@Instructionˉbudget.ToString("N0")</dd></div>
+                        </dl>
+                        <div class="capability-evidence">
+                            <h3>Required by module</h3>
+                            @Capabilityˉlist(Result.Requiredˉcapabilities)
+                            <h3>Authorized for run</h3>
+                            @Capabilityˉlist(Result.Authorizedˉcapabilities)
+                        </div>
+                        <div class="digest">
+                            <span>SHA-256</span>
+                            <code>@(Result.Moduleˉsha256 ?? "No module digest")</code>
+                        </div>
+                    }
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer>
+        <span>EXPERIMENTAL STAGE 0 HOST</span>
+        <span>Runs locally in this browser · source is not uploaded</span>
+    </footer>
+</div>
+
+@code {
+    private Playgroundˉexample Selectedˉexample = Playgroundˉexamples.All[0];
+    private string Source = Playgroundˉexamples.All[0].Source;
+    private bool Allowˉconsoleˉwrite;
+    private bool Allowˉconsoleˉwriteˉline = true;
+    private bool Allowˉdiagnosticˉwriteˉline;
+    private long Instructionˉbudget = Playgroundˉlimits.DEFAULT_MAXIMUM_INSTRUCTIONS;
+    private bool Isˉrunning;
+    private Playgroundˉresult? Result;
+    private Resultˉtab Activeˉtab = Resultˉtab.Output;
+
+    private enum Resultˉtab
+    {
+        Output,
+        Diagnostics,
+        Bytecode,
+        Execution,
+    }
+
+    private void Selectˉexample(ChangeEventArgs arguments)
+    {
+        var Id = arguments.Value?.ToString();
+        Selectedˉexample = Playgroundˉexamples.All.First(Example => Example.Id == Id);
+        Source = Selectedˉexample.Source;
+        Allowˉconsoleˉwrite = Selectedˉexample.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.CONSOLE_WRITE);
+        Allowˉconsoleˉwriteˉline = Selectedˉexample.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.CONSOLE_WRITE_LINE);
+        Allowˉdiagnosticˉwriteˉline = Selectedˉexample.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE);
+        Result = null;
+        Activeˉtab = Resultˉtab.Output;
+    }
+
+    private async Task Runˉprogram()
+    {
+        Isˉrunning = true;
+        Result = null;
+        await Task.Yield();
+
+        var Authorized = ImmutableHashSet.CreateBuilder<string>(StringComparer.Ordinal);
+        if (Allowˉconsoleˉwrite)
+        {
+            Authorized.Add(Capabilityˉcatalog.CONSOLE_WRITE);
+        }
+        if (Allowˉconsoleˉwriteˉline)
+        {
+            Authorized.Add(Capabilityˉcatalog.CONSOLE_WRITE_LINE);
+        }
+        if (Allowˉdiagnosticˉwriteˉline)
+        {
+            Authorized.Add(Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE);
+        }
+
+        Result = Playgroundˉrunner.Run(new(Source, Authorized.ToImmutable(), Instructionˉbudget));
+        Activeˉtab = Result.Status switch
+        {
+            Playgroundˉstatus.Compilationˉfailed or
+            Playgroundˉstatus.Verificationˉfailed or
+            Playgroundˉstatus.Rejected or
+            Playgroundˉstatus.Runtimeˉfailed => Resultˉtab.Diagnostics,
+            _ => Resultˉtab.Output,
+        };
+        Isˉrunning = false;
+    }
+
+    private static RenderFragment Capabilityˉlist(ImmutableArray<string> capabilities) => Builder =>
+    {
+        if (capabilities.IsEmpty)
+        {
+            Builder.OpenElement(0, "p");
+            Builder.AddAttribute(1, "class", "none-label");
+            Builder.AddContent(2, "none");
+            Builder.CloseElement();
+            return;
+        }
+
+        Builder.OpenElement(3, "ul");
+        Builder.AddAttribute(4, "class", "inline-capabilities");
+        var Sequence = 5;
+        foreach (var Capability in capabilities)
+        {
+            Builder.OpenElement(Sequence++, "li");
+            Builder.AddContent(Sequence++, Capability);
+            Builder.CloseElement();
+        }
+        Builder.CloseElement();
+    };
+
+    private static int Utf8ˉcount(string value) => System.Text.Encoding.UTF8.GetByteCount(value);
+
+    private static string Statusˉlabel(Playgroundˉstatus status) => status switch
+    {
+        Playgroundˉstatus.Rejected => "REJECTED",
+        Playgroundˉstatus.Compilationˉfailed => "COMPILE FAILED",
+        Playgroundˉstatus.Verificationˉfailed => "VERIFY FAILED",
+        Playgroundˉstatus.Runtimeˉfailed => "RUN FAILED",
+        Playgroundˉstatus.Completed => "COMPLETED",
+        _ => status.ToString().ToUpperInvariant(),
+    };
+
+    private static string Statusˉclass(Playgroundˉstatus status) => status switch
+    {
+        Playgroundˉstatus.Completed => "success",
+        _ => "failure",
+    };
+
+    private static string Tabˉlabel(Resultˉtab tab) => tab switch
+    {
+        Resultˉtab.Bytecode => "BYTECODE",
+        _ => tab.ToString().ToUpperInvariant(),
+    };
+}
