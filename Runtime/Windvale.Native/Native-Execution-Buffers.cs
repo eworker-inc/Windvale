@@ -15,7 +15,6 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
     private readonly Dictionary<uint, Nativeˉborrowedˉbuffer> Arguments = [];
     private readonly Dictionary<string, Nativeˉborrowedˉbuffer> Files = new(StringComparer.Ordinal);
     private readonly List<Nativeˉborrowedˉbuffer> Allocations = [];
-    private int Textˉarenaˉused;
     private bool Isˉdisposed;
 
     public Nativeˉexecutionˉbuffers(Hostedˉresourceˉcontext? resources)
@@ -98,10 +97,14 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
         return Readˉtext(Address, Length, fragmentˉaddress, fragmentˉlength);
     }
 
-    public Nativeˉborrowedˉbuffer Allocateˉtext(string value)
+    public Nativeˉborrowedˉbuffer Allocateˉtext(string value, IntPtr context)
     {
         ObjectDisposedException.ThrowIf(Isˉdisposed, this);
         ArgumentNullException.ThrowIfNull(value);
+        if (context == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("The native execution context is unavailable.");
+        }
         var Bytes = STRICT_UTF8.GetBytes(value);
         if (Bytes.Length > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
         {
@@ -109,7 +112,21 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
                 "WVR3012",
                 $"Native text result {Bytes.Length} exceeds the UTF-8 value limit.");
         }
-        if (Bytes.Length > Nativeˉcontract.MAXIMUM_TEXT_ARENA_BYTES - Textˉarenaˉused)
+        var Textˉarenaˉpointer = new IntPtr(Marshal.ReadInt64(
+            context,
+            Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET));
+        var Textˉarenaˉlength = Marshal.ReadInt32(
+            context,
+            Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET);
+        var Textˉarenaˉused = Marshal.ReadInt32(
+            context,
+            Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET);
+        if (Textˉarenaˉpointer != Textˉarena.Address || Textˉarenaˉlength != Textˉarena.Length)
+        {
+            throw new InvalidOperationException("The native text-arena context is invalid.");
+        }
+        if (Textˉarenaˉused is < 0 || Textˉarenaˉused > Textˉarenaˉlength ||
+            Bytes.Length > Textˉarenaˉlength - Textˉarenaˉused)
         {
             throw new Runtimeˉexception(
                 "WVR3018",
@@ -122,10 +139,14 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
             Marshal.Copy(Bytes, 0, Address, Bytes.Length);
         }
         Textˉarenaˉused = checked(Textˉarenaˉused + Bytes.Length);
+        Marshal.WriteInt32(
+            context,
+            Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            Textˉarenaˉused);
         return new(Address, Bytes.Length, Math.Max(1, Bytes.Length));
     }
 
-    public Nativeˉborrowedˉbuffer Quoteˉtext(string value)
+    public Nativeˉborrowedˉbuffer Quoteˉtext(string value, IntPtr context)
     {
         var Outputˉlength = 2;
         foreach (var Character in value)
@@ -165,7 +186,7 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
             }
         }
         Result.Append('"');
-        return Allocateˉtext(Result.ToString());
+        return Allocateˉtext(Result.ToString(), context);
     }
 
     public static void Writeˉdescriptor(IntPtr descriptor, Nativeˉborrowedˉbuffer buffer)

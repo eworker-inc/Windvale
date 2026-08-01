@@ -350,7 +350,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(15_872, First.Length);
         Equal(
-            "3010bc72b9c26386f062f78481c900cac841321b040b41447a0bbb65a9e392fe",
+            "ceffc3e33bf007e47b109f3b6a71db2fdceac3c0e908d1471f056909ee42532d",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -360,7 +360,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 12\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
+            "windvale-os-boot 13\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -380,7 +380,7 @@ internal static class Program
         Equal(2, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x30, 0x31]));
         Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x2C, 0x30, 0x00, 0x00, 0x00]));
         Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
-        Equal(1, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x38]));
+        Equal(1, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x58]));
         Equal(1, Countˉsequence(Code, [0x49, 0x8D, 0xA6, 0x00, 0x30, 0x00, 0x00]));
         Equal(2, Countˉsequence(Code, [0xFC, 0xF3, 0x48, 0xAB]));
         Equal(1, Countˉsequence(Code, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
@@ -495,7 +495,7 @@ internal static class Program
         Equal(1, Nativeˉobject.Symbols.Count(Symbol => Symbol.Name == "Main"));
 
         var Bridgeˉobject = Objectˉcodec.Readˉandˉverify(First.Bridgeˉobjectˉbytes.AsSpan()).Value;
-        Equal(103u, Bridgeˉobject.Sections[0].Memoryˉsize);
+        Equal(118u, Bridgeˉobject.Sections[0].Memoryˉsize);
         Equal(2, Bridgeˉobject.Relocations.Length);
         Equal(929, First.Moduleˉbytes.Length);
         Equal(
@@ -505,9 +505,9 @@ internal static class Program
         Equal(
             "f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038",
             Objectˉdigest.Calculateˉsha256(First.Nativeˉobjectˉbytes.AsSpan()));
-        Equal(315, First.Bridgeˉobjectˉbytes.Length);
+        Equal(330, First.Bridgeˉobjectˉbytes.Length);
         Equal(
-            "949c5fdd641722c541e2ed6583a5c28bd681b77d91f28ea5cda2999026d75a23",
+            "8b28ed85af29baa65810e0ed0ce8e2893e9696cebd666ccf72a1a53f68cde2b9",
             Objectˉdigest.Calculateˉsha256(First.Bridgeˉobjectˉbytes.AsSpan()));
     }
 

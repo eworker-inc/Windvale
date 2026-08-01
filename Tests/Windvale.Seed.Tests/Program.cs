@@ -1965,6 +1965,10 @@ internal static class Program
 
             export fn Main() -> i32 {
                 Emit(Compose(Nativeˉstate.Running, -3, 7u8, 42u32));
+                console.write_line(Textˉconcat(
+                    I32ˉformat(-2147483647 - 1),
+                    Textˉconcat(":", U32ˉformat(4294967295u32))));
+                console.write_line(Textˉconcat(I32ˉformat(0), Textˉconcat(":", U32ˉformat(0u32))));
                 return 42;
             }
             """;
@@ -1985,7 +1989,7 @@ internal static class Program
             new Referenceˉcapabilityˉhost(Referenceˉresources),
             new(Authorized)).Runˉmain();
         Equal(42, Reference.Exitˉcode);
-        Equal("Running:-3:7:42\n", Referenceˉoutput.ToString());
+        Equal("Running:-3:7:42\n-2147483648:4294967295\n0:0\n", Referenceˉoutput.ToString());
         Equal("\"Running:-3:7:42\\u20AC\"\n", Referenceˉdiagnostic.ToString());
 
         var First = X64ˉnativeˉbackend.Compile(Verified);
@@ -1997,7 +2001,7 @@ internal static class Program
             .SelectMany(Block => Block.Operations)
             .ToImmutableArray();
         True(Operations.Any(Operation => Operation is Nativeˉenumˉname), "Native IR omitted enum.name.");
-        True(Operations.Count(Operation => Operation is Nativeˉintegerˉformat) == 3,
+        True(Operations.Count(Operation => Operation is Nativeˉintegerˉformat) == 7,
             "Native IR omitted integer formatting.");
         True(Operations.Any(Operation => Operation is Nativeˉtextˉconcat), "Native IR omitted text.concat.");
         True(Operations.Any(Operation => Operation is Nativeˉtextˉfromˉutf8), "Native IR omitted text.from_utf8.");
@@ -2007,6 +2011,32 @@ internal static class Program
             "Native IR omitted a descriptor-returning function.");
         True(First.Module.Functions.Any(Function => Function.Returnˉtype == Nativeˉvalueˉtype.Void),
             "Native IR omitted a void function.");
+        foreach (var Service in new[]
+        {
+            Nativeˉservice.Textˉconcat,
+            Nativeˉservice.I32ˉformat,
+            Nativeˉservice.U32ˉformat,
+        })
+        {
+            var Firstˉservice = X64ˉnativeˉtextˉservices.Build(Service);
+            var Secondˉservice = X64ˉnativeˉtextˉservices.Build(Service);
+            Sequenceˉequal(Firstˉservice, Secondˉservice);
+            X64ˉnativeˉtextˉservices.Verify(Service, Firstˉservice.AsSpan());
+            var Corruptedˉservice = Firstˉservice.ToArray();
+            Corruptedˉservice[0] ^= 0x01;
+            Throwsˉinvalidˉoperation(
+                $"Native {Service} service identity",
+                () => X64ˉnativeˉtextˉservices.Verify(Service, Corruptedˉservice));
+        }
+        Equal(
+            X64ˉnativeˉtextˉservices.TEXT_CONCAT_CANONICAL_SIZE,
+            X64ˉnativeˉtextˉservices.Build(Nativeˉservice.Textˉconcat).Length);
+        Equal(
+            X64ˉnativeˉtextˉservices.I32_FORMAT_CANONICAL_SIZE,
+            X64ˉnativeˉtextˉservices.Build(Nativeˉservice.I32ˉformat).Length);
+        Equal(
+            X64ˉnativeˉtextˉservices.U32_FORMAT_CANONICAL_SIZE,
+            X64ˉnativeˉtextˉservices.Build(Nativeˉservice.U32ˉformat).Length);
 
         void Runˉnative(ImmutableArray<byte> code)
         {
@@ -2046,6 +2076,31 @@ internal static class Program
             "WVR3014",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 X64ˉnativeˉbackend.Compile(Invalidˉutf8).Fragment));
+
+        var Valueˉlimit = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉtextˉvalueˉlimit profile portable;
+            export fn Main() -> i32 {
+                var Value: text = "a";
+                var Power: i32 = 0;
+                while Power < 20 {
+                    Value = Textˉconcat(Value, Value);
+                    Power = Power + 1;
+                }
+                Value = Textˉconcat(Value, "a");
+                return 0;
+            }
+            """));
+        Throwsˉruntime(
+            "WVR3012",
+            () => _ = new Referenceˉruntime(
+                Valueˉlimit,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+        Throwsˉnativeˉtrap(
+            "WVR3012",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Valueˉlimit).Fragment,
+                maximumˉinstructions: 10_000));
 
         var Arenaˉexhaustion = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
             module Nativeˉtextˉarena profile portable;

@@ -6,8 +6,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 10;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v10";
+    public const int ABI_VERSION = 11;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v11";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
@@ -28,8 +28,8 @@ public static class Nativeˉcontract
 
 public static class Nativeˉexecutionˉcontextˉcontract
 {
-    public const uint FORMAT_VERSION = 2;
-    public const uint SIZE = 48;
+    public const uint FORMAT_VERSION = 3;
+    public const uint SIZE = 72;
     public const int FORMAT_VERSION_OFFSET = 0;
     public const int SIZE_OFFSET = 4;
     public const int INSTRUCTION_BUDGET_OFFSET = 8;
@@ -38,6 +38,18 @@ public static class Nativeˉexecutionˉcontextˉcontract
     public const int RECORD_ARENA_POINTER_OFFSET = 32;
     public const int RECORD_ARENA_LENGTH_OFFSET = 40;
     public const int RECORD_ARENA_USED_OFFSET = 44;
+    public const int TEXT_ARENA_POINTER_OFFSET = 48;
+    public const int TEXT_ARENA_LENGTH_OFFSET = 56;
+    public const int TEXT_ARENA_USED_OFFSET = 60;
+    public const int SERVICE_FAILURE_DETAIL_OFFSET = 64;
+    public const int RESERVED_OFFSET = 68;
+}
+
+public enum Nativeˉserviceˉfailureˉdetail : uint
+{
+    None = 0,
+    Textˉvalueˉlimit = 1,
+    Textˉarenaˉexhausted = 2,
 }
 
 public static class Nativeˉserviceˉtableˉcontract
