@@ -86,7 +86,7 @@ The compiler-generated wrapper validates the `WVKHAND1` envelope, then calls the
 COM1 is initialized at I/O base `0x3F8` for 8-N-1 operation. The transmitter is polled before every byte. Successful execution emits exact ASCII/LF bytes:
 
 ```text
-windvale-os-boot 9
+windvale-os-boot 10
 entry=pass
 system-table=pass
 memory-map=pass
@@ -132,8 +132,8 @@ status=pass
 architecture=x86-64
 application-format=pe32-plus-uefi-application-v3
 probe-version=9
-efi-bytes=15360
-efi-sha256=ac92cd4759961c7a046ede49af8dce7626016fbcf8bb46e7d90027f5974bffa4
+efi-bytes=15872
+efi-sha256=9228995f3b2522e15bd87ca63dc2637cc290f93b37f3e32b24cd8e3906671b75
 serial-marker=windvale-os-boot-9-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-native-context-native-wvb-windvale-source-status-pass
 qemu-exit-code=1
 ```
