@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel native seam version 11 defines how the shared portable-WVB native backend, reference host tools, Windvale Assembly, and system-profile Windvale source divide responsibility while the native runtime grows. Decisions 0064 through 0076 cross-host qualify the progression through ABI 14, bridge 9, and firmware probe 16. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
+Kernel native seam version 12 is the implemented firmware-probe-17 candidate. It retains the qualified ABI-14, bridge-9, and executable-WVA boundary and adds one exact Stage 0 object for the first kernel-owned terminal CPU exception. Decisions 0064 through 0076 cross-host qualify seam version 11 through firmware probe 16; candidate [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) owns version 12. [Decision 0056](../Documents/Decisions/0056-Windvale-Owned-Post-Memory-Evidence.md) records the qualified version-2 bidirectional WVA/WV boundary.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 
@@ -10,7 +10,7 @@ This contract prevents temporary C# machine-code generation from silently becomi
 
 | Layer | Current responsibility | Direction |
 | --- | --- | --- |
-| C# reference/recovery host | Compile WVB, select and verify ABI-14 native code, assemble, link, package PE32+, provide host oracles, and retain bounded loader/memory/bridge emitters while replacements are unavailable. | Remains an independent recovery and comparison path; does not define kernel policy. |
+| C# reference/recovery host | Compile WVB, select and verify ABI-14 native code, assemble, link, package PE32+, provide host oracles, and retain bounded loader, memory, exception, and bridge emitters while replacements are unavailable. | Remains an independent recovery and comparison path; does not define kernel policy. |
 | Shared portable-WVB backend | Lower verified portable semantics into the same versioned native ABI and WVO object used by host JIT/AOT evidence. | Replaces special OS instruction selection incrementally and becomes Windvale-written. |
 | WVA machine layer | Own explicit entry/exit and capability-adapter shims, register-frame mechanics, and later named privileged instructions that ordinary Windvale code must not execute ambiently. | Grows only from concrete kernel requirements with exact encodings and verification rules. |
 | `.wv` system layer | Own kernel policy, state transitions, diagnostics, allocation decisions, exception dispatch, and later runtime services once the shared native target can lower them. | Becomes the primary kernel implementation. |
@@ -46,6 +46,12 @@ The builder independently decodes the assembled WVA object and the bridge object
 
 The probe is compiled and AOT-linked on the host. The guest does not retain, decode, verify, or JIT its WVB bytes. Reaching `native-wvb=pass` proves the preverified AOT computation returned the expected packed result on the kernel-owned stack; it is not runtime bytecode-loader evidence.
 
+## Terminal CPU exception seam
+
+Probe 17 adds one exact x86-64 exception object between kernel-memory initialization and the existing WVA/native Main path. Kernel memory supplies its already-zeroed first allocation and switches to the owned stack. The exception object disables maskable interrupts, reads live `CS`, constructs the complete vector-6 interrupt gate in that page, and executes `LIDT`. The normal variant returns so the existing Main chain runs. After Main returns, the explicit invalid-opcode variant executes one `UD2`; its terminal handler writes the fixed panic suffix and QEMU failure value, then uses CLI/HLT if the test device does not complete.
+
+This raw object is an explicit replacement seam, not new portable semantics or a general kernel ABI. WVA 1 cannot express live segment-register capture, checked descriptor memory writes, `CLI`, `LIDT`, or the terminal exception entry. Extending WVA requires named instructions and independent encoding rules; exception dispatch policy moves to system-profile `.wv` only after bounded unsafe memory and a kernel call convention are specified. [Windvale-Kernel-Exceptions.md](Windvale-Kernel-Exceptions.md) owns the exact version-1 table, handler, scenarios, validation boundary, and exclusions.
+
 ## Native compiler requirements for policy migration
 
 ABI 14 retains those portable semantics and adds exact Windows/Linux file-input leaves to ABI 13's native host boundary. The kernel still passes zero service-table, record/text-arena, argument, output, and file-input fields because its current module uses none of those facilities. Moving an allocator and future exception policy into ordinary `.wv` still requires:
@@ -59,9 +65,9 @@ These are requirements on the native target, not permission to change source sem
 
 ## Safety and migration limits
 
-WVA remains semantically checked assembly. Version 3 does not add arbitrary executable-byte directives, local branch labels, memory operands, or privileged instructions to WVA 1. The current 138-byte raw bridge exists because WVA lacks stack/register moves, comparisons, and conditional branches required by the ABI transition; it has one exact independently decoded shape and a named future replacement seam.
+WVA remains semantically checked assembly. Version 3 does not add arbitrary executable-byte directives, local branch labels, memory operands, or privileged instructions to WVA 1. The current 138-byte raw bridge exists because WVA lacks stack/register moves, comparisons, and conditional branches required by the ABI transition; it has one exact independently decoded shape and a named future replacement seam. The candidate CPU-exception object is similarly bounded and independently checked because WVA lacks the explicit privileged and descriptor-memory operations named above.
 
-The seam does not move the UEFI loader, memory-map scanner, arena initializer, allocator machine implementation, COM1 instruction sequence, PE32+ packaging, or native compiler out of C#. The raw bridge establishes verified link and ABI positions through which those pieces can be replaced without changing the loader-to-source evidence chain.
+The seam does not move the UEFI loader, memory-map scanner, arena initializer, allocator machine implementation, CPU-exception machine implementation, COM1 instruction sequence, PE32+ packaging, or native compiler out of C#. The raw bridge and exception object establish verified link positions through which those pieces can be replaced without changing the loader-to-source evidence chain.
 
 ## Current evidence
 
@@ -82,3 +88,5 @@ Exact Decision 0073 commit `328e455` keeps the portable WVB and 8,010-byte servi
 Exact Decision 0074 commit `66b273f` again keeps the portable WVB and service-free WVO byte-identical while rebuilding the complete context constructor for ABI 13. Its 133-byte bridge code produces a 345-byte object with SHA-256 `0a0393457200dbf5ecfbb667c6c283510a6eb13a3e7e77537a0b6d8e0f503d68`. Firmware probe 15 remains 15,872 bytes with SHA-256 `d716b77a91646da6b423bacb1faa6d70f5a097241c610fe49291b068f33d5f29`; both hosts pass all 15 OS tests and the pinned-QEMU gate passes on Windows.
 
 Exact Decision 0076 commit `ef08619` again keeps the 929-byte portable WVB and 8,010-byte service-free WVO byte-identical while rebuilding the complete context constructor for ABI 14. Its 138-byte bridge code produces a 350-byte object with SHA-256 `3cbf50a4828a1a69ca7441a667cb95e569055468c345ed26b8a580fda3facfc5`. Firmware probe 16 remains 15,872 bytes with SHA-256 `206a036f8cbe3198544b6878bf52c80ef8d489c14d5437c6c7004ff1d6599504`; both hosts pass all 15 OS tests, the shared ABI-14 backend passes complete Windows/Debian qualification, and pinned QEMU/OVMF on Windows emits `windvale-os-boot 16` through `status=pass` before guest-controlled host exit code 1. The Debian QA host does not provide QEMU.
+
+Firmware probe 17 retains those WVB, WVO, bridge, context, and WVA contracts while adding the vector-6 exception object, allocated IDT page, ordinary armed marker, and explicit invalid-opcode image. Its implementation is a candidate; no final object/image identities, cross-host qualification, test counts, timings, or pinned-QEMU qualification are claimed here.

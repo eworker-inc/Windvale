@@ -1,15 +1,36 @@
 using Windvale.Bootstrap;
 using Windvale.ObjectModel;
 
-if (args.Length != 2 || args[0] != "--output" || string.IsNullOrWhiteSpace(args[1]))
+if ((args.Length != 2 && args.Length != 4) ||
+    args[0] != "--output" ||
+    string.IsNullOrWhiteSpace(args[1]) ||
+    (args.Length == 4 && (args[2] != "--scenario" || string.IsNullOrWhiteSpace(args[3]))))
 {
-    Console.Error.WriteLine("Usage: Windvale.Bootstrap --output <BOOTX64.EFI>");
+    Console.Error.WriteLine(
+        "Usage: Windvale.Bootstrap --output <BOOTX64.EFI> [--scenario <normal|invalid-opcode>]");
     return 64;
+}
+
+var Scenario = Firmwareˉprobeˉscenario.Normal;
+if (args.Length == 4)
+{
+    Scenario = args[3] switch
+    {
+        "normal" => Firmwareˉprobeˉscenario.Normal,
+        "invalid-opcode" => Firmwareˉprobeˉscenario.Invalidˉopcode,
+        _ => (Firmwareˉprobeˉscenario)(-1),
+    };
+    if (Scenario is not Firmwareˉprobeˉscenario.Normal and not Firmwareˉprobeˉscenario.Invalidˉopcode)
+    {
+        Console.Error.WriteLine(
+            "Usage: Windvale.Bootstrap --output <BOOTX64.EFI> [--scenario <normal|invalid-opcode>]");
+        return 64;
+    }
 }
 
 try
 {
-    var Application = Firmwareˉprobe.Buildˉapplication();
+    var Application = Firmwareˉprobe.Buildˉapplication(Scenario);
     File.WriteAllBytes(args[1], Application.AsSpan());
     Console.WriteLine($"windvale-os-probe-builder {Firmwareˉprobe.FORMAT_VERSION}");
     Console.WriteLine($"efi-bytes={Application.Length}");

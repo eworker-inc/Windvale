@@ -26,7 +26,9 @@ internal static class Program
         new("portable WVB lowers into the bounded kernel native probe", Kernelˉnativeˉprobeˉisˉportableˉandˉbounded),
         new("x86-64 kernel compiler emits deterministic verified WVO", Kernelˉcompilerˉemitsˉverifiedˉobject),
         new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
+        new("x86-64 kernel exception boundary emits deterministic verified WVO", Kernelˉexceptionˉboundaryˉemitsˉverifiedˉobject),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
+        new("invalid-opcode firmware probe builds reproducibly", Invalidˉopcodeˉfirmwareˉprobeˉbuildsˉreproducibly),
         new("firmware probe carries compiled Windvale past the kernel handoff", Firmwareˉprobeˉcarriesˉcompiledˉsource),
     ];
 
@@ -343,24 +345,108 @@ internal static class Program
             "A branching kernel entry did not produce WVN1003.");
     }
 
+    private static void Kernelˉexceptionˉboundaryˉemitsˉverifiedˉobject()
+    {
+        var First = Kernelˉexceptionˉx64.Build();
+        var Second = Kernelˉexceptionˉx64.Build();
+        Sequenceˉequal(First.Objectˉbytes, Second.Objectˉbytes);
+        Sequenceˉequal(First.Codeˉbytes, Second.Codeˉbytes);
+        Equal(First.Installerˉbytes, Second.Installerˉbytes);
+        Equal(First.Handlerˉoffset, Second.Handlerˉoffset);
+        True(First.Installerˉbytes <= First.Handlerˉoffset, "The handler overlaps the exception installer.");
+        Equal(1_797, First.Objectˉbytes.Length);
+        Equal(
+            "ab72fa17507caf3824bcf03d2f4cd973213c9453cd3c7fc74f604c15f78b9e1c",
+            Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
+        Equal(1_637, First.Codeˉbytes.Length);
+        Equal(
+            "e9d640acaf9a614337dd704729dba80bbf5c2dacdec219ee44a65bc25ee465a8",
+            Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
+        Equal(140u, First.Installerˉbytes);
+        Equal(144u, First.Handlerˉoffset);
+        Equal(0u, First.Handlerˉoffset % 16);
+
+        Equal(6u, Kernelˉexceptionˉcontract.INVALID_OPCODE_VECTOR);
+        Equal(4_096u, Kernelˉexceptionˉcontract.IDT_PAGE_BYTES);
+        Equal(16u, Kernelˉexceptionˉcontract.IDT_GATE_BYTES);
+        Equal(96u, Kernelˉexceptionˉcontract.INVALID_OPCODE_GATE_OFFSET);
+        Equal(112u, Kernelˉexceptionˉcontract.IDT_DESCRIPTOR_OFFSET);
+        Equal((ushort)111, Kernelˉexceptionˉcontract.IDT_LIMIT);
+        Equal((byte)0x8E, Kernelˉexceptionˉcontract.INTERRUPT_GATE_ATTRIBUTES);
+        Equal(
+            "panic=invalid-opcode\nvector=6\nerror-code=none\nstatus=panic\n",
+            Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER);
+
+        var Object = Objectˉcodec.Readˉandˉverify(First.Objectˉbytes.AsSpan()).Value;
+        True(Object.Architecture == Objectˉarchitecture.X86ˉ64, "The exception object architecture is not x86-64.");
+        Equal(1, Object.Sections.Length);
+        True(Object.Sections[0].Kind == Objectˉsectionˉkind.Code, "The exception object section is not code.");
+        Sequenceˉequal(First.Codeˉbytes, Object.Sections[0].Data);
+        Equal(2, Object.Symbols.Length);
+        Equal(Kernelˉexceptionˉcontract.INVALID_OPCODE_HANDLER_SYMBOL, Object.Symbols[0].Name);
+        True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Local, "The invalid-opcode handler is not local.");
+        Equal(First.Handlerˉoffset, Object.Symbols[0].Offset);
+        Equal(Kernelˉexceptionˉcontract.INSTALL_SYMBOL, Object.Symbols[1].Name);
+        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Export, "The exception installer is not exported.");
+        Equal(First.Installerˉbytes, Object.Symbols[1].Size);
+        Equal(0, Object.Relocations.Length);
+
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0xB9, 0x00, 0x02, 0x00, 0x00, 0xFC, 0xF3, 0x48, 0xAB]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0x31, 0xC0, 0x8C, 0xC8, 0x85, 0xC0]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0x41, 0xC6, 0x40, 0x65, 0x8E]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0x66, 0x41, 0xC7, 0x40, 0x70, 0x6F, 0x00]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0xFA, 0x41, 0x0F, 0x01, 0x58, 0x70]));
+        Equal(
+            Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER.Length,
+            Countˉsequence(First.Codeˉbytes, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
+        Equal(1, Countˉsequence(
+            First.Codeˉbytes,
+            [0xBA, 0xF4, 0x00, 0x00, 0x00, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xEF, 0xFA, 0xF4, 0xE9]));
+        Equal(0, Countˉsequence(First.Codeˉbytes, [0x0F, 0x0B]));
+        Equal(0, Countˉsequence(First.Codeˉbytes, [0x48, 0xCF]));
+    }
+
     private static void Firmwareˉprobeˉbuildsˉreproducibly()
     {
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(15_872, First.Length);
+        Equal(17_920, First.Length);
         Equal(
-            "206a036f8cbe3198544b6878bf52c80ef8d489c14d5437c6c7004ff1d6599504",
+            "d2c0a7e4e5e1605fc8639c05ab27ad07ee2b015ad2dc151d8637830b8acb3f18",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
         Equal(0u, Verified.Entryˉcodeˉoffset);
     }
 
+    private static void Invalidˉopcodeˉfirmwareˉprobeˉbuildsˉreproducibly()
+    {
+        var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
+        var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
+        Sequenceˉequal(First, Second);
+        Equal(17_920, First.Length);
+        Equal(
+            "26ccfaf862024e022339ca9fa8114c71b4fe601fe59a806d366e1d330b6d106d",
+            Objectˉdigest.Calculateˉsha256(First.AsSpan()));
+        True(
+            !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
+            "The normal and invalid-opcode firmware scenarios produced identical images.");
+
+        Equal(
+            "panic=invalid-opcode\nvector=6\nerror-code=none\nstatus=panic\n",
+            Firmwareˉprobe.INVALID_OPCODE_PANIC_MARKER);
+        var Code = Uefiˉapplicationˉverifier.Verify(First.AsSpan()).Codeˉbytes;
+        Equal(1, Countˉsequence(Code, [0x0F, 0x0B]));
+        Equal(0, Countˉsequence(
+            Uefiˉapplicationˉverifier.Verify(Firmwareˉprobe.Buildˉapplication().AsSpan()).Codeˉbytes,
+            [0x0F, 0x0B]));
+    }
+
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 16\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
+            "windvale-os-boot 17\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -382,9 +468,11 @@ internal static class Program
         Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
         Equal(1, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x78]));
         Equal(1, Countˉsequence(Code, [0x49, 0x8D, 0xA6, 0x00, 0x30, 0x00, 0x00]));
-        Equal(2, Countˉsequence(Code, [0xFC, 0xF3, 0x48, 0xAB]));
-        Equal(1, Countˉsequence(Code, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
-        Equal(2, Countˉsequence(Code, [0xFA, 0xF4, 0xE9]));
+        Equal(3, Countˉsequence(Code, [0xFC, 0xF3, 0x48, 0xAB]));
+        Equal(
+            1 + Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER.Length,
+            Countˉsequence(Code, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
+        Equal(3, Countˉsequence(Code, [0xFA, 0xF4, 0xE9]));
     }
 
     private const string HELLO_WORLD_SOURCE = """

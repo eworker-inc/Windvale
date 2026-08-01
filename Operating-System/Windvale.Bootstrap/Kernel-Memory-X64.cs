@@ -20,6 +20,8 @@ internal static class Kernelˉmemoryˉx64
     private const string OVERLAP_LABEL = "memory_overlap";
     private const string OVERLAP_NEXT_LABEL = "memory_overlap_next";
     private const string ALLOCATOR_FAILURE_LABEL = "allocator_failure";
+    private const string OWNED_STACK_FAILURE_LABEL = "owned_stack_failure";
+    private const string OWNED_STACK_RESTORE_LABEL = "owned_stack_restore";
 
     private const byte CONDITION_BELOW = 0x82;
     private const byte CONDITION_EQUAL = 0x84;
@@ -27,12 +29,17 @@ internal static class Kernelˉmemoryˉx64
     private const byte CONDITION_ABOVE = 0x87;
     private const byte CONDITION_ABOVE_OR_EQUAL = 0x83;
 
-    public static Kernelˉmemoryˉcode Build()
+    public static Kernelˉmemoryˉcode Build(Firmwareˉprobeˉscenario scenario)
     {
+        if (scenario is not Firmwareˉprobeˉscenario.Normal and not Firmwareˉprobeˉscenario.Invalidˉopcode)
+        {
+            throw new ArgumentOutOfRangeException(nameof(scenario));
+        }
+
         var Output = new X64ˉcodeˉbuilder();
         var Relocations = ImmutableArray.CreateBuilder<Kernelˉmemoryˉrelocation>();
 
-        Emitˉenter(Output, Relocations);
+        Emitˉenter(Output, Relocations, scenario);
         var Enterˉbytes = Output.Position;
         Output.Align(16);
         var Allocatorˉoffset = Output.Position;
@@ -43,7 +50,8 @@ internal static class Kernelˉmemoryˉx64
 
     private static void Emitˉenter(
         X64ˉcodeˉbuilder output,
-        ImmutableArray<Kernelˉmemoryˉrelocation>.Builder relocations)
+        ImmutableArray<Kernelˉmemoryˉrelocation>.Builder relocations,
+        Firmwareˉprobeˉscenario scenario)
     {
         // Preserve every nonvolatile register used by the memory boundary and reserve call shadow space.
         output.Emit(0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x57);
@@ -183,13 +191,30 @@ internal static class Kernelˉmemoryˉx64
         output.Jumpˉif(CONDITION_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x89, 0x46, 0x38);
 
-        // Call compiler-generated Main on the two-page kernel-owned stack.
+        // Install the bounded exception table and call Main on the two-page kernel-owned stack.
         output.Emit(0x49, 0x8D, 0xA6);
         output.Emitˉu32((uint)((Kernelˉmemoryˉcontract.STATE_PAGES + Kernelˉmemoryˉcontract.STACK_PAGES) * Kernelˉmemoryˉcontract.PAGE_BYTES));
         output.Emit(0x48, 0x83, 0xEC, 0x20);
+        output.Emit(0x49, 0x8B, 0x4E, 0x38);
+        Emitˉexternalˉcall(output, relocations, 3);
+        output.Emit(0x48, 0x85, 0xC0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, OWNED_STACK_FAILURE_LABEL);
         output.Emit(0x49, 0x8D, 0x4E, (byte)Kernelˉmemoryˉcontract.HANDOFF_COPY_OFFSET);
         Emitˉexternalˉcall(output, relocations, 2);
-        output.Emit(0x49, 0x89, 0xC7, 0x4C, 0x89, 0xE4, 0x4C, 0x89, 0xF8);
+        output.Emit(0x49, 0x89, 0xC7);
+        output.Emit(0x48, 0x85, 0xC0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, OWNED_STACK_RESTORE_LABEL);
+        if (scenario == Firmwareˉprobeˉscenario.Invalidˉopcode)
+        {
+            output.Emit(0x0F, 0x0B);
+            output.Emit(0x41, 0xBF, 0x01, 0x00, 0x00, 0x00);
+        }
+        output.Jump(OWNED_STACK_RESTORE_LABEL);
+
+        output.Mark(OWNED_STACK_FAILURE_LABEL);
+        output.Emit(0x41, 0xBF, 0x01, 0x00, 0x00, 0x00);
+        output.Mark(OWNED_STACK_RESTORE_LABEL);
+        output.Emit(0x4C, 0x89, 0xE4, 0x4C, 0x89, 0xF8);
         output.Jump(RESTORE_LABEL);
 
         output.Mark(FAILURE_LABEL);

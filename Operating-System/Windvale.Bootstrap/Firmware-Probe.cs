@@ -6,14 +6,20 @@ using Windvale.ObjectModel;
 
 namespace Windvale.Bootstrap;
 
+public enum Firmwareˉprobeˉscenario
+{
+    Normal,
+    Invalidˉopcode,
+}
+
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 16;
+    public const int FORMAT_VERSION = 17;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 16\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 17\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -21,6 +27,8 @@ public static class Firmwareˉprobe
     public const string ALLOCATOR_MARKER = "allocator=pass\n";
     public const string KERNEL_STACK_MARKER = "kernel-stack=pass\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
+    public const string CPU_EXCEPTIONS_MARKER = "cpu-exceptions=armed\n";
+    public const string INVALID_OPCODE_PANIC_MARKER = Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER;
     public const string NATIVE_CONTEXT_MARKER = "native-context=pass\n";
     public const string NATIVE_WVB_MARKER = "native-wvb=pass\n";
     public const string WINDVALE_SOURCE_MARKER = "windvale-source=pass\n";
@@ -28,7 +36,8 @@ public static class Firmwareˉprobe
     public const string SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + HELLO_WORLD_MARKER +
-        NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER + WINDVALE_SOURCE_MARKER + SUCCESS_MARKER;
+        CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
+        WINDVALE_SOURCE_MARKER + SUCCESS_MARKER;
 
     private const string FAILURE_MARKER = "status=fail\n";
     private const string FAILURE_LABEL = "failure";
@@ -89,8 +98,14 @@ public static class Firmwareˉprobe
     private const uint FREE_POOL_OFFSET = 0x48;
     private const uint EXIT_BOOT_SERVICES_OFFSET = 0xE8;
 
-    public static ImmutableArray<byte> Buildˉapplication()
+    public static ImmutableArray<byte> Buildˉapplication(
+        Firmwareˉprobeˉscenario scenario = Firmwareˉprobeˉscenario.Normal)
     {
+        if (scenario is not Firmwareˉprobeˉscenario.Normal and not Firmwareˉprobeˉscenario.Invalidˉopcode)
+        {
+            throw new ArgumentOutOfRangeException(nameof(scenario));
+        }
+
         var Kernel = X64ˉkernelˉcompiler.Compile(Loadˉhelloˉworldˉsource(), "Hello-World.wv");
         if (!Kernel.Success)
         {
@@ -98,6 +113,7 @@ public static class Firmwareˉprobe
                 $"The Windvale kernel source did not compile: {Kernel.Diagnostics[0]}");
         }
         var Nativeˉprobe = Kernelˉnativeˉprobe.Build();
+        var Exceptions = Kernelˉexceptionˉx64.Build();
 
         var Loader = Buildˉloaderˉmachineˉcode();
         var Loaderˉobject = new Objectˉfile(
@@ -132,7 +148,7 @@ public static class Firmwareˉprobe
                 0,
                 (uint)Supportˉcode.Length)],
             []);
-        var Memory = Kernelˉmemoryˉx64.Build();
+        var Memory = Kernelˉmemoryˉx64.Build(scenario);
         var Memoryˉobject = new Objectˉfile(
             Objectˉarchitecture.X86ˉ64,
             [new(".text", Objectˉsectionˉkind.Code, 16, (uint)Memory.Bytes.Length, Memory.Bytes)],
@@ -158,6 +174,13 @@ public static class Firmwareˉprobe
                     Objectˉlimits.UNDEFINED_SECTION,
                     0,
                     0),
+                new(
+                    Kernelˉexceptionˉcontract.INSTALL_SYMBOL,
+                    Objectˉsymbolˉbinding.Import,
+                    Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
+                    0,
+                    0),
             ],
             [.. Memory.Relocations.Select(Relocation => new Objectˉrelocation(
                 Objectˉrelocationˉkind.Relativeˉi32,
@@ -175,6 +198,7 @@ public static class Firmwareˉprobe
                 new(Kernel.Objectˉbytes),
                 new(Nativeˉprobe.Nativeˉobjectˉbytes),
                 new(Memoryˉobjectˉbytes),
+                new(Exceptions.Objectˉbytes),
                 new(Assemblyˉshimˉobjectˉbytes),
                 new(Nativeˉprobe.Bridgeˉobjectˉbytes),
                 new(Supportˉobjectˉbytes),
@@ -371,6 +395,7 @@ public static class Firmwareˉprobe
         Output.Jump(MAP_VALIDATE_LABEL);
 
         Output.Mark(EXIT_SUCCESS_LABEL);
+        Output.Emit(0xFA);
         Emitˉserialˉtext(Output, MEMORY_MAP_MARKER);
         Emitˉserialˉtext(Output, BOOT_SERVICES_MARKER);
 
@@ -394,6 +419,7 @@ public static class Firmwareˉprobe
         Kernelˉcallˉoffset = Output.Emitˉcallˉplaceholder();
         Output.Emit(0x48, 0x85, 0xC0);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, TERMINAL_FAILURE_LABEL);
+        Emitˉserialˉtext(Output, CPU_EXCEPTIONS_MARKER);
         Emitˉserialˉtext(Output, NATIVE_CONTEXT_MARKER);
         Emitˉserialˉtext(Output, NATIVE_WVB_MARKER);
         Emitˉserialˉtext(Output, WINDVALE_SOURCE_MARKER);

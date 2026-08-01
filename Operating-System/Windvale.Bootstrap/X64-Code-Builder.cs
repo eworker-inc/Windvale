@@ -54,6 +54,12 @@ internal sealed class X64ˉcodeˉbuilder
         Addˉfixup(label);
     }
 
+    public void Loadˉripˉrelativeˉrdx(string label)
+    {
+        Output.AddRange([0x48, 0x8D, 0x15]);
+        Addˉfixup(label);
+    }
+
     public uint Emitˉcallˉplaceholder()
     {
         Output.Add(0xE8);

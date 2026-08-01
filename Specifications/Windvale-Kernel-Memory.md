@@ -4,7 +4,7 @@
 
 Kernel memory version 1 defines the first bounded ownership transition after successful `ExitBootServices`. The host planner, simulated allocator, matching x86-64 memory object, and QEMU qualification are implemented. [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns this boundary.
 
-This contract deliberately establishes one small arena rather than claiming all reclaimable firmware memory. It supplies enough owned memory for copied handoff state, a kernel stack, and an allocate-only page allocator while leaving paging, general physical-memory management, and reclamation for later evidence.
+This contract deliberately establishes one small arena rather than claiming all reclaimable firmware memory. It supplies enough owned memory for copied handoff state, a kernel stack, and an allocate-only page allocator while leaving paging, general physical-memory management, and reclamation for later evidence. Firmware probe 17 assigns the already-recorded first allocation to the bounded vector-6 CPU exception table without changing this version-1 layout.
 
 ## Ownership policy
 
@@ -59,7 +59,7 @@ The first page begins with this 64-byte little-endian header:
 | `0x30` | 8 | Handoff-copy address | `arena + 64` |
 | `0x38` | 8 | First allocation address | Zero until the probe allocation succeeds |
 
-The exact 48-byte `WVKHAND1` record is copied to `arena + 64` before the stack switch. Its map pointer remains valid but borrowed; the allocator must not publish or overwrite the retained map buffer.
+The exact 48-byte `WVKHAND1` record is copied to `arena + 64` before the stack switch. Its map pointer remains valid but borrowed; the allocator must not publish or overwrite the retained map buffer. In probe 17, the first allocation is page 3 at `arena + 0x3000`; after its zeroing and address publication, [kernel CPU exceptions version 1](Windvale-Kernel-Exceptions.md) owns the complete page as its IDT storage. Pages 4 through 15 remain free under the unchanged allocator state.
 
 ## Allocate-only page ABI
 
@@ -72,7 +72,7 @@ The memory object exports ASCII symbol `Windvale_kernel_allocate_pages`:
 - Allocation is contiguous, monotonically increasing, and deterministic.
 - Version 1 provides no release operation and no allocation outside its one arena.
 
-The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocator probe, switches stacks, and calls WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. Under [kernel native seam version 5](Windvale-Kernel-Native-Seam.md), that exact shim tail-transfers to the ABI-7 probe bridge; only packed portable result 29 after the byte-decoding checks restores the handoff and reaches compiler export `Windvale_kernel_main`. Main owns the source-selected success markers and can be reached only after every preceding memory and native-probe operation succeeds.
+The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records one allocation, and switches stacks. Probe 17 passes that allocated page to the bounded CPU-exception installer before calling WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. Under [kernel native seam version 12](Windvale-Kernel-Native-Seam.md), that exact shim tail-transfers to the ABI-14 probe bridge; only packed portable result 29 after the borrowed-byte checks restores the handoff and reaches compiler export `Windvale_kernel_main`. Main owns the source-selected success markers and can be reached only after every preceding memory, exception-installation, and native-probe operation succeeds. The explicit invalid-opcode scenario executes `UD2` only after Main returns.
 
 ## Diagnostics and limits
 
@@ -104,4 +104,6 @@ windvale-source=pass
 status=pass
 ```
 
-Version 1 does not claim all physical memory, reclamation of the retained map or loader ranges, page release, paging, guard pages, NX/W^X enforcement, interrupts, multiple CPUs, processes, runtime allocation policy, or graphical output.
+Firmware probe 17 retains the version-1 state and allocator rules, gives the first allocated page one durable candidate owner, and installs the vector-6 gate on the owned stack. The normal path adds `cpu-exceptions=armed` only after Main and the exception installer return. The explicit fault path reaches the terminal invalid-opcode handler instead. Candidate artifact identities and qualification evidence remain pending.
+
+Version 1 does not claim all physical memory, reclamation of the retained map or loader ranges, page release, paging, guard pages, NX/W^X enforcement, general interrupts, multiple CPUs, processes, runtime allocation policy, or graphical output. The exception allocation does not add page-fault, double-fault, interrupt-controller, recovery, or clean-shutdown policy.
