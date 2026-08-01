@@ -191,6 +191,10 @@ Decision 0071 follows the same rule by extending the existing native dynamic-tex
 
 ABI 11 therefore keeps edit-time native evidence around two seconds while broadening the actual machine-code boundary. Exact-commit Standard and dual-host Qualification remain the milestone gate; enum metadata, quoting, and hosted native adapters should continue reusing focused boundaries unless they introduce a genuinely new process, ownership, recovery, or security contract.
 
+Decision 0072 again extends the existing native dynamic-text case rather than adding a full-suite test. It now covers exact enum-name and quote leaves, the complete runtime-private `WVEN` layout and independent reconstruction, multiple nominal types, all quote escape families including supplementary Unicode, corrupt metadata, and separate quote/enum value and arena bounds. The final focused Windows Release case takes 0.429 seconds. The existing complete `wvdump` case continues to protect the real application boundary. Pre-commit Standard passes all 56 tests in 209.841 suite seconds; its warm dynamic-text and complete-`wvdump` cases take 0.176 and 0.466 seconds. Exact-archive cross-host Qualification remains pending for the candidate.
+
+The final pure-service migration therefore preserves a sub-second focused edit loop. Hosted capability adapters may need separate process/container evidence when their implementation changes, but ordinary semantic and corruption cases should still be attached to the smallest existing owner boundary.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.

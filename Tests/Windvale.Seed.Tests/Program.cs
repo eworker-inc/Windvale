@@ -1939,8 +1939,11 @@ internal static class Program
             module Nativeˉdynamicˉtext profile hosted;
             capability console.write_line;
             capability diagnostic.write_line;
+            record Nativeˉtag { Value: i32; }
             enum Nativeˉstate { Ready = 0; Running = 1; }
+            enum Nativeˉedge { Zero = 0; Second = 2; Maximum = 2147483647; }
             data Euro: bytes = [226, 130, 172];
+            data Quoteˉedges: bytes = [34, 92, 8, 12, 10, 13, 9, 0, 31, 32, 126, 127, 195, 169, 226, 130, 172, 240, 159, 152, 128, 244, 143, 191, 191];
 
             fn Compose(State: Nativeˉstate, Delta: i32, Byte: u8, Count: u32) -> text {
                 return Textˉconcat(
@@ -1969,6 +1972,10 @@ internal static class Program
                     I32ˉformat(-2147483647 - 1),
                     Textˉconcat(":", U32ˉformat(4294967295u32))));
                 console.write_line(Textˉconcat(I32ˉformat(0), Textˉconcat(":", U32ˉformat(0u32))));
+                diagnostic.write_line(Textˉquote(Textˉfromˉutf8(Quoteˉedges)));
+                diagnostic.write_line(Textˉconcat(
+                    Enumˉname(Nativeˉedge.Second),
+                    Textˉconcat(":", Enumˉname(Nativeˉedge.Maximum))));
                 return 42;
             }
             """;
@@ -1990,7 +1997,11 @@ internal static class Program
             new(Authorized)).Runˉmain();
         Equal(42, Reference.Exitˉcode);
         Equal("Running:-3:7:42\n-2147483648:4294967295\n0:0\n", Referenceˉoutput.ToString());
-        Equal("\"Running:-3:7:42\\u20AC\"\n", Referenceˉdiagnostic.ToString());
+        Equal(
+            "\"Running:-3:7:42\\u20AC\"\n" +
+            "\"\\\"\\\\\\b\\f\\n\\r\\t\\u0000\\u001F ~\\u007F\\u00E9\\u20AC\\uD83D\\uDE00\\uDBFF\\uDFFF\"\n" +
+            "Second:Maximum\n",
+            Referenceˉdiagnostic.ToString());
 
         var First = X64ˉnativeˉbackend.Compile(Verified);
         var Second = X64ˉnativeˉbackend.Compile(Verified);
@@ -2013,21 +2024,29 @@ internal static class Program
             "Native IR omitted a void function.");
         foreach (var Service in new[]
         {
+            Nativeˉservice.Enumˉname,
             Nativeˉservice.Textˉconcat,
+            Nativeˉservice.Textˉquote,
             Nativeˉservice.I32ˉformat,
             Nativeˉservice.U32ˉformat,
         })
         {
-            var Firstˉservice = X64ˉnativeˉtextˉservices.Build(Service);
-            var Secondˉservice = X64ˉnativeˉtextˉservices.Build(Service);
+            var Firstˉservice = X64ˉnativeˉtextˉservices.Build(Service, First.Fragment.Types);
+            var Secondˉservice = X64ˉnativeˉtextˉservices.Build(Service, First.Fragment.Types);
             Sequenceˉequal(Firstˉservice, Secondˉservice);
-            X64ˉnativeˉtextˉservices.Verify(Service, Firstˉservice.AsSpan());
+            X64ˉnativeˉtextˉservices.Verify(Service, Firstˉservice.AsSpan(), First.Fragment.Types);
             var Corruptedˉservice = Firstˉservice.ToArray();
             Corruptedˉservice[0] ^= 0x01;
             Throwsˉinvalidˉoperation(
                 $"Native {Service} service identity",
-                () => X64ˉnativeˉtextˉservices.Verify(Service, Corruptedˉservice));
+                () => X64ˉnativeˉtextˉservices.Verify(
+                    Service,
+                    Corruptedˉservice,
+                    First.Fragment.Types));
         }
+        Equal(
+            323,
+            X64ˉnativeˉtextˉservices.ENUM_NAME_CANONICAL_SIZE);
         Equal(
             X64ˉnativeˉtextˉservices.TEXT_CONCAT_CANONICAL_SIZE,
             X64ˉnativeˉtextˉservices.Build(Nativeˉservice.Textˉconcat).Length);
@@ -2037,6 +2056,41 @@ internal static class Program
         Equal(
             X64ˉnativeˉtextˉservices.U32_FORMAT_CANONICAL_SIZE,
             X64ˉnativeˉtextˉservices.Build(Nativeˉservice.U32ˉformat).Length);
+        Equal(
+            X64ˉnativeˉtextˉservices.TEXT_QUOTE_CANONICAL_SIZE,
+            X64ˉnativeˉtextˉservices.Build(Nativeˉservice.Textˉquote).Length);
+        var Enumˉbundle = X64ˉnativeˉtextˉservices.Build(
+            Nativeˉservice.Enumˉname,
+            First.Fragment.Types);
+        True(
+            Enumˉbundle.Length > X64ˉnativeˉtextˉservices.ENUM_NAME_CANONICAL_SIZE,
+            "Native enum-name service omitted its immutable metadata.");
+        var Enumˉmetadata = Enumˉbundle.AsSpan()[X64ˉnativeˉtextˉservices.ENUM_NAME_CANONICAL_SIZE..];
+        Equal(0x4E455657u, BinaryPrimitives.ReadUInt32LittleEndian(Enumˉmetadata));
+        Equal(1u, BinaryPrimitives.ReadUInt32LittleEndian(Enumˉmetadata[4..]));
+        Equal((uint)Enumˉmetadata.Length, BinaryPrimitives.ReadUInt32LittleEndian(Enumˉmetadata[8..]));
+        Equal((uint)First.Fragment.Types.Length, BinaryPrimitives.ReadUInt32LittleEndian(Enumˉmetadata[12..]));
+        Equal(
+            (uint)First.Fragment.Types.OfType<Enumˉtypeˉdeclaration>().Sum(Enum => Enum.Members.Length),
+            BinaryPrimitives.ReadUInt32LittleEndian(Enumˉmetadata[16..]));
+        var Corruptedˉmetadata = Enumˉbundle.ToArray();
+        Corruptedˉmetadata[^1] ^= 0x01;
+        Throwsˉinvalidˉoperation(
+            "Native Enumˉname service identity",
+            () => X64ˉnativeˉtextˉservices.Verify(
+                Nativeˉservice.Enumˉname,
+                Corruptedˉmetadata,
+                First.Fragment.Types));
+        var Corruptedˉmetadataˉheader = Enumˉbundle.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Corruptedˉmetadataˉheader.AsSpan(X64ˉnativeˉtextˉservices.ENUM_NAME_CANONICAL_SIZE + 8),
+            uint.MaxValue);
+        Throwsˉinvalidˉoperation(
+            "Native Enumˉname service identity",
+            () => X64ˉnativeˉtextˉservices.Verify(
+                Nativeˉservice.Enumˉname,
+                Corruptedˉmetadataˉheader,
+                First.Fragment.Types));
 
         void Runˉnative(ImmutableArray<byte> code)
         {
@@ -2125,6 +2179,76 @@ internal static class Program
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 X64ˉnativeˉbackend.Compile(Arenaˉexhaustion).Fragment,
                 maximumˉinstructions: 10_000));
+
+        var Quoteˉvalueˉlimit = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉquoteˉvalueˉlimit profile portable;
+            data Euro: bytes = [226, 130, 172];
+            export fn Main() -> i32 {
+                var Value: text = Textˉfromˉutf8(Euro);
+                var Power: i32 = 0;
+                while Power < 18 {
+                    Value = Textˉconcat(Value, Value);
+                    Power = Power + 1;
+                }
+                Value = Textˉquote(Value);
+                return 0;
+            }
+            """));
+        Throwsˉruntime(
+            "WVR3012",
+            () => _ = new Referenceˉruntime(
+                Quoteˉvalueˉlimit,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+        Throwsˉnativeˉtrap(
+            "WVR3012",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Quoteˉvalueˉlimit).Fragment,
+                maximumˉinstructions: 10_000));
+
+        var Quoteˉarenaˉexhaustion = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉquoteˉarena profile portable;
+            export fn Main() -> i32 {
+                var Value: text = "a";
+                var Power: i32 = 0;
+                while Power < 18 {
+                    Value = Textˉconcat(Value, Value);
+                    Power = Power + 1;
+                }
+                var Quoted: text = "";
+                var Count: i32 = 0;
+                while Count < 62 {
+                    Quoted = Textˉquote(Value);
+                    Count = Count + 1;
+                }
+                return 0;
+            }
+            """));
+        Throwsˉnativeˉtrap(
+            "WVR3018",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Quoteˉarenaˉexhaustion).Fragment,
+                maximumˉinstructions: 10_000));
+
+        var Longˉmember = $"N{new string('a', 127)}";
+        var Enumˉarenaˉexhaustion = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess($$"""
+            module Nativeˉenumˉarena profile portable;
+            enum Nativeˉlong { {{Longˉmember}} = 0; }
+            export fn Main() -> i32 {
+                var Name: text = "";
+                var Count: i32 = 0;
+                while Count < 131073 {
+                    Name = Enumˉname(Nativeˉlong.{{Longˉmember}});
+                    Count = Count + 1;
+                }
+                return 0;
+            }
+            """));
+        Throwsˉnativeˉtrap(
+            "WVR3018",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Enumˉarenaˉexhaustion).Fragment,
+                maximumˉinstructions: 10_000_000));
 
         var Descriptorˉfunction = First.Module.Functions
             .Select((Function, Index) => (Function, Index))
