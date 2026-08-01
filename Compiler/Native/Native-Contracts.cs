@@ -5,8 +5,9 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 3;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v3";
+    public const int ABI_VERSION = 4;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v4";
+    public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
     public const int MAXIMUM_FRAME_SLOTS = 1024;
     public const int MAXIMUM_FRAME_BYTES = MAXIMUM_FRAME_SLOTS * sizeof(int);
@@ -14,6 +15,8 @@ public static class Nativeˉcontract
 }
 
 public abstract record Nativeˉoperation;
+
+public sealed record Nativeˉinstructionˉcharge : Nativeˉoperation;
 
 public enum Nativeˉvalueˉtype : byte
 {

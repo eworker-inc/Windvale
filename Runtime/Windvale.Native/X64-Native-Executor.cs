@@ -19,10 +19,19 @@ public static class X64ˉnativeˉexecutor
     private const int MAP_PRIVATE = 0x2;
     private const int MAP_ANONYMOUS = 0x20;
 
-    public static int Executeˉi32(Nativeˉfragment fragment, string entry = "Main")
+    public static int Executeˉi32(
+        Nativeˉfragment fragment,
+        string entry = "Main",
+        long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS)
     {
         Nativeˉfragmentˉverifier.Verify(fragment);
         ArgumentNullException.ThrowIfNull(entry);
+        if (maximumˉinstructions <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maximumˉinstructions),
+                "The maximum instruction count must be positive.");
+        }
         if (RuntimeInformation.ProcessArchitecture != Architecture.X64)
         {
             throw new PlatformNotSupportedException("The first native executor requires an x86-64 process.");
@@ -46,7 +55,8 @@ public static class X64ˉnativeˉexecutor
             Finalizeˉexecutable(Address, (nuint)Linkedˉcode.Length);
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
             var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉi32ˉentry>(new(Entryˉaddress));
-            Outcome = Function();
+            var Budget = checked((ulong)maximumˉinstructions);
+            Outcome = Function(0, Budget, Budget);
         }
         finally
         {
@@ -63,6 +73,12 @@ public static class X64ˉnativeˉexecutor
             throw new Nativeˉtrapˉexception(
                 "WVR3007",
                 $"Integer overflow in native entry '{entry}'.");
+        }
+        if (Status == 2)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3011",
+                $"The native instruction limit {maximumˉinstructions} was exceeded in entry '{entry}'.");
         }
         throw new Nativeˉbackendˉexception(
             "WVN4005",
@@ -164,7 +180,10 @@ public static class X64ˉnativeˉexecutor
         new(Marshal.GetLastPInvokeError(), $"{operation} failed.");
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate ulong Nativeˉi32ˉentry();
+    private delegate ulong Nativeˉi32ˉentry(
+        ulong windowsˉpadding,
+        ulong sharedˉbudget,
+        ulong systemˉvˉbudget);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr VirtualAlloc(IntPtr address, nuint size, uint allocationˉtype, uint protection);

@@ -175,6 +175,10 @@ Decision 0061 again widens the same differential case, now with typed locals and
 
 Typed forward control therefore remains a sub-second edit-time test despite substantially wider native semantics and adversarial coverage. Native instruction budgeting and backward branches should stay in this case if their safety boundary can be exercised without adding a separate long-running suite; deliberately terminating loop fixtures must remain bounded so the focused path does not inherit qualification-scale cost.
 
+Decision 0062 adds dynamic success/exhaustion boundaries for a four-instruction constant and a 157-instruction finite loop, WVO-linked loop execution, one deliberately nonterminating loop bounded at 50 instructions, and budget-source/charge/target/status corruption families to the same differential case. The final focused Windows case remains approximately 0.17 seconds. Development passes all 48 regular tests in 47.721 seconds; Standard passes all 49 tests in 201.986 suite seconds and 205.709 wall-clock seconds. Exact dual-host Qualification remains pending.
+
+Budgeted loops therefore preserve the seconds-scale inner loop and add no new complete-suite case. The exact ten-byte charge per WVB instruction increases generated native code size but does not materially affect current verifier throughput because native fixtures remain small; later compaction should be driven by code-size and execution measurements rather than test-suite timing.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.

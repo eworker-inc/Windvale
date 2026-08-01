@@ -7,6 +7,7 @@ namespace Windvale.Compiler.Native;
 public static class Nativeˉfragmentˉverifier
 {
     private const ulong INTEGER_OVERFLOW_STATUS = 0x0000_0001_0000_0000UL;
+    private const ulong INSTRUCTION_LIMIT_STATUS = 0x0000_0002_0000_0000UL;
 
     public static Nativeˉfragment Verify(Nativeˉfragment fragment)
     {
@@ -127,39 +128,30 @@ public static class Nativeˉfragmentˉverifier
 
     private static void Verifyˉtargetˉshape(Nativeˉfragment fragment)
     {
-        if (!fragment.Patches.IsEmpty ||
-            (!Isˉconstantˉshape(fragment) && !Isˉstructuredˉshape(fragment)))
+        if (!fragment.Patches.IsEmpty || !Isˉstructuredˉshape(fragment))
         {
             Fail(
                 "WVN3030",
-                "The x86-64 baseline fragment is outside the independently decoded constant/forward-control target shapes.");
+                "The x86-64 baseline fragment is outside the independently decoded budgeted-control target shape.");
         }
     }
 
-    private static bool Isˉconstantˉshape(Nativeˉfragment fragment) =>
-        fragment.Code.Length == 6 &&
-        fragment.Code[0] == 0xB8 &&
-        fragment.Code[5] == 0xC3 &&
-        fragment.Symbols.Length == 1 &&
-        fragment.Symbols[0] is
-        {
-            Name: "Main",
-            Binding: Nativeˉsymbolˉbinding.Export,
-            Kind: Nativeˉsymbolˉkind.Function,
-            Offset: 0,
-            Size: 6,
-        };
-
     private static bool Isˉstructuredˉshape(Nativeˉfragment fragment)
     {
-        if (fragment.Symbols.Length != 2 ||
+        if (fragment.Symbols.Length != 3 ||
             fragment.Symbols[0] is not
+            {
+                Name: "$instruction_limit",
+                Binding: Nativeˉsymbolˉbinding.Local,
+                Kind: Nativeˉsymbolˉkind.Function,
+            } Instructionˉlimitˉsymbol ||
+            fragment.Symbols[1] is not
             {
                 Name: "$overflow",
                 Binding: Nativeˉsymbolˉbinding.Local,
                 Kind: Nativeˉsymbolˉkind.Function,
             } Trapˉsymbol ||
-            fragment.Symbols[1] is not
+            fragment.Symbols[2] is not
             {
                 Name: "Main",
                 Binding: Nativeˉsymbolˉbinding.Export,
@@ -172,10 +164,14 @@ public static class Nativeˉfragmentˉverifier
 
         var Code = fragment.Code.AsSpan();
         var Trapˉoffset = checked((int)Trapˉsymbol.Offset);
+        var Instructionˉlimitˉoffset = checked((int)Instructionˉlimitˉsymbol.Offset);
         if (Trapˉoffset < 7 ||
-            Trapˉoffset > Code.Length - 18 ||
+            Trapˉoffset > Code.Length - 36 ||
+            Instructionˉlimitˉoffset != Trapˉoffset + 18 ||
             Mainˉsymbol.Size != Trapˉsymbol.Offset ||
-            Trapˉsymbol.Size != (uint)(Code.Length - Trapˉoffset) ||
+            Trapˉsymbol.Size != 18 ||
+            Instructionˉlimitˉsymbol.Size != 18 ||
+            Instructionˉlimitˉoffset + 18 != Code.Length ||
             !Matches(Code, 0, 0x48, 0x81, 0xEC))
         {
             return false;
@@ -188,12 +184,21 @@ public static class Nativeˉfragmentˉverifier
             !Matches(Code, Trapˉoffset + 7, 0x48, 0xB8) ||
             BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Trapˉoffset + 9, sizeof(ulong))) != INTEGER_OVERFLOW_STATUS ||
             Code[Trapˉoffset + 17] != 0xC3 ||
-            Trapˉoffset + 18 != Code.Length)
+            !Matches(Code, Instructionˉlimitˉoffset, 0x48, 0x81, 0xC4) ||
+            BinaryPrimitives.ReadInt32LittleEndian(Code.Slice(Instructionˉlimitˉoffset + 3, sizeof(int))) != Frameˉbytes ||
+            !Matches(Code, Instructionˉlimitˉoffset + 7, 0x48, 0xB8) ||
+            BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Instructionˉlimitˉoffset + 9, sizeof(ulong))) != INSTRUCTION_LIMIT_STATUS ||
+            Code[Instructionˉlimitˉoffset + 17] != 0xC3)
         {
             return false;
         }
 
         var Index = 7;
+        if (!Matches(Code, Index, 0x49, 0x89, 0xD3))
+        {
+            return false;
+        }
+        Index += 3;
         if (!Matches(Code, Index, 0x31, 0xC0))
         {
             return false;
@@ -224,6 +229,16 @@ public static class Nativeˉfragmentˉverifier
         {
             var Start = Index;
 
+            if (Index + 10 <= Trapˉoffset &&
+                Matches(Code, Index, 0x49, 0x83, 0xEB, 0x01, 0x0F, 0x82) &&
+                Tryˉreadˉtarget(Code, Index + 6, out var Limitˉtarget) &&
+                Limitˉtarget == Instructionˉlimitˉoffset)
+            {
+                Index += 10;
+                Groups.Add(new(Start, Index - Start, true, false, true, []));
+                continue;
+            }
+
             if (Index + 15 <= Trapˉoffset &&
                 Tryˉloadˉeax(Code, Index, Frameˉbytes, out var Returnˉslot) &&
                 Matches(Code, Index + 7, 0x48, 0x81, 0xC4) &&
@@ -232,7 +247,7 @@ public static class Nativeˉfragmentˉverifier
             {
                 Trackˉslot(Returnˉslot, ref Maximumˉbodyˉslot);
                 Index += 15;
-                Groups.Add(new(Start, Index - Start, false, true, []));
+                Groups.Add(new(Start, Index - Start, false, true, false, []));
                 Returns++;
                 continue;
             }
@@ -246,7 +261,7 @@ public static class Nativeˉfragmentˉverifier
             {
                 Trackˉslot(Conditionˉslot, ref Maximumˉbodyˉslot);
                 Index += 20;
-                Groups.Add(new(Start, Index - Start, false, false, [Trueˉtarget, Falseˉtarget]));
+                Groups.Add(new(Start, Index - Start, false, false, false, [Trueˉtarget, Falseˉtarget]));
                 continue;
             }
 
@@ -254,7 +269,7 @@ public static class Nativeˉfragmentˉverifier
                 Tryˉreadˉtarget(Code, Index + 1, out var Jumpˉtarget))
             {
                 Index += 5;
-                Groups.Add(new(Start, Index - Start, false, false, [Jumpˉtarget]));
+                Groups.Add(new(Start, Index - Start, false, false, false, [Jumpˉtarget]));
                 continue;
             }
 
@@ -263,7 +278,7 @@ public static class Nativeˉfragmentˉverifier
             {
                 Trackˉslot(Constantˉslot, ref Maximumˉbodyˉslot);
                 Index += 12;
-                Groups.Add(new(Start, Index - Start, true, false, []));
+                Groups.Add(new(Start, Index - Start, true, false, false, []));
                 Transformations++;
                 continue;
             }
@@ -306,7 +321,7 @@ public static class Nativeˉfragmentˉverifier
                     Trackˉslot(Resultˉslot, ref Maximumˉbodyˉslot);
                     Cursor += 7;
                     Index = Cursor;
-                    Groups.Add(new(Start, Index - Start, true, false, []));
+                    Groups.Add(new(Start, Index - Start, true, false, false, []));
                     Transformations++;
                     continue;
                 }
@@ -320,7 +335,7 @@ public static class Nativeˉfragmentˉverifier
                     Trackˉslot(Comparisonˉslot, ref Maximumˉbodyˉslot);
                     Cursor += 15;
                     Index = Cursor;
-                    Groups.Add(new(Start, Index - Start, true, false, []));
+                    Groups.Add(new(Start, Index - Start, true, false, false, []));
                     Transformations++;
                     continue;
                 }
@@ -344,7 +359,7 @@ public static class Nativeˉfragmentˉverifier
                 Trackˉslot(Negateˉslot, ref Maximumˉbodyˉslot);
                 Cursor += 7;
                 Index = Cursor;
-                Groups.Add(new(Start, Index - Start, true, false, []));
+                Groups.Add(new(Start, Index - Start, true, false, false, []));
                 Transformations++;
                 continue;
             }
@@ -355,7 +370,7 @@ public static class Nativeˉfragmentˉverifier
                 Trackˉslot(Notˉslot, ref Maximumˉbodyˉslot);
                 Cursor += 10;
                 Index = Cursor;
-                Groups.Add(new(Start, Index - Start, true, false, []));
+                Groups.Add(new(Start, Index - Start, true, false, false, []));
                 Transformations++;
                 continue;
             }
@@ -365,7 +380,7 @@ public static class Nativeˉfragmentˉverifier
                 Trackˉslot(Copyˉslot, ref Maximumˉbodyˉslot);
                 Cursor += 7;
                 Index = Cursor;
-                Groups.Add(new(Start, Index - Start, true, false, []));
+                Groups.Add(new(Start, Index - Start, true, false, false, []));
                 Transformations++;
                 continue;
             }
@@ -390,12 +405,29 @@ public static class Nativeˉfragmentˉverifier
         var Groupˉindices = Groups
             .Select((Group, Groupˉindex) => (Group.Offset, Groupˉindex))
             .ToDictionary(Item => Item.Offset, Item => Item.Groupˉindex);
+        if (!Groups[0].Isˉinstructionˉcharge)
+        {
+            return false;
+        }
         for (var Groupˉindex = 0; Groupˉindex < Groups.Count; Groupˉindex++)
         {
             var Group = Groups[Groupˉindex];
+            if (Group.Isˉinstructionˉcharge)
+            {
+                if (!Group.Fallsˉthrough || Group.Returns || Group.Targets.Length != 0 ||
+                    Groupˉindex + 1 >= Groups.Count || Groups[Groupˉindex + 1].Isˉinstructionˉcharge)
+                {
+                    return false;
+                }
+            }
+            else if (Groupˉindex == 0 || !Groups[Groupˉindex - 1].Isˉinstructionˉcharge)
+            {
+                return false;
+            }
             foreach (var Target in Group.Targets)
             {
-                if (Target <= Group.Offset || !Groupˉindices.ContainsKey(Target))
+                if (!Groupˉindices.TryGetValue(Target, out var Targetˉindex) ||
+                    !Groups[Targetˉindex].Isˉinstructionˉcharge)
                 {
                     return false;
                 }
@@ -522,6 +554,7 @@ public static class Nativeˉfragmentˉverifier
         int Length,
         bool Fallsˉthrough,
         bool Returns,
+        bool Isˉinstructionˉcharge,
         int[] Targets);
 
     [DoesNotReturn]

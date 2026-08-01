@@ -9,6 +9,7 @@ namespace Windvale.Compiler.Native;
 public static class X64ˉnativeˉbackend
 {
     private const ulong INTEGER_OVERFLOW_STATUS = 0x0000_0001_0000_0000UL;
+    private const ulong INSTRUCTION_LIMIT_STATUS = 0x0000_0002_0000_0000UL;
 
     public static Nativeˉcompilation Compile(Verifiedˉmodule verifiedˉmodule)
     {
@@ -52,24 +53,6 @@ public static class X64ˉnativeˉbackend
 
     private static Nativeˉmodule Lowerˉverifiedˉwvb(Verifiedˉfunction function)
     {
-        if (function.Instructions is
-            [
-                { Opcode: Opcode.I32ˉconst } Constant,
-                { Opcode: Opcode.Localˉstore, Unsignedˉoperand: 0 },
-                { Opcode: Opcode.Localˉload, Unsignedˉoperand: 0 },
-                { Opcode: Opcode.Return },
-            ] &&
-            function.Declaration.Localˉtypes is [{ Kind: Valueˉtype.I32 }])
-        {
-            return new([
-                new(
-                    "Main",
-                    [],
-                    [Nativeˉvalueˉtype.I32],
-                    [new(0, [new Nativeˉi32ˉconstant(0, Constant.Signedˉoperand)], new Nativeˉreturn(0))])
-            ]);
-        }
-
         var Localˉtypes = function.Declaration.Localˉtypes
             .Select(Toˉnativeˉtype)
             .ToImmutableArray();
@@ -144,6 +127,7 @@ public static class X64ˉnativeˉbackend
             {
                 var Instruction = Instructions[Index];
                 var Isˉlast = Index == Endˉindex - 1;
+                Operations.Add(new Nativeˉinstructionˉcharge());
                 switch (Instruction.Opcode)
                 {
                     case Opcode.I32ˉconst:
@@ -296,19 +280,6 @@ public static class X64ˉnativeˉbackend
             Blocks.Add(new(Blockˉid, Operations.ToImmutable(), Terminator));
         }
 
-        foreach (var Block in Blocks)
-        {
-            foreach (var Target in Targets(Block.Terminator))
-            {
-                if (Target <= Block.Id)
-                {
-                    Fail(
-                        "WVN2005",
-                        "The first native control-flow subset permits only forward acyclic branches until an execution-budget contract exists.");
-                }
-            }
-        }
-
         return new([new("Main", Localˉtypes, Valueˉtypes.ToImmutable(), Blocks.ToImmutable())]);
     }
 
@@ -320,31 +291,17 @@ public static class X64ˉnativeˉbackend
             Fail("WVN2901", "The x86-64 selector received an unsupported native machine-IR shape.");
         }
         var Function = module.Functions[0];
-        if (Function is
-            {
-                Localˉtypes.IsEmpty: true,
-                Valueˉtypes: [Nativeˉvalueˉtype.I32],
-                Blocks: [
-                    {
-                        Id: 0,
-                        Operations: [Nativeˉi32ˉconstant { Result: 0 } Singleˉconstant],
-                        Terminator: Nativeˉreturn { Value: 0 },
-                    },
-                ],
-            })
-        {
-            return Selectˉconstant(Singleˉconstant.Value);
-        }
-
         Validateˉfunction(Function);
         var Usedˉslots = checked(Function.Localˉtypes.Length + Function.Valueˉtypes.Length);
         var Frameˉbytes = checked((Usedˉslots * sizeof(int) + 15) & ~15);
         var Code = new List<byte>();
         var Overflowˉpatches = new List<int>();
+        var Instructionˉlimitˉpatches = new List<int>();
         var Branchˉpatches = new List<Nativeˉbranchˉpatch>();
         var Blockˉoffsets = new int[Function.Blocks.Length];
 
         Emitˉframeˉadjustment(Code, subtract: true, Frameˉbytes);
+        Code.AddRange([0x49, 0x89, 0xD3]);
         Code.AddRange([0x31, 0xC0]);
         for (var Slot = 0; Slot < Frameˉbytes / sizeof(int); Slot++)
         {
@@ -358,6 +315,9 @@ public static class X64ˉnativeˉbackend
             {
                 switch (Operation)
                 {
+                    case Nativeˉinstructionˉcharge:
+                        Emitˉinstructionˉcharge(Code, Instructionˉlimitˉpatches);
+                        break;
                     case Nativeˉi32ˉconstant Constant:
                         Emitˉconstant(Code, Constant.Value, Valueˉslot(Function, Constant.Result));
                         break;
@@ -426,10 +386,15 @@ public static class X64ˉnativeˉbackend
                 }
             }
 
+            var Hasˉchargedˉterminator = !Block.Operations.IsEmpty &&
+                Block.Operations[^1] is Nativeˉinstructionˉcharge;
             switch (Block.Terminator)
             {
                 case Nativeˉjump Jump:
-                    Emitˉdirectˉbranch(Code, 0xE9, Jump.Targetˉblock, Branchˉpatches);
+                    if (Hasˉchargedˉterminator || Jump.Targetˉblock != Block.Id + 1)
+                    {
+                        Emitˉdirectˉbranch(Code, 0xE9, Jump.Targetˉblock, Branchˉpatches);
+                    }
                     break;
                 case Nativeˉbranch Branch:
                     Emitˉloadˉeax(Code, Valueˉslot(Function, Branch.Condition));
@@ -452,6 +417,12 @@ public static class X64ˉnativeˉbackend
         Addˉu64(Code, INTEGER_OVERFLOW_STATUS);
         Code.Add(0xC3);
 
+        var Instructionˉlimitˉoffset = Code.Count;
+        Emitˉframeˉadjustment(Code, subtract: false, Frameˉbytes);
+        Code.AddRange([0x48, 0xB8]);
+        Addˉu64(Code, INSTRUCTION_LIMIT_STATUS);
+        Code.Add(0xC3);
+
         var Bytes = Code.ToArray();
         if (Bytes.Length > Nativeˉcontract.MAXIMUM_CODE_BYTES)
         {
@@ -460,6 +431,10 @@ public static class X64ˉnativeˉbackend
         foreach (var Patchˉoffset in Overflowˉpatches)
         {
             Writeˉrelativeˉi32(Bytes, Patchˉoffset, Trapˉoffset);
+        }
+        foreach (var Patchˉoffset in Instructionˉlimitˉpatches)
+        {
+            Writeˉrelativeˉi32(Bytes, Patchˉoffset, Instructionˉlimitˉoffset);
         }
         foreach (var Patch in Branchˉpatches)
         {
@@ -473,8 +448,10 @@ public static class X64ˉnativeˉbackend
             16,
             Bytes.ToImmutableArray(),
             [
+                new("$instruction_limit", Nativeˉsymbolˉbinding.Local, Nativeˉsymbolˉkind.Function,
+                    (uint)Instructionˉlimitˉoffset, (uint)(Bytes.Length - Instructionˉlimitˉoffset)),
                 new("$overflow", Nativeˉsymbolˉbinding.Local, Nativeˉsymbolˉkind.Function,
-                    (uint)Trapˉoffset, (uint)(Bytes.Length - Trapˉoffset)),
+                    (uint)Trapˉoffset, (uint)(Instructionˉlimitˉoffset - Trapˉoffset)),
                 new("Main", Nativeˉsymbolˉbinding.Export, Nativeˉsymbolˉkind.Function,
                     0, (uint)Trapˉoffset),
             ],
@@ -504,8 +481,23 @@ public static class X64ˉnativeˉbackend
             {
                 Fail("WVN2901", "The x86-64 selector requires canonical initialized basic blocks.");
             }
+            var Chargeˉpending = false;
             foreach (var Operation in Block.Operations)
             {
+                if (Operation is Nativeˉinstructionˉcharge)
+                {
+                    if (Chargeˉpending)
+                    {
+                        Fail("WVN2901", "The x86-64 selector rejects consecutive native instruction charges.");
+                    }
+                    Chargeˉpending = true;
+                    continue;
+                }
+                if (!Chargeˉpending)
+                {
+                    Fail("WVN2901", "Every native semantic operation must consume one instruction charge.");
+                }
+                Chargeˉpending = false;
                 switch (Operation)
                 {
                     case Nativeˉi32ˉconstant Constant:
@@ -554,14 +546,26 @@ public static class X64ˉnativeˉbackend
             switch (Block.Terminator)
             {
                 case Nativeˉjump Jump:
-                    Requireˉforwardˉtarget(function, Block.Id, Jump.Targetˉblock);
+                    Requireˉtarget(function, Jump.Targetˉblock);
+                    if (!Chargeˉpending && Jump.Targetˉblock != Block.Id + 1)
+                    {
+                        Fail("WVN2901", "Only an implicit next-block fallthrough may omit an instruction charge.");
+                    }
                     break;
                 case Nativeˉbranch Branch:
+                    if (!Chargeˉpending)
+                    {
+                        Fail("WVN2901", "A native conditional branch must consume one instruction charge.");
+                    }
                     Requireˉvalue(function, Branch.Condition, Nativeˉvalueˉtype.Bool, Nextˉvalue);
-                    Requireˉforwardˉtarget(function, Block.Id, Branch.Trueˉblock);
-                    Requireˉforwardˉtarget(function, Block.Id, Branch.Falseˉblock);
+                    Requireˉtarget(function, Branch.Trueˉblock);
+                    Requireˉtarget(function, Branch.Falseˉblock);
                     break;
                 case Nativeˉreturn Return:
+                    if (!Chargeˉpending)
+                    {
+                        Fail("WVN2901", "A native return must consume one instruction charge.");
+                    }
                     Requireˉvalue(function, Return.Value, Nativeˉvalueˉtype.I32, Nextˉvalue);
                     Returnˉcount++;
                     break;
@@ -594,23 +598,6 @@ public static class X64ˉnativeˉbackend
         {
             Fail("WVN2901", "The x86-64 selector rejects unreachable native basic blocks.");
         }
-    }
-
-    private static Nativeˉfragment Selectˉconstant(int value)
-    {
-        var Code = new byte[6];
-        Code[0] = 0xB8;
-        BinaryPrimitives.WriteInt32LittleEndian(Code.AsSpan(1, sizeof(int)), value);
-        Code[5] = 0xC3;
-        var Fragment = new Nativeˉfragment(
-            Nativeˉcontract.X64_BASELINE_TARGET,
-            Nativeˉcontract.ABI_VERSION,
-            Objectˉarchitecture.X86ˉ64,
-            16,
-            Code.ToImmutableArray(),
-            [new("Main", Nativeˉsymbolˉbinding.Export, Nativeˉsymbolˉkind.Function, 0, (uint)Code.Length)],
-            []);
-        return Nativeˉfragmentˉverifier.Verify(Fragment);
     }
 
     private static bool Isˉnativeˉtype(Valueˉshape type) =>
@@ -673,11 +660,11 @@ public static class X64ˉnativeˉbackend
         next++;
     }
 
-    private static void Requireˉforwardˉtarget(Nativeˉfunction function, int source, int target)
+    private static void Requireˉtarget(Nativeˉfunction function, int target)
     {
-        if (target <= source || target >= function.Blocks.Length)
+        if ((uint)target >= (uint)function.Blocks.Length)
         {
-            Fail("WVN2901", "The x86-64 selector permits only bounded forward basic-block targets.");
+            Fail("WVN2901", "The x86-64 selector received an invalid basic-block target.");
         }
     }
 
@@ -737,6 +724,13 @@ public static class X64ˉnativeˉbackend
     private static void Emitˉoverflowˉbranch(List<byte> code, List<int> patches)
     {
         code.AddRange([0x0F, 0x80]);
+        patches.Add(code.Count);
+        Addˉi32(code, 0);
+    }
+
+    private static void Emitˉinstructionˉcharge(List<byte> code, List<int> patches)
+    {
+        code.AddRange([0x49, 0x83, 0xEB, 0x01, 0x0F, 0x82]);
         patches.Add(code.Count);
         Addˉi32(code, 0);
     }
