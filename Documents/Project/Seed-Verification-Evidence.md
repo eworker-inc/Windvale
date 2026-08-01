@@ -3,8 +3,8 @@
 - Evidence date: 2026-08-01
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified commit: `79799332deb2d144e9b7557700829f14322a3062`
-- Latest pinned Windvale OS qualified candidate: `79799332deb2d144e9b7557700829f14322a3062`
+- Latest cross-host Seed qualified commit: `88889513e6c6d9ef673f7dcdca761628a430e31f`
+- Latest pinned Windvale OS qualified candidate: `88889513e6c6d9ef673f7dcdca761628a430e31f`
 
 ## Requirement evidence
 
@@ -670,15 +670,19 @@ All 61 portable artifacts, totaling 7,752,647 bytes, match byte for byte; their 
 
 The C# executor still builds and publishes the service bytes, owns buffers and executable memory, and supplies every other runtime service; no Windvale-written native runtime or .NET-retirement claim is made. This supersedes Decision 0069 only as the latest qualified native-runtime evidence; ABI 10, WVB/WVO, and the OS image remain unchanged.
 
-## Native text-arena and core-text-service candidate
+## Native text-arena and core-text-service qualification
 
-Decision 0071 advances the implementation candidate to `x86-64-wvb-baseline-v11`, ABI 11, and execution-context version 3. The context grows from 48 to 72 bytes and gives native and managed services one explicit 16 MiB text-arena base, capacity, allocation cursor, and exact failure-detail channel. Service-table version 4, WVB 1.6, WVO 1.0, and all service numbers remain unchanged.
+Decision 0071 advances the qualified target to `x86-64-wvb-baseline-v11`, ABI 11, and execution-context version 3. The context grows from 48 to 72 bytes and gives native and managed services one explicit 16 MiB text-arena base, capacity, allocation cursor, and exact failure-detail channel. Service-table version 4, WVB 1.6, WVO 1.0, and all service numbers remain unchanged.
 
 `Textˉconcat`, `I32ˉformat`, and `U32ˉformat` no longer use managed delegates or Windows/System V adapter thunks. Their exact platform-neutral x86-64 leaves are respectively 249 bytes / `75c5588117e1f5f58a593a23aae6156a3a68a6302df5f50153b977bccbaaa3a0`, 225 bytes / `c33758106e8d7cd31bbed8ef1e789a8e355c52736c119c75493154a4184fa41e`, and 191 bytes / `b98f2d55e30bb7369e233f94e4ade5f3e8917a7730114446f1ebc81f353e1e43`. The dynamic-text differential case covers signed minimum, unsigned maximum, zero, native/managed shared allocation, the 1 MiB value limit, aggregate exhaustion, deterministic reconstruction, and corrupt service identity. Enum naming and quoting remain managed services; hosted adapters are unchanged.
 
-The pre-commit Windows Release build has zero warnings. The focused native dynamic-text test passes in 1.011 seconds, complete Windvale-written `wvdump` in 0.843 seconds, and the native borrowed-byte/UTF-8 case in 0.328 seconds. Windows Standard passes all 56 tests in 235.402 seconds, and all 15 deterministic OS tests pass. The portable kernel WVB remains 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`, and its service-free WVO remains 8,010 bytes with SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`. The candidate bridge object is 330 bytes with SHA-256 `8b28ed85af29baa65810e0ed0ce8e2893e9696cebd666ccf72a1a53f68cde2b9`; candidate probe 13 is 15,872 bytes with SHA-256 `ceffc3e33bf007e47b109f3b6a71db2fdceac3c0e908d1471f056909ee42532d`. Pinned QEMU 11.0/Q35/TCG emits the complete probe-13 success marker and returns guest-controlled host exit code 1.
+Exact commit `88889513e6c6d9ef673f7dcdca761628a430e31f`, tree `875c8626e3e605c5080ce86c1adbb2ec00e960cc`, was archived as 2,885,974 bytes with SHA-256 `98b775a5cae3b0f48a83b9465931707226a96b8dc67bb5302008e58a41318ef3`. The exact archive matched after transfer to the isolated Debian GNU/Linux 12 x64 QA host with .NET SDK `10.0.302`. Windows and Debian build Release with zero warnings, pass all 56 tests and exact compiler reproduction, and complete the CLI verifier. The Windows suite takes 233.375 seconds; Debian takes 248.582 seconds. GitHub [Verify run 30694649557](https://github.com/eworker-inc/Windvale/actions/runs/30694649557) also passes for the exact candidate.
 
-This is development evidence only. Exact candidate commit/tree/archive identities, Windows and Debian Qualification, normalized reports, portable-artifact comparison, both exact-archive OS suites, GitHub verification, and cleanup evidence remain pending. Decision 0070 at `53cee69` remains the latest qualified native-runtime evidence, and probe 12 remains the latest qualified OS image.
+The 15,563-byte Windows report has SHA-256 `c34a2199e548631323b2186dda0dcf8ffcb0a3a3c6eb7d53d9a405c314837a4b`; its 11,918-byte timing report has SHA-256 `c08679ef53e9f5b722989feb276ec28e4882f97dadffb9c8614b782477a39ec8`. The 15,473-byte Debian report has SHA-256 `0a8116b03185d7344dd47fb0996c1cc9402c3b9583522574a2a77b0e2fa1f5cf`; its 11,524-byte timing report has SHA-256 `b613d16c834cc6a35de69b8b7eb620dd057ff345d822514f53aef13b6e28fd19`. Their normalized contracts match exactly.
+
+All 61 portable artifacts, totaling 7,752,647 bytes, match byte for byte; their retained canonical manifest has SHA-256 `11ac1d4a57fce3648004d7a6002e6124d6e2fbeefc108b31bfe305523b2de0de`. The retrieved 2,297,411-byte Debian evidence bundle has SHA-256 `7e723eeb634e145e7b7a8dcd609ec7f0e7a78e04fe402bf8ea0a54e012997b6a`. Both hosts pass all 15 OS tests. The portable kernel WVB remains 929 bytes with SHA-256 `0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339`, and its service-free WVO remains 8,010 bytes with SHA-256 `f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038`. The qualified bridge object is 330 bytes with SHA-256 `8b28ed85af29baa65810e0ed0ce8e2893e9696cebd666ccf72a1a53f68cde2b9`; qualified probe 13 is 15,872 bytes with SHA-256 `ceffc3e33bf007e47b109f3b6a71db2fdceac3c0e908d1471f056909ee42532d`. Pinned QEMU 11.0/Q35/TCG emits the complete success marker and returns guest-controlled host exit code 1. The Debian QA host does not provide QEMU. After retrieval and comparison, the resolved exact QA directory, transferred source archive, remote evidence bundle, and temporary QA inputs were removed and confirmed absent.
+
+This supersedes Decision 0070 as the latest qualified native-runtime evidence without claiming native enum metadata, native deterministic quoting, native hosted adapters, a Windvale-written native runtime, or .NET retirement.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
