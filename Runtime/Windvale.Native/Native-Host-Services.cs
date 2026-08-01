@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 using Windvale.Runtime;
@@ -8,20 +10,21 @@ namespace Windvale.Runtime.Native;
 public sealed class Nativeˉhostˉservices
 {
     public Nativeˉhostˉservices(
-        TextWriter? standardˉoutput,
+        Nativeˉoutputˉchannel? standardˉoutput,
         IEnumerable<string>? authorizedˉcapabilities = null,
-        Hostedˉresourceˉcontext? resources = null)
+        Hostedˉresourceˉcontext? resources = null,
+        Nativeˉoutputˉchannel? diagnosticˉoutput = null)
     {
-        Standardˉoutput = standardˉoutput ?? resources?.Standardˉoutput;
-        Diagnosticˉoutput = resources?.Diagnosticˉoutput;
+        Standardˉoutput = standardˉoutput;
+        Diagnosticˉoutput = diagnosticˉoutput;
         Resources = resources;
         Authorizedˉcapabilities = (authorizedˉcapabilities ?? [])
             .ToImmutableHashSet(StringComparer.Ordinal);
     }
 
-    public TextWriter? Standardˉoutput { get; }
+    public Nativeˉoutputˉchannel? Standardˉoutput { get; }
 
-    public TextWriter? Diagnosticˉoutput { get; }
+    public Nativeˉoutputˉchannel? Diagnosticˉoutput { get; }
 
     public Hostedˉresourceˉcontext? Resources { get; }
 
@@ -52,11 +55,11 @@ public sealed class Nativeˉhostˉservices
     internal bool Supports(Nativeˉservice service) =>
         service switch
         {
-            Nativeˉservice.Consoleˉwriteˉline => Standardˉoutput is not null,
+            Nativeˉservice.Consoleˉwriteˉline => Standardˉoutput?.Isˉavailable == true,
             Nativeˉservice.Processˉargumentˉcount or
                 Nativeˉservice.Processˉargument => Resources is not null,
             Nativeˉservice.Fileˉreadˉbytes => Resources?.Fileˉreader is not null,
-            Nativeˉservice.Diagnosticˉwriteˉline => Diagnosticˉoutput is not null,
+            Nativeˉservice.Diagnosticˉwriteˉline => Diagnosticˉoutput?.Isˉavailable == true,
             Nativeˉservice.Textˉutf8ˉisˉvalid or
                 Nativeˉservice.Enumˉname or
                 Nativeˉservice.Textˉconcat or
@@ -65,4 +68,81 @@ public sealed class Nativeˉhostˉservices
                 Nativeˉservice.U32ˉformat => true,
             _ => false,
         };
+}
+
+public enum Nativeˉoutputˉplatform : uint
+{
+    Windows = 1,
+    Linux = 2,
+}
+
+public sealed class Nativeˉoutputˉchannel
+{
+    private const int STD_OUTPUT_HANDLE = -11;
+    private const int STD_ERROR_HANDLE = -12;
+
+    private Nativeˉoutputˉchannel(
+        SafeFileHandle handle,
+        Nativeˉoutputˉplatform platform)
+    {
+        Handle = handle;
+        Platform = platform;
+    }
+
+    internal SafeFileHandle Handle { get; }
+
+    internal Nativeˉoutputˉplatform Platform { get; }
+
+    internal bool Isˉavailable =>
+        !Handle.IsClosed &&
+        !Handle.IsInvalid &&
+        (Platform != Nativeˉoutputˉplatform.Linux ||
+            Handle.DangerousGetHandle().ToInt64() is >= 0 and <= int.MaxValue);
+
+    public static Nativeˉoutputˉchannel Fromˉfileˉhandle(SafeFileHandle handle)
+    {
+        ArgumentNullException.ThrowIfNull(handle);
+        return new(handle, Currentˉplatform());
+    }
+
+    public static Nativeˉoutputˉchannel Processˉstandardˉoutput() =>
+        Processˉchannel(STD_OUTPUT_HANDLE, 1);
+
+    public static Nativeˉoutputˉchannel Processˉdiagnosticˉoutput() =>
+        Processˉchannel(STD_ERROR_HANDLE, 2);
+
+    private static Nativeˉoutputˉchannel Processˉchannel(int windowsˉkind, int linuxˉdescriptor)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return new(
+                new SafeFileHandle(GetStdHandle(windowsˉkind), ownsHandle: false),
+                Nativeˉoutputˉplatform.Windows);
+        }
+        if (OperatingSystem.IsLinux())
+        {
+            return new(
+                new SafeFileHandle(new IntPtr(linuxˉdescriptor), ownsHandle: false),
+                Nativeˉoutputˉplatform.Linux);
+        }
+        throw new PlatformNotSupportedException(
+            "The native output channels support Windows and Linux.");
+    }
+
+    internal static Nativeˉoutputˉplatform Currentˉplatform()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return Nativeˉoutputˉplatform.Windows;
+        }
+        if (OperatingSystem.IsLinux())
+        {
+            return Nativeˉoutputˉplatform.Linux;
+        }
+        throw new PlatformNotSupportedException(
+            "The native output channels support Windows and Linux.");
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr GetStdHandle(int standardˉhandle);
 }

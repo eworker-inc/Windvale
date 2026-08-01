@@ -13,7 +13,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $EXPECTED_QEMU_EXIT_CODE = 1
 $EXPECTED_SERIAL_MARKER =
-    "windvale-os-boot 14`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`nHello from Windvale`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`n"
+    "windvale-os-boot 15`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`nHello from Windvale`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`n"
 
 function Fail-Boot {
     param(
@@ -184,10 +184,10 @@ try {
         Status = 'pass'
         Architecture = 'x86-64'
         ApplicationFormat = 'pe32-plus-uefi-application-v3'
-        ProbeVersion = 14
+        ProbeVersion = 15
         EfiBytes = $EfiIdentity.Length
         EfiSha256 = $EfiSha256
-        SerialMarker = 'windvale-os-boot-14-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-native-context-native-wvb-windvale-source-status-pass'
+        SerialMarker = 'windvale-os-boot-15-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-hello-native-context-native-wvb-windvale-source-status-pass'
         QemuExitCode = $Process.ExitCode
         RunDirectory = if ($KeepRunDirectory) { $RunDirectory } else { $null }
     }
@@ -195,7 +195,7 @@ try {
     if ($PassThru) {
         $Report
     } elseif (!$Quiet) {
-        Write-Output 'windvale-os-boot-report 14'
+        Write-Output 'windvale-os-boot-report 15'
         Write-Output "status=$($Report.Status)"
         Write-Output "architecture=$($Report.Architecture)"
         Write-Output "application-format=$($Report.ApplicationFormat)"

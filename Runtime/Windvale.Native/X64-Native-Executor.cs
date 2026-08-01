@@ -63,32 +63,18 @@ public static class X64ˉnativeˉexecutor
         using var Buffers = new Nativeˉexecutionˉbuffers(
             hostˉservices?.Resources,
             Requiresˉarguments);
+        var Requiresˉconsole = fragment.Requiredˉservices.Contains(
+            Nativeˉservice.Consoleˉwriteˉline);
+        var Requiresˉdiagnostic = fragment.Requiredˉservices.Contains(
+            Nativeˉservice.Diagnosticˉwriteˉline);
+        using var Output = new Nativeˉoutputˉcontext(
+            hostˉservices,
+            Requiresˉconsole,
+            Requiresˉdiagnostic);
         var Callbacks = new List<Delegate>();
         var Callbackˉpointers = new Dictionary<Nativeˉservice, IntPtr>();
         var Address = IntPtr.Zero;
         var Context = IntPtr.Zero;
-        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Consoleˉwriteˉline))
-        {
-            Nativeˉconsoleˉwriteˉlineˉcallback Callback = (textˉaddress, textˉlength) =>
-            {
-                try
-                {
-                    var Text = Buffers.Readˉtext(textˉaddress, textˉlength, Address, fragment.Code.Length);
-                    hostˉservices!.Standardˉoutput!.Write(Text);
-                    hostˉservices.Standardˉoutput.Write('\n');
-                    return 0;
-                }
-                catch (Exception Exception)
-                {
-                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
-                    return 1;
-                }
-            };
-            Callbacks.Add(Callback);
-            Callbackˉpointers.Add(
-                Nativeˉservice.Consoleˉwriteˉline,
-                Marshal.GetFunctionPointerForDelegate(Callback));
-        }
         if (fragment.Requiredˉservices.Contains(Nativeˉservice.Fileˉreadˉbytes))
         {
             Nativeˉfileˉreadˉbytesˉcallback Callback = (nameˉaddress, nameˉlength, descriptor) =>
@@ -110,28 +96,6 @@ public static class X64ˉnativeˉexecutor
                 Nativeˉservice.Fileˉreadˉbytes,
                 Marshal.GetFunctionPointerForDelegate(Callback));
         }
-        if (fragment.Requiredˉservices.Contains(Nativeˉservice.Diagnosticˉwriteˉline))
-        {
-            Nativeˉconsoleˉwriteˉlineˉcallback Callback = (textˉaddress, textˉlength) =>
-            {
-                try
-                {
-                    var Text = Buffers.Readˉtext(textˉaddress, textˉlength, Address, fragment.Code.Length);
-                    hostˉservices!.Diagnosticˉoutput!.Write(Text);
-                    hostˉservices.Diagnosticˉoutput.Write('\n');
-                    return 0;
-                }
-                catch (Exception Exception)
-                {
-                    Serviceˉfailure ??= Toˉserviceˉfailure(Exception);
-                    return 1;
-                }
-            };
-            Callbacks.Add(Callback);
-            Callbackˉpointers.Add(
-                Nativeˉservice.Diagnosticˉwriteˉline,
-                Marshal.GetFunctionPointerForDelegate(Callback));
-        }
         var Serviceˉcodeˉoffset = checked((fragment.Code.Length + 15) & ~15);
         var Serviceˉcode = new List<byte>();
         var Serviceˉoffsets = new Dictionary<Nativeˉservice, int>();
@@ -142,7 +106,19 @@ public static class X64ˉnativeˉexecutor
                 Serviceˉcode.Add(0x90);
             }
             Serviceˉoffsets.Add(Service, checked(Serviceˉcodeˉoffset + Serviceˉcode.Count));
-            if (Service is Nativeˉservice.Processˉargumentˉcount or
+            if (Service is Nativeˉservice.Consoleˉwriteˉline or
+                Nativeˉservice.Diagnosticˉwriteˉline)
+            {
+                var Nativeˉserviceˉcode = X64ˉnativeˉoutputˉservices.Build(
+                    Service,
+                    Output.Platform);
+                X64ˉnativeˉoutputˉservices.Verify(
+                    Service,
+                    Output.Platform,
+                    Nativeˉserviceˉcode.AsSpan());
+                Serviceˉcode.AddRange(Nativeˉserviceˉcode);
+            }
+            else if (Service is Nativeˉservice.Processˉargumentˉcount or
                 Nativeˉservice.Processˉargument)
             {
                 var Nativeˉserviceˉcode = X64ˉnativeˉargumentˉservices.Build(Service);
@@ -259,6 +235,9 @@ public static class X64ˉnativeˉexecutor
             BinaryPrimitives.WriteUInt32LittleEndian(
                 Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.ARGUMENT_RESERVED_OFFSET),
                 0);
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.OUTPUT_TABLE_POINTER_OFFSET),
+                Output.Address == IntPtr.Zero ? 0 : checked((ulong)Output.Address.ToInt64()));
             Marshal.Copy(Contextˉbytes, 0, Context, Contextˉbytes.Length);
 
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
@@ -332,6 +311,12 @@ public static class X64ˉnativeˉexecutor
                 throw new Nativeˉtrapˉexception(
                     "WVR3020",
                     $"A native argument index was outside the supplied execution snapshot in entry '{entry}'.");
+            }
+            if (Serviceˉfailureˉdetail == Nativeˉserviceˉfailureˉdetail.Outputˉwriteˉfailed)
+            {
+                throw new Nativeˉtrapˉexception(
+                    "WVR3029",
+                    $"A native output channel rejected a write in entry '{entry}'.");
             }
             throw new Nativeˉtrapˉexception(
                 Serviceˉfailure?.Code ?? "WVR3013",
@@ -476,7 +461,6 @@ public static class X64ˉnativeˉexecutor
         {
             return service switch
             {
-                Nativeˉservice.Consoleˉwriteˉline => [0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA],
                 Nativeˉservice.Fileˉreadˉbytes =>
                 [
                     0x48, 0x89, 0xC8,
@@ -484,7 +468,6 @@ public static class X64ˉnativeˉexecutor
                     0x44, 0x89, 0xCA,
                     0x49, 0x89, 0xC0,
                 ],
-                Nativeˉservice.Diagnosticˉwriteˉline => [0x4C, 0x89, 0xC1, 0x44, 0x89, 0xCA],
                 _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service thunk."),
             };
         }
@@ -492,14 +475,12 @@ public static class X64ˉnativeˉexecutor
         {
             return service switch
             {
-                Nativeˉservice.Consoleˉwriteˉline => [0x4C, 0x89, 0xC7, 0x44, 0x89, 0xCE],
                 Nativeˉservice.Fileˉreadˉbytes =>
                 [
                     0x4C, 0x89, 0xC7,
                     0x44, 0x89, 0xCE,
                     0x48, 0x89, 0xCA,
                 ],
-                Nativeˉservice.Diagnosticˉwriteˉline => [0x4C, 0x89, 0xC7, 0x44, 0x89, 0xCE],
                 _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service thunk."),
             };
         }
@@ -636,11 +617,6 @@ public static class X64ˉnativeˉexecutor
         ulong windowsˉpaddingˉfour,
         ulong systemˉvˉpadding,
         ulong systemˉvˉpaddingˉsix);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate uint Nativeˉconsoleˉwriteˉlineˉcallback(
-        IntPtr textˉaddress,
-        uint textˉlength);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate uint Nativeˉfileˉreadˉbytesˉcallback(

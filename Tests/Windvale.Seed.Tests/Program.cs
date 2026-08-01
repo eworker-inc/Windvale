@@ -2094,17 +2094,17 @@ internal static class Program
 
         void Runˉnative(ImmutableArray<byte> code)
         {
-            var Output = new StringWriter();
-            var Diagnostic = new StringWriter();
-            var Resources = new Hostedˉresourceˉcontext([], Output, Diagnostic);
+            using var Output = new Nativeˉoutputˉcapture();
+            using var Diagnostic = new Nativeˉoutputˉcapture();
+            var Resources = new Hostedˉresourceˉcontext([], TextWriter.Null, TextWriter.Null);
             Equal(
                 Reference.Exitˉcode,
                 X64ˉnativeˉexecutor.Executeˉi32(
                     First.Fragment with { Code = code },
                     maximumˉinstructions: Reference.Executedˉinstructions,
-                    hostˉservices: new(null, Authorized, Resources)));
-            Equal(Referenceˉoutput.ToString(), Output.ToString());
-            Equal(Referenceˉdiagnostic.ToString(), Diagnostic.ToString());
+                    hostˉservices: new(Output.Channel, Authorized, Resources, Diagnostic.Channel)));
+            Equal(Referenceˉoutput.ToString(), Output.Readˉtext());
+            Equal(Referenceˉdiagnostic.ToString(), Diagnostic.Readˉtext());
         }
 
         Runˉnative(First.Fragment.Code);
@@ -2366,8 +2366,8 @@ internal static class Program
         });
 
         Hostedˉresourceˉcontext Makeˉresources(
-            StringWriter output,
-            StringWriter diagnostic,
+            TextWriter output,
+            TextWriter diagnostic,
             Testˉfileˉreader reader) =>
             new(["input.wvb"], output, diagnostic, reader);
 
@@ -2411,17 +2411,21 @@ internal static class Program
 
         void Runˉnative(ImmutableArray<byte> code)
         {
-            var Output = new StringWriter();
-            var Diagnostic = new StringWriter();
+            using var Output = new Nativeˉoutputˉcapture();
+            using var Diagnostic = new Nativeˉoutputˉcapture();
             var Reader = Makeˉreader();
             Equal(
                 Reference.Exitˉcode,
                 X64ˉnativeˉexecutor.Executeˉi32(
                     First.Fragment with { Code = code },
                     maximumˉinstructions: Reference.Executedˉinstructions,
-                    hostˉservices: new(null, Authorized, Makeˉresources(Output, Diagnostic, Reader))));
-            Equal(Referenceˉoutput.ToString(), Output.ToString());
-            Equal(Referenceˉdiagnostic.ToString(), Diagnostic.ToString());
+                    hostˉservices: new(
+                        Output.Channel,
+                        Authorized,
+                        Makeˉresources(TextWriter.Null, TextWriter.Null, Reader),
+                        Diagnostic.Channel)));
+            Equal(Referenceˉoutput.ToString(), Output.Readˉtext());
+            Equal(Referenceˉdiagnostic.ToString(), Diagnostic.Readˉtext());
             Equal(1, Reader.Readˉcount);
         }
 
@@ -2694,6 +2698,12 @@ internal static class Program
         Equal(0, Interpreted.Exitˉcode);
         Equal("Hello from Windvale\n", Interpreterˉoutput.ToString());
         True(Interpreted.Executedˉinstructions > 1, "The hosted reference runtime did not charge instructions.");
+        Throwsˉruntime(
+            "WVR3029",
+            () => _ = new Referenceˉruntime(
+                Verified,
+                new Referenceˉcapabilityˉhost(new Failingˉtextˉwriter()),
+                new(Authorizedˉcapabilities)).Runˉmain());
 
         var First = X64ˉnativeˉbackend.Compile(Verified);
         var Second = X64ˉnativeˉbackend.Compile(Verified);
@@ -2716,21 +2726,50 @@ internal static class Program
                 .Any(Operation => Operation is Nativeˉconsoleˉwriteˉline),
             "Native machine IR did not retain the authorized console service call.");
 
-        var Nativeˉoutput = new StringWriter();
-        var Host = new Nativeˉhostˉservices(Nativeˉoutput, Authorizedˉcapabilities);
+        foreach (var Platform in Enum.GetValues<Nativeˉoutputˉplatform>())
+        {
+            foreach (var Service in new[]
+            {
+                Nativeˉservice.Consoleˉwriteˉline,
+                Nativeˉservice.Diagnosticˉwriteˉline,
+            })
+            {
+                var Firstˉleaf = X64ˉnativeˉoutputˉservices.Build(Service, Platform);
+                var Secondˉleaf = X64ˉnativeˉoutputˉservices.Build(Service, Platform);
+                Sequenceˉequal(Firstˉleaf, Secondˉleaf);
+                Equal(
+                    X64ˉnativeˉoutputˉservices.Canonicalˉsize(Platform),
+                    Firstˉleaf.Length);
+                Equal(
+                    X64ˉnativeˉoutputˉservices.Canonicalˉsha256(Service, Platform),
+                    Convert.ToHexString(SHA256.HashData(Firstˉleaf.AsSpan())).ToLowerInvariant());
+                X64ˉnativeˉoutputˉservices.Verify(Service, Platform, Firstˉleaf.AsSpan());
+                var Corruptedˉleaf = Firstˉleaf.ToArray();
+                Corruptedˉleaf[0] ^= 0x01;
+                Throwsˉinvalidˉoperation(
+                    $"Native {Platform} {Service} service identity",
+                    () => X64ˉnativeˉoutputˉservices.Verify(
+                        Service,
+                        Platform,
+                        Corruptedˉleaf));
+            }
+        }
+
+        using var Nativeˉoutput = new Nativeˉoutputˉcapture();
+        var Host = new Nativeˉhostˉservices(Nativeˉoutput.Channel, Authorizedˉcapabilities);
         Equal(
             0,
             X64ˉnativeˉexecutor.Executeˉi32(
                 First.Fragment,
                 maximumˉinstructions: Interpreted.Executedˉinstructions,
                 hostˉservices: Host));
-        Equal("Hello from Windvale\n", Nativeˉoutput.ToString());
+        Equal("Hello from Windvale\n", Nativeˉoutput.Readˉtext());
         Throwsˉnativeˉtrap(
             "WVR3011",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 First.Fragment,
                 maximumˉinstructions: Interpreted.Executedˉinstructions - 1,
-                hostˉservices: new(new StringWriter(), Authorizedˉcapabilities)));
+                hostˉservices: new(Nativeˉoutput.Channel, Authorizedˉcapabilities)));
         Throwsˉnativeˉtrap(
             "WVR3010",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(First.Fragment));
@@ -2738,17 +2777,69 @@ internal static class Program
             "WVR3010",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 First.Fragment,
-                hostˉservices: new(new StringWriter())));
+                hostˉservices: new(Nativeˉoutput.Channel)));
         Throwsˉnativeˉtrap(
             "WVR3001",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 First.Fragment,
                 hostˉservices: new(null, Authorizedˉcapabilities)));
-        Throwsˉnativeˉtrap(
-            "WVR3013",
-            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
-                First.Fragment,
-                hostˉservices: new(new Failingˉtextˉwriter(), Authorizedˉcapabilities)));
+
+        var Failureˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-output-failure-{Guid.NewGuid():N}.tmp");
+        File.WriteAllBytes(Failureˉpath, []);
+        try
+        {
+            using var Readˉonly = new FileStream(
+                Failureˉpath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
+            Throwsˉnativeˉtrap(
+                "WVR3029",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    First.Fragment,
+                    hostˉservices: new(
+                        Nativeˉoutputˉchannel.Fromˉfileˉhandle(Readˉonly.SafeFileHandle),
+                        Authorizedˉcapabilities)));
+        }
+        finally
+        {
+            File.Delete(Failureˉpath);
+        }
+
+        var Dualˉoutputˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉoutputˉchannels profile hosted;
+
+            capability console.write_line;
+            capability diagnostic.write_line;
+
+            export fn Main() -> i32 {
+                console.write_line("console-€-😀");
+                diagnostic.write_line("diagnostic-€-😀");
+                console.write_line("");
+                return 0;
+            }
+            """));
+        var Dualˉoutputˉfragment = X64ˉnativeˉbackend.Compile(Dualˉoutputˉverified).Fragment;
+        var Dualˉoutputˉcapabilities = ImmutableHashSet.Create(
+            StringComparer.Ordinal,
+            Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+            Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE);
+        using (var Consoleˉcapture = new Nativeˉoutputˉcapture())
+        using (var Diagnosticˉcapture = new Nativeˉoutputˉcapture())
+        {
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    Dualˉoutputˉfragment,
+                    hostˉservices: new(
+                        Consoleˉcapture.Channel,
+                        Dualˉoutputˉcapabilities,
+                        diagnosticˉoutput: Diagnosticˉcapture.Channel)));
+            Equal("console-€-😀\n\n", Consoleˉcapture.Readˉtext());
+            Equal("diagnostic-€-😀\n", Diagnosticˉcapture.Readˉtext());
+        }
 
         var Objectˉbytes = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
         Sequenceˉequal(Objectˉbytes, Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment));
@@ -2763,14 +2854,14 @@ internal static class Program
             [Objectˉbytes.ToArray()],
             new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
         Sequenceˉequal(First.Fragment.Code, Linked.Imageˉbytes);
-        var Linkedˉoutput = new StringWriter();
+        using var Linkedˉoutput = new Nativeˉoutputˉcapture();
         Equal(
             0,
             X64ˉnativeˉexecutor.Executeˉi32(
                 First.Fragment with { Code = Linked.Imageˉbytes },
                 maximumˉinstructions: Interpreted.Executedˉinstructions,
-                hostˉservices: new(Linkedˉoutput, Authorizedˉcapabilities)));
-        Equal("Hello from Windvale\n", Linkedˉoutput.ToString());
+                hostˉservices: new(Linkedˉoutput.Channel, Authorizedˉcapabilities)));
+        Equal("Hello from Windvale\n", Linkedˉoutput.Readˉtext());
 
         var Textˉpatch = First.Fragment.Patches.Single();
         var Corruptedˉservice = First.Fragment.Code.ToArray();
@@ -2813,7 +2904,7 @@ internal static class Program
             Capabilityˉcatalog.PROCESS_ARGUMENT,
             Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT);
 
-        Hostedˉresourceˉcontext Makeˉresources(StringWriter output, Testˉfileˉreader reader) =>
+        Hostedˉresourceˉcontext Makeˉresources(TextWriter output, Testˉfileˉreader reader) =>
             new(["input.wvb"], output, TextWriter.Null, reader);
         Testˉfileˉreader Makeˉreader() => new((Name, Maximum) =>
         {
@@ -2878,15 +2969,15 @@ internal static class Program
             X64ˉnativeˉargumentˉservices.ARGUMENT_CANONICAL_SIZE,
             X64ˉnativeˉargumentˉservices.Build(Nativeˉservice.Processˉargument).Length);
 
-        var Nativeˉoutput = new StringWriter();
+        using var Nativeˉoutput = new Nativeˉoutputˉcapture();
         var Nativeˉreader = Makeˉreader();
-        var Nativeˉresources = Makeˉresources(Nativeˉoutput, Nativeˉreader);
+        var Nativeˉresources = Makeˉresources(TextWriter.Null, Nativeˉreader);
         Equal(
             0,
             X64ˉnativeˉexecutor.Executeˉi32(
                 First.Fragment,
-                hostˉservices: new(null, Authorized, Nativeˉresources)));
-        Equal("input.wvb\nwvb-header=pass\n", Nativeˉoutput.ToString());
+                hostˉservices: new(Nativeˉoutput.Channel, Authorized, Nativeˉresources)));
+        Equal("input.wvb\nwvb-header=pass\n", Nativeˉoutput.Readˉtext());
         Equal(1, Nativeˉreader.Readˉcount);
 
         const string Argumentˉtableˉsource = """
@@ -2933,18 +3024,21 @@ internal static class Program
             new(Authorized)).Runˉmain();
         Equal(0, Argumentˉtableˉreference.Exitˉcode);
         Equal(Expectedˉarguments, Argumentˉtableˉreferenceˉoutput.ToString());
-        var Argumentˉtableˉnativeˉoutput = new StringWriter();
+        using var Argumentˉtableˉnativeˉoutput = new Nativeˉoutputˉcapture();
         var Argumentˉtableˉnativeˉresources = new Hostedˉresourceˉcontext(
             Maximumˉarguments,
-            Argumentˉtableˉnativeˉoutput,
+            TextWriter.Null,
             TextWriter.Null);
         Equal(
             0,
             X64ˉnativeˉexecutor.Executeˉi32(
                 Argumentˉtableˉfragment,
                 maximumˉinstructions: Argumentˉtableˉreference.Executedˉinstructions,
-                hostˉservices: new(null, Authorized, Argumentˉtableˉnativeˉresources)));
-        Equal(Expectedˉarguments, Argumentˉtableˉnativeˉoutput.ToString());
+                hostˉservices: new(
+                    Argumentˉtableˉnativeˉoutput.Channel,
+                    Authorized,
+                    Argumentˉtableˉnativeˉresources)));
+        Equal(Expectedˉarguments, Argumentˉtableˉnativeˉoutput.Readˉtext());
 
         var Emptyˉargumentˉresources = new Hostedˉresourceˉcontext(
             [],
@@ -2954,7 +3048,10 @@ internal static class Program
             1,
             X64ˉnativeˉexecutor.Executeˉi32(
                 Argumentˉtableˉfragment,
-                hostˉservices: new(null, Authorized, Emptyˉargumentˉresources)));
+                hostˉservices: new(
+                    Argumentˉtableˉnativeˉoutput.Channel,
+                    Authorized,
+                    Emptyˉargumentˉresources)));
 
         foreach (var Pointerˉoffset in new[]
         {
@@ -2994,21 +3091,27 @@ internal static class Program
         var Invalidˉargumentˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
             Source.Replace("process.argument(0u32)", "process.argument(1u32)", StringComparison.Ordinal)));
         var Invalidˉargumentˉfragment = X64ˉnativeˉbackend.Compile(Invalidˉargumentˉverified).Fragment;
-        var Missingˉargumentˉresources = Makeˉresources(new StringWriter(), Makeˉreader());
+        var Missingˉargumentˉresources = Makeˉresources(TextWriter.Null, Makeˉreader());
         Throwsˉnativeˉtrap(
             "WVR3020",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 Invalidˉargumentˉfragment,
-                hostˉservices: new(TextWriter.Null, Authorized, Missingˉargumentˉresources)));
+                hostˉservices: new(
+                    Argumentˉtableˉnativeˉoutput.Channel,
+                    Authorized,
+                    Missingˉargumentˉresources)));
 
         var Missingˉfileˉreader = new Testˉfileˉreader((_, _) =>
             throw new Hostedˉfileˉexception(Hostedˉfileˉerror.Notˉfound, "The WVB fixture is absent."));
-        var Missingˉfileˉresources = Makeˉresources(new StringWriter(), Missingˉfileˉreader);
+        var Missingˉfileˉresources = Makeˉresources(TextWriter.Null, Missingˉfileˉreader);
         Throwsˉnativeˉtrap(
             "WVR3022",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 First.Fragment,
-                hostˉservices: new(null, Authorized, Missingˉfileˉresources)));
+                hostˉservices: new(
+                    Argumentˉtableˉnativeˉoutput.Channel,
+                    Authorized,
+                    Missingˉfileˉresources)));
     }
 
     private static void Sourceˉmodulesˉcompose()
@@ -8605,12 +8708,57 @@ internal static class Program
         throw new InvalidOperationException($"Expected native trap {expectedˉcode}.");
     }
 
+    private sealed class Nativeˉoutputˉcapture : IDisposable
+    {
+        private readonly string Pathˉname;
+        private readonly FileStream Stream;
+        private bool Isˉdisposed;
+
+        public Nativeˉoutputˉcapture()
+        {
+            Pathˉname = Path.Combine(
+                Path.GetTempPath(),
+                $"windvale-native-output-{Guid.NewGuid():N}.tmp");
+            Stream = new FileStream(
+                Pathˉname,
+                FileMode.CreateNew,
+                FileAccess.ReadWrite,
+                FileShare.ReadWrite | FileShare.Delete);
+            Channel = Nativeˉoutputˉchannel.Fromˉfileˉhandle(Stream.SafeFileHandle);
+        }
+
+        public Nativeˉoutputˉchannel Channel { get; }
+
+        public string Readˉtext()
+        {
+            Stream.Flush(flushToDisk: true);
+            Stream.Position = 0;
+            var Bytes = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Bytes);
+            Stream.Position = Stream.Length;
+            return new System.Text.UTF8Encoding(
+                encoderShouldEmitUTF8Identifier: false,
+                throwOnInvalidBytes: true).GetString(Bytes);
+        }
+
+        public void Dispose()
+        {
+            if (Isˉdisposed)
+            {
+                return;
+            }
+            Isˉdisposed = true;
+            Stream.Dispose();
+            File.Delete(Pathˉname);
+        }
+    }
+
     private sealed class Failingˉtextˉwriter : TextWriter
     {
         public override System.Text.Encoding Encoding => System.Text.Encoding.UTF8;
 
         public override void Write(string? value) =>
-            throw new IOException("Deliberate native service writer failure.");
+            throw new IOException("Deliberate output failure.");
     }
 
     private static void Writeˉreport(string path)

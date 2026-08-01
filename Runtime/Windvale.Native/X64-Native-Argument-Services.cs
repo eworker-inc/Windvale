@@ -13,7 +13,7 @@ public static class X64ˉnativeˉargumentˉservices
     public const string ARGUMENT_CANONICAL_SHA256 =
         "2253e1435f141df5b68f9f7e9e9aa0de448410c42dcf33ad76dcf131afea65d1";
 
-    // ABI-12 supplies an execution-owned immutable descriptor table through R15's context.
+    // ABI-13 retains the execution-owned immutable descriptor table through R15's context.
     // These leaves preserve R10, R11, and R15 and have no platform-specific instructions.
     public static ImmutableArray<byte> Build(Nativeˉservice service) => service switch
     {
@@ -54,7 +54,7 @@ public static class X64ˉnativeˉargumentˉservices
         _ => throw new ArgumentOutOfRangeException(
             nameof(service),
             service,
-            "The requested service is not an ABI-12 native argument leaf."),
+            "The requested service is not an ABI-13 native argument leaf."),
     };
 
     public static void Verify(Nativeˉservice service, ReadOnlySpan<byte> code)
@@ -68,7 +68,7 @@ public static class X64ˉnativeˉargumentˉservices
             _ => throw new ArgumentOutOfRangeException(
                 nameof(service),
                 service,
-                "The requested service is not an ABI-12 native argument leaf."),
+                "The requested service is not an ABI-13 native argument leaf."),
         };
         var Hash = Convert.ToHexString(SHA256.HashData(code)).ToLowerInvariant();
         if (code.Length != Expectedˉsize ||

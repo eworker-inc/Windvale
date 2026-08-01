@@ -32,7 +32,7 @@ public static class X64ˉnativeˉtextˉservices
     public const string TEXT_QUOTE_CANONICAL_SHA256 =
         "4f334af9b6349437d36fd703edb6b5882416f033fae47906a40a4bafdc083bb7";
 
-    // ABI-12 retains the text arena and service-failure detail through R15's context.
+    // ABI-13 retains the text arena and service-failure detail through R15's context.
     // These leaves return zero on success or one after publishing an exact failure detail.
     public static ImmutableArray<byte> Build(
         Nativeˉservice service,
@@ -46,7 +46,7 @@ public static class X64ˉnativeˉtextˉservices
         _ => throw new ArgumentOutOfRangeException(
             nameof(service),
             service,
-            "The requested service is not an ABI-12 native text leaf."),
+            "The requested service is not an ABI-13 native text leaf."),
     };
 
     public static void Verify(
@@ -94,7 +94,7 @@ public static class X64ˉnativeˉtextˉservices
             _ => throw new ArgumentOutOfRangeException(
                 nameof(service),
                 service,
-                "The requested service is not an ABI-12 native text leaf."),
+                "The requested service is not an ABI-13 native text leaf."),
         };
         Verifyˉidentity(service, code, Expectedˉsize, Expectedˉhash);
     }

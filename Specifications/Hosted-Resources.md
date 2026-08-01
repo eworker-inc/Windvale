@@ -64,6 +64,8 @@ The runtime rechecks the byte bound immediately before invoking the host, and th
 
 The LF rule is Windvale-defined and host-independent. A terminal may render it according to its own presentation rules, but captured output bytes remain deterministic.
 
+An output sink that rejects any part of the requested text or terminator traps with `WVR3029`. A write may already be partially externally visible; Windvale does not claim transactional console, diagnostic, pipe, or file-handle output. Reference, JIT, and AOT hosts must contain the underlying host exception or status at this boundary.
+
 ## Host boundary validation
 
 The bytecode verifier proves capability argument stack types. After invocation, the runtime independently proves that a host returned exactly the declared primitive type, returned no value for `void`, and respected text and byte limits. A bad host result traps with `WVR3013`; an uninitialized file value traps with `WVR3026`.

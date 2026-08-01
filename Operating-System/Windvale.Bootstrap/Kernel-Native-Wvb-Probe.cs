@@ -9,8 +9,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉnativeˉprobeˉcontract
 {
-    public const int FORMAT_VERSION = 7;
-    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v7";
+    public const int FORMAT_VERSION = 8;
+    public const string TARGET_NAME = "x86-64-kernel-native-wvb-probe-v8";
     public const string BRIDGE_SYMBOL = "Windvale_kernel_x64_native_probe";
     public const string NATIVE_MAIN_SYMBOL = "Main";
     public const int EXPECTED_RESULT = 29;
@@ -115,6 +115,7 @@ public static class Kernelˉnativeˉprobe
         Output.Emit(0x48, 0x89, 0x44, 0x24, 0x48);
         Output.Emit(0x48, 0x89, 0x44, 0x24, 0x50);
         Output.Emit(0x48, 0x89, 0x44, 0x24, 0x58);
+        Output.Emit(0x48, 0x89, 0x44, 0x24, 0x60);
         Output.Emit(0x48, 0x8D, 0x54, 0x24, 0x08);
         var Nativeˉcallˉoffset = Output.Emitˉcallˉplaceholder();
         Output.Emit(0x48, 0x83, 0xF8, Kernelˉnativeˉprobeˉcontract.EXPECTED_RESULT);
@@ -167,7 +168,7 @@ public static class Kernelˉnativeˉprobe
         ReadOnlySpan<byte> Expectedˉcode =
         [
             0x48, 0x83, 0xEC, 0x68, 0x48, 0x89, 0x0C, 0x24,
-            0x48, 0xB8, 0x04, 0x00, 0x00, 0x00, 0x58, 0x00, 0x00, 0x00,
+            0x48, 0xB8, 0x05, 0x00, 0x00, 0x00, 0x60, 0x00, 0x00, 0x00,
             0x48, 0x89, 0x44, 0x24, 0x08,
             0xB8, 0x0F, 0x01, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x10,
             0xB8, 0x02, 0x00, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x18,
@@ -179,6 +180,7 @@ public static class Kernelˉnativeˉprobe
             0x48, 0x89, 0x44, 0x24, 0x48,
             0x48, 0x89, 0x44, 0x24, 0x50,
             0x48, 0x89, 0x44, 0x24, 0x58,
+            0x48, 0x89, 0x44, 0x24, 0x60,
             0x48, 0x8D, 0x54, 0x24, 0x08,
             0xE8, 0x00, 0x00, 0x00, 0x00, 0x48, 0x83, 0xF8, 0x1D,
             0x0F, 0x85, 0x0D, 0x00, 0x00, 0x00,
@@ -202,7 +204,7 @@ public static class Kernelˉnativeˉprobe
                 Kind: Objectˉsymbolˉkind.Function,
                 Sectionˉindex: 0,
                 Offset: 0,
-                Size: 128,
+                Size: 133,
             } ||
             Object.Symbols[1] is not
             {
@@ -221,7 +223,7 @@ public static class Kernelˉnativeˉprobe
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
-                Offset: 91,
+                Offset: 96,
                 Symbolˉindex: 1,
                 Addend: -4,
             } ||
@@ -229,7 +231,7 @@ public static class Kernelˉnativeˉprobe
             {
                 Kind: Objectˉrelocationˉkind.Relativeˉi32,
                 Sectionˉindex: 0,
-                Offset: 114,
+                Offset: 119,
                 Symbolˉindex: 2,
                 Addend: -4,
             })

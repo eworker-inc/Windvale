@@ -419,15 +419,13 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
         switch (capability.Name)
         {
             case Capabilityˉcatalog.CONSOLE_WRITE:
-                Resources.Standardˉoutput.Write(arguments[0].Textˉvalue!);
+                Writeˉoutput(Resources.Standardˉoutput, arguments[0].Textˉvalue!, terminateˉline: false);
                 return null;
             case Capabilityˉcatalog.CONSOLE_WRITE_LINE:
-                Resources.Standardˉoutput.Write(arguments[0].Textˉvalue!);
-                Resources.Standardˉoutput.Write('\n');
+                Writeˉoutput(Resources.Standardˉoutput, arguments[0].Textˉvalue!, terminateˉline: true);
                 return null;
             case Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE:
-                Resources.Diagnosticˉoutput.Write(arguments[0].Textˉvalue!);
-                Resources.Diagnosticˉoutput.Write('\n');
+                Writeˉoutput(Resources.Diagnosticˉoutput, arguments[0].Textˉvalue!, terminateˉline: true);
                 return null;
             case Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT:
                 return Runtimeˉvalue.Fromˉu32(Resources.Getˉargumentˉcount());
@@ -442,6 +440,24 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
                 throw new Runtimeˉexception(
                     "WVR3001",
                     $"The host does not implement capability '{capability.Name}'.");
+        }
+    }
+
+    private static void Writeˉoutput(TextWriter output, string value, bool terminateˉline)
+    {
+        try
+        {
+            output.Write(value);
+            if (terminateˉline)
+            {
+                output.Write('\n');
+            }
+        }
+        catch (Exception)
+        {
+            throw new Runtimeˉexception(
+                "WVR3029",
+                "The hosted output channel rejected a write.");
         }
     }
 

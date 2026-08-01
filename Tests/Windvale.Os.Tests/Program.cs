@@ -350,7 +350,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(15_872, First.Length);
         Equal(
-            "aadfbc5cb56f6afea94605ad31ee6af6a60b1e821403dfb8e1c2550631b6d548",
+            "d716b77a91646da6b423bacb1faa6d70f5a097241c610fe49291b068f33d5f29",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -360,7 +360,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 14\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
+            "windvale-os-boot 15\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\nHello from Windvale\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -495,7 +495,7 @@ internal static class Program
         Equal(1, Nativeˉobject.Symbols.Count(Symbol => Symbol.Name == "Main"));
 
         var Bridgeˉobject = Objectˉcodec.Readˉandˉverify(First.Bridgeˉobjectˉbytes.AsSpan()).Value;
-        Equal(128u, Bridgeˉobject.Sections[0].Memoryˉsize);
+        Equal(133u, Bridgeˉobject.Sections[0].Memoryˉsize);
         Equal(2, Bridgeˉobject.Relocations.Length);
         Equal(929, First.Moduleˉbytes.Length);
         Equal(
@@ -505,9 +505,9 @@ internal static class Program
         Equal(
             "f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038",
             Objectˉdigest.Calculateˉsha256(First.Nativeˉobjectˉbytes.AsSpan()));
-        Equal(340, First.Bridgeˉobjectˉbytes.Length);
+        Equal(345, First.Bridgeˉobjectˉbytes.Length);
         Equal(
-            "0f6d4f00e6a66c23dedc7c6224cdae3f556c5d1c0ff927e596c927a73fd9829f",
+            "0a0393457200dbf5ecfbb667c6c283510a6eb13a3e7e77537a0b6d8e0f503d68",
             Objectˉdigest.Calculateˉsha256(First.Bridgeˉobjectˉbytes.AsSpan()));
     }
 

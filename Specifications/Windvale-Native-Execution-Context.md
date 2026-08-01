@@ -2,9 +2,9 @@
 
 ## Status and scope
 
-Execution-context version 4 is the implemented qualification candidate for target `x86-64-wvb-baseline-v12`. It appends one execution-owned immutable argument table while retaining the qualified text and record arenas, per-run resource limits, and platform-neutral runtime-service boundary. Decisions 0065 through 0068 qualify the seam through ABI 9. [Decision 0069](../Documents/Decisions/0069-Dynamic-Native-Text-And-Complete-Wvdump.md) through [Decision 0072](../Documents/Decisions/0072-Final-Pure-Runtime-Native-Services.md) cross-host qualify ABI 10 and ABI 11, context 3, and all six pure-service leaves. [Decision 0073](../Documents/Decisions/0073-Native-Argument-Table-And-Process-Input-Services.md) defines the ABI-12/context-4 argument-table candidate.
+Execution-context version 5 is the implemented qualification candidate for target `x86-64-wvb-baseline-v13`. It appends one runtime-private output-table pointer while retaining the qualified immutable argument table, text and record arenas, per-run resource limits, and closed runtime-service boundary. Decisions 0065 through 0068 qualify the seam through ABI 9. [Decision 0069](../Documents/Decisions/0069-Dynamic-Native-Text-And-Complete-Wvdump.md) through [Decision 0073](../Documents/Decisions/0073-Native-Argument-Table-And-Process-Input-Services.md) cross-host qualify ABI 10 through ABI 12, context 4, all six pure-service leaves, and immutable native argument access. [Decision 0074](../Documents/Decisions/0074-Native-Windows-And-Linux-Output-Services.md) defines the ABI-13/context-5 native-output candidate.
 
-This is an experimental native ABI, not a stable public foreign-function interface. ABI 12 replaces ABI 11 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-12 fragment verifier.
+This is an experimental native ABI, not a stable public foreign-function interface. ABI 13 replaces ABI 12 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-13 fragment verifier.
 
 ## Entry convention
 
@@ -20,7 +20,7 @@ Each native local and temporary owns one zero-initialized 16-byte frame slot. Sc
 
 An immutable borrowed `text` or `bytes` value occupies one slot:
 
-| Offset | Bytes | Field | ABI-12 rule |
+| Offset | Bytes | Field | ABI-13 rule |
 | ---: | ---: | --- | --- |
 | 0 | 8 | data pointer | Points into verified fragment data or one execution-owned immutable host buffer |
 | 8 | 4 | byte length | Exact remaining span length |
@@ -30,16 +30,16 @@ Static text and byte constants create descriptors through verified RIP-relative 
 
 An enum occupies the low four bytes and retains its signed member value plus compile-time nominal identity. A record occupies the low four bytes as an offset into the current execution's record arena. Each immutable record field consumes one complete 16-byte arena cell. Record construction checks offset addition and arena capacity before copying typed cells; field access proves the complete selected cell is below the committed used boundary. Packed status 7 becomes `WVR3017` on arena exhaustion.
 
-ABI 12 retains ABI 11's return shapes and arenas, ABI 9's nominal values, and ABI 8's borrowed values. Unsigned arithmetic overflow retains packed status 1 / `WVR3007`.
+ABI 13 retains ABI 12's immutable argument table, ABI 11's return shapes and arenas, ABI 9's nominal values, and ABI 8's borrowed values. Unsigned arithmetic overflow retains packed status 1 / `WVR3007`.
 
 ## Execution-context memory layout
 
-All integer fields are little-endian. The context is exactly 88 bytes:
+All integer fields are little-endian. The context is exactly 96 bytes:
 
-| Offset | Bytes | Field | Version-4 rule |
+| Offset | Bytes | Field | Version-5 rule |
 | ---: | ---: | --- | --- |
-| 0 | 4 | format version | `4` |
-| 4 | 4 | structure bytes | `88` |
+| 0 | 4 | format version | `5` |
+| 4 | 4 | structure bytes | `96` |
 | 8 | 8 | instruction budget | Positive maximum charged with WVB instruction semantics |
 | 16 | 8 | call-depth budget | Positive maximum active native call depth |
 | 24 | 8 | service-table pointer | Zero when no runtime service is required; otherwise points to the exact table below |
@@ -54,6 +54,7 @@ All integer fields are little-endian. The context is exactly 88 bytes:
 | 72 | 8 | argument-table pointer | Zero when the captured count is zero; otherwise points to the exact immutable descriptor array below |
 | 80 | 4 | argument count | Prevalidated snapshot count from 0 through 67 |
 | 84 | 4 | argument reserved | Required zero |
+| 88 | 8 | output-table pointer | Zero when no output service is required; otherwise points to the exact runtime-private table below |
 
 The platform executor or verified OS bridge owns this memory for the complete call. Ordinary generated code does not retain the pointer after return. The current adapters construct the exact version and size; the exact generated prologue and every use are independently decoded before publication.
 
@@ -65,21 +66,39 @@ Service-table version 4 is exactly 96 bytes:
 | ---: | ---: | --- | --- |
 | 0 | 4 | format version | `4` |
 | 4 | 4 | structure bytes | `96` |
-| 8 | 8 | `console.write_line` entry | Pointer to the runtime-owned adapter thunk |
+| 8 | 8 | `console.write_line` entry | Pointer to the exact platform-specific native output leaf |
 | 16 | 8 | `process.argument_count` entry | Pointer to the exact runtime-native context-count leaf |
 | 24 | 8 | `process.argument` entry | Pointer to the exact runtime-native checked descriptor-copy leaf |
 | 32 | 8 | `file.read_bytes` entry | Pointer to the runtime-owned adapter thunk |
 | 40 | 8 | `Textˉutf8ˉisˉvalid` entry | Pointer to the runtime-owned pure native validation leaf |
-| 48 | 8 | `diagnostic.write_line` entry | Pointer to the authorized diagnostic adapter thunk |
+| 48 | 8 | `diagnostic.write_line` entry | Pointer to the exact platform-specific native output leaf |
 | 56 | 8 | `Enumˉname` entry | Pointer to the exact runtime-native nominal-name leaf and its adjacent verified metadata |
 | 64 | 8 | `Textˉconcat` entry | Pointer to the exact runtime-native concatenation leaf |
 | 72 | 8 | `Textˉquote` entry | Pointer to the exact runtime-native deterministic-quote leaf |
 | 80 | 8 | `I32ˉformat` entry | Pointer to the exact runtime-native invariant signed-format leaf |
 | 88 | 8 | `U32ˉformat` entry | Pointer to the exact runtime-native invariant unsigned-format leaf; `u8` is zero-extended |
 
-The table is deliberately closed. A fragment may require any distinct canonical-order subset of these eleven services; any unknown, duplicate, or noncanonical service list fails verification. Console, process, file, and diagnostic entries are capability services and retain explicit authorization. UTF-8 validation, enum naming, concatenation, quoting, and integer formatting are deterministic runtime support with no ambient authority. All six pure operations and both immutable process-input operations use exact platform-neutral native leaves. Only console output, diagnostic output, and file-byte input use managed adapters during Stage 0. A later extension requires a new accepted contract, bounds/version handling, and cross-host evidence.
+The table is deliberately closed. A fragment may require any distinct canonical-order subset of these eleven services; any unknown, duplicate, or noncanonical service list fails verification. Console, process, file, and diagnostic entries are capability services and retain explicit authorization. UTF-8 validation, enum naming, concatenation, quoting, and integer formatting are deterministic runtime support with no ambient authority. All six pure operations and both immutable process-input operations use exact platform-neutral native leaves. Console and diagnostic output use exact Windows or Linux native leaves. Only file-byte input still uses a managed adapter during Stage 0. A later extension requires a new accepted contract, bounds/version handling, and cross-host evidence.
 
-Every status-bearing service returns zero in `EAX` on success and nonzero on service failure; `process.argument_count` returns its `u32` value directly. Managed adapters retain their captured `WVR` diagnostic. A native leaf clears context service-failure detail on entry, writes `1` for the 1 MiB text-value limit, `2` for 16 MiB text-arena exhaustion, or `3` for an argument index outside the snapshot, and then returns one. Generated code retains packed status 5; the executor translates the exact details to `WVR3012`, `WVR3018`, or `WVR3020`, and treats an absent or unknown detail as `WVR3013`. Native services do not unwind host exceptions through generated code.
+Every status-bearing service returns zero in `EAX` on success and nonzero on service failure; `process.argument_count` returns its `u32` value directly. The remaining managed file adapter retains its captured `WVR` diagnostic. A native leaf clears context service-failure detail on entry, writes `1` for the 1 MiB text-value limit, `2` for 16 MiB text-arena exhaustion, `3` for an argument index outside the snapshot, or `4` when an OS output write fails, and then returns one. Generated code retains packed status 5; the executor translates the exact details to `WVR3012`, `WVR3018`, `WVR3020`, or `WVR3029`, and treats an absent or unknown detail as `WVR3013`. Native services do not unwind host exceptions through generated code.
+
+## Runtime-private output table
+
+Output-table version 1 is exactly 48 bytes. It is host state for one native execution and is never serialized into WVB or WVO:
+
+| Offset | Bytes | Field | Version-1 rule |
+| ---: | ---: | --- | --- |
+| 0 | 4 | magic | Little-endian `WVIO` |
+| 4 | 4 | format version | `1` |
+| 8 | 4 | structure bytes | `48` |
+| 12 | 4 | platform | `1` for Windows or `2` for Linux |
+| 16 | 4 | flags | Bit 0 console present; bit 1 diagnostic present; all other bits zero |
+| 20 | 4 | reserved | Required zero |
+| 24 | 8 | console target | Windows file handle or zero-extended Linux file descriptor; zero when absent |
+| 32 | 8 | diagnostic target | Windows file handle or zero-extended Linux file descriptor; zero when absent |
+| 40 | 8 | Windows writer | Exact `WriteFile` address on Windows; required zero on Linux |
+
+The C# Stage 0 executor still constructs this table, pins the supplied safe handles for the complete native call, independently rereads every byte and host input, and releases the table afterward. Each required channel must belong to the current platform and pass preflight before executable publication. The caller owns externally supplied handles; the execution context owns only a bounded lifetime reference. Standard-output helpers expose process stdout and stderr without transferring ownership.
 
 ## `console.write_line` service
 
@@ -91,9 +110,9 @@ Generated code calls the service-table entry with this Windvale-owned internal c
 - `R9D` is their bounded byte length; and
 - `EAX` is zero on success and nonzero on service failure.
 
-The runtime owns one exact platform thunk per required service. For console, Windows maps `R8`/`R9D` to `RCX`/`EDX`; Linux maps them to `RDI`/`ESI`. Every variant preserves `R10`, `R11`, and `R15`, aligns the native stack, calls a bounded managed adapter during Stage 0, restores the original stack, and returns the adapter result. Generated fragment bytes remain identical across hosts.
+The runtime owns one exact platform leaf per required output service. Windows uses a 258-byte leaf that calls the table's verified `WriteFile` pointer with the selected handle. Linux uses a 213-byte leaf and direct x86-64 `write` syscalls. Both preserve `R10`, `R11`, and `R15`, write the complete strict-UTF-8 byte span with checked partial-write loops, then write one LF byte. Linux retries `EINTR`; zero, oversized, or failed writes become detail 4 / `WVR3029`. Empty text still emits one LF. Console and diagnostic leaves differ only in the verified table-field displacement. Generated fragment bytes remain identical across hosts; the runtime-selected leaf is outside the WVO fragment.
 
-Before allocating executable memory, the runtime requires explicit authorization for `console.write_line` (`WVR3010`) and an actual output implementation (`WVR3001`). The adapter revalidates that the complete byte range lies inside verified fragment data or an execution-owned buffer, enforces the WVB UTF-8 byte limit, decodes strict UTF-8, writes the text followed by LF, and converts adapter exceptions to packed status 5 / `WVR3013`. No managed exception unwinds through generated machine code.
+Before allocating executable memory, the runtime requires explicit authorization for each output service (`WVR3010`) and an available channel (`WVR3001`). The fragment verifier proves that each service input is a complete borrowed-text descriptor backed by immutable fragment data or an execution-owned allocation and already bounded by the WVB UTF-8 limit. No text decoding or managed callback occurs on the native output path. The Windows console's display encoding is process policy; Windvale always supplies strict UTF-8 bytes to the selected handle.
 
 ## Hosted input services
 
@@ -103,7 +122,7 @@ One `Nativeˉexecutionˉbuffers` owner exists for one native run. When either ar
 
 `file.read_bytes` receives resource-name pointer/length in `R8`/`R9D`, receives a verified output-descriptor address in `RCX`, and returns status in `EAX`. Its remaining platform thunk translates those internal registers to the Windows or System V callback convention. File reads use `Hostedˉresourceˉcontext.Readˉfileˉbytes`, so reference and native execution share the same bounded 64-name immutable snapshot cache and hosted adapter error mapping; each returned snapshot is copied once into execution-owned unmanaged storage. Repeated reads reuse the descriptor.
 
-Services write pointer/length/reserved descriptors only into independently verified frame slots. Resource-name and console input ranges must lie wholly inside fragment data or one registered execution allocation. Runtime resource errors retain their exact `WVR302x` code through packed status 5; unexpected adapter failures use `WVR3013`.
+Services write pointer/length/reserved descriptors only into independently verified frame slots. Resource-name and output input ranges must lie wholly inside fragment data or one registered execution allocation. Runtime resource errors retain their exact `WVR302x` code through packed status 5; unexpected file-adapter failures use `WVR3013`.
 
 ## Pure UTF-8 validation service
 
@@ -123,12 +142,12 @@ Before W^X publication, the runtime requires exact [Decision 0071](../Documents/
 
 ## Verification and publication
 
-The native fragment verifier independently decodes the exact context prologue, `R15` restoration on every exit, typed 16-byte frame access, hidden descriptor-result cells, scalar/descriptor/void call and return kinds, descriptor construction/copy and provenance, enum operations, record arena allocation/field copies, unsigned bounds branches, fixed-width reads, all service-table loads and argument forms, UTF-8 and runtime failure edges, immutable data targets, relocations, and packed statuses. Corrupt instruction bytes, descriptor fields, hidden results, arena sizes or offsets, argument forms, displacement bytes, service metadata, or immutable data fail before WVO serialization or writable-to-executable publication.
+The native fragment verifier independently decodes the exact context prologue, `R15` restoration on every exit, typed 16-byte frame access, hidden descriptor-result cells, scalar/descriptor/void call and return kinds, descriptor construction/copy and provenance, enum operations, record arena allocation/field copies, unsigned bounds branches, fixed-width reads, all service-table loads and argument forms, UTF-8 and runtime failure edges, immutable data targets, relocations, and packed statuses. The runtime separately reconstructs each output leaf, checks its exact length and SHA-256 identity, and rejects corrupted bytes before writable-to-executable publication. Corrupt fragment instructions, descriptor fields, hidden results, arena sizes or offsets, argument forms, displacement bytes, service metadata, or immutable data fail before WVO serialization or publication.
 
 The current `Nativeˉfragment` carries its required-service list beside code, symbols, and patches. WVO 1.0 does not serialize that list. A service-bearing linked image may therefore execute only while paired with its original verified fragment metadata; it is not yet a standalone native application. A future PE, ELF, or Windvale-native container must preserve and verify capability/service requirements before it can publish independently loadable hosted AOT modules.
 
 ## Windvale OS use
 
-The version-7 native kernel bridge constructs context version 4, while the portable kernel probe supplies exact budgets `271` and `2`, a zero service-table pointer, zero-length record and text arenas, zero argument table/count, and zero failure/reserved fields. The ordinary portable module loops over immutable i32 data, passes borrowed bytes through an internal function, slices and reads them, and checks `u8`/`u32` results. Firmware probe version 14 identifies the ABI-12 rebuild and emits `native-context=pass` only after that service-free path and the special-kernel path both succeed.
+The version-8 native kernel bridge constructs context version 5, while the portable kernel probe supplies exact budgets `271` and `2`, a zero service-table pointer, zero-length record and text arenas, zero argument table/count, a zero output-table pointer, and zero failure/reserved fields. The ordinary portable module loops over immutable i32 data, passes borrowed bytes through an internal function, slices and reads them, and checks `u8`/`u32` results. Firmware probe version 15 identifies the ABI-13 rebuild and emits `native-context=pass` only after that service-free path and the special-kernel path both succeed.
 
-This does not give Windvale OS a runtime service table, record or text allocator, WVB loader, verifier, JIT, or hosted capability implementation. It proves that the ABI-12 compiler still supplies service-free generated code through one explicit versioned context and the borrowed-byte representation in the current AOT OS candidate.
+This does not give Windvale OS a runtime service table, output table, record or text allocator, WVB loader, verifier, JIT, or hosted capability implementation. It proves that the ABI-13 compiler still supplies service-free generated code through one explicit versioned context and the borrowed-byte representation in the current AOT OS candidate.
