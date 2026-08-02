@@ -6,7 +6,7 @@ AI systems produce the source and prose. Humans define the objectives, direct th
 
 At its center is a **new programming language**, together with its compiler, portable bytecode, verified runtime, assembler, object model, linker, and Foundation library. The long-term integration goal is a **new small operating system** capable of loading and running the same verified Windvale programs that run on Windows and Linux. The language and tools remain independently useful before the operating system is complete.
 
-**[Visit windvale.ca](https://windvale.ca/)** · **[Try the browser playground](https://play.windvale.ca/)**
+**[Visit windvale.ca](https://windvale.ca/)** · **[Try the browser playground](https://windvale.ca/playground/)** · **[Support Windvale](https://windvale.ca/support/)**
 
 ## Project overview
 
@@ -201,7 +201,7 @@ GitHub does not load repository-local grammars, so GitHub file highlighting and 
 
 The experimental Stage 0 playground now compiles, verifies, and runs Windvale entirely in the browser through .NET WebAssembly. It reuses the C# reference compiler and interpreter as the current semantic oracle, produces canonical WVB, exposes only explicitly checked console and diagnostic capabilities, and shows bytecode identity and disassembly alongside execution results.
 
-**[Open the Windvale Playground](https://play.windvale.ca/)**
+**[Open the Windvale Playground](https://windvale.ca/playground/)**
 
 Run it locally:
 
@@ -209,7 +209,7 @@ Run it locally:
 dotnet run --project Tools/Windvale.Playground
 ```
 
-The [playground host specification](Specifications/Browser-Playground.md) defines its exact limits and non-claims; the [tool README](Tools/Windvale.Playground/README.md) records static publication through GitHub Pages and the later custom-domain option. This is a browser host for the language, not a browser boot of Windvale OS and not yet an accepted permanent WebAssembly compiler target.
+The [playground host specification](Specifications/Browser-Playground.md) defines its exact limits and non-claims; the [tool README](Tools/Windvale.Playground/README.md) records its same-origin static publication with the project website through Cloudflare Pages. This is a browser host for the language, not a browser boot of Windvale OS and not yet an accepted permanent WebAssembly compiler target.
 
 ## Quick start
 

@@ -68,7 +68,7 @@ This route would be an explicit Stage 0 browser host. It must not turn .NET into
 
 The first implementation builds the compiler, verifier, interpreter, reusable playground boundary, and Blazor UI successfully with .NET 10 WebAssembly. A Release static publication made on 2026-08-01 contains 49 ordinary files totaling 9.201 MiB; the corresponding Brotli representations total 2.770 MiB. This is a local measurement, not a size contract, and the SDK reported that the optional `wasm-tools` workload was not installed for further publication optimization.
 
-The experiment is published as a static GitHub Pages site at <https://play.windvale.ca/>. The custom domain points directly to GitHub Pages; compilation, verification, and execution remain inside the user's browser.
+The experiment is published with the static project website at <https://windvale.ca/playground/> through Cloudflare Pages. Compilation, verification, and execution remain inside the user's browser; the site has no application server.
 
 Focused tests exercise portable and hosted success, nominal records and enums, capability denial, malformed source, system-profile rejection, oversized input, and deterministic instruction-budget exhaustion. The current execution path remains on the browser UI thread, so the worker-containment step below is still open.
 

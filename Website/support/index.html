@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Support Windvale's open-source, AI-assisted development through a secure Stripe-hosted payment." />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f9fc" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#071018" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Windvale" />
+    <meta property="og:title" content="Support Windvale" />
+    <meta property="og:description" content="Help fund the AI compute, testing, tools, and continued development behind Windvale." />
+    <meta property="og:url" content="https://windvale.ca/support/" />
+    <meta property="og:image" content="https://windvale.ca/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Support Windvale" />
+    <meta name="twitter:description" content="Help fund the AI compute, testing, tools, and continued development behind Windvale." />
+    <meta name="twitter:image" content="https://windvale.ca/og.png" />
+    <link rel="canonical" href="https://windvale.ca/support/" />
+    <link rel="icon" href="../assets/windvale-mark-transparent.png" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="module" src="../site.js"></script>
+    <script type="module" src="support.js"></script>
+    <title>Support Windvale</title>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="/" aria-label="Windvale home">
+                <img src="../assets/windvale-mark-transparent.png" width="670" height="498" alt="" />
+                <span>Windvale</span>
+            </a>
+            <nav aria-label="Primary navigation">
+                <a href="/">Overview</a>
+                <a href="/#progress">Progress</a>
+                <a class="active" href="/support/" aria-current="page">Support</a>
+                <a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/README.md">Docs</a>
+                <a href="https://github.com/eworker-inc/Windvale">GitHub</a>
+                <a class="nav-button" href="/playground/">Playground <span aria-hidden="true">↗</span></a>
+            </nav>
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch color theme">
+                <span class="material-symbol" aria-hidden="true">dark_mode</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="support-main" id="main">
+        <section class="support-hero" aria-labelledby="support-title">
+            <div class="support-hero-copy">
+                <p class="eyebrow">Help an open project grow</p>
+                <h1 id="support-title">Give Windvale more room to build.</h1>
+                <p class="support-intro">
+                    Windvale is open source and AI-authored under human direction. The AI compute behind development,
+                    cross-platform testing, hosting, tools, and continued experimentation all have real costs.
+                    Your support helps E-Worker Inc. keep the project moving forward.
+                </p>
+                <div class="support-assurances" aria-label="Support information">
+                    <span><i class="material-symbol" aria-hidden="true">lock</i> Stripe-hosted checkout</span>
+                    <span><i class="material-symbol" aria-hidden="true">favorite</i> One-time support</span>
+                    <span><i class="material-symbol" aria-hidden="true">visibility_off</i> Public name optional</span>
+                </div>
+            </div>
+            <aside class="support-message">
+                <span class="support-message-icon material-symbol" aria-hidden="true">volunteer_activism</span>
+                <p>Every contribution—large or small—gives this experiment more time to become real, tested, and understandable.</p>
+                <small>Thank you for believing that the whole computing stack can be explored in the open.</small>
+            </aside>
+        </section>
+
+        <section class="support-tiers-section" aria-labelledby="support-tiers-title">
+            <div class="progress-heading">
+                <div>
+                    <p class="kicker">Choose your support</p>
+                    <h2 id="support-tiers-title">One-time support in US dollars.</h2>
+                </div>
+                <p>Payments will be processed securely on Stripe. Windvale never receives or stores your complete card details.</p>
+            </div>
+            <div class="support-tiers" id="support-tiers">
+                <noscript>Enable JavaScript to view the available support options.</noscript>
+            </div>
+        </section>
+
+        <section class="supporters-section" aria-labelledby="supporters-title">
+            <div class="progress-heading">
+                <div>
+                    <p class="kicker">Supporter roll</p>
+                    <h2 id="supporters-title">People helping Windvale grow.</h2>
+                </div>
+                <p id="supporter-summary" aria-live="polite">Loading the public supporter roll…</p>
+            </div>
+            <div class="supporter-roll" id="supporter-roll" aria-live="polite">
+                <p class="supporter-unavailable">Loading supporters…</p>
+            </div>
+        </section>
+
+        <section class="support-details" id="privacy" aria-labelledby="support-details-title">
+            <div>
+                <p class="kicker">Clear and optional</p>
+                <h2 id="support-details-title">You control public recognition.</h2>
+            </div>
+            <div class="support-detail-grid">
+                <article>
+                    <span class="material-symbol" aria-hidden="true">person_check</span>
+                    <h3>Opt in at checkout</h3>
+                    <p>Stripe will ask whether E-Worker Inc. may publish your collected name and support tier. Choosing anonymous is always welcome.</p>
+                </article>
+                <article>
+                    <span class="material-symbol" aria-hidden="true">shield_person</span>
+                    <h3>Only public details</h3>
+                    <p>The public roll contains only an approved display name, recognition tier, and month. It never exposes email or payment information.</p>
+                </article>
+                <article>
+                    <span class="material-symbol" aria-hidden="true">edit_note</span>
+                    <h3>Change your mind</h3>
+                    <p>Email <a href="mailto:info@eworker.ca">info@eworker.ca</a> to correct or remove your public recognition.</p>
+                </article>
+            </div>
+            <p class="support-legal">
+                Payments support E-Worker Inc.'s work on Windvale. Support does not purchase equity or guarantee particular features.
+                It is not a charitable donation, and no charitable tax receipt is issued. Payment records are handled through Stripe
+                and retained as required for business, accounting, fraud-prevention, and legal obligations.
+            </p>
+        </section>
+    </main>
+</body>
+</html>

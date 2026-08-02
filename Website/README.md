@@ -1,6 +1,6 @@
 # Windvale website
 
-This directory contains the static public home page for <https://windvale.ca/>. The production site intentionally has no application server, cookies, analytics, or runtime dependency. Vite is used only as a convenient local development server.
+This directory contains the public project home for <https://windvale.ca/>. The home, support page, and playground are static browser applications with no dedicated application server, cookies, or repository-owned analytics. A narrow Cloudflare Pages Function exposes the approved public supporter roll from Workers KV without handling payments. Vite is used only as a convenient local development server.
 
 The site follows the visitor's operating-system light or dark preference through `prefers-color-scheme`. The browser playground lives below the same origin at <https://windvale.ca/playground/>, so navigation and the saved theme remain continuous. During local development, Vite proxies `/playground/` to the independent Blazor development server at `http://127.0.0.1:5174/` while the browser stays on the website's `http://127.0.0.1:5173/` origin.
 
@@ -23,8 +23,49 @@ All public component and development-milestone progress lives in `project-progre
 
 The page uses a small self-hosted subset of Google Material Symbols Rounded. Its Apache 2.0 license is stored beside the font in `assets/material-symbols-LICENSE.txt`; visitors do not contact Google to load the icons.
 
+## Configuring support
+
+The support page lives at `/support/`. Its six one-time tiers, USD currency declaration, and public Stripe Payment Link URLs are the only values maintained in `support-data.js`. Empty or invalid checkout URLs fail closed and render as unavailable; the page accepts only public `https://buy.stripe.com/` links. Create all six Stripe prices in USD. Stripe can localize fixed tiers through Adaptive Pricing, while the choose-your-own-amount link remains explicitly USD with a $50 starting amount and a $1–$10,000 range.
+
+Configure every Stripe Payment Link consistently:
+
+- collect individual and business names;
+- add a required `Public supporter recognition` dropdown with `List my name and support tier publicly` and `Keep my support anonymous` choices;
+- enable Stripe receipts; and
+- redirect successful payments to `/support/#supporters-title` until a dedicated thank-you route is needed.
+
+The name and tier are published only after an explicit opt-in and manual review. The website never publishes email addresses, Stripe identifiers, payment details, private notes, or raw checkout fields.
+
+### Public supporter roll
+
+The Cloudflare Pages project uses a KV binding named `WINDVALE_SUPPORTERS`. The Function at `/api/supporters` reads one versioned JSON value under `public-supporters-v1`, validates every field, and returns only the public contract:
+
+```json
+{
+  "version": 1,
+  "updated": "2026-08-02",
+  "supporters": [
+    {
+      "displayName": "Approved public name",
+      "tier": "builder",
+      "since": "2026-08"
+    }
+  ],
+  "anonymousCounts": {
+    "cornerstone": 0,
+    "champion": 0,
+    "accelerator": 0,
+    "builder": 0,
+    "spark": 0,
+    "any": 0
+  }
+}
+```
+
+Keep the editable JSON source outside this public repository. Validate it with `node Tools/Website/Publish-Supporters.mjs --dry-run <outside-repository-path>` and publish it after review by setting `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `WINDVALE_SUPPORTERS_NAMESPACE_ID`, then running the same command without `--dry-run`. The tool reports counts but never prints supporter names or credentials.
+
 ## Publication
 
-The `Deploy homepage` GitHub Actions workflow assembles this directory with the published browser playground under `playground/`, then publishes the combined artifact to the `windvale-ca` Cloudflare Pages project after relevant changes reach `main`. Cloudflare owns the `windvale.ca` zone and supplies HTTPS for the apex site. No application server is involved.
+The `Deploy homepage` GitHub Actions workflow assembles this directory with the published browser playground under `playground/`, bundles the repository-root Pages Functions, then publishes the combined artifact to the `windvale-ca` Cloudflare Pages project after relevant changes reach `main`. Cloudflare owns the `windvale.ca` zone and supplies HTTPS for the apex site. Payments remain on Stripe; the only server-side website behavior is the read-only supporter-roll Function.
 
 Cloudflare credentials remain outside the repository. Automation receives only the scoped API token and account identifier through GitHub Actions secrets.
