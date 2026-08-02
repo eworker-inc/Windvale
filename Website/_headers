@@ -20,6 +20,9 @@
 /playground/index.html
   Cache-Control: public, max-age=0, must-revalidate
 
+/playground/js/playground-bootstrap.js
+  Cache-Control: public, max-age=0, must-revalidate
+
 /playground/_framework/blazor.webassembly.js
   Cache-Control: public, max-age=0, must-revalidate
 
