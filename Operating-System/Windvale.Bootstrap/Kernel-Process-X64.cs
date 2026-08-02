@@ -895,8 +895,8 @@ public static class Kernelˉprocessˉx64
             checked((byte)(Kernelˉmemoryˉcontract.ARENA_PAGES -
                 Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES)));
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
-        output.Emit(0x49, 0x83, 0x7C, 0x24, 0x28,
-            checked((byte)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES));
+        output.Emit(0x49, 0x81, 0x7C, 0x24, 0x28);
+        output.Emitˉu32(checked((uint)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES));
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
 
         Emitˉallocateˉextent(

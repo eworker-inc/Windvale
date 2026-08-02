@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Kernel paging version 4 is the qualified Probe-31 contract. It retains the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and two-code-table topology while expanding the fixed supervisor executable window from 256 KiB to 768 KiB. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns version 4; exact implementation commit `f3eca7c8dab290e3916fbf33dcabc41d685a91bb` passes complete Windows/Debian qualification in GitHub [Verify run 30753663882](https://github.com/eworker-inc/Windvale/actions/runs/30753663882). [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) retains the qualified version-3 history.
+Kernel paging version 4 remains unchanged in the implemented Probe-32 composition. Its six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, two-code-table topology, and 768 KiB supervisor executable window remain sufficient for the larger process. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns the qualified version-4 contract; [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) records its pending Probe-32 composition.
 
-The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 10 derives two private roots and manages two exact resource aliases without turning the kernel record into a public mapping API.
+The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 11 derives two private roots and manages two exact resource aliases without turning the kernel record into a public mapping API.
 
 ## Ownership split
 
@@ -15,7 +15,7 @@ The kernel root remains a bounded construction foundation, not a general virtual
 
 ## Admission boundary
 
-The installer fails before changing control state unless NX is available, `WVKMEM08` is exact, the retained handoff map and live stack are bounded below 1 GiB, the GDT is valid, the linked boot entry is aligned and leaves the required two complete 2 MiB code regions, and the allocator returns a non-overlapping six-page range. The image builder separately requires the base-zero linked payload to fit 768 KiB.
+The installer fails before changing control state unless NX is available, `WVKMEM09` is exact, the retained handoff map and live stack are bounded below 1 GiB, the GDT is valid, the linked boot entry is aligned and leaves the required two complete 2 MiB code regions, and the allocator returns a non-overlapping six-page range. The image builder separately requires the base-zero linked payload to fit 768 KiB.
 
 ## Fixed hierarchy
 
@@ -52,7 +52,7 @@ The record is evidence of the active root, not a mutable page-map interface.
 
 ## Process-root relationship
 
-Protected process 10 copies the supervisor hierarchy, replaces exactly the process allocation's 2 MiB directory entry with a private user page table, and marks only required leaves user-accessible. Init retains one RX, two RW/NX, and two owned RO/NX leaves. Each interpreter generation begins with 98 RX, 13 RW/NX stack, one RW/NX context leaf, and two absent resource targets. Atomic grant installs two RO/NX aliases; cleanup clears them before the kernel reloads init's CR3. Generation 1's 116-page extent is then zeroed, released, and rebuilt at the same physical root for generation 2.
+Protected process 11 copies the supervisor hierarchy, replaces exactly the process allocation's 2 MiB directory entry with a private user page table, and marks only required leaves user-accessible. Init retains one RX, two RW/NX, and two owned RO/NX leaves. Each interpreter generation begins with 141 RX, 15 RW/NX stack, one RW/NX context leaf, and two absent resource targets. Atomic grant installs two RO/NX aliases; cleanup clears them before the kernel reloads init's CR3. Generation 1's 161-page extent is then zeroed, released, and rebuilt at the same physical root for generation 2.
 
 The kernel executable window remains supervisor-only in every process root. One CPU and non-global mappings make the retained CR3 reload the current translation-flush boundary.
 

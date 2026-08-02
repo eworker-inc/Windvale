@@ -22,9 +22,10 @@ Windvale Seed is experimental, but several paths already work end to end:
 Windvale source -> deterministic WVB -> verification -> execution on Windows or Linux
 Windvale assembly -> verified WVO object -> deterministic linked x86-64 image
 Portable Sum-Data.wv -> the same canonical WVB -> Windows, Linux, and Windvale OS
+Portable Function-Only.wv -> the same compiler WVB -> local Probe-32 Windvale OS candidate
 ```
 
-The current Stage 0 toolchain includes the typed language, compiler, bytecode verifier, portable reference runtime, assembler, object model, linker, CLI, editor support, and focused Foundation modules. A Windvale-written compiler reproduces its canonical bytecode compiler exactly. The operating-system path now interprets the canonical `Sum-Data.wv` WVB in protected user-space client generations while C# remains the bootstrap, host adapter, packaging path, and recovery implementation.
+The current Stage 0 toolchain includes the typed language, compiler, bytecode verifier, portable reference runtime, assembler, object model, linker, CLI, editor support, and focused Foundation modules. A Windvale-written compiler reproduces its canonical bytecode compiler exactly. Qualified Probe 31 interprets canonical `Sum-Data.wv` in protected user-space client generations. Implemented [Decision 0102](Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) advances Probe 32 to the exact 815-byte cross-compiler `Function-Only.wv` fixture: four functions and four scalar families execute 199 guest instructions to result `6` in both rebuilt clients. All 67 Seed tests, all 25 OS tests, and all four Windows pinned-QEMU scenarios pass locally; complete Windows/Debian qualification is pending. C# remains the bootstrap, host adapter, packaging path, and recovery implementation.
 
 Windvale is not production-stable. Native compiler execution, the general native toolchain, broader runtime services, and the operating system remain active milestones. For current detail, use the authoritative documents instead of treating this overview as a cumulative status log:
 

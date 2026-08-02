@@ -52,18 +52,29 @@ fn Findˉsectionˉoffset(Input: bytes, Wantedˉindex: u32) -> u32 {
 
 fn Validateˉmodule(Input: bytes) -> i32 {
     let Moduleˉoffset: u32 = Findˉsectionˉoffset(Input, 0u32);
-    if Bytesˉreadˉu32ˉlittle(Input, Moduleˉoffset - 4u32) != 14u32 { return -10; }
+    if Bytesˉreadˉu32ˉlittle(Input, Moduleˉoffset - 4u32) != 25u32 { return -10; }
     if Bytesˉreadˉu8(Input, Moduleˉoffset) != 1u8 { return -10; }
-    if Bytesˉreadˉu32ˉlittle(Input, Moduleˉoffset + 1u32) != 9u32 { return -10; }
+    if Bytesˉreadˉu32ˉlittle(Input, Moduleˉoffset + 1u32) != 20u32 { return -10; }
     if Bytesˉreadˉu8(Input, Moduleˉoffset + 5u32) != 83u8 { return -10; }
-    if Bytesˉreadˉu8(Input, Moduleˉoffset + 6u32) != 117u8 { return -10; }
-    if Bytesˉreadˉu8(Input, Moduleˉoffset + 7u32) != 109u8 { return -10; }
-    if Bytesˉreadˉu8(Input, Moduleˉoffset + 8u32) != 203u8 { return -10; }
-    if Bytesˉreadˉu8(Input, Moduleˉoffset + 9u32) != 137u8 { return -10; }
-    if Bytesˉreadˉu8(Input, Moduleˉoffset + 10u32) != 100u8 { return -10; }
-    if Bytesˉreadˉu8(Input, Moduleˉoffset + 11u32) != 97u8 { return -10; }
-    if Bytesˉreadˉu8(Input, Moduleˉoffset + 12u32) != 116u8 { return -10; }
-    if Bytesˉreadˉu8(Input, Moduleˉoffset + 13u32) != 97u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 6u32) != 111u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 7u32) != 117u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 8u32) != 114u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 9u32) != 99u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 10u32) != 101u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 11u32) != 203u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 12u32) != 137u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 13u32) != 119u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 14u32) != 118u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 15u32) != 98u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 16u32) != 203u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 17u32) != 137u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 18u32) != 102u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 19u32) != 105u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 20u32) != 120u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 21u32) != 116u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 22u32) != 117u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 23u32) != 114u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 24u32) != 101u8 { return -10; }
     return 0;
 }
 
@@ -74,27 +85,31 @@ fn Validateˉemptyˉsection(Input: bytes, Sectionˉindex: u32, Failure: i32) -> 
     return 0;
 }
 
-fn Validateˉdata(Input: bytes) -> i32 {
-    let Dataˉoffset: u32 = Findˉsectionˉoffset(Input, 2u32);
-    if Bytesˉreadˉu32ˉlittle(Input, Dataˉoffset - 4u32) != 35u32 { return -12; }
-    if Bytesˉreadˉu32ˉlittle(Input, Dataˉoffset) != 1u32 { return -12; }
-    if Bytesˉreadˉu32ˉlittle(Input, Dataˉoffset + 4u32) != 6u32 { return -12; }
-    if Bytesˉreadˉu8(Input, Dataˉoffset + 8u32) != 86u8 { return -12; }
-    if Bytesˉreadˉu8(Input, Dataˉoffset + 9u32) != 97u8 { return -12; }
-    if Bytesˉreadˉu8(Input, Dataˉoffset + 10u32) != 108u8 { return -12; }
-    if Bytesˉreadˉu8(Input, Dataˉoffset + 11u32) != 117u8 { return -12; }
-    if Bytesˉreadˉu8(Input, Dataˉoffset + 12u32) != 101u8 { return -12; }
-    if Bytesˉreadˉu8(Input, Dataˉoffset + 13u32) != 115u8 { return -12; }
-    if Bytesˉreadˉu8(Input, Dataˉoffset + 14u32) != 4u8 { return -12; }
-    if Bytesˉreadˉu32ˉlittle(Input, Dataˉoffset + 15u32) != 4u32 { return -12; }
-    return 0;
+fn Expectedˉmainˉlocalˉtype(Index: u32) -> u8 {
+    if Index == 0u32 { return 5u8; }
+    if Index == 1u32 { return 1u8; }
+    if Index == 2u32 { return 5u8; }
+    if Index == 3u32 { return 1u8; }
+    if Index == 4u32 { return 5u8; }
+    if Index == 5u32 { return 5u8; }
+    if Index == 6u32 { return 2u8; }
+    if Index == 7u32 { return 1u8; }
+    if Index == 8u32 { return 1u8; }
+    if Index == 9u32 { return 1u8; }
+    if Index == 10u32 { return 5u8; }
+    if Index == 11u32 { return 5u8; }
+    if Index == 12u32 { return 5u8; }
+    if Index == 13u32 { return 4u8; }
+    if Index == 14u32 { return 2u8; }
+    if Index == 15u32 { return 2u8; }
+    return 1u8;
 }
 
 fn Validateˉfunctions(Input: bytes) -> i32 {
     let Functionsˉoffset: u32 = Findˉsectionˉoffset(Input, 3u32);
-    if Bytesˉreadˉu32ˉlittle(Input, Functionsˉoffset - 4u32) != 81u32 { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Functionsˉoffset - 4u32) != 161u32 { return -13; }
     var Cursor: u32 = Functionsˉoffset;
-    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 2u32 { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 4u32 { return -13; }
     Cursor = Cursor + 4u32;
 
     if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 3u32 { return -13; }
@@ -110,10 +125,12 @@ fn Validateˉfunctions(Input: bytes) -> i32 {
     Cursor = Cursor + 3u32;
     if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 3u32 { return -13; }
     Cursor = Cursor + 4u32;
-    if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return -13; }
-    if Bytesˉreadˉu8(Input, Cursor + 1u32) != 1u8 { return -13; }
-    if Bytesˉreadˉu8(Input, Cursor + 2u32) != 1u8 { return -13; }
-    Cursor = Cursor + 3u32;
+    var Localˉindex: u32 = 0u32;
+    while Localˉindex < 3u32 {
+        if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return -13; }
+        Cursor = Cursor + 1u32;
+        Localˉindex = Localˉindex + 1u32;
+    }
     if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 0u32 { return -13; }
     if Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32) != 42u32 { return -13; }
     if Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32) != 2u32 { return -13; }
@@ -129,23 +146,75 @@ fn Validateˉfunctions(Input: bytes) -> i32 {
     Cursor = Cursor + 4u32;
     if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return -13; }
     Cursor = Cursor + 1u32;
-    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 15u32 { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 19u32 { return -13; }
     Cursor = Cursor + 4u32;
-    var Localˉindex: u32 = 0u32;
-    while Localˉindex < 15u32 {
-        if Localˉindex == 6u32 {
-            if Bytesˉreadˉu8(Input, Cursor) != 2u8 { return -13; }
-        } else {
-            if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return -13; }
-        }
+    Localˉindex = 0u32;
+    while Localˉindex < 19u32 {
+        if Bytesˉreadˉu8(Input, Cursor) != Expectedˉmainˉlocalˉtype(Localˉindex) { return -13; }
         Cursor = Cursor + 1u32;
         Localˉindex = Localˉindex + 1u32;
     }
     if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 42u32 { return -13; }
-    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32) != 228u32 { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32) != 298u32 { return -13; }
     if Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32) != 2u32 { return -13; }
     Cursor = Cursor + 12u32;
-    if Cursor != Functionsˉoffset + 81u32 { return -13; }
+
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 5u32 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 4u32) != 80u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 5u32) != 114u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 6u32) != 111u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 7u32) != 98u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 8u32) != 101u8 { return -13; }
+    Cursor = Cursor + 9u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 2u32 { return -13; }
+    Cursor = Cursor + 4u32;
+    if Bytesˉreadˉu8(Input, Cursor) != 4u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 1u32) != 2u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 2u32) != 2u8 { return -13; }
+    Cursor = Cursor + 3u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 7u32 { return -13; }
+    Cursor = Cursor + 4u32;
+    Localˉindex = 0u32;
+    while Localˉindex < 7u32 {
+        if Localˉindex < 2u32 {
+            if Bytesˉreadˉu8(Input, Cursor) != 4u8 { return -13; }
+        } else {
+            if Bytesˉreadˉu8(Input, Cursor) != 2u8 { return -13; }
+        }
+        Cursor = Cursor + 1u32;
+        Localˉindex = Localˉindex + 1u32;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 340u32 { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32) != 104u32 { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32) != 2u32 { return -13; }
+    Cursor = Cursor + 12u32;
+
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 6u32 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 4u32) != 83u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 5u32) != 101u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 6u32) != 108u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 7u32) != 101u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 8u32) != 99u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 9u32) != 116u8 { return -13; }
+    Cursor = Cursor + 10u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 1u32 { return -13; }
+    Cursor = Cursor + 4u32;
+    if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 1u32) != 1u8 { return -13; }
+    Cursor = Cursor + 2u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 5u32 { return -13; }
+    Cursor = Cursor + 4u32;
+    if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 1u32) != 1u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 2u32) != 2u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 3u32) != 1u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 4u32) != 1u8 { return -13; }
+    Cursor = Cursor + 5u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 444u32 { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32) != 88u32 { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32) != 2u32 { return -13; }
+    Cursor = Cursor + 12u32;
+    if Cursor != Functionsˉoffset + 161u32 { return -13; }
     return 0;
 }
 
@@ -163,141 +232,101 @@ fn Validateˉexport(Input: bytes) -> i32 {
     return 0;
 }
 
-fn Isˉinstructionˉboundary(Functionˉindex: u32, Offset: u32) -> bool {
-    if Functionˉindex == 0u32 {
-        if Offset == 0u32 { return true; }
-        if Offset == 5u32 { return true; }
-        if Offset == 10u32 { return true; }
-        if Offset == 15u32 { return true; }
-        if Offset == 20u32 { return true; }
-        if Offset == 25u32 { return true; }
-        if Offset == 30u32 { return true; }
-        if Offset == 31u32 { return true; }
-        if Offset == 36u32 { return true; }
-        if Offset == 41u32 { return true; }
-        return false;
+fn Instructionˉbytes(Operation: u8) -> u32 {
+    if Operation == 1u8 { return 5u32; }
+    if Operation == 2u8 { return 2u32; }
+    if Operation == 4u8 { return 5u32; }
+    if Operation == 5u8 { return 5u32; }
+    if Operation == 8u8 { return 2u32; }
+    if Operation == 9u8 { return 5u32; }
+    if Operation == 16u8 { return 1u32; }
+    if Operation == 20u8 { return 1u32; }
+    if Operation == 37u8 { return 1u32; }
+    if Operation == 40u8 { return 1u32; }
+    if Operation == 48u8 { return 5u32; }
+    if Operation == 49u8 { return 5u32; }
+    if Operation == 64u8 { return 5u32; }
+    if Operation == 81u8 { return 1u32; }
+    if Operation == 98u8 { return 1u32; }
+    if Operation == 102u8 { return 1u32; }
+    return 0u32;
+}
+
+fn Functionˉcodeˉoffset(Functionˉindex: u32) -> u32 {
+    if Functionˉindex == 0u32 { return 0u32; }
+    if Functionˉindex == 1u32 { return 42u32; }
+    if Functionˉindex == 2u32 { return 340u32; }
+    return 444u32;
+}
+
+fn Functionˉcodeˉlength(Functionˉindex: u32) -> u32 {
+    if Functionˉindex == 0u32 { return 42u32; }
+    if Functionˉindex == 1u32 { return 298u32; }
+    if Functionˉindex == 2u32 { return 104u32; }
+    return 88u32;
+}
+
+fn Functionˉlocalˉslots(Functionˉindex: u32) -> u32 {
+    if Functionˉindex == 0u32 { return 5u32; }
+    if Functionˉindex == 1u32 { return 19u32; }
+    if Functionˉindex == 2u32 { return 9u32; }
+    return 6u32;
+}
+
+fn Isˉinstructionˉboundary(Input: bytes, Start: u32, Length: u32, Target: u32) -> bool {
+    if Target > Length { return false; }
+    var Relative: u32 = 0u32;
+    while Relative < Target {
+        let Width: u32 = Instructionˉbytes(Bytesˉreadˉu8(Input, Start + Relative));
+        if Width == 0u32 { return false; }
+        if Width > Target - Relative { return false; }
+        Relative = Relative + Width;
     }
-    if Functionˉindex != 1u32 { return false; }
-    if Offset == 0u32 { return true; }
-    if Offset == 5u32 { return true; }
-    if Offset == 10u32 { return true; }
-    if Offset == 15u32 { return true; }
-    if Offset == 20u32 { return true; }
-    if Offset == 25u32 { return true; }
-    if Offset == 30u32 { return true; }
-    if Offset == 35u32 { return true; }
-    if Offset == 40u32 { return true; }
-    if Offset == 45u32 { return true; }
-    if Offset == 50u32 { return true; }
-    if Offset == 55u32 { return true; }
-    if Offset == 60u32 { return true; }
-    if Offset == 65u32 { return true; }
-    if Offset == 70u32 { return true; }
-    if Offset == 75u32 { return true; }
-    if Offset == 76u32 { return true; }
-    if Offset == 81u32 { return true; }
-    if Offset == 86u32 { return true; }
-    if Offset == 91u32 { return true; }
-    if Offset == 96u32 { return true; }
-    if Offset == 101u32 { return true; }
-    if Offset == 106u32 { return true; }
-    if Offset == 111u32 { return true; }
-    if Offset == 116u32 { return true; }
-    if Offset == 121u32 { return true; }
-    if Offset == 126u32 { return true; }
-    if Offset == 131u32 { return true; }
-    if Offset == 136u32 { return true; }
-    if Offset == 141u32 { return true; }
-    if Offset == 146u32 { return true; }
-    if Offset == 151u32 { return true; }
-    if Offset == 156u32 { return true; }
-    if Offset == 161u32 { return true; }
-    if Offset == 166u32 { return true; }
-    if Offset == 171u32 { return true; }
-    if Offset == 176u32 { return true; }
-    if Offset == 181u32 { return true; }
-    if Offset == 186u32 { return true; }
-    if Offset == 191u32 { return true; }
-    if Offset == 192u32 { return true; }
-    if Offset == 197u32 { return true; }
-    if Offset == 202u32 { return true; }
-    if Offset == 207u32 { return true; }
-    if Offset == 212u32 { return true; }
-    if Offset == 217u32 { return true; }
-    if Offset == 222u32 { return true; }
-    if Offset == 227u32 { return true; }
-    return false;
+    return Relative == Target;
 }
 
 fn Validateˉcode(Input: bytes, Functionˉindex: u32) -> i32 {
+    if Functionˉindex >= 4u32 { return -15; }
     let Codeˉoffset: u32 = Findˉsectionˉoffset(Input, 4u32);
-    if Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset - 4u32) != 270u32 { return -15; }
-    var Start: u32 = Codeˉoffset;
-    var Length: u32 = 42u32;
-    var Localˉcount: u32 = 5u32;
-    if Functionˉindex == 1u32 {
-        Start = Codeˉoffset + 42u32;
-        Length = 228u32;
-        Localˉcount = 15u32;
-    } else {
-        if Functionˉindex != 0u32 { return -15; }
-    }
+    if Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset - 4u32) != 532u32 { return -15; }
+    let Start: u32 = Codeˉoffset + Functionˉcodeˉoffset(Functionˉindex);
+    let Length: u32 = Functionˉcodeˉlength(Functionˉindex);
     let End: u32 = Start + Length;
+    let Localˉslots: u32 = Functionˉlocalˉslots(Functionˉindex);
     var Cursor: u32 = Start;
     while Cursor < End {
-        let Relative: u32 = Cursor - Start;
-        if !Isˉinstructionˉboundary(Functionˉindex, Relative) { return -15; }
         let Operation: u8 = Bytesˉreadˉu8(Input, Cursor);
-        if Operation == 16u8 {
-            Cursor = Cursor + 1u32;
+        let Width: u32 = Instructionˉbytes(Operation);
+        if Width == 0u32 { return -15; }
+        if Width > End - Cursor { return -15; }
+        if Operation == 2u8 {
+            let Booleanˉoperand: u8 = Bytesˉreadˉu8(Input, Cursor + 1u32);
+            if Booleanˉoperand != 0u8 {
+                if Booleanˉoperand != 1u8 { return -15; }
+            }
         } else {
-            if Operation == 34u8 {
-                Cursor = Cursor + 1u32;
+            if Operation == 4u8 {
+                if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) >= Localˉslots { return -15; }
             } else {
-                if Operation == 81u8 {
-                    Cursor = Cursor + 1u32;
+                if Operation == 5u8 {
+                    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) >= Localˉslots { return -15; }
                 } else {
-                    if Cursor > End { return -15; }
-                    if 5u32 > End - Cursor { return -15; }
-                    let Operand: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
-                    if Operation == 1u8 {
-                        Cursor = Cursor + 5u32;
+                    if Operation == 48u8 {
+                        let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                        if Jumpˉtarget >= Length { return -15; }
+                        if !Isˉinstructionˉboundary(Input, Start, Length, Jumpˉtarget) { return -15; }
                     } else {
-                        if Operation == 4u8 {
-                            if Operand >= Localˉcount { return -15; }
-                            Cursor = Cursor + 5u32;
+                        if Operation == 49u8 {
+                            let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                            if Branchˉtarget >= Length { return -15; }
+                            if !Isˉinstructionˉboundary(Input, Start, Length, Branchˉtarget) { return -15; }
                         } else {
-                            if Operation == 5u8 {
-                                if Operand >= Localˉcount { return -15; }
-                                Cursor = Cursor + 5u32;
-                            } else {
-                                if Operation == 6u8 {
-                                    if Functionˉindex != 1u32 { return -15; }
-                                    if Operand != 0u32 { return -15; }
-                                    Cursor = Cursor + 5u32;
-                                } else {
-                                    if Operation == 7u8 {
-                                        if Functionˉindex != 1u32 { return -15; }
-                                        if Operand != 0u32 { return -15; }
-                                        Cursor = Cursor + 5u32;
-                                    } else {
-                                        if Operation == 48u8 {
-                                            if !Isˉinstructionˉboundary(Functionˉindex, Operand) { return -15; }
-                                            Cursor = Cursor + 5u32;
-                                        } else {
-                                            if Operation == 49u8 {
-                                                if !Isˉinstructionˉboundary(Functionˉindex, Operand) { return -15; }
-                                                Cursor = Cursor + 5u32;
-                                            } else {
-                                                if Operation == 64u8 {
-                                                    if Functionˉindex != 1u32 { return -15; }
-                                                    if Operand != 0u32 { return -15; }
-                                                    Cursor = Cursor + 5u32;
-                                                } else {
-                                                    return -15;
-                                                }
-                                            }
-                                        }
+                            if Operation == 64u8 {
+                                if Functionˉindex != 1u32 { return -15; }
+                                let Targetˉfunction: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                                if Targetˉfunction != 0u32 {
+                                    if Targetˉfunction != 2u32 {
+                                        if Targetˉfunction != 3u32 { return -15; }
                                     }
                                 }
                             }
@@ -306,16 +335,26 @@ fn Validateˉcode(Input: bytes, Functionˉindex: u32) -> i32 {
                 }
             }
         }
+        Cursor = Cursor + Width;
     }
     if Cursor != End { return -15; }
     return 0;
 }
 
-fn Readˉlocal(Index: u32,
+fn Readˉaddˉlocal(Index: u32,
+    Localˉzero: i32, Localˉone: i32, Localˉtwo: i32,
+    Localˉthree: i32, Localˉfour: i32) -> i32 {
+    if Index == 0u32 { return Localˉzero; }
+    if Index == 1u32 { return Localˉone; }
+    if Index == 2u32 { return Localˉtwo; }
+    if Index == 3u32 { return Localˉthree; }
+    return Localˉfour;
+}
+
+fn Readˉmainˉlowˉlocal(Index: u32,
     Localˉzero: i32, Localˉone: i32, Localˉtwo: i32, Localˉthree: i32,
     Localˉfour: i32, Localˉfive: i32, Localˉsix: i32, Localˉseven: i32,
-    Localˉeight: i32, Localˉnine: i32, Localˉten: i32, Localˉeleven: i32,
-    Localˉtwelve: i32, Localˉthirteen: i32, Localˉfourteen: i32) -> i32 {
+    Localˉeight: i32, Localˉnine: i32) -> i32 {
     if Index == 0u32 { return Localˉzero; }
     if Index == 1u32 { return Localˉone; }
     if Index == 2u32 { return Localˉtwo; }
@@ -325,12 +364,48 @@ fn Readˉlocal(Index: u32,
     if Index == 6u32 { return Localˉsix; }
     if Index == 7u32 { return Localˉseven; }
     if Index == 8u32 { return Localˉeight; }
-    if Index == 9u32 { return Localˉnine; }
+    return Localˉnine;
+}
+
+fn Readˉmainˉhighˉlocal(Index: u32,
+    Localˉten: i32, Localˉeleven: i32, Localˉtwelve: i32,
+    Localˉthirteen: i32, Localˉfourteen: i32, Localˉfifteen: i32,
+    Localˉsixteen: i32, Localˉseventeen: i32, Localˉeighteen: i32) -> i32 {
     if Index == 10u32 { return Localˉten; }
     if Index == 11u32 { return Localˉeleven; }
     if Index == 12u32 { return Localˉtwelve; }
     if Index == 13u32 { return Localˉthirteen; }
-    return Localˉfourteen;
+    if Index == 14u32 { return Localˉfourteen; }
+    if Index == 15u32 { return Localˉfifteen; }
+    if Index == 16u32 { return Localˉsixteen; }
+    if Index == 17u32 { return Localˉseventeen; }
+    return Localˉeighteen;
+}
+
+fn Readˉprobeˉlocal(Index: u32,
+    Localˉzero: i32, Localˉone: i32, Localˉtwo: i32, Localˉthree: i32,
+    Localˉfour: i32, Localˉfive: i32, Localˉsix: i32, Localˉseven: i32,
+    Localˉeight: i32) -> i32 {
+    if Index == 0u32 { return Localˉzero; }
+    if Index == 1u32 { return Localˉone; }
+    if Index == 2u32 { return Localˉtwo; }
+    if Index == 3u32 { return Localˉthree; }
+    if Index == 4u32 { return Localˉfour; }
+    if Index == 5u32 { return Localˉfive; }
+    if Index == 6u32 { return Localˉsix; }
+    if Index == 7u32 { return Localˉseven; }
+    return Localˉeight;
+}
+
+fn Readˉselectˉlocal(Index: u32,
+    Localˉzero: i32, Localˉone: i32, Localˉtwo: i32,
+    Localˉthree: i32, Localˉfour: i32, Localˉfive: i32) -> i32 {
+    if Index == 0u32 { return Localˉzero; }
+    if Index == 1u32 { return Localˉone; }
+    if Index == 2u32 { return Localˉtwo; }
+    if Index == 3u32 { return Localˉthree; }
+    if Index == 4u32 { return Localˉfour; }
+    return Localˉfive;
 }
 
 fn Executeˉadd(Input: bytes, Argumentˉzero: i32, Argumentˉone: i32,
@@ -353,18 +428,16 @@ fn Executeˉadd(Input: bytes, Argumentˉzero: i32, Argumentˉone: i32,
         Remainingˉbudget = Remainingˉbudget - 1u32;
         let Operation: u8 = Bytesˉreadˉu8(Input, Cursor);
         if Operation == 4u8 {
-            if 5u32 > End - Cursor { return Executionˉresult(-23, 0, Remainingˉbudget); }
             if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
             let Loadˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
             if Loadˉindex >= 5u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
-            let Loaded: i32 = Readˉlocal(Loadˉindex, Localˉzero, Localˉone,
-                Localˉtwo, Localˉthree, Localˉfour, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            let Loaded: i32 = Readˉaddˉlocal(Loadˉindex, Localˉzero, Localˉone,
+                Localˉtwo, Localˉthree, Localˉfour);
             if Stackˉdepth == 0u32 { Stackˉzero = Loaded; } else { Stackˉone = Loaded; }
             Stackˉdepth = Stackˉdepth + 1u32;
             Cursor = Cursor + 5u32;
         } else {
             if Operation == 5u8 {
-                if 5u32 > End - Cursor { return Executionˉresult(-26, 0, Remainingˉbudget); }
                 if Stackˉdepth == 0u32 { return Executionˉresult(-27, 0, Remainingˉbudget); }
                 let Storeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
                 if Storeˉindex >= 5u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
@@ -385,9 +458,220 @@ fn Executeˉadd(Input: bytes, Argumentˉzero: i32, Argumentˉone: i32,
                     Cursor = Cursor + 1u32;
                 } else {
                     if Operation != 81u8 { return Executionˉresult(-40, 0, Remainingˉbudget); }
-                    if Cursor + 1u32 != End { return Executionˉresult(-39, 0, Remainingˉbudget); }
                     if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
                     return Executionˉresult(0, Stackˉzero, Remainingˉbudget);
+                }
+            }
+        }
+    }
+    return Executionˉresult(-41, 0, Remainingˉbudget);
+}
+
+fn Executeˉprobe(Input: bytes, Argumentˉzero: i32, Argumentˉone: i32,
+    Budget: u32) -> Executionˉresult {
+    let Codeˉoffset: u32 = Findˉsectionˉoffset(Input, 4u32);
+    let Start: u32 = Codeˉoffset + 340u32;
+    let End: u32 = Start + 104u32;
+    var Cursor: u32 = Start;
+    var Remainingˉbudget: u32 = Budget;
+    var Stackˉdepth: u32 = 0u32;
+    var Stackˉzero: i32 = 0;
+    var Stackˉone: i32 = 0;
+    var Localˉzero: i32 = Argumentˉzero;
+    var Localˉone: i32 = Argumentˉone;
+    var Localˉtwo: i32 = 0;
+    var Localˉthree: i32 = 0;
+    var Localˉfour: i32 = 0;
+    var Localˉfive: i32 = 0;
+    var Localˉsix: i32 = 0;
+    var Localˉseven: i32 = 0;
+    var Localˉeight: i32 = 0;
+
+    while Cursor < End {
+        if Remainingˉbudget == 0u32 { return Executionˉresult(-34, 0, 0u32); }
+        Remainingˉbudget = Remainingˉbudget - 1u32;
+        let Operation: u8 = Bytesˉreadˉu8(Input, Cursor);
+        if Operation == 4u8 {
+            if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
+            let Loadˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+            if Loadˉindex >= 9u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
+            let Loaded: i32 = Readˉprobeˉlocal(Loadˉindex,
+                Localˉzero, Localˉone, Localˉtwo, Localˉthree, Localˉfour,
+                Localˉfive, Localˉsix, Localˉseven, Localˉeight);
+            if Stackˉdepth == 0u32 { Stackˉzero = Loaded; } else { Stackˉone = Loaded; }
+            Stackˉdepth = Stackˉdepth + 1u32;
+            Cursor = Cursor + 5u32;
+        } else {
+            if Operation == 5u8 {
+                if Stackˉdepth == 0u32 { return Executionˉresult(-27, 0, Remainingˉbudget); }
+                let Storeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                if Storeˉindex >= 9u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
+                var Storedˉvalue: i32 = Stackˉzero;
+                if Stackˉdepth == 2u32 { Storedˉvalue = Stackˉone; }
+                Stackˉdepth = Stackˉdepth - 1u32;
+                if Storeˉindex == 0u32 { Localˉzero = Storedˉvalue; }
+                if Storeˉindex == 1u32 { Localˉone = Storedˉvalue; }
+                if Storeˉindex == 2u32 { Localˉtwo = Storedˉvalue; }
+                if Storeˉindex == 3u32 { Localˉthree = Storedˉvalue; }
+                if Storeˉindex == 4u32 { Localˉfour = Storedˉvalue; }
+                if Storeˉindex == 5u32 { Localˉfive = Storedˉvalue; }
+                if Storeˉindex == 6u32 { Localˉsix = Storedˉvalue; }
+                if Storeˉindex == 7u32 { Localˉseven = Storedˉvalue; }
+                if Storeˉindex == 8u32 { Localˉeight = Storedˉvalue; }
+                Cursor = Cursor + 5u32;
+            } else {
+                if Operation == 8u8 {
+                    if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
+                    let U8ˉconstantˉbyte: u8 = Bytesˉreadˉu8(Input, Cursor + 1u32);
+                    var U8ˉconstantˉvalue: i32 = 0;
+                    if U8ˉconstantˉbyte == 255u8 { U8ˉconstantˉvalue = 255; }
+                    else { if U8ˉconstantˉbyte == 1u8 { U8ˉconstantˉvalue = 1; }
+                    else { if U8ˉconstantˉbyte != 0u8 { return Executionˉresult(-42, 0, Remainingˉbudget); } } }
+                    if Stackˉdepth == 0u32 { Stackˉzero = U8ˉconstantˉvalue; }
+                    else { Stackˉone = U8ˉconstantˉvalue; }
+                    Stackˉdepth = Stackˉdepth + 1u32;
+                    Cursor = Cursor + 2u32;
+                } else {
+                    if Operation == 2u8 {
+                        if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
+                        let Boolˉconstantˉbyte: u8 = Bytesˉreadˉu8(Input, Cursor + 1u32);
+                        var Boolˉconstantˉvalue: i32 = 0;
+                        if Boolˉconstantˉbyte == 1u8 { Boolˉconstantˉvalue = 1; }
+                        else { if Boolˉconstantˉbyte != 0u8 { return Executionˉresult(-42, 0, Remainingˉbudget); } }
+                        if Stackˉdepth == 0u32 { Stackˉzero = Boolˉconstantˉvalue; }
+                        else { Stackˉone = Boolˉconstantˉvalue; }
+                        Stackˉdepth = Stackˉdepth + 1u32;
+                        Cursor = Cursor + 2u32;
+                    } else {
+                    if Operation == 102u8 {
+                        if Stackˉdepth != 2u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                        if Stackˉzero == Stackˉone { Stackˉzero = 1; } else { Stackˉzero = 0; }
+                        Stackˉdepth = 1u32;
+                        Cursor = Cursor + 1u32;
+                    } else {
+                        if Operation == 40u8 {
+                            if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                            if Stackˉzero == 0 { Stackˉzero = 1; }
+                            else { if Stackˉzero == 1 { Stackˉzero = 0; }
+                            else { return Executionˉresult(-36, 0, Remainingˉbudget); } }
+                            Cursor = Cursor + 1u32;
+                        } else {
+                            if Operation == 48u8 {
+                                let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                                if !Isˉinstructionˉboundary(Input, Start, 104u32, Jumpˉtarget) {
+                                    return Executionˉresult(-33, 0, Remainingˉbudget);
+                                }
+                                Cursor = Start + Jumpˉtarget;
+                            } else {
+                                if Operation == 49u8 {
+                                    if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                                    let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                                    if !Isˉinstructionˉboundary(Input, Start, 104u32, Branchˉtarget) {
+                                        return Executionˉresult(-35, 0, Remainingˉbudget);
+                                    }
+                                    let Condition: i32 = Stackˉzero;
+                                    Stackˉdepth = 0u32;
+                                    if Condition == 0 { Cursor = Start + Branchˉtarget; }
+                                    else { if Condition == 1 { Cursor = Cursor + 5u32; }
+                                    else { return Executionˉresult(-36, 0, Remainingˉbudget); } }
+                                } else {
+                                    if Operation != 81u8 { return Executionˉresult(-40, 0, Remainingˉbudget); }
+                                    if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                                    return Executionˉresult(0, Stackˉzero, Remainingˉbudget);
+                                }
+                            }
+                        }
+                    } }
+                }
+            }
+        }
+    }
+    return Executionˉresult(-41, 0, Remainingˉbudget);
+}
+
+fn Executeˉselect(Input: bytes, Argumentˉzero: i32, Budget: u32) -> Executionˉresult {
+    let Codeˉoffset: u32 = Findˉsectionˉoffset(Input, 4u32);
+    let Start: u32 = Codeˉoffset + 444u32;
+    let End: u32 = Start + 88u32;
+    var Cursor: u32 = Start;
+    var Remainingˉbudget: u32 = Budget;
+    var Stackˉdepth: u32 = 0u32;
+    var Stackˉzero: i32 = 0;
+    var Stackˉone: i32 = 0;
+    var Localˉzero: i32 = Argumentˉzero;
+    var Localˉone: i32 = 0;
+    var Localˉtwo: i32 = 0;
+    var Localˉthree: i32 = 0;
+    var Localˉfour: i32 = 0;
+    var Localˉfive: i32 = 0;
+
+    while Cursor < End {
+        if Remainingˉbudget == 0u32 { return Executionˉresult(-34, 0, 0u32); }
+        Remainingˉbudget = Remainingˉbudget - 1u32;
+        let Operation: u8 = Bytesˉreadˉu8(Input, Cursor);
+        if Operation == 1u8 {
+            if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
+            let Value: i32 = Bytesˉreadˉi32ˉlittle(Input, Cursor + 1u32);
+            if Stackˉdepth == 0u32 { Stackˉzero = Value; } else { Stackˉone = Value; }
+            Stackˉdepth = Stackˉdepth + 1u32;
+            Cursor = Cursor + 5u32;
+        } else {
+            if Operation == 4u8 {
+                if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
+                let Loadˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                if Loadˉindex >= 6u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
+                let Loaded: i32 = Readˉselectˉlocal(Loadˉindex,
+                    Localˉzero, Localˉone, Localˉtwo, Localˉthree, Localˉfour, Localˉfive);
+                if Stackˉdepth == 0u32 { Stackˉzero = Loaded; } else { Stackˉone = Loaded; }
+                Stackˉdepth = Stackˉdepth + 1u32;
+                Cursor = Cursor + 5u32;
+            } else {
+                if Operation == 5u8 {
+                    if Stackˉdepth == 0u32 { return Executionˉresult(-27, 0, Remainingˉbudget); }
+                    let Storeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                    if Storeˉindex >= 6u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
+                    var Storedˉvalue: i32 = Stackˉzero;
+                    if Stackˉdepth == 2u32 { Storedˉvalue = Stackˉone; }
+                    Stackˉdepth = Stackˉdepth - 1u32;
+                    if Storeˉindex == 0u32 { Localˉzero = Storedˉvalue; }
+                    if Storeˉindex == 1u32 { Localˉone = Storedˉvalue; }
+                    if Storeˉindex == 2u32 { Localˉtwo = Storedˉvalue; }
+                    if Storeˉindex == 3u32 { Localˉthree = Storedˉvalue; }
+                    if Storeˉindex == 4u32 { Localˉfour = Storedˉvalue; }
+                    if Storeˉindex == 5u32 { Localˉfive = Storedˉvalue; }
+                    Cursor = Cursor + 5u32;
+                } else {
+                    if Operation == 37u8 {
+                        if Stackˉdepth != 2u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                        if Stackˉzero >= Stackˉone { Stackˉzero = 1; } else { Stackˉzero = 0; }
+                        Stackˉdepth = 1u32;
+                        Cursor = Cursor + 1u32;
+                    } else {
+                        if Operation == 48u8 {
+                            let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                            if !Isˉinstructionˉboundary(Input, Start, 88u32, Jumpˉtarget) {
+                                return Executionˉresult(-33, 0, Remainingˉbudget);
+                            }
+                            Cursor = Start + Jumpˉtarget;
+                        } else {
+                            if Operation == 49u8 {
+                                if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                                let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                                if !Isˉinstructionˉboundary(Input, Start, 88u32, Branchˉtarget) {
+                                    return Executionˉresult(-35, 0, Remainingˉbudget);
+                                }
+                                let Condition: i32 = Stackˉzero;
+                                Stackˉdepth = 0u32;
+                                if Condition == 0 { Cursor = Start + Branchˉtarget; }
+                                else { if Condition == 1 { Cursor = Cursor + 5u32; }
+                                else { return Executionˉresult(-36, 0, Remainingˉbudget); } }
+                            } else {
+                                if Operation != 81u8 { return Executionˉresult(-40, 0, Remainingˉbudget); }
+                                if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                                return Executionˉresult(0, Stackˉzero, Remainingˉbudget);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -398,7 +682,7 @@ fn Executeˉadd(Input: bytes, Argumentˉzero: i32, Argumentˉone: i32,
 fn Executeˉmain(Input: bytes, Budget: u32) -> Executionˉresult {
     let Codeˉoffset: u32 = Findˉsectionˉoffset(Input, 4u32);
     let Start: u32 = Codeˉoffset + 42u32;
-    let End: u32 = Start + 228u32;
+    let End: u32 = Start + 298u32;
     var Cursor: u32 = Start;
     var Remainingˉbudget: u32 = Budget;
     var Stackˉdepth: u32 = 0u32;
@@ -420,136 +704,172 @@ fn Executeˉmain(Input: bytes, Budget: u32) -> Executionˉresult {
     var Localˉtwelve: i32 = 0;
     var Localˉthirteen: i32 = 0;
     var Localˉfourteen: i32 = 0;
+    var Localˉfifteen: i32 = 0;
+    var Localˉsixteen: i32 = 0;
+    var Localˉseventeen: i32 = 0;
+    var Localˉeighteen: i32 = 0;
     while Cursor < End {
         if Remainingˉbudget == 0u32 { return Executionˉresult(-34, 0, 0u32); }
         Remainingˉbudget = Remainingˉbudget - 1u32;
         let Operation: u8 = Bytesˉreadˉu8(Input, Cursor);
-        if U32ˉfromˉu8(Operation) < 16u32 {
-            if U32ˉfromˉu8(Operation) < 5u32 {
-                if Operation == 1u8 {
-                    if 5u32 > End - Cursor { return Executionˉresult(-21, 0, Remainingˉbudget); }
+        if Operation == 1u8 {
+            if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
+            let I32ˉvalue: i32 = Bytesˉreadˉi32ˉlittle(Input, Cursor + 1u32);
+            if Stackˉdepth == 0u32 { Stackˉzero = I32ˉvalue; } else { Stackˉone = I32ˉvalue; }
+            Stackˉdepth = Stackˉdepth + 1u32;
+            Cursor = Cursor + 5u32;
+        } else {
+            if Operation == 9u8 {
+                if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
+                let U32ˉvalue: i32 = Bytesˉreadˉi32ˉlittle(Input, Cursor + 1u32);
+                if U32ˉvalue < 0 { return Executionˉresult(-42, 0, Remainingˉbudget); }
+                if Stackˉdepth == 0u32 { Stackˉzero = U32ˉvalue; } else { Stackˉone = U32ˉvalue; }
+                Stackˉdepth = Stackˉdepth + 1u32;
+                Cursor = Cursor + 5u32;
+            } else {
+            if Operation == 8u8 {
+                if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
+                let U8ˉconstantˉbyte: u8 = Bytesˉreadˉu8(Input, Cursor + 1u32);
+                var U8ˉconstantˉvalue: i32 = 0;
+                if U8ˉconstantˉbyte == 255u8 { U8ˉconstantˉvalue = 255; }
+                else { if U8ˉconstantˉbyte == 1u8 { U8ˉconstantˉvalue = 1; }
+                else { if U8ˉconstantˉbyte != 0u8 { return Executionˉresult(-42, 0, Remainingˉbudget); } } }
+                if Stackˉdepth == 0u32 { Stackˉzero = U8ˉconstantˉvalue; }
+                else { Stackˉone = U8ˉconstantˉvalue; }
+                Stackˉdepth = Stackˉdepth + 1u32;
+                Cursor = Cursor + 2u32;
+            } else {
+                if Operation == 2u8 {
                     if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
-                    let Constantˉvalue: i32 = Bytesˉreadˉi32ˉlittle(Input, Cursor + 1u32);
-                    if Stackˉdepth == 0u32 { Stackˉzero = Constantˉvalue; } else { Stackˉone = Constantˉvalue; }
+                    let Boolˉconstantˉbyte: u8 = Bytesˉreadˉu8(Input, Cursor + 1u32);
+                    var Boolˉconstantˉvalue: i32 = 0;
+                    if Boolˉconstantˉbyte == 1u8 { Boolˉconstantˉvalue = 1; }
+                    else { if Boolˉconstantˉbyte != 0u8 { return Executionˉresult(-42, 0, Remainingˉbudget); } }
+                    if Stackˉdepth == 0u32 { Stackˉzero = Boolˉconstantˉvalue; }
+                    else { Stackˉone = Boolˉconstantˉvalue; }
                     Stackˉdepth = Stackˉdepth + 1u32;
-                    Cursor = Cursor + 5u32;
+                    Cursor = Cursor + 2u32;
                 } else {
-                    if Operation != 4u8 { return Executionˉresult(-40, 0, Remainingˉbudget); }
-                    if 5u32 > End - Cursor { return Executionˉresult(-23, 0, Remainingˉbudget); }
-                    let Loadˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
-                    if Loadˉindex >= 15u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
-                    let Loaded: i32 = Readˉlocal(Loadˉindex,
-                        Localˉzero, Localˉone, Localˉtwo, Localˉthree, Localˉfour,
-                        Localˉfive, Localˉsix, Localˉseven, Localˉeight, Localˉnine,
-                        Localˉten, Localˉeleven, Localˉtwelve, Localˉthirteen,
-                        Localˉfourteen);
+                if Operation == 4u8 {
                     if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
+                    let Loadˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                    if Loadˉindex >= 19u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
+                    var Loaded: i32 = 0;
+                    if Loadˉindex < 10u32 {
+                        Loaded = Readˉmainˉlowˉlocal(Loadˉindex,
+                            Localˉzero, Localˉone, Localˉtwo, Localˉthree, Localˉfour,
+                            Localˉfive, Localˉsix, Localˉseven, Localˉeight, Localˉnine);
+                    } else {
+                        Loaded = Readˉmainˉhighˉlocal(Loadˉindex,
+                            Localˉten, Localˉeleven, Localˉtwelve, Localˉthirteen,
+                            Localˉfourteen, Localˉfifteen, Localˉsixteen,
+                            Localˉseventeen, Localˉeighteen);
+                    }
                     if Stackˉdepth == 0u32 { Stackˉzero = Loaded; } else { Stackˉone = Loaded; }
                     Stackˉdepth = Stackˉdepth + 1u32;
                     Cursor = Cursor + 5u32;
-                }
-            } else {
-                if Operation == 5u8 {
-                    if 5u32 > End - Cursor { return Executionˉresult(-26, 0, Remainingˉbudget); }
-                    if Stackˉdepth == 0u32 { return Executionˉresult(-27, 0, Remainingˉbudget); }
-                    let Storeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
-                    if Storeˉindex >= 15u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
-                    var Storedˉvalue: i32 = Stackˉzero;
-                    if Stackˉdepth == 2u32 { Storedˉvalue = Stackˉone; }
-                    Stackˉdepth = Stackˉdepth - 1u32;
-                    if Storeˉindex == 0u32 { Localˉzero = Storedˉvalue; }
-                    if Storeˉindex == 1u32 { Localˉone = Storedˉvalue; }
-                    if Storeˉindex == 2u32 { Localˉtwo = Storedˉvalue; }
-                    if Storeˉindex == 3u32 { Localˉthree = Storedˉvalue; }
-                    if Storeˉindex == 4u32 { Localˉfour = Storedˉvalue; }
-                    if Storeˉindex == 5u32 { Localˉfive = Storedˉvalue; }
-                    if Storeˉindex == 6u32 { Localˉsix = Storedˉvalue; }
-                    if Storeˉindex == 7u32 { Localˉseven = Storedˉvalue; }
-                    if Storeˉindex == 8u32 { Localˉeight = Storedˉvalue; }
-                    if Storeˉindex == 9u32 { Localˉnine = Storedˉvalue; }
-                    if Storeˉindex == 10u32 { Localˉten = Storedˉvalue; }
-                    if Storeˉindex == 11u32 { Localˉeleven = Storedˉvalue; }
-                    if Storeˉindex == 12u32 { Localˉtwelve = Storedˉvalue; }
-                    if Storeˉindex == 13u32 { Localˉthirteen = Storedˉvalue; }
-                    if Storeˉindex == 14u32 { Localˉfourteen = Storedˉvalue; }
-                    Cursor = Cursor + 5u32;
                 } else {
-                    if Operation == 6u8 {
-                        if 5u32 > End - Cursor { return Executionˉresult(-28, 0, Remainingˉbudget); }
-                        if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) != 0u32 { return Executionˉresult(-29, 0, Remainingˉbudget); }
-                        if Stackˉdepth >= 2u32 { return Executionˉresult(-22, 0, Remainingˉbudget); }
-                        if Stackˉdepth == 0u32 { Stackˉzero = 4; } else { Stackˉone = 4; }
-                        Stackˉdepth = Stackˉdepth + 1u32;
+                    if Operation == 5u8 {
+                        if Stackˉdepth == 0u32 { return Executionˉresult(-27, 0, Remainingˉbudget); }
+                        let Storeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                        if Storeˉindex >= 19u32 { return Executionˉresult(-24, 0, Remainingˉbudget); }
+                        var Storedˉvalue: i32 = Stackˉzero;
+                        if Stackˉdepth == 2u32 { Storedˉvalue = Stackˉone; }
+                        Stackˉdepth = Stackˉdepth - 1u32;
+                        if Storeˉindex == 0u32 { Localˉzero = Storedˉvalue; }
+                        if Storeˉindex == 1u32 { Localˉone = Storedˉvalue; }
+                        if Storeˉindex == 2u32 { Localˉtwo = Storedˉvalue; }
+                        if Storeˉindex == 3u32 { Localˉthree = Storedˉvalue; }
+                        if Storeˉindex == 4u32 { Localˉfour = Storedˉvalue; }
+                        if Storeˉindex == 5u32 { Localˉfive = Storedˉvalue; }
+                        if Storeˉindex == 6u32 { Localˉsix = Storedˉvalue; }
+                        if Storeˉindex == 7u32 { Localˉseven = Storedˉvalue; }
+                        if Storeˉindex == 8u32 { Localˉeight = Storedˉvalue; }
+                        if Storeˉindex == 9u32 { Localˉnine = Storedˉvalue; }
+                        if Storeˉindex == 10u32 { Localˉten = Storedˉvalue; }
+                        if Storeˉindex == 11u32 { Localˉeleven = Storedˉvalue; }
+                        if Storeˉindex == 12u32 { Localˉtwelve = Storedˉvalue; }
+                        if Storeˉindex == 13u32 { Localˉthirteen = Storedˉvalue; }
+                        if Storeˉindex == 14u32 { Localˉfourteen = Storedˉvalue; }
+                        if Storeˉindex == 15u32 { Localˉfifteen = Storedˉvalue; }
+                        if Storeˉindex == 16u32 { Localˉsixteen = Storedˉvalue; }
+                        if Storeˉindex == 17u32 { Localˉseventeen = Storedˉvalue; }
+                        if Storeˉindex == 18u32 { Localˉeighteen = Storedˉvalue; }
                         Cursor = Cursor + 5u32;
                     } else {
-                        if Operation != 7u8 { return Executionˉresult(-40, 0, Remainingˉbudget); }
-                        if 5u32 > End - Cursor { return Executionˉresult(-30, 0, Remainingˉbudget); }
-                        if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) != 0u32 { return Executionˉresult(-29, 0, Remainingˉbudget); }
-                        if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
-                        let Dataˉindex: i32 = Stackˉzero;
-                        let Dataˉoffset: u32 = Findˉsectionˉoffset(Input, 2u32) + 19u32;
-                        if Dataˉindex == 0 { Stackˉzero = Bytesˉreadˉi32ˉlittle(Input, Dataˉoffset); }
-                        else { if Dataˉindex == 1 { Stackˉzero = Bytesˉreadˉi32ˉlittle(Input, Dataˉoffset + 4u32); }
-                        else { if Dataˉindex == 2 { Stackˉzero = Bytesˉreadˉi32ˉlittle(Input, Dataˉoffset + 8u32); }
-                        else { if Dataˉindex == 3 { Stackˉzero = Bytesˉreadˉi32ˉlittle(Input, Dataˉoffset + 12u32); }
-                        else { return Executionˉresult(-32, 0, Remainingˉbudget); } } } }
-                        Cursor = Cursor + 5u32;
+                        if Operation == 20u8 {
+                            if Stackˉdepth != 2u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                            if Stackˉzero < 0 { return Executionˉresult(-42, 0, Remainingˉbudget); }
+                            if Stackˉone < 0 { return Executionˉresult(-42, 0, Remainingˉbudget); }
+                            Stackˉzero = Stackˉzero + Stackˉone;
+                            if Stackˉzero < 0 { return Executionˉresult(-42, 0, Remainingˉbudget); }
+                            Stackˉdepth = 1u32;
+                            Cursor = Cursor + 1u32;
+                        } else {
+                            if Operation == 98u8 {
+                                if Stackˉdepth != 2u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                                if Stackˉzero < 0 { return Executionˉresult(-42, 0, Remainingˉbudget); }
+                                if Stackˉone < 0 { return Executionˉresult(-42, 0, Remainingˉbudget); }
+                                if Stackˉzero < Stackˉone { Stackˉzero = 1; } else { Stackˉzero = 0; }
+                                Stackˉdepth = 1u32;
+                                Cursor = Cursor + 1u32;
+                            } else {
+                                if Operation == 48u8 {
+                                    let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                                    if !Isˉinstructionˉboundary(Input, Start, 298u32, Jumpˉtarget) {
+                                        return Executionˉresult(-33, 0, Remainingˉbudget);
+                                    }
+                                    Cursor = Start + Jumpˉtarget;
+                                } else {
+                                    if Operation == 49u8 {
+                                        if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                                        let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                                        if !Isˉinstructionˉboundary(Input, Start, 298u32, Branchˉtarget) {
+                                            return Executionˉresult(-35, 0, Remainingˉbudget);
+                                        }
+                                        let Condition: i32 = Stackˉzero;
+                                        Stackˉdepth = 0u32;
+                                        if Condition == 0 { Cursor = Start + Branchˉtarget; }
+                                        else { if Condition == 1 { Cursor = Cursor + 5u32; }
+                                        else { return Executionˉresult(-36, 0, Remainingˉbudget); } }
+                                    } else {
+                                        if Operation == 64u8 {
+                                            let Targetˉfunction: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+                                            var Called: Executionˉresult = Executionˉresult(-38, 0, Remainingˉbudget);
+                                            if Targetˉfunction == 0u32 {
+                                                if Stackˉdepth != 2u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                                                Called = Executeˉadd(Input, Stackˉzero, Stackˉone, Remainingˉbudget);
+                                            } else {
+                                                if Targetˉfunction == 2u32 {
+                                                    if Stackˉdepth != 2u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                                                    Called = Executeˉprobe(Input, Stackˉzero, Stackˉone, Remainingˉbudget);
+                                                } else {
+                                                    if Targetˉfunction != 3u32 {
+                                                        return Executionˉresult(-38, 0, Remainingˉbudget);
+                                                    }
+                                                    if Stackˉdepth != 1u32 {
+                                                        return Executionˉresult(-38, 0, Remainingˉbudget);
+                                                    }
+                                                    Called = Executeˉselect(Input, Stackˉzero, Remainingˉbudget);
+                                                }
+                                            }
+                                            if Called.Status != 0 { return Called; }
+                                            Remainingˉbudget = Called.Remainingˉbudget;
+                                            Stackˉzero = Called.Value;
+                                            Stackˉdepth = 1u32;
+                                            Cursor = Cursor + 5u32;
+                                        } else {
+                                            if Operation != 81u8 { return Executionˉresult(-40, 0, Remainingˉbudget); }
+                                            if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
+                                            return Executionˉresult(0, Stackˉzero, Remainingˉbudget);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
-            }
-        } else {
-            if U32ˉfromˉu8(Operation) < 48u32 {
-                if Operation == 16u8 {
-                    if Stackˉdepth != 2u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
-                    Stackˉzero = Stackˉzero + Stackˉone;
-                    Stackˉdepth = 1u32;
-                    Cursor = Cursor + 1u32;
-                } else {
-                    if Operation != 34u8 { return Executionˉresult(-40, 0, Remainingˉbudget); }
-                    if Stackˉdepth != 2u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
-                    if Stackˉzero < Stackˉone { Stackˉzero = 1; } else { Stackˉzero = 0; }
-                    Stackˉdepth = 1u32;
-                    Cursor = Cursor + 1u32;
-                }
-            } else {
-                if U32ˉfromˉu8(Operation) < 64u32 {
-                    if Operation == 48u8 {
-                        if 5u32 > End - Cursor { return Executionˉresult(-33, 0, Remainingˉbudget); }
-                        let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
-                        if !Isˉinstructionˉboundary(1u32, Jumpˉtarget) { return Executionˉresult(-33, 0, Remainingˉbudget); }
-                        Cursor = Start + Jumpˉtarget;
-                    } else {
-                        if Operation != 49u8 { return Executionˉresult(-40, 0, Remainingˉbudget); }
-                        if 5u32 > End - Cursor { return Executionˉresult(-35, 0, Remainingˉbudget); }
-                        if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
-                        let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
-                        if !Isˉinstructionˉboundary(1u32, Branchˉtarget) { return Executionˉresult(-35, 0, Remainingˉbudget); }
-                        let Condition: i32 = Stackˉzero;
-                        Stackˉdepth = 0u32;
-                        if Condition == 0 { Cursor = Start + Branchˉtarget; }
-                        else { if Condition == 1 { Cursor = Cursor + 5u32; }
-                        else { return Executionˉresult(-36, 0, Remainingˉbudget); } }
-                    }
-                } else {
-                    if Operation == 64u8 {
-                        if 5u32 > End - Cursor { return Executionˉresult(-37, 0, Remainingˉbudget); }
-                        if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) != 0u32 { return Executionˉresult(-38, 0, Remainingˉbudget); }
-                        if Stackˉdepth != 2u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
-                        let Called: Executionˉresult = Executeˉadd(
-                            Input, Stackˉzero, Stackˉone, Remainingˉbudget);
-                        if Called.Status != 0 { return Called; }
-                        Remainingˉbudget = Called.Remainingˉbudget;
-                        Stackˉzero = Called.Value;
-                        Stackˉdepth = 1u32;
-                        Cursor = Cursor + 5u32;
-                    } else {
-                        if Operation != 81u8 { return Executionˉresult(-40, 0, Remainingˉbudget); }
-                        if Cursor + 1u32 != End { return Executionˉresult(-39, 0, Remainingˉbudget); }
-                        if Stackˉdepth != 1u32 { return Executionˉresult(-31, 0, Remainingˉbudget); }
-                        return Executionˉresult(0, Stackˉzero, Remainingˉbudget);
-                    }
-                }
-            }
+                } }
+            } }
         }
     }
     return Executionˉresult(-41, 0, Remainingˉbudget);
@@ -568,7 +888,7 @@ export fn Main() -> i32 {
     if Status != 0 { return Status; }
     Status = Validateˉemptyˉsection(Admittedˉmodule, 1u32, -11);
     if Status != 0 { return Status; }
-    Status = Validateˉdata(Admittedˉmodule);
+    Status = Validateˉemptyˉsection(Admittedˉmodule, 2u32, -12);
     if Status != 0 { return Status; }
     Status = Validateˉfunctions(Admittedˉmodule);
     if Status != 0 { return Status; }
@@ -576,10 +896,12 @@ export fn Main() -> i32 {
     if Status != 0 { return Status; }
     Status = Validateˉemptyˉsection(Admittedˉmodule, 6u32, -18);
     if Status != 0 { return Status; }
-    Status = Validateˉcode(Admittedˉmodule, 0u32);
-    if Status != 0 { return Status; }
-    Status = Validateˉcode(Admittedˉmodule, 1u32);
-    if Status != 0 { return Status; }
+    var Functionˉindex: u32 = 0u32;
+    while Functionˉindex < 4u32 {
+        Status = Validateˉcode(Admittedˉmodule, Functionˉindex);
+        if Status != 0 { return Status; }
+        Functionˉindex = Functionˉindex + 1u32;
+    }
     let Result: Executionˉresult = Executeˉmain(Admittedˉmodule, Executionˉbudget);
     if Result.Status != 0 { return Result.Status; }
     return Result.Value;

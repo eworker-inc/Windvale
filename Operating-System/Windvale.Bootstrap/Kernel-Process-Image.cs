@@ -115,13 +115,24 @@ public static class Kernelˉprocessˉimage
                 $"The bytecode interpreter main frame uses {Executeˉmainˉframeˉslots} slots; " +
                 $"expected {Kernelˉprocessˉcontract.CLIENT_INTERPRETER_FRAME_SLOTS}.");
         }
+        var Nativeˉstackˉbytes = Measureˉnativeˉstackˉbytes(Interpreterˉnative.Module, "Main");
+        if (Nativeˉstackˉbytes != Kernelˉprocessˉcontract.CLIENT_NATIVE_STACK_USED_BYTES ||
+            Nativeˉstackˉbytes > Kernelˉprocessˉcontract.CLIENT_STACK_BYTES ||
+            Nativeˉstackˉbytes <= Kernelˉprocessˉcontract.CLIENT_STACK_BYTES -
+                Kernelˉpagingˉcontract.PAGE_BYTES)
+        {
+            throw new InvalidOperationException(
+                $"The bytecode interpreter native stack requires {Nativeˉstackˉbytes} bytes; " +
+                $"expected the minimal {Kernelˉprocessˉcontract.CLIENT_STACK_PAGES}-page " +
+                $"envelope for {Kernelˉprocessˉcontract.CLIENT_NATIVE_STACK_USED_BYTES} bytes.");
+        }
         var Interpreterˉobject = Kernelˉwvbˉadmission.Renameˉmainˉexport(
             Nativeˉobjectˉsink.Writeˉwvo(Interpreterˉnative.Fragment),
             Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL);
         var Interpreterˉdigest = SHA256.HashData(Interpreterˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Interpreterˉidentity = Convert.ToHexString(Interpreterˉdigest.AsSpan());
         if (!Interpreterˉidentity.Equals(
-                "84C89011535F1D08FEBD6F41C6AF1E2A0B933F6B20F41FBDD8A7A267F568D8A1",
+                "3669E94D712BD5A78F0061E29D8054ED3B54B687EFC9508114F79BB78AA8832F",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
@@ -178,7 +189,7 @@ public static class Kernelˉprocessˉimage
 
         var Admittedˉprogramˉdigest = SHA256.HashData(admission.Embeddedˉmoduleˉbytes.AsSpan()).ToImmutableArray();
         if (!Convert.ToHexString(Admittedˉprogramˉdigest.AsSpan()).Equals(
-                "6F3A272D37DD8893995C7F85C236414ED2864BF59DE2F3775C08AFD426013F8C",
+                "9CCFED0509E84BFC63979C6DC13170C14762EFBDAA448B4C5894325F31AA7761",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException("The process image is not bound to the admitted WVB identity.");
@@ -223,6 +234,70 @@ public static class Kernelˉprocessˉimage
         return Compilation.Moduleˉbytes;
     }
 
+    private static ulong Measureˉnativeˉstackˉbytes(Nativeˉmodule module, string entry)
+    {
+        var Entryˉindex = -1;
+        for (var Index = 0; Index < module.Functions.Length; Index++)
+        {
+            if (module.Functions[Index].Name == entry)
+            {
+                Entryˉindex = Index;
+                break;
+            }
+        }
+        if (Entryˉindex < 0)
+        {
+            throw new InvalidOperationException($"The native module is missing stack entry '{entry}'.");
+        }
+        var Active = new bool[module.Functions.Length];
+        var Memoized = new ulong[module.Functions.Length];
+        return checked(sizeof(ulong) + Measureˉnativeˉstackˉpath(
+            module, Entryˉindex, Active, Memoized));
+    }
+
+    private static ulong Measureˉnativeˉstackˉpath(
+        Nativeˉmodule module,
+        int functionˉindex,
+        bool[] active,
+        ulong[] memoized)
+    {
+        if (memoized[functionˉindex] != 0)
+        {
+            return memoized[functionˉindex];
+        }
+        if (active[functionˉindex])
+        {
+            throw new InvalidOperationException(
+                "The bounded OS interpreter stack profile does not admit recursive native calls.");
+        }
+        active[functionˉindex] = true;
+        var Function = module.Functions[functionˉindex];
+        ulong Maximumˉcalleeˉbytes = 0;
+        foreach (var Operation in Function.Blocks.SelectMany(Block => Block.Operations))
+        {
+            var Target = Operation switch
+            {
+                Nativeˉcall Call => Call.Function,
+                Nativeˉvoidˉcall Call => Call.Function,
+                _ => -1,
+            };
+            if (Target < 0)
+            {
+                continue;
+            }
+            Maximumˉcalleeˉbytes = Math.Max(
+                Maximumˉcalleeˉbytes,
+                Measureˉnativeˉstackˉpath(module, Target, active, memoized));
+        }
+        active[functionˉindex] = false;
+        var Frameˉslots = checked(Function.Allˉlocalˉtypes.Length + Function.Valueˉtypes.Length +
+            (Function.Returnˉtype == Nativeˉvalueˉtype.Record ? 1 : 0));
+        var Result = checked((ulong)Frameˉslots * Nativeˉcontract.VALUE_SLOT_BYTES +
+            sizeof(ulong) + Maximumˉcalleeˉbytes);
+        memoized[functionˉindex] = Result;
+        return Result;
+    }
+
     private static void Verifyˉpolicy(Verifiedˉmodule module)
     {
         if (module.Module is not
@@ -254,7 +329,7 @@ public static class Kernelˉprocessˉimage
                 Profile: Moduleˉprofile.Hosted,
                 Capabilities.Length: 1,
                 Data.Length: 2,
-                Functions.Length: 13,
+                Functions.Length: 23,
                 Exports.Length: 1,
                 Types.Length: 1,
             } ||
@@ -267,6 +342,10 @@ public static class Kernelˉprocessˉimage
                 Instruction.Opcode is Opcode.Callˉcapability) != 2 ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
                 Instruction.Opcode is not Opcode.Branchˉfalse) ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.U8ˉequal) ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.Boolˉnot) ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
                 Instruction.Opcode is not Opcode.Call))
         {

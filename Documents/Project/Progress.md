@@ -27,8 +27,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
 | 9. Shared native backend | 🎯 Current transfer | ABI 17's verified 2,048-cell frame and all 12 service leaves are cross-host qualified; exact compiler preflight passes the former 1,049-local blocker. | Address measured lowered-value pressure at slot 2,049 without repeatedly inflating frames. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
-| 11. Boot path and kernel | 🚧 In progress | Qualified Probe 31 passes cross-host OS contracts and all four Windows pinned-QEMU scenarios with a 137-page arena and generation-safe rebuild of the same 116-page client root. | Let non-tail lifetime pressure, broader traps, Hyper-V, or a third runnable determine the next kernel slice. |
-| 12. Runtime on Windvale OS | ✅ Qualified | Exact canonical `Sum-Data.wv` WVB—data, loop, calls, locals, and branches—returns `29` through Windows, Linux, and both protected Windvale OS generations. | Broaden semantics only for a measured second program; keep JIT publication outside the kernel. |
+| 11. Boot path and kernel | 🚧 In progress | Qualified Probe 31 is the baseline; implemented Probe 32 locally passes all four pinned-QEMU scenarios with `WVPROC11`, a 182-page arena, and generation-safe rebuild of the same 161-page client root. | Cross-host qualify Probe 32, then let non-tail lifetime pressure, broader traps, Hyper-V, or a third runnable choose the next kernel slice. |
+| 12. Runtime on Windvale OS | ✅ Qualified | `Sum-Data.wv` is cross-host qualified; implemented Probe 32 also runs exact `Function-Only.wv` through four functions and four scalar families in both OS generations. | Qualify the second fixture, then use a third real program or measured size pressure to choose generalization. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 
 ## Working end to end
@@ -57,6 +57,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Probe 29 → atomic typed WVB/budget set → exact WVA lookup and Windvale opcode charging → 67/67 Seed and 25/25 OS tests on Windows and Debian plus four Windows pinned-QEMU scenarios
 - ✅ Probe 30 → exact tail release/zero → generation-safe same-root rebuild → 67/67 Seed and 25/25 OS tests on Windows and Debian plus four Windows pinned-QEMU scenarios
 - ✅ Probe 31 → exact canonical `Sum-Data.wv` WVB → 203 charged guest opcodes → result `29` in both rebuilt clients → 67/67 Seed and 25/25 OS tests on Windows and Debian plus four Windows pinned-QEMU scenarios
+- 🚧 Probe 32 → exact cross-compiler `Function-Only.wv` WVB → four functions and `bool`/`u8`/`u32`/`i32` control flow → 199 guest opcodes → result `6` in both rebuilt clients → 67/67 local Seed and 25/25 OS tests plus four Windows pinned-QEMU scenarios; cross-host gate pending
 
 ## Reading the evidence
 

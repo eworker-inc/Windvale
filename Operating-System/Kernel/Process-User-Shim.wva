@@ -8,7 +8,7 @@ call Windvale_user_bytecode_interpreter_main
 move_u32 ebx 1
 move_u32 esi 65536
 syscall
-move_u32 eax 29
+move_u32 eax 6
 move_u32 ebx 3
 syscall
 trap

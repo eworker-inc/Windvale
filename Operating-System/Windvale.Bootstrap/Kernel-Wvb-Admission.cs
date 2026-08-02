@@ -10,15 +10,15 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉwvbˉadmissionˉcontract
 {
-    public const int FORMAT_VERSION = 3;
-    public const string TARGET_NAME = "x86-64-kernel-wvb-admission-v3";
+    public const int FORMAT_VERSION = 4;
+    public const string TARGET_NAME = "x86-64-kernel-wvb-admission-v4";
     public const string BRIDGE_SYMBOL = "Windvale_kernel_x64_wvb_admission";
     public const string ADMISSION_SYMBOL = "Windvale_kernel_wvb_admit";
     public const string EMBEDDED_MAIN_SYMBOL = "Windvale_kernel_embedded_main";
     public const string NATIVE_MAIN_SYMBOL = "Main";
     public const int ADMISSION_TOKEN = 73;
-    public const int EXPECTED_RESULT = 29;
-    public const uint EXACT_INSTRUCTION_BUDGET = 24_256;
+    public const int EXPECTED_RESULT = 6;
+    public const uint EXACT_INSTRUCTION_BUDGET = 39_712;
     public const uint EXACT_CALL_DEPTH_BUDGET = 2;
 }
 
@@ -31,7 +31,7 @@ public sealed record Kernelˉwvbˉadmissionˉartifacts(
 
 public static class Kernelˉwvbˉadmission
 {
-    private const string EMBEDDED_RESOURCE_NAME = "Windvale.Os.Examples.Sum-Data.wv";
+    private const string EMBEDDED_RESOURCE_NAME = "Windvale.Os.Tests.Source-Wvb-Function-Only.wv";
     private const string ADMISSION_RESOURCE_NAME = "Windvale.Os.Kernel.Wvb-Admission.wv";
     private const string EMBEDDED_DATA_PREFIX = "data Embeddedˉmodule: bytes = [";
     private const string FAILURE_LABEL = "wvb_admission_failure";
@@ -42,7 +42,7 @@ public static class Kernelˉwvbˉadmission
     {
         var Embeddedˉcompilation = Seedˉcompiler.Compile(
             Loadˉsource(EMBEDDED_RESOURCE_NAME),
-            "Sum-Data.wv");
+            "Function-Only.wv");
         if (!Embeddedˉcompilation.Success)
         {
             throw new InvalidOperationException(
@@ -54,11 +54,11 @@ public static class Kernelˉwvbˉadmission
         var Embeddedˉidentity = Convert.ToHexString(
             SHA256.HashData(Embeddedˉcompilation.Moduleˉbytes.AsSpan()));
         if (!Embeddedˉidentity.Equals(
-                "6F3A272D37DD8893995C7F85C236414ED2864BF59DE2F3775C08AFD426013F8C",
+                "9CCFED0509E84BFC63979C6DC13170C14762EFBDAA448B4C5894325F31AA7761",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
-                $"The embedded Sum-Data WVB has an unexpected identity: {Embeddedˉidentity}.");
+                $"The embedded function-only WVB has an unexpected identity: {Embeddedˉidentity}.");
         }
 
         var Admissionˉsource = Loadˉsource(ADMISSION_RESOURCE_NAME);
@@ -67,7 +67,7 @@ public static class Kernelˉwvbˉadmission
                 Injectˉembeddedˉmodule(Admissionˉsource, Embeddedˉcompilation.Moduleˉbytes)))
         {
             throw new InvalidOperationException(
-                "Wvb-Admission.wv does not embed the exact canonical WVB produced from Sum-Data.wv.");
+                "Wvb-Admission.wv does not embed the exact canonical WVB produced from Function-Only.wv.");
         }
 
         var Admissionˉmoduleˉbytes = Compileˉadmissionˉmodule(Admissionˉsource);
@@ -120,11 +120,11 @@ public static class Kernelˉwvbˉadmission
     {
         if (module.Module is not
             {
-                Name: "Sumˉdata",
+                Name: "Sourceˉwvbˉfixture",
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
-                Data.Length: 1,
-                Functions.Length: 2,
+                Data.Length: 0,
+                Functions.Length: 4,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||
@@ -141,18 +141,33 @@ public static class Kernelˉwvbˉadmission
                 Name: "Main",
                 Parameterˉtypes.Length: 0,
                 Returnˉtype.Kind: Valueˉtype.I32,
-                Localˉtypes.Length: 15,
+                Localˉtypes.Length: 19,
                 Maximumˉstackˉdepth: 2,
             } ||
-            module.Module.Data[0] is not I32ˉarrayˉdataˉdeclaration
+            module.Functions[2].Declaration is not
             {
-                Name: "Values",
-                Values: [3, 5, 8, 13],
+                Name: "Probe",
+                Parameterˉtypes.Length: 2,
+                Returnˉtype.Kind: Valueˉtype.Bool,
+                Localˉtypes.Length: 7,
+                Maximumˉstackˉdepth: 2,
+            } ||
+            module.Functions[3].Declaration is not
+            {
+                Name: "Select",
+                Parameterˉtypes.Length: 1,
+                Returnˉtype.Kind: Valueˉtype.I32,
+                Localˉtypes.Length: 5,
+                Maximumˉstackˉdepth: 2,
             } ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
-                Instruction.Opcode is not Opcode.Dataˉlength) ||
+                Instruction.Opcode is not Opcode.U32ˉless) ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
-                Instruction.Opcode is not Opcode.Dataˉloadˉi32) ||
+                Instruction.Opcode is not Opcode.U8ˉequal) ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.Boolˉnot) ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.I32ˉgreaterˉequal) ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
                 Instruction.Opcode is not Opcode.Call) ||
             module.Functions[1].Instructions[^1].Opcode is not Opcode.Return)
