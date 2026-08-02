@@ -1,6 +1,6 @@
 # Decision 0096: First Windvale init-owned boot-resource grant
 
-- Status: Candidate
+- Status: Qualified
 - Date: 2026-08-02
 - Owners: Windvale compiler/runtime and operating-system boundaries
 - Contracts: [Interpreter profile 4](../../Specifications/Windvale-Os-Bytecode-Interpreter.md), [protected process version 6](../../Specifications/Windvale-Protected-Process.md), kernel memory version 5, kernel paging version 3, ABI 16/context 7/service table 5, and firmware probe 27
@@ -25,11 +25,13 @@ The next coherent slice must move one real decision without pretending to implem
 - Require the coordinator to observe init blocked after exactly the grant and receive calls, validate the borrowed resource record and client publication before entering process `2`, then preserve the existing result-send, wake, exit, and contained-fault sequences.
 - Emit `resource-grant=pass` only after the machine path proves the exact state transition. The marker is evidence, not the implementation.
 
-## Candidate evidence
+## Qualification evidence
 
-The focused Windows OS suite passes 25 of 25 tests. It proves deterministic policy, init, interpreter, paging, process-machine, and firmware artifacts; absence of the admitted WVB from both user executables; absent client mapping and zero context pointers before the grant; byte-identical repeated grant planning; the complete `WVRES001` record; exactly one RO/NX alias; exact post-grant service and `WVBR` publication; one-shot rejection; malformed owner, target, leaf, resource, and digest rejection; and all earlier isolation and contained-fault invariants.
+Exact implementation commit `4701200e707786f04d4462bb75a1664cd5ed13cc` is cross-host qualified by GitHub [Verify run 30739172682](https://github.com/eworker-inc/Windvale/actions/runs/30739172682). Windows and digest-pinned Debian 12 build with zero warnings and errors, pass all 67 Seed tests and all 25 OS tests, and complete the repository's non-Fast verifier. The Seed suites take 236.791 seconds on Windows and 190.185 seconds on Linux.
 
-Important candidate artifacts are:
+The focused Windows OS suite also passes 25 of 25 tests. It proves deterministic policy, init, interpreter, paging, process-machine, and firmware artifacts; absence of the admitted WVB from both user executables; absent client mapping and zero context pointers before the grant; byte-identical repeated grant planning; the complete `WVRES001` record; exactly one RO/NX alias; exact post-grant service and `WVBR` publication; one-shot rejection; malformed owner, target, leaf, resource, and digest rejection; and all earlier isolation and contained-fault invariants.
+
+Important qualified artifacts are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -44,7 +46,7 @@ Important candidate artifacts are:
 | Fault process-machine WVO | 137,839 | `c227055913f085d118996e05bde910e37fc5c4af1ef887c2bf91f029a4ca4dc4` |
 | Fault process-machine code | 6,973 | `85a966450e3568db149984fb2f290596d8291ab1b572cccaae7cfdcc7edb94c3` |
 
-All four pinned Windows QEMU scenarios pass. Normal is 224,768 bytes with SHA-256 `709ebd7f643f2f9d9c7cf4eb4042977c675a3ff19d7a34da4d7e26e0526a29b7` and host code `0`; invalid opcode is 224,768 bytes with `a89e66da871fcf46637ce4d91463268b2c8cce4309d12953eb7c7b464f57178f` and code `3`; general protection is 224,768 bytes with `ab10c10cc0af01ebe5603033d2f35bce86660b23953c33ff6012ad7cee83a1c5` and code `3`; contained user fault is 225,280 bytes with `b5e726b51f26f48cc9948095bfce4eabaf0b3bc90b89a6c3b3650325adfb05bb` and code `0`. Normal and contained-fault paths complete the real init grant, CPL3 resource read, interpretation to `29`, result transfer, and shutdown. Cross-host qualification is not yet claimed.
+All four pinned Windows QEMU scenarios pass. Normal is 224,768 bytes with SHA-256 `709ebd7f643f2f9d9c7cf4eb4042977c675a3ff19d7a34da4d7e26e0526a29b7` and host code `0`; invalid opcode is 224,768 bytes with `a89e66da871fcf46637ce4d91463268b2c8cce4309d12953eb7c7b464f57178f` and code `3`; general protection is 224,768 bytes with `ab10c10cc0af01ebe5603033d2f35bce86660b23953c33ff6012ad7cee83a1c5` and code `3`; contained user fault is 225,280 bytes with `b5e726b51f26f48cc9948095bfce4eabaf0b3bc90b89a6c3b3650325adfb05bb` and code `0`. Normal and contained-fault paths complete the real init grant, CPL3 resource read, interpretation to `29`, result transfer, and shutdown. QEMU remains Windows-only evidence; the portable build, Seed, and OS suites carry the cross-host claim.
 
 ## Consequences
 
