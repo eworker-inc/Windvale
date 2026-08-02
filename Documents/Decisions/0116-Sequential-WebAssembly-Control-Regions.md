@@ -1,8 +1,8 @@
-# Decision 0114: Sequential WebAssembly control regions
+# Decision 0116: Sequential WebAssembly control regions
 
 - Date: 2026-08-02
-- Status: Implemented with local Windows engine, repository, and Chromium browser evidence; cross-host qualification pending
-- Extends: [Decision 0112](0112-Metered-WebAssembly-Control-Flow.md)
+- Status: Cross-host qualified; local Chromium browser evidence retained; cross-browser qualification pending
+- Extends: [Decision 0113](0113-Metered-WebAssembly-Control-Flow.md)
 - Target: `wasm32-browser-v1-experimental`
 
 ## Context
@@ -27,7 +27,7 @@ The backend can now lower multiple useful control statements in one function wit
 
 Profile 5 does not accept nested control flow. It also does not add calls, parameters, recursion, arrays, memory, text, capabilities, `break`, or `continue`. The Stage 0 compiler, mandatory WVB verifier, and hosted execution of the `.wv` lowerer remain part of artifact production.
 
-## Initial evidence
+## Qualification evidence
 
 The retained mixed-control source compiles to 566-byte WVB SHA-256 `28eeed9d8f77f87f2c69399be05a1e6f3cb53b813ed949d7d2fde65a83dac50f`. Its deterministic 1,923-byte Wasm SHA-256 is `454e8af4f739ede63e0b2d55b8907f6075fec1495a4123df53ef5ebcf3ea2c4b`. The reference runtime and Node.js agree on `0/42/184` at budget 184 and `3011/0/183` at budget 183; a repeated success run resets and reproduces the same tuple.
 
@@ -35,7 +35,9 @@ The false-route fixture produces 544-byte WVB SHA-256 `37dcab42a4bdff5c4f89a2252
 
 The independent C# decoder reconstructs every inline meter and selected WebAssembly block, loop, `if`, `else`, branch, scalar operation, and join from verified WVB. It also corrupts the `else` join and creates overlapping, crossing, and nested regions to require `Unsupportedˉcode` with zero output publication. The Node.js engine verifier retains every prior artifact identity and executes all three profile-5 modules. The standalone-page verifier reconstructs and executes the embedded mixed-control module without a .NET asset.
 
-The local Chromium-based in-app browser loads the updated .NET-free page and executes fresh workers at both retained budgets. It reports the exact profile-5 SHA-256, ABI `2`, tuples `0/42/184` and `3011/0/183`, and zero .NET/Blazor resource requests. This is local evidence from one browser-engine family, not cross-browser or cross-host qualification.
+The local Chromium-based in-app browser loads the updated .NET-free page and executes fresh workers at both retained budgets. It reports the exact profile-5 SHA-256, ABI `2`, tuples `0/42/184` and `3011/0/183`, and zero .NET/Blazor resource requests. This is local evidence from one browser-engine family, not cross-browser qualification.
+
+Exact implementation commit `87cb0a3c83441d34c8307243df5dee4ffb220417` passes GitHub [Verify run 30772366223](https://github.com/eworker-inc/Windvale/actions/runs/30772366223). Windows and digest-pinned Debian 12 each pass zero-warning Release builds, all 70 Seed tests, all 25 OS tests, and the complete native CLI qualification gate. The WebAssembly case takes 1.849 seconds on Windows and 1.305 seconds on Linux; the complete Seed suites take 226.744 and 199.612 seconds respectively. This qualifies the deterministic profile-5 backend, fixtures, and exact execution contracts across both hosts. GitHub [Deploy homepage run 30772366229](https://github.com/eworker-inc/Windvale/actions/runs/30772366229) independently reconstructs and executes the embedded artifact before publishing the standalone route successfully.
 
 ## Rejected alternatives
 

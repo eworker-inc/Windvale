@@ -1,6 +1,6 @@
 # Windvale experimental WebAssembly target
 
-- Status: Implemented experimental profiles 1 through 5; profile 4 cross-host qualified and profile 5 locally qualified, but not an accepted permanent target
+- Status: Implemented and cross-host qualified through experimental profile 5, but not an accepted permanent target
 - Target identifier: `wasm32-browser-v1-experimental`
 - WebAssembly binary version: 1
 - Portable input identity: canonical WVB 1.6
@@ -219,7 +219,7 @@ Exact commit `a2285f5a0c09598ec701691bdbf0af9080e8cf0c` establishes Windows and 
 
 The exact implementation commit also passed GitHub [Deploy homepage run 30770158921](https://github.com/eworker-inc/Windvale/actions/runs/30770158921): the deployment lane independently reconstructed and executed the embedded artifact before successfully publishing the static playground content.
 
-[Decision 0114](../Documents/Decisions/0114-Sequential-WebAssembly-Control-Regions.md) advances the selector and .NET-free page to profile 5. On 2026-08-02, a Chromium-based in-app browser validated and executed the pinned 1,923-byte mixed-control module in fresh workers: budget 184 reported `0/42/184`, budget 183 reported `3011/0/183`, and the page recorded zero .NET/Blazor requests. Cross-host and cross-browser profile-5 qualification remain separate gates.
+[Decision 0116](../Documents/Decisions/0116-Sequential-WebAssembly-Control-Regions.md) advances the selector and .NET-free page to profile 5. On 2026-08-02, a Chromium-based in-app browser validated and executed the pinned 1,923-byte mixed-control module in fresh workers: budget 184 reported `0/42/184`, budget 183 reported `3011/0/183`, and the page recorded zero .NET/Blazor requests. Exact implementation commit `87cb0a3c83441d34c8307243df5dee4ffb220417` passes GitHub [Verify run 30772366223](https://github.com/eworker-inc/Windvale/actions/runs/30772366223): Windows and digest-pinned Debian 12 each pass zero-warning builds, all 70 Seed tests, all 25 OS tests, and the complete native CLI gate. [Deploy homepage run 30772366229](https://github.com/eworker-inc/Windvale/actions/runs/30772366229) independently verifies and publishes the embedded artifact. Profile 5 is therefore cross-host qualified; cross-browser qualification remains open.
 
 ## Non-claims
 
