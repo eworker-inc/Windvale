@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Kernel memory version 2 is retained by the current probe-23 candidate. It retains version 1's deterministic ownership, copied handoff, two-page kernel stack, and allocate-only page ABI while enlarging the single arena from 16 to 32 pages so two protected processes can own distinct page-table roots and user pages. It uses the `WVKMEM02` identity; version-1 bytes are not accepted under the larger bounds.
+Kernel memory version 2 is retained by candidate probes 23 and 24. It retains version 1's deterministic ownership, copied handoff, two-page kernel stack, and allocate-only page ABI while enlarging the single arena from 16 to 32 pages so two protected processes can own distinct page-table roots and user pages. It uses the `WVKMEM02` identity; version-1 bytes are not accepted under the larger bounds.
 
-[Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the qualified version-1 foundation. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its process-driven expansion. Probe 21 remains the latest cross-host-qualified version-1 composition; version 2 has focused Windows and pinned-QEMU evidence with cross-host qualification pending.
+[Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the qualified version-1 foundation. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its process-driven expansion. Version 2 has focused Windows/QEMU and cross-host build evidence; Linux OS-test execution remains pending. Candidate [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) retains the format while consuming its last free pages.
 
 This is still one bounded boot arena, not a general physical-memory manager. It is large enough for copied state, the kernel stack, exception table, kernel page tables, and two protected processes while keeping all allocation deterministic and visibly finite.
 
@@ -45,17 +45,16 @@ The fixed version-2 layout is:
 
 The complete arena is zeroed before state publication. Stack top is `arena + 0x3000`, aligned to 16 bytes. The memory adapter preserves the loader stack, switches to the kernel stack, and restores the loader stack only to return bounded probe evidence.
 
-Probe 23 consumes the free extent in this exact order:
+Probe 24 consumes the free extent in this exact order:
 
 | Pages | Owner |
 | --- | --- |
 | `3` | Kernel IDT page |
 | `4..9` | Six-page kernel paging hierarchy |
 | `10..16` | Seven-page init-service extent |
-| `17..23` | Seven-page admitted-client extent |
-| `24..31` | Eight pages retained free |
+| `17..31` | Fifteen-page interpreter-process extent |
 
-Each process extent contains four table pages followed by user code, stack, and data as specified by [protected process version 2](Windvale-Protected-Process.md).
+The init extent contains four table pages, one RX page, one stack page, and one data page. The interpreter extent contains four table pages, eight RX pages, two stack pages, and one data page as specified by [protected process version 3](Windvale-Protected-Process.md). No allocator pages remain after the fixed boot proof; another process or runtime extent requires a new arena or reclamation decision.
 
 ## Memory-state record
 
@@ -73,9 +72,9 @@ The first page begins with this 64-byte little-endian header:
 | `0x30` | 8 | Handoff-copy address | `arena + 64` |
 | `0x38` | 8 | First allocation address | Zero until the IDT allocation succeeds |
 
-The exact 48-byte `WVKHAND1` record is copied to `arena + 64`. Its map pointer remains valid but borrowed. The kernel paging version-2 record is published at state-page offset `0x80`, and the protected-process version-1 record at offset `0x100`. Private process descriptor state begins at offset `0x200`; all of it remains kernel-only.
+The exact 48-byte `WVKHAND1` record is copied to `arena + 64`. Its map pointer remains valid but borrowed. The kernel paging version-2 record is published at state-page offset `0x80`; process-version-3 records live at offsets `0x100` and `0x300`; private GDT/TSS state begins at `0x200`; and the channel record begins at `0x400`. All remain kernel-only.
 
-After the three required allocations, the live allocator cursor is page `17` with `15` pages free. The first-allocation field continues to identify only page 3, the IDT page.
+After the four required allocations, the live allocator cursor is page `32` with zero pages free. The first-allocation field continues to identify only page 3, the IDT page.
 
 ## Allocate-only page ABI
 
@@ -88,7 +87,7 @@ The memory object exports ASCII symbol `Windvale_kernel_allocate_pages`:
 - Allocation is contiguous, monotonically increasing, and deterministic.
 - Version 2 provides no release operation and no allocation outside its arena.
 
-The object also exports `Windvale_kernel_memory_enter`. It validates and copies the handoff, initializes the arena, records the IDT allocation, switches stacks, installs exceptions, installs kernel paging, and reaches the WVB-admission/process chain. Only successful in-guest admission, process-policy token 92, client send/terminal state, init wake/exit 29, and the retained portable native result can reach compiler export `Windvale_kernel_main`. The explicit kernel-fault scenarios still execute after Main and remain terminal.
+The object also exports `Windvale_kernel_memory_enter`. It validates and copies the handoff, initializes the arena, records the IDT allocation, switches stacks, installs exceptions, installs kernel paging, and reaches the WVB-admission/process chain. Only successful in-guest admission, process-policy token 93, interpreted program result 29, interpreter send/terminal state, init wake/exit 29, and the retained portable native result can reach compiler export `Windvale_kernel_main`. The explicit kernel-fault scenarios still execute after Main and remain terminal.
 
 ## Diagnostics
 
@@ -105,7 +104,7 @@ Malformed and random bytes must produce a bounded result or one of these failure
 
 ## Current evidence and limits
 
-Probe 23 requires this normal-path suffix after firmware exit:
+Probe 24 requires this normal-path suffix after firmware exit:
 
 ```text
 memory-owned=pass
@@ -114,6 +113,7 @@ kernel-stack=pass
 paging=owned
 wvb-admission=pass
 processes=isolated
+wvb-runtime=interpreted
 init-service=pass
 ipc=cross-process
 Hello from Windvale
@@ -127,4 +127,4 @@ shutdown=poweroff
 
 The user-fault scenario adds `user-fault=contained` after source success. The invalid-opcode and general-protection kernel scenarios retain their exact terminal panic contracts and QEMU host code 3. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records current candidate artifact identities and live evidence; Decision 0052 and qualified Decisions 0088/0090 retain the historical version-1 evidence.
 
-Version 2 does not claim all physical memory, reclamation of loader ranges, page release, runtime allocation policy, general process creation, process teardown, a general virtual-memory manager, general interrupts, multiple CPUs, or graphical output. The added pages are a measured bound for two fixed protected processes, not a promise to keep extending one static arena.
+Version 2 does not claim all physical memory, reclamation of loader ranges, page release, runtime allocation policy, general process creation, process teardown, a general virtual-memory manager, general interrupts, multiple CPUs, or graphical output. Candidate probe 24 deliberately exhausts the fixed arena, making allocator growth or reclamation a required explicit decision rather than permitting another silent static extension.

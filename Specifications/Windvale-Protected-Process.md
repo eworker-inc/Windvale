@@ -1,72 +1,81 @@
-# Protected Windvale processes and first init service
+# Protected Windvale processes and first bytecode runtime
 
 ## Status and purpose
 
-Protected-process contract version 2 defines Windvale OS's first two protection domains and first user-space init/resource service. Firmware probe 23 runs a receive-only Windvale service and a send-only admitted client under separate CPL3 page-table roots, transfers one kernel-owned register message, wakes the blocked service, and completes after both domains become terminal. [Decision 0092](../Documents/Decisions/0092-First-Windvale-Init-Resource-Service.md) owns version 2; [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) remains the historical version-1 proof.
+Protected-process contract version 3 defines Windvale OS's first user-space bytecode-runtime process. Firmware probe 24 keeps the receive-only Windvale init/resource service from version 2, but process `2` now runs an AOT-built Windvale interpreter that decodes and executes the exact admitted WVB at CPL3. The admitted program's host-built AOT derivative is no longer the client computation.
 
-Focused Windows and pinned-QEMU evidence pass. Cross-host qualification is pending, so probe 21 remains the latest cross-host-qualified firmware baseline.
+[Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) owns version 3. [Decision 0092](../Documents/Decisions/0092-First-Windvale-Init-Resource-Service.md) remains the version-2 proof; exact commit `22e350b8965bbe70452261dabfc411d28cf7a1d5` passes Windows/Linux build and Seed qualification, while Linux OS-test execution remains pending.
 
-This contract is an internal experiment, not a stable public syscall ABI or a general process manager. It proves the smallest coherent service, blocking, wake-up, rights-reduction, and inter-process IPC path while deliberately deferring a general scheduler, loader, resource namespace, and capability lifecycle.
+Focused Windows tests and all four pinned-QEMU scenarios pass for version 3. Cross-host qualification of probe 24 is pending. This is an internal experiment, not a stable public syscall ABI, general process manager, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
-- [`Process-Foundation.wv`](../Operating-System/Kernel/Process-Foundation.wv) is the immutable Windvale policy oracle. It binds both WVB identities, the two roles and identities, fixed budgets, reduced endpoint rights, capacity-one channel, wait/wake sequence, and policy token `92`.
-- [`Init-Resource-Service.wv`](../Operating-System/Kernel/Init-Resource-Service.wv) is the first user-space Windvale service. It owns one fixed immutable resource and returns exact value `29` after its WVA entry receives the client's request.
-- [`Init-Resource-Service-Shim.wva`](../Operating-System/Kernel/Init-Resource-Service-Shim.wva) owns receive, Windvale-service invocation, and exit. The existing client shims own admitted-program invocation, send, and either exit or deliberate CPL3 `CLI`.
-- [`X64-Kernel-Shims.wva`](../Operating-System/Kernel/X64-Kernel-Shims.wva) owns the `SYSCALL` instruction and normalized vector-6, vector-13, and vector-14 entry bytes.
-- The Stage 0 planner and x64 process object temporarily own page-table and descriptor writes, GDT/TSS/IDT publication, MSR setup, process-record mutation, the syscall dispatcher, and the fixed coordinator. These are named replacement seams for system-profile Windvale state/validation and WVA machine mechanics.
+- [`Process-Foundation.wv`](../Operating-System/Kernel/Process-Foundation.wv) binds the interpreter, admitted-program, and init-service identities; fixed roles and budgets; reduced endpoints; wait/wake sequence; and policy token `93`.
+- [`Bytecode-Interpreter.wv`](../Operating-System/Runtime/Bytecode-Interpreter.wv) is portable Windvale source. Its AOT derivative is the client process image; at runtime it interprets the embedded admitted WVB rather than calling the program's AOT derivative.
+- [`Init-Resource-Service.wv`](../Operating-System/Kernel/Init-Resource-Service.wv) remains the receive-side user service and returns exact value `29` after its WVA entry receives the client's request.
+- The service and client WVA shims own fixed syscall entry and exit mechanics. The client shim calls the Windvale interpreter export, sends its result, and exits or takes the selected CPL3 `CLI` fault.
+- The Stage 0 planner and x64 process object temporarily own page-table and descriptor writes, record mutation, syscall dispatch, and fixed coordination. These remain named replacement seams for system-profile Windvale policy and WVA machine mechanics.
 
-The service and client computations are ordinary Windvale source compiled through canonical WVB and the shared ABI-16 native backend. C# does not define their source semantics.
+C# builds and independently checks the images, but it does not define the interpreter's source semantics or execute the admitted program in the guest.
 
 ## Fixed identities, roles, and budgets
 
-Version 2 admits exactly these canonical WVB identities:
+Version 3 binds three canonical WVB identities:
 
-| Role | Process/thread | WVB SHA-256 | Endpoint right |
+| Identity | Process/thread | WVB SHA-256 | Endpoint right |
 | --- | --- | --- | ---: |
 | Init/resource service | `1` / `1` | `478dfcd36fed7c8063cfb3f53a6a1362bda5353656339b730be573a1be8f95b0` | receive, value `2` |
-| Admitted client | `2` / `2` | `7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2` | send, value `1` |
+| Bytecode interpreter | `2` / `2` | `639e191af1844b6660750978854f5e168c25f4949f1d9282ca5777d65f617083` | send, value `1` |
+| Interpreter input | owned by process `2` | `7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2` | none |
 
-Each process has three user pages, native instruction budget `64`, native call-depth budget `1`, one capability handle, two system calls, and expected terminal result `29`. Both endpoint records use slot `0`, generation `1`, experimental reference `65536`, and channel capacity `1`. Neither process receives the combined rights value `3`.
+The init process has three user pages, instruction budget `64`, call-depth budget `1`, and one stack page. The interpreter has eleven user pages, instruction budget `567`, call-depth budget `2`, eight RX code pages, two RW/NX stack pages, and one RW/NX context page. Both have one capability handle, two system calls, expected terminal result `29`, slot `0`, generation `1`, reference `65536`, and channel capacity `1`.
 
-Policy WVB must return token `92` before the channel, process records, page tables, descriptors, or MSRs are published. Any changed identity, token, role, budget, or endpoint right fails before CPL3 entry.
+The measured AOT interpreter frame did not fit safely on one 4 KiB stack page. Version 3 therefore records and maps two contiguous NX stack pages for that role. This consumes the remaining fixed arena capacity and is an explicit bound, not an expandable allocator policy.
+
+Policy WVB must return token `93` before channel, process, paging, descriptor, or MSR state is published. A changed interpreter or program identity, role, budget, stack extent, or endpoint right fails before CPL3 entry.
 
 ## Separate address spaces
 
-The allocator requests two independent seven-page, zeroed extents below 1 GiB. Each extent fits wholly within one 2 MiB page-table region:
+Init receives a seven-page zeroed extent:
 
 | Relative page | Purpose | Process access |
 | ---: | --- | --- |
-| `0` | PML4 root | None |
-| `1` | PDPT | None |
-| `2` | Page directory | None |
-| `3` | One 2 MiB-region page table | None |
-| `4` | Role-specific linked image | user read/execute; not writable |
-| `5` | Initial user stack | user read/write; NX |
-| `6` | ABI-16 execution context/data | user read/write; NX |
+| `0..3` | Private paging hierarchy | None |
+| `4` | Linked init-service image | user RX |
+| `5` | Stack | user RW/NX |
+| `6` | ABI-16 context/data | user RW/NX |
 
-Kernel hierarchy entries remain supervisor-only. User permission is added only along each process's required hierarchy path and exactly three leaf pages. The code page is RX; stack and context are RW/NX; page zero remains absent. No present leaf may be writable and executable. The service and client roots and images must be distinct.
+The interpreter receives a fifteen-page zeroed extent:
+
+| Relative page | Purpose | Process access |
+| ---: | --- | --- |
+| `0..3` | Private paging hierarchy | None |
+| `4..11` | Linked interpreter image | user RX |
+| `12..13` | Down-growing stack | user RW/NX |
+| `14` | ABI-16 context/data | user RW/NX |
+
+Only the required hierarchy path and leaves gain user permission. Kernel mappings remain supervisor-only, page zero remains absent, and no present leaf is writable and executable. Initial user `RSP` is the exclusive end of the complete role-specific stack extent.
 
 ## Process records
 
-The kernel memory-state page stores 256-byte little-endian `WVPROC02` records at offset `0x100` for init and `0x300` for the client. Each record has this version-2 layout:
+The memory-state page stores 256-byte little-endian `WVPROC03` records at offset `0x100` for init and `0x300` for the interpreter. Version 3 uses this layout:
 
 | Offset | Bytes | Field |
 | ---: | ---: | --- |
-| `0x00` | 8 | ASCII magic `WVPROC02` |
-| `0x08` | 4 | Version `2` |
+| `0x00` | 8 | ASCII magic `WVPROC03` |
+| `0x08` | 4 | Version `3` |
 | `0x0C` | 4 | Record bytes `256` |
 | `0x10` | 4 | Process state |
 | `0x14` | 4 | Thread state |
 | `0x18` | 4 | Process identifier |
 | `0x1C` | 4 | Thread identifier |
-| `0x20` | 32 | Exact role-specific WVB SHA-256 |
+| `0x20` | 32 | Role module SHA-256: service or interpreter WVB |
 | `0x40` | 8 | Page-table root |
 | `0x48` | 8 | User code address |
-| `0x50` | 8 | User stack address |
+| `0x50` | 8 | Lowest user stack address |
 | `0x58` | 8 | User context/data address |
-| `0x60` | 4 | User-page budget `3` |
-| `0x64` | 4 | Instruction budget `64` |
+| `0x60` | 4 | User-page budget: init `3`, interpreter `11` |
+| `0x64` | 4 | Instruction budget: init `64`, interpreter `567` |
 | `0x68` | 4 | Handle budget `1` |
 | `0x6C` | 4 | System-call budget `2` |
 | `0x70` | 4 | Capability slot `0` |
@@ -79,88 +88,66 @@ The kernel memory-state page stores 256-byte little-endian `WVPROC02` records at
 | `0x98` | 8 | Saved user `RIP` from `RCX` |
 | `0xA0` | 8 | Saved user flags from `R11` |
 | `0xA8` | 4 | System-call count |
-| `0xAC` | 8 | Reserved, zero |
+| `0xAC` | 4 | Stack-page count: init `1`, interpreter `2` |
+| `0xB0` | 4 | Reserved, zero |
 | `0xB4` | 4 | Result |
 | `0xB8` | 4 | Fault vector |
 | `0xBC` | 4 | Fault error |
 | `0xC0` | 8 | Kernel-owned shared-channel address |
-| `0xC8` | 4 | Role: init `1`, client `2` |
+| `0xC8` | 4 | Role: init `1`, interpreter `2` |
 | `0xCC` | 4 | Wait reason: none `0`, channel receive `1` |
 | `0xD0` | 8 | Saved user native-context pointer from `RDX` |
-| `0xD8..0xFF` | 40 | Reserved, zero |
+| `0xD8` | 32 | Runtime-input WVB SHA-256; zero for init |
+| `0xF8` | 4 | RX code-page count: init `1`, interpreter `8` |
+| `0xFC` | 4 | Runtime kind: AOT service `1`, bytecode interpreter `2` |
 
-Process states are `1` ready, `2` running, `3` exited, and `4` faulted. Thread states add `5` waiting. A blocked receive leaves the init process running while its sole thread waits. Saving and restoring `RDX` is required because ABI-16 uses it for the native execution-context pointer across the block/wake boundary.
+Process states are ready `1`, running `2`, exited `3`, and faulted `4`; thread states add waiting `5`. Saving and restoring `RDX` remains required because ABI 16 uses it for the execution-context pointer.
 
-## Kernel-owned channel
+## Channel and execution sequence
 
-One 64-byte little-endian `WVCHAN01` record lives at memory-state offset `0x400`:
+The version-1 `WVCHAN01` capacity-one record and experimental register ABI are unchanged: `EBX` selects send `1`, receive `2`, or exit `3`; `ESI` carries the capability reference; and `EAX` carries the message or result.
 
-| Offset | Bytes | Field |
-| ---: | ---: | --- |
-| `0x00` | 8 | ASCII magic `WVCHAN01` |
-| `0x08` | 4 | Version `1` |
-| `0x0C` | 4 | Record bytes `64` |
-| `0x10` | 4 | State: empty `0`, full `1` |
-| `0x14` | 4 | One `i32` message |
-| `0x18` | 4 | Sender process |
-| `0x1C` | 4 | Receiver process |
-| `0x20` | 4 | Send count |
-| `0x24` | 4 | Receive count |
-| `0x28` | 4 | Waiting receiver process |
-| `0x2C` | 4 | Wake count |
-| `0x30` | 4 | Capacity `1` |
-| `0x34..0x3F` | 12 | Reserved, zero |
+The accepted normal sequence is:
 
-The record is supervisor-only and is not mapped as a user capability payload. A capability reference authorizes an operation; it is not a pointer to the channel.
+1. Init enters CPL3, attempts receive, records waiter `1`, and returns to the fixed coordinator with its thread waiting.
+2. The interpreter process enters CPL3. Its AOT Windvale implementation checks and interprets the embedded admitted WVB subset, producing `29`.
+3. The client shim sends `29` through its send-only endpoint and exits `29`.
+4. The coordinator validates the interpreter's terminal state and runtime identities, reactivates init, consumes the message, restores its context, and resumes it with `EAX = 29`.
+5. The Windvale init service returns and exits `29`; both records and the exact send/receive/wake counts must be terminal and consistent.
 
-## Fixed coordinator and syscall sequence
-
-The experimental number/register assignment remains: `EBX` is operation (`1` send, `2` receive, `3` exit), `ESI` is capability reference, and `EAX` carries message/result. It remains internal and versioned.
-
-The only accepted normal sequence is:
-
-1. Activate the init root and enter its WVA shim at CPL3.
-2. Init calls receive on the empty channel. The dispatcher validates receive-only authority, records waiter `1`, increments init's syscall count, marks its thread waiting, and returns to the fixed kernel coordinator.
-3. Activate the client root. The admitted Windvale program returns `29`; the client sends `29` through its send-only endpoint, then exits `29`.
-4. Require the client terminal state, full channel, exact message, sender, waiter, and counts. Activate the init root, consume the message, record receiver and one wake, clear the waiter, restore init's saved user context including `RDX`, and resume after its receive with `EAX = 29`.
-5. The Windvale init/resource service returns `29` and exits. Require both terminal records, empty channel retaining message `29`, and exact send/receive/wake counts of one.
-
-The deliberate user-fault client sends `29` and then executes privileged `CLI` instead of exit. Exact vector 13/error 0 faults only the client; the coordinator still wakes init, which completes normally. Equivalent CPL0 faults remain terminal. Invalid syscall, capability, role, state, result, or budget marks the current domain faulted with failure result `1`.
-
-This is deterministic cooperative coordination, not round-robin scheduling or preemption.
+The user-fault image interprets and sends `29`, then executes privileged `CLI` instead of exit. Vector 13/error 0 faults only the interpreter process; init still wakes and completes. Equivalent CPL0 faults remain terminal.
 
 ## Planner diagnostics
 
 | Code | Meaning |
 | --- | --- |
-| `WVOS6001` | A seven-page extent is null, unaligned, incomplete, or outside low 1 GiB. |
+| `WVOS6001` | A role-specific extent is null, unaligned, incomplete, or outside low 1 GiB. |
 | `WVOS6002` | The extent crosses a 2 MiB page-table region. |
-| `WVOS6003` | The role-specific image is empty or exceeds one page. |
-| `WVOS6004` | The module identity is not one SHA-256 digest. |
+| `WVOS6003` | The role-specific image is empty or exceeds its bounded RX extent. |
+| `WVOS6004` | The role-module identity is not one SHA-256 digest. |
 | `WVOS6005` | The extent overlaps the retained kernel executable window. |
 | `WVOS6006` | Process/thread identity, role, reduced rights, or channel address is invalid. |
+| `WVOS6007` | Runtime-input identity is nonzero for init, zero for the interpreter, or not one digest. |
 
 ## Deterministic evidence
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Windvale process-policy WVB | 3,092 | `4b52c9d0d868c2eb058b419ef1fde8f38c4c7dc492640421f974b94ca6838b9f` |
-| Process-policy WVO | 27,130 | `b4c7178d687fbef7b0b32d911cc3c8e24d9760da68af2fc4b9cc5f51ad001767` |
-| Init-service WVB | 371 | `478dfcd36fed7c8063cfb3f53a6a1362bda5353656339b730be573a1be8f95b0` |
-| Init-service WVO | 2,374 | `a7beabde6cc429f2d4632e58cd8ff5134d61713ca1b103a83fee23d838687057` |
-| Init-service WVA object | 202 | `1300167e11cb4db5704499a6d9f76ffe803130c5a64355e33e231aeaeccf6066` |
-| Linked init-service image | 2,302 | `e3d1e13f3ea9d914c7d9ee5b624171cda549aecf9ecf38b77a06142ae74a586f` |
-| Normal client WVA object | 195 | `7cf803c818437e8f662ece3b69757b957f67a648900c0aa91822cca47c4aad17` |
-| Linked normal client image | 438 | `69aeb9946942b75d1af5890a7186c1026bc562bc8aa4e59e088d4ea93f784acc` |
-| Fault client WVA object | 183 | `90ce43c85a3791881e0780161928b2f7e9b415e9b1e860179a87ece48fe06c44` |
-| Linked fault client image | 438 | `1731dffafdec9ff3ca8ac056eb1298d80a029355b19dee036a2a3d31d37ae840` |
-| Normal process-machine WVO | 7,988 | `3607d66b7e633027062a9fbb963dbd1a2723c2f7ee77fab235443c7ddd266809` |
-| Normal process-machine code | 4,202 | `260ea2b5ee15376518f571d3302e7f90e777727a55ac77480484b9adaeb7d6ac` |
-| Fault process-machine WVO | 8,020 | `c735c4f8185312cef4cd1c1c77aebba2f39b096c7e4051d1367c4a94c7ef8d3e` |
-| Fault process-machine code | 4,234 | `915f79d3d18ac165351a3a7c8936b749f3559bb7b020391d97e825cb02bad0c4` |
+| Process-policy WVB | 3,512 | `af4f1865a65be48b6fbefbe8995b4638fe91f579616fcd32cd1d05b16d684330` |
+| Process-policy WVO | 30,142 | `333046213d54a098f16e6668ee875231f3a0ee87e55a34db567ff2b8ff650806` |
+| Interpreter WVB | 3,211 | `639e191af1844b6660750978854f5e168c25f4949f1d9282ca5777d65f617083` |
+| Interpreter WVO | 30,457 | `fbe3592e5459723c2b36330ec93659fb387de497b31fa59b8e629668297aaac6` |
+| Normal client WVA object | 205 | `6a22069adef6f9a4b58d1dda2bfe0c2b35e8563bb4e7e73641f050c2eeae058d` |
+| Fault client WVA object | 193 | `c57327ddf897fb32cc57dd1266c467283273eddafd8d4b78edfc43e59fc8eeee` |
+| Linked normal interpreter image | 30,270 | `72f81045c525f1ad055127f3bb7917dace22b0a3b35ff3b6fefec28b37a6058c` |
+| Linked fault interpreter image | 30,270 | `b24007c770c1ff9d0c8a05702a6b05ead8a9361f55b6394b34cc3202343622aa` |
+| Normal process-machine WVO | 38,332 | `44559a001988e503374c2b83bc8056d928e075381ca3cd93e155040a2f63fd10` |
+| Normal process-machine code | 4,714 | `75e9cd05b3093d50b5c38a7466ec36a8ba5369cec99e35d63eba584ca7310500` |
+| Fault process-machine WVO | 38,364 | `c8ed18169fe56bd44d1594e4e7ed4cf403e157c5f831b511640f0d5f28f003fc` |
+| Fault process-machine code | 4,746 | `d1093fa03967b58fbb1654bb96a40f4b6b8481218d521001ff933338673399d7` |
 
 All 25 focused OS tests and all four pinned-QEMU scenarios pass on Windows. Cross-host qualification remains pending.
 
 ## Deliberate limits
 
-Version 2 has no general scheduler, timer, preemption, process-creation API, arbitrary module loader, capability allocation/transfer/revocation/generation rollover, endpoint discovery, queue, larger message, user pointer, shared memory, namespace, resource enumeration, teardown, page reclamation, signal ABI, driver, filesystem, package service, network service, Hyper-V evidence, or physical-hardware evidence. The fixed service exposes one immutable value solely to prove the boundary. These omissions are reconsideration points, not hidden implementation claims.
+Version 3 does not provide a general scheduler, arbitrary module loading, generic WVB section decoding, complete semantic verification, dynamic boot resources, capability transfer/revocation, executable publication, JIT code generation, process creation, teardown, reclamation, larger IPC, shared memory, filesystems, packages, networking, Hyper-V, or physical-hardware evidence. The admitted WVB remains fixed and embedded in the interpreter image. These limits prevent the first runtime proof from being mistaken for the finished runtime architecture.

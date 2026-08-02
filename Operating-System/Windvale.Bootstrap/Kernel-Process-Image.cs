@@ -18,15 +18,21 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     ImmutableArray<byte> Initˉserviceˉshimˉobjectˉbytes,
     ImmutableArray<byte> Initˉserviceˉimageˉbytes,
     ImmutableArray<byte> Initˉserviceˉdigest,
+    ImmutableArray<byte> Interpreterˉmoduleˉbytes,
+    ImmutableArray<byte> Interpreterˉnativeˉobjectˉbytes,
+    ImmutableArray<byte> Interpreterˉdigest,
+    ImmutableArray<byte> Admittedˉprogramˉdigest,
     ImmutableArray<byte> Clientˉshimˉobjectˉbytes,
-    ImmutableArray<byte> Clientˉimageˉbytes,
-    ImmutableArray<byte> Clientˉdigest);
+    ImmutableArray<byte> Clientˉimageˉbytes);
 
 public static class Kernelˉprocessˉimage
 {
     private const string POLICY_RESOURCE = "Windvale.Os.Kernel.Process-Foundation.wv";
     private const string INIT_SERVICE_RESOURCE = "Windvale.Os.Kernel.Init-Resource-Service.wv";
     private const string INIT_SERVICE_SHIM_RESOURCE = "Windvale.Os.Kernel.Init-Resource-Service-Shim.wva";
+    private const string INTERPRETER_RESOURCE = "Windvale.Os.Runtime.Bytecode-Interpreter.wv";
+    private const string INTERPRETER_DATA_PREFIX = "data Admittedˉmodule: bytes = [";
+    private const int MAXIMUM_INTERPRETED_MODULE_BYTES = 4_096;
     private const string USER_RESOURCE = "Windvale.Os.Kernel.Process-User-Shim.wva";
     private const string USER_FAULT_RESOURCE = "Windvale.Os.Kernel.Process-User-Fault-Shim.wva";
 
@@ -64,13 +70,42 @@ public static class Kernelˉprocessˉimage
         var Serviceˉlink = Linkˉcompiler.Link(
             [new(Serviceˉassembly.Objectˉbytes), new(Serviceˉobject)],
             new(0, Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL));
-        Verifyˉlinkedˉimage(Serviceˉlink, "init/resource service");
+        Verifyˉlinkedˉimage(Serviceˉlink, "init/resource service", Kernelˉpagingˉcontract.PAGE_BYTES);
         var Serviceˉdigest = SHA256.HashData(Serviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         if (!Convert.ToHexString(Serviceˉdigest.AsSpan()).Equals(
                 "478DFCD36FED7C8063CFB3F53A6A1362BDA5353656339B730BE573A1BE8F95B0",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException("The init/resource service image has an unexpected WVB identity.");
+        }
+
+        var Interpreterˉsource = Loadˉsource(INTERPRETER_RESOURCE);
+        if (!StringComparer.Ordinal.Equals(
+                Interpreterˉsource,
+                Injectˉinterpreterˉmodule(Interpreterˉsource, admission.Embeddedˉmoduleˉbytes)))
+        {
+            throw new InvalidOperationException(
+                "Bytecode-Interpreter.wv does not embed the exact WVB admitted by the kernel policy.");
+        }
+        var Interpreterˉcompilation = Seedˉcompiler.Compile(
+            Interpreterˉsource, "Bytecode-Interpreter.wv");
+        if (!Interpreterˉcompilation.Success)
+        {
+            throw new InvalidOperationException(
+                $"The Windvale bytecode interpreter did not compile: {Interpreterˉcompilation.Diagnostics[0]}");
+        }
+        var Interpreterˉmodule = Moduleˉcodec.Readˉandˉverify(Interpreterˉcompilation.Moduleˉbytes.AsSpan());
+        Verifyˉinterpreter(Interpreterˉmodule, admission.Embeddedˉmoduleˉbytes);
+        var Interpreterˉnative = X64ˉnativeˉbackend.Compile(Interpreterˉmodule);
+        var Interpreterˉobject = Kernelˉwvbˉadmission.Renameˉmainˉexport(
+            Nativeˉobjectˉsink.Writeˉwvo(Interpreterˉnative.Fragment),
+            Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL);
+        var Interpreterˉdigest = SHA256.HashData(Interpreterˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
+        if (!Convert.ToHexString(Interpreterˉdigest.AsSpan()).Equals(
+                "639E191AF1844B6660750978854F5E168C25F4949F1D9282CA5777D65F617083",
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("The user-space interpreter has an unexpected WVB identity.");
         }
 
         var Policyˉcompilation = Seedˉcompiler.Compile(Loadˉsource(POLICY_RESOURCE), "Process-Foundation.wv");
@@ -96,15 +131,15 @@ public static class Kernelˉprocessˉimage
         Verifyˉshim(
             Userˉassembly.Objectˉbytes,
             Kernelˉprocessˉcontract.USER_ENTRY_SYMBOL,
-            Kernelˉwvbˉadmissionˉcontract.EMBEDDED_MAIN_SYMBOL,
+            Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL,
             userˉfault ? 1 : 2);
         var Userˉlink = Linkˉcompiler.Link(
-            [new(Userˉassembly.Objectˉbytes), new(admission.Embeddedˉnativeˉobjectˉbytes)],
+            [new(Userˉassembly.Objectˉbytes), new(Interpreterˉobject)],
             new(0, Kernelˉprocessˉcontract.USER_ENTRY_SYMBOL));
-        Verifyˉlinkedˉimage(Userˉlink, "client");
+        Verifyˉlinkedˉimage(Userˉlink, "bytecode-interpreter client", Kernelˉprocessˉcontract.CLIENT_CODE_BYTES);
 
-        var Clientˉdigest = SHA256.HashData(admission.Embeddedˉmoduleˉbytes.AsSpan()).ToImmutableArray();
-        if (!Convert.ToHexString(Clientˉdigest.AsSpan()).Equals(
+        var Admittedˉprogramˉdigest = SHA256.HashData(admission.Embeddedˉmoduleˉbytes.AsSpan()).ToImmutableArray();
+        if (!Convert.ToHexString(Admittedˉprogramˉdigest.AsSpan()).Equals(
                 "7F08EFBB20C6CC69C100F07407F759625B38C02A3F05BB4E8DABCC7BDD10C4E2",
                 StringComparison.Ordinal))
         {
@@ -118,9 +153,31 @@ public static class Kernelˉprocessˉimage
             Serviceˉassembly.Objectˉbytes,
             Serviceˉlink.Imageˉbytes,
             Serviceˉdigest,
+            Interpreterˉcompilation.Moduleˉbytes,
+            Interpreterˉobject,
+            Interpreterˉdigest,
+            Admittedˉprogramˉdigest,
             Userˉassembly.Objectˉbytes,
-            Userˉlink.Imageˉbytes,
-            Clientˉdigest);
+            Userˉlink.Imageˉbytes);
+    }
+
+    // Stage 0 test seam: change only the interpreter input while retaining the
+    // Windvale-owned bounded decoder and its deterministic failure results.
+    public static ImmutableArray<byte> Compileˉinterpreterˉmodule(ImmutableArray<byte> programˉbytes)
+    {
+        if (programˉbytes.IsDefault || programˉbytes.Length > MAXIMUM_INTERPRETED_MODULE_BYTES)
+        {
+            throw new ArgumentOutOfRangeException(nameof(programˉbytes));
+        }
+        var Compilation = Seedˉcompiler.Compile(
+            Injectˉinterpreterˉmodule(Loadˉsource(INTERPRETER_RESOURCE), programˉbytes),
+            "Bytecode-Interpreter.wv");
+        if (!Compilation.Success)
+        {
+            throw new InvalidOperationException(
+                $"The Windvale bytecode interpreter test module did not compile: {Compilation.Diagnostics[0]}");
+        }
+        return Compilation.Moduleˉbytes;
     }
 
     private static void Verifyˉpolicy(Verifiedˉmodule module)
@@ -130,7 +187,7 @@ public static class Kernelˉprocessˉimage
                 Name: "Processˉfoundation",
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
-                Data.Length: 4,
+                Data.Length: 6,
                 Functions.Length: 3,
                 Exports.Length: 1,
                 Types.Length: 0,
@@ -143,6 +200,34 @@ public static class Kernelˉprocessˉimage
         {
             throw new InvalidOperationException(
                 $"The Windvale process policy violated '{Kernelˉprocessˉcontract.TARGET_NAME}'.");
+        }
+    }
+
+    private static void Verifyˉinterpreter(
+        Verifiedˉmodule module,
+        ImmutableArray<byte> admittedˉmoduleˉbytes)
+    {
+        if (module.Module is not
+            {
+                Name: "Bytecodeˉinterpreter",
+                Profile: Moduleˉprofile.Portable,
+                Capabilities.Length: 0,
+                Data.Length: 1,
+                Functions.Length: 2,
+                Exports.Length: 1,
+                Types.Length: 0,
+            } ||
+            module.Module.Data[0] is not Bytesˉdataˉdeclaration Program ||
+            !Program.Values.AsSpan().SequenceEqual(admittedˉmoduleˉbytes.AsSpan()) ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.Bytesˉreadˉi32ˉlittle) ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.Branchˉfalse) ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.Call))
+        {
+            throw new InvalidOperationException(
+                $"The Windvale bytecode interpreter violated '{Kernelˉprocessˉcontract.TARGET_NAME}'.");
         }
     }
 
@@ -197,14 +282,14 @@ public static class Kernelˉprocessˉimage
         }
     }
 
-    private static void Verifyˉlinkedˉimage(Linkˉresult link, string role)
+    private static void Verifyˉlinkedˉimage(Linkˉresult link, string role, ulong maximumˉbytes)
     {
         if (!link.Success || link.Entryˉaddress != 0 || link.Imageˉbytes.Length == 0 ||
-            link.Imageˉbytes.Length > (int)Kernelˉpagingˉcontract.PAGE_BYTES)
+            (ulong)link.Imageˉbytes.Length > maximumˉbytes)
         {
             throw new InvalidOperationException(
                 link.Success
-                    ? $"The linked {role} image violated its one-page entry contract."
+                    ? $"The linked {role} image violated its {maximumˉbytes}-byte RX extent."
                     : $"The {role} image did not link: {link.Diagnostics[0].Code}: {link.Diagnostics[0].Message}");
         }
     }
@@ -220,6 +305,30 @@ public static class Kernelˉprocessˉimage
             }
         }
         return Count;
+    }
+
+    private static string Injectˉinterpreterˉmodule(
+        string source,
+        ImmutableArray<byte> moduleˉbytes)
+    {
+        var Valuesˉstart = source.IndexOf(INTERPRETER_DATA_PREFIX, StringComparison.Ordinal);
+        if (Valuesˉstart < 0)
+        {
+            throw new InvalidOperationException(
+                "Bytecode-Interpreter.wv is missing its admitted-module declaration.");
+        }
+        Valuesˉstart += INTERPRETER_DATA_PREFIX.Length;
+        var Valuesˉend = source.IndexOf("];", Valuesˉstart, StringComparison.Ordinal);
+        if (Valuesˉend < 0 ||
+            source.IndexOf(INTERPRETER_DATA_PREFIX, Valuesˉstart, StringComparison.Ordinal) >= 0)
+        {
+            throw new InvalidOperationException(
+                "Bytecode-Interpreter.wv has an ambiguous admitted-module declaration.");
+        }
+        return string.Concat(
+            source.AsSpan(0, Valuesˉstart),
+            string.Join(", ", moduleˉbytes),
+            source.AsSpan(Valuesˉend));
     }
 
     private static string Loadˉsource(string resource)

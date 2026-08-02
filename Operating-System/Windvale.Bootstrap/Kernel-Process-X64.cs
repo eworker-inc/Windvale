@@ -12,6 +12,7 @@ public sealed record Kernelˉprocessˉx64ˉartifacts(
 
 public static class Kernelˉprocessˉx64
 {
+    private static readonly ImmutableArray<byte> ZERO_DIGEST = ImmutableArray.CreateRange(new byte[32]);
     private const string FAILURE_LABEL = "process_failure";
     private const string SERVICE_BLOCKED_LABEL = "process_service_blocked";
     private const string CLIENT_COMPLETION_LABEL = "process_client_completion";
@@ -47,9 +48,10 @@ public static class Kernelˉprocessˉx64
         if (image.Initˉserviceˉimageˉbytes.IsEmpty ||
             image.Initˉserviceˉimageˉbytes.Length > (int)Kernelˉpagingˉcontract.PAGE_BYTES ||
             image.Clientˉimageˉbytes.IsEmpty ||
-            image.Clientˉimageˉbytes.Length > (int)Kernelˉpagingˉcontract.PAGE_BYTES ||
+            (ulong)image.Clientˉimageˉbytes.Length > Kernelˉprocessˉcontract.CLIENT_CODE_BYTES ||
             image.Initˉserviceˉdigest.Length != Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES ||
-            image.Clientˉdigest.Length != Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES)
+            image.Interpreterˉdigest.Length != Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES ||
+            image.Admittedˉprogramˉdigest.Length != Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES)
         {
             throw new InvalidOperationException("The process machine seam received an invalid user image.");
         }
@@ -151,33 +153,48 @@ public static class Kernelˉprocessˉx64
         Emitˉinitializeˉchannel(output);
 
         // Build the receive-only init/service root first.
-        Emitˉallocateˉextent(output, relocations);
+        Emitˉallocateˉextent(output, relocations, Kernelˉprocessˉcontract.INIT_ALLOCATION_PAGES);
         Emitˉinitializeˉrecord(
             output,
             image.Initˉserviceˉdigest,
+            ZERO_DIGEST,
             Kernelˉprocessˉcontract.INIT_PROCESS_ID,
             Kernelˉprocessˉcontract.INIT_THREAD_ID,
             Kernelˉprocessˉcontract.CAPABILITY_RIGHT_RECEIVE,
             Kernelˉprocessˉcontract.ROLE_INIT_SERVICE);
         Emitˉcopyˉkernelˉtables(output);
-        Emitˉpopulateˉprocessˉtable(output, "service");
+        Emitˉpopulateˉprocessˉtable(
+            output, "service", Kernelˉprocessˉcontract.INIT_CODE_PAGES,
+            Kernelˉprocessˉcontract.INIT_STACK_PAGE, Kernelˉprocessˉcontract.INIT_STACK_PAGES,
+            Kernelˉprocessˉcontract.INIT_DATA_PAGE);
         Emitˉcopyˉuserˉimage(output, relocations, image.Initˉserviceˉimageˉbytes.Length, 0);
-        Emitˉinitializeˉuserˉcontext(output);
+        Emitˉinitializeˉuserˉcontext(
+            output, Kernelˉprocessˉcontract.INIT_DATA_PAGE,
+            Kernelˉprocessˉcontract.INIT_INSTRUCTION_BUDGET,
+            Kernelˉprocessˉcontract.INIT_CALL_DEPTH_BUDGET);
 
-        // Build a distinct send-only client root from the exact admitted module.
+        // Build a distinct send-only client root containing the exact Windvale
+        // interpreter and its separately admitted WVB input identity.
         output.Emit(0x4C, 0x8B, 0x6C, 0x24, 0x10);
-        Emitˉallocateˉextent(output, relocations);
+        Emitˉallocateˉextent(output, relocations, Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES);
         Emitˉinitializeˉrecord(
             output,
-            image.Clientˉdigest,
+            image.Interpreterˉdigest,
+            image.Admittedˉprogramˉdigest,
             Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
             Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
             Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
-            Kernelˉprocessˉcontract.ROLE_CLIENT);
+            Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         Emitˉcopyˉkernelˉtables(output);
-        Emitˉpopulateˉprocessˉtable(output, "client");
+        Emitˉpopulateˉprocessˉtable(
+            output, "client", Kernelˉprocessˉcontract.CLIENT_CODE_PAGES,
+            Kernelˉprocessˉcontract.CLIENT_STACK_PAGE, Kernelˉprocessˉcontract.CLIENT_STACK_PAGES,
+            Kernelˉprocessˉcontract.CLIENT_DATA_PAGE);
         Emitˉcopyˉuserˉimage(output, relocations, image.Clientˉimageˉbytes.Length, 1);
-        Emitˉinitializeˉuserˉcontext(output);
+        Emitˉinitializeˉuserˉcontext(
+            output, Kernelˉprocessˉcontract.CLIENT_DATA_PAGE,
+            Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET,
+            Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET);
 
         Emitˉinstallˉdescriptorˉstate(output, relocations);
         Emitˉconfigureˉsyscallˉmsrs(output);
@@ -186,7 +203,7 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x4C, 0x8B, 0x6C, 0x24, 0x08);
         Emitˉactivateˉrecordˉroot(output, relocations);
         Emitˉsetˉkernelˉgsˉbase(output);
-        Emitˉenterˉinitialˉprocess(output, SERVICE_BLOCKED_LABEL);
+        Emitˉenterˉinitialˉprocess(output, SERVICE_BLOCKED_LABEL, Kernelˉprocessˉcontract.INIT_STACK_PAGES);
 
         output.Mark(SERVICE_BLOCKED_LABEL);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
@@ -213,7 +230,7 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x4C, 0x8B, 0x6C, 0x24, 0x10);
         Emitˉactivateˉrecordˉroot(output, relocations);
         Emitˉsetˉkernelˉgsˉbase(output);
-        Emitˉenterˉinitialˉprocess(output, CLIENT_COMPLETION_LABEL);
+        Emitˉenterˉinitialˉprocess(output, CLIENT_COMPLETION_LABEL, Kernelˉprocessˉcontract.CLIENT_STACK_PAGES);
 
         output.Mark(CLIENT_COMPLETION_LABEL);
         if (userˉfault)
@@ -245,7 +262,7 @@ public static class Kernelˉprocessˉx64
             output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         }
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
-            Kernelˉprocessˉcontract.ROLE_CLIENT);
+            Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.RESULT_OFFSET,
             Kernelˉprocessˉcontract.EXPECTED_RESULT);
@@ -339,7 +356,7 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x8B, 0x44, 0x24, (byte)Kernelˉexceptionˉcontract.NORMALIZED_ERROR_CODE_OFFSET);
         Emitˉstoreˉgsˉeax(output, Kernelˉprocessˉcontract.FAULT_ERROR_OFFSET);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
-            Kernelˉprocessˉcontract.ROLE_CLIENT);
+            Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         output.Jumpˉif(CONDITION_NOT_EQUAL, EXCEPTION_FAILURE_LABEL);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 1);
         output.Jumpˉif(CONDITION_NOT_EQUAL, EXCEPTION_FAILURE_LABEL);
@@ -392,7 +409,7 @@ public static class Kernelˉprocessˉx64
         output.Mark(SYSCALL_SEND_LABEL);
         Emitˉvalidateˉcapability(output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
-            Kernelˉprocessˉcontract.ROLE_CLIENT);
+            Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
         output.Emit(0x83, 0xF8, (byte)Kernelˉprocessˉcontract.EXPECTED_RESULT);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
@@ -499,10 +516,11 @@ public static class Kernelˉprocessˉx64
 
     private static void Emitˉallocateˉextent(
         X64ˉcodeˉbuilder output,
-        ImmutableArray<Objectˉrelocation>.Builder relocations)
+        ImmutableArray<Objectˉrelocation>.Builder relocations,
+        ulong allocationˉpages)
     {
         output.Emit(0x4C, 0x89, 0xE1, 0xBA);
-        output.Emitˉu32((uint)Kernelˉprocessˉcontract.ALLOCATION_PAGES);
+        output.Emitˉu32(checked((uint)allocationˉpages));
         Emitˉexternalˉcall(output, relocations, 5);
         output.Emit(0x48, 0x85, 0xC0);
         output.Jumpˉif(CONDITION_EQUAL, FAILURE_LABEL);
@@ -510,12 +528,12 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x48, 0xF7, 0xC0, 0xFF, 0x0F, 0x00, 0x00);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x8D, 0x86);
-        output.Emitˉu32((uint)(Kernelˉprocessˉcontract.ALLOCATION_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES));
+        output.Emitˉu32(checked((uint)(allocationˉpages * Kernelˉpagingˉcontract.PAGE_BYTES)));
         output.Emit(0x48, 0x3D);
         output.Emitˉu32((uint)Kernelˉpagingˉcontract.IDENTITY_BYTES);
         output.Jumpˉif(CONDITION_ABOVE, FAILURE_LABEL);
         output.Emit(0x4C, 0x89, 0xF0, 0x48, 0xC1, 0xE8, 0x15, 0x49, 0x8D, 0x8E);
-        output.Emitˉu32((uint)(Kernelˉprocessˉcontract.ALLOCATION_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES - 1));
+        output.Emitˉu32(checked((uint)(allocationˉpages * Kernelˉpagingˉcontract.PAGE_BYTES - 1)));
         output.Emit(0x48, 0xC1, 0xE9, 0x15, 0x48, 0x39, 0xC8);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
     }
@@ -523,11 +541,34 @@ public static class Kernelˉprocessˉx64
     private static void Emitˉinitializeˉrecord(
         X64ˉcodeˉbuilder output,
         ImmutableArray<byte> digest,
+        ImmutableArray<byte> programˉdigest,
         uint processˉid,
         uint threadˉid,
         uint capabilityˉrights,
         uint role)
     {
+        var Isˉinit = role == Kernelˉprocessˉcontract.ROLE_INIT_SERVICE;
+        var Stackˉpage = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_STACK_PAGE
+            : Kernelˉprocessˉcontract.CLIENT_STACK_PAGE;
+        var Stackˉpages = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_STACK_PAGES
+            : Kernelˉprocessˉcontract.CLIENT_STACK_PAGES;
+        var Dataˉpage = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_DATA_PAGE
+            : Kernelˉprocessˉcontract.CLIENT_DATA_PAGE;
+        var Codeˉpages = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_CODE_PAGES
+            : Kernelˉprocessˉcontract.CLIENT_CODE_PAGES;
+        var Memoryˉpageˉbudget = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_MEMORY_PAGE_BUDGET
+            : Kernelˉprocessˉcontract.CLIENT_MEMORY_PAGE_BUDGET;
+        var Instructionˉbudget = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_INSTRUCTION_BUDGET
+            : Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET;
+        var Runtimeˉkind = Isˉinit
+            ? Kernelˉprocessˉcontract.RUNTIME_KIND_AOT_SERVICE
+            : Kernelˉprocessˉcontract.RUNTIME_KIND_BYTECODE_INTERPRETER;
         output.Emit(0x4C, 0x89, 0xEF, 0x31, 0xC0, 0xB9);
         output.Emitˉu32(Kernelˉprocessˉcontract.RECORD_BYTES / sizeof(ulong));
         output.Emit(0xFC, 0xF3, 0x48, 0xAB);
@@ -554,11 +595,11 @@ public static class Kernelˉprocessˉx64
         Emitˉstoreˉrecordˉaddress(output, Kernelˉprocessˉcontract.USER_CODE_ADDRESS_OFFSET,
             Kernelˉprocessˉcontract.USER_CODE_PAGE);
         Emitˉstoreˉrecordˉaddress(output, Kernelˉprocessˉcontract.USER_STACK_ADDRESS_OFFSET,
-            Kernelˉprocessˉcontract.USER_STACK_PAGE);
+            Stackˉpage);
         Emitˉstoreˉrecordˉaddress(output, Kernelˉprocessˉcontract.USER_DATA_ADDRESS_OFFSET,
-            Kernelˉprocessˉcontract.USER_DATA_PAGE);
-        Emitˉstoreˉrecordˉu32(output, 96, Kernelˉprocessˉcontract.MEMORY_PAGE_BUDGET);
-        Emitˉstoreˉrecordˉu32(output, 100, Kernelˉprocessˉcontract.INSTRUCTION_BUDGET);
+            Dataˉpage);
+        Emitˉstoreˉrecordˉu32(output, 96, Memoryˉpageˉbudget);
+        Emitˉstoreˉrecordˉu32(output, 100, Instructionˉbudget);
         Emitˉstoreˉrecordˉu32(output, 104, Kernelˉprocessˉcontract.HANDLE_BUDGET);
         Emitˉstoreˉrecordˉu32(output, 108, Kernelˉprocessˉcontract.SYSCALL_BUDGET);
         Emitˉstoreˉrecordˉu32(output, 112, Kernelˉprocessˉcontract.CAPABILITY_SLOT);
@@ -571,6 +612,18 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x49, 0x89, 0x85);
         output.Emitˉu32(Kernelˉprocessˉcontract.CHANNEL_ADDRESS_OFFSET);
         Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET, role);
+        Emitˉstoreˉrecordˉu32(
+            output, Kernelˉprocessˉcontract.STACK_PAGE_COUNT_OFFSET, checked((uint)Stackˉpages));
+        for (var Offset = 0; Offset < programˉdigest.Length; Offset += sizeof(ulong))
+        {
+            output.Emit(0x48, 0xB8);
+            output.Emitˉu64(BinaryPrimitives.ReadUInt64LittleEndian(programˉdigest.AsSpan().Slice(Offset)));
+            output.Emit(0x49, 0x89, 0x85);
+            output.Emitˉu32(checked(Kernelˉprocessˉcontract.PROGRAM_DIGEST_OFFSET + (uint)Offset));
+        }
+        Emitˉstoreˉrecordˉu32(
+            output, Kernelˉprocessˉcontract.CODE_PAGE_COUNT_OFFSET, checked((uint)Codeˉpages));
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.RUNTIME_KIND_OFFSET, Runtimeˉkind);
     }
 
     private static void Emitˉcopyˉkernelˉtables(X64ˉcodeˉbuilder output)
@@ -588,7 +641,13 @@ public static class Kernelˉprocessˉx64
             0xB9, 0x00, 0x02, 0x00, 0x00, 0xF3, 0x48, 0xA5);
     }
 
-    private static void Emitˉpopulateˉprocessˉtable(X64ˉcodeˉbuilder output, string labelˉsuffix)
+    private static void Emitˉpopulateˉprocessˉtable(
+        X64ˉcodeˉbuilder output,
+        string labelˉsuffix,
+        ulong codeˉpages,
+        ulong stackˉpage,
+        ulong stackˉpages,
+        ulong dataˉpage)
     {
         var Loopˉlabel = $"{PT_LOOP_LABEL}_{labelˉsuffix}";
         var Nullˉdoneˉlabel = $"{PT_NULL_DONE_LABEL}_{labelˉsuffix}";
@@ -608,12 +667,18 @@ public static class Kernelˉprocessˉx64
         output.Mark(Nullˉdoneˉlabel);
         output.Emit(0x4C, 0x89, 0xF0, 0x48, 0xC1, 0xE8, 0x15, 0x48, 0xC1, 0xE0, 0x03,
             0x49, 0x8D, 0x96, 0x07, 0x30, 0x00, 0x00, 0x49, 0x89, 0x94, 0x06, 0x00, 0x20, 0x00, 0x00);
-        Emitˉwriteˉuserˉpte(output, Kernelˉprocessˉcontract.USER_CODE_PAGE,
-            Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER);
-        Emitˉwriteˉuserˉpte(output, Kernelˉprocessˉcontract.USER_STACK_PAGE,
-            Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE |
-            Kernelˉprocessˉcontract.ENTRY_USER | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
-        Emitˉwriteˉuserˉpte(output, Kernelˉprocessˉcontract.USER_DATA_PAGE,
+        for (ulong Page = 0; Page < codeˉpages; Page++)
+        {
+            Emitˉwriteˉuserˉpte(output, Kernelˉprocessˉcontract.USER_CODE_PAGE + Page,
+                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER);
+        }
+        for (ulong Page = 0; Page < stackˉpages; Page++)
+        {
+            Emitˉwriteˉuserˉpte(output, stackˉpage + Page,
+                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE |
+                Kernelˉprocessˉcontract.ENTRY_USER | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+        }
+        Emitˉwriteˉuserˉpte(output, dataˉpage,
             Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE |
             Kernelˉprocessˉcontract.ENTRY_USER | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
     }
@@ -633,15 +698,21 @@ public static class Kernelˉprocessˉx64
         output.Emit(0xFC, 0xF3, 0xA4);
     }
 
-    private static void Emitˉinitializeˉuserˉcontext(X64ˉcodeˉbuilder output)
+    private static void Emitˉinitializeˉuserˉcontext(
+        X64ˉcodeˉbuilder output,
+        ulong dataˉpage,
+        uint instructionˉbudget,
+        uint callˉdepthˉbudget)
     {
-        output.Emit(0x49, 0x8D, 0xBE, 0x00, 0x60, 0x00, 0x00, 0x48, 0xB8);
+        output.Emit(0x49, 0x8D, 0xBE);
+        output.Emitˉu32(checked((uint)(dataˉpage * Kernelˉpagingˉcontract.PAGE_BYTES)));
+        output.Emit(0x48, 0xB8);
         output.Emitˉu64(((ulong)Nativeˉexecutionˉcontextˉcontract.SIZE << 32) |
             Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
         output.Emit(0x48, 0x89, 0x07, 0x48, 0xC7, 0x47, 0x08);
-        output.Emitˉu32(Kernelˉprocessˉcontract.INSTRUCTION_BUDGET);
+        output.Emitˉu32(instructionˉbudget);
         output.Emit(0x48, 0xC7, 0x47, 0x10);
-        output.Emitˉu32(Kernelˉprocessˉcontract.CALL_DEPTH_BUDGET);
+        output.Emitˉu32(callˉdepthˉbudget);
     }
 
     private static void Emitˉinstallˉdescriptorˉstate(
@@ -751,7 +822,10 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x0F, 0x30);
     }
 
-    private static void Emitˉenterˉinitialˉprocess(X64ˉcodeˉbuilder output, string resumeˉlabel)
+    private static void Emitˉenterˉinitialˉprocess(
+        X64ˉcodeˉbuilder output,
+        string resumeˉlabel,
+        ulong stackˉpages)
     {
         output.Emit(0x49, 0x89, 0xA5);
         output.Emitˉu32(Kernelˉprocessˉcontract.KERNEL_STACK_OFFSET);
@@ -769,7 +843,7 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x49, 0x8B, 0xA5);
         output.Emitˉu32(Kernelˉprocessˉcontract.USER_STACK_ADDRESS_OFFSET);
         output.Emit(0x48, 0x81, 0xC4);
-        output.Emitˉu32((uint)Kernelˉpagingˉcontract.PAGE_BYTES);
+        output.Emitˉu32(checked((uint)(stackˉpages * Kernelˉpagingˉcontract.PAGE_BYTES)));
         output.Emit(0x49, 0xC7, 0xC3, 0x02, 0x00, 0x00, 0x00, 0x48, 0x0F, 0x07);
     }
 

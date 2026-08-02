@@ -1,7 +1,7 @@
 # Decision 0092: First Windvale init/resource service
 
 - Date: 2026-08-01
-- Status: Accepted and implemented; focused Windows and pinned-QEMU evidence recorded, cross-host qualification pending
+- Status: Accepted and implemented; focused Windows and pinned-QEMU evidence recorded, cross-host OS qualification pending
 - Implements: Step 5 of [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
 - Contract: [Protected process version 2](../../Specifications/Windvale-Protected-Process.md)
 
@@ -37,7 +37,9 @@ Pinned QEMU `pc-q35-11.0,accel=tcg` passes all scenarios:
 | general protection | 80,896 | `205b4dfc88f73f9ecec41f91242642528387e0ae0c55d1273cb50a46f14d2847` | `3` |
 | contained client fault | 81,408 | `b2ed520486199104cad227f0bcbc863b428c9484400116dc88c2a55c159d2951` | `0` |
 
-The contained-fault transcript proves that the client may fault after send while the independent init service still wakes, executes Windvale code, exits, and reaches clean shutdown. Cross-host promotion remains pending.
+The contained-fault transcript proves that the client may fault after send while the independent init service still wakes, executes Windvale code, exits, and reaches clean shutdown.
+
+GitHub run `30730151722` verifies exact commit `22e350b8965bbe70452261dabfc411d28cf7a1d5`: Windows and Linux each pass all 67 Seed qualification tests, and both jobs compile the OS projects successfully. That workflow does not execute the 25-test OS binary, so it is useful cross-host build evidence but does not promote probe 23 to cross-host OS qualification. A Linux OS-test run from the same exact source state remains required.
 
 ## Consequences
 

@@ -1,9 +1,11 @@
 module Processˉfoundation profile portable;
 
-// Exact SHA-256 identities of the admitted client WVB and the Windvale init
-// service WVB. The policy must accept both identities before pages are published.
-data Clientˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
-data Expectedˉclientˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
+// Exact SHA-256 identities of the CPL3 interpreter, its admitted WVB input,
+// and the Windvale init service. All three must match before pages are published.
+data Interpreterˉdigest: bytes = [99, 158, 25, 26, 241, 132, 75, 102, 96, 117, 9, 120, 133, 79, 94, 22, 140, 37, 244, 148, 159, 29, 146, 130, 202, 87, 119, 214, 95, 97, 112, 131];
+data Expectedˉinterpreterˉdigest: bytes = [99, 158, 25, 26, 241, 132, 75, 102, 96, 117, 9, 120, 133, 79, 94, 22, 140, 37, 244, 148, 159, 29, 146, 130, 202, 87, 119, 214, 95, 97, 112, 131];
+data Programˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
+data Expectedˉprogramˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
 data Serviceˉdigest: bytes = [71, 141, 252, 211, 111, 237, 124, 128, 99, 207, 179, 245, 58, 106, 19, 98, 189, 165, 53, 54, 86, 51, 155, 115, 11, 229, 115, 161, 190, 143, 149, 176];
 data Expectedˉserviceˉdigest: bytes = [71, 141, 252, 211, 111, 237, 124, 128, 99, 207, 179, 245, 58, 106, 19, 98, 189, 165, 53, 54, 86, 51, 155, 115, 11, 229, 115, 161, 190, 143, 149, 176];
 
@@ -26,21 +28,26 @@ fn Hasˉchannelˉendpoint(Slot: u32, Generation: u32, Rights: u32, Expectedˉrig
 }
 
 export fn Main() -> i32 {
-    if !Hasˉidentity(Clientˉdigest, Expectedˉclientˉdigest) { return 0; }
+    if !Hasˉidentity(Interpreterˉdigest, Expectedˉinterpreterˉdigest) { return 0; }
+    if !Hasˉidentity(Programˉdigest, Expectedˉprogramˉdigest) { return 0; }
     if !Hasˉidentity(Serviceˉdigest, Expectedˉserviceˉdigest) { return 0; }
 
     // Two address spaces and threads share one kernel-owned capacity-one
     // channel through independently reduced endpoint capabilities.
     let Initˉprocessˉid: u32 = 1u32;
     let Clientˉprocessˉid: u32 = 2u32;
-    let Memoryˉpages: u32 = 3u32;
-    let Instructionˉbudget: u32 = 64u32;
+    let Initˉmemoryˉpages: u32 = 3u32;
+    let Interpreterˉmemoryˉpages: u32 = 11u32;
+    let Initˉinstructionˉbudget: u32 = 64u32;
+    let Interpreterˉinstructionˉbudget: u32 = 567u32;
     let Handleˉbudget: u32 = 1u32;
     let Syscallˉbudget: u32 = 2u32;
     if Initˉprocessˉid != 1u32 { return 0; }
     if Clientˉprocessˉid != 2u32 { return 0; }
-    if Memoryˉpages != 3u32 { return 0; }
-    if Instructionˉbudget != 64u32 { return 0; }
+    if Initˉmemoryˉpages != 3u32 { return 0; }
+    if Interpreterˉmemoryˉpages != 11u32 { return 0; }
+    if Initˉinstructionˉbudget != 64u32 { return 0; }
+    if Interpreterˉinstructionˉbudget != 567u32 { return 0; }
     if Handleˉbudget != 1u32 { return 0; }
     if Syscallˉbudget != 2u32 { return 0; }
     if !Hasˉchannelˉendpoint(0u32, 1u32, 2u32, 2u32) { return 0; }
@@ -69,5 +76,5 @@ export fn Main() -> i32 {
     Clientˉthreadˉstate = 3u32;
     if Initˉthreadˉstate != 3u32 { return 0; }
     if Clientˉthreadˉstate != 3u32 { return 0; }
-    return 92;
+    return 93;
 }

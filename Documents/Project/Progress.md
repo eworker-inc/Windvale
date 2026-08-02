@@ -1,6 +1,6 @@
 # Windvale progress
 
-> Status snapshot: 1 August 2026
+> Status snapshot: 2 August 2026
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Windvale roadmap phase map showing qualified, ongoing, current, in-progress, and planned phases" width="100%"></a>
 
@@ -27,8 +27,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
 | 9. Shared native backend | 🎯 Current transfer | ABI 16/context 7, all 12 native service leaves, and verified internal calls through 64 parameters are qualified; exact compiler preflight passes the former eight-parameter blocker. | Admit the compiler's sole 1,049-local function under a measured frame contract. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
-| 11. Boot path and kernel | 🚧 In progress | Probe 21 remains cross-host qualified; candidate probe 23 adds two CPL3 roots, a Windvale init/resource service, reduced endpoints, cross-process IPC, deterministic wait/wake, and client-fault containment. | Cross-host-qualify probe 23, then use a third runnable or loader case to measure the next contract. |
-| 12. Runtime on Windvale OS | 🚧 In progress | One exact admitted client and one fixed Windvale service now execute in isolated processes; there is no general loader/runtime yet. | Generalize semantic admission and run one identical WVB through equivalent Windows, Linux, and Windvale OS contracts. |
+| 11. Boot path and kernel | 🚧 In progress | Probe 21 is cross-host qualified; candidate probe 24 keeps probe 23's two isolated CPL3 roots and init service while running the admitted program through a Windvale-written interpreter process. | Cross-host-qualify the current OS contracts, then let a general boot resource or third runnable measure the next kernel boundary. |
+| 12. Runtime on Windvale OS | 🚧 In progress | One exact admitted WVB now executes through a bounded Windvale interpreter at CPL3 and sends its result to the Windvale init service. | Replace fixed offsets/input with a bounded general loader and semantic interpreter profile; keep later JIT publication outside the kernel. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 
 ## Working end to end
@@ -48,7 +48,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Fixed admission → separate CPL3 root → capability-checked send/receive/exit
 - ✅ Deliberate CPL3 privileged fault → recorded process fault → kernel continuation
 - ✅ Windvale init service → blocked receive → send-only client → cross-process wake
-- 🚧 Candidate probe 23 → cross-host qualification → measured step-6 loader/runtime or third-runnable pressure
+- ✅ Exact admitted WVB → Windvale interpreter at CPL3 → result 29 → init service
+- 🚧 Candidate probe 24 → cross-host qualification → general boot resource or third-runnable pressure
 
 ## Reading the evidence
 

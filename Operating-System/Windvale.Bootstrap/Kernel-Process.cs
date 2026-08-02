@@ -6,19 +6,20 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 2;
-    public const string TARGET_NAME = "x86-64-kernel-process-v2";
+    public const int FORMAT_VERSION = 3;
+    public const string TARGET_NAME = "x86-64-kernel-process-v3";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
     public const string INIT_SERVICE_ENTRY_SYMBOL = "Windvale_init_resource_user_entry";
     public const string INIT_SERVICE_MAIN_SYMBOL = "Windvale_init_resource_service_main";
+    public const string BYTECODE_INTERPRETER_MAIN_SYMBOL = "Windvale_user_bytecode_interpreter_main";
     public const string SYSCALL_ENTRY_SYMBOL = "Windvale_kernel_x64_process_syscall";
     public const string EXCEPTION_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception";
     public const string EXCEPTION_6_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_6_entry";
     public const string EXCEPTION_13_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_13_entry";
     public const string EXCEPTION_14_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_14_entry";
-    public const int POLICY_TOKEN = 92;
+    public const int POLICY_TOKEN = 93;
     public const int EXPECTED_RESULT = 29;
     public const string USER_FAULT_CONTAINED_MARKER = "user-fault=contained\n";
     public const uint INIT_PROCESS_ID = 1;
@@ -26,7 +27,9 @@ public static class Kernelˉprocessˉcontract
     public const uint CLIENT_PROCESS_ID = 2;
     public const uint CLIENT_THREAD_ID = 2;
     public const uint ROLE_INIT_SERVICE = 1;
-    public const uint ROLE_CLIENT = 2;
+    public const uint ROLE_BYTECODE_INTERPRETER = 2;
+    public const uint RUNTIME_KIND_AOT_SERVICE = 1;
+    public const uint RUNTIME_KIND_BYTECODE_INTERPRETER = 2;
     public const uint PROCESS_STATE_READY = 1;
     public const uint PROCESS_STATE_RUNNING = 2;
     public const uint PROCESS_STATE_EXITED = 3;
@@ -36,9 +39,12 @@ public static class Kernelˉprocessˉcontract
     public const uint THREAD_STATE_EXITED = 3;
     public const uint THREAD_STATE_FAULTED = 4;
     public const uint THREAD_STATE_WAITING = 5;
-    public const uint MEMORY_PAGE_BUDGET = 3;
-    public const uint INSTRUCTION_BUDGET = 64;
-    public const uint CALL_DEPTH_BUDGET = 1;
+    public const uint INIT_MEMORY_PAGE_BUDGET = 3;
+    public const uint CLIENT_MEMORY_PAGE_BUDGET = 11;
+    public const uint INIT_INSTRUCTION_BUDGET = 64;
+    public const uint CLIENT_INSTRUCTION_BUDGET = 567;
+    public const uint INIT_CALL_DEPTH_BUDGET = 1;
+    public const uint CLIENT_CALL_DEPTH_BUDGET = 2;
     public const uint HANDLE_BUDGET = 1;
     public const uint SYSCALL_BUDGET = 2;
     public const uint CHANNEL_CAPACITY = 1;
@@ -50,7 +56,8 @@ public static class Kernelˉprocessˉcontract
     public const uint SYSCALL_SEND = 1;
     public const uint SYSCALL_RECEIVE = 2;
     public const uint SYSCALL_EXIT = 3;
-    public const ulong ALLOCATION_PAGES = 7;
+    public const ulong INIT_ALLOCATION_PAGES = 7;
+    public const ulong CLIENT_ALLOCATION_PAGES = 15;
     public const ulong TABLE_PAGES = 4;
     public const ulong TABLE_BYTES = TABLE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
     public const ulong PML4_PAGE = 0;
@@ -58,15 +65,22 @@ public static class Kernelˉprocessˉcontract
     public const ulong PD_PAGE = 2;
     public const ulong USER_PT_PAGE = 3;
     public const ulong USER_CODE_PAGE = 4;
-    public const ulong USER_STACK_PAGE = 5;
-    public const ulong USER_DATA_PAGE = 6;
+    public const ulong INIT_CODE_PAGES = 1;
+    public const ulong CLIENT_CODE_PAGES = 8;
+    public const ulong INIT_STACK_PAGES = 1;
+    public const ulong CLIENT_STACK_PAGES = 2;
+    public const ulong INIT_STACK_PAGE = USER_CODE_PAGE + INIT_CODE_PAGES;
+    public const ulong INIT_DATA_PAGE = INIT_STACK_PAGE + INIT_STACK_PAGES;
+    public const ulong CLIENT_STACK_PAGE = USER_CODE_PAGE + CLIENT_CODE_PAGES;
+    public const ulong CLIENT_DATA_PAGE = CLIENT_STACK_PAGE + CLIENT_STACK_PAGES;
+    public const ulong CLIENT_CODE_BYTES = CLIENT_CODE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
     public const ulong ENTRY_USER = 1UL << 2;
     public const uint INIT_RECORD_OFFSET = 256;
     public const uint CLIENT_RECORD_OFFSET = 768;
     public const uint CHANNEL_RECORD_OFFSET = 1_024;
     public const uint RECORD_BYTES = 256;
-    public const ulong RECORD_MAGIC = 0x3230_434F_5250_5657;
-    public const uint RECORD_VERSION = 2;
+    public const ulong RECORD_MAGIC = 0x3330_434F_5250_5657;
+    public const uint RECORD_VERSION = 3;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -81,6 +95,7 @@ public static class Kernelˉprocessˉcontract
     public const uint USER_INSTRUCTION_POINTER_OFFSET = 152;
     public const uint USER_FLAGS_OFFSET = 160;
     public const uint SYSCALL_COUNT_OFFSET = 168;
+    public const uint STACK_PAGE_COUNT_OFFSET = 172;
     public const uint RESULT_OFFSET = 180;
     public const uint FAULT_VECTOR_OFFSET = 184;
     public const uint FAULT_ERROR_OFFSET = 188;
@@ -88,6 +103,9 @@ public static class Kernelˉprocessˉcontract
     public const uint ROLE_OFFSET = 200;
     public const uint WAIT_REASON_OFFSET = 204;
     public const uint USER_CONTEXT_POINTER_OFFSET = 208;
+    public const uint PROGRAM_DIGEST_OFFSET = 216;
+    public const uint CODE_PAGE_COUNT_OFFSET = 248;
+    public const uint RUNTIME_KIND_OFFSET = 252;
     public const uint WAIT_REASON_NONE = 0;
     public const uint WAIT_REASON_CHANNEL_RECEIVE = 1;
     public const ulong CHANNEL_MAGIC = 0x3130_4E41_4843_5657;
@@ -123,6 +141,8 @@ public sealed record Kernelˉprocessˉplan(
     ulong Userˉcodeˉaddress,
     ulong Userˉstackˉaddress,
     ulong Userˉdataˉaddress,
+    ulong Userˉcodeˉpages,
+    ulong Userˉstackˉpages,
     ImmutableArray<byte> Tableˉbytes,
     ImmutableArray<byte> Userˉcodeˉbytes,
     ImmutableArray<byte> Userˉstackˉbytes,
@@ -145,31 +165,11 @@ public static class Kernelˉprocessˉplanner
         ulong allocationˉaddress,
         ReadOnlySpan<byte> userˉimage,
         ReadOnlySpan<byte> moduleˉdigest,
+        ReadOnlySpan<byte> programˉdigest,
         Kernelˉprocessˉdefinition definition)
     {
         ArgumentNullException.ThrowIfNull(kernelˉpaging);
         ArgumentNullException.ThrowIfNull(definition);
-        var Allocationˉbytes = Kernelˉprocessˉcontract.ALLOCATION_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
-        if (allocationˉaddress == 0 ||
-            (allocationˉaddress & (Kernelˉpagingˉcontract.PAGE_BYTES - 1)) != 0 ||
-            allocationˉaddress > Kernelˉpagingˉcontract.IDENTITY_BYTES - Allocationˉbytes)
-        {
-            return Fail("WVOS6001", "The process allocation must be a complete aligned seven-page range below 1 GiB.");
-        }
-        var Allocationˉend = allocationˉaddress + Allocationˉbytes;
-        if ((allocationˉaddress / Kernelˉpagingˉcontract.LARGE_PAGE_BYTES) !=
-            ((Allocationˉend - 1) / Kernelˉpagingˉcontract.LARGE_PAGE_BYTES))
-        {
-            return Fail("WVOS6002", "The process allocation must fit one 2 MiB identity-table region.");
-        }
-        if (userˉimage.IsEmpty || userˉimage.Length > (int)Kernelˉpagingˉcontract.PAGE_BYTES)
-        {
-            return Fail("WVOS6003", "The process image must occupy 1 through 4,096 bytes.");
-        }
-        if (moduleˉdigest.Length != Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES)
-        {
-            return Fail("WVOS6004", "The process module identity must be one SHA-256 digest.");
-        }
         var Isˉinit = definition is
         {
             Processˉid: Kernelˉprocessˉcontract.INIT_PROCESS_ID,
@@ -181,7 +181,7 @@ public static class Kernelˉprocessˉplanner
         {
             Processˉid: Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
             Threadˉid: Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
-            Role: Kernelˉprocessˉcontract.ROLE_CLIENT,
+            Role: Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER,
             Capabilityˉrights: Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
         };
         if ((!Isˉinit && !Isˉclient) ||
@@ -192,9 +192,64 @@ public static class Kernelˉprocessˉplanner
             return Fail("WVOS6006", "The process identity, role, reduced endpoint rights, or shared-channel address is invalid.");
         }
 
+        var Allocationˉpages = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_ALLOCATION_PAGES
+            : Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES;
+        var Codeˉpages = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_CODE_PAGES
+            : Kernelˉprocessˉcontract.CLIENT_CODE_PAGES;
+        var Stackˉpage = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_STACK_PAGE
+            : Kernelˉprocessˉcontract.CLIENT_STACK_PAGE;
+        var Stackˉpages = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_STACK_PAGES
+            : Kernelˉprocessˉcontract.CLIENT_STACK_PAGES;
+        var Dataˉpage = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_DATA_PAGE
+            : Kernelˉprocessˉcontract.CLIENT_DATA_PAGE;
+        var Memoryˉpageˉbudget = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_MEMORY_PAGE_BUDGET
+            : Kernelˉprocessˉcontract.CLIENT_MEMORY_PAGE_BUDGET;
+        var Instructionˉbudget = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_INSTRUCTION_BUDGET
+            : Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET;
+        var Callˉdepthˉbudget = Isˉinit
+            ? Kernelˉprocessˉcontract.INIT_CALL_DEPTH_BUDGET
+            : Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET;
+        var Runtimeˉkind = Isˉinit
+            ? Kernelˉprocessˉcontract.RUNTIME_KIND_AOT_SERVICE
+            : Kernelˉprocessˉcontract.RUNTIME_KIND_BYTECODE_INTERPRETER;
+        var Allocationˉbytes = Allocationˉpages * Kernelˉpagingˉcontract.PAGE_BYTES;
+        if (allocationˉaddress == 0 ||
+            (allocationˉaddress & (Kernelˉpagingˉcontract.PAGE_BYTES - 1)) != 0 ||
+            allocationˉaddress > Kernelˉpagingˉcontract.IDENTITY_BYTES - Allocationˉbytes)
+        {
+            return Fail("WVOS6001", "The process allocation must be its complete aligned role-specific range below 1 GiB.");
+        }
+        var Allocationˉend = allocationˉaddress + Allocationˉbytes;
+        if ((allocationˉaddress / Kernelˉpagingˉcontract.LARGE_PAGE_BYTES) !=
+            ((Allocationˉend - 1) / Kernelˉpagingˉcontract.LARGE_PAGE_BYTES))
+        {
+            return Fail("WVOS6002", "The process allocation must fit one 2 MiB identity-table region.");
+        }
+        if (userˉimage.IsEmpty || (ulong)userˉimage.Length > Codeˉpages * Kernelˉpagingˉcontract.PAGE_BYTES)
+        {
+            return Fail("WVOS6003", "The process image must fit its bounded role-specific RX extent.");
+        }
+        if (moduleˉdigest.Length != Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES)
+        {
+            return Fail("WVOS6004", "The process module identity must be one SHA-256 digest.");
+        }
+        if (programˉdigest.Length != Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES ||
+            (Isˉinit && programˉdigest.ContainsAnyExcept((byte)0)) ||
+            (Isˉclient && !programˉdigest.ContainsAnyExcept((byte)0)))
+        {
+            return Fail("WVOS6007", "The process runtime-input identity is invalid for its role.");
+        }
+
         var Userˉcodeˉaddress = Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.USER_CODE_PAGE);
-        var Userˉstackˉaddress = Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.USER_STACK_PAGE);
-        var Userˉdataˉaddress = Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.USER_DATA_PAGE);
+        var Userˉstackˉaddress = Pageˉaddress(allocationˉaddress, Stackˉpage);
+        var Userˉdataˉaddress = Pageˉaddress(allocationˉaddress, Dataˉpage);
         var Executableˉend = kernelˉpaging.Executableˉaddress + Kernelˉpagingˉcontract.EXECUTABLE_BYTES;
         if (allocationˉaddress < Executableˉend && Allocationˉend > kernelˉpaging.Executableˉaddress)
         {
@@ -230,23 +285,31 @@ public static class Kernelˉprocessˉplanner
             Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.USER_PT_PAGE) |
             Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE |
             Kernelˉprocessˉcontract.ENTRY_USER);
-        Writeˉuserˉentry(Tables, Regionˉaddress, Userˉcodeˉaddress,
-            Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER);
-        Writeˉuserˉentry(Tables, Regionˉaddress, Userˉstackˉaddress,
-            Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE |
-            Kernelˉprocessˉcontract.ENTRY_USER | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+        for (ulong Page = 0; Page < Codeˉpages; Page++)
+        {
+            Writeˉuserˉentry(Tables, Regionˉaddress,
+                Userˉcodeˉaddress + Page * Kernelˉpagingˉcontract.PAGE_BYTES,
+                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER);
+        }
+        for (ulong Page = 0; Page < Stackˉpages; Page++)
+        {
+            Writeˉuserˉentry(Tables, Regionˉaddress,
+                Userˉstackˉaddress + Page * Kernelˉpagingˉcontract.PAGE_BYTES,
+                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE |
+                Kernelˉprocessˉcontract.ENTRY_USER | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+        }
         Writeˉuserˉentry(Tables, Regionˉaddress, Userˉdataˉaddress,
             Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE |
             Kernelˉprocessˉcontract.ENTRY_USER | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
 
-        var Code = new byte[Kernelˉpagingˉcontract.PAGE_BYTES];
+        var Code = new byte[checked((int)(Codeˉpages * Kernelˉpagingˉcontract.PAGE_BYTES))];
         userˉimage.CopyTo(Code);
-        var Stack = new byte[Kernelˉpagingˉcontract.PAGE_BYTES];
+        var Stack = new byte[checked((int)(Stackˉpages * Kernelˉpagingˉcontract.PAGE_BYTES))];
         var Data = new byte[Kernelˉpagingˉcontract.PAGE_BYTES];
         BinaryPrimitives.WriteUInt32LittleEndian(Data, Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
         BinaryPrimitives.WriteUInt32LittleEndian(Data.AsSpan(4), Nativeˉexecutionˉcontextˉcontract.SIZE);
-        BinaryPrimitives.WriteUInt64LittleEndian(Data.AsSpan(8), Kernelˉprocessˉcontract.INSTRUCTION_BUDGET);
-        BinaryPrimitives.WriteUInt64LittleEndian(Data.AsSpan(16), Kernelˉprocessˉcontract.CALL_DEPTH_BUDGET);
+        BinaryPrimitives.WriteUInt64LittleEndian(Data.AsSpan(8), Instructionˉbudget);
+        BinaryPrimitives.WriteUInt64LittleEndian(Data.AsSpan(16), Callˉdepthˉbudget);
 
         var Record = new byte[Kernelˉprocessˉcontract.RECORD_BYTES];
         BinaryPrimitives.WriteUInt64LittleEndian(Record, Kernelˉprocessˉcontract.RECORD_MAGIC);
@@ -261,8 +324,8 @@ public static class Kernelˉprocessˉplanner
         BinaryPrimitives.WriteUInt64LittleEndian(Record.AsSpan(72), Userˉcodeˉaddress);
         BinaryPrimitives.WriteUInt64LittleEndian(Record.AsSpan(80), Userˉstackˉaddress);
         BinaryPrimitives.WriteUInt64LittleEndian(Record.AsSpan(88), Userˉdataˉaddress);
-        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(96), Kernelˉprocessˉcontract.MEMORY_PAGE_BUDGET);
-        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(100), Kernelˉprocessˉcontract.INSTRUCTION_BUDGET);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(96), Memoryˉpageˉbudget);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(100), Instructionˉbudget);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(104), Kernelˉprocessˉcontract.HANDLE_BUDGET);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(108), Kernelˉprocessˉcontract.SYSCALL_BUDGET);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(112), Kernelˉprocessˉcontract.CAPABILITY_SLOT);
@@ -273,12 +336,22 @@ public static class Kernelˉprocessˉplanner
             Record.AsSpan((int)Kernelˉprocessˉcontract.CHANNEL_ADDRESS_OFFSET), definition.Channelˉaddress);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.ROLE_OFFSET), definition.Role);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.STACK_PAGE_COUNT_OFFSET), checked((uint)Stackˉpages));
+        programˉdigest.CopyTo(Record.AsSpan((int)Kernelˉprocessˉcontract.PROGRAM_DIGEST_OFFSET,
+            Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.CODE_PAGE_COUNT_OFFSET), checked((uint)Codeˉpages));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.RUNTIME_KIND_OFFSET), Runtimeˉkind);
 
         return new(new(
             allocationˉaddress,
             Userˉcodeˉaddress,
             Userˉstackˉaddress,
             Userˉdataˉaddress,
+            Codeˉpages,
+            Stackˉpages,
             Tables.ToImmutableArray(),
             Code.ToImmutableArray(),
             Stack.ToImmutableArray(),

@@ -31,8 +31,8 @@ internal static class Program
         new("x86-64 kernel compiler rejects unsupported source shapes", Kernelˉcompilerˉrejectsˉunsupportedˉsource),
         new("x86-64 kernel paging boundary emits deterministic verified WVO", Kernelˉpagingˉboundaryˉemitsˉverifiedˉobject),
         new("x86-64 kernel exception boundary emits deterministic verified WVO", Kernelˉexceptionˉboundaryˉemitsˉverifiedˉobject),
-        new("Windvale process policy binds init service and admitted client", Kernelˉprocessˉpolicyˉbindsˉimage),
-        new("protected process planner isolates two bounded W^X user roots", Kernelˉprocessˉplannerˉisolatesˉuserˉpages),
+        new("Windvale process policy binds init service, interpreter, and admitted WVB", Kernelˉprocessˉpolicyˉbindsˉimage),
+        new("protected process planner isolates service and interpreter W^X roots", Kernelˉprocessˉplannerˉisolatesˉuserˉpages),
         new("x86-64 protected process boundary emits deterministic verified WVO", Kernelˉprocessˉboundaryˉemitsˉverifiedˉobject),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
         new("invalid-opcode firmware probe builds reproducibly", Invalidˉopcodeˉfirmwareˉprobeˉbuildsˉreproducibly),
@@ -565,11 +565,11 @@ internal static class Program
         var Second = Kernelˉprocessˉimage.Build(Admission, false);
         var Faultˉfirst = Kernelˉprocessˉimage.Build(Admission, true);
         var Faultˉsecond = Kernelˉprocessˉimage.Build(Admission, true);
-        Equal(3_092, First.Policyˉmoduleˉbytes.Length);
-        Equal("4b52c9d0d868c2eb058b419ef1fde8f38c4c7dc492640421f974b94ca6838b9f",
+        Equal(3_512, First.Policyˉmoduleˉbytes.Length);
+        Equal("af4f1865a65be48b6fbefbe8995b4638fe91f579616fcd32cd1d05b16d684330",
             Objectˉdigest.Calculateˉsha256(First.Policyˉmoduleˉbytes.AsSpan()));
-        Equal(27_130, First.Policyˉnativeˉobjectˉbytes.Length);
-        Equal("b4c7178d687fbef7b0b32d911cc3c8e24d9760da68af2fc4b9cc5f51ad001767",
+        Equal(30_142, First.Policyˉnativeˉobjectˉbytes.Length);
+        Equal("333046213d54a098f16e6668ee875231f3a0ee87e55a34db567ff2b8ff650806",
             Objectˉdigest.Calculateˉsha256(First.Policyˉnativeˉobjectˉbytes.AsSpan()));
         Equal(371, First.Initˉserviceˉmoduleˉbytes.Length);
         Equal("478dfcd36fed7c8063cfb3f53a6a1362bda5353656339b730be573a1be8f95b0",
@@ -583,23 +583,31 @@ internal static class Program
         Equal(2_302, First.Initˉserviceˉimageˉbytes.Length);
         Equal("e3d1e13f3ea9d914c7d9ee5b624171cda549aecf9ecf38b77a06142ae74a586f",
             Objectˉdigest.Calculateˉsha256(First.Initˉserviceˉimageˉbytes.AsSpan()));
-        Equal(195, First.Clientˉshimˉobjectˉbytes.Length);
-        Equal("7cf803c818437e8f662ece3b69757b957f67a648900c0aa91822cca47c4aad17",
+        Equal(3_211, First.Interpreterˉmoduleˉbytes.Length);
+        Equal("639e191af1844b6660750978854f5e168c25f4949f1d9282ca5777d65f617083",
+            Objectˉdigest.Calculateˉsha256(First.Interpreterˉmoduleˉbytes.AsSpan()));
+        Equal(30_457, First.Interpreterˉnativeˉobjectˉbytes.Length);
+        Equal("fbe3592e5459723c2b36330ec93659fb387de497b31fa59b8e629668297aaac6",
+            Objectˉdigest.Calculateˉsha256(First.Interpreterˉnativeˉobjectˉbytes.AsSpan()));
+        Equal(205, First.Clientˉshimˉobjectˉbytes.Length);
+        Equal("6a22069adef6f9a4b58d1dda2bfe0c2b35e8563bb4e7e73641f050c2eeae058d",
             Objectˉdigest.Calculateˉsha256(First.Clientˉshimˉobjectˉbytes.AsSpan()));
-        Equal(183, Faultˉfirst.Clientˉshimˉobjectˉbytes.Length);
-        Equal("90ce43c85a3791881e0780161928b2f7e9b415e9b1e860179a87ece48fe06c44",
+        Equal(193, Faultˉfirst.Clientˉshimˉobjectˉbytes.Length);
+        Equal("c57327ddf897fb32cc57dd1266c467283273eddafd8d4b78edfc43e59fc8eeee",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Clientˉshimˉobjectˉbytes.AsSpan()));
-        Equal(438, First.Clientˉimageˉbytes.Length);
-        Equal("69aeb9946942b75d1af5890a7186c1026bc562bc8aa4e59e088d4ea93f784acc",
+        Equal(30_270, First.Clientˉimageˉbytes.Length);
+        Equal("72f81045c525f1ad055127f3bb7917dace22b0a3b35ff3b6fefec28b37a6058c",
             Objectˉdigest.Calculateˉsha256(First.Clientˉimageˉbytes.AsSpan()));
-        Equal(438, Faultˉfirst.Clientˉimageˉbytes.Length);
-        Equal("1731dffafdec9ff3ca8ac056eb1298d80a029355b19dee036a2a3d31d37ae840",
+        Equal(30_270, Faultˉfirst.Clientˉimageˉbytes.Length);
+        Equal("b24007c770c1ff9d0c8a05702a6b05ead8a9361f55b6394b34cc3202343622aa",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Clientˉimageˉbytes.AsSpan()));
 
         Sequenceˉequal(First.Policyˉmoduleˉbytes, Second.Policyˉmoduleˉbytes);
         Sequenceˉequal(First.Policyˉnativeˉobjectˉbytes, Second.Policyˉnativeˉobjectˉbytes);
         Sequenceˉequal(First.Initˉserviceˉmoduleˉbytes, Second.Initˉserviceˉmoduleˉbytes);
         Sequenceˉequal(First.Initˉserviceˉimageˉbytes, Second.Initˉserviceˉimageˉbytes);
+        Sequenceˉequal(First.Interpreterˉmoduleˉbytes, Second.Interpreterˉmoduleˉbytes);
+        Sequenceˉequal(First.Interpreterˉnativeˉobjectˉbytes, Second.Interpreterˉnativeˉobjectˉbytes);
         Sequenceˉequal(First.Clientˉshimˉobjectˉbytes, Second.Clientˉshimˉobjectˉbytes);
         Sequenceˉequal(First.Clientˉimageˉbytes, Second.Clientˉimageˉbytes);
         Sequenceˉequal(Faultˉfirst.Clientˉimageˉbytes, Faultˉsecond.Clientˉimageˉbytes);
@@ -616,11 +624,32 @@ internal static class Program
             Runˉportableˉmain(First.Policyˉmoduleˉbytes).Exitˉcode);
         Equal(Kernelˉprocessˉcontract.EXPECTED_RESULT,
             Runˉportableˉmain(First.Initˉserviceˉmoduleˉbytes).Exitˉcode);
+        var Interpreter = Runˉportableˉmain(First.Interpreterˉmoduleˉbytes);
+        Equal(Kernelˉprocessˉcontract.EXPECTED_RESULT, Interpreter.Exitˉcode);
+        Equal((long)Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET,
+            Interpreter.Executedˉinstructions);
+        Sequenceˉequal(First.Interpreterˉmoduleˉbytes,
+            Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(Admission.Embeddedˉmoduleˉbytes));
+        Equal(-1, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+            Admission.Embeddedˉmoduleˉbytes[..^1])).Exitˉcode);
+        Equal(-2, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+            Mutate(Admission.Embeddedˉmoduleˉbytes, 0).ToImmutableArray())).Exitˉcode);
+        Equal(-7, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+            Mutate(Admission.Embeddedˉmoduleˉbytes, 117).ToImmutableArray())).Exitˉcode);
+        Equal(-19, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+            Mutate(Admission.Embeddedˉmoduleˉbytes, 121).ToImmutableArray())).Exitˉcode);
+        Equal(28, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+            Mutate(Admission.Embeddedˉmoduleˉbytes, 122).ToImmutableArray())).Exitˉcode);
+        Equal(-11, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+            Mutate(Admission.Embeddedˉmoduleˉbytes, 127).ToImmutableArray())).Exitˉcode);
         Sequenceˉequal(Admission.Embeddedˉmoduleˉbytes,
             Kernelˉwvbˉadmission.Build().Embeddedˉmoduleˉbytes);
         Equal(
             "7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2",
-            Convert.ToHexString(First.Clientˉdigest.AsSpan()).ToLowerInvariant());
+            Convert.ToHexString(First.Admittedˉprogramˉdigest.AsSpan()).ToLowerInvariant());
+        Equal(
+            "639e191af1844b6660750978854f5e168c25f4949f1d9282ca5777d65f617083",
+            Convert.ToHexString(First.Interpreterˉdigest.AsSpan()).ToLowerInvariant());
         Equal(
             "478dfcd36fed7c8063cfb3f53a6a1362bda5353656339b730be573a1be8f95b0",
             Convert.ToHexString(First.Initˉserviceˉdigest.AsSpan()).ToLowerInvariant());
@@ -639,10 +668,10 @@ internal static class Program
         Equal(0, Countˉsequence(Faultˉobject.Sections[0].Data, [0xCC]));
         True((ulong)First.Initˉserviceˉimageˉbytes.Length <= Kernelˉpagingˉcontract.PAGE_BYTES,
             "The init service image exceeds one page.");
-        True((ulong)First.Clientˉimageˉbytes.Length <= Kernelˉpagingˉcontract.PAGE_BYTES,
-            "The client image exceeds one page.");
-        True((ulong)Faultˉfirst.Clientˉimageˉbytes.Length <= Kernelˉpagingˉcontract.PAGE_BYTES,
-            "The deliberate-fault client image exceeds one page.");
+        True((ulong)First.Clientˉimageˉbytes.Length <= Kernelˉprocessˉcontract.CLIENT_CODE_BYTES,
+            "The interpreter client image exceeds its RX extent.");
+        True((ulong)Faultˉfirst.Clientˉimageˉbytes.Length <= Kernelˉprocessˉcontract.CLIENT_CODE_BYTES,
+            "The deliberate-fault interpreter image exceeds its RX extent.");
     }
 
     private static void Kernelˉprocessˉplannerˉisolatesˉuserˉpages()
@@ -652,6 +681,7 @@ internal static class Program
         const ulong ALLOCATION = 0x0080_0000;
         const ulong CLIENT_ALLOCATION = 0x00A0_0000;
         const ulong CHANNEL = 0x0060_0400;
+        var Noˉprogram = ImmutableArray.CreateRange(new byte[Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES]);
         var Paging = Kernelˉpagingˉplanner.Plan(KERNEL_ROOT, EXECUTABLE).Plan!;
         var Image = Kernelˉprocessˉimage.Build(Kernelˉwvbˉadmission.Build(), false);
         var Initˉdefinition = new Kernelˉprocessˉdefinition(
@@ -663,18 +693,18 @@ internal static class Program
         var Clientˉdefinition = new Kernelˉprocessˉdefinition(
             Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
             Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
-            Kernelˉprocessˉcontract.ROLE_CLIENT,
+            Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER,
             Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
             CHANNEL);
         var First = Kernelˉprocessˉplanner.Plan(
             Paging, ALLOCATION, Image.Initˉserviceˉimageˉbytes.AsSpan(),
-            Image.Initˉserviceˉdigest.AsSpan(), Initˉdefinition);
+            Image.Initˉserviceˉdigest.AsSpan(), Noˉprogram.AsSpan(), Initˉdefinition);
         var Second = Kernelˉprocessˉplanner.Plan(
             Paging, ALLOCATION, Image.Initˉserviceˉimageˉbytes.AsSpan(),
-            Image.Initˉserviceˉdigest.AsSpan(), Initˉdefinition);
+            Image.Initˉserviceˉdigest.AsSpan(), Noˉprogram.AsSpan(), Initˉdefinition);
         var Client = Kernelˉprocessˉplanner.Plan(
             Paging, CLIENT_ALLOCATION, Image.Clientˉimageˉbytes.AsSpan(),
-            Image.Clientˉdigest.AsSpan(), Clientˉdefinition);
+            Image.Interpreterˉdigest.AsSpan(), Image.Admittedˉprogramˉdigest.AsSpan(), Clientˉdefinition);
         True(First.Success, First.Diagnostics.IsEmpty ? "Process planning failed." : First.Diagnostics[0].Message);
         True(Second.Success, "Repeated process planning failed.");
         True(Client.Success, "Client process planning failed.");
@@ -686,6 +716,10 @@ internal static class Program
         Equal(ALLOCATION + 0x5000UL, Plan.Userˉstackˉaddress);
         Equal(ALLOCATION + 0x6000UL, Plan.Userˉdataˉaddress);
         Equal(CLIENT_ALLOCATION, Client.Plan!.Rootˉaddress);
+        Equal(CLIENT_ALLOCATION + 0xC000UL, Client.Plan.Userˉstackˉaddress);
+        Equal(CLIENT_ALLOCATION + 0xE000UL, Client.Plan.Userˉdataˉaddress);
+        Equal(Kernelˉprocessˉcontract.CLIENT_CODE_PAGES, Client.Plan.Userˉcodeˉpages);
+        Equal(Kernelˉprocessˉcontract.CLIENT_STACK_PAGES, Client.Plan.Userˉstackˉpages);
         True(Client.Plan.Rootˉaddress != Plan.Rootˉaddress, "The service and client share a root.");
 
         Equal(ALLOCATION + 0x1000UL | 7UL, Kernelˉprocessˉplanner.Readˉentry(Plan, 0, 0));
@@ -698,6 +732,16 @@ internal static class Program
         Equal(
             Plan.Userˉdataˉaddress | 7UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
             Kernelˉprocessˉplanner.Readˉentry(Plan, 3, 6));
+        Equal(
+            Client.Plan.Userˉstackˉaddress | 7UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
+            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 12));
+        Equal(
+            Client.Plan.Userˉstackˉaddress + Kernelˉpagingˉcontract.PAGE_BYTES |
+                7UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
+            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 13));
+        Equal(
+            Client.Plan.Userˉdataˉaddress | 7UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
+            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 14));
 
         var Userˉleaves = 0;
         for (var Index = 0; Index < 512; Index++)
@@ -716,11 +760,31 @@ internal static class Program
                 "The process table contains a writable executable leaf.");
         }
         Equal(3, Userˉleaves);
+        var Clientˉuserˉleaves = 0;
+        for (var Index = 0; Index < 512; Index++)
+        {
+            var Entry = Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, Index);
+            if ((Entry & Kernelˉprocessˉcontract.ENTRY_USER) != 0)
+            {
+                Clientˉuserˉleaves++;
+            }
+            True(
+                (Entry & (Kernelˉpagingˉcontract.ENTRY_PRESENT |
+                    Kernelˉpagingˉcontract.ENTRY_WRITABLE |
+                    Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE)) !=
+                (Kernelˉpagingˉcontract.ENTRY_PRESENT |
+                    Kernelˉpagingˉcontract.ENTRY_WRITABLE),
+                "The interpreter table contains a writable executable leaf.");
+        }
+        Equal(11, Clientˉuserˉleaves);
         Sequenceˉequal(Image.Initˉserviceˉimageˉbytes,
             Plan.Userˉcodeˉbytes[..Image.Initˉserviceˉimageˉbytes.Length]);
         Sequenceˉequal(Image.Clientˉimageˉbytes,
             Client.Plan.Userˉcodeˉbytes[..Image.Clientˉimageˉbytes.Length]);
         True(Plan.Userˉstackˉbytes.All(Value => Value == 0), "The initial user stack is not zeroed.");
+        Equal((int)(Kernelˉprocessˉcontract.CLIENT_STACK_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES),
+            Client.Plan.Userˉstackˉbytes.Length);
+        True(Client.Plan.Userˉstackˉbytes.All(Value => Value == 0), "The interpreter user stack is not zeroed.");
         Equal((uint)Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION,
             BinaryPrimitives.ReadUInt32LittleEndian(Plan.Userˉdataˉbytes.AsSpan()));
         Equal((uint)Nativeˉexecutionˉcontextˉcontract.SIZE,
@@ -730,7 +794,16 @@ internal static class Program
         Equal(Kernelˉprocessˉcontract.PROCESS_STATE_READY,
             BinaryPrimitives.ReadUInt32LittleEndian(Plan.Processˉrecord.AsSpan()[16..]));
         Sequenceˉequal(Image.Initˉserviceˉdigest, Plan.Processˉrecord[32..64]);
-        Sequenceˉequal(Image.Clientˉdigest, Client.Plan.Processˉrecord[32..64]);
+        Sequenceˉequal(Image.Interpreterˉdigest, Client.Plan.Processˉrecord[32..64]);
+        Sequenceˉequal(Image.Admittedˉprogramˉdigest,
+            Client.Plan.Processˉrecord[(int)Kernelˉprocessˉcontract.PROGRAM_DIGEST_OFFSET..
+                (int)Kernelˉprocessˉcontract.CODE_PAGE_COUNT_OFFSET]);
+        Equal(Kernelˉprocessˉcontract.RUNTIME_KIND_BYTECODE_INTERPRETER,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Client.Plan.Processˉrecord.AsSpan()[(int)Kernelˉprocessˉcontract.RUNTIME_KIND_OFFSET..]));
+        Equal((uint)Kernelˉprocessˉcontract.CLIENT_STACK_PAGES,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Client.Plan.Processˉrecord.AsSpan()[(int)Kernelˉprocessˉcontract.STACK_PAGE_COUNT_OFFSET..]));
         Equal(Kernelˉprocessˉcontract.CAPABILITY_RIGHT_RECEIVE,
             BinaryPrimitives.ReadUInt32LittleEndian(Plan.Processˉrecord.AsSpan()[120..]));
         Equal(Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
@@ -739,17 +812,24 @@ internal static class Program
             Plan.Processˉrecord.AsSpan()[(int)Kernelˉprocessˉcontract.CHANNEL_ADDRESS_OFFSET..]));
 
         Processˉplanˉfails(Paging, 0, Image.Initˉserviceˉimageˉbytes,
-            Image.Initˉserviceˉdigest, Initˉdefinition, "WVOS6001");
+            Image.Initˉserviceˉdigest, Noˉprogram, Initˉdefinition, "WVOS6001");
         Processˉplanˉfails(Paging, 0x009F_C000, Image.Initˉserviceˉimageˉbytes,
-            Image.Initˉserviceˉdigest, Initˉdefinition, "WVOS6002");
+            Image.Initˉserviceˉdigest, Noˉprogram, Initˉdefinition, "WVOS6002");
         Processˉplanˉfails(Paging, ALLOCATION, [], Image.Initˉserviceˉdigest,
-            Initˉdefinition, "WVOS6003");
+            Noˉprogram, Initˉdefinition, "WVOS6003");
         Processˉplanˉfails(Paging, ALLOCATION, Image.Initˉserviceˉimageˉbytes,
-            Image.Initˉserviceˉdigest[..^1], Initˉdefinition, "WVOS6004");
+            Image.Initˉserviceˉdigest[..^1], Noˉprogram, Initˉdefinition, "WVOS6004");
         Processˉplanˉfails(Paging, EXECUTABLE, Image.Initˉserviceˉimageˉbytes,
-            Image.Initˉserviceˉdigest, Initˉdefinition, "WVOS6005");
+            Image.Initˉserviceˉdigest, Noˉprogram, Initˉdefinition, "WVOS6005");
         Processˉplanˉfails(Paging, ALLOCATION, Image.Initˉserviceˉimageˉbytes,
-            Image.Initˉserviceˉdigest, Initˉdefinition with { Capabilityˉrights = 3 }, "WVOS6006");
+            Image.Initˉserviceˉdigest, Noˉprogram,
+            Initˉdefinition with { Capabilityˉrights = 3 }, "WVOS6006");
+        Processˉplanˉfails(Paging, CLIENT_ALLOCATION, Image.Clientˉimageˉbytes,
+            Image.Interpreterˉdigest, Noˉprogram, Clientˉdefinition, "WVOS6007");
+        Processˉplanˉfails(Paging, CLIENT_ALLOCATION, Image.Clientˉimageˉbytes,
+            Image.Interpreterˉdigest, Image.Admittedˉprogramˉdigest[..^1], Clientˉdefinition, "WVOS6007");
+        Processˉplanˉfails(Paging, ALLOCATION, Image.Initˉserviceˉimageˉbytes,
+            Image.Initˉserviceˉdigest, Image.Admittedˉprogramˉdigest, Initˉdefinition, "WVOS6007");
     }
 
     private static void Kernelˉprocessˉboundaryˉemitsˉverifiedˉobject()
@@ -761,17 +841,17 @@ internal static class Program
         var Second = Kernelˉprocessˉx64.Build(Normalˉimage, false);
         var Faultˉfirst = Kernelˉprocessˉx64.Build(Faultˉimage, true);
         var Faultˉsecond = Kernelˉprocessˉx64.Build(Faultˉimage, true);
-        Equal(7_988, First.Objectˉbytes.Length);
-        Equal("3607d66b7e633027062a9fbb963dbd1a2723c2f7ee77fab235443c7ddd266809",
+        Equal(38_332, First.Objectˉbytes.Length);
+        Equal("44559a001988e503374c2b83bc8056d928e075381ca3cd93e155040a2f63fd10",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
-        Equal(4_202, First.Codeˉbytes.Length);
-        Equal("260ea2b5ee15376518f571d3302e7f90e777727a55ac77480484b9adaeb7d6ac",
+        Equal(4_714, First.Codeˉbytes.Length);
+        Equal("75e9cd05b3093d50b5c38a7466ec36a8ba5369cec99e35d63eba584ca7310500",
             Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
-        Equal(8_020, Faultˉfirst.Objectˉbytes.Length);
-        Equal("c735c4f8185312cef4cd1c1c77aebba2f39b096c7e4051d1367c4a94c7ef8d3e",
+        Equal(38_364, Faultˉfirst.Objectˉbytes.Length);
+        Equal("c8ed18169fe56bd44d1594e4e7ed4cf403e157c5f831b511640f0d5f28f003fc",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Objectˉbytes.AsSpan()));
-        Equal(4_234, Faultˉfirst.Codeˉbytes.Length);
-        Equal("915f79d3d18ac165351a3a7c8936b749f3559bb7b020391d97e825cb02bad0c4",
+        Equal(4_746, Faultˉfirst.Codeˉbytes.Length);
+        Equal("d1093fa03967b58fbb1654bb96a40f4b6b8481218d521001ff933338673399d7",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Codeˉbytes.AsSpan()));
         Equal(12, First.Relocations.Length);
         Equal(12, Faultˉfirst.Relocations.Length);
@@ -819,14 +899,14 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         Sequenceˉequal(First, Second);
-        Equal(81_408, First.Length);
+        Equal(114_688, First.Length);
         Equal(
-            "b2ed520486199104cad227f0bcbc863b428c9484400116dc88c2a55c159d2951",
+            "8cd17f693ae088eefaccb2b8449fd47f34e345352bb46beebd4a2a32fe8fad5d",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and deliberate user-fault images are identical.");
         Equal(
-            "windvale-os-boot 23\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nuser-fault=contained\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 24\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nuser-fault=contained\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.USER_FAULT_SERIAL_MARKER);
     }
 
@@ -836,9 +916,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(80_896, First.Length);
+        Equal(114_176, First.Length);
         Equal(
-            "5e2314ad4f3bbc3809c3027e56cf955b398d40d82657be597f8ca822ad6cdec8",
+            "4248f3402a0abfe9eda531109460fb37a7c1f3f907ded162a49a785bab38fbb7",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -850,9 +930,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(80_896, First.Length);
+        Equal(114_176, First.Length);
         Equal(
-            "a5929f97d1ef7d1152c8f4783f8f5a0bf40ba7f6f87dda529519a6b76327a2bb",
+            "465ac8d095160e169187860413b0b347148df4acc2f24802f7a5e166981f6c59",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -873,9 +953,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         Sequenceˉequal(First, Second);
-        Equal(80_896, First.Length);
+        Equal(114_176, First.Length);
         Equal(
-            "205b4dfc88f73f9ecec41f91242642528387e0ae0c55d1273cb50a46f14d2847",
+            "0a65ba2982f551434553054fc92d82a1a6e727a73527c85a79526f328105b58c",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -900,7 +980,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 23\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 24\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -1206,11 +1286,13 @@ internal static class Program
         ulong allocationˉaddress,
         ImmutableArray<byte> userˉimage,
         ImmutableArray<byte> moduleˉdigest,
+        ImmutableArray<byte> programˉdigest,
         Kernelˉprocessˉdefinition definition,
         string code)
     {
         var Result = Kernelˉprocessˉplanner.Plan(
-            paging, allocationˉaddress, userˉimage.AsSpan(), moduleˉdigest.AsSpan(), definition);
+            paging, allocationˉaddress, userˉimage.AsSpan(), moduleˉdigest.AsSpan(),
+            programˉdigest.AsSpan(), definition);
         True(!Result.Success, $"Process planning unexpectedly succeeded instead of producing {code}.");
         Equal(code, Result.Diagnostics[0].Code);
     }

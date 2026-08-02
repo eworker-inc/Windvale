@@ -908,6 +908,14 @@ GitHub [Verify run 30724785769](https://github.com/eworker-inc/Windvale/actions/
 
 After evidence retrieval and comparison, the resolved exact Debian QA directory, transferred source archive, and remote evidence bundle were removed and confirmed absent. The exact local archive, Windows artifacts, and retrieved Debian evidence bundle remain retained.
 
+## Probe-23 cross-host build and Seed evidence
+
+Exact commit `22e350b8965bbe70452261dabfc411d28cf7a1d5` adds the first Windvale init/resource service, two protected CPL3 roots, reduced send/receive endpoints, deterministic block/wake coordination, and contained client fault evidence. GitHub [Verify run 30730151722](https://github.com/eworker-inc/Windvale/actions/runs/30730151722) passes classification plus the Windows and Linux verification jobs.
+
+Both jobs restore and compile the complete solution, including `Windvale.Bootstrap` and `Windvale.Os.Tests`, then pass all 67 Seed qualification tests. The Windows suite reports 217.039 seconds; Linux reports 208.599 seconds. This is valid cross-host build and Seed evidence for the exact source state.
+
+The workflow does not execute the `Windvale.Os.Tests` binary. Probe 23's 25 focused OS tests and four pinned-QEMU scenarios pass on Windows, but a Linux run of the OS-test binary from the same exact source state has not been recorded. Probe 23 therefore remains a candidate rather than replacing exact commit `860c69c`/probe 21 as the latest fully cross-host-qualified OS baseline.
+
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
 Commit `9c4b9f5` was archived and transferred with matching SHA-256 `44565d0f6366eb418dc1a4555d1f7b355df63ec2ea836440de54639087fc335a`, then verified in the uniquely named disposable directory `/tmp/windvale-linker-9c4b9f5-20260730` on the isolated E-Worker QA host. The archive contained the canonical WVA fixture as 403 bytes plus the linker project, provider fixture, and shell verifier. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`. The verification did not use E-Worker release, configuration, service, or durable-data paths. The Debian report was retrieved with SHA-256 `b84cd3a180e8cb167dca3cf909457de91a8643f19911628c426c6e52c6fe5fc0`; the provider WVO, linked image, and canonical map were retrieved separately and each matched the Windows artifact byte for byte; then the resolved exact temporary directory and transferred archive were removed.
