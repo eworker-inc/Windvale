@@ -1,6 +1,6 @@
 # Decision 0107: Playground disposable WebAssembly worker
 
-- Status: Implemented; local Chromium execution evidence, cross-browser qualification pending
+- Status: Cross-host qualified engine integration with local Chromium worker execution; cross-browser qualification pending
 - Date: 2026-08-02
 - Extends: [Decision 0106](0106-Bounded-Straight-I32-WebAssembly-Lowering.md)
 - Target: `wasm32-browser-v1-experimental`
@@ -33,6 +33,12 @@ The UI compares ABI-0 results or ABI-1 status/result/instruction counts with the
 Windvale source now owns the code emission used by a real browser execution path. Canonical WVB remains the handoff and distribution identity, and the .NET reference interpreter remains both the general fallback and the differential oracle.
 
 This is a worker boundary for generated Wasm only. Stage 0 source compilation, bytecode verification, the Windvale backend running as WVB, and reference execution remain on the browser UI thread. The accepted direct profile has no imports or linear memory, so this decision defines no browser capability ABI. One successful Chromium-based in-app browser run on 2026-08-02 establishes local integration evidence; it does not establish cross-browser compatibility or production isolation.
+
+## Evidence
+
+Exact implementation commit `f3b96052b964832fb5fc60ed3d076b42e8b78e9d` passes GitHub [Verify run 30763774038](https://github.com/eworker-inc/Windvale/actions/runs/30763774038). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 68 Seed tests, all 25 OS tests, and the complete native CLI qualification gate. The expanded playground case recompiles and digest-checks the embedded `.wv` backend, requires unsupported fallback without Wasm publication, reproduces the exact straight-line WVB and Wasm identities, and proves deterministic repeats on both hosts.
+
+The Chromium-based local run executes the new example twice in fresh workers with equal ABI `1`, status `0`, result `42`, and 30-instruction evidence and no browser warning or error. GitHub [Deploy homepage run 30763774003](https://github.com/eworker-inc/Windvale/actions/runs/30763774003) also publishes the exact implementation commit successfully. Deployment success establishes static packaging, not browser-engine execution or cross-browser compatibility.
 
 ## Rejected alternatives
 
