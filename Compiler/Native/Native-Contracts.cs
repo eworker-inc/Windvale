@@ -28,7 +28,7 @@ public static class Nativeˉcontract
         MAXIMUM_CALL_PARAMETERS - REGISTER_CALL_PARAMETERS;
     public const int MAXIMUM_STACK_CALL_BYTES =
         MAXIMUM_STACK_CALL_PARAMETERS * VALUE_SLOT_BYTES;
-    public const int MAXIMUM_RECORD_ARENA_BYTES = 1024 * 1024;
+    public const int MAXIMUM_RECORD_ARENA_BYTES = 2 * 1024 * 1024;
     public const int MAXIMUM_TEXT_ARENA_BYTES = 16 * 1024 * 1024;
     public const int MAXIMUM_ENUM_METADATA_BYTES = 32 * 1024 * 1024;
 }

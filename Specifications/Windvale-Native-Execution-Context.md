@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Execution-context version 7 and ABI-20 target `x86-64-wvb-baseline-v20` are current and cross-host qualified under [Decision 0109](../Documents/Decisions/0109-Native-Two-Byte-Little-Endian-Construction.md) at exact implementation commit `a63ca0fe1d9d66882ead68ed28bcd7cd6a067f23`. ABI 20 extends the ABI-19 fixed-width byte-construction contract without changing this context's layout. [Decision 0099](../Documents/Decisions/0099-Bounded-Native-Frame-Admission.md) established the retained 2,048-cell envelope; [Decision 0105](../Documents/Decisions/0105-Typed-Block-Scoped-Native-Value-Slots.md) added typed block-scoped reuse without raising it; and [Decision 0108](../Documents/Decisions/0108-Native-One-Byte-Construction.md) admitted one-byte construction.
+Execution-context version 7 and ABI-20 target `x86-64-wvb-baseline-v20` are current and cross-host qualified under [Decision 0109](../Documents/Decisions/0109-Native-Two-Byte-Little-Endian-Construction.md) at exact implementation commit `a63ca0fe1d9d66882ead68ed28bcd7cd6a067f23`. ABI 20 extends the ABI-19 fixed-width byte-construction contract without changing this context's layout. [Decision 0099](../Documents/Decisions/0099-Bounded-Native-Frame-Admission.md) established the retained 2,048-cell envelope; [Decision 0105](../Documents/Decisions/0105-Typed-Block-Scoped-Native-Value-Slots.md) added typed block-scoped reuse without raising it; [Decision 0108](../Documents/Decisions/0108-Native-One-Byte-Construction.md) admitted one-byte construction; and implemented [Decision 0112](../Documents/Decisions/0112-Bounded-Exact-Compiler-Record-Arena.md) raises only the current host executor's record capacity from 1 MiB to 2 MiB from exact compiler evidence.
 
 This is an experimental native ABI, not a stable public foreign-function interface. ABI 20 replaces ABI 19 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-20 fragment verifier.
 
@@ -48,7 +48,7 @@ All integer fields are little-endian. The context is exactly 112 bytes:
 | 16 | 8 | call-depth budget | Positive maximum active native call depth |
 | 24 | 8 | service-table pointer | Zero when no runtime service is required; otherwise points to the exact table below |
 | 32 | 8 | record-arena pointer | Execution-owned base; may be zero only when arena length is zero and the module performs no record construction |
-| 40 | 4 | record-arena bytes | At most 1 MiB in the current host executor |
+| 40 | 4 | record-arena bytes | At most 2 MiB in the current host executor; independently bounded OS profiles may supply less |
 | 44 | 4 | record-arena used bytes | Starts at zero; generated checked construction advances it in 16-byte cells |
 | 48 | 8 | text-arena pointer | Execution-owned dynamic text/byte base; may be zero only when no admitted dynamic value allocates |
 | 56 | 4 | text-arena bytes | At most 16 MiB in the current host executor |

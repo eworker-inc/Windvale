@@ -37,6 +37,23 @@ public static class X64ˉnativeˉexecutor
             maximumˉcallˉdepth,
             hostˉservices).Bytes;
 
+    internal static Nativeˉexecutionˉmeasurement Measureˉi32(
+        Nativeˉfragment fragment,
+        string entry = "Main",
+        long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS,
+        int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH,
+        Nativeˉhostˉservices? hostˉservices = null)
+    {
+        var Outcome = Executeˉentry(
+            fragment,
+            Nativeˉentryˉresultˉkind.Scalar,
+            entry,
+            maximumˉinstructions,
+            maximumˉcallˉdepth,
+            hostˉservices);
+        return new(Outcome.Scalar, Outcome.Recordˉarenaˉused, Outcome.Textˉarenaˉused);
+    }
+
     private static Nativeˉexecutionˉoutcome Executeˉentry(
         Nativeˉfragment fragment,
         Nativeˉentryˉresultˉkind expectedˉresult,
@@ -182,6 +199,8 @@ public static class X64ˉnativeˉexecutor
         var Serviceˉtable = IntPtr.Zero;
         var Serviceˉfailureˉdetail = Nativeˉserviceˉfailureˉdetail.None;
         var Resultˉbytes = ImmutableArray<byte>.Empty;
+        uint Recordˉarenaˉused = 0;
+        uint Textˉarenaˉused = 0;
         ulong Outcome;
         try
         {
@@ -313,6 +332,12 @@ public static class X64ˉnativeˉexecutor
                 Resultˉpointer,
                 0,
                 0));
+            Recordˉarenaˉused = unchecked((uint)Marshal.ReadInt32(
+                Context,
+                Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET));
+            Textˉarenaˉused = unchecked((uint)Marshal.ReadInt32(
+                Context,
+                Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET));
             Fileˉinput.Verifyˉcompleted();
             Fileˉoutput.Verifyˉcompleted();
             Serviceˉfailureˉdetail = (Nativeˉserviceˉfailureˉdetail)unchecked((uint)Marshal.ReadInt32(
@@ -349,7 +374,11 @@ public static class X64ˉnativeˉexecutor
         var Status = (uint)(Outcome >> 32);
         if (Status == 0)
         {
-            return new(unchecked((int)(uint)Outcome), Resultˉbytes);
+            return new(
+                unchecked((int)(uint)Outcome),
+                Resultˉbytes,
+                Recordˉarenaˉused,
+                Textˉarenaˉused);
         }
         if (Status == 1)
         {
@@ -616,6 +645,13 @@ public static class X64ˉnativeˉexecutor
 
     private readonly record struct Nativeˉexecutionˉoutcome(
         int Scalar,
-        ImmutableArray<byte> Bytes);
+        ImmutableArray<byte> Bytes,
+        uint Recordˉarenaˉused,
+        uint Textˉarenaˉused);
+
+    internal readonly record struct Nativeˉexecutionˉmeasurement(
+        int Scalar,
+        uint Recordˉarenaˉused,
+        uint Textˉarenaˉused);
 
 }

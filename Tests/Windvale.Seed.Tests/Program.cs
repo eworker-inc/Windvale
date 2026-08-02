@@ -715,7 +715,7 @@ internal static class Program
         new("Windvale owns bounded executable-image layout before W^X publication", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlayoutˉruns),
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
-        new("native file output publishes bounded bytes and reaches compiler execution", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
+        new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
@@ -1547,6 +1547,7 @@ internal static class Program
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
         Equal(20, Nativeˉcontract.ABI_VERSION);
         Equal(8_388_608, Nativeˉcontract.MAXIMUM_CODE_BYTES);
+        Equal(2_097_152, Nativeˉcontract.MAXIMUM_RECORD_ARENA_BYTES);
         Equal(2_048, Nativeˉcontract.MAXIMUM_FRAME_SLOTS);
         Equal(100_000, Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS);
         Equal(32_768, Nativeˉcontract.MAXIMUM_FRAME_BYTES);
@@ -2419,7 +2420,7 @@ internal static class Program
             export fn Main() -> i32 {
                 var Index: i32 = 0;
                 var Cell: Nativeˉcell = Nativeˉcell(0);
-                while Index < 65536 {
+                while Index < 131072 {
                     Cell = Nativeˉcell(Index);
                     Index = Index + 1;
                 }
@@ -2430,7 +2431,7 @@ internal static class Program
             "WVR3017",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 X64ˉnativeˉbackend.Compile(Arenaˉexhaustion).Fragment,
-                maximumˉinstructions: 2_000_000));
+                maximumˉinstructions: 4_000_000));
     }
 
     private static void Nativeˉdynamicˉtextˉagrees()
@@ -5207,23 +5208,26 @@ internal static class Program
             var Compilerˉauthorized = Compilerˉtool.Module.Capabilities
                 .Select(Capability => Capability.Name)
                 .ToImmutableHashSet(StringComparer.Ordinal);
-            Throwsˉnativeˉtrap(
-                "WVR3017",
-                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
-                    Compilerˉnative.Fragment,
-                    maximumˉinstructions: 4_000_000_000,
-                    hostˉservices: new(
-                        Compilerˉoutput.Channel,
-                        Compilerˉauthorized,
-                        Compilerˉresources,
-                        Compilerˉdiagnostic.Channel,
-                        Nativeˉfileˉinput.Hostˉfileˉsystem(),
-                        Nativeˉfileˉoutput.Hostˉfileˉsystem())));
-            Equal(string.Empty, Compilerˉoutput.Readˉtext());
+            var Compilerˉmeasurement = X64ˉnativeˉexecutor.Measureˉi32(
+                Compilerˉnative.Fragment,
+                maximumˉinstructions: 4_000_000_000,
+                hostˉservices: new(
+                    Compilerˉoutput.Channel,
+                    Compilerˉauthorized,
+                    Compilerˉresources,
+                    Compilerˉdiagnostic.Channel,
+                    Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                    Nativeˉfileˉoutput.Hostˉfileˉsystem()));
+            Equal(0, Compilerˉmeasurement.Scalar);
+            Equal(1_480_096u, Compilerˉmeasurement.Recordˉarenaˉused);
+            Equal(4_340_388u, Compilerˉmeasurement.Textˉarenaˉused);
+            Equal(
+                "source wvb status=Valid functions=4 code-bytes=532 module-bytes=815\n",
+                Compilerˉoutput.Readˉtext());
             Equal(string.Empty, Compilerˉdiagnostic.Readˉtext());
-            True(
-                !File.Exists(Outputˉpath),
-                "The record-arena failure published a partial compiler output.");
+            Sequenceˉequal(
+                Compileˉsuccess(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
+                File.ReadAllBytes(Outputˉpath));
         }
         finally
         {
