@@ -47,7 +47,7 @@ The handoff includes no valid boot-services pointer. Code reached through this A
 
 ## Current evidence and limit
 
-Candidate firmware probe version 25 retains handoff version 1 while linking the compiler-generated special kernel path, Windvale-owned admission, process policy, init service, section-derived user-space interpreter, shared ABI-16 portable native probes, WVA seams, kernel memory/paging version 3, two protected roots, kernel exception destinations, and the WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
+Qualified firmware probe version 25 retains handoff version 1 while linking the compiler-generated special kernel path, Windvale-owned admission, process policy, init service, section-derived user-space interpreter, shared ABI-16 portable native probes, WVA seams, kernel memory/paging version 3, two protected roots, kernel exception destinations, and the WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
 
 ```text
 memory-map=pass

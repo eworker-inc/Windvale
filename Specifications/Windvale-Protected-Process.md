@@ -6,7 +6,7 @@ Protected-process contract version 4 defines Windvale OS's section-derived user-
 
 [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns version 4. [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) retains the cross-host-qualified version-3 proof at exact commit `190174a01299369fb855e27ea676d34062e09c5b`.
 
-Focused Windows tests and all four pinned-QEMU scenarios pass for version 4. Cross-host qualification of probe 25 is pending. This is an internal experiment, not a stable public syscall ABI, general process manager, arbitrary WVB loader, complete verifier, or JIT.
+Version 4 is cross-host qualified at exact commit `33555fdc4305f457638431ddbc40cb79fafa51c3`: Windows and pinned Debian 12 each pass all 67 Seed tests and all 25 OS tests, while Windows supplies the four pinned-QEMU scenarios. This is an internal experiment, not a stable public syscall ABI, general process manager, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
@@ -146,7 +146,7 @@ The user-fault image interprets and sends `29`, then executes privileged `CLI` i
 | Fault process-machine WVO | 136,700 | `123adcc0c0dfb9c919ae1abdcdc1f4e330e98b86d6d753b110c3ddcb04a9de44` |
 | Fault process-machine code | 5,754 | `8930d1b285f916bd18f5b5442aa52187f5ed3667f72f0c39667d6eaa6216637d` |
 
-All 25 focused OS tests and all four pinned-QEMU probe-25 scenarios pass on Windows. Cross-host qualification remains pending.
+All 67 Seed tests and all 25 OS tests pass on Windows and pinned Debian 12 at exact commit `33555fd`; all four pinned-QEMU probe-25 scenarios pass on Windows.
 
 ## Deliberate limits
 

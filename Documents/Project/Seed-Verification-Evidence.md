@@ -926,6 +926,16 @@ Pinned Windows QEMU 11.0/Q35/TCG supplies the machine evidence: the 114,176-byte
 
 This evidence qualifies the fixed-offset interpreter profile, not arbitrary WVB input, general section discovery, a complete verifier/interpreter, JIT publication, scheduling, process lifecycle, Hyper-V, physical hardware, or .NET retirement. Decision 0094 begins the next candidate section-derived profile from this exact checkpoint.
 
+## Probe-25 section-derived interpreter qualification
+
+Exact commit `33555fdc4305f457638431ddbc40cb79fafa51c3` advances the CPL3 Windvale interpreter from fixed serialized offsets to checked WVB 1.6 envelope traversal, seven ordered section payloads, and one bounded function/export profile. A second compiler-produced WVB with a longer module name moves its code payload and still returns result 29. The process contract records interpreter profile 2, a 32-page RX image, four-page RW/NX stack, one RW/NX context page, exact instruction/call-depth budgets, and policy token 94. Kernel memory version 3 selects a complete 58-page arena at a 2 MiB-aligned address; paging version 3 admits the measured 256 KiB executable window.
+
+GitHub [Verify run 30733685025](https://github.com/eworker-inc/Windvale/actions/runs/30733685025) passes classification and the complete non-Fast Windows and digest-pinned Debian 12 verification jobs. Each host passes all 67 Seed tests and all 25 OS tests. Windows Seed elapsed time is 228.831 seconds and Debian is 207.238 seconds.
+
+Pinned Windows QEMU 11.0/Q35/TCG passes all four exact probe-25 scenarios. The 214,528-byte normal image SHA-256 `99686e2b2484de156a01bbec0ece68e6a15af7229a477d9245ee4f3068ed4f5b` exits 0; the same-sized invalid-opcode image SHA-256 `da14fd39c4ebf19471bb7205aa1cfce5b40a52c1b64979d5ff62eed143d64e90` and general-protection image SHA-256 `02e6a297c6495a0c35b4b799403a0cedc8a1538c3a62c52836b2fe6fa6a225c9` exit 3; and the 215,040-byte contained-interpreter-fault image SHA-256 `ede1d1d0ae8638086c81564e3150829137f4f3aceead9e7bfddeedc9445ae2f6` exits 0. The cross-host workflow does not claim a Debian QEMU run.
+
+This evidence qualifies section-derived execution of one embedded admitted module. It does not qualify runtime-supplied WVB transport, arbitrary modules, general semantic verification or interpretation, executable publication, JIT, scheduling, process lifecycle, Hyper-V, physical hardware, or .NET retirement.
+
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
 Commit `9c4b9f5` was archived and transferred with matching SHA-256 `44565d0f6366eb418dc1a4555d1f7b355df63ec2ea836440de54639087fc335a`, then verified in the uniquely named disposable directory `/tmp/windvale-linker-9c4b9f5-20260730` on the isolated E-Worker QA host. The archive contained the canonical WVA fixture as 403 bytes plus the linker project, provider fixture, and shell verifier. The host ran Debian GNU/Linux 12 x64 with .NET SDK `10.0.302`. The verification did not use E-Worker release, configuration, service, or durable-data paths. The Debian report was retrieved with SHA-256 `b84cd3a180e8cb167dca3cf909457de91a8643f19911628c426c6e52c6fe5fc0`; the provider WVO, linked image, and canonical map were retrieved separately and each matched the Windows artifact byte for byte; then the resolved exact temporary directory and transferred archive were removed.

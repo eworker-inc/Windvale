@@ -1,7 +1,7 @@
 # Decision 0094: First section-derived user-space WVB profile
 
 - Date: 2026-08-02
-- Status: Accepted and implemented; focused Windows and pinned-QEMU evidence recorded, cross-host qualification pending
+- Status: Qualified at exact commit `33555fdc4305f457638431ddbc40cb79fafa51c3`
 - Implements: The next bounded part of step 6 in [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
 - Contracts: [Interpreter profile 2](../../Specifications/Windvale-Os-Bytecode-Interpreter.md), [protected process version 4](../../Specifications/Windvale-Protected-Process.md), kernel memory version 3, kernel paging version 3, and firmware probe 25
 
@@ -50,7 +50,7 @@ Pinned QEMU `pc-q35-11.0,accel=tcg` passes all scenarios:
 | general protection | 214,528 | `02e6a297c6495a0c35b4b799403a0cedc8a1538c3a62c52836b2fe6fa6a225c9` | `3` |
 | contained interpreter fault | 215,040 | `ede1d1d0ae8638086c81564e3150829137f4f3aceead9e7bfddeedc9445ae2f6` | `0` |
 
-Probe 25 is a candidate until the committed source passes the repository's Windows and pinned-Debian non-Fast verification. Decision 0093 records the exact preceding cross-host-qualified probe-24 checkpoint.
+Exact commit `33555fdc4305f457638431ddbc40cb79fafa51c3` is the cross-host-qualified probe-25 checkpoint. GitHub [Verify run 30733685025](https://github.com/eworker-inc/Windvale/actions/runs/30733685025) passes the complete non-Fast verifier on Windows and digest-pinned Debian 12: each host passes all 67 Seed tests and all 25 OS tests. Windows Seed elapsed time is 228.831 seconds and Debian is 207.238 seconds. The four exact QEMU scenarios above remain the recorded Windows machine evidence; the workflow does not claim a Debian QEMU run.
 
 ## Consequences
 

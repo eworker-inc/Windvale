@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel native seam version 16, WVA seam version 8, admission bridge version 2, retained bridge 10, and protected-process version 3 are cross-host qualified through probe 24 at exact commit `190174a`. Candidate probe 25 retains those machine seams while advancing memory and paging to version 3, protected processes to version 4, and the user-space Windvale interpreter to section-derived profile 2. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns the candidate runtime extension.
+Kernel native seam version 16, WVA seam version 8, admission bridge version 2, retained bridge 10, memory and paging version 3, protected-process version 4, and section-derived interpreter profile 2 are cross-host qualified through probe 25 at exact commit `33555fd`. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns the runtime extension.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 
@@ -113,4 +113,4 @@ Firmware probe 22 introduced ABI 16/context 7 with bridge 10, WVA version 8, adm
 
 Firmware probe 23 retains those ABI, WVA, admission, memory, paging, and bridge contracts while advancing protected processes to version 2. The Windvale init-service WVB is 371 bytes with SHA-256 `478dfcd36fed7c8063cfb3f53a6a1362bda5353656339b730be573a1be8f95b0`; its linked user image is 2,302 bytes. Exact commit `22e350b` passes Windows/Linux build and Seed qualification; the retained composition is later cross-host qualified with the OS suite by probe 24 at `190174a`.
 
-Candidate probe 25 advances protected processes to version 4 while retaining those machine seams. Its 12,359-byte interpreter WVB has SHA-256 `909e624df86e614b6f7dcaa61e75ffa685467015015bfafd7b0772ee41a89920`; the 127,598-byte normal interpreter image executes under 32 RX pages, four RW/NX stack pages, and one RW/NX context page. The normal process object is 136,668 bytes with SHA-256 `33ef216d89926bacd53b5a46c5f39f3802c778bdfee44de0d7c79a440637e696`. All 25 focused OS tests and all four pinned-QEMU scenarios pass on Windows; cross-host qualification remains pending.
+Probe 25 advances protected processes to version 4 while retaining those machine seams. Its 12,359-byte interpreter WVB has SHA-256 `909e624df86e614b6f7dcaa61e75ffa685467015015bfafd7b0772ee41a89920`; the 127,598-byte normal interpreter image executes under 32 RX pages, four RW/NX stack pages, and one RW/NX context page. The normal process object is 136,668 bytes with SHA-256 `33ef216d89926bacd53b5a46c5f39f3802c778bdfee44de0d7c79a440637e696`. Exact commit `33555fd` passes all 67 Seed tests and all 25 OS tests on Windows and pinned Debian 12; all four pinned-QEMU scenarios pass on Windows.

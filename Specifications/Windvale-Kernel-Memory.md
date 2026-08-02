@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 3 is used by candidate probe 25. It retains deterministic ownership, copied handoff, the two-page kernel stack, and the allocate-only page ABI while enlarging the arena to 58 pages for the section-derived interpreter. It also makes the process root's existing one-2-MiB-region assumption explicit by selecting a 2 MiB-aligned arena. It uses the `WVKMEM03` identity; earlier experimental bytes are not accepted under the new bounds.
+Kernel memory version 3 is cross-host qualified through probe 25 at exact commit `33555fd`. It retains deterministic ownership, copied handoff, the two-page kernel stack, and the allocate-only page ABI while enlarging the arena to 58 pages for the section-derived interpreter. It also makes the process root's existing one-2-MiB-region assumption explicit by selecting a 2 MiB-aligned arena. It uses the `WVKMEM03` identity; earlier experimental bytes are not accepted under the new bounds.
 
 [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the qualified version-1 foundation. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its process-driven expansion. [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) cross-host qualifies the 32-page version-2 form; [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns version 3.
 
@@ -125,6 +125,6 @@ status=pass
 shutdown=poweroff
 ```
 
-The user-fault scenario adds `user-fault=contained` after source success. The invalid-opcode and general-protection kernel scenarios retain their exact terminal panic contracts and QEMU host code 3. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records current candidate artifact identities and live evidence; Decision 0052 and qualified Decisions 0088/0090 retain the historical version-1 evidence.
+The user-fault scenario adds `user-fault=contained` after source success. The invalid-opcode and general-protection kernel scenarios retain their exact terminal panic contracts and QEMU host code 3. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records current qualified artifact identities and live evidence; Decision 0052 and qualified Decisions 0088/0090 retain the historical version-1 evidence.
 
-Version 3 does not claim all physical memory, reclamation of loader ranges, page release, runtime allocation policy, general process creation, process teardown, a general virtual-memory manager, general interrupts, multiple CPUs, or graphical output. Candidate probe 25 deliberately exhausts the fixed arena, making allocator growth or reclamation a required explicit decision rather than permitting another silent static extension.
+Version 3 does not claim all physical memory, reclamation of loader ranges, page release, runtime allocation policy, general process creation, process teardown, a general virtual-memory manager, general interrupts, multiple CPUs, or graphical output. Probe 25 deliberately exhausts the fixed arena, making allocator growth or reclamation a required explicit decision rather than permitting another silent static extension.

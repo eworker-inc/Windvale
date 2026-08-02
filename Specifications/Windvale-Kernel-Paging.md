@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel paging version 3 is used by candidate probe 25. It keeps the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, and supervisor write protection while expanding the fixed kernel executable window to 256 KiB for the measured section-derived interpreter composition. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted under the larger bound.
+Kernel paging version 3 is cross-host qualified through probe 25 at exact commit `33555fd`. It keeps the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, and supervisor write protection while expanding the fixed kernel executable window to 256 KiB for the measured section-derived interpreter composition. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted under the larger bound.
 
 [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) owns the qualified version-1 root and probe-20/21 evidence. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its first executable-window expansion. [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) cross-host qualifies that form; [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns version 3.
 
@@ -94,7 +94,7 @@ The host planner reports:
 
 The current version-3 paging WVO is 1,244 bytes with SHA-256 `1112e7f21b63ee339a2e17211ae9ce96712b446b5039384f9d38e18ff0430acd`; its 851 code bytes have SHA-256 `147de96e836a0e3ea9f3cb0b937742f56c8f45cb9f5c9e57cb06288e0035c398`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, and deterministic repetition.
 
-Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. Decision 0093 records the cross-host-qualified version-2 probe-24 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records the larger probe-25 images and live candidate evidence.
+Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. Decision 0093 records the cross-host-qualified version-2 probe-24 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records the larger cross-host-qualified probe-25 images and live evidence.
 
 ## Deliberate limits
 

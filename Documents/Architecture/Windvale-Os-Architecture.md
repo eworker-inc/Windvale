@@ -145,7 +145,7 @@ The current Windows/Linux bootstrap has already moved the allowed allocate/copy/
 
 ## Boot and trust chain
 
-The first x86-64 path remains UEFI-based and evidence-driven. Qualified probe 24 implements steps 1 through 5 plus the first bounded part of step 6 by interpreting one admitted WVB in a CPL3 Windvale runtime process. Candidate probe 25 generalizes that runtime just far enough to derive and validate the admitted module's section payloads:
+The first x86-64 path remains UEFI-based and evidence-driven. Qualified probe 24 implements steps 1 through 5 plus the first bounded part of step 6 by interpreting one admitted WVB in a CPL3 Windvale runtime process. Qualified probe 25 generalizes that runtime just far enough to derive and validate the admitted module's section payloads:
 
 1. A narrow loader validates its bounded inputs, captures the versioned handoff, loads the selected AOT kernel and boot resources, and exits boot services.
 2. The kernel takes ownership of memory, its stack, exception state, page tables, and deterministic diagnostics. Firmware services are not used after the accepted exit boundary.
@@ -209,7 +209,7 @@ Each step must be useful, bounded, and independently qualified:
 
 [Decision 0093](../Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) implements the first bounded step-6 slice as cross-host-qualified probe 24. The second process contains an AOT-built Windvale interpreter, records the interpreter and admitted-program identities separately, and derives result `29` from the admitted WVB instructions at CPL3. The admitted program's host-built AOT derivative is absent from that path.
 
-[Decision 0094](../Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) advances candidate probe 25. The interpreter now validates the module envelope, derives all seven section payloads, checks the bounded function/export shape, and executes a second compiler-produced module after a longer name moves its code payload. The embedded input and fixed coordinator are deliberately not a runtime-supplied loader, general runtime selector, JIT publication service, or scheduler.
+[Decision 0094](../Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) advances cross-host-qualified probe 25. The interpreter now validates the module envelope, derives all seven section payloads, checks the bounded function/export shape, and executes a second compiler-produced module after a longer name moves its code payload. The embedded input and fixed coordinator are deliberately not a runtime-supplied loader, general runtime selector, JIT publication service, or scheduler.
 
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 
