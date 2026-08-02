@@ -12,6 +12,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Vendor-neutral AI-authorship and attribution policy.
 - Public contribution, governance, security, support, conduct, and project-identity policies.
 - The public [`eworker-inc/Windvale`](https://github.com/eworker-inc/Windvale) repository, issue and pull-request templates, private vulnerability reporting, and public development workflow.
+- Change-aware lightweight, website, and qualification CI scopes, with a targeted site/editor/Wasm/support gate that avoids unrelated Seed qualification for website-only changes.
 - Windows and Linux repository verification workflows.
 - Repository-owned Windvale syntax highlighting and Visual Studio Code language support for `.wv` source files.
 - A GitHub-rendered visual progress dashboard with evidence-based roadmap indicators and a dated SVG phase map.

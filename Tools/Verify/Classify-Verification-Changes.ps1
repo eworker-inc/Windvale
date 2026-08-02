@@ -70,6 +70,29 @@ function Test-LightweightPath {
     return $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or $Path -eq 'LICENSE'
 }
 
+function Test-WebsitePath {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    return (
+        $Path.StartsWith('Website/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('functions/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Website/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Windvale.Playground/Editor/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Windvale.Playground/wwwroot/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            '.github/workflows/deploy-homepage.yml',
+            'package.json',
+            'package-lock.json',
+            'Vite-Config.mjs',
+            'Tools/Windvale.Playground/package.json',
+            'Tools/Windvale.Playground/package-lock.json'
+        )
+    )
+}
+
 if (!$ForceQualification) {
     $CanClassify = $true
     if ($PSBoundParameters.ContainsKey('ChangedPath')) {
@@ -108,7 +131,13 @@ if (!$ForceQualification) {
     if ($CanClassify) {
         $Paths = @(
             $Paths |
-                ForEach-Object { $_.Replace('\', '/').TrimStart('./') } |
+                ForEach-Object {
+                    $NormalizedPath = $_.Replace('\', '/')
+                    while ($NormalizedPath.StartsWith('./', [StringComparison]::Ordinal)) {
+                        $NormalizedPath = $NormalizedPath.Substring(2)
+                    }
+                    $NormalizedPath.TrimStart('/')
+                } |
                 Where-Object { ![string]::IsNullOrWhiteSpace($_) } |
                 Sort-Object -Unique
         )
@@ -123,7 +152,13 @@ if (!$ForceQualification) {
                 }
 
                 if (!(Test-LightweightPath $Path)) {
-                    $Scope = 'qualification'
+                    if (Test-WebsitePath $Path) {
+                        if ($Scope -ne 'qualification') {
+                            $Scope = 'website'
+                        }
+                    } else {
+                        $Scope = 'qualification'
+                    }
                 }
             }
         }

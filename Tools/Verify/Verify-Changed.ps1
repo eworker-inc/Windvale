@@ -13,6 +13,7 @@ $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $SeedVerifier = Join-Path $PSScriptRoot 'Verify-Seed.ps1'
+$WebsiteVerifier = Join-Path $PSScriptRoot 'Verify-Website.ps1'
 $EditorVerifier = Join-Path (Split-Path -Parent $PSScriptRoot) 'Editors/Verify-Windvale-Editor.ps1'
 
 if ($PSBoundParameters.ContainsKey('ChangedPath')) {
@@ -70,7 +71,9 @@ if ($Plan.Editor) {
     & $EditorVerifier
 }
 
-if ($Plan.Areas.Count -ne 0) {
+if ($Plan.Scope -eq 'website') {
+    & $WebsiteVerifier
+} elseif ($Plan.Areas.Count -ne 0) {
     Write-Warning 'Changed-file verification is development feedback, not conformance or qualification evidence.'
     $Arguments = @{
         Level = 'Fast'

@@ -60,28 +60,89 @@ jobs:
       - name: Verify change classification rules
         shell: pwsh
         run: |
+          if ('${{ steps.classify.outputs.scope }}' -notin @('lightweight', 'website', 'qualification')) {
+            throw 'Verification scope classification failed.'
+          }
+          if ('${{ steps.classify.outputs.editor }}' -notin @('true', 'false')) {
+            throw 'Editor verification classification failed.'
+          }
           ./Tools/Verify/Verify-Change-Classification.ps1
           ./Tools/Verify/Verify-Verification-Plan.ps1
+
+  lightweight-verifier:
+    name: Lightweight verifier
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.scope == 'lightweight' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify Windvale editor support
+        if: ${{ needs.classify-changes.outputs.editor == 'true' }}
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Editors/Verify-Windvale-Editor.ps1
+
+      - name: Verify changed-file whitespace
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
+        run: |
+          git diff --check $env:BASE_SHA $env:HEAD_SHA --
+          if ($LASTEXITCODE -ne 0) { throw 'Changed-file whitespace verification failed.' }
+
+  website-verifier:
+    name: Website verifier
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.scope == 'website' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            Tools/Windvale.Playground/package-lock.json
+
+      - name: Verify Windvale editor support
+        if: ${{ needs.classify-changes.outputs.editor == 'true' }}
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Editors/Verify-Windvale-Editor.ps1
+
+      - name: Verify changed-file whitespace
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
+        run: |
+          git diff --check $env:BASE_SHA $env:HEAD_SHA --
+          if ($LASTEXITCODE -ne 0) { throw 'Changed-file whitespace verification failed.' }
+
+      - name: Verify website
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Website.ps1
 
   windows-verifier:
     name: Windows verifier
     needs: classify-changes
-    if: ${{ always() }}
+    if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
-      - name: Require successful change classification
-        if: >-
-          ${{
-            needs.classify-changes.result != 'success' ||
-            (needs.classify-changes.outputs.scope != 'lightweight' &&
-             needs.classify-changes.outputs.scope != 'qualification') ||
-            (needs.classify-changes.outputs.editor != 'true' &&
-             needs.classify-changes.outputs.editor != 'false')
-          }}
-        shell: pwsh
-        run: throw 'Verification scope classification failed.'
-
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -99,20 +160,6 @@ jobs:
         shell: pwsh
         run: pwsh -NoProfile -File Tools/Editors/Verify-Windvale-Editor.ps1
 
-      - name: Verify lightweight changes
-        if: ${{ needs.classify-changes.outputs.scope == 'lightweight' }}
-        shell: pwsh
-        env:
-          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
-          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
-        run: |
-          git cat-file -e "$($env:BASE_SHA)^{commit}" 2>$null
-          if ($LASTEXITCODE -ne 0) {
-            git fetch --no-tags --no-recurse-submodules --depth=1 origin $env:BASE_SHA
-            if ($LASTEXITCODE -ne 0) { throw 'Git could not fetch the lightweight verification base.' }
-          }
-          git diff --check $env:BASE_SHA $env:HEAD_SHA --
-
       - name: Run Windows verification
         if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
         shell: pwsh
@@ -121,7 +168,7 @@ jobs:
   linux-verifier:
     name: Linux verifier
     needs: classify-changes
-    if: ${{ always() }}
+    if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
     runs-on: ubuntu-latest
     container:
       image: debian:12-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
@@ -132,18 +179,6 @@ jobs:
         run: |
           apt-get update
           apt-get install --yes --no-install-recommends ca-certificates curl git gzip libicu72 tar
-
-      - name: Require successful change classification
-        if: >-
-          ${{
-            needs.classify-changes.result != 'success' ||
-            (needs.classify-changes.outputs.scope != 'lightweight' &&
-             needs.classify-changes.outputs.scope != 'qualification') ||
-            (needs.classify-changes.outputs.editor != 'true' &&
-             needs.classify-changes.outputs.editor != 'false')
-          }}
-        shell: bash
-        run: exit 1
 
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -157,20 +192,55 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Verify lightweight changes
-        if: ${{ needs.classify-changes.outputs.scope == 'lightweight' }}
-        shell: bash
-        env:
-          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
-          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          if ! git cat-file -e "${BASE_SHA}^{commit}"; then
-            git fetch --no-tags --no-recurse-submodules --depth=1 origin "$BASE_SHA"
-          fi
-          git diff --check "$BASE_SHA" "$HEAD_SHA" --
-
       - name: Run Linux verification
         if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
         shell: bash
         run: ./Tools/Verify/Verify-Seed.sh
+
+  verification-gate:
+    name: Verification gate
+    needs:
+      - classify-changes
+      - lightweight-verifier
+      - website-verifier
+      - windows-verifier
+      - linux-verifier
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require the selected verification path
+        shell: bash
+        env:
+          SCOPE: ${{ needs.classify-changes.outputs.scope }}
+          CLASSIFY_RESULT: ${{ needs.classify-changes.result }}
+          LIGHTWEIGHT_RESULT: ${{ needs.lightweight-verifier.result }}
+          WEBSITE_RESULT: ${{ needs.website-verifier.result }}
+          WINDOWS_RESULT: ${{ needs.windows-verifier.result }}
+          LINUX_RESULT: ${{ needs.linux-verifier.result }}
+        run: |
+          test "$CLASSIFY_RESULT" = success
+          case "$SCOPE" in
+            lightweight)
+              test "$LIGHTWEIGHT_RESULT" = success
+              test "$WEBSITE_RESULT" = skipped
+              test "$WINDOWS_RESULT" = skipped
+              test "$LINUX_RESULT" = skipped
+              ;;
+            website)
+              test "$LIGHTWEIGHT_RESULT" = skipped
+              test "$WEBSITE_RESULT" = success
+              test "$WINDOWS_RESULT" = skipped
+              test "$LINUX_RESULT" = skipped
+              ;;
+            qualification)
+              test "$LIGHTWEIGHT_RESULT" = skipped
+              test "$WEBSITE_RESULT" = skipped
+              test "$WINDOWS_RESULT" = success
+              test "$LINUX_RESULT" = success
+              ;;
+            *)
+              echo "Unsupported verification scope: $SCOPE" >&2
+              exit 1
+              ;;
+          esac

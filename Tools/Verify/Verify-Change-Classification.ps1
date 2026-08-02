@@ -17,6 +17,30 @@ $Cases = @(
         Editor = $true
     },
     @{
+        Name = 'website static content'
+        Paths = @('Website/index.html', 'Website/styles.css')
+        Scope = 'website'
+        Editor = $false
+    },
+    @{
+        Name = 'website tooling and editor metadata'
+        Paths = @('Tools/Windvale.Playground/Editor/Vite-Config.mjs', 'Tools/Editors/Windvale/package.json')
+        Scope = 'website'
+        Editor = $true
+    },
+    @{
+        Name = 'website and documentation'
+        Paths = @('Website/site.js', 'README.md')
+        Scope = 'website'
+        Editor = $false
+    },
+    @{
+        Name = 'website deployment and function'
+        Paths = @('.github/workflows/deploy-homepage.yml', 'functions/api/supporters.js')
+        Scope = 'website'
+        Editor = $false
+    },
+    @{
         Name = 'source specification'
         Paths = @('Specifications/Seed-Language.md')
         Scope = 'qualification'
@@ -29,8 +53,20 @@ $Cases = @(
         Editor = $false
     },
     @{
+        Name = 'playground host implementation'
+        Paths = @('Tools/Windvale.Playground/Program.cs')
+        Scope = 'qualification'
+        Editor = $false
+    },
+    @{
         Name = 'mixed documentation and compiler implementation'
         Paths = @('README.md', 'Compiler/Reference/Source-Lexer.cs')
+        Scope = 'qualification'
+        Editor = $true
+    },
+    @{
+        Name = 'mixed website and compiler implementation'
+        Paths = @('Website/site.js', 'Compiler/Reference/Source-Lexer.cs')
         Scope = 'qualification'
         Editor = $true
     },

@@ -58,6 +58,10 @@ if ($Paths.Count -eq 0) {
 }
 
 foreach ($Path in $Paths) {
+    if ($Classification.Scope -ne 'qualification') {
+        break
+    }
+
     if ($Path.StartsWith('Tools/Editors/', [StringComparison]::Ordinal)) {
         continue
     }

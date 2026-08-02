@@ -19,6 +19,14 @@ Use `npm run dev:site` or `npm run dev:playground` only when debugging one half 
 
 Stop `npm run dev` before running a separate `dotnet build` or `dotnet publish` for the playground. Those commands regenerate fingerprinted WebAssembly assets, while an already-running development server can still describe the previous asset set. Restarting `npm run dev` gives the proxy and Blazor server one consistent publication; clearing the browser cache is not required.
 
+Run the complete targeted website gate with:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Website.ps1
+```
+
+It installs the pinned root and playground Node dependencies, rebuilds the browser editor and its exact third-party notices, verifies the direct WebAssembly demo and supporter contract, checks the website tooling syntax, and builds the Vite site. Change-aware local and GitHub verification select this gate for website and browser-packaging paths without running unrelated Seed qualification.
+
 ## Updating the progress cards
 
 All public component and development-milestone progress lives in `project-progress.js`. To update the dashboard, change an item's evidence `indicator`, `status`, `details`, and `next` values plus `PROGRESS_UPDATED`. The page creates both sets of cards and accessible tooltips automatically; no HTML or CSS change is needed. Keep the indicators aligned with `Documents/Project/Progress.md`; do not invent percentage-complete estimates.
