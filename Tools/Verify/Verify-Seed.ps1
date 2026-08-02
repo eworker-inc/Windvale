@@ -25,6 +25,7 @@ $OutputEncoding = $Utf8WithoutBom
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
 $TestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj'
+$OsTestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Os.Tests/Windvale.Os.Tests.csproj'
 $Artifacts = Join-Path $RepositoryRoot 'artifacts'
 New-Item -ItemType Directory -Force -Path $Artifacts | Out-Null
 $DevelopmentAreas = @(
@@ -104,6 +105,12 @@ if ($Level -eq 'Fast') {
     Write-Host "Windvale Seed fast verification passed for $($Selection -join ' and ')."
     return
 }
+
+dotnet run --project $OsTestProject --configuration $Configuration --no-build
+if ($LASTEXITCODE -ne 0) {
+    throw "Windvale OS in-process tests failed with exit code $LASTEXITCODE."
+}
+
 if ($Level -eq 'Development') {
     Write-Host 'Windvale Seed development verification passed for every regular in-process test.'
     Write-Host 'The qualification-only golden cross-host contract was not executed.'

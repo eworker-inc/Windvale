@@ -13,6 +13,7 @@ FAIL_FAST=${FAIL_FAST:-0}
 TIMING_REPORT_PATH=${TIMING_REPORT_PATH:-}
 TOOL_DLL="$REPOSITORY_ROOT/Tools/Windvale.Tool/bin/$CONFIGURATION/net10.0/windvale.dll"
 TEST_PROJECT="$REPOSITORY_ROOT/Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj"
+OS_TEST_PROJECT="$REPOSITORY_ROOT/Tests/Windvale.Os.Tests/Windvale.Os.Tests.csproj"
 ARTIFACTS="$REPOSITORY_ROOT/artifacts"
 mkdir -p "$ARTIFACTS"
 
@@ -99,6 +100,12 @@ if [ "$VERIFY_LEVEL" = 'fast' ]; then
     echo "Windvale Seed fast verification passed for $SELECTION_DESCRIPTION."
     exit 0
 fi
+
+dotnet run \
+    --project "$OS_TEST_PROJECT" \
+    --configuration "$CONFIGURATION" \
+    --no-build
+
 if [ "$VERIFY_LEVEL" = 'development' ]; then
     echo 'Windvale Seed development verification passed for every regular in-process test.'
     echo 'The qualification-only golden cross-host contract was not executed.'

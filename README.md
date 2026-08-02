@@ -239,7 +239,7 @@ When a timing report includes the golden test, its `goldenPhases` array separate
 
 Runtime performance work should iterate with a narrow compiler or runtime filter, use `-TestArea golden` alone for periodic measured checkpoints, and run Standard only for the final candidate. The complete suite is not required after every optimization edit.
 
-`-Level Development` builds and runs every regular in-process test while deferring the multi-billion-instruction golden cross-host contract. It is the broad pre-commit development check. `-Level Standard` builds and runs the complete in-process conformance suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and remains mandatory for qualifying portable semantics or artifact identities.
+`-Level Development` builds and runs every regular Seed test plus the bounded OS in-process suite while deferring the multi-billion-instruction golden cross-host contract. It is the broad pre-commit development check. `-Level Standard` runs the complete Seed in-process conformance suite plus the OS suite but skips native CLI qualification. The default `Qualification` level retains the complete verifier and the OS suite, and remains mandatory for qualifying portable semantics or artifact identities. Fast selection remains Seed-area-only; run `Tests/Windvale.Os.Tests` directly for a focused OS inner loop and `Verify-Os-Boot.ps1` only when live machine evidence is required.
 
 On Linux:
 
@@ -247,7 +247,7 @@ On Linux:
 ./Tools/Verify/Verify-Seed.sh
 ```
 
-Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`; use `VERIFY_LEVEL=development` for the broad regular suite. GitHub runs the default qualification level on Windows and Linux concurrently.
+Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`; use `VERIFY_LEVEL=development` for the broad regular suite. GitHub runs the default qualification level concurrently on Windows and a Debian 12 container, including the bounded OS suite on both hosts.
 
 Compiler bootstrap convergence is intentionally separate from the normal development suite because it executes billions of verified VM instructions. Run it once for a final compiler candidate:
 
