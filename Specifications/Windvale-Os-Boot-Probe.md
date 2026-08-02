@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Firmware Probe 31 is the implemented same-WVB candidate. It composes ABI 17/context 7, WVA seam 8, admission 3/bridge 2, retained bridge 10, memory 8, paging 4, protected processes 10, interpreter profile 5, `WVRES004`, and `WVBR002`.
+Firmware Probe 31 is the qualified same-WVB proof. It composes ABI 17/context 7, WVA seam 8, admission 3/bridge 2, retained bridge 10, memory 8, paging 4, protected processes 10, interpreter profile 5, `WVRES004`, and `WVBR002`.
 
-[Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns Probe 31. The focused Windows suite passes all 25 OS tests, and all four local Windows pinned-QEMU scenarios pass; complete committed Windows/Debian qualification remains pending. [Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) retains the fully qualified Probe-30 baseline.
+[Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns Probe 31. Exact implementation commit `f3eca7c8dab290e3916fbf33dcabc41d685a91bb` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12 in GitHub [Verify run 30753663882](https://github.com/eworker-inc/Windvale/actions/runs/30753663882); all four Windows pinned-QEMU scenarios also pass. [Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) retains the qualified Probe-30 history.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 
@@ -16,7 +16,7 @@ Stage 0 also creates the loader, memory, exception, paging, admission bridge, pr
 
 The linked kernel payload must fit the fixed 768 KiB supervisor RX window. Init fits one user RX page; the client fits 98 user RX pages. Generated WVB, WVO, EFI, firmware maps, and virtual disks are not committed.
 
-Candidate image identities are:
+Qualified image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
@@ -25,7 +25,7 @@ Candidate image identities are:
 | `general-protection` | 531,456 | `f0e9daacfa479945afec952692f69e3911b285e478f9ae8d12a3e14f0c091960` | 3 |
 | `user-fault` | 531,968 | `795cb85aa599d2ead4e228bd0eb3da5ad28ecd8970955b294ab09f72c3f7ade7` | 0 |
 
-These identities pass the local Windows pinned-QEMU gate with complete exact serial markers. They remain qualification candidates until the committed Windows/Debian gate passes.
+These identities pass the Windows pinned-QEMU gate with complete exact serial markers. The cross-host workflow qualifies deterministic construction and all OS contracts on both hosts without claiming Debian QEMU execution.
 
 ## Firmware exit and kernel entry
 

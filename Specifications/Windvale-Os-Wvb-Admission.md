@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-WVB admission version 3 is the implemented Probe-31 candidate owned by [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md). It proves that AOT Windvale code running inside the guest validates the exact canonical WVB compiled from [`Examples/Seed/Sum-Data.wv`](../Examples/Seed/Sum-Data.wv) before protected execution consumes it. Cross-host qualification is pending.
+WVB admission version 3 is the qualified Probe-31 contract owned by [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md). It proves that AOT Windvale code running inside the guest validates the exact canonical WVB compiled from [`Examples/Seed/Sum-Data.wv`](../Examples/Seed/Sum-Data.wv) before protected execution consumes it. Exact implementation commit `f3eca7c8dab290e3916fbf33dcabc41d685a91bb` passes complete Windows/Debian qualification in GitHub [Verify run 30753663882](https://github.com/eworker-inc/Windvale/actions/runs/30753663882).
 
 Version 1 and the 174-byte historical fixture remain qualified under [Decision 0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md). Admission bridge version 2 remains the process-entry composition introduced by Probe 22.
 
@@ -66,7 +66,7 @@ The retained 162-code-byte admission bridge:
 
 The canonical program's AOT derivative is retained only as deterministic differential evidence. It is not linked into either client execution path.
 
-## Deterministic candidate artifacts
+## Deterministic qualified artifacts
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |

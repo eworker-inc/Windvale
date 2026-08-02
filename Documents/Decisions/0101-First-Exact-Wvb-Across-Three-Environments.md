@@ -1,6 +1,6 @@
 # Decision 0101: First exact WVB across three environments
 
-- Status: Implemented; cross-host qualification pending
+- Status: Qualified
 - Date: 2026-08-02
 - Implements: Phase 12 of [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
 - Extends: [Decision 0093](0093-First-User-Space-Windvale-Bytecode-Interpreter.md), [Decision 0098](0098-First-Typed-Two-Resource-Lookup.md), and [Decision 0100](0100-First-Reclaimed-And-Reused-Process-Root.md)
@@ -39,9 +39,9 @@ The slice must not turn an evidence program into an implicit general loader or g
 - Exact enforcement of the 1,883-slot interpreter frame without changing the compiler's 2,048-slot ABI-17 limit.
 - Exact client record-arena pointer/capacity initialization and 240-byte post-execution use, with the init fields remaining zero.
 - All 25 focused OS tests and all four pinned-QEMU scenarios on Windows.
-- The complete Windows/Debian qualification gate before this decision becomes Qualified.
+- The complete Windows/Debian qualification gate for the exact committed candidate.
 
-The focused Windows OS suite passes all 25 tests. Current deterministic implementation identities include:
+The focused Windows OS suite passes all 25 tests. Current deterministic qualified identities include:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -62,7 +62,7 @@ All four local Windows pinned-QEMU scenarios pass with exact serial evidence and
 | General protection | 531,456 | `f0e9daacfa479945afec952692f69e3911b285e478f9ae8d12a3e14f0c091960` | 3 |
 | Contained user fault | 531,968 | `795cb85aa599d2ead4e228bd0eb3da5ad28ecd8970955b294ab09f72c3f7ade7` | 0 |
 
-Complete committed Windows/Debian qualification evidence remains pending.
+Exact implementation commit `f3eca7c8dab290e3916fbf33dcabc41d685a91bb` passes GitHub [Verify run 30753663882](https://github.com/eworker-inc/Windvale/actions/runs/30753663882). Windows and digest-pinned Debian 12 each pass all 67 Seed tests, all 25 OS tests, and the complete native CLI qualification gate. The Seed suites take 210.128 seconds on Windows and 210.185 seconds on Debian; both logs emit the same 56 SHA-256 artifact identities in the same order, beginning with the canonical `Sum-Data.wv` WVB. QEMU execution remains Windows-only evidence.
 
 ## Consequences
 

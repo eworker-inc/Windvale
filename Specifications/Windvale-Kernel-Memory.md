@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 8 is the implemented Probe-31 candidate. It retains version 7's exact checked tail release and process-root reuse while expanding the one boot arena to fit interpreter profile 5's measured code and stack. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns version 8; [Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) retains the qualified version-7 history.
+Kernel memory version 8 is the qualified Probe-31 contract. It retains version 7's exact checked tail release and process-root reuse while expanding the one boot arena to fit interpreter profile 5's measured code and stack. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns version 8; exact implementation commit `f3eca7c8dab290e3916fbf33dcabc41d685a91bb` passes complete Windows/Debian qualification in GitHub [Verify run 30753663882](https://github.com/eworker-inc/Windvale/actions/runs/30753663882). [Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) retains the qualified version-7 history.
 
 This remains one bounded deterministic boot arena, not a general physical-memory manager. Release is LIFO-only and can restore only a caller-proven suffix ending at the current cursor.
 

@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Interpreter runtime profile 5 is the implemented Probe-31 candidate owned by [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md). It executes the exact canonical WVB compiled from [`Examples/Seed/Sum-Data.wv`](../Examples/Seed/Sum-Data.wv) inside protected process `2` and returns `29` after data access, a loop, branches, locals, and internal calls.
+Interpreter runtime profile 5 is the qualified Probe-31 contract owned by [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md). It executes the exact canonical WVB compiled from [`Examples/Seed/Sum-Data.wv`](../Examples/Seed/Sum-Data.wv) inside protected process `2` and returns `29` after data access, a loop, branches, locals, and internal calls.
 
-Cross-host qualification is pending. Profile 4 and its four-opcode Probe-29 contract remain qualified history under [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md).
+Exact implementation commit `f3eca7c8dab290e3916fbf33dcabc41d685a91bb` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12 in GitHub [Verify run 30753663882](https://github.com/eworker-inc/Windvale/actions/runs/30753663882). Profile 4 and its four-opcode Probe-29 contract remain qualified history under [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md).
 
 The interpreter is hosted Windvale compiled AOT and run at CPL3. The separately mapped program is interpreted; neither the complete WVB nor its AOT derivative is linked into the client executable. The kernel contains no source-language interpreter and no WVB semantic decoder.
 
@@ -74,7 +74,7 @@ The context's record-arena pointer names 256 bytes at data-page offset `0x200`; 
 | Linked normal client | 397,741 | `f01dca52f965afc679bef80988a7fc62c1f413d26127c47e437dc81a5cc05f6f` |
 | Linked fault client | 397,741 | `9ea4bf727a73636a01b7f47584752475a27d8a6442cf669156645c0b3f2af0d5` |
 
-Focused tests cover exact success and exhaustion, budget bounds and shape, missing resources, changed data producing `28`, malformed envelopes/sections/opcodes, atomic grant, distinct aliases, typed-entry mutations, deterministic output, record-arena initialization/preservation, and equivalent two-generation exit/fault cleanup. All four local Windows pinned-QEMU scenarios pass; complete committed Windows/Debian qualification remains pending.
+Focused tests cover exact success and exhaustion, budget bounds and shape, missing resources, changed data producing `28`, malformed envelopes/sections/opcodes, atomic grant, distinct aliases, typed-entry mutations, deterministic output, record-arena initialization/preservation, and equivalent two-generation exit/fault cleanup. Both permanent hosts pass the complete qualification gate; all four pinned-QEMU scenarios pass on Windows, with no Debian QEMU execution claimed.
 
 ## Trust boundary and deliberate limits
 

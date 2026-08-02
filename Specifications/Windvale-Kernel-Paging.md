@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel paging version 4 is the implemented Probe-31 candidate. It retains the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and two-code-table topology while expanding the fixed supervisor executable window from 256 KiB to 768 KiB. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns version 4; [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) retains the qualified version-3 history.
+Kernel paging version 4 is the qualified Probe-31 contract. It retains the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and two-code-table topology while expanding the fixed supervisor executable window from 256 KiB to 768 KiB. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns version 4; exact implementation commit `f3eca7c8dab290e3916fbf33dcabc41d685a91bb` passes complete Windows/Debian qualification in GitHub [Verify run 30753663882](https://github.com/eworker-inc/Windvale/actions/runs/30753663882). [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) retains the qualified version-3 history.
 
 The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 10 derives two private roots and manages two exact resource aliases without turning the kernel record into a public mapping API.
 
@@ -60,7 +60,7 @@ The kernel executable window remains supervisor-only in every process root. One 
 
 WVA retains `enable_page_protection` (24 bytes, exact NXE/WP operations) and `activate_page_table` (6 bytes, load/readback CR3). These do not expose general MSR or control-register access.
 
-## Deterministic candidate and limits
+## Deterministic qualified artifact and limits
 
 Paging WVO version 4 is 1,244 bytes with SHA-256 `c19ba2445452b314478c0979e5cd295c2fed1c482c08c95a1452c8f6ed2c06d1`; its 851 code bytes have SHA-256 `1401a0b5a0681d62d5505c4e64e4df713ff838c4a259fcb16dbcd0f573714540`.
 

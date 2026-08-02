@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Protected-process contract version 10 is the implemented Probe-31 candidate. It retains Probe 30's generation-safe reclaim/rebuild cycle and expands the client only as required by the exact `Sum-Data.wv` interpreter profile. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns version 10; [Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) retains the qualified version-9 history.
+Protected-process contract version 10 is the qualified Probe-31 contract. It retains Probe 30's generation-safe reclaim/rebuild cycle and expands the client only as required by the exact `Sum-Data.wv` interpreter profile. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns version 10; [Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) retains the qualified version-9 history.
 
 This is an internal experiment, not a stable syscall ABI, general process manager, dynamic namespace, transferable capability system, arbitrary WVB loader, complete verifier, or JIT.
 
@@ -78,7 +78,7 @@ The two retained 128-byte `WVRES004` records track fixed identifiers/kinds, gene
 
 The contained user-fault scenario sends `29` then executes privileged `CLI`; cleanup still completes. CPL0 invalid-opcode and general-protection scenarios remain terminal.
 
-## Deterministic candidate artifacts
+## Deterministic qualified artifacts
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -91,7 +91,7 @@ The contained user-fault scenario sends `29` then executes privileged `CLI`; cle
 | Normal process-machine WVO | 425,652 | `f65d889036c12415d7f1e9a9aa29f0e0cba371f51e7494f0e8c49fa86df5e28a` |
 | Fault process-machine WVO | 425,732 | `1e59821fdb167b79035b54323c95edd9c0fe0865e5a6b16e84126876e1cf73d7` |
 
-Focused Windows evidence passes all 25 OS tests. All four local Windows pinned-QEMU scenarios pass with exact Probe-31 serial evidence; complete committed Windows/Debian qualification remains pending.
+Exact implementation commit `f3eca7c8dab290e3916fbf33dcabc41d685a91bb` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12 in GitHub [Verify run 30753663882](https://github.com/eworker-inc/Windvale/actions/runs/30753663882). All four Windows pinned-QEMU scenarios pass with exact Probe-31 serial evidence; no Debian QEMU execution is claimed.
 
 ## Deliberate limits
 
