@@ -1,7 +1,7 @@
 # Decision 0109: Native two-byte little-endian construction
 
 - Date: 2026-08-02
-- Status: Accepted
+- Status: Qualified
 - Advances: Native ABI 20
 - Refines: [Decision 0066](0066-Borrowed-Bytes-And-Unsigned-Native-Values.md) and [Decision 0108](0108-Native-One-Byte-Construction.md)
 
@@ -29,7 +29,9 @@ Exact compiler preflight clears `Bytesˉfromˉu16ˉlittle` and completes lowerin
 
 The Windows Development gate passes a zero-warning Release build, all 67 regular Seed tests, and all 25 OS tests. The complete Standard gate passes all 68 Seed tests, including the golden compiler-reproduction contract, and all 25 OS tests in 215.085 seconds.
 
-All four pinned Windows QEMU 11.0/Q35/TCG Probe-32 scenarios retain their exact ABI-19-qualified identities and pass: normal `b8f0e656066b1e4f28edc4124eca6eea18130a0d6c0f4a9018e8ae817a0fa985` (531,456 bytes, exit 0), invalid opcode `0322ce3d3a9fecfa5c84809d8594f4f3ea643aaff2776f8d25668f1d723b9b54` (531,456 bytes, exit 3), general protection `1a0bd9f37c595d4170bd05fe83cc05dc344d2223674a01812f253ceb77893e40` (531,456 bytes, exit 3), and contained user fault `68319856b2913b3c857012d3fd38f147cf2a2307afacc9ffc8c8a33c005d0cf9` (531,968 bytes, exit 0). Debian and independent GitHub evidence remain pending before this decision becomes qualified.
+All four pinned Windows QEMU 11.0/Q35/TCG Probe-32 scenarios retain their exact ABI-19-qualified identities and pass: normal `b8f0e656066b1e4f28edc4124eca6eea18130a0d6c0f4a9018e8ae817a0fa985` (531,456 bytes, exit 0), invalid opcode `0322ce3d3a9fecfa5c84809d8594f4f3ea643aaff2776f8d25668f1d723b9b54` (531,456 bytes, exit 3), general protection `1a0bd9f37c595d4170bd05fe83cc05dc344d2223674a01812f253ceb77893e40` (531,456 bytes, exit 3), and contained user fault `68319856b2913b3c857012d3fd38f147cf2a2307afacc9ffc8c8a33c005d0cf9` (531,968 bytes, exit 0).
+
+Exact implementation commit `a63ca0fe1d9d66882ead68ed28bcd7cd6a067f23` passes GitHub [Verify run 30766123518](https://github.com/eworker-inc/Windvale/actions/runs/30766123518). Windows and digest-pinned Debian 12 each pass a zero-warning Release build, all 68 Seed tests, all 25 OS tests, and the complete native CLI gate. Seed elapsed time is 247.807 seconds on Windows and 202.369 seconds on Debian; the golden contract takes 188.544 and 150.427 seconds respectively. This qualifies ABI 20 and Decision 0109 while retaining Probe 32's exact firmware identities. QEMU execution remains Windows-only evidence.
 
 ## Consequences
 
