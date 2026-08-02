@@ -36,10 +36,10 @@ internal static class Program
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
-    private const string NATIVE_CONTROL_CODE_SHA256 = "9eada8bde47bd4943806e12a558306d45ae02afeb77b71d196a38e075f200a70";
-    private const string NATIVE_CONTROL_WVO_SHA256 = "3a7f561b7a1c72c9e40f31b8ad755f728e60966957568429eade37963caf6e2f";
-    private const string NATIVE_LOOP_CODE_SHA256 = "3b453983778711cfccca3a495cd5d97eeecd28a041294ef522675582695740b1";
-    private const string NATIVE_LOOP_WVO_SHA256 = "30435304a6d134152ea5fabb889047fb2a1099ef7b4606f552817175022aebc9";
+    private const string NATIVE_CONTROL_CODE_SHA256 = "3ba822ee8c1b664bf72501f81b288fc4930db68df1d1f167270d5aa714ed6d62";
+    private const string NATIVE_CONTROL_WVO_SHA256 = "4cf925098870f7e1aa9ae3d50f30211d69287ac486a5169dc685ae3fcf18417e";
+    private const string NATIVE_LOOP_CODE_SHA256 = "470542f262ebb288c72b306cf73807f1922c9c1cf089ecfc8dbba6c810435fe8";
+    private const string NATIVE_LOOP_WVO_SHA256 = "1771bcb36ce897dab2184b28a93a93d3d1116e948997ee551920c94c2a52e9e6";
     private const string NATIVE_STENCIL_CORE_SHA256 = "d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f";
     private const string NATIVE_STENCIL_BRIDGE_SHA256 = "5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9";
     private const string NATIVE_STENCIL_DEMO_SHA256 = "651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15";
@@ -50,8 +50,8 @@ internal static class Program
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "b609fb7d442bbe1685c1058c71eb011d43b291df505697a97c233ca7063a2044";
     private const string PROJECT_MANIFEST_TOOL_SHA256 = "50ab9aa5048ab844a816d0f7f12fb691cb69f57c4a71f7eb18ebc7fb4aaf0b0c";
-    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "573e7f4caa398a1806bc414ea9aaf6043e6d3ad6a3299139a08edd022bfa329b";
-    private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "adb012c754e96a2d0c7ec7c17900e4924003d00ba2c102d3342ce5052039471d";
+    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "78cc236076bca41a80539653de093a9cfea5dd2e5eb0fd6403675332b9d6d78c";
+    private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "d667d2e7657670a1fd27fd2fa08639c020c853f3cfc9bf7d99e3d023e31a55a2";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
     private const string BYTE_ORDERING_SHA256 = "194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1";
@@ -1468,8 +1468,9 @@ internal static class Program
             },
             First.Fragment.Code.Take(13));
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
-        Equal(17, Nativeˉcontract.ABI_VERSION);
+        Equal(18, Nativeˉcontract.ABI_VERSION);
         Equal(2_048, Nativeˉcontract.MAXIMUM_FRAME_SLOTS);
+        Equal(100_000, Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS);
         Equal(32_768, Nativeˉcontract.MAXIMUM_FRAME_BYTES);
         Equal(Nativeˉcontract.X64_BASELINE_TARGET, First.Fragment.Target);
         Equal(Nativeˉcontract.ABI_VERSION, First.Fragment.Abiˉversion);
@@ -1603,16 +1604,32 @@ internal static class Program
         True(
             Controlˉfunction.Blocks.Count(Block => Block.Terminator is Nativeˉreturn) >= 2,
             "Native machine IR did not retain structured early returns.");
+        True(
+            Controlˉfunction.Valueˉslotˉcount < Controlˉfunction.Valueˉtypes.Length,
+            "Native control flow did not reuse physical value slots across empty-stack blocks.");
+        Equal(Controlˉfunction.Valueˉtypes.Length, Controlˉfunction.Valueˉslotˉindices.Length);
+        Equal(
+            Controlˉfunction.Valueˉslotˉcount,
+            Controlˉfunction.Valueˉslotˉindices.Distinct().Count());
+        True(
+            Controlˉfunction.Valueˉtypes
+                .Select((Type, Value) => (Type, Slot: Controlˉfunction.Valueˉslotˉindices[Value]))
+                .GroupBy(Value => Value.Slot)
+                .All(Slot => Slot.Select(Value => Value.Type).Distinct().Count() == 1),
+            "A compact native value slot was reused across different machine value types.");
+        Sequenceˉequal(
+            Controlˉfunction.Valueˉslotˉindices,
+            Controlˉsecond.Module.Functions[0].Valueˉslotˉindices);
         Sequenceˉequal(Controlˉfirst.Fragment.Code, Controlˉsecond.Fragment.Code);
         _ = Nativeˉfragmentˉverifier.Verify(Controlˉfirst.Fragment);
         var Controlˉfirstˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉfirst.Fragment);
         var Controlˉsecondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Controlˉsecond.Fragment);
         Sequenceˉequal(Controlˉfirstˉobject, Controlˉsecondˉobject);
-        Equal(5899, Controlˉfirst.Fragment.Code.Length);
+        Equal(4835, Controlˉfirst.Fragment.Code.Length);
         Equal(
             NATIVE_CONTROL_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Controlˉfirst.Fragment.Code.AsSpan()));
-        Equal(5972, Controlˉfirstˉobject.Length);
+        Equal(4908, Controlˉfirstˉobject.Length);
         Equal(
             NATIVE_CONTROL_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Controlˉfirstˉobject.AsSpan()));
@@ -1858,11 +1875,11 @@ internal static class Program
                 Loopˉaot,
                 maximumˉinstructions: Loopˉinterpreted.Executedˉinstructions - 1));
         Equal(157L, Loopˉinterpreted.Executedˉinstructions);
-        Equal(2001, Loopˉnative.Fragment.Code.Length);
+        Equal(1665, Loopˉnative.Fragment.Code.Length);
         Equal(
             NATIVE_LOOP_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Loopˉnative.Fragment.Code.AsSpan()));
-        Equal(2074, Loopˉobject.Length);
+        Equal(1738, Loopˉobject.Length);
         Equal(
             NATIVE_LOOP_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Loopˉobject.AsSpan()));
@@ -4948,17 +4965,17 @@ internal static class Program
         }
         catch (Nativeˉbackendˉexception Exception)
         {
-            Equal("WVN2004", Exception.Code);
+            Equal("WVN2003", Exception.Code);
             True(
                 Exception.Message.Contains(
-                    "Compilerˉbodyˉparseˉprimary",
+                    "Compilerˉcompileˉsourceˉwvb",
                     StringComparison.Ordinal),
                 $"Compiler native preflight did not identify the next exact function: {Exception.Message}");
             True(
                 Exception.Message.Contains(
-                    "2049 combined local/value frame slots",
+                    "Bytesˉfromˉu8",
                     StringComparison.Ordinal),
-                $"Compiler native preflight did not identify the next bounded-frame blocker: {Exception.Message}");
+                $"Compiler native preflight did not identify the next unsupported operation: {Exception.Message}");
             return;
         }
         throw new InvalidOperationException(

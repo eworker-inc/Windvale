@@ -6,12 +6,13 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 17;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v17";
+    public const int ABI_VERSION = 18;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v18";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
     public const int MAXIMUM_FRAME_SLOTS = 2048;
+    public const int MAXIMUM_VALUE_IDENTIFIERS = 100_000;
     public const int VALUE_SLOT_BYTES = 16;
     public const int BORROWED_BYTES_POINTER_OFFSET = 0;
     public const int BORROWED_BYTES_LENGTH_OFFSET = 8;
@@ -404,6 +405,8 @@ public sealed record Nativeˉfunction(
     Nativeˉvalueˉtype Returnˉtype,
     ImmutableArray<Nativeˉvalueˉtype> Localˉtypes,
     ImmutableArray<Nativeˉvalueˉtype> Valueˉtypes,
+    ImmutableArray<int> Valueˉslotˉindices,
+    int Valueˉslotˉcount,
     ImmutableArray<Nativeˉblock> Blocks)
 {
     public ImmutableArray<Nativeˉvalueˉtype> Allˉlocalˉtypes => [.. Parameterˉtypes, .. Localˉtypes];

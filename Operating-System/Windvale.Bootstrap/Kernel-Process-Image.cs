@@ -108,7 +108,7 @@ public static class Kernelˉprocessˉimage
         var Executeˉmain = Interpreterˉnative.Module.Functions.Single(Function =>
             Function.Name == "Executeˉmain");
         var Executeˉmainˉframeˉslots = Executeˉmain.Allˉlocalˉtypes.Length +
-            Executeˉmain.Valueˉtypes.Length + 1;
+            Executeˉmain.Valueˉslotˉcount;
         if (Executeˉmainˉframeˉslots != Kernelˉprocessˉcontract.CLIENT_INTERPRETER_FRAME_SLOTS)
         {
             throw new InvalidOperationException(
@@ -290,8 +290,9 @@ public static class Kernelˉprocessˉimage
                 Measureˉnativeˉstackˉpath(module, Target, active, memoized));
         }
         active[functionˉindex] = false;
-        var Frameˉslots = checked(Function.Allˉlocalˉtypes.Length + Function.Valueˉtypes.Length +
-            (Function.Returnˉtype == Nativeˉvalueˉtype.Record ? 1 : 0));
+        var Frameˉslots = checked(Function.Allˉlocalˉtypes.Length + Function.Valueˉslotˉcount +
+            (Function.Returnˉtype is Nativeˉvalueˉtype.Borrowedˉtext or
+                Nativeˉvalueˉtype.Borrowedˉbytes ? 1 : 0));
         var Result = checked((ulong)Frameˉslots * Nativeˉcontract.VALUE_SLOT_BYTES +
             sizeof(ulong) + Maximumˉcalleeˉbytes);
         memoized[functionˉindex] = Result;

@@ -557,10 +557,8 @@ public static class Nativeˉfragmentˉverifier
             {
                 if (Call.Returnˉkind == Decodedˉreturnˉkind.Descriptor)
                 {
-                    if (!Borrowedˉbytesˉslots.Add(Call.Resultˉslot))
-                    {
-                        Failˉshape();
-                    }
+                    Borrowedˉbytesˉslots.Add(Call.Resultˉslot);
+                    Staticˉdescriptorˉdata.Remove(Call.Resultˉslot);
                 }
                 else if (Call.Returnˉkind == Decodedˉreturnˉkind.Scalar &&
                     Borrowedˉbytesˉslots.Contains(Call.Resultˉslot))
@@ -654,6 +652,7 @@ public static class Nativeˉfragmentˉverifier
                 out var Argumentˉslot))
             {
                 Borrowedˉbytesˉslots.Add(Argumentˉslot);
+                Staticˉdescriptorˉdata.Remove(Argumentˉslot);
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -670,6 +669,7 @@ public static class Nativeˉfragmentˉverifier
                 out var Decodedˉtextˉslot))
             {
                 Borrowedˉbytesˉslots.Add(Decodedˉtextˉslot);
+                Staticˉdescriptorˉdata.Remove(Decodedˉtextˉslot);
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -730,6 +730,7 @@ public static class Nativeˉfragmentˉverifier
                     out Enumˉnameˉslot))
             {
                 Borrowedˉbytesˉslots.Add(Enumˉnameˉslot);
+                Staticˉdescriptorˉdata.Remove(Enumˉnameˉslot);
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -760,6 +761,7 @@ public static class Nativeˉfragmentˉverifier
                 out var Fileˉslot))
             {
                 Borrowedˉbytesˉslots.Add(Fileˉslot);
+                Staticˉdescriptorˉdata.Remove(Fileˉslot);
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -776,7 +778,7 @@ public static class Nativeˉfragmentˉverifier
                 out var Staticˉdata))
             {
                 Borrowedˉbytesˉslots.Add(Staticˉbytesˉslot);
-                Staticˉdescriptorˉdata.Add(Staticˉbytesˉslot, Staticˉdata);
+                Staticˉdescriptorˉdata[Staticˉbytesˉslot] = Staticˉdata;
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -799,6 +801,7 @@ public static class Nativeˉfragmentˉverifier
                     out Concatˉbytesˉslot))
             {
                 Borrowedˉbytesˉslots.Add(Concatˉbytesˉslot);
+                Staticˉdescriptorˉdata.Remove(Concatˉbytesˉslot);
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -816,6 +819,10 @@ public static class Nativeˉfragmentˉverifier
                 if (Staticˉdescriptorˉdata.TryGetValue(Copiedˉbytesˉsource, out var Copiedˉdata))
                 {
                     Staticˉdescriptorˉdata[Copiedˉbytesˉslot] = Copiedˉdata;
+                }
+                else
+                {
+                    Staticˉdescriptorˉdata.Remove(Copiedˉbytesˉslot);
                 }
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
@@ -847,6 +854,7 @@ public static class Nativeˉfragmentˉverifier
                 out var Sliceˉslot))
             {
                 Borrowedˉbytesˉslots.Add(Sliceˉslot);
+                Staticˉdescriptorˉdata.Remove(Sliceˉslot);
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -902,6 +910,7 @@ public static class Nativeˉfragmentˉverifier
                 if (Recordˉfieldˉisˉdescriptor)
                 {
                     Borrowedˉbytesˉslots.Add(Recordˉfieldˉresult);
+                    Staticˉdescriptorˉdata.Remove(Recordˉfieldˉresult);
                 }
                 else if (Borrowedˉbytesˉslots.Contains(Recordˉfieldˉresult))
                 {
@@ -1475,7 +1484,7 @@ public static class Nativeˉfragmentˉverifier
             return false;
         }
         Cursor += 8;
-        if (borrowedˉdescriptorˉslots.Contains(resultˉslot) ||
+        if (resultˉslot == Sourceˉslot ||
             !Tryˉdecodeˉserviceˉcall(
                 code,
                 ref Cursor,
@@ -1533,7 +1542,7 @@ public static class Nativeˉfragmentˉverifier
             !Matches(code, Cursor + 13, 0x41, 0x89, 0xC1) ||
             !Matches(code, Cursor + 16, 0x48, 0x8D, 0x8C, 0x24) ||
             !Tryˉreadˉslot(code, Cursor + 20, frameˉbytes, out resultˉslot) ||
-            borrowedˉdescriptorˉslots.Contains(resultˉslot))
+            resultˉslot == Valueˉslot)
         {
             return false;
         }
@@ -1568,7 +1577,7 @@ public static class Nativeˉfragmentˉverifier
             !Matches(code, Cursor + 7, 0x41, 0x89, 0xC0) ||
             !Matches(code, Cursor + 10, 0x4C, 0x8D, 0x8C, 0x24) ||
             !Tryˉreadˉslot(code, Cursor + 14, frameˉbytes, out resultˉslot) ||
-            borrowedˉdescriptorˉslots.Contains(resultˉslot))
+            resultˉslot == Valueˉslot)
         {
             return false;
         }
@@ -1613,11 +1622,12 @@ public static class Nativeˉfragmentˉverifier
         resultˉslot = 0;
         var Cursor = index;
         if (!fragment.Requiredˉservices.Contains(Nativeˉservice.Textˉconcat) ||
-            !Tryˉdecodeˉdescriptorˉaddress(code, Cursor, frameˉbytes, 0x84, borrowedˉdescriptorˉslots, out _) ||
-            !Tryˉdecodeˉdescriptorˉaddress(code, Cursor + 8, frameˉbytes, 0x8C, borrowedˉdescriptorˉslots, out _) ||
+            !Tryˉdecodeˉdescriptorˉaddress(code, Cursor, frameˉbytes, 0x84, borrowedˉdescriptorˉslots, out var Leftˉslot) ||
+            !Tryˉdecodeˉdescriptorˉaddress(code, Cursor + 8, frameˉbytes, 0x8C, borrowedˉdescriptorˉslots, out var Rightˉslot) ||
             !Matches(code, Cursor + 16, 0x48, 0x8D, 0x8C, 0x24) ||
             !Tryˉreadˉslot(code, Cursor + 20, frameˉbytes, out resultˉslot) ||
-            borrowedˉdescriptorˉslots.Contains(resultˉslot))
+            resultˉslot == Leftˉslot ||
+            resultˉslot == Rightˉslot)
         {
             return false;
         }
@@ -1648,10 +1658,10 @@ public static class Nativeˉfragmentˉverifier
         resultˉslot = 0;
         var Cursor = index;
         if (!fragment.Requiredˉservices.Contains(Nativeˉservice.Textˉquote) ||
-            !Tryˉdecodeˉdescriptorˉaddress(code, Cursor, frameˉbytes, 0x84, borrowedˉdescriptorˉslots, out _) ||
+            !Tryˉdecodeˉdescriptorˉaddress(code, Cursor, frameˉbytes, 0x84, borrowedˉdescriptorˉslots, out var Textˉslot) ||
             !Matches(code, Cursor + 8, 0x4C, 0x8D, 0x8C, 0x24) ||
             !Tryˉreadˉslot(code, Cursor + 12, frameˉbytes, out resultˉslot) ||
-            borrowedˉdescriptorˉslots.Contains(resultˉslot))
+            resultˉslot == Textˉslot)
         {
             return false;
         }
@@ -1862,7 +1872,8 @@ public static class Nativeˉfragmentˉverifier
                 0x4C, 0x01, 0xCA,
                 0x48, 0x89, 0xD0) ||
             !Tryˉstoreˉrax(code, Cursor + 78, frameˉbytes, out resultˉslot) ||
-            borrowedˉbytesˉslots.Contains(resultˉslot) ||
+            resultˉslot == Leftˉslot ||
+            resultˉslot == Rightˉslot ||
             !Matches(code, Cursor + 86, 0x44, 0x89, 0xC0) ||
             !Tryˉstoreˉeaxˉatˉfield(
                 code,
@@ -1950,7 +1961,6 @@ public static class Nativeˉfragmentˉverifier
                 0x4C, 0x01, 0xCA,
                 0x48, 0x89, 0xD0) ||
             !Tryˉstoreˉrax(code, Cursor + 42, frameˉbytes, out resultˉslot) ||
-            borrowedˉbytesˉslots.Contains(resultˉslot) ||
             code[Cursor + 50] != 0xB8 ||
             Readˉi32(code, Cursor + 51) != sizeof(uint) ||
             !Tryˉstoreˉeaxˉatˉfield(

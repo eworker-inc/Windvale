@@ -244,7 +244,7 @@ internal static class Program
         Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0010_0000, 0)), 40, "WVOS4003");
         Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0xFFFF_FFFF_FFFF_F000, 2)), 40, "WVOS4004");
         Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(2, 0x0010_0000, 56)), 40, "WVOS4005");
-        Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0030_0000, 437)), 40, "WVOS4005");
+        Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0030_0000, 389)), 40, "WVOS4005");
         Memoryˉplanˉfails(
             Buildˉmemoryˉmap(
                 new Memoryˉdescriptorˉinput(7, 0x0020_0000, Kernelˉmemoryˉcontract.ARENA_PAGES),
@@ -457,11 +457,11 @@ internal static class Program
         Sequenceˉequal(First.Codeˉbytes, Second.Codeˉbytes);
         Equal(1_244, First.Objectˉbytes.Length);
         Equal(
-            "ec2ee4a06d947ddbb3d72fe02ac99884611279602ffe7136a1fe58dd9d938830",
+            "9ffce69de103347644f3ce9aa41d972bce881dfa6c6e77ad9e7048ffbb415142",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
         Equal(851, First.Codeˉbytes.Length);
         Equal(
-            "7e914ebd115a8b5629cb636fd6804e41cf2821b538c3716451566e95ad2c5a78",
+            "f61dcf930590bdf6b47f4f948b777d16db9aaef3deec1e6ac21530009b949407",
             Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.Objectˉbytes.AsSpan()).Value;
@@ -592,26 +592,26 @@ internal static class Program
         Equal(6_553, First.Policyˉmoduleˉbytes.Length);
         Equal("10cb84b665c7cc40832ca2ba642babda433a091f2cbf3a4e3dc624baabad036d",
             Objectˉdigest.Calculateˉsha256(First.Policyˉmoduleˉbytes.AsSpan()));
-        Equal(58_648, First.Policyˉnativeˉobjectˉbytes.Length);
-        Equal("177618b72d0a1e9b4bba0b008f7c5a5f0954c6a37d88b7ce33c6ba613613ac86",
+        Equal(44_600, First.Policyˉnativeˉobjectˉbytes.Length);
+        Equal("605263ead7e9c23a46924da795ac45142c5455e2b659bf1ff934432a443ec1e3",
             Objectˉdigest.Calculateˉsha256(First.Policyˉnativeˉobjectˉbytes.AsSpan()));
         Equal(525, First.Initˉserviceˉmoduleˉbytes.Length);
         Equal("0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467",
             Objectˉdigest.Calculateˉsha256(First.Initˉserviceˉmoduleˉbytes.AsSpan()));
-        Equal(3_959, First.Initˉserviceˉnativeˉobjectˉbytes.Length);
-        Equal("a0e7d0815c40993d1846a44d230428feef1bea6350ebf536db672ca507ca6656",
+        Equal(3_455, First.Initˉserviceˉnativeˉobjectˉbytes.Length);
+        Equal("4b8126d1baa38054fc70165be3c2f9519e7bea7e1f4d5596bcae36f2567ddf11",
             Objectˉdigest.Calculateˉsha256(First.Initˉserviceˉnativeˉobjectˉbytes.AsSpan()));
         Equal(243, First.Initˉserviceˉshimˉobjectˉbytes.Length);
         Equal("2e00ea9799cd8fc55e75611a9f2f5831c26162b0d3928841f003d5ab9802139a",
             Objectˉdigest.Calculateˉsha256(First.Initˉserviceˉshimˉobjectˉbytes.AsSpan()));
-        Equal(3_935, First.Initˉserviceˉimageˉbytes.Length);
-        Equal("328d075ce129aed204707b16fab7c22b9e8f624b917ce681959118b02d313814",
+        Equal(3_431, First.Initˉserviceˉimageˉbytes.Length);
+        Equal("2d2a47977889aef14f102734939e1935f74cd651eb0255ed3f2b5ca95fd2d7f3",
             Objectˉdigest.Calculateˉsha256(First.Initˉserviceˉimageˉbytes.AsSpan()));
         Equal(56_165, First.Interpreterˉmoduleˉbytes.Length);
         Equal("3669e94d712bd5a78f0061e29d8054ed3b54b687efc9508114f79bb78aa8832f",
             Objectˉdigest.Calculateˉsha256(First.Interpreterˉmoduleˉbytes.AsSpan()));
-        Equal(577_140, First.Interpreterˉnativeˉobjectˉbytes.Length);
-        Equal("b55f9525cccab5fc2efbf5b4c488b2498a7689d4905d7e5e3d0950a791b00a85",
+        Equal(418_372, First.Interpreterˉnativeˉobjectˉbytes.Length);
+        Equal("c712a8cf7aa674b89e01e8fbc1632eeb6414fd1fde0bc4ead763e45c38037bb1",
             Objectˉdigest.Calculateˉsha256(First.Interpreterˉnativeˉobjectˉbytes.AsSpan()));
         Equal(462, First.Bootˉresourceˉserviceˉstencilˉobjectˉbytes.Length);
         Equal("fde44aad9549731d53c5ccf3a57733b3619df94369b61ef27a693e1059784bc9",
@@ -625,11 +625,11 @@ internal static class Program
         Equal(193, Faultˉfirst.Clientˉshimˉobjectˉbytes.Length);
         Equal("c57327ddf897fb32cc57dd1266c467283273eddafd8d4b78edfc43e59fc8eeee",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Clientˉshimˉobjectˉbytes.AsSpan()));
-        Equal(576_541, First.Clientˉimageˉbytes.Length);
-        Equal("afec9522862a6a69656c1a4a93f62d3e7b1b5b0f0d7c8759180410beb3429260",
+        Equal(417_773, First.Clientˉimageˉbytes.Length);
+        Equal("77e3b7fbd6f8a0c9f3949ddf15b9a2c71e7fa9a671fbebd33a830ae13d238824",
             Objectˉdigest.Calculateˉsha256(First.Clientˉimageˉbytes.AsSpan()));
-        Equal(576_541, Faultˉfirst.Clientˉimageˉbytes.Length);
-        Equal("49c9afe4ddb29967ea5a19e1fdadbe1f352a283e9dcb7738c67a09da9558466a",
+        Equal(417_773, Faultˉfirst.Clientˉimageˉbytes.Length);
+        Equal("bf50d832d6e17218faeb479fb4bbb410cc1e7aa901af12a07ba0c5f86165dccb",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Clientˉimageˉbytes.AsSpan()));
 
         Sequenceˉequal(First.Policyˉmoduleˉbytes, Second.Policyˉmoduleˉbytes);
@@ -886,10 +886,10 @@ internal static class Program
         Equal(ALLOCATION + 0x7000UL, Plan.Userˉruntimeˉinputˉaddress);
         Equal(ALLOCATION + 0x8000UL, Plan.Userˉruntimeˉbudgetˉaddress);
         Equal(CLIENT_ALLOCATION, Client.Plan!.Rootˉaddress);
-        Equal(CLIENT_ALLOCATION + 0x91000UL, Client.Plan.Userˉstackˉaddress);
-        Equal(CLIENT_ALLOCATION + 0xA0000UL, Client.Plan.Userˉdataˉaddress);
-        Equal(CLIENT_ALLOCATION + 0xA1000UL, Client.Plan.Userˉruntimeˉinputˉaddress);
-        Equal(CLIENT_ALLOCATION + 0xA2000UL, Client.Plan.Userˉruntimeˉbudgetˉaddress);
+        Equal(CLIENT_ALLOCATION + 0x6A000UL, Client.Plan.Userˉstackˉaddress);
+        Equal(CLIENT_ALLOCATION + 0x70000UL, Client.Plan.Userˉdataˉaddress);
+        Equal(CLIENT_ALLOCATION + 0x71000UL, Client.Plan.Userˉruntimeˉinputˉaddress);
+        Equal(CLIENT_ALLOCATION + 0x72000UL, Client.Plan.Userˉruntimeˉbudgetˉaddress);
         Equal(Kernelˉprocessˉcontract.CLIENT_CODE_PAGES, Client.Plan.Userˉcodeˉpages);
         Equal(Kernelˉprocessˉcontract.CLIENT_STACK_PAGES, Client.Plan.Userˉstackˉpages);
         True(Client.Plan.Rootˉaddress != Plan.Rootˉaddress, "The service and client share a root.");
@@ -999,7 +999,7 @@ internal static class Program
             "The interpreter record arena overlaps context publication or exceeds its data page.");
         Equal(1_024U, Kernelˉprocessˉcontract.CLIENT_RECORD_ARENA_BYTES);
         Equal(528U, Kernelˉprocessˉcontract.CLIENT_RECORD_ARENA_USED_BYTES);
-        Equal(58_800UL, Kernelˉprocessˉcontract.CLIENT_NATIVE_STACK_USED_BYTES);
+        Equal(23_824UL, Kernelˉprocessˉcontract.CLIENT_NATIVE_STACK_USED_BYTES);
         True(
             Kernelˉprocessˉcontract.CLIENT_NATIVE_STACK_USED_BYTES <=
                 Kernelˉprocessˉcontract.CLIENT_STACK_BYTES &&
@@ -1635,17 +1635,17 @@ internal static class Program
         var Second = Kernelˉprocessˉx64.Build(Normalˉimage, false);
         var Faultˉfirst = Kernelˉprocessˉx64.Build(Faultˉimage, true);
         var Faultˉsecond = Kernelˉprocessˉx64.Build(Faultˉimage, true);
-        Equal(608_198, First.Objectˉbytes.Length);
-        Equal("c2e393fc5fa5c348be34aa7aaa239646ea8278616b8459b24fd3677f9f928d13",
+        Equal(445_278, First.Objectˉbytes.Length);
+        Equal("668f081f1d43568b0749d57296de5f34fd0bdf8296f31a8168fb37fae6a18d6b",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
-        Equal(25_495, First.Codeˉbytes.Length);
-        Equal("ec4669c52dc19272465a54903d6e5970fafe2142511376cd137b954084915ee0",
+        Equal(21_847, First.Codeˉbytes.Length);
+        Equal("d3aefc72d403b9d413e6382c94f7fc44c5f8da3e6d9d88565dc4cfb405b6ad5a",
             Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
-        Equal(608_278, Faultˉfirst.Objectˉbytes.Length);
-        Equal("4054d3884eb8d45a1c7cda56132ae71c70e125a51183c5199c39de77cf1687a6",
+        Equal(445_358, Faultˉfirst.Objectˉbytes.Length);
+        Equal("641a328c52c20527f0e27b1824acc240977dfce1dd222f798fb4576092267624",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Objectˉbytes.AsSpan()));
-        Equal(25_575, Faultˉfirst.Codeˉbytes.Length);
-        Equal("d09fe1a322c28a273f558328437a8606602714043cbf8b6475a26e5933a9e0d2",
+        Equal(21_927, Faultˉfirst.Codeˉbytes.Length);
+        Equal("cf0a7e6a684808faefb1748a15132786bfa4e286f4c4462b80e8be308d6158d5",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Codeˉbytes.AsSpan()));
         Equal(19, First.Relocations.Length);
         Equal(19, Faultˉfirst.Relocations.Length);
@@ -1729,9 +1729,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         Sequenceˉequal(First, Second);
-        Equal(715_264, First.Length);
+        Equal(531_968, First.Length);
         Equal(
-            "0233c10f323aaa3ee30dbe710b11c05f4d85a08fd88d6a52705c02f4b271347b",
+            "68319856b2913b3c857012d3fd38f147cf2a2307afacc9ffc8c8a33c005d0cf9",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and deliberate user-fault images are identical.");
@@ -1746,9 +1746,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(714_752, First.Length);
+        Equal(531_456, First.Length);
         Equal(
-            "a2c69181b55178b0e23c9b1012239a8fb1c8a53e2ffb089c8c59f45fa9dd0a6a",
+            "b8f0e656066b1e4f28edc4124eca6eea18130a0d6c0f4a9018e8ae817a0fa985",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -1760,9 +1760,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(714_752, First.Length);
+        Equal(531_456, First.Length);
         Equal(
-            "04d801d25c0b5876fccb796d14b0c1ba14123f468200d5fb28728033867a5df5",
+            "0322ce3d3a9fecfa5c84809d8594f4f3ea643aaff2776f8d25668f1d723b9b54",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -1784,9 +1784,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         Sequenceˉequal(First, Second);
-        Equal(714_752, First.Length);
+        Equal(531_456, First.Length);
         Equal(
-            "b5abc555c11d3585b73e0d3e5391bbf33ca864933d8f0514265fce355273f799",
+            "1a0bd9f37c595d4170bd05fe83cc05dc344d2223674a01812f253ceb77893e40",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -1828,7 +1828,7 @@ internal static class Program
         Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x48]));
         Equal(1, Countˉsequence(Code, [0xFF, 0x90, 0xE8, 0x00, 0x00, 0x00]));
         Equal(3, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x48, 0x41, 0x4E, 0x44, 0x31]));
-        Equal(8, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x30, 0x39]));
+        Equal(8, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x31, 0x30]));
         Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x2C, 0x30, 0x00, 0x00, 0x00]));
         Equal(3, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
         Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x78]));
@@ -1999,9 +1999,9 @@ internal static class Program
         Equal(
             "0653613d868abbba99b5e31230fb2a1f92581c4989318577cb77a6d6e60f8339",
             Objectˉdigest.Calculateˉsha256(First.Moduleˉbytes.AsSpan()));
-        Equal(8_010, First.Nativeˉobjectˉbytes.Length);
+        Equal(7_226, First.Nativeˉobjectˉbytes.Length);
         Equal(
-            "f3d0d2aec5b7fb81d02e4188fb6ba48b6a21dc91c89bdf7f00daaf7b0a981038",
+            "0596755161d4a6f02e97148b73030de8e02bb64103395523cc1458fca7e8351c",
             Objectˉdigest.Calculateˉsha256(First.Nativeˉobjectˉbytes.AsSpan()));
         Equal(355, First.Bridgeˉobjectˉbytes.Length);
         Equal(
@@ -2027,13 +2027,13 @@ internal static class Program
         Equal(
             "f8f92352abed3c042c6ca6e5cbfd65b650a87837dd252802014b3a787cdb75cf",
             Objectˉdigest.Calculateˉsha256(First.Admissionˉmoduleˉbytes.AsSpan()));
-        Equal(6_913, First.Embeddedˉnativeˉobjectˉbytes.Length);
+        Equal(6_241, First.Embeddedˉnativeˉobjectˉbytes.Length);
         Equal(
-            "269b48d32569b12b0b414c62cc50f70784fc8d90496c520aa58098fbb5f5ba8e",
+            "04a827a46f333f00cf754ba1d470c1363a08a8e9b0cabb319d766639539bb28d",
             Objectˉdigest.Calculateˉsha256(First.Embeddedˉnativeˉobjectˉbytes.AsSpan()));
-        Equal(25_727, First.Admissionˉnativeˉobjectˉbytes.Length);
+        Equal(20_191, First.Admissionˉnativeˉobjectˉbytes.Length);
         Equal(
-            "cf819ee2f3f108a82ceca2b262b0e5ba6953594b177fef993efe20e41fe3b619",
+            "10e176ad34ba585d9cc6a595cff8d3ae0ca076fc4768748c12e530279e5c4a61",
             Objectˉdigest.Calculateˉsha256(First.Admissionˉnativeˉobjectˉbytes.AsSpan()));
         Equal(484, First.Bridgeˉobjectˉbytes.Length);
         Equal(
