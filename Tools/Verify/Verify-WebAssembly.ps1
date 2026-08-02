@@ -15,6 +15,8 @@ $StraightSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Straight
 $SubtractOverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Subtract-Overflow-Main.wv'
 $MultiplyOverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Multiply-Overflow-Main.wv'
 $NegateOverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Negate-Overflow-Main.wv'
+$MeteredLoopSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Metered-Loop-Main.wv'
+$NonterminatingLoopSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Nonterminating-Loop-Main.wv'
 $EngineVerifier = Join-Path $RepositoryRoot 'Tools/Verify/Verify-WebAssembly-Engine.mjs'
 $BackendWvb = Join-Path $ArtifactDirectory 'Windvale-WebAssembly.wvb'
 $SuccessWvb = Join-Path $ArtifactDirectory 'Checked-Add-Main.wvb'
@@ -23,12 +25,16 @@ $StraightWvb = Join-Path $ArtifactDirectory 'Straight-I32-Main.wvb'
 $SubtractOverflowWvb = Join-Path $ArtifactDirectory 'Checked-Subtract-Overflow-Main.wvb'
 $MultiplyOverflowWvb = Join-Path $ArtifactDirectory 'Checked-Multiply-Overflow-Main.wvb'
 $NegateOverflowWvb = Join-Path $ArtifactDirectory 'Checked-Negate-Overflow-Main.wvb'
+$MeteredLoopWvb = Join-Path $ArtifactDirectory 'Metered-Loop-Main.wvb'
+$NonterminatingLoopWvb = Join-Path $ArtifactDirectory 'Nonterminating-Loop-Main.wvb'
 $SuccessWasm = Join-Path $ArtifactDirectory 'Checked-Add-Main.wasm'
 $OverflowWasm = Join-Path $ArtifactDirectory 'Checked-Add-Overflow-Main.wasm'
 $StraightWasm = Join-Path $ArtifactDirectory 'Straight-I32-Main.wasm'
 $SubtractOverflowWasm = Join-Path $ArtifactDirectory 'Checked-Subtract-Overflow-Main.wasm'
 $MultiplyOverflowWasm = Join-Path $ArtifactDirectory 'Checked-Multiply-Overflow-Main.wasm'
 $NegateOverflowWasm = Join-Path $ArtifactDirectory 'Checked-Negate-Overflow-Main.wasm'
+$MeteredLoopWasm = Join-Path $ArtifactDirectory 'Metered-Loop-Main.wasm'
+$NonterminatingLoopWasm = Join-Path $ArtifactDirectory 'Nonterminating-Loop-Main.wasm'
 
 New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
 
@@ -49,6 +55,8 @@ Invoke-Windvale @('compile', $StraightSource, '-o', $StraightWvb)
 Invoke-Windvale @('compile', $SubtractOverflowSource, '-o', $SubtractOverflowWvb)
 Invoke-Windvale @('compile', $MultiplyOverflowSource, '-o', $MultiplyOverflowWvb)
 Invoke-Windvale @('compile', $NegateOverflowSource, '-o', $NegateOverflowWvb)
+Invoke-Windvale @('compile', $MeteredLoopSource, '-o', $MeteredLoopWvb)
+Invoke-Windvale @('compile', $NonterminatingLoopSource, '-o', $NonterminatingLoopWvb)
 
 $RunArguments = @(
     'run', $BackendWvb,
@@ -66,6 +74,8 @@ Invoke-Windvale ($RunArguments + @($StraightWvb, $StraightWasm))
 Invoke-Windvale ($RunArguments + @($SubtractOverflowWvb, $SubtractOverflowWasm))
 Invoke-Windvale ($RunArguments + @($MultiplyOverflowWvb, $MultiplyOverflowWasm))
 Invoke-Windvale ($RunArguments + @($NegateOverflowWvb, $NegateOverflowWasm))
+Invoke-Windvale ($RunArguments + @($MeteredLoopWvb, $MeteredLoopWasm))
+Invoke-Windvale ($RunArguments + @($NonterminatingLoopWvb, $NonterminatingLoopWasm))
 
 node $EngineVerifier `
     $SuccessWasm `
@@ -73,7 +83,9 @@ node $EngineVerifier `
     $StraightWasm `
     $SubtractOverflowWasm `
     $MultiplyOverflowWasm `
-    $NegateOverflowWasm
+    $NegateOverflowWasm `
+    $MeteredLoopWasm `
+    $NonterminatingLoopWasm
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

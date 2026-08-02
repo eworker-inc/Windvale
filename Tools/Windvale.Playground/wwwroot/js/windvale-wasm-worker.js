@@ -3,7 +3,11 @@ self.onmessage = async Event => {
     const Requestˉid = Message?.RequestId;
 
     try {
-        if (!Number.isInteger(Requestˉid) || !(Message.Bytes instanceof ArrayBuffer)) {
+        if (!Number.isInteger(Requestˉid) ||
+            !(Message.Bytes instanceof ArrayBuffer) ||
+            !Number.isInteger(Message.InstructionLimit) ||
+            Message.InstructionLimit < 1 ||
+            Message.InstructionLimit > 2_147_483_647) {
             throw new Error("The worker request is invalid.");
         }
 
@@ -23,9 +27,22 @@ self.onmessage = async Event => {
         const Instance = await WebAssembly.instantiate(Module, {});
         const Exports = Instance.exports;
         const Abiˉexport = Exports["Windvale.abi"];
-        const Result = Abiˉexport === undefined
-            ? Executeˉabiˉzero(Module, Exports)
-            : Executeˉabiˉone(Module, Exports);
+        const Abi = Abiˉexport === undefined
+            ? 0
+            : Readˉi32ˉglobal(Exports, "Windvale.abi");
+        let Result;
+        if (Abi === 0) {
+            Result = Executeˉabiˉzero(Module, Exports);
+        }
+        else if (Abi === 1) {
+            Result = Executeˉabiˉone(Module, Exports);
+        }
+        else if (Abi === 2) {
+            Result = Executeˉabiˉtwo(Module, Exports, Message.InstructionLimit);
+        }
+        else {
+            throw new Error("The generated module uses an unsupported Windvale execution ABI.");
+        }
         self.postMessage({ RequestId: Requestˉid, Succeeded: true, Error: null, ...Result });
     }
     catch (Error) {
@@ -81,6 +98,35 @@ function Executeˉabiˉone(Module, Exports) {
 
     return {
         ExecutionAbi: 1,
+        Status: Returnedˉstatus,
+        Result,
+        ExecutedInstructions: Instructionsˉvalue,
+    };
+}
+
+function Executeˉabiˉtwo(Module, Exports, Instructionˉlimit) {
+    Requireˉexports(Module, [
+        { name: "Windvale.run", kind: "function" },
+        { name: "Windvale.abi", kind: "global" },
+        { name: "Windvale.result", kind: "global" },
+        { name: "Windvale.instructions", kind: "global" },
+    ]);
+    if (typeof Exports["Windvale.run"] !== "function") {
+        throw new Error("Execution ABI 2 is missing Windvale.run(limit).");
+    }
+
+    const Returnedˉstatus = Exports["Windvale.run"](Instructionˉlimit);
+    Requireˉi32(Returnedˉstatus, "Windvale.run status");
+    const Result = Readˉi32ˉglobal(Exports, "Windvale.result");
+    const Instructionsˉvalue = Readˉglobal(Exports, "Windvale.instructions");
+    if (!Number.isInteger(Instructionsˉvalue) ||
+        Instructionsˉvalue < 0 ||
+        Instructionsˉvalue > Instructionˉlimit) {
+        throw new Error("The generated module published an invalid metered instruction count.");
+    }
+
+    return {
+        ExecutionAbi: 2,
         Status: Returnedˉstatus,
         Result,
         ExecutedInstructions: Instructionsˉvalue,

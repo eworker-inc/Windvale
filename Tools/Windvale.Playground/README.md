@@ -10,7 +10,7 @@ Direct .NET-free artifact demo: <https://windvale.ca/playground/wasm-demo/>
 
 ## Direct WebAssembly demo
 
-The nested `wwwroot/wasm-demo/` route is ordinary static HTML, CSS, and JavaScript. It does not reference the Blazor bootstrap or any .NET framework asset. It reconstructs the exact qualified 432-byte profile-3 artifact, checks SHA-256, and sends it through the same disposable worker used by the differential playground. A successful run reports ABI `1`, status `0`, result `42`, 30 instructions, and zero .NET/Blazor resource requests.
+The nested `wwwroot/wasm-demo/` route is ordinary static HTML, CSS, and JavaScript. It does not reference the Blazor bootstrap or any .NET framework asset. It reconstructs the exact 972-byte profile-4 loop artifact, checks SHA-256, and sends it through the same disposable worker used by the differential playground. The page requires ABI `2`: budget 157 must return status `0`, result `42`, and 157 instructions; budget 156 must return status `3011` (`WVR3011`), result zero, and 156 instructions. It also requires zero .NET/Blazor resource requests.
 
 The source displayed by this route is read-only provenance. The artifact was produced and qualified through the current Stage 0 toolchain, so this is a .NET-free browser execution path rather than a .NET-free compiler or build workflow. Run its independent static and engine checks with:
 
@@ -51,7 +51,7 @@ The `Deploy homepage` GitHub Actions workflow builds this project, copies its pu
 - Profiles: `portable` and bounded `hosted`; never `system`.
 - Capabilities: `console.write`, `console.write_line`, and `diagnostic.write_line`, denied until checked.
 - Limits: 64 KiB source, 250,000 instructions by default, 1,000,000 instructions maximum, 128 call frames, and 64 KiB for each output channel.
-- Direct Wasm: capability-free portable programs are offered to the digest-pinned Windvale backend; supported output is import-free, at most 64 KiB, and runs in a fresh worker with a two-second timeout.
+- Direct Wasm: capability-free portable programs are offered to the digest-pinned Windvale backend; supported output is import-free, at most 64 KiB, and runs in a fresh worker with both the selected WVB instruction limit and a two-second timeout.
 - Evidence: compiler/runtime diagnostics, standard and diagnostic output, canonical WVB size and SHA-256, disassembly, profile, capabilities, exit code, instruction count, and selected Wasm/backend identities plus differential results.
 - Editor: a local Monaco ESM bundle, Windvale-specific highlighting, contextual language completions, `Ctrl+M` insertion of the `ˉ` name separator, and compiler diagnostics projected as source markers. No editor asset is fetched from a CDN.
 

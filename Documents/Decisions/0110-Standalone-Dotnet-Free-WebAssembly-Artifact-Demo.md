@@ -1,7 +1,7 @@
 # Decision 0110: Standalone .NET-free WebAssembly artifact demo
 
 - Date: 2026-08-02
-- Status: Implemented and deployed with deterministic-engine, Chromium browser, and cross-host repository evidence; cross-browser qualification pending
+- Status: Implemented and deployed with deterministic-engine, Chromium browser, and cross-host repository evidence; retained route advanced to ABI 2 by [Decision 0112](0112-Metered-WebAssembly-Control-Flow.md); cross-browser qualification pending
 - Extends: [Decision 0107](0107-Playground-Disposable-WebAssembly-Worker.md)
 - Target: `wasm32-browser-v1-experimental`
 

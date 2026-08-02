@@ -3,10 +3,12 @@ import {
     ARTIFACT_BASE64,
     ARTIFACT_SHA256,
     ARTIFACT_SIZE,
+    EXHAUSTION_BUDGET,
+    EXHAUSTION_STATUS,
     EXPECTED_ABI,
-    EXPECTED_INSTRUCTIONS,
-    EXPECTED_RESULT,
-    EXPECTED_STATUS,
+    SUCCESS_BUDGET,
+    SUCCESS_RESULT,
+    SUCCESS_STATUS,
 } from "./windvale-artifact.js";
 
 const Runˉbutton = document.getElementById("run");
@@ -31,17 +33,30 @@ async function Runˉartifact() {
             throw new Error("The embedded artifact identity is incorrect.");
         }
 
-        const Execution = await Execute(Bytes, 2000);
-        if (!Execution.Succeeded) {
-            throw new Error(Execution.Error ?? "The browser worker rejected the module.");
+        const Success = await Execute(Bytes, 2000, SUCCESS_BUDGET);
+        if (!Success.Succeeded) {
+            throw new Error(Success.Error ?? "The browser worker rejected the module.");
         }
         if (
-            Execution.ExecutionAbi !== EXPECTED_ABI ||
-            Execution.Status !== EXPECTED_STATUS ||
-            Execution.Result !== EXPECTED_RESULT ||
-            Execution.ExecutedInstructions !== EXPECTED_INSTRUCTIONS
+            Success.ExecutionAbi !== EXPECTED_ABI ||
+            Success.Status !== SUCCESS_STATUS ||
+            Success.Result !== SUCCESS_RESULT ||
+            Success.ExecutedInstructions !== SUCCESS_BUDGET
         ) {
-            throw new Error("The module result does not match its qualified evidence.");
+            throw new Error("The exact-budget run does not match its qualified evidence.");
+        }
+
+        const Exhausted = await Execute(Bytes, 2000, EXHAUSTION_BUDGET);
+        if (!Exhausted.Succeeded) {
+            throw new Error(Exhausted.Error ?? "The browser worker rejected the module.");
+        }
+        if (
+            Exhausted.ExecutionAbi !== EXPECTED_ABI ||
+            Exhausted.Status !== EXHAUSTION_STATUS ||
+            Exhausted.Result !== 0 ||
+            Exhausted.ExecutedInstructions !== EXHAUSTION_BUDGET
+        ) {
+            throw new Error("The exhausted-budget run does not match WVR3011 evidence.");
         }
 
         const Frameworkˉrequests = Countˉframeworkˉrequests();
@@ -51,10 +66,9 @@ async function Runˉartifact() {
 
         Output.textContent = [
             `SHA-256     ${Actualˉsha256}`,
-            `ABI          ${Execution.ExecutionAbi}`,
-            `Status       ${Execution.Status}`,
-            `Result       ${Execution.Result}`,
-            `Instructions ${Execution.ExecutedInstructions}`,
+            `ABI          ${Success.ExecutionAbi}`,
+            `Budget 157   status ${Success.Status} · result ${Success.Result} · ${Success.ExecutedInstructions} instructions`,
+            `Budget 156   status ${Exhausted.Status} (WVR3011) · ${Exhausted.ExecutedInstructions} instructions`,
             `Framework    ${Frameworkˉrequests} .NET/Blazor requests`,
         ].join("\n");
         Setˉstate("passed", "Passed");

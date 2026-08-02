@@ -38,6 +38,7 @@ Requireˉtext(Application, "Countˉframeworkˉrequests", "runtime framework-requ
 Requireˉtext(Host, "Workerˉinstance.terminate()", "worker termination boundary");
 Requireˉtext(Worker, "WebAssembly.validate", "WebAssembly validation boundary");
 Requireˉtext(Worker, "WebAssembly.Module.imports(Module).length !== 0", "import rejection boundary");
+Requireˉtext(Worker, "Executeˉabiˉtwo", "metered execution ABI boundary");
 
 const Bytes = Buffer.from(Artifact.ARTIFACT_BASE64, "base64");
 Equal(Artifact.ARTIFACT_SIZE, Bytes.byteLength, "artifact byte length");
@@ -64,18 +65,31 @@ Equal(
 const Instance = new WebAssembly.Instance(Module, {});
 Equal(Artifact.EXPECTED_ABI, Instance.exports["Windvale.abi"].value, "execution ABI");
 for (let Run = 1; Run <= 2; Run++) {
-    Equal(Artifact.EXPECTED_STATUS, Instance.exports["Windvale.run"](), `run ${Run} status`);
-    Equal(Artifact.EXPECTED_RESULT, Instance.exports["Windvale.result"].value, `run ${Run} result`);
     Equal(
-        Artifact.EXPECTED_INSTRUCTIONS,
+        Artifact.SUCCESS_STATUS,
+        Instance.exports["Windvale.run"](Artifact.SUCCESS_BUDGET),
+        `success run ${Run} status`);
+    Equal(Artifact.SUCCESS_RESULT, Instance.exports["Windvale.result"].value, `success run ${Run} result`);
+    Equal(
+        Artifact.SUCCESS_BUDGET,
         Instance.exports["Windvale.instructions"].value,
-        `run ${Run} instruction count`);
+        `success run ${Run} instruction count`);
 }
+Equal(
+    Artifact.EXHAUSTION_STATUS,
+    Instance.exports["Windvale.run"](Artifact.EXHAUSTION_BUDGET),
+    "exhausted run status");
+Equal(0, Instance.exports["Windvale.result"].value, "exhausted run result reset");
+Equal(
+    Artifact.EXHAUSTION_BUDGET,
+    Instance.exports["Windvale.instructions"].value,
+    "exhausted run instruction count");
 
 console.log(
     "Standalone .NET-free WebAssembly demo verification passed: " +
     `${Bytes.byteLength} bytes, ABI ${Artifact.EXPECTED_ABI}, ` +
-    `result ${Artifact.EXPECTED_RESULT}, ${Artifact.EXPECTED_INSTRUCTIONS} instructions.`);
+    `budget ${Artifact.SUCCESS_BUDGET} result ${Artifact.SUCCESS_RESULT}, ` +
+    `budget ${Artifact.EXHAUSTION_BUDGET} status ${Artifact.EXHAUSTION_STATUS}.`);
 
 function Requireˉtext(Value, Expected, Boundary) {
     if (!Value.includes(Expected)) {

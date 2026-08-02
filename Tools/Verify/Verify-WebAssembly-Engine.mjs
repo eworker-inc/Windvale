@@ -10,6 +10,7 @@ const EXPECTED = [
         status: 0,
         result: 2147483647,
         instructions: 10,
+        abi: 1,
     },
     {
         name: "checked addition overflow",
@@ -19,6 +20,7 @@ const EXPECTED = [
         status: 3007,
         result: 0,
         instructions: 7,
+        abi: 1,
     },
     {
         name: "straight-line i32 success",
@@ -28,6 +30,7 @@ const EXPECTED = [
         status: 0,
         result: 42,
         instructions: 30,
+        abi: 1,
     },
     {
         name: "checked subtraction overflow",
@@ -37,6 +40,7 @@ const EXPECTED = [
         status: 3007,
         result: 0,
         instructions: 10,
+        abi: 1,
     },
     {
         name: "checked multiplication overflow",
@@ -46,6 +50,7 @@ const EXPECTED = [
         status: 3007,
         result: 0,
         instructions: 7,
+        abi: 1,
     },
     {
         name: "checked negation overflow",
@@ -55,14 +60,38 @@ const EXPECTED = [
         status: 3007,
         result: 0,
         instructions: 13,
+        abi: 1,
+    },
+    {
+        name: "metered loop",
+        path: process.argv[8],
+        sha256: "1c429ca20faa42b5018ea565ad10f148792dfbf6a8ecd438cf990cd60d664afe",
+        bytes: 972,
+        abi: 2,
+        runs: [
+            { budget: 157, status: 0, result: 42, instructions: 157 },
+            { budget: 156, status: 3011, result: 0, instructions: 156 },
+            { budget: 157, status: 0, result: 42, instructions: 157 },
+        ],
+    },
+    {
+        name: "nonterminating loop containment",
+        path: process.argv[9],
+        sha256: "325b6f8c9f8d7e2557f93c412aa85b913295dc4bfda5fbb32fb2337915109fde",
+        bytes: 663,
+        abi: 2,
+        runs: [
+            { budget: 50, status: 3011, result: 0, instructions: 50 },
+        ],
     },
 ];
 
-if (process.argv.length !== 8) {
+if (process.argv.length !== 10) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
-            "<subtract-overflow.wasm> <multiply-overflow.wasm> <negate-overflow.wasm>",
+            "<subtract-overflow.wasm> <multiply-overflow.wasm> <negate-overflow.wasm> " +
+            "<metered-loop.wasm> <nonterminating-loop.wasm>",
     );
 }
 
@@ -85,31 +114,40 @@ for (const expected of EXPECTED) {
 
     const { instance } = await WebAssembly.instantiate(bytes);
     const exports = instance.exports;
-    if (exports["Windvale.abi"].value !== 1) {
-        throw new Error(`${expected.path}: execution ABI is not 1.`);
+    if (exports["Windvale.abi"].value !== expected.abi) {
+        throw new Error(`${expected.path}: execution ABI is not ${expected.abi}.`);
     }
 
-    exports["Windvale.result"].value = -123;
-    exports["Windvale.instructions"].value = 99;
-    const status = exports["Windvale.run"]();
-    const result = exports["Windvale.result"].value;
-    const instructions = exports["Windvale.instructions"].value;
-    if (
-        status !== expected.status ||
-        result !== expected.result ||
-        instructions !== expected.instructions
-    ) {
-        throw new Error(
-            `${expected.path}: expected status/result/instructions ` +
-                `${expected.status}/${expected.result}/${expected.instructions}, found ` +
-                `${status}/${result}/${instructions}.`,
+    const runs = expected.runs ?? [{
+        status: expected.status,
+        result: expected.result,
+        instructions: expected.instructions,
+    }];
+    for (const run of runs) {
+        exports["Windvale.result"].value = -123;
+        exports["Windvale.instructions"].value = 99;
+        const status = expected.abi === 2
+            ? exports["Windvale.run"](run.budget)
+            : exports["Windvale.run"]();
+        const result = exports["Windvale.result"].value;
+        const instructions = exports["Windvale.instructions"].value;
+        if (
+            status !== run.status ||
+            result !== run.result ||
+            instructions !== run.instructions
+        ) {
+            throw new Error(
+                `${expected.path}: expected status/result/instructions ` +
+                    `${run.status}/${run.result}/${run.instructions}, found ` +
+                    `${status}/${result}/${instructions}.`,
+            );
+        }
+        console.log(
+            `${expected.path}: ${expected.name}; ABI ${expected.abi} ` +
+                `budget=${run.budget ?? "static"} status=${status} result=${result} ` +
+                `instructions=${instructions} SHA-256=${digest}`,
         );
     }
-
-    console.log(
-        `${expected.path}: ${expected.name}; ABI 1 status=${status} result=${result} ` +
-            `instructions=${instructions} SHA-256=${digest}`,
-    );
 }
 
 console.log(`WebAssembly engine verification passed under Node.js ${process.version}.`);

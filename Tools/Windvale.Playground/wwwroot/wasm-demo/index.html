@@ -42,11 +42,14 @@
                     <span id="source-title">Qualified source fixture</span>
                     <span class="language-badge">WV</span>
                 </div>
-                <pre><code>module WebAssemblyˉstraightˉi32 profile portable;
+                <pre><code>module Webassemblyˉmeteredˉloop profile portable;
 
 export fn Main() -&gt; i32 {
-    20 + 22;
-    return (20 + 22) * 2 - 42;
+    var Value: i32 = 0;
+    while Value &lt; 6 {
+        Value = Value + 1;
+    }
+    return Value * 7;
 }</code></pre>
                 <p class="source-note">
                     The source is shown as provenance. This milestone executes its prebuilt artifact;
@@ -61,10 +64,10 @@ export fn Main() -&gt; i32 {
                 </div>
 
                 <dl class="artifact-evidence">
-                    <div><dt>Artifact</dt><dd>432 bytes</dd></div>
+                    <div><dt>Artifact</dt><dd>972 bytes</dd></div>
                     <div><dt>Target</dt><dd>wasm32-browser-v1-experimental</dd></div>
                     <div><dt>Imports</dt><dd>None</dd></div>
-                    <div><dt>Expected</dt><dd>ABI 1 · result 42 · 30 instructions</dd></div>
+                    <div><dt>Expected</dt><dd>ABI 2 · budget 157 succeeds · 156 returns WVR3011</dd></div>
                 </dl>
 
                 <button id="run" type="button">
@@ -81,7 +84,7 @@ export fn Main() -&gt; i32 {
             <div class="boundary-grid">
                 <p><b>No CLR download</b><span>The page contains no Blazor bootstrap or .NET framework request.</span></p>
                 <p><b>Exact identity</b><span>SHA-256 is checked before the module reaches the worker.</span></p>
-                <p><b>Contained execution</b><span>A fresh worker validates, checks the ABI, executes once, and terminates.</span></p>
+                <p><b>Contained execution</b><span>Fresh workers enforce both wall-clock and exact WVB instruction budgets.</span></p>
             </div>
             <p class="boundary-note">
                 Artifact production and qualification still use the Stage 0 toolchain. This is a .NET-free

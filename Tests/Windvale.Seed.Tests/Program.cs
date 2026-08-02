@@ -91,9 +91,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "18d8f2a32c7ee6ff0a89ac705663595dc611bf7ffd545f76662e1227085bbc34";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "b47a6f5b89ac0d58dc6cafd6489b1fb12f1a0b9b161c09e8d2ca5a438993076a";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "cb6b5fbf378a4b13387704dda87beb75d6023112afeabfbaa558cf8fa32f5fe1";
+    private const string WEBASSEMBLY_CORE_SHA256 = "668a28529eebbaeda8f2618e3ddfdcb369ed496f76ee4666799cabc8d4ce3a39";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "f98f0acc048a5efe711ef6a13c179ecb452482b66ef7359b5a617733769afb1a";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "ac0cf65cecca49df200097432e37befeb76ea233621e8d8cdf6944252b11a718";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -109,6 +109,10 @@ internal static class Program
     private const string WEBASSEMBLY_MULTIPLY_OVERFLOW_SHA256 = "e924c7507a363a7b019935622abfbd4bf4ac8445cd37a0412130ce8e5c83d51a";
     private const string WEBASSEMBLY_NEGATE_OVERFLOW_WVB_SHA256 = "bf617ef07f7c3e43ba33d21c8f18eab07658ea0f40153bf8c3bef80f7db7ec98";
     private const string WEBASSEMBLY_NEGATE_OVERFLOW_SHA256 = "3f098efd63c68d8c62a4f6b373507e12c21808ff01120d165c9dc85a047e99e2";
+    private const string WEBASSEMBLY_METERED_LOOP_WVB_SHA256 = "99bf8d36c8ba8ab63c092143ebec1d79cd333c88df8b4da4ec67fd3772802af6";
+    private const string WEBASSEMBLY_METERED_LOOP_SHA256 = "1c429ca20faa42b5018ea565ad10f148792dfbf6a8ecd438cf990cd60d664afe";
+    private const string WEBASSEMBLY_NONTERMINATING_LOOP_WVB_SHA256 = "68b7043535b9ed33db4e3bde9ec7b3e21f5ef977bd325078f61a1c631758bfab";
+    private const string WEBASSEMBLY_NONTERMINATING_LOOP_SHA256 = "325b6f8c9f8d7e2557f93c412aa85b913295dc4bfda5fbb32fb2337915109fde";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -619,6 +623,12 @@ internal static class Program
     private static readonly string WEBASSEMBLY_NEGATE_OVERFLOW_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Checked-Negate-Overflow-Main.wv");
 
+    private static readonly string WEBASSEMBLY_METERED_LOOP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Metered-Loop-Main.wv");
+
+    private static readonly string WEBASSEMBLY_NONTERMINATING_LOOP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Nonterminating-Loop-Main.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -1118,6 +1128,23 @@ internal static class Program
         Sequenceˉequal(
             Webassemblyˉlowered.Webassemblyˉbytes,
             Webassemblyˉrepeat.Webassemblyˉbytes);
+
+        var Meteredˉloopˉreference = Playgroundˉrunner.Run(new(
+            WEBASSEMBLY_METERED_LOOP_SOURCE,
+            ImmutableHashSet.Create<string>(StringComparer.Ordinal),
+            157));
+        Equal(Playgroundˉstatus.Completed, Meteredˉloopˉreference.Status);
+        Equal(42, Meteredˉloopˉreference.Exitˉcode);
+        Equal(157L, Meteredˉloopˉreference.Executedˉinstructions);
+        Equal(WEBASSEMBLY_METERED_LOOP_WVB_SHA256, Meteredˉloopˉreference.Moduleˉsha256);
+        var Meteredˉloopˉlowered = Playgroundˉwebassemblyˉlowerer.Lower(
+            Meteredˉloopˉreference.Bytecodeˉbytes);
+        Equal(
+            Playgroundˉwebassemblyˉloweringˉstatus.Lowered,
+            Meteredˉloopˉlowered.Status);
+        Equal("Valid", Meteredˉloopˉlowered.Selectorˉstatus);
+        Equal(972, Meteredˉloopˉlowered.Webassemblyˉbytes.Length);
+        Equal(WEBASSEMBLY_METERED_LOOP_SHA256, Meteredˉloopˉlowered.Webassemblyˉsha256);
 
         var Twoˉchannels = Examples.Single(Example => Example.Id == "two-channels");
         var Twoˉchannelˉresult = Playgroundˉrunner.Run(new(
@@ -7273,6 +7300,96 @@ internal static class Program
                 Popˉlowered.Writtenˉbytes.AsSpan(),
                 Popˉverified));
 
+        var Meteredˉloopˉwvb = Compileˉsuccess(WEBASSEMBLY_METERED_LOOP_SOURCE);
+        Equal(
+            WEBASSEMBLY_METERED_LOOP_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Meteredˉloopˉwvb));
+        var Meteredˉloopˉverified = Moduleˉcodec.Readˉandˉverify(Meteredˉloopˉwvb);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 157),
+            Runˉreferenceˉwebassemblyˉi32(Meteredˉloopˉwvb, 157));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3011, 0, 156),
+            Runˉreferenceˉwebassemblyˉi32(Meteredˉloopˉwvb, 156));
+        var Meteredˉloopˉlowered = Runˉwebassemblyˉtool(Tool, Meteredˉloopˉwvb);
+        Equal(0, Meteredˉloopˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=972 execution-abi=2\n",
+            Meteredˉloopˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_METERED_LOOP_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Meteredˉloopˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉmeteredˉloopˉwebassembly(
+            Meteredˉloopˉlowered.Writtenˉbytes.AsSpan(),
+            Meteredˉloopˉverified);
+        var Meteredˉloopˉrepeat = Runˉwebassemblyˉtool(Tool, Meteredˉloopˉwvb);
+        Equal(0, Meteredˉloopˉrepeat.Exitˉcode);
+        Sequenceˉequal(
+            Meteredˉloopˉlowered.Writtenˉbytes,
+            Meteredˉloopˉrepeat.Writtenˉbytes);
+
+        var Nonterminatingˉloopˉwvb = Compileˉsuccess(
+            WEBASSEMBLY_NONTERMINATING_LOOP_SOURCE);
+        Equal(
+            WEBASSEMBLY_NONTERMINATING_LOOP_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Nonterminatingˉloopˉwvb));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3011, 0, 50),
+            Runˉreferenceˉwebassemblyˉi32(Nonterminatingˉloopˉwvb, 50));
+        var Nonterminatingˉloopˉverified = Moduleˉcodec.Readˉandˉverify(
+            Nonterminatingˉloopˉwvb);
+        var Nonterminatingˉloopˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Nonterminatingˉloopˉwvb);
+        Equal(0, Nonterminatingˉloopˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=663 execution-abi=2\n",
+            Nonterminatingˉloopˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_NONTERMINATING_LOOP_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Nonterminatingˉloopˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉmeteredˉloopˉwebassembly(
+            Nonterminatingˉloopˉlowered.Writtenˉbytes.AsSpan(),
+            Nonterminatingˉloopˉverified);
+
+        var Invalidˉbackwardˉtarget = Meteredˉloopˉwvb.ToArray();
+        var Meteredˉloopˉfunction = Meteredˉloopˉverified.Functions[0];
+        var Backwardˉjump = Meteredˉloopˉfunction.Instructions.Single(Instruction =>
+            Instruction.Opcode == Opcode.Jump &&
+            Instruction.Unsignedˉoperand < Instruction.Offset);
+        var Meteredˉloopˉcode = Findˉsectionˉpayload(
+            Invalidˉbackwardˉtarget,
+            Sectionˉkind.Code);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉbackwardˉtarget.AsSpan(
+                Meteredˉloopˉcode + Backwardˉjump.Offset + 1,
+                4),
+            Backwardˉjump.Unsignedˉoperand + 1);
+        var Invalidˉbackwardˉresult = Runˉwebassemblyˉtool(
+            Tool,
+            Invalidˉbackwardˉtarget);
+        Equal(1, Invalidˉbackwardˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Invalidˉbackwardˉresult.Diagnostics);
+        Equal(0, Invalidˉbackwardˉresult.Writeˉcount);
+
+        var Invalidˉexitˉtarget = Meteredˉloopˉwvb.ToArray();
+        var Exitˉbranch = Meteredˉloopˉfunction.Instructions.Single(Instruction =>
+            Instruction.Opcode == Opcode.Branchˉfalse);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉexitˉtarget.AsSpan(
+                Meteredˉloopˉcode + Exitˉbranch.Offset + 1,
+                4),
+            Exitˉbranch.Unsignedˉoperand + 1);
+        var Invalidˉexitˉresult = Runˉwebassemblyˉtool(Tool, Invalidˉexitˉtarget);
+        Equal(1, Invalidˉexitˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Invalidˉexitˉresult.Diagnostics);
+        Equal(0, Invalidˉexitˉresult.Writeˉcount);
+
         var Outputˉlimitˉcode = ImmutableArray.CreateBuilder<byte>();
         Outputˉlimitˉcode.AddRange(I32ˉinstruction(1));
         for (var Index = 0; Index < 2_047; Index++)
@@ -11379,13 +11496,18 @@ internal static class Program
     }
 
     private static WebAssemblyˉexecutionˉresult Runˉreferenceˉwebassemblyˉi32(
-        IEnumerable<byte> input)
+        IEnumerable<byte> input,
+        long maximumˉinstructions = 1_000_000)
     {
         var Verified = Moduleˉcodec.Readˉandˉverify(input.ToArray());
         var Runtime = new Referenceˉruntime(
             Verified,
             new Referenceˉcapabilityˉhost(new StringWriter()),
-            Runtimeˉoptions.Portableˉdefaults with { Collectˉfunctionˉsteps = true });
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Maximumˉinstructions = maximumˉinstructions,
+                Collectˉfunctionˉsteps = true,
+            });
         try
         {
             var Result = Runtime.Runˉmain();
@@ -11399,6 +11521,12 @@ internal static class Program
             var Steps = Runtime.Readˉfunctionˉsteps()
                 .Sum(Item => Item.Executedˉinstructions);
             return new(3007, 0, Steps);
+        }
+        catch (Runtimeˉexception Exception) when (Exception.Code == "WVR3011")
+        {
+            var Steps = Runtime.Readˉfunctionˉsteps()
+                .Sum(Item => Item.Executedˉinstructions);
+            return new(3011, 0, Steps);
         }
     }
 
@@ -11643,6 +11771,223 @@ internal static class Program
         return Trapped
             ? new(3007, 0, Trapˉstep)
             : new(0, Result, Function.Instructions.Length);
+    }
+
+    private static void Validateˉmeteredˉloopˉwebassembly(
+        ReadOnlySpan<byte> module,
+        Verifiedˉmodule source)
+    {
+        Equal(1, source.Functions.Length);
+        var Function = source.Functions[0];
+        Equal("Main", Function.Declaration.Name);
+        Equal(Valueˉtype.I32, Function.Declaration.Returnˉtype.Kind);
+        True(
+            Function.Declaration.Localˉtypes.All(Type =>
+                Type.Kind is Valueˉtype.I32 or Valueˉtype.Bool),
+            "The metered-loop fixture contains an unsupported local type.");
+        var Backwardˉjump = Function.Instructions.Single(Instruction =>
+            Instruction.Opcode == Opcode.Jump &&
+            Instruction.Unsignedˉoperand < (uint)Instruction.Offset);
+        var Loopˉheader = Backwardˉjump.Unsignedˉoperand;
+
+        var Reader = new WebAssemblyˉtestˉreader(module);
+        Reader.Readˉheader();
+
+        var Typeˉend = Reader.Readˉsection(1);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The metered-loop type count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x60, "The metered-loop function type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The metered-loop parameter count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The metered-loop budget type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The metered-loop result count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The metered-loop result type is invalid.");
+        Reader.Require(Reader.Position == Typeˉend, "The metered-loop type section has trailing bytes.");
+
+        var Functionˉend = Reader.Readˉsection(3);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The metered-loop function count is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 0, "The metered-loop type index is invalid.");
+        Reader.Require(Reader.Position == Functionˉend, "The metered-loop function section has trailing bytes.");
+
+        var Globalˉend = Reader.Readˉsection(6);
+        Reader.Require(Reader.Readˉuleb32() == 3, "The metered-loop global count is invalid.");
+        Reader.Readˉglobal(0, 2);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Require(Reader.Position == Globalˉend, "The metered-loop global section has trailing bytes.");
+
+        var Exportˉend = Reader.Readˉsection(7);
+        Reader.Require(Reader.Readˉuleb32() == 4, "The metered-loop export count is invalid.");
+        Reader.Readˉexport("Windvale.run", 0, 0);
+        Reader.Readˉexport("Windvale.abi", 3, 0);
+        Reader.Readˉexport("Windvale.result", 3, 1);
+        Reader.Readˉexport("Windvale.instructions", 3, 2);
+        Reader.Require(Reader.Position == Exportˉend, "The metered-loop export section has trailing bytes.");
+
+        var Codeˉend = Reader.Readˉsection(10);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The metered-loop body count is invalid.");
+        var Bodyˉlength = Reader.Readˉuleb32();
+        Reader.Require(Bodyˉlength <= int.MaxValue, "The metered-loop body is oversized.");
+        Reader.Require(
+            Reader.Position <= Codeˉend - (int)Bodyˉlength,
+            "The metered-loop body is truncated.");
+        var Bodyˉend = Reader.Position + (int)Bodyˉlength;
+
+        var Localˉcount = Function.Declaration.Localˉtypes.Length;
+        var Scratchˉleft = (uint)Localˉcount + 1;
+        var Scratchˉright = Scratchˉleft + 1;
+        var Scratchˉresult = Scratchˉleft + 2;
+        var Scratchˉwide = Scratchˉleft + 3;
+        Reader.Require(Reader.Readˉuleb32() == 2, "The metered-loop local group count is invalid.");
+        Reader.Require(
+            Reader.Readˉuleb32() == (uint)Localˉcount + 3,
+            "The metered-loop i32 local count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The metered-loop local type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The metered-loop i64 local count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7E, "The metered-loop wide local type is invalid.");
+        Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The metered-loop result reset is invalid.");
+        Reader.Readˉindexed(0x24, 1);
+        Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The metered-loop counter reset is invalid.");
+        Reader.Readˉindexed(0x24, 2);
+
+        void Readˉmeter()
+        {
+            Reader.Readˉindexed(0x23, 2);
+            Reader.Readˉindexed(0x20, 0);
+            Reader.Require(Reader.Readˉbyte() == 0x4F, "The metered-loop budget comparison is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x04, "The metered-loop exhaustion branch is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x40, "The metered-loop exhaustion block type is invalid.");
+            Reader.Require(Reader.Readˉi32ˉconstant() == 3011, "The metered-loop exhaustion status is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0F, "The metered-loop exhaustion return is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0B, "The metered-loop exhaustion branch is unterminated.");
+            Reader.Readˉindexed(0x23, 2);
+            Reader.Require(Reader.Readˉi32ˉconstant() == 1, "The metered-loop charge is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x6A, "The metered-loop charge addition is invalid.");
+            Reader.Readˉindexed(0x24, 2);
+        }
+
+        void Readˉoverflowˉreturn()
+        {
+            Reader.Require(Reader.Readˉbyte() == 0x04, "The metered-loop overflow branch is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x40, "The metered-loop overflow block type is invalid.");
+            Reader.Require(Reader.Readˉi32ˉconstant() == 3007, "The metered-loop overflow status is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0F, "The metered-loop overflow return is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0B, "The metered-loop overflow branch is unterminated.");
+        }
+
+        void Readˉcheckedˉadd()
+        {
+            Reader.Readˉindexed(0x21, Scratchˉright);
+            Reader.Readˉindexed(0x21, Scratchˉleft);
+            Reader.Readˉindexed(0x20, Scratchˉleft);
+            Reader.Readˉindexed(0x20, Scratchˉright);
+            Reader.Require(Reader.Readˉbyte() == 0x6A, "The metered-loop checked add is invalid.");
+            Reader.Readˉindexed(0x22, Scratchˉresult);
+            Reader.Readˉindexed(0x20, Scratchˉleft);
+            Reader.Require(Reader.Readˉbyte() == 0x73, "The metered-loop checked add xor is invalid.");
+            Reader.Readˉindexed(0x20, Scratchˉresult);
+            Reader.Readˉindexed(0x20, Scratchˉright);
+            Reader.Require(Reader.Readˉbyte() == 0x73, "The metered-loop checked add xor is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x71, "The metered-loop checked add mask is invalid.");
+            Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The metered-loop checked add sign is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x48, "The metered-loop checked add comparison is invalid.");
+            Readˉoverflowˉreturn();
+            Reader.Readˉindexed(0x20, Scratchˉresult);
+        }
+
+        void Readˉcheckedˉmultiply()
+        {
+            Reader.Readˉindexed(0x21, Scratchˉright);
+            Reader.Readˉindexed(0x21, Scratchˉleft);
+            Reader.Readˉindexed(0x20, Scratchˉleft);
+            Reader.Require(Reader.Readˉbyte() == 0xAC, "The metered-loop multiply extension is invalid.");
+            Reader.Readˉindexed(0x20, Scratchˉright);
+            Reader.Require(Reader.Readˉbyte() == 0xAC, "The metered-loop multiply extension is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x7E, "The metered-loop multiply is invalid.");
+            Reader.Readˉindexed(0x22, Scratchˉwide);
+            Reader.Require(Reader.Readˉbyte() == 0xA7, "The metered-loop multiply wrap is invalid.");
+            Reader.Readˉindexed(0x22, Scratchˉresult);
+            Reader.Require(Reader.Readˉbyte() == 0xAC, "The metered-loop multiply result extension is invalid.");
+            Reader.Readˉindexed(0x20, Scratchˉwide);
+            Reader.Require(Reader.Readˉbyte() == 0x52, "The metered-loop multiply comparison is invalid.");
+            Readˉoverflowˉreturn();
+            Reader.Readˉindexed(0x20, Scratchˉresult);
+        }
+
+        foreach (var Instruction in Function.Instructions)
+        {
+            if ((uint)Instruction.Offset == Loopˉheader)
+            {
+                Reader.Require(Reader.Readˉbyte() == 0x02, "The metered-loop block is missing.");
+                Reader.Require(Reader.Readˉbyte() == 0x40, "The metered-loop block type is invalid.");
+                Reader.Require(Reader.Readˉbyte() == 0x03, "The metered-loop loop is missing.");
+                Reader.Require(Reader.Readˉbyte() == 0x40, "The metered-loop loop type is invalid.");
+            }
+            Readˉmeter();
+            switch (Instruction.Opcode)
+            {
+                case Opcode.I32ˉconst:
+                    Reader.Require(
+                        Reader.Readˉi32ˉconstant() == Instruction.Signedˉoperand,
+                        "The metered-loop constant changed value.");
+                    break;
+                case Opcode.Localˉload:
+                    Reader.Readˉindexed(0x20, Instruction.Unsignedˉoperand + 1);
+                    break;
+                case Opcode.Localˉstore:
+                    Reader.Readˉindexed(0x21, Instruction.Unsignedˉoperand + 1);
+                    break;
+                case Opcode.I32ˉadd:
+                    Readˉcheckedˉadd();
+                    break;
+                case Opcode.I32ˉmultiply:
+                    Readˉcheckedˉmultiply();
+                    break;
+                case Opcode.I32ˉequal:
+                    Reader.Require(Reader.Readˉbyte() == 0x46, "The metered-loop equality is invalid.");
+                    break;
+                case Opcode.I32ˉnotˉequal:
+                    Reader.Require(Reader.Readˉbyte() == 0x47, "The metered-loop inequality is invalid.");
+                    break;
+                case Opcode.I32ˉless:
+                    Reader.Require(Reader.Readˉbyte() == 0x48, "The metered-loop less-than is invalid.");
+                    break;
+                case Opcode.I32ˉlessˉequal:
+                    Reader.Require(Reader.Readˉbyte() == 0x4C, "The metered-loop less-equal is invalid.");
+                    break;
+                case Opcode.I32ˉgreater:
+                    Reader.Require(Reader.Readˉbyte() == 0x4A, "The metered-loop greater-than is invalid.");
+                    break;
+                case Opcode.I32ˉgreaterˉequal:
+                    Reader.Require(Reader.Readˉbyte() == 0x4E, "The metered-loop greater-equal is invalid.");
+                    break;
+                case Opcode.Jump when Instruction.Unsignedˉoperand < (uint)Instruction.Offset:
+                    Reader.Readˉindexed(0x0C, 0);
+                    Reader.Require(Reader.Readˉbyte() == 0x0B, "The metered loop is unterminated.");
+                    Reader.Require(Reader.Readˉbyte() == 0x0B, "The metered outer block is unterminated.");
+                    break;
+                case Opcode.Jump:
+                    break;
+                case Opcode.Branchˉfalse:
+                    Reader.Require(Reader.Readˉbyte() == 0x45, "The metered-loop false test is invalid.");
+                    Reader.Readˉindexed(0x0D, 1);
+                    break;
+                case Opcode.Pop:
+                    Reader.Require(Reader.Readˉbyte() == 0x1A, "The metered-loop drop is invalid.");
+                    break;
+                case Opcode.Return:
+                    Reader.Readˉindexed(0x24, 1);
+                    Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The metered-loop success status is invalid.");
+                    Reader.Require(Reader.Readˉbyte() == 0x0F, "The metered-loop success return is invalid.");
+                    break;
+                default:
+                    throw new InvalidDataException(
+                        $"Unsupported metered-loop source opcode {Instruction.Opcode}.");
+            }
+        }
+
+        Reader.Require(Reader.Readˉbyte() == 0x0B, "The metered-loop body is unterminated.");
+        Reader.Require(Reader.Position == Bodyˉend, "The metered-loop body has trailing bytes.");
+        Reader.Require(Reader.Position == Codeˉend, "The metered-loop code section has trailing bytes.");
+        Reader.Require(Reader.Position == Reader.Length, "The metered-loop module has trailing bytes.");
     }
 
     private static WebAssemblyˉexecutionˉresult Executeˉcheckedˉaddˉwebassembly(

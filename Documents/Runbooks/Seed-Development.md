@@ -60,13 +60,13 @@ Fast and changed-file runs are development feedback, not qualification evidence.
 
 ## Direct WebAssembly verification
 
-On Windows, rebuild the Windvale-authored backend, lower the two checked-add and four bounded straight-line `i32` fixtures through the `.wv` hosted tool, verify exact artifact sizes and hashes, and execute all six modules in Node.js with:
+On Windows, rebuild the Windvale-authored backend, lower the two checked-add, four bounded straight-line `i32`, and two metered-loop fixtures through the `.wv` hosted tool, verify exact artifact sizes and hashes, and execute all eight modules in Node.js with:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1
 ```
 
-The verifier requires execution ABI 1 to reset its exported evidence, return status `0` or `3007`, and publish the same result and attempted-instruction count as the retained contract for addition, subtraction, multiplication, and negation. A successful local run is engine evidence, not Windows/Linux cross-host qualification or browser-worker evidence.
+The verifier requires execution ABI 1 to reset its exported evidence, return status `0` or `3007`, and publish the same result and attempted-instruction count as the retained arithmetic contracts. For execution ABI 2 it requires exact loop success at budget 157, `3011` exhaustion at 156, successful reset and repetition, and nonterminating-loop containment at budget 50. A successful local run is engine evidence, not Windows/Linux cross-host qualification or browser-worker evidence.
 
 ## Compiler bootstrap convergence
 

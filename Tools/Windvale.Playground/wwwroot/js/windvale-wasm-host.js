@@ -1,11 +1,16 @@
 let Nextˉrequestˉid = 1;
 
-export function Execute(Bytes, Timeoutˉmilliseconds) {
+export function Execute(Bytes, Timeoutˉmilliseconds, Instructionˉlimit = 1_000_000) {
     if (!(Bytes instanceof Uint8Array)) {
         return Promise.resolve(Failure("The browser host did not receive WebAssembly bytes."));
     }
     if (!Number.isInteger(Timeoutˉmilliseconds) || Timeoutˉmilliseconds < 1) {
         return Promise.resolve(Failure("The WebAssembly worker timeout is invalid."));
+    }
+    if (!Number.isInteger(Instructionˉlimit) ||
+        Instructionˉlimit < 1 ||
+        Instructionˉlimit > 2_147_483_647) {
+        return Promise.resolve(Failure("The Windvale instruction limit is invalid."));
     }
 
     const Requestˉid = Nextˉrequestˉid++;
@@ -43,7 +48,11 @@ export function Execute(Bytes, Timeoutˉmilliseconds) {
         Workerˉinstance.onerror = () =>
             Finish(Failure("The disposable WebAssembly worker failed."));
         Workerˉinstance.postMessage(
-            { RequestId: Requestˉid, Bytes: Transferˉbytes.buffer },
+            {
+                RequestId: Requestˉid,
+                Bytes: Transferˉbytes.buffer,
+                InstructionLimit: Instructionˉlimit,
+            },
             [Transferˉbytes.buffer]);
     });
 }

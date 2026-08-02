@@ -227,5 +227,11 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Checked-Negate-Overflow-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Checked-Negate-Overflow-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Metered-Loop-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Metered-Loop-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Nonterminating-Loop-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Nonterminating-Loop-Main.wv" />
   </ItemGroup>
 </Project>
