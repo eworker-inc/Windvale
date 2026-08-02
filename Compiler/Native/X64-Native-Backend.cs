@@ -483,6 +483,14 @@ public static class X64ˉnativeˉbackend
                             Encodedˉu8.Value));
                         Stack.Push(new(Encodedˉu8ˉresult, Nativeˉvalueˉtype.Borrowedˉbytes));
                         break;
+                    case Opcode.Bytesˉfromˉu16ˉlittle:
+                        var Encodedˉu16 = Popˉvalue(Nativeˉvalueˉtype.U32);
+                        var Encodedˉu16ˉresult = Newˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
+                        Operations.Add(new Nativeˉbytesˉfromˉu16ˉlittle(
+                            Encodedˉu16ˉresult,
+                            Encodedˉu16.Value));
+                        Stack.Push(new(Encodedˉu16ˉresult, Nativeˉvalueˉtype.Borrowedˉbytes));
+                        break;
                     case Opcode.Bytesˉlength:
                         var Bytesˉlengthˉvalue = Popˉvalue(Nativeˉvalueˉtype.Borrowedˉbytes);
                         var Bytesˉlengthˉresult = Newˉvalue(Nativeˉvalueˉtype.U32);
@@ -1155,6 +1163,13 @@ public static class X64ˉnativeˉbackend
                                 Encode,
                                 Runtimeˉserviceˉpatches);
                             break;
+                        case Nativeˉbytesˉfromˉu16ˉlittle Encode:
+                            Emitˉbytesˉfromˉu16ˉlittle(
+                                Code,
+                                Function,
+                                Encode,
+                                Runtimeˉserviceˉpatches);
+                            break;
                         case Nativeˉbytesˉfromˉu32ˉlittle Encode:
                             Emitˉbytesˉfromˉu32ˉlittle(
                                 Code,
@@ -1586,7 +1601,9 @@ public static class X64ˉnativeˉbackend
 
         if (Code.Count > Nativeˉcontract.MAXIMUM_CODE_BYTES)
         {
-            Fail("WVN2902", "The selected x86-64 fragment exceeds its code-size limit.");
+            Fail(
+                "WVN2902",
+                $"The selected x86-64 fragment is {Code.Count} bytes; the limit is {Nativeˉcontract.MAXIMUM_CODE_BYTES} bytes.");
         }
         var Bytes = Code.ToImmutableArray();
         var Symbols = ImmutableArray.CreateBuilder<Nativeˉsymbol>();
@@ -1826,6 +1843,10 @@ public static class X64ˉnativeˉbackend
                         break;
                     case Nativeˉbytesˉfromˉu8 Encode:
                         Requireˉvalue(function, Encode.Value, Nativeˉvalueˉtype.U8, Firstˉblockˉvalue, Nextˉvalue);
+                        Requireˉresult(function, Encode.Result, Nativeˉvalueˉtype.Borrowedˉbytes, ref Nextˉvalue);
+                        break;
+                    case Nativeˉbytesˉfromˉu16ˉlittle Encode:
+                        Requireˉvalue(function, Encode.Value, Nativeˉvalueˉtype.U32, Firstˉblockˉvalue, Nextˉvalue);
                         Requireˉresult(function, Encode.Result, Nativeˉvalueˉtype.Borrowedˉbytes, ref Nextˉvalue);
                         break;
                     case Nativeˉbytesˉfromˉu32ˉlittle Encode:
@@ -2575,6 +2596,77 @@ public static class X64ˉnativeˉbackend
             Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted,
             runtimeˉserviceˉpatches);
         var End = code.Count;
+        foreach (var Patch in Arenaˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Arenaˉfailure);
+        }
+        Writeˉrelativeˉi32(code, Endˉpatch, End);
+    }
+
+    private static void Emitˉbytesˉfromˉu16ˉlittle(
+        List<byte> code,
+        Nativeˉfunction function,
+        Nativeˉbytesˉfromˉu16ˉlittle encode,
+        List<int> runtimeˉserviceˉpatches)
+    {
+        var Rangeˉpatches = new List<int>();
+        var Arenaˉpatches = new List<int>();
+        Emitˉloadˉeax(code, Valueˉslot(function, encode.Value));
+        code.Add(0x3D); // cmp eax, 65535
+        Addˉi32(code, ushort.MaxValue);
+        code.AddRange([0x0F, 0x87]); // ja range failure
+        Rangeˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x41, 0x89, 0xC1,
+            0x89, 0xC1,
+            0x83, 0xC1, 0x02,
+            0x0F, 0x82,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+            0x0F, 0x87,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+            0x4C, 0x01, 0xCA,
+            0x48, 0x89, 0xD0,
+        ]);
+        Emitˉstoreˉrax(code, Valueˉslot(function, encode.Result));
+        code.Add(0xB8);
+        Addˉi32(code, sizeof(ushort));
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, encode.Result),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        Emitˉloadˉeax(code, Valueˉslot(function, encode.Value));
+        code.AddRange([0x66, 0x89, 0x02, 0xE9]);
+        var Endˉpatch = code.Count;
+        Addˉi32(code, 0);
+        var Rangeˉfailure = code.Count;
+        Emitˉruntimeˉfailure(
+            code,
+            Nativeˉserviceˉfailureˉdetail.Bytesˉu16ˉoutˉofˉrange,
+            runtimeˉserviceˉpatches);
+        var Arenaˉfailure = code.Count;
+        Emitˉruntimeˉfailure(
+            code,
+            Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted,
+            runtimeˉserviceˉpatches);
+        var End = code.Count;
+        foreach (var Patch in Rangeˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Rangeˉfailure);
+        }
         foreach (var Patch in Arenaˉpatches)
         {
             Writeˉrelativeˉi32(code, Patch, Arenaˉfailure);

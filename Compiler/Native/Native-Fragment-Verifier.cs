@@ -799,6 +799,14 @@ public static class Nativeˉfragmentˉverifier
                     Runtimeˉservice,
                     Borrowedˉbytesˉslots,
                     out Concatˉbytesˉslot) ||
+                Tryˉdecodeˉbytesˉfromˉu16ˉlittle(
+                    Code,
+                    ref Index,
+                    Propagate,
+                    Frameˉbytes,
+                    Runtimeˉservice,
+                    Borrowedˉbytesˉslots,
+                    out Concatˉbytesˉslot) ||
                 Tryˉdecodeˉbytesˉfromˉu32ˉlittle(
                     Code,
                     ref Index,
@@ -1990,6 +1998,88 @@ public static class Nativeˉfragmentˉverifier
         }
         Cursor += 76;
         if (Arenaˉtarget != Cursor ||
+            !Tryˉdecodeˉruntimeˉfailure(
+                code,
+                ref Cursor,
+                Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted,
+                runtimeˉservice) ||
+            Endˉtarget != Cursor ||
+            Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉbytesˉfromˉu16ˉlittle(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int runtimeˉservice,
+        HashSet<int> borrowedˉbytesˉslots,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (Cursor < 0 ||
+            Cursor > code.Length - 95 ||
+            !Tryˉloadˉeax(code, Cursor, frameˉbytes, out var Valueˉslot) ||
+            borrowedˉbytesˉslots.Contains(Valueˉslot) ||
+            code[Cursor + 7] != 0x3D ||
+            Readˉi32(code, Cursor + 8) != ushort.MaxValue ||
+            !Matches(code, Cursor + 12, 0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 14, out var Rangeˉtarget) ||
+            !Matches(
+                code,
+                Cursor + 18,
+                0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                0x41, 0x89, 0xC1,
+                0x89, 0xC1,
+                0x83, 0xC1, 0x02,
+                0x0F, 0x82) ||
+            !Tryˉreadˉtarget(code, Cursor + 32, out var Arenaˉtarget) ||
+            !Matches(
+                code,
+                Cursor + 36,
+                0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+                0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 42, out var Secondˉarenaˉtarget) ||
+            Secondˉarenaˉtarget != Arenaˉtarget ||
+            !Matches(
+                code,
+                Cursor + 46,
+                0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+                0x4C, 0x01, 0xCA,
+                0x48, 0x89, 0xD0) ||
+            !Tryˉstoreˉrax(code, Cursor + 60, frameˉbytes, out resultˉslot) ||
+            resultˉslot == Valueˉslot ||
+            code[Cursor + 68] != 0xB8 ||
+            Readˉi32(code, Cursor + 69) != sizeof(ushort) ||
+            !Tryˉstoreˉeaxˉatˉfield(
+                code,
+                Cursor + 73,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉresult) ||
+            Lengthˉresult != resultˉslot ||
+            !Tryˉloadˉeax(code, Cursor + 80, frameˉbytes, out var Storedˉvalue) ||
+            Storedˉvalue != Valueˉslot ||
+            !Matches(code, Cursor + 87, 0x66, 0x89, 0x02, 0xE9) ||
+            !Tryˉreadˉtarget(code, Cursor + 91, out var Endˉtarget))
+        {
+            return false;
+        }
+        Cursor += 95;
+        if (Rangeˉtarget != Cursor ||
+            !Tryˉdecodeˉruntimeˉfailure(
+                code,
+                ref Cursor,
+                Nativeˉserviceˉfailureˉdetail.Bytesˉu16ˉoutˉofˉrange,
+                runtimeˉservice) ||
+            Arenaˉtarget != Cursor ||
             !Tryˉdecodeˉruntimeˉfailure(
                 code,
                 ref Cursor,

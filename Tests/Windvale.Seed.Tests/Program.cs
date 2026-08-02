@@ -289,6 +289,8 @@ internal static class Program
             let Answer: u32 = (Sum - 1u32) * 1u32;
             let Encodedˉzero: bytes = Bytesˉfromˉu8(0u8);
             let Encodedˉmaximum: bytes = Bytesˉfromˉu8(255u8);
+            let Encodedˉu16ˉzero: bytes = Bytesˉfromˉu16ˉlittle(0u32);
+            let Encodedˉu16ˉmaximum: bytes = Bytesˉfromˉu16ˉlittle(65535u32);
             let Encodedˉword: bytes = Bytesˉfromˉu32ˉlittle(42u32);
             if Bytesˉlength(Packet) == 9u32 {
                 if First == 42u8 {
@@ -304,6 +306,10 @@ internal static class Program
                                                     if Bytesˉreadˉu8(Encodedˉzero, 0u32) != 0u8 { return 0; }
                                                     if Bytesˉlength(Encodedˉmaximum) != 1u32 { return 0; }
                                                     if Bytesˉreadˉu8(Encodedˉmaximum, 0u32) != 255u8 { return 0; }
+                                                    if Bytesˉlength(Encodedˉu16ˉzero) != 2u32 { return 0; }
+                                                    if Bytesˉreadˉu16ˉlittle(Encodedˉu16ˉzero, 0u32) != 0u32 { return 0; }
+                                                    if Bytesˉlength(Encodedˉu16ˉmaximum) != 2u32 { return 0; }
+                                                    if Bytesˉreadˉu16ˉlittle(Encodedˉu16ˉmaximum, 0u32) != 65535u32 { return 0; }
                                                     if Bytesˉreadˉu32ˉlittle(Encodedˉword, 0u32) != 42u32 { return 0; }
                                                     return 42;
                                                 }
@@ -1538,7 +1544,7 @@ internal static class Program
             },
             First.Fragment.Code.Take(13));
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
-        Equal(19, Nativeˉcontract.ABI_VERSION);
+        Equal(20, Nativeˉcontract.ABI_VERSION);
         Equal(2_048, Nativeˉcontract.MAXIMUM_FRAME_SLOTS);
         Equal(100_000, Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS);
         Equal(32_768, Nativeˉcontract.MAXIMUM_FRAME_BYTES);
@@ -2978,6 +2984,7 @@ internal static class Program
         True(Operations.Any(Operation => Operation is Nativeˉbytesˉlength),
             "Native machine IR omitted the byte length.");
         Equal(2, Operations.OfType<Nativeˉbytesˉfromˉu8>().Count());
+        Equal(2, Operations.OfType<Nativeˉbytesˉfromˉu16ˉlittle>().Count());
         True(Operations.Any(Operation => Operation is Nativeˉbytesˉfromˉu32ˉlittle),
             "Native machine IR omitted little-endian byte construction.");
         True(Operations.Any(Operation => Operation is Nativeˉu32ˉfromˉu8),
@@ -3040,6 +3047,57 @@ internal static class Program
             () => _ = Nativeˉfragmentˉverifier.Verify(
                 First.Fragment with { Code = Corruptedˉu32ˉalias.ToImmutableArray() }));
 
+        var Encodedˉu16ˉcomparison = First.Fragment.Code.AsSpan().IndexOf(new byte[]
+        {
+            0x3D, 0xFF, 0xFF, 0x00, 0x00,
+            0x0F, 0x87,
+        });
+        var Encodedˉu16ˉstart = Encodedˉu16ˉcomparison - 7;
+        True(Encodedˉu16ˉstart >= 0, "Native bytes.from_u16_little omitted its checked range guard.");
+
+        var Corruptedˉu16ˉmaximum = First.Fragment.Code.ToArray();
+        Corruptedˉu16ˉmaximum[Encodedˉu16ˉstart + 8] = 0xFE;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu16ˉmaximum.ToImmutableArray() }));
+
+        var Corruptedˉu16ˉbranch = First.Fragment.Code.ToArray();
+        Corruptedˉu16ˉbranch[Encodedˉu16ˉstart + 13] = 0x86;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu16ˉbranch.ToImmutableArray() }));
+
+        var Corruptedˉu16ˉallocation = First.Fragment.Code.ToArray();
+        Corruptedˉu16ˉallocation[Encodedˉu16ˉstart + 29] = 0x03;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu16ˉallocation.ToImmutableArray() }));
+
+        var Corruptedˉu16ˉstore = First.Fragment.Code.ToArray();
+        Corruptedˉu16ˉstore[Encodedˉu16ˉstart + 87] = 0x90;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu16ˉstore.ToImmutableArray() }));
+
+        var Corruptedˉu16ˉalias = First.Fragment.Code.ToArray();
+        Corruptedˉu16ˉalias.AsSpan(Encodedˉu16ˉstart + 64, sizeof(int)).CopyTo(
+            Corruptedˉu16ˉalias.AsSpan(Encodedˉu16ˉstart + 83, sizeof(int)));
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu16ˉalias.ToImmutableArray() }));
+
+        var Corruptedˉu16ˉfailure = First.Fragment.Code.ToArray();
+        Corruptedˉu16ˉfailure[Encodedˉu16ˉstart + 99] = 0x00;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu16ˉfailure.ToImmutableArray() }));
+
         Equal(
             42,
             X64ˉnativeˉexecutor.Executeˉi32(
@@ -3057,6 +3115,37 @@ internal static class Program
                 First.Fragment with { Code = Linked.Imageˉbytes },
                 maximumˉinstructions: Interpreted.Executedˉinstructions,
                 maximumˉcallˉdepth: 2));
+
+        var U16ˉoverflow = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉu16ˉoverflow profile portable;
+
+            export fn Main() -> i32 {
+                Bytesˉfromˉu16ˉlittle(65536u32);
+                return 0;
+            }
+            """));
+        Throwsˉruntime(
+            "WVR3016",
+            () => _ = new Referenceˉruntime(
+                U16ˉoverflow,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
+        var Nativeˉu16ˉoverflow = X64ˉnativeˉbackend.Compile(U16ˉoverflow);
+        _ = Nativeˉfragmentˉverifier.Verify(Nativeˉu16ˉoverflow.Fragment);
+        Throwsˉnativeˉtrap(
+            "WVR3016",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(Nativeˉu16ˉoverflow.Fragment));
+        var Nativeˉu16ˉoverflowˉobject = Nativeˉobjectˉsink.Writeˉwvo(Nativeˉu16ˉoverflow.Fragment);
+        var Nativeˉu16ˉoverflowˉlinked = Linkˉsuccess(
+            [Nativeˉu16ˉoverflowˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Throwsˉnativeˉtrap(
+            "WVR3016",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                Nativeˉu16ˉoverflow.Fragment with
+                {
+                    Code = Nativeˉu16ˉoverflowˉlinked.Imageˉbytes,
+                }));
 
         var Utf8ˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
             module Nativeˉutf8ˉvalidation profile portable;
@@ -5088,17 +5177,17 @@ internal static class Program
         }
         catch (Nativeˉbackendˉexception Exception)
         {
-            Equal("WVN2003", Exception.Code);
+            Equal("WVN2902", Exception.Code);
             True(
                 Exception.Message.Contains(
-                    "Compilerˉcompileˉsourceˉwvb",
+                    "4556121 bytes",
                     StringComparison.Ordinal),
-                $"Compiler native preflight did not identify the next exact function: {Exception.Message}");
+                $"Compiler native preflight did not identify the exact selected size: {Exception.Message}");
             True(
                 Exception.Message.Contains(
-                    "Bytesˉfromˉu16ˉlittle",
+                    $"{Nativeˉcontract.MAXIMUM_CODE_BYTES} bytes",
                     StringComparison.Ordinal),
-                $"Compiler native preflight did not identify the next unsupported operation: {Exception.Message}");
+                $"Compiler native preflight did not identify the admitted size: {Exception.Message}");
             return;
         }
         throw new InvalidOperationException(

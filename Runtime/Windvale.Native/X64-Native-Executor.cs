@@ -446,6 +446,13 @@ public static class X64ˉnativeˉexecutor
                     "WVR3015",
                     $"A native byte result exceeded the {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}-byte value limit in entry '{entry}'.");
             }
+            if (Serviceˉfailureˉdetail ==
+                Nativeˉserviceˉfailureˉdetail.Bytesˉu16ˉoutˉofˉrange)
+            {
+                throw new Nativeˉtrapˉexception(
+                    "WVR3016",
+                    $"Bytesˉfromˉu16ˉlittle received a native value above {ushort.MaxValue} in entry '{entry}'.");
+            }
             throw new Nativeˉtrapˉexception(
                 "WVR3013",
                 $"A native runtime service rejected its request in entry '{entry}'.");

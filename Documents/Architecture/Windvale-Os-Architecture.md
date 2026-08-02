@@ -229,6 +229,8 @@ Qualified [Decision 0105](../Decisions/0105-Typed-Block-Scoped-Native-Value-Slot
 
 Qualified [Decision 0108](../Decisions/0108-Native-One-Byte-Construction.md) advances the shared backend to ABI 19 without changing Probe 32's reachable operation set, WVB, process/memory formats, stack proof, or firmware bytes. Windows and digest-pinned Debian each pass all 25 OS tests, while all four exact Windows pinned-QEMU scenarios retain their qualified identities. ABI 19 / `WVKMEM10` is therefore the latest qualified shared native/OS baseline.
 
+Accepted [Decision 0109](../Decisions/0109-Native-Two-Byte-Little-Endian-Construction.md) advances the host implementation to ABI 20 by adding an operation not reachable from Probe 32. It retains the guest WVB, generated probe fragments, process/memory formats, stack proof, and `WVKMEM10` policy. All 25 local OS tests and all four pinned Windows QEMU scenarios pass with the exact retained firmware identities. ABI 19 remains the latest qualified OS baseline until ABI 20 completes cross-host verification.
+
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 
 ## Deliberately deferred choices

@@ -6,8 +6,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 19;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v19";
+    public const int ABI_VERSION = 20;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v20";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
@@ -72,6 +72,7 @@ public enum Nativeˉserviceˉfailureˉdetail : uint
     Fileˉtooˉlarge = 9,
     Fileˉsnapshotˉlimit = 10,
     Bytesˉvalueˉlimit = 11,
+    Bytesˉu16ˉoutˉofˉrange = 12,
 }
 
 public static class Nativeˉserviceˉtableˉcontract
@@ -305,6 +306,10 @@ public sealed record Nativeˉbytesˉconcat(
     int Right) : Nativeˉoperation;
 
 public sealed record Nativeˉbytesˉfromˉu8(
+    int Result,
+    int Value) : Nativeˉoperation;
+
+public sealed record Nativeˉbytesˉfromˉu16ˉlittle(
     int Result,
     int Value) : Nativeˉoperation;
 
