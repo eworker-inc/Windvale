@@ -1,7 +1,7 @@
 # Decision 0115: Exact-compiler record-lifetime pressure
 
 - Date: 2026-08-02
-- Status: Accepted and implemented; cross-host qualification pending
+- Status: Qualified at exact integration commit `05e5ef1069eff5283f4f1c46923f40905e04c5db`
 - Retains: Native ABI 20, execution-context version 7, target `x86-64-wvb-baseline-v20`, and the 2 MiB host record arena
 - Refines: [Decision 0058](0058-Reproducible-Compiler-Bootstrap.md), [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), and [Decision 0112](0112-Bounded-Exact-Compiler-Record-Arena.md)
 
@@ -51,9 +51,11 @@ The reference profiler completed the canonical Stage 1 run with result zero and 
 
 The focused profiler test proves disabled behavior, deterministic per-function counts, tie ordering by function index, and reset rather than accumulation across repeated runs. Windows and Linux CLI verifiers use the existing composed record example to require exactly one report line: `Function record-fields=2 index=2 name=Compositionˉmake`.
 
-The focused full-inventory test executes the exact compiler with the normal native executor and reaches the expected bounded failure in approximately three seconds on the development Windows host. It verifies that neither output stream nor the target module is published.
+The focused full-inventory test executes the exact compiler with the normal native executor, reaches the expected bounded failure, and verifies that neither output stream nor the target module is published.
 
-Cross-host qualification remains pending. No native ABI, selected machine byte, WVB/WVO serialization, OS source, or guest artifact changes in this slice.
+Exact implementation commit `a759b86c7735e6a2a94b24efcd9f48af52e8e6d2`, followed only by the decision-number repair in exact integration commit `05e5ef1069eff5283f4f1c46923f40905e04c5db`, passes GitHub [Verify run 30771491421](https://github.com/eworker-inc/Windvale/actions/runs/30771491421). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 70 Seed tests, all 25 OS tests, and the complete native CLI gate. The bounded full-bootstrap case takes 897 ms on Windows and 678 ms on Linux. Windows Seed takes 238.394 seconds with a 172.632-second golden contract; Linux Seed takes 199.414 seconds with a 147.241-second golden contract. The complete jobs finish in 8m48s and 7m29s respectively.
+
+No native ABI, selected machine byte, WVB/WVO serialization, OS source, or guest artifact changes in this slice. QEMU was not rerun because every native/OS artifact input and identity remains unchanged.
 
 ## Consequences
 
