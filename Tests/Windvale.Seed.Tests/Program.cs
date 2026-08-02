@@ -43,8 +43,8 @@ internal static class Program
     private const string NATIVE_STENCIL_CORE_SHA256 = "d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f";
     private const string NATIVE_STENCIL_BRIDGE_SHA256 = "5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9";
     private const string NATIVE_STENCIL_DEMO_SHA256 = "651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15";
-    private const string NATIVE_PUBLICATION_CORE_SHA256 = "b25fa550518caa4ef43c7ae886cce328148777782f70e3faa25ac19821b6d439";
-    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "750b6134395c46c9e1c703ae2a56449bd1710f517e516397e10a1ccc951c503e";
+    private const string NATIVE_PUBLICATION_CORE_SHA256 = "19e111490cba6f3dcae963169be82c8033d267ea505c30850502ae36fb36e13c";
+    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "5ad896d92368dcadc61f358d51f5786408d9f1dc977efa5f522f99230f3ed51e";
     private const string NATIVE_PUBLICATION_LIFETIME_CORE_SHA256 = "52b1cb6dd0d7fa9d17c1cba50b527912876e4acf1cd9663846ce915b4c56aed5";
     private const string NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256 = "74dfaf40bb6ea83f0fd72757c9c4cb85f5c8dd28a41f3993325871d348e88d32";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
@@ -86,6 +86,7 @@ internal static class Program
     private const string SOURCE_WVB_SHA256 = "9c3f4f6839274766a3633784716147e03e3bce47ec1103dac0eb0d998a1b4b9a";
     private const string SOURCE_WVB_DEMO_SHA256 = "acf1f5cbde6e2ba3d831ed8390dac85f812d13525847619b3c85903bb7a44c8f";
     private const string SOURCE_WVB_TOOL_SHA256 = "9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066";
+    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "8e74707df03a535e3ef68cfcfc8da6fa68fda29ccf4344e272fc50c8a5845bab";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
@@ -714,7 +715,7 @@ internal static class Program
         new("Windvale owns bounded executable-image layout before W^X publication", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlayoutˉruns),
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
-        new("native file output publishes bounded bytes and advances compiler preflight", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
+        new("native file output publishes bounded bytes and reaches compiler execution", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
@@ -1545,6 +1546,7 @@ internal static class Program
             First.Fragment.Code.Take(13));
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
         Equal(20, Nativeˉcontract.ABI_VERSION);
+        Equal(8_388_608, Nativeˉcontract.MAXIMUM_CODE_BYTES);
         Equal(2_048, Nativeˉcontract.MAXIMUM_FRAME_SLOTS);
         Equal(100_000, Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS);
         Equal(32_768, Nativeˉcontract.MAXIMUM_FRAME_BYTES);
@@ -1552,6 +1554,14 @@ internal static class Program
         Equal(Nativeˉcontract.ABI_VERSION, First.Fragment.Abiˉversion);
         Equal(0, First.Fragment.Patches.Length);
         _ = Nativeˉfragmentˉverifier.Verify(First.Fragment);
+        Throwsˉnative(
+            "WVN3005",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with
+                {
+                    Code = ImmutableArray.Create(
+                        new byte[Nativeˉcontract.MAXIMUM_CODE_BYTES + 1]),
+                }));
 
         var Firstˉobject = Nativeˉobjectˉsink.Writeˉwvo(First.Fragment);
         var Secondˉobject = Nativeˉobjectˉsink.Writeˉwvo(Second.Fragment);
@@ -5171,27 +5181,54 @@ internal static class Program
             SOURCE_WVB_TOOL_SOURCE,
             "Source-Wvb-Tool.wv");
         Equal(SOURCE_WVB_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉbytes));
+        var Compilerˉtool = Moduleˉcodec.Readˉandˉverify(Compilerˉtoolˉbytes);
+        var Compilerˉnative = X64ˉnativeˉbackend.Compile(Compilerˉtool);
+        Equal(4_556_121, Compilerˉnative.Fragment.Code.Length);
+        Equal(
+            SOURCE_WVB_TOOL_NATIVE_CODE_SHA256,
+            Objectˉdigest.Calculateˉsha256(Compilerˉnative.Fragment.Code.AsSpan()));
+        _ = Nativeˉfragmentˉverifier.Verify(Compilerˉnative.Fragment);
+
+        var Compilerˉdirectory = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-compiler-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Compilerˉdirectory);
         try
         {
-            _ = X64ˉnativeˉbackend.Compile(Moduleˉcodec.Readˉandˉverify(Compilerˉtoolˉbytes));
+            var Sourceˉpath = Path.Combine(Compilerˉdirectory, "function-only.wv");
+            var Outputˉpath = Path.Combine(Compilerˉdirectory, "function-only.wvb");
+            File.WriteAllText(Sourceˉpath, SOURCE_WVB_FUNCTION_ONLY_SOURCE, new UTF8Encoding(false));
+            using var Compilerˉoutput = new Nativeˉoutputˉcapture();
+            using var Compilerˉdiagnostic = new Nativeˉoutputˉcapture();
+            var Compilerˉresources = new Hostedˉresourceˉcontext(
+                [Sourceˉpath, Outputˉpath],
+                TextWriter.Null,
+                TextWriter.Null);
+            var Compilerˉauthorized = Compilerˉtool.Module.Capabilities
+                .Select(Capability => Capability.Name)
+                .ToImmutableHashSet(StringComparer.Ordinal);
+            Throwsˉnativeˉtrap(
+                "WVR3017",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    Compilerˉnative.Fragment,
+                    maximumˉinstructions: 4_000_000_000,
+                    hostˉservices: new(
+                        Compilerˉoutput.Channel,
+                        Compilerˉauthorized,
+                        Compilerˉresources,
+                        Compilerˉdiagnostic.Channel,
+                        Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                        Nativeˉfileˉoutput.Hostˉfileˉsystem())));
+            Equal(string.Empty, Compilerˉoutput.Readˉtext());
+            Equal(string.Empty, Compilerˉdiagnostic.Readˉtext());
+            True(
+                !File.Exists(Outputˉpath),
+                "The record-arena failure published a partial compiler output.");
         }
-        catch (Nativeˉbackendˉexception Exception)
+        finally
         {
-            Equal("WVN2902", Exception.Code);
-            True(
-                Exception.Message.Contains(
-                    "4556121 bytes",
-                    StringComparison.Ordinal),
-                $"Compiler native preflight did not identify the exact selected size: {Exception.Message}");
-            True(
-                Exception.Message.Contains(
-                    $"{Nativeˉcontract.MAXIMUM_CODE_BYTES} bytes",
-                    StringComparison.Ordinal),
-                $"Compiler native preflight did not identify the admitted size: {Exception.Message}");
-            return;
+            Directory.Delete(Compilerˉdirectory, recursive: true);
         }
-        throw new InvalidOperationException(
-            "The compiler native preflight unexpectedly completed; update this evidence to the newly observed execution result.");
     }
 
     private static void Sourceˉmodulesˉcompose()

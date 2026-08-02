@@ -1601,9 +1601,50 @@ public static class X64ˉnativeˉbackend
 
         if (Code.Count > Nativeˉcontract.MAXIMUM_CODE_BYTES)
         {
+            var Functionˉcodeˉbytes = Functionˉsizes.Aggregate(
+                0L,
+                (Total, Size) => checked(Total + Size));
+            var Nonˉfunctionˉbytes = checked(Code.Count - Functionˉcodeˉbytes);
+            var Functionˉevidence = Enumerable.Range(0, module.Functions.Length)
+                .Select(Functionˉindex => (
+                    Index: Functionˉindex,
+                    Function: module.Functions[Functionˉindex],
+                    Bytes: Functionˉsizes[Functionˉindex],
+                    Operations: module.Functions[Functionˉindex].Blocks.Aggregate(
+                        0L,
+                        (Total, Block) => checked(Total + Block.Operations.Length)),
+                    Zeroedˉframeˉslots: checked(
+                        module.Functions[Functionˉindex].Parameterˉtypes.Length +
+                        module.Functions[Functionˉindex].Localˉtypes.Length +
+                        module.Functions[Functionˉindex].Valueˉslotˉcount)))
+                .ToImmutableArray();
+            var Operationˉcount = Functionˉevidence.Aggregate(
+                0L,
+                (Total, Entry) => checked(Total + Entry.Operations));
+            var Zeroedˉframeˉslotˉcount = Functionˉevidence.Aggregate(
+                0L,
+                (Total, Entry) => checked(Total + Entry.Zeroedˉframeˉslots));
+            var Largestˉfunctions = Functionˉevidence
+                .OrderByDescending(Entry => Entry.Bytes)
+                .ThenBy(Entry => Entry.Function.Name, StringComparer.Ordinal)
+                .ThenBy(Entry => Entry.Index)
+                .Take(5)
+                .Select(Entry =>
+                {
+                    var Frameˉslots = checked(
+                        Entry.Zeroedˉframeˉslots +
+                        (Isˉnativeˉdescriptorˉtype(Entry.Function.Returnˉtype) ? 1 : 0));
+                    return
+                        $"'{Entry.Function.Name}' bytes={Entry.Bytes}, operations={Entry.Operations}, " +
+                        $"blocks={Entry.Function.Blocks.Length}, frame-slots={Frameˉslots}";
+                });
             Fail(
                 "WVN2902",
-                $"The selected x86-64 fragment is {Code.Count} bytes; the limit is {Nativeˉcontract.MAXIMUM_CODE_BYTES} bytes.");
+                $"The selected x86-64 fragment is {Code.Count} bytes; the limit is {Nativeˉcontract.MAXIMUM_CODE_BYTES} bytes. " +
+                $"Function code accounts for {Functionˉcodeˉbytes} bytes across {module.Functions.Length} functions, " +
+                $"{Operationˉcount} operations, and {Zeroedˉframeˉslotˉcount} zeroed frame slots; " +
+                $"alignment and immutable data account for {Nonˉfunctionˉbytes} bytes. " +
+                $"Largest functions: {string.Join("; ", Largestˉfunctions)}.");
         }
         var Bytes = Code.ToImmutableArray();
         var Symbols = ImmutableArray.CreateBuilder<Nativeˉsymbol>();

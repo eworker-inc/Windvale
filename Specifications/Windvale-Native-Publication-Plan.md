@@ -4,7 +4,7 @@
 
 `WVPQ 1` and `WVPL 1` are versioned internal contracts between the Stage 0 native executor and the retained Windvale publication planner. They describe the bounded layout of one independently verified native fragment and its canonical runtime-service leaves before writable memory is allocated and before the image becomes executable.
 
-[Decision 0082](../Documents/Decisions/0082-Windvale-Owned-Native-Publication-Layout.md) first cross-host qualifies both contracts and their live use at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. [Decision 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) cross-host qualifies the closed planner domain's extension from 11 to 12 service IDs at exact commit `12e9e2e` without changing either serialized contract version. The current portable core is 7,189 bytes with SHA-256 `b25fa550518caa4ef43c7ae886cce328148777782f70e3faa25ac19821b6d439`; the current retained hosted bridge is 7,105 bytes with SHA-256 `750b6134395c46c9e1c703ae2a56449bd1710f517e516397e10a1ccc951c503e`.
+[Decision 0082](../Documents/Decisions/0082-Windvale-Owned-Native-Publication-Layout.md) first cross-host qualifies both contracts and their live use at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. [Decision 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) cross-host qualifies the closed planner domain's extension from 11 to 12 service IDs at exact commit `12e9e2e` without changing either serialized contract version. [Decision 0111](../Documents/Decisions/0111-Bounded-Exact-Compiler-Fragment-Publication.md) expands the bounded fragment extent to 8 MiB while retaining both format versions and the 34 MiB final-image ceiling. The current portable core is 7,189 bytes with SHA-256 `19e111490cba6f3dcae963169be82c8033d267ea505c30850502ae36fb36e13c`; the current retained hosted bridge is 7,105 bytes with SHA-256 `5ad896d92368dcadc61f358d51f5786408d9f1dc977efa5f522f99230f3ed51e`.
 
 This contract is not a public application format, a native object format, a code cache, or a general linker input. It does not contain machine bytes, absolute addresses, relocations, operating-system handles, or executable-memory policy. WVB remains the portable program identity and WVO remains the serialized native object format.
 
@@ -19,7 +19,7 @@ The request is exactly `24 + service_count * 12` bytes.
 | 0 | 4 | magic | ASCII `WVPQ`, encoded as `0x51505657` |
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | Exact request length |
-| 12 | 4 | fragment bytes | `1` through `1,048,576` |
+| 12 | 4 | fragment bytes | `1` through `8,388,608` |
 | 16 | 4 | service count | `0` through `12` |
 | 20 | 4 | reserved | Zero |
 
@@ -71,7 +71,7 @@ A rejected request produces an exact 32-byte `WVPL 1` envelope with zero fragmen
 | 2 | `Invalidˉmagic` | Request magic differs |
 | 3 | `Invalidˉversion` | Request version differs |
 | 4 | `Invalidˉreserved` | A reserved field is nonzero |
-| 5 | `Invalidˉfragment` | Fragment extent is zero or above 1 MiB |
+| 5 | `Invalidˉfragment` | Fragment extent is zero or above 8 MiB |
 | 6 | `Invalidˉservice` | Service count or ID is outside the closed table |
 | 7 | `Invalidˉorder` | Service IDs are not strictly increasing |
 | 8 | `Invalidˉrange` | A service leaf has zero bytes |
