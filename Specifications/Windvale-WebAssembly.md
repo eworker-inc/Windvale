@@ -1,6 +1,6 @@
 # Windvale experimental WebAssembly target
 
-- Status: Implemented experimental profiles 1 through 4; not an accepted permanent target
+- Status: Implemented experimental profiles 1 through 4; profile 4 cross-host qualified, but not an accepted permanent target
 - Target identifier: `wasm32-browser-v1-experimental`
 - WebAssembly binary version: 1
 - Portable input identity: canonical WVB 1.6
@@ -184,11 +184,15 @@ Profile 4 additionally requires independent reconstruction of the emitted block,
 
 On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles eight profile-2 through profile-4 fixtures, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine. The profile-4 cases require exact success, one-instruction-short exhaustion, reset across repeated runs, and nonterminating-loop containment.
 
+Exact profile-4 implementation commit `1342f63bc7eaae17a526ca440b075c2abf3c3b31` passed GitHub [Verify run 30770158910](https://github.com/eworker-inc/Windvale/actions/runs/30770158910). Its Windows and digest-pinned Debian jobs each passed the complete repository verifier with zero-warning builds, all 68 Seed tests, and all 25 OS tests. This establishes deterministic equality for the retained profile-4 WVB and WebAssembly identities and the exact `0/42/157`, `3011/0/156`, and nonterminating `3011/0/50` execution evidence on both hosts.
+
 Exact commit `a2285f5a0c09598ec701691bdbf0af9080e8cf0c` establishes Windows and digest-pinned Debian 12 equality for the backend WVB, selected input WVB, and generated WebAssembly digests through GitHub [Verify run 30762541741](https://github.com/eworker-inc/Windvale/actions/runs/30762541741). Both host qualification jobs completed successfully; the run-level conclusion changed to `cancelled` only after both jobs completed, when a later `main` push activated workflow concurrency cancellation.
 
 [Decision 0107](../Documents/Decisions/0107-Playground-Disposable-WebAssembly-Worker.md) integrates the exact profile-3 success WVB and Wasm identities into the playground. On 2026-08-02, a Chromium-based in-app browser twice validated and ran the transferred 432-byte import-free module in a fresh worker, reporting ABI `1`, status `0`, result `42`, and 30 instructions equal to the .NET reference path, with no browser warning or error. This is local browser integration evidence, not cross-browser qualification or complete playground isolation.
 
 [Decision 0112](../Documents/Decisions/0112-Metered-WebAssembly-Control-Flow.md) advances the same worker and the .NET-free page to ABI 2. On 2026-08-02, a Chromium-based in-app browser validated and ran the pinned 972-byte loop module in fresh workers: budget 157 reported `0/42/157`, budget 156 reported `3011/0/156`, and the page recorded zero .NET/Blazor requests. The seven observed assets were the stylesheet, logo, analytics script, application, artifact data, shared host, and shared worker; the browser console contained no warning or error. This remains one browser-engine family rather than cross-browser qualification.
+
+The exact implementation commit also passed GitHub [Deploy homepage run 30770158921](https://github.com/eworker-inc/Windvale/actions/runs/30770158921): the deployment lane independently reconstructed and executed the embedded artifact before successfully publishing the static playground content.
 
 ## Non-claims
 

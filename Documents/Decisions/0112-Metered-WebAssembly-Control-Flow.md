@@ -1,7 +1,7 @@
 # Decision 0112: Metered WebAssembly control flow
 
 - Date: 2026-08-02
-- Status: Implemented with Windows engine, repository, and Chromium browser evidence; cross-host qualification pending
+- Status: Cross-host qualified with deterministic engine and local Chromium browser evidence; cross-browser qualification pending
 - Extends: [Decision 0106](0106-Bounded-Straight-I32-WebAssembly-Lowering.md), [Decision 0110](0110-Standalone-Dotnet-Free-WebAssembly-Artifact-Demo.md)
 - Target: `wasm32-browser-v1-experimental`
 
@@ -30,7 +30,7 @@ ABI 2 is deliberately additive. Profiles 2 and 3 retain ABI 1 and their exact ar
 
 Profile 4 is not a general control-flow lowerer. Its selector accepts one canonical compiler shape and rejects malformed targets, additional back edges, nonempty edge stacks, unsupported local types, multiple regions, and calls without output publication. Canonical WVB remains the portable identity, and the Stage 0 compiler and verifier remain required for artifact production.
 
-## Initial evidence
+## Evidence
 
 The terminating source compiles to 341-byte WVB SHA-256 `99bf8d36c8ba8ab63c092143ebec1d79cd333c88df8b4da4ec67fd3772802af6`. Its generated 972-byte Wasm SHA-256 is `1c429ca20faa42b5018ea565ad10f148792dfbf6a8ecd438cf990cd60d664afe`. Node.js validates and instantiates it without imports; budget 157 returns status/result/count `0/42/157`, budget 156 returns `3011/0/156`, and a repeated budget-157 run resets and reproduces `0/42/157`.
 
@@ -38,9 +38,11 @@ The nonterminating source compiles to 292-byte WVB SHA-256 `68b7043535b9ed33db4e
 
 The focused Seed conformance case independently reconstructs the ABI-2 module structure and every emitted meter, scalar operation, block, loop, and branch from verified WVB. It compares reference-runtime success and exhaustion, requires deterministic repeats, and corrupts both the backward and exit targets to prove rejection without publication. `Tools/Verify/Verify-WebAssembly.ps1` executes all eight retained ABI-1/ABI-2 artifacts under Node.js 24.18.0. `npm run verify:wasm-demo` independently reconstructs the deployed base64 bytes and executes both loop budgets.
 
-The local Chromium-based in-app browser loads only the stylesheet, logo, analytics script, application, artifact data, shared host, and shared worker. One button action reports the exact SHA-256 and ABI-2 tuples `0/42/157` and `3011/0/156`, records zero .NET/Blazor resource requests, and produces no warning or error. This is one browser-engine family, not cross-browser qualification.
+Exact implementation commit `1342f63bc7eaae17a526ca440b075c2abf3c3b31` passed GitHub [Verify run 30770158910](https://github.com/eworker-inc/Windvale/actions/runs/30770158910). The Windows job completed all 68 Seed tests in 171.761 seconds and all 25 OS tests; the digest-pinned Debian job completed all 68 Seed tests in 214.183 seconds and all 25 OS tests. Both jobs produced zero-warning builds and passed the complete repository verifier, including the deterministic profile-4 identities and exact success, exhaustion, and containment assertions above.
 
-These are local Windows implementation results until the same source state passes the Linux repository gate.
+The same implementation commit passed GitHub [Deploy homepage run 30770158921](https://github.com/eworker-inc/Windvale/actions/runs/30770158921). Its independent direct-WebAssembly-demo verification reconstructed the embedded 972-byte artifact, executed both budgets, and the workflow published the static playground content successfully.
+
+The local Chromium-based in-app browser loads only the stylesheet, logo, analytics script, application, artifact data, shared host, and shared worker. One button action reports the exact SHA-256 and ABI-2 tuples `0/42/157` and `3011/0/156`, records zero .NET/Blazor resource requests, and produces no warning or error. This qualifies browser execution in one engine family, not cross-browser portability or production isolation.
 
 ## Rejected alternatives
 
