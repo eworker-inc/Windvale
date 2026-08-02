@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-WVB admission version 1 is the cross-host-qualified fixed policy owned by [Decision 0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md). It proves that AOT Windvale code running inside the guest validates one embedded canonical WVB before any accepted execution path consumes it. Admission bridge version 1 historically executed the program's native derivative directly at ring 0. Bridge version 2 invokes the [protected-process contract](Windvale-Protected-Process.md) and is cross-host qualified through probe 27. Candidate probe 28 preserves the same bridge and admitted bytes while protected-process version 7 cleans up the terminal borrow.
+WVB admission version 1 is the cross-host-qualified fixed policy owned by [Decision 0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md). It proves that AOT Windvale code running inside the guest validates one embedded canonical WVB before any accepted execution path consumes it. Admission bridge version 1 historically executed the program's native derivative directly at ring 0. Bridge version 2 invokes the [protected-process contract](Windvale-Protected-Process.md) and remains byte-identical and cross-host qualified through probe 28 while protected-process version 7 cleans up the terminal borrow.
 
 This is a fixed bootstrap admission profile, not the general semantic WVB verifier, a loader, an interpreter, a JIT, or a stable public ABI.
 

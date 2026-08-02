@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel trap frame version 1 is cross-host qualified at exact commit `12e9e2e` through the pre-paging firmware probe-20 baseline and remains unchanged through qualified probe 27 and candidate probe 28. It gives x86-64 exception entries with and without CPU error codes one common terminal-handler input. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) owns the contract and its evidence boundary; later OS decisions record complete compositions.
+Kernel trap frame version 1 is cross-host qualified at exact commit `12e9e2e` through the pre-paging firmware probe-20 baseline and remains unchanged through qualified probe 28. It gives x86-64 exception entries with and without CPU error codes one common terminal-handler input. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) owns the contract and its evidence boundary; later OS decisions record complete compositions.
 
 This is an internal machine-entry contract. Its qualified version-1 use is ring 0; probes 22 through 28 also apply the same normalized prefix to process-private privilege-transition frames. It is not a Windvale source value, WVB record, public syscall ABI, user-process signal frame, unwind record, or mapping of Windvale `WVR` runtime traps to CPU faults.
 

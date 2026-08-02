@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel shutdown version 1 is cross-host qualified at exact commit `12e9e2e`. It was introduced by Windvale OS firmware probe 18 and remains byte-for-byte unchanged through qualified probe 27 and candidate probe 28. It defines one deterministic clean-poweroff path for pinned QEMU `pc-q35-11.0` after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; Decisions 0087 through 0097 record later compositions.
+Kernel shutdown version 1 is cross-host qualified at exact commit `12e9e2e`. It was introduced by Windvale OS firmware probe 18 and remains byte-for-byte unchanged through qualified probe 28. It defines one deterministic clean-poweroff path for pinned QEMU `pc-q35-11.0` after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; Decisions 0087 through 0097 record later compositions.
 
 This is a target-specific machine adapter, not a portable Windvale capability, general ACPI discovery, a Hyper-V shutdown contract, or a process/service shutdown policy.
 

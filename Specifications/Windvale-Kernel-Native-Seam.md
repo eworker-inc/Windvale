@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel native seam version 16, WVA seam version 8, admission bridge version 2, retained bridge 10, memory version 5, paging version 3, and interpreter profile 4 remain unchanged in candidate probe 28. The composition advances only protected processes to version 7 for terminal resource cleanup. [Decision 0097](../Documents/Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) owns the candidate extension; probe 27 remains the latest cross-host-qualified composition.
+Kernel native seam version 16, WVA seam version 8, admission bridge version 2, retained bridge 10, memory version 5, paging version 3, and interpreter profile 4 remain unchanged in qualified probe 28. The composition advances only protected processes to version 7 for terminal resource cleanup. [Decision 0097](../Documents/Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) owns the qualified extension.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 
@@ -119,4 +119,4 @@ Qualified probe 26 retains the same machine seams while advancing to process ver
 
 Qualified probe 27 retains the same ABI, WVA, admission, and native bridges while advancing to process version 6, memory version 5, and interpreter profile 4. Exact commit `4701200` passes all 67 Seed tests and all 25 OS tests on Windows and pinned Debian 12.
 
-Candidate probe 28 advances only the process composition to version 7. Its normal process-machine WVO is 138,751 bytes with SHA-256 `19da37cdc044505a92410449a14e72c35ed8573b409c095b0b9a8a8f9d21f065`. All 25 focused Windows OS tests and all four Windows pinned-QEMU scenarios pass; cross-host qualification is pending.
+Qualified probe 28 advances only the process composition to version 7. Its normal process-machine WVO is 138,751 bytes with SHA-256 `19da37cdc044505a92410449a14e72c35ed8573b409c095b0b9a8a8f9d21f065`. Exact implementation commit `b2197fa` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12; all four Windows pinned-QEMU scenarios pass.

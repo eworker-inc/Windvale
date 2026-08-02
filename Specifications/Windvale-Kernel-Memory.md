@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 5 is the qualified probe-27 contract and remains byte-identical in candidate probe 28. It retains deterministic ownership, copied handoff, the two-page kernel stack, the allocate-only page ABI, and 2 MiB alignment in a 60-page arena. Probe 28 changes the protected-process lifecycle, not memory allocation or arena bytes.
+Kernel memory version 5 remains byte-identical through qualified probe 28. It retains deterministic ownership, copied handoff, the two-page kernel stack, the allocate-only page ABI, and 2 MiB alignment in a 60-page arena. Probe 28 changes the protected-process lifecycle, not memory allocation or arena bytes.
 
 [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the qualified version-1 foundation. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its process-driven expansion. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns qualified version 3; [Decision 0095](../Documents/Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) owns qualified version 4; qualified [Decision 0096](../Documents/Decisions/0096-First-Windvale-Init-Owned-Boot-Resource-Grant.md) owns version 5. [Decision 0097](../Documents/Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) composes it unchanged.
 

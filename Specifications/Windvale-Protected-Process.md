@@ -4,9 +4,9 @@
 
 Protected-process contract version 7 defines Windvale OS's first automatic terminal resource-borrow cleanup. Firmware probe 28 retains the qualified init-owned grant, then removes process `2`'s WVB alias and private publication after ordinary exit or contained fault, before process `1` resumes.
 
-[Decision 0097](../Documents/Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) owns candidate version 7. Qualified [Decision 0096](../Documents/Decisions/0096-First-Windvale-Init-Owned-Boot-Resource-Grant.md) retains the cross-host-qualified version-6 grant proof at exact commit `4701200e707786f04d4462bb75a1664cd5ed13cc`.
+[Decision 0097](../Documents/Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) owns qualified version 7. Qualified [Decision 0096](../Documents/Decisions/0096-First-Windvale-Init-Owned-Boot-Resource-Grant.md) retains the version-6 grant proof as its immediate baseline.
 
-Version 7 has focused Windows and all four pinned-QEMU scenario evidence. Cross-host qualification is not yet claimed. This remains an internal experiment, not a stable syscall ABI, general process manager, resource namespace, transferable capability system, arbitrary WVB loader, complete verifier, or JIT.
+Version 7 is cross-host qualified on Windows and digest-pinned Debian 12, with all four pinned-QEMU scenarios passing on Windows. This remains an internal experiment, not a stable syscall ABI, general process manager, resource namespace, transferable capability system, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
@@ -195,7 +195,7 @@ The user-fault image interprets and sends `29`, then executes privileged `CLI` i
 | Fault process-machine WVO | 138,783 | `bedd2a06969d3df295efe8eefa626dd1c97737731ef1056fbcb6df152f259138` |
 | Fault process-machine code | 7,917 | `9df1702699d3f9da8a3926c2406f84cff06e638b6a176401c70b82ddce4e634c` |
 
-The focused Windows suite passes 25 of 25 tests, including exit, repeated, hardware-accessed-leaf, and fault cleanup equivalence. All four pinned-QEMU probe-28 scenarios pass and emit `resource-revoked=pass`. Cross-host qualification remains pending.
+Exact implementation commit `b2197fa4fb78b26d75e4fd5269cde590cbd98dcf` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12 in GitHub [Verify run 30741650532](https://github.com/eworker-inc/Windvale/actions/runs/30741650532). The focused Windows suite covers exit, repeated, hardware-accessed-leaf, and fault cleanup equivalence. All four Windows pinned-QEMU probe-28 scenarios pass and emit `resource-revoked=pass`.
 
 ## Deliberate limits
 

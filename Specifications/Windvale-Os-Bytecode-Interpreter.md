@@ -4,7 +4,7 @@
 
 Interpreter runtime profile 4 is the first Windvale OS runtime that begins without its WVB mapping or usable service pointers and receives them through an init-selected, kernel-mediated immutable grant. [`Bytecode-Interpreter.wv`](../Operating-System/Runtime/Bytecode-Interpreter.wv) remains hosted Windvale source with exactly one declared capability, `file.read_bytes`, and exactly one resource name, `boot:main.wvb`. Its byte-identical AOT derivative runs at CPL3 after the grant, validates the bounded WVB profile, and executes it.
 
-Profile 4 is cross-host qualified through probe 27 and remains byte-identical in candidate probe 28. Probe 28 adds terminal cleanup around the interpreter without changing its WVB, WVO, linked images, accepted semantics, service leaf, or budgets.
+Profile 4 remains byte-identical and cross-host qualified through probe 28. Probe 28 adds terminal cleanup around the interpreter without changing its WVB, WVO, linked images, accepted semantics, service leaf, or budgets.
 
 Qualified [Decision 0096](../Documents/Decisions/0096-First-Windvale-Init-Owned-Boot-Resource-Grant.md) owns profile 4. [Decision 0097](../Documents/Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) composes it unchanged with protected-process version 7.
 

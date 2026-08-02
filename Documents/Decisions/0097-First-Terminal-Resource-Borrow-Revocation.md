@@ -1,6 +1,6 @@
 # Decision 0097: First terminal resource-borrow revocation
 
-- Status: Candidate
+- Status: Qualified
 - Date: 2026-08-02
 - Owners: Windvale compiler/runtime and operating-system boundaries
 - Contracts: [Interpreter profile 4](../../Specifications/Windvale-Os-Bytecode-Interpreter.md), [protected process version 7](../../Specifications/Windvale-Protected-Process.md), kernel memory version 5, kernel paging version 3, ABI 16/context 7/service table 5, and firmware probe 28
@@ -23,11 +23,11 @@ The smallest coherent next slice is automatic cleanup of that one terminal borro
 - Emit `resource-revoked=pass` only after the process machine returns with the cleanup invariants proven. The marker is evidence, not the implementation.
 - Keep the init WVB/WVO, interpreter WVB/WVO, linked init/client images, admitted WVB, WVA service leaf, channel, syscall assignments, budgets, and arena byte-identical. Stage 0 C# remains the raw table/record emitter and independent oracle; Windvale owns the lifecycle policy and WVA retains machine-entry and privileged-operation seams.
 
-## Candidate evidence
+## Qualification evidence
 
 The focused Windows OS suite passes 25 of 25 tests. It proves deterministic exit, repeated, hardware-accessed-leaf, and fault revocation planning; byte-identical cleanup results; terminal-state rejection; malformed record/table/data rejection; release-replay rejection; exact zeroed publication ranges; and all previous isolation, admission, IPC, exception, and reproducibility contracts.
 
-Important candidate artifacts are:
+Important qualified artifacts are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -45,7 +45,7 @@ Important candidate artifacts are:
 
 All four pinned Windows QEMU 11.0/Q35/TCG scenarios pass with exact probe-28 transcripts. Normal is 230,912 bytes with SHA-256 `bc5f04c0e75fb217c9339bcc2a391bbe68f9f79ad97c18a93e35e310dab62d46` and host code `0`; invalid opcode is 230,912 bytes with `2c9c6c60543d3729f7401720c0b03e98dc2c5e3654e45668bfcd4559650bc543` and code `3`; general protection is 230,912 bytes with `bdccbd123dd457d88c4902f33e727320b08c93e6acd62ac0f706912d5f1163ca` and code `3`; contained user fault is 231,424 bytes with `221c710d741565c7113a7b8c2ea94c66358018e144ae59f583a3c1ce10225494` and code `0`.
 
-Cross-host qualification is pending. Until Windows and digest-pinned Debian complete the repository verifier for the exact implementation commit, Decision 0096 remains the latest fully qualified baseline.
+Exact implementation commit `b2197fa4fb78b26d75e4fd5269cde590cbd98dcf` passes GitHub [Verify run 30741650532](https://github.com/eworker-inc/Windvale/actions/runs/30741650532). Windows and digest-pinned Debian 12 each pass all 67 Seed tests, all 25 OS tests, and the complete non-Fast verifier. Seed elapsed time is 237.598 seconds on Windows and 210.262 seconds on Linux. This promotes probe 28 and Decision 0097 to the latest fully cross-host-qualified OS baseline; live QEMU remains Windows-only evidence.
 
 ## Consequences
 

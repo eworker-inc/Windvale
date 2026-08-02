@@ -3,8 +3,8 @@
 - Evidence date: 2026-08-02
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified commit: `4701200e707786f04d4462bb75a1664cd5ed13cc`
-- Latest pinned Windvale OS qualified commit: `4701200e707786f04d4462bb75a1664cd5ed13cc`
+- Latest cross-host Seed qualified implementation commit: `b2197fa4fb78b26d75e4fd5269cde590cbd98dcf`
+- Latest pinned Windvale OS qualified implementation commit: `b2197fa4fb78b26d75e4fd5269cde590cbd98dcf`
 
 ## Requirement evidence
 
@@ -958,17 +958,17 @@ Pinned Windows QEMU 11.0/Q35/TCG passes all four exact probe-27 scenarios. The 2
 
 This evidence qualifies probe 27's fixed grant on Windows and Linux; QEMU boot execution remains Windows-only evidence. It does not qualify resource names, multiple resources/recipients, general capability transfer, ownership migration, revocation, teardown, reclamation, packages, arbitrary loading, broader semantics, JIT, scheduling, Hyper-V, physical hardware, or .NET retirement.
 
-## Probe-28 terminal resource-borrow cleanup candidate
+## Qualified probe-28 terminal resource-borrow cleanup
 
-Candidate Decision 0097 advances protected processes to `WVPROC07`, the 128-byte resource record to `WVRES002`, Windvale policy token `96`, and firmware probe 28 while retaining memory version 5, paging version 3, ABI 16/context 7/service table 5, interpreter profile 4, both user images, the admitted WVB, and the WVA resource leaf byte-identically.
+Qualified Decision 0097 advances protected processes to `WVPROC07`, the 128-byte resource record to `WVRES002`, Windvale policy token `96`, and firmware probe 28 while retaining memory version 5, paging version 3, ABI 16/context 7/service table 5, interpreter profile 4, both user images, the admitted WVB, and the WVA resource leaf byte-identically.
 
 After process `2` exits or reaches the contained vector-13 fault, the process machine revalidates the live immutable borrow. It accepts the exact granted leaf with or without x86-64 accessed bit 5, which hardware sets during the interpreter's WVB read, and rejects every other mutation. It then clears the client PTE, both native-context resource pointers, the complete 104-byte service table, and the complete 32-byte `WVBR` table. The resource returns to owned/no-borrower state with grant count one and mapping count zero; init's physical page, WVB bytes, and digest remain owned and unchanged. Reloading init's CR3 flushes non-global client translations on the current single-CPU path; the client root is retired rather than reused.
 
-The focused Windows suite passes all 25 OS tests. Deterministic coverage proves byte-identical normal, repeated, accessed-leaf, and contained-fault cleanup; rejects nonterminal/mixed state as `WVOS6201`, malformed live records as `WVOS6202`, inconsistent aliases/publication as `WVOS6203`, and a released-record replay; and retains every earlier deterministic artifact and malformed-input check. Candidate identities include policy WVB `c4aacb9036f825ecd3d038954c1d07c573b43eb4f6ee831d0b81d188f0682679` (5,152 bytes), policy WVO `d6290156c6d7cf709ba44b3035fac4eea75995ecf3ddfbcb8a0a9b73c0612509` (45,886 bytes), normal process-machine WVO `19da37cdc044505a92410449a14e72c35ed8573b409c095b0b9a8a8f9d21f065` (138,751 bytes), and fault process-machine WVO `bedd2a06969d3df295efe8eefa626dd1c97737731ef1056fbcb6df152f259138` (138,783 bytes).
+The focused Windows suite passes all 25 OS tests. Deterministic coverage proves byte-identical normal, repeated, accessed-leaf, and contained-fault cleanup; rejects nonterminal/mixed state as `WVOS6201`, malformed live records as `WVOS6202`, inconsistent aliases/publication as `WVOS6203`, and a released-record replay; and retains every earlier deterministic artifact and malformed-input check. Qualified identities include policy WVB `c4aacb9036f825ecd3d038954c1d07c573b43eb4f6ee831d0b81d188f0682679` (5,152 bytes), policy WVO `d6290156c6d7cf709ba44b3035fac4eea75995ecf3ddfbcb8a0a9b73c0612509` (45,886 bytes), normal process-machine WVO `19da37cdc044505a92410449a14e72c35ed8573b409c095b0b9a8a8f9d21f065` (138,751 bytes), and fault process-machine WVO `bedd2a06969d3df295efe8eefa626dd1c97737731ef1056fbcb6df152f259138` (138,783 bytes).
 
 Pinned Windows QEMU 11.0/Q35/TCG passes all four exact probe-28 scenarios with `resource-revoked=pass`. The 230,912-byte normal image SHA-256 `bc5f04c0e75fb217c9339bcc2a391bbe68f9f79ad97c18a93e35e310dab62d46` exits 0; the same-sized invalid-opcode image `2c9c6c60543d3729f7401720c0b03e98dc2c5e3654e45668bfcd4559650bc543` and general-protection image `bdccbd123dd457d88c4902f33e727320b08c93e6acd62ac0f706912d5f1163ca` exit 3; and the 231,424-byte contained-user-fault image `221c710d741565c7113a7b8c2ea94c66358018e144ae59f583a3c1ce10225494` exits 0.
 
-Cross-host qualification remains pending. This candidate proves one automatic terminal borrow cleanup, not explicit revocation, page or root reclamation/reuse, SMP shootdown, multiple resources or recipients, ownership transfer, arbitrary loading, JIT publication, scheduling, Hyper-V, physical hardware, or .NET retirement.
+Exact implementation commit `b2197fa4fb78b26d75e4fd5269cde590cbd98dcf` passes GitHub [Verify run 30741650532](https://github.com/eworker-inc/Windvale/actions/runs/30741650532). Windows and digest-pinned Debian 12 each pass all 67 Seed tests, all 25 OS tests, and the complete non-Fast verifier. Seed elapsed time is 237.598 seconds on Windows and 210.262 seconds on Linux. This qualifies probe 28 as the latest cross-host OS baseline. It proves one automatic terminal borrow cleanup, not explicit revocation, page or root reclamation/reuse, SMP shootdown, multiple resources or recipients, ownership transfer, arbitrary loading, JIT publication, scheduling, Hyper-V, physical hardware, or .NET retirement.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 
