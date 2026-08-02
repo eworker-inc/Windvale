@@ -16,16 +16,16 @@ $ErrorActionPreference = 'Stop'
 $ExpectedQemuExitCode = if ($Scenario -in @('normal', 'user-fault')) { 0 } else { 3 }
 $ExpectedSerialMarker = switch ($Scenario) {
     'normal' {
-        "windvale-os-boot 26`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nwvb-runtime=interpreted`ninit-service=pass`nipc=cross-process`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`nshutdown=poweroff`n"
+        "windvale-os-boot 27`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nresource-grant=pass`nwvb-runtime=interpreted`ninit-service=pass`nipc=cross-process`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`nshutdown=poweroff`n"
     }
     'invalid-opcode' {
-        "windvale-os-boot 26`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nwvb-runtime=interpreted`ninit-service=pass`nipc=cross-process`nHello from Windvale`npanic=invalid-opcode`nvector=6`nerror-code=0`nstatus=panic`n"
+        "windvale-os-boot 27`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nresource-grant=pass`nwvb-runtime=interpreted`ninit-service=pass`nipc=cross-process`nHello from Windvale`npanic=invalid-opcode`nvector=6`nerror-code=0`nstatus=panic`n"
     }
     'general-protection' {
-        "windvale-os-boot 26`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nwvb-runtime=interpreted`ninit-service=pass`nipc=cross-process`nHello from Windvale`npanic=general-protection`nvector=13`nerror-code=0`nstatus=panic`n"
+        "windvale-os-boot 27`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nresource-grant=pass`nwvb-runtime=interpreted`ninit-service=pass`nipc=cross-process`nHello from Windvale`npanic=general-protection`nvector=13`nerror-code=0`nstatus=panic`n"
     }
     'user-fault' {
-        "windvale-os-boot 26`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nwvb-runtime=interpreted`ninit-service=pass`nipc=cross-process`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nuser-fault=contained`nstatus=pass`nshutdown=poweroff`n"
+        "windvale-os-boot 27`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nresource-grant=pass`nwvb-runtime=interpreted`ninit-service=pass`nipc=cross-process`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nuser-fault=contained`nstatus=pass`nshutdown=poweroff`n"
     }
 }
 $OppositeTerminalMarker = if ($Scenario -in @('normal', 'user-fault')) {
@@ -221,21 +221,21 @@ try {
         Scenario = $Scenario
         Architecture = 'x86-64'
         ApplicationFormat = 'pe32-plus-uefi-application-v3'
-        ProbeVersion = 26
+        ProbeVersion = 27
         EfiBytes = $EfiIdentity.Length
         EfiSha256 = $EfiSha256
         SerialMarker = switch ($Scenario) {
             'normal' {
-                'windvale-os-boot-26-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff'
+                'windvale-os-boot-27-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-resource-grant-pass-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff'
             }
             'invalid-opcode' {
-                'windvale-os-boot-26-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-panic-invalid-opcode-vector-6-error-code-0-status-panic'
+                'windvale-os-boot-27-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-resource-grant-pass-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-panic-invalid-opcode-vector-6-error-code-0-status-panic'
             }
             'general-protection' {
-                'windvale-os-boot-26-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-panic-general-protection-vector-13-error-code-0-status-panic'
+                'windvale-os-boot-27-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-resource-grant-pass-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-panic-general-protection-vector-13-error-code-0-status-panic'
             }
             'user-fault' {
-                'windvale-os-boot-26-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-user-fault-contained-status-pass-shutdown-poweroff'
+                'windvale-os-boot-27-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-resource-grant-pass-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-user-fault-contained-status-pass-shutdown-poweroff'
             }
         }
         QemuExitCode = $Process.ExitCode
@@ -245,7 +245,7 @@ try {
     if ($PassThru) {
         $Report
     } elseif (!$Quiet) {
-        Write-Output 'windvale-os-boot-report 26'
+        Write-Output 'windvale-os-boot-report 27'
         Write-Output "status=$($Report.Status)"
         Write-Output "scenario=$($Report.Scenario)"
         Write-Output "architecture=$($Report.Architecture)"

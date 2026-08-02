@@ -75,17 +75,19 @@ public static class Kernelˉprocessˉimage
             Serviceˉassembly.Objectˉbytes,
             Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.INIT_SERVICE_MAIN_SYMBOL,
-            2);
+            3);
         var Serviceˉlink = Linkˉcompiler.Link(
             [new(Serviceˉassembly.Objectˉbytes), new(Serviceˉobject)],
             new(0, Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL));
         Verifyˉlinkedˉimage(Serviceˉlink, "init/resource service", Kernelˉpagingˉcontract.PAGE_BYTES);
         var Serviceˉdigest = SHA256.HashData(Serviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
-        if (!Convert.ToHexString(Serviceˉdigest.AsSpan()).Equals(
-                "478DFCD36FED7C8063CFB3F53A6A1362BDA5353656339B730BE573A1BE8F95B0",
+        var Serviceˉidentity = Convert.ToHexString(Serviceˉdigest.AsSpan());
+        if (!Serviceˉidentity.Equals(
+                "0FE423C499CE4F573095DDB9FF03355EE8B6AD927941F764DDAF2EAF9537F78B",
                 StringComparison.Ordinal))
         {
-            throw new InvalidOperationException("The init/resource service image has an unexpected WVB identity.");
+            throw new InvalidOperationException(
+                $"The init/resource service image has an unexpected WVB identity: {Serviceˉidentity}.");
         }
 
         var Interpreterˉsource = Loadˉsource(INTERPRETER_RESOURCE);

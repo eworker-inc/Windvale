@@ -102,9 +102,9 @@ A process is conceptually a protection domain containing:
 - explicit memory, instruction, handle, and other resource budgets;
 - lifecycle, result, fault, and diagnostic state.
 
-This conceptual model is accepted. [Protected process version 5](../../Specifications/Windvale-Protected-Process.md) now implements one deliberately fixed internal representation: separate service and interpreter roots, role-specific W^X extents, explicit module/runtime-input identities and budgets, one RO/NX boot-resource mapping, reduced endpoint rights, one kernel-owned capacity-one channel, waiting state, and closed lifecycle/fault/result evidence. That representation is implementation evidence, not yet a stable public process ABI.
+This conceptual model is accepted. Candidate [protected process version 6](../../Specifications/Windvale-Protected-Process.md) implements one deliberately fixed internal representation: separate init and interpreter roots, role-specific W^X extents, explicit module/resource identities and budgets, one init-owned RO/NX page, one checked immutable client alias, reduced rights, one kernel-owned capacity-one result channel, waiting state, and closed lifecycle/fault/result evidence. That representation is implementation evidence, not yet a stable public process ABI.
 
-A capability identifies a kernel-mediated object plus permitted operations. The current experiment uses slot 0, generation 1, machine reference 65536, and separately reduced send-only and receive-only endpoints. The kernel checks all components before its register channel changes state. General capability allocation, transfer, revocation, and generation rollover remain unimplemented. References must not be recovered from raw addresses, and the current integer encoding remains internal and replaceable.
+A capability identifies a kernel-mediated object plus permitted operations. The current experiment uses slot 0, generation 1, machine reference 65536, a send-only client right, and init's combined receive-plus-fixed-grant rights. The one reference still names a deliberately closed boot contract rather than a general object table. The kernel checks every component before either channel or resource state changes. General capability allocation, transfer, revocation, and generation rollover remain unimplemented. References must not be recovered from raw addresses, and the current integer encoding remains internal and replaceable.
 
 Expected kernel-object families include processes, threads, address spaces, memory regions, channels or endpoints, interrupt bindings, device-memory ranges, and resource providers. This is a design inventory, not a commitment that every family is a public object or syscall.
 
@@ -124,7 +124,7 @@ x86-64 entry, exit, register preservation, and context-switch mechanics belong i
 
 Requests must use checked buffer descriptors and capability references rather than expose native structure layouts. The kernel validates address ranges, arithmetic, access direction, length, alignment, rights, and resource budgets before use. IPC requires bounded message and queue sizes, defined backpressure, and explicit behavior when a peer exits.
 
-Protected-process version 5 retains the first measured mechanics: `EBX` numbers 1/2/3 select send/receive/exit, `ESI` carries the capability reference, and `EAX` carries the register message/result. It preserves the ABI-16 context pointer in `RDX`, records role-specific code, stack, and runtime-input extents, and distinguishes the interpreter identity from its WVB input identity. A separate fixed service pointer is not yet a transferable kernel capability. This assignment is explicitly experimental and internal. Public user-ABI stability, larger-message encoding, copy-versus-map thresholds, general resource transfer, peer lifecycle, scheduling, and backpressure remain deferred.
+Protected-process version 6 retains the first measured mechanics: `EBX` numbers 1/2/3 select send/receive/exit and number 4 selects the single boot-resource grant; `ESI` carries reference 65536; `EAX` carries the message/result or resource identifier. It preserves the ABI-16 context pointer in `RDX`, records role-specific extents and identities, and validates one `WVRES001` owned-to-borrowed transition before installing a RO/NX alias. This assignment is explicitly experimental and internal. It is not general capability transfer. Public user-ABI stability, larger-message encoding, copy-versus-map thresholds, ownership migration, revocation, peer lifecycle, scheduling, and backpressure remain deferred.
 
 ## Memory and executable publication
 
@@ -145,7 +145,7 @@ The current Windows/Linux bootstrap has already moved the allowed allocate/copy/
 
 ## Boot and trust chain
 
-The first x86-64 path remains UEFI-based and evidence-driven. Qualified probe 24 implements steps 1 through 5 plus the first bounded part of step 6 by interpreting one admitted WVB in a CPL3 Windvale runtime process. Qualified probe 25 derives and validates the admitted module's section payloads. Qualified probe 26 separates the WVB from the interpreter RX image and supplies it through one immutable boot resource:
+The first x86-64 path remains UEFI-based and evidence-driven. Qualified probe 24 implements steps 1 through 5 plus the first bounded part of step 6 by interpreting one admitted WVB in a CPL3 Windvale runtime process. Qualified probe 25 derives and validates the admitted module's section payloads. Qualified probe 26 separates the WVB from the interpreter RX image. Candidate probe 27 makes Windvale init select resource `1` and grants one immutable alias before client entry:
 
 1. A narrow loader validates its bounded inputs, captures the versioned handoff, loads the selected AOT kernel and boot resources, and exits boot services.
 2. The kernel takes ownership of memory, its stack, exception state, page tables, and deterministic diagnostics. Firmware services are not used after the accepted exit boundary.
@@ -213,13 +213,15 @@ Each step must be useful, bounded, and independently qualified:
 
 [Decision 0095](../Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) advances cross-host-qualified probe 26. The hosted Windvale interpreter declares only `file.read_bytes`, fetches `boot:main.wvb` through an exact WVA-owned ABI-16 leaf, and receives a borrowed descriptor into a separate RO/NX page. Stage 0 still creates that fixed resource and republishes the verified WVA stencil as code; the init service does not yet own or transfer it. This is a real runtime input, but not a filesystem, general resource namespace, loader, runtime selector, JIT publication service, or scheduler.
 
+[Decision 0096](../Decisions/0096-First-Windvale-Init-Owned-Boot-Resource-Grant.md) advances candidate probe 27. Init owns the admitted WVB page, Windvale `Main` selects fixed resource `1`, the client begins without a resource PTE or service pointers, and one validated syscall installs a RO/NX alias plus its ABI-16 tables. Init remains lifetime owner; the client is one fixed borrower. This moves real policy into Windvale without claiming a namespace, general handle transfer, ownership migration, revocation, package service, or scheduler.
+
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 
 ## Deliberately deferred choices
 
 The following should remain open until a focused implementation supplies evidence:
 
-- stable public syscall numbers, register assignments, and user ABI (the version-5 internal experiment is not frozen);
+- stable public syscall numbers, register assignments, and user ABI (the version-6 internal experiment is not frozen);
 - scheduler algorithm, priority model, real-time policy, and SMP strategy;
 - IPC wire encoding, zero-copy thresholds, and service discovery;
 - virtual-address layout, page size policy beyond architecture requirements, and shared-memory model;

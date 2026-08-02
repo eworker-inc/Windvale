@@ -1,23 +1,25 @@
-# First runtime-supplied Windvale OS bytecode interpreter
+# Init-granted Windvale OS bytecode interpreter
 
 ## Status and purpose
 
-Interpreter profile 3 is the first Windvale OS runtime that obtains its WVB input at execution time instead of carrying the program bytes inside its own WVB or linked RX image. [`Bytecode-Interpreter.wv`](../Operating-System/Runtime/Bytecode-Interpreter.wv) is hosted Windvale source with exactly one declared capability, `file.read_bytes`, and exactly one resource name, `boot:main.wvb`. Its AOT derivative runs at CPL3, receives the resource through the unchanged ABI-16 native service table, validates the bounded WVB profile, and executes it.
+Interpreter runtime profile 4 is the first Windvale OS runtime that begins without its WVB mapping or usable service pointers and receives them through an init-selected, kernel-mediated immutable grant. [`Bytecode-Interpreter.wv`](../Operating-System/Runtime/Bytecode-Interpreter.wv) remains hosted Windvale source with exactly one declared capability, `file.read_bytes`, and exactly one resource name, `boot:main.wvb`. Its byte-identical AOT derivative runs at CPL3 after the grant, validates the bounded WVB profile, and executes it.
 
-Profile 3 is cross-host qualified at exact commit `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`: Windows and digest-pinned Debian 12 each pass all 67 Seed tests and all 25 OS tests, while Windows supplies all four pinned-QEMU scenarios.
+Profile 4 has focused Windows and all four pinned-QEMU probe-27 scenario evidence. Cross-host qualification is not yet claimed.
 
-[Decision 0095](../Documents/Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) owns profile 3. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) retains the qualified embedded-input profile-2 proof.
+[Decision 0096](../Documents/Decisions/0096-First-Windvale-Init-Owned-Boot-Resource-Grant.md) owns candidate profile 4. [Decision 0095](../Documents/Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) retains the cross-host-qualified direct-mapping profile-3 proof.
 
 The interpreter itself remains an AOT boot component; the separately mapped program is interpreted. The kernel contains neither a language interpreter nor WVB semantic decoding.
 
 ## Runtime-input contract
 
-Profile 3 performs one `file.read_bytes("boot:main.wvb")` call before parsing. Windows and Linux reference tests provide that resource through an immutable in-memory reader. Windvale OS provides the same logical capability through:
+Profile 4 performs the same one `file.read_bytes("boot:main.wvb")` call before parsing. Windows and Linux reference tests provide that resource through an immutable in-memory reader. Windvale OS starts process `2` with context offsets 24 and 96 zero and its target PTE absent. Windvale init selects resource identifier `1`; fixed grant syscall `4` then provides the same logical capability through:
 
 - native execution context offset `96`, pointing to one OS-private `WVBR` version-1 table;
 - ABI-16 service-table slot `file.read_bytes`, pointing to one exact 199-byte x86-64 leaf;
 - a 32-byte little-endian table containing magic/version/size, one data pointer, one length, and a zero reserved word; and
-- one separate 4 KiB user-readable, read-only, non-executable page containing the admitted WVB followed by zeros.
+- one user-readable, read-only, non-executable alias of init's owned 4 KiB page containing the admitted WVB followed by zeros.
+
+The grant publishes the service table, `WVBR` table, and both context pointers as one checked transition before the interpreter enters. Init remains the resource owner; process `2` is the single recorded borrower. This is a fixed-lifetime immutable borrow, not a general capability or page-ownership transfer.
 
 The leaf accepts only the exact 13-byte UTF-8 name `boot:main.wvb`. It checks the table pointer, magic/version, 32-byte size, zero reserved field, nonzero data pointer, and length from 12 through 4,096 bytes before returning an ABI-16 borrowed-bytes descriptor. Wrong names fail with native file-not-found detail `6`; unavailable or malformed tables fail with detail `8`. The leaf preserves ABI-16 context and budget registers `R10`, `R11`, and `R15`.
 
@@ -25,7 +27,7 @@ The service is authored as a read-only WVA stencil because WVA deliberately forb
 
 ## Accepted input and execution
 
-After acquisition, profile 3 retains profile 2's section-derived validation and execution rules:
+After acquisition, profile 4 retains profile 3's section-derived validation and execution rules:
 
 - total length from 12 through 4,096 bytes, magic `WVB1`, format version `1.6`, and seven sections;
 - exactly seven ordered section kinds, zero flags/reserved fields, checked payload ranges, and no trailing bytes;
@@ -37,7 +39,7 @@ After acquisition, profile 3 retains profile 2's section-derived validation and 
 
 The only accepted instruction forms are `i32.const`, `local.store 0`, `local.load 0`, and `return`. Canonical execution returns `29` after exactly `4,678` verified Windvale instructions with maximum dynamic call depth `3`.
 
-Focused tests compile the interpreter once and vary only its supplied immutable WVB. They cover truncation, bad magic, inconsistent section length, unknown opcode, changed constant, changed local operand, and a second compiler-produced module whose longer name moves the code payload. Artifact tests also prove that the complete 174-byte admitted WVB occurs neither in the interpreter WVB nor in its linked RX client image.
+Focused tests compile the interpreter once and vary only its supplied immutable WVB. They cover truncation, bad magic, inconsistent section length, unknown opcode, changed constant, changed local operand, and a second compiler-produced module whose longer name moves the code payload. Artifact tests also prove that the complete 174-byte admitted WVB occurs in neither the interpreter WVB, linked init image, nor linked client image. Grant tests lock the absent pre-grant target, zero pointers, exact RO/NX alias, exact tables, and one-shot state transition.
 
 ## Artifact and process bounds
 
@@ -50,10 +52,10 @@ Focused tests compile the interpreter once and vary only its supplied immutable 
 | Linked normal client image | 128,157 | `5a0acf3db339df5c3308f51a2e7ce182ee884d9b528db2998e9d0dcbf3b30655` |
 | Linked deliberate-fault image | 128,157 | `1a56e471c06702e479ec7c1cee49d98415734e7d5fca24f46fbc3c66c8175a83` |
 
-The process maps 32 RX pages, four RW/NX stack pages, one RW/NX execution-context page, and one RO/NX runtime-input page. It has no writable executable page and no executable-publication capability.
+The process begins with 32 RX pages, four RW/NX stack pages, and one RW/NX execution-context page. The grant adds one RO/NX runtime-input alias, bringing the user-page count from 37 to the recorded budget of 38. It has no writable executable page and no executable-publication capability.
 
 ## Trust boundary and deliberate limits
 
-The fixed AOT admission policy still checks every byte of the canonical WVB before process construction. The planner independently verifies that the supplied resource hashes to the program identity recorded in `WVPROC05`. The interpreter then decodes its semantic subset after fetching the resource.
+The fixed AOT admission policy still checks every byte of the canonical WVB before process construction. The owner planner verifies that the init page hashes to the identity recorded in both `WVPROC06` records. Grant syscall `4` revalidates the exact kernel-owned `WVRES001` record, absent client PTE, bounds, digest, flags, service leaf, owner, borrower, and counts before publication. The interpreter then decodes its semantic subset after fetching the resource.
 
-Profile 3 is not an arbitrary resource namespace, filesystem, complete WVB verifier, multi-function interpreter, JIT, cache, dynamic runtime selector, or stable runtime ABI. The resource is fixed at boot and borrowed immutably for the process lifetime. Generalization must decide whether an init/package service should transfer handles or bytes, expand semantic coverage under verify-before-execute, and keep executable publication behind the kernel's W^X boundary.
+Profile 4 is not an arbitrary resource namespace, filesystem, complete WVB verifier, multi-function interpreter, JIT, cache, dynamic runtime selector, or stable runtime ABI. The resource is fixed at boot, selected by identifier `1`, and borrowed immutably for the process lifetime. Generalization must add typed lookup only when a second real resource requires it, define revocation when teardown exists, expand semantics under verify-before-execute, and keep executable publication behind the kernel's W^X boundary.

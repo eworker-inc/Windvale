@@ -39,7 +39,7 @@ This list records unresolved decisions without presenting them as implementation
 
 - Which kernel-owned data, address-materialization, and target-container rules should extend the accepted special kernel WVO without duplicating the shared native backend?
 - What counts as “from scratch” at each bootstrap stage?
-- Which parts of Decision 0092's two-process records, reduced endpoints, saved context, and fixed wait/wake coordinator should survive a third runnable or general loader case?
+- Which parts of Decision 0096's two-process records, fixed immutable grant, saved context, and wait/wake coordinator should survive a second resource, teardown, third runnable, or general loader case?
 - Which first boot-critical drivers should remain with the kernel temporarily, and which should begin as isolated AOT system services?
 - What are the first package/resource and filesystem contracts, after the in-guest verifier and protected-process boundary exist?
 - Which QEMU and Hyper-V behaviors must be qualified before the first OS milestone is complete?
@@ -57,10 +57,10 @@ The [WebAssembly playground exploration](WebAssembly-Playground-Exploration.md) 
 
 ## First decision sequence
 
-Decisions 0058 through qualified 0095 establish reproducible bytecode compiler convergence, the bounded shared ABI-16 native path with all 12 current service leaves and calls through 64 parameters, live Windvale-produced service leaves, Windvale-owned executable-image layout and lifetime, WVA-owned Q35 poweroff, normalized no-error/error-code trap entries, the first kernel-owned W^X root, fixed in-guest WVB admission, protected processes, the first Windvale init/resource service, the first user-space Windvale bytecode interpreter, section-derived validation, and one runtime-supplied RO/NX boot resource. The recommended next decisions are:
+Decisions 0058 through qualified 0095 and candidate 0096 establish reproducible bytecode compiler convergence, the bounded shared ABI-16 native path with all 12 current service leaves and calls through 64 parameters, live Windvale-produced service leaves, Windvale-owned executable-image layout and lifetime, WVA-owned Q35 poweroff, normalized no-error/error-code trap entries, the first kernel-owned W^X root, fixed in-guest WVB admission, protected processes, the first Windvale init/resource service, the first user-space Windvale bytecode interpreter, section-derived validation, one runtime-supplied RO/NX boot resource, and a Windvale-selected one-shot immutable grant. The recommended next decisions are:
 
 1. Admit the smallest safe frame contract demanded by `Compilerˉsourceˉwirˉcompileˉblock`: 1,049 locals and declared stack depth 12 against the current 1,024-slot bound. Measure lowered numbered-value pressure before choosing a larger fixed frame versus deterministic slot reuse.
 2. Continue compiling and then execute the qualified Windvale-written compiler through the shared native path, recording each next backend or runtime contract demanded by that real workload.
 3. Add native PE/COFF and ELF containers plus standalone Windows/Linux capability and process hosts without leaking host rules into portable modules.
-4. Generalize exactly one measured boundary after qualified probe 26: move immutable resource ownership/transfer toward init or package service, broaden the interpreter for a real module, or add a third runnable only when it creates real scheduler pressure. Keep JIT publication, broader traps, virtual memory, and lifecycle adapters separate.
+4. First qualify probe 27. Then generalize exactly one measured boundary: introduce typed lookup only for a second real resource, define revocation only with teardown, broaden the interpreter for a real module, or add a third runnable only when it creates real scheduler pressure. Keep JIT publication, broader traps, virtual memory, and lifecycle adapters separate.
 5. Satisfy the remaining Decision 0057 native-retirement conditions, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.

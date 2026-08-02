@@ -6,7 +6,7 @@ Kernel handoff version 1 defines the first internal transition from the UEFI loa
 
 ## Linked symbol boundary
 
-The loader imports the ASCII-safe function symbol `Windvale_kernel_entry`. The special kernel object exports that symbol. Qualified firmware probe 21 and probes through 25 additionally import `Windvale_kernel_x64_q35_shutdown` from WVA for the post-return lifecycle call. Both contain code-only `.text` sections and are linked at base zero through one WVO `relative-i32` relocation with addend `-4` at the x86-64 `call rel32` displacement field. ABI-16 portable native objects, admission/process bridges, kernel exceptions, normalized frames, paging/process installation, interpretation, and shutdown do not change the handoff record or loader-to-entry call ABI. Exact commit `190174a` qualifies the probe-24 composition; Decisions 0091 through 0094 retain the handoff unchanged.
+The loader imports the ASCII-safe function symbol `Windvale_kernel_entry`. The special kernel object exports that symbol. Qualified firmware probe 21 and probes through candidate 27 additionally import `Windvale_kernel_x64_q35_shutdown` from WVA for the post-return lifecycle call. Both contain code-only `.text` sections and are linked at base zero through one WVO `relative-i32` relocation with addend `-4` at the x86-64 `call rel32` displacement field. ABI-16 portable native objects, admission/process bridges, kernel exceptions, normalized frames, paging/process installation, resource grants, interpretation, and shutdown do not change the handoff record or loader-to-entry call ABI. Exact commit `6bb34bb` cross-host qualifies the probe-26 composition; Decision 0096 retains the handoff unchanged.
 
 The successful flat link must report only code and read-only-data sections, at least one code section, zero absolute relocations, and no relocation kind other than `relative-i32` before UEFI application format version 3 accepts it. Firmware may relocate the complete PE image because each resolved relative displacement remains invariant when caller, target, and immutable data move together.
 
@@ -37,17 +37,17 @@ The record is 48 little-endian bytes:
 | `0x28` | 4 | Descriptor version | `1` |
 | `0x2C` | 4 | Reserved | Zero |
 
-Memory-map bytes must be an exact multiple of descriptor bytes. Every descriptor is validated by current firmware probe version 25 before the exit call; the compiler-generated kernel wrapper independently revalidates the record envelope and divisibility before accepting it. The memory object then independently revalidates the envelope and every descriptor before making an ownership decision.
+Memory-map bytes must be an exact multiple of descriptor bytes. Every descriptor is validated by current firmware probe version 27 before the exit call; the compiler-generated kernel wrapper independently revalidates the record envelope and divisibility before accepting it. The memory object then independently revalidates the envelope and every descriptor before making an ownership decision.
 
 ## Lifetime and ownership
 
-The original record occupies the loader's live stack frame and is immutable for the duration of the kernel-entry call. Kernel memory version 3 copies all 48 bytes into its owned state page before changing stacks and passes that identity through the admission, process, retained-native, and compiler-generated paths. The retained memory-map buffer remains borrowed loader data and live after boot services terminate; later reclamation must preserve it until another ownership decision replaces this contract.
+The original record occupies the loader's live stack frame and is immutable for the duration of the kernel-entry call. Kernel memory version 5 copies all 48 bytes into its owned state page before changing stacks and passes that identity through the admission, process, retained-native, and compiler-generated paths. The retained memory-map buffer remains borrowed loader data and live after boot services terminate; later reclamation must preserve it until another ownership decision replaces this contract.
 
 The handoff includes no valid boot-services pointer. Code reached through this ABI must not call a boot service, firmware device-handle protocol, or invalidated system-table field.
 
 ## Current evidence and limit
 
-Qualified firmware probe version 25 retains handoff version 1 while linking the compiler-generated special kernel path, Windvale-owned admission, process policy, init service, section-derived user-space interpreter, shared ABI-16 portable native probes, WVA seams, kernel memory/paging version 3, two protected roots, kernel exception destinations, and the WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
+Candidate firmware probe version 27 retains handoff version 1 while linking the compiler-generated special kernel path, Windvale-owned admission and init resource selection, process policy, section-derived user-space interpreter, shared ABI-16 portable native probes, WVA seams, kernel memory version 5/paging version 3, two protected roots, kernel exception destinations, and the WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
 
 ```text
 memory-map=pass
@@ -58,6 +58,7 @@ kernel-stack=pass
 paging=owned
 wvb-admission=pass
 processes=isolated
+resource-grant=pass
 wvb-runtime=interpreted
 init-service=pass
 ipc=cross-process
@@ -70,4 +71,4 @@ status=pass
 shutdown=poweroff
 ```
 
-The memory layer calls WVA export `Windvale_kernel_wva_main` only after owned-state initialization, handoff copy, stack switch, exception installation, and [kernel paging version 3](Windvale-Kernel-Paging.md) activation. WVA tail-transfers to admission bridge version 2. Its exact 8,944/2 context accepts only Windvale admission token 73, then calls [protected process version 4](Windvale-Protected-Process.md). Only exact section-derived user-space interpretation, interpreter-process completion, and Windvale init-service completion reach the retained 271/2 portable-probe bridge; only that bridge's packed result 29 reaches compiler export `Windvale_kernel_main`. Normal return powers off through WVA. Separate images prove terminal CPL0 `(6, 0)` and `(13, 0)` plus contained interpreter CPL3 `(13, 0)`. Probe 25 does not prove runtime-supplied or general WVB loading, general physical/virtual-memory management, JIT publication, scheduling, interrupts, recovery, or a general service runtime.
+The memory layer calls WVA export `Windvale_kernel_wva_main` only after owned-state initialization, handoff copy, stack switch, exception installation, and [kernel paging version 3](Windvale-Kernel-Paging.md) activation. WVA tail-transfers to admission bridge version 2. Its exact 8,944/2 context accepts only Windvale admission token 73, then calls [protected process version 6](Windvale-Protected-Process.md). Only exact init selection/grant, section-derived user-space interpretation, interpreter-process completion, and init completion reach the retained 271/2 portable-probe bridge; only that bridge's packed result 29 reaches compiler export `Windvale_kernel_main`. Normal return powers off through WVA. Separate images prove terminal CPL0 `(6, 0)` and `(13, 0)` plus contained interpreter CPL3 `(13, 0)`. Probe 27 does not prove general WVB loading, physical/virtual-memory management, capability transfer, JIT publication, scheduling, interrupts, recovery, or a general service runtime.
