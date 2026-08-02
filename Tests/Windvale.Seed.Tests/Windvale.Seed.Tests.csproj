@@ -215,5 +215,17 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Checked-Add-Overflow-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Checked-Add-Overflow-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Straight-I32-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Straight-I32-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Checked-Subtract-Overflow-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Checked-Subtract-Overflow-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Checked-Multiply-Overflow-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Checked-Multiply-Overflow-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Checked-Negate-Overflow-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Checked-Negate-Overflow-Main.wv" />
   </ItemGroup>
 </Project>

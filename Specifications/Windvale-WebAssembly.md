@@ -1,13 +1,13 @@
 # Windvale experimental WebAssembly target
 
-- Status: Implemented experimental profiles 1 and 2; not an accepted permanent target
+- Status: Implemented experimental profiles 1 through 3; not an accepted permanent target
 - Target identifier: `wasm32-browser-v1-experimental`
 - WebAssembly binary version: 1
 - Portable input identity: canonical WVB 1.6
 
 ## Purpose
 
-This contract defines Windvale's first direct WebAssembly lowering slice. A portable Windvale implementation validates one exact canonical WVB profile and emits a deterministic WebAssembly binary module. WebAssembly is an execution target for already defined Windvale semantics; it does not replace typed WIR, canonical WVB, the mandatory WVB verifier, or the reference runtime.
+This contract defines Windvale's first direct WebAssembly lowering slices. A portable Windvale implementation validates bounded canonical WVB profiles and emits deterministic WebAssembly binary modules. WebAssembly is an execution target for already defined Windvale semantics; it does not replace typed WIR, canonical WVB, the mandatory WVB verifier, or the reference runtime.
 
 The implementation is `Compiler/Windvale/WebAssembly-Core.wv`. `Examples/Compiler/WebAssembly-Tool.wv` is the first hosted shell. The shell reads one WVB resource and publishes one `.wasm` resource only after complete successful selection and encoding.
 
@@ -47,6 +47,17 @@ Profile 2 accepts the exact compiler-produced shape for `return <left> + <right>
 
 Both operands may contain any signed 32-bit value. The generated WebAssembly executes `i32.add`, detects signed overflow explicitly, and reports Windvale runtime status `WVR3007` through execution ABI 1. It does not depend on WebAssembly's wrapping addition as the Windvale result and does not convert overflow into a WebAssembly engine trap.
 
+### Profile 3: bounded straight-line `i32`
+
+Profile 3 accepts one validated, straight-line `Main() -> i32` instruction stream with:
+
+- zero through 256 `i32` locals and no locals of another type;
+- code offset zero, one through 16,384 code bytes, one through 4,096 instructions, and declared maximum operand-stack depth one through 256;
+- `i32.const`, `local.load`, `local.store`, `i32.add`, `i32.subtract`, `i32.multiply`, `i32.negate`, `pop`, and one final `return`; and
+- a statically valid operand stack, in-range local indices, exact agreement with the declared maximum stack, and exactly one `i32` at the final return.
+
+Branches, calls, and instructions for other value families are rejected. The generated function retains the source WVB locals, adds three `i32` scratch locals and one `i64` scratch local, and lowers every accepted WVB instruction in order. Addition, subtraction, multiplication, and negation preserve Windvale's checked `i32` semantics. Each operation is charged before it is attempted, so the exported count includes a failing arithmetic instruction exactly as the reference runtime does.
+
 ## Profile 1 output module
 
 Successful lowering emits a WebAssembly binary version-1 module with these sections in ascending order:
@@ -64,9 +75,9 @@ The first `42` artifact is exactly 37 bytes with SHA-256:
 1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1
 ```
 
-## Execution ABI 1 and profile 2 output
+## Execution ABI 1 and profiles 2 and 3 output
 
-Profile 2 emits a WebAssembly binary version-1 module with one `() -> i32` function, one internal `i32` local, three `i32` globals, and no imports, tables, memory, start function, element section, or data section. It exports:
+Profiles 2 and 3 emit a WebAssembly binary version-1 module with one `() -> i32` function, three `i32` globals, and no imports, tables, memory, start function, element section, or data section. Profile 2 has one internal `i32` local. Profile 3 has the selected WVB locals plus target scratch locals. Both export:
 
 | Export | WebAssembly kind | Contract |
 | --- | --- | --- |
@@ -75,9 +86,11 @@ Profile 2 emits a WebAssembly binary version-1 module with one `() -> i32` funct
 | `Windvale.result` | mutable `i32` global | Contains `Main`'s result only when `Windvale.run` returned `0`; reset to zero before every run. |
 | `Windvale.instructions` | mutable `i32` global | Contains the exact number of WVB instructions attempted; reset to zero before every run. |
 
-A conforming host checks `Windvale.abi`, invokes `Windvale.run` once, then reads `Windvale.instructions` and, on status zero, `Windvale.result`. Status `3007` maps to the existing `WVR3007` runtime diagnostic and makes the result global invalid. The current bounded profile reports ten instructions on success and seven on overflow, including the failing `i32.add`, matching the reference runtime's pre-execution instruction charge.
+A conforming host checks `Windvale.abi`, invokes `Windvale.run` once, then reads `Windvale.instructions` and, on status zero, `Windvale.result`. Status `3007` maps to the existing `WVR3007` runtime diagnostic and makes the result global invalid. Profile 2 reports ten instructions on success and seven on overflow, including the failing `i32.add`. Profile 3 publishes the exact attempted WVB instruction ordinal before every operation, matching the reference runtime's pre-execution instruction charge.
 
 Signed addition overflow is detected from the wrapped sum using `((left xor sum) and (right xor sum)) < 0`. The check is target implementation detail; `WVR3007`, result validity, and instruction accounting are Windvale contracts. The output uses shortest LEB128 encodings and is deterministic for identical WVB bytes.
+
+Profile 3 detects subtraction overflow with `((left xor result) and (left xor right)) < 0`. Multiplication is evaluated in signed `i64`, wrapped to `i32`, sign-extended again, and compared with the wide result. Negation rejects `i32` minimum before computing `0 - value`. These checks return status `3007`; they do not escape as WebAssembly engine traps.
 
 The successful `2147483640 + 7` artifact is exactly 176 bytes with SHA-256:
 
@@ -91,9 +104,24 @@ The `2147483647 + 1` overflow artifact is also 176 bytes and has SHA-256:
 984139ccb136981e4d6382e4c547012be13df38af056cd09abebec10cc1a6f52
 ```
 
+The profile-3 straight-line fixture returns `42`, reports 30 instructions, is 432 bytes, and has SHA-256:
+
+```text
+15f2d58746ff2b0ae33a0de05e2781949c9d908fab46dd4072bfe3b2fa42b0bb
+```
+
+The subtraction, multiplication, and negation overflow fixtures return status `3007` after 10, 7, and 13 attempted instructions. Their deterministic WebAssembly SHA-256 values are, respectively:
+
+```text
+757d26c2cf404cabcf5b78d2c998bc7ddc78ec4531e4571630ae2c1b5c8d7925
+e924c7507a363a7b019935622abfbd4bf4ac8445cd37a0412130ce8e5c83d51a
+3f098efd63c68d8c62a4f6b373507e12c21808ff01120d165c9dc85a047e99e2
+```
+
 ## Limits and failure behavior
 
 - Input WVB is limited to the current 4 MiB immutable-`bytes` value and hosted-file boundary. This is narrower than WVB's general 16 MiB module limit.
+- Profile 3 is independently bounded to 256 locals, 16,384 code bytes, 4,096 instructions, and maximum operand-stack depth 256.
 - Output is limited to 65,536 bytes for this experimental profile.
 - All offset and length checks precede reads or additions that depend on untrusted values.
 - Failure returns a typed status and an empty output value.
@@ -113,9 +141,9 @@ The profile requires:
 - truncated, oversized, inconsistent, unsupported-profile, and unsupported-code rejection with no output; and
 - execution by a conforming WebAssembly engine before browser integration is claimed.
 
-Profile 2 additionally requires positive-overflow, negative-overflow, both signed extrema, mixed-sign, and non-overflow cases; exact `WVR3007` status mapping; exact success and failure instruction counts; reset-before-run behavior; and proof that overflow does not escape as an engine trap.
+Profiles 2 and 3 additionally require positive-overflow, negative-overflow, both signed extrema, mixed-sign, and non-overflow cases across their accepted arithmetic; exact `WVR3007` status mapping; exact success and failure instruction counts; reset-before-run behavior; and proof that overflow does not escape as an engine trap. Profile 3 also requires local-index, operand-stack, instruction-count, code-size, and output-size boundary coverage.
 
-On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles both checked-add fixtures, lowers them by running the hosted `.wv` tool, checks exact digests, and executes both outputs under the installed Node.js WebAssembly engine.
+On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles six profile-2/profile-3 fixtures, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine.
 
 Cross-host equality is required before this slice is described as qualified. Browser support is not established until the generated module runs inside the playground's worker containment boundary on the explicitly tested browser profile.
 
@@ -127,11 +155,11 @@ This profile does not establish:
 - a direct source-to-WebAssembly compiler;
 - a general WVB-to-WebAssembly backend;
 - a Windvale-native general WVB verifier or interpreter;
-- checked subtraction, multiplication, negation, arbitrary instruction streams, calls, source branches, loops, general resource counters, text, bytes, records, enums, memory management, or capabilities in WebAssembly;
+- calls, source branches, loops, arbitrary or unbounded instruction streams, other scalar families, general resource counters, text, bytes, records, enums, memory management, or capabilities in WebAssembly;
 - compilation of the Windvale compiler itself to WebAssembly;
 - replacement of the .NET playground path; or
 - production browser isolation.
 
 ## Next extension boundary
 
-The next backend slice should replace the two exact code templates with a bounded one-function `i32` instruction-stream lowering model, retaining execution ABI 1 while adding checked subtraction or multiplication through the same status seam. It must keep control-flow reconstruction, calls, linear memory, and browser capability imports outside the profile until the verifier-evidence boundary and instruction accounting are explicit for each.
+The next backend slice should reconstruct a deliberately small structured-control-flow subset for one `i32` function while retaining execution ABI 1 and exact instruction accounting. Calls, linear memory, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, profile 3 requires Windows/Linux byte equality before playground-worker integration can be described as qualified.

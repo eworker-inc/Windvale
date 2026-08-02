@@ -1,7 +1,7 @@
 # Decision 0104: WebAssembly checked addition and execution ABI
 
 - Date: 2026-08-02
-- Status: Implemented with Windows development and Node.js engine evidence; cross-host and browser-worker qualification pending
+- Status: Implemented; extended by [Decision 0106](0106-Bounded-Straight-I32-WebAssembly-Lowering.md); cross-host and browser-worker qualification pending
 - Extends: [Decision 0102](0102-First-Windvale-WebAssembly-Backend-Slice.md)
 
 ## Context
@@ -33,7 +33,7 @@ The ABI currently uses an `i32` instruction global because profile 2 can report 
 
 The result and instruction globals are mutable because the generated function writes them and WebAssembly export mutability is shared with the host. The host adapter is trusted not to rewrite evidence after `Windvale.run`; the function resets both globals so host changes before a run cannot affect its reported result.
 
-Profile selection remains deliberately exact. This establishes checked-code generation and host-visible failure evidence, but it is not yet a general stack-machine-to-structured-WebAssembly translator.
+At this checkpoint profile selection remained deliberately exact. This established checked-code generation and host-visible failure evidence without yet providing a general stack-machine-to-structured-WebAssembly translator. Decision 0106 records the later bounded straight-line generalization.
 
 ## Evidence
 
@@ -45,7 +45,7 @@ Node.js 24.18.0 validates and instantiates both modules. The successful module r
 
 Focused tests compare the complete successful module bytes and both output digests, parse every section and instruction independently from the `.wv` encoder, compare success and overflow status/result/count tuples with the reference runtime, cover both signed extrema and mixed-sign cases, repeat output generation, and reject a substituted WVB arithmetic opcode without publishing output.
 
-The current Windvale core WVB has SHA-256 `aa5086df27c993ec76d92b7680517c60777936a55c1e00644ad03d736ddd2f9f`; the hosted tool WVB has SHA-256 `1ef6274dd7a7188464c7cd7c2fdb2ed71656a0d901c9d8c9aa6535f7ebe738bd`; and the portable encoder demo WVB has SHA-256 `0da57f8ae5f3dfc420d1bd57286bf77f5012a71ee8121cfd09b8fcb05c5e0588`.
+At the profile-2 checkpoint, the Windvale core WVB had SHA-256 `aa5086df27c993ec76d92b7680517c60777936a55c1e00644ad03d736ddd2f9f`; the hosted tool WVB had SHA-256 `1ef6274dd7a7188464c7cd7c2fdb2ed71656a0d901c9d8c9aa6535f7ebe738bd`; and the portable encoder demo WVB had SHA-256 `0da57f8ae5f3dfc420d1bd57286bf77f5012a71ee8121cfd09b8fcb05c5e0588`. Decision 0106 records their identities after the straight-line extension.
 
 This is Windows development evidence and an independently identified engine run. It is not Windows/Linux byte equality or playground-worker qualification.
 

@@ -1,0 +1,5 @@
+module WebAssemblyˉcheckedˉmultiplyˉoverflow profile portable;
+
+export fn Main() -> i32 {
+    return 50000 * 50000;
+}

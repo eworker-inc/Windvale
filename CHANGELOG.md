@@ -47,7 +47,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Cross-host-qualified ABI 15/context 7 native whole-file output through exact Windows and Linux leaves, advancing the exact compiler WVB beyond its `file.write_bytes` admission blocker.
 - Cross-host-qualified ABI 16 bounded internal calls: four fast register parameters plus verified 16-byte stack cells through the language's 64-parameter limit, advancing exact compiler preflight to its single 1,049-local function.
 - The public [`windvale.ca`](https://windvale.ca/) project home, system-responsive light and dark themes, new Windvale visual identity, and same-origin [`windvale.ca/playground/`](https://windvale.ca/playground/) browser playground.
-- Windvale-authored WebAssembly backend profiles: a portable `.wv` selector emits the deterministic 37-byte constant module, then execution ABI 1 extends the path through checked `i32.add` with exact success or `WVR3007` status, result validity, and instruction accounting without an engine trap.
+- Windvale-authored WebAssembly backend profiles: a portable `.wv` selector emits the deterministic 37-byte constant module, then execution ABI 1 extends the path through a validated, bounded, straight-line `i32` stream with locals, discard, and checked add/subtract/multiply/negate. Exact success or `WVR3007` status, result validity, and instruction accounting are preserved without an engine trap.
 - A separate Windvale support page with configurable one-time Stripe tiers, explicit public-recognition consent, and a validated Cloudflare KV-backed supporter roll that keeps personal data out of repository history.
 
 ### Changed

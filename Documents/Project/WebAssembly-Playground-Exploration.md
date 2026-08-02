@@ -1,7 +1,7 @@
 # WebAssembly and browser playground exploration
 
 - Date: 2026-08-01
-- Status: Exploration with an implemented Stage 0 playground and first Windvale-authored direct-backend slice; not an accepted permanent WebAssembly target
+- Status: Exploration with an implemented Stage 0 playground and bounded Windvale-authored straight-line backend; not an accepted permanent WebAssembly target
 
 ## Purpose
 
@@ -99,7 +99,9 @@ The direct backend must not become a parallel language implementation. It should
 
 [Decision 0104](../Decisions/0104-WebAssembly-Checked-Addition-And-Execution-Contract.md) adds the second exact profile and execution ABI 1. Generated Wasm performs checked `i32.add`, returns status `3007` for `WVR3007`, and publishes the same seven-or-ten attempted WVB instruction count as the reference runtime. Successful and overflowing modules both validate and run in Node.js without an engine trap.
 
-This is backend-construction evidence rather than browser integration. It does not yet implement arbitrary instruction streams, other checked arithmetic, source branches, calls, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, or replacement of the .NET playground path. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
+[Decision 0106](../Decisions/0106-Bounded-Straight-I32-WebAssembly-Lowering.md) adds a third profile that validates and lowers one bounded straight-line `i32` instruction stream. It covers locals, discarded values, and checked addition, subtraction, multiplication, and negation while retaining execution ABI 1 and exact pre-execution instruction charging. Four profile-3 artifacts validate and run in Node.js with the same status/result/count tuples as the reference runtime.
+
+This is backend-construction evidence rather than browser integration. It does not yet implement branches, calls, other value families, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, or replacement of the .NET playground path. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
 ## Proposed playground shape
 
@@ -262,9 +264,9 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 
 ### Native browser execution
 
-1. Generalize the implemented constant and checked-add profiles into a bounded one-function `i32` instruction lowerer while retaining execution ABI 1 and the Stage 0 path as its differential oracle.
-2. Preserve canonical WVB identity and interpreter/native/WebAssembly differential tests.
-3. Add a bounded UI/event experiment only after its capability, lifetime, and asynchronous execution model is explicit.
+1. Establish Windows/Linux byte equality for the bounded one-function straight-line `i32` lowerer while retaining execution ABI 1 and the Stage 0 path as its differential oracle.
+2. Run generated modules inside the playground's disposable worker boundary and preserve canonical WVB identity plus interpreter/WebAssembly differential evidence.
+3. Add structured control flow, then a bounded UI/event experiment only after each capability, lifetime, resource, and asynchronous execution contract is explicit.
 4. Decide whether WebAssembly becomes a permanent Windvale host and AOT target.
 
 ## Qualification direction if WebAssembly is accepted
@@ -296,7 +298,7 @@ Browser equality should be claimed only for behavior defined by Windvale. Layout
 ## Open decisions
 
 - Is the playground's first value education, public demonstration, development inspection, or all three in a deliberately ordered interface?
-- After the implemented Stage 0 host and direct constant/checked-add slices, what cross-host and containment evidence threshold should move generated WebAssembly execution into the playground worker?
+- After the implemented Stage 0 host and bounded straight-line backend, what cross-host and containment evidence threshold should move generated WebAssembly execution into the playground worker?
 - Does direct WebAssembly compilation consume typed WIR, canonical verified WVB, or a shared machine-independent lowering model?
 - Which execution and memory limits provide useful interaction on desktop and mobile browsers?
 - Which browser engines form the first supported profile?

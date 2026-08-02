@@ -1,0 +1,6 @@
+module WebAssemblyˉstraightˉi32 profile portable;
+
+export fn Main() -> i32 {
+    20 + 22;
+    return (20 + 22) * 2 - 42;
+}

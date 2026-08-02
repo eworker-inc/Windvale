@@ -1,0 +1,5 @@
+module WebAssemblyˉcheckedˉnegateˉoverflow profile portable;
+
+export fn Main() -> i32 {
+    return -(-2147483647 - 1);
+}

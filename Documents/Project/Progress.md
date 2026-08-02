@@ -30,7 +30,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 11. Boot path and kernel | 🚧 In progress | Probe 32 remains cross-host qualified; the ABI 18 / `WVKMEM10` candidate passes all four local pinned-QEMU scenarios with the same `WVPROC11` behavior, a 134-page arena, and a 113-page client root. | Cross-host qualify compaction, then let non-tail lifetime pressure, broader traps, Hyper-V, or a third runnable choose the next kernel slice. |
 | 12. Runtime on Windvale OS | ✅ Qualified | Exact `Sum-Data.wv` and `Function-Only.wv` compiler outputs run across both hosts and Windvale OS; the second covers four functions and four scalar families. | Use a third real program or measured native-size pressure to choose further generalization. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
-| WebAssembly interoperability | 🚧 In progress | A portable `.wv` selector emits deterministic constant and checked-`i32.add` Wasm profiles from canonical WVB. Execution ABI 1 preserves success, `WVR3007`, and exact instruction counts in Node.js. | Generalize bounded `i32` instruction lowering, then qualify the profiles cross-host before playground-worker integration. |
+| WebAssembly interoperability | 🚧 In progress | A portable `.wv` selector emits deterministic Wasm from a validated, bounded, straight-line WVB `i32` stream. Locals, discard, and checked add/subtract/multiply/negate preserve success, `WVR3007`, and exact instruction counts in Node.js. | Establish Windows/Linux byte equality, then integrate the qualified slice into the playground worker before adding structured control flow. |
 
 ## Working end to end
 
@@ -44,6 +44,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Qualified compiler WVB → native file publication
 - ✅ Canonical constant WVB → Windvale-authored selector → deterministic Wasm → result `42`
 - ✅ Checked-add WVB → Windvale-authored selector → execution ABI 1 → result or `WVR3007` plus exact instruction count
+- ✅ Bounded straight-line `i32` WVB → Windvale-authored lowering → checked arithmetic → deterministic Wasm under Node.js
 - 🎯 Qualified compiler WVB → ABI-18 typed block slots → exact preflight reaches `Bytesˉfromˉu8`
 - ✅ WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
 - ✅ WVA paging mechanics → kernel-owned low-1-GiB W^X identity root
