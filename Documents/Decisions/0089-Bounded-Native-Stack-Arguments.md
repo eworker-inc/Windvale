@@ -1,7 +1,7 @@
 # Decision 0089: Bounded native stack arguments
 
 - Date: 2026-08-01
-- Status: Accepted and implemented candidate; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified
 - Extends: [Decision 0063](0063-Shared-Budget-Native-Calls-And-Static-Data.md)'s four-register internal call convention and [Decision 0069](0069-Dynamic-Native-Text-And-Complete-Wvdump.md)'s descriptor result convention
 - Advances: Native ABI 16
 - Retains: Execution-context version 7, service-table version 5, all 12 native services, WVB 1.6, WVO 1.0, and the host entry convention
@@ -28,13 +28,17 @@ Focused differential coverage must execute the maximum 64-parameter scalar call,
 
 The exact compiler WVB must pass `Compilerˉbodyˉblockˉstepˉvalid` and name its next real blocker. Complete qualification must retain zero-warning Windows and Debian builds, normalized-contract equality, portable-artifact equality, native CLI coverage, OS tests, and the permanent redirected-process UTF-8/macron regression.
 
-## Candidate evidence
+## Qualification evidence
 
 Focused Windows evidence passes a maximum-width 64-scalar call, a fifth-position borrowed-byte descriptor with a descriptor return, and a five-parameter void call through the interpreter, actual W^X execution, and linked WVO/AOT execution. Deliberately changing the 960-byte reservation, first outgoing cell, exact release, or descriptor-cell high word is rejected as `WVN3030` by independent fragment reconstruction.
 
 The fresh zero-warning Windows Standard gate on the integrated Decisions 0088 through 0090 tree passes all 67 Seed tests in 237.692 seconds. The new bounded-wide-call case takes 39 milliseconds; the unchanged golden closure remains dominant at 177.231 seconds. All 43 compiler-area tests passed in the earlier focused sweep, and all 21 current OS tests pass, including the later fixed WVB-admission slice. The retained at-most-four-parameter native probe remains byte-identical across ABI 15 and ABI 16; probe-21 firmware identities change only because Decision 0090 adds admission artifacts and evidence. The 15,798-byte candidate report has SHA-256 `310b2b003caf04e257bd14d9ae614f2bf02668fc5f6df0c26d9267ba4d1c25b1`; its 13,729-byte timing report has SHA-256 `dd663af1fa49004896174d195d822b9d088226ca3d1c8c72d61dc917d8220053`.
 
 Repeating native preflight over the exact compiler WVB now passes the former eight-parameter function and advances to `WVN2002` in `Compilerˉsourceˉwirˉcompileˉblock`. That function has 11 already-supported parameter shapes, 1,049 locals, and maximum WVB stack depth 12; the current native frame cap is 1,024 slots. Across the complete compiler, this is the only function at or above 1,024 locals; the observed maxima are 1,049 locals, stack depth 34, and locals-plus-declared-stack depth 1,061. Bounded frame admission is therefore the next measured slice. This is progress evidence, not a claim of native compiler execution.
+
+Exact integrated commit `860c69c00995de6ed048cb65f8bfb158287f19a2`, tree `5c885feac990dc65ab5a7577fd44c6d39dc55c10`, was archived as 7,057,219 bytes with SHA-256 `fdcddb7ebdbab7b791ef5e1c0e98e87fc0b4415ed5b078fe427c8920ff4c08a6`. The same archive completed Qualification in 501.3 seconds on Windows and 517.2 seconds on Debian GNU/Linux 12 x64 with .NET SDK 10.0.302. Suite times are 243.529 and 257.101 seconds; the wide-call case takes 38 and 39 milliseconds, and the golden closure takes 180.409 and 191.031 seconds.
+
+Both hosts pass zero-warning builds, all 67 Seed tests, the complete native CLI/reproduction gate—including redirected macron-bearing output—and all 21 OS tests. Their normalized contract has SHA-256 `240595dd55f602f724951e2e1d644ba577a1783606380ae584e210c82df9369b`; all 69 portable artifacts totaling 7,851,187 bytes match byte for byte. The Windows report is 15,798 bytes with SHA-256 `310b2b003caf04e257bd14d9ae614f2bf02668fc5f6df0c26d9267ba4d1c25b1`; the Debian report is 15,705 bytes with SHA-256 `f54dbe55cd43e2199423034d68917baef60d8853b23995860ad10576b6639aaa`. Independent GitHub [Verify run 30724785769](https://github.com/eworker-inc/Windvale/actions/runs/30724785769) passes its Windows and Linux jobs.
 
 ## Consequences and limits
 

@@ -1,7 +1,7 @@
 # Decision 0088: First kernel-owned x86-64 page tables
 
 - Date: 2026-08-01
-- Status: Accepted and implemented candidate; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified
 - Implements: The page-table-ownership part of [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
 - Extends: [Decision 0052](0052-First-Kernel-Owned-Memory-Foundation.md) and qualified [Decision 0086](0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md)
 - Contract: [Kernel paging version 1](../../Specifications/Windvale-Kernel-Paging.md)
@@ -24,7 +24,7 @@ Decision 0084 assigns durable policy to system-profile Windvale, irreducible arc
 - Preserve kernel memory version 1, handoff version 1, exception version 2, trap-frame version 1, shutdown version 1, execution-context version 7, WVB 1.6, WVO 1.0, and UEFI application format version 3. Decision 0089 later advances current fragment metadata from ABI 15 to ABI 16 without changing this probe's at-most-four-parameter machine code.
 - Do not claim a virtual-memory manager, process isolation, page-fault handling, reclamation, user mode, mappings above 1 GiB, or a public page-map API.
 
-## Candidate evidence
+## Qualification evidence
 
 Local Windows evidence records:
 
@@ -37,7 +37,9 @@ Local Windows evidence records:
 - a 22,016-byte invalid-opcode image with SHA-256 `aa610e6ac00ed43466a87521bb4cebb2934d0885acb960db8913f025ced9cce9`, normalized `(6, 0)`, and exit code 3; and
 - a 22,016-byte general-protection image with SHA-256 `74632fcde4873f2d46e18b1b77c5cc8b495e83f0f750930e039da27dd67cd0ee`, normalized `(13, 0)`, and exit code 3.
 
-The normal path executes the portable WVB-derived object, compiler-generated `.wv` Main, and WVA shutdown after activation. Decision 0089's ABI-16 candidate leaves this probe's WVO and all three firmware identities byte-identical, and all 20 OS tests continue to pass. The two fault scenarios prove the WVA entries and Stage 0 terminal policy remain reachable through the new root. This is candidate evidence only; complete cross-host and independent CI qualification remain pending.
+The normal path executes the portable WVB-derived object, compiler-generated `.wv` Main, and WVA shutdown after activation. Decision 0089's ABI-16 extension leaves this probe's WVO byte-identical. The two fault scenarios prove the WVA entries and Stage 0 terminal policy remain reachable through the new root.
+
+Exact integrated commit `860c69c00995de6ed048cb65f8bfb158287f19a2` qualifies this page-table contract together with Decisions 0089 and 0090. Windows and Debian pass zero-warning Qualification with all 67 Seed tests and all 21 OS tests; normalized contracts and all 69 portable artifacts match. Pinned QEMU passes probe 21's normal, invalid-opcode, and general-protection scenarios under this unchanged root. Independent GitHub [Verify run 30724785769](https://github.com/eworker-inc/Windvale/actions/runs/30724785769) passes both host jobs.
 
 ## Consequences
 
@@ -45,7 +47,7 @@ Windvale no longer relies on firmware's page-table root after the bounded transi
 
 The construction emitter remains C# Stage 0 and is therefore intentionally temporary. Its named export, four imports, independent table oracle, exact object identity, and WVA-owned privileged calls make the replacement boundary explicit. Moving the constructor into `.wv` requires checked 64-bit integers, bounded unsafe memory operations, and enough control flow; moving more of it into WVA requires equivalent semantic validation rather than raw bytes.
 
-The fixed low-1-GiB identity map is not the future process layout. It is the bridge used by candidate [Decision 0090](0090-First-In-Guest-Wvb-Admission.md): AOT Windvale code validates one embedded canonical WVB inside the guest before its native derivative executes. Process-specific address spaces and page-fault policy come later.
+The fixed low-1-GiB identity map is not the future process layout. It is the bridge used by qualified [Decision 0090](0090-First-In-Guest-Wvb-Admission.md): AOT Windvale code validates one embedded canonical WVB inside the guest before its native derivative executes. Process-specific address spaces and page-fault policy come later.
 
 ## Reconsider when
 

@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-WVB admission version 1 is the implemented candidate owned by [Decision 0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md). It proves that AOT Windvale code running inside the guest validates one embedded canonical WVB before the native derivative of those exact bytes executes.
+WVB admission version 1 is the cross-host-qualified fixed profile owned by [Decision 0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md). It proves that AOT Windvale code running inside the guest validates one embedded canonical WVB before the native derivative of those exact bytes executes.
 
 This is a fixed bootstrap admission profile, not the general semantic WVB verifier, a loader, an interpreter, a JIT, or a stable public ABI.
 
@@ -56,7 +56,7 @@ The 163-byte bridge body exported as `Windvale_kernel_x64_wvb_admission` perform
 
 The bridge is a Stage 0 machine emitter and replacement seam. Admission policy lives in Windvale. The later portable probe and system-profile kernel Main retain their prior contracts and run only after this sequence succeeds.
 
-## Exact candidate artifacts
+## Exact qualified artifacts
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -66,7 +66,7 @@ The bridge is a Stage 0 machine emitter and replacement seam. Admission policy l
 | Admission WVO | 24,445 | `5b11e97e5bb9746daa911559ea9a7a204419fe2cded44977163430185e7d150d` |
 | Admission bridge WVO | 481 | `eb229f4fbf104c67e3402280016355da87a3bda51ffcb361c07d709815060f39` |
 
-These identities are candidate evidence until exact Windows/Debian qualification is recorded.
+Exact commit `860c69c` reproduces these identities under all 21 OS tests on Windows and Debian and all three pinned-QEMU scenarios. Independent GitHub Windows/Linux verification also passes.
 
 ## Non-claims and next boundary
 

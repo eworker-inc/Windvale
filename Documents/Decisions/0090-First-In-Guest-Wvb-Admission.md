@@ -1,9 +1,9 @@
 # Decision 0090: First in-guest WVB admission
 
 - Date: 2026-08-01
-- Status: Accepted and implemented candidate; cross-host qualification pending
+- Status: Accepted, implemented, and cross-host qualified
 - Implements: Step 3 of [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
-- Extends: Candidate [Decision 0088](0088-First-Kernel-Owned-X64-Page-Tables.md)
+- Extends: Qualified [Decision 0088](0088-First-Kernel-Owned-X64-Page-Tables.md)
 - Contract: [Windvale OS WVB admission version 1](../../Specifications/Windvale-Os-Wvb-Admission.md)
 
 ## Context
@@ -17,14 +17,14 @@ The current native backend intentionally exposes one source-level `Main() -> i32
 - Define WVB admission version 1 as an intentionally fixed profile for the exact 174-byte canonical WVB 1.6 produced from `Embedded-Wvb-Program.wv`.
 - Implement the live admission decision in portable Windvale source `Wvb-Admission.wv`. It checks the WVB header, version, seven exact section envelopes, total length, and every byte against the accepted canonical identity. It returns token 73 only after all checks succeed and returns zero for rejection.
 - Embed both candidate and accepted bytes in the verifier's immutable read-only data. Stage 0 must prove that the candidate bytes in the checked-in verifier source equal the canonical compiler output before constructing an image.
-- AOT-compile the verifier and embedded program independently through the ordinary verified WVB, shared ABI-15 native backend, fragment verifier, and WVO sink. Rename only their external `Main` symbols at the verified object boundary to `Windvale_kernel_wvb_admit` and `Windvale_kernel_embedded_main`; preserve source semantics and object relocations.
+- AOT-compile the verifier and embedded program independently through the ordinary verified WVB, shared ABI-16 native backend, fragment verifier, and WVO sink. Their at-most-four-parameter code remains byte-identical to ABI 15. Rename only their external `Main` symbols at the verified object boundary to `Windvale_kernel_wvb_admit` and `Windvale_kernel_embedded_main`; preserve source semantics and object relocations.
 - Add one exact bridge export, `Windvale_kernel_x64_wvb_admission`. It constructs a service-free context with instruction budget 8,948 and call-depth budget 2, calls the verifier first, accepts only token 73, then calls the admitted program and accepts only result 29. A rejection, runtime trap, exhausted budget, or wrong result returns failure without reaching the later call.
-- Tail-transfer to the retained portable native probe only after both new calls succeed. The prior ABI-15 borrowed-byte evidence and compiler-generated system-profile Main remain unchanged behind this gate.
+- Tail-transfer to the retained portable native probe only after both new calls succeed. The prior ABI-15 borrowed-byte machine evidence and compiler-generated system-profile Main remain unchanged behind this ABI-16 gate.
 - Advance the WVA kernel seam to version 7 and the firmware probe to version 21. The WVA Main shim enters the admission bridge. System-profile Windvale emits `wvb-admission=pass` only after the admission bridge, admitted AOT module, and retained native probe return successfully.
 - Keep source parsing, canonical WVB production, AOT compilation, object-symbol adaptation, linking, PE32+ packaging, and independent verification in named C# Stage 0 seams. They remain replacement and recovery machinery, not guest admission policy.
 - Do not claim a general WVB decoder, complete semantic verifier, runtime loader, interpreter, JIT, process boundary, capability table, or user-mode execution.
 
-## Candidate evidence
+## Qualification evidence
 
 Local Windows evidence records:
 
@@ -39,7 +39,7 @@ Local Windows evidence records:
 - a 47,104-byte invalid-opcode image with SHA-256 `0bbc0b6eedbd21aef853a2233d3fa3dbaa9564eca36f3344067b1c9b240237fc`, normalized `(6, 0)`, and exit code 3; and
 - a 47,104-byte general-protection image with SHA-256 `724907ffd0963f015003c91431b79b728109ed861de73f3c1b0bf5e7b58568b6`, normalized `(13, 0)`, and exit code 3.
 
-The complete Windows/Debian qualification gate and independent CI have not been run for this candidate. Decision 0087 at exact commit `12e9e2e` remains the latest cross-host-qualified baseline.
+Exact integrated commit `860c69c00995de6ed048cb65f8bfb158287f19a2` passes zero-warning Windows and Debian Qualification with all 67 Seed tests, the complete native CLI/reproduction gate, and all 21 OS tests. Normalized contracts match, and all 69 portable artifacts totaling 7,851,187 bytes are byte-identical. Exact-archive pinned QEMU reproduces all three 47,104-byte images and accepted serial outcomes above. Independent GitHub [Verify run 30724785769](https://github.com/eworker-inc/Windvale/actions/runs/30724785769) passes both host jobs. Decision 0090 therefore supersedes the pre-paging Decision 0087 baseline as the latest qualified OS composition without claiming a general verifier, loader, or isolated runtime.
 
 ## Consequences
 

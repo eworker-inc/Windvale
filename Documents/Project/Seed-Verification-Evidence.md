@@ -3,8 +3,8 @@
 - Evidence date: 2026-08-01
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified commit: `50294d9d5cc24edc26a3e56994cb3aa28e16352c`
-- Latest pinned Windvale OS qualified candidate: `50294d9d5cc24edc26a3e56994cb3aa28e16352c`
+- Latest cross-host Seed qualified commit: `860c69c00995de6ed048cb65f8bfb158287f19a2`
+- Latest pinned Windvale OS qualified commit: `860c69c00995de6ed048cb65f8bfb158287f19a2`
 
 ## Requirement evidence
 
@@ -886,7 +886,7 @@ After evidence retrieval and comparison, the exact Debian QA trees, transferred 
 
 This supersedes Decision 0083 as the latest qualified native-runtime and OS evidence. It qualifies all twelve current native service leaves, bounded whole-file publication, WVA-owned Q35 shutdown, normalized vector-6/vector-13 terminal entries, and composed probe 20. It does not qualify ABI-16 stack arguments, native compiler execution, Windvale-owned platform memory calls or service-table construction, a general trap/interrupt system, in-guest WVB loading, page-table ownership, standalone native host tools, Hyper-V, or .NET retirement.
 
-## Bounded native stack-argument candidate
+## Bounded native stack-argument and probe-21 qualification
 
 Decision 0089 replaces the current fragment target with ABI 16 while retaining execution-context version 7 and service-table version 5. Positions zero through three keep the prior register convention. Each later position receives one exact 16-byte outgoing cell; the source-language maximum of 64 parameters therefore bounds a call-site reservation to 960 bytes. The caller releases that reservation before packed-status propagation, and the callee copies every later scalar or descriptor into its own initialized frame.
 
@@ -896,7 +896,17 @@ The fresh zero-warning Windows Standard gate on the integrated Decisions 0088 th
 
 The exact 599,868-byte compiler WVB contains 328 functions: 103 require five through 23 parameters. ABI 16 passes the former eight-parameter blocker and all wider signatures before preflight stops at `WVN2002` in `Compilerˉsourceˉwirˉcompileˉblock`. That function has 11 supported parameters, 1,049 locals, and declared stack depth 12 against the native frame's current 1,024-slot cap. It is the compiler's only function at or above 1,024 locals; observed maxima are 1,049 locals, stack depth 34, and locals-plus-declared-stack depth 1,061. The next slice must measure lowered numbered-value pressure before choosing a larger fixed frame or deterministic slot reuse.
 
-Cross-host qualification, normalized-report comparison, portable-artifact comparison, complete OS evidence, and independent CI remain pending for this candidate. No native compiler execution, frame-bound expansion, register allocation, standalone host compiler, or .NET retirement is claimed.
+Exact integrated commit `860c69c00995de6ed048cb65f8bfb158287f19a2`, tree `5c885feac990dc65ab5a7577fd44c6d39dc55c10`, was published to both configured remotes. Its 7,057,219-byte source archive has SHA-256 `fdcddb7ebdbab7b791ef5e1c0e98e87fc0b4415ed5b078fe427c8920ff4c08a6` and retained the same digest after transfer to the isolated Debian GNU/Linux 12 x64 QA host with .NET SDK `10.0.302`.
+
+Windows and Debian pass zero-warning Release builds, all 67 Seed tests, exact compiler and retained-WVB reproduction, and the complete native CLI gate. Complete Qualification takes 501.3 and 517.2 seconds wall-clock, with suite times of 243.529 and 257.101 seconds. The bounded-wide-call case takes 38 and 39 milliseconds; the golden contract remains dominant at 180.409 and 191.031 seconds. The permanent redirected native-process UTF-8/macron regression passes on both hosts.
+
+The 15,798-byte Windows report has SHA-256 `310b2b003caf04e257bd14d9ae614f2bf02668fc5f6df0c26d9267ba4d1c25b1`; its 13,728-byte timing report has SHA-256 `79a7e3e22accc8fafec9a8b710d7e194cd670acf009bcbbf02f5f2b527f47415`. The 15,705-byte Debian report has SHA-256 `f54dbe55cd43e2199423034d68917baef60d8853b23995860ad10576b6639aaa`; its 13,280-byte timing report has SHA-256 `1734843c35e47362099726443a25242ed216cda562de10c0f099f4c626308ffe`. The built-in comparator confirms exact normalized-contract equality; the canonical compact contract has SHA-256 `240595dd55f602f724951e2e1d644ba577a1783606380ae584e210c82df9369b`.
+
+All 69 portable artifacts, totaling 7,851,187 bytes, match byte for byte. The directly retrieved 2,335,941-byte Debian evidence bundle has SHA-256 `d39b1d8c8494a76337e36b492c07ca9d3342025b8062cf16c4fa55d96e0621f5`. Both exact hosts pass all 21 OS tests. Exact-archive pinned QEMU reproduces all three 47,104-byte probe-21 images: normal SHA-256 `c3a07e1a6c8f162720a3dcd690fdb945bd862b360b26665c53e5be0642a87c38` exits 0 after the complete paging/admission/shutdown transcript; invalid-opcode SHA-256 `0bbc0b6eedbd21aef853a2233d3fa3dbaa9564eca36f3344067b1c9b240237fc` emits `(6, 0)` and exits 3; general-protection SHA-256 `724907ffd0963f015003c91431b79b728109ed861de73f3c1b0bf5e7b58568b6` emits `(13, 0)` and exits 3.
+
+GitHub [Verify run 30724785769](https://github.com/eworker-inc/Windvale/actions/runs/30724785769) independently passes classification plus Windows and Linux Qualification for the exact implementation commit. This supersedes Decision 0087 as the latest qualified native-runtime and OS evidence. It qualifies ABI 16 stack arguments, kernel-owned page tables, and one fixed Windvale-owned verify-before-execute WVB admission path. It does not qualify native compiler execution, frame-bound expansion, register allocation, a general guest verifier/loader, process isolation, standalone host tools, Hyper-V, or .NET retirement.
+
+After evidence retrieval and comparison, the resolved exact Debian QA directory, transferred source archive, and remote evidence bundle were removed and confirmed absent. The exact local archive, Windows artifacts, and retrieved Debian evidence bundle remain retained.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel paging version 1 defines the first page-table root owned and activated by the Windvale kernel after `ExitBootServices`. It is implemented by firmware probe 20 and recorded by [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md). Candidate probe 21 composes the unchanged root with [Decision 0090's](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md) WVB admission path. Local Windows tests and pinned-QEMU scenarios pass; cross-host qualification is pending.
+Kernel paging version 1 defines the first page-table root owned and activated by the Windvale kernel after `ExitBootServices`. It is implemented by firmware probe 20 and recorded by [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md). Qualified probe 21 composes the unchanged root with [Decision 0090's](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md) WVB admission path. Exact commit `860c69c` passes Windows/Debian Qualification, all 21 OS tests on both hosts, and all three pinned-QEMU scenarios.
 
 This is a bounded single-address-space foundation. It replaces inherited firmware translation state with a deterministic identity map, a null-page guard, NX enforcement, supervisor write protection, and one fixed executable window. It does not define a virtual-memory manager, address-space isolation, demand paging, reclamation, user mode, or a public mapping API.
 
@@ -84,13 +84,13 @@ The host planner reports:
 | `WVOS5002` | The executable address is unaligned or cannot be represented by the two admitted code tables. |
 | `WVOS5003` | The table allocation overlaps the executable window. |
 
-The candidate paging WVO is 1,244 bytes with SHA-256 `deeebe592b38890c9964cc4d9736b1d617c0d6b20bed494ba533dcb9b1d4f318`; its 851 code bytes have SHA-256 `12cbb64dad4558f94fd7075995cb5ac8a788ed5476999d14d2a585b310021678`. Its four relocations are exact, relative, and target only the four named imports.
+The qualified paging WVO is 1,244 bytes with SHA-256 `deeebe592b38890c9964cc4d9736b1d617c0d6b20bed494ba533dcb9b1d4f318`; its 851 code bytes have SHA-256 `12cbb64dad4558f94fd7075995cb5ac8a788ed5476999d14d2a585b310021678`. Its four relocations are exact, relative, and target only the four named imports.
 
 Firmware probe 20 produces three exact 22,016-byte PE32+ images. The normal image has SHA-256 `392a2801bd8d8895bd9c34213336a69057c1ae81675269056c60b8c3e974ab01` and powers off with host code 0. The invalid-opcode image has SHA-256 `aa610e6ac00ed43466a87521bb4cebb2934d0885acb960db8913f025ced9cce9`; the general-protection image has SHA-256 `74632fcde4873f2d46e18b1b77c5cc8b495e83f0f750930e039da27dd67cd0ee`. Both faults occur after activation, retain their normalized error evidence, and terminate with host code 3.
 
-Composed probe 21 produces three 47,104-byte images and retains the same paging object and activation order. All three pinned-QEMU scenarios pass after the added in-guest admission path; Decision 0090 records their exact identities. Neither candidate has completed exact cross-host qualification.
+Composed probe 21 produces three 47,104-byte images and retains the same paging object and activation order. All three exact-archive pinned-QEMU scenarios pass after the added in-guest admission path; Decision 0090 records their exact identities.
 
-Local evidence includes all 20 OS tests, all 6 focused assembler tests, and all three pinned-QEMU scenarios. Complete Windows/Debian qualification and independent GitHub evidence remain pending.
+Qualification evidence includes all 21 OS tests on Windows and Debian, all 6 focused assembler tests, all three pinned-QEMU scenarios, and independent GitHub Windows/Linux verification at exact commit `860c69c`.
 
 ## Deliberate limits
 

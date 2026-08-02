@@ -217,6 +217,8 @@ Decision 0083 adds one separate focused test because executable-image state and 
 
 Exact commit `a898fe8` completes concurrent Qualification in 484.1 seconds on Windows and 513.7 seconds on Debian, with suite times of 240.113 and 256.330 seconds. The exact-host lifetime case takes 12 and 14 milliseconds. Both hosts pass zero-warning builds, all 64 Seed tests, all 17 OS tests, and the complete CLI gate; normalized reports and all 69 portable artifacts match. Both pinned-QEMU probe-17 scenarios retain their qualified identities. Publication-lifetime ownership therefore adds a milliseconds-scale edit signal and does not move the qualification bottleneck away from the unchanged golden compiler closure.
 
+Decision 0089 follows the same throughput rule with one focused wide-call case. Exact integrated commit `860c69c` completes concurrent Qualification in 501.3 seconds on Windows and 517.2 seconds on Debian, with suite times of 243.529 and 257.101 seconds. The wide-call case takes 38 and 39 milliseconds while the golden closure takes 180.409 and 191.031 seconds. Both hosts pass zero-warning builds, all 67 Seed tests, all 21 OS tests, and the complete CLI/reproduction gate; normalized contracts and all 69 portable artifacts match. All three exact probe-21 QEMU scenarios and GitHub's Windows/Linux gate pass. ABI 16 therefore removes 103 real compiler signature blockers without moving the edit-time loop or milestone bottleneck materially.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.
