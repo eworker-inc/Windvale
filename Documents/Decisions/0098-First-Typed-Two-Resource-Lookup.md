@@ -1,9 +1,10 @@
 # Decision 0098: First typed two-resource lookup
 
-- Status: Candidate
+- Status: Qualified
 - Date: 2026-08-02
 - Owners: Windvale compiler/runtime and operating-system boundaries
 - Extends: [Decision 0097](0097-First-Terminal-Resource-Borrow-Revocation.md)
+- Contracts: protected process 8, resource record 3, `WVBR002`, kernel memory 6, interpreter profile 4, and firmware probe 29
 
 ## Context
 
@@ -34,6 +35,8 @@ The next measured pressure is a second real input: a four-byte execution budget 
 - Interpreter coverage for exact budget `4`, exhausted budget `3`, zero, oversized, malformed-length, and missing-name cases.
 - Exact proof that the two source pages and two client PTEs are distinct, that no client-owned placeholder page backs either alias, and that the 63-page allocator is exhausted at the new exact final cursor. The four-page stack must pass all pinned scenarios; the measured three-page configuration must not be recorded as sufficient.
 - Focused Windows OS tests, all four pinned-QEMU scenarios, deterministic artifact identities, and the repository's Windows/Debian qualification gate before this decision becomes Qualified.
+
+Exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` satisfies this evidence in GitHub [Verify run 30745623111](https://github.com/eworker-inc/Windvale/actions/runs/30745623111). Windows and digest-pinned Debian 12 each pass all 67 Seed tests, all 25 OS tests, and the complete non-Fast verifier; the Seed suites take 229.159 seconds and 196.686 seconds respectively. The 56 SHA-256 values emitted by both qualification logs match in exact order. All four pinned-QEMU scenarios pass on Windows with the identities recorded below; the workflow does not claim Debian QEMU execution.
 
 ## Consequences
 

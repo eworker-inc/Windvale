@@ -27,8 +27,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
 | 9. Shared native backend | 🎯 Current transfer | ABI 16/context 7, all 12 native service leaves, and verified internal calls through 64 parameters are qualified; exact compiler preflight passes the former eight-parameter blocker. | Admit the compiler's sole 1,049-local function under a measured frame contract. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
-| 11. Boot path and kernel | 🚧 In progress | Qualified probe 28 cleans one borrow; candidate probe 29 atomically grants and cleans a typed WVB/budget pair and measures a four-page kernel stack. | Cross-host qualify probe 29, then let actual page/root reuse, independent lifetime, broader input, or a third runnable measure the next boundary. |
-| 12. Runtime on Windvale OS | 🚧 In progress | Candidate process `2` reads typed WVB and execution-budget resources, charges four opcodes, and loses both aliases at terminal state. | Qualify the pair, then broaden semantics only for a measured program; keep JIT publication outside the kernel. |
+| 11. Boot path and kernel | 🚧 In progress | Qualified probe 29 atomically grants and cleans a typed WVB/budget pair and measures a four-page kernel stack. | Let actual page/root reuse, independent lifetime, broader input, or a third runnable measure the next boundary. |
+| 12. Runtime on Windvale OS | 🚧 In progress | Qualified process `2` reads typed WVB and execution-budget resources, charges four opcodes, and loses both aliases at terminal state. | Broaden semantics only for a measured program; keep JIT publication outside the kernel. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 
 ## Working end to end
@@ -54,7 +54,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Probe 26 → separate RO/NX WVB boot resource → Windows/pinned-Debian Seed and OS qualification plus four Windows pinned-QEMU scenarios
 - ✅ Probe 27 → Windvale init selection → one-shot immutable grant → Windows/pinned-Debian Seed and OS qualification plus four Windows pinned-QEMU scenarios
 - ✅ Probe 28 → terminal borrower → cleared alias and private publication → 67/67 Seed and 25/25 OS tests on Windows and Debian plus four Windows pinned-QEMU scenarios
-- 🚧 Probe 29 → atomic typed WVB/budget set → exact WVA lookup and Windvale opcode charging → 25/25 local OS tests plus four Windows pinned-QEMU scenarios; cross-host qualification pending
+- ✅ Probe 29 → atomic typed WVB/budget set → exact WVA lookup and Windvale opcode charging → 67/67 Seed and 25/25 OS tests on Windows and Debian plus four Windows pinned-QEMU scenarios
 
 ## Reading the evidence
 

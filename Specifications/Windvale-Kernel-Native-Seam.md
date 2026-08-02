@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel native seam version 16, WVA seam version 8, admission bridge version 2, retained bridge 10, paging version 3, and interpreter profile number 4 remain active in candidate probe 29. The composition advances memory to version 6, protected processes to version 8, resource records to version 3, and the OS-private resource directory to `WVBR002`. The interpreter implementation changes while retaining profile number 4. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns the candidate; probe 28 remains the latest qualified integrated baseline.
+Kernel native seam version 16, WVA seam version 8, admission bridge version 2, retained bridge 10, paging version 3, and interpreter profile number 4 remain active in qualified probe 29. The composition advances memory to version 6, protected processes to version 8, resource records to version 3, and the OS-private resource directory to `WVBR002`. The interpreter implementation changes while retaining profile number 4. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns the qualified composition.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 
@@ -121,4 +121,4 @@ Qualified probe 27 retains the same ABI, WVA, admission, and native bridges whil
 
 Qualified probe 28 advances only the process composition to version 7. Its normal process-machine WVO is 138,751 bytes with SHA-256 `19da37cdc044505a92410449a14e72c35ed8573b409c095b0b9a8a8f9d21f065`. Exact implementation commit `b2197fa` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12; all four Windows pinned-QEMU scenarios pass.
 
-Candidate probe 29 retains ABI 16, context 7, service-table 5, WVA seam 8, admission bridge 2, retained bridge 10, and paging 3. Its normal process-machine WVO is 149,483 bytes with SHA-256 `b18ccf8f4c2eb065d017e2fafb2254fbf0299af1cf0eb130c3ca3405a34392e2`; its fault form is 149,531 bytes with SHA-256 `a3bc89dbdd1539934417ae03f4375bd36af1ef6617d1b4f7651b5955f923ebd0`. All 25 local OS tests and four pinned-QEMU scenarios pass. Cross-host qualification remains pending.
+Qualified probe 29 retains ABI 16, context 7, service-table 5, WVA seam 8, admission bridge 2, retained bridge 10, and paging 3. Its normal process-machine WVO is 149,483 bytes with SHA-256 `b18ccf8f4c2eb065d017e2fafb2254fbf0299af1cf0eb130c3ca3405a34392e2`; its fault form is 149,531 bytes with SHA-256 `a3bc89dbdd1539934417ae03f4375bd36af1ef6617d1b4f7651b5955f923ebd0`. Exact implementation commit `3fd9ef7` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12; all four Windows pinned-QEMU scenarios pass.

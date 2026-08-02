@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Protected-process contract version 8 is the candidate Probe 29 boundary for one atomic, typed, two-resource borrow. It extends the cross-host-qualified version-7 terminal cleanup from Probe 28 without changing the stable language or native ABI contracts.
+Protected-process contract version 8 is the cross-host-qualified Probe 29 boundary for one atomic, typed, two-resource borrow. It extends the version-7 terminal cleanup from Probe 28 without changing the stable language or native ABI contracts.
 
-[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns candidate version 8. [Decision 0097](../Documents/Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) remains the latest qualified protected-process baseline until Probe 29 completes Windows and Debian qualification.
+[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns qualified version 8. Exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` passes Windows and Debian qualification in GitHub [Verify run 30745623111](https://github.com/eworker-inc/Windvale/actions/runs/30745623111).
 
 This is an internal experiment, not a stable syscall ABI, general process manager, dynamic namespace, transferable capability system, arbitrary WVB loader, complete verifier, or JIT.
 
@@ -18,7 +18,7 @@ This is an internal experiment, not a stable syscall ABI, general process manage
 
 ## Fixed resources, roles, and budgets
 
-The candidate binds four canonical SHA-256 identities:
+Version 8 binds four canonical SHA-256 identities:
 
 | Identity | SHA-256 | Authority |
 | --- | --- | --- |
@@ -29,7 +29,7 @@ The candidate binds four canonical SHA-256 identities:
 
 Init is process/thread `1/1`, has five user pages, instruction budget `64`, call-depth budget `1`, runtime profile `1`, one handle, and three syscalls. The interpreter is process/thread `2/2`, has 38 pre-grant and 40 post-grant user pages, instruction budget `4,822`, call-depth budget `3`, runtime profile `4`, one handle, and two syscalls. Both retain result `29`, capability slot `0`, generation `1`, reference `65536`, and channel capacity `1`.
 
-Policy WVB must return token `97` before channel, resource, paging, descriptor, or MSR state is published. The candidate's larger policy requires the kernel's measured four-page owned stack; three pages do not complete process construction under pinned QEMU.
+Policy WVB must return token `97` before channel, resource, paging, descriptor, or MSR state is published. Version 8's larger policy requires the kernel's measured four-page owned stack; three pages do not complete process construction under pinned QEMU.
 
 ## Separate address spaces
 
@@ -135,7 +135,7 @@ The user-fault scenario sends `29` and executes privileged `CLI`; the same two-r
 | `WVOS6202` | The record set is not two exact live typed borrows. |
 | `WVOS6203` | A live alias, digest, PTE address, service, or private directory differs from the admitted grant. |
 
-## Deterministic candidate evidence
+## Deterministic qualified evidence
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -155,7 +155,7 @@ The user-fault scenario sends `29` and executes privileged `CLI`; the same two-r
 | Fault process-machine WVO | 149,531 | `a3bc89dbdd1539934417ae03f4375bd36af1ef6617d1b4f7651b5955f923ebd0` |
 | Fault process-machine code | 10,119 | `0b9941bab32ad8d01daeba277fe9e118f82de0974b4b68fb86582e1f5e0b06c6` |
 
-The local Windows candidate passes all 25 focused OS tests and all four pinned-QEMU Probe 29 scenarios. Cross-host qualification is still required before version 8 becomes Qualified.
+Windows and digest-pinned Debian 12 pass all 67 Seed tests, all 25 OS tests, and the complete non-Fast verifier for exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c`. All four pinned-QEMU Probe 29 scenarios pass on Windows.
 
 ## Deliberate limits
 

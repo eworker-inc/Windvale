@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Firmware probe 29 is the current candidate typed-resource proof. It composes ABI 16/context 7, WVA seam 8, admission bridge 2, retained bridge 10, memory 6, paging 3, protected processes 8, interpreter profile 4, `WVRES003`, and `WVBR002`.
+Firmware probe 29 is the current cross-host-qualified typed-resource proof. It composes ABI 16/context 7, WVA seam 8, admission bridge 2, retained bridge 10, memory 6, paging 3, protected processes 8, interpreter profile 4, `WVRES003`, and `WVBR002`.
 
-[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns Probe 29. Exact commit `b2197fa4fb78b26d75e4fd5269cde590cbd98dcf` and Probe 28 remain the latest fully cross-host-qualified OS baseline; GitHub [Verify run 30741650532](https://github.com/eworker-inc/Windvale/actions/runs/30741650532) passed Windows and Debian. Probe 29 currently has local Windows focused and pinned-QEMU evidence and still requires cross-host qualification.
+[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns Probe 29. Exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` passes all 67 Seed tests, all 25 OS tests, and the complete non-Fast verifier on Windows and digest-pinned Debian 12 in GitHub [Verify run 30745623111](https://github.com/eworker-inc/Windvale/actions/runs/30745623111). All four pinned-QEMU scenarios pass on Windows.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 
@@ -16,7 +16,7 @@ Stage 0 also creates the loader, memory, exception, paging, admission bridge, pr
 
 The linked kernel payload starts at entry offset zero and fits the fixed 256 KiB supervisor RX window. The init image fits one user RX page; the client image fits 33 user RX pages. Generated WVB, WVO, EFI, firmware, maps, and virtual disks are not committed.
 
-Key candidate identities are recorded in [Windvale-Protected-Process.md](Windvale-Protected-Process.md) and [Windvale-Os-Bytecode-Interpreter.md](Windvale-Os-Bytecode-Interpreter.md). Complete image identities are:
+Key qualified identities are recorded in [Windvale-Protected-Process.md](Windvale-Protected-Process.md) and [Windvale-Os-Bytecode-Interpreter.md](Windvale-Os-Bytecode-Interpreter.md). Complete image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |

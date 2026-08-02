@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Kernel memory version 6 is the Probe 29 candidate. It expands the qualified version-5 arena from 60 to 63 pages: one page for init's second owned resource and two pages for the measured growth from a two-page to a four-page kernel stack.
+Kernel memory version 6 is the qualified Probe 29 contract. It expands the version-5 arena from 60 to 63 pages: one page for init's second owned resource and two pages for the measured growth from a two-page to a four-page kernel stack.
 
-[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns candidate version 6. Version 5 remains the latest cross-host-qualified memory baseline through Probe 28.
+[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns qualified version 6. Exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` passes Windows and Debian qualification in GitHub [Verify run 30745623111](https://github.com/eworker-inc/Windvale/actions/runs/30745623111).
 
 This is one bounded boot arena, not a general physical-memory manager. Allocation remains monotonic, deterministic, visibly finite, and release-free.
 
@@ -78,7 +78,7 @@ The 48-byte `WVKHAND1` record is copied to `arena + 64`; its map pointer remains
 
 Malformed and random inputs must remain bounded and must not escape index, arithmetic, or allocation exceptions.
 
-## Candidate evidence and limits
+## Qualified evidence and limits
 
 Probe 29 adds `typed-resources=pass` between `resource-grant=pass` and `resource-revoked=pass`. The four clean Windows QEMU identities are:
 

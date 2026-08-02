@@ -102,7 +102,7 @@ A process is conceptually a protection domain containing:
 - explicit memory, instruction, handle, and other resource budgets;
 - lifecycle, result, fault, and diagnostic state.
 
-This conceptual model is accepted. Qualified protected-process version 7 supplies the terminal-cleanup baseline. Candidate [version 8](../../Specifications/Windvale-Protected-Process.md) pressures that representation with separate init and interpreter roots, role-specific W^X extents, two init-owned typed RO/NX resources, one ordered atomic grant, two client aliases, execution-budget enforcement, automatic terminal cleanup, reduced rights, one kernel-owned capacity-one result channel, and closed lifecycle/fault/result evidence. That representation is implementation evidence, not yet a stable public process ABI.
+This conceptual model is accepted. Qualified protected-process [version 8](../../Specifications/Windvale-Protected-Process.md) pressures that representation with separate init and interpreter roots, role-specific W^X extents, two init-owned typed RO/NX resources, one ordered atomic grant, two client aliases, execution-budget enforcement, automatic terminal cleanup, reduced rights, one kernel-owned capacity-one result channel, and closed lifecycle/fault/result evidence. That representation is implementation evidence, not yet a stable public process ABI.
 
 A capability identifies a kernel-mediated object plus permitted operations. The current experiment uses slot 0, generation 1, machine reference 65536, a send-only client right, and init's combined receive-plus-fixed-grant rights. The one reference still names a deliberately closed boot contract rather than a general object table. The kernel checks every component before either channel or resource state changes. General capability allocation, transfer, revocation, and generation rollover remain unimplemented. References must not be recovered from raw addresses, and the current integer encoding remains internal and replaceable.
 
@@ -145,7 +145,7 @@ The current Windows/Linux bootstrap has already moved the allowed allocate/copy/
 
 ## Boot and trust chain
 
-The first x86-64 path remains UEFI-based and evidence-driven. Qualified probes 24 through 28 establish interpretation, section-derived validation, runtime-supplied WVB, init ownership/grant, and terminal cleanup. Candidate probe 29 adds a second typed execution-budget resource, atomic publication, and two-alias cleanup:
+The first x86-64 path remains UEFI-based and evidence-driven. Qualified probes 24 through 29 establish interpretation, section-derived validation, runtime-supplied WVB, init ownership/grant, terminal cleanup, and a second typed execution-budget resource with atomic publication and two-alias cleanup:
 
 1. A narrow loader validates its bounded inputs, captures the versioned handoff, loads the selected AOT kernel and boot resources, and exits boot services.
 2. The kernel takes ownership of memory, its stack, exception state, page tables, and deterministic diagnostics. Firmware services are not used after the accepted exit boundary.
@@ -217,7 +217,7 @@ Each step must be useful, bounded, and independently qualified:
 
 Qualified [Decision 0097](../Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) advances probe 28. The Windvale policy requires zero live mappings after the borrower becomes terminal. Stage 0 revalidates the exact live borrow, accepts only the x86 processor-maintained leaf accessed bit, clears the client PTE and complete private resource publication, preserves init ownership and one historical grant, then reloads init's CR3. This is bounded lifecycle evidence, not page reclamation, reusable address-space teardown, SMP shootdown, or a general revocation interface.
 
-Candidate [Decision 0098](../Decisions/0098-First-Typed-Two-Resource-Lookup.md) advances probe 29. Init selects the ordered set `(1,2)` containing the WVB and a separate four-byte execution budget. The kernel publishes two distinct RO/NX aliases and `WVBR002` atomically; the WVA leaf performs typed lookup; the Windvale interpreter charges budget per opcode; terminal cleanup revalidates and clears the complete pair. Pinned QEMU also measures a four-page kernel stack as necessary for the enlarged Windvale policy. This is still a fixed two-entry set with one lifetime, not dynamic enumeration, package lookup, independent revocation, or reclamation.
+Qualified [Decision 0098](../Decisions/0098-First-Typed-Two-Resource-Lookup.md) advances probe 29. Init selects the ordered set `(1,2)` containing the WVB and a separate four-byte execution budget. The kernel publishes two distinct RO/NX aliases and `WVBR002` atomically; the WVA leaf performs typed lookup; the Windvale interpreter charges budget per opcode; terminal cleanup revalidates and clears the complete pair. Pinned QEMU also measures a four-page kernel stack as necessary for the enlarged Windvale policy. This is still a fixed two-entry set with one lifetime, not dynamic enumeration, package lookup, independent revocation, or reclamation.
 
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 

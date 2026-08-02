@@ -2,11 +2,11 @@
 
 ## Status and purpose
 
-Kernel paging version 3 remains the active byte-identical contract in candidate probe 29. It retains the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and fixed 256 KiB kernel executable window while composing with memory version 6 and protected-process version 8. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted. The paging object itself is qualified through probe 28, while the new two-resource composition still awaits cross-host qualification.
+Kernel paging version 3 remains the active byte-identical contract in qualified probe 29. It retains the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and fixed 256 KiB kernel executable window while composing with memory version 6 and protected-process version 8. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted.
 
 [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) owns the qualified version-1 root and probe-20/21 evidence. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its first executable-window expansion. [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) cross-host qualifies that form; [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns version 3.
 
-The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Candidate protected-process version 8 derives two process roots with five init leaves and 38 initial interpreter leaves, atomically adds two immutable client aliases, then clears both when the borrower becomes terminal. It does not mutate the kernel-root contract into a public mapping API.
+The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Qualified protected-process version 8 derives two process roots with five init leaves and 38 initial interpreter leaves, atomically adds two immutable client aliases, then clears both when the borrower becomes terminal. It does not mutate the kernel-root contract into a public mapping API.
 
 ## Ownership split
 
@@ -92,7 +92,7 @@ The host planner reports:
 | `WVOS5002` | The executable address is unaligned or cannot use the two admitted code tables. |
 | `WVOS5003` | The table allocation overlaps the executable window. |
 
-The unchanged qualified version-3 paging WVO is 1,244 bytes with SHA-256 `63e3cbd8cfb0f5a6260b660d4f2253c3f14b3a5f71271fe99ecf04644c4b6c2d`; its 851 code bytes have SHA-256 `fc841c0eb94adce393014597a404e1ffb6f5cb53dd472f8fb87bc837276e4b88`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, deterministic repetition, two distinct live aliases, permitted accessed bits, and terminal zeroing. Decision 0097 records the qualified probe-28 baseline; Decision 0098 owns the candidate probe-29 composition.
+The unchanged qualified version-3 paging WVO is 1,244 bytes with SHA-256 `63e3cbd8cfb0f5a6260b660d4f2253c3f14b3a5f71271fe99ecf04644c4b6c2d`; its 851 code bytes have SHA-256 `fc841c0eb94adce393014597a404e1ffb6f5cb53dd472f8fb87bc837276e4b88`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, deterministic repetition, two distinct live aliases, permitted accessed bits, and terminal zeroing. Decision 0097 records the qualified probe-28 baseline; Decision 0098 owns the qualified probe-29 composition.
 
 Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. Decision 0093 records the cross-host-qualified version-2 probe-24 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records current whole-image evidence.
 

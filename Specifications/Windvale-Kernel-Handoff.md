@@ -6,7 +6,7 @@ Kernel handoff version 1 defines the first internal transition from the UEFI loa
 
 ## Linked symbol boundary
 
-The loader imports the ASCII-safe function symbol `Windvale_kernel_entry`. The special kernel object exports that symbol. Probes 21 through candidate 29 additionally import `Windvale_kernel_x64_q35_shutdown` from WVA for the post-return lifecycle call. Both contain code-only `.text` sections and are linked at base zero through one WVO `relative-i32` relocation with addend `-4` at the x86-64 `call rel32` displacement field. ABI-16 portable native objects, admission/process bridges, exceptions, paging/process installation, typed resource grant/cleanup, interpretation, and shutdown do not change the handoff record or loader-to-entry call ABI. Exact commit `b2197fa` qualifies the Probe 28 composition; Decision 0098 retains the handoff unchanged in candidate Probe 29.
+The loader imports the ASCII-safe function symbol `Windvale_kernel_entry`. The special kernel object exports that symbol. Probes 21 through 29 additionally import `Windvale_kernel_x64_q35_shutdown` from WVA for the post-return lifecycle call. Both contain code-only `.text` sections and are linked at base zero through one WVO `relative-i32` relocation with addend `-4` at the x86-64 `call rel32` displacement field. ABI-16 portable native objects, admission/process bridges, exceptions, paging/process installation, typed resource grant/cleanup, interpretation, and shutdown do not change the handoff record or loader-to-entry call ABI. Exact implementation commit `3fd9ef7` qualifies the Probe 29 composition; Decision 0098 retains the handoff unchanged.
 
 The successful flat link must report only code and read-only-data sections, at least one code section, zero absolute relocations, and no relocation kind other than `relative-i32` before UEFI application format version 3 accepts it. Firmware may relocate the complete PE image because each resolved relative displacement remains invariant when caller, target, and immutable data move together.
 
@@ -47,7 +47,7 @@ The handoff includes no valid boot-services pointer. Code reached through this A
 
 ## Current evidence and limit
 
-Candidate firmware probe 29 retains handoff version 1 while linking the compiler-generated special kernel path, Windvale-owned admission and ordered resource-set selection, process policy, budgeted user-space interpreter, shared ABI-16 portable native probes, WVA seams, memory 6/paging 3, two protected roots, kernel exception destinations, and the WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
+Qualified firmware probe 29 retains handoff version 1 while linking the compiler-generated special kernel path, Windvale-owned admission and ordered resource-set selection, process policy, budgeted user-space interpreter, shared ABI-16 portable native probes, WVA seams, memory 6/paging 3, two protected roots, kernel exception destinations, and the WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
 
 ```text
 memory-map=pass

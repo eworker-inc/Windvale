@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Interpreter runtime profile 4 now has a Probe 29 candidate that consumes an atomic typed pair: the admitted WVB and its execution budget. The profile number and ABI 16/context 7/service-table 5 remain unchanged, but the interpreter WVB and accepted runtime-input contract are no longer byte-identical to qualified Probe 28.
+Interpreter runtime profile 4 now has a cross-host-qualified Probe 29 revision that consumes an atomic typed pair: the admitted WVB and its execution budget. The profile number and ABI 16/context 7/service-table 5 remain unchanged, but the interpreter WVB and accepted runtime-input contract are no longer byte-identical to Probe 28.
 
-[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns the candidate extension. Probe 28 remains the qualified baseline until cross-host evidence completes.
+[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns the qualified extension. Exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` passes Windows and Debian qualification in GitHub [Verify run 30745623111](https://github.com/eworker-inc/Windvale/actions/runs/30745623111).
 
 The interpreter itself is an AOT boot component running at CPL3. The separately mapped program is interpreted; the kernel contains neither source-language interpretation nor WVB semantic decoding.
 
@@ -64,7 +64,7 @@ The client has 33 RX pages, four RW/NX stack pages, and one RW/NX data page. The
 | Linked normal image | 134,077 | `4cb7edd21a44183fbddc9105834ecc6a69e576ac3bf4b0fcdf1ee98f111c55b3` |
 | Linked fault image | 134,077 | `f70fc9b66ea493863439fe4f4ad5510b1e666fb1466cfce25e0088b8af883ef8` |
 
-Focused tests cover exact budget success, exhaustion, invalid bounds, malformed length, missing name, shifted module sections, malformed WVB, atomic grant, distinct aliases, typed-entry mutations, and equivalent exit/fault cleanup. All 25 local OS tests and all four pinned-QEMU Probe 29 scenarios pass; cross-host qualification remains pending.
+Focused tests cover exact budget success, exhaustion, invalid bounds, malformed length, missing name, shifted module sections, malformed WVB, atomic grant, distinct aliases, typed-entry mutations, and equivalent exit/fault cleanup. Windows and digest-pinned Debian 12 pass all 67 Seed tests and all 25 OS tests; all four pinned-QEMU Probe 29 scenarios pass on Windows.
 
 ## Trust boundary and deliberate limits
 
