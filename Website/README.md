@@ -17,6 +17,8 @@ Open <http://127.0.0.1:5173/> for the website or <http://127.0.0.1:5173/playgrou
 
 Use `npm run dev:site` or `npm run dev:playground` only when debugging one half independently.
 
+Stop `npm run dev` before running a separate `dotnet build` or `dotnet publish` for the playground. Those commands regenerate fingerprinted WebAssembly assets, while an already-running development server can still describe the previous asset set. Restarting `npm run dev` gives the proxy and Blazor server one consistent publication; clearing the browser cache is not required.
+
 ## Updating the progress cards
 
 All public component and development-milestone progress lives in `project-progress.js`. To update the dashboard, change an item's `percent`, `status`, `details`, and `next` values plus `PROGRESS_UPDATED`. The page creates both sets of cards, progress bars, and accessible tooltips automatically; no HTML or CSS change is needed.
@@ -71,5 +73,7 @@ Keep the editable JSON source outside this public repository. Validate it with `
 ## Publication
 
 The `Deploy homepage` GitHub Actions workflow assembles this directory with the published browser playground under `playground/`, bundles the repository-root Pages Functions, then publishes the combined artifact to the `windvale-ca` Cloudflare Pages project after relevant changes reach `main`. Cloudflare owns the `windvale.ca` zone and supplies HTTPS for the apex site. Payments remain on Stripe; the only server-side website behavior is the read-only supporter-roll Function.
+
+The deployment stamps the playground bootstrap URL with the Git commit so a new release cannot reuse a browser's old startup script. Mutable entry points, startup scripts, and editor bundles must revalidate on every visit. Only content-fingerprinted `.wasm`, `.pdb`, and `.dat` framework assets receive long-lived immutable caching. Keep WebAssembly integrity checks enabled: a missing or mixed-release asset is a publication or caching fault, not a reason to weaken verification.
 
 Cloudflare credentials remain outside the repository. Automation receives only the scoped API token and account identifier through GitHub Actions secrets.

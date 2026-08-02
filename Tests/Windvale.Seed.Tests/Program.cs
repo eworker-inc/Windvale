@@ -1028,6 +1028,33 @@ internal static class Program
         Equal(Playgroundˉstatus.Completed, Nominalˉresult.Status);
         Equal(42, Nominalˉresult.Exitˉcode);
 
+        var Textˉformatting = Examples.Single(Example => Example.Id == "text-formatting");
+        var Textˉformattingˉresult = Playgroundˉrunner.Run(new(
+            Textˉformatting.Source,
+            Textˉformatting.Recommendedˉcapabilities));
+        Equal(Playgroundˉstatus.Completed, Textˉformattingˉresult.Status);
+        Equal("Windvale: Running, build 42\n", Textˉformattingˉresult.Standardˉoutput);
+        Equal(0, Textˉformattingˉresult.Exitˉcode);
+
+        var Unicode = Examples.Single(Example => Example.Id == "unicode-round-trip");
+        var Unicodeˉresult = Playgroundˉrunner.Run(new(
+            Unicode.Source,
+            Unicode.Recommendedˉcapabilities));
+        Equal(Playgroundˉstatus.Completed, Unicodeˉresult.Status);
+        Equal("Hello, 世界\nUTF-8 bytes: 13\n", Unicodeˉresult.Standardˉoutput);
+        Equal(0, Unicodeˉresult.Exitˉcode);
+
+        var Binary = Examples.Single(Example => Example.Id == "inspect-bytes");
+        var Binaryˉresult = Playgroundˉrunner.Run(new(
+            Binary.Source,
+            Binary.Recommendedˉcapabilities));
+        Equal(Playgroundˉstatus.Completed, Binaryˉresult.Status);
+        Equal(
+            "version=1, sections=7\n" +
+            "magic sha256=7b30cf1ebf4a969d835a5236be8488aa57d613a26c30eaa62c20b27059a6bd5f\n",
+            Binaryˉresult.Standardˉoutput);
+        Equal(0, Binaryˉresult.Exitˉcode);
+
         var Budget = Examples.Single(Example => Example.Id == "instruction-budget");
         var Budgetˉresult = Playgroundˉrunner.Run(new(
             Budget.Source,

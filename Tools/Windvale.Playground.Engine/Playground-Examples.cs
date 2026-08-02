@@ -100,6 +100,88 @@ public static class Playgroundˉexamples
             """,
             Capabilities()),
         new(
+            "text-formatting",
+            "Text and formatting",
+            "Build readable text from enum names and numbers, then write it through an authorized capability.",
+            """
+            module Textˉandˉformatting profile hosted;
+
+            capability console.write_line;
+
+            enum Buildˉstate {
+                Waiting = 0;
+                Running = 1;
+                Complete = 2;
+            }
+
+            fn Describeˉbuild(State: Buildˉstate, Number: u32) -> text {
+                let Stateˉname: text = Enumˉname(State);
+                let Buildˉnumber: text = U32ˉformat(Number);
+                let Prefix: text = Textˉconcat("Windvale: ", Stateˉname);
+                return Textˉconcat(Prefix, Textˉconcat(", build ", Buildˉnumber));
+            }
+
+            export fn Main() -> i32 {
+                console.write_line(Describeˉbuild(Buildˉstate.Running, 42u32));
+                return 0;
+            }
+            """,
+            Capabilities(Capabilityˉcatalog.CONSOLE_WRITE_LINE)),
+        new(
+            "unicode-round-trip",
+            "Unicode round trip",
+            "Encode Unicode text as strict UTF-8 bytes, validate it, decode it, and report its byte length.",
+            """
+            module Unicodeˉroundˉtrip profile hosted;
+
+            capability console.write_line;
+
+            data Greeting: text = "Hello, 世界";
+
+            export fn Main() -> i32 {
+                let Encoded: bytes = Textˉtoˉutf8(Greeting);
+                if !Textˉutf8ˉisˉvalid(Encoded) {
+                    return 1;
+                }
+
+                let Recovered: text = Textˉfromˉutf8(Encoded);
+                let Byteˉcount: text = U32ˉformat(Bytesˉlength(Encoded));
+                console.write_line(Recovered);
+                console.write_line(Textˉconcat("UTF-8 bytes: ", Byteˉcount));
+                return 0;
+            }
+            """,
+            Capabilities(Capabilityˉcatalog.CONSOLE_WRITE_LINE)),
+        new(
+            "inspect-bytes",
+            "Inspect binary data",
+            "Slice immutable bytes, read little-endian fields, and calculate a stable SHA-256 digest.",
+            """
+            module Inspectˉbinaryˉdata profile hosted;
+
+            capability console.write_line;
+
+            data Header: bytes = [87, 86, 66, 49, 1, 0, 7, 0, 0, 0];
+
+            export fn Main() -> i32 {
+                let Magic: bytes = Bytesˉslice(Header, 0u32, 4u32);
+                let Version: u32 = Bytesˉreadˉu16ˉlittle(Header, 4u32);
+                let Sectionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Header, 6u32);
+                let Summary: text = Textˉconcat(
+                    Textˉconcat("version=", U32ˉformat(Version)),
+                    Textˉconcat(", sections=", U32ˉformat(Sectionˉcount)));
+
+                console.write_line(Summary);
+                console.write_line(Textˉconcat("magic sha256=", Bytesˉsha256ˉhex(Magic)));
+
+                if Bytesˉlength(Header) == 10u32 {
+                    return 0;
+                }
+                return 1;
+            }
+            """,
+            Capabilities(Capabilityˉcatalog.CONSOLE_WRITE_LINE)),
+        new(
             "instruction-budget",
             "Instruction budget",
             "See the runtime stop a valid program when it exhausts the playground instruction budget.",

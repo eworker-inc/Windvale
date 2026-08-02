@@ -161,7 +161,6 @@ svg {
 .header-actions a,
 .toolbar-actions,
 .example-picker,
-.active-file,
 .run-button,
 .status-bar > div,
 .status-item,
@@ -218,35 +217,10 @@ svg {
 .ide-toolbar {
     display: flex;
     align-items: stretch;
-    justify-content: space-between;
+    justify-content: flex-end;
     min-width: 0;
     border-bottom: 1px solid var(--line-strong);
     background: var(--panel-muted);
-}
-
-.active-file {
-    min-width: 0;
-    gap: 7px;
-    padding: 0 15px;
-    color: var(--text);
-    border-right: 1px solid var(--line);
-    background: var(--panel);
-    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
-    font-size: 11px;
-}
-
-.active-file svg {
-    width: 15px;
-    height: 15px;
-    color: var(--blue);
-}
-
-.unsaved-dot {
-    width: 6px;
-    height: 6px;
-    margin-left: 2px;
-    border-radius: 50%;
-    background: var(--blue);
 }
 
 .toolbar-actions {
@@ -1079,19 +1053,9 @@ select {
         padding: 0 12px;
     }
 
-    .ide-toolbar {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .active-file {
-        min-height: 38px;
-        border-right: 0;
-        border-bottom: 1px solid var(--line);
-    }
-
     .toolbar-actions {
         justify-content: space-between;
+        width: 100%;
         padding: 7px 9px;
     }
 

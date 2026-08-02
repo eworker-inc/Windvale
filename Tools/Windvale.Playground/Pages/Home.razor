@@ -30,11 +30,6 @@
     </header>
 
     <div class="ide-toolbar">
-        <div class="active-file" title="Active source file">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v5h4" /></svg>
-            <span>playground.wv</span>
-            <span class="unsaved-dot" aria-label="Source is editable"></span>
-        </div>
         <div class="toolbar-actions">
             <label class="example-picker">
                 <span>Example</span>
@@ -253,7 +248,10 @@
             </span>
             <span class="status-item wide-only" data-status-characters>@Source.Length.ToString("N0") chars</span>
             <span class="status-item" data-status-cursor>Ln 1, Col 1</span>
-            <span class="status-item wide-only" title="Insert the Windvale name separator">ˉ Ctrl+M</span>
+            <span class="status-item wide-only"
+                  title="Keyboard shortcuts: run Ctrl+Enter; show completions Ctrl+Space; insert the Windvale separator Ctrl+M or Ctrl+Semicolon">
+                Shortcuts: Ctrl+Enter run · Ctrl+Space complete · Ctrl+M / Ctrl+; ˉ
+            </span>
         </div>
     </footer>
 </div>

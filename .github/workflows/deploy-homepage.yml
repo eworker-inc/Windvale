@@ -65,6 +65,18 @@ jobs:
           --output artifacts/playground
           -p:ContinuousIntegrationBuild=true
 
+      - name: Version playground bootstrap
+        shell: bash
+        run: |
+          index_path="artifacts/playground/wwwroot/index.html"
+          marker="__WINDVALE_BUILD_VERSION__"
+          grep -Fq "$marker" "$index_path"
+          sed -i "s/$marker/$GITHUB_SHA/g" "$index_path"
+          if grep -Fq "$marker" "$index_path"; then
+            echo "Playground bootstrap version marker was not replaced." >&2
+            exit 1
+          fi
+
       - name: Assemble same-origin static site
         shell: bash
         run: |
