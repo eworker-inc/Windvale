@@ -1,6 +1,6 @@
 # Decision 0100: First reclaimed and reused process root
 
-- Status: Implemented; cross-host qualification pending
+- Status: Qualified
 - Date: 2026-08-02
 - Implements: The first reclamation pressure from [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
 - Extends: [Decision 0098](0098-First-Typed-Two-Resource-Lookup.md)
@@ -41,6 +41,8 @@ The focused Windows evidence passes all 25 OS tests and all four pinned-QEMU sce
 | Invalid opcode | 261,120 | `bb57ebf7e50eb56bf3d42d91b2213ed5b262554416fdf76609142eccba44cc55` | panic/host `3` |
 | General protection | 261,120 | `d56fe572fb7a7ff724f7b7c26aa5299a6c5cee4c203f009b63d651c1d3cd8fcc` | panic/host `3` |
 | Contained user fault | 261,632 | `78dfa73a80a05021273cb44587f6b957d16d4cd4ebaec487f7b8a8f5427846ca` | poweroff `0` |
+
+Exact implementation commit `4a077ab9ebaf2108201927eef3095e87ef2ed907` passes GitHub [Verify run 30749304867](https://github.com/eworker-inc/Windvale/actions/runs/30749304867). Windows and digest-pinned Debian 12 each pass all 67 Seed tests, all 25 OS tests, and the complete non-Fast verifier. Seed elapsed time is 221.700 seconds on Windows and 201.079 seconds on Linux; both logs emit the same 56 SHA-256 values in exact order. QEMU execution remains Windows-only evidence.
 
 ## Consequences
 

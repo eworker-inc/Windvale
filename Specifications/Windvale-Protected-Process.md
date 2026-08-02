@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Protected-process contract version 9 is the implemented Probe 30 boundary for reclaiming a terminal client and rebuilding a second logical generation at the same physical root. It retains Probe 29's atomic typed pair and extends terminal cleanup with exact page release, generation-safe regrant, and a second real CPL3 execution.
+Protected-process contract version 9 is the qualified Probe 30 boundary for reclaiming a terminal client and rebuilding a second logical generation at the same physical root. It retains Probe 29's atomic typed pair and extends terminal cleanup with exact page release, generation-safe regrant, and a second real CPL3 execution.
 
-[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) owns version 9. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) and exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` retain the qualified version-8 baseline.
+[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) owns version 9 at exact implementation commit `4a077ab9ebaf2108201927eef3095e87ef2ed907`. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) and exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` retain the qualified version-8 history.
 
 This is an internal experiment, not a stable syscall ABI, general process manager, dynamic namespace, transferable capability system, arbitrary WVB loader, complete verifier, or JIT.
 
@@ -164,7 +164,7 @@ The user-fault scenario sends `29` and executes privileged `CLI`; the same two-r
 | Fault process-machine WVO | 155,973 | `821d4c1dba668566f9a42f839da14ea78814ac688cb16cbac649bd5bdfbeb6dc` |
 | Fault process-machine code | 16,375 | `1c4b38b16e0840d5fcc1249e2af180e0a1c6f849671745b00b7318a92a28cc0f` |
 
-Focused Windows evidence passes all 25 OS tests and all four pinned-QEMU Probe 30 scenarios. Cross-host qualification is pending.
+Exact implementation commit `4a077ab9ebaf2108201927eef3095e87ef2ed907` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12 in GitHub Verify run 30749304867. Focused Windows evidence also passes all four pinned-QEMU Probe 30 scenarios.
 
 ## Deliberate limits
 

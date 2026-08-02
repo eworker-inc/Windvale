@@ -1,6 +1,6 @@
 # Decision 0099: Bounded native frame admission
 
-- Status: Implemented; cross-host qualification pending
+- Status: Qualified
 - Date: 2026-08-02
 - Extends: [Decision 0089](0089-Bounded-Native-Stack-Arguments.md)
 - Advances: Native ABI 17
@@ -25,7 +25,9 @@ The operating-system process policy independently reaches the same ceiling while
 
 Focused compiler verification must show that the former 1,049-local function is admitted past the ABI-16 preflight boundary. Exact compiler preflight must then either execute or name its next real bounded blocker without a host failure.
 
-The implemented preflight advances to `Compilerˉbodyˉparseˉprimary` and reports `WVN2004`: it requires at least 2,049 combined local/value slots against the new 2,048-slot limit. That is deliberate progress evidence, not a claim that the compiler now runs natively. The complete Windows/Debian qualification gate remains required before this decision becomes Qualified.
+The implemented preflight advances to `Compilerˉbodyˉparseˉprimary` and reports `WVN2004`: it requires at least 2,049 combined local/value slots against the new 2,048-slot limit. That is deliberate progress evidence, not a claim that the compiler now runs natively.
+
+Exact implementation commit `4a077ab9ebaf2108201927eef3095e87ef2ed907` passes GitHub [Verify run 30749304867](https://github.com/eworker-inc/Windvale/actions/runs/30749304867). Windows and digest-pinned Debian 12 each pass all 67 Seed tests, all 25 OS tests, and the complete non-Fast verifier. Seed elapsed time is 221.700 seconds on Windows and 201.079 seconds on Linux; both logs emit the same 56 SHA-256 values in exact order.
 
 ## Consequences and limits
 

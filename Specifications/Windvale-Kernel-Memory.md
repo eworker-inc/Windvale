@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Kernel memory version 7 is the implemented Probe 30 contract. It retains version 6's 63-page arena and adds one exact checked tail-release operation so a terminal 42-page client extent can be scrubbed and reused.
+Kernel memory version 7 is the qualified Probe 30 contract. It retains version 6's 63-page arena and adds one exact checked tail-release operation so a terminal 42-page client extent can be scrubbed and reused.
 
-[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) owns version 7. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) and exact commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` retain the qualified version-6 baseline.
+[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) owns version 7 at exact implementation commit `4a077ab9ebaf2108201927eef3095e87ef2ed907`. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) and exact commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` retain the qualified version-6 history.
 
 This is one bounded boot arena, not a general physical-memory manager. Allocation is deterministic and visibly finite. Release is LIFO-only: it can restore only a caller-proven suffix ending at the current cursor. The memory state does not retain allocation-boundary provenance; Probe 30's process record and fixed layout prove that its 42-page suffix is the retired client extent.
 

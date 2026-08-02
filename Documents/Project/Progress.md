@@ -25,7 +25,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 0–6. Seed through assembler and linker | ✅ Qualified | The Stage 0 foundation, byte primitives, hosted resource boundary, `wvdump`, object model, assembler, and linker have Windows and Debian evidence. | Preserve these contracts as later native and OS work consumes them. |
 | 7. Foundation modules | 🔵 Ongoing | Machine contracts, byte ordering, decimal parsing, and byte construction are shared by real Windvale tools. | Add facilities only when measured compiler, runtime, or tool pressure requires them. |
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
-| 9. Shared native backend | 🎯 Current transfer | ABI 17 implements a verified 2,048-cell frame and passes the exact compiler's former 1,049-local blocker; ABI 16/context 7 and all 12 service leaves remain the qualified baseline. | Address measured lowered-value pressure at slot 2,049 without repeatedly inflating frames. |
+| 9. Shared native backend | 🎯 Current transfer | ABI 17's verified 2,048-cell frame and all 12 service leaves are cross-host qualified; exact compiler preflight passes the former 1,049-local blocker. | Address measured lowered-value pressure at slot 2,049 without repeatedly inflating frames. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
 | 11. Boot path and kernel | 🚧 In progress | Probe 30 reclaims one exact 42-page tail, scrubs it, and rebuilds generation 2 at the identical physical root. | Let non-tail lifetime pressure or a third runnable determine allocator/scheduler work. |
 | 12. Runtime on Windvale OS | 🚧 In progress | Probe 30 runs the same typed WVB/budget interpreter twice under distinct generation-stamped identities and cleans both grants. | Broaden semantics only for a measured program; keep JIT publication outside the kernel. |
@@ -55,7 +55,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Probe 27 → Windvale init selection → one-shot immutable grant → Windows/pinned-Debian Seed and OS qualification plus four Windows pinned-QEMU scenarios
 - ✅ Probe 28 → terminal borrower → cleared alias and private publication → 67/67 Seed and 25/25 OS tests on Windows and Debian plus four Windows pinned-QEMU scenarios
 - ✅ Probe 29 → atomic typed WVB/budget set → exact WVA lookup and Windvale opcode charging → 67/67 Seed and 25/25 OS tests on Windows and Debian plus four Windows pinned-QEMU scenarios
-- 🚧 Probe 30 → exact tail release/zero → generation-safe same-root rebuild → 25/25 focused OS tests plus four Windows pinned-QEMU scenarios; cross-host qualification pending
+- ✅ Probe 30 → exact tail release/zero → generation-safe same-root rebuild → 67/67 Seed and 25/25 OS tests on Windows and Debian plus four Windows pinned-QEMU scenarios
 
 ## Reading the evidence
 

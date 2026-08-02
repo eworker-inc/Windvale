@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Firmware probe 30 is the implemented process-reclamation proof. It composes ABI 17/context 7, WVA seam 8, admission bridge 2, retained bridge 10, memory 7, paging 3, protected processes 9, interpreter profile 4, `WVRES004`, and `WVBR002`.
+Firmware probe 30 is the qualified process-reclamation proof. It composes ABI 17/context 7, WVA seam 8, admission bridge 2, retained bridge 10, memory 7, paging 3, protected processes 9, interpreter profile 4, `WVRES004`, and `WVBR002`.
 
-[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) owns Probe 30. Focused Windows evidence passes all 25 OS tests and all four pinned-QEMU scenarios; cross-host qualification is pending. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) retains the qualified Probe-29 baseline.
+[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) owns Probe 30. Exact implementation commit `4a077ab9ebaf2108201927eef3095e87ef2ed907` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12; focused Windows evidence also passes all four pinned-QEMU scenarios. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) retains the qualified Probe-29 history.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 
