@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel paging version 4 remains unchanged in the qualified Probe-32 composition. Its six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, two-code-table topology, and 768 KiB supervisor executable window remain sufficient for the larger process. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns the version-4 contract; [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) records its qualified Probe-32 composition at exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` and GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402).
+Kernel paging version 4 remains unchanged in the qualified Probe-32 composition. Its six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, two-code-table topology, and 768 KiB supervisor executable window remain sufficient for the larger process. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns the version-4 contract; [Decision 0103](../Documents/Decisions/0103-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) records its qualified Probe-32 composition at exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` and GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402).
 
 The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 11 derives two private roots and manages two exact resource aliases without turning the kernel record into a public mapping API.
 

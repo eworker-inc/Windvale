@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-WVB admission version 4 is the qualified Probe-32 contract owned by [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md). It proves that AOT Windvale code running inside the guest validates the exact canonical WVB compiled from [`Tests/Fixtures/Source-Wvb/Function-Only.wv`](../Tests/Fixtures/Source-Wvb/Function-Only.wv) before protected execution consumes it. Exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes complete Windows/Debian qualification in GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402).
+WVB admission version 4 is the qualified Probe-32 contract owned by [Decision 0103](../Documents/Decisions/0103-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md). It proves that AOT Windvale code running inside the guest validates the exact canonical WVB compiled from [`Tests/Fixtures/Source-Wvb/Function-Only.wv`](../Tests/Fixtures/Source-Wvb/Function-Only.wv) before protected execution consumes it. Exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes complete Windows/Debian qualification in GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402).
 
 Admission version 3 and exact `Sum-Data.wv` remain qualified history under [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md). Admission bridge version 2 remains the process-entry composition introduced by Probe 22. This is fixed bootstrap admission, not the general semantic WVB verifier, loader, interpreter, JIT, or public ABI.
 

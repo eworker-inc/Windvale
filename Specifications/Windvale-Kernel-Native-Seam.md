@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel native seam version 17, WVA seam version 8, admission bridge version 2, retained bridge 10, and paging version 4 compose qualified Probe 32 with interpreter profile 6, memory 9, and protected processes 11. Resource records remain version 4 and the OS-private directory remains `WVBR002`. [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) owns the composition; [Decisions 0099](../Documents/Decisions/0099-Bounded-Native-Frame-Admission.md) and [0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) retain its qualified ABI and OS history.
+Kernel native seam version 17, WVA seam version 8, admission bridge version 2, retained bridge 10, and paging version 4 compose qualified Probe 32 with interpreter profile 6, memory 9, and protected processes 11. Resource records remain version 4 and the OS-private directory remains `WVBR002`. [Decision 0103](../Documents/Decisions/0103-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) owns the composition; [Decisions 0099](../Documents/Decisions/0099-Bounded-Native-Frame-Admission.md) and [0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) retain its qualified ABI and OS history.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 

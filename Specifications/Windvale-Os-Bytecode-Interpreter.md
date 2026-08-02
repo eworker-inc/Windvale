@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Interpreter runtime profile 6 is the qualified Probe-32 contract owned by [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md). It executes the exact canonical WVB compiled from [`Tests/Fixtures/Source-Wvb/Function-Only.wv`](../Tests/Fixtures/Source-Wvb/Function-Only.wv) inside protected process `2` and returns `6` after four functions exercise scalar types, comparisons, forward control flow, locals, and internal calls. Exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes complete Windows/Debian qualification in GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402).
+Interpreter runtime profile 6 is the qualified Probe-32 contract owned by [Decision 0103](../Documents/Decisions/0103-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md). It executes the exact canonical WVB compiled from [`Tests/Fixtures/Source-Wvb/Function-Only.wv`](../Tests/Fixtures/Source-Wvb/Function-Only.wv) inside protected process `2` and returns `6` after four functions exercise scalar types, comparisons, forward control flow, locals, and internal calls. Exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes complete Windows/Debian qualification in GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402).
 
 Profile 5 and the exact `Sum-Data.wv` Probe-31 contract remain qualified under [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md).
 
