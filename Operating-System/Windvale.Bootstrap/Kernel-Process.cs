@@ -6,21 +6,27 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 1;
-    public const string TARGET_NAME = "x86-64-kernel-process-v1";
+    public const int FORMAT_VERSION = 2;
+    public const string TARGET_NAME = "x86-64-kernel-process-v2";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
+    public const string INIT_SERVICE_ENTRY_SYMBOL = "Windvale_init_resource_user_entry";
+    public const string INIT_SERVICE_MAIN_SYMBOL = "Windvale_init_resource_service_main";
     public const string SYSCALL_ENTRY_SYMBOL = "Windvale_kernel_x64_process_syscall";
     public const string EXCEPTION_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception";
     public const string EXCEPTION_6_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_6_entry";
     public const string EXCEPTION_13_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_13_entry";
     public const string EXCEPTION_14_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_14_entry";
-    public const int POLICY_TOKEN = 91;
+    public const int POLICY_TOKEN = 92;
     public const int EXPECTED_RESULT = 29;
     public const string USER_FAULT_CONTAINED_MARKER = "user-fault=contained\n";
-    public const uint PROCESS_ID = 1;
-    public const uint THREAD_ID = 1;
+    public const uint INIT_PROCESS_ID = 1;
+    public const uint INIT_THREAD_ID = 1;
+    public const uint CLIENT_PROCESS_ID = 2;
+    public const uint CLIENT_THREAD_ID = 2;
+    public const uint ROLE_INIT_SERVICE = 1;
+    public const uint ROLE_CLIENT = 2;
     public const uint PROCESS_STATE_READY = 1;
     public const uint PROCESS_STATE_RUNNING = 2;
     public const uint PROCESS_STATE_EXITED = 3;
@@ -29,17 +35,17 @@ public static class Kernelˉprocessˉcontract
     public const uint THREAD_STATE_RUNNING = 2;
     public const uint THREAD_STATE_EXITED = 3;
     public const uint THREAD_STATE_FAULTED = 4;
+    public const uint THREAD_STATE_WAITING = 5;
     public const uint MEMORY_PAGE_BUDGET = 3;
-    public const uint INSTRUCTION_BUDGET = 4;
+    public const uint INSTRUCTION_BUDGET = 64;
     public const uint CALL_DEPTH_BUDGET = 1;
     public const uint HANDLE_BUDGET = 1;
-    public const uint SYSCALL_BUDGET = 3;
+    public const uint SYSCALL_BUDGET = 2;
     public const uint CHANNEL_CAPACITY = 1;
     public const uint CAPABILITY_SLOT = 0;
     public const uint CAPABILITY_GENERATION = 1;
     public const uint CAPABILITY_RIGHT_SEND = 1U << 0;
     public const uint CAPABILITY_RIGHT_RECEIVE = 1U << 1;
-    public const uint CAPABILITY_RIGHTS = CAPABILITY_RIGHT_SEND | CAPABILITY_RIGHT_RECEIVE;
     public const uint CAPABILITY_REFERENCE = (CAPABILITY_GENERATION << 16) | CAPABILITY_SLOT;
     public const uint SYSCALL_SEND = 1;
     public const uint SYSCALL_RECEIVE = 2;
@@ -55,10 +61,12 @@ public static class Kernelˉprocessˉcontract
     public const ulong USER_STACK_PAGE = 5;
     public const ulong USER_DATA_PAGE = 6;
     public const ulong ENTRY_USER = 1UL << 2;
-    public const uint RECORD_OFFSET = 256;
+    public const uint INIT_RECORD_OFFSET = 256;
+    public const uint CLIENT_RECORD_OFFSET = 768;
+    public const uint CHANNEL_RECORD_OFFSET = 1_024;
     public const uint RECORD_BYTES = 256;
-    public const ulong RECORD_MAGIC = 0x3130_434F_5250_5657;
-    public const uint RECORD_VERSION = 1;
+    public const ulong RECORD_MAGIC = 0x3230_434F_5250_5657;
+    public const uint RECORD_VERSION = 2;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -73,17 +81,40 @@ public static class Kernelˉprocessˉcontract
     public const uint USER_INSTRUCTION_POINTER_OFFSET = 152;
     public const uint USER_FLAGS_OFFSET = 160;
     public const uint SYSCALL_COUNT_OFFSET = 168;
-    public const uint CHANNEL_STATE_OFFSET = 172;
-    public const uint CHANNEL_MESSAGE_OFFSET = 176;
     public const uint RESULT_OFFSET = 180;
     public const uint FAULT_VECTOR_OFFSET = 184;
     public const uint FAULT_ERROR_OFFSET = 188;
+    public const uint CHANNEL_ADDRESS_OFFSET = 192;
+    public const uint ROLE_OFFSET = 200;
+    public const uint WAIT_REASON_OFFSET = 204;
+    public const uint USER_CONTEXT_POINTER_OFFSET = 208;
+    public const uint WAIT_REASON_NONE = 0;
+    public const uint WAIT_REASON_CHANNEL_RECEIVE = 1;
+    public const ulong CHANNEL_MAGIC = 0x3130_4E41_4843_5657;
+    public const uint CHANNEL_VERSION = 1;
+    public const uint CHANNEL_RECORD_BYTES = 64;
+    public const uint CHANNEL_STATE_OFFSET = 16;
+    public const uint CHANNEL_MESSAGE_OFFSET = 20;
+    public const uint CHANNEL_SENDER_OFFSET = 24;
+    public const uint CHANNEL_RECEIVER_OFFSET = 28;
+    public const uint CHANNEL_SEND_COUNT_OFFSET = 32;
+    public const uint CHANNEL_RECEIVE_COUNT_OFFSET = 36;
+    public const uint CHANNEL_WAITER_OFFSET = 40;
+    public const uint CHANNEL_WAKE_COUNT_OFFSET = 44;
+    public const uint CHANNEL_CAPACITY_OFFSET = 48;
     public const uint GDT_OFFSET = 512;
     public const uint GDT_BYTES = 56;
     public const uint GDTR_OFFSET = 576;
     public const uint TSS_OFFSET = 640;
     public const uint TSS_BYTES = 104;
 }
+
+public sealed record Kernelˉprocessˉdefinition(
+    uint Processˉid,
+    uint Threadˉid,
+    uint Role,
+    uint Capabilityˉrights,
+    ulong Channelˉaddress);
 
 public sealed record Kernelˉprocessˉdiagnostic(string Code, string Message);
 
@@ -113,9 +144,11 @@ public static class Kernelˉprocessˉplanner
         Kernelˉpagingˉplan kernelˉpaging,
         ulong allocationˉaddress,
         ReadOnlySpan<byte> userˉimage,
-        ReadOnlySpan<byte> moduleˉdigest)
+        ReadOnlySpan<byte> moduleˉdigest,
+        Kernelˉprocessˉdefinition definition)
     {
         ArgumentNullException.ThrowIfNull(kernelˉpaging);
+        ArgumentNullException.ThrowIfNull(definition);
         var Allocationˉbytes = Kernelˉprocessˉcontract.ALLOCATION_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
         if (allocationˉaddress == 0 ||
             (allocationˉaddress & (Kernelˉpagingˉcontract.PAGE_BYTES - 1)) != 0 ||
@@ -127,15 +160,36 @@ public static class Kernelˉprocessˉplanner
         if ((allocationˉaddress / Kernelˉpagingˉcontract.LARGE_PAGE_BYTES) !=
             ((Allocationˉend - 1) / Kernelˉpagingˉcontract.LARGE_PAGE_BYTES))
         {
-            return Fail("WVOS6002", "The first process allocation must fit one 2 MiB identity-table region.");
+            return Fail("WVOS6002", "The process allocation must fit one 2 MiB identity-table region.");
         }
         if (userˉimage.IsEmpty || userˉimage.Length > (int)Kernelˉpagingˉcontract.PAGE_BYTES)
         {
-            return Fail("WVOS6003", "The first process image must occupy 1 through 4,096 bytes.");
+            return Fail("WVOS6003", "The process image must occupy 1 through 4,096 bytes.");
         }
         if (moduleˉdigest.Length != Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES)
         {
             return Fail("WVOS6004", "The process module identity must be one SHA-256 digest.");
+        }
+        var Isˉinit = definition is
+        {
+            Processˉid: Kernelˉprocessˉcontract.INIT_PROCESS_ID,
+            Threadˉid: Kernelˉprocessˉcontract.INIT_THREAD_ID,
+            Role: Kernelˉprocessˉcontract.ROLE_INIT_SERVICE,
+            Capabilityˉrights: Kernelˉprocessˉcontract.CAPABILITY_RIGHT_RECEIVE,
+        };
+        var Isˉclient = definition is
+        {
+            Processˉid: Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
+            Threadˉid: Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
+            Role: Kernelˉprocessˉcontract.ROLE_CLIENT,
+            Capabilityˉrights: Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
+        };
+        if ((!Isˉinit && !Isˉclient) ||
+            definition.Channelˉaddress == 0 ||
+            (definition.Channelˉaddress & (sizeof(ulong) - 1)) != 0 ||
+            definition.Channelˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES)
+        {
+            return Fail("WVOS6006", "The process identity, role, reduced endpoint rights, or shared-channel address is invalid.");
         }
 
         var Userˉcodeˉaddress = Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.USER_CODE_PAGE);
@@ -200,8 +254,8 @@ public static class Kernelˉprocessˉplanner
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(12), Kernelˉprocessˉcontract.RECORD_BYTES);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(16), Kernelˉprocessˉcontract.PROCESS_STATE_READY);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(20), Kernelˉprocessˉcontract.THREAD_STATE_READY);
-        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(24), Kernelˉprocessˉcontract.PROCESS_ID);
-        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(28), Kernelˉprocessˉcontract.THREAD_ID);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(24), definition.Processˉid);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(28), definition.Threadˉid);
         moduleˉdigest.CopyTo(Record.AsSpan(32, Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES));
         BinaryPrimitives.WriteUInt64LittleEndian(Record.AsSpan(64), allocationˉaddress);
         BinaryPrimitives.WriteUInt64LittleEndian(Record.AsSpan(72), Userˉcodeˉaddress);
@@ -213,8 +267,12 @@ public static class Kernelˉprocessˉplanner
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(108), Kernelˉprocessˉcontract.SYSCALL_BUDGET);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(112), Kernelˉprocessˉcontract.CAPABILITY_SLOT);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(116), Kernelˉprocessˉcontract.CAPABILITY_GENERATION);
-        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(120), Kernelˉprocessˉcontract.CAPABILITY_RIGHTS);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(120), definition.Capabilityˉrights);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(124), Kernelˉprocessˉcontract.CHANNEL_CAPACITY);
+        BinaryPrimitives.WriteUInt64LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.CHANNEL_ADDRESS_OFFSET), definition.Channelˉaddress);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.ROLE_OFFSET), definition.Role);
 
         return new(new(
             allocationˉaddress,

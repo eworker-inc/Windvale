@@ -1,0 +1,11 @@
+module Initˉresourceˉservice profile portable;
+
+// The first user-space service owns one fixed immutable resource. The machine
+// seam delivers the request value through its receive-only endpoint before Main.
+export fn Main() -> i32 {
+    let Resourceˉid: u32 = 1u32;
+    let Resourceˉvalue: i32 = 29;
+    if Resourceˉid != 1u32 { return 0; }
+    if Resourceˉvalue != 29 { return 0; }
+    return Resourceˉvalue;
+}

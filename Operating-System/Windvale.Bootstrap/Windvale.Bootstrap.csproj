@@ -14,6 +14,8 @@
   <ItemGroup>
     <EmbeddedResource Include="../Kernel/Embedded-Wvb-Program.wv" LogicalName="Windvale.Os.Kernel.Embedded-Wvb-Program.wv" />
     <EmbeddedResource Include="../Kernel/Hello-World.wv" LogicalName="Windvale.Os.Kernel.Hello-World.wv" />
+    <EmbeddedResource Include="../Kernel/Init-Resource-Service.wv" LogicalName="Windvale.Os.Kernel.Init-Resource-Service.wv" />
+    <EmbeddedResource Include="../Kernel/Init-Resource-Service-Shim.wva" LogicalName="Windvale.Os.Kernel.Init-Resource-Service-Shim.wva" />
     <EmbeddedResource Include="../Kernel/Native-Wvb-Probe.wv" LogicalName="Windvale.Os.Kernel.Native-Wvb-Probe.wv" />
     <EmbeddedResource Include="../Kernel/Process-Foundation.wv" LogicalName="Windvale.Os.Kernel.Process-Foundation.wv" />
     <EmbeddedResource Include="../Kernel/Process-User-Fault-Shim.wva" LogicalName="Windvale.Os.Kernel.Process-User-Fault-Shim.wva" />

@@ -2,11 +2,11 @@
 
 ## Status and purpose
 
-Kernel paging version 2 is the current probe-22 candidate. It retains the qualified version-1 six-page low-1-GiB identity hierarchy, null guard, NX enforcement, and supervisor write protection while expanding the fixed kernel executable window from 64 KiB to 128 KiB. It publishes `WVKPAG02`; version-1 ownership records are not accepted under the larger bound.
+Kernel paging version 2 is retained by the current probe-23 candidate. It keeps the qualified version-1 six-page low-1-GiB identity hierarchy, null guard, NX enforcement, and supervisor write protection while using the expanded fixed 128 KiB kernel executable window. It publishes `WVKPAG02`; version-1 ownership records are not accepted under the larger bound.
 
 [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) owns the qualified version-1 root and probe-20/21 evidence. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its measured executable-window expansion. Cross-host qualification remains pending, so probe 21 remains the latest cross-host-qualified paging composition.
 
-The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 1 separately derives one process root with three user leaves; it does not mutate the kernel-root contract into a public mapping API.
+The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 2 separately derives two process roots with three user leaves each; it does not mutate the kernel-root contract into a public mapping API.
 
 ## Ownership split
 
@@ -69,9 +69,9 @@ The record is evidence of the active kernel root, not a mutable page-map interfa
 
 ## Process-root relationship
 
-[Protected process version 1](Windvale-Protected-Process.md) allocates a separate PML4/PDPT/page-directory root after the kernel root is active. It copies the kernel hierarchy, replaces exactly the process allocation's 2 MiB directory entry with a private page table, adds user permission only to the required hierarchy path, and marks exactly three leaves user-accessible. The machine switches to the process root only after every user page, descriptor, process record, and syscall MSR is complete.
+[Protected process version 2](Windvale-Protected-Process.md) allocates separate init and client PML4/PDPT/page-directory roots after the kernel root is active. Each copies the kernel hierarchy, replaces exactly its process allocation's 2 MiB directory entry with a private page table, adds user permission only to the required hierarchy path, and marks exactly three leaves user-accessible. The machine switches to a process root only after every user page, descriptor, process record, channel record, and syscall MSR is complete.
 
-The kernel executable window remains supervisor-only in that process root. When the process exits or faults, the current bounded continuation remains mapped and returns to kernel code; version 1 does not yet reclaim or recycle either root.
+The kernel executable window remains supervisor-only in both process roots. When either process exits, blocks, or faults, the current bounded continuation remains mapped and returns to kernel code; version 2 does not yet reclaim or recycle either root.
 
 ## WVA privileged operations
 
@@ -94,8 +94,8 @@ The host planner reports:
 
 The current version-2 paging WVO is 1,244 bytes with SHA-256 `43bc3a191ebaec3944bb1fa47927e9623341dbb11085ea3c76fbe70b6ca16cb0`; its 851 code bytes have SHA-256 `c77b367b120299f39ca65e4b6955d48ab57408440ad762e3deab17988e01606d`. Focused tests lock the 32 RX leaves, every other permission, record identity, four imports/relocations, and deterministic repetition.
 
-Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records the larger probe-22 images and live candidate evidence.
+Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records the larger probe-23 images and live candidate evidence.
 
 ## Deliberate limits
 
-Version 2 still retains one fixed identity-mapped kernel root and keeps interrupts disabled. It does not selectively unmap firmware/loader ranges, map memory above 1 GiB, handle page faults, release table pages, optimize global or huge pages, support PCID, KASLR, SMP shootdown, copy-on-write, shared memory, or expose a public map API. The one process root is specified separately and adds no general address-space manager, demand paging, teardown, or scheduler.
+Version 2 still retains one fixed identity-mapped kernel root and keeps interrupts disabled. It does not selectively unmap firmware/loader ranges, map memory above 1 GiB, handle page faults, release table pages, optimize global or huge pages, support PCID, KASLR, SMP shootdown, copy-on-write, shared memory, or expose a public map API. The two process roots are specified separately and add no general address-space manager, demand paging, teardown, or scheduler.

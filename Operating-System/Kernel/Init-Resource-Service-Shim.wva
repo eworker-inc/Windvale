@@ -1,0 +1,15 @@
+windvale-assembly 1
+symbol export function Windvale_init_resource_user_entry in .text
+symbol import function Windvale_init_resource_service_main
+
+section code .text align 16
+define Windvale_init_resource_user_entry
+move_u32 ebx 2
+move_u32 esi 65536
+syscall
+call Windvale_init_resource_service_main
+move_u32 ebx 3
+syscall
+trap
+end define
+end section

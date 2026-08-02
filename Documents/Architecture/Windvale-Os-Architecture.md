@@ -102,9 +102,9 @@ A process is conceptually a protection domain containing:
 - explicit memory, instruction, handle, and other resource budgets;
 - lifecycle, result, fault, and diagnostic state.
 
-This conceptual model is accepted. [Protected process version 1](../../Specifications/Windvale-Protected-Process.md) now implements one deliberately fixed internal representation: process/thread id 1, one separate root, three user pages, explicit budgets, one capability slot with generation and rights, one capacity-one channel, and closed lifecycle/fault/result state. That representation is implementation evidence, not yet a stable public process ABI.
+This conceptual model is accepted. [Protected process version 2](../../Specifications/Windvale-Protected-Process.md) now implements one deliberately fixed internal representation: two process/thread identities, separate roots, three user pages each, explicit budgets, reduced endpoint rights, one kernel-owned capacity-one channel, waiting state, and closed lifecycle/fault/result evidence. That representation is implementation evidence, not yet a stable public process ABI.
 
-A capability identifies a kernel-mediated object plus permitted operations. The first experiment uses slot 0, generation 1, send/receive rights, and machine reference 65536. The kernel checks all three components before its register channel changes state. Capabilities may eventually be reduced or transferred only through explicit kernel operations; version 1 implements neither operation. References must not be recovered from raw addresses, and the current integer encoding remains internal and replaceable.
+A capability identifies a kernel-mediated object plus permitted operations. The current experiment uses slot 0, generation 1, machine reference 65536, and separately reduced send-only and receive-only endpoints. The kernel checks all components before its register channel changes state. General capability allocation, transfer, revocation, and generation rollover remain unimplemented. References must not be recovered from raw addresses, and the current integer encoding remains internal and replaceable.
 
 Expected kernel-object families include processes, threads, address spaces, memory regions, channels or endpoints, interrupt bindings, device-memory ranges, and resource providers. This is a design inventory, not a commitment that every family is a public object or syscall.
 
@@ -124,7 +124,7 @@ x86-64 entry, exit, register preservation, and context-switch mechanics belong i
 
 Requests must use checked buffer descriptors and capability references rather than expose native structure layouts. The kernel validates address ranges, arithmetic, access direction, length, alignment, rights, and resource budgets before use. IPC requires bounded message and queue sizes, defined backpressure, and explicit behavior when a peer exits.
 
-Protected-process version 1 supplies the first measured mechanics: `EBX` numbers 1/2/3 select send/receive/exit, `ESI` carries the capability reference, and `EAX` carries the register message/result. This assignment is explicitly experimental and internal. Public user-ABI stability, larger-message encoding, copy-versus-map thresholds, peer exit, blocking, and general backpressure remain deferred.
+Protected-process version 2 retains the first measured mechanics: `EBX` numbers 1/2/3 select send/receive/exit, `ESI` carries the capability reference, and `EAX` carries the register message/result. It adds one deterministic blocked receive and wake while preserving the ABI-16 context pointer in `RDX`. This assignment is explicitly experimental and internal. Public user-ABI stability, larger-message encoding, copy-versus-map thresholds, general peer lifecycle, scheduling, and backpressure remain deferred.
 
 ## Memory and executable publication
 
@@ -145,7 +145,7 @@ The current Windows/Linux bootstrap has already moved the allowed allocate/copy/
 
 ## Boot and trust chain
 
-The first x86-64 path remains UEFI-based and evidence-driven. Candidate probe 22 implements steps 1 through 4 for one fixed module; steps 5 and 6 remain next:
+The first x86-64 path remains UEFI-based and evidence-driven. Candidate probe 23 implements steps 1 through 5 for one fixed client and service; step 6 remains next:
 
 1. A narrow loader validates its bounded inputs, captures the versioned handoff, loads the selected AOT kernel and boot resources, and exits boot services.
 2. The kernel takes ownership of memory, its stack, exception state, page tables, and deterministic diagnostics. Firmware services are not used after the accepted exit boundary.
@@ -205,13 +205,15 @@ Each step must be useful, bounded, and independently qualified:
 
 [Decision 0091](../Decisions/0091-First-Protected-Windvale-Process.md) implements step 4 as candidate probe 22: the admitted Windvale AOT program executes at CPL3 under a separate root, uses a generation/rights-checked capability to send and receive one register message, exits through `SYSCALL`, and can take a contained user general-protection fault while equivalent CPL0 faults remain terminal. Windvale owns the fixed process policy, WVA owns user syscall and exception-entry bytes, and the page/descriptor/MSR/dispatcher object remains a named Stage 0 replacement seam. The next architectural slice is step 5, a minimal Windvale init/resource service that uses this boundary rather than widening it speculatively.
 
+[Decision 0092](../Decisions/0092-First-Windvale-Init-Resource-Service.md) implements step 5 as candidate probe 23: a Windvale init/resource service blocks with receive-only authority, an admitted client runs under a second root with send-only authority, and one kernel-owned message wakes the service. Both normal client exit and contained client fault permit the independent service to complete. The fixed coordinator is deliberately not a general scheduler; step 6 now requires broader runtime/loader evidence rather than speculative scheduling policy.
+
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 
 ## Deliberately deferred choices
 
 The following should remain open until a focused implementation supplies evidence:
 
-- stable public syscall numbers, register assignments, and user ABI (the version-1 internal experiment is not frozen);
+- stable public syscall numbers, register assignments, and user ABI (the version-2 internal experiment is not frozen);
 - scheduler algorithm, priority model, real-time policy, and SMP strategy;
 - IPC wire encoding, zero-copy thresholds, and service discovery;
 - virtual-address layout, page size policy beyond architecture requirements, and shared-memory model;

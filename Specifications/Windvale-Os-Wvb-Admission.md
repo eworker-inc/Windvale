@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-WVB admission version 1 is the cross-host-qualified fixed policy owned by [Decision 0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md). It proves that AOT Windvale code running inside the guest validates one embedded canonical WVB before the native derivative of those exact bytes executes. Qualified admission bridge version 1 executes the derivative directly at ring 0; probe 22 candidate bridge version 2 instead invokes [protected process version 1](Windvale-Protected-Process.md), which executes that same derivative at CPL3.
+WVB admission version 1 is the cross-host-qualified fixed policy owned by [Decision 0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md). It proves that AOT Windvale code running inside the guest validates one embedded canonical WVB before the native derivative of those exact bytes executes. Qualified admission bridge version 1 executes the derivative directly at ring 0; candidate bridge version 2 instead invokes the current [protected-process contract](Windvale-Protected-Process.md), which executes that same derivative as the client at CPL3. Probe 23 retains the admitted bytes and bridge while adding an independently identified Windvale service under a second root.
 
 This is a fixed bootstrap admission profile, not the general semantic WVB verifier, a loader, an interpreter, a JIT, or a stable public ABI.
 
@@ -45,7 +45,7 @@ The ordinary native backend accepts one source export named `Main`. Stage 0 rewr
 | `Wvbˉadmission.Main` | `Windvale_kernel_wvb_admit` |
 | `Embeddedˉwvbˉprogram.Main` | `Windvale_kernel_embedded_main` |
 
-Qualified bridge version 1 has a 163-byte body and performs the direct ring-0 call recorded by Decision 0090. Probe 22 advances the bridge target to version 2 and uses a 162-byte body exported as `Windvale_kernel_x64_wvb_admission`:
+Qualified bridge version 1 has a 163-byte body and performs the direct ring-0 call recorded by Decision 0090. Candidate probes 22 and 23 use bridge version 2 with a 162-byte body exported as `Windvale_kernel_x64_wvb_admission`:
 
 1. Preserve the kernel handoff pointer.
 2. Construct native execution context version 7 with instruction budget 8,944, call-depth budget 2, and every service/resource pointer and capacity zero.
@@ -68,10 +68,10 @@ The bridge is a Stage 0 machine emitter and replacement seam. Admission policy a
 
 Exact commit `860c69c` reproduces these identities under all 21 OS tests on Windows and Debian and all three pinned-QEMU scenarios. Independent GitHub Windows/Linux verification also passes.
 
-Probe 22 preserves the first four artifact identities and replaces only the bridge composition. Candidate bridge version 2 is 484 bytes with SHA-256 `7b53fc11e4e99966386994c247c3a2a19f99ef8da751dbd9dc53f5575871a00d`; its 162 code bytes contain three exact relative calls/transfers to admission, protected process, and the retained native probe. Cross-host qualification of this new composition is pending.
+Candidate probes 22 and 23 preserve the first four artifact identities and replace only the bridge composition. Candidate bridge version 2 is 484 bytes with SHA-256 `7b53fc11e4e99966386994c247c3a2a19f99ef8da751dbd9dc53f5575871a00d`; its 162 code bytes contain three exact relative calls/transfers to admission, protected process, and the retained native probe. Cross-host qualification of this new composition is pending.
 
 ## Non-claims and next boundary
 
-Version 1 does not accept arbitrary valid WVB, produce general diagnostics, retain a decoded module model, validate capabilities or complex control flow generically, select cached native code, or publish executable pages. Probe 22 isolates the admitted program at CPL3, but the fixed verifier remains a trusted AOT ring-0 boot component and the host still constructs the derived image.
+Version 1 does not accept arbitrary valid WVB, produce general diagnostics, retain a decoded module model, validate capabilities or complex control flow generically, select cached native code, or publish executable pages. Probe 23 isolates the admitted client and Windvale service under separate CPL3 roots, but the fixed verifier remains a trusted AOT ring-0 boot component and the host still constructs both derived images.
 
-The next general-verifier revision must use checked offset arithmetic, bounded counts and strings, complete instruction decoding, branch-boundary validation, stack/type agreement, capability validation, canonical trailing-byte rejection, and deterministic diagnostics. The next OS architecture slice is the first init/resource service using the protected boundary, without widening this fixed profile into a general loader by implication.
+The next general-verifier revision must use checked offset arithmetic, bounded counts and strings, complete instruction decoding, branch-boundary validation, stack/type agreement, capability validation, canonical trailing-byte rejection, and deterministic diagnostics. The next OS architecture slice should measure the smallest step-6 loader/runtime case or third-runnable pressure without widening this fixed profile by implication.

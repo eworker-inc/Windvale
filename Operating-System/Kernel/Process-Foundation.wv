@@ -1,9 +1,11 @@
 module Processˉfoundation profile portable;
 
-// SHA-256 of the exact WVB admitted by Wvb-Admission.wv. The first process
-// contract binds its authority and budgets to this immutable program identity.
-data Moduleˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
-data Expectedˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
+// Exact SHA-256 identities of the admitted client WVB and the Windvale init
+// service WVB. The policy must accept both identities before pages are published.
+data Clientˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
+data Expectedˉclientˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
+data Serviceˉdigest: bytes = [71, 141, 252, 211, 111, 237, 124, 128, 99, 207, 179, 245, 58, 106, 19, 98, 189, 165, 53, 54, 86, 51, 155, 115, 11, 229, 115, 161, 190, 143, 149, 176];
+data Expectedˉserviceˉdigest: bytes = [71, 141, 252, 211, 111, 237, 124, 128, 99, 207, 179, 245, 58, 106, 19, 98, 189, 165, 53, 54, 86, 51, 155, 115, 11, 229, 115, 161, 190, 143, 149, 176];
 
 fn Hasˉidentity(Input: bytes, Expected: bytes) -> bool {
     if Bytesˉlength(Input) != 32u32 { return false; }
@@ -16,41 +18,43 @@ fn Hasˉidentity(Input: bytes, Expected: bytes) -> bool {
     return true;
 }
 
-fn Hasˉchannelˉcapability(Slot: u32, Generation: u32, Rights: u32) -> bool {
+fn Hasˉchannelˉendpoint(Slot: u32, Generation: u32, Rights: u32, Expectedˉrights: u32) -> bool {
     if Slot != 0u32 { return false; }
     if Generation != 1u32 { return false; }
-    if Rights != 3u32 { return false; }
+    if Rights != Expectedˉrights { return false; }
     return true;
 }
 
 export fn Main() -> i32 {
-    if !Hasˉidentity(Moduleˉdigest, Expectedˉdigest) { return 0; }
+    if !Hasˉidentity(Clientˉdigest, Expectedˉclientˉdigest) { return 0; }
+    if !Hasˉidentity(Serviceˉdigest, Expectedˉserviceˉdigest) { return 0; }
 
-    // One address space, thread, capability, and capacity-one channel. These
-    // values are mirrored by the independently verified Stage 0 machine seam.
-    let Processˉid: u32 = 1u32;
-    let Threadˉid: u32 = 1u32;
+    // Two address spaces and threads share one kernel-owned capacity-one
+    // channel through independently reduced endpoint capabilities.
+    let Initˉprocessˉid: u32 = 1u32;
+    let Clientˉprocessˉid: u32 = 2u32;
     let Memoryˉpages: u32 = 3u32;
-    let Instructionˉbudget: u32 = 4u32;
+    let Instructionˉbudget: u32 = 64u32;
     let Handleˉbudget: u32 = 1u32;
-    let Syscallˉbudget: u32 = 3u32;
-    if Processˉid != 1u32 { return 0; }
-    if Threadˉid != 1u32 { return 0; }
+    let Syscallˉbudget: u32 = 2u32;
+    if Initˉprocessˉid != 1u32 { return 0; }
+    if Clientˉprocessˉid != 2u32 { return 0; }
     if Memoryˉpages != 3u32 { return 0; }
-    if Instructionˉbudget != 4u32 { return 0; }
+    if Instructionˉbudget != 64u32 { return 0; }
     if Handleˉbudget != 1u32 { return 0; }
-    if Syscallˉbudget != 3u32 { return 0; }
-    if !Hasˉchannelˉcapability(0u32, 1u32, 3u32) { return 0; }
+    if Syscallˉbudget != 2u32 { return 0; }
+    if !Hasˉchannelˉendpoint(0u32, 1u32, 2u32, 2u32) { return 0; }
+    if !Hasˉchannelˉendpoint(0u32, 1u32, 1u32, 1u32) { return 0; }
 
-    var Processˉstate: u32 = 1u32;
-    var Threadˉstate: u32 = 1u32;
+    var Initˉthreadˉstate: u32 = 1u32;
+    var Clientˉthreadˉstate: u32 = 1u32;
     var Channelˉstate: u32 = 0u32;
     var Message: i32 = 0;
     var Syscalls: u32 = 0u32;
 
-    Processˉstate = 2u32;
-    Threadˉstate = 2u32;
-    // send(29), receive() -> 29, exit(29)
+    Initˉthreadˉstate = 5u32;
+    Clientˉthreadˉstate = 2u32;
+    // Init blocks in receive; the client sends 29; init wakes, receives, exits.
     if Channelˉstate != 0u32 { return 0; }
     Message = 29;
     Channelˉstate = 1u32;
@@ -60,11 +64,10 @@ export fn Main() -> i32 {
     Channelˉstate = 0u32;
     Syscalls = Syscalls + 1u32;
     if Channelˉstate != 0u32 { return 0; }
-    Syscalls = Syscalls + 1u32;
     if Syscalls != Syscallˉbudget { return 0; }
-    Threadˉstate = 3u32;
-    Processˉstate = 3u32;
-    if Threadˉstate != 3u32 { return 0; }
-    if Processˉstate != 3u32 { return 0; }
-    return 91;
+    Initˉthreadˉstate = 3u32;
+    Clientˉthreadˉstate = 3u32;
+    if Initˉthreadˉstate != 3u32 { return 0; }
+    if Clientˉthreadˉstate != 3u32 { return 0; }
+    return 92;
 }

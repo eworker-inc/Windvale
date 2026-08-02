@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel shutdown version 1 is cross-host qualified at exact commit `12e9e2e`. It was introduced by Windvale OS firmware probe 18, retained by qualified probe 21, and remains byte-for-byte unchanged in candidate probe 22. It defines one deterministic clean-poweroff path for pinned QEMU `pc-q35-11.0` after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; Decisions 0087 through 0091 record later compositions.
+Kernel shutdown version 1 is cross-host qualified at exact commit `12e9e2e`. It was introduced by Windvale OS firmware probe 18, retained by qualified probe 21, and remains byte-for-byte unchanged through candidate probe 23. It defines one deterministic clean-poweroff path for pinned QEMU `pc-q35-11.0` after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; Decisions 0087 through 0092 record later compositions.
 
 This is a target-specific machine adapter, not a portable Windvale capability, general ACPI discovery, a Hyper-V shutdown contract, or a process/service shutdown policy.
 
@@ -48,12 +48,12 @@ The operation runs at the existing privileged x86-64 boot level after `ExitBootS
 
 ## Normal and fault evidence
 
-Probe 22 retains the normal path, two terminal kernel-fault scenarios, and one contained user-fault success scenario after WVB admission and protected-process execution:
+Probe 23 retains the normal path, two terminal kernel-fault scenarios, and one contained client-fault success scenario after WVB admission and two-process execution:
 
-- `normal` completes Windvale admission, CPL3 send/receive/exit, the retained ABI-16 portable-WVB AOT path, and system-profile Main, emits the exact success and shutdown markers once, executes the WVA Q35 poweroff request, and requires QEMU process exit code `0`.
+- `normal` completes Windvale admission, blocks the receive-only init service, runs the send-only client, wakes and completes the service, runs the retained ABI-16 portable-WVB AOT path and system-profile Main, emits the exact success and shutdown markers once, executes the WVA Q35 poweroff request, and requires QEMU process exit code `0`.
 - `invalid-opcode` executes `UD2` after Main, emits the exact normalized vector-6 terminal panic suffix, and uses the test-only `isa-debug-exit` path with host code `3`.
 - `general-protection` dereferences a noncanonical address after Main, emits the exact normalized vector-13 terminal panic suffix, and uses the same test-only host code `3`.
-- `user-fault` executes privileged `CLI` at CPL3, contains vector 13 against the process, resumes the kernel, emits `user-fault=contained`, and reaches the same clean shutdown with host code `0`.
+- `user-fault` sends the client result, executes privileged `CLI` at CPL3, contains vector 13 against the client, wakes and completes the independent init service, emits `user-fault=contained`, and reaches the same clean shutdown with host code `0`.
 
 Neither terminal kernel-fault image may emit the later armed, native, success, or shutdown markers. The contained user-fault image must emit all of them.
 

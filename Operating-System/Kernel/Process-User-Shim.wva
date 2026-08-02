@@ -8,9 +8,7 @@ call Windvale_kernel_embedded_main
 move_u32 ebx 1
 move_u32 esi 65536
 syscall
-move_u32 ebx 2
-move_u32 esi 65536
-syscall
+move_u32 eax 29
 move_u32 ebx 3
 syscall
 trap
