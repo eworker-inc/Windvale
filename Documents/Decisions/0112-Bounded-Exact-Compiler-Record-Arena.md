@@ -1,7 +1,7 @@
 # Decision 0112: Bounded exact-compiler record arena
 
 - Date: 2026-08-02
-- Status: Implemented; qualification pending
+- Status: Qualified at exact commit `bbec1aee901d6471b3ff0e56e65f656a4cd53ed1`
 - Retains: Native ABI 20, execution-context version 7, and target `x86-64-wvb-baseline-v20`
 - Refines: [Decision 0068](0068-Bounded-Native-Nominal-Values-And-Wvdump-Structural-Core.md) and [Decision 0111](0111-Bounded-Exact-Compiler-Fragment-Publication.md)
 
@@ -30,7 +30,9 @@ The focused exact-compiler test invokes the normal executor with the implemented
 
 The existing exhaustion fixture now requests more than 2 MiB of record cells and still reaches `WVR3017`, proving that the revised bound remains enforced.
 
-The exact selected compiler remains 4,556,121 bytes with SHA-256 `8e74707df03a535e3ef68cfcfc8da6fa68fda29ccf4344e272fc50c8a5845bab`. Windows Development passes a zero-warning Release build, all 67 regular Seed tests, and all 25 OS tests; the complete command takes 74.1 seconds. Windows Standard passes all 68 Seed tests and all 25 OS tests in 241.2 seconds wall time; Seed in-process time is 227.737 seconds, including 169.396 seconds for the golden compiler-reproduction contract. Because the fragment, ABI, and OS inputs do not change, pinned-QEMU reproduction is not required for this implementation candidate.
+The exact selected compiler remains 4,556,121 bytes with SHA-256 `8e74707df03a535e3ef68cfcfc8da6fa68fda29ccf4344e272fc50c8a5845bab`. Windows Development passes a zero-warning Release build, all 67 regular Seed tests, and all 25 OS tests; the complete command takes 74.1 seconds. Windows Standard passes all 68 Seed tests and all 25 OS tests in 241.2 seconds wall time; Seed in-process time is 227.737 seconds, including 169.396 seconds for the golden compiler-reproduction contract.
+
+Exact implementation commit `bbec1aee901d6471b3ff0e56e65f656a4cd53ed1` passes GitHub [Verify run 30769250223](https://github.com/eworker-inc/Windvale/actions/runs/30769250223). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 68 Seed tests, all 25 OS tests, retained planner reproduction, and the complete native CLI gate. The exact compiler case takes 1.678 seconds on Windows and 1.414 seconds on Linux. Windows Seed takes 227.437 seconds with a 169.266-second golden contract; Linux Seed takes 192.121 seconds with a 141.888-second golden contract. The complete jobs finish in 8m46s and 7m14s respectively. QEMU was not rerun because the fragment, ABI, generated machine bytes, and all OS inputs remain unchanged.
 
 ## Consequences
 
