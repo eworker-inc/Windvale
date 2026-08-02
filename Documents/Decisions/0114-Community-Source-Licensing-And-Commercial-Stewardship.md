@@ -1,4 +1,4 @@
-# Decision 0113: Community-source licensing and commercial stewardship
+# Decision 0114: Community-source licensing and commercial stewardship
 
 - Date: 2026-08-02
 - Status: Accepted and implemented

@@ -272,7 +272,7 @@ The completion gate is the central Windvale portability proof: one module artifa
 
 ### Phase 13 - public foundation
 
-1. Keep the accepted Windvale Community Source License, [E-Worker Inc](https://eworker.ca) stewardship, vendor-neutral AI authorship, public contribution foundation, and third-party notices visible in source distributions; [Decisions 0113](../Decisions/0113-Community-Source-Licensing-And-Commercial-Stewardship.md), [0031](../Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md), and [0032](../Decisions/0032-Public-Contribution-And-Governance-Foundation.md) define the current policy.
+1. Keep the accepted Windvale Community Source License, [E-Worker Inc](https://eworker.ca) stewardship, vendor-neutral AI authorship, public contribution foundation, and third-party notices visible in source distributions; [Decisions 0114](../Decisions/0114-Community-Source-Licensing-And-Commercial-Stewardship.md), [0031](../Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md), and [0032](../Decisions/0032-Public-Contribution-And-Governance-Foundation.md) define the current policy.
 2. Publish the recovery bootstrap, pinned prerequisites, artifact provenance, cross-host qualification procedure, and release manifests.
 3. Apply the repository-wide AI-authorship default, recording a specific model or vendor only when technically material to reproducibility, qualification, or a third-party obligation.
 4. Maintain the published contributor agreement, contribution, review, security, support, conduct, governance, and project-identity policies and the configured GitHub reporting, CLA, DCO, role, and branch settings. The unchanged history was imported privately under `eworker-inc/Windvale` before public visibility.

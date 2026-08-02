@@ -1,4 +1,4 @@
-# Decision 0112: Metered WebAssembly control flow
+# Decision 0113: Metered WebAssembly control flow
 
 - Date: 2026-08-02
 - Status: Cross-host qualified with deterministic engine and local Chromium browser evidence; cross-browser qualification pending

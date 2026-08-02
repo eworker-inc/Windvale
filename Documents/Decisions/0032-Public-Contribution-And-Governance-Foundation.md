@@ -1,7 +1,7 @@
 # Decision 0032: Public contribution and governance foundation
 
 - Date: 2026-07-30
-- Status: Accepted; contribution-licensing and DCO-only portions superseded on 2026-08-02 by [Decision 0113](0113-Community-Source-Licensing-And-Commercial-Stewardship.md), while the remaining governance foundation stays current
+- Status: Accepted; contribution-licensing and DCO-only portions superseded on 2026-08-02 by [Decision 0114](0114-Community-Source-Licensing-And-Commercial-Stewardship.md), while the remaining governance foundation stays current
 
 ## Context
 
