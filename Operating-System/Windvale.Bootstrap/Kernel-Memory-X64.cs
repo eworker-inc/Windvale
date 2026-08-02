@@ -8,6 +8,7 @@ internal sealed record Kernelˉmemoryˉcode(
     ImmutableArray<byte> Bytes,
     uint Enterˉbytes,
     uint Allocatorˉoffset,
+    uint Releaserˉoffset,
     ImmutableArray<Kernelˉmemoryˉrelocation> Relocations);
 
 internal static class Kernelˉmemoryˉx64
@@ -20,6 +21,7 @@ internal static class Kernelˉmemoryˉx64
     private const string OVERLAP_LABEL = "memory_overlap";
     private const string OVERLAP_NEXT_LABEL = "memory_overlap_next";
     private const string ALLOCATOR_FAILURE_LABEL = "allocator_failure";
+    private const string RELEASER_FAILURE_LABEL = "releaser_failure";
     private const string OWNED_STACK_FAILURE_LABEL = "owned_stack_failure";
     private const string OWNED_STACK_RESTORE_LABEL = "owned_stack_restore";
 
@@ -47,8 +49,13 @@ internal static class Kernelˉmemoryˉx64
         Output.Align(16);
         var Allocatorˉoffset = Output.Position;
         Emitˉallocator(Output);
+        Output.Align(16);
+        var Releaserˉoffset = Output.Position;
+        Emitˉreleaser(Output);
 
-        return new(Output.Build(), Enterˉbytes, Allocatorˉoffset, Relocations.ToImmutable());
+        return new(
+            Output.Build(), Enterˉbytes, Allocatorˉoffset, Releaserˉoffset,
+            Relocations.ToImmutable());
     }
 
     private static void Emitˉenter(
@@ -212,15 +219,15 @@ internal static class Kernelˉmemoryˉx64
         output.Emitˉu32((uint)((Kernelˉmemoryˉcontract.STATE_PAGES + Kernelˉmemoryˉcontract.STACK_PAGES) * Kernelˉmemoryˉcontract.PAGE_BYTES));
         output.Emit(0x48, 0x83, 0xEC, 0x20);
         output.Emit(0x49, 0x8B, 0x4E, 0x38);
-        Emitˉexternalˉcall(output, relocations, 3);
-        output.Emit(0x48, 0x85, 0xC0);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, OWNED_STACK_FAILURE_LABEL);
-        output.Emit(0x4C, 0x89, 0xF1);
         Emitˉexternalˉcall(output, relocations, 4);
         output.Emit(0x48, 0x85, 0xC0);
         output.Jumpˉif(CONDITION_NOT_EQUAL, OWNED_STACK_FAILURE_LABEL);
+        output.Emit(0x4C, 0x89, 0xF1);
+        Emitˉexternalˉcall(output, relocations, 5);
+        output.Emit(0x48, 0x85, 0xC0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, OWNED_STACK_FAILURE_LABEL);
         output.Emit(0x49, 0x8D, 0x4E, (byte)Kernelˉmemoryˉcontract.HANDOFF_COPY_OFFSET);
-        Emitˉexternalˉcall(output, relocations, 2);
+        Emitˉexternalˉcall(output, relocations, 3);
         output.Emit(0x49, 0x89, 0xC7);
         output.Emit(0x48, 0x85, 0xC0);
         output.Jumpˉif(CONDITION_NOT_EQUAL, OWNED_STACK_RESTORE_LABEL);
@@ -286,6 +293,52 @@ internal static class Kernelˉmemoryˉx64
         output.Emit(0x4C, 0x89, 0xD7, 0x31, 0xC0, 0x4C, 0x89, 0xC9, 0xFC, 0xF3, 0x48, 0xAB);
         output.Emit(0x4C, 0x89, 0xD0, 0x5F, 0xC3);
         output.Mark(ALLOCATOR_FAILURE_LABEL);
+        output.Emit(0x31, 0xC0, 0x5F, 0xC3);
+    }
+
+    private static void Emitˉreleaser(X64ˉcodeˉbuilder output)
+    {
+        // RCX is the arena state, RDX is the exact tail address, and R8D is
+        // the bounded page count. Only a caller-proven suffix ending at the
+        // current cursor can be released; success zeros it before restoring
+        // the allocation cursor.
+        output.Emit(0x57, 0x48, 0x85, 0xC9);
+        output.Jumpˉif(CONDITION_EQUAL, RELEASER_FAILURE_LABEL);
+        output.Emit(0x49, 0x89, 0xCB, 0x48, 0xB8);
+        output.Emitˉu64(Kernelˉmemoryˉcontract.STATE_MAGIC);
+        output.Emit(0x49, 0x39, 0x03);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
+        output.Emit(0x41, 0x83, 0x7B, 0x08, (byte)Kernelˉmemoryˉcontract.STATE_VERSION);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
+        output.Emit(0x41, 0x83, 0x7B, 0x0C, (byte)Kernelˉmemoryˉcontract.STATE_HEADER_BYTES);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
+        output.Emit(0x4D, 0x39, 0x5B, 0x10);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
+        output.Emit(0x49, 0x83, 0x7B, 0x18, (byte)Kernelˉmemoryˉcontract.ARENA_PAGES);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
+        output.Emit(0x45, 0x85, 0xC0);
+        output.Jumpˉif(CONDITION_EQUAL, RELEASER_FAILURE_LABEL);
+
+        output.Emit(0x4C, 0x89, 0xC0, 0x4D, 0x8B, 0x4B, 0x20);
+        output.Emit(0x4C, 0x39, 0xC8);
+        output.Jumpˉif(CONDITION_ABOVE, RELEASER_FAILURE_LABEL);
+        output.Emit(0x4D, 0x8B, 0x53, 0x28, 0x4D, 0x01, 0xCA);
+        output.Emit(0x49, 0x83, 0xFA, (byte)Kernelˉmemoryˉcontract.ARENA_PAGES);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
+        output.Emit(0x49, 0x29, 0xC1, 0x49, 0x83, 0xF9,
+            (byte)Kernelˉmemoryˉcontract.FIRST_FREE_PAGE);
+        output.Jumpˉif(CONDITION_BELOW, RELEASER_FAILURE_LABEL);
+        output.Emit(0x4D, 0x89, 0xCA, 0x49, 0xC1, 0xE2, 0x0C, 0x4D, 0x01, 0xDA);
+        output.Emit(0x4C, 0x39, 0xD2);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
+        output.Emit(0x4D, 0x8B, 0x53, 0x28, 0x49, 0x01, 0xC2);
+        output.Emit(0x49, 0x83, 0xFA, (byte)Kernelˉmemoryˉcontract.INITIAL_FREE_PAGES);
+        output.Jumpˉif(CONDITION_ABOVE, RELEASER_FAILURE_LABEL);
+        output.Emit(0x4D, 0x89, 0x4B, 0x20, 0x4D, 0x89, 0x53, 0x28);
+
+        output.Emit(0x48, 0x89, 0xD7, 0x48, 0x89, 0xC1, 0x48, 0xC1, 0xE1, 0x09);
+        output.Emit(0x31, 0xC0, 0xFC, 0xF3, 0x48, 0xAB, 0x48, 0x89, 0xD0, 0x5F, 0xC3);
+        output.Mark(RELEASER_FAILURE_LABEL);
         output.Emit(0x31, 0xC0, 0x5F, 0xC3);
     }
 

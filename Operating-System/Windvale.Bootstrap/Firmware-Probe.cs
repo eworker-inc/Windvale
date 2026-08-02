@@ -16,12 +16,12 @@ public enum Firmwareˉprobeˉscenario
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 29;
+    public const int FORMAT_VERSION = 30;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 29\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 30\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -36,6 +36,7 @@ public static class Firmwareˉprobe
     public const string RESOURCE_GRANT_MARKER = "resource-grant=pass\n";
     public const string TYPED_RESOURCES_MARKER = "typed-resources=pass\n";
     public const string RESOURCE_REVOKED_MARKER = "resource-revoked=pass\n";
+    public const string PROCESS_REUSE_MARKER = "process-reuse=pass\n";
     public const string IPC_MARKER = "ipc=cross-process\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string CPU_EXCEPTIONS_MARKER = "cpu-exceptions=armed\n";
@@ -52,7 +53,7 @@ public static class Firmwareˉprobe
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
         WVB_ADMISSION_MARKER + PROCESS_MARKER + RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
-        RESOURCE_REVOKED_MARKER +
+        RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
         WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER +
         IPC_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
@@ -61,7 +62,7 @@ public static class Firmwareˉprobe
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
         WVB_ADMISSION_MARKER + PROCESS_MARKER + RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
-        RESOURCE_REVOKED_MARKER +
+        RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
         WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER +
         IPC_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
@@ -207,7 +208,7 @@ public static class Firmwareˉprobe
                     Objectˉsymbolˉkind.Function,
                     0,
                     Memory.Allocatorˉoffset,
-                    checked((uint)Memory.Bytes.Length - Memory.Allocatorˉoffset)),
+                    Memory.Releaserˉoffset - Memory.Allocatorˉoffset),
                 new(
                     Kernelˉmemoryˉcontract.MEMORY_ENTER_SYMBOL,
                     Objectˉsymbolˉbinding.Export,
@@ -215,6 +216,13 @@ public static class Firmwareˉprobe
                     0,
                     0,
                     Memory.Enterˉbytes),
+                new(
+                    Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL,
+                    Objectˉsymbolˉbinding.Export,
+                    Objectˉsymbolˉkind.Function,
+                    0,
+                    Memory.Releaserˉoffset,
+                    checked((uint)Memory.Bytes.Length - Memory.Releaserˉoffset)),
                 new(
                     Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL,
                     Objectˉsymbolˉbinding.Import,

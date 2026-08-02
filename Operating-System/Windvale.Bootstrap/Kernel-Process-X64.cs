@@ -18,6 +18,8 @@ public static class Kernelˉprocessˉx64
     private const string FAILURE_LABEL = "process_failure";
     private const string SERVICE_BLOCKED_LABEL = "process_service_blocked";
     private const string CLIENT_COMPLETION_LABEL = "process_client_completion";
+    private const string SECOND_SERVICE_BLOCKED_LABEL = "process_second_service_blocked";
+    private const string SECOND_CLIENT_COMPLETION_LABEL = "process_second_client_completion";
     private const string COMPLETION_LABEL = "process_completion";
     private const string PT_LOOP_LABEL = "process_pt_loop";
     private const string PT_NULL_DONE_LABEL = "process_pt_null_done";
@@ -33,7 +35,7 @@ public static class Kernelˉprocessˉx64
     private const byte CONDITION_EQUAL = 0x84;
     private const byte CONDITION_NOT_EQUAL = 0x85;
     private const byte CONDITION_ABOVE = 0x87;
-    private const uint POLICY_INSTRUCTION_BUDGET = 8_192;
+    private const uint POLICY_INSTRUCTION_BUDGET = 16_384;
     private const uint POLICY_CALL_DEPTH_BUDGET = 2;
     private const uint FRAME_BYTES = 0xD0;
     private const uint INIT_RECORD_SLOT_OFFSET = 0xB8;
@@ -128,6 +130,7 @@ public static class Kernelˉprocessˉx64
                     Objectˉsymbolˉkind.Function, 0, Syscallˉoffset, Syscallˉbytes),
                 Import(Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL),
                 Import(Kernelˉprocessˉcontract.POLICY_SYMBOL),
+                Import(Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL),
                 Import(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL),
                 Import(Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL),
                 Import(Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL),
@@ -207,6 +210,7 @@ public static class Kernelˉprocessˉx64
             image.Admittedˉprogramˉdigest,
             Kernelˉprocessˉcontract.INIT_PROCESS_ID,
             Kernelˉprocessˉcontract.INIT_THREAD_ID,
+            Kernelˉprocessˉcontract.INIT_PROCESS_GENERATION,
             Kernelˉprocessˉcontract.INIT_CAPABILITY_RIGHTS,
             Kernelˉprocessˉcontract.ROLE_INIT_SERVICE);
         Emitˉcopyˉkernelˉtables(output);
@@ -231,7 +235,7 @@ public static class Kernelˉprocessˉx64
             Kernelˉprocessˉcontract.INIT_CALL_DEPTH_BUDGET);
 
         // Build a distinct send-only interpreter root. Its target resource PTE
-        // and ABI-16 resource tables remain zero until the init grant syscall.
+        // and ABI-17 resource tables remain zero until the init grant syscall.
         Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
         Emitˉallocateˉextent(output, relocations, Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES);
         Emitˉinitializeˉrecord(
@@ -240,6 +244,7 @@ public static class Kernelˉprocessˉx64
             image.Admittedˉprogramˉdigest,
             Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
             Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
+            Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION,
             Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
             Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         Emitˉcopyˉkernelˉtables(output);
@@ -329,6 +334,9 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
             Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET,
+            Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.RESULT_OFFSET,
             Kernelˉprocessˉcontract.EXPECTED_RESULT);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -343,9 +351,130 @@ public static class Kernelˉprocessˉx64
         Emitˉrevokeˉterminalˉresource(
             output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
 
-        // The client is now terminal and its immutable alias has been removed.
-        // Switch back to the blocked service root, which also flushes the
-        // retired client translation, consume the message, and resume receive.
+        // The client is now terminal and its immutable aliases are gone.
+        // Switch to init's root before releasing the exact 42-page allocator
+        // tail, then rebuild generation 2 at the identical physical root.
+        output.Emit(0x0F, 0x01, 0xF8);
+        Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
+        Emitˉactivateˉrecordˉroot(output, relocations);
+        Emitˉsetˉkernelˉgsˉbase(output);
+        Emitˉvalidateˉreleasedˉresource(
+            output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
+        Emitˉreclaimˉandˉrebuildˉclient(output, relocations, image);
+
+        // Consume generation 1's message and resume init. Its WVA seam issues
+        // a second grant and receive, then blocks at the new coordinator label.
+        Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
+        Emitˉsetˉkernelˉgsˉbase(output);
+        output.Loadˉripˉrelativeˉrdx(SECOND_SERVICE_BLOCKED_LABEL);
+        output.Emit(0x49, 0x89, 0x95);
+        output.Emitˉu32(Kernelˉprocessˉcontract.KERNEL_RESUME_OFFSET);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_RUNNING);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_NONE);
+        Emitˉloadˉrecordˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉloadˉchannelˉeax(output, Kernelˉprocessˉcontract.CHANNEL_MESSAGE_OFFSET);
+        output.Emit(0x83, 0xF8, (byte)Kernelˉprocessˉcontract.EXPECTED_RESULT);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_RECEIVER_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+        Emitˉincrementˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_RECEIVE_COUNT_OFFSET);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET, 0);
+        Emitˉincrementˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAKE_COUNT_OFFSET);
+        Emitˉresumeˉsavedˉprocess(output);
+
+        output.Mark(SECOND_SERVICE_BLOCKED_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+            Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_WAITING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 4);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_CHANNEL_RECEIVE);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉloadˉgsˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_SEND_COUNT_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_RECEIVE_COUNT_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAKE_COUNT_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉvalidateˉborrowedˉresource(
+            output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
+
+        output.Emit(0x0F, 0x01, 0xF8);
+        Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
+        Emitˉcompareˉrecordˉu32(output, Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET,
+            Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉactivateˉrecordˉroot(output, relocations);
+        Emitˉsetˉkernelˉgsˉbase(output);
+        Emitˉenterˉinitialˉprocess(
+            output, SECOND_CLIENT_COMPLETION_LABEL, Kernelˉprocessˉcontract.CLIENT_STACK_PAGES);
+
+        output.Mark(SECOND_CLIENT_COMPLETION_LABEL);
+        if (userˉfault)
+        {
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+                Kernelˉprocessˉcontract.PROCESS_STATE_FAULTED);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+                Kernelˉprocessˉcontract.THREAD_STATE_FAULTED);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.FAULT_VECTOR_OFFSET,
+                Kernelˉexceptionˉcontract.GENERAL_PROTECTION_VECTOR);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.FAULT_ERROR_OFFSET, 0);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 1);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        }
+        else
+        {
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+                Kernelˉprocessˉcontract.PROCESS_STATE_EXITED);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+                Kernelˉprocessˉcontract.THREAD_STATE_EXITED);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET,
+                Kernelˉprocessˉcontract.CLIENT_SYSCALL_BUDGET);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        }
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
+            Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET,
+            Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.RESULT_OFFSET,
+            Kernelˉprocessˉcontract.EXPECTED_RESULT);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉloadˉgsˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_MESSAGE_OFFSET,
+            Kernelˉprocessˉcontract.EXPECTED_RESULT);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_SEND_COUNT_OFFSET, 2);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉrevokeˉterminalˉresource(
+            output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
+
+        // Generation 2 is terminal. Switch back to init, consume its message,
+        // and let the five-syscall service exit through the final label.
         output.Emit(0x0F, 0x01, 0xF8);
         Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
         Emitˉactivateˉrecordˉroot(output, relocations);
@@ -390,9 +519,9 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_MESSAGE_OFFSET,
             Kernelˉprocessˉcontract.EXPECTED_RESULT);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
-        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_RECEIVE_COUNT_OFFSET, 1);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_RECEIVE_COUNT_OFFSET, 2);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
-        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAKE_COUNT_OFFSET, 1);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAKE_COUNT_OFFSET, 2);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉvalidateˉreleasedˉresource(
             output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
@@ -400,9 +529,13 @@ public static class Kernelˉprocessˉx64
         // Restore the kernel GS state and independently re-check the terminal client.
         output.Emit(0x0F, 0x01, 0xF8);
         Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
+        Emitˉcompareˉrecordˉu32(output, Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET,
+            Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉrecordˉu32(output, Kernelˉprocessˉcontract.RESULT_OFFSET,
             Kernelˉprocessˉcontract.EXPECTED_RESULT);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉvalidateˉexhaustedˉallocator(output);
         output.Emit(0xB8);
         output.Emitˉu32(Kernelˉprocessˉcontract.EXPECTED_RESULT);
         Emitˉepilogue(output);
@@ -456,7 +589,7 @@ public static class Kernelˉprocessˉx64
 
         output.Mark(EXCEPTION_KERNEL_LABEL);
         var Jumpˉfield = output.Emitˉjumpˉplaceholder();
-        relocations.Add(Relocation(Jumpˉfield, 9));
+        relocations.Add(Relocation(Jumpˉfield, 10));
     }
 
     private static void Emitˉsyscallˉentry(
@@ -663,7 +796,7 @@ public static class Kernelˉprocessˉx64
             resourceˉid);
         Emitˉstoreˉresourceˉu32(
             output, Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET,
-            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+            Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE);
         Emitˉstoreˉresourceˉu32(
             output, Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET,
             attributes);
@@ -733,12 +866,85 @@ public static class Kernelˉprocessˉx64
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
     }
 
+    private static void Emitˉreclaimˉandˉrebuildˉclient(
+        X64ˉcodeˉbuilder output,
+        ImmutableArray<Objectˉrelocation>.Builder relocations,
+        Kernelˉprocessˉimageˉartifacts image)
+    {
+        Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
+        Emitˉcompareˉrecordˉu32(output, Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET,
+            Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉrecordˉu32(output, Kernelˉprocessˉcontract.RESULT_OFFSET,
+            Kernelˉprocessˉcontract.EXPECTED_RESULT);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+
+        output.Emit(0x4C, 0x89, 0xE1, 0x49, 0x8B, 0x95);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
+        output.Emit(0x41, 0xB8);
+        output.Emitˉu32(checked((uint)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES));
+        Emitˉexternalˉcall(output, relocations, 9);
+        output.Emit(0x49, 0x3B, 0x85);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        output.Emit(0x49, 0x83, 0x7C, 0x24, 0x20,
+            checked((byte)(Kernelˉmemoryˉcontract.ARENA_PAGES -
+                Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES)));
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        output.Emit(0x49, 0x83, 0x7C, 0x24, 0x28,
+            checked((byte)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES));
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+
+        Emitˉallocateˉextent(
+            output, relocations, Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES);
+        output.Emit(0x4D, 0x3B, 0xB5);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉinitializeˉrecord(
+            output,
+            image.Interpreterˉdigest,
+            image.Admittedˉprogramˉdigest,
+            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
+            Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
+            Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION,
+            Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
+            Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
+        Emitˉcopyˉkernelˉtables(output);
+        Emitˉpopulateˉprocessˉtable(
+            output, "client_reuse", Kernelˉprocessˉcontract.CLIENT_CODE_PAGES,
+            Kernelˉprocessˉcontract.CLIENT_STACK_PAGE,
+            Kernelˉprocessˉcontract.CLIENT_STACK_PAGES,
+            Kernelˉprocessˉcontract.CLIENT_DATA_PAGE,
+            Kernelˉprocessˉcontract.CLIENT_RUNTIME_INPUT_PAGE,
+            Kernelˉprocessˉcontract.CLIENT_RUNTIME_BUDGET_PAGE,
+            false);
+        Emitˉcopyˉuserˉbytes(
+            output, relocations, image.Clientˉimageˉbytes.Length, 1,
+            Kernelˉprocessˉcontract.USER_CODE_PAGE);
+        Emitˉinitializeˉuserˉcontext(
+            output, Kernelˉprocessˉcontract.CLIENT_DATA_PAGE,
+            Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET,
+            Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET);
+        Emitˉvalidateˉexhaustedˉallocator(output);
+    }
+
+    private static void Emitˉvalidateˉexhaustedˉallocator(X64ˉcodeˉbuilder output)
+    {
+        Emitˉvalidateˉmemoryˉstate(output);
+        output.Emit(0x49, 0x83, 0x7C, 0x24, 0x20,
+            checked((byte)Kernelˉmemoryˉcontract.ARENA_PAGES));
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        output.Emit(0x49, 0x83, 0x7C, 0x24, 0x28, 0x00);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+    }
+
     private static void Emitˉinitializeˉrecord(
         X64ˉcodeˉbuilder output,
         ImmutableArray<byte> digest,
         ImmutableArray<byte> programˉdigest,
         uint processˉid,
         uint threadˉid,
+        uint processˉgeneration,
         uint capabilityˉrights,
         uint role)
     {
@@ -828,6 +1034,8 @@ public static class Kernelˉprocessˉx64
         Emitˉstoreˉrecordˉu32(
             output, Kernelˉprocessˉcontract.CODE_PAGE_COUNT_OFFSET, checked((uint)Codeˉpages));
         Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.RUNTIME_KIND_OFFSET, Runtimeˉkind);
+        Emitˉstoreˉrecordˉu32(
+            output, Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET, processˉgeneration);
     }
 
     private static void Emitˉcopyˉkernelˉtables(X64ˉcodeˉbuilder output)
@@ -979,9 +1187,9 @@ public static class Kernelˉprocessˉx64
         // Reuse the existing kernel-owned zeroed IDT page, extending it through
         // page fault and routing 6/13/14 through WVA-normalized process stubs.
         output.Emit(0x4D, 0x8B, 0x44, 0x24, 0x38);
-        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.INVALID_OPCODE_GATE_OFFSET, 13);
-        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.GENERAL_PROTECTION_GATE_OFFSET, 11);
-        Emitˉgate(output, relocations, 14 * Kernelˉexceptionˉcontract.IDT_GATE_BYTES, 12);
+        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.INVALID_OPCODE_GATE_OFFSET, 14);
+        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.GENERAL_PROTECTION_GATE_OFFSET, 12);
+        Emitˉgate(output, relocations, 14 * Kernelˉexceptionˉcontract.IDT_GATE_BYTES, 13);
         output.Emit(0x66, 0x41, 0xC7, 0x80);
         output.Emitˉu32(IDT_DESCRIPTOR_OFFSET);
         output.Emit((byte)IDT_LIMIT, (byte)(IDT_LIMIT >> 8));
@@ -1033,7 +1241,7 @@ public static class Kernelˉprocessˉx64
     {
         output.Emit(0x49, 0x8B, 0x85);
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
-        Emitˉexternalˉcall(output, relocations, 10);
+        Emitˉexternalˉcall(output, relocations, 11);
         output.Emit(0x49, 0x3B, 0x85);
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -1244,12 +1452,10 @@ public static class Kernelˉprocessˉx64
                 output, Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
                 Kernelˉprocessˉcontract.RESOURCE_STATE_BORROWED);
             Emitˉstoreˉresourceˉu32(
-                output, Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET,
-                Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
-            Emitˉstoreˉresourceˉu32(
-                output, Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 1);
-            Emitˉstoreˉresourceˉu32(
                 output, Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 1);
+            Emitˉstoreˉresourceˉborrowerˉgeneration(output);
+            output.Emit(0x41, 0xFF, 0x41,
+                checked((byte)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET));
         }
     }
 
@@ -1266,17 +1472,17 @@ public static class Kernelˉprocessˉx64
                 Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED),
             (Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET, resourceˉid),
             (Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET,
-                Kernelˉprocessˉcontract.INIT_PROCESS_ID),
+                Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE),
             (Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0),
             (Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET, resourceˉlength),
             (Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET, attributes),
-            (Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 0),
             (Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0),
         })
         {
             Emitˉcompareˉresourceˉu32(output, Field.Offset, Field.Value);
             output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
         }
+        Emitˉvalidateˉownedˉgrantˉgeneration(output, SYSCALL_FAILURE_LABEL);
         output.Emit(0x49, 0x8B, 0x41,
             (byte)Kernelˉprocessˉcontract.RESOURCE_SOURCE_ADDRESS_OFFSET);
         output.Emit(0x48, 0x85, 0xC0);
@@ -1431,18 +1637,16 @@ public static class Kernelˉprocessˉx64
                 Kernelˉprocessˉcontract.RESOURCE_STATE_BORROWED),
             (Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET, resourceˉid),
             (Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET,
-                Kernelˉprocessˉcontract.INIT_PROCESS_ID),
-            (Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET,
-                Kernelˉprocessˉcontract.CLIENT_PROCESS_ID),
+                Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE),
             (Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET, resourceˉlength),
             (Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET, attributes),
-            (Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 1),
             (Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 1),
         })
         {
             Emitˉcompareˉresourceˉu32(output, Field.Offset, Field.Value);
             output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
         }
+        Emitˉvalidateˉborrowedˉgeneration(output, failureˉlabel);
         output.Emit(0x49, 0x8B, 0x41,
             (byte)Kernelˉprocessˉcontract.RESOURCE_SOURCE_ADDRESS_OFFSET);
         output.Emit(0x4D, 0x8B, 0x41,
@@ -1611,17 +1815,17 @@ public static class Kernelˉprocessˉx64
                 Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED),
             (Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET, resourceˉid),
             (Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET,
-                Kernelˉprocessˉcontract.INIT_PROCESS_ID),
+                Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE),
             (Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0),
             (Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET, resourceˉlength),
             (Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET, attributes),
-            (Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 1),
             (Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0),
         })
         {
             Emitˉcompareˉresourceˉu32(output, Field.Offset, Field.Value);
             output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
         }
+        Emitˉvalidateˉreleasedˉgeneration(output, failureˉlabel);
         output.Emit(0x4D, 0x8B, 0x51,
             (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
         output.Emit(0x49, 0x83, 0x3A, 0x00);
@@ -1690,6 +1894,65 @@ public static class Kernelˉprocessˉx64
     {
         output.Emit(0x41, 0xC7, 0x41, checked((byte)offset));
         output.Emitˉu32(value);
+    }
+
+    private static void Emitˉstoreˉresourceˉborrowerˉgeneration(
+        X64ˉcodeˉbuilder output)
+    {
+        Emitˉloadˉclientˉgenerationˉeax(output, SYSCALL_FAILURE_LABEL);
+        output.Emit(0xC1, 0xE0, 0x10, 0x83, 0xC8,
+            checked((byte)Kernelˉprocessˉcontract.CLIENT_PROCESS_ID));
+        output.Emit(0x41, 0x89, 0x41,
+            checked((byte)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET));
+    }
+
+    private static void Emitˉvalidateˉownedˉgrantˉgeneration(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel)
+    {
+        Emitˉloadˉclientˉgenerationˉeax(output, failureˉlabel);
+        output.Emit(0xFF, 0xC8, 0x41, 0x39, 0x41,
+            checked((byte)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET));
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+    }
+
+    private static void Emitˉvalidateˉborrowedˉgeneration(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel)
+    {
+        Emitˉloadˉclientˉgenerationˉeax(output, failureˉlabel);
+        output.Emit(0x41, 0x39, 0x41,
+            checked((byte)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET));
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        output.Emit(0xC1, 0xE0, 0x10, 0x83, 0xC8,
+            checked((byte)Kernelˉprocessˉcontract.CLIENT_PROCESS_ID));
+        output.Emit(0x41, 0x39, 0x41,
+            checked((byte)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET));
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+    }
+
+    private static void Emitˉvalidateˉreleasedˉgeneration(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel)
+    {
+        Emitˉloadˉclientˉgenerationˉeax(output, failureˉlabel);
+        output.Emit(0x41, 0x39, 0x41,
+            checked((byte)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET));
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+    }
+
+    private static void Emitˉloadˉclientˉgenerationˉeax(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel)
+    {
+        output.Emit(0x41, 0x8B, 0x84, 0x24);
+        output.Emitˉu32(
+            Kernelˉprocessˉcontract.CLIENT_RECORD_OFFSET +
+            Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET);
+        output.Emit(0x83, 0xF8, (byte)Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION);
+        output.Jumpˉif(CONDITION_BELOW, failureˉlabel);
+        output.Emit(0x83, 0xF8, (byte)Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION);
+        output.Jumpˉif(CONDITION_ABOVE, failureˉlabel);
     }
 
     private static void Emitˉrequireˉsyscallˉbudget(X64ˉcodeˉbuilder output)
@@ -1915,13 +2178,21 @@ public static class Kernelˉprocessˉx64
             !Object.Sections[2].Data.AsSpan().SequenceEqual(clientˉimage.AsSpan()) ||
             !Object.Sections[3].Data.AsSpan().SequenceEqual(runtimeˉinput.AsSpan()) ||
             !Object.Sections[4].Data.AsSpan().SequenceEqual(runtimeˉbudget.AsSpan()) ||
-            Object.Symbols.Length != 14 ||
+            Object.Symbols.Length != 15 ||
             Object.Symbols[2].Name != "Windvale_resource_init_boot" ||
             Object.Symbols[3].Name != "Windvale_resource_init_budget" ||
             Object.Symbols[3].Sectionˉindex != 4 ||
             Object.Symbols[4].Name != Kernelˉprocessˉcontract.ENTER_SYMBOL ||
             Object.Symbols[5].Name != Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL ||
             Object.Symbols[6].Name != Kernelˉprocessˉcontract.SYSCALL_ENTRY_SYMBOL ||
+            Object.Symbols[7].Name != Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL ||
+            Object.Symbols[8].Name != Kernelˉprocessˉcontract.POLICY_SYMBOL ||
+            Object.Symbols[9].Name != Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL ||
+            Object.Symbols[10].Name != Kernelˉexceptionˉcontract.TERMINAL_SYMBOL ||
+            Object.Symbols[11].Name != Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL ||
+            Object.Symbols[12].Name != Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL ||
+            Object.Symbols[13].Name != Kernelˉprocessˉcontract.EXCEPTION_14_ENTRY_SYMBOL ||
+            Object.Symbols[14].Name != Kernelˉprocessˉcontract.EXCEPTION_6_ENTRY_SYMBOL ||
             !Object.Relocations.AsSpan().SequenceEqual(relocations.AsSpan()))
         {
             throw new InvalidOperationException(

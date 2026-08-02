@@ -5,10 +5,11 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉmemoryˉcontract
 {
-    public const int FORMAT_VERSION = 6;
-    public const string TARGET_NAME = "x86-64-kernel-memory-v6";
+    public const int FORMAT_VERSION = 7;
+    public const string TARGET_NAME = "x86-64-kernel-memory-v7";
     public const string MEMORY_ENTER_SYMBOL = "Windvale_kernel_memory_enter";
     public const string ALLOCATE_PAGES_SYMBOL = "Windvale_kernel_allocate_pages";
+    public const string RELEASE_TAIL_PAGES_SYMBOL = "Windvale_kernel_release_tail_pages";
     public const uint EFI_CONVENTIONAL_MEMORY = 7;
     public const ulong PAGE_BYTES = 4_096;
     public const ulong ARENA_ALIGNMENT_BYTES = 2 * 1024 * 1024;
@@ -22,8 +23,8 @@ public static class Kernelˉmemoryˉcontract
     public const ulong INITIAL_FREE_PAGES = ARENA_PAGES - FIRST_FREE_PAGE;
     public const uint STATE_HEADER_BYTES = 64;
     public const uint HANDOFF_COPY_OFFSET = STATE_HEADER_BYTES;
-    public const ulong STATE_MAGIC = 0x3630_4D45_4D4B_5657;
-    public const uint STATE_VERSION = 6;
+    public const ulong STATE_MAGIC = 0x3730_4D45_4D4B_5657;
+    public const uint STATE_VERSION = 7;
 }
 
 public sealed record Kernelˉmemoryˉdiagnostic(string Code, string Message);
@@ -180,7 +181,7 @@ public sealed class Kernelˉpageˉallocator
             plan.Freeˉpages != Kernelˉmemoryˉcontract.INITIAL_FREE_PAGES ||
             arena.Length != checked((int)Kernelˉmemoryˉcontract.ARENA_BYTES))
         {
-            throw new ArgumentException("The allocator requires one canonical version 2 kernel arena.", nameof(plan));
+            throw new ArgumentException("The allocator requires one canonical kernel arena.", nameof(plan));
         }
 
         Plan = plan;
@@ -206,5 +207,23 @@ public sealed class Kernelˉpageˉallocator
         Nextˉpage += pages;
         Remainingˉpages -= pages;
         return Address;
+    }
+
+    public bool Releaseˉtailˉpages(ulong address, ulong pages)
+    {
+        if (pages == 0 ||
+            pages > Nextˉpage - Plan.Firstˉfreeˉpage ||
+            address != Plan.Arenaˉaddress +
+                checked((Nextˉpage - pages) * Kernelˉmemoryˉcontract.PAGE_BYTES))
+        {
+            return false;
+        }
+
+        var Byteˉoffset = checked((address - Plan.Arenaˉaddress));
+        var Byteˉlength = checked(pages * Kernelˉmemoryˉcontract.PAGE_BYTES);
+        Array.Clear(Arena, checked((int)Byteˉoffset), checked((int)Byteˉlength));
+        Nextˉpage -= pages;
+        Remainingˉpages += pages;
+        return true;
     }
 }

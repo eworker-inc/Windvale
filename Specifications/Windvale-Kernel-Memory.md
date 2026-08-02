@@ -2,11 +2,11 @@
 
 ## Status and purpose
 
-Kernel memory version 6 is the qualified Probe 29 contract. It expands the version-5 arena from 60 to 63 pages: one page for init's second owned resource and two pages for the measured growth from a two-page to a four-page kernel stack.
+Kernel memory version 7 is the implemented Probe 30 contract. It retains version 6's 63-page arena and adds one exact checked tail-release operation so a terminal 42-page client extent can be scrubbed and reused.
 
-[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns qualified version 6. Exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` passes Windows and Debian qualification in GitHub [Verify run 30745623111](https://github.com/eworker-inc/Windvale/actions/runs/30745623111).
+[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) owns version 7. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) and exact commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` retain the qualified version-6 baseline.
 
-This is one bounded boot arena, not a general physical-memory manager. Allocation remains monotonic, deterministic, visibly finite, and release-free.
+This is one bounded boot arena, not a general physical-memory manager. Allocation is deterministic and visibly finite. Release is LIFO-only: it can restore only a caller-proven suffix ending at the current cursor. The memory state does not retain allocation-boundary provenance; Probe 30's process record and fixed layout prove that its 42-page suffix is the retired client extent.
 
 ## Ownership and validation
 
@@ -22,13 +22,13 @@ The fixed 252 KiB layout is:
 
 | Arena pages | Bytes | Purpose |
 | --- | ---: | --- |
-| `0` | 4,096 | `WVKMEM06`, copied handoff, paging/process/channel/resource/descriptor state |
+| `0` | 4,096 | `WVKMEM07`, copied handoff, paging/process/channel/resource/descriptor state |
 | `1..4` | 16,384 | Down-growing owned kernel stack |
 | `5..62` | 237,568 | Fifty-eight initially free allocator pages |
 
 The complete arena is zeroed before state publication. Stack top is `arena + 0x5000`, aligned to 16 bytes.
 
-Probe 29 consumes the free extent exactly:
+Probe 30 first consumes the free extent exactly:
 
 | Pages | Owner |
 | --- | --- |
@@ -37,18 +37,18 @@ Probe 29 consumes the free extent exactly:
 | `12..20` | Nine-page init/resource-owner extent |
 | `21..62` | Forty-two-page interpreter extent |
 
-The init extent contains four table pages, code, stack, data, WVB, and budget pages. The client extent contains four table pages, 33 code pages, four stack pages, and one data page. Its two resource aliases are later virtual pages backed by the two init pages, not client placeholders. The final cursor is page `63` with zero free pages.
+The init extent contains four table pages, code, stack, data, WVB, and budget pages. The client extent contains four table pages, 33 code pages, four stack pages, and one data page. Its two resource aliases are later virtual pages backed by the two init pages, not client placeholders. Generation 1 reaches cursor `63` with zero free pages. Exact tail release restores cursor `21` and 42 free pages; immediate generation-2 allocation returns page `21` and restores cursor `63` with zero free pages.
 
-Pinned QEMU measurement is part of the contract choice: two pages allow the enlarged Windvale policy's generated native frame to overwrite state; three pages still do not complete process construction; four pages pass normal, both terminal kernel-fault scenarios, and contained user fault. After the policy call, the coordinator derives the 2 MiB-aligned arena base from the owned stack and revalidates `WVKMEM06` before process publication.
+Pinned QEMU measurement remains part of the inherited stack contract: two pages allowed the Probe-29 Windvale policy's generated native frame to overwrite state; three pages still did not complete process construction; four pages pass normal, both terminal kernel-fault scenarios, and contained user fault. After the policy call, the coordinator derives the 2 MiB-aligned arena base from the owned stack and revalidates `WVKMEM07` before process publication.
 
 ## Memory-state header
 
 The first page begins with this 64-byte little-endian header:
 
-| Offset | Bytes | Field | Version-6 rule |
+| Offset | Bytes | Field | Version-7 rule |
 | ---: | ---: | --- | --- |
-| `0x00` | 8 | Magic | ASCII `WVKMEM06` |
-| `0x08` | 4 | Version | `6` |
+| `0x00` | 8 | Magic | ASCII `WVKMEM07` |
+| `0x08` | 4 | Version | `7` |
 | `0x0C` | 4 | Header bytes | `64` |
 | `0x10` | 8 | Arena address | Selected 2 MiB-aligned base |
 | `0x18` | 8 | Arena pages | `63` |
@@ -57,11 +57,13 @@ The first page begins with this 64-byte little-endian header:
 | `0x30` | 8 | Handoff-copy address | `arena + 64` |
 | `0x38` | 8 | First allocation address | Zero until IDT allocation succeeds |
 
-The 48-byte `WVKHAND1` record is copied to `arena + 64`; its map pointer remains borrowed. Paging record `WVKPAG03` remains at `0x80`; `WVPROC08` records are at `0x100` and `0x300`; GDT/TSS state begins at `0x200`; `WVCHAN01` begins at `0x400`; and the two `WVRES003` records begin at `0x440` and `0x4C0`. All are kernel-only.
+The 48-byte `WVKHAND1` record is copied to `arena + 64`; its map pointer remains borrowed. Paging record `WVKPAG03` remains at `0x80`; `WVPROC09` records are at `0x100` and `0x300`; GDT/TSS state begins at `0x210`; `WVCHAN01` begins at `0x410`; and the two `WVRES004` records begin at `0x450` and `0x4D0`. All are kernel-only.
 
-## Allocate-only ABI
+## Bounded allocation and tail release ABI
 
-`Windvale_kernel_allocate_pages` accepts an exact version-6 state pointer in `RCX` and a nonzero page count in `EDX`. Success advances the cursor, decreases free count, zeroes every returned byte, and returns the first page address in `RAX`. Failure returns zero without mutation. Allocation is contiguous and monotonically increasing; version 6 has no release operation.
+`Windvale_kernel_allocate_pages` accepts an exact version-7 state pointer in `RCX` and a nonzero page count in `EDX`. Success advances the cursor, decreases free count, zeroes every returned byte, and returns the first page address in `RAX`. Failure returns zero without mutation.
+
+`Windvale_kernel_release_tail_pages` accepts that state pointer in `RCX`, the candidate address in `RDX`, and a nonzero page count in `R8D`. The candidate must describe a suffix ending exactly at the current cursor, all checked arithmetic must remain inside the 63-page arena, and restored free pages must remain bounded. Success restores cursor/free count, zeroes the complete suffix, and returns its address. A zero count, non-tail address, underflow, overflow, malformed state, or out-of-arena range returns zero without mutation. Version 7 does not retain allocation records or a free list, so its caller owns proof that the suffix corresponds to a complete retired allocation; it cannot release non-tail extents.
 
 `Windvale_kernel_memory_enter` validates and copies the handoff, initializes the arena, records the IDT allocation, switches stacks, installs exceptions and paging, and enters the Windvale admission/process chain. Only the complete typed-resource sequence can reach final Main.
 
@@ -78,15 +80,15 @@ The 48-byte `WVKHAND1` record is copied to `arena + 64`; its map pointer remains
 
 Malformed and random inputs must remain bounded and must not escape index, arithmetic, or allocation exceptions.
 
-## Qualified evidence and limits
+## Probe evidence and limits
 
-Probe 29 adds `typed-resources=pass` between `resource-grant=pass` and `resource-revoked=pass`. The four clean Windows QEMU identities are:
+Probe 30 adds `process-reuse=pass` after `resource-revoked=pass`. The four clean Windows QEMU identities are:
 
 | Scenario | EFI bytes | SHA-256 | Guest result |
 | --- | ---: | --- | ---: |
-| Normal | 258,048 | `a8a14581eab4c1a6d67aba7af0cec1baa956574a410a4cd0de1121e1f843ee67` | poweroff `0` |
-| Invalid opcode | 258,048 | `35ee08e97aff4f6a2c0018c962960d5c7ee8af58fe6d5b36565613a99292ad0f` | panic/host `3` |
-| General protection | 258,048 | `92ae33986ab53245f57dc9263179e6dcd2c66cf79b634dcedaee51e93f915ca7` | panic/host `3` |
-| Contained user fault | 258,560 | `35a3dece4e64463bc9df7ef73c83ec5f5fff3b0daedd7176f77f1c2ef5525484` | poweroff `0` |
+| Normal | 261,120 | `5034c01a98f20344d96fa091fd9a55a303e72669d746a4b83df2900eed93992f` | poweroff `0` |
+| Invalid opcode | 261,120 | `bb57ebf7e50eb56bf3d42d91b2213ed5b262554416fdf76609142eccba44cc55` | panic/host `3` |
+| General protection | 261,120 | `d56fe572fb7a7ff724f7b7c26aa5299a6c5cee4c203f009b63d651c1d3cd8fcc` | panic/host `3` |
+| Contained user fault | 261,632 | `78dfa73a80a05021273cb44587f6b957d16d4cd4ebaec487f7b8a8f5427846ca` | poweroff `0` |
 
-Version 6 does not claim all physical memory, loader-range reclamation, page release, runtime allocation policy, process creation, address-space reuse, SMP, general interrupts, or hardware qualification. The arena is deliberately exhausted, so reclamation remains an explicit later decision.
+Version 7 does not claim all physical memory, loader-range reclamation, arbitrary release order, free lists, coalescing, runtime allocation policy, general process creation, concurrent address-space reuse, SMP, general interrupts, or hardware qualification. It proves one exact release/reallocate cycle only.

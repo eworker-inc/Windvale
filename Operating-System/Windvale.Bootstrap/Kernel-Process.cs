@@ -7,8 +7,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 8;
-    public const string TARGET_NAME = "x86-64-kernel-process-v8";
+    public const int FORMAT_VERSION = 9;
+    public const string TARGET_NAME = "x86-64-kernel-process-v9";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
@@ -26,8 +26,17 @@ public static class Kernelˉprocessˉcontract
     public const string USER_FAULT_CONTAINED_MARKER = "user-fault=contained\n";
     public const uint INIT_PROCESS_ID = 1;
     public const uint INIT_THREAD_ID = 1;
+    public const uint INIT_PROCESS_GENERATION = 1;
     public const uint CLIENT_PROCESS_ID = 2;
     public const uint CLIENT_THREAD_ID = 2;
+    public const uint FIRST_CLIENT_GENERATION = 1;
+    public const uint SECOND_CLIENT_GENERATION = 2;
+    public const uint INIT_PROCESS_REFERENCE =
+        (INIT_PROCESS_GENERATION << 16) | INIT_PROCESS_ID;
+    public const uint FIRST_CLIENT_PROCESS_REFERENCE =
+        (FIRST_CLIENT_GENERATION << 16) | CLIENT_PROCESS_ID;
+    public const uint SECOND_CLIENT_PROCESS_REFERENCE =
+        (SECOND_CLIENT_GENERATION << 16) | CLIENT_PROCESS_ID;
     public const uint ROLE_INIT_SERVICE = 1;
     public const uint ROLE_BYTECODE_INTERPRETER = 2;
     public const uint RUNTIME_KIND_AOT_SERVICE = 1;
@@ -48,7 +57,7 @@ public static class Kernelˉprocessˉcontract
     public const uint INIT_CALL_DEPTH_BUDGET = 1;
     public const uint CLIENT_CALL_DEPTH_BUDGET = 3;
     public const uint HANDLE_BUDGET = 1;
-    public const uint INIT_SYSCALL_BUDGET = 3;
+    public const uint INIT_SYSCALL_BUDGET = 5;
     public const uint CLIENT_SYSCALL_BUDGET = 2;
     public const uint CHANNEL_CAPACITY = 1;
     public const uint CAPABILITY_SLOT = 0;
@@ -106,10 +115,10 @@ public static class Kernelˉprocessˉcontract
     public const ulong ENTRY_USER = 1UL << 2;
     public const uint INIT_RECORD_OFFSET = 256;
     public const uint CLIENT_RECORD_OFFSET = 768;
-    public const uint CHANNEL_RECORD_OFFSET = 1_024;
-    public const uint RECORD_BYTES = 256;
-    public const ulong RECORD_MAGIC = 0x3830_434F_5250_5657;
-    public const uint RECORD_VERSION = 8;
+    public const uint CHANNEL_RECORD_OFFSET = 1_040;
+    public const uint RECORD_BYTES = 264;
+    public const ulong RECORD_MAGIC = 0x3930_434F_5250_5657;
+    public const uint RECORD_VERSION = 9;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -137,6 +146,7 @@ public static class Kernelˉprocessˉcontract
     public const uint PROGRAM_DIGEST_OFFSET = 216;
     public const uint CODE_PAGE_COUNT_OFFSET = 248;
     public const uint RUNTIME_KIND_OFFSET = 252;
+    public const uint PROCESS_GENERATION_OFFSET = 256;
     public const uint RUNTIME_PROFILE_BOOT_RESOURCE_OWNER = 1;
     public const uint RUNTIME_PROFILE_GRANTED_BOOT_RESOURCE_INTERPRETER = 4;
     public const uint WAIT_REASON_NONE = 0;
@@ -158,8 +168,8 @@ public static class Kernelˉprocessˉcontract
     public const uint RESOURCE_COUNT = 2;
     public const uint RESOURCE_RECORD_BYTES = 128;
     public const uint RESOURCE_RECORD_SET_BYTES = RESOURCE_COUNT * RESOURCE_RECORD_BYTES;
-    public const ulong RESOURCE_MAGIC = 0x3330_3053_4552_5657;
-    public const uint RESOURCE_VERSION = 3;
+    public const ulong RESOURCE_MAGIC = 0x3430_3053_4552_5657;
+    public const uint RESOURCE_VERSION = 4;
     public const uint RESOURCE_STATE_OWNED = 1;
     public const uint RESOURCE_STATE_BORROWED = 2;
     public const uint MODULE_RESOURCE_ID = 1;
@@ -195,16 +205,17 @@ public static class Kernelˉprocessˉcontract
         RESOURCE_BASE_FLAGS | (RESOURCE_KIND_WVB_MODULE << (int)RESOURCE_KIND_SHIFT);
     public const uint BUDGET_RESOURCE_ATTRIBUTES =
         RESOURCE_BASE_FLAGS | (RESOURCE_KIND_U32_EXECUTION_BUDGET << (int)RESOURCE_KIND_SHIFT);
-    public const uint GDT_OFFSET = 512;
+    public const uint GDT_OFFSET = 528;
     public const uint GDT_BYTES = 56;
-    public const uint GDTR_OFFSET = 576;
-    public const uint TSS_OFFSET = 640;
+    public const uint GDTR_OFFSET = 592;
+    public const uint TSS_OFFSET = 608;
     public const uint TSS_BYTES = 104;
 }
 
 public sealed record Kernelˉprocessˉdefinition(
     uint Processˉid,
     uint Threadˉid,
+    uint Processˉgeneration,
     uint Role,
     uint Capabilityˉrights,
     ulong Channelˉaddress);
@@ -280,16 +291,18 @@ public static class Kernelˉprocessˉplanner
         {
             Processˉid: Kernelˉprocessˉcontract.INIT_PROCESS_ID,
             Threadˉid: Kernelˉprocessˉcontract.INIT_THREAD_ID,
+            Processˉgeneration: Kernelˉprocessˉcontract.INIT_PROCESS_GENERATION,
             Role: Kernelˉprocessˉcontract.ROLE_INIT_SERVICE,
             Capabilityˉrights: Kernelˉprocessˉcontract.INIT_CAPABILITY_RIGHTS,
         };
-        var Isˉclient = definition is
-        {
-            Processˉid: Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
-            Threadˉid: Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
-            Role: Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER,
-            Capabilityˉrights: Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
-        };
+        var Isˉclient =
+            definition.Processˉid == Kernelˉprocessˉcontract.CLIENT_PROCESS_ID &&
+            definition.Threadˉid == Kernelˉprocessˉcontract.CLIENT_THREAD_ID &&
+            definition.Processˉgeneration is
+                Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION or
+                Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION &&
+            definition.Role == Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER &&
+            definition.Capabilityˉrights == Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND;
         if ((!Isˉinit && !Isˉclient) ||
             definition.Channelˉaddress == 0 ||
             (definition.Channelˉaddress & (sizeof(ulong) - 1)) != 0 ||
@@ -515,6 +528,9 @@ public static class Kernelˉprocessˉplanner
             Record.AsSpan((int)Kernelˉprocessˉcontract.CODE_PAGE_COUNT_OFFSET), checked((uint)Codeˉpages));
         BinaryPrimitives.WriteUInt32LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.RUNTIME_KIND_OFFSET), Runtimeˉkind);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET),
+            definition.Processˉgeneration);
 
         return new(new(
             allocationˉaddress,
@@ -584,10 +600,37 @@ public static class Kernelˉresourceˉgrantˉplanner
         ReadOnlySpan<byte> budgetˉdigest,
         int programˉlength,
         uint resourceˉsetˉtoken,
-        uint serviceˉoffset)
+        uint serviceˉoffset) =>
+        Plan(
+            owner, client, programˉdigest, budgetˉdigest, programˉlength,
+            resourceˉsetˉtoken, serviceˉoffset, []);
+
+    public static Kernelˉresourceˉgrantˉresult Plan(
+        Kernelˉprocessˉplan owner,
+        Kernelˉprocessˉplan client,
+        ReadOnlySpan<byte> programˉdigest,
+        ReadOnlySpan<byte> budgetˉdigest,
+        int programˉlength,
+        uint resourceˉsetˉtoken,
+        uint serviceˉoffset,
+        ReadOnlySpan<byte> ownedˉresourceˉrecords)
     {
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(client);
+        var Clientˉgeneration = Readˉprocessˉgeneration(client.Processˉrecord);
+        var Isˉfirstˉgrant =
+            Clientˉgeneration == Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION &&
+            ownedˉresourceˉrecords.IsEmpty;
+        var Isˉsecondˉgrant =
+            Clientˉgeneration == Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION &&
+            ownedˉresourceˉrecords.Length == Kernelˉprocessˉcontract.RESOURCE_RECORD_SET_BYTES;
+        if (!Isˉfirstˉgrant && !Isˉsecondˉgrant)
+        {
+            return Fail("WVOS6105", "The resource grant does not match the borrower's bounded lifecycle generation.");
+        }
+        var Previousˉgrantˉcount = Clientˉgeneration - 1;
+        var Borrowerˉreference =
+            (Clientˉgeneration << 16) | Kernelˉprocessˉcontract.CLIENT_PROCESS_ID;
         if (resourceˉsetˉtoken != Kernelˉprocessˉcontract.RESOURCE_SET_TOKEN)
         {
             return Fail("WVOS6104", "The requested resource set is unknown, partial, duplicate, or out of order.");
@@ -611,9 +654,18 @@ public static class Kernelˉresourceˉgrantˉplanner
         {
             return Fail("WVOS6101", "The immutable typed-resource owner, bytes, or digest is invalid.");
         }
-        if (!Hasˉrecord(owner.Processˉrecord, Kernelˉprocessˉcontract.ROLE_INIT_SERVICE,
-                Kernelˉprocessˉcontract.RUNTIME_PROFILE_BOOT_RESOURCE_OWNER, programˉdigest) ||
-            !Hasˉrecord(client.Processˉrecord, Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER,
+        if (!Hasˉrecord(
+                owner.Processˉrecord,
+                Kernelˉprocessˉcontract.INIT_PROCESS_ID,
+                Kernelˉprocessˉcontract.INIT_PROCESS_GENERATION,
+                Kernelˉprocessˉcontract.ROLE_INIT_SERVICE,
+                Kernelˉprocessˉcontract.RUNTIME_PROFILE_BOOT_RESOURCE_OWNER,
+                programˉdigest) ||
+            !Hasˉrecord(
+                client.Processˉrecord,
+                Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
+                Clientˉgeneration,
+                Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER,
                 Kernelˉprocessˉcontract.RUNTIME_PROFILE_GRANTED_BOOT_RESOURCE_INTERPRETER,
                 programˉdigest) ||
             new[]
@@ -722,6 +774,37 @@ public static class Kernelˉresourceˉgrantˉplanner
             client.Userˉruntimeˉbudgetˉaddress,
             Kernelˉprocessˉcontract.EXECUTION_BUDGET_BYTES);
 
+        if (Isˉsecondˉgrant)
+        {
+            var Expectedˉowned = Buildˉresourceˉrecords(
+                owner, client, programˉdigest, budgetˉdigest, programˉlength,
+                serviceˉoffset,
+                Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE,
+                Previousˉgrantˉcount);
+            Releaseˉrecords(Expectedˉowned);
+            if (!Expectedˉowned.AsSpan().SequenceEqual(ownedˉresourceˉrecords))
+            {
+                return Fail("WVOS6105", "The prior owned resource state cannot authorize generation-two reuse.");
+            }
+        }
+
+        var Records = Buildˉresourceˉrecords(
+            owner, client, programˉdigest, budgetˉdigest, programˉlength,
+            serviceˉoffset, Borrowerˉreference, Clientˉgeneration);
+        return new(new(Records.ToImmutableArray(), Tables.ToImmutableArray(), Data.ToImmutableArray()), []);
+    }
+
+    private static byte[] Buildˉresourceˉrecords(
+        Kernelˉprocessˉplan owner,
+        Kernelˉprocessˉplan client,
+        ReadOnlySpan<byte> programˉdigest,
+        ReadOnlySpan<byte> budgetˉdigest,
+        int programˉlength,
+        uint serviceˉoffset,
+        uint borrowerˉreference,
+        uint grantˉcount)
+    {
+        var Serviceˉaddress = client.Userˉcodeˉaddress + serviceˉoffset;
         var Records = new byte[Kernelˉprocessˉcontract.RESOURCE_RECORD_SET_BYTES];
         Writeˉrecord(
             Records.AsSpan(0, (int)Kernelˉprocessˉcontract.RESOURCE_RECORD_BYTES),
@@ -732,7 +815,9 @@ public static class Kernelˉresourceˉgrantˉplanner
             checked((uint)programˉlength),
             Serviceˉaddress,
             programˉdigest,
-            client);
+            client,
+            borrowerˉreference,
+            grantˉcount);
         Writeˉrecord(
             Records.AsSpan((int)Kernelˉprocessˉcontract.RESOURCE_RECORD_BYTES),
             Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID,
@@ -742,8 +827,27 @@ public static class Kernelˉresourceˉgrantˉplanner
             Kernelˉprocessˉcontract.EXECUTION_BUDGET_BYTES,
             Serviceˉaddress,
             budgetˉdigest,
-            client);
-        return new(new(Records.ToImmutableArray(), Tables.ToImmutableArray(), Data.ToImmutableArray()), []);
+            client,
+            borrowerˉreference,
+            grantˉcount);
+        return Records;
+    }
+
+    private static void Releaseˉrecords(byte[] records)
+    {
+        for (var Index = 0; Index < Kernelˉprocessˉcontract.RESOURCE_COUNT; Index++)
+        {
+            var Record = records.AsSpan(
+                checked((int)(Index * Kernelˉprocessˉcontract.RESOURCE_RECORD_BYTES)),
+                (int)Kernelˉprocessˉcontract.RESOURCE_RECORD_BYTES);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET..],
+                Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET..], 0);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET..], 0);
+        }
     }
 
     private static void Writeˉdirectoryˉentry(
@@ -777,7 +881,9 @@ public static class Kernelˉresourceˉgrantˉplanner
         uint length,
         ulong serviceˉaddress,
         ReadOnlySpan<byte> digest,
-        Kernelˉprocessˉplan client)
+        Kernelˉprocessˉplan client,
+        uint borrowerˉreference,
+        uint grantˉcount)
     {
         BinaryPrimitives.WriteUInt64LittleEndian(record, Kernelˉprocessˉcontract.RESOURCE_MAGIC);
         BinaryPrimitives.WriteUInt32LittleEndian(record[8..], Kernelˉprocessˉcontract.RESOURCE_VERSION);
@@ -786,9 +892,9 @@ public static class Kernelˉresourceˉgrantˉplanner
             Kernelˉprocessˉcontract.RESOURCE_STATE_BORROWED);
         BinaryPrimitives.WriteUInt32LittleEndian(record[(int)Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET..], resourceˉid);
         BinaryPrimitives.WriteUInt32LittleEndian(record[(int)Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET..],
-            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+            Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE);
         BinaryPrimitives.WriteUInt32LittleEndian(record[(int)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET..],
-            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
+            borrowerˉreference);
         BinaryPrimitives.WriteUInt64LittleEndian(record[(int)Kernelˉprocessˉcontract.RESOURCE_SOURCE_ADDRESS_OFFSET..],
             sourceˉaddress);
         BinaryPrimitives.WriteUInt32LittleEndian(record[(int)Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET..], length);
@@ -802,7 +908,8 @@ public static class Kernelˉresourceˉgrantˉplanner
         BinaryPrimitives.WriteUInt64LittleEndian(record[(int)Kernelˉprocessˉcontract.RESOURCE_SERVICE_ADDRESS_OFFSET..],
             serviceˉaddress);
         digest.CopyTo(record[(int)Kernelˉprocessˉcontract.RESOURCE_DIGEST_OFFSET..]);
-        BinaryPrimitives.WriteUInt32LittleEndian(record[(int)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET..], 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            record[(int)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET..], grantˉcount);
         BinaryPrimitives.WriteUInt32LittleEndian(record[(int)Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET..], 1);
         BinaryPrimitives.WriteUInt64LittleEndian(record[(int)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET..],
             checked(client.Rootˉaddress + Kernelˉprocessˉcontract.USER_PT_PAGE *
@@ -811,6 +918,8 @@ public static class Kernelˉresourceˉgrantˉplanner
 
     private static bool Hasˉrecord(
         ImmutableArray<byte> record,
+        uint processˉid,
+        uint processˉgeneration,
         uint role,
         uint profile,
         ReadOnlySpan<byte> digest) =>
@@ -818,12 +927,21 @@ public static class Kernelˉresourceˉgrantˉplanner
         BinaryPrimitives.ReadUInt64LittleEndian(record.AsSpan()) == Kernelˉprocessˉcontract.RECORD_MAGIC &&
         BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[8..]) ==
             Kernelˉprocessˉcontract.RECORD_VERSION &&
+        BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[24..]) == processˉid &&
+        BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+            (int)Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET..]) == processˉgeneration &&
         BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
             (int)Kernelˉprocessˉcontract.ROLE_OFFSET..]) == role &&
         BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
             (int)Kernelˉprocessˉcontract.RUNTIME_PROFILE_OFFSET..]) == profile &&
         record.AsSpan((int)Kernelˉprocessˉcontract.PROGRAM_DIGEST_OFFSET,
             Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES).SequenceEqual(digest);
+
+    private static uint Readˉprocessˉgeneration(ImmutableArray<byte> record) =>
+        record.Length == Kernelˉprocessˉcontract.RECORD_BYTES
+            ? BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET..])
+            : 0;
 
     private static int Entryˉindex(ulong address) => checked((int)(
         (address & (Kernelˉpagingˉcontract.LARGE_PAGE_BYTES - 1)) /
@@ -845,6 +963,18 @@ public static class Kernelˉresourceˉrevocationˉplanner
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(granted);
+        var Clientˉgeneration = client.Processˉrecord.Length == Kernelˉprocessˉcontract.RECORD_BYTES
+            ? BinaryPrimitives.ReadUInt32LittleEndian(client.Processˉrecord.AsSpan()[
+                (int)Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET..])
+            : 0;
+        if (Clientˉgeneration is not
+            Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION and not
+            Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION)
+        {
+            return Fail("WVOS6204", "The terminal borrower has no valid lifecycle generation.");
+        }
+        var Borrowerˉreference =
+            (Clientˉgeneration << 16) | Kernelˉprocessˉcontract.CLIENT_PROCESS_ID;
         var Terminal =
             (clientˉprocessˉstate == Kernelˉprocessˉcontract.PROCESS_STATE_EXITED &&
                 clientˉthreadˉstate == Kernelˉprocessˉcontract.THREAD_STATE_EXITED) ||
@@ -867,11 +997,15 @@ public static class Kernelˉresourceˉrevocationˉplanner
         if (!Hasˉliveˉrecord(
                 Moduleˉrecord,
                 Kernelˉprocessˉcontract.MODULE_RESOURCE_ID,
-                Kernelˉprocessˉcontract.MODULE_RESOURCE_ATTRIBUTES) ||
+                Kernelˉprocessˉcontract.MODULE_RESOURCE_ATTRIBUTES,
+                Borrowerˉreference,
+                Clientˉgeneration) ||
             !Hasˉliveˉrecord(
                 Budgetˉrecord,
                 Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID,
-                Kernelˉprocessˉcontract.BUDGET_RESOURCE_ATTRIBUTES))
+                Kernelˉprocessˉcontract.BUDGET_RESOURCE_ATTRIBUTES,
+                Borrowerˉreference,
+                Clientˉgeneration))
         {
             return Fail("WVOS6202", "The resource set is not two exact live immutable typed borrows.");
         }
@@ -897,6 +1031,9 @@ public static class Kernelˉresourceˉrevocationˉplanner
         var Budgetˉdigest = Budgetˉrecord.Slice(
             (int)Kernelˉprocessˉcontract.RESOURCE_DIGEST_OFFSET,
             Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES);
+        var Previousˉowned = Clientˉgeneration == Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION
+            ? Buildˉpreviousˉownedˉrecords(granted.Resourceˉrecords)
+            : [];
         var Expected = Kernelˉresourceˉgrantˉplanner.Plan(
             owner,
             client,
@@ -904,7 +1041,8 @@ public static class Kernelˉresourceˉrevocationˉplanner
             Budgetˉdigest,
             checked((int)Programˉlength),
             Kernelˉprocessˉcontract.RESOURCE_SET_TOKEN,
-            checked((uint)(Serviceˉaddress - client.Userˉcodeˉaddress)));
+            checked((uint)(Serviceˉaddress - client.Userˉcodeˉaddress)),
+            Previousˉowned.AsSpan());
         if (!Expected.Success)
         {
             return Fail("WVOS6203", "The live aliases or client resource publication are inconsistent.");
@@ -987,7 +1125,9 @@ public static class Kernelˉresourceˉrevocationˉplanner
     private static bool Hasˉliveˉrecord(
         ReadOnlySpan<byte> record,
         uint resourceˉid,
-        uint attributes) =>
+        uint attributes,
+        uint borrowerˉreference,
+        uint grantˉcount) =>
         BinaryPrimitives.ReadUInt64LittleEndian(record) == Kernelˉprocessˉcontract.RESOURCE_MAGIC &&
         BinaryPrimitives.ReadUInt32LittleEndian(record[8..]) == Kernelˉprocessˉcontract.RESOURCE_VERSION &&
         BinaryPrimitives.ReadUInt32LittleEndian(record[12..]) ==
@@ -999,16 +1139,38 @@ public static class Kernelˉresourceˉrevocationˉplanner
             (int)Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET..]) == resourceˉid &&
         BinaryPrimitives.ReadUInt32LittleEndian(record[
             (int)Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET..]) ==
-            Kernelˉprocessˉcontract.INIT_PROCESS_ID &&
+            Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE &&
         BinaryPrimitives.ReadUInt32LittleEndian(record[
-            (int)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET..]) ==
-            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID &&
+            (int)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET..]) == borrowerˉreference &&
         BinaryPrimitives.ReadUInt32LittleEndian(record[
             (int)Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET..]) == attributes &&
         BinaryPrimitives.ReadUInt32LittleEndian(record[
-            (int)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET..]) == 1 &&
+            (int)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET..]) == grantˉcount &&
         BinaryPrimitives.ReadUInt32LittleEndian(record[
             (int)Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET..]) == 1;
+
+    private static ImmutableArray<byte> Buildˉpreviousˉownedˉrecords(
+        ImmutableArray<byte> liveˉrecords)
+    {
+        var Previous = liveˉrecords.ToArray();
+        for (var Index = 0; Index < Kernelˉprocessˉcontract.RESOURCE_COUNT; Index++)
+        {
+            var Record = Previous.AsSpan(
+                checked((int)(Index * Kernelˉprocessˉcontract.RESOURCE_RECORD_BYTES)),
+                (int)Kernelˉprocessˉcontract.RESOURCE_RECORD_BYTES);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET..],
+                Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET..], 0);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET..],
+                Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET..], 0);
+        }
+        return Previous.ToImmutableArray();
+    }
 
     private static Kernelˉresourceˉrevocationˉresult Fail(string code, string message) =>
         new(null, [new(code, message)]);

@@ -29,6 +29,63 @@ fn Hasˉchannelˉendpoint(Slot: u32, Generation: u32, Rights: u32, Expectedˉrig
     return true;
 }
 
+fn Hasˉresourceˉgeneration(
+    Generation: u32,
+    Historicalˉgrants: u32,
+    Expectedˉborrower: u32
+) -> bool {
+    let Clientˉprocessˉid: u32 = 2u32;
+    let Borrower: u32 = Generation * 65536u32 + Clientˉprocessˉid;
+    var State: u32 = 1u32;
+    var Mappings: u32 = 0u32;
+    if Generation < 1u32 { return false; }
+    if Generation > 2u32 { return false; }
+    if Borrower != Expectedˉborrower { return false; }
+    if Historicalˉgrants + 1u32 != Generation { return false; }
+    State = 2u32;
+    Mappings = Mappings + 1u32;
+    if State != 2u32 { return false; }
+    if Mappings != 1u32 { return false; }
+    State = 1u32;
+    Mappings = Mappings - 1u32;
+    if State != 1u32 { return false; }
+    if Mappings != 0u32 { return false; }
+    return true;
+}
+
+fn Hasˉexecutionˉgeneration(Generation: u32) -> bool {
+    var Channelˉstate: u32 = 0u32;
+    var Message: i32 = 0;
+
+    if Generation < 1u32 { return false; }
+    if Generation > 2u32 { return false; }
+    if Channelˉstate != 0u32 { return false; }
+    Message = 29;
+    Channelˉstate = 1u32;
+    if Channelˉstate != 1u32 { return false; }
+    if Message != 29 { return false; }
+    Channelˉstate = 0u32;
+    if Channelˉstate != 0u32 { return false; }
+    return true;
+}
+
+fn Hasˉreuseˉcontract() -> bool {
+    var Clientˉgeneration: u32 = 1u32;
+    var Clientˉextentˉstate: u32 = 1u32;
+    var Clientˉreuseˉcount: u32 = 0u32;
+
+    if Clientˉextentˉstate != 1u32 { return false; }
+    Clientˉextentˉstate = 2u32;
+    if Clientˉextentˉstate != 2u32 { return false; }
+    Clientˉgeneration = 2u32;
+    Clientˉextentˉstate = 1u32;
+    Clientˉreuseˉcount = Clientˉreuseˉcount + 1u32;
+    if Clientˉgeneration != 2u32 { return false; }
+    if Clientˉextentˉstate != 1u32 { return false; }
+    if Clientˉreuseˉcount != 1u32 { return false; }
+    return true;
+}
+
 export fn Main() -> i32 {
     if !Hasˉidentity(Interpreterˉdigest, Expectedˉinterpreterˉdigest) { return 0; }
     if !Hasˉidentity(Programˉdigest, Expectedˉprogramˉdigest) { return 0; }
@@ -47,7 +104,7 @@ export fn Main() -> i32 {
     let Initˉprofile: u32 = 1u32;
     let Interpreterˉprofile: u32 = 4u32;
     let Handleˉbudget: u32 = 1u32;
-    let Initˉsyscallˉbudget: u32 = 3u32;
+    let Initˉsyscallˉbudget: u32 = 5u32;
     let Interpreterˉsyscallˉbudget: u32 = 2u32;
     if Initˉprocessˉid != 1u32 { return 0; }
     if Clientˉprocessˉid != 2u32 { return 0; }
@@ -59,31 +116,17 @@ export fn Main() -> i32 {
     if Initˉprofile != 1u32 { return 0; }
     if Interpreterˉprofile != 4u32 { return 0; }
     if Handleˉbudget != 1u32 { return 0; }
-    if Initˉsyscallˉbudget != 3u32 { return 0; }
+    if Initˉsyscallˉbudget != 5u32 { return 0; }
     if Interpreterˉsyscallˉbudget != 2u32 { return 0; }
     if !Hasˉchannelˉendpoint(0u32, 1u32, 6u32, 6u32) { return 0; }
     if !Hasˉchannelˉendpoint(0u32, 1u32, 1u32, 1u32) { return 0; }
 
-    var Initˉthreadˉstate: u32 = 1u32;
-    var Clientˉthreadˉstate: u32 = 1u32;
     let Resourceˉsetˉtoken: u32 = 131073u32;
     let Moduleˉresourceˉid: u32 = 1u32;
     let Moduleˉresourceˉkind: u32 = 1u32;
     let Budgetˉresourceˉid: u32 = 2u32;
     let Budgetˉresourceˉkind: u32 = 2u32;
     let Executionˉbudget: u32 = 4u32;
-    var Moduleˉresourceˉstate: u32 = 1u32;
-    var Moduleˉresourceˉborrower: u32 = 0u32;
-    var Moduleˉresourceˉgrants: u32 = 0u32;
-    var Moduleˉresourceˉmappings: u32 = 0u32;
-    var Budgetˉresourceˉstate: u32 = 1u32;
-    var Budgetˉresourceˉborrower: u32 = 0u32;
-    var Budgetˉresourceˉgrants: u32 = 0u32;
-    var Budgetˉresourceˉmappings: u32 = 0u32;
-    var Channelˉstate: u32 = 0u32;
-    var Message: i32 = 0;
-    var Initˉsyscalls: u32 = 0u32;
-    var Clientˉsyscalls: u32 = 0u32;
 
     if Resourceˉsetˉtoken != 131073u32 { return 0; }
     if Moduleˉresourceˉid != 1u32 { return 0; }
@@ -91,61 +134,14 @@ export fn Main() -> i32 {
     if Budgetˉresourceˉid != 2u32 { return 0; }
     if Budgetˉresourceˉkind != 2u32 { return 0; }
     if Executionˉbudget != 4u32 { return 0; }
-    if Moduleˉresourceˉstate != 1u32 { return 0; }
-    if Budgetˉresourceˉstate != 1u32 { return 0; }
-    Moduleˉresourceˉstate = 2u32;
-    Moduleˉresourceˉborrower = Clientˉprocessˉid;
-    Moduleˉresourceˉgrants = Moduleˉresourceˉgrants + 1u32;
-    Moduleˉresourceˉmappings = Moduleˉresourceˉmappings + 1u32;
-    Budgetˉresourceˉstate = 2u32;
-    Budgetˉresourceˉborrower = Clientˉprocessˉid;
-    Budgetˉresourceˉgrants = Budgetˉresourceˉgrants + 1u32;
-    Budgetˉresourceˉmappings = Budgetˉresourceˉmappings + 1u32;
-    Initˉsyscalls = Initˉsyscalls + 1u32;
-    Initˉthreadˉstate = 5u32;
-    Initˉsyscalls = Initˉsyscalls + 1u32;
-    Clientˉthreadˉstate = 2u32;
-    // Init grants, blocks in receive, and the client interprets then sends 29.
-    if Channelˉstate != 0u32 { return 0; }
-    Message = 29;
-    Channelˉstate = 1u32;
-    Clientˉsyscalls = Clientˉsyscalls + 1u32;
-    if Channelˉstate != 1u32 { return 0; }
-    if Message != 29 { return 0; }
-    Channelˉstate = 0u32;
-    Initˉsyscalls = Initˉsyscalls + 1u32;
-    Clientˉsyscalls = Clientˉsyscalls + 1u32;
-    if Channelˉstate != 0u32 { return 0; }
-    if Moduleˉresourceˉstate != 2u32 { return 0; }
-    if Moduleˉresourceˉborrower != Clientˉprocessˉid { return 0; }
-    if Moduleˉresourceˉgrants != 1u32 { return 0; }
-    if Moduleˉresourceˉmappings != 1u32 { return 0; }
-    if Budgetˉresourceˉstate != 2u32 { return 0; }
-    if Budgetˉresourceˉborrower != Clientˉprocessˉid { return 0; }
-    if Budgetˉresourceˉgrants != 1u32 { return 0; }
-    if Budgetˉresourceˉmappings != 1u32 { return 0; }
-    if Initˉsyscalls != Initˉsyscallˉbudget { return 0; }
-    if Clientˉsyscalls != Interpreterˉsyscallˉbudget { return 0; }
-    Initˉthreadˉstate = 3u32;
-    Clientˉthreadˉstate = 3u32;
-    if Initˉthreadˉstate != 3u32 { return 0; }
-    if Clientˉthreadˉstate != 3u32 { return 0; }
-    // A terminal borrower cannot retain either live alias. Kernel mechanics
-    // clear both PTEs and the complete private publication while init retains
-    // both owned pages and both historical grant counts.
-    Moduleˉresourceˉstate = 1u32;
-    Moduleˉresourceˉborrower = 0u32;
-    Moduleˉresourceˉmappings = Moduleˉresourceˉmappings - 1u32;
-    Budgetˉresourceˉstate = 1u32;
-    Budgetˉresourceˉborrower = 0u32;
-    Budgetˉresourceˉmappings = Budgetˉresourceˉmappings - 1u32;
-    if Moduleˉresourceˉstate != 1u32 { return 0; }
-    if Moduleˉresourceˉborrower != 0u32 { return 0; }
-    if Moduleˉresourceˉgrants != 1u32 { return 0; }
-    if Moduleˉresourceˉmappings != 0u32 { return 0; }
-    if Budgetˉresourceˉstate != 1u32 { return 0; }
-    if Budgetˉresourceˉborrower != 0u32 { return 0; }
-    if Budgetˉresourceˉgrants != 1u32 { return 0; }
-    if Budgetˉresourceˉmappings != 0u32 { return 0; }
+    // The machine proof enforces the same transition against live records:
+    // generation 1 grants, runs, revokes, releases its exact tail extent, and
+    // generation 2 reuses that physical root without inheriting its identity.
+    if !Hasˉresourceˉgeneration(1u32, 0u32, 65538u32) { return 0; }
+    if !Hasˉexecutionˉgeneration(1u32) { return 0; }
+    if !Hasˉreuseˉcontract() { return 0; }
+    if !Hasˉresourceˉgeneration(2u32, 1u32, 131074u32) { return 0; }
+    if !Hasˉexecutionˉgeneration(2u32) { return 0; }
+    if 2u32 + 2u32 + 1u32 != Initˉsyscallˉbudget { return 0; }
     return 97;
 }

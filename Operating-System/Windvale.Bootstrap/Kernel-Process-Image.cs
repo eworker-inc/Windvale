@@ -79,7 +79,7 @@ public static class Kernelˉprocessˉimage
             Serviceˉassembly.Objectˉbytes,
             Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.INIT_SERVICE_MAIN_SYMBOL,
-            3);
+            5);
         var Serviceˉlink = Linkˉcompiler.Link(
             [new(Serviceˉassembly.Objectˉbytes), new(Serviceˉobject)],
             new(0, Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL));
@@ -221,7 +221,7 @@ public static class Kernelˉprocessˉimage
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
                 Data.Length: 8,
-                Functions.Length: 3,
+                Functions.Length: 6,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||
@@ -360,7 +360,7 @@ public static class Kernelˉprocessˉimage
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
-                "The Windvale OS boot-resource WVA stencil violated its fixed ABI-16 contract.");
+                "The Windvale OS boot-resource WVA stencil violated its fixed ABI-17 contract.");
         }
         return Objectˉcodec.Write(new Objectˉfile(
             Objectˉarchitecture.X86ˉ64,

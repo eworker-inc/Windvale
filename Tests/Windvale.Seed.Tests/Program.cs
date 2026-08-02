@@ -1412,6 +1412,9 @@ internal static class Program
             },
             First.Fragment.Code.Take(13));
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Equal(17, Nativeˉcontract.ABI_VERSION);
+        Equal(2_048, Nativeˉcontract.MAXIMUM_FRAME_SLOTS);
+        Equal(32_768, Nativeˉcontract.MAXIMUM_FRAME_BYTES);
         Equal(Nativeˉcontract.X64_BASELINE_TARGET, First.Fragment.Target);
         Equal(Nativeˉcontract.ABI_VERSION, First.Fragment.Abiˉversion);
         Equal(0, First.Fragment.Patches.Length);
@@ -4889,15 +4892,15 @@ internal static class Program
         }
         catch (Nativeˉbackendˉexception Exception)
         {
-            Equal("WVN2002", Exception.Code);
+            Equal("WVN2004", Exception.Code);
             True(
                 Exception.Message.Contains(
-                    "Compilerˉsourceˉwirˉcompileˉblock",
+                    "Compilerˉbodyˉparseˉprimary",
                     StringComparison.Ordinal),
                 $"Compiler native preflight did not identify the next exact function: {Exception.Message}");
             True(
                 Exception.Message.Contains(
-                    "bounded scalar/borrowed descriptor parameters and locals",
+                    "2049 combined local/value frame slots",
                     StringComparison.Ordinal),
                 $"Compiler native preflight did not identify the next bounded-frame blocker: {Exception.Message}");
             return;

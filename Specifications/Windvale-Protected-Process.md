@@ -2,16 +2,16 @@
 
 ## Status and purpose
 
-Protected-process contract version 8 is the cross-host-qualified Probe 29 boundary for one atomic, typed, two-resource borrow. It extends the version-7 terminal cleanup from Probe 28 without changing the stable language or native ABI contracts.
+Protected-process contract version 9 is the implemented Probe 30 boundary for reclaiming a terminal client and rebuilding a second logical generation at the same physical root. It retains Probe 29's atomic typed pair and extends terminal cleanup with exact page release, generation-safe regrant, and a second real CPL3 execution.
 
-[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns qualified version 8. Exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` passes Windows and Debian qualification in GitHub [Verify run 30745623111](https://github.com/eworker-inc/Windvale/actions/runs/30745623111).
+[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) owns version 9. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) and exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` retain the qualified version-8 baseline.
 
 This is an internal experiment, not a stable syscall ABI, general process manager, dynamic namespace, transferable capability system, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
-- [`Process-Foundation.wv`](../Operating-System/Kernel/Process-Foundation.wv) binds the init, interpreter, program, and execution-budget identities; roles; budgets; ordered resource-set token; atomic grant; terminal cleanup; result channel; and policy token `97`.
-- [`Init-Resource-Service.wv`](../Operating-System/Kernel/Init-Resource-Service.wv) selects ordered identifiers `(1,2)` and returns resource-set token `131073` (`0x0002_0001`). Its WVA shim passes that token unchanged to syscall `4`.
+- [`Process-Foundation.wv`](../Operating-System/Kernel/Process-Foundation.wv) binds the init, interpreter, program, and execution-budget identities; roles; budgets; ordered resource-set token; two generation-stamped grants; exact reuse; terminal cleanup; result channel; and policy token `97`.
+- [`Init-Resource-Service.wv`](../Operating-System/Kernel/Init-Resource-Service.wv) selects ordered identifiers `(1,2)` and returns resource-set token `131073` (`0x0002_0001`). Its WVA shim performs grant/receive twice, then exits on syscall five.
 - [`Bytecode-Interpreter.wv`](../Operating-System/Runtime/Bytecode-Interpreter.wv) reads both exact resource names and enforces the supplied execution budget.
 - [`Boot-Resource-Service.wva`](../Operating-System/Runtime/Boot-Resource-Service.wva) owns the exact typed lookup leaf for the two names and `WVBR002` entries.
 - Stage 0 temporarily owns raw page-table writes, initial records, atomic publication, syscall dispatch, fixed coordination, and firmware packaging. It independently reconstructs and checks Windvale/WVA-owned decisions.
@@ -27,9 +27,9 @@ Version 8 binds four canonical SHA-256 identities:
 | `boot:main.wvb` | `7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2` | resource `1`, kind `1`, immutable RO/NX |
 | `boot:main.budget` | `fb5e512425fc9449316ec95969ebe71e2d576dbab833d61e2a5b9330fd70ee02` | resource `2`, kind `2`, four-byte LE value `4`, immutable RO/NX |
 
-Init is process/thread `1/1`, has five user pages, instruction budget `64`, call-depth budget `1`, runtime profile `1`, one handle, and three syscalls. The interpreter is process/thread `2/2`, has 38 pre-grant and 40 post-grant user pages, instruction budget `4,822`, call-depth budget `3`, runtime profile `4`, one handle, and two syscalls. Both retain result `29`, capability slot `0`, generation `1`, reference `65536`, and channel capacity `1`.
+Init is process/thread `1/1`, generation `1`, process reference `65537`, has five user pages, instruction budget `64`, call-depth budget `1`, runtime profile `1`, one handle, and five syscalls. The interpreter uses process/thread `2/2`, generation `1` then `2`, references `65538` then `131074`, 38 pre-grant and 40 post-grant user pages, instruction budget `4,822`, call-depth budget `3`, runtime profile `4`, one handle, and two syscalls per generation. Both retain result `29`, capability slot `0`, capability reference `65536`, and channel capacity `1`.
 
-Policy WVB must return token `97` before channel, resource, paging, descriptor, or MSR state is published. Version 8's larger policy requires the kernel's measured four-page owned stack; three pages do not complete process construction under pinned QEMU.
+Policy WVB must return token `97` before channel, resource, paging, descriptor, or MSR state is published. The policy expresses each grant/execution/revocation generation as a bounded helper and requires one exact release/reuse transition between them. The inherited four-page owned kernel stack remains sufficient under pinned QEMU.
 
 ## Separate address spaces
 
@@ -44,7 +44,7 @@ Init receives a nine-page physical extent:
 | `7` | Owned `boot:main.wvb` page | user RO/NX |
 | `8` | Owned `boot:main.budget` page | user RO/NX |
 
-The client receives 42 physical pages and two later virtual aliases:
+Each client generation receives the same reclaimed 42-page physical extent and two later virtual aliases:
 
 | Relative page | Purpose | Before grant | After grant |
 | ---: | --- | --- | --- |
@@ -55,36 +55,37 @@ The client receives 42 physical pages and two later virtual aliases:
 | `42` | Module alias | absent | init page `7`, user RO/NX |
 | `43` | Budget alias | absent | init page `8`, user RO/NX |
 
-No client-owned placeholder page backs either alias. Both target PTEs begin exactly zero. The atomic grant writes two distinct init physical addresses with present/user/NX and without writable. Kernel mappings remain supervisor-only and no present leaf is writable and executable.
+No client-owned placeholder page backs either alias. Both target PTEs begin exactly zero. The atomic grant writes two distinct init physical addresses with present/user/NX and without writable. After generation-1 cleanup, the complete 42-page extent is zeroed and released; generation 2 reconstructs every table, image, stack, data, context, and record byte at the same root. Kernel mappings remain supervisor-only and no present leaf is writable and executable.
 
 ## Process records
 
-The state page stores 256-byte little-endian `WVPROC08` records at offsets `0x100` and `0x300`. Version 8 retains the version-7 field layout while changing these bound values:
+The state page stores 264-byte little-endian `WVPROC09` records at offsets `0x100` and `0x300`. Version 9 retains the first 256 bytes of version 8 and appends one field:
 
-- magic/version are `WVPROC08` and `8`;
+- magic/version are `WVPROC09` and `9`;
 - user-page budgets are init `5` and interpreter `40`;
 - interpreter instruction budget is `4,822`;
 - interpreter RX code-page count is `33`;
 - runtime profiles remain init owner `1` and granted interpreter `4`;
 - the program digest at `0xD8` remains the admitted WVB identity; the Windvale policy and the separate resource record bind the budget digest.
+- process generation at `0x100` is init `1`, first client `1`, or rebuilt client `2`.
 
 All other lifecycle, saved-register, capability, channel, result, fault, stack-count, and runtime-kind fields retain their version-7 offsets. Saving/restoring `RDX` remains required because ABI 16 uses it for the native-context pointer.
 
-Both context pages begin with valid context-7 headers. Init leaves its service/resource pointers zero. The client starts with context offsets 24 and 96 zero; grant syscall `4` publishes service-table version 5 at data offset `0x80`, `WVBR002` at `0x100`, and both pointers as one transition.
+Both context pages begin with valid context-7 headers under ABI 17. Init leaves its service/resource pointers zero. Each rebuilt client starts with context offsets 24 and 96 zero; grant syscall `4` publishes service-table version 5 at data offset `0x80`, `WVBR002` at `0x100`, and both pointers as one transition.
 
 ## Typed resource records
 
-Two 128-byte little-endian `WVRES003` records begin at state offsets `0x440` and `0x4C0`. Both use this layout:
+Two 128-byte little-endian `WVRES004` records begin at state offsets `0x450` and `0x4D0`. Both use this layout:
 
 | Offset | Bytes | Field |
 | ---: | ---: | --- |
-| `0x00` | 8 | Magic `WVRES003` |
-| `0x08` | 4 | Version `3` |
+| `0x00` | 8 | Magic `WVRES004` |
+| `0x08` | 4 | Version `4` |
 | `0x0C` | 4 | Record bytes `128` |
 | `0x10` | 4 | State: owned `1`, borrowed `2` |
 | `0x14` | 4 | Resource identifier |
-| `0x18` | 4 | Owner process `1` |
-| `0x1C` | 4 | Borrower: zero or process `2` |
+| `0x18` | 4 | Owner process reference `65537` |
+| `0x1C` | 4 | Borrower: zero, `65538`, or `131074` |
 | `0x20` | 8 | Init source identity address |
 | `0x28` | 4 | Exact byte length |
 | `0x2C` | 4 | Typed attributes |
@@ -112,13 +113,18 @@ The WVA leaf accepts only `boot:main.wvb` and `boot:main.budget`, then validates
 ## Grant, execution, and cleanup
 
 1. Init enters CPL3 and returns ordered resource-set token `131073`.
-2. Syscall `4` validates both owned records, both source pages/digests, both absent target PTEs, the shared service leaf, and the exact token before any mutation.
-3. The kernel installs both RO/NX aliases, publishes service table 5 plus `WVBR002`, and changes both records to borrower `2`, grant count `1`, mapping count `1`.
-4. Init blocks in receive after exactly two syscalls. The coordinator revalidates the complete atomic publication before entering process `2`.
+2. Syscall `4` validates both pristine owned records, both source pages/digests, both absent target PTEs, the shared service leaf, and the exact token before any mutation.
+3. The kernel installs both RO/NX aliases, publishes service table 5 plus `WVBR002`, and changes both records to borrower `65538`, grant count `1`, mapping count `1`.
+4. Init blocks in receive after exactly two syscalls. The coordinator revalidates the complete atomic publication before entering client generation 1.
 5. The interpreter reads both names, validates the module and exact four-byte budget, charges one unit per opcode, and returns `29` after the canonical four opcodes.
-6. The client sends `29`, then exits or takes the contained vector-13 fault.
-7. Cleanup accepts only the exact two live PTEs plus each hardware accessed bit, revalidates both records and both directory entries, clears both aliases and the complete private publication, and returns both records to owned/no-borrower/mapping-zero while preserving one grant.
-8. Reloading init's CR3 flushes the retired non-global translations. Init receives and exits `29`.
+6. Generation 1 sends `29`, then exits or takes the contained vector-13 fault. Cleanup validates generation `1`, clears both aliases and the complete private publication, and returns both records to owned/no-borrower/mapping-zero while preserving grant count `1`.
+7. Reloading init's CR3 flushes the retired non-global translations. The coordinator validates the released records, zeroes and releases the exact 42-page allocator tail, and immediately reallocates the same root.
+8. Every client page is reconstructed from immutable inputs. The new `WVPROC09` record carries generation `2`; stale generation-1 process and resource evidence is invalid.
+9. Init receives the first `29`, returns token `131073` again on syscall three, and blocks on syscall four.
+10. The second grant requires the exact released generation-1 record history, installs both aliases, records borrower `131074`, and advances both grant counts to `2`.
+11. Client generation 2 independently interprets the same two resources and sends `29`, then exits or takes the contained vector-13 fault.
+12. Cleanup validates generation `2`, clears both aliases/publications, and returns both records to owned/no-borrower/mapping-zero while preserving grant count `2`.
+13. Init receives the second `29` and exits on syscall five. The allocator must again be exactly exhausted at cursor page `63`.
 
 The user-fault scenario sends `29` and executes privileged `CLI`; the same two-resource cleanup still completes. CPL0 invalid-opcode and general-protection scenarios remain terminal.
 
@@ -131,32 +137,35 @@ The user-fault scenario sends `29` and executes privileged `CLI`; the same two-r
 | `WVOS6102` | Either target alias is already mapped or the resources are not exclusively owned by init. |
 | `WVOS6103` | The service leaf or private publication is outside fixed client bounds. |
 | `WVOS6104` | The requested set is unknown, partial, duplicate, or out of order. |
+| `WVOS6105` | The generation or prior released grant history is not the exact next lifecycle state. |
 | `WVOS6201` | Borrower process/thread state is not coherently terminal. |
 | `WVOS6202` | The record set is not two exact live typed borrows. |
 | `WVOS6203` | A live alias, digest, PTE address, service, or private directory differs from the admitted grant. |
+| `WVOS6204` | The terminal client generation is outside the supported first/second generation proof. |
 
-## Deterministic qualified evidence
+## Deterministic Probe 30 evidence
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Process-policy WVB | 6,955 | `5134108d706aefd18ac90c18cefe793d9ec166f19066484219e2618300e4cedb` |
-| Process-policy WVO | 62,210 | `6e49e4d2a71513cc7f14442a2744c06b414da0081a60d150529ca0b54f394563` |
+| Process-policy WVB | 6,553 | `c811fb5c7ef7a194f238831fd91f6a306084e619cd7572300eab74e2107bdfa2` |
+| Process-policy WVO | 58,648 | `ffd7d1c4a78e57f4bae3cff03314f632909359b6012f7fc8c747cabe710edaf9` |
 | Init WVB | 525 | `0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467` |
 | Init WVO | 3,959 | `a0e7d0815c40993d1846a44d230428feef1bea6350ebf536db672ca507ca6656` |
-| Linked init image | 3,903 | `a08cc4b84772ea9e855acc5b9c7f0cc4e1b7e1ab24ad317ad3e59af129f531d1` |
+| WVA init-service shim WVO | 243 | `2e00ea9799cd8fc55e75611a9f2f5831c26162b0d3928841f003d5ab9802139a` |
+| Linked init image | 3,935 | `328d075ce129aed204707b16fab7c22b9e8f624b917ce681959118b02d313814` |
 | Interpreter WVB | 12,851 | `7fbb25fe08136c86c063c08395451f8db1219bd17e0adc0748b5fa2d9a3f8fee` |
 | Interpreter WVO | 134,166 | `3de222684b7fd38a9ace76a58c5ddaaf715f34e847e81af802cf1a3289428a4e` |
 | WVA typed-lookup stencil WVO | 462 | `fde44aad9549731d53c5ccf3a57733b3619df94369b61ef27a693e1059784bc9` |
 | Published typed-lookup WVO | 462 | `ecb940abb9de8086d50ae418853021cf1f7566a9415a5a3a3b4e5cc45ed5e78c` |
 | Linked normal client image | 134,077 | `4cb7edd21a44183fbddc9105834ecc6a69e576ac3bf4b0fcdf1ee98f111c55b3` |
 | Linked fault client image | 134,077 | `f70fc9b66ea493863439fe4f4ad5510b1e666fb1466cfce25e0088b8af883ef8` |
-| Normal process-machine WVO | 149,483 | `b18ccf8f4c2eb065d017e2fafb2254fbf0299af1cf0eb130c3ca3405a34392e2` |
-| Normal process-machine code | 10,071 | `e83edda8691142d8ad777269ee0f03bc1febc2785edf0dcd547f77f6bc3ae8bb` |
-| Fault process-machine WVO | 149,531 | `a3bc89dbdd1539934417ae03f4375bd36af1ef6617d1b4f7651b5955f923ebd0` |
-| Fault process-machine code | 10,119 | `0b9941bab32ad8d01daeba277fe9e118f82de0974b4b68fb86582e1f5e0b06c6` |
+| Normal process-machine WVO | 155,893 | `4f126af968669458c499e8e40b375cbbd614b2e3e8bb29f1ee46597fc19e21ea` |
+| Normal process-machine code | 16,295 | `7db8a79b86e01f87de8e65881992cda321318f599b8c1d138acaaf89a464e42d` |
+| Fault process-machine WVO | 155,973 | `821d4c1dba668566f9a42f839da14ea78814ac688cb16cbac649bd5bdfbeb6dc` |
+| Fault process-machine code | 16,375 | `1c4b38b16e0840d5fcc1249e2af180e0a1c6f849671745b00b7318a92a28cc0f` |
 
-Windows and digest-pinned Debian 12 pass all 67 Seed tests, all 25 OS tests, and the complete non-Fast verifier for exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c`. All four pinned-QEMU Probe 29 scenarios pass on Windows.
+Focused Windows evidence passes all 25 OS tests and all four pinned-QEMU Probe 30 scenarios. Cross-host qualification is pending.
 
 ## Deliberate limits
 
-Version 8 has exactly two fixed names, one owner, one borrower, one ordered atomic grant, and one shared terminal lifetime. It does not add enumeration, arbitrary resource counts, transfer/delegation, explicit revocation, independent lifetimes, page/root reuse, SMP shootdown, process creation, scheduling, arbitrary loading, executable publication, JIT, filesystems, packages, networking, Hyper-V, or physical-hardware evidence.
+Version 9 has exactly two fixed names, one owner, one logical borrower at a time, two fixed generations, two ordered atomic grants, and one exact LIFO extent reuse. It does not add enumeration, arbitrary resource counts, transfer/delegation, explicit revocation, independent lifetimes, non-tail release, concurrent root reuse, SMP shootdown, general process creation, scheduling, arbitrary loading, executable publication, JIT, filesystems, packages, networking, Hyper-V, or physical-hardware evidence.

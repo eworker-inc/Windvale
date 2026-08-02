@@ -12,6 +12,16 @@ syscall
 move_u32 ebx 2
 move_u32 esi 65536
 syscall
+# The coordinator reclaims and rebuilds the terminal client before resuming
+# this service. Regrant the same ordered set to generation 2, wait for its
+# independently interpreted result, and only then exit.
+move_u32 eax 131073
+move_u32 ebx 4
+move_u32 esi 65536
+syscall
+move_u32 ebx 2
+move_u32 esi 65536
+syscall
 move_u32 ebx 3
 syscall
 trap

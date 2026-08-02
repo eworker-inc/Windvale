@@ -2,9 +2,9 @@
 
 ## Status and scope
 
-Execution-context version 7 and ABI-16 target `x86-64-wvb-baseline-v16` are cross-host qualified at exact commit `860c69c`. [Decision 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) first qualified context version 7 under ABI 15 with one runtime-private file-output-table pointer and exact native Windows/Linux `file.write_bytes` leaves. [Decision 0089](../Documents/Decisions/0089-Bounded-Native-Stack-Arguments.md) advances only bounded internal calls to ABI 16 while retaining every context and service-table field. Execution-context version 6 and ABI 14 remain cross-host-qualified historical evidence at exact commit `ef08619`; [Decision 0076](../Documents/Decisions/0076-Native-Windows-And-Linux-File-Input.md) records that transition. [Decision 0080](../Documents/Decisions/0080-Native-Byte-Result-And-Live-Stencil-Consumption.md) adds the bounded exported byte-result contract without advancing version 6, and [Decision 0082](../Documents/Decisions/0082-Windvale-Owned-Native-Publication-Layout.md) moves executable-image layout into Windvale without changing ABI 14.
+Execution-context version 7 and ABI-17 target `x86-64-wvb-baseline-v17` are current in the implementation. [Decision 0099](../Documents/Decisions/0099-Bounded-Native-Frame-Admission.md) doubles only the verified frame envelope to 2,048 cells; cross-host qualification is pending. ABI 16 remains cross-host qualified at exact commit `860c69c`: [Decision 0089](../Documents/Decisions/0089-Bounded-Native-Stack-Arguments.md) introduced its bounded internal calls while retaining every context and service-table field. [Decision 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) first qualified context version 7 under ABI 15. Execution-context version 6 and ABI 14 remain historical evidence at exact commit `ef08619`.
 
-This is an experimental native ABI, not a stable public foreign-function interface. ABI 16 replaces ABI 15 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-16 fragment verifier.
+This is an experimental native ABI, not a stable public foreign-function interface. ABI 17 replaces ABI 16 in the current implementation. Qualified older artifacts remain historical evidence and are not accepted by the ABI-17 fragment verifier.
 
 ## Entry convention
 
@@ -20,11 +20,11 @@ After a successful exported byte return, the host requires a zero reserved word,
 
 ## Value-slot and borrowed-descriptor layout
 
-Each native local and temporary owns one zero-initialized 16-byte frame slot. Scalars use the low four bytes. The wider slot is a universal representation boundary for values that require more than one machine word; it is not a heap object or a claim that every future Windvale value will use this exact shape.
+Each native local and temporary owns one zero-initialized 16-byte frame slot. ABI 17 admits at most 2,048 combined local/numbered-value cells, for a 32 KiB generated frame before any separate outgoing-call reservation. Scalars use the low four bytes. The wider slot is a universal representation boundary for values that require more than one machine word; it is not a heap object or a claim that every future Windvale value will use this exact shape.
 
 An immutable borrowed `text` or `bytes` value occupies one slot:
 
-| Offset | Bytes | Field | ABI-16 rule |
+| Offset | Bytes | Field | ABI-17 rule |
 | ---: | ---: | --- | --- |
 | 0 | 8 | data pointer | Points into verified fragment data or one execution-owned immutable host buffer |
 | 8 | 4 | byte length | Exact remaining span length |
@@ -34,7 +34,7 @@ Static text and byte constants create descriptors through verified RIP-relative 
 
 An enum occupies the low four bytes and retains its signed member value plus compile-time nominal identity. A record occupies the low four bytes as an offset into the current execution's record arena. Each immutable record field consumes one complete 16-byte arena cell, including borrowed text or byte descriptors. Record construction checks offset addition and arena capacity before copying typed cells; field access proves the complete selected cell is below the committed used boundary. A fragment containing descriptor-bearing records uses independently decoded nominal-type tags on all record construction and field-access shapes so descriptor provenance cannot be confused with a scalar cell. Packed status 7 becomes `WVR3017` on arena exhaustion.
 
-ABI 16 retains ABI 15's native file output, ABI 14's native file input, ABI 13's native output, ABI 12's immutable argument table, ABI 11's return shapes and arenas, ABI 9's nominal values, and ABI 8's borrowed values. Unsigned arithmetic overflow retains packed status 1 / `WVR3007`.
+ABI 17 retains ABI 16's bounded 64-parameter calls, ABI 15's native file output, ABI 14's native file input, ABI 13's native output, ABI 12's immutable argument table, ABI 11's return shapes and arenas, ABI 9's nominal values, and ABI 8's borrowed values. Unsigned arithmetic overflow retains packed status 1 / `WVR3007`.
 
 ## Execution-context memory layout
 
@@ -212,4 +212,6 @@ Decision 0090 adds a separate ABI-16 context instance with exact budgets `8948` 
 
 [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) retains ABI 16, context 7, and service-table 5 while replacing the OS-private table with `WVBR002`. One atomic grant publishes two ordered entries and two RO/NX aliases for `boot:main.wvb` and `boot:main.budget`. The exact 347-byte WVA leaf performs typed name lookup and returns either borrowed descriptor through the unchanged `file.read_bytes` generated-call convention. Both context pointers still transition from zero to their final values only after the complete set validates; terminal cleanup returns them to zero and clears the complete 80-byte directory.
 
-Windvale OS still has no general runtime service registry, output filesystem, record or text allocator, general WVB loader/verifier, JIT, or dynamic hosted-capability implementation. Qualified Probe 29 proves that ABI-16 generated hosted code can consume two typed Windvale-selected immutable OS resources without changing host ABI semantics. Stage 0 still writes the table and PTEs after independently checking Windvale-owned policy and WVA-owned leaf bytes; those are named replacement seams rather than portable semantics.
+[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) advances the composed OS to ABI 17 without changing context 7, service-table 5, `WVBR002`, or hosted-call semantics. Probe 30 constructs the same exact table twice for generation-stamped clients at one reused physical root; cleanup clears the complete table before tail release and rebuild.
+
+Windvale OS still has no general runtime service registry, output filesystem, record or text allocator, general WVB loader/verifier, JIT, or dynamic hosted-capability implementation. Probe 30 proves that ABI-17 generated hosted code can consume two typed Windvale-selected immutable OS resources across one generation-safe reuse cycle without changing host ABI semantics. Stage 0 still writes the table and PTEs after independently checking Windvale-owned policy and WVA-owned leaf bytes; those are named replacement seams rather than portable semantics.

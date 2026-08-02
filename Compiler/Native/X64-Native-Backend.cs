@@ -192,7 +192,11 @@ public static class X64ˉnativeˉbackend
             {
                 if (Allˉlocalˉtypes.Length + Valueˉtypes.Count >= Nativeˉcontract.MAXIMUM_FRAME_SLOTS)
                 {
-                    Fail("WVN2004", "The baseline native function exceeds its combined local/value frame-slot limit.");
+                    Fail(
+                        "WVN2004",
+                        $"Native function '{function.Declaration.Name}' requires at least " +
+                        $"{Allˉlocalˉtypes.Length + Valueˉtypes.Count + 1} combined local/value " +
+                        $"frame slots; the limit is {Nativeˉcontract.MAXIMUM_FRAME_SLOTS}.");
                 }
                 var Result = Valueˉtypes.Count;
                 Valueˉtypes.Add(type);
