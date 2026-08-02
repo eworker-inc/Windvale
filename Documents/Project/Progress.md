@@ -25,7 +25,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 0–6. Seed through assembler and linker | ✅ Qualified | The Stage 0 foundation, byte primitives, hosted resource boundary, `wvdump`, object model, assembler, and linker have Windows and Debian evidence. | Preserve these contracts as later native and OS work consumes them. |
 | 7. Foundation modules | 🔵 Ongoing | Machine contracts, byte ordering, decimal parsing, and byte construction are shared by real Windvale tools. | Add facilities only when measured compiler, runtime, or tool pressure requires them. |
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
-| 9. Shared native backend | 🎯 Current transfer | Qualified ABI 18 deterministically reuses exact-type physical cells across empty-stack blocks while retaining the 2,048-cell ceiling; exact compiler preflight now reaches `Bytesˉfromˉu8`. | Implement only the next opcode/runtime contract demanded by exact compiler execution. |
+| 9. Shared native backend | 🎯 Current transfer | ABI 19's implemented candidate constructs one native byte under the retained arena and typed-slot contracts; exact compiler preflight now reaches `Bytesˉfromˉu16ˉlittle`. | Cross-host qualify Decision 0108, then implement only the next measured opcode/runtime contract. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
 | 11. Boot path and kernel | 🚧 In progress | Probe 32 through ABI 18 / `WVKMEM10` is cross-host qualified with the same `WVPROC11` behavior, a 134-page arena, and a 113-page client root; all four local pinned-QEMU scenarios pass. | Let non-tail lifetime pressure, broader traps, Hyper-V, or a third runnable choose the next kernel slice. |
 | 12. Runtime on Windvale OS | ✅ Qualified | Exact `Sum-Data.wv` and `Function-Only.wv` compiler outputs run across both hosts and Windvale OS; the second covers four functions and four scalar families. | Use a third real program or measured native-size pressure to choose further generalization. |
@@ -45,7 +45,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Canonical constant WVB → Windvale-authored selector → deterministic Wasm → result `42`
 - ✅ Checked-add WVB → Windvale-authored selector → execution ABI 1 → result or `WVR3007` plus exact instruction count
 - ✅ Bounded straight-line `i32` WVB → Windvale-authored lowering → checked arithmetic → deterministic Wasm under Node.js
-- 🎯 Qualified compiler WVB → ABI-18 typed block slots → exact preflight reaches `Bytesˉfromˉu8`
+- 🎯 Qualified compiler WVB → ABI-19 one-byte construction candidate → exact preflight reaches `Bytesˉfromˉu16ˉlittle`
 - ✅ WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
 - ✅ WVA paging mechanics → kernel-owned low-1-GiB W^X identity root
 - ✅ One embedded WVB → in-guest Windvale admission → its AOT form

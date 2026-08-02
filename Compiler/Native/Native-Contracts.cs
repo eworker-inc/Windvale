@@ -6,8 +6,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 18;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v18";
+    public const int ABI_VERSION = 19;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v19";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
@@ -303,6 +303,10 @@ public sealed record Nativeˉbytesˉconcat(
     int Result,
     int Left,
     int Right) : Nativeˉoperation;
+
+public sealed record Nativeˉbytesˉfromˉu8(
+    int Result,
+    int Value) : Nativeˉoperation;
 
 public sealed record Nativeˉbytesˉfromˉu32ˉlittle(
     int Result,

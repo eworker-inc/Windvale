@@ -287,6 +287,9 @@ internal static class Program
             let Short: u32 = Bytesˉreadˉu16ˉlittle(Packet, 1u32);
             let Negative: i32 = Bytesˉreadˉi32ˉlittle(Packet, 5u32);
             let Answer: u32 = (Sum - 1u32) * 1u32;
+            let Encodedˉzero: bytes = Bytesˉfromˉu8(0u8);
+            let Encodedˉmaximum: bytes = Bytesˉfromˉu8(255u8);
+            let Encodedˉword: bytes = Bytesˉfromˉu32ˉlittle(42u32);
             if Bytesˉlength(Packet) == 9u32 {
                 if First == 42u8 {
                     if First != 41u8 {
@@ -296,7 +299,14 @@ internal static class Program
                                     if Answer < 43u32 {
                                         if Answer <= 42u32 {
                                             if Answer > 41u32 {
-                                                if Answer >= 42u32 { return 42; }
+                                                if Answer >= 42u32 {
+                                                    if Bytesˉlength(Encodedˉzero) != 1u32 { return 0; }
+                                                    if Bytesˉreadˉu8(Encodedˉzero, 0u32) != 0u8 { return 0; }
+                                                    if Bytesˉlength(Encodedˉmaximum) != 1u32 { return 0; }
+                                                    if Bytesˉreadˉu8(Encodedˉmaximum, 0u32) != 255u8 { return 0; }
+                                                    if Bytesˉreadˉu32ˉlittle(Encodedˉword, 0u32) != 42u32 { return 0; }
+                                                    return 42;
+                                                }
                                             }
                                         }
                                     }
@@ -1528,7 +1538,7 @@ internal static class Program
             },
             First.Fragment.Code.Take(13));
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
-        Equal(18, Nativeˉcontract.ABI_VERSION);
+        Equal(19, Nativeˉcontract.ABI_VERSION);
         Equal(2_048, Nativeˉcontract.MAXIMUM_FRAME_SLOTS);
         Equal(100_000, Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS);
         Equal(32_768, Nativeˉcontract.MAXIMUM_FRAME_BYTES);
@@ -2967,6 +2977,9 @@ internal static class Program
                 .Order());
         True(Operations.Any(Operation => Operation is Nativeˉbytesˉlength),
             "Native machine IR omitted the byte length.");
+        Equal(2, Operations.OfType<Nativeˉbytesˉfromˉu8>().Count());
+        True(Operations.Any(Operation => Operation is Nativeˉbytesˉfromˉu32ˉlittle),
+            "Native machine IR omitted little-endian byte construction.");
         True(Operations.Any(Operation => Operation is Nativeˉu32ˉfromˉu8),
             "Native machine IR omitted the lossless u8-to-u32 conversion.");
         True(Operations.Any(Operation => Operation is Nativeˉu32ˉbinary),
@@ -2977,6 +2990,56 @@ internal static class Program
             "Native machine IR omitted u8 comparisons.");
 
         _ = Nativeˉfragmentˉverifier.Verify(First.Fragment);
+
+        var Encodedˉu8ˉstart = First.Fragment.Code.AsSpan().IndexOf(new byte[]
+        {
+            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x41, 0x89, 0xC1,
+            0x89, 0xC1,
+            0x83, 0xC1, 0x01,
+            0x0F, 0x82,
+        });
+        True(Encodedˉu8ˉstart >= 0, "Native bytes.from_u8 omitted its checked arena allocation.");
+
+        var Corruptedˉu8ˉallocation = First.Fragment.Code.ToArray();
+        Corruptedˉu8ˉallocation[Encodedˉu8ˉstart + 11] = 0x02;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu8ˉallocation.ToImmutableArray() }));
+
+        var Corruptedˉu8ˉstore = First.Fragment.Code.ToArray();
+        Corruptedˉu8ˉstore[Encodedˉu8ˉstart + 69] = 0x89;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu8ˉstore.ToImmutableArray() }));
+
+        var Corruptedˉu8ˉalias = First.Fragment.Code.ToArray();
+        Corruptedˉu8ˉalias.AsSpan(Encodedˉu8ˉstart + 46, sizeof(int)).CopyTo(
+            Corruptedˉu8ˉalias.AsSpan(Encodedˉu8ˉstart + 65, sizeof(int)));
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu8ˉalias.ToImmutableArray() }));
+
+        var Encodedˉu32ˉstart = First.Fragment.Code.AsSpan().IndexOf(new byte[]
+        {
+            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x41, 0x89, 0xC1,
+            0x89, 0xC1,
+            0x83, 0xC1, 0x04,
+            0x0F, 0x82,
+        });
+        True(Encodedˉu32ˉstart >= 0, "Native bytes.from_u32_little omitted its checked arena allocation.");
+        var Corruptedˉu32ˉalias = First.Fragment.Code.ToArray();
+        Corruptedˉu32ˉalias.AsSpan(Encodedˉu32ˉstart + 46, sizeof(int)).CopyTo(
+            Corruptedˉu32ˉalias.AsSpan(Encodedˉu32ˉstart + 65, sizeof(int)));
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉu32ˉalias.ToImmutableArray() }));
+
         Equal(
             42,
             X64ˉnativeˉexecutor.Executeˉi32(
@@ -5033,7 +5096,7 @@ internal static class Program
                 $"Compiler native preflight did not identify the next exact function: {Exception.Message}");
             True(
                 Exception.Message.Contains(
-                    "Bytesˉfromˉu8",
+                    "Bytesˉfromˉu16ˉlittle",
                     StringComparison.Ordinal),
                 $"Compiler native preflight did not identify the next unsupported operation: {Exception.Message}");
             return;

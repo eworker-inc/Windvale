@@ -791,6 +791,14 @@ public static class Nativeˉfragmentˉverifier
                     Runtimeˉservice,
                     Borrowedˉbytesˉslots,
                     out var Concatˉbytesˉslot) ||
+                Tryˉdecodeˉbytesˉfromˉu8(
+                    Code,
+                    ref Index,
+                    Propagate,
+                    Frameˉbytes,
+                    Runtimeˉservice,
+                    Borrowedˉbytesˉslots,
+                    out Concatˉbytesˉslot) ||
                 Tryˉdecodeˉbytesˉfromˉu32ˉlittle(
                     Code,
                     ref Index,
@@ -1937,7 +1945,9 @@ public static class Nativeˉfragmentˉverifier
     {
         resultˉslot = 0;
         var Cursor = index;
-        if (!Matches(
+        if (Cursor < 0 ||
+            Cursor > code.Length - 76 ||
+            !Matches(
                 code,
                 Cursor,
                 0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
@@ -1971,8 +1981,79 @@ public static class Nativeˉfragmentˉverifier
                 out var Lengthˉresult) ||
             Lengthˉresult != resultˉslot ||
             !Tryˉloadˉeax(code, Cursor + 62, frameˉbytes, out var Valueˉslot) ||
+            Valueˉslot == resultˉslot ||
             borrowedˉbytesˉslots.Contains(Valueˉslot) ||
             !Matches(code, Cursor + 69, 0x89, 0x02, 0xE9) ||
+            !Tryˉreadˉtarget(code, Cursor + 72, out var Endˉtarget))
+        {
+            return false;
+        }
+        Cursor += 76;
+        if (Arenaˉtarget != Cursor ||
+            !Tryˉdecodeˉruntimeˉfailure(
+                code,
+                ref Cursor,
+                Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted,
+                runtimeˉservice) ||
+            Endˉtarget != Cursor ||
+            Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉbytesˉfromˉu8(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        int runtimeˉservice,
+        HashSet<int> borrowedˉbytesˉslots,
+        out int resultˉslot)
+    {
+        resultˉslot = 0;
+        var Cursor = index;
+        if (Cursor < 0 ||
+            Cursor > code.Length - 76 ||
+            !Matches(
+                code,
+                Cursor,
+                0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                0x41, 0x89, 0xC1,
+                0x89, 0xC1,
+                0x83, 0xC1, 0x01,
+                0x0F, 0x82) ||
+            !Tryˉreadˉtarget(code, Cursor + 14, out var Arenaˉtarget) ||
+            !Matches(
+                code,
+                Cursor + 18,
+                0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+                0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 24, out var Secondˉarenaˉtarget) ||
+            Secondˉarenaˉtarget != Arenaˉtarget ||
+            !Matches(
+                code,
+                Cursor + 28,
+                0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+                0x4C, 0x01, 0xCA,
+                0x48, 0x89, 0xD0) ||
+            !Tryˉstoreˉrax(code, Cursor + 42, frameˉbytes, out resultˉslot) ||
+            code[Cursor + 50] != 0xB8 ||
+            Readˉi32(code, Cursor + 51) != sizeof(byte) ||
+            !Tryˉstoreˉeaxˉatˉfield(
+                code,
+                Cursor + 55,
+                frameˉbytes,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
+                out var Lengthˉresult) ||
+            Lengthˉresult != resultˉslot ||
+            !Tryˉloadˉeax(code, Cursor + 62, frameˉbytes, out var Valueˉslot) ||
+            Valueˉslot == resultˉslot ||
+            borrowedˉbytesˉslots.Contains(Valueˉslot) ||
+            !Matches(code, Cursor + 69, 0x88, 0x02, 0xE9) ||
             !Tryˉreadˉtarget(code, Cursor + 72, out var Endˉtarget))
         {
             return false;
