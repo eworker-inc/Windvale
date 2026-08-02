@@ -51,7 +51,7 @@ export const SUPPORT_TIERS = Object.freeze([
         icon: "foundation",
         accent: "amber",
         image: new URL("./assets/support/cornerstone.jpg", import.meta.url).href,
-        description: "Makes a major contribution to Windvale's long-term open-source development.",
+        description: "Makes a major contribution to Windvale's long-term community development.",
         checkoutUrl: "https://buy.stripe.com/8x214g1redBZeB87Li1sQ04",
     },
     {

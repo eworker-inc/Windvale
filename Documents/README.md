@@ -29,7 +29,7 @@ Windvale separates current status, enduring architecture, accepted decisions, ex
 ## Development and operations
 
 - [Seed development runbook](Runbooks/Seed-Development.md) — prerequisites, verification tiers, bootstrap convergence, CLI examples, assembly, and linking
-- [Contributing guide](../CONTRIBUTING.md) — public contribution, DCO sign-off, provenance, and pull-request requirements
+- [Contributing guide](../CONTRIBUTING.md) — CLA acceptance, DCO sign-off, provenance, and pull-request requirements
 - [Website guide](../Website/README.md) — local preview, progress data, support configuration, analytics, and publication
 
 ## Evidence and operations

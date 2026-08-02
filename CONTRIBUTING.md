@@ -66,15 +66,19 @@ Keep pull requests focused and reviewable. Update tests and specifications in th
 
 A maintainer may request a smaller change, additional hostile-input coverage, an independent verifier, deterministic-byte comparison, a decision record, or clearer ownership boundaries before acceptance. [E-Worker Inc](https://eworker.ca) retains final responsibility for accepting and releasing changes under [GOVERNANCE.md](GOVERNANCE.md).
 
-## Developer Certificate of Origin
+## Contributor License Agreement and Developer Certificate of Origin
 
-Windvale uses the [Developer Certificate of Origin 1.1](https://developercertificate.org/) instead of a separate contributor license agreement. Every contributed commit must include a sign-off from the responsible human or organization:
+Before E-Worker Inc can accept an external contribution, the responsible individual or authorized entity representative must accept the [Windvale Contributor License Agreement 1.0](CONTRIBUTOR-LICENSE-AGREEMENT.md). Complete the CLA acceptance section in the pull-request description with the legal name or entity, GitHub account, agreement version, and acceptance date. The public acceptance record applies to later contributions under the same identity and agreement version unless E-Worker requests renewed acceptance. Contributions submitted directly by E-Worker Inc do not require a separate external acceptance record.
+
+The CLA does not transfer a contributor's copyright. It gives E-Worker the rights needed to distribute Windvale under the community license and offer separate commercial terms. CLA acceptance does not replace source and provenance review.
+
+Every contributed commit must also include a sign-off under the [Developer Certificate of Origin 1.1](https://developercertificate.org/) from the responsible human or organization:
 
 ```text
 Signed-off-by: Responsible Name <verified-address@example.org>
 ```
 
-Add it with `git commit --signoff`. By signing, the submitter certifies that the contribution may be submitted under the project's license and that the sign-off can remain in the public record. The sign-off identifies the responsible submitter; it does not claim that the submitter personally wrote AI-authored content.
+Add it with `git commit --signoff`. By signing, the submitter certifies that the contribution may be submitted under the project's contribution terms and that the sign-off can remain in the public record. The sign-off identifies the responsible submitter; it does not claim that the submitter personally wrote AI-authored content and does not by itself constitute CLA acceptance.
 
 Use a stable verified email or a GitHub-provided ID-based `noreply` email if privacy is required. GitHub usernames, Git author names, and Git emails are separate identifiers. Never publish an address accidentally or invent an address that appears deliverable.
 
@@ -84,4 +88,4 @@ New E-Worker project-generated commits use `E-Worker AI <246088022+EWorkerAI@use
 
 ## Licensing
 
-Contributions accepted into Windvale are distributed under the root [MIT License](LICENSE). A contribution must not include material that the submitter cannot distribute under those terms. AI generation does not erase copyright, license, patent, privacy, export, or attribution obligations attached to source material.
+Windvale-owned work, including accepted contributions, is distributed under the root [Windvale Community Source License 1.0](LICENSE). Under the CLA, E-Worker may also offer the contribution under separate commercial or other terms. Contributors retain any copyright they hold in their contributions. A contribution must not include material that the submitter cannot provide under the CLA and project license. AI generation does not erase copyright, license, patent, privacy, export, or attribution obligations attached to source material. Third-party material remains under its own terms and must be identified as described in the [third-party notice policy](THIRD-PARTY-NOTICES.md).

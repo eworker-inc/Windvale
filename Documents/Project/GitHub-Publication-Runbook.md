@@ -19,7 +19,7 @@ The official repository is public at [`eworker-inc/Windvale`](https://github.com
 - Use [info@eworker.ca](mailto:info@eworker.ca) as the public business, fallback security, conduct, and project-identity contact.
 - Use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as the descriptive author for new E-Worker project-generated commits.
 - Use `E-Worker Inc <info@eworker.ca>` as the responsible committer and DCO signer.
-- Apply the Developer Certificate of Origin to new contributions prospectively. The identity normalization must not retrofit sign-offs onto bootstrap commits.
+- Apply the Developer Certificate of Origin to new contributions prospectively. Require Contributor License Agreement 1.0 acceptance for external contributions from its adoption onward. Neither requirement is retrofitted onto bootstrap commits.
 
 ## 1. Preserve the completed identity normalization
 
@@ -77,7 +77,7 @@ The pre-public inspection covered:
 - Enable private vulnerability reporting.
 - Enable secret scanning and push protection when available for the organization and repository.
 - Keep the default workflow token read-only unless a reviewed workflow has a narrower documented need for write access.
-- Configure the DCO check for new contributions.
+- Configure the DCO check and preserve a reviewable CLA acceptance record for new external contributions.
 - Protect `main` after the initial checks have run: require the applicable checks, block force pushes and branch deletion, and avoid rules that make a single-maintainer project impossible to operate safely.
 - Decide whether Issues and Discussions are enabled and verify that their public guidance matches `SUPPORT.md` and `SECURITY.md`.
 

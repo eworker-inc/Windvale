@@ -4,12 +4,12 @@
 
 This document gives people and AI agents the durable rules needed to develop Windvale safely and coherently.
 
-Windvale is an open-source experiment in constructing a small computing stack: language, compiler, bytecode, runtime, assembler, object model, linker, foundation library, tools, and operating system. The goal is not merely to generate code with AI. The result must be understandable, testable, reproducible, and useful independently at each layer.
+Windvale is a source-available experiment in constructing a small computing stack: language, compiler, bytecode, runtime, assembler, object model, linker, foundation library, tools, and operating system. The goal is not merely to generate code with AI. The result must be understandable, testable, reproducible, and useful independently at each layer.
 
 ## Quick start
 
 - Read this file before making non-trivial changes.
-- Follow `CONTRIBUTING.md` for public contribution, DCO sign-off, provenance, and pull-request requirements.
+- Follow `CONTRIBUTING.md` for Contributor License Agreement acceptance, DCO sign-off, provenance, and pull-request requirements.
 - Use the active checkout and its configured repository remote; local worktree and mirror paths are environment-specific.
 - Use `main` as the default branch until the repository establishes a different branching policy.
 - Before changes, run `git status --short --branch` and `git pull --ff-only`.

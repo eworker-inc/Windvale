@@ -14,6 +14,16 @@ List the exact checks run and their results. State which broader checks were not
 
 Identify incorporated third-party material and any technically material AI provenance. Do not list a model merely because Windvale uses AI by default.
 
+## Contributor License Agreement acceptance
+
+External contributors must complete this section. Leave it blank only for contributions submitted directly by E-Worker Inc.
+
+- Legal name or authorized entity:
+- GitHub account:
+- Agreement version: 1.0
+- Acceptance date (YYYY-MM-DD):
+- [ ] I have read and accept the [Windvale Contributor License Agreement 1.0](../CONTRIBUTOR-LICENSE-AGREEMENT.md), and I am authorized to accept it for the name or entity above.
+
 ## Checklist
 
 - [ ] I reviewed the complete generated change and accept responsibility for submitting it.
@@ -22,5 +32,6 @@ Identify incorporated third-party material and any technically material AI prove
 - [ ] New or changed serialized input has appropriate malformed and boundary coverage.
 - [ ] Generated artifacts are deterministic where the contract requires it.
 - [ ] I disclosed relevant third-party material and license obligations.
+- [ ] The required CLA acceptance is recorded above or already applies to this contributor and agreement version.
 - [ ] Every contributed commit includes the required DCO sign-off.
 - [ ] I did not include secrets, credentials, private data, or machine-local configuration.

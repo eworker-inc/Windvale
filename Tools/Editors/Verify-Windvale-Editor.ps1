@@ -69,7 +69,11 @@ $Configuration = Read-Json $ConfigurationPath
 $Grammar = Read-Json $GrammarPath
 
 Assert-Condition ($Package.name -eq 'windvale-language') 'The extension package name must remain windvale-language.'
-Assert-Condition ($Package.license -eq 'MIT') 'The extension package must remain MIT licensed.'
+Assert-Condition ($Package.license -eq 'SEE LICENSE IN LICENSE') 'The extension package must name its bundled custom license.'
+$Licenseˉpath = Join-Path $ExtensionRoot 'LICENSE'
+Assert-Condition (Test-Path -LiteralPath $Licenseˉpath -PathType Leaf) 'The extension package must include its license.'
+$Licenseˉtext = Get-Content -LiteralPath $Licenseˉpath -Raw
+Assert-Condition ($Licenseˉtext.StartsWith('# Windvale Community Source License 1.0')) 'The extension license must match the repository license family.'
 Assert-Condition (@($Package.contributes.languages).Count -eq 1) 'The extension must contribute exactly one source language.'
 Assert-Condition (@($Package.contributes.grammars).Count -eq 1) 'The extension must contribute exactly one source grammar.'
 

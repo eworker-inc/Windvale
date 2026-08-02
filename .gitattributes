@@ -24,3 +24,4 @@
 *.efi binary
 *.img binary
 *.vhdx binary
+Tools/Windvale.Playground/wwwroot/editor/notices/monaco-editor-ThirdPartyNotices.txt whitespace=-blank-at-eof

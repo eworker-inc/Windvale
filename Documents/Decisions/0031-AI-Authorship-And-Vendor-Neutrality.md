@@ -1,7 +1,7 @@
 # Decision 0031: AI authorship and vendor neutrality
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; amended before initial public visibility to remove provider-specific narrative
+- Status: Accepted and implemented; licensing references superseded on 2026-08-02 by [Decision 0113](0113-Community-Source-Licensing-And-Commercial-Stewardship.md), while the attribution policy remains current
 
 ## Context
 

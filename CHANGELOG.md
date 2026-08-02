@@ -8,7 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
-- MIT licensing and [E-Worker Inc](https://eworker.ca) stewardship.
+- The [Windvale Community Source License 1.0](LICENSE), [E-Worker Inc](https://eworker.ca) stewardship, contributor agreement, and third-party notice policy.
 - Vendor-neutral AI-authorship and attribution policy.
 - Public contribution, governance, security, support, conduct, and project-identity policies.
 - The public [`eworker-inc/Windvale`](https://github.com/eworker-inc/Windvale) repository, issue and pull-request templates, private vulnerability reporting, and public development workflow.

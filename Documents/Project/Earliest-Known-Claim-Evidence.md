@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Windvale describes itself as among the earliest known open-source efforts to build its own language, compiler, verified bytecode, runtime, assembler, object model, linker, native path, Foundation library, and operating system as one coherent AI-authored stack from an empty project.
+Windvale describes itself as among the earliest known publicly developed efforts to build its own language, compiler, verified bytecode, runtime, assembler, object model, linker, native path, Foundation library, and operating system as one coherent AI-authored stack from an empty project.
 
 This record preserves the meaning and reasonable search basis of that qualified statement. It does not establish an exhaustive priority result. Private, deleted, unpublished, poorly indexed, or differently described projects may exist, and public projects may change after the review date.
 
@@ -19,7 +19,7 @@ The statement concerns the combined project scope, not priority for an operating
 - an assembler, structured object model, and linker owned as distinct contracts;
 - a reusable foundation library and a planned or implemented operating system using the same stack;
 - repository-wide AI implementation and documentation authorship under human direction and review; and
-- open-source publication as one coherent project developed from an empty starting repository.
+- public source publication as one coherent project developed from an empty starting repository.
 
 The word “known” limits the statement to reasonably discoverable public evidence as of the review date. “Among the earliest” deliberately permits earlier and contemporaneous efforts and makes no exact ranking claim.
 

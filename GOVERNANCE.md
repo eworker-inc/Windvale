@@ -4,7 +4,7 @@
 
 [E-Worker Inc](https://eworker.ca) initiated Windvale and is its project steward. The steward controls official repositories and releases, appoints maintainers, accepts or rejects contributions, administers security reports, and decides when a contract or milestone is qualified.
 
-Windvale is open source under the MIT License. Open-source permission does not require the official project to accept every compatible change or transfer stewardship of the Windvale identity.
+Windvale-owned work is source-available under the [Windvale Community Source License 1.0](LICENSE). The public license permits defined free uses while reserving large-organization production use and Windvale-as-a-product use for separate commercial terms. Independent applications remain the property of their creators, and third-party components remain under their own licenses. Source availability does not require the official project to accept every compatible change or transfer stewardship of the Windvale identity.
 
 ## Roles
 
@@ -29,7 +29,7 @@ Official releases require an identified source commit, release notes, applicable
 
 ## Identity and attribution
 
-Repository ownership, GitHub login, Git author metadata, DCO sign-off, AI attribution, and legal stewardship serve different purposes and need not use the same name.
+Repository ownership, GitHub login, Git author metadata, CLA acceptance, DCO sign-off, AI attribution, and legal stewardship serve different purposes and need not use the same name.
 
 The [completed one-time pre-public identity normalization](Documents/Project/Bootstrap-Attribution-Migration.md) associates bootstrap commits with the project account while retaining their existing descriptive author names, source trees, messages, timestamps, and evidence mapping. New E-Worker project-generated commits use `E-Worker AI <246088022+EWorkerAI@users.noreply.github.com>` as the vendor-neutral descriptive author shared across E-Worker projects. `E-Worker Inc <info@eworker.ca>` is the responsible committer and DCO signer. The repository context identifies Windvale.
 

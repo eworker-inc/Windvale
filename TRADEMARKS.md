@@ -1,6 +1,6 @@
 # Windvale name and project identity
 
-The MIT License grants broad permission for Windvale source code and documentation. It does not grant permission to imply that a modified project, service, release, or organization is official, sponsored, endorsed, or operated by [E-Worker Inc](https://eworker.ca).
+The [Windvale Community Source License](LICENSE) grants defined permissions for Windvale source code and documentation subject to its conditions. It does not grant permission to imply that a modified project, service, release, or organization is official, sponsored, endorsed, or operated by [E-Worker Inc](https://eworker.ca).
 
 E-Worker Inc uses the names **Windvale** and **E-Worker**, and associated project logos or visual identity, to identify the official project and its stewardship. This policy does not state that any name or mark is registered in every jurisdiction.
 

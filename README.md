@@ -1,6 +1,6 @@
 # Windvale
 
-Windvale is an MIT-licensed [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
+Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
 AI systems produce the source and prose. Humans define the objectives, direct the work, review and test the results, decide what the project accepts and publishes, and remain responsible for publication. [E-Worker Inc](https://eworker.ca) provides project stewardship.
 
@@ -130,9 +130,13 @@ Start with the [documentation guide](Documents/README.md). It separates current 
 
 ## License, stewardship, and participation
 
-Windvale is open source under the [MIT License](LICENSE). Copyright © 2026 [E-Worker Inc](https://eworker.ca) and Windvale contributors. “Author” and “authored” describe how the project was produced; they do not assert that an AI system is a legal person or copyright holder. See [Decision 0031](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md) for the project-wide attribution policy.
+Windvale-owned work is source-available under the [Windvale Community Source License 1.0](LICENSE). Personal, noncommercial, evaluation, and qualifying small-organization uses are free; large-organization production use and Windvale-as-a-product use require a separate commercial agreement with [E-Worker Inc](https://eworker.ca). Independent applications created with Windvale belong to their creators and may use terms of their choice. Third-party components remain under their [separate licenses](THIRD-PARTY-NOTICES.md).
+
+Copyright © 2026 E-Worker Inc and Windvale contributors. “Author” and “authored” describe how the project was produced; they do not assert that an AI system is a legal person or copyright holder. See [Decision 0031](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md) for the project-wide attribution policy and [Decision 0113](Documents/Decisions/0113-Community-Source-Licensing-And-Commercial-Stewardship.md) for the licensing decision.
 
 - [Contributing](CONTRIBUTING.md)
+- [Contributor License Agreement](CONTRIBUTOR-LICENSE-AGREEMENT.md)
+- [Third-party notices](THIRD-PARTY-NOTICES.md)
 - [Security](SECURITY.md)
 - [Governance](GOVERNANCE.md)
 - [Code of conduct](CODE_OF_CONDUCT.md)
