@@ -1,7 +1,7 @@
 # Decision 0110: Standalone .NET-free WebAssembly artifact demo
 
 - Date: 2026-08-02
-- Status: Implemented with local deterministic-engine and Chromium browser evidence; cross-browser and deployment evidence pending
+- Status: Implemented and deployed with deterministic-engine, Chromium browser, and cross-host repository evidence; cross-browser qualification pending
 - Extends: [Decision 0107](0107-Playground-Disposable-WebAssembly-Worker.md)
 - Target: `wasm32-browser-v1-experimental`
 
@@ -33,7 +33,9 @@ This demo is intentionally not an editable playground, a browser compiler, a gen
 
 `npm run verify:wasm-demo` reconstructs the exact 432 bytes, reproduces the pinned SHA-256, validates the import-free exact export contract under Node.js, and executes the same instance twice with ABI `1`, status `0`, result `42`, and 30 instructions after each reset. A zero-warning Release build and publication retain `wasm-demo/index.html` plus the shared worker in the published `wwwroot`. The focused Seed browser-playground engine case also passes.
 
-A local Chromium-based in-app browser loads the direct HTML entry, reports the same identity and ABI tuple after one button action, and records no warning or error. Its observed asset inventory contains only the demo stylesheet, logo, analytics bootstrap, application module, artifact-data module, shared host, and shared worker; it contains no `_framework`, Blazor, or .NET asset. This is local browser evidence, not cross-browser or public-deployment qualification.
+A local Chromium-based in-app browser loads the direct HTML entry, reports the same identity and ABI tuple after one button action, and records no warning or error. Its observed asset inventory contains only the demo stylesheet, logo, analytics bootstrap, application module, artifact-data module, shared host, and shared worker; it contains no `_framework`, Blazor, or .NET asset. This local step does not by itself establish cross-browser or public-deployment qualification.
+
+Exact implementation commit `e9480bca814318fb6fdcab0c4f3f1db699a01e6f` passes GitHub [Verify run 30767375189](https://github.com/eworker-inc/Windvale/actions/runs/30767375189): Windows and digest-pinned Debian 12 each complete the full repository qualification gate successfully. GitHub [Deploy homepage run 30767375190](https://github.com/eworker-inc/Windvale/actions/runs/30767375190) independently passes `verify:wasm-demo`, publishes the static route, and completes successfully. The public `windvale.ca` route then returns the exact ABI tuple in a Chromium-based browser with no framework asset or browser warning. This establishes deployment and one browser-engine family, not cross-browser qualification.
 
 ## Reconsider when
 
