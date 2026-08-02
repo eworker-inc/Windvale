@@ -1,7 +1,7 @@
 # Decision 0091: First protected Windvale process
 
 - Date: 2026-08-01
-- Status: Accepted and implemented; focused Windows and pinned-QEMU evidence recorded, cross-host qualification pending
+- Status: Qualified as retained composition at exact commit `190174a01299369fb855e27ea676d34062e09c5b`
 - Implements: Step 4 of [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
 - Contract: [Protected process version 1](../../Specifications/Windvale-Protected-Process.md)
 

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel paging version 3 is cross-host qualified through probe 25 at exact commit `33555fd`. Candidate probe 26 retains its six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and fixed 256 KiB kernel executable window while binding the adjacent memory-version-4 process composition. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted under the current bound.
+Kernel paging version 3 is cross-host qualified through probe 26 at exact commit `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`. Probe 26 retains its six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and fixed 256 KiB kernel executable window while binding the adjacent memory-version-4 process composition. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted under the current bound.
 
 [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) owns the qualified version-1 root and probe-20/21 evidence. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its first executable-window expansion. [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) cross-host qualifies that form; [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns version 3.
 
@@ -92,7 +92,7 @@ The host planner reports:
 | `WVOS5002` | The executable address is unaligned or cannot use the two admitted code tables. |
 | `WVOS5003` | The table allocation overlaps the executable window. |
 
-The candidate probe-26 version-3 paging WVO is 1,244 bytes with SHA-256 `1922983d5b6323e6d6a111169be1e1e89beb477e20810f4706d62f58d4feed19`; its 851 code bytes have SHA-256 `7e06755a6b2a8b492cd696ba0d1ada7410437a6e33867cd1a8673b33f3de8fb2`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, and deterministic repetition. Decision 0094 retains the cross-host-qualified probe-25 identities.
+The qualified probe-26 version-3 paging WVO is 1,244 bytes with SHA-256 `1922983d5b6323e6d6a111169be1e1e89beb477e20810f4706d62f58d4feed19`; its 851 code bytes have SHA-256 `7e06755a6b2a8b492cd696ba0d1ada7410437a6e33867cd1a8673b33f3de8fb2`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, and deterministic repetition. Decision 0094 retains the cross-host-qualified probe-25 identities.
 
 Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. Decision 0093 records the cross-host-qualified version-2 probe-24 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records the larger cross-host-qualified probe-25 images and live evidence.
 

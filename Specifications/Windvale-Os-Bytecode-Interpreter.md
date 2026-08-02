@@ -4,6 +4,8 @@
 
 Interpreter profile 3 is the first Windvale OS runtime that obtains its WVB input at execution time instead of carrying the program bytes inside its own WVB or linked RX image. [`Bytecode-Interpreter.wv`](../Operating-System/Runtime/Bytecode-Interpreter.wv) is hosted Windvale source with exactly one declared capability, `file.read_bytes`, and exactly one resource name, `boot:main.wvb`. Its AOT derivative runs at CPL3, receives the resource through the unchanged ABI-16 native service table, validates the bounded WVB profile, and executes it.
 
+Profile 3 is cross-host qualified at exact commit `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`: Windows and digest-pinned Debian 12 each pass all 67 Seed tests and all 25 OS tests, while Windows supplies all four pinned-QEMU scenarios.
+
 [Decision 0095](../Documents/Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) owns profile 3. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) retains the qualified embedded-input profile-2 proof.
 
 The interpreter itself remains an AOT boot component; the separately mapped program is interpreted. The kernel contains neither a language interpreter nor WVB semantic decoding.

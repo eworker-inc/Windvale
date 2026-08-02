@@ -1,6 +1,6 @@
 # Decision 0095: First runtime-supplied WVB boot resource
 
-- Status: Candidate
+- Status: Qualified at exact commit `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`
 - Date: 2026-08-02
 - Owners: Windvale compiler/runtime and operating-system boundaries
 - Contracts: [Interpreter profile 3](../../Specifications/Windvale-Os-Bytecode-Interpreter.md), [protected process version 5](../../Specifications/Windvale-Protected-Process.md), kernel memory version 4, kernel paging version 3, ABI 16/context 7/service table 5, and firmware probe 26
@@ -24,9 +24,9 @@ The smallest coherent next step is not a filesystem, package manager, arbitrary 
 - Expand the client extent from 41 to 42 pages and the fixed arena from 58 to 59 pages. Process `2` owns 32 RX code pages, four RW/NX stack pages, one RW/NX context page, and one RO/NX input page. Its user-page budget is `38`, instruction budget is the measured `4,678`, and call-depth budget remains `3`.
 - Keep the fixed AOT admission policy in front of process creation. The admitted program remains the exact 174-byte WVB with SHA-256 `7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2`. Runtime supply changes transport, not admission or semantics.
 
-## Candidate evidence
+## Qualification evidence
 
-The focused Windows OS suite passes 25 of 25 tests. It covers deterministic interpreter, service-stencil, published service, process, paging, and firmware artifacts; reference execution with alternate and malformed runtime inputs; absence of the admitted WVB from the interpreter/client image; RO/NX resource mapping; zero tail; exact service and resource tables; process/profile identities; resource digest and leaf-range rejection; and all earlier isolation and fault invariants.
+The focused OS suite passes 25 of 25 tests on Windows and digest-pinned Debian 12. It covers deterministic interpreter, service-stencil, published service, process, paging, and firmware artifacts; reference execution with alternate and malformed runtime inputs; absence of the admitted WVB from the interpreter/client image; RO/NX resource mapping; zero tail; exact service and resource tables; process/profile identities; resource digest and leaf-range rejection; and all earlier isolation and fault invariants.
 
 Important candidate artifacts are:
 
@@ -39,7 +39,9 @@ Important candidate artifacts are:
 | Linked normal client image | 128,157 | `5a0acf3db339df5c3308f51a2e7ce182ee884d9b528db2998e9d0dcbf3b30655` |
 | Normal process-machine WVO | 137,665 | `6d1517bbf5f947f55e07cbb582b3bf7050199bd8b31a1425a82a891a68730f14` |
 
-All four pinned Windows QEMU scenarios pass. Normal is 215,552 bytes with SHA-256 `ab6b818beee3ac7419d48ad7ac5d04f06bab0ec67ab3909de64ed1b88c2e1170` and host code `0`; invalid opcode is 215,552 bytes with `e439c3afa5168743076981aa4c0a278384508b65481d8f7ed0dc68959d4f49e8` and code `3`; general protection is 215,552 bytes with `710d34c567f3411cf7728fd211b67e39fcdd175e9a4441960e0f4846d3ef4f52` and code `3`; contained user fault is 216,064 bytes with `55b2bb810c34e2c4ea6f4f68558c09913ff802c4357282d6b24a6b6b3d6e1dcc` and code `0`. Normal and contained-fault paths complete the real CPL3 resource call, interpret result `29`, transfer it to init, and shut down. Windows/Linux qualification is still required before this decision becomes qualified.
+GitHub [Verify run 30736314724](https://github.com/eworker-inc/Windvale/actions/runs/30736314724) passes classification and the complete Windows and digest-pinned Debian 12 verification jobs for exact implementation commit `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`. Each host builds with zero warnings/errors and passes all 67 Seed tests plus all 25 OS tests. Windows Seed elapsed time is 154.646 seconds and Debian is 208.700 seconds.
+
+All four pinned Windows QEMU scenarios pass. Normal is 215,552 bytes with SHA-256 `ab6b818beee3ac7419d48ad7ac5d04f06bab0ec67ab3909de64ed1b88c2e1170` and host code `0`; invalid opcode is 215,552 bytes with `e439c3afa5168743076981aa4c0a278384508b65481d8f7ed0dc68959d4f49e8` and code `3`; general protection is 215,552 bytes with `710d34c567f3411cf7728fd211b67e39fcdd175e9a4441960e0f4846d3ef4f52` and code `3`; contained user fault is 216,064 bytes with `55b2bb810c34e2c4ea6f4f68558c09913ff802c4357282d6b24a6b6b3d6e1dcc` and code `0`. Normal and contained-fault paths complete the real CPL3 resource call, interpret result `29`, transfer it to init, and shut down. No Debian QEMU run is claimed.
 
 ## Consequences
 

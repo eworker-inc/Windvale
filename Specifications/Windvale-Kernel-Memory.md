@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 4 is the probe-26 candidate. It retains deterministic ownership, copied handoff, the two-page kernel stack, the allocate-only page ABI, and 2 MiB alignment while enlarging the arena to 59 pages for the interpreter's separate RO/NX boot-resource page. It uses the `WVKMEM04` identity; earlier experimental bytes are not accepted under the new bounds.
+Kernel memory version 4 is cross-host qualified through probe 26 at exact commit `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`. It retains deterministic ownership, copied handoff, the two-page kernel stack, the allocate-only page ABI, and 2 MiB alignment while enlarging the arena to 59 pages for the interpreter's separate RO/NX boot-resource page. It uses the `WVKMEM04` identity; earlier experimental bytes are not accepted under the new bounds.
 
 [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the qualified version-1 foundation. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its process-driven expansion. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns qualified version 3; [Decision 0095](../Documents/Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) owns version 4.
 

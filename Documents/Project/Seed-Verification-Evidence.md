@@ -1,10 +1,10 @@
 # Windvale Seed verification evidence
 
-- Evidence date: 2026-08-01
+- Evidence date: 2026-08-02
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified commit: `860c69c00995de6ed048cb65f8bfb158287f19a2`
-- Latest pinned Windvale OS qualified commit: `860c69c00995de6ed048cb65f8bfb158287f19a2`
+- Latest cross-host Seed qualified commit: `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`
+- Latest pinned Windvale OS qualified commit: `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`
 
 ## Requirement evidence
 
@@ -935,6 +935,16 @@ GitHub [Verify run 30733685025](https://github.com/eworker-inc/Windvale/actions/
 Pinned Windows QEMU 11.0/Q35/TCG passes all four exact probe-25 scenarios. The 214,528-byte normal image SHA-256 `99686e2b2484de156a01bbec0ece68e6a15af7229a477d9245ee4f3068ed4f5b` exits 0; the same-sized invalid-opcode image SHA-256 `da14fd39c4ebf19471bb7205aa1cfce5b40a52c1b64979d5ff62eed143d64e90` and general-protection image SHA-256 `02e6a297c6495a0c35b4b799403a0cedc8a1538c3a62c52836b2fe6fa6a225c9` exit 3; and the 215,040-byte contained-interpreter-fault image SHA-256 `ede1d1d0ae8638086c81564e3150829137f4f3aceead9e7bfddeedc9445ae2f6` exits 0. The cross-host workflow does not claim a Debian QEMU run.
 
 This evidence qualifies section-derived execution of one embedded admitted module. It does not qualify runtime-supplied WVB transport, arbitrary modules, general semantic verification or interpretation, executable publication, JIT, scheduling, process lifecycle, Hyper-V, physical hardware, or .NET retirement.
+
+## Probe-26 runtime-supplied WVB qualification
+
+Exact commit `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5` removes the admitted program from the interpreter WVB and linked RX image. The hosted Windvale interpreter declares only `file.read_bytes`, requests exact `boot:main.wvb`, and receives a borrowed descriptor through an exact 199-byte WVA-owned ABI-16 service leaf. Protected-process version 5 maps the admitted 174-byte WVB in its own RO/NX page, records runtime profile 3, and independently binds its digest. Kernel memory version 4 expands the aligned boot arena to 59 pages while paging version 3 retains the W^X kernel contract.
+
+GitHub [Verify run 30736314724](https://github.com/eworker-inc/Windvale/actions/runs/30736314724) passes classification and the complete non-Fast Windows and digest-pinned Debian 12 jobs. Each host builds the complete solution with zero warnings/errors and passes all 67 Seed tests plus all 25 OS tests. Windows Seed elapsed time is 154.646 seconds and Debian is 208.700 seconds.
+
+Pinned Windows QEMU 11.0/Q35/TCG passes all four exact probe-26 scenarios. The 215,552-byte normal image SHA-256 `ab6b818beee3ac7419d48ad7ac5d04f06bab0ec67ab3909de64ed1b88c2e1170` exits 0; the same-sized invalid-opcode image SHA-256 `e439c3afa5168743076981aa4c0a278384508b65481d8f7ed0dc68959d4f49e8` and general-protection image SHA-256 `710d34c567f3411cf7728fd211b67e39fcdd175e9a4441960e0f4846d3ef4f52` exit 3; and the 216,064-byte contained-user-fault image SHA-256 `55b2bb810c34e2c4ea6f4f68558c09913ff802c4357282d6b24a6b6b3d6e1dcc` exits 0 after the interpreter resource call and independent init completion. The workflow does not claim a Debian QEMU run.
+
+This evidence qualifies one fixed runtime-supplied immutable WVB and its Windvale OS adapter, not arbitrary loading, a resource namespace, init/package ownership or transfer, general semantic verification or interpretation, executable publication, JIT, scheduling, process lifecycle, Hyper-V, physical hardware, or .NET retirement.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 

@@ -6,7 +6,7 @@ Protected-process contract version 5 defines Windvale OS's first runtime-supplie
 
 [Decision 0095](../Documents/Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) owns version 5. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) retains the cross-host-qualified version-4 proof at exact commit `33555fdc4305f457638431ddbc40cb79fafa51c3`.
 
-Version 5 is a candidate pending cross-host qualification. Focused Windows evidence passes all 25 OS tests, and all four pinned-QEMU scenarios pass; normal and contained-fault execution complete the real CPL3 resource call. This is an internal experiment, not a stable public syscall ABI, general process manager, arbitrary WVB loader, complete verifier, or JIT.
+Version 5 is cross-host qualified at exact commit `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`. Windows and digest-pinned Debian 12 each pass all 67 Seed tests and all 25 OS tests. All four pinned Windows QEMU scenarios pass; normal and contained-fault execution complete the real CPL3 resource call. This is an internal experiment, not a stable public syscall ABI, general process manager, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
@@ -152,7 +152,7 @@ The user-fault image interprets and sends `29`, then executes privileged `CLI` i
 | Fault process-machine WVO | 137,697 | `385fc83b83e7be331e8b8479abc0d75e23e6bb30554bd9983766a547a996a09c` |
 | Fault process-machine code | 5,914 | `b0cf19a876badadc6b1023d3243f0e4e5b43f84936a554e21f9427b7278e95b6` |
 
-All 25 focused OS tests pass on Windows for this candidate. All four pinned-QEMU probe-26 scenarios pass and prove the actual CPL3 service call, preserved kernel-fault terminals, and contained client fault. Cross-host qualification remains required before this paragraph may claim qualification.
+All 67 Seed tests and all 25 focused OS tests pass on Windows and pinned Debian 12 at exact commit `6bb34bb4c6dc23e89fbdcd8592b31f0585f91ec5`. All four pinned-QEMU probe-26 scenarios pass on Windows and prove the actual CPL3 service call, preserved kernel-fault terminals, and contained client fault. The workflow does not claim Debian QEMU execution.
 
 ## Deliberate limits
 

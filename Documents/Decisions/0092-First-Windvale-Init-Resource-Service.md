@@ -1,7 +1,7 @@
 # Decision 0092: First Windvale init/resource service
 
 - Date: 2026-08-01
-- Status: Accepted and implemented; focused Windows and pinned-QEMU evidence recorded, cross-host OS qualification pending
+- Status: Qualified as retained composition at exact commit `190174a01299369fb855e27ea676d34062e09c5b`
 - Implements: Step 5 of [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
 - Contract: [Protected process version 2](../../Specifications/Windvale-Protected-Process.md)
 
@@ -40,6 +40,8 @@ Pinned QEMU `pc-q35-11.0,accel=tcg` passes all scenarios:
 The contained-fault transcript proves that the client may fault after send while the independent init service still wakes, executes Windvale code, exits, and reaches clean shutdown.
 
 GitHub run `30730151722` verifies exact commit `22e350b8965bbe70452261dabfc411d28cf7a1d5`: Windows and Linux each pass all 67 Seed qualification tests, and both jobs compile the OS projects successfully. That workflow does not execute the 25-test OS binary, so it is useful cross-host build evidence but does not promote probe 23 to cross-host OS qualification. A Linux OS-test run from the same exact source state remains required.
+
+Later probe-24 exact commit `190174a01299369fb855e27ea676d34062e09c5b` executes all 25 retained OS tests on Windows and pinned Debian 12 and therefore qualifies this retained process/init-service composition without rewriting probe-23's historical evidence.
 
 ## Consequences
 
