@@ -134,7 +134,8 @@ internal static class Kernelˉmemoryˉx64
         output.Emit(0x49, 0x8B, 0x42, 0x08, 0x48, 0x3D);
         output.Emitˉu32((uint)Kernelˉmemoryˉcontract.MINIMUM_PHYSICAL_ADDRESS);
         output.Jumpˉif(CONDITION_BELOW, SCAN_NEXT_LABEL);
-        output.Emit(0x49, 0x83, 0x7A, 0x18, (byte)Kernelˉmemoryˉcontract.ARENA_PAGES);
+        output.Emit(0x49, 0x81, 0x7A, 0x18);
+        output.Emitˉu32((uint)Kernelˉmemoryˉcontract.ARENA_PAGES);
         output.Jumpˉif(CONDITION_BELOW, SCAN_NEXT_LABEL);
 
         // The process roots each own one 2 MiB page-table region. Align the complete
@@ -274,7 +275,8 @@ internal static class Kernelˉmemoryˉx64
         output.Jumpˉif(CONDITION_NOT_EQUAL, ALLOCATOR_FAILURE_LABEL);
         output.Emit(0x48, 0x39, 0x49, 0x10);
         output.Jumpˉif(CONDITION_NOT_EQUAL, ALLOCATOR_FAILURE_LABEL);
-        output.Emit(0x48, 0x83, 0x79, 0x18, (byte)Kernelˉmemoryˉcontract.ARENA_PAGES);
+        output.Emit(0x48, 0x81, 0x79, 0x18);
+        output.Emitˉu32((uint)Kernelˉmemoryˉcontract.ARENA_PAGES);
         output.Jumpˉif(CONDITION_NOT_EQUAL, ALLOCATOR_FAILURE_LABEL);
         output.Emit(0x85, 0xD2);
         output.Jumpˉif(CONDITION_EQUAL, ALLOCATOR_FAILURE_LABEL);
@@ -282,10 +284,12 @@ internal static class Kernelˉmemoryˉx64
         output.Emit(0x4C, 0x3B, 0x41, 0x28);
         output.Jumpˉif(CONDITION_ABOVE, ALLOCATOR_FAILURE_LABEL);
         output.Emit(0x4C, 0x8B, 0x49, 0x20, 0x4D, 0x89, 0xCA, 0x4C, 0x03, 0x51, 0x28);
-        output.Emit(0x49, 0x83, 0xFA, (byte)Kernelˉmemoryˉcontract.ARENA_PAGES);
+        output.Emit(0x49, 0x81, 0xFA);
+        output.Emitˉu32((uint)Kernelˉmemoryˉcontract.ARENA_PAGES);
         output.Jumpˉif(CONDITION_NOT_EQUAL, ALLOCATOR_FAILURE_LABEL);
         output.Emit(0x4C, 0x89, 0xC8, 0x4C, 0x01, 0xC0);
-        output.Emit(0x48, 0x83, 0xF8, (byte)Kernelˉmemoryˉcontract.ARENA_PAGES);
+        output.Emit(0x48, 0x3D);
+        output.Emitˉu32((uint)Kernelˉmemoryˉcontract.ARENA_PAGES);
         output.Jumpˉif(CONDITION_ABOVE, ALLOCATOR_FAILURE_LABEL);
         output.Emit(0x49, 0xC1, 0xE1, 0x0C, 0x49, 0x01, 0xC9);
         output.Emit(0x4C, 0x01, 0x41, 0x20, 0x4C, 0x29, 0x41, 0x28);
@@ -314,7 +318,8 @@ internal static class Kernelˉmemoryˉx64
         output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
         output.Emit(0x4D, 0x39, 0x5B, 0x10);
         output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
-        output.Emit(0x49, 0x83, 0x7B, 0x18, (byte)Kernelˉmemoryˉcontract.ARENA_PAGES);
+        output.Emit(0x49, 0x81, 0x7B, 0x18);
+        output.Emitˉu32((uint)Kernelˉmemoryˉcontract.ARENA_PAGES);
         output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
         output.Emit(0x45, 0x85, 0xC0);
         output.Jumpˉif(CONDITION_EQUAL, RELEASER_FAILURE_LABEL);
@@ -323,7 +328,8 @@ internal static class Kernelˉmemoryˉx64
         output.Emit(0x4C, 0x39, 0xC8);
         output.Jumpˉif(CONDITION_ABOVE, RELEASER_FAILURE_LABEL);
         output.Emit(0x4D, 0x8B, 0x53, 0x28, 0x4D, 0x01, 0xCA);
-        output.Emit(0x49, 0x83, 0xFA, (byte)Kernelˉmemoryˉcontract.ARENA_PAGES);
+        output.Emit(0x49, 0x81, 0xFA);
+        output.Emitˉu32((uint)Kernelˉmemoryˉcontract.ARENA_PAGES);
         output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
         output.Emit(0x49, 0x29, 0xC1, 0x49, 0x83, 0xF9,
             (byte)Kernelˉmemoryˉcontract.FIRST_FREE_PAGE);
@@ -332,7 +338,8 @@ internal static class Kernelˉmemoryˉx64
         output.Emit(0x4C, 0x39, 0xD2);
         output.Jumpˉif(CONDITION_NOT_EQUAL, RELEASER_FAILURE_LABEL);
         output.Emit(0x4D, 0x8B, 0x53, 0x28, 0x49, 0x01, 0xC2);
-        output.Emit(0x49, 0x83, 0xFA, (byte)Kernelˉmemoryˉcontract.INITIAL_FREE_PAGES);
+        output.Emit(0x49, 0x81, 0xFA);
+        output.Emitˉu32((uint)Kernelˉmemoryˉcontract.INITIAL_FREE_PAGES);
         output.Jumpˉif(CONDITION_ABOVE, RELEASER_FAILURE_LABEL);
         output.Emit(0x4D, 0x89, 0x4B, 0x20, 0x4D, 0x89, 0x53, 0x28);
 

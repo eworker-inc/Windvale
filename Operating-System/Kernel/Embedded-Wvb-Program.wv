@@ -1,5 +1,0 @@
-module Embeddedˉwvbˉprogram profile portable;
-
-export fn Main() -> i32 {
-    return 29;
-}

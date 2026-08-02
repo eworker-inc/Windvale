@@ -5,8 +5,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉmemoryˉcontract
 {
-    public const int FORMAT_VERSION = 7;
-    public const string TARGET_NAME = "x86-64-kernel-memory-v7";
+    public const int FORMAT_VERSION = 8;
+    public const string TARGET_NAME = "x86-64-kernel-memory-v8";
     public const string MEMORY_ENTER_SYMBOL = "Windvale_kernel_memory_enter";
     public const string ALLOCATE_PAGES_SYMBOL = "Windvale_kernel_allocate_pages";
     public const string RELEASE_TAIL_PAGES_SYMBOL = "Windvale_kernel_release_tail_pages";
@@ -15,7 +15,7 @@ public static class Kernelˉmemoryˉcontract
     public const ulong ARENA_ALIGNMENT_BYTES = 2 * 1024 * 1024;
     public const ulong MINIMUM_PHYSICAL_ADDRESS = 1 * 1024 * 1024;
     public const ulong MAXIMUM_PHYSICAL_ADDRESS_EXCLUSIVE = 1UL << 32;
-    public const ulong ARENA_PAGES = 63;
+    public const ulong ARENA_PAGES = 137;
     public const ulong ARENA_BYTES = ARENA_PAGES * PAGE_BYTES;
     public const ulong STATE_PAGES = 1;
     public const ulong STACK_PAGES = 4;
@@ -23,8 +23,8 @@ public static class Kernelˉmemoryˉcontract
     public const ulong INITIAL_FREE_PAGES = ARENA_PAGES - FIRST_FREE_PAGE;
     public const uint STATE_HEADER_BYTES = 64;
     public const uint HANDOFF_COPY_OFFSET = STATE_HEADER_BYTES;
-    public const ulong STATE_MAGIC = 0x3730_4D45_4D4B_5657;
-    public const uint STATE_VERSION = 7;
+    public const ulong STATE_MAGIC = 0x3830_4D45_4D4B_5657;
+    public const uint STATE_VERSION = 8;
 }
 
 public sealed record Kernelˉmemoryˉdiagnostic(string Code, string Message);

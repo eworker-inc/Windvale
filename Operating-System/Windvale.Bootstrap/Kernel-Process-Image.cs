@@ -105,13 +105,23 @@ public static class Kernelˉprocessˉimage
         var Interpreterˉmodule = Moduleˉcodec.Readˉandˉverify(Interpreterˉcompilation.Moduleˉbytes.AsSpan());
         Verifyˉinterpreter(Interpreterˉmodule);
         var Interpreterˉnative = X64ˉnativeˉbackend.Compile(Interpreterˉmodule);
+        var Executeˉmain = Interpreterˉnative.Module.Functions.Single(Function =>
+            Function.Name == "Executeˉmain");
+        var Executeˉmainˉframeˉslots = Executeˉmain.Allˉlocalˉtypes.Length +
+            Executeˉmain.Valueˉtypes.Length + 1;
+        if (Executeˉmainˉframeˉslots != Kernelˉprocessˉcontract.CLIENT_INTERPRETER_FRAME_SLOTS)
+        {
+            throw new InvalidOperationException(
+                $"The bytecode interpreter main frame uses {Executeˉmainˉframeˉslots} slots; " +
+                $"expected {Kernelˉprocessˉcontract.CLIENT_INTERPRETER_FRAME_SLOTS}.");
+        }
         var Interpreterˉobject = Kernelˉwvbˉadmission.Renameˉmainˉexport(
             Nativeˉobjectˉsink.Writeˉwvo(Interpreterˉnative.Fragment),
             Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL);
         var Interpreterˉdigest = SHA256.HashData(Interpreterˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Interpreterˉidentity = Convert.ToHexString(Interpreterˉdigest.AsSpan());
         if (!Interpreterˉidentity.Equals(
-                "7FBB25FE08136C86C063C08395451F8DB1219BD17E0ADC0748B5FA2D9A3F8FEE",
+                "84C89011535F1D08FEBD6F41C6AF1E2A0B933F6B20F41FBDD8A7A267F568D8A1",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
@@ -168,7 +178,7 @@ public static class Kernelˉprocessˉimage
 
         var Admittedˉprogramˉdigest = SHA256.HashData(admission.Embeddedˉmoduleˉbytes.AsSpan()).ToImmutableArray();
         if (!Convert.ToHexString(Admittedˉprogramˉdigest.AsSpan()).Equals(
-                "7F08EFBB20C6CC69C100F07407F759625B38C02A3F05BB4E8DABCC7BDD10C4E2",
+                "6F3A272D37DD8893995C7F85C236414ED2864BF59DE2F3775C08AFD426013F8C",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException("The process image is not bound to the admitted WVB identity.");
@@ -244,9 +254,9 @@ public static class Kernelˉprocessˉimage
                 Profile: Moduleˉprofile.Hosted,
                 Capabilities.Length: 1,
                 Data.Length: 2,
-                Functions.Length: 8,
+                Functions.Length: 13,
                 Exports.Length: 1,
-                Types.Length: 0,
+                Types.Length: 1,
             } ||
             module.Module.Capabilities[0].Name != Capabilityˉcatalog.FILE_READ_BYTES ||
             module.Module.Data.Count(Data => Data is Textˉdataˉdeclaration

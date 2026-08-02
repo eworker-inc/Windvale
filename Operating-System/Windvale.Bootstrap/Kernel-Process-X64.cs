@@ -232,7 +232,8 @@ public static class Kernelˉprocessˉx64
         Emitˉinitializeˉuserˉcontext(
             output, Kernelˉprocessˉcontract.INIT_DATA_PAGE,
             Kernelˉprocessˉcontract.INIT_INSTRUCTION_BUDGET,
-            Kernelˉprocessˉcontract.INIT_CALL_DEPTH_BUDGET);
+            Kernelˉprocessˉcontract.INIT_CALL_DEPTH_BUDGET,
+            false);
 
         // Build a distinct send-only interpreter root. Its target resource PTE
         // and ABI-17 resource tables remain zero until the init grant syscall.
@@ -260,7 +261,8 @@ public static class Kernelˉprocessˉx64
         Emitˉinitializeˉuserˉcontext(
             output, Kernelˉprocessˉcontract.CLIENT_DATA_PAGE,
             Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET,
-            Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET);
+            Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET,
+            true);
         Emitˉinitializeˉresourceˉrecord(output, image);
 
         Emitˉinstallˉdescriptorˉstate(output, relocations);
@@ -340,6 +342,7 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.RESULT_OFFSET,
             Kernelˉprocessˉcontract.EXPECTED_RESULT);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉvalidateˉclientˉrecordˉarena(output);
         Emitˉloadˉgsˉchannelˉr10(output);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 1);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -462,6 +465,7 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.RESULT_OFFSET,
             Kernelˉprocessˉcontract.EXPECTED_RESULT);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉvalidateˉclientˉrecordˉarena(output);
         Emitˉloadˉgsˉchannelˉr10(output);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 1);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -924,15 +928,36 @@ public static class Kernelˉprocessˉx64
         Emitˉinitializeˉuserˉcontext(
             output, Kernelˉprocessˉcontract.CLIENT_DATA_PAGE,
             Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET,
-            Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET);
+            Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET,
+            true);
         Emitˉvalidateˉexhaustedˉallocator(output);
+    }
+
+    private static void Emitˉvalidateˉclientˉrecordˉarena(X64ˉcodeˉbuilder output)
+    {
+        output.Emit(0x65, 0x48, 0x8B, 0x04, 0x25);
+        output.Emitˉu32(Kernelˉprocessˉcontract.USER_DATA_ADDRESS_OFFSET);
+        output.Emit(0x48, 0x8B, 0x48,
+            (byte)Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET);
+        output.Emit(0x48, 0x8D, 0x90);
+        output.Emitˉu32(Kernelˉprocessˉcontract.CLIENT_RECORD_ARENA_OFFSET);
+        output.Emit(0x48, 0x39, 0xD1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        output.Emit(0x81, 0x78,
+            (byte)Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET);
+        output.Emitˉu32(Kernelˉprocessˉcontract.CLIENT_RECORD_ARENA_BYTES);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        output.Emit(0x81, 0x78,
+            (byte)Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET);
+        output.Emitˉu32(Kernelˉprocessˉcontract.CLIENT_RECORD_ARENA_USED_BYTES);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
     }
 
     private static void Emitˉvalidateˉexhaustedˉallocator(X64ˉcodeˉbuilder output)
     {
         Emitˉvalidateˉmemoryˉstate(output);
-        output.Emit(0x49, 0x83, 0x7C, 0x24, 0x20,
-            checked((byte)Kernelˉmemoryˉcontract.ARENA_PAGES));
+        output.Emit(0x49, 0x81, 0x7C, 0x24, 0x20);
+        output.Emitˉu32(checked((uint)Kernelˉmemoryˉcontract.ARENA_PAGES));
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x83, 0x7C, 0x24, 0x28, 0x00);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -1134,7 +1159,8 @@ public static class Kernelˉprocessˉx64
         X64ˉcodeˉbuilder output,
         ulong dataˉpage,
         uint instructionˉbudget,
-        uint callˉdepthˉbudget)
+        uint callˉdepthˉbudget,
+        bool includeˉrecordˉarena)
     {
         output.Emit(0x49, 0x8D, 0xBE);
         output.Emitˉu32(checked((uint)(dataˉpage * Kernelˉpagingˉcontract.PAGE_BYTES)));
@@ -1145,6 +1171,16 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(instructionˉbudget);
         output.Emit(0x48, 0xC7, 0x47, 0x10);
         output.Emitˉu32(callˉdepthˉbudget);
+        if (includeˉrecordˉarena)
+        {
+            output.Emit(0x48, 0x8D, 0x87);
+            output.Emitˉu32(Kernelˉprocessˉcontract.CLIENT_RECORD_ARENA_OFFSET);
+            output.Emit(0x48, 0x89, 0x47,
+                (byte)Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET);
+            output.Emit(0xC7, 0x47,
+                (byte)Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET);
+            output.Emitˉu32(Kernelˉprocessˉcontract.CLIENT_RECORD_ARENA_BYTES);
+        }
     }
 
     private static void Emitˉinstallˉdescriptorˉstate(

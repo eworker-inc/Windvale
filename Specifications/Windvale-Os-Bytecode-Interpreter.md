@@ -2,72 +2,82 @@
 
 ## Status and purpose
 
-Interpreter runtime profile 4 now has a cross-host-qualified Probe 29 revision that consumes an atomic typed pair: the admitted WVB and its execution budget. The profile number and ABI 16/context 7/service-table 5 remain unchanged, but the interpreter WVB and accepted runtime-input contract are no longer byte-identical to Probe 28.
+Interpreter runtime profile 5 is the implemented Probe-31 candidate owned by [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md). It executes the exact canonical WVB compiled from [`Examples/Seed/Sum-Data.wv`](../Examples/Seed/Sum-Data.wv) inside protected process `2` and returns `29` after data access, a loop, branches, locals, and internal calls.
 
-[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns the qualified extension. Exact implementation commit `3fd9ef7535d7536ed084144e4f697cda548bf35c` passes Windows and Debian qualification in GitHub [Verify run 30745623111](https://github.com/eworker-inc/Windvale/actions/runs/30745623111).
+Cross-host qualification is pending. Profile 4 and its four-opcode Probe-29 contract remain qualified history under [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md).
 
-The interpreter itself is an AOT boot component running at CPL3. The separately mapped program is interpreted; the kernel contains neither source-language interpretation nor WVB semantic decoding.
+The interpreter is hosted Windvale compiled AOT and run at CPL3. The separately mapped program is interpreted; neither the complete WVB nor its AOT derivative is linked into the client executable. The kernel contains no source-language interpreter and no WVB semantic decoder.
 
 ## Typed runtime inputs
 
 The interpreter declares only `file.read_bytes` and performs exactly these lookups:
 
-1. `boot:main.wvb` — resource `1`, kind `wvb-module`, exact admitted WVB;
-2. `boot:main.budget` — resource `2`, kind `u32-execution-budget`, exactly four little-endian bytes.
+1. `boot:main.wvb` — resource `1`, kind `wvb-module`, exact 493-byte admitted WVB;
+2. `boot:main.budget` — resource `2`, kind `u32-execution-budget`, exactly four little-endian bytes containing `203`.
 
-Process `2` starts with context offsets 24 and 96 zero and both target PTEs absent. Windvale init selects ordered set token `131073`; one checked syscall publishes:
+Process `2` starts with both resource PTEs and context pointers absent. Windvale init selects ordered set token `131073`; one checked syscall publishes two distinct user-readable RO/NX aliases, service-table version 5 with only `file.read_bytes`, the exact two-entry `WVBR002` directory, and both context pointers as one atomic transition.
 
-- two distinct user-readable RO/NX aliases of init-owned pages;
-- native service-table version 5 with only `file.read_bytes` nonzero;
-- one 80-byte `WVBR002` directory with a 16-byte header and two ordered 32-byte typed entries; and
-- both context pointers as part of the same atomic transition.
+The retained 347-byte WVA leaf accepts only those two names. It validates directory magic, version, size, count, identifier, kind, pointer, exact length, flags, and reserved bytes before returning an ABI-17 borrowed-bytes descriptor. Stage 0 independently reconstructs the leaf and requires byte equality with the WVA stencil.
 
-The exact 347-byte WVA leaf matches only the two names. It validates directory magic/version/size/count, entry identifier/kind, pointer, exact length, flags, and zero reserved bytes before returning an ABI-16 borrowed-bytes descriptor. Wrong names fail with file-not-found detail `6`; a missing or malformed directory fails with unavailable detail `8`.
+## Admitted module profile
 
-Stage 0 independently reconstructs the leaf with its x86-64 builder and requires byte equality with the checked-in WVA stencil. WVA owns the final service bytes; Stage 0 remains the explicit publication adapter.
+The sole accepted program has this exact semantic shape:
 
-## Module admission
+| Property | Required value |
+| --- | --- |
+| Module | `Sumˉdata`, portable profile |
+| WVB | version 1.6, seven ordered canonical sections, 493 exact bytes |
+| Capabilities/types | none |
+| Data | immutable `Values = [3, 5, 8, 13]` |
+| Functions | `Add(i32, i32) -> i32` and `Main() -> i32` |
+| Export | exactly `Main` |
+| Result | `29` |
+| Guest instructions | exactly `203` |
 
-The WVB resource retains the section-derived profile:
+Profile 5 validates the envelope, section order/lengths, portable module record, empty capability/type sections, data declaration, both function records and code envelopes, export, operand widths, local/data/function indices, and allowed branch targets before execution.
 
-- total length from 12 through 4,096 bytes, magic `WVB1`, version `1.6`, and seven sections;
-- seven ordered section kinds, zero flags/reserved fields, checked payload ranges, and exact consumption;
-- portable profile, a nonempty module name no longer than 255 bytes, and empty capability/data/type sections;
-- exactly one exported `Main() -> i32`, one `i32` local, maximum stack depth one, and code covering the complete code payload;
-- opcode-specific operand bounds, local index `0`, initialization, and one final return at the code-envelope end.
+The accepted opcode set is:
 
-The only accepted opcodes are `i32.const`, `local.store 0`, `local.load 0`, and `return`.
+- `i32.const`, `local.load`, and `local.store`;
+- `data.length` and `data.load.i32`;
+- `i32.add` and `i32.less`;
+- `jump` and `branch.false`;
+- `call` and `return`.
 
-## Execution-budget contract
+`Executeˉadd` and `Executeˉmain` are separate bounded Windvale helpers. Calls are limited to the exact `Main -> Add` shape; recursion and arbitrary dynamic function dispatch are not admitted.
 
-The budget resource must be exactly four bytes, decode to a nonzero unsigned value no greater than `64`, and have the exact typed directory entry. The interpreter charges one unit immediately before each WVB opcode:
+## Budget and execution contract
 
-- canonical value `4` executes all four opcodes and returns `29`;
-- value `3` exhausts before `return` and returns interpreter status `-34`;
-- zero or `65` is rejected as invalid budget with status `-17`;
-- a three-byte resource is rejected with status `-16`; and
-- a missing budget name remains a contained runtime failure (`WVR3022` in the reference harness).
+The guest budget must be exactly four bytes, decode to a nonzero unsigned value no greater than `256`, and have the exact typed directory entry. One unit is charged immediately before every guest opcode:
 
-The complete AOT interpreter path consumes the exact process instruction budget `4,822` with maximum dynamic call depth `3`. This host/native counter is separate from the four-opcode guest budget.
+- canonical value `203` completes and returns `29`;
+- value `202` exhausts before completion and returns interpreter status `-34`;
+- zero or `257` is invalid and returns status `-17`;
+- a three-byte resource returns status `-16`; and
+- a missing budget name remains a contained runtime capability failure.
+
+The complete AOT interpreter path consumes exactly 93,181 native instructions with maximum dynamic call depth 4. `Executeˉmain` uses 1,883 generated frame slots, below ABI 17's existing 2,048-slot ceiling. Guest budget, native instruction budget, native call depth, and generated frame size are separate contracts.
 
 ## Process and artifact bounds
 
-The client has 33 RX pages, four RW/NX stack pages, and one RW/NX data page. The two aliases occupy following virtual pages 42 and 43 but consume no client-owned physical placeholder pages. User-page count moves atomically from `38` to `40`.
+Each client generation owns 98 RX code pages, 13 RW/NX stack pages, and one RW/NX context/data page. Its 116-page physical extent also contains four private table pages. Two following virtual pages become resource aliases without client-owned placeholder pages. User-page count moves atomically from 112 to 114.
+
+The context's record-arena pointer names 256 bytes at data-page offset `0x200`; length is `256` and used begins at zero. This is an execution-scoped monotonic arena inside the existing RW/NX data page, not a general allocator. The canonical execution creates five three-field immutable result records and must finish with exactly 240 bytes used. The process machine rejects any other pointer, capacity, or final use. Init's record-arena fields remain zero.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Interpreter WVB | 12,851 | `7fbb25fe08136c86c063c08395451f8db1219bd17e0adc0748b5fa2d9a3f8fee` |
-| Interpreter WVO | 134,166 | `3de222684b7fd38a9ace76a58c5ddaaf715f34e847e81af802cf1a3289428a4e` |
-| Raw WVA leaf | 347 | `b43bc2457fd5b5622095bad6d59ad3cd2aa045bde1cc79576afbb419bac02fd7` |
-| WVA stencil WVO | 462 | `fde44aad9549731d53c5ccf3a57733b3619df94369b61ef27a693e1059784bc9` |
-| Published service WVO | 462 | `ecb940abb9de8086d50ae418853021cf1f7566a9415a5a3a3b4e5cc45ed5e78c` |
-| Linked normal image | 134,077 | `4cb7edd21a44183fbddc9105834ecc6a69e576ac3bf4b0fcdf1ee98f111c55b3` |
-| Linked fault image | 134,077 | `f70fc9b66ea493863439fe4f4ad5510b1e666fb1466cfce25e0088b8af883ef8` |
+| Canonical program WVB | 493 | `6f3a272d37dd8893995c7f85c236414ed2864bf59de2f3775c08afd426013f8c` |
+| Interpreter WVB | 38,567 | `84c89011535f1d08febd6f41c6af1e2a0b933f6b20f41fbdd8a7a267f568d8a1` |
+| Interpreter WVO | 398,000 | `9e6df332ded8ab1483811493ae2997c27a02a76452a3d0151cc17064b4f1dfcc` |
+| WVA lookup stencil WVO | 462 | `fde44aad9549731d53c5ccf3a57733b3619df94369b61ef27a693e1059784bc9` |
+| Published lookup WVO | 462 | `ecb940abb9de8086d50ae418853021cf1f7566a9415a5a3a3b4e5cc45ed5e78c` |
+| Linked normal client | 397,741 | `f01dca52f965afc679bef80988a7fc62c1f413d26127c47e437dc81a5cc05f6f` |
+| Linked fault client | 397,741 | `9ea4bf727a73636a01b7f47584752475a27d8a6442cf669156645c0b3f2af0d5` |
 
-Focused tests cover exact budget success, exhaustion, invalid bounds, malformed length, missing name, shifted module sections, malformed WVB, atomic grant, distinct aliases, typed-entry mutations, and equivalent exit/fault cleanup. Windows and digest-pinned Debian 12 pass all 67 Seed tests and all 25 OS tests; all four pinned-QEMU Probe 29 scenarios pass on Windows.
+Focused tests cover exact success and exhaustion, budget bounds and shape, missing resources, changed data producing `28`, malformed envelopes/sections/opcodes, atomic grant, distinct aliases, typed-entry mutations, deterministic output, record-arena initialization/preservation, and equivalent two-generation exit/fault cleanup. All four local Windows pinned-QEMU scenarios pass; complete committed Windows/Debian qualification remains pending.
 
 ## Trust boundary and deliberate limits
 
-The AOT admission policy checks the canonical WVB before process construction. Grant revalidates both source pages and digests; the WVA leaf validates the typed private directory; the interpreter validates its semantic subset and supplied budget; terminal cleanup revalidates and clears both live aliases and the complete publication.
+AOT admission checks exact identity before process construction. Grant revalidates source pages and digests; WVA validates the private typed directory; Windvale profile 5 validates and interprets its semantic subset; terminal cleanup revalidates and clears both aliases and the complete publication.
 
-Profile 4 still is not a general resource namespace, filesystem, complete WVB verifier, multi-function interpreter, JIT, cache, dynamic runtime selector, or stable runtime ABI. Both names, kinds, owner, borrower, order, and lifetime are fixed. Generalization waits for a third resource, independent lifetime, package lookup, or executable-publication requirement.
+Profile 5 is not a general resource namespace, filesystem, package loader, complete WVB verifier, general multi-function interpreter, JIT, cache, dynamic runtime selector, or stable runtime ABI. It accepts one measured module shape. Generalization waits for another real program or capability requirement.

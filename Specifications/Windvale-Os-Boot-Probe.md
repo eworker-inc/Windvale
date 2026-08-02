@@ -2,58 +2,58 @@
 
 ## Status and purpose
 
-Firmware probe 30 is the qualified process-reclamation proof. It composes ABI 17/context 7, WVA seam 8, admission bridge 2, retained bridge 10, memory 7, paging 3, protected processes 9, interpreter profile 4, `WVRES004`, and `WVBR002`.
+Firmware Probe 31 is the implemented same-WVB candidate. It composes ABI 17/context 7, WVA seam 8, admission 3/bridge 2, retained bridge 10, memory 8, paging 4, protected processes 10, interpreter profile 5, `WVRES004`, and `WVBR002`.
 
-[Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) owns Probe 30. Exact implementation commit `4a077ab9ebaf2108201927eef3095e87ef2ed907` passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12; focused Windows evidence also passes all four pinned-QEMU scenarios. [Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) retains the qualified Probe-29 history.
+[Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) owns Probe 31. The focused Windows suite passes all 25 OS tests, and all four local Windows pinned-QEMU scenarios pass; complete committed Windows/Debian qualification remains pending. [Decision 0100](../Documents/Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) retains the fully qualified Probe-30 baseline.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 
 ## Artifact construction
 
-The builder compiles system-profile `Hello-World.wv`; portable admission, process-policy, init, embedded-program, and retained-native modules; hosted `Bytecode-Interpreter.wv`; and the kernel, init, typed-resource, and client WVA shims. Portable modules pass through canonical WVB, mandatory verification, ABI-17 native selection/fragment verification, and WVO. Stage 0 rewrites only verified link-facing symbols.
+The builder compiles system-profile `Hello-World.wv`; portable admission, process-policy, init, canonical `Examples/Seed/Sum-Data.wv`, and retained-native modules; hosted `Bytecode-Interpreter.wv`; and the kernel/init/resource/client WVA shims. Portable modules pass through canonical WVB, mandatory verification, ABI-17 native selection/fragment verification, and WVO. Stage 0 rewrites only verified link-facing symbols.
 
-Stage 0 also creates the loader, memory, exception, paging, admission bridge, process machine, retained bridge, and x64 byte adapter. It independently reconstructs the exact 347-byte typed lookup leaf and requires byte equality with the WVA stencil before publishing it as code. The linker reconstructs the base-zero image and passes verified code/read-only data to UEFI application writer 3.
+Stage 0 also creates the loader, memory, exception, paging, admission bridge, process machine, retained bridge, and x64 byte adapter. It independently reconstructs the exact WVA lookup leaf before publication. The linker reconstructs the base-zero image and passes verified code/read-only data to UEFI application writer 3.
 
-The linked kernel payload starts at entry offset zero and fits the fixed 256 KiB supervisor RX window. The init image fits one user RX page; the client image fits 33 user RX pages. Generated WVB, WVO, EFI, firmware, maps, and virtual disks are not committed.
+The linked kernel payload must fit the fixed 768 KiB supervisor RX window. Init fits one user RX page; the client fits 98 user RX pages. Generated WVB, WVO, EFI, firmware maps, and virtual disks are not committed.
 
-Key qualified identities are recorded in [Windvale-Protected-Process.md](Windvale-Protected-Process.md) and [Windvale-Os-Bytecode-Interpreter.md](Windvale-Os-Bytecode-Interpreter.md). Complete image identities are:
+Candidate image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
-| `normal` | 261,120 | `5034c01a98f20344d96fa091fd9a55a303e72669d746a4b83df2900eed93992f` | 0 |
-| `invalid-opcode` | 261,120 | `bb57ebf7e50eb56bf3d42d91b2213ed5b262554416fdf76609142eccba44cc55` | 3 |
-| `general-protection` | 261,120 | `d56fe572fb7a7ff724f7b7c26aa5299a6c5cee4c203f009b63d651c1d3cd8fcc` | 3 |
-| `user-fault` | 261,632 | `78dfa73a80a05021273cb44587f6b957d16d4cd4ebaec487f7b8a8f5427846ca` | 0 |
+| `normal` | 531,456 | `30acb028e44b6d12bc4d0e4d34232d86a43b83b40f070d3a48b7c56e505bc0bc` | 0 |
+| `invalid-opcode` | 531,456 | `dec5a39be132a3e6f140425547097b450a38a7b62e6ac3fa3d20f7d3c457587b` | 3 |
+| `general-protection` | 531,456 | `f0e9daacfa479945afec952692f69e3911b285e478f9ae8d12a3e14f0c091960` | 3 |
+| `user-fault` | 531,968 | `795cb85aa599d2ead4e228bd0eb3da5ad28ecd8970955b294ab09f72c3f7ade7` | 0 |
+
+These identities pass the local Windows pinned-QEMU gate with complete exact serial markers. They remain qualification candidates until the committed Windows/Debian gate passes.
 
 ## Firmware exit and kernel entry
 
-The loader validates the UEFI system/boot-service tables, obtains a bounded memory map, and retries `ExitBootServices` at most three times. A stale key permits only a bounded refresh. No firmware service is used after successful exit.
+The loader validates UEFI tables, obtains a bounded memory map, and retries `ExitBootServices` at most three times. It uses no firmware service after successful exit and overlays exact `WVKHAND1` before kernel entry.
 
-The loader overlays exact `WVKHAND1` and enters the kernel. Memory 7 selects and clears a 2 MiB-aligned 63-page arena below 4 GiB, publishes `WVKMEM07`, copies the handoff, and switches to the measured four-page stack. Page 5 becomes the IDT; paging 3 consumes pages 6 through 11 and activates the unchanged low-1-GiB W^X root.
+Memory 8 selects and clears a 2 MiB-aligned 137-page arena below 4 GiB, publishes `WVKMEM08`, copies the handoff, and switches to the four-page kernel stack. Page 5 becomes the IDT; paging 4 consumes pages 6 through 11 and activates the low-1-GiB W^X root with a 768 KiB supervisor RX window.
 
-Admission bridge 2 retains context budgets 8,944/2 and requires token 73. The protected-process path then:
+Admission 3 requires token 73 for the exact 493-byte canonical WVB. Protected-process execution then:
 
-1. runs Windvale process policy and requires token `97`;
-2. reconstructs the aligned arena base from the owned stack and revalidates `WVKMEM07` after the generated policy call;
-3. allocates pages 12 through 20 for init and 21 through 62 for the client;
-4. creates two roots, two init-owned RO/NX resource pages, two absent client target PTEs, `WVPROC09`, `WVCHAN01`, and two `WVRES004` records;
-5. enters init, which passes ordered set token `131073` to syscall `4` and then waits;
-6. atomically installs both aliases and publishes service table 5 plus `WVBR002`;
-7. enters the client, which reads `boot:main.wvb` and `boot:main.budget`, enforces budget `4`, interprets four opcodes to `29`, and sends the result;
-8. on exit or contained fault, revalidates and clears both aliases and the complete publication, then reloads init's CR3;
-9. zeroes and releases the exact 42-page allocator tail, reallocates the identical root, and rebuilds it as client generation `2`;
-10. wakes init, which receives the first result, performs a generation-2 grant, and waits again;
-11. enters generation 2, repeats interpretation/result `29`, and performs generation-matched cleanup after exit or contained fault; and
-12. wakes init, requires its fifth-syscall exit result `29`, runs the retained native probe, and reaches compiler-generated Main.
+1. runs Windvale process policy and requires token 97;
+2. allocates pages 12 through 20 for init and 21 through 136 for the client;
+3. creates two roots, two init-owned RO/NX resources, absent client aliases, `WVPROC10`, `WVCHAN01`, and two `WVRES004` records;
+4. enters init, which grants ordered set token `131073` and waits;
+5. publishes both aliases, service table 5, and `WVBR002` atomically;
+6. enters client generation 1, which interprets `Sumˉdata` for exactly 203 guest instructions and returns `29`;
+7. cleans both aliases/publications, reloads init's CR3, releases the exact 116-page tail, and rebuilds the same root as generation 2;
+8. repeats grant, interpretation, result, and cleanup under generation 2;
+9. lets init receive the second `29` and exit;
+10. runs the retained native probe and compiler-generated system-profile Main.
 
-The CPL0 invalid-opcode and general-protection scenarios occur after both processes and Main complete, so they retain terminal panic behavior. The user-fault scenario executes `CLI` in process `2`; vector 13/error 0 is contained and the same two-resource cleanup completes.
+The user-fault scenario contains vector 13 from client `CLI` after the result send. CPL0 invalid-opcode and general-protection scenarios remain terminal after the complete successful prefix.
 
 ## Exact serial evidence
 
 Normal success requires:
 
 ```text
-windvale-os-boot 30
+windvale-os-boot 31
 entry=pass
 system-table=pass
 memory-map=pass
@@ -80,9 +80,7 @@ status=pass
 shutdown=poweroff
 ```
 
-The user-fault scenario inserts `user-fault=contained` before `status=pass`. The two CPL0 fault scenarios share the prefix through `Hello from Windvale` and end respectively with vector 6 or 13, error code 0, and `status=panic`.
-
-Kernel panic writes value 1 to QEMU test port `0xF4`, producing host code 3. Normal and contained-user-fault success use the Q35 shutdown adapter and produce host code 0. The complete serial marker is mandatory because host code alone is ambiguous.
+The user-fault case inserts `user-fault=contained` before `status=pass`. Kernel panic writes value 1 to QEMU test port `0xF4`, producing host code 3; normal and contained-fault success use the Q35 shutdown leaf and produce code 0. Complete serial evidence is mandatory because host code alone is ambiguous.
 
 ## Boot harness
 
@@ -95,35 +93,10 @@ pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 -Scenario general-protecti
 pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 -Scenario user-fault
 ```
 
-The harness preflights the pinned QEMU/OVMF environment, creates run-private media and variable-store state, launches `pc-q35-11.0,accel=tcg` with one CPU and 128 MiB, captures serial, checks exact scenario output and exit code, and rechecks input identities. The default timeout is 60 seconds. Temporary artifacts are deleted unless `-KeepRunDirectory` is supplied.
+The harness preflights pinned QEMU/OVMF, creates run-private media and variable state, launches `pc-q35-11.0,accel=tcg` with one CPU and 128 MiB, captures serial, validates scenario output and exit code, and rechecks input identities. Default timeout is 60 seconds. Temporary artifacts are deleted unless `-KeepRunDirectory` is supplied.
 
-Normal path-free report shape:
-
-```text
-windvale-os-boot-report 30
-status=pass
-scenario=normal
-architecture=x86-64
-application-format=pe32-plus-uefi-application-v3
-probe-version=30
-efi-bytes=261120
-efi-sha256=5034c01a98f20344d96fa091fd9a55a303e72669d746a4b83df2900eed93992f
-serial-marker=windvale-os-boot-30-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-resource-grant-pass-typed-resources-pass-resource-revoked-pass-process-reuse-pass-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff
-qemu-exit-code=0
-```
-
-## Harness failures
-
-| Code | Meaning |
-| --- | --- |
-| `WVOS3001` | Host or probe build failed. |
-| `WVOS3002` | QEMU could not start. |
-| `WVOS3003` | Bounded timeout expired. |
-| `WVOS3004` | Unexpected QEMU exit code. |
-| `WVOS3005` | Missing, duplicate, or conflicting serial evidence. |
-| `WVOS3006` | Generated EFI or installed firmware input changed. |
-| `WVOS3007` | Temporary cleanup failed its absolute-path boundary. |
+Harness diagnostics remain `WVOS3001` build failure, `WVOS3002` start failure, `WVOS3003` timeout, `WVOS3004` exit mismatch, `WVOS3005` serial mismatch, `WVOS3006` changed input, and `WVOS3007` cleanup-boundary failure.
 
 ## Deliberate non-claims
 
-Probe 30 does not authenticate firmware CRCs, own general physical memory, release non-tail extents, load arbitrary WVB, provide complete verification, publish executable memory, JIT, schedule generally, transfer capabilities, enumerate dynamic resources, provide independent resource lifetimes, implement filesystems/packages/network/devices, handle SMP shootdown, or qualify Hyper-V/physical hardware. The two names, kinds, owner, generations, order, and lifetime remain fixed; Stage 0 machine emitters remain explicit replacement seams.
+Probe 31 does not authenticate firmware CRCs, own general physical memory, release non-tail extents, load arbitrary WVB, provide complete verification, publish executable memory, JIT, schedule generally, transfer capabilities, enumerate resources, provide independent resource lifetimes, implement filesystems/packages/network/devices, handle SMP shootdown, or qualify Hyper-V/physical hardware. Stage 0 machine emitters remain explicit replacement seams.

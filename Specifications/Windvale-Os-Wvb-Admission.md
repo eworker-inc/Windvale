@@ -2,76 +2,82 @@
 
 ## Status and scope
 
-WVB admission version 1 is the cross-host-qualified fixed policy owned by [Decision 0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md). It proves that AOT Windvale code running inside the guest validates one embedded canonical WVB before any accepted execution path consumes it. Admission bridge version 1 historically executed the program's native derivative directly at ring 0. Bridge version 2 invokes the [protected-process contract](Windvale-Protected-Process.md) and remains byte-identical and cross-host qualified through probe 29.
+WVB admission version 3 is the implemented Probe-31 candidate owned by [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md). It proves that AOT Windvale code running inside the guest validates the exact canonical WVB compiled from [`Examples/Seed/Sum-Data.wv`](../Examples/Seed/Sum-Data.wv) before protected execution consumes it. Cross-host qualification is pending.
 
-This is a fixed bootstrap admission profile, not the general semantic WVB verifier, a loader, an interpreter, a JIT, or a stable public ABI.
+Version 1 and the 174-byte historical fixture remain qualified under [Decision 0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md). Admission bridge version 2 remains the process-entry composition introduced by Probe 22.
+
+This is fixed bootstrap admission, not the general semantic WVB verifier, loader, interpreter, JIT, or public ABI.
 
 ## Admitted module
 
-The sole admitted input is the canonical WVB 1.6 produced from `Operating-System/Kernel/Embedded-Wvb-Program.wv`:
+The sole admitted input is canonical WVB 1.6 produced from `Examples/Seed/Sum-Data.wv`:
 
 | Property | Required value |
 | --- | --- |
-| Module identity | `Embeddedˉwvbˉprogram` |
+| Module identity | `Sumˉdata` |
 | Profile | portable |
-| Capabilities | 0 |
-| Data declarations | 0 |
-| Functions | one `Main() -> i32` |
-| Code | reachable constant 29, local store/load, return |
-| Exports | one function export `Main` |
-| Nominal types | 0 |
-| Bytes | 174 |
-| SHA-256 | `7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2` |
+| Capabilities/types | none |
+| Data | immutable `Values = [3, 5, 8, 13]` |
+| Functions | `Add(i32, i32) -> i32`; `Main() -> i32` |
+| Code | bounded loop, data load, four internal calls, integer add/compare, branches, return |
+| Export | exactly function `Main` |
+| Result/instructions | `29` after exactly 203 guest instructions |
+| Bytes | 493 |
+| SHA-256 | `6f3a272d37dd8893995c7f85c236414ed2864bf59de2f3775c08afd426013f8c` |
 
-The exact bytes occur as immutable `Embeddedˉmodule` data in `Wvb-Admission.wv`. `Expectedˉmodule` is the Windvale-owned accepted identity. The Stage 0 builder recompiles `Embedded-Wvb-Program.wv` and refuses image construction unless its canonical output is byte-identical to the checked-in candidate data.
+The exact bytes occur as immutable `Embeddedˉmodule` data in `Operating-System/Kernel/Wvb-Admission.wv`. `Expectedˉmodule` is the Windvale-owned accepted identity. The Stage 0 builder compiles the canonical example and refuses image construction unless its output is byte-identical to that data.
 
 ## Windvale admission policy
 
-`Wvb-Admission.wv` is portable, capability-free Windvale compiled to canonical WVB and then AOT through the shared x86-64 backend. Its exported source entry returns:
+`Wvb-Admission.wv` is portable, capability-free Windvale compiled to canonical WVB and AOT through the shared ABI-17 x86-64 backend. Its exported entry returns token `73` only after exact success and `0` for any candidate mismatch.
 
-- `73` after all admission checks succeed; or
-- `0` when the candidate length, header, version, section count, any section envelope, or any canonical byte differs.
+The verifier requires exactly 493 bytes, magic `WVB1`, WVB version 1.6, and seven canonical sections. It checks ordered kind/flags/reserved words and these payload envelopes:
 
-The verifier first requires exactly 174 bytes, `WVB1`, WVB version 1.6, and seven sections. It then requires the exact canonical kind/flags/reserved words and payload lengths at offsets 12, 47, 59, 71, 113, 137, and 162. Finally, a bounded loop compares all 174 candidate bytes with the accepted identity. Fixed input length is established before any read. The successful reference path executes exactly 8,944 WVB instructions with maximum dynamic call depth 2.
+| Kind | Section offset | Payload bytes |
+| ---: | ---: | ---: |
+| 1 | 12 | 14 |
+| 2 | 34 | 4 |
+| 3 | 46 | 35 |
+| 4 | 89 | 81 |
+| 5 | 178 | 270 |
+| 6 | 456 | 17 |
+| 7 | 481 | 4 |
 
-Changed magic, changed first-section length, changed code constant, and one-byte truncation must return rejection. The code-constant mutation remains structurally plausible and therefore proves that exact identity is checked in addition to the outer envelopes.
+A bounded loop then compares all 493 candidate bytes with the accepted identity. Fixed length is established before any read. The successful admission path executes exactly 24,256 native-WVB instructions with maximum dynamic call depth 2.
+
+Changed magic, section shape, data value, and one-byte truncation must reject. The data mutation remains structurally valid and executes to `28` under the ordinary runtime, proving that admission binds exact program identity rather than only the envelope.
 
 ## AOT symbols and call order
 
-The ordinary native backend accepts one source export named `Main`. Stage 0 rewrites only the verified WVO external symbol table, reorders symbols canonically, and remaps relocation symbol indices:
+Stage 0 renames only verified WVO export symbols:
 
 | Source module | Boot-image export |
 | --- | --- |
 | `Wvbˉadmission.Main` | `Windvale_kernel_wvb_admit` |
-| `Embeddedˉwvbˉprogram.Main` | `Windvale_kernel_embedded_main` |
+| `Sumˉdata.Main` | `Windvale_kernel_embedded_main` |
 
-Qualified bridge version 1 has a 163-byte body and performs the direct ring-0 call recorded by Decision 0090. Probes 22 through 29 use bridge version 2 with a 162-byte body exported as `Windvale_kernel_x64_wvb_admission`:
+The retained 162-code-byte admission bridge:
 
-1. Preserve the kernel handoff pointer.
-2. Construct native execution context version 7 with instruction budget 8,944, call-depth budget 2, and every service/resource pointer and capacity zero.
-3. Call `Windvale_kernel_wvb_admit`; continue only when `RAX == 73`.
-4. Reload the handoff pointer and call `Windvale_kernel_x64_process_enter`; that path independently requires the exact admitted identity and continues only after CPL3 returns exact result 29 or its explicitly admitted contained-fault result. Qualified probe 29 lets Windvale init select and atomically grant the typed WVB/budget pair, then removes both terminal client aliases and their complete private publication before returning the result. Neither `Windvale_kernel_embedded_main` nor the complete WVB is present in either linked user executable.
-5. Restore the handoff and tail-transfer to retained `Windvale_kernel_x64_native_probe`.
-6. On any mismatch or native trap, return failure 1 without making a later call.
+1. builds native context 7 with budget 24,256, call depth 2, and no services;
+2. calls `Windvale_kernel_wvb_admit` and requires `73`;
+3. calls the protected-process entry, which independently requires exact program identity and result `29` for both client generations;
+4. tail-transfers to the retained native probe; and
+5. returns failure 1 on any mismatch or native trap.
 
-The bridge is a Stage 0 machine emitter and replacement seam. Admission policy and process policy live in Windvale; WVA owns user entry and syscall encoding. The later portable probe and system-profile kernel Main retain their prior contracts and run only after this sequence succeeds.
+The canonical program's AOT derivative is retained only as deterministic differential evidence. It is not linked into either client execution path.
 
-## Exact qualified artifacts
+## Deterministic candidate artifacts
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Embedded program WVB | 174 | `7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2` |
-| Admission WVB | 2,786 | `231a4001dc316ae965a851aa27eabacaba7ef57d4f72d18ee0e7eaa4d90d2e54` |
-| Embedded program WVO | 504 | `461361ba8853faa59d7b8f841308fd88b5e7ee837a2654ab3e534771c189a834` |
-| Admission WVO | 24,445 | `5b11e97e5bb9746daa911559ea9a7a204419fe2cded44977163430185e7d150d` |
-| Admission bridge WVO | 481 | `eb229f4fbf104c67e3402280016355da87a3bda51ffcb361c07d709815060f39` |
-
-Exact commit `860c69c` reproduces these identities under all 21 OS tests on Windows and Debian and all three pinned-QEMU scenarios. Independent GitHub Windows/Linux verification also passes.
-
-Probes 22 through 29 preserve the first four artifact identities and replace only the bridge composition. Bridge version 2 is 484 bytes with SHA-256 `7b53fc11e4e99966386994c247c3a2a19f99ef8da751dbd9dc53f5575871a00d`; its 162 code bytes contain three exact relative calls/transfers to admission, protected process, and the retained native probe. Exact commit `190174a01299369fb855e27ea676d34062e09c5b` cross-host qualifies the bridge with all 67 Seed tests and all 25 OS tests. Probes 28 and 29 retain it byte-identically.
+| Canonical program WVB | 493 | `6f3a272d37dd8893995c7f85c236414ed2864bf59de2f3775c08afd426013f8c` |
+| Admission WVB | 3,424 | `fde22db922a283c11c56b6802587398172e0b03e7580d99e91fcf95e189f8629` |
+| Canonical program WVO | 3,585 | `fa67f716dd1b64d8a78fe0f67ae8deef1785e34c99344574b0ce207b57a9cf9e` |
+| Admission WVO | 25,083 | `798d10bb9c6219b8d299d459d202f13a8fdd7e195d95c1cb80db8d06183634de` |
+| Admission bridge WVO | 484 | `cc03a88843382f2eba5e0de6d8b88af156c214ca707887a222fed65448032d33` |
 
 ## Non-claims and next boundary
 
-Version 1 does not accept arbitrary valid WVB, produce general diagnostics, retain a decoded module model, validate capabilities or complex control flow generically, select cached native code, or publish executable pages. Qualified probe 29 isolates the interpreter and Windvale init under separate CPL3 roots, retains init's fixed atomic two-resource grant, and removes both terminal client aliases. The fixed admission verifier remains a trusted AOT ring-0 boot component, and Stage 0 still constructs process images, both owner pages, and checked mapping/cleanup operations. The admitted program's AOT derivative is built as deterministic reference evidence but is not linked into its guest execution path.
+Version 3 does not accept arbitrary valid WVB, produce general diagnostics, retain a general decoded module model, select cached native code, or publish executable pages. The exact admission verifier remains a trusted AOT ring-0 boot component, while the admitted program is separately validated by interpreter profile 5 at CPL3.
 
-The next general-verifier revision must use checked offset arithmetic, bounded counts and strings, complete instruction decoding, branch-boundary validation, stack/type agreement, capability validation, canonical trailing-byte rejection, and deterministic diagnostics. After qualified probe 29, the next OS slice should replace one measured limit: add reclamation when root/page reuse is real, broaden interpreter semantics for a real module, add a third runnable only when it creates scheduling pressure, or separate resource lifetimes only when a real consumer requires it. JIT publication remains a separate capability and W^X decision.
+A future general-verifier revision still requires checked offset arithmetic, bounded counts and strings, complete instruction decoding, branch-boundary validation, stack/type agreement, capability validation, canonical trailing-byte rejection, and deterministic diagnostics. Another real program should choose the next semantic extension.

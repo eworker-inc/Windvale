@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Security.Cryptography;
 using System.Text;
 using Windvale.Bytecode;
 using Windvale.Compiler;
@@ -9,15 +10,15 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉwvbˉadmissionˉcontract
 {
-    public const int FORMAT_VERSION = 2;
-    public const string TARGET_NAME = "x86-64-kernel-wvb-admission-v2";
+    public const int FORMAT_VERSION = 3;
+    public const string TARGET_NAME = "x86-64-kernel-wvb-admission-v3";
     public const string BRIDGE_SYMBOL = "Windvale_kernel_x64_wvb_admission";
     public const string ADMISSION_SYMBOL = "Windvale_kernel_wvb_admit";
     public const string EMBEDDED_MAIN_SYMBOL = "Windvale_kernel_embedded_main";
     public const string NATIVE_MAIN_SYMBOL = "Main";
     public const int ADMISSION_TOKEN = 73;
     public const int EXPECTED_RESULT = 29;
-    public const uint EXACT_INSTRUCTION_BUDGET = 8_944;
+    public const uint EXACT_INSTRUCTION_BUDGET = 24_256;
     public const uint EXACT_CALL_DEPTH_BUDGET = 2;
 }
 
@@ -30,7 +31,7 @@ public sealed record Kernelˉwvbˉadmissionˉartifacts(
 
 public static class Kernelˉwvbˉadmission
 {
-    private const string EMBEDDED_RESOURCE_NAME = "Windvale.Os.Kernel.Embedded-Wvb-Program.wv";
+    private const string EMBEDDED_RESOURCE_NAME = "Windvale.Os.Examples.Sum-Data.wv";
     private const string ADMISSION_RESOURCE_NAME = "Windvale.Os.Kernel.Wvb-Admission.wv";
     private const string EMBEDDED_DATA_PREFIX = "data Embeddedˉmodule: bytes = [";
     private const string FAILURE_LABEL = "wvb_admission_failure";
@@ -41,7 +42,7 @@ public static class Kernelˉwvbˉadmission
     {
         var Embeddedˉcompilation = Seedˉcompiler.Compile(
             Loadˉsource(EMBEDDED_RESOURCE_NAME),
-            "Embedded-Wvb-Program.wv");
+            "Sum-Data.wv");
         if (!Embeddedˉcompilation.Success)
         {
             throw new InvalidOperationException(
@@ -50,6 +51,15 @@ public static class Kernelˉwvbˉadmission
 
         var Embeddedˉmodule = Moduleˉcodec.Readˉandˉverify(Embeddedˉcompilation.Moduleˉbytes.AsSpan());
         Verifyˉembeddedˉmodule(Embeddedˉmodule);
+        var Embeddedˉidentity = Convert.ToHexString(
+            SHA256.HashData(Embeddedˉcompilation.Moduleˉbytes.AsSpan()));
+        if (!Embeddedˉidentity.Equals(
+                "6F3A272D37DD8893995C7F85C236414ED2864BF59DE2F3775C08AFD426013F8C",
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"The embedded Sum-Data WVB has an unexpected identity: {Embeddedˉidentity}.");
+        }
 
         var Admissionˉsource = Loadˉsource(ADMISSION_RESOURCE_NAME);
         if (!StringComparer.Ordinal.Equals(
@@ -57,7 +67,7 @@ public static class Kernelˉwvbˉadmission
                 Injectˉembeddedˉmodule(Admissionˉsource, Embeddedˉcompilation.Moduleˉbytes)))
         {
             throw new InvalidOperationException(
-                "Wvb-Admission.wv does not embed the exact canonical WVB produced from Embedded-Wvb-Program.wv.");
+                "Wvb-Admission.wv does not embed the exact canonical WVB produced from Sum-Data.wv.");
         }
 
         var Admissionˉmoduleˉbytes = Compileˉadmissionˉmodule(Admissionˉsource);
@@ -110,24 +120,42 @@ public static class Kernelˉwvbˉadmission
     {
         if (module.Module is not
             {
-                Name: "Embeddedˉwvbˉprogram",
+                Name: "Sumˉdata",
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
-                Data.Length: 0,
-                Functions.Length: 1,
+                Data.Length: 1,
+                Functions.Length: 2,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||
             module.Functions[0].Declaration is not
             {
+                Name: "Add",
+                Parameterˉtypes.Length: 2,
+                Returnˉtype.Kind: Valueˉtype.I32,
+                Localˉtypes.Length: 3,
+                Maximumˉstackˉdepth: 2,
+            } ||
+            module.Functions[1].Declaration is not
+            {
                 Name: "Main",
                 Parameterˉtypes.Length: 0,
                 Returnˉtype.Kind: Valueˉtype.I32,
-                Maximumˉstackˉdepth: 1,
+                Localˉtypes.Length: 15,
+                Maximumˉstackˉdepth: 2,
             } ||
-            module.Functions[0].Instructions.Select(Instruction => Instruction.Opcode).ToArray() is not
-                [Opcode.I32ˉconst, Opcode.Localˉstore, Opcode.Localˉload, Opcode.Return] ||
-            module.Functions[0].Instructions[0].Signedˉoperand != Kernelˉwvbˉadmissionˉcontract.EXPECTED_RESULT)
+            module.Module.Data[0] is not I32ˉarrayˉdataˉdeclaration
+            {
+                Name: "Values",
+                Values: [3, 5, 8, 13],
+            } ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.Dataˉlength) ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.Dataˉloadˉi32) ||
+            module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
+                Instruction.Opcode is not Opcode.Call) ||
+            module.Functions[1].Instructions[^1].Opcode is not Opcode.Return)
         {
             throw new InvalidOperationException(
                 $"The embedded module violated '{Kernelˉwvbˉadmissionˉcontract.TARGET_NAME}'.");
