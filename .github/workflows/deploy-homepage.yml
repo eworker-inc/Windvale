@@ -12,6 +12,7 @@ on:
       - Runtime/Windvale.Runtime/**
       - Tools/Windvale.Playground.Engine/**
       - Tools/Windvale.Playground/**
+      - Tools/Website/Verify-Wasm-Demo.mjs
       - Website/**
       - functions/**
       - Directory.Build.props
@@ -57,6 +58,9 @@ jobs:
         run: |
           npm ci
           npm run build
+
+      - name: Verify direct WebAssembly demo
+        run: npm run verify:wasm-demo
 
       - name: Publish standalone WebAssembly application
         run: >-

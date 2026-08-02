@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Run a pinned Windvale-generated WebAssembly artifact directly in the browser without loading .NET." />
+    <meta name="theme-color" content="#101411" />
+    <link rel="icon" type="image/png" href="../assets/windvale-mark-transparent.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="/analytics.js"></script>
+    <title>Windvale Direct WebAssembly Demo</title>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="../../" aria-label="Windvale home">
+            <img src="../assets/windvale-mark-transparent.png" alt="" />
+            <span>Windvale <b>WebAssembly</b></span>
+        </a>
+        <nav aria-label="Demo links">
+            <a href="../">Editable playground</a>
+            <a href="../../">Home</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero" aria-labelledby="demo-title">
+            <div>
+                <p class="eyebrow">Direct browser execution</p>
+                <h1 id="demo-title">Windvale running without .NET</h1>
+                <p class="summary">
+                    This page loads one deterministic module emitted by Windvale's
+                    <code>.wv</code> WebAssembly backend and executes it directly in a disposable browser worker.
+                    It does not start Blazor or the .NET runtime.
+                </p>
+            </div>
+            <div class="runtime-badge"><i></i> Browser WebAssembly</div>
+        </section>
+
+        <div class="workspace">
+            <section class="panel source-panel" aria-labelledby="source-title">
+                <div class="panel-title">
+                    <span id="source-title">Qualified source fixture</span>
+                    <span class="language-badge">WV</span>
+                </div>
+                <pre><code>module WebAssemblyˉstraightˉi32 profile portable;
+
+export fn Main() -&gt; i32 {
+    20 + 22;
+    return (20 + 22) * 2 - 42;
+}</code></pre>
+                <p class="source-note">
+                    The source is shown as provenance. This milestone executes its prebuilt artifact;
+                    source editing still belongs to the Stage 0 playground.
+                </p>
+            </section>
+
+            <section class="panel execution-panel" aria-labelledby="execution-title">
+                <div class="panel-title">
+                    <span id="execution-title">Execution evidence</span>
+                    <span id="state-badge" class="state-badge ready">Ready</span>
+                </div>
+
+                <dl class="artifact-evidence">
+                    <div><dt>Artifact</dt><dd>432 bytes</dd></div>
+                    <div><dt>Target</dt><dd>wasm32-browser-v1-experimental</dd></div>
+                    <div><dt>Imports</dt><dd>None</dd></div>
+                    <div><dt>Expected</dt><dd>ABI 1 · result 42 · 30 instructions</dd></div>
+                </dl>
+
+                <button id="run" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z" /></svg>
+                    <span>Run WebAssembly</span>
+                </button>
+
+                <pre id="output" class="output" aria-live="polite">Ready to validate and execute the pinned artifact.</pre>
+            </section>
+        </div>
+
+        <section class="boundary" aria-labelledby="boundary-title">
+            <h2 id="boundary-title">What this proves</h2>
+            <div class="boundary-grid">
+                <p><b>No CLR download</b><span>The page contains no Blazor bootstrap or .NET framework request.</span></p>
+                <p><b>Exact identity</b><span>SHA-256 is checked before the module reaches the worker.</span></p>
+                <p><b>Contained execution</b><span>A fresh worker validates, checks the ABI, executes once, and terminates.</span></p>
+            </div>
+            <p class="boundary-note">
+                Artifact production and qualification still use the Stage 0 toolchain. This is a .NET-free
+                browser runtime lane, not yet a .NET-free source compiler.
+            </p>
+        </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>

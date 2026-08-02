@@ -51,6 +51,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - The public [`windvale.ca`](https://windvale.ca/) project home, system-responsive light and dark themes, new Windvale visual identity, and same-origin [`windvale.ca/playground/`](https://windvale.ca/playground/) browser playground.
 - Cross-host-qualified Windvale-authored WebAssembly backend profiles: a portable `.wv` selector emits the deterministic 37-byte constant module, then execution ABI 1 extends the path through a validated, bounded, straight-line `i32` stream with locals, discard, and checked add/subtract/multiply/negate. Exact success or `WVR3007` status, result validity, and instruction accounting are preserved without an engine trap.
 - Playground integration for the bounded direct-Wasm subset: a digest-pinned `.wv` backend lowers canonical WVB, a disposable browser worker validates and executes the import-free module, and the UI compares result and instruction evidence with the .NET reference interpreter.
+- A standalone `/playground/wasm-demo/` route that checks and executes the pinned 432-byte Windvale-generated artifact without loading Blazor or .NET, while keeping Stage 0 artifact-production provenance explicit.
 - A separate Windvale support page with configurable one-time Stripe tiers, explicit public-recognition consent, and a validated Cloudflare KV-backed supporter roll that keeps personal data out of repository history.
 
 ### Changed

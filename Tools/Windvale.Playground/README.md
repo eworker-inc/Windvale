@@ -6,6 +6,18 @@ The host contract is defined by [`Specifications/Browser-Playground.md`](../../S
 
 Public playground: <https://windvale.ca/playground/>
 
+Direct .NET-free artifact demo: <https://windvale.ca/playground/wasm-demo/>
+
+## Direct WebAssembly demo
+
+The nested `wwwroot/wasm-demo/` route is ordinary static HTML, CSS, and JavaScript. It does not reference the Blazor bootstrap or any .NET framework asset. It reconstructs the exact qualified 432-byte profile-3 artifact, checks SHA-256, and sends it through the same disposable worker used by the differential playground. A successful run reports ABI `1`, status `0`, result `42`, 30 instructions, and zero .NET/Blazor resource requests.
+
+The source displayed by this route is read-only provenance. The artifact was produced and qualified through the current Stage 0 toolchain, so this is a .NET-free browser execution path rather than a .NET-free compiler or build workflow. Run its independent static and engine checks with:
+
+```powershell
+npm run verify:wasm-demo
+```
+
 ## Run locally
 
 From the repository root:
@@ -16,7 +28,7 @@ npm run build --prefix Tools/Windvale.Playground
 dotnet run --project Tools/Windvale.Playground
 ```
 
-Open <http://127.0.0.1:5174/> to test the playground alone. To test the website and shared theme together, also run `npm run dev` at the repository root and open <http://127.0.0.1:5173/playground/>. Vite proxies that path to the Blazor server while preserving the website origin. The first two commands build the locally hosted Monaco editor bundle; they are required only after the editor dependencies or integration change. The first browser download includes the editor, Stage 0 managed runtime, and compiler; subsequent loads can use the browser cache.
+Open <http://127.0.0.1:5174/> to test the playground alone or <http://127.0.0.1:5174/wasm-demo/index.html> for the direct artifact route. To test the website and shared theme together, also run `npm run dev` at the repository root and open <http://127.0.0.1:5173/playground/>. Vite proxies that path to the Blazor server while preserving the website origin. The explicit `index.html` suffix bypasses the Blazor development server's fallback route; production static hosting exposes the clean `/playground/wasm-demo/` URL. The first two commands build the locally hosted Monaco editor bundle; they are required only after the editor dependencies or integration change. The first editable-playground browser download includes the editor, Stage 0 managed runtime, and compiler; the direct artifact route does not.
 
 The current dated .NET 10 Release publication totals approximately 3.60 MiB across its Brotli-compressed representations, or 13.84 MiB for the corresponding uncompressed static files. The enhanced Monaco editor itself is approximately 1.03 MiB over Brotli. These local measurements are guidance, not a size contract.
 

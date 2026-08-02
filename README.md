@@ -41,6 +41,8 @@ The experimental Stage 0 playground compiles, verifies, and runs Windvale entire
 
 **[Open the Windvale Playground](https://windvale.ca/playground/)**
 
+The separate **[direct WebAssembly demo](https://windvale.ca/playground/wasm-demo/)** starts no Blazor or .NET runtime. It checks and executes one pinned, qualified Windvale-generated artifact in the same disposable worker. The displayed source is read-only: artifact production and the editable compiler path still use Stage 0.
+
 Run it locally:
 
 ```powershell

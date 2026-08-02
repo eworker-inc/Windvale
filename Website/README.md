@@ -2,7 +2,7 @@
 
 This directory contains the public project home for <https://windvale.ca/>. The home, support page, and playground are static browser applications with no dedicated application server. A narrow Cloudflare Pages Function exposes the approved public supporter roll from Workers KV without handling payments. Vite is used only as a convenient local development server.
 
-The site follows the visitor's operating-system light or dark preference through `prefers-color-scheme`. The browser playground lives below the same origin at <https://windvale.ca/playground/>, so navigation and the saved theme remain continuous. During local development, Vite proxies `/playground/` to the independent Blazor development server at `http://127.0.0.1:5174/` while the browser stays on the website's `http://127.0.0.1:5173/` origin.
+The site follows the visitor's operating-system light or dark preference through `prefers-color-scheme`. The browser playground lives below the same origin at <https://windvale.ca/playground/>, so navigation and the saved theme remain continuous. Its nested <https://windvale.ca/playground/wasm-demo/> route executes a pinned Windvale-generated artifact without starting Blazor or .NET. During local development, Vite proxies `/playground/` to the independent Blazor development server at `http://127.0.0.1:5174/` while the browser stays on the website's `http://127.0.0.1:5173/` origin.
 
 ## Local preview
 
@@ -73,6 +73,8 @@ Keep the editable JSON source outside this public repository. Validate it with `
 ## Publication
 
 The `Deploy homepage` GitHub Actions workflow assembles this directory with the published browser playground under `playground/`, bundles the repository-root Pages Functions, then publishes the combined artifact to the `windvale-ca` Cloudflare Pages project after relevant changes reach `main`. Cloudflare owns the `windvale.ca` zone and supplies HTTPS for the apex site. Payments remain on Stripe; the only server-side website behavior is the read-only supporter-roll Function.
+
+Before publication, `npm run verify:wasm-demo` checks the direct route's static dependency boundary, reconstructs and hashes its exact 432-byte artifact, validates its import-free export contract, and executes it twice under Node.js.
 
 The deployment stamps both Blazor startup requests with the Git commit so a new release cannot reuse a browser's old startup script or embedded framework manifest. Mutable entry points, startup scripts, and editor bundles request revalidation, and the Cloudflare zone's Browser Cache TTL remains set to `Respect Existing Headers`. The per-deployment stamp is a second correctness boundary if that zone policy changes. Only content-fingerprinted `.wasm`, `.pdb`, and `.dat` framework assets receive long-lived immutable caching. Keep WebAssembly integrity checks enabled: a missing or mixed-release asset is a publication or caching fault, not a reason to weaken verification.
 

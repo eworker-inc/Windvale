@@ -23,6 +23,9 @@
 /playground/js/playground-bootstrap.js
   Cache-Control: public, max-age=0, must-revalidate
 
+/playground/wasm-demo/*
+  Cache-Control: public, max-age=0, must-revalidate
+
 /playground/_framework/blazor.webassembly.js
   Cache-Control: public, max-age=0, must-revalidate
 

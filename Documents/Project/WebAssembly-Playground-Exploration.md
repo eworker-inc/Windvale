@@ -103,6 +103,8 @@ The direct backend must not become a parallel language implementation. It should
 
 [Decision 0107](../Decisions/0107-Playground-Disposable-WebAssembly-Worker.md) embeds and digest-pins that `.wv` backend in the playground, offers completed capability-free portable WVB to it, and executes successful output in a fresh two-second worker. The retained profile-3 example reports ABI 1, status 0, result 42, and 30 instructions equal to the reference path while exposing the exact WVB, Wasm, and backend identities.
 
+[Decision 0110](../Decisions/0110-Standalone-Dotnet-Free-WebAssembly-Artifact-Demo.md) publishes that exact retained artifact through a separate ordinary HTML/JavaScript route. Visiting and executing `/playground/wasm-demo/` starts no Blazor or .NET runtime: the page checks the 432-byte identity and requires ABI 1, status 0, result 42, and 30 instructions through the existing disposable worker. Its displayed source remains read-only, and Stage 0 still produces and qualifies the artifact.
+
 This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet implement branches, calls, other value families, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, cross-browser qualification, or UI-thread containment for Stage 0. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
 ## Proposed playground shape
