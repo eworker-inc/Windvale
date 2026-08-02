@@ -1,10 +1,15 @@
 module Initˉresourceˉservice profile portable;
 
-// The first user-space resource owner selects one fixed immutable boot object.
-// Its WVA seam grants a read-only borrow, waits for the interpreter result, and
+// The first user-space resource owner selects one exact ordered set: admitted
+// WVB identifier 1 and execution-budget identifier 2. Its WVA seam passes the
+// token unchanged for one atomic grant, waits for the interpreter result, and
 // exits with that received value.
 export fn Main() -> i32 {
-    let Resourceˉid: u32 = 1u32;
-    if Resourceˉid != 1u32 { return 0; }
-    return 1;
+    let Moduleˉresourceˉid: u32 = 1u32;
+    let Budgetˉresourceˉid: u32 = 2u32;
+    let Resourceˉset: u32 = Moduleˉresourceˉid + Budgetˉresourceˉid * 65536u32;
+    if Moduleˉresourceˉid != 1u32 { return 0; }
+    if Budgetˉresourceˉid != 2u32 { return 0; }
+    if Resourceˉset != 131073u32 { return 0; }
+    return 131073;
 }

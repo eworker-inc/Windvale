@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Kernel trap frame version 1 is cross-host qualified at exact commit `12e9e2e` through the pre-paging firmware probe-20 baseline and remains unchanged through qualified probe 28. It gives x86-64 exception entries with and without CPU error codes one common terminal-handler input. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) owns the contract and its evidence boundary; later OS decisions record complete compositions.
+Kernel trap frame version 1 is cross-host qualified at exact commit `12e9e2e` through the pre-paging firmware probe-20 baseline, remains unchanged through qualified probe 28, and is unchanged in candidate probe 29. It gives x86-64 exception entries with and without CPU error codes one common terminal-handler input. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) owns the contract and its evidence boundary; later OS decisions record complete compositions.
 
-This is an internal machine-entry contract. Its qualified version-1 use is ring 0; probes 22 through 28 also apply the same normalized prefix to process-private privilege-transition frames. It is not a Windvale source value, WVB record, public syscall ABI, user-process signal frame, unwind record, or mapping of Windvale `WVR` runtime traps to CPU faults.
+This is an internal machine-entry contract. Its qualified version-1 use is ring 0; probes 22 through candidate 29 also apply the same normalized prefix to process-private privilege-transition frames. It is not a Windvale source value, WVB record, public syscall ABI, user-process signal frame, unwind record, or mapping of Windvale `WVR` runtime traps to CPU faults.
 
 ## Same-privilege frame
 
@@ -48,7 +48,7 @@ The object and boot tests independently lock the WVA stub bytes, definition offs
 
 ## Process-private privilege-transition frame
 
-When probe 28 takes vector 6, 13, or 14 from CPL3, the processor changes to the active process's TSS ring-0 stack and appends the interrupted user `RSP` and `SS`. After WVA normalization, `RSP` addresses this exact 56-byte record:
+When candidate probe 29 takes vector 6, 13, or 14 from CPL3, the processor changes to the active process's TSS ring-0 stack and appends the interrupted user `RSP` and `SS`. After WVA normalization, `RSP` addresses this exact 56-byte record:
 
 | Offset | Bytes | Field | Owner |
 | ---: | ---: | --- | --- |
@@ -64,4 +64,4 @@ The process common entry consumes only vector, error, and `CS`. For CPL3 it reco
 
 ## Limits
 
-Version 1 does not define IST stack switches, page-fault `CR2`, double faults, NMI, interrupts, complete register preservation, SIMD state, nested faults, concurrency, recovery, resumption, unwinding, user signals, or a stable external ABI. Probe 28 retains evidence for the 56-byte privilege-transition extension and explicit preservation of ABI-16 execution-context register `RDX` across init grant/block/wake and client terminal cleanup; all other cases remain open.
+Version 1 does not define IST stack switches, page-fault `CR2`, double faults, NMI, interrupts, complete register preservation, SIMD state, nested faults, concurrency, recovery, resumption, unwinding, user signals, or a stable external ABI. Candidate probe 29 retains evidence for the 56-byte privilege-transition extension and explicit preservation of ABI-16 execution-context register `RDX` across atomic grant, init block/wake, and cleanup of both client aliases; all other cases remain open.

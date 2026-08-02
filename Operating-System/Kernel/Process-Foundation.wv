@@ -1,13 +1,15 @@
 module Processˉfoundation profile portable;
 
-// Exact SHA-256 identities of the CPL3 interpreter, its admitted WVB input,
-// and the Windvale init owner. All three must match before pages are published.
-data Interpreterˉdigest: bytes = [37, 162, 35, 52, 108, 99, 87, 41, 6, 128, 71, 106, 57, 164, 230, 120, 33, 229, 239, 201, 66, 9, 51, 169, 4, 134, 249, 147, 174, 244, 107, 242];
-data Expectedˉinterpreterˉdigest: bytes = [37, 162, 35, 52, 108, 99, 87, 41, 6, 128, 71, 106, 57, 164, 230, 120, 33, 229, 239, 201, 66, 9, 51, 169, 4, 134, 249, 147, 174, 244, 107, 242];
+// Exact SHA-256 identities of the CPL3 interpreter, admitted WVB, execution
+// budget, and Windvale init owner. All four match before pages are published.
+data Interpreterˉdigest: bytes = [127, 187, 37, 254, 8, 19, 108, 134, 192, 99, 192, 131, 149, 69, 31, 141, 177, 33, 155, 209, 126, 10, 220, 7, 72, 181, 250, 45, 154, 63, 143, 238];
+data Expectedˉinterpreterˉdigest: bytes = [127, 187, 37, 254, 8, 19, 108, 134, 192, 99, 192, 131, 149, 69, 31, 141, 177, 33, 155, 209, 126, 10, 220, 7, 72, 181, 250, 45, 154, 63, 143, 238];
 data Programˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
 data Expectedˉprogramˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
-data Serviceˉdigest: bytes = [15, 228, 35, 196, 153, 206, 79, 87, 48, 149, 221, 185, 255, 3, 53, 94, 232, 182, 173, 146, 121, 65, 247, 100, 221, 175, 46, 175, 149, 55, 247, 139];
-data Expectedˉserviceˉdigest: bytes = [15, 228, 35, 196, 153, 206, 79, 87, 48, 149, 221, 185, 255, 3, 53, 94, 232, 182, 173, 146, 121, 65, 247, 100, 221, 175, 46, 175, 149, 55, 247, 139];
+data Budgetˉdigest: bytes = [251, 94, 81, 36, 37, 252, 148, 73, 49, 110, 201, 89, 105, 235, 231, 30, 45, 87, 109, 186, 184, 51, 214, 30, 42, 91, 147, 48, 253, 112, 238, 2];
+data Expectedˉbudgetˉdigest: bytes = [251, 94, 81, 36, 37, 252, 148, 73, 49, 110, 201, 89, 105, 235, 231, 30, 45, 87, 109, 186, 184, 51, 214, 30, 42, 91, 147, 48, 253, 112, 238, 2];
+data Serviceˉdigest: bytes = [5, 84, 216, 3, 64, 68, 11, 248, 137, 95, 11, 240, 102, 211, 85, 218, 131, 51, 119, 145, 245, 64, 79, 43, 114, 202, 109, 162, 20, 102, 68, 103];
+data Expectedˉserviceˉdigest: bytes = [5, 84, 216, 3, 64, 68, 11, 248, 137, 95, 11, 240, 102, 211, 85, 218, 131, 51, 119, 145, 245, 64, 79, 43, 114, 202, 109, 162, 20, 102, 68, 103];
 
 fn Hasˉidentity(Input: bytes, Expected: bytes) -> bool {
     if Bytesˉlength(Input) != 32u32 { return false; }
@@ -30,17 +32,17 @@ fn Hasˉchannelˉendpoint(Slot: u32, Generation: u32, Rights: u32, Expectedˉrig
 export fn Main() -> i32 {
     if !Hasˉidentity(Interpreterˉdigest, Expectedˉinterpreterˉdigest) { return 0; }
     if !Hasˉidentity(Programˉdigest, Expectedˉprogramˉdigest) { return 0; }
+    if !Hasˉidentity(Budgetˉdigest, Expectedˉbudgetˉdigest) { return 0; }
     if !Hasˉidentity(Serviceˉdigest, Expectedˉserviceˉdigest) { return 0; }
 
     // Two address spaces and threads share one kernel-owned capacity-one
-    // result channel. Init additionally owns one exact one-shot resource-grant
-    // right on its reduced endpoint.
+    // result channel. Init owns one exact atomic two-resource grant right.
     let Initˉprocessˉid: u32 = 1u32;
     let Clientˉprocessˉid: u32 = 2u32;
-    let Initˉmemoryˉpages: u32 = 4u32;
-    let Interpreterˉmemoryˉpages: u32 = 38u32;
+    let Initˉmemoryˉpages: u32 = 5u32;
+    let Interpreterˉmemoryˉpages: u32 = 40u32;
     let Initˉinstructionˉbudget: u32 = 64u32;
-    let Interpreterˉinstructionˉbudget: u32 = 4678u32;
+    let Interpreterˉinstructionˉbudget: u32 = 4822u32;
     let Interpreterˉcallˉdepth: u32 = 3u32;
     let Initˉprofile: u32 = 1u32;
     let Interpreterˉprofile: u32 = 4u32;
@@ -49,10 +51,10 @@ export fn Main() -> i32 {
     let Interpreterˉsyscallˉbudget: u32 = 2u32;
     if Initˉprocessˉid != 1u32 { return 0; }
     if Clientˉprocessˉid != 2u32 { return 0; }
-    if Initˉmemoryˉpages != 4u32 { return 0; }
-    if Interpreterˉmemoryˉpages != 38u32 { return 0; }
+    if Initˉmemoryˉpages != 5u32 { return 0; }
+    if Interpreterˉmemoryˉpages != 40u32 { return 0; }
     if Initˉinstructionˉbudget != 64u32 { return 0; }
-    if Interpreterˉinstructionˉbudget != 4678u32 { return 0; }
+    if Interpreterˉinstructionˉbudget != 4822u32 { return 0; }
     if Interpreterˉcallˉdepth != 3u32 { return 0; }
     if Initˉprofile != 1u32 { return 0; }
     if Interpreterˉprofile != 4u32 { return 0; }
@@ -64,20 +66,41 @@ export fn Main() -> i32 {
 
     var Initˉthreadˉstate: u32 = 1u32;
     var Clientˉthreadˉstate: u32 = 1u32;
-    var Resourceˉstate: u32 = 1u32;
-    var Resourceˉborrower: u32 = 0u32;
-    var Resourceˉgrants: u32 = 0u32;
-    var Resourceˉmappings: u32 = 0u32;
+    let Resourceˉsetˉtoken: u32 = 131073u32;
+    let Moduleˉresourceˉid: u32 = 1u32;
+    let Moduleˉresourceˉkind: u32 = 1u32;
+    let Budgetˉresourceˉid: u32 = 2u32;
+    let Budgetˉresourceˉkind: u32 = 2u32;
+    let Executionˉbudget: u32 = 4u32;
+    var Moduleˉresourceˉstate: u32 = 1u32;
+    var Moduleˉresourceˉborrower: u32 = 0u32;
+    var Moduleˉresourceˉgrants: u32 = 0u32;
+    var Moduleˉresourceˉmappings: u32 = 0u32;
+    var Budgetˉresourceˉstate: u32 = 1u32;
+    var Budgetˉresourceˉborrower: u32 = 0u32;
+    var Budgetˉresourceˉgrants: u32 = 0u32;
+    var Budgetˉresourceˉmappings: u32 = 0u32;
     var Channelˉstate: u32 = 0u32;
     var Message: i32 = 0;
     var Initˉsyscalls: u32 = 0u32;
     var Clientˉsyscalls: u32 = 0u32;
 
-    if Resourceˉstate != 1u32 { return 0; }
-    Resourceˉstate = 2u32;
-    Resourceˉborrower = Clientˉprocessˉid;
-    Resourceˉgrants = Resourceˉgrants + 1u32;
-    Resourceˉmappings = Resourceˉmappings + 1u32;
+    if Resourceˉsetˉtoken != 131073u32 { return 0; }
+    if Moduleˉresourceˉid != 1u32 { return 0; }
+    if Moduleˉresourceˉkind != 1u32 { return 0; }
+    if Budgetˉresourceˉid != 2u32 { return 0; }
+    if Budgetˉresourceˉkind != 2u32 { return 0; }
+    if Executionˉbudget != 4u32 { return 0; }
+    if Moduleˉresourceˉstate != 1u32 { return 0; }
+    if Budgetˉresourceˉstate != 1u32 { return 0; }
+    Moduleˉresourceˉstate = 2u32;
+    Moduleˉresourceˉborrower = Clientˉprocessˉid;
+    Moduleˉresourceˉgrants = Moduleˉresourceˉgrants + 1u32;
+    Moduleˉresourceˉmappings = Moduleˉresourceˉmappings + 1u32;
+    Budgetˉresourceˉstate = 2u32;
+    Budgetˉresourceˉborrower = Clientˉprocessˉid;
+    Budgetˉresourceˉgrants = Budgetˉresourceˉgrants + 1u32;
+    Budgetˉresourceˉmappings = Budgetˉresourceˉmappings + 1u32;
     Initˉsyscalls = Initˉsyscalls + 1u32;
     Initˉthreadˉstate = 5u32;
     Initˉsyscalls = Initˉsyscalls + 1u32;
@@ -93,24 +116,36 @@ export fn Main() -> i32 {
     Initˉsyscalls = Initˉsyscalls + 1u32;
     Clientˉsyscalls = Clientˉsyscalls + 1u32;
     if Channelˉstate != 0u32 { return 0; }
-    if Resourceˉstate != 2u32 { return 0; }
-    if Resourceˉborrower != Clientˉprocessˉid { return 0; }
-    if Resourceˉgrants != 1u32 { return 0; }
-    if Resourceˉmappings != 1u32 { return 0; }
+    if Moduleˉresourceˉstate != 2u32 { return 0; }
+    if Moduleˉresourceˉborrower != Clientˉprocessˉid { return 0; }
+    if Moduleˉresourceˉgrants != 1u32 { return 0; }
+    if Moduleˉresourceˉmappings != 1u32 { return 0; }
+    if Budgetˉresourceˉstate != 2u32 { return 0; }
+    if Budgetˉresourceˉborrower != Clientˉprocessˉid { return 0; }
+    if Budgetˉresourceˉgrants != 1u32 { return 0; }
+    if Budgetˉresourceˉmappings != 1u32 { return 0; }
     if Initˉsyscalls != Initˉsyscallˉbudget { return 0; }
     if Clientˉsyscalls != Interpreterˉsyscallˉbudget { return 0; }
     Initˉthreadˉstate = 3u32;
     Clientˉthreadˉstate = 3u32;
     if Initˉthreadˉstate != 3u32 { return 0; }
     if Clientˉthreadˉstate != 3u32 { return 0; }
-    // A terminal borrower cannot retain a live alias. Kernel mechanics clear
-    // the PTE and private publication tables while init retains ownership.
-    Resourceˉstate = 1u32;
-    Resourceˉborrower = 0u32;
-    Resourceˉmappings = Resourceˉmappings - 1u32;
-    if Resourceˉstate != 1u32 { return 0; }
-    if Resourceˉborrower != 0u32 { return 0; }
-    if Resourceˉgrants != 1u32 { return 0; }
-    if Resourceˉmappings != 0u32 { return 0; }
-    return 96;
+    // A terminal borrower cannot retain either live alias. Kernel mechanics
+    // clear both PTEs and the complete private publication while init retains
+    // both owned pages and both historical grant counts.
+    Moduleˉresourceˉstate = 1u32;
+    Moduleˉresourceˉborrower = 0u32;
+    Moduleˉresourceˉmappings = Moduleˉresourceˉmappings - 1u32;
+    Budgetˉresourceˉstate = 1u32;
+    Budgetˉresourceˉborrower = 0u32;
+    Budgetˉresourceˉmappings = Budgetˉresourceˉmappings - 1u32;
+    if Moduleˉresourceˉstate != 1u32 { return 0; }
+    if Moduleˉresourceˉborrower != 0u32 { return 0; }
+    if Moduleˉresourceˉgrants != 1u32 { return 0; }
+    if Moduleˉresourceˉmappings != 0u32 { return 0; }
+    if Budgetˉresourceˉstate != 1u32 { return 0; }
+    if Budgetˉresourceˉborrower != 0u32 { return 0; }
+    if Budgetˉresourceˉgrants != 1u32 { return 0; }
+    if Budgetˉresourceˉmappings != 0u32 { return 0; }
+    return 97;
 }

@@ -5,6 +5,7 @@ symbol import function Windvale_init_resource_service_main
 section code .text align 16
 define Windvale_init_resource_user_entry
 call Windvale_init_resource_service_main
+# EAX carries Windvale's canonical ordered resource-set token unchanged.
 move_u32 ebx 4
 move_u32 esi 65536
 syscall

@@ -2,92 +2,68 @@
 
 ## Status and purpose
 
-Kernel memory version 5 remains byte-identical through qualified probe 28. It retains deterministic ownership, copied handoff, the two-page kernel stack, the allocate-only page ABI, and 2 MiB alignment in a 60-page arena. Probe 28 changes the protected-process lifecycle, not memory allocation or arena bytes.
+Kernel memory version 6 is the Probe 29 candidate. It expands the qualified version-5 arena from 60 to 63 pages: one page for init's second owned resource and two pages for the measured growth from a two-page to a four-page kernel stack.
 
-[Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the qualified version-1 foundation. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its process-driven expansion. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns qualified version 3; [Decision 0095](../Documents/Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) owns qualified version 4; qualified [Decision 0096](../Documents/Decisions/0096-First-Windvale-Init-Owned-Boot-Resource-Grant.md) owns version 5. [Decision 0097](../Documents/Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) composes it unchanged.
+[Decision 0098](../Documents/Decisions/0098-First-Typed-Two-Resource-Lookup.md) owns candidate version 6. Version 5 remains the latest cross-host-qualified memory baseline through Probe 28.
 
-This is still one bounded boot arena, not a general physical-memory manager. It is large enough for copied state, the kernel stack, exception table, kernel page tables, and two protected processes while keeping all allocation deterministic and visibly finite.
+This is one bounded boot arena, not a general physical-memory manager. Allocation remains monotonic, deterministic, visibly finite, and release-free.
 
-## Ownership policy
+## Ownership and validation
 
-Only UEFI type 7, `EfiConventionalMemory`, is claimable. Loader code/data, boot-services code/data, runtime-services ranges, ACPI ranges, persistent or unaccepted memory, MMIO, reserved ranges, and unknown future types remain unowned.
+Only UEFI type 7, `EfiConventionalMemory`, is claimable. Loader, boot-service, runtime-service, ACPI, persistent, unaccepted, MMIO, reserved, and unknown ranges remain unowned. The retained map buffer and linked image remain outside the arena under their firmware classifications.
 
-The retained memory-map buffer remains loader-owned `EfiLoaderData`. The selected arena must not overlap it or any other descriptor. The linked image and loader stack remain outside the arena under their firmware classifications.
+The planner requires a nonempty map no larger than 1 MiB, descriptor stride 40 through 256 bytes, exact divisibility, 4 KiB-aligned physical and virtual starts, nonzero page counts, and checked last-page arithmetic. Unknown types are structurally valid but not claimable. No arena is returned until the complete map passes.
 
-## Validated map boundary
+## Deterministic arena
 
-The planner consumes map bytes and descriptor stride from [kernel handoff version 1](Windvale-Kernel-Handoff.md). Before selecting memory it requires:
+An eligible descriptor must contain a complete 63-page range beginning at its first 2 MiB-aligned address at or above 1 MiB and ending below 4 GiB. The lowest eligible address wins independent of descriptor order. Alignment loss is included in the fit check. Any overlap with another descriptor rejects the map.
 
-- nonempty map bytes, at most 1 MiB;
-- descriptor stride from 40 through 256 bytes;
-- map bytes exactly divisible by the stride;
-- 4 KiB-aligned physical and virtual starts;
-- nonzero page count for every descriptor; and
-- checked last-page address arithmetic.
+The fixed 252 KiB layout is:
 
-Unknown memory-type values are structurally valid but never claimable. No arena address is returned until the complete map passes.
-
-## Deterministic arena selection
-
-An eligible descriptor must be `EfiConventionalMemory`, begin at or above 1 MiB, and contain a complete 60-page arena beginning at the first 2 MiB-aligned address inside that descriptor and ending below the exclusive 4 GiB boundary. The planner selects the lowest eligible aligned candidate, independent of descriptor order. A descriptor with 60 pages may still be ineligible when alignment consumes a prefix; checked last-page arithmetic proves the complete candidate range.
-
-The selected 240 KiB range is checked against every other descriptor. Any overlap rejects the complete map rather than silently choosing another range.
-
-## Arena layout
-
-The fixed version-5 layout is:
-
-| Arena pages | Bytes | Owner and purpose |
+| Arena pages | Bytes | Purpose |
 | --- | ---: | --- |
-| `0` | 4,096 | Memory-state header, copied handoff, paging/process records, and descriptor state |
-| `1..2` | 8,192 | Down-growing kernel stack |
-| `3..59` | 233,472 | Fifty-seven initially free allocator pages |
+| `0` | 4,096 | `WVKMEM06`, copied handoff, paging/process/channel/resource/descriptor state |
+| `1..4` | 16,384 | Down-growing owned kernel stack |
+| `5..62` | 237,568 | Fifty-eight initially free allocator pages |
 
-The complete arena is zeroed before state publication. Stack top is `arena + 0x3000`, aligned to 16 bytes. The memory adapter preserves the loader stack, switches to the kernel stack, and restores the loader stack only to return bounded probe evidence.
+The complete arena is zeroed before state publication. Stack top is `arena + 0x5000`, aligned to 16 bytes.
 
-Probes 27 and 28 consume the free extent in this exact order:
+Probe 29 consumes the free extent exactly:
 
 | Pages | Owner |
 | --- | --- |
-| `3` | Kernel IDT page |
-| `4..9` | Six-page kernel paging hierarchy |
-| `10..17` | Eight-page init-service/resource-owner extent |
-| `18..59` | Forty-two-page interpreter-process extent |
+| `5` | Kernel IDT page |
+| `6..11` | Six-page kernel paging hierarchy |
+| `12..20` | Nine-page init/resource-owner extent |
+| `21..62` | Forty-two-page interpreter extent |
 
-The init extent contains four table pages, one RX page, one stack page, one data page, and one owned RO/NX resource page. The interpreter extent contains four table pages, 32 RX pages, four stack pages, one data page, and one reserved physical page whose corresponding user PTE starts absent. Granting resource `1` aliases init's page into that target virtual address; terminal cleanup removes the alias but does not expose or reclaim the reserved client page. [Protected process version 7](Windvale-Protected-Process.md) specifies the boundary. No allocator pages remain after the fixed proof.
+The init extent contains four table pages, code, stack, data, WVB, and budget pages. The client extent contains four table pages, 33 code pages, four stack pages, and one data page. Its two resource aliases are later virtual pages backed by the two init pages, not client placeholders. The final cursor is page `63` with zero free pages.
 
-## Memory-state record
+Pinned QEMU measurement is part of the contract choice: two pages allow the enlarged Windvale policy's generated native frame to overwrite state; three pages still do not complete process construction; four pages pass normal, both terminal kernel-fault scenarios, and contained user fault. After the policy call, the coordinator derives the 2 MiB-aligned arena base from the owned stack and revalidates `WVKMEM06` before process publication.
+
+## Memory-state header
 
 The first page begins with this 64-byte little-endian header:
 
-| Offset | Bytes | Field | Version 5 rule |
+| Offset | Bytes | Field | Version-6 rule |
 | ---: | ---: | --- | --- |
-| `0x00` | 8 | Magic | ASCII `WVKMEM05` |
-| `0x08` | 4 | Version | `5` |
+| `0x00` | 8 | Magic | ASCII `WVKMEM06` |
+| `0x08` | 4 | Version | `6` |
 | `0x0C` | 4 | Header bytes | `64` |
 | `0x10` | 8 | Arena address | Selected 2 MiB-aligned base |
-| `0x18` | 8 | Arena pages | `60` |
-| `0x20` | 8 | Next free page | Initially `3` |
-| `0x28` | 8 | Free pages | Initially `57` |
+| `0x18` | 8 | Arena pages | `63` |
+| `0x20` | 8 | Next free page | Initially `5` |
+| `0x28` | 8 | Free pages | Initially `58` |
 | `0x30` | 8 | Handoff-copy address | `arena + 64` |
-| `0x38` | 8 | First allocation address | Zero until the IDT allocation succeeds |
+| `0x38` | 8 | First allocation address | Zero until IDT allocation succeeds |
 
-The exact 48-byte `WVKHAND1` record is copied to `arena + 64`. Its map pointer remains valid but borrowed. The kernel paging version-3 record is published at state-page offset `0x80`; process-version-7 records live at offsets `0x100` and `0x300`; private GDT/TSS state begins at `0x200`; the channel record begins at `0x400`; and `WVRES002` begins at `0x440`. All remain kernel-only.
+The 48-byte `WVKHAND1` record is copied to `arena + 64`; its map pointer remains borrowed. Paging record `WVKPAG03` remains at `0x80`; `WVPROC08` records are at `0x100` and `0x300`; GDT/TSS state begins at `0x200`; `WVCHAN01` begins at `0x400`; and the two `WVRES003` records begin at `0x440` and `0x4C0`. All are kernel-only.
 
-After the four required allocations, the live allocator cursor is page `60` with zero pages free. The first-allocation field continues to identify only page 3, the IDT page.
+## Allocate-only ABI
 
-## Allocate-only page ABI
+`Windvale_kernel_allocate_pages` accepts an exact version-6 state pointer in `RCX` and a nonzero page count in `EDX`. Success advances the cursor, decreases free count, zeroes every returned byte, and returns the first page address in `RAX`. Failure returns zero without mutation. Allocation is contiguous and monotonically increasing; version 6 has no release operation.
 
-The memory object exports ASCII symbol `Windvale_kernel_allocate_pages`:
-
-- `RCX` points to an exact version-5 memory-state record.
-- `EDX` is a nonzero page count no greater than the recorded free pages.
-- Success advances the cursor, decreases the free count, zeroes every returned byte, and returns the first page address in `RAX`.
-- Failure returns zero and leaves allocator state unchanged.
-- Allocation is contiguous, monotonically increasing, and deterministic.
-- Version 5 provides no release operation and no allocation outside its arena.
-
-The object also exports `Windvale_kernel_memory_enter`. It validates and copies the handoff, initializes the arena, records the IDT allocation, switches stacks, installs exceptions, installs kernel paging, and reaches the WVB-admission/process chain. Only successful in-guest admission, process-policy token 96, init-owned grant, interpreted result 29, interpreter send/terminal state, terminal borrow cleanup, init wake/exit 29, and the retained portable native result can reach compiler export `Windvale_kernel_main`. The explicit kernel-fault scenarios still execute after Main and remain terminal.
+`Windvale_kernel_memory_enter` validates and copies the handoff, initializes the arena, records the IDT allocation, switches stacks, installs exceptions and paging, and enters the Windvale admission/process chain. Only the complete typed-resource sequence can reach final Main.
 
 ## Diagnostics
 
@@ -97,36 +73,20 @@ The object also exports `Windvale_kernel_memory_enter`. It validates and copies 
 | `WVOS4002` | Unaligned descriptor address. |
 | `WVOS4003` | Zero-page descriptor. |
 | `WVOS4004` | Descriptor physical-address overflow. |
-| `WVOS4005` | No eligible 2 MiB-aligned 240 KiB conventional-memory arena. |
+| `WVOS4005` | No eligible 2 MiB-aligned 252 KiB conventional-memory arena. |
 | `WVOS4006` | Another descriptor overlaps the selected arena. |
 
-Malformed and random bytes must produce a bounded result or one of these failures; they must not escape index, arithmetic, or allocation exceptions.
+Malformed and random inputs must remain bounded and must not escape index, arithmetic, or allocation exceptions.
 
-## Current evidence and limits
+## Candidate evidence and limits
 
-Probe 28 requires this normal-path suffix after firmware exit:
+Probe 29 adds `typed-resources=pass` between `resource-grant=pass` and `resource-revoked=pass`. The four clean Windows QEMU identities are:
 
-```text
-memory-owned=pass
-allocator=pass
-kernel-stack=pass
-paging=owned
-wvb-admission=pass
-processes=isolated
-resource-grant=pass
-resource-revoked=pass
-wvb-runtime=interpreted
-init-service=pass
-ipc=cross-process
-Hello from Windvale
-cpu-exceptions=armed
-native-context=pass
-native-wvb=pass
-windvale-source=pass
-status=pass
-shutdown=poweroff
-```
+| Scenario | EFI bytes | SHA-256 | Guest result |
+| --- | ---: | --- | ---: |
+| Normal | 258,048 | `a8a14581eab4c1a6d67aba7af0cec1baa956574a410a4cd0de1121e1f843ee67` | poweroff `0` |
+| Invalid opcode | 258,048 | `35ee08e97aff4f6a2c0018c962960d5c7ee8af58fe6d5b36565613a99292ad0f` | panic/host `3` |
+| General protection | 258,048 | `92ae33986ab53245f57dc9263179e6dcd2c66cf79b634dcedaee51e93f915ca7` | panic/host `3` |
+| Contained user fault | 258,560 | `35a3dece4e64463bc9df7ef73c83ec5f5fff3b0daedd7176f77f1c2ef5525484` | poweroff `0` |
 
-The user-fault scenario adds `user-fault=contained` after source success. The invalid-opcode and general-protection kernel scenarios retain their exact terminal panic contracts and QEMU host code 3. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records current candidate artifact identities and live evidence; Decision 0096 retains version 5's cross-host qualification.
-
-Version 5 does not claim all physical memory, reclamation of loader ranges, page release, runtime allocation policy, general process creation, address-space reclamation, a general virtual-memory manager, general interrupts, multiple CPUs, or graphical output. Probe 28 clears one terminal alias and private publication but returns no page to the allocator. The fixed arena remains exhausted, making allocator growth or reclamation an explicit future decision.
+Version 6 does not claim all physical memory, loader-range reclamation, page release, runtime allocation policy, process creation, address-space reuse, SMP, general interrupts, or hardware qualification. The arena is deliberately exhausted, so reclamation remains an explicit later decision.

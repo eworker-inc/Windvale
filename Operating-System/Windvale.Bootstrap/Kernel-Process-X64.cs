@@ -14,7 +14,7 @@ public sealed record Kernelˉprocessˉx64ˉartifacts(
 public static class Kernelˉprocessˉx64
 {
     private const string BOOT_RESOURCE_SERVICE_OBJECT_SHA256 =
-        "610B861538697CA15C7F2B5FAC5BC222BE5697A2063509FFB7AB5B0E669A226D";
+        "ECB940ABB9DE8086D50AE418853021CF1F7566A9415A5A3A3B4E5CC45ED5E78C";
     private const string FAILURE_LABEL = "process_failure";
     private const string SERVICE_BLOCKED_LABEL = "process_service_blocked";
     private const string CLIENT_COMPLETION_LABEL = "process_client_completion";
@@ -35,8 +35,10 @@ public static class Kernelˉprocessˉx64
     private const byte CONDITION_ABOVE = 0x87;
     private const uint POLICY_INSTRUCTION_BUDGET = 8_192;
     private const uint POLICY_CALL_DEPTH_BUDGET = 2;
-    private const uint FRAME_BYTES = 0xA0;
-    private const uint CONTEXT_OFFSET = 0x20;
+    private const uint FRAME_BYTES = 0xD0;
+    private const uint INIT_RECORD_SLOT_OFFSET = 0xB8;
+    private const uint CLIENT_RECORD_SLOT_OFFSET = 0xC0;
+    private const uint CONTEXT_OFFSET = 0x40;
     private const uint IDT_DESCRIPTOR_OFFSET = 15 * Kernelˉexceptionˉcontract.IDT_GATE_BYTES;
     private const ushort IDT_LIMIT = (ushort)(IDT_DESCRIPTOR_OFFSET - 1);
     private const ushort KERNEL_CODE_SELECTOR = 0x08;
@@ -59,6 +61,12 @@ public static class Kernelˉprocessˉx64
                 Kernelˉprocessˉcontract.MAXIMUM_RUNTIME_INPUT_BYTES ||
             !SHA256.HashData(image.Admittedˉprogramˉbytes.AsSpan()).AsSpan()
                 .SequenceEqual(image.Admittedˉprogramˉdigest.AsSpan()) ||
+            image.Executionˉbudgetˉbytes.Length != Kernelˉprocessˉcontract.EXECUTION_BUDGET_BYTES ||
+            BinaryPrimitives.ReadUInt32LittleEndian(image.Executionˉbudgetˉbytes.AsSpan()) !=
+                Kernelˉprocessˉcontract.EXECUTION_BUDGET ||
+            image.Executionˉbudgetˉdigest.Length != Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES ||
+            !SHA256.HashData(image.Executionˉbudgetˉbytes.AsSpan()).AsSpan()
+                .SequenceEqual(image.Executionˉbudgetˉdigest.AsSpan()) ||
             image.Bootˉresourceˉserviceˉoffset > (uint)image.Clientˉimageˉbytes.Length ||
             Kernelˉprocessˉcontract.BOOT_RESOURCE_SERVICE_BYTES >
                 (uint)image.Clientˉimageˉbytes.Length - image.Bootˉresourceˉserviceˉoffset)
@@ -85,7 +93,7 @@ public static class Kernelˉprocessˉx64
         var Exceptionˉbytes = Output.Position - Exceptionˉoffset;
         Output.Align(16);
         var Syscallˉoffset = Output.Position;
-        Emitˉsyscallˉentry(Output);
+        Emitˉsyscallˉentry(Output, image);
         var Syscallˉbytes = Output.Position - Syscallˉoffset;
         var Code = Output.Build();
         var Frozenˉrelocations = Relocations.ToImmutable();
@@ -100,6 +108,8 @@ public static class Kernelˉprocessˉx64
                     (uint)image.Clientˉimageˉbytes.Length, image.Clientˉimageˉbytes),
                 new(".rodata.cresource", Objectˉsectionˉkind.Readˉonlyˉdata, 16,
                     (uint)image.Admittedˉprogramˉbytes.Length, image.Admittedˉprogramˉbytes),
+                new(".rodata.dbudget", Objectˉsectionˉkind.Readˉonlyˉdata, 4,
+                    (uint)image.Executionˉbudgetˉbytes.Length, image.Executionˉbudgetˉbytes),
             ],
             [
                 new("Windvale_init_resource_user_image", Objectˉsymbolˉbinding.Local,
@@ -108,6 +118,8 @@ public static class Kernelˉprocessˉx64
                     Objectˉsymbolˉkind.Data, 2, 0, (uint)image.Clientˉimageˉbytes.Length),
                 new("Windvale_resource_init_boot", Objectˉsymbolˉbinding.Local,
                     Objectˉsymbolˉkind.Data, 3, 0, (uint)image.Admittedˉprogramˉbytes.Length),
+                new("Windvale_resource_init_budget", Objectˉsymbolˉbinding.Local,
+                    Objectˉsymbolˉkind.Data, 4, 0, (uint)image.Executionˉbudgetˉbytes.Length),
                 new(Kernelˉprocessˉcontract.ENTER_SYMBOL, Objectˉsymbolˉbinding.Export,
                     Objectˉsymbolˉkind.Function, 0, 0, Enterˉbytes),
                 new(Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL, Objectˉsymbolˉbinding.Export,
@@ -125,7 +137,8 @@ public static class Kernelˉprocessˉx64
             Frozenˉrelocations);
         var Objectˉbytes = Objectˉcodec.Write(Object).ToImmutableArray();
         Verifyˉobject(Objectˉbytes, Code, image.Initˉserviceˉimageˉbytes,
-            image.Clientˉimageˉbytes, image.Admittedˉprogramˉbytes, Frozenˉrelocations);
+            image.Clientˉimageˉbytes, image.Admittedˉprogramˉbytes,
+            image.Executionˉbudgetˉbytes, Frozenˉrelocations);
         return new(Objectˉbytes, Code, Frozenˉrelocations);
     }
 
@@ -142,12 +155,6 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(FRAME_BYTES);
         output.Emit(0x49, 0x89, 0xCC, 0x49, 0x83, 0xEC, (byte)Kernelˉmemoryˉcontract.HANDOFF_COPY_OFFSET);
         Emitˉvalidateˉmemoryˉstate(output);
-        output.Emit(0x4D, 0x8D, 0xAC, 0x24);
-        output.Emitˉu32(Kernelˉprocessˉcontract.INIT_RECORD_OFFSET);
-        output.Emit(0x4C, 0x89, 0x24, 0x24, 0x4C, 0x89, 0x6C, 0x24, 0x08);
-        output.Emit(0x49, 0x8D, 0x84, 0x24);
-        output.Emitˉu32(Kernelˉprocessˉcontract.CLIENT_RECORD_OFFSET);
-        output.Emit(0x48, 0x89, 0x44, 0x24, 0x10);
 
         // Windvale policy binds both WVB identities, roles, budgets, and reduced
         // endpoints before any process page or machine state is published.
@@ -169,9 +176,25 @@ public static class Kernelˉprocessˉx64
             Emitˉstoreˉstackˉrax(output, Offset);
         }
         output.Emit(0x48, 0x8D, 0x54, 0x24, (byte)CONTEXT_OFFSET);
-        Emitˉexternalˉcall(output, relocations, 7);
+        // Keep the generated policy's native frame below the coordinator frame.
+        // Recover the aligned arena base from the owned stack and revalidate it
+        // instead of trusting coordinator temporaries across this Stage 0 seam.
+        output.Emit(0x48, 0x83, 0xEC, 0x28);
+        Emitˉexternalˉcall(output, relocations, 8);
+        output.Emit(0x48, 0x83, 0xC4, 0x28);
+        output.Emit(0x49, 0x89, 0xE4, 0x49, 0x81, 0xE4);
+        output.Emitˉu32(unchecked((uint)~(Kernelˉmemoryˉcontract.ARENA_ALIGNMENT_BYTES - 1)));
         output.Emit(0x48, 0x83, 0xF8, (byte)Kernelˉprocessˉcontract.POLICY_TOKEN);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉvalidateˉmemoryˉstate(output);
+        output.Emit(0x4D, 0x8D, 0xAC, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.INIT_RECORD_OFFSET);
+        output.Emit(0x4C, 0x89, 0xAC, 0x24);
+        output.Emitˉu32(INIT_RECORD_SLOT_OFFSET);
+        output.Emit(0x49, 0x8D, 0x84, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.CLIENT_RECORD_OFFSET);
+        output.Emit(0x48, 0x89, 0x84, 0x24);
+        output.Emitˉu32(CLIENT_RECORD_SLOT_OFFSET);
 
         Emitˉinitializeˉchannel(output);
 
@@ -191,13 +214,17 @@ public static class Kernelˉprocessˉx64
             output, "service", Kernelˉprocessˉcontract.INIT_CODE_PAGES,
             Kernelˉprocessˉcontract.INIT_STACK_PAGE, Kernelˉprocessˉcontract.INIT_STACK_PAGES,
             Kernelˉprocessˉcontract.INIT_DATA_PAGE,
-            Kernelˉprocessˉcontract.INIT_RUNTIME_INPUT_PAGE, true);
+            Kernelˉprocessˉcontract.INIT_RUNTIME_INPUT_PAGE,
+            Kernelˉprocessˉcontract.INIT_RUNTIME_BUDGET_PAGE, true);
         Emitˉcopyˉuserˉbytes(
             output, relocations, image.Initˉserviceˉimageˉbytes.Length, 0,
             Kernelˉprocessˉcontract.USER_CODE_PAGE);
         Emitˉcopyˉuserˉbytes(
             output, relocations, image.Admittedˉprogramˉbytes.Length, 2,
             Kernelˉprocessˉcontract.INIT_RUNTIME_INPUT_PAGE);
+        Emitˉcopyˉuserˉbytes(
+            output, relocations, image.Executionˉbudgetˉbytes.Length, 3,
+            Kernelˉprocessˉcontract.INIT_RUNTIME_BUDGET_PAGE);
         Emitˉinitializeˉuserˉcontext(
             output, Kernelˉprocessˉcontract.INIT_DATA_PAGE,
             Kernelˉprocessˉcontract.INIT_INSTRUCTION_BUDGET,
@@ -205,7 +232,7 @@ public static class Kernelˉprocessˉx64
 
         // Build a distinct send-only interpreter root. Its target resource PTE
         // and ABI-16 resource tables remain zero until the init grant syscall.
-        output.Emit(0x4C, 0x8B, 0x6C, 0x24, 0x10);
+        Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
         Emitˉallocateˉextent(output, relocations, Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES);
         Emitˉinitializeˉrecord(
             output,
@@ -220,7 +247,8 @@ public static class Kernelˉprocessˉx64
             output, "client", Kernelˉprocessˉcontract.CLIENT_CODE_PAGES,
             Kernelˉprocessˉcontract.CLIENT_STACK_PAGE, Kernelˉprocessˉcontract.CLIENT_STACK_PAGES,
             Kernelˉprocessˉcontract.CLIENT_DATA_PAGE,
-            Kernelˉprocessˉcontract.CLIENT_RUNTIME_INPUT_PAGE, false);
+            Kernelˉprocessˉcontract.CLIENT_RUNTIME_INPUT_PAGE,
+            Kernelˉprocessˉcontract.CLIENT_RUNTIME_BUDGET_PAGE, false);
         Emitˉcopyˉuserˉbytes(
             output, relocations, image.Clientˉimageˉbytes.Length, 1,
             Kernelˉprocessˉcontract.USER_CODE_PAGE);
@@ -235,7 +263,7 @@ public static class Kernelˉprocessˉx64
 
         // Windvale init grants its resource, then deterministically blocks on
         // the still-empty result channel.
-        output.Emit(0x4C, 0x8B, 0x6C, 0x24, 0x08);
+        Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
         Emitˉactivateˉrecordˉroot(output, relocations);
         Emitˉsetˉkernelˉgsˉbase(output);
         Emitˉenterˉinitialˉprocess(output, SERVICE_BLOCKED_LABEL, Kernelˉprocessˉcontract.INIT_STACK_PAGES);
@@ -264,7 +292,7 @@ public static class Kernelˉprocessˉx64
         // Return GS to its user value, install the client as the next syscall
         // destination, and run it under its own root.
         output.Emit(0x0F, 0x01, 0xF8);
-        output.Emit(0x4C, 0x8B, 0x6C, 0x24, 0x10);
+        Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
         Emitˉactivateˉrecordˉroot(output, relocations);
         Emitˉsetˉkernelˉgsˉbase(output);
         Emitˉenterˉinitialˉprocess(output, CLIENT_COMPLETION_LABEL, Kernelˉprocessˉcontract.CLIENT_STACK_PAGES);
@@ -319,7 +347,7 @@ public static class Kernelˉprocessˉx64
         // Switch back to the blocked service root, which also flushes the
         // retired client translation, consume the message, and resume receive.
         output.Emit(0x0F, 0x01, 0xF8);
-        output.Emit(0x4C, 0x8B, 0x6C, 0x24, 0x08);
+        Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
         Emitˉactivateˉrecordˉroot(output, relocations);
         Emitˉsetˉkernelˉgsˉbase(output);
         output.Loadˉripˉrelativeˉrdx(COMPLETION_LABEL);
@@ -371,7 +399,7 @@ public static class Kernelˉprocessˉx64
 
         // Restore the kernel GS state and independently re-check the terminal client.
         output.Emit(0x0F, 0x01, 0xF8);
-        output.Emit(0x4C, 0x8B, 0x6C, 0x24, 0x10);
+        Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
         Emitˉcompareˉrecordˉu32(output, Kernelˉprocessˉcontract.RESULT_OFFSET,
             Kernelˉprocessˉcontract.EXPECTED_RESULT);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -428,10 +456,12 @@ public static class Kernelˉprocessˉx64
 
         output.Mark(EXCEPTION_KERNEL_LABEL);
         var Jumpˉfield = output.Emitˉjumpˉplaceholder();
-        relocations.Add(Relocation(Jumpˉfield, 8));
+        relocations.Add(Relocation(Jumpˉfield, 9));
     }
 
-    private static void Emitˉsyscallˉentry(X64ˉcodeˉbuilder output)
+    private static void Emitˉsyscallˉentry(
+        X64ˉcodeˉbuilder output,
+        Kernelˉprocessˉimageˉartifacts image)
     {
         output.Mark("process_syscall_machine_entry");
         output.Emit(0x0F, 0x01, 0xF8);
@@ -456,10 +486,11 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
             Kernelˉprocessˉcontract.ROLE_INIT_SERVICE);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
-        output.Emit(0x83, 0xF8, (byte)Kernelˉprocessˉcontract.RESOURCE_ID);
+        output.Emit(0x3D);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_SET_TOKEN);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
         Emitˉrequireˉsyscallˉbudget(output);
-        Emitˉgrantˉbootˉresource(output);
+        Emitˉgrantˉbootˉresource(output, checked((uint)image.Admittedˉprogramˉbytes.Length));
         Emitˉincrementˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET);
         output.Emit(0x31, 0xC0);
         output.Jump(SYSCALL_RESUME_LABEL);
@@ -581,10 +612,44 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x49, 0x8D, 0xBC, 0x24);
         output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
         output.Emit(0x31, 0xC0, 0xB9);
-        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_RECORD_BYTES / sizeof(ulong));
+        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_RECORD_SET_BYTES / sizeof(ulong));
         output.Emit(0xFC, 0xF3, 0x48, 0xAB);
+
+        Emitˉinitializeˉresourceˉrecordˉentry(
+            output,
+            Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ID,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ATTRIBUTES,
+            Kernelˉprocessˉcontract.INIT_RUNTIME_INPUT_PAGE,
+            Kernelˉprocessˉcontract.CLIENT_RUNTIME_INPUT_PAGE,
+            checked((uint)image.Admittedˉprogramˉbytes.Length),
+            image.Admittedˉprogramˉdigest,
+            image.Bootˉresourceˉserviceˉoffset);
+        Emitˉinitializeˉresourceˉrecordˉentry(
+            output,
+            Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ATTRIBUTES,
+            Kernelˉprocessˉcontract.INIT_RUNTIME_BUDGET_PAGE,
+            Kernelˉprocessˉcontract.CLIENT_RUNTIME_BUDGET_PAGE,
+            Kernelˉprocessˉcontract.EXECUTION_BUDGET_BYTES,
+            image.Executionˉbudgetˉdigest,
+            image.Bootˉresourceˉserviceˉoffset);
+    }
+
+    private static void Emitˉinitializeˉresourceˉrecordˉentry(
+        X64ˉcodeˉbuilder output,
+        uint recordˉoffset,
+        uint resourceˉid,
+        uint attributes,
+        ulong sourceˉpage,
+        ulong targetˉpage,
+        uint resourceˉlength,
+        ImmutableArray<byte> digest,
+        uint serviceˉoffset)
+    {
         output.Emit(0x4D, 0x8D, 0x8C, 0x24);
-        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
+        output.Emitˉu32(recordˉoffset);
         output.Emit(0x48, 0xB8);
         output.Emitˉu64(Kernelˉprocessˉcontract.RESOURCE_MAGIC);
         output.Emit(0x49, 0x89, 0x01);
@@ -595,41 +660,41 @@ public static class Kernelˉprocessˉx64
             Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED);
         Emitˉstoreˉresourceˉu32(
             output, Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET,
-            Kernelˉprocessˉcontract.RESOURCE_ID);
+            resourceˉid);
         Emitˉstoreˉresourceˉu32(
             output, Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET,
             Kernelˉprocessˉcontract.INIT_PROCESS_ID);
         Emitˉstoreˉresourceˉu32(
             output, Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET,
-            Kernelˉprocessˉcontract.RESOURCE_FLAGS);
+            attributes);
 
-        output.Emit(0x48, 0x8B, 0x44, 0x24, 0x08, 0x48, 0x8B, 0x40,
+        Emitˉloadˉstackˉrax(output, INIT_RECORD_SLOT_OFFSET);
+        output.Emit(0x48, 0x8B, 0x40,
             (byte)Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET, 0x48, 0x05);
-        output.Emitˉu32(checked((uint)(Kernelˉprocessˉcontract.INIT_RUNTIME_INPUT_PAGE *
-            Kernelˉpagingˉcontract.PAGE_BYTES)));
+        output.Emitˉu32(checked((uint)(sourceˉpage * Kernelˉpagingˉcontract.PAGE_BYTES)));
         output.Emit(0x49, 0x89, 0x41, (byte)Kernelˉprocessˉcontract.RESOURCE_SOURCE_ADDRESS_OFFSET);
         Emitˉstoreˉresourceˉu32(
             output, Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET,
-            checked((uint)image.Admittedˉprogramˉbytes.Length));
+            resourceˉlength);
 
-        output.Emit(0x48, 0x8B, 0x44, 0x24, 0x10, 0x48, 0x8B, 0x50,
+        Emitˉloadˉstackˉrax(output, CLIENT_RECORD_SLOT_OFFSET);
+        output.Emit(0x48, 0x8B, 0x50,
             (byte)Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
         output.Emit(0x49, 0x89, 0x51, (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_ROOT_OFFSET);
         output.Emit(0x48, 0x8B, 0x40, (byte)Kernelˉprocessˉcontract.USER_DATA_ADDRESS_OFFSET);
         output.Emit(0x49, 0x89, 0x41, (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_DATA_OFFSET);
         output.Emit(0x48, 0x8D, 0x82);
-        output.Emitˉu32(checked((uint)(Kernelˉprocessˉcontract.CLIENT_RUNTIME_INPUT_PAGE *
-            Kernelˉpagingˉcontract.PAGE_BYTES)));
+        output.Emitˉu32(checked((uint)(targetˉpage * Kernelˉpagingˉcontract.PAGE_BYTES)));
         output.Emit(0x49, 0x89, 0x41, (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_ADDRESS_OFFSET);
         output.Emit(0x48, 0x8D, 0x82);
         output.Emitˉu32(checked((uint)(Kernelˉprocessˉcontract.USER_CODE_PAGE *
-            Kernelˉpagingˉcontract.PAGE_BYTES + image.Bootˉresourceˉserviceˉoffset)));
+            Kernelˉpagingˉcontract.PAGE_BYTES + serviceˉoffset)));
         output.Emit(0x49, 0x89, 0x41, (byte)Kernelˉprocessˉcontract.RESOURCE_SERVICE_ADDRESS_OFFSET);
-        for (var Offset = 0; Offset < image.Admittedˉprogramˉdigest.Length; Offset += sizeof(ulong))
+        for (var Offset = 0; Offset < digest.Length; Offset += sizeof(ulong))
         {
             output.Emit(0x48, 0xB8);
             output.Emitˉu64(BinaryPrimitives.ReadUInt64LittleEndian(
-                image.Admittedˉprogramˉdigest.AsSpan().Slice(Offset)));
+                digest.AsSpan().Slice(Offset)));
             output.Emit(0x49, 0x89, 0x41,
                 checked((byte)(Kernelˉprocessˉcontract.RESOURCE_DIGEST_OFFSET + Offset)));
         }
@@ -651,7 +716,7 @@ public static class Kernelˉprocessˉx64
     {
         output.Emit(0x4C, 0x89, 0xE1, 0xBA);
         output.Emitˉu32(checked((uint)allocationˉpages));
-        Emitˉexternalˉcall(output, relocations, 6);
+        Emitˉexternalˉcall(output, relocations, 7);
         output.Emit(0x48, 0x85, 0xC0);
         output.Jumpˉif(CONDITION_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x89, 0xC6);
@@ -788,6 +853,7 @@ public static class Kernelˉprocessˉx64
         ulong stackˉpages,
         ulong dataˉpage,
         ulong runtimeˉinputˉpage,
+        ulong runtimeˉbudgetˉpage,
         bool runtimeˉinputˉpresent)
     {
         var Loopˉlabel = $"{PT_LOOP_LABEL}_{labelˉsuffix}";
@@ -827,10 +893,14 @@ public static class Kernelˉprocessˉx64
             Emitˉwriteˉuserˉpte(output, runtimeˉinputˉpage,
                 Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
                 Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+            Emitˉwriteˉuserˉpte(output, runtimeˉbudgetˉpage,
+                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
+                Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
         }
         else
         {
             Emitˉclearˉprocessˉpte(output, runtimeˉinputˉpage);
+            Emitˉclearˉprocessˉpte(output, runtimeˉbudgetˉpage);
         }
     }
 
@@ -909,9 +979,9 @@ public static class Kernelˉprocessˉx64
         // Reuse the existing kernel-owned zeroed IDT page, extending it through
         // page fault and routing 6/13/14 through WVA-normalized process stubs.
         output.Emit(0x4D, 0x8B, 0x44, 0x24, 0x38);
-        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.INVALID_OPCODE_GATE_OFFSET, 12);
-        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.GENERAL_PROTECTION_GATE_OFFSET, 10);
-        Emitˉgate(output, relocations, 14 * Kernelˉexceptionˉcontract.IDT_GATE_BYTES, 11);
+        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.INVALID_OPCODE_GATE_OFFSET, 13);
+        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.GENERAL_PROTECTION_GATE_OFFSET, 11);
+        Emitˉgate(output, relocations, 14 * Kernelˉexceptionˉcontract.IDT_GATE_BYTES, 12);
         output.Emit(0x66, 0x41, 0xC7, 0x80);
         output.Emitˉu32(IDT_DESCRIPTOR_OFFSET);
         output.Emit((byte)IDT_LIMIT, (byte)(IDT_LIMIT >> 8));
@@ -963,7 +1033,7 @@ public static class Kernelˉprocessˉx64
     {
         output.Emit(0x49, 0x8B, 0x85);
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
-        Emitˉexternalˉcall(output, relocations, 9);
+        Emitˉexternalˉcall(output, relocations, 10);
         output.Emit(0x49, 0x3B, 0x85);
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -1080,52 +1150,139 @@ public static class Kernelˉprocessˉx64
         output.Jumpˉif(CONDITION_EQUAL, SYSCALL_FAILURE_LABEL);
     }
 
-    private static void Emitˉgrantˉbootˉresource(X64ˉcodeˉbuilder output)
+    private static void Emitˉgrantˉbootˉresource(
+        X64ˉcodeˉbuilder output,
+        uint programˉlength)
     {
         Emitˉloadˉgsˉchannelˉr10(output);
-        output.Emit(0x4D, 0x8D, 0x4A,
-            checked((byte)(Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET -
-                Kernelˉprocessˉcontract.CHANNEL_RECORD_OFFSET)));
-        Emitˉvalidateˉresourceˉheader(output, SYSCALL_FAILURE_LABEL);
-        Emitˉcompareˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
-            Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
-        Emitˉcompareˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET,
-            Kernelˉprocessˉcontract.RESOURCE_ID);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
-        Emitˉcompareˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET,
-            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
-        Emitˉcompareˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
-        Emitˉcompareˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET,
-            Kernelˉprocessˉcontract.RESOURCE_FLAGS);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
-        Emitˉcompareˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 0);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
-        Emitˉcompareˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        Emitˉloadˉchannelˉresource(output, Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
+        Emitˉvalidateˉownedˉresource(
+            output,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ID,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ATTRIBUTES,
+            programˉlength);
+        Emitˉloadˉchannelˉresource(output, Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET);
+        Emitˉvalidateˉownedˉresource(
+            output,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ATTRIBUTES,
+            Kernelˉprocessˉcontract.EXECUTION_BUDGET_BYTES);
 
+        // Both records and both empty target PTEs are accepted before the
+        // single resource-set operation mutates either borrower mapping.
+        foreach (var Recordˉoffset in new[]
+        {
+            Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET,
+        })
+        {
+            Emitˉloadˉchannelˉresource(output, Recordˉoffset);
+            output.Emit(0x4D, 0x8B, 0x41,
+                (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
+            output.Emit(0x49, 0x8B, 0x41,
+                (byte)Kernelˉprocessˉcontract.RESOURCE_SOURCE_ADDRESS_OFFSET);
+            output.Emit(0x48, 0x83, 0xC8,
+                (byte)(Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER));
+            output.Emit(0x48, 0x0F, 0xBA, 0xE8, 0x3F, 0x49, 0x89, 0x00);
+        }
+
+        Emitˉloadˉchannelˉresource(output, Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
+        output.Emit(0x4D, 0x8B, 0x41,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_DATA_OFFSET);
+        output.Emit(0x49, 0x8D, 0x80);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET);
+        output.Emit(0x49, 0x89, 0x40,
+            (byte)Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET);
+        output.Emit(0x49, 0x8D, 0x80);
+        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET);
+        output.Emit(0x49, 0x89, 0x40,
+            (byte)Nativeˉexecutionˉcontextˉcontract.FILE_INPUT_TABLE_POINTER_OFFSET);
+        output.Emit(0x48, 0xB8);
+        output.Emitˉu64(((ulong)Nativeˉserviceˉtableˉcontract.SIZE << 32) |
+            Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
+        output.Emit(0x49, 0x89, 0x80);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET);
+        output.Emit(0x49, 0x8B, 0x41,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_SERVICE_ADDRESS_OFFSET);
+        output.Emit(0x49, 0x89, 0x80);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET +
+            Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET);
+        output.Emit(0x48, 0xB8);
+        output.Emitˉu64(((ulong)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_VERSION << 32) |
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_MAGIC);
+        output.Emit(0x49, 0x89, 0x80);
+        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET);
+        Emitˉstoreˉclientˉdataˉu32(
+            output, Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET + 8,
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_BYTES);
+        Emitˉstoreˉclientˉdataˉu32(
+            output,
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET +
+                Kernelˉprocessˉcontract.BOOT_RESOURCE_COUNT_OFFSET,
+            Kernelˉprocessˉcontract.RESOURCE_COUNT);
+        Emitˉpublishˉresourceˉentry(
+            output,
+            Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_FIRST_ENTRY_OFFSET,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ID,
+            Kernelˉprocessˉcontract.RESOURCE_KIND_WVB_MODULE);
+        Emitˉpublishˉresourceˉentry(
+            output,
+            Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_SECOND_ENTRY_OFFSET,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID,
+            Kernelˉprocessˉcontract.RESOURCE_KIND_U32_EXECUTION_BUDGET);
+
+        foreach (var Recordˉoffset in new[]
+        {
+            Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET,
+        })
+        {
+            Emitˉloadˉchannelˉresource(output, Recordˉoffset);
+            Emitˉstoreˉresourceˉu32(
+                output, Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
+                Kernelˉprocessˉcontract.RESOURCE_STATE_BORROWED);
+            Emitˉstoreˉresourceˉu32(
+                output, Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET,
+                Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
+            Emitˉstoreˉresourceˉu32(
+                output, Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 1);
+            Emitˉstoreˉresourceˉu32(
+                output, Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 1);
+        }
+    }
+
+    private static void Emitˉvalidateˉownedˉresource(
+        X64ˉcodeˉbuilder output,
+        uint resourceˉid,
+        uint attributes,
+        uint resourceˉlength)
+    {
+        Emitˉvalidateˉresourceˉheader(output, SYSCALL_FAILURE_LABEL);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
+                Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED),
+            (Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET, resourceˉid),
+            (Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET,
+                Kernelˉprocessˉcontract.INIT_PROCESS_ID),
+            (Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0),
+            (Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET, resourceˉlength),
+            (Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET, attributes),
+            (Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 0),
+            (Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0),
+        })
+        {
+            Emitˉcompareˉresourceˉu32(output, Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        }
         output.Emit(0x49, 0x8B, 0x41,
             (byte)Kernelˉprocessˉcontract.RESOURCE_SOURCE_ADDRESS_OFFSET);
         output.Emit(0x48, 0x85, 0xC0);
         output.Jumpˉif(CONDITION_EQUAL, SYSCALL_FAILURE_LABEL);
         output.Emit(0x48, 0xA9, 0xFF, 0x0F, 0x00, 0x00);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
-        output.Emit(0x41, 0x83, 0x79,
-            (byte)Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET, 12);
-        output.Jumpˉif(CONDITION_BELOW, SYSCALL_FAILURE_LABEL);
-        output.Emit(0x41, 0x81, 0x79,
-            (byte)Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET);
-        output.Emitˉu32(Kernelˉprocessˉcontract.MAXIMUM_RUNTIME_INPUT_BYTES);
-        output.Jumpˉif(CONDITION_ABOVE, SYSCALL_FAILURE_LABEL);
         foreach (var Offset in new[]
         {
             Kernelˉprocessˉcontract.RESOURCE_TARGET_ROOT_OFFSET,
@@ -1142,62 +1299,42 @@ public static class Kernelˉprocessˉx64
             (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
         output.Emit(0x49, 0x83, 0x38, 0x00);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+    }
 
-        output.Emit(0x49, 0x8B, 0x41,
-            (byte)Kernelˉprocessˉcontract.RESOURCE_SOURCE_ADDRESS_OFFSET);
-        output.Emit(0x48, 0x83, 0xC8,
-            (byte)(Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER));
-        output.Emit(0x48, 0x0F, 0xBA, 0xE8, 0x3F, 0x49, 0x89, 0x00);
-
-        output.Emit(0x4D, 0x8B, 0x41,
-            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_DATA_OFFSET);
-        output.Emit(0x49, 0x8D, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET);
-        output.Emit(0x49, 0x89, 0x40,
-            (byte)Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET);
-        output.Emit(0x49, 0x8D, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET);
-        output.Emit(0x49, 0x89, 0x40,
-            (byte)Nativeˉexecutionˉcontextˉcontract.FILE_INPUT_TABLE_POINTER_OFFSET);
-        output.Emit(0x48, 0xB8);
-        output.Emitˉu64(((ulong)Nativeˉserviceˉtableˉcontract.SIZE << 32) |
-            Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
-        output.Emit(0x49, 0x89, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET);
-        output.Emit(0x49, 0x8B, 0x41,
-            (byte)Kernelˉprocessˉcontract.RESOURCE_SERVICE_ADDRESS_OFFSET);
-        output.Emit(0x49, 0x89, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET +
-            Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET);
-        output.Emit(0x48, 0xB8);
-        output.Emitˉu64(((ulong)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_VERSION << 32) |
-            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_MAGIC);
-        output.Emit(0x49, 0x89, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET);
-        output.Emit(0x41, 0xC7, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET + 8);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_BYTES);
+    private static void Emitˉpublishˉresourceˉentry(
+        X64ˉcodeˉbuilder output,
+        uint recordˉoffset,
+        uint entryˉoffset,
+        uint resourceˉid,
+        uint kind)
+    {
+        Emitˉloadˉchannelˉresource(output, recordˉoffset);
+        var Entryˉbase = Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET + entryˉoffset;
+        Emitˉstoreˉclientˉdataˉu32(
+            output, Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_ENTRY_ID_OFFSET, resourceˉid);
+        Emitˉstoreˉclientˉdataˉu32(
+            output, Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_ENTRY_KIND_OFFSET, kind);
         output.Emit(0x49, 0x8B, 0x41,
             (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_ADDRESS_OFFSET);
         output.Emit(0x49, 0x89, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET +
-            Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_POINTER_OFFSET);
+        output.Emitˉu32(Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_POINTER_OFFSET);
         output.Emit(0x41, 0x8B, 0x41,
             (byte)Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET);
         output.Emit(0x41, 0x89, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET +
-            Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_LENGTH_OFFSET);
+        output.Emitˉu32(Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_LENGTH_OFFSET);
+        Emitˉstoreˉclientˉdataˉu32(
+            output, Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_ENTRY_FLAGS_OFFSET,
+            Kernelˉprocessˉcontract.RESOURCE_BASE_FLAGS);
+    }
 
-        Emitˉstoreˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
-            Kernelˉprocessˉcontract.RESOURCE_STATE_BORROWED);
-        Emitˉstoreˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET,
-            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
-        Emitˉstoreˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 1);
-        Emitˉstoreˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 1);
+    private static void Emitˉstoreˉclientˉdataˉu32(
+        X64ˉcodeˉbuilder output,
+        uint offset,
+        uint value)
+    {
+        output.Emit(0x41, 0xC7, 0x80);
+        output.Emitˉu32(offset);
+        output.Emitˉu32(value);
     }
 
     private static void Emitˉvalidateˉborrowedˉresource(
@@ -1206,19 +1343,99 @@ public static class Kernelˉprocessˉx64
         uint resourceˉlength,
         bool allowˉaccessedˉleaf = false)
     {
-        output.Emit(0x4D, 0x8D, 0x8C, 0x24);
-        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
+        Emitˉvalidateˉborrowedˉresourceˉentry(
+            output,
+            failureˉlabel,
+            Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ID,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ATTRIBUTES,
+            resourceˉlength,
+            allowˉaccessedˉleaf);
+        Emitˉvalidateˉborrowedˉresourceˉentry(
+            output,
+            failureˉlabel,
+            Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ATTRIBUTES,
+            Kernelˉprocessˉcontract.EXECUTION_BUDGET_BYTES,
+            allowˉaccessedˉleaf);
+
+        Emitˉloadˉstateˉresource(output, Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
+        output.Emit(0x4D, 0x8B, 0x41,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_DATA_OFFSET);
+        output.Emit(0x49, 0x8D, 0x90);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET);
+        output.Emit(0x49, 0x39, 0x50,
+            (byte)Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        output.Emit(0x49, 0x8D, 0x90);
+        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET);
+        output.Emit(0x49, 0x39, 0x50,
+            (byte)Nativeˉexecutionˉcontextˉcontract.FILE_INPUT_TABLE_POINTER_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        output.Emit(0x48, 0xB8);
+        output.Emitˉu64(((ulong)Nativeˉserviceˉtableˉcontract.SIZE << 32) |
+            Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
+        output.Emit(0x49, 0x39, 0x80);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        output.Emit(0x49, 0x8B, 0x41,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_SERVICE_ADDRESS_OFFSET);
+        output.Emit(0x49, 0x39, 0x80);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET +
+            Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        output.Emit(0x48, 0xB8);
+        output.Emitˉu64(((ulong)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_VERSION << 32) |
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_MAGIC);
+        output.Emit(0x49, 0x39, 0x80);
+        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        Emitˉcompareˉclientˉdataˉu32(
+            output, failureˉlabel,
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET + 8,
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_BYTES);
+        Emitˉcompareˉclientˉdataˉu32(
+            output, failureˉlabel,
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET +
+                Kernelˉprocessˉcontract.BOOT_RESOURCE_COUNT_OFFSET,
+            Kernelˉprocessˉcontract.RESOURCE_COUNT);
+        Emitˉvalidateˉresourceˉentry(
+            output, failureˉlabel,
+            Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_FIRST_ENTRY_OFFSET,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ID,
+            Kernelˉprocessˉcontract.RESOURCE_KIND_WVB_MODULE);
+        Emitˉvalidateˉresourceˉentry(
+            output, failureˉlabel,
+            Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_SECOND_ENTRY_OFFSET,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID,
+            Kernelˉprocessˉcontract.RESOURCE_KIND_U32_EXECUTION_BUDGET);
+    }
+
+    private static void Emitˉvalidateˉborrowedˉresourceˉentry(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel,
+        uint recordˉoffset,
+        uint resourceˉid,
+        uint attributes,
+        uint resourceˉlength,
+        bool allowˉaccessedˉleaf)
+    {
+        Emitˉloadˉstateˉresource(output, recordˉoffset);
         Emitˉvalidateˉresourceˉheader(output, failureˉlabel);
         foreach (var Field in new (uint Offset, uint Value)[]
         {
             (Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
                 Kernelˉprocessˉcontract.RESOURCE_STATE_BORROWED),
-            (Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET, Kernelˉprocessˉcontract.RESOURCE_ID),
-            (Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET, Kernelˉprocessˉcontract.INIT_PROCESS_ID),
+            (Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET, resourceˉid),
+            (Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET,
+                Kernelˉprocessˉcontract.INIT_PROCESS_ID),
             (Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET,
                 Kernelˉprocessˉcontract.CLIENT_PROCESS_ID),
             (Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET, resourceˉlength),
-            (Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET, Kernelˉprocessˉcontract.RESOURCE_FLAGS),
+            (Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET, attributes),
             (Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 1),
             (Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 1),
         })
@@ -1235,7 +1452,6 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x48, 0x0F, 0xBA, 0xE8, 0x3F);
         if (allowˉaccessedˉleaf)
         {
-            // A successful hardware read may set the leaf's accessed bit.
             output.Emit(0x49, 0x8B, 0x10, 0x48, 0x83, 0xE2, 0xDF, 0x48, 0x39, 0xC2);
         }
         else
@@ -1243,24 +1459,43 @@ public static class Kernelˉprocessˉx64
             output.Emit(0x49, 0x39, 0x00);
         }
         output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+    }
 
+    private static void Emitˉvalidateˉresourceˉentry(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel,
+        uint recordˉoffset,
+        uint entryˉoffset,
+        uint resourceˉid,
+        uint kind)
+    {
+        Emitˉloadˉstateˉresource(output, recordˉoffset);
         output.Emit(0x4D, 0x8B, 0x41,
             (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_DATA_OFFSET);
-        output.Emit(0x49, 0x8D, 0x90);
-        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET);
-        output.Emit(0x49, 0x39, 0x50,
-            (byte)Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
-        output.Emit(0x49, 0x8D, 0x90);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET);
-        output.Emit(0x49, 0x39, 0x50,
-            (byte)Nativeˉexecutionˉcontextˉcontract.FILE_INPUT_TABLE_POINTER_OFFSET);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
-        output.Emit(0x48, 0xB8);
-        output.Emitˉu64(((ulong)Nativeˉserviceˉtableˉcontract.SIZE << 32) |
-            Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
+        var Entryˉbase = Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET + entryˉoffset;
+        Emitˉcompareˉclientˉdataˉu32(
+            output, failureˉlabel,
+            Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_ENTRY_ID_OFFSET, resourceˉid);
+        Emitˉcompareˉclientˉdataˉu32(
+            output, failureˉlabel,
+            Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_ENTRY_KIND_OFFSET, kind);
+        output.Emit(0x49, 0x8B, 0x41,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_ADDRESS_OFFSET);
         output.Emit(0x49, 0x39, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET);
+        output.Emitˉu32(Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_POINTER_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        output.Emit(0x41, 0x8B, 0x41,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET);
+        output.Emit(0x41, 0x39, 0x80);
+        output.Emitˉu32(Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_LENGTH_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        Emitˉcompareˉclientˉdataˉu32(
+            output, failureˉlabel,
+            Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_ENTRY_FLAGS_OFFSET,
+            Kernelˉprocessˉcontract.RESOURCE_BASE_FLAGS);
+        output.Emit(0x49, 0x83, 0xB8);
+        output.Emitˉu32(Entryˉbase + Kernelˉprocessˉcontract.BOOT_RESOURCE_RESERVED_OFFSET);
+        output.Emit(0x00);
         output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
         output.Emit(0x49, 0x8B, 0x41,
             (byte)Kernelˉprocessˉcontract.RESOURCE_SERVICE_ADDRESS_OFFSET);
@@ -1268,22 +1503,17 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET +
             Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET);
         output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
-        output.Emit(0x48, 0xB8);
-        output.Emitˉu64(((ulong)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_VERSION << 32) |
-            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_MAGIC);
-        output.Emit(0x49, 0x39, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
-        output.Emit(0x49, 0x8B, 0x41,
-            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_ADDRESS_OFFSET);
-        output.Emit(0x49, 0x39, 0x80);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET +
-            Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_POINTER_OFFSET);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+    }
+
+    private static void Emitˉcompareˉclientˉdataˉu32(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel,
+        uint offset,
+        uint value)
+    {
         output.Emit(0x41, 0x81, 0xB8);
-        output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET +
-            Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_LENGTH_OFFSET);
-        output.Emitˉu32(resourceˉlength);
+        output.Emitˉu32(offset);
+        output.Emitˉu32(value);
         output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
     }
 
@@ -1295,15 +1525,20 @@ public static class Kernelˉprocessˉx64
         Emitˉvalidateˉborrowedˉresource(
             output, failureˉlabel, resourceˉlength, allowˉaccessedˉleaf: true);
 
-        // Remove the sole client leaf before the root is retired. The
-        // subsequent CR3 activation flushes its non-global cached translation.
-        output.Emit(0x4D, 0x8B, 0x51,
-            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
-        output.Emit(0x49, 0xC7, 0x02);
-        output.Emitˉu32(0);
+        foreach (var Recordˉoffset in new[]
+        {
+            Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET,
+        })
+        {
+            Emitˉloadˉstateˉresource(output, Recordˉoffset);
+            output.Emit(0x4D, 0x8B, 0x51,
+                (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
+            output.Emit(0x49, 0xC7, 0x02);
+            output.Emitˉu32(0);
+        }
 
-        // Clear both context pointers and the complete private service/resource
-        // table extents. The owner page and its identity are left untouched.
+        Emitˉloadˉstateˉresource(output, Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
         output.Emit(0x4D, 0x8B, 0x41,
             (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_DATA_OFFSET);
         output.Emit(0x31, 0xC0);
@@ -1313,13 +1548,21 @@ public static class Kernelˉprocessˉx64
             output.Emitˉu32(Offset);
         }
 
-        Emitˉstoreˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
-            Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED);
-        Emitˉstoreˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0);
-        Emitˉstoreˉresourceˉu32(
-            output, Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0);
+        foreach (var Recordˉoffset in new[]
+        {
+            Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET,
+        })
+        {
+            Emitˉloadˉstateˉresource(output, Recordˉoffset);
+            Emitˉstoreˉresourceˉu32(
+                output, Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
+                Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED);
+            Emitˉstoreˉresourceˉu32(
+                output, Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0);
+            Emitˉstoreˉresourceˉu32(
+                output, Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0);
+        }
     }
 
     private static void Emitˉvalidateˉreleasedˉresource(
@@ -1327,30 +1570,20 @@ public static class Kernelˉprocessˉx64
         string failureˉlabel,
         uint resourceˉlength)
     {
-        output.Emit(0x4D, 0x8D, 0x8C, 0x24);
-        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
-        Emitˉvalidateˉresourceˉheader(output, failureˉlabel);
-        foreach (var Field in new (uint Offset, uint Value)[]
-        {
-            (Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
-                Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED),
-            (Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET, Kernelˉprocessˉcontract.RESOURCE_ID),
-            (Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET, Kernelˉprocessˉcontract.INIT_PROCESS_ID),
-            (Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0),
-            (Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET, resourceˉlength),
-            (Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET, Kernelˉprocessˉcontract.RESOURCE_FLAGS),
-            (Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 1),
-            (Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0),
-        })
-        {
-            Emitˉcompareˉresourceˉu32(output, Field.Offset, Field.Value);
-            output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
-        }
+        Emitˉvalidateˉreleasedˉresourceˉentry(
+            output, failureˉlabel,
+            Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ID,
+            Kernelˉprocessˉcontract.MODULE_RESOURCE_ATTRIBUTES,
+            resourceˉlength);
+        Emitˉvalidateˉreleasedˉresourceˉentry(
+            output, failureˉlabel,
+            Kernelˉprocessˉcontract.SECOND_RESOURCE_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID,
+            Kernelˉprocessˉcontract.BUDGET_RESOURCE_ATTRIBUTES,
+            Kernelˉprocessˉcontract.EXECUTION_BUDGET_BYTES);
 
-        output.Emit(0x4D, 0x8B, 0x51,
-            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
-        output.Emit(0x49, 0x83, 0x3A, 0x00);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        Emitˉloadˉstateˉresource(output, Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
         output.Emit(0x4D, 0x8B, 0x41,
             (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_DATA_OFFSET);
         output.Emit(0x31, 0xC0);
@@ -1360,6 +1593,51 @@ public static class Kernelˉprocessˉx64
             output.Emitˉu32(Offset);
             output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
         }
+    }
+
+    private static void Emitˉvalidateˉreleasedˉresourceˉentry(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel,
+        uint recordˉoffset,
+        uint resourceˉid,
+        uint attributes,
+        uint resourceˉlength)
+    {
+        Emitˉloadˉstateˉresource(output, recordˉoffset);
+        Emitˉvalidateˉresourceˉheader(output, failureˉlabel);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
+                Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED),
+            (Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET, resourceˉid),
+            (Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET,
+                Kernelˉprocessˉcontract.INIT_PROCESS_ID),
+            (Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0),
+            (Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET, resourceˉlength),
+            (Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET, attributes),
+            (Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 1),
+            (Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0),
+        })
+        {
+            Emitˉcompareˉresourceˉu32(output, Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        }
+        output.Emit(0x4D, 0x8B, 0x51,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
+        output.Emit(0x49, 0x83, 0x3A, 0x00);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+    }
+
+    private static void Emitˉloadˉchannelˉresource(X64ˉcodeˉbuilder output, uint recordˉoffset)
+    {
+        output.Emit(0x4D, 0x8D, 0x8A);
+        output.Emitˉu32(recordˉoffset - Kernelˉprocessˉcontract.CHANNEL_RECORD_OFFSET);
+    }
+
+    private static void Emitˉloadˉstateˉresource(X64ˉcodeˉbuilder output, uint recordˉoffset)
+    {
+        output.Emit(0x4D, 0x8D, 0x8C, 0x24);
+        output.Emitˉu32(recordˉoffset);
     }
 
     private static IEnumerable<uint> Revokedˉclientˉdataˉqwordˉoffsets()
@@ -1495,6 +1773,18 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(offset);
     }
 
+    private static void Emitˉloadˉstackˉrax(X64ˉcodeˉbuilder output, uint offset)
+    {
+        output.Emit(0x48, 0x8B, 0x84, 0x24);
+        output.Emitˉu32(offset);
+    }
+
+    private static void Emitˉloadˉstackˉr13(X64ˉcodeˉbuilder output, uint offset)
+    {
+        output.Emit(0x4C, 0x8B, 0xAC, 0x24);
+        output.Emitˉu32(offset);
+    }
+
     private static void Emitˉstoreˉgsˉu32(X64ˉcodeˉbuilder output, uint offset, uint value)
     {
         output.Emit(0x65, 0xC7, 0x04, 0x25);
@@ -1610,23 +1900,28 @@ public static class Kernelˉprocessˉx64
         ImmutableArray<byte> serviceˉimage,
         ImmutableArray<byte> clientˉimage,
         ImmutableArray<byte> runtimeˉinput,
+        ImmutableArray<byte> runtimeˉbudget,
         ImmutableArray<Objectˉrelocation> relocations)
     {
         var Object = Objectˉcodec.Readˉandˉverify(objectˉbytes.AsSpan()).Value;
-        if (Object.Sections.Length != 4 ||
+        if (Object.Sections.Length != 5 ||
             Object.Sections[0].Kind != Objectˉsectionˉkind.Code ||
             Object.Sections[1].Kind != Objectˉsectionˉkind.Readˉonlyˉdata ||
             Object.Sections[2].Kind != Objectˉsectionˉkind.Readˉonlyˉdata ||
             Object.Sections[3].Kind != Objectˉsectionˉkind.Readˉonlyˉdata ||
+            Object.Sections[4].Kind != Objectˉsectionˉkind.Readˉonlyˉdata ||
             !Object.Sections[0].Data.AsSpan().SequenceEqual(code.AsSpan()) ||
             !Object.Sections[1].Data.AsSpan().SequenceEqual(serviceˉimage.AsSpan()) ||
             !Object.Sections[2].Data.AsSpan().SequenceEqual(clientˉimage.AsSpan()) ||
             !Object.Sections[3].Data.AsSpan().SequenceEqual(runtimeˉinput.AsSpan()) ||
-            Object.Symbols.Length != 13 ||
+            !Object.Sections[4].Data.AsSpan().SequenceEqual(runtimeˉbudget.AsSpan()) ||
+            Object.Symbols.Length != 14 ||
             Object.Symbols[2].Name != "Windvale_resource_init_boot" ||
-            Object.Symbols[3].Name != Kernelˉprocessˉcontract.ENTER_SYMBOL ||
-            Object.Symbols[4].Name != Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL ||
-            Object.Symbols[5].Name != Kernelˉprocessˉcontract.SYSCALL_ENTRY_SYMBOL ||
+            Object.Symbols[3].Name != "Windvale_resource_init_budget" ||
+            Object.Symbols[3].Sectionˉindex != 4 ||
+            Object.Symbols[4].Name != Kernelˉprocessˉcontract.ENTER_SYMBOL ||
+            Object.Symbols[5].Name != Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL ||
+            Object.Symbols[6].Name != Kernelˉprocessˉcontract.SYSCALL_ENTRY_SYMBOL ||
             !Object.Relocations.AsSpan().SequenceEqual(relocations.AsSpan()))
         {
             throw new InvalidOperationException(

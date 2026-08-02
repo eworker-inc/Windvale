@@ -2,11 +2,11 @@
 
 ## Status and purpose
 
-Kernel paging version 3 remains the active contract in qualified probe 28. It retains the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and fixed 256 KiB kernel executable window while binding the adjacent memory-version-5/process-version-7 composition. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted. The complete terminal-cleanup composition is cross-host qualified; live QEMU evidence remains Windows-only.
+Kernel paging version 3 remains the active byte-identical contract in candidate probe 29. It retains the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and fixed 256 KiB kernel executable window while composing with memory version 6 and protected-process version 8. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted. The paging object itself is qualified through probe 28, while the new two-resource composition still awaits cross-host qualification.
 
 [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) owns the qualified version-1 root and probe-20/21 evidence. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its first executable-window expansion. [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) cross-host qualifies that form; [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns version 3.
 
-The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 7 separately derives two process roots with four init leaves and 37 initial interpreter leaves, adds exactly one immutable client alias through the fixed grant, then clears that leaf when the borrower becomes terminal. It does not mutate the kernel-root contract into a public mapping API.
+The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Candidate protected-process version 8 derives two process roots with five init leaves and 38 initial interpreter leaves, atomically adds two immutable client aliases, then clears both when the borrower becomes terminal. It does not mutate the kernel-root contract into a public mapping API.
 
 ## Ownership split
 
@@ -22,7 +22,7 @@ The installer imports `Windvale_boot_probe`, `Windvale_kernel_allocate_pages`, `
 The live installer fails before changing control state unless:
 
 - CPUID exposes extended leaf `0x80000001` and NX;
-- the memory-state header is exact version 5;
+- the memory-state header is exact version 6;
 - the retained handoff map is nonempty, at most 1 MiB, arithmetically valid, and wholly below 1 GiB;
 - the active stack is nonzero and below 1 GiB;
 - `SGDT` reports a nonempty GDT wholly below 1 GiB;
@@ -69,9 +69,9 @@ The record is evidence of the active kernel root, not a mutable page-map interfa
 
 ## Process-root relationship
 
-[Protected process version 7](Windvale-Protected-Process.md) allocates separate init and interpreter PML4/PDPT/page-directory roots after the kernel root is active. Each copies the kernel hierarchy, replaces exactly its process allocation's 2 MiB directory entry with a private page table, and adds user permission only to the required hierarchy path. Init has one RX, two RW/NX, and one owned RO/NX leaf. The interpreter begins with 32 RX, four RW/NX stack, one RW/NX context leaf, and an absent resource target. Init's one-shot grant installs a RO/NX alias of its owned page and publishes the client's resource tables before the client root is activated. Once the client exits or faults, the kernel accepts only the exact granted leaf plus the processor-maintained accessed bit, clears the leaf, and immediately loads init's CR3. Kernel memory version 5 aligns the complete arena to 2 MiB so both extents satisfy this one-private-table rule.
+[Protected process version 8](Windvale-Protected-Process.md) allocates separate init and interpreter PML4/PDPT/page-directory roots after the kernel root is active. Each copies the kernel hierarchy, replaces exactly its process allocation's 2 MiB directory entry with a private page table, and adds user permission only to the required hierarchy path. Init has one RX, two RW/NX, and two owned RO/NX leaves. The interpreter begins with 33 RX, four RW/NX stack, one RW/NX context leaf, and two absent resource targets. Init's atomic grant installs two RO/NX aliases and publishes `WVBR002` before the client root is activated. Once the client exits or faults, the kernel accepts only the two exact leaves plus their processor-maintained accessed bits, clears both, and immediately loads init's CR3. Kernel memory version 6 keeps the complete arena 2 MiB aligned so both extents satisfy this one-private-table rule.
 
-The kernel executable window remains supervisor-only in both process roots. When either process exits, blocks, or faults, the current bounded continuation remains mapped and returns to kernel code. Probe 28 retires but does not reclaim or recycle the client root; its following init CR3 load provides the required single-CPU non-global translation flush.
+The kernel executable window remains supervisor-only in both process roots. When either process exits, blocks, or faults, the current bounded continuation remains mapped and returns to kernel code. Probe 29 retires but does not reclaim or recycle the client root; its following init CR3 load provides the required single-CPU non-global translation flush.
 
 ## WVA privileged operations
 
@@ -92,7 +92,7 @@ The host planner reports:
 | `WVOS5002` | The executable address is unaligned or cannot use the two admitted code tables. |
 | `WVOS5003` | The table allocation overlaps the executable window. |
 
-The unchanged qualified probe-28 version-3 paging WVO is 1,244 bytes with SHA-256 `63e3cbd8cfb0f5a6260b660d4f2253c3f14b3a5f71271fe99ecf04644c4b6c2d`; its 851 code bytes have SHA-256 `fc841c0eb94adce393014597a404e1ffb6f5cb53dd472f8fb87bc837276e4b88`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, deterministic repetition, the permitted live accessed bit, and terminal zeroing. Decision 0097 records the cross-host-qualified probe-28 composition.
+The unchanged qualified version-3 paging WVO is 1,244 bytes with SHA-256 `63e3cbd8cfb0f5a6260b660d4f2253c3f14b3a5f71271fe99ecf04644c4b6c2d`; its 851 code bytes have SHA-256 `fc841c0eb94adce393014597a404e1ffb6f5cb53dd472f8fb87bc837276e4b88`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, deterministic repetition, two distinct live aliases, permitted accessed bits, and terminal zeroing. Decision 0097 records the qualified probe-28 baseline; Decision 0098 owns the candidate probe-29 composition.
 
 Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. Decision 0093 records the cross-host-qualified version-2 probe-24 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records current whole-image evidence.
 

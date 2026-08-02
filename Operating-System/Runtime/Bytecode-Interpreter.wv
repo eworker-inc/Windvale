@@ -5,6 +5,7 @@ capability file.read_bytes;
 // Every platform resolves this opaque name to one immutable admitted WVB.
 // Windvale OS maps it from a separately protected boot-resource page.
 data Runtimeˉinputˉname: text = "boot:main.wvb";
+data Runtimeˉbudgetˉname: text = "boot:main.budget";
 
 fn Validateˉenvelope(Input: bytes) -> i32 {
     let Total: u32 = Bytesˉlength(Input);
@@ -130,7 +131,7 @@ fn Validateˉexport(Input: bytes) -> i32 {
     return 0;
 }
 
-fn Executeˉcode(Input: bytes) -> i32 {
+fn Executeˉcode(Input: bytes, Budget: u32) -> i32 {
     let Codeˉoffset: u32 = Findˉsectionˉoffset(Input, 4u32);
     let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset - 4u32);
 
@@ -141,8 +142,11 @@ fn Executeˉcode(Input: bytes) -> i32 {
     var Stackˉdepth: u32 = 0u32;
     var Localˉvalue: i32 = 0;
     var Localˉinitialized: bool = false;
+    var Remainingˉbudget: u32 = Budget;
 
     while Cursor < End {
+        if Remainingˉbudget == 0u32 { return -34; }
+        Remainingˉbudget = Remainingˉbudget - 1u32;
         let Operation: u8 = Bytesˉreadˉu8(Input, Cursor);
         if Operation == 1u8 {
             if Cursor > End { return -21; }
@@ -188,6 +192,11 @@ fn Executeˉcode(Input: bytes) -> i32 {
 
 export fn Main() -> i32 {
     let Admittedˉmodule: bytes = file.read_bytes(Runtimeˉinputˉname);
+    let Budgetˉbytes: bytes = file.read_bytes(Runtimeˉbudgetˉname);
+    if Bytesˉlength(Budgetˉbytes) != 4u32 { return -16; }
+    let Executionˉbudget: u32 = Bytesˉreadˉu32ˉlittle(Budgetˉbytes, 0u32);
+    if Executionˉbudget == 0u32 { return -17; }
+    if Executionˉbudget > 64u32 { return -17; }
     var Status: i32 = Validateˉenvelope(Admittedˉmodule);
     if Status != 0 { return Status; }
     Status = Validateˉmodule(Admittedˉmodule);
@@ -202,5 +211,5 @@ export fn Main() -> i32 {
     if Status != 0 { return Status; }
     Status = Validateˉemptyˉsection(Admittedˉmodule, 6u32, -15);
     if Status != 0 { return Status; }
-    return Executeˉcode(Admittedˉmodule);
+    return Executeˉcode(Admittedˉmodule, Executionˉbudget);
 }

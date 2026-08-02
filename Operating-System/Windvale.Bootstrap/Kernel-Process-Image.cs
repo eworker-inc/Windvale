@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
@@ -26,6 +27,8 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     uint Bootˉresourceˉserviceˉoffset,
     ImmutableArray<byte> Admittedˉprogramˉbytes,
     ImmutableArray<byte> Admittedˉprogramˉdigest,
+    ImmutableArray<byte> Executionˉbudgetˉbytes,
+    ImmutableArray<byte> Executionˉbudgetˉdigest,
     ImmutableArray<byte> Clientˉshimˉobjectˉbytes,
     ImmutableArray<byte> Clientˉimageˉbytes);
 
@@ -40,8 +43,9 @@ public static class Kernelˉprocessˉimage
     private const string BOOT_RESOURCE_SERVICE_STENCIL_SYMBOL =
         "Windvale_os_boot_resource_read_bytes_stencil";
     private const string BOOT_RESOURCE_SERVICE_STENCIL_SHA256 =
-        "8FCCEE8F5FC7369F88C5FA018D8B05EEB4C6B0317C7E1A5AD9D7CB88B95B2422";
+        "B43BC2457FD5B5622095BAD6D59AD3CD2AA045BDE1CC79576AFBB419BAC02FD7";
     private const string BOOT_RESOURCE_NAME = "boot:main.wvb";
+    private const string BOOT_BUDGET_NAME = "boot:main.budget";
     private const string USER_RESOURCE = "Windvale.Os.Kernel.Process-User-Shim.wva";
     private const string USER_FAULT_RESOURCE = "Windvale.Os.Kernel.Process-User-Fault-Shim.wva";
 
@@ -83,7 +87,7 @@ public static class Kernelˉprocessˉimage
         var Serviceˉdigest = SHA256.HashData(Serviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Serviceˉidentity = Convert.ToHexString(Serviceˉdigest.AsSpan());
         if (!Serviceˉidentity.Equals(
-                "0FE423C499CE4F573095DDB9FF03355EE8B6AD927941F764DDAF2EAF9537F78B",
+                "0554D80340440BF8895F0BF066D355DA83337791F5404F2B72CA6DA214664467",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
@@ -107,7 +111,7 @@ public static class Kernelˉprocessˉimage
         var Interpreterˉdigest = SHA256.HashData(Interpreterˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Interpreterˉidentity = Convert.ToHexString(Interpreterˉdigest.AsSpan());
         if (!Interpreterˉidentity.Equals(
-                "25A223346C6357290680476A39A4E67821E5EFC9420933A90486F993AEF46BF2",
+                "7FBB25FE08136C86C063C08395451F8DB1219BD17E0ADC0748B5FA2D9A3F8FEE",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
@@ -169,6 +173,9 @@ public static class Kernelˉprocessˉimage
         {
             throw new InvalidOperationException("The process image is not bound to the admitted WVB identity.");
         }
+        var Executionˉbudgetˉbytes = ImmutableArray.Create<byte>(
+            (byte)Kernelˉprocessˉcontract.EXECUTION_BUDGET, 0, 0, 0);
+        var Executionˉbudgetˉdigest = SHA256.HashData(Executionˉbudgetˉbytes.AsSpan()).ToImmutableArray();
         return new(
             Policyˉcompilation.Moduleˉbytes,
             Policyˉobject,
@@ -185,6 +192,8 @@ public static class Kernelˉprocessˉimage
             Bootˉresourceˉserviceˉoffset,
             admission.Embeddedˉmoduleˉbytes,
             Admittedˉprogramˉdigest,
+            Executionˉbudgetˉbytes,
+            Executionˉbudgetˉdigest,
             Userˉassembly.Objectˉbytes,
             Userˉlink.Imageˉbytes);
     }
@@ -211,7 +220,7 @@ public static class Kernelˉprocessˉimage
                 Name: "Processˉfoundation",
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
-                Data.Length: 6,
+                Data.Length: 8,
                 Functions.Length: 3,
                 Exports.Length: 1,
                 Types.Length: 0,
@@ -234,24 +243,27 @@ public static class Kernelˉprocessˉimage
                 Name: "Bytecodeˉinterpreter",
                 Profile: Moduleˉprofile.Hosted,
                 Capabilities.Length: 1,
-                Data.Length: 1,
+                Data.Length: 2,
                 Functions.Length: 8,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||
             module.Module.Capabilities[0].Name != Capabilityˉcatalog.FILE_READ_BYTES ||
-            module.Module.Data[0] is not Textˉdataˉdeclaration { Value: BOOT_RESOURCE_NAME } ||
+            module.Module.Data.Count(Data => Data is Textˉdataˉdeclaration
+                { Value: BOOT_RESOURCE_NAME or BOOT_BUDGET_NAME }) != 2 ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
                 Instruction.Opcode is not Opcode.Bytesˉreadˉi32ˉlittle) ||
             module.Functions.SelectMany(Function => Function.Instructions).Count(Instruction =>
-                Instruction.Opcode is Opcode.Callˉcapability) != 1 ||
+                Instruction.Opcode is Opcode.Callˉcapability) != 2 ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
                 Instruction.Opcode is not Opcode.Branchˉfalse) ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
                 Instruction.Opcode is not Opcode.Call))
         {
             throw new InvalidOperationException(
-                $"The Windvale bytecode interpreter violated '{Kernelˉprocessˉcontract.TARGET_NAME}'.");
+                $"The Windvale bytecode interpreter violated '{Kernelˉprocessˉcontract.TARGET_NAME}': " +
+                $"data={module.Module.Data.Length}, functions={module.Module.Functions.Length}, " +
+                $"calls={module.Functions.SelectMany(Function => Function.Instructions).Count(Instruction => Instruction.Opcode is Opcode.Callˉcapability)}.");
         }
     }
 
@@ -323,11 +335,12 @@ public static class Kernelˉprocessˉimage
         ImmutableArray<byte> stencilˉobjectˉbytes)
     {
         var Stencil = Objectˉcodec.Readˉandˉverify(stencilˉobjectˉbytes.AsSpan()).Value;
+        var Expectedˉleaf = Buildˉbootˉresourceˉserviceˉleaf();
         if (Stencil.Sections.Length != 1 ||
             Stencil.Sections[0] is not
             {
                 Kind: Objectˉsectionˉkind.Readˉonlyˉdata,
-                Data.Length: 199,
+                Data.Length: (int)Kernelˉprocessˉcontract.BOOT_RESOURCE_SERVICE_BYTES,
             } ||
             Stencil.Symbols.Length != 1 ||
             Stencil.Symbols[0] is not
@@ -337,9 +350,11 @@ public static class Kernelˉprocessˉimage
                 Kind: Objectˉsymbolˉkind.Data,
                 Sectionˉindex: 0,
                 Offset: 0,
-                Size: 199,
+                Size: Kernelˉprocessˉcontract.BOOT_RESOURCE_SERVICE_BYTES,
             } ||
             !Stencil.Relocations.IsEmpty ||
+            Expectedˉleaf.Length != Kernelˉprocessˉcontract.BOOT_RESOURCE_SERVICE_BYTES ||
+            !Stencil.Sections[0].Data.AsSpan().SequenceEqual(Expectedˉleaf.AsSpan()) ||
             !Convert.ToHexString(SHA256.HashData(Stencil.Sections[0].Data.AsSpan())).Equals(
                 BOOT_RESOURCE_SERVICE_STENCIL_SHA256,
                 StringComparison.Ordinal))
@@ -349,10 +364,120 @@ public static class Kernelˉprocessˉimage
         }
         return Objectˉcodec.Write(new Objectˉfile(
             Objectˉarchitecture.X86ˉ64,
-            [new(".text.bresource", Objectˉsectionˉkind.Code, 16, 199, Stencil.Sections[0].Data)],
+            [new(".text.bresource", Objectˉsectionˉkind.Code, 16,
+                Kernelˉprocessˉcontract.BOOT_RESOURCE_SERVICE_BYTES, Stencil.Sections[0].Data)],
             [new(BOOT_RESOURCE_SERVICE_SYMBOL, Objectˉsymbolˉbinding.Export,
-                Objectˉsymbolˉkind.Function, 0, 0, 199)],
+                Objectˉsymbolˉkind.Function, 0, 0,
+                Kernelˉprocessˉcontract.BOOT_RESOURCE_SERVICE_BYTES)],
             [])).ToImmutableArray();
+    }
+
+    private static ImmutableArray<byte> Buildˉbootˉresourceˉserviceˉleaf()
+    {
+        const byte CONDITION_BELOW = 0x82;
+        const byte CONDITION_EQUAL = 0x84;
+        const byte CONDITION_NOT_EQUAL = 0x85;
+        const byte CONDITION_ABOVE = 0x87;
+        const string MODULE_NAME = "boot_resource_module_name";
+        const string TABLE = "boot_resource_table";
+        const string MODULE_LENGTH = "boot_resource_module_length";
+        const string SUCCESS = "boot_resource_success";
+        const string INVALID = "boot_resource_invalid";
+        const string MISSING = "boot_resource_missing";
+        var Output = new X64ˉcodeˉbuilder();
+
+        Output.Emit(0x41, 0xC7, 0x47, 0x40);
+        Output.Emitˉu32(0);
+        Output.Emit(0x41, 0x83, 0xF9, (byte)BOOT_RESOURCE_NAME.Length);
+        Output.Jumpˉif(CONDITION_EQUAL, MODULE_NAME);
+        Output.Emit(0x41, 0x83, 0xF9, (byte)BOOT_BUDGET_NAME.Length);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, MISSING);
+        Output.Emit(0x49, 0x8B, 0x00, 0x48, 0xBA);
+        Output.Emitˉu64(BinaryPrimitives.ReadUInt64LittleEndian("boot:mai"u8));
+        Output.Emit(0x48, 0x39, 0xD0);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, MISSING);
+        Output.Emit(0x49, 0x8B, 0x40, 0x08, 0x48, 0xBA);
+        Output.Emitˉu64(BinaryPrimitives.ReadUInt64LittleEndian("n.budget"u8));
+        Output.Emit(0x48, 0x39, 0xD0);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, MISSING);
+        Output.Emit(0xBA);
+        Output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_SECOND_ENTRY_OFFSET);
+        Output.Emit(0x41, 0xB9);
+        Output.Emitˉu32(Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID);
+        Output.Jump(TABLE);
+
+        Output.Mark(MODULE_NAME);
+        Output.Emit(0x49, 0x8B, 0x00, 0x48, 0xBA);
+        Output.Emitˉu64(BinaryPrimitives.ReadUInt64LittleEndian("boot:mai"u8));
+        Output.Emit(0x48, 0x39, 0xD0);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, MISSING);
+        Output.Emit(0x49, 0x8B, 0x40, 0x05, 0x48, 0xBA);
+        Output.Emitˉu64(BinaryPrimitives.ReadUInt64LittleEndian("main.wvb"u8));
+        Output.Emit(0x48, 0x39, 0xD0);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, MISSING);
+        Output.Emit(0xBA);
+        Output.Emitˉu32(Kernelˉprocessˉcontract.BOOT_RESOURCE_FIRST_ENTRY_OFFSET);
+        Output.Emit(0x41, 0xB9);
+        Output.Emitˉu32(Kernelˉprocessˉcontract.MODULE_RESOURCE_ID);
+
+        Output.Mark(TABLE);
+        Output.Emit(0x4D, 0x8B, 0x47, 0x60, 0x4D, 0x85, 0xC0);
+        Output.Jumpˉif(CONDITION_EQUAL, MISSING);
+        Output.Emit(0x48, 0xB8);
+        Output.Emitˉu64(((ulong)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_VERSION << 32) |
+            Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_MAGIC);
+        Output.Emit(0x49, 0x39, 0x00);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, INVALID);
+        Output.Emit(0x41, 0x83, 0x78, 0x08,
+            (byte)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_BYTES);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, INVALID);
+        Output.Emit(0x41, 0x83, 0x78, 0x0C,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_COUNT);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, INVALID);
+        Output.Emit(0x4C, 0x01, 0xC2);
+        Output.Emit(0x44, 0x39, 0x0A);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, INVALID);
+        Output.Emit(0x44, 0x39, 0x4A, 0x04);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, INVALID);
+        Output.Emit(0x83, 0x7A, 0x14, (byte)Kernelˉprocessˉcontract.RESOURCE_BASE_FLAGS);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, INVALID);
+        Output.Emit(0x48, 0x83, 0x7A, 0x18, 0x00);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, INVALID);
+        Output.Emit(0x48, 0x8B, 0x42, 0x08, 0x48, 0x85, 0xC0);
+        Output.Jumpˉif(CONDITION_EQUAL, INVALID);
+        Output.Emit(0x8B, 0x52, 0x10);
+        Output.Emit(0x41, 0x83, 0xF9, (byte)Kernelˉprocessˉcontract.MODULE_RESOURCE_ID);
+        Output.Jumpˉif(CONDITION_EQUAL, MODULE_LENGTH);
+        Output.Emit(0x83, 0xFA, (byte)Kernelˉprocessˉcontract.EXECUTION_BUDGET_BYTES);
+        Output.Jumpˉif(CONDITION_NOT_EQUAL, INVALID);
+        Output.Jump(SUCCESS);
+
+        Output.Mark(MODULE_LENGTH);
+        Output.Emit(0x83, 0xFA, 12);
+        Output.Jumpˉif(CONDITION_BELOW, INVALID);
+        Output.Emit(0x81, 0xFA);
+        Output.Emitˉu32(Kernelˉprocessˉcontract.MAXIMUM_RUNTIME_INPUT_BYTES);
+        Output.Jumpˉif(CONDITION_ABOVE, INVALID);
+
+        Output.Mark(SUCCESS);
+        Output.Emit(0x48, 0x89, 0x01, 0x89, 0x51, 0x08, 0xC7, 0x41, 0x0C);
+        Output.Emitˉu32(0);
+        Output.Emit(0x31, 0xC0, 0xC3);
+
+        Output.Mark(INVALID);
+        Output.Emit(0x41, 0xC7, 0x47, 0x40);
+        Output.Emitˉu32(6);
+        Output.Emit(0xB8);
+        Output.Emitˉu32(1);
+        Output.Emit(0xC3);
+
+        Output.Mark(MISSING);
+        Output.Emit(0x41, 0xC7, 0x47, 0x40);
+        Output.Emitˉu32(8);
+        Output.Emit(0xB8);
+        Output.Emitˉu32(1);
+        Output.Emit(0xC3);
+        return Output.Build();
     }
 
     private static uint Readˉlinkedˉserviceˉoffset(
