@@ -1,0 +1,14 @@
+{
+  "name": "windvale-website-local",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently --kill-others --names website,playground --prefix-colors blue,magenta \"npm:dev:site\" \"npm:dev:playground\"",
+    "dev:site": "vite --config Vite-Config.mjs",
+    "dev:playground": "npm run build --prefix Tools/Windvale.Playground && dotnet run --project Tools/Windvale.Playground/Windvale.Playground.csproj"
+  },
+  "devDependencies": {
+    "concurrently": "10.0.4",
+    "vite": "8.2.0"
+  }
+}

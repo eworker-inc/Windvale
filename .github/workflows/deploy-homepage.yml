@@ -6,7 +6,15 @@ on:
       - main
     paths:
       - .github/workflows/deploy-homepage.yml
+      - Compiler/Reference/**
+      - Object-Model/Windvale.ObjectModel/**
+      - Runtime/Windvale.Bytecode/**
+      - Runtime/Windvale.Runtime/**
+      - Tools/Windvale.Playground.Engine/**
+      - Tools/Windvale.Playground/**
       - Website/**
+      - Directory.Build.props
+      - global.json
   workflow_dispatch:
 
 permissions:
@@ -15,6 +23,10 @@ permissions:
 concurrency:
   group: windvale-homepage
   cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
 
 jobs:
   deploy:
@@ -27,13 +39,45 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install pinned .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: Tools/Windvale.Playground/package-lock.json
+
+      - name: Build local playground editor
+        working-directory: Tools/Windvale.Playground
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish standalone WebAssembly application
+        run: >-
+          dotnet publish Tools/Windvale.Playground/Windvale.Playground.csproj
+          --configuration Release
+          --output artifacts/playground
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Assemble same-origin static site
+        shell: bash
+        run: |
+          mkdir -p artifacts/site/playground
+          cp -a Website/. artifacts/site/
+          cp -a artifacts/playground/wwwroot/. artifacts/site/playground/
+
       - name: Publish static site
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: >-
-          npx --yes wrangler@4.118.0 pages deploy Website
+          npx --yes wrangler@4.118.0 pages deploy artifacts/site
           --project-name windvale-ca
           --branch main
           --commit-hash "${GITHUB_SHA}"

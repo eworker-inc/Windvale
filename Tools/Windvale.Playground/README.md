@@ -4,31 +4,35 @@ This project is the experimental, fully client-side Stage 0 Windvale playground.
 
 The host contract is defined by [`Specifications/Browser-Playground.md`](../../Specifications/Browser-Playground.md). The broader WebAssembly direction remains exploratory.
 
-Public playground: <https://play.windvale.ca/>
+Public playground: <https://windvale.ca/playground/>
 
 ## Run locally
 
 From the repository root:
 
 ```powershell
+npm ci --prefix Tools/Windvale.Playground
+npm run build --prefix Tools/Windvale.Playground
 dotnet run --project Tools/Windvale.Playground
 ```
 
-Open the HTTPS or HTTP address printed by the development server. The first download includes the Stage 0 managed runtime and compiler; subsequent loads can use the browser cache.
+Open <http://127.0.0.1:5174/> to test the playground alone. To test the website and shared theme together, also run `npm run dev` at the repository root and open <http://127.0.0.1:5173/playground/>. Vite proxies that path to the Blazor server while preserving the website origin. The first two commands build the locally hosted Monaco editor bundle; they are required only after the editor dependencies or integration change. The first browser download includes the editor, Stage 0 managed runtime, and compiler; subsequent loads can use the browser cache.
 
-The first measured .NET 10 Release publication totals approximately 2.77 MiB across its Brotli-compressed representations, or 9.20 MiB for the corresponding uncompressed static files. This dated local measurement is not a size contract.
+The current dated .NET 10 Release publication totals approximately 3.60 MiB across its Brotli-compressed representations, or 13.84 MiB for the corresponding uncompressed static files. The enhanced Monaco editor itself is approximately 1.03 MiB over Brotli. These local measurements are guidance, not a size contract.
 
 ## Publish static files
 
 ```powershell
+npm ci --prefix Tools/Windvale.Playground
+npm run build --prefix Tools/Windvale.Playground
 dotnet publish Tools/Windvale.Playground/Windvale.Playground.csproj `
   --configuration Release `
   --output artifacts/playground
 ```
 
-Deploy the contents of `artifacts/playground/wwwroot`, not its parent directory. The output has a relative base path and a `.nojekyll` marker, so the same publication can live at a custom-domain root or below a GitHub Pages repository path. The static host must serve WebAssembly with the `application/wasm` media type.
+Deploy the contents of `artifacts/playground/wwwroot`, not its parent directory. The output has a relative base path and a `.nojekyll` marker, so it can live below the website's `/playground/` path. The static host must serve WebAssembly with the `application/wasm` media type.
 
-The `Deploy playground` GitHub Actions workflow publishes this directory to the repository's GitHub Pages project site after relevant changes reach `main`. A later custom domain can point to the same Pages deployment without adding an application server.
+The `Deploy homepage` GitHub Actions workflow builds this project, copies its published `wwwroot` into the website artifact at `playground/`, and publishes the combined static site to Cloudflare Pages. It does not add an application server.
 
 ## Current boundary
 
@@ -36,5 +40,6 @@ The `Deploy playground` GitHub Actions workflow publishes this directory to the 
 - Capabilities: `console.write`, `console.write_line`, and `diagnostic.write_line`, denied until checked.
 - Limits: 64 KiB source, 250,000 instructions by default, 1,000,000 instructions maximum, 128 call frames, and 64 KiB for each output channel.
 - Evidence: compiler/runtime diagnostics, standard and diagnostic output, canonical WVB size and SHA-256, disassembly, profile, capabilities, exit code, and instruction count.
+- Editor: a local Monaco ESM bundle, Windvale-specific highlighting, contextual language completions, `Ctrl+M` insertion of the `ˉ` name separator, and compiler diagnostics projected as source markers. No editor asset is fetched from a CDN.
 
 The current interpreter runs on the browser UI thread. Moving compilation and execution to a Web Worker is a hardening step before accepting arbitrary hostile public input.
