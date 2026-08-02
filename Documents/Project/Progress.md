@@ -60,7 +60,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 
 ## Reading the evidence
 
-- [README progress table](../../README.md#progress-at-a-glance) describes user-visible project areas and their next milestones.
+- [README overview](../../README.md#what-works-today) summarizes user-visible working paths and routes current detail here.
 - [Development roadmap](Roadmap.md) defines the phase gates and detailed execution plan.
 - [Qualification evidence](Seed-Verification-Evidence.md) records the exact cross-host reports, artifacts, and digests.
 - [Changelog](../../CHANGELOG.md) summarizes the newest accepted slices.

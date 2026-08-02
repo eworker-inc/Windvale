@@ -55,22 +55,17 @@ function Buildˉprogressˉcard(item, index, items) {
     const card = Makeˉelement("button", `progress-card accent-${item.accent}`);
     const tooltipˉid = `progress-tooltip-${item.key}`;
     card.type = "button";
-    card.style.setProperty("--progress", `${item.percent}%`);
     card.setAttribute("aria-describedby", tooltipˉid);
     card.setAttribute("aria-expanded", "false");
 
     const top = Makeˉelement("span", "progress-card-top");
     const icon = Makeˉelement("span", "progress-icon material-symbol", item.icon);
     icon.setAttribute("aria-hidden", "true");
-    const percent = Makeˉelement("strong", "progress-percent", `${item.percent}%`);
-    top.append(icon, percent);
+    const indicator = Makeˉelement("strong", "progress-indicator", item.indicator);
+    top.append(icon, indicator);
 
     const name = Makeˉelement("span", "progress-name", item.name);
     const status = Makeˉelement("span", "progress-status", item.status);
-    const track = Makeˉelement("span", "progress-track");
-    const fill = Makeˉelement("span", "progress-fill");
-    track.setAttribute("aria-hidden", "true");
-    track.append(fill);
 
     const hint = Makeˉelement("span", "progress-hint", "Details");
     const tooltip = Makeˉelement("span", "progress-tooltip");
@@ -88,7 +83,7 @@ function Buildˉprogressˉcard(item, index, items) {
         tooltip.classList.add("align-right");
     }
 
-    card.append(top, name, status, track, hint, tooltip);
+    card.append(top, name, status, hint, tooltip);
     card.addEventListener("click", () => {
         const willˉopen = !card.classList.contains("tooltip-open");
         document.querySelectorAll(".progress-card.tooltip-open").forEach((openˉcard) => {

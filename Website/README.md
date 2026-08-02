@@ -21,7 +21,7 @@ Stop `npm run dev` before running a separate `dotnet build` or `dotnet publish` 
 
 ## Updating the progress cards
 
-All public component and development-milestone progress lives in `project-progress.js`. To update the dashboard, change an item's `percent`, `status`, `details`, and `next` values plus `PROGRESS_UPDATED`. The page creates both sets of cards, progress bars, and accessible tooltips automatically; no HTML or CSS change is needed.
+All public component and development-milestone progress lives in `project-progress.js`. To update the dashboard, change an item's evidence `indicator`, `status`, `details`, and `next` values plus `PROGRESS_UPDATED`. The page creates both sets of cards and accessible tooltips automatically; no HTML or CSS change is needed. Keep the indicators aligned with `Documents/Project/Progress.md`; do not invent percentage-complete estimates.
 
 The page uses a small self-hosted subset of Google Material Symbols Rounded. Its Apache 2.0 license is stored beside the font in `assets/material-symbols-LICENSE.txt`; visitors do not contact Google to load the icons.
 

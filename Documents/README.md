@@ -26,6 +26,12 @@ Windvale separates current status, enduring architecture, accepted decisions, ex
 - [Accepted decisions](Decisions/) — dated architecture and policy records; later decisions can amend earlier ones
 - [Agent handbook](../AGENTS.md) — durable contribution and verification rules for people and AI agents
 
+## Development and operations
+
+- [Seed development runbook](Runbooks/Seed-Development.md) — prerequisites, verification tiers, bootstrap convergence, CLI examples, assembly, and linking
+- [Contributing guide](../CONTRIBUTING.md) — public contribution, DCO sign-off, provenance, and pull-request requirements
+- [Website guide](../Website/README.md) — local preview, progress data, support configuration, analytics, and publication
+
 ## Evidence and operations
 
 - [Seed verification evidence](Project/Seed-Verification-Evidence.md) — exact cross-host qualification history and artifact identities

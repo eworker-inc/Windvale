@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title description">
   <title id="title">Windvale development progress for August 2026</title>
-  <desc id="description">Eight roadmap phases are qualified, Foundation modules are ongoing, the shared native backend is the current ownership transfer, three phases are in progress, and the Windvale OS runtime phase is planned.</desc>
+  <desc id="description">Nine roadmap phases are qualified, Foundation modules are ongoing, the shared native backend is the current ownership transfer, three phases are in progress, and no phases remain only planned.</desc>
 
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
@@ -21,7 +21,7 @@
 
   <g font-family="Segoe UI, Inter, Arial, sans-serif">
     <text x="48" y="62" fill="#f5f9fc" font-size="32" font-weight="700" letter-spacing="2">WINDVALE PROGRESS</text>
-    <text x="48" y="92" fill="#9db7c9" font-size="16">Evidence-based roadmap snapshot · 1 August 2026</text>
+    <text x="48" y="92" fill="#9db7c9" font-size="16">Evidence-based roadmap snapshot · 2 August 2026</text>
     <text x="1232" y="62" text-anchor="end" fill="#75cfff" font-size="15" font-weight="600">14 ROADMAP PHASES</text>
     <text x="1232" y="88" text-anchor="end" fill="#9db7c9" font-size="14">Overlapping gates, not a percentage meter</text>
 
@@ -30,9 +30,9 @@
         <rect width="220" height="92" rx="14" fill="#10283a" stroke="#2f5268"/>
         <circle cx="28" cy="30" r="10" fill="#59d98e"/>
         <path d="M23 30l4 4 7-9" fill="none" stroke="#062014" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="48" y="36" fill="#59d98e" font-size="25" font-weight="700">8</text>
+        <text x="48" y="36" fill="#59d98e" font-size="25" font-weight="700">9</text>
         <text x="78" y="35" fill="#f5f9fc" font-size="15" font-weight="700">QUALIFIED</text>
-        <text x="20" y="70" fill="#9db7c9" font-size="13">Phases 0–6 and 8</text>
+        <text x="20" y="70" fill="#9db7c9" font-size="13">Phases 0–6, 8, and 12</text>
       </g>
       <g transform="translate(289 124)">
         <rect width="220" height="92" rx="14" fill="#10283a" stroke="#2f5268"/>
@@ -59,9 +59,9 @@
       <g transform="translate(1012 124)">
         <rect width="220" height="92" rx="14" fill="#10283a" stroke="#2f5268"/>
         <circle cx="28" cy="30" r="10" fill="none" stroke="#8299a8" stroke-width="2"/>
-        <text x="48" y="36" fill="#aab9c3" font-size="25" font-weight="700">1</text>
+        <text x="48" y="36" fill="#aab9c3" font-size="25" font-weight="700">0</text>
         <text x="78" y="35" fill="#f5f9fc" font-size="15" font-weight="700">PLANNED</text>
-        <text x="20" y="70" fill="#9db7c9" font-size="13">Phase 12 OS runtime</text>
+        <text x="20" y="70" fill="#9db7c9" font-size="13">All phases underway</text>
       </g>
     </g>
 
@@ -155,11 +155,11 @@
         <text x="14" y="72" fill="#f5f9fc" font-size="15" font-weight="600">kernel</text>
       </g>
       <g transform="translate(905 404)">
-        <rect width="150" height="88" rx="12" fill="#10283a" stroke="#8299a8"/>
-        <rect width="150" height="5" rx="2.5" fill="#8299a8"/>
-        <text x="14" y="31" fill="#aab9c3" font-size="13" font-weight="700">PHASE 12</text>
-        <text x="14" y="53" fill="#f5f9fc" font-size="15" font-weight="600">Windvale OS</text>
-        <text x="14" y="72" fill="#f5f9fc" font-size="15" font-weight="600">runtime</text>
+        <rect width="150" height="88" rx="12" fill="#10283a" stroke="#59d98e"/>
+        <rect width="150" height="5" rx="2.5" fill="#59d98e"/>
+        <text x="14" y="31" fill="#59d98e" font-size="13" font-weight="700">PHASE 12</text>
+        <text x="14" y="55" fill="#f5f9fc" font-size="16" font-weight="600">Windvale OS</text>
+        <text x="14" y="76" fill="#9db7c9" font-size="12">Qualified</text>
       </g>
       <g transform="translate(1075 404)">
         <rect width="150" height="88" rx="12" fill="#10283a" stroke="#f4b860"/>
@@ -176,21 +176,21 @@
       <circle cx="38" cy="38" r="5" fill="#7bdff2"/>
       <path d="M38 15V5M61 38h10M38 61v10M15 38H5" fill="none" stroke="#7bdff2" stroke-width="2" stroke-linecap="round"/>
       <text x="70" y="34" fill="#7bdff2" font-size="14" font-weight="700" letter-spacing="1.5">CURRENT TRANSFER</text>
-      <text x="70" y="61" fill="#f5f9fc" font-size="18" font-weight="600">Move a measured part of W^X publication, arena ownership, or execution lifetime into Windvale.</text>
-      <text x="70" y="87" fill="#9db7c9" font-size="14">Windvale already produces, validates, patches, and returns the native stencil bytes consumed by the live host-service path.</text>
+      <text x="70" y="61" fill="#f5f9fc" font-size="18" font-weight="600">Reduce measured lowered-value pressure at slot 2,049, then continue exact native compiler preflight.</text>
+      <text x="70" y="87" fill="#9db7c9" font-size="14">ABI 17's verified 2,048-cell frame clears the former blocker; all 12 native service leaves are cross-host qualified.</text>
     </g>
 
     <g transform="translate(48 690)">
-      <text x="0" y="0" fill="#75cfff" font-size="13" font-weight="700" letter-spacing="1.4">PORTABILITY GOAL</text>
-      <text x="170" y="0" fill="#f5f9fc" font-size="15" font-weight="600">ONE VERIFIED WVB</text>
-      <path d="M330 -5h42" stroke="#47677b" stroke-width="2"/>
-      <path d="M365 -11l9 6-9 6" fill="none" stroke="#47677b" stroke-width="2"/>
-      <text x="394" y="0" fill="#f5f9fc" font-size="15">Windows</text>
-      <text x="505" y="0" fill="#6f8da1" font-size="15">+</text>
-      <text x="529" y="0" fill="#f5f9fc" font-size="15">Linux</text>
-      <text x="605" y="0" fill="#6f8da1" font-size="15">+</text>
-      <text x="629" y="0" fill="#f5f9fc" font-size="15">Windvale OS</text>
-      <text x="1184" y="0" text-anchor="end" fill="#7f9aac" font-size="12">Current contracts and evidence govern</text>
+      <text x="0" y="0" fill="#75cfff" font-size="13" font-weight="700" letter-spacing="1.4">PORTABILITY MILESTONE</text>
+      <text x="200" y="0" fill="#f5f9fc" font-size="15" font-weight="600">ONE CANONICAL WVB</text>
+      <path d="M365 -5h42" stroke="#47677b" stroke-width="2"/>
+      <path d="M400 -11l9 6-9 6" fill="none" stroke="#47677b" stroke-width="2"/>
+      <text x="429" y="0" fill="#f5f9fc" font-size="15">Windows</text>
+      <text x="540" y="0" fill="#6f8da1" font-size="15">+</text>
+      <text x="564" y="0" fill="#f5f9fc" font-size="15">Linux</text>
+      <text x="640" y="0" fill="#6f8da1" font-size="15">+</text>
+      <text x="664" y="0" fill="#f5f9fc" font-size="15">Windvale OS</text>
+      <text x="1184" y="0" text-anchor="end" fill="#59d98e" font-size="12">Qualified at f3eca7c</text>
     </g>
   </g>
 </svg>
