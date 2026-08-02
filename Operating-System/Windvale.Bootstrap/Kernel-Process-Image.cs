@@ -21,6 +21,10 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     ImmutableArray<byte> Interpreterˉmoduleˉbytes,
     ImmutableArray<byte> Interpreterˉnativeˉobjectˉbytes,
     ImmutableArray<byte> Interpreterˉdigest,
+    ImmutableArray<byte> Bootˉresourceˉserviceˉstencilˉobjectˉbytes,
+    ImmutableArray<byte> Bootˉresourceˉserviceˉobjectˉbytes,
+    uint Bootˉresourceˉserviceˉoffset,
+    ImmutableArray<byte> Admittedˉprogramˉbytes,
     ImmutableArray<byte> Admittedˉprogramˉdigest,
     ImmutableArray<byte> Clientˉshimˉobjectˉbytes,
     ImmutableArray<byte> Clientˉimageˉbytes);
@@ -31,8 +35,13 @@ public static class Kernelˉprocessˉimage
     private const string INIT_SERVICE_RESOURCE = "Windvale.Os.Kernel.Init-Resource-Service.wv";
     private const string INIT_SERVICE_SHIM_RESOURCE = "Windvale.Os.Kernel.Init-Resource-Service-Shim.wva";
     private const string INTERPRETER_RESOURCE = "Windvale.Os.Runtime.Bytecode-Interpreter.wv";
-    private const string INTERPRETER_DATA_PREFIX = "data Admittedˉmodule: bytes = [";
-    private const int MAXIMUM_INTERPRETED_MODULE_BYTES = 4_096;
+    private const string BOOT_RESOURCE_SERVICE_RESOURCE = "Windvale.Os.Runtime.Boot-Resource-Service.wva";
+    private const string BOOT_RESOURCE_SERVICE_SYMBOL = "Windvale_os_boot_resource_read_bytes";
+    private const string BOOT_RESOURCE_SERVICE_STENCIL_SYMBOL =
+        "Windvale_os_boot_resource_read_bytes_stencil";
+    private const string BOOT_RESOURCE_SERVICE_STENCIL_SHA256 =
+        "8FCCEE8F5FC7369F88C5FA018D8B05EEB4C6B0317C7E1A5AD9D7CB88B95B2422";
+    private const string BOOT_RESOURCE_NAME = "boot:main.wvb";
     private const string USER_RESOURCE = "Windvale.Os.Kernel.Process-User-Shim.wva";
     private const string USER_FAULT_RESOURCE = "Windvale.Os.Kernel.Process-User-Fault-Shim.wva";
 
@@ -80,13 +89,6 @@ public static class Kernelˉprocessˉimage
         }
 
         var Interpreterˉsource = Loadˉsource(INTERPRETER_RESOURCE);
-        if (!StringComparer.Ordinal.Equals(
-                Interpreterˉsource,
-                Injectˉinterpreterˉmodule(Interpreterˉsource, admission.Embeddedˉmoduleˉbytes)))
-        {
-            throw new InvalidOperationException(
-                "Bytecode-Interpreter.wv does not embed the exact WVB admitted by the kernel policy.");
-        }
         var Interpreterˉcompilation = Seedˉcompiler.Compile(
             Interpreterˉsource, "Bytecode-Interpreter.wv");
         if (!Interpreterˉcompilation.Success)
@@ -95,7 +97,7 @@ public static class Kernelˉprocessˉimage
                 $"The Windvale bytecode interpreter did not compile: {Interpreterˉcompilation.Diagnostics[0]}");
         }
         var Interpreterˉmodule = Moduleˉcodec.Readˉandˉverify(Interpreterˉcompilation.Moduleˉbytes.AsSpan());
-        Verifyˉinterpreter(Interpreterˉmodule, admission.Embeddedˉmoduleˉbytes);
+        Verifyˉinterpreter(Interpreterˉmodule);
         var Interpreterˉnative = X64ˉnativeˉbackend.Compile(Interpreterˉmodule);
         var Interpreterˉobject = Kernelˉwvbˉadmission.Renameˉmainˉexport(
             Nativeˉobjectˉsink.Writeˉwvo(Interpreterˉnative.Fragment),
@@ -103,12 +105,24 @@ public static class Kernelˉprocessˉimage
         var Interpreterˉdigest = SHA256.HashData(Interpreterˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Interpreterˉidentity = Convert.ToHexString(Interpreterˉdigest.AsSpan());
         if (!Interpreterˉidentity.Equals(
-                "909E624DF86E614B6F7DCAA61E75FFA685467015015BFAFD7B0772EE41A89920",
+                "25A223346C6357290680476A39A4E67821E5EFC9420933A90486F993AEF46BF2",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
                 $"The user-space interpreter has an unexpected WVB identity: {Interpreterˉidentity}.");
         }
+
+        var Bootˉresourceˉassembly = Assemblyˉcompiler.Assemble(
+            Loadˉsource(BOOT_RESOURCE_SERVICE_RESOURCE));
+        if (!Bootˉresourceˉassembly.Success)
+        {
+            throw new InvalidOperationException(
+                $"The boot-resource service did not assemble: " +
+                $"{Bootˉresourceˉassembly.Diagnostics[0].Code}: " +
+                Bootˉresourceˉassembly.Diagnostics[0].Message);
+        }
+        var Bootˉresourceˉserviceˉobject = Publishˉbootˉresourceˉservice(
+            Bootˉresourceˉassembly.Objectˉbytes);
 
         var Policyˉcompilation = Seedˉcompiler.Compile(Loadˉsource(POLICY_RESOURCE), "Process-Foundation.wv");
         if (!Policyˉcompilation.Success)
@@ -136,9 +150,15 @@ public static class Kernelˉprocessˉimage
             Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL,
             userˉfault ? 1 : 2);
         var Userˉlink = Linkˉcompiler.Link(
-            [new(Userˉassembly.Objectˉbytes), new(Interpreterˉobject)],
+            [
+                new(Userˉassembly.Objectˉbytes),
+                new(Interpreterˉobject),
+                new(Bootˉresourceˉserviceˉobject),
+            ],
             new(0, Kernelˉprocessˉcontract.USER_ENTRY_SYMBOL));
         Verifyˉlinkedˉimage(Userˉlink, "bytecode-interpreter client", Kernelˉprocessˉcontract.CLIENT_CODE_BYTES);
+        var Bootˉresourceˉserviceˉoffset = Readˉlinkedˉserviceˉoffset(
+            Userˉlink, Bootˉresourceˉserviceˉobject, BOOT_RESOURCE_SERVICE_SYMBOL);
 
         var Admittedˉprogramˉdigest = SHA256.HashData(admission.Embeddedˉmoduleˉbytes.AsSpan()).ToImmutableArray();
         if (!Convert.ToHexString(Admittedˉprogramˉdigest.AsSpan()).Equals(
@@ -158,21 +178,21 @@ public static class Kernelˉprocessˉimage
             Interpreterˉcompilation.Moduleˉbytes,
             Interpreterˉobject,
             Interpreterˉdigest,
+            Bootˉresourceˉassembly.Objectˉbytes,
+            Bootˉresourceˉserviceˉobject,
+            Bootˉresourceˉserviceˉoffset,
+            admission.Embeddedˉmoduleˉbytes,
             Admittedˉprogramˉdigest,
             Userˉassembly.Objectˉbytes,
             Userˉlink.Imageˉbytes);
     }
 
-    // Stage 0 test seam: change only the interpreter input while retaining the
-    // Windvale-owned bounded decoder and its deterministic failure results.
-    public static ImmutableArray<byte> Compileˉinterpreterˉmodule(ImmutableArray<byte> programˉbytes)
+    // Stage 0 test seam: compile the interpreter once; tests vary only the
+    // immutable resource supplied through its declared runtime capability.
+    public static ImmutableArray<byte> Compileˉinterpreterˉmodule()
     {
-        if (programˉbytes.IsDefault || programˉbytes.Length > MAXIMUM_INTERPRETED_MODULE_BYTES)
-        {
-            throw new ArgumentOutOfRangeException(nameof(programˉbytes));
-        }
         var Compilation = Seedˉcompiler.Compile(
-            Injectˉinterpreterˉmodule(Loadˉsource(INTERPRETER_RESOURCE), programˉbytes),
+            Loadˉsource(INTERPRETER_RESOURCE),
             "Bytecode-Interpreter.wv");
         if (!Compilation.Success)
         {
@@ -205,24 +225,24 @@ public static class Kernelˉprocessˉimage
         }
     }
 
-    private static void Verifyˉinterpreter(
-        Verifiedˉmodule module,
-        ImmutableArray<byte> admittedˉmoduleˉbytes)
+    private static void Verifyˉinterpreter(Verifiedˉmodule module)
     {
         if (module.Module is not
             {
                 Name: "Bytecodeˉinterpreter",
-                Profile: Moduleˉprofile.Portable,
-                Capabilities.Length: 0,
+                Profile: Moduleˉprofile.Hosted,
+                Capabilities.Length: 1,
                 Data.Length: 1,
                 Functions.Length: 8,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||
-            module.Module.Data[0] is not Bytesˉdataˉdeclaration Program ||
-            !Program.Values.AsSpan().SequenceEqual(admittedˉmoduleˉbytes.AsSpan()) ||
+            module.Module.Capabilities[0].Name != Capabilityˉcatalog.FILE_READ_BYTES ||
+            module.Module.Data[0] is not Textˉdataˉdeclaration { Value: BOOT_RESOURCE_NAME } ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
                 Instruction.Opcode is not Opcode.Bytesˉreadˉi32ˉlittle) ||
+            module.Functions.SelectMany(Function => Function.Instructions).Count(Instruction =>
+                Instruction.Opcode is Opcode.Callˉcapability) != 1 ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
                 Instruction.Opcode is not Opcode.Branchˉfalse) ||
             module.Functions.SelectMany(Function => Function.Instructions).All(Instruction =>
@@ -297,6 +317,75 @@ public static class Kernelˉprocessˉimage
         }
     }
 
+    private static ImmutableArray<byte> Publishˉbootˉresourceˉservice(
+        ImmutableArray<byte> stencilˉobjectˉbytes)
+    {
+        var Stencil = Objectˉcodec.Readˉandˉverify(stencilˉobjectˉbytes.AsSpan()).Value;
+        if (Stencil.Sections.Length != 1 ||
+            Stencil.Sections[0] is not
+            {
+                Kind: Objectˉsectionˉkind.Readˉonlyˉdata,
+                Data.Length: 199,
+            } ||
+            Stencil.Symbols.Length != 1 ||
+            Stencil.Symbols[0] is not
+            {
+                Name: BOOT_RESOURCE_SERVICE_STENCIL_SYMBOL,
+                Binding: Objectˉsymbolˉbinding.Export,
+                Kind: Objectˉsymbolˉkind.Data,
+                Sectionˉindex: 0,
+                Offset: 0,
+                Size: 199,
+            } ||
+            !Stencil.Relocations.IsEmpty ||
+            !Convert.ToHexString(SHA256.HashData(Stencil.Sections[0].Data.AsSpan())).Equals(
+                BOOT_RESOURCE_SERVICE_STENCIL_SHA256,
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "The Windvale OS boot-resource WVA stencil violated its fixed ABI-16 contract.");
+        }
+        return Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".text.bresource", Objectˉsectionˉkind.Code, 16, 199, Stencil.Sections[0].Data)],
+            [new(BOOT_RESOURCE_SERVICE_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 0, 199)],
+            [])).ToImmutableArray();
+    }
+
+    private static uint Readˉlinkedˉserviceˉoffset(
+        Linkˉresult link,
+        ImmutableArray<byte> objectˉbytes,
+        string symbol)
+    {
+        var Map = new UTF8Encoding(false, true).GetString(link.Mapˉbytes.AsSpan());
+        var Marker = $" kind=function name={symbol} address=";
+        var Markerˉoffset = Map.IndexOf(Marker, StringComparison.Ordinal);
+        if (Markerˉoffset < 0)
+        {
+            throw new InvalidOperationException(
+                "The linked client image is missing its boot-resource service leaf.");
+        }
+        var Addressˉstart = Markerˉoffset + Marker.Length;
+        var Addressˉend = Map.IndexOf(' ', Addressˉstart);
+        if (Addressˉend < 0 ||
+            !uint.TryParse(Map.AsSpan(Addressˉstart, Addressˉend - Addressˉstart), out var Address) ||
+            Address > (uint)link.Imageˉbytes.Length)
+        {
+            throw new InvalidOperationException(
+                "The linked boot-resource service address is malformed or outside the client image.");
+        }
+        var Object = Objectˉcodec.Readˉandˉverify(objectˉbytes.AsSpan()).Value;
+        var Leaf = Object.Sections[0].Data;
+        if ((uint)Leaf.Length > (uint)link.Imageˉbytes.Length - Address ||
+            !link.Imageˉbytes.AsSpan((int)Address, Leaf.Length).SequenceEqual(Leaf.AsSpan()))
+        {
+            throw new InvalidOperationException(
+                "The linked boot-resource service bytes do not match their verified WVA leaf.");
+        }
+        return Address;
+    }
+
     private static int Countˉsequence(ReadOnlySpan<byte> source, ReadOnlySpan<byte> sequence)
     {
         var Count = 0;
@@ -308,30 +397,6 @@ public static class Kernelˉprocessˉimage
             }
         }
         return Count;
-    }
-
-    private static string Injectˉinterpreterˉmodule(
-        string source,
-        ImmutableArray<byte> moduleˉbytes)
-    {
-        var Valuesˉstart = source.IndexOf(INTERPRETER_DATA_PREFIX, StringComparison.Ordinal);
-        if (Valuesˉstart < 0)
-        {
-            throw new InvalidOperationException(
-                "Bytecode-Interpreter.wv is missing its admitted-module declaration.");
-        }
-        Valuesˉstart += INTERPRETER_DATA_PREFIX.Length;
-        var Valuesˉend = source.IndexOf("];", Valuesˉstart, StringComparison.Ordinal);
-        if (Valuesˉend < 0 ||
-            source.IndexOf(INTERPRETER_DATA_PREFIX, Valuesˉstart, StringComparison.Ordinal) >= 0)
-        {
-            throw new InvalidOperationException(
-                "Bytecode-Interpreter.wv has an ambiguous admitted-module declaration.");
-        }
-        return string.Concat(
-            source.AsSpan(0, Valuesˉstart),
-            string.Join(", ", moduleˉbytes),
-            source.AsSpan(Valuesˉend));
     }
 
     private static string Loadˉsource(string resource)

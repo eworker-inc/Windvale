@@ -23,5 +23,6 @@
     <EmbeddedResource Include="../Kernel/Wvb-Admission.wv" LogicalName="Windvale.Os.Kernel.Wvb-Admission.wv" />
     <EmbeddedResource Include="../Kernel/X64-Kernel-Shims.wva" LogicalName="Windvale.Os.Kernel.X64-Kernel-Shims.wva" />
     <EmbeddedResource Include="../Runtime/Bytecode-Interpreter.wv" LogicalName="Windvale.Os.Runtime.Bytecode-Interpreter.wv" />
+    <EmbeddedResource Include="../Runtime/Boot-Resource-Service.wva" LogicalName="Windvale.Os.Runtime.Boot-Resource-Service.wva" />
   </ItemGroup>
 </Project>

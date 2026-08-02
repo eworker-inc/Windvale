@@ -2,11 +2,11 @@
 
 ## Status and purpose
 
-Kernel paging version 3 is cross-host qualified through probe 25 at exact commit `33555fd`. It keeps the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, and supervisor write protection while expanding the fixed kernel executable window to 256 KiB for the measured section-derived interpreter composition. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted under the larger bound.
+Kernel paging version 3 is cross-host qualified through probe 25 at exact commit `33555fd`. Candidate probe 26 retains its six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, and fixed 256 KiB kernel executable window while binding the adjacent memory-version-4 process composition. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted under the current bound.
 
 [Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) owns the qualified version-1 root and probe-20/21 evidence. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its first executable-window expansion. [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) cross-host qualifies that form; [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns version 3.
 
-The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 4 separately derives two process roots with three init leaves and 37 interpreter leaves; it does not mutate the kernel-root contract into a public mapping API.
+The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 5 separately derives two process roots with three init leaves and 38 interpreter leaves; it does not mutate the kernel-root contract into a public mapping API.
 
 ## Ownership split
 
@@ -69,7 +69,7 @@ The record is evidence of the active kernel root, not a mutable page-map interfa
 
 ## Process-root relationship
 
-[Protected process version 4](Windvale-Protected-Process.md) allocates separate init and interpreter PML4/PDPT/page-directory roots after the kernel root is active. Each copies the kernel hierarchy, replaces exactly its process allocation's 2 MiB directory entry with a private page table, and adds user permission only to the required hierarchy path. Init has one RX and two RW/NX user leaves. The interpreter has 32 RX, four RW/NX stack, and one RW/NX context leaf. Kernel memory version 3 aligns the complete arena to 2 MiB so both process extents satisfy this one-private-table rule. The machine switches roots only after every page, descriptor, process record, channel record, and syscall MSR is complete.
+[Protected process version 5](Windvale-Protected-Process.md) allocates separate init and interpreter PML4/PDPT/page-directory roots after the kernel root is active. Each copies the kernel hierarchy, replaces exactly its process allocation's 2 MiB directory entry with a private page table, and adds user permission only to the required hierarchy path. Init has one RX and two RW/NX user leaves. The interpreter has 32 RX, four RW/NX stack, one RW/NX context leaf, and one RO/NX boot-resource leaf. Kernel memory version 4 aligns the complete arena to 2 MiB so both process extents satisfy this one-private-table rule. The machine switches roots only after every page, descriptor, resource table, process record, channel record, and syscall MSR is complete.
 
 The kernel executable window remains supervisor-only in both process roots. When either process exits, blocks, or faults, the current bounded continuation remains mapped and returns to kernel code; version 3 does not yet reclaim or recycle either root.
 
@@ -92,7 +92,7 @@ The host planner reports:
 | `WVOS5002` | The executable address is unaligned or cannot use the two admitted code tables. |
 | `WVOS5003` | The table allocation overlaps the executable window. |
 
-The current version-3 paging WVO is 1,244 bytes with SHA-256 `1112e7f21b63ee339a2e17211ae9ce96712b446b5039384f9d38e18ff0430acd`; its 851 code bytes have SHA-256 `147de96e836a0e3ea9f3cb0b937742f56c8f45cb9f5c9e57cb06288e0035c398`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, and deterministic repetition.
+The candidate probe-26 version-3 paging WVO is 1,244 bytes with SHA-256 `1922983d5b6323e6d6a111169be1e1e89beb477e20810f4706d62f58d4feed19`; its 851 code bytes have SHA-256 `7e06755a6b2a8b492cd696ba0d1ada7410437a6e33867cd1a8673b33f3de8fb2`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, and deterministic repetition. Decision 0094 retains the cross-host-qualified probe-25 identities.
 
 Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. Decision 0093 records the cross-host-qualified version-2 probe-24 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records the larger cross-host-qualified probe-25 images and live evidence.
 

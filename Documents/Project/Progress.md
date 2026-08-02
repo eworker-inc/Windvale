@@ -27,8 +27,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
 | 9. Shared native backend | 🎯 Current transfer | ABI 16/context 7, all 12 native service leaves, and verified internal calls through 64 parameters are qualified; exact compiler preflight passes the former eight-parameter blocker. | Admit the compiler's sole 1,049-local function under a measured frame contract. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
-| 11. Boot path and kernel | 🚧 In progress | Probe 25 is cross-host qualified and keeps two isolated CPL3 roots and the init service while deriving and validating real WVB section payloads in the interpreter process. | Let a runtime-supplied boot resource or third runnable measure the next kernel boundary. |
-| 12. Runtime on Windvale OS | 🚧 In progress | One embedded admitted WVB executes through a section-derived bounded Windvale interpreter at CPL3 and sends its result to the Windvale init service. | Introduce a bounded runtime-supplied module input and broaden semantic verification only from measured programs; keep later JIT publication outside the kernel. |
+| 11. Boot path and kernel | 🚧 In progress | Probe 25 is cross-host qualified. Candidate probe 26 keeps two isolated CPL3 roots and init while adding one RO/NX boot-resource page and exact ABI-16 service leaf. | Qualify probe 26, then let resource transfer or a third runnable measure the next kernel boundary. |
+| 12. Runtime on Windvale OS | 🚧 In progress | One fixed admitted WVB is supplied at runtime to a section-derived Windvale interpreter at CPL3 and its result reaches the Windvale init service. | Move ownership toward init/package service or broaden semantic verification only from measured programs; keep later JIT publication outside the kernel. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 
 ## Working end to end
@@ -51,6 +51,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Exact admitted WVB → Windvale interpreter at CPL3 → result 29 → init service
 - ✅ Probe 24 → Windows and pinned-Debian Seed plus OS-test qualification
 - ✅ Probe 25 → section-derived interpreter → Windows and pinned-Debian Seed plus OS-test qualification
+- 🚧 Probe 26 → separate RO/NX WVB boot resource → Windows focused tests and all four pinned-QEMU scenarios pass; cross-host qualification pending
 - 🚧 Runtime-supplied boot resource or third-runnable pressure
 
 ## Reading the evidence

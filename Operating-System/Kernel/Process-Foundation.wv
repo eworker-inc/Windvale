@@ -2,8 +2,8 @@ module Processˉfoundation profile portable;
 
 // Exact SHA-256 identities of the CPL3 interpreter, its admitted WVB input,
 // and the Windvale init service. All three must match before pages are published.
-data Interpreterˉdigest: bytes = [144, 158, 98, 77, 248, 110, 97, 75, 111, 125, 202, 166, 30, 117, 255, 166, 133, 70, 112, 21, 1, 91, 250, 253, 123, 7, 114, 238, 65, 168, 153, 32];
-data Expectedˉinterpreterˉdigest: bytes = [144, 158, 98, 77, 248, 110, 97, 75, 111, 125, 202, 166, 30, 117, 255, 166, 133, 70, 112, 21, 1, 91, 250, 253, 123, 7, 114, 238, 65, 168, 153, 32];
+data Interpreterˉdigest: bytes = [37, 162, 35, 52, 108, 99, 87, 41, 6, 128, 71, 106, 57, 164, 230, 120, 33, 229, 239, 201, 66, 9, 51, 169, 4, 134, 249, 147, 174, 244, 107, 242];
+data Expectedˉinterpreterˉdigest: bytes = [37, 162, 35, 52, 108, 99, 87, 41, 6, 128, 71, 106, 57, 164, 230, 120, 33, 229, 239, 201, 66, 9, 51, 169, 4, 134, 249, 147, 174, 244, 107, 242];
 data Programˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
 data Expectedˉprogramˉdigest: bytes = [127, 8, 239, 187, 32, 198, 204, 105, 193, 0, 240, 116, 7, 247, 89, 98, 91, 56, 192, 42, 63, 5, 187, 78, 141, 171, 204, 123, 221, 16, 196, 226];
 data Serviceˉdigest: bytes = [71, 141, 252, 211, 111, 237, 124, 128, 99, 207, 179, 245, 58, 106, 19, 98, 189, 165, 53, 54, 86, 51, 155, 115, 11, 229, 115, 161, 190, 143, 149, 176];
@@ -37,21 +37,21 @@ export fn Main() -> i32 {
     let Initˉprocessˉid: u32 = 1u32;
     let Clientˉprocessˉid: u32 = 2u32;
     let Initˉmemoryˉpages: u32 = 3u32;
-    let Interpreterˉmemoryˉpages: u32 = 37u32;
+    let Interpreterˉmemoryˉpages: u32 = 38u32;
     let Initˉinstructionˉbudget: u32 = 64u32;
-    let Interpreterˉinstructionˉbudget: u32 = 4671u32;
+    let Interpreterˉinstructionˉbudget: u32 = 4678u32;
     let Interpreterˉcallˉdepth: u32 = 3u32;
-    let Interpreterˉprofile: u32 = 2u32;
+    let Interpreterˉprofile: u32 = 3u32;
     let Handleˉbudget: u32 = 1u32;
     let Syscallˉbudget: u32 = 2u32;
     if Initˉprocessˉid != 1u32 { return 0; }
     if Clientˉprocessˉid != 2u32 { return 0; }
     if Initˉmemoryˉpages != 3u32 { return 0; }
-    if Interpreterˉmemoryˉpages != 37u32 { return 0; }
+    if Interpreterˉmemoryˉpages != 38u32 { return 0; }
     if Initˉinstructionˉbudget != 64u32 { return 0; }
-    if Interpreterˉinstructionˉbudget != 4671u32 { return 0; }
+    if Interpreterˉinstructionˉbudget != 4678u32 { return 0; }
     if Interpreterˉcallˉdepth != 3u32 { return 0; }
-    if Interpreterˉprofile != 2u32 { return 0; }
+    if Interpreterˉprofile != 3u32 { return 0; }
     if Handleˉbudget != 1u32 { return 0; }
     if Syscallˉbudget != 2u32 { return 0; }
     if !Hasˉchannelˉendpoint(0u32, 1u32, 2u32, 2u32) { return 0; }

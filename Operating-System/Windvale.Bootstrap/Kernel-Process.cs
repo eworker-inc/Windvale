@@ -1,19 +1,21 @@
 using System.Buffers.Binary;
 using System.Collections.Immutable;
+using System.Security.Cryptography;
 using Windvale.Compiler.Native;
 
 namespace Windvale.Bootstrap;
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 4;
-    public const string TARGET_NAME = "x86-64-kernel-process-v4";
+    public const int FORMAT_VERSION = 5;
+    public const string TARGET_NAME = "x86-64-kernel-process-v5";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
     public const string INIT_SERVICE_ENTRY_SYMBOL = "Windvale_init_resource_user_entry";
     public const string INIT_SERVICE_MAIN_SYMBOL = "Windvale_init_resource_service_main";
     public const string BYTECODE_INTERPRETER_MAIN_SYMBOL = "Windvale_user_bytecode_interpreter_main";
+    public const string BOOT_RESOURCE_SERVICE_SYMBOL = "Windvale_os_boot_resource_read_bytes";
     public const string SYSCALL_ENTRY_SYMBOL = "Windvale_kernel_x64_process_syscall";
     public const string EXCEPTION_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception";
     public const string EXCEPTION_6_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_6_entry";
@@ -40,9 +42,9 @@ public static class Kernelˉprocessˉcontract
     public const uint THREAD_STATE_FAULTED = 4;
     public const uint THREAD_STATE_WAITING = 5;
     public const uint INIT_MEMORY_PAGE_BUDGET = 3;
-    public const uint CLIENT_MEMORY_PAGE_BUDGET = 37;
+    public const uint CLIENT_MEMORY_PAGE_BUDGET = 38;
     public const uint INIT_INSTRUCTION_BUDGET = 64;
-    public const uint CLIENT_INSTRUCTION_BUDGET = 4_671;
+    public const uint CLIENT_INSTRUCTION_BUDGET = 4_678;
     public const uint INIT_CALL_DEPTH_BUDGET = 1;
     public const uint CLIENT_CALL_DEPTH_BUDGET = 3;
     public const uint HANDLE_BUDGET = 1;
@@ -57,7 +59,7 @@ public static class Kernelˉprocessˉcontract
     public const uint SYSCALL_RECEIVE = 2;
     public const uint SYSCALL_EXIT = 3;
     public const ulong INIT_ALLOCATION_PAGES = 7;
-    public const ulong CLIENT_ALLOCATION_PAGES = 41;
+    public const ulong CLIENT_ALLOCATION_PAGES = 42;
     public const ulong TABLE_PAGES = 4;
     public const ulong TABLE_BYTES = TABLE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
     public const ulong PML4_PAGE = 0;
@@ -73,14 +75,25 @@ public static class Kernelˉprocessˉcontract
     public const ulong INIT_DATA_PAGE = INIT_STACK_PAGE + INIT_STACK_PAGES;
     public const ulong CLIENT_STACK_PAGE = USER_CODE_PAGE + CLIENT_CODE_PAGES;
     public const ulong CLIENT_DATA_PAGE = CLIENT_STACK_PAGE + CLIENT_STACK_PAGES;
+    public const ulong CLIENT_RUNTIME_INPUT_PAGE = CLIENT_DATA_PAGE + 1;
     public const ulong CLIENT_CODE_BYTES = CLIENT_CODE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
+    public const int MAXIMUM_RUNTIME_INPUT_BYTES = 4_096;
+    public const uint BOOT_RESOURCE_SERVICE_BYTES = 199;
+    public const uint RUNTIME_SERVICE_TABLE_OFFSET = 128;
+    public const uint BOOT_RESOURCE_TABLE_OFFSET = 256;
+    public const uint BOOT_RESOURCE_TABLE_MAGIC = 0x5242_5657;
+    public const uint BOOT_RESOURCE_TABLE_VERSION = 1;
+    public const uint BOOT_RESOURCE_TABLE_BYTES = 32;
+    public const uint BOOT_RESOURCE_DATA_POINTER_OFFSET = 16;
+    public const uint BOOT_RESOURCE_DATA_LENGTH_OFFSET = 24;
+    public const uint BOOT_RESOURCE_RESERVED_OFFSET = 28;
     public const ulong ENTRY_USER = 1UL << 2;
     public const uint INIT_RECORD_OFFSET = 256;
     public const uint CLIENT_RECORD_OFFSET = 768;
     public const uint CHANNEL_RECORD_OFFSET = 1_024;
     public const uint RECORD_BYTES = 256;
-    public const ulong RECORD_MAGIC = 0x3430_434F_5250_5657;
-    public const uint RECORD_VERSION = 4;
+    public const ulong RECORD_MAGIC = 0x3530_434F_5250_5657;
+    public const uint RECORD_VERSION = 5;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -108,7 +121,7 @@ public static class Kernelˉprocessˉcontract
     public const uint CODE_PAGE_COUNT_OFFSET = 248;
     public const uint RUNTIME_KIND_OFFSET = 252;
     public const uint RUNTIME_PROFILE_NONE = 0;
-    public const uint RUNTIME_PROFILE_SECTION_INTERPRETER = 2;
+    public const uint RUNTIME_PROFILE_BOOT_RESOURCE_INTERPRETER = 3;
     public const uint WAIT_REASON_NONE = 0;
     public const uint WAIT_REASON_CHANNEL_RECEIVE = 1;
     public const ulong CHANNEL_MAGIC = 0x3130_4E41_4843_5657;
@@ -150,6 +163,8 @@ public sealed record Kernelˉprocessˉplan(
     ImmutableArray<byte> Userˉcodeˉbytes,
     ImmutableArray<byte> Userˉstackˉbytes,
     ImmutableArray<byte> Userˉdataˉbytes,
+    ulong Userˉruntimeˉinputˉaddress,
+    ImmutableArray<byte> Userˉruntimeˉinputˉbytes,
     ImmutableArray<byte> Processˉrecord);
 
 public sealed record Kernelˉprocessˉplanˉresult(
@@ -169,6 +184,8 @@ public static class Kernelˉprocessˉplanner
         ReadOnlySpan<byte> userˉimage,
         ReadOnlySpan<byte> moduleˉdigest,
         ReadOnlySpan<byte> programˉdigest,
+        ReadOnlySpan<byte> runtimeˉinput,
+        uint bootˉresourceˉserviceˉoffset,
         Kernelˉprocessˉdefinition definition)
     {
         ArgumentNullException.ThrowIfNull(kernelˉpaging);
@@ -224,7 +241,7 @@ public static class Kernelˉprocessˉplanner
             : Kernelˉprocessˉcontract.RUNTIME_KIND_BYTECODE_INTERPRETER;
         var Runtimeˉprofile = Isˉinit
             ? Kernelˉprocessˉcontract.RUNTIME_PROFILE_NONE
-            : Kernelˉprocessˉcontract.RUNTIME_PROFILE_SECTION_INTERPRETER;
+            : Kernelˉprocessˉcontract.RUNTIME_PROFILE_BOOT_RESOURCE_INTERPRETER;
         var Allocationˉbytes = Allocationˉpages * Kernelˉpagingˉcontract.PAGE_BYTES;
         if (allocationˉaddress == 0 ||
             (allocationˉaddress & (Kernelˉpagingˉcontract.PAGE_BYTES - 1)) != 0 ||
@@ -252,10 +269,23 @@ public static class Kernelˉprocessˉplanner
         {
             return Fail("WVOS6007", "The process runtime-input identity is invalid for its role.");
         }
+        if ((Isˉinit && (!runtimeˉinput.IsEmpty || bootˉresourceˉserviceˉoffset != 0)) ||
+            (Isˉclient &&
+                (runtimeˉinput.Length is < 12 or > Kernelˉprocessˉcontract.MAXIMUM_RUNTIME_INPUT_BYTES ||
+                 bootˉresourceˉserviceˉoffset > (uint)userˉimage.Length ||
+                 Kernelˉprocessˉcontract.BOOT_RESOURCE_SERVICE_BYTES >
+                    (uint)userˉimage.Length - bootˉresourceˉserviceˉoffset ||
+                 !SHA256.HashData(runtimeˉinput).AsSpan().SequenceEqual(programˉdigest))))
+        {
+            return Fail("WVOS6008", "The process runtime-input resource or service leaf is invalid for its role.");
+        }
 
         var Userˉcodeˉaddress = Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.USER_CODE_PAGE);
         var Userˉstackˉaddress = Pageˉaddress(allocationˉaddress, Stackˉpage);
         var Userˉdataˉaddress = Pageˉaddress(allocationˉaddress, Dataˉpage);
+        var Userˉruntimeˉinputˉaddress = Isˉclient
+            ? Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.CLIENT_RUNTIME_INPUT_PAGE)
+            : 0;
         var Executableˉend = kernelˉpaging.Executableˉaddress + Kernelˉpagingˉcontract.EXECUTABLE_BYTES;
         if (allocationˉaddress < Executableˉend && Allocationˉend > kernelˉpaging.Executableˉaddress)
         {
@@ -307,6 +337,12 @@ public static class Kernelˉprocessˉplanner
         Writeˉuserˉentry(Tables, Regionˉaddress, Userˉdataˉaddress,
             Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE |
             Kernelˉprocessˉcontract.ENTRY_USER | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+        if (Isˉclient)
+        {
+            Writeˉuserˉentry(Tables, Regionˉaddress, Userˉruntimeˉinputˉaddress,
+                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
+                Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+        }
 
         var Code = new byte[checked((int)(Codeˉpages * Kernelˉpagingˉcontract.PAGE_BYTES))];
         userˉimage.CopyTo(Code);
@@ -316,6 +352,50 @@ public static class Kernelˉprocessˉplanner
         BinaryPrimitives.WriteUInt32LittleEndian(Data.AsSpan(4), Nativeˉexecutionˉcontextˉcontract.SIZE);
         BinaryPrimitives.WriteUInt64LittleEndian(Data.AsSpan(8), Instructionˉbudget);
         BinaryPrimitives.WriteUInt64LittleEndian(Data.AsSpan(16), Callˉdepthˉbudget);
+        var Runtimeˉinputˉbytes = Isˉclient
+            ? new byte[Kernelˉpagingˉcontract.PAGE_BYTES]
+            : [];
+        if (Isˉclient)
+        {
+            runtimeˉinput.CopyTo(Runtimeˉinputˉbytes);
+            var Serviceˉtableˉaddress = Userˉdataˉaddress +
+                Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET;
+            var Resourceˉtableˉaddress = Userˉdataˉaddress +
+                Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET;
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Data.AsSpan(Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET),
+                Serviceˉtableˉaddress);
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Data.AsSpan(Nativeˉexecutionˉcontextˉcontract.FILE_INPUT_TABLE_POINTER_OFFSET),
+                Resourceˉtableˉaddress);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET),
+                Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET + 4),
+                Nativeˉserviceˉtableˉcontract.SIZE);
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET +
+                    Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET),
+                Userˉcodeˉaddress + bootˉresourceˉserviceˉoffset);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET),
+                Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_MAGIC);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET + 4),
+                Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_VERSION);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET + 8),
+                Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_BYTES);
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET +
+                    (int)Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_POINTER_OFFSET),
+                Userˉruntimeˉinputˉaddress);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET +
+                    (int)Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_LENGTH_OFFSET),
+                checked((uint)runtimeˉinput.Length));
+        }
 
         var Record = new byte[Kernelˉprocessˉcontract.RECORD_BYTES];
         BinaryPrimitives.WriteUInt64LittleEndian(Record, Kernelˉprocessˉcontract.RECORD_MAGIC);
@@ -364,6 +444,8 @@ public static class Kernelˉprocessˉplanner
             Code.ToImmutableArray(),
             Stack.ToImmutableArray(),
             Data.ToImmutableArray(),
+            Userˉruntimeˉinputˉaddress,
+            Runtimeˉinputˉbytes.ToImmutableArray(),
             Record.ToImmutableArray()), []);
     }
 

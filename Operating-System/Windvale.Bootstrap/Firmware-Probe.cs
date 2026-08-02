@@ -16,12 +16,12 @@ public enum Firmwareˉprobeˉscenario
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 25;
+    public const int FORMAT_VERSION = 26;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 25\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 26\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";

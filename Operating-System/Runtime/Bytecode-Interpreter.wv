@@ -1,10 +1,10 @@
-module Bytecodeˉinterpreter profile portable;
+module Bytecodeˉinterpreter profile hosted;
 
-// Canonical WVB 1.6 for Embedded-Wvb-Program.wv. The kernel admits this exact
-// identity before starting the interpreter process; this first runtime slice
-// independently decodes the admitted function body rather than executing its
-// host-built AOT derivative.
-data Admittedˉmodule: bytes = [87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0, 1, 0, 0, 0, 27, 0, 0, 0, 1, 22, 0, 0, 0, 69, 109, 98, 101, 100, 100, 101, 100, 203, 137, 119, 118, 98, 203, 137, 112, 114, 111, 103, 114, 97, 109, 2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 29, 0, 0, 0, 5, 0, 0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 0, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0];
+capability file.read_bytes;
+
+// Every platform resolves this opaque name to one immutable admitted WVB.
+// Windvale OS maps it from a separately protected boot-resource page.
+data Runtimeˉinputˉname: text = "boot:main.wvb";
 
 fn Validateˉenvelope(Input: bytes) -> i32 {
     let Total: u32 = Bytesˉlength(Input);
@@ -187,6 +187,7 @@ fn Executeˉcode(Input: bytes) -> i32 {
 }
 
 export fn Main() -> i32 {
+    let Admittedˉmodule: bytes = file.read_bytes(Runtimeˉinputˉname);
     var Status: i32 = Validateˉenvelope(Admittedˉmodule);
     if Status != 0 { return Status; }
     Status = Validateˉmodule(Admittedˉmodule);
