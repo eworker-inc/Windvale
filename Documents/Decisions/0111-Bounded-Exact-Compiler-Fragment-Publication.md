@@ -1,7 +1,7 @@
 # Decision 0111: Bounded exact-compiler fragment publication
 
 - Date: 2026-08-02
-- Status: Implemented; cross-host qualification pending
+- Status: Qualified at exact commit `e139e4e391192c115a1cabd92a1e0ab3bd71d31d`
 - Retains: Native ABI 20 and target `x86-64-wvb-baseline-v20`
 - Refines: [Decision 0082](0082-Windvale-Owned-Native-Publication-Layout.md) and [Decision 0109](0109-Native-Two-Byte-Little-Endian-Construction.md)
 
@@ -30,7 +30,9 @@ The portable publication core remains 7,189 bytes and now has SHA-256 `19e111490
 
 Live W^X publication of the exact compiler now completes. Execution begins against a real source input and deterministically reaches `WVR3017`, exhausting the retained 1 MiB immutable-record arena before stdout, diagnostics, or output-file publication. That is the next measured native-compiler boundary.
 
-Windows Development passes a zero-warning Release build, all 67 regular Seed tests, and all 25 OS tests in 67.4 seconds wall time. Windows Standard passes all 68 Seed tests, including the 153.641-second golden compiler-reproduction contract, plus all 25 OS tests in 219.6 seconds wall time; Seed in-process time is 206.326 seconds. Complete Windows/Debian qualification and the native CLI gate remain pending.
+Windows Development passes a zero-warning Release build, all 67 regular Seed tests, and all 25 OS tests in 67.4 seconds wall time. Windows Standard passes all 68 Seed tests, including the 153.641-second golden compiler-reproduction contract, plus all 25 OS tests in 219.6 seconds wall time; Seed in-process time is 206.326 seconds.
+
+Exact implementation commit `e139e4e391192c115a1cabd92a1e0ab3bd71d31d` passes GitHub [Verify run 30768107059](https://github.com/eworker-inc/Windvale/actions/runs/30768107059). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 68 Seed tests, all 25 OS tests, retained planner reproduction, and the complete native CLI gate. Windows Seed takes 227.915 seconds with a 164.428-second golden contract; Linux Seed takes 207.347 seconds with a 153.987-second golden contract. The complete jobs finish in 8m29s and 7m38s respectively. QEMU was not rerun because ABI 20, generated machine bytes, and all OS inputs remain unchanged.
 
 ## Consequences
 

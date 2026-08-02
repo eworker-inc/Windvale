@@ -1062,7 +1062,7 @@ The Windows Development gate passes a zero-warning Release build, all 67 regular
 
 Exact implementation commit `a35c3484c8d18498cc611354dc04554c513fc15c` passes GitHub [Verify run 30764320109](https://github.com/eworker-inc/Windvale/actions/runs/30764320109). Windows and digest-pinned Debian 12 each pass a zero-warning Release build, all 68 Seed tests, all 25 OS tests, and the complete native CLI qualification gate. Seed elapsed time is 242.730 seconds on Windows and 203.702 seconds on Debian; the golden contract takes 182.201 and 151.697 seconds respectively. This qualifies ABI 19 and Decision 0108 as the latest shared native/OS baseline while retaining Probe 32's exact firmware identities. QEMU execution remains Windows-only evidence.
 
-## Implemented bounded exact-compiler publication
+## Qualified bounded exact-compiler publication
 
 [Decision 0111](../Decisions/0111-Bounded-Exact-Compiler-Fragment-Publication.md) attributes the exact compiler's 4,556,121 selected bytes before revising a security boundary. Function code accounts for 4,555,263 bytes across 328 functions and 191,632 machine-IR operations; alignment and immutable data account for only 858 bytes. The 48,578 zeroed frame slots currently emit 1,360,840 bytes, so eliminating all frame initialization would still leave 3,195,281 bytes. This rules out a local encoding change as an honest way to retain the 1 MiB whole-fragment ceiling.
 
@@ -1070,7 +1070,9 @@ The implemented hard fragment limit is 8 MiB, below the retained 34 MiB publicat
 
 The Windvale-written publication planner retains `WVPQ 1`, `WVPL 1`, canonical placement, and the 34 MiB image limit while accepting exactly 8 MiB and rejecting 8 MiB plus one. Its 7,189-byte portable core has SHA-256 `19e111490cba6f3dcae963169be82c8033d267ea505c30850502ae36fb36e13c`; its regenerated 7,105-byte retained bridge has SHA-256 `5ad896d92368dcadc61f358d51f5786408d9f1dc977efa5f522f99230f3ed51e`. An 8 MiB plus one fragment fails independently as `WVN3005`.
 
-Windows Development passes a zero-warning Release build, all 67 regular Seed tests, and all 25 OS tests in 67.4 seconds wall time. Windows Standard passes all 68 Seed tests and all 25 OS tests in 219.6 seconds wall time. The Seed suite takes 206.326 seconds, including 153.641 seconds for the qualification-only golden compiler contract. Cross-host and complete native CLI qualification are pending; QEMU was not rerun because ABI 20, all machine bytes, and every OS source/artifact input remain unchanged.
+Windows Development passes a zero-warning Release build, all 67 regular Seed tests, and all 25 OS tests in 67.4 seconds wall time. Windows Standard passes all 68 Seed tests and all 25 OS tests in 219.6 seconds wall time. The Seed suite takes 206.326 seconds, including 153.641 seconds for the qualification-only golden compiler contract.
+
+Exact implementation commit `e139e4e391192c115a1cabd92a1e0ab3bd71d31d` passes GitHub [Verify run 30768107059](https://github.com/eworker-inc/Windvale/actions/runs/30768107059). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 68 Seed tests, all 25 OS tests, exact retained-planner reproduction, and the complete native CLI gate. Windows Seed takes 227.915 seconds with a 164.428-second golden contract; Linux Seed takes 207.347 seconds with a 153.987-second golden contract. The complete jobs finish in 8m29s and 7m38s respectively. QEMU was not rerun because ABI 20, every generated machine byte, and all OS source/artifact inputs remain unchanged.
 
 ## Qualified ABI-20 two-byte construction
 
