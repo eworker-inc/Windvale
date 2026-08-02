@@ -204,8 +204,8 @@ printf '%s\n' "$INSPECT_OUTPUT" | grep -F 'data.load.i32' >/dev/null
 
 RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$SUM_MODULE")
 printf '%s\n' "$RUN_OUTPUT" | grep -F 'Result: 29' >/dev/null
-if printf '%s\n' "$RUN_OUTPUT" | grep -E '^Function instructions=' >/dev/null; then
-    echo 'The default run unexpectedly reported per-function instruction counts.' >&2
+if printf '%s\n' "$RUN_OUTPUT" | grep -E '^Function (instructions|record-fields)=' >/dev/null; then
+    echo 'The default run unexpectedly reported per-function profiling data.' >&2
     exit 1
 fi
 
@@ -264,6 +264,15 @@ fi
 COMPOSITION_RUN_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$COMPOSITION_MODULE")
 printf '%s\n' "$COMPOSITION_RUN_OUTPUT" | grep -F 'Result: 42' >/dev/null
+RECORD_FIELD_REPORT_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$COMPOSITION_MODULE" --report-function-record-fields 2>&1)
+printf '%s\n' "$RECORD_FIELD_REPORT_OUTPUT" | grep -F 'Result: 42' >/dev/null
+printf '%s\n' "$RECORD_FIELD_REPORT_OUTPUT" | grep -F \
+    'Function record-fields=2 index=2 name=Compositionˉmake' >/dev/null
+if [ "$(printf '%s\n' "$RECORD_FIELD_REPORT_OUTPUT" | grep -c '^Function record-fields=')" -ne 1 ]; then
+    echo 'The Seed CLI did not report deterministic per-function record construction pressure.' >&2
+    exit 1
+fi
 dotnet "$TOOL_DLL" \
     compile "$COMPOSITION_ROOT" \
     --module "$COMPOSITION_LEAF" \

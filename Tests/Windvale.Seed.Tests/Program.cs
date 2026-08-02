@@ -726,6 +726,7 @@ internal static class Program
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
+        new("native exact compiler exposes the bounded full-bootstrap record-lifetime boundary", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreachesˉrecordˉboundary),
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
@@ -772,6 +773,7 @@ internal static class Program
         new("verifier rejects unsafe instruction streams", [TEST_AREA_BYTECODE], Unsafeˉbytecodeˉisˉrejected),
         new("runtime traps overflow and data bounds", [TEST_AREA_RUNTIME], Runtimeˉtrapsˉareˉdeterministic),
         new("runtime enforces instruction and call-depth limits", [TEST_AREA_RUNTIME], Runtimeˉlimitsˉareˉenforced),
+        new("reference runtime reports per-function record construction pressure", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉrecordˉpressureˉisˉreported),
         new("bounded random input never escapes diagnostic boundaries", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_ASSEMBLER], Randomˉinputˉisˉcontained),
         new(GOLDEN_TEST_NAME, [TEST_AREA_GOLDEN], Goldenˉhashesˉmatch),
     ];
@@ -5259,6 +5261,85 @@ internal static class Program
         finally
         {
             Directory.Delete(Compilerˉdirectory, recursive: true);
+        }
+    }
+
+    private static void Nativeˉcompilerˉbootstrapˉreachesˉrecordˉboundary()
+    {
+        var Compilerˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
+            SOURCE_WVB_TOOL_SOURCE,
+            "Source-Wvb-Tool.wv");
+        var Compilerˉtool = Moduleˉcodec.Readˉandˉverify(Compilerˉbytes);
+        var Compilerˉrecords = Compilerˉtool.Module.Types
+            .OfType<Recordˉtypeˉdeclaration>()
+            .ToImmutableArray();
+        Equal(49, Compilerˉrecords.Length);
+        Equal(22, Compilerˉtool.Module.Types.OfType<Enumˉtypeˉdeclaration>().Count());
+        Equal(34, Compilerˉrecords.Max(Record => Record.Fields.Length));
+        Equal(
+            0,
+            Compilerˉrecords.Sum(Record =>
+                Record.Fields.Count(Field => Field.Type.Kind == Valueˉtype.Record)));
+        var Compilerˉnative = X64ˉnativeˉbackend.Compile(Compilerˉtool);
+        var Directoryˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-bootstrap-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Directoryˉpath);
+        try
+        {
+            var Inventory = new (string Name, string Source)[]
+            {
+                ("Source-Wvb-Tool.wv", SOURCE_WVB_TOOL_SOURCE),
+                ("Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE),
+                ("Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
+                ("Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
+                ("Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE),
+                ("Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+                ("Source-Set-Core.wv", SOURCE_SET_SOURCE),
+                ("Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE),
+                ("Source-Wir-Core.wv", SOURCE_WIR_SOURCE),
+                ("Source-Wvb-Core.wv", SOURCE_WVB_SOURCE),
+                ("Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                ("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
+            };
+            var Arguments = new List<string>();
+            foreach (var Item in Inventory)
+            {
+                var Pathˉname = Path.Combine(Directoryˉpath, Item.Name);
+                File.WriteAllText(Pathˉname, Item.Source, new UTF8Encoding(false));
+                Arguments.Add(Pathˉname);
+            }
+            var Outputˉpath = Path.Combine(Directoryˉpath, "Bootstrap-Stage2.wvb");
+            Arguments.Add(Outputˉpath);
+
+            using var Compilerˉoutput = new Nativeˉoutputˉcapture();
+            using var Compilerˉdiagnostic = new Nativeˉoutputˉcapture();
+            var Compilerˉresources = new Hostedˉresourceˉcontext(
+                Arguments.ToImmutableArray(),
+                TextWriter.Null,
+                TextWriter.Null);
+            var Compilerˉauthorized = Compilerˉtool.Module.Capabilities
+                .Select(Capability => Capability.Name)
+                .ToImmutableHashSet(StringComparer.Ordinal);
+            Throwsˉnativeˉtrap(
+                "WVR3017",
+                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                    Compilerˉnative.Fragment,
+                    maximumˉinstructions: 8_000_000_000,
+                    hostˉservices: new(
+                        Compilerˉoutput.Channel,
+                        Compilerˉauthorized,
+                        Compilerˉresources,
+                        Compilerˉdiagnostic.Channel,
+                        Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                        Nativeˉfileˉoutput.Hostˉfileˉsystem())));
+            Equal(string.Empty, Compilerˉoutput.Readˉtext());
+            Equal(string.Empty, Compilerˉdiagnostic.Readˉtext());
+            False(File.Exists(Outputˉpath), "The bounded native bootstrap failure created an output module.");
+        }
+        finally
+        {
+            Directory.Delete(Directoryˉpath, recursive: true);
         }
     }
 
@@ -10416,6 +10497,45 @@ internal static class Program
             new Referenceˉcapabilityˉhost(new StringWriter()),
             new(Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities, Maximumˉcallˉdepth: 8));
         Throwsˉruntime("WVR3004", () => _ = Depthˉlimited.Runˉmain());
+    }
+
+    private static void Runtimeˉrecordˉpressureˉisˉreported()
+    {
+        const string Source = """
+            module Runtimeˉrecordˉpressure profile portable;
+            record Runtimeˉpair { Left: i32; Right: i32; }
+            fn Make(Value: i32) -> Runtimeˉpair {
+                return Runtimeˉpair(Value, Value + 1);
+            }
+            export fn Main() -> i32 {
+                let First: Runtimeˉpair = Make(4);
+                let Second: Runtimeˉpair = Runtimeˉpair(First.Right, First.Left);
+                return Second.Left;
+            }
+            """;
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        var Disabled = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults);
+        Equal(5, Disabled.Runˉmain().Exitˉcode);
+        Equal(0, Disabled.Readˉfunctionˉrecordˉfields().Length);
+
+        var Enabled = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            new(
+                Runtimeˉoptions.Portableˉdefaults.Authorizedˉcapabilities,
+                Collectˉfunctionˉrecordˉfields: true));
+        Equal(0, Enabled.Readˉfunctionˉrecordˉfields().Length);
+        Equal(5, Enabled.Runˉmain().Exitˉcode);
+        var Firstˉreport = Enabled.Readˉfunctionˉrecordˉfields();
+        Equal(2, Firstˉreport.Length);
+        Equal(new Runtimeˉfunctionˉrecordˉfields(0, "Main", 2), Firstˉreport[0]);
+        Equal(new Runtimeˉfunctionˉrecordˉfields(1, "Make", 2), Firstˉreport[1]);
+
+        Equal(5, Enabled.Runˉmain().Exitˉcode);
+        Sequenceˉequal(Firstˉreport, Enabled.Readˉfunctionˉrecordˉfields());
     }
 
     private static void Goldenˉhashesˉmatch()

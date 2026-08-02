@@ -413,7 +413,8 @@ internal static class Program
         {
             return Usageˉerror(
                 "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
-                "[--report-steps] [--report-function-steps] [-- <argument>...]");
+                "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
+                "[-- <argument>...]");
         }
 
         var Moduleˉpath = arguments[0];
@@ -422,6 +423,7 @@ internal static class Program
         long Maximumˉsteps = 1_000_000;
         var Reportˉsteps = false;
         var Reportˉfunctionˉsteps = false;
+        var Reportˉfunctionˉrecordˉfields = false;
         for (var Index = 1; Index < arguments.Length; Index++)
         {
             switch (arguments[Index])
@@ -448,6 +450,9 @@ internal static class Program
                 case "--report-function-steps":
                     Reportˉfunctionˉsteps = true;
                     break;
+                case "--report-function-record-fields":
+                    Reportˉfunctionˉrecordˉfields = true;
+                    break;
                 case "--":
                     Programˉarguments.AddRange(arguments[(Index + 1)..]);
                     Index = arguments.Length;
@@ -470,7 +475,8 @@ internal static class Program
             new(
                 Authorized.ToImmutable(),
                 Maximumˉsteps,
-                Collectˉfunctionˉsteps: Reportˉfunctionˉsteps));
+                Collectˉfunctionˉsteps: Reportˉfunctionˉsteps,
+                Collectˉfunctionˉrecordˉfields: Reportˉfunctionˉrecordˉfields));
         Runtimeˉresult Result;
         try
         {
@@ -484,6 +490,15 @@ internal static class Program
                 {
                     Console.Error.WriteLine(
                         $"Function instructions={Function.Executedˉinstructions} " +
+                        $"index={Function.Functionˉindex} name={Function.Functionˉname}");
+                }
+            }
+            if (Reportˉfunctionˉrecordˉfields)
+            {
+                foreach (var Function in Runtime.Readˉfunctionˉrecordˉfields())
+                {
+                    Console.Error.WriteLine(
+                        $"Function record-fields={Function.Constructedˉfields} " +
                         $"index={Function.Functionˉindex} name={Function.Functionˉname}");
                 }
             }
@@ -571,7 +586,8 @@ internal static class Program
         output.WriteLine("  windvale object-verify <object.wvo>");
         output.WriteLine(
             "  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
-            "[--report-steps] [--report-function-steps] [-- <argument>...]");
+            "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
+            "[-- <argument>...]");
         output.WriteLine("  windvale help");
     }
 }

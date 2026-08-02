@@ -17,6 +17,7 @@ public sealed class Referenceˉruntime
     private readonly Runtimeˉoptions Options;
     private readonly ImmutableArray<Dictionary<int, int>> Instructionˉindices;
     private readonly long[]? Functionˉsteps;
+    private readonly long[]? Functionˉrecordˉfields;
     private long Executedˉinstructions;
 
     public Referenceˉruntime(
@@ -52,6 +53,9 @@ public sealed class Referenceˉruntime
         Functionˉsteps = options.Collectˉfunctionˉsteps
             ? new long[verifiedˉmodule.Functions.Length]
             : null;
+        Functionˉrecordˉfields = options.Collectˉfunctionˉrecordˉfields
+            ? new long[verifiedˉmodule.Functions.Length]
+            : null;
     }
 
     public ImmutableArray<Runtimeˉfunctionˉsteps> Readˉfunctionˉsteps()
@@ -68,6 +72,24 @@ public sealed class Referenceˉruntime
                 Functionˉsteps[Index]))
             .Where(Item => Item.Executedˉinstructions > 0)
             .OrderByDescending(Item => Item.Executedˉinstructions)
+            .ThenBy(Item => Item.Functionˉindex)
+            .ToImmutableArray();
+    }
+
+    public ImmutableArray<Runtimeˉfunctionˉrecordˉfields> Readˉfunctionˉrecordˉfields()
+    {
+        if (Functionˉrecordˉfields is null)
+        {
+            return [];
+        }
+
+        return Verifiedˉmodule.Functions
+            .Select((Function, Index) => new Runtimeˉfunctionˉrecordˉfields(
+                Index,
+                Function.Declaration.Name,
+                Functionˉrecordˉfields[Index]))
+            .Where(Item => Item.Constructedˉfields > 0)
+            .OrderByDescending(Item => Item.Constructedˉfields)
             .ThenBy(Item => Item.Functionˉindex)
             .ToImmutableArray();
     }
@@ -109,6 +131,10 @@ public sealed class Referenceˉruntime
         if (Functionˉsteps is not null)
         {
             Array.Clear(Functionˉsteps);
+        }
+        if (Functionˉrecordˉfields is not null)
+        {
+            Array.Clear(Functionˉrecordˉfields);
         }
         return Mainˉexport;
     }
@@ -467,6 +493,12 @@ public sealed class Referenceˉruntime
                     case Opcode.Recordˉcreate:
                         var Recordˉtype = (Recordˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
                             (int)Instruction.Unsignedˉoperand];
+                        if (Functionˉrecordˉfields is not null)
+                        {
+                            Functionˉrecordˉfields[functionˉindex] = checked(
+                                Functionˉrecordˉfields[functionˉindex] +
+                                Recordˉtype.Fields.Length);
+                        }
                         var Recordˉfields = Popˉarguments(Stack, Recordˉtype.Fields.Length);
                         Stack.Push(Runtimeˉvalue.Fromˉrecord(
                             (int)Instruction.Unsignedˉoperand,

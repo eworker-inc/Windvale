@@ -170,7 +170,8 @@ public sealed record Runtimeˉoptions(
     ImmutableHashSet<string> Authorizedˉcapabilities,
     long Maximumˉinstructions = 1_000_000,
     int Maximumˉcallˉdepth = 1024,
-    bool Collectˉfunctionˉsteps = false)
+    bool Collectˉfunctionˉsteps = false,
+    bool Collectˉfunctionˉrecordˉfields = false)
 {
     public static Runtimeˉoptions Portableˉdefaults { get; } = new(
         ImmutableHashSet.Create<string>(StringComparer.Ordinal));
@@ -186,6 +187,11 @@ public sealed record Runtimeˉfunctionˉsteps(
     int Functionˉindex,
     string Functionˉname,
     long Executedˉinstructions);
+
+public sealed record Runtimeˉfunctionˉrecordˉfields(
+    int Functionˉindex,
+    string Functionˉname,
+    long Constructedˉfields);
 
 public static class Hostedˉresourceˉlimits
 {

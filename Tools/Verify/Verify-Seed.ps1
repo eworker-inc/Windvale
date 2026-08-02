@@ -228,7 +228,7 @@ $RunOutput = dotnet $ToolDll run $SumModule
 if (
     $LASTEXITCODE -ne 0 -or
     $RunOutput -notcontains 'Result: 29' -or
-    ($RunOutput -join "`n") -match '(?m)^Function instructions='
+    ($RunOutput -join "`n") -match '(?m)^Function (instructions|record-fields)='
 ) {
     throw 'The Seed CLI did not produce Result: 29 for Sum-Data.wvb.'
 }
@@ -296,6 +296,15 @@ if ($CompositionHash -ne '0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea
 $CompositionRunOutput = dotnet $ToolDll run $CompositionModule
 if ($LASTEXITCODE -ne 0 -or $CompositionRunOutput -notcontains 'Result: 42') {
     throw 'The composed source module did not return Result: 42.'
+}
+$RecordFieldReportOutput = dotnet $ToolDll run $CompositionModule --report-function-record-fields 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    $RecordFieldReportOutput -notcontains 'Result: 42' -or
+    ($RecordFieldReportOutput -join "`n") -notmatch '(?m)^Function record-fields=2 index=2 name=Compositionˉmake$' -or
+    [regex]::Matches(($RecordFieldReportOutput -join "`n"), '(?m)^Function record-fields=').Count -ne 1
+) {
+    throw 'The Seed CLI did not report deterministic per-function record construction pressure.'
 }
 dotnet $ToolDll `
     compile $CompositionRoot --module $CompositionLeaf --module $CompositionMiddle -o $CompositionReorderedModule
