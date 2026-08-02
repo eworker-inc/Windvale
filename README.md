@@ -37,7 +37,7 @@ Windvale is not production-stable. Native compiler execution, the general native
 
 ## Browser playground
 
-The experimental Stage 0 playground compiles, verifies, and runs Windvale entirely in the browser through .NET WebAssembly. It reuses the C# reference compiler and interpreter as the current semantic oracle, produces canonical WVB, and exposes only explicitly checked console and diagnostic capabilities.
+The experimental Stage 0 playground compiles, verifies, and runs Windvale entirely in the browser through .NET WebAssembly. It reuses the C# reference compiler and interpreter as the current semantic oracle, produces canonical WVB, and exposes only explicitly checked console and diagnostic capabilities. Its bounded portable subset is also lowered by the Windvale-authored backend and executed in a disposable Web Worker for differential evidence.
 
 **[Open the Windvale Playground](https://windvale.ca/playground/)**
 
@@ -49,7 +49,7 @@ dotnet run --project Tools/Windvale.Playground
 
 The [playground host specification](Specifications/Browser-Playground.md) defines its limits and non-claims. This is a browser host for the language, not a browser boot of Windvale OS and not yet an accepted permanent WebAssembly compiler target.
 
-The separate [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) now proves the first lower layer in Windvale source: portable `.wv` code revalidates canonical WVB and lowers a bounded straight-line `i32` instruction stream to deterministic import-free Wasm. Execution ABI 1 preserves successful results, checked add/subtract/multiply/negate overflow as `WVR3007`, and exact instruction accounting. This path is not yet integrated into the playground and does not replace its .NET compiler or runtime.
+The separate [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) proves the first lower layer in Windvale source: cross-host-qualified portable `.wv` code revalidates canonical WVB and lowers a bounded straight-line `i32` instruction stream to deterministic import-free Wasm. Execution ABI 1 preserves successful results, checked add/subtract/multiply/negate overflow as `WVR3007`, and exact instruction accounting. The playground now runs selected output in a disposable worker and compares it with the reference interpreter; this does not replace its .NET compiler, verifier, general runtime, or fallback path.
 
 ## Quick start
 

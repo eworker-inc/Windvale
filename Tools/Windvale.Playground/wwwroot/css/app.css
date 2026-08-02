@@ -914,6 +914,18 @@ select {
     overflow-wrap: anywhere;
 }
 
+.digest span:not(:first-child) {
+    display: block;
+    margin-top: 12px;
+}
+
+.wasm-note {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.45;
+}
+
 .status-bar {
     display: flex;
     align-items: center;

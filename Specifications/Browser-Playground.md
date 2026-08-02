@@ -6,7 +6,7 @@
 
 ## Purpose
 
-The browser playground exposes the existing Windvale source-to-WVB-to-runtime path as a fully client-side demonstration. It lets a user edit Windvale source, compile it with the C# Stage 0 reference compiler, independently verify the resulting canonical WVB, execute it with the reference interpreter, and inspect evidence from every completed phase.
+The browser playground exposes the existing Windvale source-to-WVB-to-runtime path as a fully client-side demonstration. It lets a user edit Windvale source, compile it with the C# Stage 0 reference compiler, independently verify the resulting canonical WVB, execute it with the reference interpreter, and inspect evidence from every completed phase. For the bounded portable subset in [`Windvale-WebAssembly.md`](Windvale-WebAssembly.md), the UI also runs the qualified Windvale-authored backend over that WVB and executes the generated Wasm in a disposable worker as differential evidence.
 
 This host contract contains the experiment without making .NET or WebAssembly the definition of Windvale semantics. The source language, canonical WVB, verifier, runtime behavior, profiles, and capability names remain owned by their existing specifications.
 
@@ -22,9 +22,15 @@ Windvale source
     -> browser-profile and capability checks
     -> bounded reference interpreter
     -> output, diagnostics, exit code, instruction count, digest, and disassembly
+
+eligible portable WVB
+    -> digest-pinned Windvale-authored backend under the reference interpreter
+    -> deterministic import-free Wasm
+    -> disposable Web Worker validation and execution
+    -> result and instruction-count comparison with the reference interpreter
 ```
 
-Compilation failure produces no WVB identity. Verification and playground-policy failures may retain the compiled WVB, digest, module profile, declared capabilities, and inspection report when those values were established safely before the failure. Execution starts only after bytecode verification and playground-policy checks succeed.
+Compilation failure produces no WVB identity. Verification and playground-policy failures may retain the compiled WVB, digest, module profile, declared capabilities, and inspection report when those values were established safely before the failure. Execution starts only after bytecode verification and playground-policy checks succeed. Direct Wasm lowering is attempted only after a portable, capability-free module completes through the reference interpreter. A valid module outside the bounded Wasm selector remains a normal reference-interpreter result rather than a playground failure.
 
 ## Accepted module profiles
 
@@ -62,10 +68,13 @@ The Stage 0 host enforces these ceilings:
 | Standard output | 65,536 UTF-8 bytes |
 | Diagnostic output | 65,536 UTF-8 bytes |
 | Inspection report shown to the UI | 262,144 characters plus a truncation marker |
+| Windvale backend execution | 100,000,000 reference instructions and 128 call frames |
+| Generated WebAssembly | 65,536 bytes |
+| Disposable worker wall clock | 2,000 milliseconds |
 
 The normal runtime trap codes continue to describe instruction, call-depth, authorization, entry-point, type, and execution failures. A rejected output write is surfaced through the existing hosted-output runtime boundary.
 
-The current interpreter runs on the browser UI thread. Instruction and call-depth budgets contain ordinary Windvale execution, but a worker boundary remains required before treating the host as hardened against arbitrary hostile compiler inputs or browser main-thread denial of service.
+The Stage 0 compiler, canonical verifier, reference interpreter, and Windvale backend interpreter still run on the browser UI thread. Only the generated import-free Wasm executes in a disposable worker. Instruction and call-depth budgets contain ordinary Windvale execution, but compilation, verification, lowering, and fallback execution must also move behind a worker boundary before treating the host as hardened against arbitrary hostile source or browser main-thread denial of service.
 
 ## Request and result boundary
 
@@ -85,6 +94,8 @@ It returns immutable evidence containing:
 - exit code and executed instruction count after successful execution.
 
 The engine contains no browser, DOM, file, network, or deployment API. The Blazor WebAssembly project is one UI adapter over that testable boundary.
+
+The reusable engine also exposes the bounded WebAssembly lowerer as a separate immutable result. It embeds the portable backend and hosted shell as `.wv` source, compiles the composition once through Stage 0, requires backend WVB SHA-256 `b47a6f5b89ac0d58dc6cafd6489b1fb12f1a0b9b161c09e8d2ca5a438993076a`, and publishes no Wasm on selector failure. The browser adapter transfers successful bytes to a new module worker, which applies `WebAssembly.validate`, rejects all imports, checks the exact ABI-0 or ABI-1 exports, executes once, returns only bounded scalar evidence, and is terminated after success, failure, or timeout.
 
 The UI adapter hosts a locally bundled Monaco editor. Its Windvale tokenizer mirrors the implemented lexical categories in `Tools/Editors/Windvale/syntaxes/Windvale.tmLanguage.json`; it is presentation support rather than a source-language contract or compiler front end. Compiler diagnostics with source locations are projected into editor markers, while the compiler remains their authority. Editor text crosses into the reusable engine only when a run is requested.
 
@@ -110,11 +121,12 @@ Compiler, bytecode, and runtime diagnostic codes retain their existing meanings 
 
 This experiment does not establish:
 
-- a direct Windvale-to-WebAssembly compiler backend;
+- a general Windvale-to-WebAssembly compiler backend;
 - a Windvale-native WVB interpreter compiled to WebAssembly;
 - WebAssembly as an accepted permanent Windvale target;
 - browser UI APIs as portable Windvale UI semantics;
 - native x86-64, PE, ELF, WVO, UEFI, or Windvale OS execution in the browser; or
-- production isolation for hostile source.
+- production isolation for hostile source; or
+- worker containment for Stage 0 compilation, WVB verification, Windvale-authored lowering, or reference-interpreter fallback.
 
-The host contract should be reconsidered when a worker boundary is designed, a new browser capability is proposed, a Windvale-native interpreter can replace part of Stage 0, direct WebAssembly lowering is evaluated, or cross-browser differential evidence is ready for qualification.
+The host contract should be reconsidered when the complete Stage 0 pipeline moves behind a worker boundary, a new browser capability is proposed, a Windvale-native interpreter can replace part of Stage 0, the direct subset expands, or cross-browser differential evidence is ready for qualification.

@@ -70,7 +70,7 @@ The first implementation builds the compiler, verifier, interpreter, reusable pl
 
 The experiment is published with the static project website at <https://windvale.ca/playground/> through Cloudflare Pages. Compilation, verification, and execution remain inside the user's browser; the site has no application server.
 
-Focused tests exercise portable and hosted success, nominal records and enums, capability denial, malformed source, system-profile rejection, oversized input, and deterministic instruction-budget exhaustion. The current execution path remains on the browser UI thread, so the worker-containment step below is still open.
+Focused tests exercise portable and hosted success, nominal records and enums, capability denial, malformed source, system-profile rejection, oversized input, and deterministic instruction-budget exhaustion. The Stage 0 compiler, verifier, backend interpreter, and general reference interpreter remain on the browser UI thread. The bounded generated-Wasm path now has its own disposable worker, but complete pipeline containment remains open.
 
 ### Windvale-native WVB interpreter compiled to WebAssembly
 
@@ -101,7 +101,9 @@ The direct backend must not become a parallel language implementation. It should
 
 [Decision 0106](../Decisions/0106-Bounded-Straight-I32-WebAssembly-Lowering.md) adds a third profile that validates and lowers one bounded straight-line `i32` instruction stream. It covers locals, discarded values, and checked addition, subtraction, multiplication, and negation while retaining execution ABI 1 and exact pre-execution instruction charging. Four profile-3 artifacts validate and run in Node.js with the same status/result/count tuples as the reference runtime.
 
-This is backend-construction evidence rather than browser integration. It does not yet implement branches, calls, other value families, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, or replacement of the .NET playground path. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
+[Decision 0107](../Decisions/0107-Playground-Disposable-WebAssembly-Worker.md) embeds and digest-pins that `.wv` backend in the playground, offers completed capability-free portable WVB to it, and executes successful output in a fresh two-second worker. The retained profile-3 example reports ABI 1, status 0, result 42, and 30 instructions equal to the reference path while exposing the exact WVB, Wasm, and backend identities.
+
+This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet implement branches, calls, other value families, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, cross-browser qualification, or UI-thread containment for Stage 0. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
 ## Proposed playground shape
 
@@ -112,7 +114,7 @@ The initial user experience could have four primary views:
 3. **Bytecode** — WVB sections, declarations, functions, data, and decoded instructions.
 4. **Execution** — verifier status, requested and granted capabilities, instruction count, memory limits, and traps.
 
-The surrounding page can use TypeScript or JavaScript, ordinary HTML, and an established browser editor. Compilation and execution should run in a Web Worker so an expensive or malicious program cannot freeze the page's user-interface thread. The Windvale program itself does not need to contain JavaScript.
+The surrounding page can use TypeScript or JavaScript, ordinary HTML, and an established browser editor. The generated Wasm subset now executes in a disposable worker; compilation, verification, `.wv` lowering, and fallback execution should follow so expensive or malicious input cannot freeze the page's user-interface thread. The Windvale program itself does not need to contain JavaScript.
 
 An initial playground should be deployable as static assets after its toolchain artifacts are produced. A server-executed fallback is possible, but it has materially different cost, isolation, privacy, and abuse-control requirements and should not be confused with client-side execution.
 
@@ -249,8 +251,8 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 ### Exploration spike
 
 1. Prove whether the current C# source compiler, WVB codec/verifier, and reference interpreter can build for browser-hosted .NET WebAssembly without the native project.
-2. Compile and run one small portable program in a Web Worker.
-3. Compare its WVB bytes, diagnostics, result, and defined instruction count with the desktop reference path.
+2. Compile and run one small portable program in a Web Worker. Implemented for the bounded profile-3 example by Decision 0107.
+3. Compare its WVB bytes, result, and defined instruction count with the reference path. Implemented locally for ABI 1; cross-browser evidence remains open.
 4. Measure compressed download size, cold start, compile time, execution time, peak browser memory, and worker termination behavior.
 5. Record unsupported APIs and required adapter seams before choosing a product route.
 
@@ -264,8 +266,8 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 
 ### Native browser execution
 
-1. Establish Windows/Linux byte equality for the bounded one-function straight-line `i32` lowerer while retaining execution ABI 1 and the Stage 0 path as its differential oracle.
-2. Run generated modules inside the playground's disposable worker boundary and preserve canonical WVB identity plus interpreter/WebAssembly differential evidence.
+1. Retain the established Windows/Linux byte equality for the bounded one-function straight-line `i32` lowerer, execution ABI 1, and the Stage 0 differential oracle.
+2. Retain the implemented disposable-worker path and its canonical WVB plus interpreter/WebAssembly differential evidence while broadening browser coverage.
 3. Add structured control flow, then a bounded UI/event experiment only after each capability, lifetime, resource, and asynchronous execution contract is explicit.
 4. Decide whether WebAssembly becomes a permanent Windvale host and AOT target.
 
@@ -298,7 +300,7 @@ Browser equality should be claimed only for behavior defined by Windvale. Layout
 ## Open decisions
 
 - Is the playground's first value education, public demonstration, development inspection, or all three in a deliberately ordered interface?
-- After the implemented Stage 0 host and bounded straight-line backend, what cross-host and containment evidence threshold should move generated WebAssembly execution into the playground worker?
+- What complete-pipeline worker containment and cross-browser evidence threshold should qualify the playground beyond the current local generated-Wasm path?
 - Does direct WebAssembly compilation consume typed WIR, canonical verified WVB, or a shared machine-independent lowering model?
 - Which execution and memory limits provide useful interaction on desktop and mobile browsers?
 - Which browser engines form the first supported profile?

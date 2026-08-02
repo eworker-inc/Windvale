@@ -3,4 +3,12 @@
     <ProjectReference Include="..\..\Compiler\Reference\Windvale.Compiler.csproj" />
     <ProjectReference Include="..\..\Runtime\Windvale.Runtime\Windvale.Runtime.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource
+      Include="..\..\Compiler\Windvale\WebAssembly-Core.wv"
+      LogicalName="Windvale.Playground.WebAssembly-Core.wv" />
+    <EmbeddedResource
+      Include="..\..\Examples\Compiler\WebAssembly-Tool.wv"
+      LogicalName="Windvale.Playground.WebAssembly-Tool.wv" />
+  </ItemGroup>
 </Project>

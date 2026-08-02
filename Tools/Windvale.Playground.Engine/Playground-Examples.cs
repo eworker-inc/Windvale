@@ -25,6 +25,19 @@ public static class Playgroundˉexamples
             """,
             Capabilities(Capabilityˉcatalog.CONSOLE_WRITE_LINE)),
         new(
+            "webassembly-worker",
+            "WebAssembly worker",
+            "Lower canonical WVB with the Windvale-authored backend, execute it in a disposable Web Worker, and compare both runtimes.",
+            """
+            module WebAssemblyˉstraightˉi32 profile portable;
+
+            export fn Main() -> i32 {
+                20 + 22;
+                return (20 + 22) * 2 - 42;
+            }
+            """,
+            Capabilities()),
+        new(
             "sum-data",
             "Sum data",
             "Run a portable module with loops, functions, and immutable module data.",

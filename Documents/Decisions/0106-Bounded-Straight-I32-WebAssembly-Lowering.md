@@ -1,7 +1,7 @@
 # Decision 0106: Bounded straight-line i32 WebAssembly lowering
 
 - Date: 2026-08-02
-- Status: Implemented with Windows development and Node.js engine evidence; cross-host and browser-worker qualification pending
+- Status: Cross-host qualified with independent Node.js evidence; locally integrated into the playground worker by [Decision 0107](0107-Playground-Disposable-WebAssembly-Worker.md)
 - Extends: [Decision 0104](0104-WebAssembly-Checked-Addition-And-Execution-Contract.md)
 
 ## Context
@@ -41,7 +41,9 @@ Node.js 24.18.0 validates, instantiates, and executes those four modules plus th
 
 At this checkpoint, the Windvale core WVB has SHA-256 `18d8f2a32c7ee6ff0a89ac705663595dc611bf7ffd545f76662e1227085bbc34`; the hosted tool WVB has SHA-256 `b47a6f5b89ac0d58dc6cafd6489b1fb12f1a0b9b161c09e8d2ca5a438993076a`; and the portable encoder demo WVB has SHA-256 `cb6b5fbf378a4b13387704dda87beb75d6023112afeabfbaa558cf8fa32f5fe1`.
 
-This is Windows development evidence and an independently identified engine run. It is not Windows/Linux byte equality or playground-worker qualification.
+Exact implementation commit `a2285f5a0c09598ec701691bdbf0af9080e8cf0c` passes both host jobs in GitHub [Verify run 30762541741](https://github.com/eworker-inc/Windvale/actions/runs/30762541741). Windows and digest-pinned Debian 12 each pass a zero-warning Release build, all 68 Seed tests, all 25 OS tests, and the complete native CLI qualification gate. The WebAssembly conformance case recompiles the portable backend and all selected WVB inputs, requires the exact core/tool/demo and generated-Wasm digests, independently parses the emitted modules, and compares the execution tuples with the reference runtime on both hosts.
+
+The run-level conclusion is `cancelled` because a later `main` documentation push activated the workflow's `cancel-in-progress` policy after the Debian job completed successfully at 19:09:53 UTC and the Windows job completed successfully at 19:11:07 UTC. Both exact-host job conclusions are `success`; no qualification step was cancelled or failed. The separate Node.js 24.18.0 engine run remains Windows evidence. Decision 0107 subsequently integrates the retained straight-line artifact into a disposable playground worker; cross-browser qualification remains pending.
 
 ## Rejected alternatives
 

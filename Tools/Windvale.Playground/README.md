@@ -1,6 +1,6 @@
 # Windvale Playground
 
-This project is the experimental, fully client-side Stage 0 Windvale playground. The browser downloads .NET WebAssembly plus the existing C# reference compiler, canonical WVB verifier, and reference interpreter. Source stays in the browser.
+This project is the experimental, fully client-side Stage 0 Windvale playground. The browser downloads .NET WebAssembly plus the existing C# reference compiler, canonical WVB verifier, and reference interpreter. For the bounded direct-Wasm subset, an embedded `.wv` backend lowers canonical WVB and a disposable browser worker executes the generated module for comparison. Source stays in the browser.
 
 The host contract is defined by [`Specifications/Browser-Playground.md`](../../Specifications/Browser-Playground.md). The broader WebAssembly direction remains exploratory.
 
@@ -39,7 +39,8 @@ The `Deploy homepage` GitHub Actions workflow builds this project, copies its pu
 - Profiles: `portable` and bounded `hosted`; never `system`.
 - Capabilities: `console.write`, `console.write_line`, and `diagnostic.write_line`, denied until checked.
 - Limits: 64 KiB source, 250,000 instructions by default, 1,000,000 instructions maximum, 128 call frames, and 64 KiB for each output channel.
-- Evidence: compiler/runtime diagnostics, standard and diagnostic output, canonical WVB size and SHA-256, disassembly, profile, capabilities, exit code, and instruction count.
+- Direct Wasm: capability-free portable programs are offered to the digest-pinned Windvale backend; supported output is import-free, at most 64 KiB, and runs in a fresh worker with a two-second timeout.
+- Evidence: compiler/runtime diagnostics, standard and diagnostic output, canonical WVB size and SHA-256, disassembly, profile, capabilities, exit code, instruction count, and selected Wasm/backend identities plus differential results.
 - Editor: a local Monaco ESM bundle, Windvale-specific highlighting, contextual language completions, `Ctrl+M` insertion of the `ˉ` name separator, and compiler diagnostics projected as source markers. No editor asset is fetched from a CDN.
 
-The current interpreter runs on the browser UI thread. Moving compilation and execution to a Web Worker is a hardening step before accepting arbitrary hostile public input.
+The current compiler, verifier, Windvale backend interpreter, and general reference interpreter run on the browser UI thread. The generated Wasm worker is one containment boundary; moving the remaining pipeline off the UI thread is still required before accepting arbitrary hostile public input.

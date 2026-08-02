@@ -219,6 +219,9 @@
                             <div><dt>Instructions</dt><dd>@(Result.Executedˉinstructions?.ToString("N0") ?? "—")</dd></div>
                             <div><dt>WVB size</dt><dd>@Result.Bytecodeˉbytes.Length.ToString("N0") bytes</dd></div>
                             <div><dt>Budget</dt><dd>@Instructionˉbudget.ToString("N0")</dd></div>
+                            <div><dt>Wasm worker</dt><dd>@Webassemblyˉworkerˉlabel</dd></div>
+                            <div><dt>Wasm result</dt><dd>@Webassemblyˉresultˉlabel</dd></div>
+                            <div><dt>Wasm instructions</dt><dd>@(Webassemblyˉexecution?.ExecutedInstructions?.ToString("N0") ?? "—")</dd></div>
                         </dl>
                         <div class="capability-evidence">
                             <h3>Required by module</h3>
@@ -226,7 +229,21 @@
                             <h3>Authorized for run</h3>
                             @Capabilityˉlist(Result.Authorizedˉcapabilities)
                         </div>
-                        <div class="digest"><span>SHA-256</span><code>@(Result.Moduleˉsha256 ?? "No module digest")</code></div>
+                        <div class="digest">
+                            <span>WVB SHA-256</span>
+                            <code>@(Result.Moduleˉsha256 ?? "No module digest")</code>
+                            @if (Webassemblyˉlowering?.Webassemblyˉsha256 is not null)
+                            {
+                                <span>Generated Wasm SHA-256</span>
+                                <code>@Webassemblyˉlowering.Webassemblyˉsha256</code>
+                                <span>Windvale backend WVB SHA-256</span>
+                                <code>@Playgroundˉwebassemblyˉlowerer.BACKEND_WVB_SHA256</code>
+                            }
+                            @if (Webassemblyˉmessage is not null)
+                            {
+                                <p class="wasm-note">@Webassemblyˉmessage</p>
+                            }
+                        </div>
                     </div>
                 }
             </div>
@@ -260,6 +277,7 @@
     private ElementReference Layoutˉelement;
     private ElementReference Editorˉelement;
     private IJSObjectReference? Editorˉmodule;
+    private IJSObjectReference? Webassemblyˉmodule;
     private DotNetObjectReference<Home>? Selfˉreference;
     private Playgroundˉexample Selectedˉexample = Playgroundˉexamples.All[0];
     private string Source = Playgroundˉexamples.All[0].Source;
@@ -271,7 +289,11 @@
     private bool Editorˉready;
     private bool Isˉrunning;
     private Playgroundˉresult? Result;
+    private Playgroundˉwebassemblyˉloweringˉresult? Webassemblyˉlowering;
+    private Browserˉwebassemblyˉresult? Webassemblyˉexecution;
     private Resultˉtab Activeˉtab = Resultˉtab.Output;
+
+    private const int WEBASSEMBLY_WORKER_TIMEOUT_MILLISECONDS = 2_000;
 
     private enum Resultˉtab
     {
@@ -316,6 +338,8 @@
         Allowˉconsoleˉwriteˉline = Selectedˉexample.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.CONSOLE_WRITE_LINE);
         Allowˉdiagnosticˉwriteˉline = Selectedˉexample.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE);
         Result = null;
+        Webassemblyˉlowering = null;
+        Webassemblyˉexecution = null;
         Activeˉtab = Resultˉtab.Output;
 
         if (Editorˉready && Editorˉmodule is not null)
@@ -341,6 +365,8 @@
 
         Isˉrunning = true;
         Result = null;
+        Webassemblyˉlowering = null;
+        Webassemblyˉexecution = null;
         await InvokeAsync(StateHasChanged);
         await Task.Yield();
 
@@ -385,6 +411,8 @@
                     .ToArray();
                 await Editorˉmodule.InvokeVoidAsync("SetDiagnostics", Markers);
             }
+
+            await Runˉwebassemblyˉworker();
         }
         finally
         {
@@ -410,6 +438,17 @@
 
     public async ValueTask DisposeAsync()
     {
+        if (Webassemblyˉmodule is not null)
+        {
+            try
+            {
+                await Webassemblyˉmodule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // The browser has already navigated away.
+            }
+        }
         if (Editorˉmodule is not null)
         {
             try
@@ -427,11 +466,101 @@
 
     private string Runˉstatusˉlabel => Isˉrunning
         ? "Running"
-        : Result is null ? "Ready" : Statusˉlabel(Result.Status);
+        : Result is null
+            ? "Ready"
+            : Webassemblyˉfailed
+                ? "WASM FAILED"
+                : Statusˉlabel(Result.Status);
 
     private string Runˉstatusˉclass => Isˉrunning
         ? "running"
-        : Result is null ? "idle" : Statusˉclass(Result.Status);
+        : Result is null
+            ? "idle"
+            : Webassemblyˉfailed
+                ? "failure"
+                : Statusˉclass(Result.Status);
+
+    private async Task Runˉwebassemblyˉworker()
+    {
+        if (Result is not
+            {
+                Status: Playgroundˉstatus.Completed,
+                Profile: Moduleˉprofile.Portable,
+                Requiredˉcapabilities.IsEmpty: true,
+            })
+        {
+            return;
+        }
+
+        Webassemblyˉlowering = Playgroundˉwebassemblyˉlowerer.Lower(Result.Bytecodeˉbytes);
+        if (Webassemblyˉlowering.Status != Playgroundˉwebassemblyˉloweringˉstatus.Lowered)
+        {
+            return;
+        }
+
+        try
+        {
+            Webassemblyˉmodule ??= await JavaScript.InvokeAsync<IJSObjectReference>(
+                "import",
+                "./js/windvale-wasm-host.js");
+            Webassemblyˉexecution = await Webassemblyˉmodule.InvokeAsync<Browserˉwebassemblyˉresult>(
+                "Execute",
+                Webassemblyˉlowering.Webassemblyˉbytes.ToArray(),
+                WEBASSEMBLY_WORKER_TIMEOUT_MILLISECONDS);
+        }
+        catch (JSException Exception)
+        {
+            Webassemblyˉexecution = Browserˉwebassemblyˉresult.Failure(Exception.Message);
+        }
+
+        Activeˉtab = Resultˉtab.Execution;
+    }
+
+    private bool Webassemblyˉmatched =>
+        Result is not null &&
+        Webassemblyˉexecution is { Succeeded: true, Status: 0 } Execution &&
+        Execution.Result == Result.Exitˉcode &&
+        (Execution.ExecutionAbi == 0 ||
+            Execution.ExecutedInstructions == Result.Executedˉinstructions);
+
+    private bool Webassemblyˉfailed =>
+        Webassemblyˉlowering?.Status == Playgroundˉwebassemblyˉloweringˉstatus.Failed ||
+        (Webassemblyˉlowering?.Status == Playgroundˉwebassemblyˉloweringˉstatus.Lowered &&
+            Webassemblyˉexecution is not null &&
+            !Webassemblyˉmatched);
+
+    private string Webassemblyˉworkerˉlabel => Webassemblyˉlowering?.Status switch
+    {
+        null => "not selected",
+        Playgroundˉwebassemblyˉloweringˉstatus.Unsupported =>
+            $"subset: {Webassemblyˉlowering.Selectorˉstatus}",
+        Playgroundˉwebassemblyˉloweringˉstatus.Failed => "lowering failed",
+        Playgroundˉwebassemblyˉloweringˉstatus.Lowered when Webassemblyˉexecution is null =>
+            "worker unavailable",
+        Playgroundˉwebassemblyˉloweringˉstatus.Lowered when Webassemblyˉmatched =>
+            $"matched · ABI {Webassemblyˉexecution!.ExecutionAbi}",
+        _ => "mismatch",
+    };
+
+    private string Webassemblyˉresultˉlabel => Webassemblyˉexecution is
+        { Succeeded: true, Status: not null, Result: not null } Execution
+            ? $"status {Execution.Status}, result {Execution.Result}"
+            : "—";
+
+    private string? Webassemblyˉmessage => Webassemblyˉlowering?.Status switch
+    {
+        Playgroundˉwebassemblyˉloweringˉstatus.Unsupported =>
+            "This valid program is outside the bounded direct-Wasm subset, so the .NET reference interpreter remains the execution path.",
+        Playgroundˉwebassemblyˉloweringˉstatus.Failed => Webassemblyˉlowering.Failure,
+        Playgroundˉwebassemblyˉloweringˉstatus.Lowered when
+            Webassemblyˉexecution is { Succeeded: false } => Webassemblyˉexecution.Error,
+        Playgroundˉwebassemblyˉloweringˉstatus.Lowered when
+            Webassemblyˉexecution is { Succeeded: true } && !Webassemblyˉmatched =>
+                "The disposable WebAssembly worker did not match the .NET reference result.",
+        Playgroundˉwebassemblyˉloweringˉstatus.Lowered =>
+            "A disposable worker validated and ran the Windvale-generated, import-free WebAssembly module; its result agrees with the .NET reference interpreter.",
+        _ => null,
+    };
 
     private static RenderFragment Capabilityˉlist(ImmutableArray<string> capabilities) => Builder =>
     {
@@ -479,4 +608,24 @@
         Resultˉtab.Bytecode => "Bytecode",
         _ => tab.ToString(),
     };
+
+    private sealed class Browserˉwebassemblyˉresult
+    {
+        public bool Succeeded { get; set; }
+
+        public int? ExecutionAbi { get; set; }
+
+        public int? Status { get; set; }
+
+        public int? Result { get; set; }
+
+        public long? ExecutedInstructions { get; set; }
+
+        public string? Error { get; set; }
+
+        public static Browserˉwebassemblyˉresult Failure(string error) => new()
+        {
+            Error = error,
+        };
+    }
 }

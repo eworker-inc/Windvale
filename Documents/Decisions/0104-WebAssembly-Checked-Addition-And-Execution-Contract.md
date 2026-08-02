@@ -1,7 +1,7 @@
 # Decision 0104: WebAssembly checked addition and execution ABI
 
 - Date: 2026-08-02
-- Status: Implemented; extended by [Decision 0106](0106-Bounded-Straight-I32-WebAssembly-Lowering.md); cross-host and browser-worker qualification pending
+- Status: Implemented; cross-host qualified through [Decision 0106](0106-Bounded-Straight-I32-WebAssembly-Lowering.md) and locally integrated into the browser by [Decision 0107](0107-Playground-Disposable-WebAssembly-Worker.md)
 - Extends: [Decision 0102](0102-First-Windvale-WebAssembly-Backend-Slice.md)
 
 ## Context
@@ -47,7 +47,7 @@ Focused tests compare the complete successful module bytes and both output diges
 
 At the profile-2 checkpoint, the Windvale core WVB had SHA-256 `aa5086df27c993ec76d92b7680517c60777936a55c1e00644ad03d736ddd2f9f`; the hosted tool WVB had SHA-256 `1ef6274dd7a7188464c7cd7c2fdb2ed71656a0d901c9d8c9aa6535f7ebe738bd`; and the portable encoder demo WVB had SHA-256 `0da57f8ae5f3dfc420d1bd57286bf77f5012a71ee8121cfd09b8fcb05c5e0588`. Decision 0106 records their identities after the straight-line extension.
 
-This is Windows development evidence and an independently identified engine run. It is not Windows/Linux byte equality or playground-worker qualification.
+Decision 0106 records later Windows/Linux byte equality for the retained profile-2 artifacts. Decision 0107 consumes the same ABI in the playground's disposable worker; cross-browser qualification remains pending.
 
 ## Rejected alternatives
 

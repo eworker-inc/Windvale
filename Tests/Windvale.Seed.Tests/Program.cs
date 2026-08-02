@@ -1061,6 +1061,46 @@ internal static class Program
         Equal(29, Sumˉresult.Exitˉcode);
         Equal(Moduleˉprofile.Portable, Sumˉresult.Profile);
         Equal(0, Sumˉresult.Requiredˉcapabilities.Length);
+        var Unsupportedˉwebassembly = Playgroundˉwebassemblyˉlowerer.Lower(
+            Sumˉresult.Bytecodeˉbytes);
+        Equal(
+            Playgroundˉwebassemblyˉloweringˉstatus.Unsupported,
+            Unsupportedˉwebassembly.Status);
+        True(
+            Unsupportedˉwebassembly.Selectorˉstatus?.StartsWith(
+                "Unsupportedˉ",
+                StringComparison.Ordinal) == true,
+            "The playground did not retain the Windvale backend selector status.");
+        Equal(0, Unsupportedˉwebassembly.Webassemblyˉbytes.Length);
+
+        var Webassembly = Examples.Single(Example => Example.Id == "webassembly-worker");
+        var Webassemblyˉreference = Playgroundˉrunner.Run(new(
+            Webassembly.Source,
+            Webassembly.Recommendedˉcapabilities));
+        Equal(Playgroundˉstatus.Completed, Webassemblyˉreference.Status);
+        Equal(Moduleˉprofile.Portable, Webassemblyˉreference.Profile);
+        Equal(42, Webassemblyˉreference.Exitˉcode);
+        Equal(30L, Webassemblyˉreference.Executedˉinstructions);
+        Equal(WEBASSEMBLY_STRAIGHT_I32_WVB_SHA256, Webassemblyˉreference.Moduleˉsha256);
+        var Webassemblyˉlowered = Playgroundˉwebassemblyˉlowerer.Lower(
+            Webassemblyˉreference.Bytecodeˉbytes);
+        Equal(
+            Playgroundˉwebassemblyˉloweringˉstatus.Lowered,
+            Webassemblyˉlowered.Status);
+        Equal("Valid", Webassemblyˉlowered.Selectorˉstatus);
+        Equal(432, Webassemblyˉlowered.Webassemblyˉbytes.Length);
+        Equal(WEBASSEMBLY_STRAIGHT_I32_SHA256, Webassemblyˉlowered.Webassemblyˉsha256);
+        True(
+            Webassemblyˉlowered.Loweringˉinstructions > 0,
+            "The playground did not report Windvale backend execution evidence.");
+        var Webassemblyˉrepeat = Playgroundˉwebassemblyˉlowerer.Lower(
+            Webassemblyˉreference.Bytecodeˉbytes);
+        Equal(Webassemblyˉlowered.Status, Webassemblyˉrepeat.Status);
+        Equal(Webassemblyˉlowered.Webassemblyˉsha256, Webassemblyˉrepeat.Webassemblyˉsha256);
+        Equal(Webassemblyˉlowered.Loweringˉinstructions, Webassemblyˉrepeat.Loweringˉinstructions);
+        Sequenceˉequal(
+            Webassemblyˉlowered.Webassemblyˉbytes,
+            Webassemblyˉrepeat.Webassemblyˉbytes);
 
         var Twoˉchannels = Examples.Single(Example => Example.Id == "two-channels");
         var Twoˉchannelˉresult = Playgroundˉrunner.Run(new(

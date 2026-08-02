@@ -145,7 +145,9 @@ Profiles 2 and 3 additionally require positive-overflow, negative-overflow, both
 
 On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles six profile-2/profile-3 fixtures, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine.
 
-Cross-host equality is required before this slice is described as qualified. Browser support is not established until the generated module runs inside the playground's worker containment boundary on the explicitly tested browser profile.
+Exact commit `a2285f5a0c09598ec701691bdbf0af9080e8cf0c` establishes Windows and digest-pinned Debian 12 equality for the backend WVB, selected input WVB, and generated WebAssembly digests through GitHub [Verify run 30762541741](https://github.com/eworker-inc/Windvale/actions/runs/30762541741). Both host qualification jobs completed successfully; the run-level conclusion changed to `cancelled` only after both jobs completed, when a later `main` push activated workflow concurrency cancellation.
+
+[Decision 0107](../Documents/Decisions/0107-Playground-Disposable-WebAssembly-Worker.md) integrates the exact profile-3 success WVB and Wasm identities into the playground. On 2026-08-02, a Chromium-based in-app browser twice validated and ran the transferred 432-byte import-free module in a fresh worker, reporting ABI `1`, status `0`, result `42`, and 30 instructions equal to the .NET reference path, with no browser warning or error. This is local browser integration evidence, not cross-browser qualification or complete playground isolation.
 
 ## Non-claims
 
@@ -162,4 +164,4 @@ This profile does not establish:
 
 ## Next extension boundary
 
-The next backend slice should reconstruct a deliberately small structured-control-flow subset for one `i32` function while retaining execution ABI 1 and exact instruction accounting. Calls, linear memory, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, profile 3 requires Windows/Linux byte equality before playground-worker integration can be described as qualified.
+The next backend slice should reconstruct a deliberately small structured-control-flow subset for one `i32` function while retaining execution ABI 1 and exact instruction accounting. Calls, linear memory, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, the Stage 0 compiler, verifier, `.wv` lowerer execution, and fallback interpreter should move off the UI thread before the playground is treated as hardened against hostile inputs.
