@@ -142,11 +142,15 @@ public static class X64ˉnativeˉbackend
             .Select(Toˉnativeˉtype)
             .ToImmutableArray();
         var Allˉlocalˉtypes = Parameterˉtypes.AddRange(Localˉtypes);
+        var Allˉlocalˉnominalˉtypeˉindices = function.Declaration.Allˉlocalˉtypes
+            .Select(Type => Type.Nominalˉtypeˉindex)
+            .ToImmutableArray();
         var Referenceˉlocalˉinitialized = Allˉlocalˉtypes
             .Select((Type, Index) =>
                 Index < Parameterˉtypes.Length && Isˉnativeˉrunˉreferenceˉtype(Type))
             .ToArray();
         var Valueˉtypes = ImmutableArray.CreateBuilder<Nativeˉvalueˉtype>();
+        var Valueˉnominalˉtypeˉindices = ImmutableArray.CreateBuilder<int>();
         var Blockˉvalueˉranges = new List<(int First, int Count)>();
         var Hiddenˉresultˉslots = Isˉnativeˉdescriptorˉtype(
             Toˉnativeˉtype(function.Declaration.Returnˉtype)) ? 1 : 0;
@@ -192,7 +196,7 @@ public static class X64ˉnativeˉbackend
             var Stack = new Stack<Nativeˉstackˉvalue>();
             Nativeˉterminator? Terminator = null;
 
-            int Newˉvalue(Nativeˉvalueˉtype type)
+            int Newˉvalue(Nativeˉvalueˉtype type, int nominalˉtypeˉindex = -1)
             {
                 if (Valueˉtypes.Count >= Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS)
                 {
@@ -203,6 +207,7 @@ public static class X64ˉnativeˉbackend
                 }
                 var Result = Valueˉtypes.Count;
                 Valueˉtypes.Add(type);
+                Valueˉnominalˉtypeˉindices.Add(nominalˉtypeˉindex);
                 return Result;
             }
 
@@ -262,7 +267,9 @@ public static class X64ˉnativeˉbackend
                         {
                             Fail("WVN2003", "Verified WVB exposed invalid enum member metadata during native lowering.");
                         }
-                        var Enumˉconstant = Newˉvalue(Nativeˉvalueˉtype.Enum);
+                        var Enumˉconstant = Newˉvalue(
+                            Nativeˉvalueˉtype.Enum,
+                            Enumˉtypeˉindex);
                         Operations.Add(new Nativeˉenumˉconstant(
                             Enumˉconstant,
                             Enumˉtypeˉindex,
@@ -304,7 +311,9 @@ public static class X64ˉnativeˉbackend
                         {
                             Fail("WVN2003", "A native borrowed-descriptor or record local must be initialized before use.");
                         }
-                        var Loadˉresult = Newˉvalue(Loadˉtype);
+                        var Loadˉresult = Newˉvalue(
+                            Loadˉtype,
+                            function.Declaration.Allˉlocalˉtypes[Loadˉindex].Nominalˉtypeˉindex);
                         Operations.Add(new Nativeˉlocalˉload(Loadˉresult, Loadˉindex, Loadˉtype));
                         Stack.Push(new(
                             Loadˉresult,
@@ -639,7 +648,9 @@ public static class X64ˉnativeˉbackend
                         {
                             Recordˉfields[Fieldˉindex] = Popˉvalue(Toˉnativeˉtype(Recordˉtype.Fields[Fieldˉindex].Type));
                         }
-                        var Recordˉresult = Newˉvalue(Nativeˉvalueˉtype.Record);
+                        var Recordˉresult = Newˉvalue(
+                            Nativeˉvalueˉtype.Record,
+                            Recordˉtypeˉindex);
                         Operations.Add(new Nativeˉrecordˉcreate(
                             Recordˉresult,
                             Recordˉtypeˉindex,
@@ -662,7 +673,9 @@ public static class X64ˉnativeˉbackend
                         }
                         var Recordˉfieldˉshape = Fieldˉrecord.Fields[Recordˉfieldˉindex].Type;
                         var Recordˉfieldˉtype = Toˉnativeˉtype(Recordˉfieldˉshape);
-                        var Recordˉfieldˉresult = Newˉvalue(Recordˉfieldˉtype);
+                        var Recordˉfieldˉresult = Newˉvalue(
+                            Recordˉfieldˉtype,
+                            Recordˉfieldˉshape.Nominalˉtypeˉindex);
                         Operations.Add(new Nativeˉrecordˉfield(
                             Recordˉfieldˉresult,
                             Recordˉsource.Nominalˉtypeˉindex,
@@ -764,7 +777,9 @@ public static class X64ˉnativeˉbackend
                         else
                         {
                             var Callˉtype = Toˉnativeˉtype(Callˉshape);
-                            var Callˉresult = Newˉvalue(Callˉtype);
+                            var Callˉresult = Newˉvalue(
+                                Callˉtype,
+                                Callˉshape.Nominalˉtypeˉindex);
                             Operations.Add(new Nativeˉcall(
                                 Callˉresult,
                                 Callˉtype,
@@ -836,6 +851,7 @@ public static class X64ˉnativeˉbackend
         }
 
         var Frozenˉvalueˉtypes = Valueˉtypes.ToImmutable();
+        var Frozenˉvalueˉnominalˉtypeˉindices = Valueˉnominalˉtypeˉindices.ToImmutable();
         var Valueˉslots = Allocateˉvalueˉslots(Frozenˉvalueˉtypes, Blockˉvalueˉranges);
         var Requiredˉframeˉslots = checked(
             Allˉlocalˉtypes.Length + Valueˉslots.Count + Hiddenˉresultˉslots);
@@ -852,8 +868,11 @@ public static class X64ˉnativeˉbackend
             function.Declaration.Name,
             Parameterˉtypes,
             Toˉnativeˉtype(function.Declaration.Returnˉtype),
+            function.Declaration.Returnˉtype.Nominalˉtypeˉindex,
             Localˉtypes,
+            Allˉlocalˉnominalˉtypeˉindices,
             Frozenˉvalueˉtypes,
+            Frozenˉvalueˉnominalˉtypeˉindices,
             Valueˉslots.Indices,
             Valueˉslots.Count,
             Blocks.ToImmutable());
@@ -880,6 +899,18 @@ public static class X64ˉnativeˉbackend
                 !Isˉsupportedˉnativeˉnominalˉtype(Type)))
         {
             Fail("WVN2901", "The x86-64 selector received invalid nominal type metadata.");
+        }
+        if (module.Functions.Any(Function =>
+                Function is null ||
+                Function.Parameterˉtypes.IsDefault ||
+                Function.Localˉtypes.IsDefault ||
+                Function.Allˉlocalˉnominalˉtypeˉindices.IsDefault ||
+                Function.Allˉlocalˉnominalˉtypeˉindices.Length != Function.Allˉlocalˉtypes.Length ||
+                Function.Valueˉtypes.IsDefault ||
+                Function.Valueˉnominalˉtypeˉindices.IsDefault ||
+                Function.Valueˉnominalˉtypeˉindices.Length != Function.Valueˉtypes.Length))
+        {
+            Fail("WVN2901", "The x86-64 selector received invalid native shape metadata.");
         }
         foreach (var Function in module.Functions)
         {
@@ -1695,8 +1726,12 @@ public static class X64ˉnativeˉbackend
     {
         if (function.Parameterˉtypes.IsDefault ||
             function.Localˉtypes.IsDefault ||
+            function.Allˉlocalˉnominalˉtypeˉindices.IsDefault ||
             function.Valueˉtypes.IsDefault ||
+            function.Valueˉnominalˉtypeˉindices.IsDefault ||
             function.Valueˉslotˉindices.IsDefault ||
+            function.Allˉlocalˉnominalˉtypeˉindices.Length != function.Allˉlocalˉtypes.Length ||
+            function.Valueˉnominalˉtypeˉindices.Length != function.Valueˉtypes.Length ||
             function.Valueˉslotˉindices.Length != function.Valueˉtypes.Length ||
             function.Valueˉtypes.Length > Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS ||
             function.Valueˉslotˉcount is < 0 or > Nativeˉcontract.MAXIMUM_FRAME_SLOTS ||
@@ -1717,7 +1752,21 @@ public static class X64ˉnativeˉbackend
                 Nativeˉvalueˉtype.Borrowedˉbytes or
                 Nativeˉvalueˉtype.Enum or
                 Nativeˉvalueˉtype.Record)) ||
-            function.Valueˉtypes.Any(Type => !Enum.IsDefined(Type) || Type == Nativeˉvalueˉtype.Void))
+            function.Valueˉtypes.Any(Type => !Enum.IsDefined(Type) || Type == Nativeˉvalueˉtype.Void) ||
+            !Isˉvalidˉnativeˉshape(
+                module.Types,
+                function.Returnˉtype,
+                function.Returnˉnominalˉtypeˉindex) ||
+            function.Allˉlocalˉtypes.Select((Type, Index) =>
+                Isˉvalidˉnativeˉshape(
+                    module.Types,
+                    Type,
+                    function.Allˉlocalˉnominalˉtypeˉindices[Index])).Any(Valid => !Valid) ||
+            function.Valueˉtypes.Select((Type, Index) =>
+                Isˉvalidˉnativeˉshape(
+                    module.Types,
+                    Type,
+                    function.Valueˉnominalˉtypeˉindices[Index])).Any(Valid => !Valid))
         {
             Fail("WVN2901", "The x86-64 selector received invalid native function metadata.");
         }
@@ -1772,7 +1821,12 @@ public static class X64ˉnativeˉbackend
                         {
                             Fail("WVN2901", "The x86-64 selector received invalid enum constant metadata.");
                         }
-                        Requireˉresult(function, Constant.Result, Nativeˉvalueˉtype.Enum, ref Nextˉvalue);
+                        Requireˉresult(
+                            function,
+                            Constant.Result,
+                            Nativeˉvalueˉtype.Enum,
+                            ref Nextˉvalue,
+                            Constant.Type);
                         break;
                     case Nativeˉstaticˉtextˉconstant Constant:
                         if ((uint)Constant.Data >= (uint)module.Data.Length ||
@@ -1800,11 +1854,24 @@ public static class X64ˉnativeˉbackend
                         break;
                     case Nativeˉlocalˉload Load:
                         Requireˉlocal(function, Load.Local, Load.Type);
-                        Requireˉresult(function, Load.Result, Load.Type, ref Nextˉvalue);
+                        var Loadˉnominalˉtypeˉindex = function.Allˉlocalˉnominalˉtypeˉindices[Load.Local];
+                        Requireˉresult(
+                            function,
+                            Load.Result,
+                            Load.Type,
+                            ref Nextˉvalue,
+                            Loadˉnominalˉtypeˉindex);
                         break;
                     case Nativeˉlocalˉstore Store:
                         Requireˉlocal(function, Store.Local, Store.Type);
-                        Requireˉvalue(function, Store.Value, Store.Type, Firstˉblockˉvalue, Nextˉvalue);
+                        var Storeˉnominalˉtypeˉindex = function.Allˉlocalˉnominalˉtypeˉindices[Store.Local];
+                        Requireˉvalue(
+                            function,
+                            Store.Value,
+                            Store.Type,
+                            Firstˉblockˉvalue,
+                            Nextˉvalue,
+                            Storeˉnominalˉtypeˉindex);
                         break;
                     case Nativeˉi32ˉbinary Binary when Enum.IsDefined(Binary.Kind):
                         Requireˉvalue(function, Binary.Left, Nativeˉvalueˉtype.I32, Firstˉblockˉvalue, Nextˉvalue);
@@ -1847,6 +1914,11 @@ public static class X64ˉnativeˉbackend
                     case Nativeˉenumˉcomparison Comparison when Enum.IsDefined(Comparison.Kind):
                         Requireˉvalue(function, Comparison.Left, Nativeˉvalueˉtype.Enum, Firstˉblockˉvalue, Nextˉvalue);
                         Requireˉvalue(function, Comparison.Right, Nativeˉvalueˉtype.Enum, Firstˉblockˉvalue, Nextˉvalue);
+                        if (function.Valueˉnominalˉtypeˉindices[Comparison.Left] !=
+                            function.Valueˉnominalˉtypeˉindices[Comparison.Right])
+                        {
+                            Fail("WVN2901", "The x86-64 selector received mismatched enum identities.");
+                        }
                         Requireˉresult(function, Comparison.Result, Nativeˉvalueˉtype.Bool, ref Nextˉvalue);
                         break;
                     case Nativeˉu32ˉfromˉu8 Conversion:
@@ -1921,7 +1993,13 @@ public static class X64ˉnativeˉbackend
                         {
                             Fail("WVN2901", "The x86-64 selector received invalid enum-name metadata.");
                         }
-                        Requireˉvalue(function, Name.Value, Nativeˉvalueˉtype.Enum, Firstˉblockˉvalue, Nextˉvalue);
+                        Requireˉvalue(
+                            function,
+                            Name.Value,
+                            Nativeˉvalueˉtype.Enum,
+                            Firstˉblockˉvalue,
+                            Nextˉvalue,
+                            Name.Type);
                         Requireˉresult(function, Name.Result, Nativeˉvalueˉtype.Borrowedˉtext, ref Nextˉvalue);
                         break;
                     case Nativeˉintegerˉformat Format when Enum.IsDefined(Format.Kind):
@@ -1976,9 +2054,15 @@ public static class X64ˉnativeˉbackend
                                 Create.Fields[Field],
                                 Toˉnativeˉtype(Record.Fields[Field].Type),
                                 Firstˉblockˉvalue,
-                                Nextˉvalue);
+                                Nextˉvalue,
+                                Record.Fields[Field].Type.Nominalˉtypeˉindex);
                         }
-                        Requireˉresult(function, Create.Result, Nativeˉvalueˉtype.Record, ref Nextˉvalue);
+                        Requireˉresult(
+                            function,
+                            Create.Result,
+                            Nativeˉvalueˉtype.Record,
+                            ref Nextˉvalue,
+                            Create.Type);
                         break;
                     case Nativeˉrecordˉfield Field:
                         if ((uint)Field.Type >= (uint)module.Types.Length ||
@@ -1991,12 +2075,19 @@ public static class X64ˉnativeˉbackend
                         {
                             Fail("WVN2901", "The x86-64 selector received an invalid record field index.");
                         }
-                        Requireˉvalue(function, Field.Record, Nativeˉvalueˉtype.Record, Firstˉblockˉvalue, Nextˉvalue);
+                        Requireˉvalue(
+                            function,
+                            Field.Record,
+                            Nativeˉvalueˉtype.Record,
+                            Firstˉblockˉvalue,
+                            Nextˉvalue,
+                            Field.Type);
                         Requireˉresult(
                             function,
                             Field.Result,
                             Toˉnativeˉtype(Fieldˉrecord.Fields[Field.Field].Type),
-                            ref Nextˉvalue);
+                            ref Nextˉvalue,
+                            Fieldˉrecord.Fields[Field.Field].Type.Nominalˉtypeˉindex);
                         break;
                     case Nativeˉdataˉlength Length:
                         Requireˉdata(module, Length.Data);
@@ -2076,9 +2167,15 @@ public static class X64ˉnativeˉbackend
                                 Call.Arguments[Argument],
                                 module.Functions[Call.Function].Parameterˉtypes[Argument],
                                 Firstˉblockˉvalue,
-                                Nextˉvalue);
+                                Nextˉvalue,
+                                module.Functions[Call.Function].Allˉlocalˉnominalˉtypeˉindices[Argument]);
                         }
-                        Requireˉresult(function, Call.Result, Call.Type, ref Nextˉvalue);
+                        Requireˉresult(
+                            function,
+                            Call.Result,
+                            Call.Type,
+                            ref Nextˉvalue,
+                            module.Functions[Call.Function].Returnˉnominalˉtypeˉindex);
                         break;
                     case Nativeˉvoidˉcall Call:
                         if ((uint)Call.Function >= (uint)module.Functions.Length ||
@@ -2095,7 +2192,8 @@ public static class X64ˉnativeˉbackend
                                 Call.Arguments[Argument],
                                 module.Functions[Call.Function].Parameterˉtypes[Argument],
                                 Firstˉblockˉvalue,
-                                Nextˉvalue);
+                                Nextˉvalue,
+                                module.Functions[Call.Function].Allˉlocalˉnominalˉtypeˉindices[Argument]);
                         }
                         break;
                     default:
@@ -2127,7 +2225,13 @@ public static class X64ˉnativeˉbackend
                     {
                         Fail("WVN2901", "A native return must consume one instruction charge.");
                     }
-                    Requireˉvalue(function, Return.Value, function.Returnˉtype, Firstˉblockˉvalue, Nextˉvalue);
+                    Requireˉvalue(
+                        function,
+                        Return.Value,
+                        function.Returnˉtype,
+                        Firstˉblockˉvalue,
+                        Nextˉvalue,
+                        function.Returnˉnominalˉtypeˉindex);
                     Returnˉcount++;
                     break;
                 case Nativeˉreturnˉvoid:
@@ -2254,6 +2358,21 @@ public static class X64ˉnativeˉbackend
             _ => false,
         };
 
+    private static bool Isˉvalidˉnativeˉshape(
+        ImmutableArray<Nominalˉtypeˉdeclaration> types,
+        Nativeˉvalueˉtype type,
+        int nominalˉtypeˉindex) =>
+        type switch
+        {
+            Nativeˉvalueˉtype.Record =>
+                (uint)nominalˉtypeˉindex < (uint)types.Length &&
+                types[nominalˉtypeˉindex] is Recordˉtypeˉdeclaration,
+            Nativeˉvalueˉtype.Enum =>
+                (uint)nominalˉtypeˉindex < (uint)types.Length &&
+                types[nominalˉtypeˉindex] is Enumˉtypeˉdeclaration,
+            _ => nominalˉtypeˉindex == -1,
+        };
+
     private static bool Isˉnativeˉreturnˉtype(Valueˉshape type) =>
         type.Kind switch
         {
@@ -2339,11 +2458,16 @@ public static class X64ˉnativeˉbackend
         int value,
         Nativeˉvalueˉtype type,
         int firstˉavailable,
-        int available)
+        int available,
+        int? nominalˉtypeˉindex = null)
     {
-        if (value < firstˉavailable || (uint)value >= (uint)available || function.Valueˉtypes[value] != type)
+        if (value < firstˉavailable ||
+            (uint)value >= (uint)available ||
+            function.Valueˉtypes[value] != type ||
+            nominalˉtypeˉindex.HasValue &&
+            function.Valueˉnominalˉtypeˉindices[value] != nominalˉtypeˉindex.Value)
         {
-            Fail("WVN2901", "The x86-64 selector received an invalid block-local typed value reference.");
+            Fail("WVN2901", "The x86-64 selector received an invalid block-local shaped value reference.");
         }
     }
 
@@ -2351,11 +2475,16 @@ public static class X64ˉnativeˉbackend
         Nativeˉfunction function,
         int result,
         Nativeˉvalueˉtype type,
-        ref int next)
+        ref int next,
+        int? nominalˉtypeˉindex = null)
     {
-        if (result != next || (uint)result >= (uint)function.Valueˉtypes.Length || function.Valueˉtypes[result] != type)
+        if (result != next ||
+            (uint)result >= (uint)function.Valueˉtypes.Length ||
+            function.Valueˉtypes[result] != type ||
+            nominalˉtypeˉindex.HasValue &&
+            function.Valueˉnominalˉtypeˉindices[result] != nominalˉtypeˉindex.Value)
         {
-            Fail("WVN2901", "The x86-64 selector requires canonical typed result numbering.");
+            Fail("WVN2901", "The x86-64 selector requires canonical shaped result numbering.");
         }
         next++;
     }

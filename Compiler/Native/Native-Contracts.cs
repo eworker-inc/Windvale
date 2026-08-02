@@ -412,8 +412,11 @@ public sealed record Nativeˉfunction(
     string Name,
     ImmutableArray<Nativeˉvalueˉtype> Parameterˉtypes,
     Nativeˉvalueˉtype Returnˉtype,
+    int Returnˉnominalˉtypeˉindex,
     ImmutableArray<Nativeˉvalueˉtype> Localˉtypes,
+    ImmutableArray<int> Allˉlocalˉnominalˉtypeˉindices,
     ImmutableArray<Nativeˉvalueˉtype> Valueˉtypes,
+    ImmutableArray<int> Valueˉnominalˉtypeˉindices,
     ImmutableArray<int> Valueˉslotˉindices,
     int Valueˉslotˉcount,
     ImmutableArray<Nativeˉblock> Blocks)

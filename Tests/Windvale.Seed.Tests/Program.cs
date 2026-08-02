@@ -2424,6 +2424,23 @@ internal static class Program
         var First = X64ˉnativeˉbackend.Compile(Verified);
         var Second = X64ˉnativeˉbackend.Compile(Verified);
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
+        Nativeˉshapesˉmatchˉverifiedˉwvb(Verified, First);
+        var Recordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(First.Module);
+        Equal(
+            "0:Advance:1:3:9:3:3:32;" +
+            "1:Main:0:4:12:3:6:25;" +
+            "2:Make:0:1:3:3:3:20;" +
+            "3:Read:1:4:12:3:3:30",
+            string.Join(
+                ";",
+                Recordˉstorage.Select(Function =>
+                    $"{Function.Functionˉindex}:{Function.Functionˉname}:" +
+                    $"{Function.Recordˉparameterˉbindings}:" +
+                    $"{Function.Recordˉlocalˉbindings}:" +
+                    $"{Function.Declaredˉrecordˉlocalˉfieldˉcells}:" +
+                    $"{Function.Persistentˉrecordˉfieldˉcells}:" +
+                    $"{Function.Peakˉliveˉrecordˉfieldˉcells}:" +
+                    $"{Function.Projectedˉframeˉcells}")));
         Equal(2, First.Module.Types.Length);
         True(
             First.Module.Functions.SelectMany(Function => Function.Blocks)
@@ -5249,6 +5266,53 @@ internal static class Program
         Equal(SOURCE_WVB_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉbytes));
         var Compilerˉtool = Moduleˉcodec.Readˉandˉverify(Compilerˉtoolˉbytes);
         var Compilerˉnative = X64ˉnativeˉbackend.Compile(Compilerˉtool);
+        Nativeˉshapesˉmatchˉverifiedˉwvb(Compilerˉtool, Compilerˉnative);
+        var Compilerˉrecordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(
+            Compilerˉnative.Module);
+        var Largestˉrecordˉframe = Compilerˉrecordˉstorage.MaxBy(
+            Function => Function.Projectedˉframeˉcells)!;
+        True(
+            Compilerˉrecordˉstorage.All(Function =>
+                Function.Persistentˉrecordˉfieldˉcells <=
+                    Function.Declaredˉrecordˉlocalˉfieldˉcells &&
+                Function.Peakˉliveˉrecordˉfieldˉcells <=
+                    Function.Blockˉrecordˉfieldˉcells &&
+                Function.Projectedˉframeˉcells == checked(
+                    Function.Existingˉframeˉcells +
+                    Function.Persistentˉrecordˉfieldˉcells +
+                    Function.Peakˉliveˉrecordˉfieldˉcells +
+                    (Function.Returnsˉrecord ? 1 : 0))),
+            "Native record-storage accounting violated its bounded frame model.");
+        Equal(
+            "NATIVE_RECORD_STORAGE functions=328 record-functions=253 " +
+            "parameters=308 assigned-parameters=0 locals=8097 declared=137512 persistent=9291 " +
+            "block=88669 peak-live=7463 values=14948 slots=4484 " +
+            "return-functions=206 return-fields=3222 max-frame=1489 " +
+            "largest-declared=13512 largest-persistent=196 largest-peak=114 " +
+            "max-existing=1178 max-width=34 largest-index=204 " +
+            "largest-name=Compilerˉsourceˉwirˉcompileˉblock nested=0",
+            $"NATIVE_RECORD_STORAGE functions={Compilerˉrecordˉstorage.Length} " +
+            $"record-functions={Compilerˉrecordˉstorage.Count(Function => Function.Recordˉvalueˉidentifiers > 0 || Function.Recordˉparameterˉbindings > 0 || Function.Recordˉlocalˉbindings > 0 || Function.Returnsˉrecord)} " +
+            $"parameters={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉparameterˉbindings)} " +
+            $"assigned-parameters={Compilerˉrecordˉstorage.Sum(Function => Function.Assignedˉrecordˉparameterˉbindings)} " +
+            $"locals={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉlocalˉbindings)} " +
+            $"declared={Compilerˉrecordˉstorage.Sum(Function => Function.Declaredˉrecordˉlocalˉfieldˉcells)} " +
+            $"persistent={Compilerˉrecordˉstorage.Sum(Function => Function.Persistentˉrecordˉfieldˉcells)} " +
+            $"block={Compilerˉrecordˉstorage.Sum(Function => Function.Blockˉrecordˉfieldˉcells)} " +
+            $"peak-live={Compilerˉrecordˉstorage.Sum(Function => Function.Peakˉliveˉrecordˉfieldˉcells)} " +
+            $"values={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉvalueˉidentifiers)} " +
+            $"slots={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉvalueˉslots)} " +
+            $"return-functions={Compilerˉrecordˉstorage.Count(Function => Function.Returnsˉrecord)} " +
+            $"return-fields={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉreturnˉfieldˉcells)} " +
+            $"max-frame={Largestˉrecordˉframe.Projectedˉframeˉcells} " +
+            $"largest-declared={Largestˉrecordˉframe.Declaredˉrecordˉlocalˉfieldˉcells} " +
+            $"largest-persistent={Largestˉrecordˉframe.Persistentˉrecordˉfieldˉcells} " +
+            $"largest-peak={Largestˉrecordˉframe.Peakˉliveˉrecordˉfieldˉcells} " +
+            $"max-existing={Compilerˉrecordˉstorage.Max(Function => Function.Existingˉframeˉcells)} " +
+            $"max-width={Compilerˉrecordˉstorage.Max(Function => Function.Maximumˉrecordˉfieldˉcells)} " +
+            $"largest-index={Largestˉrecordˉframe.Functionˉindex} " +
+            $"largest-name={Largestˉrecordˉframe.Functionˉname} " +
+            $"nested={Compilerˉrecordˉstorage.Count(Function => Function.Containsˉnestedˉrecordˉfields)}");
         Equal(4_556_121, Compilerˉnative.Fragment.Code.Length);
         Equal(
             SOURCE_WVB_TOOL_NATIVE_CODE_SHA256,
@@ -13342,6 +13406,140 @@ internal static class Program
         }
 
         throw new InvalidOperationException($"Expected native trap {expectedˉcode}.");
+    }
+
+    private static void Nativeˉshapesˉmatchˉverifiedˉwvb(
+        Verifiedˉmodule verified,
+        Nativeˉcompilation compilation)
+    {
+        Equal(verified.Functions.Length, compilation.Module.Functions.Length);
+        for (var Functionˉindex = 0; Functionˉindex < verified.Functions.Length; Functionˉindex++)
+        {
+            var Verifiedˉfunction = verified.Functions[Functionˉindex].Declaration;
+            var Nativeˉfunction = compilation.Module.Functions[Functionˉindex];
+            Equal(
+                Verifiedˉfunction.Returnˉtype.Nominalˉtypeˉindex,
+                Nativeˉfunction.Returnˉnominalˉtypeˉindex);
+            Sequenceˉequal(
+                Verifiedˉfunction.Allˉlocalˉtypes
+                    .Select(Type => Type.Nominalˉtypeˉindex)
+                    .ToImmutableArray(),
+                Nativeˉfunction.Allˉlocalˉnominalˉtypeˉindices);
+            Equal(
+                Nativeˉfunction.Valueˉtypes.Length,
+                Nativeˉfunction.Valueˉnominalˉtypeˉindices.Length);
+
+            for (var Value = 0; Value < Nativeˉfunction.Valueˉtypes.Length; Value++)
+            {
+                var Nominalˉtypeˉindex = Nativeˉfunction.Valueˉnominalˉtypeˉindices[Value];
+                switch (Nativeˉfunction.Valueˉtypes[Value])
+                {
+                    case Nativeˉvalueˉtype.Record:
+                        True(
+                            (uint)Nominalˉtypeˉindex < (uint)compilation.Module.Types.Length &&
+                            compilation.Module.Types[Nominalˉtypeˉindex] is Recordˉtypeˉdeclaration,
+                            "Native record value omitted its record identity.");
+                        break;
+                    case Nativeˉvalueˉtype.Enum:
+                        True(
+                            (uint)Nominalˉtypeˉindex < (uint)compilation.Module.Types.Length &&
+                            compilation.Module.Types[Nominalˉtypeˉindex] is Enumˉtypeˉdeclaration,
+                            "Native enum value omitted its enum identity.");
+                        break;
+                    default:
+                        Equal(-1, Nominalˉtypeˉindex);
+                        break;
+                }
+            }
+
+            foreach (var Block in Nativeˉfunction.Blocks)
+            {
+                foreach (var Operation in Block.Operations)
+                {
+                    switch (Operation)
+                    {
+                        case Nativeˉenumˉconstant Constant:
+                            Equal(
+                                Constant.Type,
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Constant.Result]);
+                            break;
+                        case Nativeˉlocalˉload Load:
+                            Equal(
+                                Nativeˉfunction.Allˉlocalˉnominalˉtypeˉindices[Load.Local],
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Load.Result]);
+                            break;
+                        case Nativeˉlocalˉstore Store:
+                            Equal(
+                                Nativeˉfunction.Allˉlocalˉnominalˉtypeˉindices[Store.Local],
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Store.Value]);
+                            break;
+                        case Nativeˉenumˉcomparison Comparison:
+                            Equal(
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Comparison.Left],
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Comparison.Right]);
+                            break;
+                        case Nativeˉenumˉname Name:
+                            Equal(
+                                Name.Type,
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Name.Value]);
+                            break;
+                        case Nativeˉrecordˉcreate Create:
+                            var Record = (Recordˉtypeˉdeclaration)compilation.Module.Types[Create.Type];
+                            Equal(
+                                Create.Type,
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Create.Result]);
+                            for (var Field = 0; Field < Create.Fields.Length; Field++)
+                            {
+                                Equal(
+                                    Record.Fields[Field].Type.Nominalˉtypeˉindex,
+                                    Nativeˉfunction.Valueˉnominalˉtypeˉindices[
+                                        Create.Fields[Field]]);
+                            }
+                            break;
+                        case Nativeˉrecordˉfield Field:
+                            var Fieldˉrecord =
+                                (Recordˉtypeˉdeclaration)compilation.Module.Types[Field.Type];
+                            Equal(
+                                Field.Type,
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Field.Record]);
+                            Equal(
+                                Fieldˉrecord.Fields[Field.Field].Type.Nominalˉtypeˉindex,
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Field.Result]);
+                            break;
+                        case Nativeˉcall Call:
+                            var Called = compilation.Module.Functions[Call.Function];
+                            Equal(
+                                Called.Returnˉnominalˉtypeˉindex,
+                                Nativeˉfunction.Valueˉnominalˉtypeˉindices[Call.Result]);
+                            for (var Argument = 0; Argument < Call.Arguments.Length; Argument++)
+                            {
+                                Equal(
+                                    Called.Allˉlocalˉnominalˉtypeˉindices[Argument],
+                                    Nativeˉfunction.Valueˉnominalˉtypeˉindices[
+                                        Call.Arguments[Argument]]);
+                            }
+                            break;
+                        case Nativeˉvoidˉcall Call:
+                            var Calledˉvoid = compilation.Module.Functions[Call.Function];
+                            for (var Argument = 0; Argument < Call.Arguments.Length; Argument++)
+                            {
+                                Equal(
+                                    Calledˉvoid.Allˉlocalˉnominalˉtypeˉindices[Argument],
+                                    Nativeˉfunction.Valueˉnominalˉtypeˉindices[
+                                        Call.Arguments[Argument]]);
+                            }
+                            break;
+                    }
+                }
+
+                if (Block.Terminator is Nativeˉreturn Return)
+                {
+                    Equal(
+                        Nativeˉfunction.Returnˉnominalˉtypeˉindex,
+                        Nativeˉfunction.Valueˉnominalˉtypeˉindices[Return.Value]);
+                }
+            }
+        }
     }
 
     private sealed class Nativeˉoutputˉcapture : IDisposable
