@@ -105,7 +105,13 @@ jobs:
         env:
           BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
-        run: git diff --check $env:BASE_SHA $env:HEAD_SHA --
+        run: |
+          git cat-file -e "$($env:BASE_SHA)^{commit}" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            git fetch --no-tags --no-recurse-submodules --depth=1 origin $env:BASE_SHA
+            if ($LASTEXITCODE -ne 0) { throw 'Git could not fetch the lightweight verification base.' }
+          }
+          git diff --check $env:BASE_SHA $env:HEAD_SHA --
 
       - name: Run Windows verification
         if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
@@ -157,7 +163,11 @@ jobs:
         env:
           BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
-        run: git diff --check "$BASE_SHA" "$HEAD_SHA" --
+        run: |
+          if ! git cat-file -e "${BASE_SHA}^{commit}"; then
+            git fetch --no-tags --no-recurse-submodules --depth=1 origin "$BASE_SHA"
+          fi
+          git diff --check "$BASE_SHA" "$HEAD_SHA" --
 
       - name: Run Linux verification
         if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
