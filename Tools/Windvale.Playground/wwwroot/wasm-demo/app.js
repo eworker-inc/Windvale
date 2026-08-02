@@ -67,8 +67,8 @@ async function Runˉartifact() {
         Output.textContent = [
             `SHA-256     ${Actualˉsha256}`,
             `ABI          ${Success.ExecutionAbi}`,
-            `Budget 157   status ${Success.Status} · result ${Success.Result} · ${Success.ExecutedInstructions} instructions`,
-            `Budget 156   status ${Exhausted.Status} (WVR3011) · ${Exhausted.ExecutedInstructions} instructions`,
+            `Budget ${SUCCESS_BUDGET}   status ${Success.Status} · result ${Success.Result} · ${Success.ExecutedInstructions} instructions`,
+            `Budget ${EXHAUSTION_BUDGET}   status ${Exhausted.Status} (WVR3011) · ${Exhausted.ExecutedInstructions} instructions`,
             `Framework    ${Frameworkˉrequests} .NET/Blazor requests`,
         ].join("\n");
         Setˉstate("passed", "Passed");

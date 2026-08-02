@@ -51,7 +51,7 @@ dotnet run --project Tools/Windvale.Playground
 
 The [playground host specification](Specifications/Browser-Playground.md) defines its limits and non-claims. This is a browser host for the language, not a browser boot of Windvale OS and not yet an accepted permanent WebAssembly compiler target.
 
-The separate [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) proves the first cross-host-qualified lower layer in Windvale source: portable `.wv` code revalidates canonical WVB and lowers bounded scalar instruction streams plus one structured loop to deterministic import-free Wasm. Execution ABI 1 preserves checked arithmetic and exact straight-line accounting; ABI 2 accepts an instruction limit, succeeds at the exact measured loop budget, and contains exhaustion as `WVR3011`. The playground executes selected output in a disposable worker, and its separate direct demo needs no .NET runtime; artifact production, verification, and the editable general path still use Stage 0.
+The separate [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) proves the first lower layer in Windvale source: portable `.wv` code revalidates canonical WVB and lowers bounded scalar streams, loops, and sequential `if`/`if/else` regions to deterministic import-free Wasm. Execution ABI 1 preserves checked arithmetic and exact straight-line accounting; ABI 2 accepts an instruction limit, succeeds at exact measured control-flow budgets, and contains exhaustion as `WVR3011`. The playground executes selected output in a disposable worker, and its separate direct demo needs no .NET runtime; artifact production, verification, and the editable general path still use Stage 0.
 
 ## Quick start
 

@@ -30,7 +30,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 11. Boot path and kernel | 🚧 In progress | Probe 32 through ABI 20 / `WVKMEM10` is cross-host qualified with the same `WVPROC11` behavior, a 134-page arena, and a 113-page client root; all four local pinned-QEMU scenarios pass. | Let non-tail lifetime pressure, broader traps, Hyper-V, or a third runnable choose the next kernel slice. |
 | 12. Runtime on Windvale OS | ✅ Qualified | Exact `Sum-Data.wv` and `Function-Only.wv` compiler outputs run across both hosts and Windvale OS; the second covers four functions and four scalar families. | Use a third real program or measured native-size pressure to choose further generalization. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
-| WebAssembly interoperability | 🚧 In progress | A cross-host-qualified portable `.wv` selector now reconstructs one bounded WVB loop with dynamic instruction metering. The editable playground and separate .NET-free route execute the pinned ABI-2 artifact in disposable workers. | Move the remaining Stage 0 pipeline off the UI thread and add cross-browser evidence before considering a broader target. |
+| WebAssembly interoperability | 🚧 In progress | A portable `.wv` selector emits deterministic Wasm from bounded scalar WVB plus metered loops and sequential `if`/`if/else` regions. The editable playground compares worker evidence with its .NET oracle, while a separate static route executes the pinned 1,923-byte profile-5 artifact without loading .NET. | Qualify profile 5 cross-host, then add nested control or bounded calls and move the remaining Stage 0 pipeline off the UI thread. |
 
 ## Working end to end
 
@@ -45,6 +45,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Canonical constant WVB → Windvale-authored selector → deterministic Wasm → result `42`
 - ✅ Checked-add WVB → Windvale-authored selector → execution ABI 1 → result or `WVR3007` plus exact instruction count
 - ✅ Bounded straight-line `i32` WVB → Windvale-authored lowering → checked arithmetic → deterministic Wasm under Node.js
+- ✅ Sequential loops and `if`/`if/else` → ABI-2 instruction metering → exact success and `WVR3011` exhaustion
 - ✅ Pinned generated Wasm → static JavaScript host → disposable browser worker without loading .NET
 - ✅ WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
 - ✅ WVA paging mechanics → kernel-owned low-1-GiB W^X identity root

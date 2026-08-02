@@ -43,6 +43,14 @@ record Compilerˉwebassemblyˉloop {
     Exitˉoffset: u32;
 }
 
+record Compilerˉwebassemblyˉcontrol {
+    Valid: bool;
+    Kind: u32;
+    Header: u32;
+    Falseˉtarget: u32;
+    Exitˉtarget: u32;
+}
+
 record Compilerˉwebassemblyˉsummary {
     Status: Compilerˉwebassemblyˉstatus;
     Webassembly: bytes;
@@ -448,6 +456,463 @@ export fn Compilerˉwebassemblyˉvalidateˉmeteredˉloop(
         Loopˉheader,
         Exitˉoffset
     );
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉfailure() -> Compilerˉwebassemblyˉcontrol {
+    return Compilerˉwebassemblyˉcontrol(false, 0u32, 0u32, 0u32, 0u32);
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉinstructionˉwidth(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Cursor: u32
+) -> u32 {
+    if Cursor >= Length { return 0u32; }
+    let Opcode: u8 = Bytesˉreadˉu8(Input, Offset + Cursor);
+    var Width: u32 = 0u32;
+    if Opcode == 1u8 { Width = 5u32; }
+    if Opcode == 4u8 { Width = 5u32; }
+    if Opcode == 5u8 { Width = 5u32; }
+    if Opcode == 16u8 { Width = 1u32; }
+    if Opcode == 17u8 { Width = 1u32; }
+    if Opcode == 18u8 { Width = 1u32; }
+    if Opcode == 19u8 { Width = 1u32; }
+    if Opcode == 32u8 { Width = 1u32; }
+    if Opcode == 33u8 { Width = 1u32; }
+    if Opcode == 34u8 { Width = 1u32; }
+    if Opcode == 35u8 { Width = 1u32; }
+    if Opcode == 36u8 { Width = 1u32; }
+    if Opcode == 37u8 { Width = 1u32; }
+    if Opcode == 48u8 { Width = 5u32; }
+    if Opcode == 49u8 { Width = 5u32; }
+    if Opcode == 80u8 { Width = 1u32; }
+    if Opcode == 81u8 { Width = 1u32; }
+    if Width == 0u32 { return 0u32; }
+    if !Compilerˉwebassemblyˉrangeˉisˉvalid(Length, Cursor, Width) { return 0u32; }
+    return Width;
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉisˉboundary(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Target: u32
+) -> bool {
+    if Target >= Length { return false; }
+    var Cursor: u32 = 0u32;
+    while Cursor < Target {
+        let Width: u32 = Compilerˉwebassemblyˉcontrolˉinstructionˉwidth(
+            Input,
+            Offset,
+            Length,
+            Cursor
+        );
+        if Width == 0u32 { return false; }
+        Cursor = Cursor + Width;
+        if Cursor > Target { return false; }
+    }
+    return Cursor == Target;
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉhasˉentryˉjump(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Header: u32
+) -> bool {
+    if Header == 0u32 { return false; }
+    var Cursor: u32 = 0u32;
+    var Previous: u32 = Length;
+    while Cursor < Header {
+        Previous = Cursor;
+        let Width: u32 = Compilerˉwebassemblyˉcontrolˉinstructionˉwidth(
+            Input,
+            Offset,
+            Length,
+            Cursor
+        );
+        if Width == 0u32 { return false; }
+        Cursor = Cursor + Width;
+        if Cursor > Header { return false; }
+    }
+    if Cursor != Header { return false; }
+    if Previous == Length { return false; }
+    if Bytesˉreadˉu8(Input, Offset + Previous) != 48u8 { return false; }
+    if Previous + 5u32 != Header { return false; }
+    return Bytesˉreadˉu32ˉlittle(Input, Offset + Previous + 1u32) == Header;
+}
+
+export fn Compilerˉwebassemblyˉclassifyˉsequentialˉregion(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Branch: u32
+) -> Compilerˉwebassemblyˉcontrol {
+    if !Compilerˉwebassemblyˉrangeˉisˉvalid(Length, Branch, 5u32) {
+        return Compilerˉwebassemblyˉcontrolˉfailure();
+    }
+    if Bytesˉreadˉu8(Input, Offset + Branch) != 49u8 {
+        return Compilerˉwebassemblyˉcontrolˉfailure();
+    }
+    let Falseˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + Branch + 1u32);
+    if Falseˉtarget <= Branch + 5u32 { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+    if !Compilerˉwebassemblyˉcontrolˉisˉboundary(
+        Input,
+        Offset,
+        Length,
+        Falseˉtarget
+    ) {
+        return Compilerˉwebassemblyˉcontrolˉfailure();
+    }
+    let Bodyˉentry: u32 = Branch + 5u32;
+    if Bytesˉreadˉu8(Input, Offset + Bodyˉentry) != 48u8 {
+        return Compilerˉwebassemblyˉcontrolˉfailure();
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Offset + Bodyˉentry + 1u32) != Bodyˉentry + 5u32 {
+        return Compilerˉwebassemblyˉcontrolˉfailure();
+    }
+
+    var Cursor: u32 = Bodyˉentry;
+    var Backwardˉcount: u32 = 0u32;
+    var Forwardˉcount: u32 = 0u32;
+    var Header: u32 = Length;
+    var Exitˉtarget: u32 = Falseˉtarget;
+    while Cursor < Falseˉtarget {
+        let Width: u32 = Compilerˉwebassemblyˉcontrolˉinstructionˉwidth(
+            Input,
+            Offset,
+            Length,
+            Cursor
+        );
+        if Width == 0u32 { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+        if Cursor + Width > Falseˉtarget {
+            return Compilerˉwebassemblyˉcontrolˉfailure();
+        }
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Offset + Cursor);
+        if Opcode == 49u8 { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+        if Opcode == 48u8 {
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + Cursor + 1u32);
+            if Target >= Length { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+            if Target == Cursor { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+            if Target < Cursor {
+                if Cursor + 5u32 != Falseˉtarget {
+                    return Compilerˉwebassemblyˉcontrolˉfailure();
+                }
+                Backwardˉcount = Backwardˉcount + 1u32;
+                Header = Target;
+            }
+            if Target > Cursor + 5u32 {
+                if Cursor + 5u32 != Falseˉtarget {
+                    return Compilerˉwebassemblyˉcontrolˉfailure();
+                }
+                Forwardˉcount = Forwardˉcount + 1u32;
+                Exitˉtarget = Target;
+            }
+        }
+        Cursor = Cursor + Width;
+    }
+    if Cursor != Falseˉtarget { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+    if Backwardˉcount > 1u32 { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+    if Forwardˉcount > 1u32 { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+    if Backwardˉcount != 0u32 {
+        if Forwardˉcount != 0u32 { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+        if Header >= Branch { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+        if !Compilerˉwebassemblyˉcontrolˉisˉboundary(Input, Offset, Length, Header) {
+            return Compilerˉwebassemblyˉcontrolˉfailure();
+        }
+        if !Compilerˉwebassemblyˉcontrolˉhasˉentryˉjump(Input, Offset, Length, Header) {
+            return Compilerˉwebassemblyˉcontrolˉfailure();
+        }
+        return Compilerˉwebassemblyˉcontrol(
+            true,
+            1u32,
+            Header,
+            Falseˉtarget,
+            Falseˉtarget
+        );
+    }
+    if Forwardˉcount == 0u32 {
+        return Compilerˉwebassemblyˉcontrol(
+            true,
+            2u32,
+            Branch,
+            Falseˉtarget,
+            Falseˉtarget
+        );
+    }
+    if Exitˉtarget <= Falseˉtarget { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+    if !Compilerˉwebassemblyˉcontrolˉisˉboundary(
+        Input,
+        Offset,
+        Length,
+        Exitˉtarget
+    ) {
+        return Compilerˉwebassemblyˉcontrolˉfailure();
+    }
+    Cursor = Falseˉtarget;
+    while Cursor < Exitˉtarget {
+        let Elseˉwidth: u32 = Compilerˉwebassemblyˉcontrolˉinstructionˉwidth(
+            Input,
+            Offset,
+            Length,
+            Cursor
+        );
+        if Elseˉwidth == 0u32 { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+        if Cursor + Elseˉwidth > Exitˉtarget {
+            return Compilerˉwebassemblyˉcontrolˉfailure();
+        }
+        let Elseˉopcode: u8 = Bytesˉreadˉu8(Input, Offset + Cursor);
+        if Elseˉopcode == 49u8 { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+        if Elseˉopcode == 48u8 {
+            let Elseˉjump: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + Cursor + 1u32);
+            if Elseˉjump != Cursor + 5u32 {
+                return Compilerˉwebassemblyˉcontrolˉfailure();
+            }
+        }
+        Cursor = Cursor + Elseˉwidth;
+    }
+    if Cursor != Exitˉtarget { return Compilerˉwebassemblyˉcontrolˉfailure(); }
+    return Compilerˉwebassemblyˉcontrol(
+        true,
+        3u32,
+        Branch,
+        Falseˉtarget,
+        Exitˉtarget
+    );
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉhasˉbackwardˉtarget(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Header: u32
+) -> bool {
+    var Cursor: u32 = Header;
+    while Cursor < Length {
+        let Width: u32 = Compilerˉwebassemblyˉcontrolˉinstructionˉwidth(
+            Input,
+            Offset,
+            Length,
+            Cursor
+        );
+        if Width == 0u32 { return false; }
+        if Bytesˉreadˉu8(Input, Offset + Cursor) == 48u8 {
+            if Bytesˉreadˉu32ˉlittle(Input, Offset + Cursor + 1u32) == Header {
+                if Cursor > Header { return true; }
+            }
+        }
+        Cursor = Cursor + Width;
+    }
+    return false;
+}
+
+export fn Compilerˉwebassemblyˉvalidateˉsequentialˉcontrol(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Localˉtypesˉoffset: u32,
+    Localˉcount: u32,
+    Declaredˉmaximumˉstack: u32
+) -> Compilerˉwebassemblyˉcode {
+    if Declaredˉmaximumˉstack != 2u32 {
+        return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+    }
+    var Cursor: u32 = 0u32;
+    var Depth: u32 = 0u32;
+    var Firstˉtype: u8 = 0u8;
+    var Secondˉtype: u8 = 0u8;
+    var Maximumˉstack: u32 = 0u32;
+    var Instructionˉcount: u32 = 0u32;
+    var Regionˉcount: u32 = 0u32;
+    var Conditionalˉcount: u32 = 0u32;
+    var Regionˉfloor: u32 = 0u32;
+    var Activeˉkind: u32 = 0u32;
+    var Activeˉheader: u32 = Length;
+    var Activeˉfalse: u32 = Length;
+    var Activeˉexit: u32 = Length;
+    var Sawˉelse: bool = false;
+    var Returned: bool = false;
+    while Cursor < Length {
+        if Activeˉkind == 2u32 {
+            if Cursor == Activeˉfalse {
+                Activeˉkind = 0u32;
+                Regionˉfloor = Cursor;
+                Regionˉcount = Regionˉcount + 1u32;
+            }
+        }
+        if Activeˉkind == 3u32 {
+            if Cursor == Activeˉfalse { Sawˉelse = true; }
+            if Cursor == Activeˉexit {
+                if !Sawˉelse { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+                Activeˉkind = 0u32;
+                Sawˉelse = false;
+                Regionˉfloor = Cursor;
+                Regionˉcount = Regionˉcount + 1u32;
+            }
+        }
+        if Instructionˉcount >= 4096u32 {
+            return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+        }
+        Instructionˉcount = Instructionˉcount + 1u32;
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Offset + Cursor);
+        var Handled: bool = false;
+        if Opcode == 1u8 {
+            if !Compilerˉwebassemblyˉrangeˉisˉvalid(Length, Cursor, 5u32) {
+                return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+            }
+            if Depth == 0u32 { Firstˉtype = 1u8; }
+            if Depth == 1u32 { Secondˉtype = 1u8; }
+            if Depth >= 2u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            Depth = Depth + 1u32;
+            Cursor = Cursor + 5u32;
+            Handled = true;
+        }
+        if Opcode == 4u8 {
+            if !Compilerˉwebassemblyˉrangeˉisˉvalid(Length, Cursor, 5u32) {
+                return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+            }
+            let Loadˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + Cursor + 1u32);
+            if Loadˉindex >= Localˉcount {
+                return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+            }
+            let Loadˉtype: u8 = Bytesˉreadˉu8(Input, Localˉtypesˉoffset + Loadˉindex);
+            if Depth == 0u32 { Firstˉtype = Loadˉtype; }
+            if Depth == 1u32 { Secondˉtype = Loadˉtype; }
+            if Depth >= 2u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            Depth = Depth + 1u32;
+            Cursor = Cursor + 5u32;
+            Handled = true;
+        }
+        if Opcode == 5u8 {
+            if !Compilerˉwebassemblyˉrangeˉisˉvalid(Length, Cursor, 5u32) {
+                return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+            }
+            let Storeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + Cursor + 1u32);
+            if Storeˉindex >= Localˉcount { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Depth == 0u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            let Storeˉtype: u8 = Bytesˉreadˉu8(Input, Localˉtypesˉoffset + Storeˉindex);
+            var Stackˉtype: u8 = Firstˉtype;
+            if Depth == 2u32 { Stackˉtype = Secondˉtype; }
+            if Stackˉtype != Storeˉtype {
+                return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+            }
+            Depth = Depth - 1u32;
+            Cursor = Cursor + 5u32;
+            Handled = true;
+        }
+        var Arithmetic: bool = false;
+        if Opcode == 16u8 { Arithmetic = true; }
+        if Opcode == 17u8 { Arithmetic = true; }
+        if Opcode == 18u8 { Arithmetic = true; }
+        if Arithmetic {
+            if Depth != 2u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Firstˉtype != 1u8 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Secondˉtype != 1u8 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            Depth = 1u32;
+            Firstˉtype = 1u8;
+            Cursor = Cursor + 1u32;
+            Handled = true;
+        }
+        if Opcode == 19u8 {
+            var Negateˉtype: u8 = Firstˉtype;
+            if Depth == 2u32 { Negateˉtype = Secondˉtype; }
+            if Depth == 0u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Negateˉtype != 1u8 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            Cursor = Cursor + 1u32;
+            Handled = true;
+        }
+        var Comparison: bool = false;
+        if Opcode == 32u8 { Comparison = true; }
+        if Opcode == 33u8 { Comparison = true; }
+        if Opcode == 34u8 { Comparison = true; }
+        if Opcode == 35u8 { Comparison = true; }
+        if Opcode == 36u8 { Comparison = true; }
+        if Opcode == 37u8 { Comparison = true; }
+        if Comparison {
+            if Depth != 2u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Firstˉtype != 1u8 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Secondˉtype != 1u8 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            Depth = 1u32;
+            Firstˉtype = 2u8;
+            Cursor = Cursor + 1u32;
+            Handled = true;
+        }
+        if Opcode == 48u8 {
+            if Depth != 0u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + Cursor + 1u32);
+            if Target >= Length { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Target == Cursor { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Target < Cursor {
+                if Activeˉkind != 1u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+                if Target != Activeˉheader { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+                if Cursor + 5u32 != Activeˉfalse {
+                    return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+                }
+                Activeˉkind = 0u32;
+                Regionˉfloor = Activeˉfalse;
+                Regionˉcount = Regionˉcount + 1u32;
+            }
+            if Target > Cursor + 5u32 {
+                if Activeˉkind != 3u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+                if Cursor + 5u32 != Activeˉfalse {
+                    return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+                }
+                if Target != Activeˉexit { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            }
+            Cursor = Cursor + 5u32;
+            Handled = true;
+        }
+        if Opcode == 49u8 {
+            if Depth != 1u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Firstˉtype != 2u8 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Activeˉkind != 0u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            let Region: Compilerˉwebassemblyˉcontrol =
+                Compilerˉwebassemblyˉclassifyˉsequentialˉregion(
+                    Input,
+                    Offset,
+                    Length,
+                    Cursor
+                );
+            if !Region.Valid { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Region.Header < Regionˉfloor {
+                return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+            }
+            Activeˉkind = Region.Kind;
+            Activeˉheader = Region.Header;
+            Activeˉfalse = Region.Falseˉtarget;
+            Activeˉexit = Region.Exitˉtarget;
+            if Region.Kind != 1u32 { Conditionalˉcount = Conditionalˉcount + 1u32; }
+            Depth = 0u32;
+            Cursor = Cursor + 5u32;
+            Handled = true;
+        }
+        if Opcode == 80u8 {
+            if Depth == 0u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            Depth = Depth - 1u32;
+            Cursor = Cursor + 1u32;
+            Handled = true;
+        }
+        if Opcode == 81u8 {
+            if Activeˉkind != 0u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Depth != 1u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Firstˉtype != 1u8 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            if Cursor + 1u32 != Length { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+            Returned = true;
+            Cursor = Cursor + 1u32;
+            Handled = true;
+        }
+        if !Handled { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+        if Depth > Maximumˉstack { Maximumˉstack = Depth; }
+    }
+    if !Returned { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+    if Activeˉkind != 0u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+    if Regionˉcount < 2u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+    if Conditionalˉcount == 0u32 { return Compilerˉwebassemblyˉcode(false, 0u32, 0u32); }
+    if Maximumˉstack != Declaredˉmaximumˉstack {
+        return Compilerˉwebassemblyˉcode(false, 0u32, 0u32);
+    }
+    return Compilerˉwebassemblyˉcode(true, Instructionˉcount, Maximumˉstack);
 }
 
 export fn Compilerˉwebassemblyˉbyte(Value: u32) -> bytes {
@@ -1412,6 +1877,199 @@ export fn Compilerˉwebassemblyˉencodeˉmeteredˉloop(
     return Compilerˉwebassemblyˉencodeˉmeteredˉexecutionˉbody(Body);
 }
 
+export fn Compilerˉwebassemblyˉencodeˉsequentialˉcontrol(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Localˉcount: u32
+) -> bytes {
+    let Scratchˉleft: u32 = Localˉcount + 1u32;
+    let Scratchˉright: u32 = Localˉcount + 2u32;
+    let Scratchˉresult: u32 = Localˉcount + 3u32;
+    let Scratchˉwide: u32 = Localˉcount + 4u32;
+
+    var Body: bytes = Compilerˉwebassemblyˉuleb32(2u32);
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉuleb32(Localˉcount + 3u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(127u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉuleb32(1u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(126u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉi32ˉconstant(0));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉindexedˉinstruction(36u32, 1u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉi32ˉconstant(0));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉindexedˉinstruction(36u32, 2u32));
+
+    var Cursor: u32 = 0u32;
+    var Activeˉkind: u32 = 0u32;
+    var Activeˉheader: u32 = Codeˉlength;
+    var Activeˉfalse: u32 = Codeˉlength;
+    var Activeˉexit: u32 = Codeˉlength;
+    while Cursor < Codeˉlength {
+        if Activeˉkind == 2u32 {
+            if Cursor == Activeˉfalse {
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+                Activeˉkind = 0u32;
+            }
+        }
+        if Activeˉkind == 3u32 {
+            if Cursor == Activeˉexit {
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+                Activeˉkind = 0u32;
+            }
+        }
+        if Activeˉkind == 0u32 {
+            if Compilerˉwebassemblyˉcontrolˉhasˉbackwardˉtarget(
+                Input,
+                Codeˉoffset,
+                Codeˉlength,
+                Cursor
+            ) {
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(2u32));
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(3u32));
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
+                Activeˉkind = 1u32;
+                Activeˉheader = Cursor;
+            }
+        }
+        Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉmeterˉinstruction());
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        if Opcode == 1u8 {
+            Body = Bytesˉconcat(
+                Body,
+                Compilerˉwebassemblyˉi32ˉconstantˉfromˉinput(
+                    Input,
+                    Codeˉoffset + Cursor + 1u32
+                )
+            );
+            Cursor = Cursor + 5u32;
+        }
+        if Opcode == 4u8 {
+            Body = Bytesˉconcat(
+                Body,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    32u32,
+                    Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32) + 1u32
+                )
+            );
+            Cursor = Cursor + 5u32;
+        }
+        if Opcode == 5u8 {
+            Body = Bytesˉconcat(
+                Body,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    33u32,
+                    Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32) + 1u32
+                )
+            );
+            Cursor = Cursor + 5u32;
+        }
+        if Opcode == 16u8 {
+            Body = Bytesˉconcat(
+                Body,
+                Compilerˉwebassemblyˉcheckedˉaddˉinstructions(
+                    Scratchˉleft,
+                    Scratchˉright,
+                    Scratchˉresult
+                )
+            );
+            Cursor = Cursor + 1u32;
+        }
+        if Opcode == 17u8 {
+            Body = Bytesˉconcat(
+                Body,
+                Compilerˉwebassemblyˉcheckedˉsubtractˉinstructions(
+                    Scratchˉleft,
+                    Scratchˉright,
+                    Scratchˉresult
+                )
+            );
+            Cursor = Cursor + 1u32;
+        }
+        if Opcode == 18u8 {
+            Body = Bytesˉconcat(
+                Body,
+                Compilerˉwebassemblyˉcheckedˉmultiplyˉinstructions(
+                    Scratchˉleft,
+                    Scratchˉright,
+                    Scratchˉresult,
+                    Scratchˉwide
+                )
+            );
+            Cursor = Cursor + 1u32;
+        }
+        if Opcode == 19u8 {
+            Body = Bytesˉconcat(
+                Body,
+                Compilerˉwebassemblyˉcheckedˉnegateˉinstructions(Scratchˉleft)
+            );
+            Cursor = Cursor + 1u32;
+        }
+        var Comparisonˉopcode: u32 = 0u32;
+        if Opcode == 32u8 { Comparisonˉopcode = 70u32; }
+        if Opcode == 33u8 { Comparisonˉopcode = 71u32; }
+        if Opcode == 34u8 { Comparisonˉopcode = 72u32; }
+        if Opcode == 35u8 { Comparisonˉopcode = 76u32; }
+        if Opcode == 36u8 { Comparisonˉopcode = 74u32; }
+        if Opcode == 37u8 { Comparisonˉopcode = 78u32; }
+        if Comparisonˉopcode != 0u32 {
+            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(Comparisonˉopcode));
+            Cursor = Cursor + 1u32;
+        }
+        if Opcode == 48u8 {
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
+            if Target < Cursor {
+                Body = Bytesˉconcat(
+                    Body,
+                    Compilerˉwebassemblyˉindexedˉinstruction(12u32, 0u32)
+                );
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+                Activeˉkind = 0u32;
+            }
+            if Target > Cursor + 5u32 {
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(5u32));
+            }
+            Cursor = Cursor + 5u32;
+        }
+        if Opcode == 49u8 {
+            let Region: Compilerˉwebassemblyˉcontrol =
+                Compilerˉwebassemblyˉclassifyˉsequentialˉregion(
+                    Input,
+                    Codeˉoffset,
+                    Codeˉlength,
+                    Cursor
+                );
+            Activeˉkind = Region.Kind;
+            Activeˉheader = Region.Header;
+            Activeˉfalse = Region.Falseˉtarget;
+            Activeˉexit = Region.Exitˉtarget;
+            if Region.Kind == 1u32 {
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(69u32));
+                Body = Bytesˉconcat(
+                    Body,
+                    Compilerˉwebassemblyˉindexedˉinstruction(13u32, 1u32)
+                );
+            } else {
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(4u32));
+                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
+            }
+            Cursor = Cursor + 5u32;
+        }
+        if Opcode == 80u8 {
+            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(26u32));
+            Cursor = Cursor + 1u32;
+        }
+        if Opcode == 81u8 {
+            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉindexedˉinstruction(36u32, 1u32));
+            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉi32ˉconstant(0));
+            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(15u32));
+            Cursor = Cursor + 1u32;
+        }
+    }
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+    return Compilerˉwebassemblyˉencodeˉmeteredˉexecutionˉbody(Body);
+}
+
 export fn Compilerˉlowerˉwvbˉwebassembly(
     Input: bytes
 ) -> Compilerˉwebassemblyˉsummary {
@@ -1630,20 +2288,40 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
                         Mainˉfunction.Localˉcount,
                         Mainˉfunction.Maximumˉstack
                     );
-                if !Meteredˉloop.Valid {
-                    return Compilerˉwebassemblyˉfailure(
+                if Meteredˉloop.Valid {
+                    Webassembly = Compilerˉwebassemblyˉencodeˉmeteredˉloop(
                         Input,
-                        Compilerˉwebassemblyˉstatus.Unsupportedˉcode
+                        Code.Payloadˉoffset,
+                        Code.Payloadˉlength,
+                        Mainˉfunction.Localˉcount,
+                        Meteredˉloop.Loopˉheader
                     );
+                    Executionˉabi = 2u32;
                 }
-                Webassembly = Compilerˉwebassemblyˉencodeˉmeteredˉloop(
-                    Input,
-                    Code.Payloadˉoffset,
-                    Code.Payloadˉlength,
-                    Mainˉfunction.Localˉcount,
-                    Meteredˉloop.Loopˉheader
-                );
-                Executionˉabi = 2u32;
+                if !Meteredˉloop.Valid {
+                    let Sequentialˉcontrol: Compilerˉwebassemblyˉcode =
+                        Compilerˉwebassemblyˉvalidateˉsequentialˉcontrol(
+                            Input,
+                            Code.Payloadˉoffset,
+                            Code.Payloadˉlength,
+                            Localˉtypesˉoffset,
+                            Mainˉfunction.Localˉcount,
+                            Mainˉfunction.Maximumˉstack
+                        );
+                    if !Sequentialˉcontrol.Valid {
+                        return Compilerˉwebassemblyˉfailure(
+                            Input,
+                            Compilerˉwebassemblyˉstatus.Unsupportedˉcode
+                        );
+                    }
+                    Webassembly = Compilerˉwebassemblyˉencodeˉsequentialˉcontrol(
+                        Input,
+                        Code.Payloadˉoffset,
+                        Code.Payloadˉlength,
+                        Mainˉfunction.Localˉcount
+                    );
+                    Executionˉabi = 2u32;
+                }
             }
         }
     }

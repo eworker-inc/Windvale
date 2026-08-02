@@ -66,7 +66,7 @@ On Windows, rebuild the Windvale-authored backend, lower the two checked-add, fo
 pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1
 ```
 
-The verifier requires execution ABI 1 to reset its exported evidence, return status `0` or `3007`, and publish the same result and attempted-instruction count as the retained arithmetic contracts. For execution ABI 2 it requires exact loop success at budget 157, `3011` exhaustion at 156, successful reset and repetition, and nonterminating-loop containment at budget 50. A successful local run is engine evidence, not Windows/Linux cross-host qualification or browser-worker evidence.
+The verifier requires execution ABI 1 to reset its exported evidence, return status `0` or `3007`, and publish the same result and attempted-instruction count as the retained arithmetic contracts. For execution ABI 2 it requires exact single-loop success at budget 157, `3011` exhaustion at 156, nonterminating-loop containment at 50, mixed sequential-control success/exhaustion at 184/183 and 331/330 across both conditional routes, and two-`if` success/exhaustion at 41/40. Every successful case resets and repeats exactly. A successful local run is engine evidence, not Windows/Linux cross-host qualification or browser-worker evidence.
 
 ## Compiler bootstrap convergence
 

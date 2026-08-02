@@ -1,0 +1,21 @@
+module Webassemblyˉstructuredˉcontrolˉelse profile portable;
+
+export fn Main() -> i32 {
+    var Value: i32 = 0;
+
+    while Value < 3 {
+        Value = Value + 1;
+    }
+
+    if Value == 4 {
+        Value = 0;
+    } else {
+        Value = 2;
+    }
+
+    while Value < 42 {
+        Value = Value + 4;
+    }
+
+    return Value;
+}

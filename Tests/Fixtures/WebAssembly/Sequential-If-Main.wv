@@ -1,0 +1,15 @@
+module Webassemblyˉsequentialˉif profile portable;
+
+export fn Main() -> i32 {
+    var Value: i32 = 0;
+
+    if Value == 1 {
+        Value = 40;
+    }
+
+    if Value == 0 {
+        Value = Value + 42;
+    }
+
+    return Value;
+}

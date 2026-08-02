@@ -91,9 +91,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "668a28529eebbaeda8f2618e3ddfdcb369ed496f76ee4666799cabc8d4ce3a39";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "f98f0acc048a5efe711ef6a13c179ecb452482b66ef7359b5a617733769afb1a";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "ac0cf65cecca49df200097432e37befeb76ea233621e8d8cdf6944252b11a718";
+    private const string WEBASSEMBLY_CORE_SHA256 = "5b108fb0866913666becf400803ca47b4d8f0e4ef0d7ad76d20eb96a281149a1";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "c1f16695843c0001ffcf2e32ce9cb12f81d8db3b9902d1be6fa9258df52f6386";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "de2755fe9dbb9f00c9905964978f9b53acafb035a7cf475420c9b471a0e155d0";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -113,6 +113,12 @@ internal static class Program
     private const string WEBASSEMBLY_METERED_LOOP_SHA256 = "1c429ca20faa42b5018ea565ad10f148792dfbf6a8ecd438cf990cd60d664afe";
     private const string WEBASSEMBLY_NONTERMINATING_LOOP_WVB_SHA256 = "68b7043535b9ed33db4e3bde9ec7b3e21f5ef977bd325078f61a1c631758bfab";
     private const string WEBASSEMBLY_NONTERMINATING_LOOP_SHA256 = "325b6f8c9f8d7e2557f93c412aa85b913295dc4bfda5fbb32fb2337915109fde";
+    private const string WEBASSEMBLY_STRUCTURED_CONTROL_WVB_SHA256 = "28eeed9d8f77f87f2c69399be05a1e6f3cb53b813ed949d7d2fde65a83dac50f";
+    private const string WEBASSEMBLY_STRUCTURED_CONTROL_SHA256 = "454e8af4f739ede63e0b2d55b8907f6075fec1495a4123df53ef5ebcf3ea2c4b";
+    private const string WEBASSEMBLY_STRUCTURED_CONTROL_ELSE_WVB_SHA256 = "37dcab42a4bdff5c4f89a2252b79880a1da65bf66d3251c1edfd2398f714ae49";
+    private const string WEBASSEMBLY_STRUCTURED_CONTROL_ELSE_SHA256 = "242116d69f8c28acf4886b1210ffd2b75e622ce92b44586a8a1668188930a84b";
+    private const string WEBASSEMBLY_SEQUENTIAL_IF_WVB_SHA256 = "061e1db0f14dd36d32235a44502b0b3accdd5c3cad529c3926a381a293884148";
+    private const string WEBASSEMBLY_SEQUENTIAL_IF_SHA256 = "d4fd2bf65a6b4aebf55aaf033e86984a4e882761a4c9a59d85bd7ca8353a21ba";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -628,6 +634,15 @@ internal static class Program
 
     private static readonly string WEBASSEMBLY_NONTERMINATING_LOOP_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Nonterminating-Loop-Main.wv");
+
+    private static readonly string WEBASSEMBLY_STRUCTURED_CONTROL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Structured-Control-Main.wv");
+
+    private static readonly string WEBASSEMBLY_STRUCTURED_CONTROL_ELSE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Structured-Control-Else-Main.wv");
+
+    private static readonly string WEBASSEMBLY_SEQUENTIAL_IF_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Sequential-If-Main.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -1147,6 +1162,27 @@ internal static class Program
         Equal("Valid", Meteredˉloopˉlowered.Selectorˉstatus);
         Equal(972, Meteredˉloopˉlowered.Webassemblyˉbytes.Length);
         Equal(WEBASSEMBLY_METERED_LOOP_SHA256, Meteredˉloopˉlowered.Webassemblyˉsha256);
+
+        var Structuredˉcontrolˉreference = Playgroundˉrunner.Run(new(
+            WEBASSEMBLY_STRUCTURED_CONTROL_SOURCE,
+            ImmutableHashSet.Create<string>(StringComparer.Ordinal),
+            184));
+        Equal(Playgroundˉstatus.Completed, Structuredˉcontrolˉreference.Status);
+        Equal(42, Structuredˉcontrolˉreference.Exitˉcode);
+        Equal(184L, Structuredˉcontrolˉreference.Executedˉinstructions);
+        Equal(
+            WEBASSEMBLY_STRUCTURED_CONTROL_WVB_SHA256,
+            Structuredˉcontrolˉreference.Moduleˉsha256);
+        var Structuredˉcontrolˉlowered = Playgroundˉwebassemblyˉlowerer.Lower(
+            Structuredˉcontrolˉreference.Bytecodeˉbytes);
+        Equal(
+            Playgroundˉwebassemblyˉloweringˉstatus.Lowered,
+            Structuredˉcontrolˉlowered.Status);
+        Equal("Valid", Structuredˉcontrolˉlowered.Selectorˉstatus);
+        Equal(1923, Structuredˉcontrolˉlowered.Webassemblyˉbytes.Length);
+        Equal(
+            WEBASSEMBLY_STRUCTURED_CONTROL_SHA256,
+            Structuredˉcontrolˉlowered.Webassemblyˉsha256);
 
         var Twoˉchannels = Examples.Single(Example => Example.Id == "two-channels");
         var Twoˉchannelˉresult = Playgroundˉrunner.Run(new(
@@ -7400,7 +7436,7 @@ internal static class Program
         Equal(
             WEBASSEMBLY_METERED_LOOP_SHA256,
             Moduleˉdigest.Calculateˉsha256(Meteredˉloopˉlowered.Writtenˉbytes.AsSpan()));
-        Validateˉmeteredˉloopˉwebassembly(
+        Validateˉmeteredˉcontrolˉwebassembly(
             Meteredˉloopˉlowered.Writtenˉbytes.AsSpan(),
             Meteredˉloopˉverified);
         var Meteredˉloopˉrepeat = Runˉwebassemblyˉtool(Tool, Meteredˉloopˉwvb);
@@ -7430,9 +7466,156 @@ internal static class Program
             WEBASSEMBLY_NONTERMINATING_LOOP_SHA256,
             Moduleˉdigest.Calculateˉsha256(
                 Nonterminatingˉloopˉlowered.Writtenˉbytes.AsSpan()));
-        Validateˉmeteredˉloopˉwebassembly(
+        Validateˉmeteredˉcontrolˉwebassembly(
             Nonterminatingˉloopˉlowered.Writtenˉbytes.AsSpan(),
             Nonterminatingˉloopˉverified);
+
+        var Structuredˉcontrolˉwvb = Compileˉsuccess(WEBASSEMBLY_STRUCTURED_CONTROL_SOURCE);
+        Equal(
+            WEBASSEMBLY_STRUCTURED_CONTROL_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Structuredˉcontrolˉwvb));
+        var Structuredˉcontrolˉverified = Moduleˉcodec.Readˉandˉverify(
+            Structuredˉcontrolˉwvb);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 184),
+            Runˉreferenceˉwebassemblyˉi32(Structuredˉcontrolˉwvb, 184));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3011, 0, 183),
+            Runˉreferenceˉwebassemblyˉi32(Structuredˉcontrolˉwvb, 183));
+        var Structuredˉcontrolˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Structuredˉcontrolˉwvb);
+        Equal(0, Structuredˉcontrolˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=1923 execution-abi=2\n",
+            Structuredˉcontrolˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_STRUCTURED_CONTROL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Structuredˉcontrolˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉmeteredˉcontrolˉwebassembly(
+            Structuredˉcontrolˉlowered.Writtenˉbytes.AsSpan(),
+            Structuredˉcontrolˉverified);
+        var Structuredˉcontrolˉrepeat = Runˉwebassemblyˉtool(
+            Tool,
+            Structuredˉcontrolˉwvb);
+        Equal(0, Structuredˉcontrolˉrepeat.Exitˉcode);
+        Sequenceˉequal(
+            Structuredˉcontrolˉlowered.Writtenˉbytes,
+            Structuredˉcontrolˉrepeat.Writtenˉbytes);
+
+        var Structuredˉelseˉwvb = Compileˉsuccess(
+            WEBASSEMBLY_STRUCTURED_CONTROL_ELSE_SOURCE);
+        Equal(
+            WEBASSEMBLY_STRUCTURED_CONTROL_ELSE_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Structuredˉelseˉwvb));
+        var Structuredˉelseˉverified = Moduleˉcodec.Readˉandˉverify(Structuredˉelseˉwvb);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 331),
+            Runˉreferenceˉwebassemblyˉi32(Structuredˉelseˉwvb, 331));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3011, 0, 330),
+            Runˉreferenceˉwebassemblyˉi32(Structuredˉelseˉwvb, 330));
+        var Structuredˉelseˉlowered = Runˉwebassemblyˉtool(Tool, Structuredˉelseˉwvb);
+        Equal(0, Structuredˉelseˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=1770 execution-abi=2\n",
+            Structuredˉelseˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_STRUCTURED_CONTROL_ELSE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Structuredˉelseˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉmeteredˉcontrolˉwebassembly(
+            Structuredˉelseˉlowered.Writtenˉbytes.AsSpan(),
+            Structuredˉelseˉverified);
+
+        var Sequentialˉifˉwvb = Compileˉsuccess(WEBASSEMBLY_SEQUENTIAL_IF_SOURCE);
+        Equal(
+            WEBASSEMBLY_SEQUENTIAL_IF_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Sequentialˉifˉwvb));
+        var Sequentialˉifˉverified = Moduleˉcodec.Readˉandˉverify(Sequentialˉifˉwvb);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 41),
+            Runˉreferenceˉwebassemblyˉi32(Sequentialˉifˉwvb, 41));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3011, 0, 40),
+            Runˉreferenceˉwebassemblyˉi32(Sequentialˉifˉwvb, 40));
+        var Sequentialˉifˉlowered = Runˉwebassemblyˉtool(Tool, Sequentialˉifˉwvb);
+        Equal(0, Sequentialˉifˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=1164 execution-abi=2\n",
+            Sequentialˉifˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_SEQUENTIAL_IF_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Sequentialˉifˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉmeteredˉcontrolˉwebassembly(
+            Sequentialˉifˉlowered.Writtenˉbytes.AsSpan(),
+            Sequentialˉifˉverified);
+
+        var Invalidˉelseˉtarget = Structuredˉcontrolˉwvb.ToArray();
+        var Structuredˉfunction = Structuredˉcontrolˉverified.Functions[0];
+        var Elseˉjump = Structuredˉfunction.Instructions.Single(Instruction =>
+            Instruction.Opcode == Opcode.Jump &&
+            Instruction.Unsignedˉoperand > Instruction.Offset + 5);
+        var Structuredˉcode = Findˉsectionˉpayload(
+            Invalidˉelseˉtarget,
+            Sectionˉkind.Code);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉelseˉtarget.AsSpan(Structuredˉcode + Elseˉjump.Offset + 1, 4),
+            Elseˉjump.Unsignedˉoperand + 1);
+        var Invalidˉelseˉresult = Runˉwebassemblyˉtool(Tool, Invalidˉelseˉtarget);
+        Equal(1, Invalidˉelseˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Invalidˉelseˉresult.Diagnostics);
+        Equal(0, Invalidˉelseˉresult.Writeˉcount);
+
+        var Overlappingˉregion = Structuredˉcontrolˉwvb.ToArray();
+        var Firstˉbranch = Structuredˉfunction.Instructions
+            .Where(Instruction => Instruction.Opcode == Opcode.Branchˉfalse)
+            .OrderBy(Instruction => Instruction.Offset)
+            .First();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Overlappingˉregion.AsSpan(Structuredˉcode + Firstˉbranch.Offset + 1, 4),
+            Elseˉjump.Unsignedˉoperand);
+        var Overlappingˉresult = Runˉwebassemblyˉtool(Tool, Overlappingˉregion);
+        Equal(1, Overlappingˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Overlappingˉresult.Diagnostics);
+        Equal(0, Overlappingˉresult.Writeˉcount);
+
+        var Crossingˉbackˉedge = Structuredˉcontrolˉwvb.ToArray();
+        var Backwardˉedges = Structuredˉfunction.Instructions
+            .Where(Instruction =>
+                Instruction.Opcode == Opcode.Jump &&
+                Instruction.Unsignedˉoperand < Instruction.Offset)
+            .OrderBy(Instruction => Instruction.Offset)
+            .ToArray();
+        Equal(2, Backwardˉedges.Length);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Crossingˉbackˉedge.AsSpan(
+                Structuredˉcode + Backwardˉedges[1].Offset + 1,
+                4),
+            Backwardˉedges[0].Unsignedˉoperand);
+        var Crossingˉbackˉresult = Runˉwebassemblyˉtool(Tool, Crossingˉbackˉedge);
+        Equal(1, Crossingˉbackˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Crossingˉbackˉresult.Diagnostics);
+        Equal(0, Crossingˉbackˉresult.Writeˉcount);
+
+        var Nestedˉcontrolˉwvb = Compileˉsuccess(
+            "module Webassemblyˉnestedˉunsupported profile portable; " +
+            "export fn Main() -> i32 { var Value: i32 = 0; " +
+            "if Value == 0 { if Value < 1 { Value = 42; } } return Value; }");
+        var Nestedˉcontrolˉresult = Runˉwebassemblyˉtool(Tool, Nestedˉcontrolˉwvb);
+        Equal(1, Nestedˉcontrolˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Nestedˉcontrolˉresult.Diagnostics);
+        Equal(0, Nestedˉcontrolˉresult.Writeˉcount);
 
         var Invalidˉbackwardˉtarget = Meteredˉloopˉwvb.ToArray();
         var Meteredˉloopˉfunction = Meteredˉloopˉverified.Functions[0];
@@ -11893,7 +12076,7 @@ internal static class Program
             : new(0, Result, Function.Instructions.Length);
     }
 
-    private static void Validateˉmeteredˉloopˉwebassembly(
+    private static void Validateˉmeteredˉcontrolˉwebassembly(
         ReadOnlySpan<byte> module,
         Verifiedˉmodule source)
     {
@@ -11905,10 +12088,44 @@ internal static class Program
             Function.Declaration.Localˉtypes.All(Type =>
                 Type.Kind is Valueˉtype.I32 or Valueˉtype.Bool),
             "The metered-loop fixture contains an unsupported local type.");
-        var Backwardˉjump = Function.Instructions.Single(Instruction =>
-            Instruction.Opcode == Opcode.Jump &&
-            Instruction.Unsignedˉoperand < (uint)Instruction.Offset);
-        var Loopˉheader = Backwardˉjump.Unsignedˉoperand;
+        var Loopˉheaders = new HashSet<uint>();
+        var Loopˉbranches = new HashSet<int>();
+        var Conditionalˉends = new HashSet<uint>();
+        var Elseˉjumps = new HashSet<int>();
+        foreach (var Branch in Function.Instructions.Where(Instruction =>
+            Instruction.Opcode == Opcode.Branchˉfalse))
+        {
+            var Falseˉtarget = Branch.Unsignedˉoperand;
+            var Regionˉinstructions = Function.Instructions.Where(Instruction =>
+                Instruction.Offset >= Branch.Offset + Branch.Size &&
+                (uint)Instruction.Offset < Falseˉtarget).ToArray();
+            var Backwardˉjumps = Regionˉinstructions.Where(Instruction =>
+                Instruction.Opcode == Opcode.Jump &&
+                Instruction.Unsignedˉoperand < (uint)Instruction.Offset).ToArray();
+            var Forwardˉjumps = Regionˉinstructions.Where(Instruction =>
+                Instruction.Opcode == Opcode.Jump &&
+                Instruction.Unsignedˉoperand > (uint)(Instruction.Offset + Instruction.Size)).ToArray();
+            True(
+                Backwardˉjumps.Length <= 1 && Forwardˉjumps.Length <= 1,
+                "The metered-control source region is not sequential.");
+            True(
+                Backwardˉjumps.Length == 0 || Forwardˉjumps.Length == 0,
+                "The metered-control source region mixes loop and conditional exits.");
+            if (Backwardˉjumps.Length == 1)
+            {
+                Loopˉheaders.Add(Backwardˉjumps[0].Unsignedˉoperand);
+                Loopˉbranches.Add(Branch.Offset);
+            }
+            else if (Forwardˉjumps.Length == 1)
+            {
+                Elseˉjumps.Add(Forwardˉjumps[0].Offset);
+                Conditionalˉends.Add(Forwardˉjumps[0].Unsignedˉoperand);
+            }
+            else
+            {
+                Conditionalˉends.Add(Falseˉtarget);
+            }
+        }
 
         var Reader = new WebAssemblyˉtestˉreader(module);
         Reader.Readˉheader();
@@ -12034,7 +12251,11 @@ internal static class Program
 
         foreach (var Instruction in Function.Instructions)
         {
-            if ((uint)Instruction.Offset == Loopˉheader)
+            if (Conditionalˉends.Contains((uint)Instruction.Offset))
+            {
+                Reader.Require(Reader.Readˉbyte() == 0x0B, "The metered conditional is unterminated.");
+            }
+            if (Loopˉheaders.Contains((uint)Instruction.Offset))
             {
                 Reader.Require(Reader.Readˉbyte() == 0x02, "The metered-loop block is missing.");
                 Reader.Require(Reader.Readˉbyte() == 0x40, "The metered-loop block type is invalid.");
@@ -12084,11 +12305,22 @@ internal static class Program
                     Reader.Require(Reader.Readˉbyte() == 0x0B, "The metered loop is unterminated.");
                     Reader.Require(Reader.Readˉbyte() == 0x0B, "The metered outer block is unterminated.");
                     break;
+                case Opcode.Jump when Elseˉjumps.Contains(Instruction.Offset):
+                    Reader.Require(Reader.Readˉbyte() == 0x05, "The metered conditional else marker is missing.");
+                    break;
                 case Opcode.Jump:
                     break;
                 case Opcode.Branchˉfalse:
-                    Reader.Require(Reader.Readˉbyte() == 0x45, "The metered-loop false test is invalid.");
-                    Reader.Readˉindexed(0x0D, 1);
+                    if (Loopˉbranches.Contains(Instruction.Offset))
+                    {
+                        Reader.Require(Reader.Readˉbyte() == 0x45, "The metered-loop false test is invalid.");
+                        Reader.Readˉindexed(0x0D, 1);
+                    }
+                    else
+                    {
+                        Reader.Require(Reader.Readˉbyte() == 0x04, "The metered conditional is missing.");
+                        Reader.Require(Reader.Readˉbyte() == 0x40, "The metered conditional type is invalid.");
+                    }
                     break;
                 case Opcode.Pop:
                     Reader.Require(Reader.Readˉbyte() == 0x1A, "The metered-loop drop is invalid.");

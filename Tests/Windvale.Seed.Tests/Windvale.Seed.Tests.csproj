@@ -233,5 +233,14 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Nonterminating-Loop-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Nonterminating-Loop-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Structured-Control-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Structured-Control-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Structured-Control-Else-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Structured-Control-Else-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Sequential-If-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Sequential-If-Main.wv" />
   </ItemGroup>
 </Project>

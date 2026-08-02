@@ -42,14 +42,26 @@
                     <span id="source-title">Qualified source fixture</span>
                     <span class="language-badge">WV</span>
                 </div>
-                <pre><code>module Webassemblyˉmeteredˉloop profile portable;
+                <pre><code>module Webassemblyˉstructuredˉcontrol profile portable;
 
 export fn Main() -&gt; i32 {
     var Value: i32 = 0;
-    while Value &lt; 6 {
+
+    while Value &lt; 3 {
         Value = Value + 1;
     }
-    return Value * 7;
+
+    if Value == 3 {
+        Value = Value * 10;
+    } else {
+        Value = 1;
+    }
+
+    while Value &lt; 42 {
+        Value = Value + 4;
+    }
+
+    return Value;
 }</code></pre>
                 <p class="source-note">
                     The source is shown as provenance. This milestone executes its prebuilt artifact;
@@ -64,10 +76,11 @@ export fn Main() -&gt; i32 {
                 </div>
 
                 <dl class="artifact-evidence">
-                    <div><dt>Artifact</dt><dd>972 bytes</dd></div>
+                    <div><dt>Artifact</dt><dd>1,923 bytes</dd></div>
                     <div><dt>Target</dt><dd>wasm32-browser-v1-experimental</dd></div>
                     <div><dt>Imports</dt><dd>None</dd></div>
-                    <div><dt>Expected</dt><dd>ABI 2 · budget 157 succeeds · 156 returns WVR3011</dd></div>
+                    <div><dt>Control</dt><dd>Two loops · one if/else</dd></div>
+                    <div><dt>Expected</dt><dd>ABI 2 · budget 184 succeeds · 183 returns WVR3011</dd></div>
                 </dl>
 
                 <button id="run" type="button">

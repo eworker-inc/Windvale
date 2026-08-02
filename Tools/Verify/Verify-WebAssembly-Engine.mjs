@@ -84,14 +84,52 @@ const EXPECTED = [
             { budget: 50, status: 3011, result: 0, instructions: 50 },
         ],
     },
+    {
+        name: "sequential structured control",
+        path: process.argv[10],
+        sha256: "454e8af4f739ede63e0b2d55b8907f6075fec1495a4123df53ef5ebcf3ea2c4b",
+        bytes: 1923,
+        abi: 2,
+        runs: [
+            { budget: 184, status: 0, result: 42, instructions: 184 },
+            { budget: 183, status: 3011, result: 0, instructions: 183 },
+            { budget: 184, status: 0, result: 42, instructions: 184 },
+        ],
+    },
+    {
+        name: "sequential structured control else route",
+        path: process.argv[11],
+        sha256: "242116d69f8c28acf4886b1210ffd2b75e622ce92b44586a8a1668188930a84b",
+        bytes: 1770,
+        abi: 2,
+        runs: [
+            { budget: 331, status: 0, result: 42, instructions: 331 },
+            { budget: 330, status: 3011, result: 0, instructions: 330 },
+            { budget: 331, status: 0, result: 42, instructions: 331 },
+        ],
+    },
+    {
+        name: "sequential if control",
+        path: process.argv[12],
+        sha256: "d4fd2bf65a6b4aebf55aaf033e86984a4e882761a4c9a59d85bd7ca8353a21ba",
+        bytes: 1164,
+        abi: 2,
+        runs: [
+            { budget: 41, status: 0, result: 42, instructions: 41 },
+            { budget: 40, status: 3011, result: 0, instructions: 40 },
+            { budget: 41, status: 0, result: 42, instructions: 41 },
+        ],
+    },
 ];
 
-if (process.argv.length !== 10) {
+if (process.argv.length !== 13) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
             "<subtract-overflow.wasm> <multiply-overflow.wasm> <negate-overflow.wasm> " +
-            "<metered-loop.wasm> <nonterminating-loop.wasm>",
+            "<metered-loop.wasm> <nonterminating-loop.wasm> " +
+            "<structured-control.wasm> <structured-control-else.wasm> " +
+            "<sequential-if.wasm>",
     );
 }
 
