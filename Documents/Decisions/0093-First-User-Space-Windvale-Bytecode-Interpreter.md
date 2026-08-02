@@ -1,7 +1,7 @@
 # Decision 0093: First user-space Windvale bytecode interpreter
 
 - Date: 2026-08-02
-- Status: Accepted and implemented; focused Windows and pinned-QEMU evidence recorded, cross-host qualification pending
+- Status: Qualified at exact commit `190174a01299369fb855e27ea676d34062e09c5b`; superseded for current development by Decision 0094
 - Implements: The first bounded part of step 6 in [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
 - Contracts: [Protected process version 3](../../Specifications/Windvale-Protected-Process.md) and [interpreter profile 1](../../Specifications/Windvale-Os-Bytecode-Interpreter.md)
 
@@ -36,6 +36,8 @@ Pinned QEMU `pc-q35-11.0,accel=tcg` passes all scenarios:
 | contained interpreter fault | 114,688 | `8cd17f693ae088eefaccb2b8449fd47f34e345352bb46beebd4a2a32fe8fad5d` | `0` |
 
 Normal serial evidence includes `wvb-runtime=interpreted` only after process result `29` has crossed the existing service boundary. Live testing caught a real one-page stack underrun caused by the interpreter's measured AOT frame. The corrected contract uses two contiguous RW/NX stack pages, initializes `RSP` at their exclusive end, and records the page count in `WVPROC03`.
+
+Exact commit `190174a01299369fb855e27ea676d34062e09c5b` is the cross-host-qualified probe-24 checkpoint. GitHub [Verify run 30732061301](https://github.com/eworker-inc/Windvale/actions/runs/30732061301) passes the complete non-Fast verifier on Windows and digest-pinned Debian 12: each host passes all 67 Seed tests and all 25 OS tests. Windows Seed elapsed time is 247.422 seconds and Debian is 145.020 seconds. The four exact QEMU scenarios above remain the recorded Windows machine evidence; the cross-host workflow does not claim a Debian QEMU run.
 
 ## Consequences
 

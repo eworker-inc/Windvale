@@ -101,11 +101,13 @@ public static class Kernelˉprocessˉimage
             Nativeˉobjectˉsink.Writeˉwvo(Interpreterˉnative.Fragment),
             Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL);
         var Interpreterˉdigest = SHA256.HashData(Interpreterˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
-        if (!Convert.ToHexString(Interpreterˉdigest.AsSpan()).Equals(
-                "639E191AF1844B6660750978854F5E168C25F4949F1D9282CA5777D65F617083",
+        var Interpreterˉidentity = Convert.ToHexString(Interpreterˉdigest.AsSpan());
+        if (!Interpreterˉidentity.Equals(
+                "909E624DF86E614B6F7DCAA61E75FFA685467015015BFAFD7B0772EE41A89920",
                 StringComparison.Ordinal))
         {
-            throw new InvalidOperationException("The user-space interpreter has an unexpected WVB identity.");
+            throw new InvalidOperationException(
+                $"The user-space interpreter has an unexpected WVB identity: {Interpreterˉidentity}.");
         }
 
         var Policyˉcompilation = Seedˉcompiler.Compile(Loadˉsource(POLICY_RESOURCE), "Process-Foundation.wv");
@@ -213,7 +215,7 @@ public static class Kernelˉprocessˉimage
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
                 Data.Length: 1,
-                Functions.Length: 2,
+                Functions.Length: 8,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||
@@ -289,7 +291,8 @@ public static class Kernelˉprocessˉimage
         {
             throw new InvalidOperationException(
                 link.Success
-                    ? $"The linked {role} image violated its {maximumˉbytes}-byte RX extent."
+                    ? $"The linked {role} image has {link.Imageˉbytes.Length} bytes and violated its " +
+                        $"{maximumˉbytes}-byte RX extent."
                     : $"The {role} image did not link: {link.Diagnostics[0].Code}: {link.Diagnostics[0].Message}");
         }
     }

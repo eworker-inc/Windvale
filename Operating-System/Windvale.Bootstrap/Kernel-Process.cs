@@ -6,8 +6,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 3;
-    public const string TARGET_NAME = "x86-64-kernel-process-v3";
+    public const int FORMAT_VERSION = 4;
+    public const string TARGET_NAME = "x86-64-kernel-process-v4";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
@@ -19,7 +19,7 @@ public static class Kernelˉprocessˉcontract
     public const string EXCEPTION_6_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_6_entry";
     public const string EXCEPTION_13_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_13_entry";
     public const string EXCEPTION_14_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_14_entry";
-    public const int POLICY_TOKEN = 93;
+    public const int POLICY_TOKEN = 94;
     public const int EXPECTED_RESULT = 29;
     public const string USER_FAULT_CONTAINED_MARKER = "user-fault=contained\n";
     public const uint INIT_PROCESS_ID = 1;
@@ -40,11 +40,11 @@ public static class Kernelˉprocessˉcontract
     public const uint THREAD_STATE_FAULTED = 4;
     public const uint THREAD_STATE_WAITING = 5;
     public const uint INIT_MEMORY_PAGE_BUDGET = 3;
-    public const uint CLIENT_MEMORY_PAGE_BUDGET = 11;
+    public const uint CLIENT_MEMORY_PAGE_BUDGET = 37;
     public const uint INIT_INSTRUCTION_BUDGET = 64;
-    public const uint CLIENT_INSTRUCTION_BUDGET = 567;
+    public const uint CLIENT_INSTRUCTION_BUDGET = 4_671;
     public const uint INIT_CALL_DEPTH_BUDGET = 1;
-    public const uint CLIENT_CALL_DEPTH_BUDGET = 2;
+    public const uint CLIENT_CALL_DEPTH_BUDGET = 3;
     public const uint HANDLE_BUDGET = 1;
     public const uint SYSCALL_BUDGET = 2;
     public const uint CHANNEL_CAPACITY = 1;
@@ -57,7 +57,7 @@ public static class Kernelˉprocessˉcontract
     public const uint SYSCALL_RECEIVE = 2;
     public const uint SYSCALL_EXIT = 3;
     public const ulong INIT_ALLOCATION_PAGES = 7;
-    public const ulong CLIENT_ALLOCATION_PAGES = 15;
+    public const ulong CLIENT_ALLOCATION_PAGES = 41;
     public const ulong TABLE_PAGES = 4;
     public const ulong TABLE_BYTES = TABLE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
     public const ulong PML4_PAGE = 0;
@@ -66,9 +66,9 @@ public static class Kernelˉprocessˉcontract
     public const ulong USER_PT_PAGE = 3;
     public const ulong USER_CODE_PAGE = 4;
     public const ulong INIT_CODE_PAGES = 1;
-    public const ulong CLIENT_CODE_PAGES = 8;
+    public const ulong CLIENT_CODE_PAGES = 32;
     public const ulong INIT_STACK_PAGES = 1;
-    public const ulong CLIENT_STACK_PAGES = 2;
+    public const ulong CLIENT_STACK_PAGES = 4;
     public const ulong INIT_STACK_PAGE = USER_CODE_PAGE + INIT_CODE_PAGES;
     public const ulong INIT_DATA_PAGE = INIT_STACK_PAGE + INIT_STACK_PAGES;
     public const ulong CLIENT_STACK_PAGE = USER_CODE_PAGE + CLIENT_CODE_PAGES;
@@ -79,8 +79,8 @@ public static class Kernelˉprocessˉcontract
     public const uint CLIENT_RECORD_OFFSET = 768;
     public const uint CHANNEL_RECORD_OFFSET = 1_024;
     public const uint RECORD_BYTES = 256;
-    public const ulong RECORD_MAGIC = 0x3330_434F_5250_5657;
-    public const uint RECORD_VERSION = 3;
+    public const ulong RECORD_MAGIC = 0x3430_434F_5250_5657;
+    public const uint RECORD_VERSION = 4;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -96,6 +96,7 @@ public static class Kernelˉprocessˉcontract
     public const uint USER_FLAGS_OFFSET = 160;
     public const uint SYSCALL_COUNT_OFFSET = 168;
     public const uint STACK_PAGE_COUNT_OFFSET = 172;
+    public const uint RUNTIME_PROFILE_OFFSET = 176;
     public const uint RESULT_OFFSET = 180;
     public const uint FAULT_VECTOR_OFFSET = 184;
     public const uint FAULT_ERROR_OFFSET = 188;
@@ -106,6 +107,8 @@ public static class Kernelˉprocessˉcontract
     public const uint PROGRAM_DIGEST_OFFSET = 216;
     public const uint CODE_PAGE_COUNT_OFFSET = 248;
     public const uint RUNTIME_KIND_OFFSET = 252;
+    public const uint RUNTIME_PROFILE_NONE = 0;
+    public const uint RUNTIME_PROFILE_SECTION_INTERPRETER = 2;
     public const uint WAIT_REASON_NONE = 0;
     public const uint WAIT_REASON_CHANNEL_RECEIVE = 1;
     public const ulong CHANNEL_MAGIC = 0x3130_4E41_4843_5657;
@@ -219,6 +222,9 @@ public static class Kernelˉprocessˉplanner
         var Runtimeˉkind = Isˉinit
             ? Kernelˉprocessˉcontract.RUNTIME_KIND_AOT_SERVICE
             : Kernelˉprocessˉcontract.RUNTIME_KIND_BYTECODE_INTERPRETER;
+        var Runtimeˉprofile = Isˉinit
+            ? Kernelˉprocessˉcontract.RUNTIME_PROFILE_NONE
+            : Kernelˉprocessˉcontract.RUNTIME_PROFILE_SECTION_INTERPRETER;
         var Allocationˉbytes = Allocationˉpages * Kernelˉpagingˉcontract.PAGE_BYTES;
         if (allocationˉaddress == 0 ||
             (allocationˉaddress & (Kernelˉpagingˉcontract.PAGE_BYTES - 1)) != 0 ||
@@ -338,6 +344,8 @@ public static class Kernelˉprocessˉplanner
             Record.AsSpan((int)Kernelˉprocessˉcontract.ROLE_OFFSET), definition.Role);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.STACK_PAGE_COUNT_OFFSET), checked((uint)Stackˉpages));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.RUNTIME_PROFILE_OFFSET), Runtimeˉprofile);
         programˉdigest.CopyTo(Record.AsSpan((int)Kernelˉprocessˉcontract.PROGRAM_DIGEST_OFFSET,
             Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES));
         BinaryPrimitives.WriteUInt32LittleEndian(

@@ -6,17 +6,137 @@ module Bytecodeˉinterpreter profile portable;
 // host-built AOT derivative.
 data Admittedˉmodule: bytes = [87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0, 1, 0, 0, 0, 27, 0, 0, 0, 1, 22, 0, 0, 0, 69, 109, 98, 101, 100, 100, 101, 100, 203, 137, 119, 118, 98, 203, 137, 112, 114, 111, 103, 114, 97, 109, 2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 29, 0, 0, 0, 5, 0, 0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 0, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0];
 
-fn Interpretˉmain(Input: bytes) -> i32 {
-    if Bytesˉlength(Input) != 174u32 { return -1; }
+fn Validateˉenvelope(Input: bytes) -> i32 {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 12u32 { return -1; }
+    if Total > 4096u32 { return -1; }
     if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 826431063u32 { return -2; }
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return -3; }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 { return -4; }
-    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return -5; }
-    if Bytesˉreadˉu32ˉlittle(Input, 113u32) != 5u32 { return -6; }
-    if Bytesˉreadˉu32ˉlittle(Input, 117u32) != 16u32 { return -7; }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 { return -3; }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return -4; }
 
-    var Cursor: u32 = 121u32;
-    let End: u32 = 137u32;
+    var Cursor: u32 = 12u32;
+    var Sectionˉindex: u32 = 0u32;
+    while Sectionˉindex < 7u32 {
+        if Cursor > Total { return -5; }
+        if 8u32 > Total - Cursor { return -5; }
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != Sectionˉindex + 1u32 { return -6; }
+        if Bytesˉreadˉu8(Input, Cursor + 1u32) != 0u8 { return -7; }
+        if Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 { return -7; }
+
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Payloadˉoffset: u32 = Cursor + 8u32;
+        if Payloadˉoffset > Total { return -8; }
+        if Payloadˉlength > Total - Payloadˉoffset { return -8; }
+        Cursor = Payloadˉoffset + Payloadˉlength;
+        Sectionˉindex = Sectionˉindex + 1u32;
+    }
+    if Cursor != Total { return -9; }
+    return 0;
+}
+
+// The envelope verifier establishes every range before this bounded lookup.
+fn Findˉsectionˉoffset(Input: bytes, Wantedˉindex: u32) -> u32 {
+    var Cursor: u32 = 12u32;
+    var Sectionˉindex: u32 = 0u32;
+    while Sectionˉindex < Wantedˉindex {
+        Cursor = Cursor + 8u32 + Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        Sectionˉindex = Sectionˉindex + 1u32;
+    }
+    return Cursor + 8u32;
+}
+
+fn Validateˉmodule(Input: bytes) -> i32 {
+    let Moduleˉoffset: u32 = Findˉsectionˉoffset(Input, 0u32);
+    let Moduleˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Moduleˉoffset - 4u32);
+
+    if Moduleˉlength < 6u32 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset) != 1u8 { return -10; }
+    let Moduleˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Moduleˉoffset + 1u32);
+    if Moduleˉnameˉlength == 0u32 { return -10; }
+    if Moduleˉnameˉlength > 255u32 { return -10; }
+    if Moduleˉnameˉlength != Moduleˉlength - 5u32 { return -10; }
+    return 0;
+}
+
+fn Validateˉemptyˉsection(Input: bytes, Sectionˉindex: u32, Failure: i32) -> i32 {
+    let Payloadˉoffset: u32 = Findˉsectionˉoffset(Input, Sectionˉindex);
+    if Bytesˉreadˉu32ˉlittle(Input, Payloadˉoffset - 4u32) != 4u32 { return Failure; }
+    if Bytesˉreadˉu32ˉlittle(Input, Payloadˉoffset) != 0u32 { return Failure; }
+    return 0;
+}
+
+fn Validateˉfunction(Input: bytes) -> i32 {
+    let Functionsˉoffset: u32 = Findˉsectionˉoffset(Input, 3u32);
+    let Functionsˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionsˉoffset - 4u32);
+    let Codeˉoffset: u32 = Findˉsectionˉoffset(Input, 4u32);
+    let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset - 4u32);
+
+    let Functionsˉend: u32 = Functionsˉoffset + Functionsˉlength;
+    var Cursor: u32 = Functionsˉoffset;
+    if Cursor > Functionsˉend { return -13; }
+    if 4u32 > Functionsˉend - Cursor { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 1u32 { return -13; }
+    Cursor = Cursor + 4u32;
+    if Cursor > Functionsˉend { return -13; }
+    if 8u32 > Functionsˉend - Cursor { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 4u32 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 4u32) != 77u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 5u32) != 97u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 6u32) != 105u8 { return -13; }
+    if Bytesˉreadˉu8(Input, Cursor + 7u32) != 110u8 { return -13; }
+    Cursor = Cursor + 8u32;
+    if Cursor > Functionsˉend { return -13; }
+    if 22u32 > Functionsˉend - Cursor { return -13; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 0u32 { return -13; }
+    Cursor = Cursor + 4u32;
+    if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return -13; }
+    Cursor = Cursor + 1u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 1u32 { return -13; }
+    Cursor = Cursor + 4u32;
+    if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return -13; }
+    Cursor = Cursor + 1u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 0u32 { return -13; }
+    Cursor = Cursor + 4u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != Codeˉlength { return -13; }
+    Cursor = Cursor + 4u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 1u32 { return -13; }
+    Cursor = Cursor + 4u32;
+    if Cursor != Functionsˉend { return -13; }
+    return 0;
+}
+
+fn Validateˉexport(Input: bytes) -> i32 {
+    let Exportsˉoffset: u32 = Findˉsectionˉoffset(Input, 5u32);
+    let Exportsˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Exportsˉoffset - 4u32);
+
+    let Exportsˉend: u32 = Exportsˉoffset + Exportsˉlength;
+    var Cursor: u32 = Exportsˉoffset;
+    if Cursor > Exportsˉend { return -14; }
+    if 17u32 > Exportsˉend - Cursor { return -14; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 1u32 { return -14; }
+    Cursor = Cursor + 4u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 4u32 { return -14; }
+    if Bytesˉreadˉu8(Input, Cursor + 4u32) != 77u8 { return -14; }
+    if Bytesˉreadˉu8(Input, Cursor + 5u32) != 97u8 { return -14; }
+    if Bytesˉreadˉu8(Input, Cursor + 6u32) != 105u8 { return -14; }
+    if Bytesˉreadˉu8(Input, Cursor + 7u32) != 110u8 { return -14; }
+    Cursor = Cursor + 8u32;
+    if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return -14; }
+    Cursor = Cursor + 1u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 0u32 { return -14; }
+    Cursor = Cursor + 4u32;
+    if Cursor != Exportsˉend { return -14; }
+    return 0;
+}
+
+fn Executeˉcode(Input: bytes) -> i32 {
+    let Codeˉoffset: u32 = Findˉsectionˉoffset(Input, 4u32);
+    let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset - 4u32);
+
+    var Cursor: u32 = Codeˉoffset;
+    let End: u32 = Codeˉoffset + Codeˉlength;
+    if Cursor == End { return -20; }
     var Stackˉvalue: i32 = 0;
     var Stackˉdepth: u32 = 0u32;
     var Localˉvalue: i32 = 0;
@@ -25,44 +145,61 @@ fn Interpretˉmain(Input: bytes) -> i32 {
     while Cursor < End {
         let Operation: u8 = Bytesˉreadˉu8(Input, Cursor);
         if Operation == 1u8 {
-            if Cursor > 132u32 { return -8; }
-            if Stackˉdepth != 0u32 { return -9; }
+            if Cursor > End { return -21; }
+            if 5u32 > End - Cursor { return -21; }
+            if Stackˉdepth != 0u32 { return -22; }
             Stackˉvalue = Bytesˉreadˉi32ˉlittle(Input, Cursor + 1u32);
             Stackˉdepth = 1u32;
             Cursor = Cursor + 5u32;
         } else {
             if Operation == 5u8 {
-                if Cursor > 132u32 { return -10; }
-                if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) != 0u32 { return -11; }
-                if Stackˉdepth != 1u32 { return -12; }
+                if Cursor > End { return -23; }
+                if 5u32 > End - Cursor { return -23; }
+                if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) != 0u32 { return -24; }
+                if Stackˉdepth != 1u32 { return -25; }
                 Localˉvalue = Stackˉvalue;
                 Localˉinitialized = true;
                 Stackˉdepth = 0u32;
                 Cursor = Cursor + 5u32;
             } else {
                 if Operation == 4u8 {
-                    if Cursor > 132u32 { return -13; }
-                    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) != 0u32 { return -14; }
-                    if Stackˉdepth != 0u32 { return -15; }
-                    if !Localˉinitialized { return -16; }
+                    if Cursor > End { return -26; }
+                    if 5u32 > End - Cursor { return -26; }
+                    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) != 0u32 { return -27; }
+                    if Stackˉdepth != 0u32 { return -28; }
+                    if !Localˉinitialized { return -29; }
                     Stackˉvalue = Localˉvalue;
                     Stackˉdepth = 1u32;
                     Cursor = Cursor + 5u32;
                 } else {
                     if Operation == 81u8 {
-                        if Cursor + 1u32 != End { return -17; }
-                        if Stackˉdepth != 1u32 { return -18; }
+                        if Cursor + 1u32 != End { return -30; }
+                        if Stackˉdepth != 1u32 { return -31; }
                         return Stackˉvalue;
                     } else {
-                        return -19;
+                        return -32;
                     }
                 }
             }
         }
     }
-    return -20;
+    return -33;
 }
 
 export fn Main() -> i32 {
-    return Interpretˉmain(Admittedˉmodule);
+    var Status: i32 = Validateˉenvelope(Admittedˉmodule);
+    if Status != 0 { return Status; }
+    Status = Validateˉmodule(Admittedˉmodule);
+    if Status != 0 { return Status; }
+    Status = Validateˉemptyˉsection(Admittedˉmodule, 1u32, -11);
+    if Status != 0 { return Status; }
+    Status = Validateˉemptyˉsection(Admittedˉmodule, 2u32, -12);
+    if Status != 0 { return Status; }
+    Status = Validateˉfunction(Admittedˉmodule);
+    if Status != 0 { return Status; }
+    Status = Validateˉexport(Admittedˉmodule);
+    if Status != 0 { return Status; }
+    Status = Validateˉemptyˉsection(Admittedˉmodule, 6u32, -15);
+    if Status != 0 { return Status; }
+    return Executeˉcode(Admittedˉmodule);
 }

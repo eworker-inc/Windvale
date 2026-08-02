@@ -2,11 +2,11 @@
 
 ## Status and purpose
 
-Firmware probe version 24 is the current user-space-interpreter candidate. It composes ABI 16/context 7, separate Windvale identities for the init service, interpreter, and admitted WVB input, kernel memory and paging version 2, two CPL3 roots, reduced channel endpoints, deterministic block/wake coordination, interpreted result IPC, and contained interpreter-process general protection. [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) owns the new slice.
+Firmware probe version 25 is the current section-derived-interpreter candidate. It composes ABI 16/context 7, separate Windvale identities for the init service, interpreter, and admitted WVB input, kernel memory and paging version 3, protected-process version 4, two CPL3 roots, reduced channel endpoints, deterministic block/wake coordination, interpreted result IPC, and contained interpreter-process general protection. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns the new slice.
 
-Focused Windows tests and all four pinned-QEMU scenarios pass. Cross-host qualification of probe 24 is pending. Exact commit `860c69c00995de6ed048cb65f8bfb158287f19a2` and probe 21 remain the latest fully cross-host-qualified OS baseline; Decision 0092 records probe 23's later Windows/QEMU plus cross-host build evidence.
+Focused Windows tests and all four pinned-QEMU scenarios pass. Cross-host qualification of probe 25 is pending. Exact commit `190174a01299369fb855e27ea676d34062e09c5b` and probe 24 are the latest fully cross-host-qualified OS baseline: GitHub Verify run 30732061301 passes all 67 Seed tests and all 25 OS tests on Windows and digest-pinned Debian 12. Decision 0093 records that baseline and its exact Windows QEMU evidence.
 
-Decisions 0045 through 0092 retain the historical progression through probe 23. Current component contracts are [protected process](Windvale-Protected-Process.md), [bytecode interpreter](Windvale-Os-Bytecode-Interpreter.md), [WVB admission](Windvale-Os-Wvb-Admission.md), [kernel memory](Windvale-Kernel-Memory.md), [kernel paging](Windvale-Kernel-Paging.md), [CPU exceptions](Windvale-Kernel-Exceptions.md), [trap frame](Windvale-Kernel-Trap-Frame.md), [kernel handoff](Windvale-Kernel-Handoff.md), [shutdown](Windvale-Kernel-Shutdown.md), [native seam](Windvale-Kernel-Native-Seam.md), [execution context](Windvale-Native-Execution-Context.md), [UEFI application](Windvale-Uefi-Application.md), and [boot environment](Windvale-Os-Boot-Environment.md).
+Decisions 0045 through 0093 retain the historical progression through probe 24. Current component contracts are [protected process](Windvale-Protected-Process.md), [bytecode interpreter](Windvale-Os-Bytecode-Interpreter.md), [WVB admission](Windvale-Os-Wvb-Admission.md), [kernel memory](Windvale-Kernel-Memory.md), [kernel paging](Windvale-Kernel-Paging.md), [CPU exceptions](Windvale-Kernel-Exceptions.md), [trap frame](Windvale-Kernel-Trap-Frame.md), [kernel handoff](Windvale-Kernel-Handoff.md), [shutdown](Windvale-Kernel-Shutdown.md), [native seam](Windvale-Kernel-Native-Seam.md), [execution context](Windvale-Native-Execution-Context.md), [UEFI application](Windvale-Uefi-Application.md), and [boot environment](Windvale-Os-Boot-Environment.md).
 
 The firmware ABI and table rules follow UEFI 2.11 x64 calling conventions, system/boot-service table layouts, `GetMemoryMap`, and `ExitBootServices`. These platform mechanics do not define portable Windvale semantics.
 
@@ -22,7 +22,7 @@ The special kernel source passes through the ordinary frontend/typed WIR and ver
 
 The Stage 0 builder also creates loader, kernel-memory, CPU-exception, kernel-paging, admission-bridge, process-machine, retained native-bridge, and x64 byte-adapter WVO objects. The WVA sources assemble through the reference/recovery assembler and are compared with the Windvale-written assembler where their grammar overlaps. The linker resolves every call, tail jump, and RIP-relative data relocation, reconstructs the base-zero image, and passes verified code/read-only data to UEFI application writer version 3.
 
-The linked payload must begin at entry offset zero and fit the fixed 128 KiB kernel executable window. Both role-specific user images must begin at entry offset zero. The init image fits one 4 KiB RX page; the interpreter image fits eight 4 KiB RX pages. No generated WVB, WVO, EFI application, FAT view, variable store, firmware image, or captured memory map is committed.
+The linked payload must begin at entry offset zero and fit the fixed 256 KiB kernel executable window. Both role-specific user images must begin at entry offset zero. The init image fits one 4 KiB RX page; the interpreter image fits 32 4 KiB RX pages. No generated WVB, WVO, EFI application, FAT view, variable store, firmware image, or captured memory map is committed.
 
 Important current exact artifacts include:
 
@@ -30,20 +30,20 @@ Important current exact artifacts include:
 | --- | ---: | --- |
 | Special kernel WVO | 5,894 | `44be3b850c7da68788ccff6a86779b4b9a5ad7d2b2b92d24e7a4d7315901921c` |
 | WVA kernel seam WVO | 1,123 | `8a6f54950f15c7331107a5bfa7bd2d863f64b25d395b7cfd9983c31130599363` |
-| Paging v2 WVO | 1,244 | `43bc3a191ebaec3944bb1fa47927e9623341dbb11085ea3c76fbe70b6ca16cb0` |
+| Paging v3 WVO | 1,244 | `1112e7f21b63ee339a2e17211ae9ce96712b446b5039384f9d38e18ff0430acd` |
 | Terminal exception WVO | 4,667 | `49f15606d2cd41236f87e8a7a7e24a9532683ffe9d5a59795dc8084288b2f84a` |
 | WVB admission v2 bridge | 484 | `7b53fc11e4e99966386994c247c3a2a19f99ef8da751dbd9dc53f5575871a00d` |
 
-The admitted 174-byte WVB remains `7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2`. Its 2,786-byte admission WVB, 504-byte embedded-program reference WVO, and 24,445-byte admission WVO remain byte-identical to Decision 0090. Admission bridge version 2 calls the protected-process entry after token 73. Probe 24's client does not link the embedded-program WVO; it links the 30,270-byte interpreter image. [Windvale-Protected-Process.md](Windvale-Protected-Process.md) records the policy, user-image, and process-machine identities.
+The admitted 174-byte WVB remains `7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2`. Its 2,786-byte admission WVB, 504-byte embedded-program reference WVO, and 24,445-byte admission WVO remain byte-identical to Decision 0090. Admission bridge version 2 calls the protected-process entry after token 73. Probe 25's client does not link the embedded-program WVO; it links the 127,598-byte interpreter image. The interpreter discovers and validates all seven WVB section payloads before executing the supported code. [Windvale-Protected-Process.md](Windvale-Protected-Process.md) records the policy, user-image, and process-machine identities.
 
 Current complete images are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
-| `normal` | 114,176 | `4248f3402a0abfe9eda531109460fb37a7c1f3f907ded162a49a785bab38fbb7` | 0 |
-| `invalid-opcode` | 114,176 | `465ac8d095160e169187860413b0b347148df4acc2f24802f7a5e166981f6c59` | 3 |
-| `general-protection` | 114,176 | `0a65ba2982f551434553054fc92d82a1a6e727a73527c85a79526f328105b58c` | 3 |
-| `user-fault` | 114,688 | `8cd17f693ae088eefaccb2b8449fd47f34e345352bb46beebd4a2a32fe8fad5d` | 0 |
+| `normal` | 214,528 | `99686e2b2484de156a01bbec0ece68e6a15af7229a477d9245ee4f3068ed4f5b` | 0 |
+| `invalid-opcode` | 214,528 | `da14fd39c4ebf19471bb7205aa1cfce5b40a52c1b64979d5ff62eed143d64e90` | 3 |
+| `general-protection` | 214,528 | `02e6a297c6495a0c35b4b799403a0cedc8a1538c3a62c52836b2fe6fa6a225c9` | 3 |
+| `user-fault` | 215,040 | `ede1d1d0ae8638086c81564e3150829137f4f3aceead9e7bfddeedc9445ae2f6` | 0 |
 
 ## Firmware entry and bounded exit
 
@@ -59,18 +59,18 @@ The probe makes at most three `ExitBootServices` attempts. A stale map key permi
 
 After successful exit, the loader overlays exact `WVKHAND1`, calls `Windvale_kernel_entry`, and retains a 16-byte-aligned loader frame. The compiler wrapper validates the handoff before entering the memory object.
 
-Kernel memory version 2 selects the lowest eligible 32-page/128 KiB conventional-memory arena below 4 GiB, rejects descriptor overlap, clears it, publishes `WVKMEM02`, copies the handoff, and switches to the two-page kernel stack. Allocation page 3 becomes the zeroed IDT page.
+Kernel memory version 3 selects the lowest eligible 2 MiB-aligned 58-page/232 KiB conventional-memory arena below 4 GiB, checks the complete aligned range, rejects descriptor overlap, clears it, publishes `WVKMEM03`, copies the handoff, and switches to the two-page kernel stack. Allocation page 3 becomes the zeroed IDT page.
 
-Kernel paging version 2 allocates pages 4 through 9, builds the low-1-GiB identity hierarchy, enables NX/WP, activates/read-backs CR3, and publishes `WVKPAG02`. Page zero is absent, ordinary leaves are supervisor RW/NX, and the 128 KiB linked-payload window is supervisor RX.
+Kernel paging version 3 allocates pages 4 through 9, builds the low-1-GiB identity hierarchy, enables NX/WP, activates/read-backs CR3, and publishes `WVKPAG03`. Page zero is absent, ordinary leaves are supervisor RW/NX, and the 256 KiB linked-payload window is supervisor RX.
 
 The WVA tail reaches admission bridge version 2. It constructs an ABI-16/context-7 service-free context with exact budgets 8,944/2 and calls AOT Windvale admission export `Windvale_kernel_wvb_admit`. Only token 73 permits the protected-process call.
 
 The protected-process path then:
 
-1. runs `Process-Foundation.wv` through the shared native backend and requires policy token 93;
-2. allocates pages 10 through 16 for init and 17 through 31 for the interpreter process;
+1. runs `Process-Foundation.wv` through the shared native backend and requires policy token 94;
+2. allocates pages 10 through 16 for init and 17 through 57 for the interpreter process;
 3. creates two separate roots with role-specific user RX/RW-NX mappings;
-4. publishes two `WVPROC03` records, one `WVCHAN01` record, the private GDT/TSS, extended IDT, and syscall MSRs;
+4. publishes two `WVPROC04` records, one `WVCHAN01` record, the private GDT/TSS, extended IDT, and syscall MSRs;
 5. runs init until its receive-only thread waits on the empty channel;
 6. runs the send-only Windvale interpreter, which decodes the admitted WVB to result 29 before exact exit or the explicitly selected contained client fault;
 7. reactivates init, consumes message 29, restores its saved native context, and requires the Windvale service to exit 29; and
@@ -85,7 +85,7 @@ The invalid-opcode and general-protection scenarios fault at CPL0 after both pro
 Normal success requires:
 
 ```text
-windvale-os-boot 24
+windvale-os-boot 25
 entry=pass
 system-table=pass
 memory-map=pass
@@ -150,15 +150,15 @@ The harness preflights the pinned environment, builds a run-private removable-me
 Normal report evidence has this path-free shape:
 
 ```text
-windvale-os-boot-report 24
+windvale-os-boot-report 25
 status=pass
 scenario=normal
 architecture=x86-64
 application-format=pe32-plus-uefi-application-v3
-probe-version=24
-efi-bytes=114176
-efi-sha256=4248f3402a0abfe9eda531109460fb37a7c1f3f907ded162a49a785bab38fbb7
-serial-marker=windvale-os-boot-24-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff
+probe-version=25
+efi-bytes=214528
+efi-sha256=99686e2b2484de156a01bbec0ece68e6a15af7229a477d9245ee4f3068ed4f5b
+serial-marker=windvale-os-boot-25-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-wvb-runtime-interpreted-init-service-pass-ipc-cross-process-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff
 qemu-exit-code=0
 ```
 
@@ -178,8 +178,8 @@ Other reports select their scenario, exact digest/size, marker suffix, and expec
 
 ## What this does not prove
 
-Probe 24 does not authenticate firmware CRCs, own general physical memory, reclaim loader ranges, implement a general VM manager, load arbitrary WVB, provide complete semantic verification, JIT bytecode, or select a native cache dynamically. It interprets only one fixed admitted subset. The system target, page/descriptor constructors, symbol adaptation, admission/process bridges, syscall dispatcher, and COM1 adapter retain named Stage 0 seams.
+Probe 25 does not authenticate firmware CRCs, own general physical memory, reclaim loader ranges, implement a general VM manager, load arbitrary WVB, provide complete semantic verification, JIT bytecode, or select a native cache dynamically. It discovers sections in one embedded admitted module and interprets only one bounded semantic subset. The system target, page/descriptor constructors, symbol adaptation, admission/process bridges, syscall dispatcher, and COM1 adapter retain named Stage 0 seams.
 
 The fixed two-process proof has no general scheduler, preemption, timer, process creation API, capability transfer/revocation, general IPC queue, larger messages, user allocator, teardown, page reclamation, shared memory, demand paging, signal ABI, general service discovery, resource namespace, filesystem, package service, network, or device service. Its arena is fully consumed and its number/register assignment is experimental, not a stable public ABI.
 
-The exception boundary has no `CR2` page-fault evidence, double-fault containment, IST, NMI, IRQ, PIC/APIC, interrupt enablement, nested-fault policy, general resumption, or WVR-to-CPU mapping. Shutdown remains pinned-Q35-specific. Hyper-V, physical hardware, and cross-host probe-24 qualification remain later gates.
+The exception boundary has no `CR2` page-fault evidence, double-fault containment, IST, NMI, IRQ, PIC/APIC, interrupt enablement, nested-fault policy, general resumption, or WVR-to-CPU mapping. Shutdown remains pinned-Q35-specific. Hyper-V, physical hardware, and cross-host probe-25 qualification remain later gates.

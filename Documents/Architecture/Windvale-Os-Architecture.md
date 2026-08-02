@@ -145,7 +145,7 @@ The current Windows/Linux bootstrap has already moved the allowed allocate/copy/
 
 ## Boot and trust chain
 
-The first x86-64 path remains UEFI-based and evidence-driven. Candidate probe 23 implements steps 1 through 5 for one fixed client and service. Candidate probe 24 implements the first bounded part of step 6 by interpreting that client's admitted WVB in a CPL3 Windvale runtime process:
+The first x86-64 path remains UEFI-based and evidence-driven. Qualified probe 24 implements steps 1 through 5 plus the first bounded part of step 6 by interpreting one admitted WVB in a CPL3 Windvale runtime process. Candidate probe 25 generalizes that runtime just far enough to derive and validate the admitted module's section payloads:
 
 1. A narrow loader validates its bounded inputs, captures the versioned handoff, loads the selected AOT kernel and boot resources, and exits boot services.
 2. The kernel takes ownership of memory, its stack, exception state, page tables, and deterministic diagnostics. Firmware services are not used after the accepted exit boundary.
@@ -205,9 +205,11 @@ Each step must be useful, bounded, and independently qualified:
 
 [Decision 0091](../Decisions/0091-First-Protected-Windvale-Process.md) implements step 4: the admitted Windvale AOT program executes at CPL3 under a separate root, uses a generation/rights-checked capability to send and receive one register message, exits through `SYSCALL`, and can take a contained user general-protection fault while equivalent CPL0 faults remain terminal. Windvale owns the fixed process policy, WVA owns user syscall and exception-entry bytes, and the page/descriptor/MSR/dispatcher object remains a named Stage 0 replacement seam.
 
-[Decision 0092](../Decisions/0092-First-Windvale-Init-Resource-Service.md) implements candidate step 5: a Windvale init/resource service blocks with receive-only authority, a client runs under a second root with send-only authority, and one kernel-owned message wakes the service. Both normal client exit and contained client fault permit the independent service to complete. Cross-host builds and Seed qualification pass at `22e350b`; a Linux OS-test run remains pending.
+[Decision 0092](../Decisions/0092-First-Windvale-Init-Resource-Service.md) implements step 5: a Windvale init/resource service blocks with receive-only authority, a client runs under a second root with send-only authority, and one kernel-owned message wakes the service. Both normal client exit and contained client fault permit the independent service to complete. Its composition is cross-host qualified by the later probe-24 checkpoint at `190174a`.
 
-[Decision 0093](../Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) implements the first bounded step-6 slice as candidate probe 24. The second process now contains an AOT-built Windvale interpreter, records the interpreter and admitted-program identities separately, and derives result `29` from the admitted WVB instructions at CPL3. The admitted program's host-built AOT derivative is absent from that path. The fixed interpreter profile and coordinator are deliberately not a general loader, runtime selector, JIT publication service, or scheduler.
+[Decision 0093](../Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) implements the first bounded step-6 slice as cross-host-qualified probe 24. The second process contains an AOT-built Windvale interpreter, records the interpreter and admitted-program identities separately, and derives result `29` from the admitted WVB instructions at CPL3. The admitted program's host-built AOT derivative is absent from that path.
+
+[Decision 0094](../Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) advances candidate probe 25. The interpreter now validates the module envelope, derives all seven section payloads, checks the bounded function/export shape, and executes a second compiler-produced module after a longer name moves its code payload. The embedded input and fixed coordinator are deliberately not a runtime-supplied loader, general runtime selector, JIT publication service, or scheduler.
 
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 
@@ -215,7 +217,7 @@ This sequence may interleave with native Windows/Linux work. It does not require
 
 The following should remain open until a focused implementation supplies evidence:
 
-- stable public syscall numbers, register assignments, and user ABI (the version-3 internal experiment is not frozen);
+- stable public syscall numbers, register assignments, and user ABI (the version-4 internal experiment is not frozen);
 - scheduler algorithm, priority model, real-time policy, and SMP strategy;
 - IPC wire encoding, zero-copy thresholds, and service discovery;
 - virtual-address layout, page size policy beyond architecture requirements, and shared-memory model;

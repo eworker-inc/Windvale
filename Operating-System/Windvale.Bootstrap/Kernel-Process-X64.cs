@@ -569,6 +569,9 @@ public static class Kernelˉprocessˉx64
         var Runtimeˉkind = Isˉinit
             ? Kernelˉprocessˉcontract.RUNTIME_KIND_AOT_SERVICE
             : Kernelˉprocessˉcontract.RUNTIME_KIND_BYTECODE_INTERPRETER;
+        var Runtimeˉprofile = Isˉinit
+            ? Kernelˉprocessˉcontract.RUNTIME_PROFILE_NONE
+            : Kernelˉprocessˉcontract.RUNTIME_PROFILE_SECTION_INTERPRETER;
         output.Emit(0x4C, 0x89, 0xEF, 0x31, 0xC0, 0xB9);
         output.Emitˉu32(Kernelˉprocessˉcontract.RECORD_BYTES / sizeof(ulong));
         output.Emit(0xFC, 0xF3, 0x48, 0xAB);
@@ -614,6 +617,8 @@ public static class Kernelˉprocessˉx64
         Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET, role);
         Emitˉstoreˉrecordˉu32(
             output, Kernelˉprocessˉcontract.STACK_PAGE_COUNT_OFFSET, checked((uint)Stackˉpages));
+        Emitˉstoreˉrecordˉu32(
+            output, Kernelˉprocessˉcontract.RUNTIME_PROFILE_OFFSET, Runtimeˉprofile);
         for (var Offset = 0; Offset < programˉdigest.Length; Offset += sizeof(ulong))
         {
             output.Emit(0x48, 0xB8);

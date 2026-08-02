@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel shutdown version 1 is cross-host qualified at exact commit `12e9e2e`. It was introduced by Windvale OS firmware probe 18, retained by qualified probe 21, and remains byte-for-byte unchanged through candidates 22 through 24. It defines one deterministic clean-poweroff path for pinned QEMU `pc-q35-11.0` after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; Decisions 0087 through 0093 record later compositions.
+Kernel shutdown version 1 is cross-host qualified at exact commit `12e9e2e`. It was introduced by Windvale OS firmware probe 18, retained by qualified probes 21 and 24, and remains byte-for-byte unchanged through candidate probe 25. It defines one deterministic clean-poweroff path for pinned QEMU `pc-q35-11.0` after successful kernel execution. [Decision 0085](../Documents/Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) owns the contract; Decisions 0087 through 0094 record later compositions.
 
 This is a target-specific machine adapter, not a portable Windvale capability, general ACPI discovery, a Hyper-V shutdown contract, or a process/service shutdown policy.
 
@@ -48,7 +48,7 @@ The operation runs at the existing privileged x86-64 boot level after `ExitBootS
 
 ## Normal and fault evidence
 
-Probe 24 retains the normal path, two terminal kernel-fault scenarios, and one contained interpreter-process-fault success scenario after WVB admission and two-process execution:
+Probe 25 retains the normal path, two terminal kernel-fault scenarios, and one contained interpreter-process-fault success scenario after WVB admission and two-process execution:
 
 - `normal` completes Windvale admission, blocks the receive-only init service, interprets the admitted WVB in the send-only process, wakes and completes the service, runs the retained ABI-16 portable-WVB AOT path and system-profile Main, emits the exact success and shutdown markers once, executes the WVA Q35 poweroff request, and requires QEMU process exit code `0`.
 - `invalid-opcode` executes `UD2` after Main, emits the exact normalized vector-6 terminal panic suffix, and uses the test-only `isa-debug-exit` path with host code `3`.

@@ -129,6 +129,19 @@ internal static class Kernelˉmemoryˉx64
         output.Jumpˉif(CONDITION_BELOW, SCAN_NEXT_LABEL);
         output.Emit(0x49, 0x83, 0x7A, 0x18, (byte)Kernelˉmemoryˉcontract.ARENA_PAGES);
         output.Jumpˉif(CONDITION_BELOW, SCAN_NEXT_LABEL);
+
+        // The process roots each own one 2 MiB page-table region. Align the complete
+        // arena so every bounded process extent selected from it stays in that region.
+        output.Emit(0x48, 0x05);
+        output.Emitˉu32((uint)(Kernelˉmemoryˉcontract.ARENA_ALIGNMENT_BYTES - 1));
+        output.Jumpˉif(CONDITION_BELOW, SCAN_NEXT_LABEL);
+        output.Emit(0x48, 0x25);
+        output.Emitˉu32(unchecked((uint)~(Kernelˉmemoryˉcontract.ARENA_ALIGNMENT_BYTES - 1)));
+        output.Emit(0x48, 0x89, 0xC2, 0x48, 0x81, 0xC2);
+        output.Emitˉu32((uint)(Kernelˉmemoryˉcontract.ARENA_BYTES - Kernelˉmemoryˉcontract.PAGE_BYTES));
+        output.Jumpˉif(CONDITION_BELOW, SCAN_NEXT_LABEL);
+        output.Emit(0x48, 0x39, 0xCA);
+        output.Jumpˉif(CONDITION_ABOVE, SCAN_NEXT_LABEL);
         output.Emit(0x48, 0xB9);
         output.Emitˉu64(Kernelˉmemoryˉcontract.MAXIMUM_PHYSICAL_ADDRESS_EXCLUSIVE - Kernelˉmemoryˉcontract.ARENA_BYTES);
         output.Emit(0x48, 0x39, 0xC8);
@@ -211,6 +224,7 @@ internal static class Kernelˉmemoryˉx64
         output.Emit(0x49, 0x89, 0xC7);
         output.Emit(0x48, 0x85, 0xC0);
         output.Jumpˉif(CONDITION_NOT_EQUAL, OWNED_STACK_RESTORE_LABEL);
+        output.Emit(0x45, 0x31, 0xFF);
         if (scenario == Firmwareˉprobeˉscenario.Invalidˉopcode)
         {
             output.Emit(0x0F, 0x0B);

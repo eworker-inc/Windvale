@@ -5,15 +5,16 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉmemoryˉcontract
 {
-    public const int FORMAT_VERSION = 2;
-    public const string TARGET_NAME = "x86-64-kernel-memory-v2";
+    public const int FORMAT_VERSION = 3;
+    public const string TARGET_NAME = "x86-64-kernel-memory-v3";
     public const string MEMORY_ENTER_SYMBOL = "Windvale_kernel_memory_enter";
     public const string ALLOCATE_PAGES_SYMBOL = "Windvale_kernel_allocate_pages";
     public const uint EFI_CONVENTIONAL_MEMORY = 7;
     public const ulong PAGE_BYTES = 4_096;
+    public const ulong ARENA_ALIGNMENT_BYTES = 2 * 1024 * 1024;
     public const ulong MINIMUM_PHYSICAL_ADDRESS = 1 * 1024 * 1024;
     public const ulong MAXIMUM_PHYSICAL_ADDRESS_EXCLUSIVE = 1UL << 32;
-    public const ulong ARENA_PAGES = 32;
+    public const ulong ARENA_PAGES = 58;
     public const ulong ARENA_BYTES = ARENA_PAGES * PAGE_BYTES;
     public const ulong STATE_PAGES = 1;
     public const ulong STACK_PAGES = 2;
@@ -21,8 +22,8 @@ public static class Kernelˉmemoryˉcontract
     public const ulong INITIAL_FREE_PAGES = ARENA_PAGES - FIRST_FREE_PAGE;
     public const uint STATE_HEADER_BYTES = 64;
     public const uint HANDOFF_COPY_OFFSET = STATE_HEADER_BYTES;
-    public const ulong STATE_MAGIC = 0x3230_4D45_4D4B_5657;
-    public const uint STATE_VERSION = 2;
+    public const ulong STATE_MAGIC = 0x3330_4D45_4D4B_5657;
+    public const uint STATE_VERSION = 3;
 }
 
 public sealed record Kernelˉmemoryˉdiagnostic(string Code, string Message);
@@ -89,26 +90,38 @@ public static class Kernelˉmemoryˉplanner
             }
 
             var Type = BinaryPrimitives.ReadUInt32LittleEndian(Descriptor);
+            var Alignmentˉmask = Kernelˉmemoryˉcontract.ARENA_ALIGNMENT_BYTES - 1;
+            var Candidateˉaddress = Physicalˉaddress > ulong.MaxValue - Alignmentˉmask
+                ? ulong.MaxValue
+                : (Physicalˉaddress + Alignmentˉmask) & ~Alignmentˉmask;
+            var Lastˉpageˉaddress =
+                Physicalˉaddress + ((Pages - 1) * Kernelˉmemoryˉcontract.PAGE_BYTES);
             if (Type != Kernelˉmemoryˉcontract.EFI_CONVENTIONAL_MEMORY ||
                 Physicalˉaddress < Kernelˉmemoryˉcontract.MINIMUM_PHYSICAL_ADDRESS ||
                 Pages < Kernelˉmemoryˉcontract.ARENA_PAGES ||
-                Physicalˉaddress >
+                Candidateˉaddress >
                     Kernelˉmemoryˉcontract.MAXIMUM_PHYSICAL_ADDRESS_EXCLUSIVE -
-                    Kernelˉmemoryˉcontract.ARENA_BYTES)
+                    Kernelˉmemoryˉcontract.ARENA_BYTES ||
+                Candidateˉaddress > Lastˉpageˉaddress ||
+                Kernelˉmemoryˉcontract.ARENA_BYTES - Kernelˉmemoryˉcontract.PAGE_BYTES >
+                    Lastˉpageˉaddress - Candidateˉaddress)
             {
                 continue;
             }
 
-            if (Arenaˉaddress is null || Physicalˉaddress < Arenaˉaddress.Value)
+            if (Arenaˉaddress is null || Candidateˉaddress < Arenaˉaddress.Value)
             {
-                Arenaˉaddress = Physicalˉaddress;
+                Arenaˉaddress = Candidateˉaddress;
                 Arenaˉdescriptor = Index;
             }
         }
 
         if (Arenaˉaddress is null)
         {
-            return Fail("WVOS4005", "The map contains no eligible 128 KiB conventional-memory arena below 4 GiB.");
+            return Fail(
+                "WVOS4005",
+                $"The map contains no eligible 2 MiB-aligned " +
+                $"{Kernelˉmemoryˉcontract.ARENA_BYTES / 1024} KiB conventional-memory arena below 4 GiB.");
         }
 
         var Arenaˉend = Arenaˉaddress.Value + Kernelˉmemoryˉcontract.ARENA_BYTES;

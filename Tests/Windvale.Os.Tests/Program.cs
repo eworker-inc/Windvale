@@ -215,21 +215,21 @@ internal static class Program
     private static void Memoryˉplannerˉselectsˉboundedˉarena()
     {
         var Map = Buildˉmemoryˉmap(
-            new Memoryˉdescriptorˉinput(7, 0x0030_0000, 32),
+            new Memoryˉdescriptorˉinput(7, 0x0030_0000, 314),
             new Memoryˉdescriptorˉinput(2, 0x0010_0000, 8),
             new Memoryˉdescriptorˉinput(7, 0x0020_0000, 16));
         var Result = Kernelˉmemoryˉplanner.Plan(Map, 40);
         True(Result.Success, Result.Diagnostics.IsEmpty ? "Memory planning failed." : Result.Diagnostics[0].Message);
         var Plan = Result.Plan!;
-        Equal(0x0030_0000UL, Plan.Arenaˉaddress);
-        Equal(32UL, Plan.Arenaˉpages);
-        Equal(0x0030_0000UL, Plan.Stateˉaddress);
-        Equal(0x0030_0040UL, Plan.Handoffˉcopyˉaddress);
-        Equal(0x0030_1000UL, Plan.Stackˉaddress);
+        Equal(0x0040_0000UL, Plan.Arenaˉaddress);
+        Equal(58UL, Plan.Arenaˉpages);
+        Equal(0x0040_0000UL, Plan.Stateˉaddress);
+        Equal(0x0040_0040UL, Plan.Handoffˉcopyˉaddress);
+        Equal(0x0040_1000UL, Plan.Stackˉaddress);
         Equal(8_192UL, Plan.Stackˉbytes);
-        Equal(0x0030_3000UL, Plan.Stackˉtop);
+        Equal(0x0040_3000UL, Plan.Stackˉtop);
         Equal(3UL, Plan.Firstˉfreeˉpage);
-        Equal(29UL, Plan.Freeˉpages);
+        Equal(55UL, Plan.Freeˉpages);
     }
 
     private static void Memoryˉplannerˉrejectsˉmalformedˉmaps()
@@ -240,10 +240,11 @@ internal static class Program
         Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0010_0001, 16)), 40, "WVOS4002");
         Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0010_0000, 0)), 40, "WVOS4003");
         Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0xFFFF_FFFF_FFFF_F000, 2)), 40, "WVOS4004");
-        Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(2, 0x0010_0000, 32)), 40, "WVOS4005");
+        Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(2, 0x0010_0000, 56)), 40, "WVOS4005");
+        Memoryˉplanˉfails(Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0030_0000, 313)), 40, "WVOS4005");
         Memoryˉplanˉfails(
             Buildˉmemoryˉmap(
-                new Memoryˉdescriptorˉinput(7, 0x0020_0000, 32),
+                new Memoryˉdescriptorˉinput(7, 0x0020_0000, 58),
                 new Memoryˉdescriptorˉinput(2, 0x0020_8000, 1)),
             40,
             "WVOS4006");
@@ -260,7 +261,7 @@ internal static class Program
     private static void Pageˉallocatorˉisˉboundedˉandˉzeroing()
     {
         var Plan = Kernelˉmemoryˉplanner.Plan(
-            Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0020_0000, 32)),
+            Buildˉmemoryˉmap(new Memoryˉdescriptorˉinput(7, 0x0020_0000, 58)),
             40).Plan!;
         var Arena = Enumerable.Repeat((byte)0xA5, checked((int)Kernelˉmemoryˉcontract.ARENA_BYTES)).ToArray();
         var Allocator = new Kernelˉpageˉallocator(Plan, Arena);
@@ -269,9 +270,9 @@ internal static class Program
         Array.Fill(Arena, (byte)0x5A, 3 * 4_096, 4_096);
         Equal(0x0020_3000UL, Allocator.Allocateˉpages(1)!.Value);
         True(Arena.AsSpan(3 * 4_096, 4_096).IndexOfAnyExcept((byte)0) < 0, "Allocated page was not zeroed.");
-        Equal(28UL, Allocator.Remainingˉpages);
+        Equal(54UL, Allocator.Remainingˉpages);
         True(Allocator.Allocateˉpages(0) is null, "A zero-page allocation succeeded.");
-        Equal(0x0020_4000UL, Allocator.Allocateˉpages(28)!.Value);
+        Equal(0x0020_4000UL, Allocator.Allocateˉpages(54)!.Value);
         Equal(0UL, Allocator.Remainingˉpages);
         True(Allocator.Allocateˉpages(1) is null, "An exhausted allocator returned a page.");
     }
@@ -312,7 +313,7 @@ internal static class Program
         Equal(
             (EXECUTABLE + Kernelˉpagingˉcontract.EXECUTABLE_BYTES) | 3UL |
                 Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
-            Kernelˉpagingˉplanner.Readˉentry(Plan, 5, 28));
+            Kernelˉpagingˉplanner.Readˉentry(Plan, 5, 60));
 
         for (ulong Page = 3; Page <= 5; Page++)
         {
@@ -433,11 +434,11 @@ internal static class Program
         Sequenceˉequal(First.Codeˉbytes, Second.Codeˉbytes);
         Equal(1_244, First.Objectˉbytes.Length);
         Equal(
-            "43bc3a191ebaec3944bb1fa47927e9623341dbb11085ea3c76fbe70b6ca16cb0",
+            "1112e7f21b63ee339a2e17211ae9ce96712b446b5039384f9d38e18ff0430acd",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
         Equal(851, First.Codeˉbytes.Length);
         Equal(
-            "c77b367b120299f39ca65e4b6955d48ab57408440ad762e3deab17988e01606d",
+            "147de96e836a0e3ea9f3cb0b937742f56c8f45cb9f5c9e57cb06288e0035c398",
             Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.Objectˉbytes.AsSpan()).Value;
@@ -462,8 +463,8 @@ internal static class Program
         Equal(2, Countˉsequence(First.Codeˉbytes, [0x0F, 0xA2]));
         Equal(1, Countˉsequence(First.Codeˉbytes, [0xB9, 0x00, 0x02, 0x00, 0x00]));
         Equal(1, Countˉsequence(First.Codeˉbytes, [0xB9, 0x00, 0x04, 0x00, 0x00]));
-        Equal(1, Countˉsequence(First.Codeˉbytes, [0xB9, 0x20, 0x00, 0x00, 0x00]));
-        Equal(1, Countˉsequence(First.Codeˉbytes, [0x57, 0x56, 0x4B, 0x50, 0x41, 0x47, 0x30, 0x32]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0xB9, 0x40, 0x00, 0x00, 0x00]));
+        Equal(1, Countˉsequence(First.Codeˉbytes, [0x57, 0x56, 0x4B, 0x50, 0x41, 0x47, 0x30, 0x33]));
         Equal(0, Countˉsequence(First.Codeˉbytes, [0x0F, 0x22, 0xD8]));
         Equal(0, Countˉsequence(First.Codeˉbytes, [0x0F, 0x32]));
     }
@@ -565,11 +566,11 @@ internal static class Program
         var Second = Kernelˉprocessˉimage.Build(Admission, false);
         var Faultˉfirst = Kernelˉprocessˉimage.Build(Admission, true);
         var Faultˉsecond = Kernelˉprocessˉimage.Build(Admission, true);
-        Equal(3_512, First.Policyˉmoduleˉbytes.Length);
-        Equal("af4f1865a65be48b6fbefbe8995b4638fe91f579616fcd32cd1d05b16d684330",
+        Equal(3_708, First.Policyˉmoduleˉbytes.Length);
+        Equal("c84aeb3b9658b9a2c5847bd769aef6eb87a9b46b743123ef49a5faf530f7a65b",
             Objectˉdigest.Calculateˉsha256(First.Policyˉmoduleˉbytes.AsSpan()));
-        Equal(30_142, First.Policyˉnativeˉobjectˉbytes.Length);
-        Equal("333046213d54a098f16e6668ee875231f3a0ee87e55a34db567ff2b8ff650806",
+        Equal(31_998, First.Policyˉnativeˉobjectˉbytes.Length);
+        Equal("a992d44ce72cbee7b0bd3bb110cb4c5ce2a027d788dfb1cfa67e2ad461ddd0bf",
             Objectˉdigest.Calculateˉsha256(First.Policyˉnativeˉobjectˉbytes.AsSpan()));
         Equal(371, First.Initˉserviceˉmoduleˉbytes.Length);
         Equal("478dfcd36fed7c8063cfb3f53a6a1362bda5353656339b730be573a1be8f95b0",
@@ -583,11 +584,11 @@ internal static class Program
         Equal(2_302, First.Initˉserviceˉimageˉbytes.Length);
         Equal("e3d1e13f3ea9d914c7d9ee5b624171cda549aecf9ecf38b77a06142ae74a586f",
             Objectˉdigest.Calculateˉsha256(First.Initˉserviceˉimageˉbytes.AsSpan()));
-        Equal(3_211, First.Interpreterˉmoduleˉbytes.Length);
-        Equal("639e191af1844b6660750978854f5e168c25f4949f1d9282ca5777d65f617083",
+        Equal(12_359, First.Interpreterˉmoduleˉbytes.Length);
+        Equal("909e624df86e614b6f7dcaa61e75ffa685467015015bfafd7b0772ee41a89920",
             Objectˉdigest.Calculateˉsha256(First.Interpreterˉmoduleˉbytes.AsSpan()));
-        Equal(30_457, First.Interpreterˉnativeˉobjectˉbytes.Length);
-        Equal("fbe3592e5459723c2b36330ec93659fb387de497b31fa59b8e629668297aaac6",
+        Equal(128_129, First.Interpreterˉnativeˉobjectˉbytes.Length);
+        Equal("9788ad4159d783ebc35ee5af6c73b7c294643261bc00acfcf0f33a6bdf35c140",
             Objectˉdigest.Calculateˉsha256(First.Interpreterˉnativeˉobjectˉbytes.AsSpan()));
         Equal(205, First.Clientˉshimˉobjectˉbytes.Length);
         Equal("6a22069adef6f9a4b58d1dda2bfe0c2b35e8563bb4e7e73641f050c2eeae058d",
@@ -595,11 +596,11 @@ internal static class Program
         Equal(193, Faultˉfirst.Clientˉshimˉobjectˉbytes.Length);
         Equal("c57327ddf897fb32cc57dd1266c467283273eddafd8d4b78edfc43e59fc8eeee",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Clientˉshimˉobjectˉbytes.AsSpan()));
-        Equal(30_270, First.Clientˉimageˉbytes.Length);
-        Equal("72f81045c525f1ad055127f3bb7917dace22b0a3b35ff3b6fefec28b37a6058c",
+        Equal(127_598, First.Clientˉimageˉbytes.Length);
+        Equal("c293f84199fecce07c3a0dbafb6406e7c2aad3521782df7095fe8ee6ca58a0e8",
             Objectˉdigest.Calculateˉsha256(First.Clientˉimageˉbytes.AsSpan()));
-        Equal(30_270, Faultˉfirst.Clientˉimageˉbytes.Length);
-        Equal("b24007c770c1ff9d0c8a05702a6b05ead8a9361f55b6394b34cc3202343622aa",
+        Equal(127_598, Faultˉfirst.Clientˉimageˉbytes.Length);
+        Equal("6364289e6ddaaa125969bb27626672f08f114ebd738b7b191d2c55125c45fc6e",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Clientˉimageˉbytes.AsSpan()));
 
         Sequenceˉequal(First.Policyˉmoduleˉbytes, Second.Policyˉmoduleˉbytes);
@@ -630,17 +631,38 @@ internal static class Program
             Interpreter.Executedˉinstructions);
         Sequenceˉequal(First.Interpreterˉmoduleˉbytes,
             Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(Admission.Embeddedˉmoduleˉbytes));
-        Equal(-1, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+
+        var Offsetˉvariant = Seedˉcompiler.Compile("""
+            module Offsetˉindependentˉembeddedˉprogram profile portable;
+
+            export fn Main() -> i32 {
+                return 29;
+            }
+            """, "Offset-Independent-Embedded-Program.wv");
+        True(Offsetˉvariant.Success,
+            "The offset-variant embedded program did not compile: " +
+                string.Join(" | ", Offsetˉvariant.Diagnostics));
+        True(Offsetˉvariant.Moduleˉbytes.Length != Admission.Embeddedˉmoduleˉbytes.Length,
+            "The offset-variant WVB unexpectedly retained the canonical byte length.");
+        True(
+            Findˉwvbˉsectionˉpayload(Offsetˉvariant.Moduleˉbytes, 5) !=
+                Findˉwvbˉsectionˉpayload(Admission.Embeddedˉmoduleˉbytes, 5),
+            "The offset-variant WVB did not move the code-section payload.");
+        Equal(Kernelˉprocessˉcontract.EXPECTED_RESULT,
+            Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+                Offsetˉvariant.Moduleˉbytes)).Exitˉcode);
+
+        Equal(-8, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
             Admission.Embeddedˉmoduleˉbytes[..^1])).Exitˉcode);
         Equal(-2, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
             Mutate(Admission.Embeddedˉmoduleˉbytes, 0).ToImmutableArray())).Exitˉcode);
-        Equal(-7, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+        Equal(-6, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
             Mutate(Admission.Embeddedˉmoduleˉbytes, 117).ToImmutableArray())).Exitˉcode);
-        Equal(-19, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+        Equal(-32, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
             Mutate(Admission.Embeddedˉmoduleˉbytes, 121).ToImmutableArray())).Exitˉcode);
         Equal(28, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
             Mutate(Admission.Embeddedˉmoduleˉbytes, 122).ToImmutableArray())).Exitˉcode);
-        Equal(-11, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
+        Equal(-24, Runˉportableˉmain(Kernelˉprocessˉimage.Compileˉinterpreterˉmodule(
             Mutate(Admission.Embeddedˉmoduleˉbytes, 127).ToImmutableArray())).Exitˉcode);
         Sequenceˉequal(Admission.Embeddedˉmoduleˉbytes,
             Kernelˉwvbˉadmission.Build().Embeddedˉmoduleˉbytes);
@@ -648,7 +670,7 @@ internal static class Program
             "7f08efbb20c6cc69c100f07407f759625b38c02a3f05bb4e8dabcc7bdd10c4e2",
             Convert.ToHexString(First.Admittedˉprogramˉdigest.AsSpan()).ToLowerInvariant());
         Equal(
-            "639e191af1844b6660750978854f5e168c25f4949f1d9282ca5777d65f617083",
+            "909e624df86e614b6f7dcaa61e75ffa685467015015bfafd7b0772ee41a89920",
             Convert.ToHexString(First.Interpreterˉdigest.AsSpan()).ToLowerInvariant());
         Equal(
             "478dfcd36fed7c8063cfb3f53a6a1362bda5353656339b730be573a1be8f95b0",
@@ -716,8 +738,8 @@ internal static class Program
         Equal(ALLOCATION + 0x5000UL, Plan.Userˉstackˉaddress);
         Equal(ALLOCATION + 0x6000UL, Plan.Userˉdataˉaddress);
         Equal(CLIENT_ALLOCATION, Client.Plan!.Rootˉaddress);
-        Equal(CLIENT_ALLOCATION + 0xC000UL, Client.Plan.Userˉstackˉaddress);
-        Equal(CLIENT_ALLOCATION + 0xE000UL, Client.Plan.Userˉdataˉaddress);
+        Equal(CLIENT_ALLOCATION + 0x24000UL, Client.Plan.Userˉstackˉaddress);
+        Equal(CLIENT_ALLOCATION + 0x28000UL, Client.Plan.Userˉdataˉaddress);
         Equal(Kernelˉprocessˉcontract.CLIENT_CODE_PAGES, Client.Plan.Userˉcodeˉpages);
         Equal(Kernelˉprocessˉcontract.CLIENT_STACK_PAGES, Client.Plan.Userˉstackˉpages);
         True(Client.Plan.Rootˉaddress != Plan.Rootˉaddress, "The service and client share a root.");
@@ -734,14 +756,22 @@ internal static class Program
             Kernelˉprocessˉplanner.Readˉentry(Plan, 3, 6));
         Equal(
             Client.Plan.Userˉstackˉaddress | 7UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
-            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 12));
+            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 36));
         Equal(
             Client.Plan.Userˉstackˉaddress + Kernelˉpagingˉcontract.PAGE_BYTES |
                 7UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
-            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 13));
+            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 37));
+        Equal(
+            Client.Plan.Userˉstackˉaddress + 2 * Kernelˉpagingˉcontract.PAGE_BYTES |
+                7UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
+            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 38));
+        Equal(
+            Client.Plan.Userˉstackˉaddress + 3 * Kernelˉpagingˉcontract.PAGE_BYTES |
+                7UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
+            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 39));
         Equal(
             Client.Plan.Userˉdataˉaddress | 7UL | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE,
-            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 14));
+            Kernelˉprocessˉplanner.Readˉentry(Client.Plan, 3, 40));
 
         var Userˉleaves = 0;
         for (var Index = 0; Index < 512; Index++)
@@ -776,7 +806,7 @@ internal static class Program
                     Kernelˉpagingˉcontract.ENTRY_WRITABLE),
                 "The interpreter table contains a writable executable leaf.");
         }
-        Equal(11, Clientˉuserˉleaves);
+        Equal(37, Clientˉuserˉleaves);
         Sequenceˉequal(Image.Initˉserviceˉimageˉbytes,
             Plan.Userˉcodeˉbytes[..Image.Initˉserviceˉimageˉbytes.Length]);
         Sequenceˉequal(Image.Clientˉimageˉbytes,
@@ -801,6 +831,12 @@ internal static class Program
         Equal(Kernelˉprocessˉcontract.RUNTIME_KIND_BYTECODE_INTERPRETER,
             BinaryPrimitives.ReadUInt32LittleEndian(
                 Client.Plan.Processˉrecord.AsSpan()[(int)Kernelˉprocessˉcontract.RUNTIME_KIND_OFFSET..]));
+        Equal(Kernelˉprocessˉcontract.RUNTIME_PROFILE_NONE,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Plan.Processˉrecord.AsSpan()[(int)Kernelˉprocessˉcontract.RUNTIME_PROFILE_OFFSET..]));
+        Equal(Kernelˉprocessˉcontract.RUNTIME_PROFILE_SECTION_INTERPRETER,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Client.Plan.Processˉrecord.AsSpan()[(int)Kernelˉprocessˉcontract.RUNTIME_PROFILE_OFFSET..]));
         Equal((uint)Kernelˉprocessˉcontract.CLIENT_STACK_PAGES,
             BinaryPrimitives.ReadUInt32LittleEndian(
                 Client.Plan.Processˉrecord.AsSpan()[(int)Kernelˉprocessˉcontract.STACK_PAGE_COUNT_OFFSET..]));
@@ -841,17 +877,17 @@ internal static class Program
         var Second = Kernelˉprocessˉx64.Build(Normalˉimage, false);
         var Faultˉfirst = Kernelˉprocessˉx64.Build(Faultˉimage, true);
         var Faultˉsecond = Kernelˉprocessˉx64.Build(Faultˉimage, true);
-        Equal(38_332, First.Objectˉbytes.Length);
-        Equal("44559a001988e503374c2b83bc8056d928e075381ca3cd93e155040a2f63fd10",
+        Equal(136_668, First.Objectˉbytes.Length);
+        Equal("33ef216d89926bacd53b5a46c5f39f3802c778bdfee44de0d7c79a440637e696",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
-        Equal(4_714, First.Codeˉbytes.Length);
-        Equal("75e9cd05b3093d50b5c38a7466ec36a8ba5369cec99e35d63eba584ca7310500",
+        Equal(5_722, First.Codeˉbytes.Length);
+        Equal("c7f1a05cb3ca5d5f47a6f6702f2375de84630afb8be36bd3dbe0a65bd692b715",
             Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
-        Equal(38_364, Faultˉfirst.Objectˉbytes.Length);
-        Equal("c8ed18169fe56bd44d1594e4e7ed4cf403e157c5f831b511640f0d5f28f003fc",
+        Equal(136_700, Faultˉfirst.Objectˉbytes.Length);
+        Equal("123adcc0c0dfb9c919ae1abdcdc1f4e330e98b86d6d753b110c3ddcb04a9de44",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Objectˉbytes.AsSpan()));
-        Equal(4_746, Faultˉfirst.Codeˉbytes.Length);
-        Equal("d1093fa03967b58fbb1654bb96a40f4b6b8481218d521001ff933338673399d7",
+        Equal(5_754, Faultˉfirst.Codeˉbytes.Length);
+        Equal("8930d1b285f916bd18f5b5442aa52187f5ed3667f72f0c39667d6eaa6216637d",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Codeˉbytes.AsSpan()));
         Equal(12, First.Relocations.Length);
         Equal(12, Faultˉfirst.Relocations.Length);
@@ -899,14 +935,14 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         Sequenceˉequal(First, Second);
-        Equal(114_688, First.Length);
+        Equal(215_040, First.Length);
         Equal(
-            "8cd17f693ae088eefaccb2b8449fd47f34e345352bb46beebd4a2a32fe8fad5d",
+            "ede1d1d0ae8638086c81564e3150829137f4f3aceead9e7bfddeedc9445ae2f6",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and deliberate user-fault images are identical.");
         Equal(
-            "windvale-os-boot 24\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nuser-fault=contained\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 25\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nuser-fault=contained\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.USER_FAULT_SERIAL_MARKER);
     }
 
@@ -916,9 +952,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(114_176, First.Length);
+        Equal(214_528, First.Length);
         Equal(
-            "4248f3402a0abfe9eda531109460fb37a7c1f3f907ded162a49a785bab38fbb7",
+            "99686e2b2484de156a01bbec0ece68e6a15af7229a477d9245ee4f3068ed4f5b",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -930,9 +966,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(114_176, First.Length);
+        Equal(214_528, First.Length);
         Equal(
-            "465ac8d095160e169187860413b0b347148df4acc2f24802f7a5e166981f6c59",
+            "da14fd39c4ebf19471bb7205aa1cfce5b40a52c1b64979d5ff62eed143d64e90",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -953,9 +989,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         Sequenceˉequal(First, Second);
-        Equal(114_176, First.Length);
+        Equal(214_528, First.Length);
         Equal(
-            "0a65ba2982f551434553054fc92d82a1a6e727a73527c85a79526f328105b58c",
+            "02e6a297c6495a0c35b4b799403a0cedc8a1538c3a62c52836b2fe6fa6a225c9",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -980,7 +1016,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 24\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 25\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -997,7 +1033,7 @@ internal static class Program
         Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x48]));
         Equal(1, Countˉsequence(Code, [0xFF, 0x90, 0xE8, 0x00, 0x00, 0x00]));
         Equal(3, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x48, 0x41, 0x4E, 0x44, 0x31]));
-        Equal(4, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x30, 0x32]));
+        Equal(4, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x30, 0x33]));
         Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x2C, 0x30, 0x00, 0x00, 0x00]));
         Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
         Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x78]));
@@ -1257,6 +1293,23 @@ internal static class Program
             Moduleˉcodec.Readˉandˉverify(moduleˉbytes.AsSpan()),
             new Referenceˉcapabilityˉhost(TextWriter.Null),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+    }
+
+    private static int Findˉwvbˉsectionˉpayload(ImmutableArray<byte> moduleˉbytes, byte sectionˉkind)
+    {
+        var Cursor = 12;
+        while (Cursor + 8 <= moduleˉbytes.Length)
+        {
+            var Payloadˉlength = BinaryPrimitives.ReadUInt32LittleEndian(moduleˉbytes.AsSpan()[(Cursor + 4)..]);
+            if (moduleˉbytes[Cursor] == sectionˉkind)
+            {
+                return Cursor + 8;
+            }
+
+            Cursor = checked(Cursor + 8 + checked((int)Payloadˉlength));
+        }
+
+        throw new InvalidOperationException($"WVB section {sectionˉkind} was not found.");
     }
 
     private static void Assertˉadmissionˉresult(

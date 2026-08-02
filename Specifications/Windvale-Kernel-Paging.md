@@ -2,11 +2,11 @@
 
 ## Status and purpose
 
-Kernel paging version 2 is retained by candidate probes 23 and 24. It keeps the qualified version-1 six-page low-1-GiB identity hierarchy, null guard, NX enforcement, and supervisor write protection while using the expanded fixed 128 KiB kernel executable window. It publishes `WVKPAG02`; version-1 ownership records are not accepted under the larger bound.
+Kernel paging version 3 is used by candidate probe 25. It keeps the six-page low-1-GiB identity hierarchy, null guard, NX enforcement, and supervisor write protection while expanding the fixed kernel executable window to 256 KiB for the measured section-derived interpreter composition. It publishes `WVKPAG03`; earlier experimental ownership records are not accepted under the larger bound.
 
-[Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) owns the qualified version-1 root and probe-20/21 evidence. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its measured executable-window expansion. Version 2 has focused Windows/QEMU and cross-host build evidence; Linux OS-test execution remains pending.
+[Decision 0088](../Documents/Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md) owns the qualified version-1 root and probe-20/21 evidence. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its first executable-window expansion. [Decision 0093](../Documents/Decisions/0093-First-User-Space-Windvale-Bytecode-Interpreter.md) cross-host qualifies that form; [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns version 3.
 
-The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 3 separately derives two process roots with three init leaves and eleven interpreter leaves; it does not mutate the kernel-root contract into a public mapping API.
+The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 4 separately derives two process roots with three init leaves and 37 interpreter leaves; it does not mutate the kernel-root contract into a public mapping API.
 
 ## Ownership split
 
@@ -22,7 +22,7 @@ The installer imports `Windvale_boot_probe`, `Windvale_kernel_allocate_pages`, `
 The live installer fails before changing control state unless:
 
 - CPUID exposes extended leaf `0x80000001` and NX;
-- the memory-state header is exact version 2;
+- the memory-state header is exact version 3;
 - the retained handoff map is nonempty, at most 1 MiB, arithmetically valid, and wholly below 1 GiB;
 - the active stack is nonzero and below 1 GiB;
 - `SGDT` reports a nonempty GDT wholly below 1 GiB;
@@ -30,11 +30,11 @@ The live installer fails before changing control state unless:
 - the allocator returns one aligned contiguous six-page range wholly below 1 GiB; and
 - that range does not overlap the executable window.
 
-The image builder separately requires the linked payload to begin at link offset zero and fit the 128 KiB executable window. Allocator pages are already zeroed. A pre-activation failure returns status 1 without loading the candidate root. Activation is accepted only when WVA readback equals the requested root.
+The image builder separately requires the linked payload to begin at link offset zero and fit the 256 KiB executable window. Allocator pages are already zeroed. A pre-activation failure returns status 1 without loading the candidate root. Activation is accepted only when WVA readback equals the requested root.
 
 ## Fixed hierarchy
 
-Version 2 allocates exactly six consecutive 4 KiB pages:
+Version 3 allocates exactly six consecutive 4 KiB pages:
 
 | Relative page | Structure | Rule |
 | ---: | --- | --- |
@@ -45,33 +45,33 @@ Version 2 allocates exactly six consecutive 4 KiB pages:
 | `4` | First code-region page table | Covers the 2 MiB region containing the boot entry. |
 | `5` | Second code-region page table | Covers the immediately following 2 MiB region. |
 
-All present entries are supervisor-only. Ordinary identity leaves are writable and non-executable. Exactly 32 consecutive 4 KiB leaves beginning at `Windvale_boot_probe` are read-only and executable. `CR0.WP` enforces read-only status in supervisor mode, `EFER.NXE` makes NX effective, and no admitted leaf is writable and executable.
+All present entries are supervisor-only. Ordinary identity leaves are writable and non-executable. Exactly 64 consecutive 4 KiB leaves beginning at `Windvale_boot_probe` are read-only and executable. `CR0.WP` enforces read-only status in supervisor mode, `EFER.NXE` makes NX effective, and no admitted leaf is writable and executable.
 
-The two code tables remain consecutive, so the 128 KiB window may cross one 2 MiB boundary. Code growth beyond 128 KiB is a build failure, not an implicit permission expansion.
+The two code tables remain consecutive, so the 256 KiB window may cross one 2 MiB boundary. Code growth beyond 256 KiB is a build failure, not an implicit permission expansion.
 
 ## Paging ownership record
 
 After successful CR3 readback, the installer writes this 64-byte little-endian record at memory-state offset `0x80`:
 
-| Offset | Bytes | Field | Version 2 rule |
+| Offset | Bytes | Field | Version 3 rule |
 | ---: | ---: | --- | --- |
-| `0x00` | 8 | Magic | ASCII `WVKPAG02` |
-| `0x08` | 4 | Version | `2` |
+| `0x00` | 8 | Magic | ASCII `WVKPAG03` |
+| `0x08` | 4 | Version | `3` |
 | `0x0C` | 4 | Record bytes | `64` |
 | `0x10` | 8 | Root address | First page of the six-page allocation |
 | `0x18` | 8 | Table pages | `6` |
 | `0x20` | 8 | Identity bytes | `1,073,741,824` |
 | `0x28` | 8 | Executable address | Runtime address of `Windvale_boot_probe` |
-| `0x30` | 8 | Executable bytes | `131,072` |
+| `0x30` | 8 | Executable bytes | `262,144` |
 | `0x38` | 8 | Flags | bit 0 NX, bit 1 supervisor write-protect, bit 2 null guard |
 
 The record is evidence of the active kernel root, not a mutable page-map interface.
 
 ## Process-root relationship
 
-[Protected process version 3](Windvale-Protected-Process.md) allocates separate init and interpreter PML4/PDPT/page-directory roots after the kernel root is active. Each copies the kernel hierarchy, replaces exactly its process allocation's 2 MiB directory entry with a private page table, and adds user permission only to the required hierarchy path. Init has one RX and two RW/NX user leaves. The interpreter has eight RX, two RW/NX stack, and one RW/NX context leaf. The machine switches roots only after every page, descriptor, process record, channel record, and syscall MSR is complete.
+[Protected process version 4](Windvale-Protected-Process.md) allocates separate init and interpreter PML4/PDPT/page-directory roots after the kernel root is active. Each copies the kernel hierarchy, replaces exactly its process allocation's 2 MiB directory entry with a private page table, and adds user permission only to the required hierarchy path. Init has one RX and two RW/NX user leaves. The interpreter has 32 RX, four RW/NX stack, and one RW/NX context leaf. Kernel memory version 3 aligns the complete arena to 2 MiB so both process extents satisfy this one-private-table rule. The machine switches roots only after every page, descriptor, process record, channel record, and syscall MSR is complete.
 
-The kernel executable window remains supervisor-only in both process roots. When either process exits, blocks, or faults, the current bounded continuation remains mapped and returns to kernel code; version 2 does not yet reclaim or recycle either root.
+The kernel executable window remains supervisor-only in both process roots. When either process exits, blocks, or faults, the current bounded continuation remains mapped and returns to kernel code; version 3 does not yet reclaim or recycle either root.
 
 ## WVA privileged operations
 
@@ -92,10 +92,10 @@ The host planner reports:
 | `WVOS5002` | The executable address is unaligned or cannot use the two admitted code tables. |
 | `WVOS5003` | The table allocation overlaps the executable window. |
 
-The current version-2 paging WVO is 1,244 bytes with SHA-256 `43bc3a191ebaec3944bb1fa47927e9623341dbb11085ea3c76fbe70b6ca16cb0`; its 851 code bytes have SHA-256 `c77b367b120299f39ca65e4b6955d48ab57408440ad762e3deab17988e01606d`. Focused tests lock the 32 RX leaves, every other permission, record identity, four imports/relocations, and deterministic repetition.
+The current version-3 paging WVO is 1,244 bytes with SHA-256 `1112e7f21b63ee339a2e17211ae9ce96712b446b5039384f9d38e18ff0430acd`; its 851 code bytes have SHA-256 `147de96e836a0e3ea9f3cb0b937742f56c8f45cb9f5c9e57cb06288e0035c398`. Focused tests lock the 64 RX leaves, every other permission, record identity, four imports/relocations, and deterministic repetition.
 
-Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. Decision 0092 records the candidate version-2 probe-23 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records the larger probe-24 images and live candidate evidence.
+Decision 0088 retains version-1 WVO and probe-20 identities. Decision 0090 retains the qualified probe-21 composition. Decision 0093 records the cross-host-qualified version-2 probe-24 composition. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records the larger probe-25 images and live candidate evidence.
 
 ## Deliberate limits
 
-Version 2 still retains one fixed identity-mapped kernel root and keeps interrupts disabled. It does not selectively unmap firmware/loader ranges, map memory above 1 GiB, handle page faults, release table pages, optimize global or huge pages, support PCID, KASLR, SMP shootdown, copy-on-write, shared memory, or expose a public map API. The two process roots are specified separately and add no general address-space manager, demand paging, teardown, executable-publication API, or scheduler.
+Version 3 still retains one fixed identity-mapped kernel root and keeps interrupts disabled. It does not selectively unmap firmware/loader ranges, map memory above 1 GiB, handle page faults, release table pages, optimize global or huge pages, support PCID, KASLR, SMP shootdown, copy-on-write, shared memory, or expose a public map API. The two process roots are specified separately and add no general address-space manager, demand paging, teardown, executable-publication API, or scheduler.
