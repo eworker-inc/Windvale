@@ -1,7 +1,7 @@
 # Decision 0108: Native one-byte construction
 
 - Date: 2026-08-02
-- Status: Implemented with Windows Standard and pinned-QEMU evidence; cross-host qualification pending
+- Status: Qualified
 - Advances: Native ABI 19
 - Refines: [Decision 0066](0066-Borrowed-Bytes-And-Unsigned-Native-Values.md) and [Decision 0105](0105-Typed-Block-Scoped-Native-Value-Slots.md)
 
@@ -22,7 +22,7 @@ The source language, WVB 1.6 verifier, and reference runtime already define this
 - Cover both `0u8` and `255u8` through the reference interpreter, W^X JIT, and linked WVO/AOT; require deterministic machine fragments; and reject corrupt allocation widths, store widths, and scalar/descriptor aliases.
 - Repeat exact compiler preflight after the operation is admitted. Record the next observed contract rather than expanding this decision speculatively.
 
-## Initial evidence
+## Evidence
 
 The focused borrowed-bytes case passes interpreter/JIT/WVO differential execution to result `42`, exercises both ends of the `u8` range, and rejects all targeted corruptions. Exact compiler preflight clears `Bytesˉfromˉu8` and now stops in the same `Compilerˉcompileˉsourceˉwvb` function at unsupported `Bytesˉfromˉu16ˉlittle`.
 
@@ -30,7 +30,7 @@ The Windows Development gate passes a zero-warning Release build, all 67 regular
 
 All four pinned Windows QEMU 11.0/Q35/TCG Probe-32 scenarios retain their exact ABI-18-qualified image identities and pass: normal `b8f0e656066b1e4f28edc4124eca6eea18130a0d6c0f4a9018e8ae817a0fa985` (531,456 bytes, exit 0), invalid opcode `0322ce3d3a9fecfa5c84809d8594f4f3ea643aaff2776f8d25668f1d723b9b54` (531,456 bytes, exit 3), general protection `1a0bd9f37c595d4170bd05fe83cc05dc344d2223674a01812f253ceb77893e40` (531,456 bytes, exit 3), and contained user fault `68319856b2913b3c857012d3fd38f147cf2a2307afacc9ffc8c8a33c005d0cf9` (531,968 bytes, exit 0). This confirms that the new backend shape does not perturb the retained OS workload.
 
-Cross-host Windows/Debian qualification and an exact implementation commit are still required before ABI 19 replaces ABI 18 as the latest qualified baseline.
+Exact implementation commit `a35c3484c8d18498cc611354dc04554c513fc15c` passes GitHub [Verify run 30764320109](https://github.com/eworker-inc/Windvale/actions/runs/30764320109). Windows and digest-pinned Debian 12 each pass a zero-warning Release build, all 68 Seed tests, all 25 OS tests, and the complete native CLI qualification gate. Seed elapsed time is 242.730 seconds on Windows and 203.702 seconds on Debian; the golden contract takes 182.201 and 151.697 seconds respectively. This qualifies ABI 19 and Decision 0108 as the latest shared native baseline while retaining the exact qualified Probe-32 firmware identities. QEMU execution remains Windows-only evidence.
 
 ## Consequences
 
