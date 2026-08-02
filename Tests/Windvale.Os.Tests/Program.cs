@@ -33,7 +33,7 @@ internal static class Program
         new("x86-64 kernel paging boundary emits deterministic verified WVO", Kernelˉpagingˉboundaryˉemitsˉverifiedˉobject),
         new("x86-64 kernel exception boundary emits deterministic verified WVO", Kernelˉexceptionˉboundaryˉemitsˉverifiedˉobject),
         new("Windvale process policy binds init service, interpreter, and admitted WVB", Kernelˉprocessˉpolicyˉbindsˉimage),
-        new("protected process planner isolates service and interpreter W^X roots", Kernelˉprocessˉplannerˉisolatesˉuserˉpages),
+        new("protected process planner isolates and revokes the interpreter resource", Kernelˉprocessˉplannerˉisolatesˉuserˉpages),
         new("x86-64 protected process boundary emits deterministic verified WVO", Kernelˉprocessˉboundaryˉemitsˉverifiedˉobject),
         new("firmware probe builds reproducibly", Firmwareˉprobeˉbuildsˉreproducibly),
         new("invalid-opcode firmware probe builds reproducibly", Invalidˉopcodeˉfirmwareˉprobeˉbuildsˉreproducibly),
@@ -567,11 +567,11 @@ internal static class Program
         var Second = Kernelˉprocessˉimage.Build(Admission, false);
         var Faultˉfirst = Kernelˉprocessˉimage.Build(Admission, true);
         var Faultˉsecond = Kernelˉprocessˉimage.Build(Admission, true);
-        Equal(4_610, First.Policyˉmoduleˉbytes.Length);
-        Equal("fad470d9988c997daf4e44f90bbfe665391f5f02dd84ba8e8025580efc11c49f",
+        Equal(5_152, First.Policyˉmoduleˉbytes.Length);
+        Equal("c4aacb9036f825ecd3d038954c1d07c573b43eb4f6ee831d0b81d188f0682679",
             Objectˉdigest.Calculateˉsha256(First.Policyˉmoduleˉbytes.AsSpan()));
-        Equal(40_702, First.Policyˉnativeˉobjectˉbytes.Length);
-        Equal("364b3ea7b4de30b17af93b5132812b7290c67255028482873a52d7a0c49cb960",
+        Equal(45_886, First.Policyˉnativeˉobjectˉbytes.Length);
+        Equal("d6290156c6d7cf709ba44b3035fac4eea75995ecf3ddfbcb8a0a9b73c0612509",
             Objectˉdigest.Calculateˉsha256(First.Policyˉnativeˉobjectˉbytes.AsSpan()));
         Equal(273, First.Initˉserviceˉmoduleˉbytes.Length);
         Equal("0fe423c499ce4f573095ddb9ff03355ee8b6ad927941f764ddaf2eaf9537f78b",
@@ -1029,6 +1029,127 @@ internal static class Program
                 Kernelˉpagingˉcontract.PAGE_BYTES + 41UL * sizeof(ulong),
             BinaryPrimitives.ReadUInt64LittleEndian(Resourceˉrecord[
                 (int)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET..]));
+
+        var Revoked = Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan, Grant.Plan,
+            Kernelˉprocessˉcontract.PROCESS_STATE_EXITED,
+            Kernelˉprocessˉcontract.THREAD_STATE_EXITED);
+        var Repeatedˉrevocation = Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan, Grant.Plan,
+            Kernelˉprocessˉcontract.PROCESS_STATE_EXITED,
+            Kernelˉprocessˉcontract.THREAD_STATE_EXITED);
+        var Faultˉrevocation = Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan, Grant.Plan,
+            Kernelˉprocessˉcontract.PROCESS_STATE_FAULTED,
+            Kernelˉprocessˉcontract.THREAD_STATE_FAULTED);
+        var Targetˉpteˉoffset = checked((int)(Kernelˉprocessˉcontract.USER_PT_PAGE *
+            Kernelˉpagingˉcontract.PAGE_BYTES + 41UL * sizeof(ulong)));
+        var Accessedˉtables = Grant.Plan.Clientˉtableˉbytes.ToArray();
+        BinaryPrimitives.WriteUInt64LittleEndian(
+            Accessedˉtables.AsSpan(Targetˉpteˉoffset),
+            BinaryPrimitives.ReadUInt64LittleEndian(Accessedˉtables.AsSpan(Targetˉpteˉoffset)) |
+                Kernelˉpagingˉcontract.ENTRY_ACCESSED);
+        var Accessedˉrevocation = Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan,
+            Grant.Plan with { Clientˉtableˉbytes = Accessedˉtables.ToImmutableArray() },
+            Kernelˉprocessˉcontract.PROCESS_STATE_EXITED,
+            Kernelˉprocessˉcontract.THREAD_STATE_EXITED);
+        True(Revoked.Success, Revoked.Diagnostics.IsEmpty
+            ? "Resource revocation planning failed."
+            : Revoked.Diagnostics[0].Message);
+        True(Repeatedˉrevocation.Success, "Repeated resource revocation planning failed.");
+        True(Faultˉrevocation.Success, "Fault-terminal resource revocation planning failed.");
+        True(Accessedˉrevocation.Success,
+            "Hardware-accessed resource revocation planning failed.");
+        Sequenceˉequal(Revoked.Plan!.Resourceˉrecord, Repeatedˉrevocation.Plan!.Resourceˉrecord);
+        Sequenceˉequal(Revoked.Plan.Clientˉtableˉbytes, Repeatedˉrevocation.Plan.Clientˉtableˉbytes);
+        Sequenceˉequal(Revoked.Plan.Clientˉdataˉbytes, Repeatedˉrevocation.Plan.Clientˉdataˉbytes);
+        Sequenceˉequal(Revoked.Plan.Resourceˉrecord, Faultˉrevocation.Plan!.Resourceˉrecord);
+        Sequenceˉequal(Revoked.Plan.Clientˉtableˉbytes, Faultˉrevocation.Plan.Clientˉtableˉbytes);
+        Sequenceˉequal(Revoked.Plan.Clientˉdataˉbytes, Faultˉrevocation.Plan.Clientˉdataˉbytes);
+        Sequenceˉequal(Revoked.Plan.Resourceˉrecord, Accessedˉrevocation.Plan!.Resourceˉrecord);
+        Sequenceˉequal(Revoked.Plan.Clientˉtableˉbytes, Accessedˉrevocation.Plan.Clientˉtableˉbytes);
+        Sequenceˉequal(Revoked.Plan.Clientˉdataˉbytes, Accessedˉrevocation.Plan.Clientˉdataˉbytes);
+        var Revokedˉrecord = Revoked.Plan.Resourceˉrecord.AsSpan();
+        Equal(Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED,
+            BinaryPrimitives.ReadUInt32LittleEndian(Revokedˉrecord[
+                (int)Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET..]));
+        Equal(0U, BinaryPrimitives.ReadUInt32LittleEndian(Revokedˉrecord[
+            (int)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET..]));
+        Equal(1U, BinaryPrimitives.ReadUInt32LittleEndian(Revokedˉrecord[
+            (int)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET..]));
+        Equal(0U, BinaryPrimitives.ReadUInt32LittleEndian(Revokedˉrecord[
+            (int)Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET..]));
+        Sequenceˉequal(Image.Admittedˉprogramˉdigest,
+            Revoked.Plan.Resourceˉrecord[
+                (int)Kernelˉprocessˉcontract.RESOURCE_DIGEST_OFFSET..
+                (int)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET]);
+        Equal(0UL, BinaryPrimitives.ReadUInt64LittleEndian(
+            Revoked.Plan.Clientˉtableˉbytes.AsSpan()[
+                Targetˉpteˉoffset..]));
+        Equal(0UL, BinaryPrimitives.ReadUInt64LittleEndian(
+            Revoked.Plan.Clientˉdataˉbytes.AsSpan()[
+                Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET..]));
+        Equal(0UL, BinaryPrimitives.ReadUInt64LittleEndian(
+            Revoked.Plan.Clientˉdataˉbytes.AsSpan()[
+                Nativeˉexecutionˉcontextˉcontract.FILE_INPUT_TABLE_POINTER_OFFSET..]));
+        True(!Revoked.Plan.Clientˉdataˉbytes.AsSpan(
+                (int)Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET,
+                (int)Nativeˉserviceˉtableˉcontract.SIZE).ContainsAnyExcept((byte)0),
+            "The revoked client service table was not cleared.");
+        True(!Revoked.Plan.Clientˉdataˉbytes.AsSpan(
+                (int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET,
+                (int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_BYTES).ContainsAnyExcept((byte)0),
+            "The revoked client resource table was not cleared.");
+
+        Equal("WVOS6201", Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan, Grant.Plan,
+            Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING,
+            Kernelˉprocessˉcontract.THREAD_STATE_RUNNING).Diagnostics[0].Code);
+        var Changedˉgrantˉrecord = Grant.Plan with
+        {
+            Resourceˉrecord = Mutate(Grant.Plan.Resourceˉrecord, 0).ToImmutableArray(),
+        };
+        Equal("WVOS6202", Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan, Changedˉgrantˉrecord,
+            Kernelˉprocessˉcontract.PROCESS_STATE_EXITED,
+            Kernelˉprocessˉcontract.THREAD_STATE_EXITED).Diagnostics[0].Code);
+        var Outsideˉpteˉrecord = Grant.Plan.Resourceˉrecord.ToArray();
+        BinaryPrimitives.WriteUInt64LittleEndian(
+            Outsideˉpteˉrecord.AsSpan((int)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET),
+            Client.Plan.Rootˉaddress - sizeof(ulong));
+        Equal("WVOS6203", Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan,
+            Grant.Plan with { Resourceˉrecord = Outsideˉpteˉrecord.ToImmutableArray() },
+            Kernelˉprocessˉcontract.PROCESS_STATE_EXITED,
+            Kernelˉprocessˉcontract.THREAD_STATE_EXITED).Diagnostics[0].Code);
+        var Changedˉgrantˉtables = Grant.Plan with
+        {
+            Clientˉtableˉbytes = Mutate(Grant.Plan.Clientˉtableˉbytes,
+                checked((int)(Kernelˉprocessˉcontract.USER_PT_PAGE *
+                    Kernelˉpagingˉcontract.PAGE_BYTES + 41UL * sizeof(ulong)))).ToImmutableArray(),
+        };
+        Equal("WVOS6203", Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan, Changedˉgrantˉtables,
+            Kernelˉprocessˉcontract.PROCESS_STATE_FAULTED,
+            Kernelˉprocessˉcontract.THREAD_STATE_FAULTED).Diagnostics[0].Code);
+        var Changedˉgrantˉdata = Grant.Plan with
+        {
+            Clientˉdataˉbytes = Mutate(Grant.Plan.Clientˉdataˉbytes,
+                (int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET).ToImmutableArray(),
+        };
+        Equal("WVOS6203", Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan, Changedˉgrantˉdata,
+            Kernelˉprocessˉcontract.PROCESS_STATE_EXITED,
+            Kernelˉprocessˉcontract.THREAD_STATE_EXITED).Diagnostics[0].Code);
+        var Replayˉrelease = new Kernelˉresourceˉgrantˉplan(
+            Revoked.Plan.Resourceˉrecord,
+            Revoked.Plan.Clientˉtableˉbytes,
+            Revoked.Plan.Clientˉdataˉbytes);
+        Equal("WVOS6202", Kernelˉresourceˉrevocationˉplanner.Plan(
+            Plan, Client.Plan, Replayˉrelease,
+            Kernelˉprocessˉcontract.PROCESS_STATE_EXITED,
+            Kernelˉprocessˉcontract.THREAD_STATE_EXITED).Diagnostics[0].Code);
         Equal(Kernelˉprocessˉcontract.RECORD_MAGIC,
             BinaryPrimitives.ReadUInt64LittleEndian(Plan.Processˉrecord.AsSpan()));
         Equal(Kernelˉprocessˉcontract.PROCESS_STATE_READY,
@@ -1126,17 +1247,17 @@ internal static class Program
         var Second = Kernelˉprocessˉx64.Build(Normalˉimage, false);
         var Faultˉfirst = Kernelˉprocessˉx64.Build(Faultˉimage, true);
         var Faultˉsecond = Kernelˉprocessˉx64.Build(Faultˉimage, true);
-        Equal(137_807, First.Objectˉbytes.Length);
-        Equal("d863e61be67659b30b370da8ba9174b712f0d0bd8f02f31b9cdbb9fd523334c3",
+        Equal(138_751, First.Objectˉbytes.Length);
+        Equal("19da37cdc044505a92410449a14e72c35ed8573b409c095b0b9a8a8f9d21f065",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
-        Equal(6_941, First.Codeˉbytes.Length);
-        Equal("ca0ac1c6110628b3c0cc1b582c905b2610222646b65f43a40e1a729b157828df",
+        Equal(7_885, First.Codeˉbytes.Length);
+        Equal("52a5729eca1c36d5ba004dc69fc30d250eea91ad59888d04c4b0c240af9cbfac",
             Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
-        Equal(137_839, Faultˉfirst.Objectˉbytes.Length);
-        Equal("c227055913f085d118996e05bde910e37fc5c4af1ef887c2bf91f029a4ca4dc4",
+        Equal(138_783, Faultˉfirst.Objectˉbytes.Length);
+        Equal("bedd2a06969d3df295efe8eefa626dd1c97737731ef1056fbcb6df152f259138",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Objectˉbytes.AsSpan()));
-        Equal(6_973, Faultˉfirst.Codeˉbytes.Length);
-        Equal("85a966450e3568db149984fb2f290596d8291ab1b572cccaae7cfdcc7edb94c3",
+        Equal(7_917, Faultˉfirst.Codeˉbytes.Length);
+        Equal("9df1702699d3f9da8a3926c2406f84cff06e638b6a176401c70b82ddce4e634c",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Codeˉbytes.AsSpan()));
         Equal(13, First.Relocations.Length);
         Equal(13, Faultˉfirst.Relocations.Length);
@@ -1207,14 +1328,14 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         Sequenceˉequal(First, Second);
-        Equal(225_280, First.Length);
+        Equal(231_424, First.Length);
         Equal(
-            "b5e726b51f26f48cc9948095bfce4eabaf0b3bc90b89a6c3b3650325adfb05bb",
+            "221c710d741565c7113a7b8c2ea94c66358018e144ae59f583a3c1ce10225494",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and deliberate user-fault images are identical.");
         Equal(
-            "windvale-os-boot 27\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nresource-grant=pass\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nuser-fault=contained\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 28\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nresource-grant=pass\nresource-revoked=pass\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nuser-fault=contained\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.USER_FAULT_SERIAL_MARKER);
     }
 
@@ -1224,9 +1345,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(224_768, First.Length);
+        Equal(230_912, First.Length);
         Equal(
-            "709ebd7f643f2f9d9c7cf4eb4042977c675a3ff19d7a34da4d7e26e0526a29b7",
+            "bc5f04c0e75fb217c9339bcc2a391bbe68f9f79ad97c18a93e35e310dab62d46",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -1238,9 +1359,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(224_768, First.Length);
+        Equal(230_912, First.Length);
         Equal(
-            "a89e66da871fcf46637ce4d91463268b2c8cce4309d12953eb7c7b464f57178f",
+            "2c9c6c60543d3729f7401720c0b03e98dc2c5e3654e45668bfcd4559650bc543",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -1262,9 +1383,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         Sequenceˉequal(First, Second);
-        Equal(224_768, First.Length);
+        Equal(230_912, First.Length);
         Equal(
-            "ab10c10cc0af01ebe5603033d2f35bce86660b23953c33ff6012ad7cee83a1c5",
+            "bdccbd123dd457d88c4902f33e727320b08c93e6acd62ac0f706912d5f1163ca",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -1289,7 +1410,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 27\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nresource-grant=pass\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 28\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\nresource-grant=pass\nresource-revoked=pass\nwvb-runtime=interpreted\ninit-service=pass\nipc=cross-process\nHello from Windvale\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;

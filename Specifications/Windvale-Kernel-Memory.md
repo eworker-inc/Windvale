@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Kernel memory version 5 is a probe-27 candidate. It retains deterministic ownership, copied handoff, the two-page kernel stack, the allocate-only page ABI, and 2 MiB alignment while enlarging the arena to 60 pages so init owns one RO/NX boot-resource page. It uses the `WVKMEM05` identity; earlier experimental bytes are not accepted under the new bounds. Focused Windows and pinned-QEMU evidence pass; cross-host qualification is not yet claimed.
+Kernel memory version 5 is the qualified probe-27 contract and remains byte-identical in candidate probe 28. It retains deterministic ownership, copied handoff, the two-page kernel stack, the allocate-only page ABI, and 2 MiB alignment in a 60-page arena. Probe 28 changes the protected-process lifecycle, not memory allocation or arena bytes.
 
-[Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the qualified version-1 foundation. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its process-driven expansion. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns qualified version 3; [Decision 0095](../Documents/Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) owns qualified version 4; [Decision 0096](../Documents/Decisions/0096-First-Windvale-Init-Owned-Boot-Resource-Grant.md) owns candidate version 5.
+[Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the qualified version-1 foundation. [Decision 0091](../Documents/Decisions/0091-First-Protected-Windvale-Process.md) owns version 2 and its process-driven expansion. [Decision 0094](../Documents/Decisions/0094-First-Section-Derived-User-Space-Wvb-Profile.md) owns qualified version 3; [Decision 0095](../Documents/Decisions/0095-First-Runtime-Supplied-Wvb-Boot-Resource.md) owns qualified version 4; qualified [Decision 0096](../Documents/Decisions/0096-First-Windvale-Init-Owned-Boot-Resource-Grant.md) owns version 5. [Decision 0097](../Documents/Decisions/0097-First-Terminal-Resource-Borrow-Revocation.md) composes it unchanged.
 
 This is still one bounded boot arena, not a general physical-memory manager. It is large enough for copied state, the kernel stack, exception table, kernel page tables, and two protected processes while keeping all allocation deterministic and visibly finite.
 
@@ -45,7 +45,7 @@ The fixed version-5 layout is:
 
 The complete arena is zeroed before state publication. Stack top is `arena + 0x3000`, aligned to 16 bytes. The memory adapter preserves the loader stack, switches to the kernel stack, and restores the loader stack only to return bounded probe evidence.
 
-Probe 27 consumes the free extent in this exact order:
+Probes 27 and 28 consume the free extent in this exact order:
 
 | Pages | Owner |
 | --- | --- |
@@ -54,7 +54,7 @@ Probe 27 consumes the free extent in this exact order:
 | `10..17` | Eight-page init-service/resource-owner extent |
 | `18..59` | Forty-two-page interpreter-process extent |
 
-The init extent contains four table pages, one RX page, one stack page, one data page, and one owned RO/NX resource page. The interpreter extent contains four table pages, 32 RX pages, four stack pages, one data page, and one reserved physical page whose corresponding user PTE starts absent. Granting resource `1` aliases init's page into that target virtual address; it does not expose the reserved client page. [Protected process version 6](Windvale-Protected-Process.md) specifies the boundary. No allocator pages remain after the fixed proof.
+The init extent contains four table pages, one RX page, one stack page, one data page, and one owned RO/NX resource page. The interpreter extent contains four table pages, 32 RX pages, four stack pages, one data page, and one reserved physical page whose corresponding user PTE starts absent. Granting resource `1` aliases init's page into that target virtual address; terminal cleanup removes the alias but does not expose or reclaim the reserved client page. [Protected process version 7](Windvale-Protected-Process.md) specifies the boundary. No allocator pages remain after the fixed proof.
 
 ## Memory-state record
 
@@ -72,7 +72,7 @@ The first page begins with this 64-byte little-endian header:
 | `0x30` | 8 | Handoff-copy address | `arena + 64` |
 | `0x38` | 8 | First allocation address | Zero until the IDT allocation succeeds |
 
-The exact 48-byte `WVKHAND1` record is copied to `arena + 64`. Its map pointer remains valid but borrowed. The kernel paging version-3 record is published at state-page offset `0x80`; process-version-6 records live at offsets `0x100` and `0x300`; private GDT/TSS state begins at `0x200`; the channel record begins at `0x400`; and `WVRES001` begins at `0x440`. All remain kernel-only.
+The exact 48-byte `WVKHAND1` record is copied to `arena + 64`. Its map pointer remains valid but borrowed. The kernel paging version-3 record is published at state-page offset `0x80`; process-version-7 records live at offsets `0x100` and `0x300`; private GDT/TSS state begins at `0x200`; the channel record begins at `0x400`; and `WVRES002` begins at `0x440`. All remain kernel-only.
 
 After the four required allocations, the live allocator cursor is page `60` with zero pages free. The first-allocation field continues to identify only page 3, the IDT page.
 
@@ -87,7 +87,7 @@ The memory object exports ASCII symbol `Windvale_kernel_allocate_pages`:
 - Allocation is contiguous, monotonically increasing, and deterministic.
 - Version 5 provides no release operation and no allocation outside its arena.
 
-The object also exports `Windvale_kernel_memory_enter`. It validates and copies the handoff, initializes the arena, records the IDT allocation, switches stacks, installs exceptions, installs kernel paging, and reaches the WVB-admission/process chain. Only successful in-guest admission, process-policy token 95, init-owned grant, interpreted result 29, interpreter send/terminal state, init wake/exit 29, and the retained portable native result can reach compiler export `Windvale_kernel_main`. The explicit kernel-fault scenarios still execute after Main and remain terminal.
+The object also exports `Windvale_kernel_memory_enter`. It validates and copies the handoff, initializes the arena, records the IDT allocation, switches stacks, installs exceptions, installs kernel paging, and reaches the WVB-admission/process chain. Only successful in-guest admission, process-policy token 96, init-owned grant, interpreted result 29, interpreter send/terminal state, terminal borrow cleanup, init wake/exit 29, and the retained portable native result can reach compiler export `Windvale_kernel_main`. The explicit kernel-fault scenarios still execute after Main and remain terminal.
 
 ## Diagnostics
 
@@ -104,7 +104,7 @@ Malformed and random bytes must produce a bounded result or one of these failure
 
 ## Current evidence and limits
 
-Probe 27 requires this normal-path suffix after firmware exit:
+Probe 28 requires this normal-path suffix after firmware exit:
 
 ```text
 memory-owned=pass
@@ -114,6 +114,7 @@ paging=owned
 wvb-admission=pass
 processes=isolated
 resource-grant=pass
+resource-revoked=pass
 wvb-runtime=interpreted
 init-service=pass
 ipc=cross-process
@@ -126,6 +127,6 @@ status=pass
 shutdown=poweroff
 ```
 
-The user-fault scenario adds `user-fault=contained` after source success. The invalid-opcode and general-protection kernel scenarios retain their exact terminal panic contracts and QEMU host code 3. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records current candidate artifact identities and live evidence; Decision 0052 and qualified Decisions 0088/0090 retain the historical version-1 evidence.
+The user-fault scenario adds `user-fault=contained` after source success. The invalid-opcode and general-protection kernel scenarios retain their exact terminal panic contracts and QEMU host code 3. [Windvale-Os-Boot-Probe.md](Windvale-Os-Boot-Probe.md) records current candidate artifact identities and live evidence; Decision 0096 retains version 5's cross-host qualification.
 
-Version 5 does not claim all physical memory, reclamation of loader ranges, page release, runtime allocation policy, general process creation, process teardown, a general virtual-memory manager, general interrupts, multiple CPUs, or graphical output. Probe 27 deliberately exhausts the fixed arena, making allocator growth or reclamation a required explicit decision rather than permitting another silent static extension.
+Version 5 does not claim all physical memory, reclamation of loader ranges, page release, runtime allocation policy, general process creation, address-space reclamation, a general virtual-memory manager, general interrupts, multiple CPUs, or graphical output. Probe 28 clears one terminal alias and private publication but returns no page to the allocator. The fixed arena remains exhausted, making allocator growth or reclamation an explicit future decision.

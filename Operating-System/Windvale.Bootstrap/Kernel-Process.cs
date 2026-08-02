@@ -7,8 +7,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 6;
-    public const string TARGET_NAME = "x86-64-kernel-process-v6";
+    public const int FORMAT_VERSION = 7;
+    public const string TARGET_NAME = "x86-64-kernel-process-v7";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
@@ -21,7 +21,7 @@ public static class Kernelˉprocessˉcontract
     public const string EXCEPTION_6_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_6_entry";
     public const string EXCEPTION_13_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_13_entry";
     public const string EXCEPTION_14_ENTRY_SYMBOL = "Windvale_kernel_x64_process_exception_14_entry";
-    public const int POLICY_TOKEN = 95;
+    public const int POLICY_TOKEN = 96;
     public const int EXPECTED_RESULT = 29;
     public const string USER_FAULT_CONTAINED_MARKER = "user-fault=contained\n";
     public const uint INIT_PROCESS_ID = 1;
@@ -98,8 +98,8 @@ public static class Kernelˉprocessˉcontract
     public const uint CLIENT_RECORD_OFFSET = 768;
     public const uint CHANNEL_RECORD_OFFSET = 1_024;
     public const uint RECORD_BYTES = 256;
-    public const ulong RECORD_MAGIC = 0x3630_434F_5250_5657;
-    public const uint RECORD_VERSION = 6;
+    public const ulong RECORD_MAGIC = 0x3730_434F_5250_5657;
+    public const uint RECORD_VERSION = 7;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -145,8 +145,8 @@ public static class Kernelˉprocessˉcontract
     public const uint CHANNEL_CAPACITY_OFFSET = 48;
     public const uint RESOURCE_RECORD_OFFSET = CHANNEL_RECORD_OFFSET + CHANNEL_RECORD_BYTES;
     public const uint RESOURCE_RECORD_BYTES = 128;
-    public const ulong RESOURCE_MAGIC = 0x3130_3053_4552_5657;
-    public const uint RESOURCE_VERSION = 1;
+    public const ulong RESOURCE_MAGIC = 0x3230_3053_4552_5657;
+    public const uint RESOURCE_VERSION = 2;
     public const uint RESOURCE_STATE_OWNED = 1;
     public const uint RESOURCE_STATE_BORROWED = 2;
     public const uint RESOURCE_ID = 1;
@@ -215,6 +215,18 @@ public sealed record Kernelˉresourceˉgrantˉplan(
 
 public sealed record Kernelˉresourceˉgrantˉresult(
     Kernelˉresourceˉgrantˉplan? Plan,
+    ImmutableArray<Kernelˉprocessˉdiagnostic> Diagnostics)
+{
+    public bool Success => Plan is not null && Diagnostics.IsEmpty;
+}
+
+public sealed record Kernelˉresourceˉrevocationˉplan(
+    ImmutableArray<byte> Resourceˉrecord,
+    ImmutableArray<byte> Clientˉtableˉbytes,
+    ImmutableArray<byte> Clientˉdataˉbytes);
+
+public sealed record Kernelˉresourceˉrevocationˉresult(
+    Kernelˉresourceˉrevocationˉplan? Plan,
     ImmutableArray<Kernelˉprocessˉdiagnostic> Diagnostics)
 {
     public bool Success => Plan is not null && Diagnostics.IsEmpty;
@@ -693,5 +705,138 @@ public static class Kernelˉresourceˉgrantˉplanner
         Kernelˉpagingˉcontract.PAGE_BYTES));
 
     private static Kernelˉresourceˉgrantˉresult Fail(string code, string message) =>
+        new(null, [new(code, message)]);
+}
+
+public static class Kernelˉresourceˉrevocationˉplanner
+{
+    public static Kernelˉresourceˉrevocationˉresult Plan(
+        Kernelˉprocessˉplan owner,
+        Kernelˉprocessˉplan client,
+        Kernelˉresourceˉgrantˉplan granted,
+        uint clientˉprocessˉstate,
+        uint clientˉthreadˉstate)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(granted);
+        var Terminal =
+            (clientˉprocessˉstate == Kernelˉprocessˉcontract.PROCESS_STATE_EXITED &&
+                clientˉthreadˉstate == Kernelˉprocessˉcontract.THREAD_STATE_EXITED) ||
+            (clientˉprocessˉstate == Kernelˉprocessˉcontract.PROCESS_STATE_FAULTED &&
+                clientˉthreadˉstate == Kernelˉprocessˉcontract.THREAD_STATE_FAULTED);
+        if (!Terminal)
+        {
+            return Fail("WVOS6201", "The resource borrower is not in one coherent terminal state.");
+        }
+        if (granted.Resourceˉrecord.Length != Kernelˉprocessˉcontract.RESOURCE_RECORD_BYTES ||
+            granted.Clientˉtableˉbytes.Length != (int)Kernelˉprocessˉcontract.TABLE_BYTES ||
+            granted.Clientˉdataˉbytes.Length != (int)Kernelˉpagingˉcontract.PAGE_BYTES)
+        {
+            return Fail("WVOS6202", "The borrowed resource record or client publication has an invalid extent.");
+        }
+
+        var Record = granted.Resourceˉrecord.AsSpan();
+        if (BinaryPrimitives.ReadUInt64LittleEndian(Record) != Kernelˉprocessˉcontract.RESOURCE_MAGIC ||
+            BinaryPrimitives.ReadUInt32LittleEndian(Record[8..]) != Kernelˉprocessˉcontract.RESOURCE_VERSION ||
+            BinaryPrimitives.ReadUInt32LittleEndian(Record[12..]) !=
+                Kernelˉprocessˉcontract.RESOURCE_RECORD_BYTES ||
+            BinaryPrimitives.ReadUInt32LittleEndian(Record[
+                (int)Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET..]) !=
+                Kernelˉprocessˉcontract.RESOURCE_STATE_BORROWED ||
+            BinaryPrimitives.ReadUInt32LittleEndian(Record[
+                (int)Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET..]) !=
+                Kernelˉprocessˉcontract.RESOURCE_ID ||
+            BinaryPrimitives.ReadUInt32LittleEndian(Record[
+                (int)Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET..]) !=
+                Kernelˉprocessˉcontract.INIT_PROCESS_ID ||
+            BinaryPrimitives.ReadUInt32LittleEndian(Record[
+                (int)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET..]) !=
+                Kernelˉprocessˉcontract.CLIENT_PROCESS_ID ||
+            BinaryPrimitives.ReadUInt32LittleEndian(Record[
+                (int)Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET..]) != 1 ||
+            BinaryPrimitives.ReadUInt32LittleEndian(Record[
+                (int)Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET..]) != 1)
+        {
+            return Fail("WVOS6202", "The resource is not one exact live immutable borrow.");
+        }
+
+        var Resourceˉlength = BinaryPrimitives.ReadUInt32LittleEndian(Record[
+            (int)Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET..]);
+        var Serviceˉaddress = BinaryPrimitives.ReadUInt64LittleEndian(Record[
+            (int)Kernelˉprocessˉcontract.RESOURCE_SERVICE_ADDRESS_OFFSET..]);
+        if (Resourceˉlength is < 12 or > Kernelˉprocessˉcontract.MAXIMUM_RUNTIME_INPUT_BYTES ||
+            Serviceˉaddress < client.Userˉcodeˉaddress ||
+            Serviceˉaddress - client.Userˉcodeˉaddress > uint.MaxValue)
+        {
+            return Fail("WVOS6202", "The borrowed resource length or service address is invalid.");
+        }
+        var Digest = Record.Slice(
+            (int)Kernelˉprocessˉcontract.RESOURCE_DIGEST_OFFSET,
+            Kernelˉprocessˉcontract.MODULE_DIGEST_BYTES);
+        var Expected = Kernelˉresourceˉgrantˉplanner.Plan(
+            owner,
+            client,
+            Digest,
+            checked((int)Resourceˉlength),
+            checked((uint)(Serviceˉaddress - client.Userˉcodeˉaddress)));
+        if (!Expected.Success)
+        {
+            return Fail("WVOS6203", "The live alias or client resource publication is inconsistent.");
+        }
+
+        var Targetˉpte = BinaryPrimitives.ReadUInt64LittleEndian(Record[
+            (int)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET..]);
+        if (Targetˉpte < client.Rootˉaddress ||
+            Targetˉpte - client.Rootˉaddress >
+                checked((ulong)(granted.Clientˉtableˉbytes.Length - sizeof(ulong))))
+        {
+            return Fail("WVOS6203", "The live alias PTE is outside the borrower table extent.");
+        }
+        var Targetˉpteˉoffset = checked((int)(Targetˉpte - client.Rootˉaddress));
+        var Normalizedˉtables = granted.Clientˉtableˉbytes.ToArray();
+        var Liveˉentry = BinaryPrimitives.ReadUInt64LittleEndian(
+            Normalizedˉtables.AsSpan(Targetˉpteˉoffset));
+        BinaryPrimitives.WriteUInt64LittleEndian(
+            Normalizedˉtables.AsSpan(Targetˉpteˉoffset),
+            Liveˉentry & ~Kernelˉpagingˉcontract.ENTRY_ACCESSED);
+        if (!Expected.Plan!.Resourceˉrecord.AsSpan().SequenceEqual(Record) ||
+            !Expected.Plan.Clientˉtableˉbytes.AsSpan().SequenceEqual(Normalizedˉtables) ||
+            !Expected.Plan.Clientˉdataˉbytes.AsSpan().SequenceEqual(
+                granted.Clientˉdataˉbytes.AsSpan()))
+        {
+            return Fail("WVOS6203", "The live alias or client resource publication is inconsistent.");
+        }
+
+        var Releasedˉrecord = granted.Resourceˉrecord.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Releasedˉrecord.AsSpan((int)Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET),
+            Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Releasedˉrecord.AsSpan((int)Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET), 0);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Releasedˉrecord.AsSpan((int)Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET), 0);
+
+        var Releasedˉtables = granted.Clientˉtableˉbytes.ToArray();
+        BinaryPrimitives.WriteUInt64LittleEndian(Releasedˉtables.AsSpan(Targetˉpteˉoffset), 0);
+
+        var Releasedˉdata = granted.Clientˉdataˉbytes.ToArray();
+        BinaryPrimitives.WriteUInt64LittleEndian(Releasedˉdata.AsSpan(
+            Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET), 0);
+        BinaryPrimitives.WriteUInt64LittleEndian(Releasedˉdata.AsSpan(
+            Nativeˉexecutionˉcontextˉcontract.FILE_INPUT_TABLE_POINTER_OFFSET), 0);
+        Releasedˉdata.AsSpan(
+            (int)Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET,
+            (int)Nativeˉserviceˉtableˉcontract.SIZE).Clear();
+        Releasedˉdata.AsSpan(
+            (int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET,
+            (int)Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_BYTES).Clear();
+        return new(new(
+            Releasedˉrecord.ToImmutableArray(),
+            Releasedˉtables.ToImmutableArray(),
+            Releasedˉdata.ToImmutableArray()), []);
+    }
+
+    private static Kernelˉresourceˉrevocationˉresult Fail(string code, string message) =>
         new(null, [new(code, message)]);
 }

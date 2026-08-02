@@ -312,9 +312,12 @@ public static class Kernelˉprocessˉx64
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_SEND_COUNT_OFFSET, 1);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉrevokeˉterminalˉresource(
+            output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
 
-        // The client is now terminal. Switch back to the blocked service root,
-        // consume the one message, and resume the saved receive with EAX=29.
+        // The client is now terminal and its immutable alias has been removed.
+        // Switch back to the blocked service root, which also flushes the
+        // retired client translation, consume the message, and resume receive.
         output.Emit(0x0F, 0x01, 0xF8);
         output.Emit(0x4C, 0x8B, 0x6C, 0x24, 0x08);
         Emitˉactivateˉrecordˉroot(output, relocations);
@@ -363,6 +366,8 @@ public static class Kernelˉprocessˉx64
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAKE_COUNT_OFFSET, 1);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉvalidateˉreleasedˉresource(
+            output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
 
         // Restore the kernel GS state and independently re-check the terminal client.
         output.Emit(0x0F, 0x01, 0xF8);
@@ -1198,7 +1203,8 @@ public static class Kernelˉprocessˉx64
     private static void Emitˉvalidateˉborrowedˉresource(
         X64ˉcodeˉbuilder output,
         string failureˉlabel,
-        uint resourceˉlength)
+        uint resourceˉlength,
+        bool allowˉaccessedˉleaf = false)
     {
         output.Emit(0x4D, 0x8D, 0x8C, 0x24);
         output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
@@ -1226,7 +1232,16 @@ public static class Kernelˉprocessˉx64
             (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
         output.Emit(0x48, 0x83, 0xC8,
             (byte)(Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER));
-        output.Emit(0x48, 0x0F, 0xBA, 0xE8, 0x3F, 0x49, 0x39, 0x00);
+        output.Emit(0x48, 0x0F, 0xBA, 0xE8, 0x3F);
+        if (allowˉaccessedˉleaf)
+        {
+            // A successful hardware read may set the leaf's accessed bit.
+            output.Emit(0x49, 0x8B, 0x10, 0x48, 0x83, 0xE2, 0xDF, 0x48, 0x39, 0xC2);
+        }
+        else
+        {
+            output.Emit(0x49, 0x39, 0x00);
+        }
         output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
 
         output.Emit(0x4D, 0x8B, 0x41,
@@ -1270,6 +1285,101 @@ public static class Kernelˉprocessˉx64
             Kernelˉprocessˉcontract.BOOT_RESOURCE_DATA_LENGTH_OFFSET);
         output.Emitˉu32(resourceˉlength);
         output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+    }
+
+    private static void Emitˉrevokeˉterminalˉresource(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel,
+        uint resourceˉlength)
+    {
+        Emitˉvalidateˉborrowedˉresource(
+            output, failureˉlabel, resourceˉlength, allowˉaccessedˉleaf: true);
+
+        // Remove the sole client leaf before the root is retired. The
+        // subsequent CR3 activation flushes its non-global cached translation.
+        output.Emit(0x4D, 0x8B, 0x51,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
+        output.Emit(0x49, 0xC7, 0x02);
+        output.Emitˉu32(0);
+
+        // Clear both context pointers and the complete private service/resource
+        // table extents. The owner page and its identity are left untouched.
+        output.Emit(0x4D, 0x8B, 0x41,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_DATA_OFFSET);
+        output.Emit(0x31, 0xC0);
+        foreach (var Offset in Revokedˉclientˉdataˉqwordˉoffsets())
+        {
+            output.Emit(0x49, 0x89, 0x80);
+            output.Emitˉu32(Offset);
+        }
+
+        Emitˉstoreˉresourceˉu32(
+            output, Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
+            Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED);
+        Emitˉstoreˉresourceˉu32(
+            output, Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0);
+        Emitˉstoreˉresourceˉu32(
+            output, Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0);
+    }
+
+    private static void Emitˉvalidateˉreleasedˉresource(
+        X64ˉcodeˉbuilder output,
+        string failureˉlabel,
+        uint resourceˉlength)
+    {
+        output.Emit(0x4D, 0x8D, 0x8C, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_RECORD_OFFSET);
+        Emitˉvalidateˉresourceˉheader(output, failureˉlabel);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (Kernelˉprocessˉcontract.RESOURCE_STATE_OFFSET,
+                Kernelˉprocessˉcontract.RESOURCE_STATE_OWNED),
+            (Kernelˉprocessˉcontract.RESOURCE_ID_OFFSET, Kernelˉprocessˉcontract.RESOURCE_ID),
+            (Kernelˉprocessˉcontract.RESOURCE_OWNER_OFFSET, Kernelˉprocessˉcontract.INIT_PROCESS_ID),
+            (Kernelˉprocessˉcontract.RESOURCE_BORROWER_OFFSET, 0),
+            (Kernelˉprocessˉcontract.RESOURCE_LENGTH_OFFSET, resourceˉlength),
+            (Kernelˉprocessˉcontract.RESOURCE_FLAGS_OFFSET, Kernelˉprocessˉcontract.RESOURCE_FLAGS),
+            (Kernelˉprocessˉcontract.RESOURCE_GRANT_COUNT_OFFSET, 1),
+            (Kernelˉprocessˉcontract.RESOURCE_MAPPING_COUNT_OFFSET, 0),
+        })
+        {
+            Emitˉcompareˉresourceˉu32(output, Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        }
+
+        output.Emit(0x4D, 0x8B, 0x51,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_PTE_OFFSET);
+        output.Emit(0x49, 0x83, 0x3A, 0x00);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        output.Emit(0x4D, 0x8B, 0x41,
+            (byte)Kernelˉprocessˉcontract.RESOURCE_TARGET_DATA_OFFSET);
+        output.Emit(0x31, 0xC0);
+        foreach (var Offset in Revokedˉclientˉdataˉqwordˉoffsets())
+        {
+            output.Emit(0x49, 0x39, 0x80);
+            output.Emitˉu32(Offset);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, failureˉlabel);
+        }
+    }
+
+    private static IEnumerable<uint> Revokedˉclientˉdataˉqwordˉoffsets()
+    {
+        yield return Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET;
+        yield return Nativeˉexecutionˉcontextˉcontract.FILE_INPUT_TABLE_POINTER_OFFSET;
+        for (uint Offset = Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET;
+            Offset < Kernelˉprocessˉcontract.RUNTIME_SERVICE_TABLE_OFFSET +
+                Nativeˉserviceˉtableˉcontract.SIZE;
+            Offset += sizeof(ulong))
+        {
+            yield return Offset;
+        }
+        for (uint Offset = Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET;
+            Offset < Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_OFFSET +
+                Kernelˉprocessˉcontract.BOOT_RESOURCE_TABLE_BYTES;
+            Offset += sizeof(ulong))
+        {
+            yield return Offset;
+        }
     }
 
     private static void Emitˉvalidateˉresourceˉheader(

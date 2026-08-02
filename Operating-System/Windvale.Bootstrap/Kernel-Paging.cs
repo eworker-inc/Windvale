@@ -24,6 +24,7 @@ public static class Kernelˉpagingˉcontract
     public const ulong CODE_PT1_PAGE = 5;
     public const ulong ENTRY_PRESENT = 1UL << 0;
     public const ulong ENTRY_WRITABLE = 1UL << 1;
+    public const ulong ENTRY_ACCESSED = 1UL << 5;
     public const ulong ENTRY_LARGE_PAGE = 1UL << 7;
     public const ulong ENTRY_NO_EXECUTE = 1UL << 63;
     public const ulong ENTRY_ADDRESS_MASK = 0x000F_FFFF_FFFF_F000;

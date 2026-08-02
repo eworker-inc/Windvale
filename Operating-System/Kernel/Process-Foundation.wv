@@ -67,6 +67,7 @@ export fn Main() -> i32 {
     var Resourceˉstate: u32 = 1u32;
     var Resourceˉborrower: u32 = 0u32;
     var Resourceˉgrants: u32 = 0u32;
+    var Resourceˉmappings: u32 = 0u32;
     var Channelˉstate: u32 = 0u32;
     var Message: i32 = 0;
     var Initˉsyscalls: u32 = 0u32;
@@ -76,6 +77,7 @@ export fn Main() -> i32 {
     Resourceˉstate = 2u32;
     Resourceˉborrower = Clientˉprocessˉid;
     Resourceˉgrants = Resourceˉgrants + 1u32;
+    Resourceˉmappings = Resourceˉmappings + 1u32;
     Initˉsyscalls = Initˉsyscalls + 1u32;
     Initˉthreadˉstate = 5u32;
     Initˉsyscalls = Initˉsyscalls + 1u32;
@@ -94,11 +96,21 @@ export fn Main() -> i32 {
     if Resourceˉstate != 2u32 { return 0; }
     if Resourceˉborrower != Clientˉprocessˉid { return 0; }
     if Resourceˉgrants != 1u32 { return 0; }
+    if Resourceˉmappings != 1u32 { return 0; }
     if Initˉsyscalls != Initˉsyscallˉbudget { return 0; }
     if Clientˉsyscalls != Interpreterˉsyscallˉbudget { return 0; }
     Initˉthreadˉstate = 3u32;
     Clientˉthreadˉstate = 3u32;
     if Initˉthreadˉstate != 3u32 { return 0; }
     if Clientˉthreadˉstate != 3u32 { return 0; }
-    return 95;
+    // A terminal borrower cannot retain a live alias. Kernel mechanics clear
+    // the PTE and private publication tables while init retains ownership.
+    Resourceˉstate = 1u32;
+    Resourceˉborrower = 0u32;
+    Resourceˉmappings = Resourceˉmappings - 1u32;
+    if Resourceˉstate != 1u32 { return 0; }
+    if Resourceˉborrower != 0u32 { return 0; }
+    if Resourceˉgrants != 1u32 { return 0; }
+    if Resourceˉmappings != 0u32 { return 0; }
+    return 96;
 }
