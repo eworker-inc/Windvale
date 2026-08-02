@@ -32,7 +32,8 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Qualification-pending kernel-owned x86-64 page tables with a low-1-GiB identity map, null-page guard, NX/WP enforcement, fixed read-only/executable boot window, WVA-owned CR3 mechanics, and continued success/fault evidence under the new root.
 - Qualification-pending in-guest WVB admission: an AOT Windvale verifier checks one exact embedded WVB 1.6 identity before the bridge can execute its separately AOT-compiled form, while malformed and changed candidates fail closed.
 - A permanent UTF-8 native-process verifier boundary and detached/redirected macron regression check, closing the recurring launcher-only decoding failure.
-- Cross-host-qualified ABI 15/context 7 native whole-file output through exact Windows and Linux leaves, advancing the exact compiler WVB beyond its `file.write_bytes` admission blocker to bounded record-shaped function admission.
+- Cross-host-qualified ABI 15/context 7 native whole-file output through exact Windows and Linux leaves, advancing the exact compiler WVB beyond its `file.write_bytes` admission blocker.
+- Qualification-pending ABI 16 bounded internal calls: four fast register parameters plus verified 16-byte stack cells through the language's 64-parameter limit, advancing exact compiler preflight to its single 1,049-local function.
 - The public [`windvale.ca`](https://windvale.ca/) project home, system-responsive light and dark themes, new Windvale visual identity, and independently deployed [`play.windvale.ca`](https://play.windvale.ca/) browser playground.
 
 ### Changed

@@ -6,8 +6,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 15;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v15";
+    public const int ABI_VERSION = 16;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v16";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 1024 * 1024;
@@ -21,7 +21,12 @@ public static class Nativeˉcontract
     public const int BORROWED_TEXT_RESERVED_OFFSET = 12;
     public const int MAXIMUM_FRAME_BYTES = MAXIMUM_FRAME_SLOTS * VALUE_SLOT_BYTES;
     public const int MAXIMUM_BLOCKS = 4096;
-    public const int MAXIMUM_CALL_PARAMETERS = 4;
+    public const int REGISTER_CALL_PARAMETERS = 4;
+    public const int MAXIMUM_CALL_PARAMETERS = 64;
+    public const int MAXIMUM_STACK_CALL_PARAMETERS =
+        MAXIMUM_CALL_PARAMETERS - REGISTER_CALL_PARAMETERS;
+    public const int MAXIMUM_STACK_CALL_BYTES =
+        MAXIMUM_STACK_CALL_PARAMETERS * VALUE_SLOT_BYTES;
     public const int MAXIMUM_RECORD_ARENA_BYTES = 1024 * 1024;
     public const int MAXIMUM_TEXT_ARENA_BYTES = 16 * 1024 * 1024;
     public const int MAXIMUM_ENUM_METADATA_BYTES = 32 * 1024 * 1024;

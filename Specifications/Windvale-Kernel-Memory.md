@@ -72,7 +72,7 @@ The memory object exports ASCII symbol `Windvale_kernel_allocate_pages`:
 - Allocation is contiguous, monotonically increasing, and deterministic.
 - Version 1 provides no release operation and no allocation outside its one arena.
 
-The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records the IDT allocation, and switches stacks. Probe 21 passes that page to the exception installer, then passes the memory-state pointer to `Windvale_kernel_x64_paging_install`. The paging installer requests its own six-page allocation before calling WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. Under the current [kernel native seam](Windvale-Kernel-Native-Seam.md), that exact shim tail-transfers to the WVB-admission bridge. Only verifier token 73, admitted-program result 29, and the retained portable-probe result 29 restore the handoff and reach compiler export `Windvale_kernel_main`. Main owns the source-selected success markers and can be reached only after every preceding memory, exception, paging, admission, and native-probe operation succeeds. The two explicit fault scenarios execute after Main and therefore after CR3 activation, but before control reaches the loader's final success and shutdown path.
+The same object exports `Windvale_kernel_memory_enter`. It accepts the loader handoff pointer in `RCX`, initializes the arena, performs and records the IDT allocation, and switches stacks. Probe 21 passes that page to the exception installer, then passes the memory-state pointer to `Windvale_kernel_x64_paging_install`. The paging installer requests its own six-page allocation before calling WVA export `Windvale_kernel_wva_main` with the copied handoff pointer. Under the current [kernel native seam](Windvale-Kernel-Native-Seam.md), that exact shim tail-transfers to the ABI-16 WVB-admission bridge. Only verifier token 73, admitted-program result 29, and the retained portable-probe result 29 restore the handoff and reach compiler export `Windvale_kernel_main`. Main owns the source-selected success markers and can be reached only after every preceding memory, exception, paging, admission, and native-probe operation succeeds. The two explicit fault scenarios execute after Main and therefore after CR3 activation, but before control reaches the loader's final success and shutdown path.
 
 ## Diagnostics and limits
 
@@ -91,7 +91,7 @@ Malformed and random bytes must produce a bounded result or one of these failure
 
 ## Current evidence and limit
 
-Candidate firmware probe version 21 retains the version-1 arena, allocator, copied-handoff, and stack rules while running the Windvale-owned admission profile, admitted AOT module, retained ABI-15 portable native probe, and compiler export `Windvale_kernel_main` under a kernel-owned page-table root. The normal pinned-QEMU gate requires this memory/native suffix:
+Candidate firmware probe version 21 retains the version-1 arena, allocator, copied-handoff, and stack rules while running the Windvale-owned admission profile, admitted AOT module, retained ABI-16 portable native probe, and compiler export `Windvale_kernel_main` under a kernel-owned page-table root. The normal pinned-QEMU gate requires this memory/native suffix:
 
 ```text
 memory-owned=pass

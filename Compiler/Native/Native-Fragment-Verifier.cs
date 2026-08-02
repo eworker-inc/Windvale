@@ -428,7 +428,7 @@ public static class Nativeˉfragmentˉverifier
         var Parameterˉkinds = new List<Decodedˉargumentˉkind>();
         while (Parameterˉkinds.Count < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
             Tryˉstoreˉargument(
-                Code,
+                Code[..End],
                 Index,
                 Frameˉbytes,
                 Parameterˉkinds.Count,
@@ -1027,12 +1027,17 @@ public static class Nativeˉfragmentˉverifier
         out Decodedˉcall call)
     {
         call = new(0, [], [], Decodedˉreturnˉkind.Void, -1);
+        if (end < 0 || end > code.Length)
+        {
+            return false;
+        }
+        var Functionˉcode = code[..end];
         var Cursor = index;
         var Argumentˉkinds = new List<Decodedˉargumentˉkind>();
         var Argumentˉslots = new List<int>();
-        while (Argumentˉkinds.Count < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
+        while (Argumentˉkinds.Count < Nativeˉcontract.REGISTER_CALL_PARAMETERS &&
             Tryˉloadˉargument(
-                code,
+                Functionˉcode,
                 Cursor,
                 frameˉbytes,
                 Argumentˉkinds.Count,
@@ -1044,34 +1049,84 @@ public static class Nativeˉfragmentˉverifier
             Argumentˉslots.Add(Argumentˉslot);
             Cursor += Argumentˉlength;
         }
+        var Stackˉbytes = 0;
+        if (Argumentˉkinds.Count == Nativeˉcontract.REGISTER_CALL_PARAMETERS &&
+            Matches(Functionˉcode, Cursor, 0x48, 0x81, 0xEC))
+        {
+            if (Cursor > Functionˉcode.Length - 7)
+            {
+                return false;
+            }
+            Stackˉbytes = Readˉi32(Functionˉcode, Cursor + 3);
+            if (Stackˉbytes is <= 0 or > Nativeˉcontract.MAXIMUM_STACK_CALL_BYTES ||
+                (Stackˉbytes & (Nativeˉcontract.VALUE_SLOT_BYTES - 1)) != 0)
+            {
+                return false;
+            }
+            Cursor += 7;
+            while (Argumentˉkinds.Count < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
+                Tryˉloadˉstackˉargument(
+                    Functionˉcode,
+                    Cursor,
+                    frameˉbytes,
+                    Stackˉbytes,
+                    Argumentˉkinds.Count,
+                    out var Argumentˉlength,
+                    out var Argumentˉkind,
+                    out var Argumentˉslot))
+            {
+                Argumentˉkinds.Add(Argumentˉkind);
+                Argumentˉslots.Add(Argumentˉslot);
+                Cursor += Argumentˉlength;
+            }
+            if (Stackˉbytes != Stackˉcallˉbytes(Argumentˉkinds.Count))
+            {
+                return false;
+            }
+        }
         var Returnˉkind = Decodedˉreturnˉkind.Void;
         var Resultˉslot = -1;
-        if (Matches(code, Cursor, 0x48, 0x8D, 0x84, 0x24) &&
-            Tryˉreadˉslot(code, Cursor + 4, frameˉbytes, out Resultˉslot))
+        if (Matches(Functionˉcode, Cursor, 0x48, 0x8D, 0x84, 0x24) &&
+            Tryˉreadˉadjustedˉslot(
+                Functionˉcode,
+                Cursor + 4,
+                frameˉbytes,
+                Stackˉbytes,
+                out Resultˉslot))
         {
             Returnˉkind = Decodedˉreturnˉkind.Descriptor;
             Cursor += 8;
         }
-        if (Cursor >= end || code[Cursor] != 0xE8 ||
-            !Tryˉreadˉtarget(code, Cursor + 1, out var Target) ||
+        if (Cursor >= end || Functionˉcode[Cursor] != 0xE8 ||
+            !Tryˉreadˉtarget(Functionˉcode, Cursor + 1, out var Target) ||
             !functions.ContainsKey(Target))
         {
             return false;
         }
         Cursor += 5;
-        if (!Matches(code, Cursor,
+        if (Stackˉbytes != 0)
+        {
+            if (Cursor > Functionˉcode.Length - 7 ||
+                !Matches(Functionˉcode, Cursor, 0x48, 0x81, 0xC4) ||
+                Readˉi32(Functionˉcode, Cursor + 3) != Stackˉbytes)
+            {
+                return false;
+            }
+            Cursor += 7;
+        }
+        if (!Matches(Functionˉcode, Cursor,
                 0x48, 0x89, 0xC2,
                 0x48, 0xC1, 0xEA, 0x20,
                 0x48, 0x85, 0xD2,
                 0x0F, 0x85) ||
-            !Tryˉreadˉtarget(code, Cursor + 12, out var Propagateˉtarget) ||
+            !Tryˉreadˉtarget(Functionˉcode, Cursor + 12, out var Propagateˉtarget) ||
             Propagateˉtarget != propagate)
         {
             return false;
         }
         Cursor += 16;
         if (Returnˉkind != Decodedˉreturnˉkind.Descriptor &&
-            Tryˉstoreˉeax(code, Cursor, frameˉbytes, out Resultˉslot))
+            Tryˉstoreˉeax(Functionˉcode, Cursor, frameˉbytes, out Resultˉslot))
         {
             Returnˉkind = Decodedˉreturnˉkind.Scalar;
             Cursor += 7;
@@ -2610,6 +2665,69 @@ public static class Nativeˉfragmentˉverifier
             Tryˉreadˉslot(code, offset + Bytesˉprefix.Length, frameˉbytes, out slot);
     }
 
+    private static bool Tryˉloadˉstackˉargument(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int stackˉbytes,
+        int argument,
+        out int length,
+        out Decodedˉargumentˉkind kind,
+        out int slot)
+    {
+        length = 14;
+        kind = Decodedˉargumentˉkind.Scalar;
+        slot = 0;
+        if (offset < 0 || offset > code.Length - 14)
+        {
+            return false;
+        }
+        var Outgoingˉoffset = checked(
+            (argument - Nativeˉcontract.REGISTER_CALL_PARAMETERS) *
+            Nativeˉcontract.VALUE_SLOT_BYTES);
+        if (Matches(code, offset, 0x8B, 0x84, 0x24) &&
+            Tryˉreadˉadjustedˉslot(
+                code,
+                offset + 3,
+                frameˉbytes,
+                stackˉbytes,
+                out slot) &&
+            Matches(code, offset + 7, 0x89, 0x84, 0x24) &&
+            Readˉi32(code, offset + 10) == Outgoingˉoffset)
+        {
+            return true;
+        }
+
+        length = 32;
+        kind = Decodedˉargumentˉkind.Borrowedˉbytes;
+        if (offset > code.Length - 32 ||
+            !Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) ||
+            !Tryˉreadˉadjustedˉslot(
+                code,
+                offset + 4,
+                frameˉbytes,
+                stackˉbytes,
+                out slot) ||
+            !Matches(code, offset + 8, 0x48, 0x89, 0x84, 0x24) ||
+            Readˉi32(code, offset + 12) != Outgoingˉoffset ||
+            !Matches(code, offset + 16, 0x48, 0x8B, 0x84, 0x24) ||
+            !Tryˉreadˉadjustedˉslotˉfield(
+                code,
+                offset + 20,
+                frameˉbytes,
+                stackˉbytes,
+                sizeof(ulong),
+                sizeof(ulong),
+                out var Highˉslot) ||
+            Highˉslot != slot ||
+            !Matches(code, offset + 24, 0x48, 0x89, 0x84, 0x24) ||
+            Readˉi32(code, offset + 28) != checked(Outgoingˉoffset + sizeof(ulong)))
+        {
+            return false;
+        }
+        return true;
+    }
+
     private static bool Tryˉstoreˉargument(
         ReadOnlySpan<byte> code,
         int offset,
@@ -2618,6 +2736,47 @@ public static class Nativeˉfragmentˉverifier
         out int length,
         out Decodedˉargumentˉkind kind)
     {
+        if (argument >= Nativeˉcontract.REGISTER_CALL_PARAMETERS)
+        {
+            var Incomingˉoffset = checked(
+                frameˉbytes + sizeof(ulong) +
+                (argument - Nativeˉcontract.REGISTER_CALL_PARAMETERS) *
+                Nativeˉcontract.VALUE_SLOT_BYTES);
+            length = 14;
+            kind = Decodedˉargumentˉkind.Scalar;
+            if (offset >= 0 &&
+                offset <= code.Length - 14 &&
+                Matches(code, offset, 0x8B, 0x84, 0x24) &&
+                Readˉi32(code, offset + 3) == Incomingˉoffset &&
+                Tryˉstoreˉeax(code, offset + 7, frameˉbytes, out var Scalarˉslot) &&
+                Scalarˉslot == argument)
+            {
+                return true;
+            }
+
+            length = 32;
+            kind = Decodedˉargumentˉkind.Borrowedˉbytes;
+            if (offset < 0 ||
+                offset > code.Length - 32 ||
+                !Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) ||
+                Readˉi32(code, offset + 4) != Incomingˉoffset ||
+                !Tryˉstoreˉrax(code, offset + 8, frameˉbytes, out var Stackˉpointerˉslot) ||
+                Stackˉpointerˉslot != argument ||
+                !Matches(code, offset + 16, 0x48, 0x8B, 0x84, 0x24) ||
+                Readˉi32(code, offset + 20) != checked(Incomingˉoffset + sizeof(ulong)) ||
+                !Tryˉstoreˉraxˉatˉfield(
+                    code,
+                    offset + 24,
+                    frameˉbytes,
+                    sizeof(ulong),
+                    out var Stackˉhighˉslot) ||
+                Stackˉhighˉslot != argument)
+            {
+                return false;
+            }
+            return true;
+        }
+
         var Prefix = argument switch
         {
             0 => new byte[] { 0x44, 0x89, 0x84, 0x24 },
@@ -2790,6 +2949,56 @@ public static class Nativeˉfragmentˉverifier
         slot = Displacement / Nativeˉcontract.VALUE_SLOT_BYTES;
         return true;
     }
+
+    private static bool Tryˉreadˉadjustedˉslot(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int stackˉadjustment,
+        out int slot) =>
+        Tryˉreadˉadjustedˉslotˉfield(
+            code,
+            offset,
+            frameˉbytes,
+            stackˉadjustment,
+            0,
+            Nativeˉcontract.VALUE_SLOT_BYTES,
+            out slot);
+
+    private static bool Tryˉreadˉadjustedˉslotˉfield(
+        ReadOnlySpan<byte> code,
+        int offset,
+        int frameˉbytes,
+        int stackˉadjustment,
+        int field,
+        int width,
+        out int slot)
+    {
+        slot = 0;
+        if (offset < 0 || offset > code.Length - sizeof(int))
+        {
+            return false;
+        }
+        var Displacement = Readˉi32(code, offset);
+        var Adjustedˉdisplacement = (long)Displacement - stackˉadjustment;
+        if (stackˉadjustment < 0 ||
+            field < 0 ||
+            width < 1 ||
+            field > Nativeˉcontract.VALUE_SLOT_BYTES - width ||
+            Adjustedˉdisplacement < field ||
+            (Adjustedˉdisplacement - field) % Nativeˉcontract.VALUE_SLOT_BYTES != 0 ||
+            Adjustedˉdisplacement > frameˉbytes - width)
+        {
+            return false;
+        }
+        slot = checked((int)((Adjustedˉdisplacement - field) / Nativeˉcontract.VALUE_SLOT_BYTES));
+        return true;
+    }
+
+    private static int Stackˉcallˉbytes(int parameters) =>
+        checked(
+            Math.Max(0, parameters - Nativeˉcontract.REGISTER_CALL_PARAMETERS) *
+            Nativeˉcontract.VALUE_SLOT_BYTES);
 
     private static bool Tryˉreadˉtarget(ReadOnlySpan<byte> code, int displacementˉoffset, out int target)
     {

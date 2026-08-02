@@ -636,6 +636,7 @@ internal static class Program
         new("hosted resources are explicit, separated, and bounded", [TEST_AREA_RUNTIME], Hostedˉresourcesˉareˉbounded),
         new("compiler output is deterministic and canonical", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Compilerˉisˉdeterministic),
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
+        new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
         new("native dynamic text, descriptor returns, and void calls agree across runtimes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉdynamicˉtextˉagrees),
         new("Windvale-written wvdump structural parser runs through JIT and WVO AOT", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvdumpˉstructuralˉparserˉruns),
@@ -2041,9 +2042,145 @@ internal static class Program
             X64ˉnativeˉexecutor.Executeˉi32(
                 X64ˉnativeˉbackend.Compile(Fourˉparameterˉverified).Fragment));
 
-        var Tooˉmanyˉparameters = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
-            "module Nativeˉwideˉcall profile portable; fn Fifth(A: i32, B: i32, C: i32, D: i32, E: i32) -> i32 { return E; } export fn Main() -> i32 { return Fifth(1, 2, 3, 4, 5); }"));
-        Throwsˉnative("WVN2002", () => _ = X64ˉnativeˉbackend.Compile(Tooˉmanyˉparameters));
+        var Fiveˉparameterˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
+            "module Nativeˉwideˉcall profile portable; fn Sum(A: i32, B: i32, C: i32, D: i32, E: i32) -> i32 { return A + B + C + D + E; } export fn Main() -> i32 { return Sum(1, 2, 3, 4, 5); }"));
+        Equal(
+            15,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Fiveˉparameterˉverified).Fragment));
+    }
+
+    private static void Nativeˉwideˉcallsˉagree()
+    {
+        var Parameters = string.Join(
+            ", ",
+            Enumerable.Range(0, Nativeˉcontract.MAXIMUM_CALL_PARAMETERS)
+                .Select(Index => $"P{Index:D2}: i32"));
+        var Arguments = string.Join(
+            ", ",
+            Enumerable.Range(1, Nativeˉcontract.MAXIMUM_CALL_PARAMETERS));
+        var Wideˉsource = $$"""
+            module Nativeˉmaximumˉwideˉcall profile portable;
+            fn Select({{Parameters}}) -> i32 { return P00 + P31 + P63; }
+            export fn Main() -> i32 { return Select({{Arguments}}); }
+            """;
+        var Wideˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Wideˉsource));
+        var Wideˉreference = new Referenceˉruntime(
+            Wideˉverified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(97, Wideˉreference.Exitˉcode);
+        var Wideˉfirst = X64ˉnativeˉbackend.Compile(Wideˉverified);
+        var Wideˉsecond = X64ˉnativeˉbackend.Compile(Wideˉverified);
+        Sequenceˉequal(Wideˉfirst.Fragment.Code, Wideˉsecond.Fragment.Code);
+        True(
+            Wideˉfirst.Module.Functions
+                .SelectMany(Function => Function.Blocks)
+                .SelectMany(Block => Block.Operations)
+                .Any(Operation => Operation is Nativeˉcall
+                    { Arguments.Length: Nativeˉcontract.MAXIMUM_CALL_PARAMETERS }),
+            "Native machine IR omitted the bounded maximum-width call.");
+        Equal(
+            Wideˉreference.Exitˉcode,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Wideˉfirst.Fragment,
+                maximumˉinstructions: Wideˉreference.Executedˉinstructions));
+        var Wideˉobject = Nativeˉobjectˉsink.Writeˉwvo(Wideˉfirst.Fragment);
+        var Wideˉlinked = Linkˉsuccess(
+            [Wideˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Equal(
+            Wideˉreference.Exitˉcode,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Wideˉfirst.Fragment with { Code = Wideˉlinked.Imageˉbytes },
+                maximumˉinstructions: Wideˉreference.Executedˉinstructions));
+
+        var Mainˉsymbol = Wideˉfirst.Fragment.Symbols.Single(
+            Symbol => Symbol.Binding == Nativeˉsymbolˉbinding.Export);
+        var Mainˉoffset = checked((int)Mainˉsymbol.Offset);
+        var Mainˉcode = Wideˉfirst.Fragment.Code.AsSpan(
+            Mainˉoffset,
+            checked((int)Mainˉsymbol.Size));
+        var Stackˉreserve = Mainˉcode.IndexOf(new byte[]
+        {
+            0x48, 0x81, 0xEC, 0xC0, 0x03, 0x00, 0x00,
+        });
+        True(Stackˉreserve >= 0, "Native maximum-width call omitted its bounded stack reservation.");
+        var Stackˉrelease = Mainˉcode.IndexOf(new byte[]
+        {
+            0x48, 0x81, 0xC4, 0xC0, 0x03, 0x00, 0x00,
+        });
+        True(Stackˉrelease >= 0, "Native maximum-width call omitted its bounded stack release.");
+
+        var Corruptedˉreserve = Wideˉfirst.Fragment.Code.ToArray();
+        Corruptedˉreserve[Mainˉoffset + Stackˉreserve + 3] ^= 0x10;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Wideˉfirst.Fragment with { Code = Corruptedˉreserve.ToImmutableArray() }));
+
+        var Corruptedˉoutgoingˉslot = Wideˉfirst.Fragment.Code.ToArray();
+        Corruptedˉoutgoingˉslot[Mainˉoffset + Stackˉreserve + 17] ^= 0x01;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Wideˉfirst.Fragment with { Code = Corruptedˉoutgoingˉslot.ToImmutableArray() }));
+
+        var Corruptedˉrelease = Wideˉfirst.Fragment.Code.ToArray();
+        Corruptedˉrelease[Mainˉoffset + Stackˉrelease + 3] ^= 0x10;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Wideˉfirst.Fragment with { Code = Corruptedˉrelease.ToImmutableArray() }));
+
+        var Descriptorˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉwideˉdescriptor profile portable;
+            data Expected: bytes = [0, 42, 255];
+            fn Fifth(A: i32, B: i32, C: i32, D: i32, Value: bytes) -> bytes {
+                return Value;
+            }
+            export fn Main() -> bytes { return Fifth(1, 2, 3, 4, Expected); }
+            """));
+        var Descriptorˉnative = X64ˉnativeˉbackend.Compile(Descriptorˉverified);
+        Sequenceˉequal(
+            new byte[] { 0, 42, 255 },
+            X64ˉnativeˉexecutor.Executeˉbytes(Descriptorˉnative.Fragment));
+        var Descriptorˉobject = Nativeˉobjectˉsink.Writeˉwvo(Descriptorˉnative.Fragment);
+        var Descriptorˉlinked = Linkˉsuccess(
+            [Descriptorˉobject.ToArray()],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Sequenceˉequal(
+            new byte[] { 0, 42, 255 },
+            X64ˉnativeˉexecutor.Executeˉbytes(
+                Descriptorˉnative.Fragment with { Code = Descriptorˉlinked.Imageˉbytes }));
+
+        var Descriptorˉmain = Descriptorˉnative.Fragment.Symbols.Single(
+            Symbol => Symbol.Binding == Nativeˉsymbolˉbinding.Export);
+        var Descriptorˉmainˉoffset = checked((int)Descriptorˉmain.Offset);
+        var Descriptorˉreserve = Descriptorˉnative.Fragment.Code.AsSpan(
+                Descriptorˉmainˉoffset,
+                checked((int)Descriptorˉmain.Size))
+            .IndexOf(new byte[] { 0x48, 0x81, 0xEC, 0x10, 0x00, 0x00, 0x00 });
+        True(Descriptorˉreserve >= 0, "Native descriptor call omitted its stack cell.");
+        var Corruptedˉdescriptorˉcell = Descriptorˉnative.Fragment.Code.ToArray();
+        Corruptedˉdescriptorˉcell[Descriptorˉmainˉoffset + Descriptorˉreserve + 35] ^= 0x01;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Descriptorˉnative.Fragment with
+                {
+                    Code = Corruptedˉdescriptorˉcell.ToImmutableArray(),
+                }));
+
+        var Voidˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉwideˉvoid profile portable;
+            fn Ignore(A: i32, B: i32, C: i32, D: i32, E: i32) -> void { return; }
+            export fn Main() -> i32 { Ignore(1, 2, 3, 4, 5); return 42; }
+            """));
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Voidˉverified).Fragment));
     }
 
     private static void Nativeˉnominalˉvaluesˉagree()
@@ -4754,14 +4891,14 @@ internal static class Program
             Equal("WVN2002", Exception.Code);
             True(
                 Exception.Message.Contains(
-                    "Compilerˉbodyˉblockˉstepˉvalid",
+                    "Compilerˉsourceˉwirˉcompileˉblock",
                     StringComparison.Ordinal),
                 $"Compiler native preflight did not identify the next exact function: {Exception.Message}");
             True(
                 Exception.Message.Contains(
                     "bounded scalar/borrowed descriptor parameters and locals",
                     StringComparison.Ordinal),
-                $"Compiler native preflight did not identify the next function-shape blocker: {Exception.Message}");
+                $"Compiler native preflight did not identify the next bounded-frame blocker: {Exception.Message}");
             return;
         }
         throw new InvalidOperationException(

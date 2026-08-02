@@ -21,7 +21,7 @@ Decision 0084 assigns durable policy to system-profile Windvale, irreducible arc
 - Advance the kernel WVA seam to version 6 with named wrappers for both operations. Keep table construction and live-range validation in Stage 0 export `Windvale_kernel_x64_paging_install` behind an explicit future `.wv`/WVA replacement seam.
 - Allocate the six tables through `Windvale_kernel_allocate_pages` after the existing one-page IDT allocation. Write a versioned `WVKPAG01` ownership record at memory-state offset `0x80` only after CR3 readback matches.
 - Advance the firmware probe to version 20. Compiler-generated system-profile Windvale prints `paging=owned` only after the installer returns success. Retain the normal shutdown and both post-activation terminal-fault scenarios.
-- Preserve kernel memory version 1, handoff version 1, exception version 2, trap-frame version 1, shutdown version 1, native ABI 15/context 7, WVB 1.6, WVO 1.0, and UEFI application format version 3.
+- Preserve kernel memory version 1, handoff version 1, exception version 2, trap-frame version 1, shutdown version 1, execution-context version 7, WVB 1.6, WVO 1.0, and UEFI application format version 3. Decision 0089 later advances current fragment metadata from ABI 15 to ABI 16 without changing this probe's at-most-four-parameter machine code.
 - Do not claim a virtual-memory manager, process isolation, page-fault handling, reclamation, user mode, mappings above 1 GiB, or a public page-map API.
 
 ## Candidate evidence
@@ -37,7 +37,7 @@ Local Windows evidence records:
 - a 22,016-byte invalid-opcode image with SHA-256 `aa610e6ac00ed43466a87521bb4cebb2934d0885acb960db8913f025ced9cce9`, normalized `(6, 0)`, and exit code 3; and
 - a 22,016-byte general-protection image with SHA-256 `74632fcde4873f2d46e18b1b77c5cc8b495e83f0f750930e039da27dd67cd0ee`, normalized `(13, 0)`, and exit code 3.
 
-The normal path executes the portable ABI-15 WVB-derived object, compiler-generated `.wv` Main, and WVA shutdown after activation. The two fault scenarios prove the WVA entries and Stage 0 terminal policy remain reachable through the new root. This is candidate evidence only; complete cross-host and independent CI qualification remain pending.
+The normal path executes the portable WVB-derived object, compiler-generated `.wv` Main, and WVA shutdown after activation. Decision 0089's ABI-16 candidate leaves this probe's WVO and all three firmware identities byte-identical, and all 20 OS tests continue to pass. The two fault scenarios prove the WVA entries and Stage 0 terminal policy remain reachable through the new root. This is candidate evidence only; complete cross-host and independent CI qualification remain pending.
 
 ## Consequences
 

@@ -27,7 +27,7 @@ Each service record is exactly 12 bytes:
 
 | Relative offset | Bytes | Field | Rule |
 | ---: | ---: | --- | --- |
-| 0 | 4 | service ID | `1` through `12`, matching the closed ABI-15 service table |
+| 0 | 4 | service ID | `1` through `12`, matching the closed ABI-16 service table retained from ABI 15 |
 | 4 | 4 | leaf bytes | Positive |
 | 8 | 4 | reserved | Zero |
 

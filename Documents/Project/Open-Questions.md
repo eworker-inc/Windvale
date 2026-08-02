@@ -57,9 +57,9 @@ The [WebAssembly playground exploration](WebAssembly-Playground-Exploration.md) 
 
 ## First decision sequence
 
-Decisions 0058 through 0087 establish reproducible bytecode compiler convergence, the bounded shared ABI-15 native path with all 12 current service leaves, live Windvale-produced service leaves, Windvale-owned executable-image layout and lifetime, WVA-owned Q35 poweroff, normalized no-error/error-code trap entries, and the durable capability-oriented OS boundary. The recommended next decisions are:
+Decisions 0058 through 0087 establish reproducible bytecode compiler convergence, the bounded shared ABI-15 native path with all 12 current service leaves, live Windvale-produced service leaves, Windvale-owned executable-image layout and lifetime, WVA-owned Q35 poweroff, normalized no-error/error-code trap entries, and the durable capability-oriented OS boundary. Candidate Decision 0089 adds verified ABI-16 calls through the language's 64-parameter limit. The recommended next decisions are:
 
-1. Admit the smallest record-shaped parameter/local contract demanded by the exact next compiler blocker, `Compilerˉbodyˉblockˉstepˉvalid`, without turning the backend into an unbounded aggregate ABI.
+1. Qualify Decision 0089, then admit the smallest safe frame contract demanded by `Compilerˉsourceˉwirˉcompileˉblock`: 1,049 locals and declared stack depth 12 against the current 1,024-slot bound. Measure lowered numbered-value pressure before choosing a larger fixed frame versus deterministic slot reuse.
 2. Continue compiling and then execute the qualified Windvale-written compiler through the shared native path, recording each next backend or runtime contract demanded by that real workload.
 3. Add native PE/COFF and ELF containers plus standalone Windows/Linux capability and process hosts without leaking host rules into portable modules.
 4. Cross-host qualify candidate Decision 0088's kernel-owned page tables, then add an AOT Windvale verifier that admits one embedded WVB, retaining pinned-QEMU evidence before Hyper-V qualification and treating broader traps, virtual memory, and lifecycle adapters as separate contracts.

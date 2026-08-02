@@ -917,7 +917,11 @@ public static class X64ˉnativeˉbackend
             }
             for (var Parameter = 0; Parameter < Function.Parameterˉtypes.Length; Parameter++)
             {
-                Emitˉstoreˉargument(Code, Parameter, Function.Parameterˉtypes[Parameter]);
+                Emitˉstoreˉargument(
+                    Code,
+                    Parameter,
+                    Function.Parameterˉtypes[Parameter],
+                    Frameˉbytes);
             }
 
             foreach (var Block in Function.Blocks)
@@ -1295,7 +1299,12 @@ public static class X64ˉnativeˉbackend
                                 Runtimeˉserviceˉpatches);
                             break;
                         case Nativeˉcall Call:
-                            for (var Argument = 0; Argument < Call.Arguments.Length; Argument++)
+                            var Callˉstackˉbytes = Stackˉcallˉbytes(Call.Arguments.Length);
+                            for (var Argument = 0;
+                                Argument < Math.Min(
+                                    Call.Arguments.Length,
+                                    Nativeˉcontract.REGISTER_CALL_PARAMETERS);
+                                Argument++)
                             {
                                 Emitˉloadˉargument(
                                     Code,
@@ -1303,13 +1312,35 @@ public static class X64ˉnativeˉbackend
                                     Valueˉslot(Function, Call.Arguments[Argument]),
                                     module.Functions[Call.Function].Parameterˉtypes[Argument]);
                             }
+                            if (Callˉstackˉbytes != 0)
+                            {
+                                Emitˉframeˉadjustment(Code, subtract: true, Callˉstackˉbytes);
+                                for (var Argument = Nativeˉcontract.REGISTER_CALL_PARAMETERS;
+                                    Argument < Call.Arguments.Length;
+                                    Argument++)
+                                {
+                                    Emitˉloadˉstackˉargument(
+                                        Code,
+                                        Argument,
+                                        Valueˉslot(Function, Call.Arguments[Argument]),
+                                        module.Functions[Call.Function].Parameterˉtypes[Argument],
+                                        Callˉstackˉbytes);
+                                }
+                            }
                             if (Isˉnativeˉdescriptorˉtype(Call.Type))
                             {
-                                Emitˉloadˉdescriptorˉoutputˉrax(Code, Valueˉslot(Function, Call.Result));
+                                Emitˉloadˉdescriptorˉoutputˉrax(
+                                    Code,
+                                    Valueˉslot(Function, Call.Result),
+                                    Callˉstackˉbytes);
                             }
                             Code.Add(0xE8);
                             Callˉpatches.Add(new(Code.Count, Call.Function));
                             Addˉi32(Code, 0);
+                            if (Callˉstackˉbytes != 0)
+                            {
+                                Emitˉframeˉadjustment(Code, subtract: false, Callˉstackˉbytes);
+                            }
                             Code.AddRange([0x48, 0x89, 0xC2, 0x48, 0xC1, 0xEA, 0x20, 0x48, 0x85, 0xD2, 0x0F, 0x85]);
                             Propagateˉpatches.Add(Code.Count);
                             Addˉi32(Code, 0);
@@ -1319,7 +1350,12 @@ public static class X64ˉnativeˉbackend
                             }
                             break;
                         case Nativeˉvoidˉcall Call:
-                            for (var Argument = 0; Argument < Call.Arguments.Length; Argument++)
+                            var Voidˉcallˉstackˉbytes = Stackˉcallˉbytes(Call.Arguments.Length);
+                            for (var Argument = 0;
+                                Argument < Math.Min(
+                                    Call.Arguments.Length,
+                                    Nativeˉcontract.REGISTER_CALL_PARAMETERS);
+                                Argument++)
                             {
                                 Emitˉloadˉargument(
                                     Code,
@@ -1327,9 +1363,28 @@ public static class X64ˉnativeˉbackend
                                     Valueˉslot(Function, Call.Arguments[Argument]),
                                     module.Functions[Call.Function].Parameterˉtypes[Argument]);
                             }
+                            if (Voidˉcallˉstackˉbytes != 0)
+                            {
+                                Emitˉframeˉadjustment(Code, subtract: true, Voidˉcallˉstackˉbytes);
+                                for (var Argument = Nativeˉcontract.REGISTER_CALL_PARAMETERS;
+                                    Argument < Call.Arguments.Length;
+                                    Argument++)
+                                {
+                                    Emitˉloadˉstackˉargument(
+                                        Code,
+                                        Argument,
+                                        Valueˉslot(Function, Call.Arguments[Argument]),
+                                        module.Functions[Call.Function].Parameterˉtypes[Argument],
+                                        Voidˉcallˉstackˉbytes);
+                                }
+                            }
                             Code.Add(0xE8);
                             Callˉpatches.Add(new(Code.Count, Call.Function));
                             Addˉi32(Code, 0);
+                            if (Voidˉcallˉstackˉbytes != 0)
+                            {
+                                Emitˉframeˉadjustment(Code, subtract: false, Voidˉcallˉstackˉbytes);
+                            }
                             Code.AddRange([0x48, 0x89, 0xC2, 0x48, 0xC1, 0xEA, 0x20, 0x48, 0x85, 0xD2, 0x0F, 0x85]);
                             Propagateˉpatches.Add(Code.Count);
                             Addˉi32(Code, 0);
@@ -2597,10 +2652,13 @@ public static class X64ˉnativeˉbackend
         Addˉi32(code, Slotˉoffset(slot));
     }
 
-    private static void Emitˉloadˉdescriptorˉoutputˉrax(List<byte> code, int slot)
+    private static void Emitˉloadˉdescriptorˉoutputˉrax(
+        List<byte> code,
+        int slot,
+        int stackˉadjustment = 0)
     {
         code.AddRange([0x48, 0x8D, 0x84, 0x24]);
-        Addˉi32(code, Slotˉoffset(slot));
+        Addˉi32(code, checked(Slotˉoffset(slot) + stackˉadjustment));
     }
 
     private static void Emitˉloadˉdescriptorˉoutputˉrcx(List<byte> code, int slot)
@@ -2664,11 +2722,65 @@ public static class X64ˉnativeˉbackend
         Addˉi32(code, Slotˉoffset(slot));
     }
 
+    private static void Emitˉloadˉstackˉargument(
+        List<byte> code,
+        int argument,
+        int slot,
+        Nativeˉvalueˉtype type,
+        int stackˉbytes)
+    {
+        var Outgoingˉoffset = checked(
+            (argument - Nativeˉcontract.REGISTER_CALL_PARAMETERS) *
+            Nativeˉcontract.VALUE_SLOT_BYTES);
+        var Sourceˉoffset = checked(Slotˉoffset(slot) + stackˉbytes);
+        if (Isˉnativeˉdescriptorˉtype(type))
+        {
+            code.AddRange([0x48, 0x8B, 0x84, 0x24]);
+            Addˉi32(code, Sourceˉoffset);
+            code.AddRange([0x48, 0x89, 0x84, 0x24]);
+            Addˉi32(code, Outgoingˉoffset);
+            code.AddRange([0x48, 0x8B, 0x84, 0x24]);
+            Addˉi32(code, checked(Sourceˉoffset + sizeof(ulong)));
+            code.AddRange([0x48, 0x89, 0x84, 0x24]);
+            Addˉi32(code, checked(Outgoingˉoffset + sizeof(ulong)));
+            return;
+        }
+
+        code.AddRange([0x8B, 0x84, 0x24]);
+        Addˉi32(code, Sourceˉoffset);
+        code.AddRange([0x89, 0x84, 0x24]);
+        Addˉi32(code, Outgoingˉoffset);
+    }
+
     private static void Emitˉstoreˉargument(
         List<byte> code,
         int argument,
-        Nativeˉvalueˉtype type)
+        Nativeˉvalueˉtype type,
+        int frameˉbytes)
     {
+        if (argument >= Nativeˉcontract.REGISTER_CALL_PARAMETERS)
+        {
+            var Incomingˉoffset = checked(
+                frameˉbytes + sizeof(ulong) +
+                (argument - Nativeˉcontract.REGISTER_CALL_PARAMETERS) *
+                Nativeˉcontract.VALUE_SLOT_BYTES);
+            if (Isˉnativeˉdescriptorˉtype(type))
+            {
+                code.AddRange([0x48, 0x8B, 0x84, 0x24]);
+                Addˉi32(code, Incomingˉoffset);
+                Emitˉstoreˉrax(code, argument);
+                code.AddRange([0x48, 0x8B, 0x84, 0x24]);
+                Addˉi32(code, checked(Incomingˉoffset + sizeof(ulong)));
+                Emitˉstoreˉraxˉatˉfield(code, argument, sizeof(ulong));
+                return;
+            }
+
+            code.AddRange([0x8B, 0x84, 0x24]);
+            Addˉi32(code, Incomingˉoffset);
+            Emitˉstoreˉeax(code, argument);
+            return;
+        }
+
         if (Isˉnativeˉdescriptorˉtype(type))
         {
             code.AddRange(argument switch
@@ -2701,6 +2813,19 @@ public static class X64ˉnativeˉbackend
             _ => throw new Nativeˉbackendˉexception("WVN2901", "The native function exceeds its register-parameter limit."),
         });
         Addˉi32(code, Slotˉoffset(argument));
+    }
+
+    private static int Stackˉcallˉbytes(int parameters)
+    {
+        if (parameters is < 0 or > Nativeˉcontract.MAXIMUM_CALL_PARAMETERS)
+        {
+            throw new Nativeˉbackendˉexception(
+                "WVN2901",
+                "The native call exceeds its bounded argument limit.");
+        }
+        return checked(
+            Math.Max(0, parameters - Nativeˉcontract.REGISTER_CALL_PARAMETERS) *
+            Nativeˉcontract.VALUE_SLOT_BYTES);
     }
 
     private static void Emitˉloadˉecx(List<byte> code, int slot)
