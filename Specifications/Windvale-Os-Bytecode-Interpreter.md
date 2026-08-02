@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Interpreter runtime profile 6 is the implemented Probe-32 contract owned by [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md); cross-host qualification is pending. It executes the exact canonical WVB compiled from [`Tests/Fixtures/Source-Wvb/Function-Only.wv`](../Tests/Fixtures/Source-Wvb/Function-Only.wv) inside protected process `2` and returns `6` after four functions exercise scalar types, comparisons, forward control flow, locals, and internal calls.
+Interpreter runtime profile 6 is the qualified Probe-32 contract owned by [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md). It executes the exact canonical WVB compiled from [`Tests/Fixtures/Source-Wvb/Function-Only.wv`](../Tests/Fixtures/Source-Wvb/Function-Only.wv) inside protected process `2` and returns `6` after four functions exercise scalar types, comparisons, forward control flow, locals, and internal calls. Exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes complete Windows/Debian qualification in GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402).
 
 Profile 5 and the exact `Sum-Data.wv` Probe-31 contract remain qualified under [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md).
 
@@ -76,7 +76,7 @@ The context's record-arena pointer names 1,024 bytes at data-page offset `0x200`
 | Linked normal client | 576,541 | `afec9522862a6a69656c1a4a93f62d3e7b1b5b0f0d7c8759180410beb3429260` |
 | Linked fault client | 576,541 | `49c9afe4ddb29967ea5a19e1fdadbe1f352a283e9dcb7738c67a09da9558466a` |
 
-The focused Windows OS suite and all four pinned-QEMU scenarios pass locally. Complete Windows/Debian qualification remains pending for the committed candidate.
+Windows and digest-pinned Debian 12 each pass all 67 Seed tests and all 25 OS tests. All four pinned-QEMU scenarios pass on Windows; no Debian QEMU execution is claimed.
 
 ## Trust boundary and deliberate limits
 

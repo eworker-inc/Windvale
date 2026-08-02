@@ -1,6 +1,6 @@
 # Decision 0102: Second exact WVB and broader scalar control flow
 
-- Status: Implemented; cross-host qualification pending
+- Status: Qualified
 - Date: 2026-08-02
 - Implements: the next bounded Phase 12 extension after the first same-module proof
 - Extends: [Decision 0101](0101-First-Exact-Wvb-Across-Three-Environments.md)
@@ -37,7 +37,7 @@ That fixture adds four functions, `bool`, `u8`, and `u32` values, forward branch
 - All 25 focused OS tests and all four pinned-QEMU scenarios on Windows.
 - Complete Windows and digest-pinned Debian qualification for the exact committed candidate before this decision becomes Qualified.
 
-## Local implementation evidence
+## Qualification evidence
 
 The local changed-files gate passes all 67 Seed tests with a zero-warning Release build, and the focused Windows OS suite passes all 25 tests. All four local Windows pinned-QEMU scenarios pass with complete Probe-32 serial evidence:
 
@@ -60,7 +60,7 @@ Current deterministic implementation identities are:
 | Normal process-machine WVO | 608,198 | `c2e393fc5fa5c348be34aa7aaa239646ea8278616b8459b24fd3677f9f928d13` |
 | Fault process-machine WVO | 608,278 | `4054d3884eb8d45a1c7cda56132ae71c70e125a51183c5199c39de77cf1687a6` |
 
-This is local implementation evidence, not cross-host qualification. The exact commit and GitHub run will be recorded after the committed candidate passes the complete gate.
+Exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402). Windows and digest-pinned Debian 12 each pass all 67 Seed tests, all 25 OS tests, and the complete native CLI qualification gate. Seed elapsed time is 251.909 seconds on Windows and 200.120 seconds on Debian. QEMU execution remains Windows-only evidence.
 
 ## Consequences
 

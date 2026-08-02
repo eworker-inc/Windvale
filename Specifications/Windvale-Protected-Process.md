@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Protected-process contract version 11 is the implemented Probe-32 contract. It retains Probe 31's generation-safe reclaim/rebuild cycle while expanding the client for interpreter profile 6. [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) owns version 11; cross-host qualification is pending. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) retains the qualified version-10 history.
+Protected-process contract version 11 is the qualified Probe-32 contract. It retains Probe 31's generation-safe reclaim/rebuild cycle while expanding the client for interpreter profile 6. [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) owns version 11; exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes complete Windows/Debian qualification in GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402). [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) retains the qualified version-10 history.
 
 This is an internal experiment, not a stable syscall ABI, general process manager, dynamic namespace, transferable capability system, arbitrary WVB loader, complete verifier, or JIT.
 
@@ -82,7 +82,7 @@ The two retained 128-byte `WVRES004` records track fixed identifiers/kinds, gene
 
 The contained user-fault scenario sends `6` then executes privileged `CLI`; cleanup still completes. CPL0 invalid-opcode and general-protection scenarios remain terminal.
 
-## Deterministic implementation artifacts
+## Deterministic qualified artifacts
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -96,7 +96,7 @@ The contained user-fault scenario sends `6` then executes privileged `CLI`; clea
 | Normal process-machine WVO | 608,198 | `c2e393fc5fa5c348be34aa7aaa239646ea8278616b8459b24fd3677f9f928d13` |
 | Fault process-machine WVO | 608,278 | `4054d3884eb8d45a1c7cda56132ae71c70e125a51183c5199c39de77cf1687a6` |
 
-All 25 focused OS tests pass locally. All four Windows pinned-QEMU scenarios pass after the `WVPROC11` correction; complete cross-host qualification remains pending.
+Windows and digest-pinned Debian 12 each pass all 67 Seed tests and all 25 OS tests. All four Windows pinned-QEMU scenarios pass after the `WVPROC11` correction; no Debian QEMU execution is claimed.
 
 ## Deliberate limits
 

@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-WVB admission version 4 is the implemented Probe-32 contract owned by [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md); cross-host qualification is pending. It proves that AOT Windvale code running inside the guest validates the exact canonical WVB compiled from [`Tests/Fixtures/Source-Wvb/Function-Only.wv`](../Tests/Fixtures/Source-Wvb/Function-Only.wv) before protected execution consumes it.
+WVB admission version 4 is the qualified Probe-32 contract owned by [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md). It proves that AOT Windvale code running inside the guest validates the exact canonical WVB compiled from [`Tests/Fixtures/Source-Wvb/Function-Only.wv`](../Tests/Fixtures/Source-Wvb/Function-Only.wv) before protected execution consumes it. Exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes complete Windows/Debian qualification in GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402).
 
 Admission version 3 and exact `Sum-Data.wv` remain qualified history under [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md). Admission bridge version 2 remains the process-entry composition introduced by Probe 22. This is fixed bootstrap admission, not the general semantic WVB verifier, loader, interpreter, JIT, or public ABI.
 
@@ -63,7 +63,7 @@ The retained 162-code-byte admission bridge:
 
 The canonical program's AOT derivative is retained only as deterministic differential evidence. It is not linked into either client execution path.
 
-## Deterministic implementation artifacts
+## Deterministic qualified artifacts
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -73,7 +73,7 @@ The canonical program's AOT derivative is retained only as deterministic differe
 | Admission WVO | 25,727 | `cf819ee2f3f108a82ceca2b262b0e5ba6953594b177fef993efe20e41fe3b619` |
 | Admission bridge WVO | 484 | `2b5b67bfe04ba87c473d7a9c9fbcc213e864a9bcf39bbd58d0c10f5314aad606` |
 
-The focused Windows tests pass locally. These identities become qualified only after the exact committed candidate passes the complete Windows/Debian gate.
+Windows and digest-pinned Debian 12 each pass the complete qualification gate with these identities.
 
 ## Non-claims and next boundary
 

@@ -1006,7 +1006,7 @@ Exact implementation commit `f3eca7c8dab290e3916fbf33dcabc41d685a91bb` passes Gi
 
 This evidence does not qualify arbitrary WVB loading or verification, a dynamic namespace, independent resource lifetimes, general allocation, scheduling, JIT publication, broader traps, Hyper-V, physical hardware, or .NET retirement. A second real program, independently lived resource, or third runnable must choose the next boundary.
 
-## Implemented Probe-32 second exact-WVB candidate
+## Qualified Probe-32 second exact WVB
 
 Implemented Decision 0102 advances admission to version 4, interpreter profile to 6, kernel memory to `WVKMEM09`, protected processes to `WVPROC11`, and firmware to Probe 32 while retaining ABI 17/context 7/service table 5, WVA seam 8, admission bridge 2, retained bridge 10, paging 4, `WVRES004`, and `WVBR002`.
 
@@ -1016,7 +1016,7 @@ The AOT interpreter consumes exactly 189,114 native instructions at dynamic dept
 
 The local changed-files verifier completes a zero-warning Release build and all 67 Seed tests in 218.262 seconds. The focused Windows suite passes all 25 OS tests. Pinned Windows QEMU 11.0/Q35/TCG passes all four exact Probe-32 scenarios after the serialized process identity was corrected to `WVPROC11`: normal `a2c69181b55178b0e23c9b1012239a8fb1c8a53e2ffb089c8c59f45fa9dd0a6a` (714,752 bytes, exit 0), invalid opcode `04d801d25c0b5876fccb796d14b0c1ba14123f468200d5fb28728033867a5df5` (714,752 bytes, exit 3), general protection `b5abc555c11d3585b73e0d3e5391bbf33ca864933d8f0514265fce355273f799` (714,752 bytes, exit 3), and contained user fault `0233c10f323aaa3ee30dbe710b11c05f4d85a08fd88d6a52705c02f4b271347b` (715,264 bytes, exit 0).
 
-This remains local candidate evidence. The exact implementation commit, complete Windows and digest-pinned Debian results, normalized report comparison, and GitHub run will be added only after the committed candidate passes the full gate. Probe 31 therefore remains the latest fully cross-host-qualified OS baseline.
+Exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402). Windows and digest-pinned Debian 12 each pass all 67 Seed tests, all 25 OS tests, and the complete native CLI qualification gate. Seed elapsed time is 251.909 seconds on Windows and 200.120 seconds on Debian. This qualifies Decision 0102 and Probe 32 as the latest cross-host OS baseline. QEMU execution remains Windows-only evidence.
 
 ## Prior Stage 0 linker qualification (WVB 1.5)
 

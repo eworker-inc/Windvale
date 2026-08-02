@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 9 is the implemented Probe-32 contract. It retains version 8's exact checked tail release and process-root reuse while expanding the one boot arena to fit interpreter profile 6's measured code and stack. [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) owns version 9; cross-host qualification is pending. [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) retains the qualified version-8 history.
+Kernel memory version 9 is the qualified Probe-32 contract. It retains version 8's exact checked tail release and process-root reuse while expanding the one boot arena to fit interpreter profile 6's measured code and stack. [Decision 0102](../Documents/Decisions/0102-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) owns version 9; exact implementation commit `da938979ae9fe59e5f752bdb81359ded58a0e6ac` passes complete Windows/Debian qualification in GitHub [Verify run 30758910402](https://github.com/eworker-inc/Windvale/actions/runs/30758910402). [Decision 0101](../Documents/Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) retains the qualified version-8 history.
 
 This remains one bounded deterministic boot arena, not a general physical-memory manager. Release is LIFO-only and can restore only a caller-proven suffix ending at the current cursor.
 
