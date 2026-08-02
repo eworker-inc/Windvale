@@ -209,5 +209,11 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Constant-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Constant-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Checked-Add-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Checked-Add-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Checked-Add-Overflow-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Checked-Add-Overflow-Main.wv" />
   </ItemGroup>
 </Project>

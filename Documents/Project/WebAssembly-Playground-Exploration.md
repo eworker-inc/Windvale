@@ -95,9 +95,11 @@ It also requires the largest new compiler surface:
 
 The direct backend must not become a parallel language implementation. It should consume the same verified semantic evidence used by other execution modes.
 
-[Decision 0102](../Decisions/0102-First-Windvale-WebAssembly-Backend-Slice.md) now implements the first bounded direct slice in `.wv`. The portable selector revalidates one exact compiler-produced WVB shape, lowers `Main() -> i32` returning any constant, and emits a deterministic import-free and memory-free WebAssembly version-1 module. The first 37-byte module validates in an independent WebAssembly engine and returns `42`, matching the reference runtime.
+[Decision 0102](../Decisions/0102-First-Windvale-WebAssembly-Backend-Slice.md) implements the first bounded direct slice in `.wv`. The portable selector revalidates one exact compiler-produced WVB shape, lowers `Main() -> i32` returning any constant, and emits a deterministic import-free and memory-free WebAssembly version-1 module. The first 37-byte module validates in an independent WebAssembly engine and returns `42`, matching the reference runtime.
 
-This is backend-construction evidence rather than browser integration. It does not yet implement checked arithmetic, traps, branches, calls, instruction accounting, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, or replacement of the .NET playground path. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
+[Decision 0104](../Decisions/0104-WebAssembly-Checked-Addition-And-Execution-Contract.md) adds the second exact profile and execution ABI 1. Generated Wasm performs checked `i32.add`, returns status `3007` for `WVR3007`, and publishes the same seven-or-ten attempted WVB instruction count as the reference runtime. Successful and overflowing modules both validate and run in Node.js without an engine trap.
+
+This is backend-construction evidence rather than browser integration. It does not yet implement arbitrary instruction streams, other checked arithmetic, source branches, calls, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, or replacement of the .NET playground path. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
 ## Proposed playground shape
 
@@ -260,7 +262,7 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 
 ### Native browser execution
 
-1. Extend the implemented Windvale-authored direct backend through checked arithmetic and an explicit trap/result ABI, while retaining the Stage 0 path as its differential oracle.
+1. Generalize the implemented constant and checked-add profiles into a bounded one-function `i32` instruction lowerer while retaining execution ABI 1 and the Stage 0 path as its differential oracle.
 2. Preserve canonical WVB identity and interpreter/native/WebAssembly differential tests.
 3. Add a bounded UI/event experiment only after its capability, lifetime, and asynchronous execution model is explicit.
 4. Decide whether WebAssembly becomes a permanent Windvale host and AOT target.
@@ -294,7 +296,7 @@ Browser equality should be claimed only for behavior defined by Windvale. Layout
 ## Open decisions
 
 - Is the playground's first value education, public demonstration, development inspection, or all three in a deliberately ordered interface?
-- After the implemented Stage 0 host and first direct constant slice, what evidence threshold should move generated WebAssembly execution into the playground worker?
+- After the implemented Stage 0 host and direct constant/checked-add slices, what cross-host and containment evidence threshold should move generated WebAssembly execution into the playground worker?
 - Does direct WebAssembly compilation consume typed WIR, canonical verified WVB, or a shared machine-independent lowering model?
 - Which execution and memory limits provide useful interaction on desktop and mobile browsers?
 - Which browser engines form the first supported profile?

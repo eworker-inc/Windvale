@@ -49,7 +49,7 @@ dotnet run --project Tools/Windvale.Playground
 
 The [playground host specification](Specifications/Browser-Playground.md) defines its limits and non-claims. This is a browser host for the language, not a browser boot of Windvale OS and not yet an accepted permanent WebAssembly compiler target.
 
-The separate [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) now proves the first lower layer: portable `.wv` code revalidates one canonical WVB constant-return profile and emits a deterministic import-free Wasm module. This first slice is not yet integrated into the playground and does not replace its .NET compiler or runtime.
+The separate [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) now proves the first lower layer in Windvale source: portable `.wv` code revalidates canonical WVB constant and checked-add profiles and emits deterministic import-free Wasm. Execution ABI 1 preserves a successful result or `WVR3007` plus exact instruction accounting. These slices are not yet integrated into the playground and do not replace its .NET compiler or runtime.
 
 ## Quick start
 

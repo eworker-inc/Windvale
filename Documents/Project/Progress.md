@@ -30,7 +30,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 11. Boot path and kernel | 🚧 In progress | Qualified Probe 32 passes cross-host OS contracts and all four Windows pinned-QEMU scenarios with `WVPROC11`, a 182-page arena, and generation-safe rebuild of the same 161-page client root. | Let non-tail lifetime pressure, broader traps, Hyper-V, compact execution, or a third runnable choose the next kernel slice. |
 | 12. Runtime on Windvale OS | ✅ Qualified | Exact `Sum-Data.wv` and `Function-Only.wv` compiler outputs run across both hosts and Windvale OS; the second covers four functions and four scalar families. | Use a third real program or measured native-size pressure to choose further generalization. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
-| WebAssembly interoperability | 🚧 In progress | A portable `.wv` selector emits the first deterministic 37-byte Wasm module from canonical WVB; independent structure/result checks and a WebAssembly engine agree on `42`. | Define the checked-arithmetic trap/result ABI, then qualify the slice cross-host before playground-worker integration. |
+| WebAssembly interoperability | 🚧 In progress | A portable `.wv` selector emits deterministic constant and checked-`i32.add` Wasm profiles from canonical WVB. Execution ABI 1 preserves success, `WVR3007`, and exact instruction counts in Node.js. | Generalize bounded `i32` instruction lowering, then qualify the profiles cross-host before playground-worker integration. |
 
 ## Working end to end
 
@@ -43,6 +43,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Windvale lifetime graph → internal state owner → allocate/copy/seal/invoke/release
 - ✅ Qualified compiler WVB → native file publication
 - ✅ Canonical constant WVB → Windvale-authored selector → deterministic Wasm → result `42`
+- ✅ Checked-add WVB → Windvale-authored selector → execution ABI 1 → result or `WVR3007` plus exact instruction count
 - 🎯 Qualified compiler WVB → ABI-17 2,048-cell frame → measured lowered-value pressure at slot 2,049
 - ✅ WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
 - ✅ WVA paging mechanics → kernel-owned low-1-GiB W^X identity root

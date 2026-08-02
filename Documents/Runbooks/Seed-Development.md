@@ -6,6 +6,7 @@ This runbook is the practical entry point for building, testing, and exploring t
 
 - .NET SDK 10.0.302 or a compatible later patch in the same feature band
 - PowerShell 7 on Windows, or a POSIX shell on Linux
+- Node.js 24 when running the optional direct-WebAssembly engine verifier
 
 The repository pins the SDK in `global.json` and uses no external NuGet packages.
 
@@ -56,6 +57,16 @@ On Linux:
 Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`. Use `VERIFY_LEVEL=development` for the broad regular suite.
 
 Fast and changed-file runs are development feedback, not qualification evidence. Record which broader checks were not run and why.
+
+## Direct WebAssembly verification
+
+On Windows, rebuild the Windvale-authored backend, lower the successful and overflowing checked-add fixtures through the `.wv` hosted tool, verify exact artifact hashes, and execute both modules in Node.js with:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1
+```
+
+The verifier requires execution ABI 1 to reset its exported evidence, return status `0` or `3007`, and publish the same result and attempted-instruction count as the retained contract. A successful local run is engine evidence, not Windows/Linux cross-host qualification or browser-worker evidence.
 
 ## Compiler bootstrap convergence
 

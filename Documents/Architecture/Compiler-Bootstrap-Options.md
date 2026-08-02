@@ -135,7 +135,7 @@ C must remain an optional backend, not the definition of Windvale semantics or a
 
 ### WebAssembly — optional experimental backend
 
-WebAssembly offers a standardized portable execution environment and can provide useful ecosystem reach. Making it the primary path would, however, duplicate Windvale bytecode’s role and would not remove the need for a native kernel backend. [Decision 0102](../Decisions/0102-First-Windvale-WebAssembly-Backend-Slice.md) implements the first deliberately bounded interoperability experiment: portable `.wv` lowers one exact canonical WVB constant profile to deterministic Wasm. It remains an optional target rather than a bootstrap requirement, and wider semantic, runtime, browser, and cross-host qualification is still open.
+WebAssembly offers a standardized portable execution environment and can provide useful ecosystem reach. Making it the primary path would, however, duplicate Windvale bytecode’s role and would not remove the need for a native kernel backend. [Decision 0102](../Decisions/0102-First-Windvale-WebAssembly-Backend-Slice.md) implements the first deliberately bounded interoperability experiment: portable `.wv` lowers one exact canonical WVB constant profile to deterministic Wasm. [Decision 0104](../Decisions/0104-WebAssembly-Checked-Addition-And-Execution-Contract.md) adds checked `i32.add` and a versioned status/result/instruction boundary without an engine trap. WebAssembly remains an optional target rather than a bootstrap requirement, and general lowering, browser integration, and cross-host qualification are still open.
 
 ### LLVM IR — optional accelerator, not the core contract
 

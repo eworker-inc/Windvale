@@ -90,11 +90,16 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "86e68b7a5874c5d10c1948711a67a0d52af1c2e45db48c428d5d0a0741f53271";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "e109e22d0922cc18cec4aebfb096d501e4b6548989871c81e57f96906626f067";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "d5f70a9d44b0311b6c256858a1405fecfdfd3b098067794514df3d5bd31b8b32";
+    private const string WEBASSEMBLY_CORE_SHA256 = "aa5086df27c993ec76d92b7680517c60777936a55c1e00644ad03d736ddd2f9f";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "1ef6274dd7a7188464c7cd7c2fdb2ed71656a0d901c9d8c9aa6535f7ebe738bd";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "0da57f8ae5f3dfc420d1bd57286bf77f5012a71ee8121cfd09b8fcb05c5e0588";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
+    private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
+    private const string WEBASSEMBLY_CHECKED_ADD_SHA256 = "4057797732dd7250413f44aa71e012222591ae7e219e27a7680f246b2cedeb8a";
+    private const string WEBASSEMBLY_CHECKED_ADD_HEX = "0061736D010000000105016000017F030201000610037F0041010B7F0141000B7F0141000B0749040C57696E6476616C652E72756E00000C57696E6476616C652E61626903000F57696E6476616C652E726573756C7403011557696E6476616C652E696E737472756374696F6E7303020A3E013C01017F410024014100240241F8FFFFFF0741076A220041F8FFFFFF077320004107737141004804404107240241BF170F0B20002401410A240241000B";
+    private const string WEBASSEMBLY_CHECKED_ADD_OVERFLOW_WVB_SHA256 = "fbba878513eabf1d8c47fdbab887f314117a8ee5184c42a23edc94190926a583";
+    private const string WEBASSEMBLY_CHECKED_ADD_OVERFLOW_SHA256 = "984139ccb136981e4d6382e4c547012be13df38af056cd09abebec10cc1a6f52";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -571,6 +576,12 @@ internal static class Program
     private static readonly string WEBASSEMBLY_CONSTANT_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Constant-Main.wv");
 
+    private static readonly string WEBASSEMBLY_CHECKED_ADD_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Checked-Add-Main.wv");
+
+    private static readonly string WEBASSEMBLY_CHECKED_ADD_OVERFLOW_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Checked-Add-Overflow-Main.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -668,7 +679,7 @@ internal static class Program
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output publishes bounded bytes and advances compiler preflight", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
-        new("Windvale lowers the first verified WVB profile to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
+        new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
         new("Windvale-written project manifests agree with the reference parser", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉprojectˉmanifestsˉagree),
@@ -6797,6 +6808,118 @@ internal static class Program
             Equal(Expected, Executeˉconstantˉwebassembly(Lowered.Writtenˉbytes.AsSpan()));
         }
 
+        var Checkedˉaddˉwvb = Compileˉsuccess(WEBASSEMBLY_CHECKED_ADD_SOURCE);
+        Equal(
+            WEBASSEMBLY_CHECKED_ADD_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Checkedˉaddˉwvb));
+        var Checkedˉreference = Runˉreferenceˉcheckedˉadd(Checkedˉaddˉwvb);
+        Equal(0, Checkedˉreference.Status);
+        Equal(int.MaxValue, Checkedˉreference.Result);
+        Equal(10L, Checkedˉreference.Executedˉinstructions);
+
+        var Checkedˉlowered = Runˉwebassemblyˉtool(Tool, Checkedˉaddˉwvb);
+        Equal(0, Checkedˉlowered.Exitˉcode);
+        Equal(string.Empty, Checkedˉlowered.Diagnostics);
+        Equal(1, Checkedˉlowered.Readˉcount);
+        Equal(1, Checkedˉlowered.Writeˉcount);
+        Equal(
+            "webassembly status=Valid module-bytes=176 execution-abi=1\n",
+            Checkedˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_CHECKED_ADD_HEX,
+            Convert.ToHexString(Checkedˉlowered.Writtenˉbytes.AsSpan()));
+        Equal(
+            WEBASSEMBLY_CHECKED_ADD_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Checkedˉlowered.Writtenˉbytes.AsSpan()));
+        Equal(
+            Checkedˉreference,
+            Executeˉcheckedˉaddˉwebassembly(Checkedˉlowered.Writtenˉbytes.AsSpan()));
+
+        var Checkedˉoverflowˉwvb = Compileˉsuccess(
+            WEBASSEMBLY_CHECKED_ADD_OVERFLOW_SOURCE);
+        Equal(
+            WEBASSEMBLY_CHECKED_ADD_OVERFLOW_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Checkedˉoverflowˉwvb));
+        var Checkedˉoverflowˉreference = Runˉreferenceˉcheckedˉadd(
+            Checkedˉoverflowˉwvb);
+        Equal(new WebAssemblyˉexecutionˉresult(3007, 0, 7), Checkedˉoverflowˉreference);
+        var Checkedˉoverflowˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Checkedˉoverflowˉwvb);
+        Equal(0, Checkedˉoverflowˉlowered.Exitˉcode);
+        Equal(
+            WEBASSEMBLY_CHECKED_ADD_OVERFLOW_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Checkedˉoverflowˉlowered.Writtenˉbytes.AsSpan()));
+        Equal(
+            Checkedˉoverflowˉreference,
+            Executeˉcheckedˉaddˉwebassembly(
+                Checkedˉoverflowˉlowered.Writtenˉbytes.AsSpan()));
+
+        var Checkedˉrepeat = Runˉwebassemblyˉtool(Tool, Checkedˉaddˉwvb);
+        Equal(0, Checkedˉrepeat.Exitˉcode);
+        Sequenceˉequal(Checkedˉlowered.Writtenˉbytes, Checkedˉrepeat.Writtenˉbytes);
+
+        foreach (var Case in new (int Left, int Right, int Status, int Result, long Steps)[]
+        {
+            (40, 2, 0, 42, 10),
+            (int.MaxValue, 0, 0, int.MaxValue, 10),
+            (int.MinValue, 0, 0, int.MinValue, 10),
+            (-20, -22, 0, -42, 10),
+            (int.MaxValue, 1, 3007, 0, 7),
+            (int.MinValue, -1, 3007, 0, 7),
+            (int.MaxValue, int.MinValue, 0, -1, 10),
+        })
+        {
+            var Wvb = Checkedˉaddˉwvb.ToArray();
+            var Codeˉpayload = Findˉsectionˉpayload(Wvb, Sectionˉkind.Code);
+            BinaryPrimitives.WriteInt32LittleEndian(
+                Wvb.AsSpan(Codeˉpayload + 1, 4),
+                Case.Left);
+            BinaryPrimitives.WriteInt32LittleEndian(
+                Wvb.AsSpan(Codeˉpayload + 11, 4),
+                Case.Right);
+            var Reference = Runˉreferenceˉcheckedˉadd(Wvb);
+            Equal(Case.Status, Reference.Status);
+            Equal(Case.Result, Reference.Result);
+            Equal(Case.Steps, Reference.Executedˉinstructions);
+            var Lowered = Runˉwebassemblyˉtool(Tool, Wvb);
+            Equal(0, Lowered.Exitˉcode);
+            Equal(
+                Reference,
+                Executeˉcheckedˉaddˉwebassembly(Lowered.Writtenˉbytes.AsSpan()));
+        }
+
+        var Unsupportedˉadd = Checkedˉaddˉwvb.ToArray();
+        var Unsupportedˉaddˉcode = Findˉsectionˉpayload(
+            Unsupportedˉadd,
+            Sectionˉkind.Code);
+        Unsupportedˉadd[Unsupportedˉaddˉcode + 30] = (byte)Opcode.I32ˉsubtract;
+        var Unsupportedˉaddˉresult = Runˉwebassemblyˉtool(Tool, Unsupportedˉadd);
+        Equal(1, Unsupportedˉaddˉresult.Exitˉcode);
+        Equal("webassembly status=Unsupportedˉcode\n", Unsupportedˉaddˉresult.Diagnostics);
+        Equal(0, Unsupportedˉaddˉresult.Writeˉcount);
+
+        var Inconsistentˉadd = Checkedˉaddˉwvb.ToArray();
+        var Inconsistentˉaddˉfunction = Findˉsectionˉpayload(
+            Inconsistentˉadd,
+            Sectionˉkind.Functions);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Inconsistentˉadd.AsSpan(Inconsistentˉaddˉfunction + 17, 4),
+            2);
+        var Inconsistentˉaddˉresult = Runˉwebassemblyˉtool(Tool, Inconsistentˉadd);
+        Equal(1, Inconsistentˉaddˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉfunction\n",
+            Inconsistentˉaddˉresult.Diagnostics);
+        Equal(0, Inconsistentˉaddˉresult.Writeˉcount);
+
+        Throwsˉinvalidˉdata(() => Executeˉcheckedˉaddˉwebassembly(
+            Checkedˉlowered.Writtenˉbytes.AsSpan()[..^1]));
+        var Mutableˉabi = Checkedˉlowered.Writtenˉbytes.ToArray();
+        Mutableˉabi[23] = 1;
+        Throwsˉinvalidˉdata(() => Executeˉcheckedˉaddˉwebassembly(Mutableˉabi));
+
         var Truncated = Constantˉwvb[..^1];
         var Truncatedˉresult = Runˉwebassemblyˉtool(Tool, Truncated);
         Equal(1, Truncatedˉresult.Exitˉcode);
@@ -6821,7 +6944,7 @@ internal static class Program
             module WebAssemblyˉunsupported profile portable;
 
             export fn Main() -> i32 {
-                return 40 + 2;
+                return 40 - 2;
             }
             """);
         var Unsupported = Runˉwebassemblyˉtool(Tool, Unsupportedˉwvb);
@@ -10765,6 +10888,237 @@ internal static class Program
             Result.Executedˉinstructions);
     }
 
+    private static WebAssemblyˉexecutionˉresult Runˉreferenceˉcheckedˉadd(
+        IEnumerable<byte> input)
+    {
+        var Verified = Moduleˉcodec.Readˉandˉverify(input.ToArray());
+        var Runtime = new Referenceˉruntime(
+            Verified,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults with { Collectˉfunctionˉsteps = true });
+        try
+        {
+            var Result = Runtime.Runˉmain();
+            Equal(
+                Result.Executedˉinstructions,
+                Runtime.Readˉfunctionˉsteps().Sum(Item => Item.Executedˉinstructions));
+            return new(0, Result.Exitˉcode, Result.Executedˉinstructions);
+        }
+        catch (Runtimeˉexception Exception) when (Exception.Code == "WVR3007")
+        {
+            var Steps = Runtime.Readˉfunctionˉsteps()
+                .Sum(Item => Item.Executedˉinstructions);
+            return new(3007, 0, Steps);
+        }
+    }
+
+    private static WebAssemblyˉexecutionˉresult Executeˉcheckedˉaddˉwebassembly(
+        ReadOnlySpan<byte> module)
+    {
+        var Bytes = module.ToArray();
+        var Cursor = 0;
+
+        void Require(bool condition, string message)
+        {
+            if (!condition)
+            {
+                throw new InvalidDataException(message);
+            }
+        }
+
+        byte Readˉbyte()
+        {
+            Require(Cursor < Bytes.Length, "The checked-add WebAssembly module is truncated.");
+            return Bytes[Cursor++];
+        }
+
+        uint Readˉuleb32()
+        {
+            uint Result = 0;
+            for (var Index = 0; Index < 5; Index++)
+            {
+                var Value = Readˉbyte();
+                var Payload = (uint)(Value & 0x7F);
+                if (Index == 4)
+                {
+                    Require(Payload <= 0x0F, "The checked-add u32 LEB128 value exceeds 32 bits.");
+                }
+                Result |= Payload << (Index * 7);
+                if ((Value & 0x80) == 0)
+                {
+                    return Result;
+                }
+            }
+            throw new InvalidDataException("The checked-add u32 LEB128 value is unterminated.");
+        }
+
+        int Readˉsleb32()
+        {
+            long Result = 0;
+            for (var Index = 0; Index < 5; Index++)
+            {
+                var Value = Readˉbyte();
+                var Payload = Value & 0x7F;
+                Result |= (long)Payload << (Index * 7);
+                if ((Value & 0x80) != 0)
+                {
+                    continue;
+                }
+
+                if (Index == 4)
+                {
+                    var Negative = (Payload & 0x08) != 0;
+                    Require(
+                        Negative
+                            ? (Payload & 0x70) == 0x70
+                            : (Payload & 0x70) == 0,
+                        "The checked-add i32 LEB128 value has invalid unused bits.");
+                    return unchecked((int)(uint)Result);
+                }
+
+                var Shift = (Index + 1) * 7;
+                if ((Value & 0x40) != 0)
+                {
+                    Result |= -1L << Shift;
+                }
+                Require(Result is >= int.MinValue and <= int.MaxValue,
+                    "The checked-add signed LEB128 value exceeds i32.");
+                return (int)Result;
+            }
+            throw new InvalidDataException("The checked-add i32 LEB128 value is unterminated.");
+        }
+
+        int Readˉsection(byte expectedˉkind)
+        {
+            Require(Readˉbyte() == expectedˉkind, "The checked-add section order is invalid.");
+            var Length = Readˉuleb32();
+            Require(Length <= int.MaxValue, "The checked-add section is oversized.");
+            Require(Cursor <= Bytes.Length - (int)Length, "The checked-add section is truncated.");
+            return Cursor + (int)Length;
+        }
+
+        void Readˉindexed(byte opcode, uint index)
+        {
+            Require(Readˉbyte() == opcode, "The checked-add indexed opcode is invalid.");
+            Require(Readˉuleb32() == index, "The checked-add instruction index is invalid.");
+        }
+
+        int Readˉi32ˉconstant()
+        {
+            Require(Readˉbyte() == 0x41, "The checked-add i32 constant opcode is invalid.");
+            return Readˉsleb32();
+        }
+
+        void Readˉglobal(byte mutable, int initial)
+        {
+            Require(Readˉbyte() == 0x7F, "The checked-add global type is invalid.");
+            Require(Readˉbyte() == mutable, "The checked-add global mutability is invalid.");
+            Require(Readˉi32ˉconstant() == initial, "The checked-add global initializer is invalid.");
+            Require(Readˉbyte() == 0x0B, "The checked-add global initializer is unterminated.");
+        }
+
+        void Readˉexport(string name, byte kind, uint index)
+        {
+            Require(Readˉuleb32() == name.Length, "The checked-add export name length is invalid.");
+            foreach (var Character in name)
+            {
+                Require(Readˉbyte() == (byte)Character, "The checked-add export name is invalid.");
+            }
+            Require(Readˉbyte() == kind, "The checked-add export kind is invalid.");
+            Require(Readˉuleb32() == index, "The checked-add export index is invalid.");
+        }
+
+        Require(Bytes.Length >= 8, "The checked-add WebAssembly header is truncated.");
+        Require(Readˉbyte() == 0x00, "The checked-add WebAssembly magic is invalid.");
+        Require(Readˉbyte() == 0x61, "The checked-add WebAssembly magic is invalid.");
+        Require(Readˉbyte() == 0x73, "The checked-add WebAssembly magic is invalid.");
+        Require(Readˉbyte() == 0x6D, "The checked-add WebAssembly magic is invalid.");
+        Require(Readˉbyte() == 0x01, "The checked-add WebAssembly version is invalid.");
+        Require(Readˉbyte() == 0x00, "The checked-add WebAssembly version is invalid.");
+        Require(Readˉbyte() == 0x00, "The checked-add WebAssembly version is invalid.");
+        Require(Readˉbyte() == 0x00, "The checked-add WebAssembly version is invalid.");
+
+        var Typeˉend = Readˉsection(1);
+        Require(Readˉuleb32() == 1, "The checked-add type count is invalid.");
+        Require(Readˉbyte() == 0x60, "The checked-add function type is invalid.");
+        Require(Readˉuleb32() == 0, "The checked-add parameter count is invalid.");
+        Require(Readˉuleb32() == 1, "The checked-add result count is invalid.");
+        Require(Readˉbyte() == 0x7F, "The checked-add result type is invalid.");
+        Require(Cursor == Typeˉend, "The checked-add type section has trailing bytes.");
+
+        var Functionˉend = Readˉsection(3);
+        Require(Readˉuleb32() == 1, "The checked-add function count is invalid.");
+        Require(Readˉuleb32() == 0, "The checked-add type index is invalid.");
+        Require(Cursor == Functionˉend, "The checked-add function section has trailing bytes.");
+
+        var Globalˉend = Readˉsection(6);
+        Require(Readˉuleb32() == 3, "The checked-add global count is invalid.");
+        Readˉglobal(0, 1);
+        Readˉglobal(1, 0);
+        Readˉglobal(1, 0);
+        Require(Cursor == Globalˉend, "The checked-add global section has trailing bytes.");
+
+        var Exportˉend = Readˉsection(7);
+        Require(Readˉuleb32() == 4, "The checked-add export count is invalid.");
+        Readˉexport("Windvale.run", 0, 0);
+        Readˉexport("Windvale.abi", 3, 0);
+        Readˉexport("Windvale.result", 3, 1);
+        Readˉexport("Windvale.instructions", 3, 2);
+        Require(Cursor == Exportˉend, "The checked-add export section has trailing bytes.");
+
+        var Codeˉend = Readˉsection(10);
+        Require(Readˉuleb32() == 1, "The checked-add body count is invalid.");
+        var Bodyˉlength = Readˉuleb32();
+        Require(Bodyˉlength <= int.MaxValue, "The checked-add body is oversized.");
+        Require(Cursor <= Codeˉend - (int)Bodyˉlength, "The checked-add body is truncated.");
+        var Bodyˉend = Cursor + (int)Bodyˉlength;
+        Require(Readˉuleb32() == 1, "The checked-add local group count is invalid.");
+        Require(Readˉuleb32() == 1, "The checked-add local count is invalid.");
+        Require(Readˉbyte() == 0x7F, "The checked-add local type is invalid.");
+
+        Require(Readˉi32ˉconstant() == 0, "The checked-add result reset is invalid.");
+        Readˉindexed(0x24, 1);
+        Require(Readˉi32ˉconstant() == 0, "The checked-add step reset is invalid.");
+        Readˉindexed(0x24, 2);
+
+        var Left = Readˉi32ˉconstant();
+        var Right = Readˉi32ˉconstant();
+        Require(Readˉbyte() == 0x6A, "The checked-add addition opcode is invalid.");
+        Readˉindexed(0x22, 0);
+        Require(Readˉi32ˉconstant() == Left, "The checked-add left overflow probe changed.");
+        Require(Readˉbyte() == 0x73, "The checked-add first xor opcode is invalid.");
+        Readˉindexed(0x20, 0);
+        Require(Readˉi32ˉconstant() == Right, "The checked-add right overflow probe changed.");
+        Require(Readˉbyte() == 0x73, "The checked-add second xor opcode is invalid.");
+        Require(Readˉbyte() == 0x71, "The checked-add and opcode is invalid.");
+        Require(Readˉi32ˉconstant() == 0, "The checked-add sign comparison constant is invalid.");
+        Require(Readˉbyte() == 0x48, "The checked-add signed comparison opcode is invalid.");
+        Require(Readˉbyte() == 0x04, "The checked-add if opcode is invalid.");
+        Require(Readˉbyte() == 0x40, "The checked-add if block type is invalid.");
+
+        Require(Readˉi32ˉconstant() == 7, "The checked-add overflow step count is invalid.");
+        Readˉindexed(0x24, 2);
+        Require(Readˉi32ˉconstant() == 3007, "The checked-add overflow status is invalid.");
+        Require(Readˉbyte() == 0x0F, "The checked-add overflow return is invalid.");
+        Require(Readˉbyte() == 0x0B, "The checked-add overflow branch is unterminated.");
+
+        Readˉindexed(0x20, 0);
+        Readˉindexed(0x24, 1);
+        Require(Readˉi32ˉconstant() == 10, "The checked-add success step count is invalid.");
+        Readˉindexed(0x24, 2);
+        Require(Readˉi32ˉconstant() == 0, "The checked-add success status is invalid.");
+        Require(Readˉbyte() == 0x0B, "The checked-add body end is invalid.");
+        Require(Cursor == Bodyˉend, "The checked-add body has trailing bytes.");
+        Require(Cursor == Codeˉend, "The checked-add code section has trailing bytes.");
+        Require(Cursor == Bytes.Length, "The checked-add module has trailing bytes.");
+
+        var Sum = unchecked(Left + Right);
+        var Overflow = ((Left ^ Sum) & (Right ^ Sum)) < 0;
+        return Overflow
+            ? new(3007, 0, 7)
+            : new(0, Sum, 10);
+    }
+
     private static int Executeˉconstantˉwebassembly(ReadOnlySpan<byte> module)
     {
         var Bytes = module.ToArray();
@@ -11823,6 +12177,11 @@ internal static class Program
         int Writeˉcount,
         string Writtenˉresourceˉname,
         ImmutableArray<byte> Writtenˉbytes,
+        long Executedˉinstructions);
+
+    private sealed record WebAssemblyˉexecutionˉresult(
+        int Status,
+        int Result,
         long Executedˉinstructions);
 
     private sealed record Wvˉlinkerˉscanˉresult(

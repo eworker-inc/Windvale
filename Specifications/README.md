@@ -34,7 +34,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Seed CLI](Seed-CLI.md)
 - [Seed conformance](Seed-Conformance.md)
 - [Browser playground host](Browser-Playground.md)
-- [Experimental WebAssembly target](Windvale-WebAssembly.md)
+- [Experimental WebAssembly target and execution ABI](Windvale-WebAssembly.md)
 - [`wvdump` structural core](Wv-Dump-Core.md)
 - [`wvdump` report](Wv-Dump-Report.md)
 
