@@ -164,6 +164,7 @@ jobs:
           BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           if ! git cat-file -e "${BASE_SHA}^{commit}"; then
             git fetch --no-tags --no-recurse-submodules --depth=1 origin "$BASE_SHA"
           fi
