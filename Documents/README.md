@@ -8,7 +8,7 @@ Windvale separates current status, enduring architecture, accepted decisions, ex
 - [Roadmap](Project/Roadmap.md) — phase gates, detailed sequence, and current transfer
 - [Project vision](Project/Project-Vision.md) — purpose, intended stack, success principles, and non-goals
 - [Open questions](Project/Open-Questions.md) — unresolved choices only
-- [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 experiment, possible permanent browser target, demonstrations, constraints, and decisions still to make
+- [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host and first Windvale-authored direct-backend slice, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 
 ## Architecture

@@ -1,0 +1,4 @@
+windvale-project 1
+root "Examples/Compiler/WebAssembly-Tool.wv"
+source "Compiler/Windvale/WebAssembly-Core.wv"
+emit wvb

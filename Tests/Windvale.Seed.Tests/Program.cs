@@ -90,6 +90,11 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
+    private const string WEBASSEMBLY_CORE_SHA256 = "86e68b7a5874c5d10c1948711a67a0d52af1c2e45db48c428d5d0a0741f53271";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "e109e22d0922cc18cec4aebfb096d501e4b6548989871c81e57f96906626f067";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "d5f70a9d44b0311b6c256858a1405fecfdfd3b098067794514df3d5bd31b8b32";
+    private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
+    private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -554,6 +559,18 @@ internal static class Program
     private static readonly string SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Composition-Middle.wv");
 
+    private static readonly string WEBASSEMBLY_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Core.wv");
+
+    private static readonly string WEBASSEMBLY_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Tool.wv");
+
+    private static readonly string WEBASSEMBLY_DEMO_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Demo.wv");
+
+    private static readonly string WEBASSEMBLY_CONSTANT_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Constant-Main.wv");
+
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
@@ -651,6 +668,7 @@ internal static class Program
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output publishes bounded bytes and advances compiler preflight", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
+        new("Windvale lowers the first verified WVB profile to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
         new("Windvale-written project manifests agree with the reference parser", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉprojectˉmanifestsˉagree),
@@ -6685,6 +6703,142 @@ internal static class Program
         Equal(0, Rejectedˉwriter.Writeˉcount);
     }
 
+    private static void Compilerˉwebassemblyˉruns()
+    {
+        var Coreˉbytes = Compileˉwithˉwebassemblyˉsuccess(
+            WEBASSEMBLY_CORE_SOURCE,
+            "WebAssembly-Core.wv",
+            includeˉwebassembly: false);
+        Equal(WEBASSEMBLY_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Coreˉbytes));
+        var Core = Moduleˉcodec.Readˉandˉverify(Coreˉbytes);
+        Equal("Compilerˉwebassembly", Core.Module.Name);
+        Equal(Moduleˉprofile.Portable, Core.Module.Profile);
+        True(
+            Core.Module.Exports.Any(Export =>
+                Export.Name == "Compilerˉlowerˉwvbˉwebassembly"),
+            "The Windvale WebAssembly lowering entry point was not emitted.");
+
+        var Toolˉbytes = Compileˉwithˉwebassemblyˉsuccess(
+            WEBASSEMBLY_TOOL_SOURCE,
+            "WebAssembly-Tool.wv");
+        Equal(WEBASSEMBLY_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Demoˉbytes = Compileˉwithˉwebassemblyˉsuccess(
+            WEBASSEMBLY_DEMO_SOURCE,
+            "WebAssembly-Demo.wv");
+        Equal(WEBASSEMBLY_DEMO_SHA256, Moduleˉdigest.Calculateˉsha256(Demoˉbytes));
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Demoˉbytes),
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+        var Constantˉwvb = Compileˉsuccess(WEBASSEMBLY_CONSTANT_SOURCE);
+        Equal(
+            WEBASSEMBLY_CONSTANT_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Constantˉwvb));
+        var Constantˉverified = Moduleˉcodec.Readˉandˉverify(Constantˉwvb);
+        Equal(
+            42,
+            new Referenceˉruntime(
+                Constantˉverified,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        var First = Runˉwebassemblyˉtool(Tool, Constantˉwvb);
+        Equal(0, First.Exitˉcode);
+        Equal(string.Empty, First.Diagnostics);
+        Equal(1, First.Readˉcount);
+        Equal(1, First.Writeˉcount);
+        Equal("output.wasm", First.Writtenˉresourceˉname);
+        Equal("webassembly status=Valid module-bytes=37 result=42\n", First.Output);
+        Sequenceˉequal<byte>(
+            [
+                0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00,
+                0x01, 0x05, 0x01, 0x60, 0x00, 0x01, 0x7F,
+                0x03, 0x02, 0x01, 0x00,
+                0x07, 0x08, 0x01, 0x04, 0x4D, 0x61, 0x69, 0x6E, 0x00, 0x00,
+                0x0A, 0x06, 0x01, 0x04, 0x00, 0x41, 0x2A, 0x0B,
+            ],
+            First.Writtenˉbytes);
+        Equal(
+            WEBASSEMBLY_CONSTANT_SHA256,
+            Moduleˉdigest.Calculateˉsha256(First.Writtenˉbytes.AsSpan()));
+        Equal(42, Executeˉconstantˉwebassembly(First.Writtenˉbytes.AsSpan()));
+
+        var Second = Runˉwebassemblyˉtool(Tool, Constantˉwvb);
+        Equal(0, Second.Exitˉcode);
+        Sequenceˉequal(First.Writtenˉbytes, Second.Writtenˉbytes);
+
+        foreach (var Expected in new[]
+        {
+            -134_217_729,
+            -65,
+            -64,
+            63,
+            64,
+            8_192,
+            134_217_728,
+            int.MaxValue,
+            int.MinValue,
+        })
+        {
+            var Wvb = Constantˉwvb.ToArray();
+            var Codeˉpayload = Findˉsectionˉpayload(Wvb, Sectionˉkind.Code);
+            BinaryPrimitives.WriteInt32LittleEndian(Wvb.AsSpan(Codeˉpayload + 1, 4), Expected);
+            Equal(
+                Expected,
+                new Referenceˉruntime(
+                    Moduleˉcodec.Readˉandˉverify(Wvb),
+                    new Referenceˉcapabilityˉhost(new StringWriter()),
+                    Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+            var Lowered = Runˉwebassemblyˉtool(Tool, Wvb);
+            Equal(0, Lowered.Exitˉcode);
+            Equal(Expected, Executeˉconstantˉwebassembly(Lowered.Writtenˉbytes.AsSpan()));
+        }
+
+        var Truncated = Constantˉwvb[..^1];
+        var Truncatedˉresult = Runˉwebassemblyˉtool(Tool, Truncated);
+        Equal(1, Truncatedˉresult.Exitˉcode);
+        Equal("webassembly status=Invalidˉwvb\n", Truncatedˉresult.Diagnostics);
+        Equal(0, Truncatedˉresult.Writeˉcount);
+
+        var Oversizedˉsection = Constantˉwvb.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(Oversizedˉsection.AsSpan(16, 4), uint.MaxValue);
+        var Oversizedˉsectionˉresult = Runˉwebassemblyˉtool(Tool, Oversizedˉsection);
+        Equal(1, Oversizedˉsectionˉresult.Exitˉcode);
+        Equal("webassembly status=Invalidˉwvb\n", Oversizedˉsectionˉresult.Diagnostics);
+        Equal(0, Oversizedˉsectionˉresult.Writeˉcount);
+
+        var Hosted = Constantˉwvb.ToArray();
+        Hosted[20] = 2;
+        var Hostedˉresult = Runˉwebassemblyˉtool(Tool, Hosted);
+        Equal(1, Hostedˉresult.Exitˉcode);
+        Equal("webassembly status=Unsupportedˉprofile\n", Hostedˉresult.Diagnostics);
+        Equal(0, Hostedˉresult.Writeˉcount);
+
+        var Unsupportedˉwvb = Compileˉsuccess("""
+            module WebAssemblyˉunsupported profile portable;
+
+            export fn Main() -> i32 {
+                return 40 + 2;
+            }
+            """);
+        var Unsupported = Runˉwebassemblyˉtool(Tool, Unsupportedˉwvb);
+        Equal(1, Unsupported.Exitˉcode);
+        Contains(Unsupported.Diagnostics, "webassembly status=Unsupportedˉ");
+        Equal(0, Unsupported.Writeˉcount);
+
+        var Truncatedˉwasm = First.Writtenˉbytes[..^1].ToArray();
+        Throwsˉinvalidˉdata(() => Executeˉconstantˉwebassembly(Truncatedˉwasm));
+        var Inconsistentˉwasm = First.Writtenˉbytes.ToArray();
+        Inconsistentˉwasm[9] = 6;
+        Throwsˉinvalidˉdata(() => Executeˉconstantˉwebassembly(Inconsistentˉwasm));
+        var Invalidˉopcode = First.Writtenˉbytes.ToArray();
+        Invalidˉopcode[^3] = 0x42;
+        Throwsˉinvalidˉdata(() => Executeˉconstantˉwebassembly(Invalidˉopcode));
+    }
+
     private static void Moduleˉroundˉtrip()
     {
         var Bytes = Compileˉsuccess(SUM_SOURCE);
@@ -10574,6 +10728,177 @@ internal static class Program
         }
     }
 
+    private static WebAssemblyˉtoolˉresult Runˉwebassemblyˉtool(
+        Verifiedˉmodule module,
+        IEnumerable<byte> input)
+    {
+        var Input = input.ToImmutableArray();
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Reader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            Equal("input.wvb", Name);
+            True(Input.Length <= Maximumˉbytes, "The WebAssembly input limit was too small.");
+            return Input;
+        });
+        var Writer = new Capturingˉfileˉwriter();
+        var Authorized = module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Result = new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["input.wvb", "output.wasm"],
+                Output,
+                Diagnostics,
+                Reader,
+                Writer)),
+            new(Authorized, Maximumˉinstructions: 100_000_000)).Runˉmain();
+        return new(
+            Result.Exitˉcode,
+            Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal),
+            Diagnostics.ToString().Replace("\r\n", "\n", StringComparison.Ordinal),
+            Reader.Readˉcount,
+            Writer.Writeˉcount,
+            Writer.Resourceˉname,
+            Writer.Bytes,
+            Result.Executedˉinstructions);
+    }
+
+    private static int Executeˉconstantˉwebassembly(ReadOnlySpan<byte> module)
+    {
+        var Bytes = module.ToArray();
+        var Cursor = 0;
+
+        void Require(bool condition, string message)
+        {
+            if (!condition)
+            {
+                throw new InvalidDataException(message);
+            }
+        }
+
+        byte Readˉbyte()
+        {
+            Require(Cursor < Bytes.Length, "The WebAssembly module is truncated.");
+            return Bytes[Cursor++];
+        }
+
+        uint Readˉuleb32()
+        {
+            uint Result = 0;
+            for (var Index = 0; Index < 5; Index++)
+            {
+                var Value = Readˉbyte();
+                var Payload = (uint)(Value & 0x7F);
+                if (Index == 4)
+                {
+                    Require(Payload <= 0x0F, "The u32 LEB128 value exceeds 32 bits.");
+                }
+                Result |= Payload << (Index * 7);
+                if ((Value & 0x80) == 0)
+                {
+                    return Result;
+                }
+            }
+            throw new InvalidDataException("The u32 LEB128 value is unterminated.");
+        }
+
+        int Readˉsleb32()
+        {
+            long Result = 0;
+            for (var Index = 0; Index < 5; Index++)
+            {
+                var Value = Readˉbyte();
+                var Payload = Value & 0x7F;
+                Result |= (long)Payload << (Index * 7);
+                if ((Value & 0x80) != 0)
+                {
+                    continue;
+                }
+
+                if (Index == 4)
+                {
+                    var Negative = (Payload & 0x08) != 0;
+                    Require(
+                        Negative
+                            ? (Payload & 0x70) == 0x70
+                            : (Payload & 0x70) == 0,
+                        "The i32 LEB128 value has invalid unused bits.");
+                    return unchecked((int)(uint)Result);
+                }
+
+                var Shift = (Index + 1) * 7;
+                if ((Value & 0x40) != 0)
+                {
+                    Result |= -1L << Shift;
+                }
+                Require(Result is >= int.MinValue and <= int.MaxValue,
+                    "The signed LEB128 value exceeds i32.");
+                return (int)Result;
+            }
+            throw new InvalidDataException("The i32 LEB128 value is unterminated.");
+        }
+
+        int Readˉsection(byte expectedˉkind)
+        {
+            Require(Readˉbyte() == expectedˉkind, "The WebAssembly section order is invalid.");
+            var Length = Readˉuleb32();
+            Require(Length <= int.MaxValue, "The WebAssembly section is oversized.");
+            Require(Cursor <= Bytes.Length - (int)Length, "The WebAssembly section is truncated.");
+            return Cursor + (int)Length;
+        }
+
+        Require(Bytes.Length >= 8, "The WebAssembly header is truncated.");
+        Require(Readˉbyte() == 0x00, "The WebAssembly magic is invalid.");
+        Require(Readˉbyte() == 0x61, "The WebAssembly magic is invalid.");
+        Require(Readˉbyte() == 0x73, "The WebAssembly magic is invalid.");
+        Require(Readˉbyte() == 0x6D, "The WebAssembly magic is invalid.");
+        Require(Readˉbyte() == 0x01, "The WebAssembly version is invalid.");
+        Require(Readˉbyte() == 0x00, "The WebAssembly version is invalid.");
+        Require(Readˉbyte() == 0x00, "The WebAssembly version is invalid.");
+        Require(Readˉbyte() == 0x00, "The WebAssembly version is invalid.");
+
+        var Typeˉend = Readˉsection(1);
+        Require(Readˉuleb32() == 1, "The WebAssembly type count is invalid.");
+        Require(Readˉbyte() == 0x60, "The WebAssembly function type is invalid.");
+        Require(Readˉuleb32() == 0, "The WebAssembly parameter count is invalid.");
+        Require(Readˉuleb32() == 1, "The WebAssembly result count is invalid.");
+        Require(Readˉbyte() == 0x7F, "The WebAssembly result type is invalid.");
+        Require(Cursor == Typeˉend, "The WebAssembly type section has trailing bytes.");
+
+        var Functionˉend = Readˉsection(3);
+        Require(Readˉuleb32() == 1, "The WebAssembly function count is invalid.");
+        Require(Readˉuleb32() == 0, "The WebAssembly type index is invalid.");
+        Require(Cursor == Functionˉend, "The WebAssembly function section has trailing bytes.");
+
+        var Exportˉend = Readˉsection(7);
+        Require(Readˉuleb32() == 1, "The WebAssembly export count is invalid.");
+        Require(Readˉuleb32() == 4, "The WebAssembly export name length is invalid.");
+        Require(Readˉbyte() == (byte)'M', "The WebAssembly export name is invalid.");
+        Require(Readˉbyte() == (byte)'a', "The WebAssembly export name is invalid.");
+        Require(Readˉbyte() == (byte)'i', "The WebAssembly export name is invalid.");
+        Require(Readˉbyte() == (byte)'n', "The WebAssembly export name is invalid.");
+        Require(Readˉbyte() == 0, "The WebAssembly export kind is invalid.");
+        Require(Readˉuleb32() == 0, "The WebAssembly export index is invalid.");
+        Require(Cursor == Exportˉend, "The WebAssembly export section has trailing bytes.");
+
+        var Codeˉend = Readˉsection(10);
+        Require(Readˉuleb32() == 1, "The WebAssembly body count is invalid.");
+        var Bodyˉlength = Readˉuleb32();
+        Require(Bodyˉlength <= int.MaxValue, "The WebAssembly body is oversized.");
+        Require(Cursor <= Codeˉend - (int)Bodyˉlength, "The WebAssembly body is truncated.");
+        var Bodyˉend = Cursor + (int)Bodyˉlength;
+        Require(Readˉuleb32() == 0, "The WebAssembly local group count is invalid.");
+        Require(Readˉbyte() == 0x41, "The WebAssembly body opcode is invalid.");
+        var Result = Readˉsleb32();
+        Require(Readˉbyte() == 0x0B, "The WebAssembly body end is invalid.");
+        Require(Cursor == Bodyˉend, "The WebAssembly body has trailing bytes.");
+        Require(Cursor == Codeˉend, "The WebAssembly code section has trailing bytes.");
+        Require(Cursor == Bytes.Length, "The WebAssembly module has trailing bytes.");
+        return Result;
+    }
+
     private static int Runˉportable(string source)
     {
         var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(source));
@@ -10923,6 +11248,31 @@ internal static class Program
         return Result.Moduleˉbytes.ToArray();
     }
 
+    private static byte[] Compileˉwithˉwebassemblyˉsuccess(
+        string source,
+        string sourceˉname,
+        bool includeˉwebassembly = true)
+    {
+        var Dependencies = new List<Sourceˉmoduleˉinput>();
+        if (includeˉwebassembly)
+        {
+            Dependencies.Add(new(
+                "Compiler/Windvale/WebAssembly-Core.wv",
+                WEBASSEMBLY_CORE_SOURCE));
+        }
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            Dependencies);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler WebAssembly composition failed: " +
+                string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
     private static byte[] Compileˉwithˉtoolˉfoundationˉsuccess(string source, string sourceˉname)
     {
         var Result = Seedˉcompiler.Compileˉmodules(
@@ -11179,6 +11529,20 @@ internal static class Program
 
         throw new InvalidOperationException(
             $"Expected invalid-operation failure containing '{expectedˉmessage}'.");
+    }
+
+    private static void Throwsˉinvalidˉdata(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (InvalidDataException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException("Expected invalid WebAssembly data failure.");
     }
 
     private static void Throwsˉnativeˉtrap(string expectedˉcode, Action action)
@@ -11449,6 +11813,16 @@ internal static class Program
         string Output,
         string Diagnostics,
         int Readˉcount,
+        long Executedˉinstructions);
+
+    private sealed record WebAssemblyˉtoolˉresult(
+        int Exitˉcode,
+        string Output,
+        string Diagnostics,
+        int Readˉcount,
+        int Writeˉcount,
+        string Writtenˉresourceˉname,
+        ImmutableArray<byte> Writtenˉbytes,
         long Executedˉinstructions);
 
     private sealed record Wvˉlinkerˉscanˉresult(

@@ -197,5 +197,17 @@
     <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Composition-Middle.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Composition-Middle.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Core.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Core.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/WebAssembly-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/WebAssembly-Demo.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Demo.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Constant-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Constant-Main.wv" />
   </ItemGroup>
 </Project>

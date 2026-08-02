@@ -33,6 +33,12 @@ Windvale remains bytecode-first for as long as that reduces bootstrap loops. A n
 | 12. Runtime on Windvale OS | Load, verify, and run one identical WVB through equivalent Windvale-native execution contracts across Windows, Linux, and Windvale OS. | Qualified at `f3eca7c`: canonical `Sum-Data.wv` WVB returns `29` through Windows/Linux reference/native paths and a protected Windvale OS interpreter |
 | 13. Public foundation | Reproducible recovery bootstrap, security limits, licensing, governance, contribution rules, and public-release criteria. | Public repository and policies are live; the initial publication baseline and ongoing public operations remain |
 
+## Exploratory WebAssembly goal
+
+WebAssembly remains an optional interoperability track and does not reorder the native Windows/Linux or Windvale OS phase gates. The active experimental goal is a Windvale-authored backend that consumes canonical verified WVB, emits deterministic WebAssembly, preserves Windvale results, traps, capabilities, and defined resource counters, and can eventually replace the .NET execution path in the browser playground without making WebAssembly the language definition or portable distribution identity.
+
+[Decision 0102](../Decisions/0102-First-Windvale-WebAssembly-Backend-Slice.md) implements the first slice: one exact portable `Main() -> i32` constant profile lowers through `.wv` to a 37-byte import-free module and agrees with the reference result. The next gate is one checked `i32` arithmetic operation plus an explicit result/trap ABI, focused malformed-input evidence, Windows/Linux byte equality, and execution in an independently identified WebAssembly engine. Browser-worker integration follows only after that semantic boundary is qualified.
+
 ## Detailed execution plan
 
 ### Phase 6 - assembler and linker

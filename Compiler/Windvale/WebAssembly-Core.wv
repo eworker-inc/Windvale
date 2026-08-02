@@ -1,0 +1,461 @@
+module Compilerˉwebassembly profile portable;
+
+enum Compilerˉwebassemblyˉstatus {
+    Valid = 0;
+    Invalidˉwvb = 1;
+    Unsupportedˉprofile = 2;
+    Unsupportedˉmodule = 3;
+    Unsupportedˉfunction = 4;
+    Unsupportedˉcode = 5;
+    Outputˉlimit = 6;
+}
+
+record Compilerˉwebassemblyˉdivision {
+    Quotient: u32;
+    Remainder: u32;
+}
+
+record Compilerˉwebassemblyˉsection {
+    Valid: bool;
+    Payloadˉoffset: u32;
+    Payloadˉlength: u32;
+    Nextˉoffset: u32;
+}
+
+record Compilerˉwebassemblyˉsummary {
+    Status: Compilerˉwebassemblyˉstatus;
+    Webassembly: bytes;
+    Result: i32;
+}
+
+export fn Compilerˉwebassemblyˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Compilerˉwebassemblyˉfailure(
+    Input: bytes,
+    Status: Compilerˉwebassemblyˉstatus
+) -> Compilerˉwebassemblyˉsummary {
+    return Compilerˉwebassemblyˉsummary(
+        Status,
+        Compilerˉwebassemblyˉempty(Input),
+        0
+    );
+}
+
+export fn Compilerˉwebassemblyˉrangeˉisˉvalid(
+    Total: u32,
+    Offset: u32,
+    Length: u32
+) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+export fn Compilerˉwebassemblyˉreadˉsection(
+    Input: bytes,
+    Cursor: u32,
+    Kind: u8
+) -> Compilerˉwebassemblyˉsection {
+    let Total: u32 = Bytesˉlength(Input);
+    if !Compilerˉwebassemblyˉrangeˉisˉvalid(Total, Cursor, 8u32) {
+        return Compilerˉwebassemblyˉsection(false, 0u32, 0u32, 0u32);
+    }
+    if Bytesˉreadˉu8(Input, Cursor) != Kind {
+        return Compilerˉwebassemblyˉsection(false, 0u32, 0u32, 0u32);
+    }
+    if Bytesˉreadˉu8(Input, Cursor + 1u32) != 0u8 {
+        return Compilerˉwebassemblyˉsection(false, 0u32, 0u32, 0u32);
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 {
+        return Compilerˉwebassemblyˉsection(false, 0u32, 0u32, 0u32);
+    }
+    let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+    let Payloadˉoffset: u32 = Cursor + 8u32;
+    if !Compilerˉwebassemblyˉrangeˉisˉvalid(
+        Total,
+        Payloadˉoffset,
+        Payloadˉlength
+    ) {
+        return Compilerˉwebassemblyˉsection(false, 0u32, 0u32, 0u32);
+    }
+    return Compilerˉwebassemblyˉsection(
+        true,
+        Payloadˉoffset,
+        Payloadˉlength,
+        Payloadˉoffset + Payloadˉlength
+    );
+}
+
+export fn Compilerˉwebassemblyˉbyte(Value: u32) -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32);
+}
+
+export fn Compilerˉwebassemblyˉdivideˉoneˉhundredˉtwentyˉeight(
+    Value: u32
+) -> Compilerˉwebassemblyˉdivision {
+    var Quotient: u32 = 0u32;
+    var Remainder: u32 = Value;
+    if Remainder >= 2147483648u32 { Remainder = Remainder - 2147483648u32; Quotient = Quotient + 16777216u32; }
+    if Remainder >= 1073741824u32 { Remainder = Remainder - 1073741824u32; Quotient = Quotient + 8388608u32; }
+    if Remainder >= 536870912u32 { Remainder = Remainder - 536870912u32; Quotient = Quotient + 4194304u32; }
+    if Remainder >= 268435456u32 { Remainder = Remainder - 268435456u32; Quotient = Quotient + 2097152u32; }
+    if Remainder >= 134217728u32 { Remainder = Remainder - 134217728u32; Quotient = Quotient + 1048576u32; }
+    if Remainder >= 67108864u32 { Remainder = Remainder - 67108864u32; Quotient = Quotient + 524288u32; }
+    if Remainder >= 33554432u32 { Remainder = Remainder - 33554432u32; Quotient = Quotient + 262144u32; }
+    if Remainder >= 16777216u32 { Remainder = Remainder - 16777216u32; Quotient = Quotient + 131072u32; }
+    if Remainder >= 8388608u32 { Remainder = Remainder - 8388608u32; Quotient = Quotient + 65536u32; }
+    if Remainder >= 4194304u32 { Remainder = Remainder - 4194304u32; Quotient = Quotient + 32768u32; }
+    if Remainder >= 2097152u32 { Remainder = Remainder - 2097152u32; Quotient = Quotient + 16384u32; }
+    if Remainder >= 1048576u32 { Remainder = Remainder - 1048576u32; Quotient = Quotient + 8192u32; }
+    if Remainder >= 524288u32 { Remainder = Remainder - 524288u32; Quotient = Quotient + 4096u32; }
+    if Remainder >= 262144u32 { Remainder = Remainder - 262144u32; Quotient = Quotient + 2048u32; }
+    if Remainder >= 131072u32 { Remainder = Remainder - 131072u32; Quotient = Quotient + 1024u32; }
+    if Remainder >= 65536u32 { Remainder = Remainder - 65536u32; Quotient = Quotient + 512u32; }
+    if Remainder >= 32768u32 { Remainder = Remainder - 32768u32; Quotient = Quotient + 256u32; }
+    if Remainder >= 16384u32 { Remainder = Remainder - 16384u32; Quotient = Quotient + 128u32; }
+    if Remainder >= 8192u32 { Remainder = Remainder - 8192u32; Quotient = Quotient + 64u32; }
+    if Remainder >= 4096u32 { Remainder = Remainder - 4096u32; Quotient = Quotient + 32u32; }
+    if Remainder >= 2048u32 { Remainder = Remainder - 2048u32; Quotient = Quotient + 16u32; }
+    if Remainder >= 1024u32 { Remainder = Remainder - 1024u32; Quotient = Quotient + 8u32; }
+    if Remainder >= 512u32 { Remainder = Remainder - 512u32; Quotient = Quotient + 4u32; }
+    if Remainder >= 256u32 { Remainder = Remainder - 256u32; Quotient = Quotient + 2u32; }
+    if Remainder >= 128u32 { Remainder = Remainder - 128u32; Quotient = Quotient + 1u32; }
+    return Compilerˉwebassemblyˉdivision(Quotient, Remainder);
+}
+
+export fn Compilerˉwebassemblyˉuleb32(Value: u32) -> bytes {
+    var Remaining: u32 = Value;
+    var Result: bytes = Compilerˉwebassemblyˉempty(Bytesˉfromˉu8(0u8));
+    var Complete: bool = false;
+    while !Complete {
+        let Division: Compilerˉwebassemblyˉdivision =
+            Compilerˉwebassemblyˉdivideˉoneˉhundredˉtwentyˉeight(Remaining);
+        var Byteˉvalue: u32 = Division.Remainder;
+        if Division.Quotient != 0u32 {
+            Byteˉvalue = Byteˉvalue + 128u32;
+        }
+        Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(Byteˉvalue));
+        Remaining = Division.Quotient;
+        if Remaining == 0u32 { Complete = true; }
+    }
+    return Result;
+}
+
+export fn Compilerˉwebassemblyˉdivideˉbyte(
+    Value: u32,
+    Divisor: u32
+) -> Compilerˉwebassemblyˉdivision {
+    if Divisor == 0u32 {
+        return Compilerˉwebassemblyˉdivision(0u32, Value);
+    }
+    var Quotient: u32 = 0u32;
+    var Remainder: u32 = Value;
+    while Remainder >= Divisor {
+        Remainder = Remainder - Divisor;
+        Quotient = Quotient + 1u32;
+    }
+    return Compilerˉwebassemblyˉdivision(Quotient, Remainder);
+}
+
+export fn Compilerˉwebassemblyˉsleb32(
+    Input: bytes,
+    Offset: u32
+) -> bytes {
+    let B0: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+    let B1: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32));
+    let B2: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 2u32));
+    let B3: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 3u32));
+    let D0: Compilerˉwebassemblyˉdivision = Compilerˉwebassemblyˉdivideˉbyte(B0, 128u32);
+    let D1: Compilerˉwebassemblyˉdivision = Compilerˉwebassemblyˉdivideˉbyte(B1, 64u32);
+    let D2: Compilerˉwebassemblyˉdivision = Compilerˉwebassemblyˉdivideˉbyte(B2, 32u32);
+    let D3: Compilerˉwebassemblyˉdivision = Compilerˉwebassemblyˉdivideˉbyte(B3, 16u32);
+    var G0: u32 = D0.Remainder;
+    var G1: u32 = D0.Quotient + D1.Remainder * 2u32;
+    var G2: u32 = D1.Quotient + D2.Remainder * 4u32;
+    var G3: u32 = D2.Quotient + D3.Remainder * 8u32;
+    var G4: u32 = D3.Quotient;
+    if B3 >= 128u32 { G4 = G4 + 112u32; }
+
+    let Value: i32 = Bytesˉreadˉi32ˉlittle(Input, Offset);
+    var Length: u32 = 5u32;
+    if Value >= -64 {
+        if Value <= 63 { Length = 1u32; }
+    }
+    if Length == 5u32 {
+        if Value >= -8192 {
+            if Value <= 8191 { Length = 2u32; }
+        }
+    }
+    if Length == 5u32 {
+        if Value >= -1048576 {
+            if Value <= 1048575 { Length = 3u32; }
+        }
+    }
+    if Length == 5u32 {
+        if Value >= -134217728 {
+            if Value <= 134217727 { Length = 4u32; }
+        }
+    }
+
+    if Length > 1u32 { G0 = G0 + 128u32; }
+    if Length > 2u32 { G1 = G1 + 128u32; }
+    if Length > 3u32 { G2 = G2 + 128u32; }
+    if Length > 4u32 { G3 = G3 + 128u32; }
+
+    var Result: bytes = Compilerˉwebassemblyˉbyte(G0);
+    if Length > 1u32 { Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(G1)); }
+    if Length > 2u32 { Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(G2)); }
+    if Length > 3u32 { Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(G3)); }
+    if Length > 4u32 { Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(G4)); }
+    return Result;
+}
+
+export fn Compilerˉwebassemblyˉsectionˉbytes(
+    Kind: u32,
+    Payload: bytes
+) -> bytes {
+    var Result: bytes = Compilerˉwebassemblyˉbyte(Kind);
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉuleb32(Bytesˉlength(Payload))
+    );
+    return Bytesˉconcat(Result, Payload);
+}
+
+export fn Compilerˉwebassemblyˉmainˉname() -> bytes {
+    return Textˉtoˉutf8("Main");
+}
+
+export fn Compilerˉwebassemblyˉstring(Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Compilerˉwebassemblyˉuleb32(Bytesˉlength(Value)),
+        Value
+    );
+}
+
+export fn Compilerˉwebassemblyˉencodeˉconstant(
+    Input: bytes,
+    Constantˉoffset: u32
+) -> bytes {
+    var Typeˉpayload: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(96u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(0u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(1u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
+
+    var Functionˉpayload: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    Functionˉpayload = Bytesˉconcat(
+        Functionˉpayload,
+        Compilerˉwebassemblyˉuleb32(0u32)
+    );
+
+    var Exportˉpayload: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    Exportˉpayload = Bytesˉconcat(
+        Exportˉpayload,
+        Compilerˉwebassemblyˉstring(Compilerˉwebassemblyˉmainˉname())
+    );
+    Exportˉpayload = Bytesˉconcat(
+        Exportˉpayload,
+        Compilerˉwebassemblyˉbyte(0u32)
+    );
+    Exportˉpayload = Bytesˉconcat(
+        Exportˉpayload,
+        Compilerˉwebassemblyˉuleb32(0u32)
+    );
+
+    var Body: bytes = Compilerˉwebassemblyˉuleb32(0u32);
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(65u32));
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉsleb32(Input, Constantˉoffset)
+    );
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+    var Codeˉpayload: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    Codeˉpayload = Bytesˉconcat(
+        Codeˉpayload,
+        Compilerˉwebassemblyˉuleb32(Bytesˉlength(Body))
+    );
+    Codeˉpayload = Bytesˉconcat(Codeˉpayload, Body);
+
+    var Result: bytes = Compilerˉwebassemblyˉbyte(0u32);
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8("asm"));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉsectionˉbytes(1u32, Typeˉpayload)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉsectionˉbytes(3u32, Functionˉpayload)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉsectionˉbytes(7u32, Exportˉpayload)
+    );
+    return Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉsectionˉbytes(10u32, Codeˉpayload)
+    );
+}
+
+export fn Compilerˉlowerˉwvbˉwebassembly(
+    Input: bytes
+) -> Compilerˉwebassemblyˉsummary {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total > 4194304u32 {
+        return Compilerˉwebassemblyˉfailure(
+            Input,
+            Compilerˉwebassemblyˉstatus.Invalidˉwvb
+        );
+    }
+    if !Compilerˉwebassemblyˉrangeˉisˉvalid(Total, 0u32, 12u32) {
+        return Compilerˉwebassemblyˉfailure(
+            Input,
+            Compilerˉwebassemblyˉstatus.Invalidˉwvb
+        );
+    }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    if Bytesˉreadˉu8(Input, 1u32) != 86u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    if Bytesˉreadˉu8(Input, 2u32) != 66u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    if Bytesˉreadˉu8(Input, 3u32) != 49u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+
+    let Module: Compilerˉwebassemblyˉsection =
+        Compilerˉwebassemblyˉreadˉsection(Input, 12u32, 1u8);
+    if !Module.Valid { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    let Capabilities: Compilerˉwebassemblyˉsection =
+        Compilerˉwebassemblyˉreadˉsection(Input, Module.Nextˉoffset, 2u8);
+    if !Capabilities.Valid { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    let Data: Compilerˉwebassemblyˉsection =
+        Compilerˉwebassemblyˉreadˉsection(Input, Capabilities.Nextˉoffset, 3u8);
+    if !Data.Valid { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    let Functions: Compilerˉwebassemblyˉsection =
+        Compilerˉwebassemblyˉreadˉsection(Input, Data.Nextˉoffset, 4u8);
+    if !Functions.Valid { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    let Code: Compilerˉwebassemblyˉsection =
+        Compilerˉwebassemblyˉreadˉsection(Input, Functions.Nextˉoffset, 5u8);
+    if !Code.Valid { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    let Exports: Compilerˉwebassemblyˉsection =
+        Compilerˉwebassemblyˉreadˉsection(Input, Code.Nextˉoffset, 6u8);
+    if !Exports.Valid { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    let Types: Compilerˉwebassemblyˉsection =
+        Compilerˉwebassemblyˉreadˉsection(Input, Exports.Nextˉoffset, 7u8);
+    if !Types.Valid { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    if Types.Nextˉoffset != Total {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb);
+    }
+
+    if Module.Payloadˉlength < 5u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb);
+    }
+    if Bytesˉreadˉu8(Input, Module.Payloadˉoffset) != 1u8 {
+        return Compilerˉwebassemblyˉfailure(
+            Input,
+            Compilerˉwebassemblyˉstatus.Unsupportedˉprofile
+        );
+    }
+    let Moduleˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Module.Payloadˉoffset + 1u32
+    );
+    if Moduleˉnameˉlength == 0u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb);
+    }
+    if Moduleˉnameˉlength > 255u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb);
+    }
+    if Moduleˉnameˉlength != Module.Payloadˉlength - 5u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb);
+    }
+
+    if Capabilities.Payloadˉlength != 4u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Capabilities.Payloadˉoffset) != 0u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
+    }
+    if Data.Payloadˉlength != 4u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Data.Payloadˉoffset) != 0u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
+    }
+    if Types.Payloadˉlength != 4u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Types.Payloadˉoffset) != 0u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
+    }
+
+    if Functions.Payloadˉlength != 34u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction);
+    }
+    let Function: u32 = Functions.Payloadˉoffset;
+    if Bytesˉreadˉu32ˉlittle(Input, Function) != 1u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu32ˉlittle(Input, Function + 4u32) != 4u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Function + 8u32) != 77u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Function + 9u32) != 97u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Function + 10u32) != 105u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Function + 11u32) != 110u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu32ˉlittle(Input, Function + 12u32) != 0u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Function + 16u32) != 1u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu32ˉlittle(Input, Function + 17u32) != 1u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Function + 21u32) != 1u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu32ˉlittle(Input, Function + 22u32) != 0u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu32ˉlittle(Input, Function + 26u32) != 16u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu32ˉlittle(Input, Function + 30u32) != 1u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+
+    if Exports.Payloadˉlength != 17u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction);
+    }
+    let Export: u32 = Exports.Payloadˉoffset;
+    if Bytesˉreadˉu32ˉlittle(Input, Export) != 1u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu32ˉlittle(Input, Export + 4u32) != 4u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Export + 8u32) != 77u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Export + 9u32) != 97u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Export + 10u32) != 105u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Export + 11u32) != 110u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu8(Input, Export + 12u32) != 1u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+    if Bytesˉreadˉu32ˉlittle(Input, Export + 13u32) != 0u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉfunction); }
+
+    if Code.Payloadˉlength != 16u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉcode);
+    }
+    if Bytesˉreadˉu8(Input, Code.Payloadˉoffset) != 1u8 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉcode);
+    }
+    if Bytesˉreadˉu8(Input, Code.Payloadˉoffset + 5u32) != 5u8 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉcode);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Code.Payloadˉoffset + 6u32) != 0u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉcode);
+    }
+    if Bytesˉreadˉu8(Input, Code.Payloadˉoffset + 10u32) != 4u8 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉcode);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Code.Payloadˉoffset + 11u32) != 0u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉcode);
+    }
+    if Bytesˉreadˉu8(Input, Code.Payloadˉoffset + 15u32) != 81u8 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉcode);
+    }
+
+    let Webassembly: bytes = Compilerˉwebassemblyˉencodeˉconstant(
+        Input,
+        Code.Payloadˉoffset + 1u32
+    );
+    if Bytesˉlength(Webassembly) > 65536u32 {
+        return Compilerˉwebassemblyˉfailure(
+            Input,
+            Compilerˉwebassemblyˉstatus.Outputˉlimit
+        );
+    }
+    return Compilerˉwebassemblyˉsummary(
+        Compilerˉwebassemblyˉstatus.Valid,
+        Webassembly,
+        Bytesˉreadˉi32ˉlittle(Input, Code.Payloadˉoffset + 1u32)
+    );
+}
