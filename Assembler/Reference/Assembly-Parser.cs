@@ -256,7 +256,8 @@ internal static class Assemblyˉparser
                         Assemblyˉstatementˉkind.Halt or Assemblyˉstatementˉkind.Outˉu16 or
                         Assemblyˉstatementˉkind.Pushˉi32 or
                         Assemblyˉstatementˉkind.Enableˉpageˉprotection or
-                        Assemblyˉstatementˉkind.Activateˉpageˉtable;
+                        Assemblyˉstatementˉkind.Activateˉpageˉtable or
+                        Assemblyˉstatementˉkind.Syscall;
                     var Materializedˉdataˉstatement = Statement.Kind is
                         Assemblyˉstatementˉkind.Bytes or Assemblyˉstatementˉkind.U32 or
                         Assemblyˉstatementˉkind.I32 or Assemblyˉstatementˉkind.Addressˉu32;
@@ -404,6 +405,7 @@ internal static class Assemblyˉparser
             case "out_u16":
             case "enable_page_protection":
             case "activate_page_table":
+            case "syscall":
                 if (tokens.Count != 1)
                 {
                     return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' takes no operands."));
@@ -417,7 +419,8 @@ internal static class Assemblyˉparser
                     "halt" => Assemblyˉstatementˉkind.Halt,
                     "out_u16" => Assemblyˉstatementˉkind.Outˉu16,
                     "enable_page_protection" => Assemblyˉstatementˉkind.Enableˉpageˉprotection,
-                    _ => Assemblyˉstatementˉkind.Activateˉpageˉtable,
+                    "activate_page_table" => Assemblyˉstatementˉkind.Activateˉpageˉtable,
+                    _ => Assemblyˉstatementˉkind.Syscall,
                 };
                 return (new(Simpleˉkind, null, 0, 0, [], Span), null);
             case "call":

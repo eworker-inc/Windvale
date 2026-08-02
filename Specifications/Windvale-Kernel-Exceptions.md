@@ -4,7 +4,7 @@
 
 Kernel CPU exceptions version 1 remains cross-host qualified for firmware probe 17 at exact commit `ba2cf69cd4a97876f5e953b3938d032fc75a8ff7`. [Decision 0081](../Documents/Decisions/0081-First-Terminal-X64-Cpu-Exception-Boundary.md) records its one kernel-owned terminal invalid-opcode destination.
 
-Version 2 is cross-host qualified at exact commit `12e9e2e` through the pre-paging firmware probe-20 baseline and retained unchanged by qualified probe 21 at `860c69c`. It retains vector 6, adds general protection vector 13, and moves both entry-normalization stubs into WVA while one bounded Stage 0 object still owns descriptor publication and terminal policy. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) and [kernel trap frame version 1](Windvale-Kernel-Trap-Frame.md) own the boundary; [Decisions 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) and [0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md) record the two complete compositions.
+Version 2 is cross-host qualified at exact commit `12e9e2e` through the pre-paging firmware probe-20 baseline and retained unchanged by qualified probe 21 at `860c69c`. It retains vector 6, adds general protection vector 13, and moves both entry-normalization stubs into WVA while one bounded Stage 0 object still owns descriptor publication and terminal policy. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) and [kernel trap frame version 1](Windvale-Kernel-Trap-Frame.md) own the boundary; [Decisions 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) and [0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md) record the two complete compositions. Probe 22 adds a process-private IDT extension for vectors 6, 13, and 14 plus CPL3 containment; it does not change the qualified ring-0 terminal contract.
 
 CPU exceptions remain distinct from Windvale runtime traps such as `WVR3007`. Runtime traps are checked semantic results and do not raise processor faults.
 
@@ -48,13 +48,22 @@ Reconstructing the three offset fields yields the exact linked WVA entry target.
 
 Both use WVA `push_i32`, which creates one sign-extended 64-bit stack cell in x86-64 mode. The resulting 40-byte same-privilege record is defined by [Windvale-Kernel-Trap-Frame.md](Windvale-Kernel-Trap-Frame.md). WVA owns the architecture-dependent normalization bytes; Stage 0 assembles, verifies, links, and packages them.
 
+## Probe-22 process-private extension
+
+[Protected process version 1](Windvale-Protected-Process.md) reuses the zeroed IDT page while its CPL3 thread is active. Its machine seam writes DPL-0 interrupt gates for vectors 6, 13, and 14, stores the ten-byte IDTR operand at page offset 240 with limit 239, and loads a private GDT/TSS before entering user mode. The TSS supplies the saved kernel stack on privilege-changing exception delivery.
+
+WVA exports process-specific normalization stubs for invalid opcode, general protection, and page fault. Vector 6 pushes synthetic error 0 and vector 6; vectors 13 and 14 preserve their CPU error cell and push the vector. A privilege-changing CPU frame includes the interrupted user `RSP` and `SS`, so the normalized record is 56 bytes as described by the trap-frame contract.
+
+The process common entry inspects the saved `CS`. A CPL0 origin tail-transfers unchanged to the qualified terminal handler. A CPL3 origin records vector/error and returns to the saved kernel continuation with the process and thread faulted. Probe 22 live-proves only deterministic CPL3 `CLI` delivery as `(13, 0)` after two valid system calls; vector 6 and vector 14 are structurally installed but are not yet claimed as live user-fault evidence.
+
 ## Deterministic scenarios
 
-Probe 21 supports three explicit construction scenarios after page-table activation and WVB admission:
+Probe 22 supports four explicit construction scenarios after page-table activation, WVB admission, and protected-process construction:
 
-- `normal` installs both gates, completes both Main paths, emits the success markers, and enters the WVA Q35 shutdown adapter;
+- `normal` completes the CPL3 send/receive/exit sequence, completes both Main paths, emits the success markers, and enters the WVA Q35 shutdown adapter;
 - `invalid-opcode` executes `UD2`, proving delivery of vector 6 without a CPU error code; and
-- `general-protection` dereferences `0x0100000000000000`, an address noncanonical under both four- and five-level x86-64 paging, proving delivery of vector 13 with CPU error code 0 before translation.
+- `general-protection` dereferences `0x0100000000000000`, an address noncanonical under both four- and five-level x86-64 paging, proving terminal kernel delivery of vector 13 with CPU error code 0 before translation; and
+- `user-fault` completes the CPL3 send/receive pair, executes privileged `CLI`, records `(13, 0)` against the process, resumes the kernel, and emits `user-fault=contained`.
 
 The scenario is fixed when the image is built. It is not inferred from timing, firmware behavior, mutable guest input, or host state. Instructions after either deliberate fault only select failure if the processor incorrectly resumes.
 
@@ -92,10 +101,10 @@ The Stage 0 object exports the installer and common terminal handler, and import
 - normalized frame offsets and both terminal marker writers; and
 - absence of `UD2` and `IRETQ` from the exception object itself.
 
-Candidate local Windows evidence records a 620-byte WVA object with SHA-256 `4bb07c28877905de6e57d79454e33402de4ac54048d5ce09a26b49ad0d8347a5`; a 4,667-byte exception WVO with SHA-256 `49f15606d2cd41236f87e8a7a7e24a9532683ffe9d5a59795dc8084288b2f84a`; and 4,348 code bytes with SHA-256 `9307e2e9e4471d15448326ab2a86464f652fadfe60901226ef32b02e4dc9f8b9`. The installer occupies 222 bytes and the common terminal handler begins at aligned offset 224.
+The qualified pre-process seam records a 620-byte WVA object with SHA-256 `4bb07c28877905de6e57d79454e33402de4ac54048d5ce09a26b49ad0d8347a5`; a 4,667-byte exception WVO with SHA-256 `49f15606d2cd41236f87e8a7a7e24a9532683ffe9d5a59795dc8084288b2f84a`; and 4,348 code bytes with SHA-256 `9307e2e9e4471d15448326ab2a86464f652fadfe60901226ef32b02e4dc9f8b9`. The installer occupies 222 bytes and the common terminal handler begins at aligned offset 224. Probe 22's expanded WVA seam is 1,123 bytes with SHA-256 `8a6f54950f15c7331107a5bfa7bd2d863f64b25d395b7cfd9983c31130599363`; the separate terminal exception object remains byte-for-byte unchanged.
 
 Real pinned QEMU 11.0/Q35/TCG execution passes all three scenarios: normal exits cleanly with host code 0, and both fault paths emit their exact normalized records and exit with expected host code 3. Static fixtures cannot substitute for live `CS`, `LIDT`, processor exception delivery, or the CPU-pushed vector-13 error cell.
 
 ## Limits
 
-Version 2 provides no other exception vector, page-fault `CR2`, double-fault containment, TSS, IST, NMI, IRQ, PIC/APIC, interrupt enablement, register-save frame, nested-fault policy, `IRETQ`, recovery, unwinding, process isolation, user mode, SMP, scheduler integration, or WVR-to-CPU mapping. The shared terminal handler remains Stage 0 C#-emitted machine code because current WVA lacks comparisons, conditional branches, memory reads, and its polled serial loop; system-profile `.wv` policy still requires bounded unsafe memory plus a specified kernel call convention.
+The qualified version-2 terminal contract still provides no page-fault `CR2`, double-fault containment, IST, NMI, IRQ, PIC/APIC, interrupt enablement, register-save frame, nested-fault policy, `IRETQ`, recovery, unwinding, SMP, scheduler integration, or WVR-to-CPU mapping. Probe 22's process-private extension adds one TSS and bounded user-fault containment but no general dispatcher, page-fault policy, resumption, signal model, or process-facing exception ABI. The shared terminal handler remains Stage 0 C#-emitted machine code because current WVA lacks comparisons, conditional branches, memory reads, and its polled serial loop; system-profile `.wv` policy still requires bounded unsafe memory plus a specified kernel call convention.

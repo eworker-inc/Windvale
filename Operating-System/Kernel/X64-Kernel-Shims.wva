@@ -6,8 +6,12 @@ symbol export function Windvale_kernel_x64_exception_13_entry in .text
 symbol export function Windvale_kernel_x64_exception_6_entry in .text
 symbol export function Windvale_kernel_x64_page_protection_enable in .text
 symbol export function Windvale_kernel_x64_page_table_activate in .text
+symbol export function Windvale_kernel_x64_process_exception_13_entry in .text
+symbol export function Windvale_kernel_x64_process_exception_14_entry in .text
+symbol export function Windvale_kernel_x64_process_exception_6_entry in .text
 symbol export function Windvale_kernel_x64_q35_shutdown in .text
 symbol import function Windvale_kernel_x64_exception_terminal
+symbol import function Windvale_kernel_x64_process_exception
 symbol import function Windvale_kernel_x64_write_byte
 symbol import function Windvale_kernel_x64_wvb_admission
 
@@ -34,6 +38,19 @@ end define
 define Windvale_kernel_x64_page_table_activate
 activate_page_table
 return
+end define
+define Windvale_kernel_x64_process_exception_13_entry
+push_i32 13
+jump Windvale_kernel_x64_process_exception
+end define
+define Windvale_kernel_x64_process_exception_14_entry
+push_i32 14
+jump Windvale_kernel_x64_process_exception
+end define
+define Windvale_kernel_x64_process_exception_6_entry
+push_i32 0
+push_i32 6
+jump Windvale_kernel_x64_process_exception
 end define
 define Windvale_kernel_x64_q35_shutdown
 move_u32 edx 1540

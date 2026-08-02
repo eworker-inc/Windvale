@@ -58,7 +58,7 @@ System-profile Windvale will need explicit unsafe, memory, atomic, concurrency, 
 6. Move the interpreter and later JIT to user or isolated service space behind verified W^X publication.
 7. Add device and resource services one qualified boundary at a time, then prove one exact WVB across all three environments.
 
-Qualified [Decision 0090](0090-First-In-Guest-Wvb-Admission.md) implements the deliberately fixed first part of step 3: AOT Windvale code validates one exact WVB 1.6 identity before its separately AOT-compiled form executes. General semantic verification, loading, and isolation remain open. The next architecture slice is step 4.
+Qualified [Decision 0090](0090-First-In-Guest-Wvb-Admission.md) implements the deliberately fixed first part of step 3: AOT Windvale code validates one exact WVB 1.6 identity before its separately AOT-compiled form executes. [Decision 0091](0091-First-Protected-Windvale-Process.md) implements bounded step 4 in candidate probe 22: one separate CPL3 root/thread, fixed capability and resource budget, capacity-one register IPC, exact exit, and contained user general protection. General semantic verification, loading, scheduling, capability transfer, and process lifecycle remain open. The next architecture slice is step 5, a minimal Windvale init/resource service.
 
 ## Reconsider when
 

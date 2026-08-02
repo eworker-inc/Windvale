@@ -7,7 +7,7 @@ if ((args.Length != 2 && args.Length != 4) ||
     (args.Length == 4 && (args[2] != "--scenario" || string.IsNullOrWhiteSpace(args[3]))))
 {
     Console.Error.WriteLine(
-        "Usage: Windvale.Bootstrap --output <BOOTX64.EFI> [--scenario <normal|invalid-opcode|general-protection>]");
+        "Usage: Windvale.Bootstrap --output <BOOTX64.EFI> [--scenario <normal|invalid-opcode|general-protection|user-fault>]");
     return 64;
 }
 
@@ -19,14 +19,16 @@ if (args.Length == 4)
         "normal" => Firmwareˉprobeˉscenario.Normal,
         "invalid-opcode" => Firmwareˉprobeˉscenario.Invalidˉopcode,
         "general-protection" => Firmwareˉprobeˉscenario.Generalˉprotection,
+        "user-fault" => Firmwareˉprobeˉscenario.Userˉfault,
         _ => (Firmwareˉprobeˉscenario)(-1),
     };
     if (Scenario is not Firmwareˉprobeˉscenario.Normal and
         not Firmwareˉprobeˉscenario.Invalidˉopcode and
-        not Firmwareˉprobeˉscenario.Generalˉprotection)
+        not Firmwareˉprobeˉscenario.Generalˉprotection and
+        not Firmwareˉprobeˉscenario.Userˉfault)
     {
         Console.Error.WriteLine(
-            "Usage: Windvale.Bootstrap --output <BOOTX64.EFI> [--scenario <normal|invalid-opcode|general-protection>]");
+            "Usage: Windvale.Bootstrap --output <BOOTX64.EFI> [--scenario <normal|invalid-opcode|general-protection|user-fault>]");
         return 64;
     }
 }

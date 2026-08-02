@@ -5,15 +5,15 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉpagingˉcontract
 {
-    public const int FORMAT_VERSION = 1;
-    public const string TARGET_NAME = "x86-64-kernel-paging-v1";
+    public const int FORMAT_VERSION = 2;
+    public const string TARGET_NAME = "x86-64-kernel-paging-v2";
     public const string INSTALL_SYMBOL = "Windvale_kernel_x64_paging_install";
     public const string PROTECTION_ENABLE_SYMBOL = "Windvale_kernel_x64_page_protection_enable";
     public const string PAGE_TABLE_ACTIVATE_SYMBOL = "Windvale_kernel_x64_page_table_activate";
     public const ulong PAGE_BYTES = 4_096;
     public const ulong LARGE_PAGE_BYTES = 2 * 1024 * 1024;
     public const ulong IDENTITY_BYTES = 1UL << 30;
-    public const ulong EXECUTABLE_BYTES = 64 * 1024;
+    public const ulong EXECUTABLE_BYTES = 128 * 1024;
     public const ulong TABLE_PAGES = 6;
     public const ulong TABLE_BYTES = TABLE_PAGES * PAGE_BYTES;
     public const ulong PML4_PAGE = 0;
@@ -29,8 +29,8 @@ public static class Kernelˉpagingˉcontract
     public const ulong ENTRY_ADDRESS_MASK = 0x000F_FFFF_FFFF_F000;
     public const uint RECORD_OFFSET = 128;
     public const uint RECORD_BYTES = 64;
-    public const ulong RECORD_MAGIC = 0x3130_4741_504B_5657;
-    public const uint RECORD_VERSION = 1;
+    public const ulong RECORD_MAGIC = 0x3230_4741_504B_5657;
+    public const uint RECORD_VERSION = 2;
     public const ulong RECORD_FLAG_NX = 1UL << 0;
     public const ulong RECORD_FLAG_WRITE_PROTECT = 1UL << 1;
     public const ulong RECORD_FLAG_NULL_GUARD = 1UL << 2;

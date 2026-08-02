@@ -9,15 +9,15 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉwvbˉadmissionˉcontract
 {
-    public const int FORMAT_VERSION = 1;
-    public const string TARGET_NAME = "x86-64-kernel-wvb-admission-v1";
+    public const int FORMAT_VERSION = 2;
+    public const string TARGET_NAME = "x86-64-kernel-wvb-admission-v2";
     public const string BRIDGE_SYMBOL = "Windvale_kernel_x64_wvb_admission";
     public const string ADMISSION_SYMBOL = "Windvale_kernel_wvb_admit";
     public const string EMBEDDED_MAIN_SYMBOL = "Windvale_kernel_embedded_main";
     public const string NATIVE_MAIN_SYMBOL = "Main";
     public const int ADMISSION_TOKEN = 73;
     public const int EXPECTED_RESULT = 29;
-    public const uint EXACT_INSTRUCTION_BUDGET = 8_948;
+    public const uint EXACT_INSTRUCTION_BUDGET = 8_944;
     public const uint EXACT_CALL_DEPTH_BUDGET = 2;
 }
 
@@ -159,7 +159,7 @@ public static class Kernelˉwvbˉadmission
         }
     }
 
-    private static ImmutableArray<byte> Renameˉmainˉexport(
+    internal static ImmutableArray<byte> Renameˉmainˉexport(
         ImmutableArray<byte> objectˉbytes,
         string replacementˉsymbol)
     {
@@ -240,8 +240,8 @@ public static class Kernelˉwvbˉadmission
         var Admissionˉcallˉoffset = Output.Emitˉcallˉplaceholder();
         Output.Emit(0x48, 0x83, 0xF8, Kernelˉwvbˉadmissionˉcontract.ADMISSION_TOKEN);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
-        Output.Emit(0x48, 0x8D, 0x54, 0x24, 0x08);
-        var Embeddedˉcallˉoffset = Output.Emitˉcallˉplaceholder();
+        Output.Emit(0x48, 0x8B, 0x0C, 0x24);
+        var Processˉcallˉoffset = Output.Emitˉcallˉplaceholder();
         Output.Emit(0x48, 0x83, 0xF8, Kernelˉwvbˉadmissionˉcontract.EXPECTED_RESULT);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Output.Emit(0x48, 0x8B, 0x0C, 0x24);
@@ -263,14 +263,14 @@ public static class Kernelˉwvbˉadmission
                     0,
                     0,
                     (uint)Code.Length),
-                Import(Kernelˉwvbˉadmissionˉcontract.EMBEDDED_MAIN_SYMBOL),
                 Import(Kernelˉwvbˉadmissionˉcontract.ADMISSION_SYMBOL),
                 Import(Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL),
+                Import(Kernelˉprocessˉcontract.ENTER_SYMBOL),
             ],
             [
-                new(Objectˉrelocationˉkind.Relativeˉi32, 0, Admissionˉcallˉoffset, 2, -4),
-                new(Objectˉrelocationˉkind.Relativeˉi32, 0, Embeddedˉcallˉoffset, 1, -4),
-                new(Objectˉrelocationˉkind.Relativeˉi32, 0, Nativeˉprobeˉjumpˉoffset, 3, -4),
+                new(Objectˉrelocationˉkind.Relativeˉi32, 0, Admissionˉcallˉoffset, 1, -4),
+                new(Objectˉrelocationˉkind.Relativeˉi32, 0, Processˉcallˉoffset, 3, -4),
+                new(Objectˉrelocationˉkind.Relativeˉi32, 0, Nativeˉprobeˉjumpˉoffset, 2, -4),
             ])).ToImmutableArray();
         Verifyˉbridge(Objectˉbytes);
         return Objectˉbytes;
@@ -293,7 +293,7 @@ public static class Kernelˉwvbˉadmission
                 Name: ".text.admission",
                 Kind: Objectˉsectionˉkind.Code,
                 Alignment: 16,
-                Memoryˉsize: 163,
+                Memoryˉsize: 162,
             } ||
             Object.Symbols.Length != 4 ||
             Object.Symbols[0] is not
@@ -303,23 +303,26 @@ public static class Kernelˉwvbˉadmission
                 Kind: Objectˉsymbolˉkind.Function,
                 Sectionˉindex: 0,
                 Offset: 0,
-                Size: 163,
+                Size: 162,
             } ||
-            Object.Symbols[1].Name != Kernelˉwvbˉadmissionˉcontract.EMBEDDED_MAIN_SYMBOL ||
-            Object.Symbols[2].Name != Kernelˉwvbˉadmissionˉcontract.ADMISSION_SYMBOL ||
-            Object.Symbols[3].Name != Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL ||
+            Object.Symbols[1].Name != Kernelˉwvbˉadmissionˉcontract.ADMISSION_SYMBOL ||
+            Object.Symbols[2].Name != Kernelˉnativeˉprobeˉcontract.BRIDGE_SYMBOL ||
+            Object.Symbols[3].Name != Kernelˉprocessˉcontract.ENTER_SYMBOL ||
             Object.Symbols.Skip(1).Any(Symbol =>
                 Symbol.Binding != Objectˉsymbolˉbinding.Import ||
                 Symbol.Kind != Objectˉsymbolˉkind.Function) ||
             Object.Relocations is not
             [
-                { Kind: Objectˉrelocationˉkind.Relativeˉi32, Sectionˉindex: 0, Offset: 106, Symbolˉindex: 2, Addend: -4 },
-                { Kind: Objectˉrelocationˉkind.Relativeˉi32, Sectionˉindex: 0, Offset: 126, Symbolˉindex: 1, Addend: -4 },
-                { Kind: Objectˉrelocationˉkind.Relativeˉi32, Sectionˉindex: 0, Offset: 149, Symbolˉindex: 3, Addend: -4 },
+                { Kind: Objectˉrelocationˉkind.Relativeˉi32, Sectionˉindex: 0, Offset: 106, Symbolˉindex: 1, Addend: -4 },
+                { Kind: Objectˉrelocationˉkind.Relativeˉi32, Sectionˉindex: 0, Offset: 125, Symbolˉindex: 3, Addend: -4 },
+                { Kind: Objectˉrelocationˉkind.Relativeˉi32, Sectionˉindex: 0, Offset: 148, Symbolˉindex: 2, Addend: -4 },
             ])
         {
             throw new InvalidOperationException(
-                $"The WVB admission bridge violated '{Kernelˉwvbˉadmissionˉcontract.TARGET_NAME}'.");
+                $"The WVB admission bridge violated '{Kernelˉwvbˉadmissionˉcontract.TARGET_NAME}': " +
+                $"code={Object.Sections[0].Memoryˉsize}, relocations=" +
+                string.Join(",", Object.Relocations.Select(Relocation =>
+                    $"{Relocation.Offset}:{Relocation.Symbolˉindex}")) + ".");
         }
     }
 

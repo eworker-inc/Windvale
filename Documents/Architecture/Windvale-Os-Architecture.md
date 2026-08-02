@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted long-lived architecture direction. [Decision 0084](../Decisions/0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md) records the boundary. Implementation remains incremental, and current behavior is defined only by qualified specifications and evidence.
+Accepted long-lived architecture direction. [Decision 0084](../Decisions/0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md) records the boundary. Implementation remains incremental, and current behavior is defined only by qualified specifications or explicitly labeled candidate evidence.
 
 This document fixes ownership, trust, and portability rules. It intentionally does not freeze syscall numbers, binary layouts, scheduling policy, package or filesystem formats, or other details that still need measured experiments.
 
@@ -56,7 +56,7 @@ flowchart TB
     Machine --> Hardware
 ```
 
-Some boot-critical adapters may initially reside with the kernel because no isolated process environment exists yet. They remain named seams and move outside the kernel when the process, IPC, and capability evidence makes that safer and simpler. The design judges each move by trusted-code size, failure containment, performance, and implementation clarity rather than by a kernel-style label.
+Some boot-critical adapters still reside with the kernel because the current isolated environment is one deliberately fixed process, not yet a service system. They remain named seams and move outside the kernel when init/resource, IPC, and capability evidence makes that safer and simpler. The design judges each move by trusted-code size, failure containment, performance, and implementation clarity rather than by a kernel-style label.
 
 ## Stable invariants
 
@@ -102,9 +102,9 @@ A process is conceptually a protection domain containing:
 - explicit memory, instruction, handle, and other resource budgets;
 - lifecycle, result, fault, and diagnostic state.
 
-This conceptual model is accepted; its serialized representation is not yet fixed.
+This conceptual model is accepted. [Protected process version 1](../../Specifications/Windvale-Protected-Process.md) now implements one deliberately fixed internal representation: process/thread id 1, one separate root, three user pages, explicit budgets, one capability slot with generation and rights, one capacity-one channel, and closed lifecycle/fault/result state. That representation is implementation evidence, not yet a stable public process ABI.
 
-A capability identifies a kernel-mediated object plus permitted operations. An implementation will need at least a slot identity, stale-reference protection such as a generation, and a rights set, but their bit encoding remains an evidence-driven ABI choice. Capabilities may be reduced or transferred only through explicit kernel operations. They must not be guessed from integers or recovered from raw addresses.
+A capability identifies a kernel-mediated object plus permitted operations. The first experiment uses slot 0, generation 1, send/receive rights, and machine reference 65536. The kernel checks all three components before its register channel changes state. Capabilities may eventually be reduced or transferred only through explicit kernel operations; version 1 implements neither operation. References must not be recovered from raw addresses, and the current integer encoding remains internal and replaceable.
 
 Expected kernel-object families include processes, threads, address spaces, memory regions, channels or endpoints, interrupt bindings, device-memory ranges, and resource providers. This is a design inventory, not a commitment that every family is a public object or syscall.
 
@@ -122,7 +122,9 @@ The system-call surface should be small, versioned, architecture-neutral at the 
 
 x86-64 entry, exit, register preservation, and context-switch mechanics belong in WVA. Windvale source owns validation, policy, state transitions, accounting, and diagnostics.
 
-Requests must use checked buffer descriptors and capability references rather than expose native structure layouts. The kernel validates address ranges, arithmetic, access direction, length, alignment, rights, and resource budgets before use. IPC requires bounded message and queue sizes, defined backpressure, and explicit behavior when a peer exits. The exact syscall numbering, register assignment, IPC encoding, and copy-versus-map thresholds remain deferred.
+Requests must use checked buffer descriptors and capability references rather than expose native structure layouts. The kernel validates address ranges, arithmetic, access direction, length, alignment, rights, and resource budgets before use. IPC requires bounded message and queue sizes, defined backpressure, and explicit behavior when a peer exits.
+
+Protected-process version 1 supplies the first measured mechanics: `EBX` numbers 1/2/3 select send/receive/exit, `ESI` carries the capability reference, and `EAX` carries the register message/result. This assignment is explicitly experimental and internal. Public user-ABI stability, larger-message encoding, copy-versus-map thresholds, peer exit, blocking, and general backpressure remain deferred.
 
 ## Memory and executable publication
 
@@ -143,7 +145,7 @@ The current Windows/Linux bootstrap has already moved the allowed allocate/copy/
 
 ## Boot and trust chain
 
-The first x86-64 path remains UEFI-based and evidence-driven:
+The first x86-64 path remains UEFI-based and evidence-driven. Candidate probe 22 implements steps 1 through 4 for one fixed module; steps 5 and 6 remain next:
 
 1. A narrow loader validates its bounded inputs, captures the versioned handoff, loads the selected AOT kernel and boot resources, and exits boot services.
 2. The kernel takes ownership of memory, its stack, exception state, page tables, and deterministic diagnostics. Firmware services are not used after the accepted exit boundary.
@@ -199,7 +201,9 @@ Each step must be useful, bounded, and independently qualified:
 7. Add drivers and resource services one measured device and contract at a time.
 8. Prove the exact same WVB bytes, verifier result, outputs, diagnostics, and defined resource counters on Windows, Linux, and Windvale OS.
 
-[Decisions 0085](../Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) and [0086](../Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) qualify clean Q35 shutdown and the first two normalized trap examples through the pre-paging probe-20 baseline at `12e9e2e`. Exact commit `860c69c` then qualifies [Decision 0088](../Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md)'s bounded page-table ownership: one kernel-owned low-1-GiB identity root provides a null guard and W^X policy. It also qualifies [Decision 0090](../Decisions/0090-First-In-Guest-Wvb-Admission.md)'s first deliberately fixed part of step 3: an AOT Windvale component checks one exact WVB 1.6 identity inside the guest, and the bridge reaches its separately AOT-compiled program only after receiving the accepted token. This proves the trust order without claiming a general verifier or loader. The page-table constructor, IDT publication, terminal policy, symbol adaptation, and admission bridge remain named Stage 0 replacement seams. The next architectural slice is one protected address space, thread, capability table, bounded resource budget, and IPC channel.
+[Decisions 0085](../Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.md) and [0086](../Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) qualify clean Q35 shutdown and the first two normalized trap examples through the pre-paging probe-20 baseline at `12e9e2e`. Exact commit `860c69c` then qualifies [Decision 0088](../Decisions/0088-First-Kernel-Owned-X64-Page-Tables.md)'s bounded kernel root and [Decision 0090](../Decisions/0090-First-In-Guest-Wvb-Admission.md)'s fixed in-guest WVB admission.
+
+[Decision 0091](../Decisions/0091-First-Protected-Windvale-Process.md) implements step 4 as candidate probe 22: the admitted Windvale AOT program executes at CPL3 under a separate root, uses a generation/rights-checked capability to send and receive one register message, exits through `SYSCALL`, and can take a contained user general-protection fault while equivalent CPL0 faults remain terminal. Windvale owns the fixed process policy, WVA owns user syscall and exception-entry bytes, and the page/descriptor/MSR/dispatcher object remains a named Stage 0 replacement seam. The next architectural slice is step 5, a minimal Windvale init/resource service that uses this boundary rather than widening it speculatively.
 
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 
@@ -207,7 +211,7 @@ This sequence may interleave with native Windows/Linux work. It does not require
 
 The following should remain open until a focused implementation supplies evidence:
 
-- exact syscall numbers, register assignments, and public user ABI stability;
+- stable public syscall numbers, register assignments, and user ABI (the version-1 internal experiment is not frozen);
 - scheduler algorithm, priority model, real-time policy, and SMP strategy;
 - IPC wire encoding, zero-copy thresholds, and service discovery;
 - virtual-address layout, page size policy beyond architecture requirements, and shared-memory model;

@@ -1,0 +1,16 @@
+windvale-assembly 1
+symbol export function Windvale_process_user_entry in .text
+symbol import function Windvale_kernel_embedded_main
+
+section code .text align 16
+define Windvale_process_user_entry
+call Windvale_kernel_embedded_main
+move_u32 ebx 1
+move_u32 esi 65536
+syscall
+move_u32 ebx 2
+move_u32 esi 65536
+syscall
+disable_interrupts
+end define
+end section

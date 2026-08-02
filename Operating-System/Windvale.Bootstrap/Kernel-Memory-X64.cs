@@ -33,7 +33,8 @@ internal static class Kernelˉmemoryˉx64
     {
         if (scenario is not Firmwareˉprobeˉscenario.Normal and
             not Firmwareˉprobeˉscenario.Invalidˉopcode and
-            not Firmwareˉprobeˉscenario.Generalˉprotection)
+            not Firmwareˉprobeˉscenario.Generalˉprotection and
+            not Firmwareˉprobeˉscenario.Userˉfault)
         {
             throw new ArgumentOutOfRangeException(nameof(scenario));
         }
@@ -120,7 +121,7 @@ internal static class Kernelˉmemoryˉx64
         output.Emit(0x48, 0xFF, 0xC9, 0x48, 0xC1, 0xE1, 0x0C, 0x49, 0x03, 0x4A, 0x08);
         output.Jumpˉif(CONDITION_BELOW, FAILURE_LABEL);
 
-        // Choose the lowest complete 64 KiB EfiConventionalMemory arena in [1 MiB, 4 GiB).
+        // Choose the lowest complete contracted EfiConventionalMemory arena in [1 MiB, 4 GiB).
         output.Emit(0x41, 0x83, 0x3A, (byte)Kernelˉmemoryˉcontract.EFI_CONVENTIONAL_MEMORY);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SCAN_NEXT_LABEL);
         output.Emit(0x49, 0x8B, 0x42, 0x08, 0x48, 0x3D);

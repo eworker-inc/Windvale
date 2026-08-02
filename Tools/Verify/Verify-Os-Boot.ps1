@@ -3,7 +3,7 @@ param(
     [string]$QemuPath,
     [string]$FirmwareCodePath,
     [string]$FirmwareVariablesTemplatePath,
-    [ValidateSet('normal', 'invalid-opcode', 'general-protection')]
+    [ValidateSet('normal', 'invalid-opcode', 'general-protection', 'user-fault')]
     [string]$Scenario = 'normal',
     [ValidateRange(5, 300)]
     [int]$TimeoutSeconds = 60,
@@ -13,22 +13,30 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$ExpectedQemuExitCode = if ($Scenario -eq 'normal') { 0 } else { 3 }
+$ExpectedQemuExitCode = if ($Scenario -in @('normal', 'user-fault')) { 0 } else { 3 }
 $ExpectedSerialMarker = switch ($Scenario) {
     'normal' {
-        "windvale-os-boot 21`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`nshutdown=poweroff`n"
+        "windvale-os-boot 22`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocess=isolated`nipc=pass`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`nshutdown=poweroff`n"
     }
     'invalid-opcode' {
-        "windvale-os-boot 21`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nHello from Windvale`npanic=invalid-opcode`nvector=6`nerror-code=0`nstatus=panic`n"
+        "windvale-os-boot 22`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocess=isolated`nipc=pass`nHello from Windvale`npanic=invalid-opcode`nvector=6`nerror-code=0`nstatus=panic`n"
     }
     'general-protection' {
-        "windvale-os-boot 21`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nHello from Windvale`npanic=general-protection`nvector=13`nerror-code=0`nstatus=panic`n"
+        "windvale-os-boot 22`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocess=isolated`nipc=pass`nHello from Windvale`npanic=general-protection`nvector=13`nerror-code=0`nstatus=panic`n"
+    }
+    'user-fault' {
+        "windvale-os-boot 22`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocess=isolated`nipc=pass`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nuser-fault=contained`nstatus=pass`nshutdown=poweroff`n"
     }
 }
-$OppositeTerminalMarker = if ($Scenario -eq 'normal') { "status=panic`n" } else { "status=pass`n" }
+$OppositeTerminalMarker = if ($Scenario -in @('normal', 'user-fault')) {
+    "status=panic`n"
+} else {
+    "status=pass`n"
+}
 $OtherFaultMarker = switch ($Scenario) {
     'invalid-opcode' { "panic=general-protection`n" }
     'general-protection' { "panic=invalid-opcode`n" }
+    'user-fault' { 'panic=' }
     default { $null }
 }
 
@@ -213,18 +221,21 @@ try {
         Scenario = $Scenario
         Architecture = 'x86-64'
         ApplicationFormat = 'pe32-plus-uefi-application-v3'
-        ProbeVersion = 21
+        ProbeVersion = 22
         EfiBytes = $EfiIdentity.Length
         EfiSha256 = $EfiSha256
         SerialMarker = switch ($Scenario) {
             'normal' {
-                'windvale-os-boot-21-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff'
+                'windvale-os-boot-22-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-process-isolated-ipc-pass-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff'
             }
             'invalid-opcode' {
-                'windvale-os-boot-21-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-hello-panic-invalid-opcode-vector-6-error-code-0-status-panic'
+                'windvale-os-boot-22-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-process-isolated-ipc-pass-hello-panic-invalid-opcode-vector-6-error-code-0-status-panic'
             }
             'general-protection' {
-                'windvale-os-boot-21-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-hello-panic-general-protection-vector-13-error-code-0-status-panic'
+                'windvale-os-boot-22-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-process-isolated-ipc-pass-hello-panic-general-protection-vector-13-error-code-0-status-panic'
+            }
+            'user-fault' {
+                'windvale-os-boot-22-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-process-isolated-ipc-pass-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-user-fault-contained-status-pass-shutdown-poweroff'
             }
         }
         QemuExitCode = $Process.ExitCode
@@ -234,7 +245,7 @@ try {
     if ($PassThru) {
         $Report
     } elseif (!$Quiet) {
-        Write-Output 'windvale-os-boot-report 21'
+        Write-Output 'windvale-os-boot-report 22'
         Write-Output "status=$($Report.Status)"
         Write-Output "scenario=$($Report.Scenario)"
         Write-Output "architecture=$($Report.Architecture)"

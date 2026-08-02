@@ -11,16 +11,17 @@ public enum Firmwareˉprobeˉscenario
     Normal,
     Invalidˉopcode,
     Generalˉprotection,
+    Userˉfault,
 }
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 21;
+    public const int FORMAT_VERSION = 22;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 21\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 22\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -29,6 +30,8 @@ public static class Firmwareˉprobe
     public const string KERNEL_STACK_MARKER = "kernel-stack=pass\n";
     public const string PAGING_OWNED_MARKER = "paging=owned\n";
     public const string WVB_ADMISSION_MARKER = "wvb-admission=pass\n";
+    public const string PROCESS_MARKER = "process=isolated\n";
+    public const string IPC_MARKER = "ipc=pass\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string CPU_EXCEPTIONS_MARKER = "cpu-exceptions=armed\n";
     public const string INVALID_OPCODE_PANIC_MARKER = Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER;
@@ -37,14 +40,21 @@ public static class Firmwareˉprobe
     public const string NATIVE_CONTEXT_MARKER = "native-context=pass\n";
     public const string NATIVE_WVB_MARKER = "native-wvb=pass\n";
     public const string WINDVALE_SOURCE_MARKER = "windvale-source=pass\n";
+    public const string USER_FAULT_CONTAINED_MARKER = Kernelˉprocessˉcontract.USER_FAULT_CONTAINED_MARKER;
     public const string SUCCESS_MARKER = "status=pass\n";
     public const string SHUTDOWN_MARKER = "shutdown=poweroff\n";
     public const string SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
-        WVB_ADMISSION_MARKER + HELLO_WORLD_MARKER +
+        WVB_ADMISSION_MARKER + PROCESS_MARKER + IPC_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
         WINDVALE_SOURCE_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
+    public const string USER_FAULT_SERIAL_MARKER =
+        ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
+        MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
+        WVB_ADMISSION_MARKER + PROCESS_MARKER + IPC_MARKER + HELLO_WORLD_MARKER +
+        CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
+        WINDVALE_SOURCE_MARKER + USER_FAULT_CONTAINED_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
 
     private const string FAILURE_MARKER = "status=fail\n";
     private const string FAILURE_LABEL = "failure";
@@ -109,7 +119,8 @@ public static class Firmwareˉprobe
     {
         if (scenario is not Firmwareˉprobeˉscenario.Normal and
             not Firmwareˉprobeˉscenario.Invalidˉopcode and
-            not Firmwareˉprobeˉscenario.Generalˉprotection)
+            not Firmwareˉprobeˉscenario.Generalˉprotection and
+            not Firmwareˉprobeˉscenario.Userˉfault)
         {
             throw new ArgumentOutOfRangeException(nameof(scenario));
         }
@@ -121,11 +132,17 @@ public static class Firmwareˉprobe
                 $"The Windvale kernel source did not compile: {Kernel.Diagnostics[0]}");
         }
         var Admission = Kernelˉwvbˉadmission.Build();
+        var Processˉimage = Kernelˉprocessˉimage.Build(
+            Admission,
+            scenario == Firmwareˉprobeˉscenario.Userˉfault);
+        var Process = Kernelˉprocessˉx64.Build(
+            Processˉimage,
+            scenario == Firmwareˉprobeˉscenario.Userˉfault);
         var Nativeˉprobe = Kernelˉnativeˉprobe.Build();
         var Exceptions = Kernelˉexceptionˉx64.Build();
         var Paging = Kernelˉpagingˉx64.Build();
 
-        var Loader = Buildˉloaderˉmachineˉcode();
+        var Loader = Buildˉloaderˉmachineˉcode(scenario);
         var Loaderˉobject = new Objectˉfile(
             Objectˉarchitecture.X86ˉ64,
             [new(".text", Objectˉsectionˉkind.Code, 16, (uint)Loader.Bytes.Length, Loader.Bytes)],
@@ -224,8 +241,9 @@ public static class Firmwareˉprobe
                 new(Loaderˉobjectˉbytes),
                 new(Kernel.Objectˉbytes),
                 new(Admission.Admissionˉnativeˉobjectˉbytes),
-                new(Admission.Embeddedˉnativeˉobjectˉbytes),
                 new(Nativeˉprobe.Nativeˉobjectˉbytes),
+                new(Processˉimage.Policyˉnativeˉobjectˉbytes),
+                new(Process.Objectˉbytes),
                 new(Memoryˉobjectˉbytes),
                 new(Exceptions.Objectˉbytes),
                 new(Paging.Objectˉbytes),
@@ -243,7 +261,8 @@ public static class Firmwareˉprobe
         if (Link.Entryˉaddress != 0 || Link.Imageˉbytes.Length > (int)Kernelˉpagingˉcontract.EXECUTABLE_BYTES)
         {
             throw new InvalidOperationException(
-                $"The linked firmware payload does not fit the fixed {Kernelˉpagingˉcontract.EXECUTABLE_BYTES}-byte executable window.");
+                $"The linked firmware payload is {Link.Imageˉbytes.Length} bytes and does not fit the fixed " +
+                $"{Kernelˉpagingˉcontract.EXECUTABLE_BYTES}-byte executable window.");
         }
 
         var Application = Uefiˉapplicationˉwriter.Write(Link);
@@ -255,7 +274,7 @@ public static class Firmwareˉprobe
         return Application.Imageˉbytes;
     }
 
-    private static Bootstrapˉcode Buildˉloaderˉmachineˉcode()
+    private static Bootstrapˉcode Buildˉloaderˉmachineˉcode(Firmwareˉprobeˉscenario scenario)
     {
         var Output = new X64ˉcodeˉbuilder();
         uint Kernelˉcallˉoffset;
@@ -460,6 +479,10 @@ public static class Firmwareˉprobe
         Emitˉserialˉtext(Output, NATIVE_CONTEXT_MARKER);
         Emitˉserialˉtext(Output, NATIVE_WVB_MARKER);
         Emitˉserialˉtext(Output, WINDVALE_SOURCE_MARKER);
+        if (scenario == Firmwareˉprobeˉscenario.Userˉfault)
+        {
+            Emitˉserialˉtext(Output, USER_FAULT_CONTAINED_MARKER);
+        }
         Emitˉserialˉtext(Output, SUCCESS_MARKER);
         Emitˉserialˉtext(Output, SHUTDOWN_MARKER);
         Shutdownˉcallˉoffset = Output.Emitˉcallˉplaceholder();

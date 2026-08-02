@@ -123,7 +123,7 @@ public static class Kernelˉpagingˉx64
         output.Emitˉu32(1U << 20);
         output.Jumpˉif(CONDITION_EQUAL, FAILURE_LABEL);
 
-        // The linked image starts at the page-aligned boot entry and must fit its fixed 64 KiB RX window.
+        // The linked image starts at the page-aligned boot entry and must fit its fixed RX window.
         output.Emit(0x4C, 0x8D, 0x35);
         var Entryˉfield = output.Position;
         output.Emitˉu32(0);
@@ -219,12 +219,14 @@ public static class Kernelˉpagingˉx64
         output.Emit(0x49, 0x8D, 0x85, 0x03, 0x40, 0x00, 0x00, 0x49, 0x89, 0x02);
         output.Emit(0x49, 0x8D, 0x85, 0x03, 0x50, 0x00, 0x00, 0x49, 0x89, 0x42, 0x08);
 
-        // Narrow exactly sixteen code leaves to supervisor read-only/executable.
+        // Narrow exactly the contracted code leaves to supervisor read-only/executable.
         output.Emit(0x4C, 0x89, 0xF0, 0x48, 0xC1, 0xE8, 0x09, 0x25, 0xF8, 0x0F, 0x00, 0x00);
         output.Emit(0x4D, 0x8D, 0x95);
         output.Emitˉu32(0x4000);
         output.Emit(0x49, 0x01, 0xC2, 0x4D, 0x89, 0xF3, 0x49, 0x83, 0xCB, 0x01);
-        output.Emit(0xB9, 0x10, 0x00, 0x00, 0x00);
+        output.Emit(0xB9);
+        output.Emitˉu32(checked((uint)(
+            Kernelˉpagingˉcontract.EXECUTABLE_BYTES / Kernelˉpagingˉcontract.PAGE_BYTES)));
         output.Mark(EXECUTABLE_LOOP_LABEL);
         output.Emit(0x4D, 0x89, 0x1A, 0x49, 0x83, 0xC2, 0x08, 0x49, 0x81, 0xC3);
         output.Emitˉu32((uint)Kernelˉpagingˉcontract.PAGE_BYTES);

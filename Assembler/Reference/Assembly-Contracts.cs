@@ -78,6 +78,7 @@ internal enum Assemblyˉstatementˉkind
     Pushˉi32,
     Enableˉpageˉprotection,
     Activateˉpageˉtable,
+    Syscall,
     Bytes,
     U32,
     I32,

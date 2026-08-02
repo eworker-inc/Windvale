@@ -27,8 +27,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 8. Self-hosted compiler | ✅ Qualified | The committed 12-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Execute the qualified compiler through the shared native path. |
 | 9. Shared native backend | 🎯 Current transfer | ABI 16/context 7, all 12 native service leaves, and verified internal calls through 64 parameters are qualified; exact compiler preflight passes the former eight-parameter blocker. | Admit the compiler's sole 1,049-local function under a measured frame contract. |
 | 10. Native host tools and .NET retirement | 🚧 In progress | Windvale constructs the live process-input leaves and owns image layout plus lifecycle policy; one internal host owner contains raw W^X authority. | Qualify native compiler execution and standalone Windows/Linux tools, then satisfy the documented .NET-retirement gate. |
-| 11. Boot path and kernel | 🚧 In progress | Probe 21 cross-host qualifies ABI 16, a kernel-owned W^X root, and Windvale-owned admission of one embedded WVB before its AOT form executes. | Add one protected process/thread/capability/IPC boundary. |
-| 12. Runtime on Windvale OS | 🚧 In progress | One fixed WVB identity is now checked by AOT Windvale code in-guest before its derived native object executes; there is no general loader or isolated runtime yet. | Generalize semantic admission and run one identical WVB through equivalent Windows, Linux, and Windvale OS contracts. |
+| 11. Boot path and kernel | 🚧 In progress | Probe 21 remains cross-host qualified; candidate probe 22 adds a real separate CPL3 root/thread, fixed capability/budgets, register IPC, syscall exit, and contained user fault. | Cross-host-qualify probe 22, then start a minimal Windvale init/resource service. |
+| 12. Runtime on Windvale OS | 🚧 In progress | One exact WVB identity is checked by AOT Windvale code and its derived native object now executes inside the candidate protected process; there is no general loader/runtime yet. | Generalize semantic admission and run one identical WVB through equivalent Windows, Linux, and Windvale OS contracts. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 
 ## Working end to end
@@ -45,7 +45,9 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
 - ✅ WVA paging mechanics → kernel-owned low-1-GiB W^X identity root
 - ✅ One embedded WVB → in-guest Windvale admission → its AOT form
-- 🚧 Qualified fixed admission → general semantic admission + isolated runtime
+- ✅ Fixed admission → separate CPL3 root → capability-checked send/receive/exit
+- ✅ Deliberate CPL3 privileged fault → recorded process fault → kernel continuation
+- 🚧 Candidate protected process → cross-host qualification + first init/resource service
 
 ## Reading the evidence
 

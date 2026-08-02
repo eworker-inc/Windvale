@@ -4,7 +4,7 @@
 
 Kernel trap frame version 1 is cross-host qualified at exact commit `12e9e2e` through the pre-paging firmware probe-20 baseline and retained unchanged by qualified probe 21 at `860c69c`. It gives x86-64 exception entries with and without CPU error codes one common terminal-handler input. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) owns the contract and its evidence boundary; [Decisions 0087](../Documents/Decisions/0087-Native-Windows-And-Linux-File-Output.md) and [0090](../Documents/Decisions/0090-First-In-Guest-Wvb-Admission.md) record the two complete compositions.
 
-This is an internal ring-0 machine-entry contract. It is not a Windvale source value, WVB record, public syscall ABI, user-process signal frame, unwind record, or mapping of Windvale `WVR` runtime traps to CPU faults.
+This is an internal machine-entry contract. Its qualified version-1 use is ring 0; probe 22 also applies the same normalized prefix to one process-private privilege-transition frame. It is not a Windvale source value, WVB record, public syscall ABI, user-process signal frame, unwind record, or mapping of Windvale `WVR` runtime traps to CPU faults.
 
 ## Same-privilege frame
 
@@ -46,6 +46,22 @@ The probe-21 common handler reads only vector and error code. It accepts `(6, 0)
 
 The object and boot tests independently lock the WVA stub bytes, definition offsets and sizes, relocations to the common handler, IDT targets, frame offsets, exact scenario markers, and QEMU terminal exit. Real QEMU execution is required to prove both a CPU-no-error-code delivery and a CPU-error-code delivery; static object checks alone are insufficient.
 
+## Process-private privilege-transition frame
+
+When probe 22 takes vector 6, 13, or 14 from CPL3, the processor changes to the TSS ring-0 stack and appends the interrupted user `RSP` and `SS`. After WVA normalization, `RSP` addresses this exact 56-byte record:
+
+| Offset | Bytes | Field | Owner |
+| ---: | ---: | --- | --- |
+| `0` | 8 | Vector | WVA process-entry stub |
+| `8` | 8 | Error code | CPU when defined; otherwise synthetic zero |
+| `16` | 8 | Interrupted `RIP` | CPU |
+| `24` | 8 | Interrupted `CS` | CPU; low two bits identify CPL3 |
+| `32` | 8 | Interrupted `RFLAGS` | CPU |
+| `40` | 8 | Interrupted user `RSP` | CPU |
+| `48` | 8 | Interrupted user `SS` | CPU |
+
+The process common entry consumes only vector, error, and `CS`. For CPL3 it records the fault and returns to the saved kernel continuation rather than using `IRETQ`; for CPL0 it preserves the existing terminal path. The frame is internal to protected-process version 1 and does not freeze a signal or debugger ABI.
+
 ## Limits
 
-Version 1 does not cover privilege transitions, processor-pushed `RSP`/`SS`, IST stack switches, page-fault `CR2`, double faults, NMI, interrupts, register preservation, SIMD state, nested faults, concurrency, recovery, resumption, unwinding, user processes, or a stable external ABI. The normalized prefix is intentionally small enough to extend only after one of those cases supplies concrete evidence.
+Version 1 does not define IST stack switches, page-fault `CR2`, double faults, NMI, interrupts, register preservation, SIMD state, nested faults, concurrency, recovery, resumption, unwinding, user signals, or a stable external ABI. Probe 22 supplies evidence for the one 56-byte privilege-transition extension above; all other cases remain open.

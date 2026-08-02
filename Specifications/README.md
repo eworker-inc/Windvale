@@ -62,6 +62,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Kernel handoff](Windvale-Kernel-Handoff.md)
 - [Kernel memory](Windvale-Kernel-Memory.md)
 - [Kernel paging](Windvale-Kernel-Paging.md)
+- [First protected process](Windvale-Protected-Process.md)
 - [Kernel native seam](Windvale-Kernel-Native-Seam.md)
 - [Kernel trap frame](Windvale-Kernel-Trap-Frame.md)
 - [Kernel CPU exceptions](Windvale-Kernel-Exceptions.md)

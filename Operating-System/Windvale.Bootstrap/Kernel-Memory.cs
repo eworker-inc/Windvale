@@ -5,15 +5,15 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉmemoryˉcontract
 {
-    public const int FORMAT_VERSION = 1;
-    public const string TARGET_NAME = "x86-64-kernel-memory-v1";
+    public const int FORMAT_VERSION = 2;
+    public const string TARGET_NAME = "x86-64-kernel-memory-v2";
     public const string MEMORY_ENTER_SYMBOL = "Windvale_kernel_memory_enter";
     public const string ALLOCATE_PAGES_SYMBOL = "Windvale_kernel_allocate_pages";
     public const uint EFI_CONVENTIONAL_MEMORY = 7;
     public const ulong PAGE_BYTES = 4_096;
     public const ulong MINIMUM_PHYSICAL_ADDRESS = 1 * 1024 * 1024;
     public const ulong MAXIMUM_PHYSICAL_ADDRESS_EXCLUSIVE = 1UL << 32;
-    public const ulong ARENA_PAGES = 16;
+    public const ulong ARENA_PAGES = 32;
     public const ulong ARENA_BYTES = ARENA_PAGES * PAGE_BYTES;
     public const ulong STATE_PAGES = 1;
     public const ulong STACK_PAGES = 2;
@@ -21,8 +21,8 @@ public static class Kernelˉmemoryˉcontract
     public const ulong INITIAL_FREE_PAGES = ARENA_PAGES - FIRST_FREE_PAGE;
     public const uint STATE_HEADER_BYTES = 64;
     public const uint HANDOFF_COPY_OFFSET = STATE_HEADER_BYTES;
-    public const ulong STATE_MAGIC = 0x3130_4D45_4D4B_5657;
-    public const uint STATE_VERSION = 1;
+    public const ulong STATE_MAGIC = 0x3230_4D45_4D4B_5657;
+    public const uint STATE_VERSION = 2;
 }
 
 public sealed record Kernelˉmemoryˉdiagnostic(string Code, string Message);
@@ -108,7 +108,7 @@ public static class Kernelˉmemoryˉplanner
 
         if (Arenaˉaddress is null)
         {
-            return Fail("WVOS4005", "The map contains no eligible 64 KiB conventional-memory arena below 4 GiB.");
+            return Fail("WVOS4005", "The map contains no eligible 128 KiB conventional-memory arena below 4 GiB.");
         }
 
         var Arenaˉend = Arenaˉaddress.Value + Kernelˉmemoryˉcontract.ARENA_BYTES;
@@ -167,7 +167,7 @@ public sealed class Kernelˉpageˉallocator
             plan.Freeˉpages != Kernelˉmemoryˉcontract.INITIAL_FREE_PAGES ||
             arena.Length != checked((int)Kernelˉmemoryˉcontract.ARENA_BYTES))
         {
-            throw new ArgumentException("The allocator requires one canonical version 1 kernel arena.", nameof(plan));
+            throw new ArgumentException("The allocator requires one canonical version 2 kernel arena.", nameof(plan));
         }
 
         Plan = plan;

@@ -131,6 +131,9 @@ internal static class X64ˉobjectˉencoder
             case Assemblyˉstatementˉkind.Activateˉpageˉtable:
                 output.Writeˉbytes([0x0F, 0x22, 0xD8, 0x0F, 0x20, 0xD8], statement.Span);
                 break;
+            case Assemblyˉstatementˉkind.Syscall:
+                output.Writeˉbytes([0x0F, 0x05], statement.Span);
+                break;
             case Assemblyˉstatementˉkind.Call:
             case Assemblyˉstatementˉkind.Jump:
                 output.Writeˉu8(
