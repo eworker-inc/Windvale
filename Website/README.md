@@ -1,6 +1,6 @@
 # Windvale website
 
-This directory contains the public project home for <https://windvale.ca/>. The home, support page, and playground are static browser applications with no dedicated application server, cookies, or repository-owned analytics. A narrow Cloudflare Pages Function exposes the approved public supporter roll from Workers KV without handling payments. Vite is used only as a convenient local development server.
+This directory contains the public project home for <https://windvale.ca/>. The home, support page, and playground are static browser applications with no dedicated application server. A narrow Cloudflare Pages Function exposes the approved public supporter roll from Workers KV without handling payments. Vite is used only as a convenient local development server.
 
 The site follows the visitor's operating-system light or dark preference through `prefers-color-scheme`. The browser playground lives below the same origin at <https://windvale.ca/playground/>, so navigation and the saved theme remain continuous. During local development, Vite proxies `/playground/` to the independent Blazor development server at `http://127.0.0.1:5174/` while the browser stays on the website's `http://127.0.0.1:5173/` origin.
 
@@ -22,6 +22,10 @@ Use `npm run dev:site` or `npm run dev:playground` only when debugging one half 
 All public component and development-milestone progress lives in `project-progress.js`. To update the dashboard, change an item's `percent`, `status`, `details`, and `next` values plus `PROGRESS_UPDATED`. The page creates both sets of cards, progress bars, and accessible tooltips automatically; no HTML or CSS change is needed.
 
 The page uses a small self-hosted subset of Google Material Symbols Rounded. Its Apache 2.0 license is stored beside the font in `assets/material-symbols-LICENSE.txt`; visitors do not contact Google to load the icons.
+
+## Analytics
+
+All public pages load the shared `analytics.js` bootstrap for the Google Analytics 4 stream `G-3PB4LZFMRE`. The bootstrap records ordinary page views across the home, support, playground, and not-found pages while disabling Google signals and ad-personalization signals. Google Analytics can use first-party analytics cookies and receives usage data directly from the visitor's browser; Windvale does not run a separate analytics backend. The Content Security Policy permits only the Google Tag and GA4 collection origins needed by this configuration, without advertising endpoints.
 
 ## Configuring support
 
