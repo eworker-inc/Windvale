@@ -1,7 +1,7 @@
 # Decision 0176: Third protected service and ready/wait dispatcher
 
 - Date: 2026-08-03
-- Status: Implemented candidate with focused Windows and pinned-QEMU evidence; cross-host qualification pending
+- Status: Cross-host qualified at exact implementation commit `aae6818e3226e9e7e88d205b4666fb9904e4735b`
 - Extends: [Decision 0172](0172-First-Kernel-Owned-Service-Endpoint.md) and [Decision 0173](0173-Windvale-Process-Service-And-Driver-Architecture.md)
 - Contracts: [`WVKMEM15`](../../Specifications/Windvale-Kernel-Memory.md), [`WVPROC17`](../../Specifications/Windvale-Protected-Process.md), and firmware Probe 38
 
@@ -28,13 +28,13 @@ Windvale now has three independently protected AOT/interpreter processes and two
 
 This is still not a general scheduler, process manager, service manager, registry, dynamic endpoint API, capability-transfer system, or recovery supervisor. Process roles remain policy metadata rather than authority. The kernel still does not parse resource or directory wire formats, and Stage 0 still owns checked record serialization, page-table mutation, and x86-64 orchestration as named replacement seams.
 
-## Local evidence
+## Qualification evidence
 
 The portable process policy is 16,023 WVB bytes with SHA-256 `319a7fb7f3ea08ff3c7c4aba8b37ee90106f5360f62abcc529fd51286bee34ad`; its ABI-22 WVO is 109,340 bytes with SHA-256 `860e893dab8b170a9a9d49cdcda2d8997e351a3e6e13b03b7d92f1ad38f7cf74`. The directory provider is 473 WVB bytes with SHA-256 `33b0e425bd6e2a1cd6ae8f95d4645748a6031b93684a9b1ac4d0e56e8408bef7`; its linked 3,831-byte image has SHA-256 `bf25040b4925a13c4a919ffd5a53de8ff281e4452132a9f7cd9bb3624740c883`.
 
-The normal process-machine WVO is 502,697 bytes with SHA-256 `6435782bc20b63b187e31a28634022d8f910ed92f49889ecfe1cb6e829de7dd2`; its 38,551 code bytes have SHA-256 `73e46e135ba08ea56090bf40cba6e3ff6186c894a23b6722fff911ebebd173bb`. A zero-warning Release build and all 38 focused OS tests pass locally on Windows. All five pinned QEMU/TCG scenarios pass with exact Probe-38 transcripts. The normal EFI image is 649,728 bytes with SHA-256 `534d73d391b155f53d70a01b770478d1f10818ea57566f6b60aa80cdf1941e68`; the other exact identities are recorded in the boot-probe specification.
+The normal process-machine WVO is 502,697 bytes with SHA-256 `6435782bc20b63b187e31a28634022d8f910ed92f49889ecfe1cb6e829de7dd2`; its 38,551 code bytes have SHA-256 `73e46e135ba08ea56090bf40cba6e3ff6186c894a23b6722fff911ebebd173bb`. All five pinned Windows QEMU/TCG scenarios pass with exact Probe-38 transcripts. The normal EFI image is 649,728 bytes with SHA-256 `534d73d391b155f53d70a01b770478d1f10818ea57566f6b60aa80cdf1941e68`; the other exact identities are recorded in the boot-probe specification.
 
-This is local candidate evidence. Cross-host construction and the broader repository gates remain pending and must not be inferred from the Windows QEMU result.
+Exact implementation commit `aae6818e3226e9e7e88d205b4666fb9904e4735b` passes GitHub [Verify run 30834243770](https://github.com/eworker-inc/Windvale/actions/runs/30834243770). Windows and digest-pinned Debian each complete a zero-warning Release build, all 87 Seed tests including the golden compiler contract, all 38 OS tests, and the complete native CLI gate. Linux finishes in 11m59s and Windows in 12m13s. This supersedes Probe 37 as the cross-host-qualified OS baseline. Pinned QEMU execution remains Windows evidence; Debian QEMU is not claimed.
 
 ## Rejected alternatives
 
