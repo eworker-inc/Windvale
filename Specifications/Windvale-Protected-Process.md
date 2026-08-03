@@ -32,7 +32,7 @@ Init is process/thread `1/1`, generation 1, process reference `65537`, runtime p
 
 The client is process/thread `2/2`, generation 1 then 2, references `65538` then `131074`, runtime profile 6, native instruction/call budgets `189,114/5`, 755 physical frame cells, exact call-graph stack use 24,240 bytes, 116 pre-grant and 118 post-grant user pages, one handle, and three syscalls per generation. The separate guest execution budget is `199` with maximum `256`.
 
-Both retain result `6`, capability slot 0/generation 1, channel capacity 1, and ABI 21/context 7/service-table 5. Process policy must return token `97` before machine state is published.
+Both retain result `6`, capability slot 0/generation 1, channel capacity 1, and ABI 22/context 7/service-table 5. Process policy must return token `97` before machine state is published.
 
 ## Address spaces
 
@@ -48,32 +48,32 @@ Init receives 11 physical pages:
 | `9` | execution budget | RO/NX |
 | `10` | complete immutable boot `WVRS 1` image | RO/NX |
 
-Each client generation receives this reclaimed 120-page physical extent plus two later aliases:
+Each client generation receives this reclaimed 121-page physical extent plus two later aliases:
 
 | Relative page | Purpose | Before grant | After grant |
 | ---: | --- | --- | --- |
 | `0..3` | private paging hierarchy | none | none |
-| `4..112` | 109-page interpreter image | user RX | user RX |
-| `113..118` | six-page stack | user RW/NX | user RW/NX |
-| `119` | ABI-21 context/data and reply window | user RW/NX | user RW/NX |
-| `120` | module alias | absent | init WVB page, user RO/NX |
-| `121` | budget alias | absent | init budget page, user RO/NX |
+| `4..113` | 110-page interpreter image | user RX | user RX |
+| `114..119` | six-page stack | user RW/NX | user RW/NX |
+| `120` | ABI-22 context/data and reply window | user RW/NX | user RW/NX |
+| `121` | module alias | absent | init WVB page, user RO/NX |
+| `122` | budget alias | absent | init budget page, user RO/NX |
 
-No placeholder backs an alias. The init store has no client PTE. Generation-1 cleanup clears both client aliases and publications; the complete 120-page extent is zeroed and released. Generation 2 reconstructs every table, image, stack, data, context, and record byte at the same physical root with a different logical identity.
+No placeholder backs an alias. The init store has no client PTE. Generation-1 cleanup clears both client aliases and publications; the complete 121-page extent is zeroed and released. Generation 2 reconstructs every table, image, stack, data, context, and record byte at the same physical root with a different logical identity.
 
 ## `WVPROC13` and `WVCHAN03` records
 
 The state page stores two 264-byte little-endian process records at offsets `0x100` and `0x300`. Version 13 preserves version 12's field offsets while binding the new measured values:
 
 - magic/version `WVPROC13` and `13`;
-- user-page budgets init `7`, client `118`;
-- init allocation/code pages `11/2`, client allocation/code pages `120/109`;
+- user-page budgets init `7`, client `119`;
+- init allocation/code pages `11/2`, client allocation/code pages `121/110`;
 - client native instruction budget `189,114`, call depth `5`, and six stack pages;
 - runtime profiles init `1`, client `6`;
 - process generation init/first client `1`, rebuilt client `2`;
 - exact canonical program digest at offset `0xD8`.
 
-Both context pages retain valid context-7 headers under ABI 21. Init's data page publishes the store descriptor at offset `0x180`, a 1,056-byte request window at `0x400`, and a 2,016-byte response window at `0x820`. Each rebuilt client begins with runtime service/resource pointers zero and a dormant 1,024-byte compatibility record arena at data offset `0x200`, with used length zero. Grant publishes service table 5 at data offset `0x80`, `WVBR002` at `0x100`, and both runtime resource pointers atomically while preserving the arena fields. ABI 21's frame-owned direct records leave arena use at zero; cleanup and generation-2 reconstruction preserve that value.
+Both context pages retain valid context-7 headers under ABI 22. Init's data page publishes the store descriptor at offset `0x180`, a 1,056-byte request window at `0x400`, and a 2,016-byte response window at `0x820`. Each rebuilt client begins with runtime service/resource pointers zero and a dormant 1,024-byte compatibility record arena at data offset `0x200`, with used length zero. Grant publishes service table 5 at data offset `0x80`, `WVBR002` at `0x100`, and both runtime resource pointers atomically while preserving the arena fields. ABI 22 retains frame-owned direct records and leaves arena use at zero; cleanup and generation-2 reconstruction preserve that value.
 
 `WVCHAN03` is a 112-byte kernel-owned record at state offset `0x410`. It retains request/reply counters, byte length, and service/client destinations and capacities. Offsets `0x60`, `0x64`, `0x68`, and `0x6C` add peer status, peer process, close count, and reserved zero. Syscalls 5 through 7 require nonempty extents no larger than 4,096 bytes, checked end arithmetic, RX sources, RW/NX destinations, exact endpoint roles, and directional rights. No user mapping exposes the record.
 
@@ -102,10 +102,10 @@ Before machine construction, Stage 0 verifies the exact store and complete-image
 5. Init validates the request, dynamically searches its mapped store, and constructs the canonical 116-byte `WVRY 1` response for resource 3. The kernel copies it into the client's upper data-page window.
 6. The client validates the complete response, interprets the exact 815-byte program for 199 guest instructions, sends `6`, then exits or takes the contained fault.
 7. Cleanup clears channel message and destination state, records terminal peer status, validates generation 1, clears both aliases and runtime publication, and preserves grant count 1.
-8. Init's CR3 reload retires non-global translations. The exact 120-page tail is zeroed, released, immediately reallocated at the same root, and the channel is cleanly reopened for generation 2.
+8. Init's CR3 reload retires non-global translations. The exact 121-page tail is zeroed, released, immediately reallocated at the same root, and the channel is cleanly reopened for generation 2.
 9. Init receives `6`, grants again, and blocks. The second grant records borrower `131074` and grant count 2.
 10. Generation 2 independently repeats dynamic request/reply, validation, interpretation, result send, peer cleanup, and grant cleanup.
-11. Init receives the second result and exits. The allocator ends exactly exhausted at cursor page 143; the init store remains one immutable mapping.
+11. Init receives the second result and exits. The allocator ends exactly exhausted at cursor page 144; the init store remains one immutable mapping.
 
 The contained user-fault scenario sends `6` then executes privileged `CLI`; cleanup records fault status and still completes. CPL0 invalid-opcode and general-protection scenarios remain terminal.
 
@@ -114,17 +114,17 @@ The contained user-fault scenario sends `6` then executes privileged `CLI`; clea
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Process-policy WVB | 6,973 | `04c91ebca24d72ba13ab3b8c6d3d0fb4a1ad0be807de58584caa4df5005ab956` |
-| Process-policy WVO | 47,496 | `6ec4ca02eb59959ebcfc245fee07dd0a8d1c26e5e2f6d9de1566c37ea65c5f9b` |
+| Process-policy WVO | 47,624 | `6e01b565ddaeeea3dd0c2b4e4f4cc7f928b51cb305491892e7bda9a794babe0d` |
 | Init WVB | 525 | `0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467` |
 | Init WVA object | 1,929 | `93d212d61723e5d43d30a4fbe3319b5b448cb7f52e147cd02f95a69cb722b53f` |
 | Linked init image | 5,015 | `0e4afe4990bb6c4dfe1f255ec51594a58a6aaa1ef857d9ea48d44eb5e58e9a5e` |
 | Boot `WVRS 1` store | 1,195 | `e06cb88bc97c8a8c8413c476c41ec86eafb8d1ee3fab0daee8e3b50e788023b8` |
 | Interpreter WVB | 56,165 | `3669e94d712bd5a78f0061e29d8054ed3b54b687efc9508114f79bb78aa8832f` |
-| Interpreter WVO | 445,684 | `3840f10bacf8b7b498f28646b947a53841baf00241cd21bc94423ab5a43e8e31` |
-| Linked normal client | 445,789 | `c3046836c9048f8aef2765337a2831a34dd8014489afcbcc1aceddd1ce019578` |
-| Linked fault client | 445,773 | `dd880728016b305c002cd6270e18168de613c513eb444943c1429a30e037a19e` |
-| Normal process-machine WVO | 480,666 | `7c445a204aa906b0411f1fbd15f7df5aea4feae2c36a76cf914e39f6b59645fe` |
-| Fault process-machine WVO | 480,714 | `64577556b02f59e03a3645292402a40d57821313a618e39d60f8d8b92aa513a8` |
+| Interpreter WVO | 447,652 | `0748200721cab7d5c3c6a43916fc623dfa0ee35e304fea6ad899877c9601c8e2` |
+| Linked normal client | 447,757 | `aa3fdd6e836c71add4f24b6992fcfae090bf8d5aa056ec068a9c21dea516c919` |
+| Linked fault client | 447,741 | `3344865517e56066ec0b8fbd7e5f80695a715fa04adc9959a876a73e04bbbbe8` |
+| Normal process-machine WVO | 482,698 | `8b8c10b829ebad1f27801a85b246aeec964e4c38ef0a18bf8738afcec5ffad27` |
+| Fault process-machine WVO | 482,762 | `8174add03c1b327152b38c0513215407ac3c1b403dd0dd63c783669e1590304b` |
 
 The current candidate passes all 31 bounded OS tests and all four Windows pinned-QEMU scenarios. Fresh Debian and complete dual-host qualification are pending; no Debian QEMU execution is claimed.
 

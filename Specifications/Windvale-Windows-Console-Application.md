@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`windows-x64-console-v1` is the first deterministic Windows host-executable target. It packages one already verified ABI-21 x86-64 native fragment as an import-free PE32+ console application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and PE adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without loading .NET.
+`windows-x64-console-v1` is the first deterministic Windows host-executable target. It packages one already verified ABI-22 x86-64 native fragment as an import-free PE32+ console application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and PE adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without loading .NET.
 
 This is a narrow executable-boundary proof. It is not a general Windows runtime, hosted-capability container, native compiler executable, or .NET-retirement milestone.
 
@@ -10,7 +10,7 @@ This is a narrow executable-boundary proof. It is not a general Windows runtime,
 
 The adapter accepts one complete native fragment only after the independent native fragment verifier succeeds. Version 1 additionally requires:
 
-- target `x86-64-wvb-baseline-v21` and native ABI 21;
+- target `x86-64-wvb-baseline-v22` and native ABI 22;
 - exactly one exported, non-empty `Main() -> i32` entry;
 - no required runtime services, and therefore no hosted capabilities;
 - WVO production within the existing 4 MiB object bound;
@@ -32,7 +32,7 @@ The PE entry is an exact 98-byte Windows x64 stub followed by zero padding to by
 6. returns successful `i32` results from `0` through `255` unchanged; and
 7. maps every other successful result and every packed nonzero native status to process result `1`.
 
-The fixed execution limits are ABI 21's defaults: 1,000,000 charged instructions and call depth 1,024. Windows terminates the process when its primary entry thread returns. Restricting the portable process-result range to `0` through `255` makes direct process observation identical to Linux; the underlying Windvale `Main() -> i32` semantics remain unchanged. Version 1 emits no diagnostic text for a native trap.
+The fixed execution limits are ABI 22's defaults: 1,000,000 charged instructions and call depth 1,024. Windows terminates the process when its primary entry thread returns. Restricting the portable process-result range to `0` through `255` makes direct process observation identical to Linux; the underlying Windvale `Main() -> i32` semantics remain unchanged. Version 1 emits no diagnostic text for a native trap.
 
 ## Memory contract
 
@@ -40,11 +40,11 @@ The executable has no PE imports and uses no heap or OS allocation API. Its writ
 
 | Region | Virtual bytes | Initial rule |
 | --- | ---: | --- |
-| ABI-21 execution context | 112 | Exact version, size, budgets, arena lengths, and otherwise zero |
+| ABI-22 execution context | 112 | Exact version, size, budgets, arena lengths, and otherwise zero |
 | Record arena | 2,097,152 | Retained loader-zeroed compatibility extent; context base is installed by the entry stub |
 | Dynamic text/byte arena | 16,777,216 | Zero-filled; context base is installed by the entry stub |
 
-The first 512 `.data` bytes are present in the file; the remaining virtual extent is loader-zeroed. Service, argument, output, file-input, and file-output pointers remain zero. Dynamic text and byte allocations retain checked cursor and bounds behavior. ABI-21 generated records use verified frame-owned backing, do not read or advance the retained record arena, and leave its cursor at zero.
+The first 512 `.data` bytes are present in the file; the remaining virtual extent is loader-zeroed. Service, argument, output, file-input, and file-output pointers remain zero. Dynamic text and byte allocations retain checked cursor and bounds behavior within this container's retained 16 MiB capacity. ABI-22 generated records use verified frame-owned backing, do not read or advance the retained record arena, and leave its cursor at zero.
 
 The PE reserves 64 MiB of stack with a 64 KiB initial commit, covering the retained 1,024-call budget at the current 32 KiB maximum generated frame plus bounded outgoing cells. It declares a 1 MiB heap reserve but version 1 does not use it.
 

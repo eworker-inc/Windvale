@@ -49,7 +49,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - A Windvale-written typed WVIR producer with explicit blocks, temporaries, source spans, and an independent packed-directory validator
 - A Windvale-written WVIR-to-WVB backend that emits one canonical verified module from a validated source graph
 
-This implementation is the qualified Windvale compiler: Stage 0 builds Stage 1, and Stage 1 reproduces the exact Stage 2 WVB from the committed 12-module inventory on Windows and Debian. Native execution of that compiler remains a later gate.
+This implementation is the qualified Windvale bytecode compiler: Stage 0 builds Stage 1, and Stage 1 reproduces the exact Stage 2 WVB from the committed 12-module inventory on Windows and Debian. Implemented-candidate ABI 22 also runs Stage 1 as verified native x86-64 and reproduces the same Stage 2 bytes under a bounded host arena; cross-host qualification and standalone native-tool packaging remain open.
 
 ### Reference compiler
 
@@ -83,7 +83,7 @@ Every function is checked for valid branch boundaries, index and type use, match
 
 ### Shared native execution
 
-`Runtime/Windvale.Native/` owns the current bounded ABI-16 lowering, strict fragment reconstruction, W^X JIT and WVO/AOT execution, versioned execution context, twelve native service leaves including exact Windows/Linux file output, verified internal calls through 64 parameters, publication layout, and narrow platform adapters. Windvale-written source under `Compiler/Windvale/` validates and constructs the two live process-input leaves and plans every executable-image extent and canonical service placement. C# Stage 0 still owns WVB loading/lowering, OS allocation and protection, cache publication, invocation, arenas, and teardown until the measured transfers and [native-retirement gate](Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) are complete.
+`Runtime/Windvale.Native/` owns the current bounded ABI-22 execution path, strict fragment reconstruction, W^X JIT and WVO/AOT execution, versioned execution context, twelve native service leaves including exact Windows/Linux file output, verified internal calls through 64 parameters, bounded dynamic-value ownership/checkpoints, publication layout, and narrow platform adapters. Windvale-written source under `Compiler/Windvale/` validates and constructs the two live process-input leaves and plans every executable-image extent and canonical service placement. C# Stage 0 still owns WVB loading/lowering, OS allocation and protection, cache publication, invocation, arenas, and teardown until the measured transfers and [native-retirement gate](Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) are complete.
 
 ### Object model
 

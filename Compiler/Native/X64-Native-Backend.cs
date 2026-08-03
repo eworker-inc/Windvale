@@ -948,7 +948,7 @@ public static class X64ˉnativeˉbackend
         {
             Fail(
                 "WVN2901",
-                "ABI 21 requires bounded direct-record frame storage without nested record fields.");
+                "ABI 22 requires bounded direct-record frame storage without nested record fields.");
         }
         foreach (var Data in module.Data)
         {
@@ -1026,6 +1026,17 @@ public static class X64ˉnativeˉbackend
                     continue;
                 }
                 Emitˉstoreˉeaxˉatˉoffset(Code, Offset);
+            }
+            if (!Isˉmain &&
+                (Isˉnativeˉdescriptorˉtype(Function.Returnˉtype) ||
+                    Function.Returnˉtype == Nativeˉvalueˉtype.Record))
+            {
+                Code.AddRange(
+                [
+                    0x41, 0x8B, 0x47,
+                    Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                ]);
+                Emitˉstoreˉeaxˉatˉfield(Code, Hiddenˉresultˉslot, sizeof(ulong));
             }
             for (var Parameter = 0; Parameter < Function.Parameterˉtypes.Length; Parameter++)
             {
@@ -2650,6 +2661,11 @@ public static class X64ˉnativeˉbackend
         code.Add(0xB8);
         Addˉi32(code, length);
         Emitˉstoreˉeaxˉatˉfield(code, targetˉslot, lengthˉoffset);
+        code.AddRange([0x31, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            targetˉslot,
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
     }
 
     private static void Emitˉcopy(
@@ -2662,11 +2678,8 @@ public static class X64ˉnativeˉbackend
         {
             Emitˉloadˉrax(code, sourceˉslot);
             Emitˉstoreˉrax(code, targetˉslot);
-            var Lengthˉoffset = type == Nativeˉvalueˉtype.Borrowedˉtext
-                ? Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET
-                : Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET;
-            Emitˉloadˉeaxˉatˉfield(code, sourceˉslot, Lengthˉoffset);
-            Emitˉstoreˉeaxˉatˉfield(code, targetˉslot, Lengthˉoffset);
+            Emitˉloadˉraxˉatˉfield(code, sourceˉslot, sizeof(ulong));
+            Emitˉstoreˉraxˉatˉfield(code, targetˉslot, sizeof(ulong));
             return;
         }
 
@@ -2714,6 +2727,11 @@ public static class X64ˉnativeˉbackend
         Emitˉstoreˉrax(code, Resultˉslot);
         Emitˉloadˉeax(code, Lengthˉslot);
         Emitˉstoreˉeaxˉatˉfield(code, Resultˉslot, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x31, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Resultˉslot,
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
     }
 
     private static void Emitˉbytesˉread(
@@ -2757,6 +2775,11 @@ public static class X64ˉnativeˉbackend
     {
         var Limitˉpatches = new List<int>();
         var Arenaˉpatches = new List<int>();
+        var Ownedˉfallbackˉpatches = new List<int>();
+        var Growˉownedˉtailˉpatches = new List<int>();
+        var Promoteˉpatches = new List<int>();
+        var Fallbackˉpatches = new List<int>();
+        var Endˉpatches = new List<int>();
         Emitˉloadˉeaxˉatˉfield(
             code,
             Valueˉslot(function, concat.Left),
@@ -2778,8 +2801,310 @@ public static class X64ˉnativeˉbackend
             0x41, 0x89, 0xC0,
             0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
             0x41, 0x89, 0xC1,
+            0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
             0x89, 0xC1,
-            0x44, 0x01, 0xC1,
+            0x48, 0x01, 0xCA,
+        ]);
+        code.AddRange([0x31, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        Emitˉloadˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Left),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        code.AddRange([0x85, 0xC0, 0x0F, 0x84]);
+        Ownedˉfallbackˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x89, 0xC1]);
+        Emitˉloadˉrax(code, Valueˉslot(function, concat.Left));
+        code.AddRange(
+        [
+            0x48, 0x83, 0xE8, Nativeˉcontract.DYNAMIC_BYTES_HEADER_BYTES,
+            0x49, 0x3B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+            0x0F, 0x82,
+        ]);
+        Ownedˉfallbackˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x48, 0x83, 0xC0, Nativeˉcontract.DYNAMIC_BYTES_HEADER_BYTES,
+            0x48, 0x39, 0xD0,
+            0x0F, 0x87,
+        ]);
+        Ownedˉfallbackˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x3B, 0x48, 0xFC, 0x0F, 0x85]);
+        Ownedˉfallbackˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x8B, 0x48, 0xF8, 0x48, 0x01, 0xC1]);
+        code.AddRange([0x48, 0x39, 0xD1, 0x0F, 0x87]);
+        Ownedˉfallbackˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x8B, 0x50, 0xF8, 0x44, 0x39, 0xC2, 0x0F, 0x82]);
+        Growˉownedˉtailˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x8B, 0x48, 0xFC, 0x83, 0xC1, 0x01, 0x0F, 0x84]);
+        Ownedˉfallbackˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x89, 0x48, 0xFC]);
+        code.AddRange([0x49, 0x89, 0xC1]);
+        Emitˉloadˉecxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Left),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x49, 0x01, 0xC9]);
+        code.AddRange([0x8B, 0x48, 0xFC]);
+        Emitˉstoreˉrax(code, Valueˉslot(function, concat.Result));
+        code.AddRange([0x44, 0x89, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x89, 0xC8]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        Emitˉbytesˉcopyˉloop(code, Valueˉslot(function, concat.Right));
+        code.Add(0xE9);
+        Endˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+
+        var Growˉownedˉtail = code.Count;
+        code.AddRange([0x48, 0x39, 0xD1, 0x0F, 0x85]);
+        Promoteˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x8B, 0x48, 0xFC, 0x83, 0xC1, 0x01, 0x0F, 0x84]);
+        Ownedˉfallbackˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x8B, 0x48, 0xF8,
+            0x44, 0x89, 0xC2,
+            0x29, 0xCA,
+            0x45, 0x8B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x41, 0x01, 0xD1,
+            0x0F, 0x82,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x45, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+            0x0F, 0x87,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x45, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x44, 0x89, 0x40, 0xF8,
+            0x8B, 0x48, 0xFC,
+            0x83, 0xC1, 0x01,
+        ]);
+        code.AddRange([0x89, 0x48, 0xFC]);
+        Emitˉstoreˉrax(code, Valueˉslot(function, concat.Result));
+        code.AddRange([0x49, 0x89, 0xC1, 0x44, 0x89, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x89, 0xC8]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        Emitˉloadˉecxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Left),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x49, 0x01, 0xC9]);
+        Emitˉbytesˉcopyˉloop(code, Valueˉslot(function, concat.Right));
+        code.Add(0xE9);
+        Endˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+
+        var Promote = code.Count;
+        code.Add(0xB8);
+        Addˉi32(code, 1);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        var Tailˉprobe = code.Count;
+        Emitˉloadˉrax(code, Valueˉslot(function, concat.Left));
+        code.AddRange(
+        [
+            0x49, 0x3B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+            0x0F, 0x82,
+        ]);
+        Fallbackˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        Emitˉloadˉecxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Left),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange(
+        [
+            0x48, 0x01, 0xC8,
+        ]);
+
+        var Tail = code.Count;
+        code.AddRange([0x48, 0x39, 0xD0, 0x0F, 0x85]);
+        Fallbackˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        Emitˉloadˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Right),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange(
+        [
+            0x45, 0x8B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x44, 0x89, 0xC9,
+            0x01, 0xC1,
+            0x0F, 0x82,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+            0x0F, 0x87,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+        ]);
+        Emitˉloadˉrax(code, Valueˉslot(function, concat.Left));
+        Emitˉstoreˉrax(code, Valueˉslot(function, concat.Result));
+        code.AddRange([0x44, 0x89, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x31, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        code.AddRange([0x49, 0x89, 0xD1]);
+        Emitˉbytesˉcopyˉloop(code, Valueˉslot(function, concat.Right));
+        code.Add(0xE9);
+        Endˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+
+        var Fallback = code.Count;
+        code.AddRange(
+        [
+            0x45, 0x8B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x44, 0x89, 0xC1,
+            0x81, 0xF9,
+        ]);
+        Addˉi32(code, Nativeˉcontract.DYNAMIC_BYTES_MINIMUM_OWNED_LENGTH);
+        code.AddRange([0x0F, 0x83]);
+        var Ownedˉcapacityˉpatch = code.Count;
+        Addˉi32(code, 0);
+
+        code.AddRange(
+        [
+            0x44, 0x89, 0xC8,
+            0x44, 0x01, 0xC0,
+            0x0F, 0x82,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x3B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+            0x0F, 0x87,
+        ]);
+        Arenaˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x89, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+            0x44, 0x89, 0xC9,
+            0x48, 0x01, 0xCA,
+            0x48, 0x89, 0xD0,
+        ]);
+        Emitˉstoreˉrax(code, Valueˉslot(function, concat.Result));
+        code.AddRange([0x44, 0x89, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x31, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        code.AddRange([0x49, 0x89, 0xD1, 0xE9]);
+        var Copyˉfromˉexactˉpatch = code.Count;
+        Addˉi32(code, 0);
+
+        var Ownedˉcapacity = code.Count;
+        Writeˉrelativeˉi32(code, Ownedˉcapacityˉpatch, Ownedˉcapacity);
+        Emitˉloadˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        code.AddRange([0x85, 0xC0, 0x0F, 0x85]);
+        var Promotedˉcapacityˉpatch = code.Count;
+        Addˉi32(code, 0);
+        code.AddRange([0x44, 0x89, 0xC1, 0xE9]);
+        var Capacityˉreadyˉfromˉcandidateˉpatch = code.Count;
+        Addˉi32(code, 0);
+
+        var Promotedˉcapacity = code.Count;
+        Writeˉrelativeˉi32(code, Promotedˉcapacityˉpatch, Promotedˉcapacity);
+        code.AddRange([0x44, 0x89, 0xC1, 0x81, 0xF9]);
+        Addˉi32(code, Nativeˉcontract.DYNAMIC_BYTES_MAXIMUM_DOUBLED_LENGTH);
+        code.AddRange([0x0F, 0x87]);
+        var Capacityˉceilingˉpatch = code.Count;
+        Addˉi32(code, 0);
+        code.AddRange([0x01, 0xC9]);
+        code.Add(0xE9);
+        var Capacityˉreadyˉfromˉdoubleˉpatch = code.Count;
+        Addˉi32(code, 0);
+
+        var Capacityˉceiling = code.Count;
+        code.AddRange([0x81, 0xF9]);
+        Addˉi32(code, Nativeˉcontract.DYNAMIC_BYTES_MAXIMUM_CAPACITY);
+        code.AddRange([0x0F, 0x87]);
+        var Capacityˉexactˉpatch = code.Count;
+        Addˉi32(code, 0);
+        code.Add(0xB9);
+        Addˉi32(code, Nativeˉcontract.DYNAMIC_BYTES_MAXIMUM_CAPACITY);
+        code.Add(0xE9);
+        var Capacityˉreadyˉfromˉceilingˉpatch = code.Count;
+        Addˉi32(code, 0);
+
+        var Capacityˉexact = code.Count;
+        code.AddRange([0x44, 0x89, 0xC1]);
+        var Capacityˉready = code.Count;
+        Writeˉrelativeˉi32(code, Capacityˉceilingˉpatch, Capacityˉceiling);
+        Writeˉrelativeˉi32(code, Capacityˉexactˉpatch, Capacityˉexact);
+        Writeˉrelativeˉi32(code, Capacityˉreadyˉfromˉcandidateˉpatch, Capacityˉready);
+        Writeˉrelativeˉi32(code, Capacityˉreadyˉfromˉdoubleˉpatch, Capacityˉready);
+        Writeˉrelativeˉi32(code, Capacityˉreadyˉfromˉceilingˉpatch, Capacityˉready);
+        code.AddRange(
+        [
+            0x89, 0xC8,
+        ]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        code.AddRange(
+        [
+            0x44, 0x89, 0xC8,
+            0x83, 0xC1, Nativeˉcontract.DYNAMIC_BYTES_HEADER_BYTES,
+            0x01, 0xC1,
             0x0F, 0x82,
         ]);
         Arenaˉpatches.Add(code.Count);
@@ -2795,7 +3120,18 @@ public static class X64ˉnativeˉbackend
         [
             0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
             0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
-            0x4C, 0x01, 0xCA,
+            0x44, 0x89, 0xC9,
+            0x48, 0x01, 0xCA,
+        ]);
+        Emitˉloadˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        code.AddRange([0x89, 0x02, 0xC7, 0x42, 0x04]);
+        Addˉi32(code, checked((int)Nativeˉcontract.DYNAMIC_BYTES_FIRST_GENERATION));
+        code.AddRange(
+        [
+            0x48, 0x83, 0xC2, Nativeˉcontract.DYNAMIC_BYTES_HEADER_BYTES,
             0x48, 0x89, 0xD0,
         ]);
         Emitˉstoreˉrax(code, Valueˉslot(function, concat.Result));
@@ -2804,17 +3140,24 @@ public static class X64ˉnativeˉbackend
             code,
             Valueˉslot(function, concat.Result),
             Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.Add(0xB8);
+        Addˉi32(code, checked((int)Nativeˉcontract.DYNAMIC_BYTES_FIRST_GENERATION));
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, concat.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
+        code.AddRange([0x49, 0x89, 0xD1, 0xE9]);
+        var Copyˉfromˉownedˉpatch = code.Count;
+        Addˉi32(code, 0);
 
-        code.AddRange([0x49, 0x89, 0xD1]);
-        Emitˉbytesˉcopyˉloop(
-            code,
-            Valueˉslot(function, concat.Left));
-        Emitˉbytesˉcopyˉloop(
-            code,
-            Valueˉslot(function, concat.Right));
+        var Copy = code.Count;
+        Writeˉrelativeˉi32(code, Copyˉfromˉexactˉpatch, Copy);
+        Writeˉrelativeˉi32(code, Copyˉfromˉownedˉpatch, Copy);
+        Emitˉbytesˉcopyˉloop(code, Valueˉslot(function, concat.Left));
+        Emitˉbytesˉcopyˉloop(code, Valueˉslot(function, concat.Right));
 
         code.Add(0xE9);
-        var Endˉpatch = code.Count;
+        Endˉpatches.Add(code.Count);
         Addˉi32(code, 0);
         var Limitˉfailure = code.Count;
         Emitˉruntimeˉfailure(
@@ -2835,7 +3178,26 @@ public static class X64ˉnativeˉbackend
         {
             Writeˉrelativeˉi32(code, Patch, Arenaˉfailure);
         }
-        Writeˉrelativeˉi32(code, Endˉpatch, End);
+        foreach (var Patch in Ownedˉfallbackˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Tailˉprobe);
+        }
+        foreach (var Patch in Growˉownedˉtailˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Growˉownedˉtail);
+        }
+        foreach (var Patch in Promoteˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Promote);
+        }
+        foreach (var Patch in Fallbackˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Fallback);
+        }
+        foreach (var Patch in Endˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, End);
+        }
     }
 
     private static void Emitˉbytesˉfromˉu32ˉlittle(
@@ -2876,6 +3238,11 @@ public static class X64ˉnativeˉbackend
             code,
             Valueˉslot(function, encode.Result),
             Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x31, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, encode.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
         Emitˉloadˉeax(code, Valueˉslot(function, encode.Value));
         code.AddRange([0x89, 0x02, 0xE9]);
         var Endˉpatch = code.Count;
@@ -2938,6 +3305,11 @@ public static class X64ˉnativeˉbackend
             code,
             Valueˉslot(function, encode.Result),
             Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x31, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, encode.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
         Emitˉloadˉeax(code, Valueˉslot(function, encode.Value));
         code.AddRange([0x66, 0x89, 0x02, 0xE9]);
         var Endˉpatch = code.Count;
@@ -3002,6 +3374,11 @@ public static class X64ˉnativeˉbackend
             code,
             Valueˉslot(function, encode.Result),
             Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x31, 0xC0]);
+        Emitˉstoreˉeaxˉatˉfield(
+            code,
+            Valueˉslot(function, encode.Result),
+            Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET);
         Emitˉloadˉeax(code, Valueˉslot(function, encode.Value));
         code.AddRange([0x88, 0x02, 0xE9]);
         var Endˉpatch = code.Count;
@@ -3109,7 +3486,7 @@ public static class X64ˉnativeˉbackend
         var Record = Requireˉdirectˉrecord(types, type);
         if (targetˉbackingˉcell < 0)
         {
-            Fail("WVN2901", "ABI 21 record copying requires owned frame backing.");
+            Fail("WVN2901", "ABI 22 record copying requires owned frame backing.");
         }
         Emitˉrecordˉtypeˉtag(code, type);
         Emitˉloadˉrdx(code, sourceˉhandleˉcell);
@@ -3155,7 +3532,7 @@ public static class X64ˉnativeˉbackend
             ((Recordˉtypeˉdeclaration)types[type]).Fields.Any(
                 Field => Field.Type.Kind == Valueˉtype.Record))
         {
-            Fail("WVN2901", "ABI 21 requires a direct non-nested record identity.");
+            Fail("WVN2901", "ABI 22 requires a direct non-nested record identity.");
         }
         return (Recordˉtypeˉdeclaration)types[type];
     }
@@ -3207,7 +3584,7 @@ public static class X64ˉnativeˉbackend
     {
         if (cell < 0)
         {
-            Fail("WVN2901", "ABI 21 requires a nonnegative frame-storage cell.");
+            Fail("WVN2901", "ABI 22 requires a nonnegative frame-storage cell.");
         }
         code.AddRange([0x48, 0x8D, 0x84, 0x24]);
         Addˉi32(code, checked(Slotˉoffset(cell) + stackˉadjustment));
@@ -3392,13 +3769,13 @@ public static class X64ˉnativeˉbackend
             Emitˉstoreˉrax(code, argument);
             code.AddRange(argument switch
             {
-                0 => [0x41, 0x8B, 0x40, (byte)Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
-                1 => [0x41, 0x8B, 0x41, (byte)Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
-                2 => [0x8B, 0x41, (byte)Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
-                3 => [0x8B, 0x42, (byte)Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET],
+                0 => [0x49, 0x8B, 0x40, sizeof(ulong)],
+                1 => [0x49, 0x8B, 0x41, sizeof(ulong)],
+                2 => [0x48, 0x8B, 0x41, sizeof(ulong)],
+                3 => [0x48, 0x8B, 0x42, sizeof(ulong)],
                 _ => [],
             });
-            Emitˉstoreˉeaxˉatˉfield(code, argument, Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+            Emitˉstoreˉraxˉatˉfield(code, argument, sizeof(ulong));
             return;
         }
 
@@ -3546,12 +3923,157 @@ public static class X64ˉnativeˉbackend
         int frameˉbytes,
         bool restoreˉcontext)
     {
+        if (restoreˉcontext)
+        {
+            Emitˉloadˉrdx(code, hiddenˉresultˉslot);
+            Emitˉloadˉrax(code, resultˉslot);
+            code.AddRange([0x48, 0x89, 0x02]);
+            Emitˉloadˉeaxˉatˉfield(
+                code,
+                resultˉslot,
+                Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+            code.AddRange([0x89, 0x42, 0x08, 0x31, 0xC0, 0x89, 0x42, 0x0C]);
+            Emitˉfunctionˉreturn(code, frameˉbytes, restoreˉcontext);
+            return;
+        }
+
+        var Resetˉpatches = new List<int>();
+        var Preserveˉpatches = new List<int>();
+        var Internalˉpatches = new List<int>();
+        Emitˉloadˉeaxˉatˉfield(code, hiddenˉresultˉslot, sizeof(ulong));
+        code.AddRange(
+        [
+            0x41, 0x89, 0xC1,
+            0x4D, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+        ]);
+        Emitˉloadˉrax(code, resultˉslot);
+        Emitˉloadˉecxˉatˉfield(
+            code,
+            resultˉslot,
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x4C, 0x39, 0xC0, 0x0F, 0x82]);
+        Resetˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x48, 0x89, 0xC2, 0x48, 0x01, 0xCA, 0x0F, 0x82]);
+        Preserveˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x4C, 0x29, 0xC0, 0x4C, 0x29, 0xC2]);
+        code.AddRange(
+        [
+            0x45, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x4C, 0x39, 0xC0,
+            0x0F, 0x87,
+        ]);
+        Resetˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x4C, 0x39, 0xC2, 0x0F, 0x87]);
+        Resetˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        Emitˉloadˉeaxˉatˉfield(code, hiddenˉresultˉslot, sizeof(ulong));
+        code.AddRange([0x41, 0x89, 0xC1, 0x4C, 0x39, 0xC8, 0x0F, 0x83]);
+        Internalˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+        code.AddRange([0x4C, 0x39, 0xCA, 0x0F, 0x87]);
+        Preserveˉpatches.Add(code.Count);
+        Addˉi32(code, 0);
+
+        var Reset = code.Count;
+        foreach (var Patch in Resetˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Reset);
+        }
+        Emitˉloadˉeaxˉatˉfield(code, hiddenˉresultˉslot, sizeof(ulong));
+        code.AddRange(
+        [
+            0x41, 0x89, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0xE9,
+        ]);
+        var Externalˉfromˉresetˉpatch = code.Count;
+        Addˉi32(code, 0);
+
+        var Preserve = code.Count;
+        foreach (var Patch in Preserveˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Preserve);
+        }
+        var External = code.Count;
+        Writeˉrelativeˉi32(code, Externalˉfromˉresetˉpatch, External);
         Emitˉloadˉrdx(code, hiddenˉresultˉslot);
         Emitˉloadˉrax(code, resultˉslot);
         code.AddRange([0x48, 0x89, 0x02]);
-        Emitˉloadˉraxˉatˉfield(code, resultˉslot, sizeof(ulong));
-        code.AddRange([0x48, 0x89, 0x42, 0x08, 0x31, 0xC0]);
+        Emitˉloadˉeaxˉatˉfield(
+            code,
+            resultˉslot,
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x89, 0x42, 0x08, 0x31, 0xC0, 0x89, 0x42, 0x0C]);
         Emitˉfunctionˉreturn(code, frameˉbytes, restoreˉcontext);
+
+        var Internal = code.Count;
+        foreach (var Patch in Internalˉpatches)
+        {
+            Writeˉrelativeˉi32(code, Patch, Internal);
+        }
+        Emitˉloadˉeaxˉatˉfield(code, hiddenˉresultˉslot, sizeof(ulong));
+        code.AddRange(
+        [
+            0x41, 0x89, 0xC1,
+            0x4D, 0x8B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+            0x49, 0x01, 0xC1,
+        ]);
+        Emitˉloadˉecxˉatˉfield(
+            code,
+            resultˉslot,
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x89, 0xC2, 0x01, 0xCA, 0x0F, 0x82]);
+        var Internalˉpreserveˉoverflowˉpatch = code.Count;
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x3B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
+            0x0F, 0x87,
+        ]);
+        var Internalˉpreserveˉlimitˉpatch = code.Count;
+        Addˉi32(code, 0);
+        code.AddRange(
+        [
+            0x41, 0x89, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+        ]);
+        Emitˉloadˉrax(code, resultˉslot);
+        code.AddRange([0x85, 0xC9, 0x0F, 0x84]);
+        var Copyˉendˉpatch = code.Count;
+        Addˉi32(code, 0);
+        var Copy = code.Count;
+        code.AddRange(
+        [
+            0x44, 0x0F, 0xB6, 0x00,
+            0x45, 0x88, 0x01,
+            0x48, 0xFF, 0xC0,
+            0x49, 0xFF, 0xC1,
+            0xFF, 0xC9,
+            0x0F, 0x85,
+        ]);
+        var Copyˉpatch = code.Count;
+        Addˉi32(code, 0);
+        var Copyˉend = code.Count;
+        Writeˉrelativeˉi32(code, Copyˉendˉpatch, Copyˉend);
+        Writeˉrelativeˉi32(code, Copyˉpatch, Copy);
+        Emitˉloadˉeaxˉatˉfield(code, hiddenˉresultˉslot, sizeof(ulong));
+        code.AddRange(
+        [
+            0x41, 0x89, 0xC1,
+            0x49, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
+            0x4C, 0x01, 0xC8,
+        ]);
+        Emitˉloadˉrdx(code, hiddenˉresultˉslot);
+        code.AddRange([0x48, 0x89, 0x02]);
+        Emitˉloadˉeaxˉatˉfield(
+            code,
+            resultˉslot,
+            Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
+        code.AddRange([0x89, 0x42, 0x08, 0x31, 0xC0, 0x89, 0x42, 0x0C]);
+        Emitˉfunctionˉreturn(code, frameˉbytes, restoreˉcontext);
+        Writeˉrelativeˉi32(code, Internalˉpreserveˉoverflowˉpatch, Preserve);
+        Writeˉrelativeˉi32(code, Internalˉpreserveˉlimitˉpatch, Preserve);
     }
 
     private static void Emitˉrecordˉfunctionˉreturn(
@@ -3578,6 +4100,23 @@ public static class X64ˉnativeˉbackend
             Addˉi32(code, checked(Fieldˉoffset + sizeof(ulong)));
             code.AddRange([0x48, 0x89, 0x8A]);
             Addˉi32(code, checked(Fieldˉoffset + sizeof(ulong)));
+        }
+        if (!restoreˉcontext)
+        {
+            var Descriptorˉfields = Record.Fields
+                .Select((Field, Index) => (Field, Index))
+                .Where(Item => Item.Field.Type.Kind is Valueˉtype.Text or Valueˉtype.Bytes)
+                .Select(Item => Item.Index)
+                .ToImmutableArray();
+            if (Descriptorˉfields.IsEmpty)
+            {
+                Emitˉloadˉeaxˉatˉfield(code, hiddenˉresultˉcell, sizeof(ulong));
+                code.AddRange(
+                [
+                    0x41, 0x89, 0x47,
+                    Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+                ]);
+            }
         }
         code.AddRange([0x31, 0xC0]);
         Emitˉfunctionˉreturn(code, frameˉbytes, restoreˉcontext);

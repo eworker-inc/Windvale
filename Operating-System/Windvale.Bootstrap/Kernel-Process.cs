@@ -51,7 +51,7 @@ public static class Kernelˉprocessˉcontract
     public const uint THREAD_STATE_FAULTED = 4;
     public const uint THREAD_STATE_WAITING = 5;
     public const uint INIT_MEMORY_PAGE_BUDGET = 7;
-    public const uint CLIENT_MEMORY_PAGE_BUDGET = 118;
+    public const uint CLIENT_MEMORY_PAGE_BUDGET = 119;
     public const uint INIT_INSTRUCTION_BUDGET = 64;
     public const uint CLIENT_INSTRUCTION_BUDGET = 189_114;
     public const uint INIT_CALL_DEPTH_BUDGET = 1;
@@ -85,7 +85,7 @@ public static class Kernelˉprocessˉcontract
     public const uint SYSCALL_REPLY_RESOURCE_REQUEST = 7;
     public const uint RESOURCE_SET_TOKEN = 0x0002_0001;
     public const ulong INIT_ALLOCATION_PAGES = 11;
-    public const ulong CLIENT_ALLOCATION_PAGES = 120;
+    public const ulong CLIENT_ALLOCATION_PAGES = 121;
     public const ulong TABLE_PAGES = 4;
     public const ulong TABLE_BYTES = TABLE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
     public const ulong PML4_PAGE = 0;
@@ -94,7 +94,7 @@ public static class Kernelˉprocessˉcontract
     public const ulong USER_PT_PAGE = 3;
     public const ulong USER_CODE_PAGE = 4;
     public const ulong INIT_CODE_PAGES = 2;
-    public const ulong CLIENT_CODE_PAGES = 109;
+    public const ulong CLIENT_CODE_PAGES = 110;
     public const ulong INIT_STACK_PAGES = 1;
     public const ulong CLIENT_STACK_PAGES = 6;
     public const ulong CLIENT_STACK_BYTES = CLIENT_STACK_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;

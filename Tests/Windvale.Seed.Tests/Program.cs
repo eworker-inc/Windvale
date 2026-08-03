@@ -58,8 +58,8 @@ internal static class Program
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "b609fb7d442bbe1685c1058c71eb011d43b291df505697a97c233ca7063a2044";
     private const string PROJECT_MANIFEST_TOOL_SHA256 = "50ab9aa5048ab844a816d0f7f12fb691cb69f57c4a71f7eb18ebc7fb4aaf0b0c";
-    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "f5f3c244f250e70c8b2c0ea64bdb3c85c32c398df2f051e81802c372a783e6b0";
-    private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "3cb76bcbe51d18f93fbee1c57059b67149ba0d1fb151e5f3a5701feb55304dc2";
+    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "a90577205efd19149f1d89f7979e74c8a177b5d2c59558d76e58bccde96a7a2a";
+    private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "b5f67c3254bdabbc53bd2430d5f350261a8fc5214bc7d3d1d9be6702a37ad4f2";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
     private const string BYTE_ORDERING_SHA256 = "194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1";
@@ -94,7 +94,7 @@ internal static class Program
     private const string SOURCE_WVB_SHA256 = "9c3f4f6839274766a3633784716147e03e3bce47ec1103dac0eb0d998a1b4b9a";
     private const string SOURCE_WVB_DEMO_SHA256 = "acf1f5cbde6e2ba3d831ed8390dac85f812d13525847619b3c85903bb7a44c8f";
     private const string SOURCE_WVB_TOOL_SHA256 = "9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066";
-    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "29a8b354e185fad4b4d8967ee8e263ce68cb9939373d91fb1e7919be887c8569";
+    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "af8db63675a2441e57a763ca4caa411419a84879cf01a1eb62b4be7556487cab";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
@@ -345,6 +345,17 @@ internal static class Program
             let Encodedˉu16ˉzero: bytes = Bytesˉfromˉu16ˉlittle(0u32);
             let Encodedˉu16ˉmaximum: bytes = Bytesˉfromˉu16ˉlittle(65535u32);
             let Encodedˉword: bytes = Bytesˉfromˉu32ˉlittle(42u32);
+            let Built: bytes = Bytesˉconcat(Packet, Encodedˉword);
+            let Extended: bytes = Bytesˉconcat(Built, Packet);
+            var Large: bytes = Packet;
+            var Largeˉindex: u32 = 0u32;
+            while Largeˉindex < 256u32 {
+                Large = Bytesˉconcat(Large, Packet);
+                Largeˉindex = Largeˉindex + 1u32;
+            }
+            let Largeˉalias: bytes = Large;
+            let Largeˉnewer: bytes = Bytesˉconcat(Large, Packet);
+            let Largeˉfork: bytes = Bytesˉconcat(Largeˉalias, Encodedˉword);
             if Bytesˉlength(Packet) == 9u32 {
                 if First == 42u8 {
                     if First != 41u8 {
@@ -364,6 +375,17 @@ internal static class Program
                                                     if Bytesˉlength(Encodedˉu16ˉmaximum) != 2u32 { return 0; }
                                                     if Bytesˉreadˉu16ˉlittle(Encodedˉu16ˉmaximum, 0u32) != 65535u32 { return 0; }
                                                     if Bytesˉreadˉu32ˉlittle(Encodedˉword, 0u32) != 42u32 { return 0; }
+                                                    if Bytesˉlength(Built) != 13u32 { return 0; }
+                                                    if Bytesˉreadˉu8(Built, 0u32) != 42u8 { return 0; }
+                                                    if Bytesˉreadˉu32ˉlittle(Built, 9u32) != 42u32 { return 0; }
+                                                    if Bytesˉlength(Extended) != 22u32 { return 0; }
+                                                    if Bytesˉreadˉu8(Extended, 13u32) != 42u8 { return 0; }
+                                                    if Bytesˉlength(Large) != 2313u32 { return 0; }
+                                                    if Bytesˉreadˉu8(Large, 2312u32) != 255u8 { return 0; }
+                                                    if Bytesˉlength(Largeˉnewer) != 2322u32 { return 0; }
+                                                    if Bytesˉreadˉu8(Largeˉnewer, 2313u32) != 42u8 { return 0; }
+                                                    if Bytesˉlength(Largeˉfork) != 2317u32 { return 0; }
+                                                    if Bytesˉreadˉu32ˉlittle(Largeˉfork, 2313u32) != 42u32 { return 0; }
                                                     return 42;
                                                 }
                                             }
@@ -892,7 +914,7 @@ internal static class Program
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
-        new("native exact compiler exposes the bounded full-bootstrap text-lifetime boundary", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreachesˉtextˉboundary),
+        new("native exact compiler reproduces full Stage 2 under the bounded text arena", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreproducesˉstage2),
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
@@ -1769,9 +1791,10 @@ internal static class Program
             },
             First.Fragment.Code.Take(13));
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
-        Equal(21, Nativeˉcontract.ABI_VERSION);
+        Equal(22, Nativeˉcontract.ABI_VERSION);
         Equal(33_554_432, Nativeˉcontract.MAXIMUM_CODE_BYTES);
         Equal(2_097_152, Nativeˉcontract.MAXIMUM_RECORD_ARENA_BYTES);
+        Equal(67_108_864, Nativeˉcontract.MAXIMUM_TEXT_ARENA_BYTES);
         Equal(2_048, Nativeˉcontract.MAXIMUM_FRAME_SLOTS);
         Equal(100_000, Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS);
         Equal(32_768, Nativeˉcontract.MAXIMUM_FRAME_BYTES);
@@ -1779,6 +1802,7 @@ internal static class Program
         Equal(Nativeˉcontract.ABI_VERSION, First.Fragment.Abiˉversion);
         Equal(0, First.Fragment.Patches.Length);
         _ = Nativeˉfragmentˉverifier.Verify(First.Fragment);
+
         Throwsˉnative(
             "WVN3005",
             () => _ = Nativeˉfragmentˉverifier.Verify(
@@ -4612,8 +4636,8 @@ internal static class Program
                 }
                 var Copy: text = Value;
                 var Count: i32 = 0;
-                while Count < 40 {
-                    Copy = Textˉconcat(Value, "");
+                while Count < 140 {
+                    Copy = Textˉconcat(Value, "b");
                     Count = Count + 1;
                 }
                 return 0;
@@ -4662,7 +4686,7 @@ internal static class Program
                 }
                 var Quoted: text = "";
                 var Count: i32 = 0;
-                while Count < 62 {
+                while Count < 255 {
                     Quoted = Textˉquote(Value);
                     Count = Count + 1;
                 }
@@ -4682,7 +4706,7 @@ internal static class Program
             export fn Main() -> i32 {
                 var Name: text = "";
                 var Count: i32 = 0;
-                while Count < 131073 {
+                while Count < 524289 {
                     Name = Enumˉname(Nativeˉlong.{{Longˉmember}});
                     Count = Count + 1;
                 }
@@ -4693,7 +4717,7 @@ internal static class Program
             "WVR3018",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 X64ˉnativeˉbackend.Compile(Enumˉarenaˉexhaustion).Fragment,
-                maximumˉinstructions: 10_000_000));
+                maximumˉinstructions: 50_000_000));
 
         var Descriptorˉfunction = First.Module.Functions
             .Select((Function, Index) => (Function, Index))
@@ -4952,6 +4976,20 @@ internal static class Program
             "Native machine IR omitted u8 comparisons.");
 
         _ = Nativeˉfragmentˉverifier.Verify(First.Fragment);
+
+        var Encodedˉownedˉthreshold = First.Fragment.Code.AsSpan().IndexOf(new byte[]
+        {
+            0x44, 0x89, 0xC1,
+            0x81, 0xF9, 0x40, 0x00, 0x00, 0x00,
+            0x0F, 0x83,
+        });
+        True(Encodedˉownedˉthreshold >= 0, "Native bytes.concat omitted its owned-buffer threshold.");
+        var Corruptedˉownedˉthreshold = First.Fragment.Code.ToArray();
+        Corruptedˉownedˉthreshold[Encodedˉownedˉthreshold + 5] = 0x3F;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                First.Fragment with { Code = Corruptedˉownedˉthreshold.ToImmutableArray() }));
 
         var Encodedˉu8ˉstart = First.Fragment.Code.AsSpan().IndexOf(new byte[]
         {
@@ -7185,11 +7223,27 @@ internal static class Program
             $"largest-name={Largestˉrecordˉframe.Functionˉname} " +
             $"nested={Compilerˉrecordˉstorage.Count(Function => Function.Containsˉnestedˉrecordˉfields)} " +
             $"offset-map={Nativeˉrecordˉstorageˉdigest(Compilerˉrecordˉstorage)}");
-        Equal(16_905_513, Compilerˉnative.Fragment.Code.Length);
+        Equal(17_130_441, Compilerˉnative.Fragment.Code.Length);
         Equal(
             SOURCE_WVB_TOOL_NATIVE_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Compilerˉnative.Fragment.Code.AsSpan()));
         _ = Nativeˉfragmentˉverifier.Verify(Compilerˉnative.Fragment);
+
+        var Encodedˉcheckpoint = Compilerˉnative.Fragment.Code.AsSpan().IndexOf(new byte[]
+        {
+            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
+            0x89, 0x84, 0x24,
+        });
+        True(Encodedˉcheckpoint >= 0, "Native compiler functions omitted their text-arena checkpoint.");
+        var Corruptedˉcheckpoint = Compilerˉnative.Fragment.Code.ToArray();
+        Corruptedˉcheckpoint[Encodedˉcheckpoint + 3]++;
+        Throwsˉnative(
+            "WVN3030",
+            () => _ = Nativeˉfragmentˉverifier.Verify(
+                Compilerˉnative.Fragment with
+                {
+                    Code = Corruptedˉcheckpoint.ToImmutableArray(),
+                }));
 
         var Compilerˉdirectory = Path.Combine(
             Path.GetTempPath(),
@@ -7221,7 +7275,7 @@ internal static class Program
                     Nativeˉfileˉoutput.Hostˉfileˉsystem()));
             Equal(0, Compilerˉmeasurement.Scalar);
             Equal(0u, Compilerˉmeasurement.Recordˉarenaˉused);
-            Equal(4_340_388u, Compilerˉmeasurement.Textˉarenaˉused);
+            Equal(60_632u, Compilerˉmeasurement.Textˉarenaˉused);
             Equal(
                 "source wvb status=Valid functions=4 code-bytes=532 module-bytes=815\n",
                 Compilerˉoutput.Readˉtext());
@@ -7236,7 +7290,7 @@ internal static class Program
         }
     }
 
-    private static void Nativeˉcompilerˉbootstrapˉreachesˉtextˉboundary()
+    private static void Nativeˉcompilerˉbootstrapˉreproducesˉstage2()
     {
         var Compilerˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_TOOL_SOURCE,
@@ -7341,21 +7395,24 @@ internal static class Program
             var Compilerˉauthorized = Compilerˉtool.Module.Capabilities
                 .Select(Capability => Capability.Name)
                 .ToImmutableHashSet(StringComparer.Ordinal);
-            Throwsˉnativeˉtrap(
-                "WVR3018",
-                () => _ = X64ˉnativeˉexecutor.Executeˉi32(
-                    Compilerˉnative.Fragment,
-                    maximumˉinstructions: 8_000_000_000,
-                    hostˉservices: new(
-                        Compilerˉoutput.Channel,
-                        Compilerˉauthorized,
-                        Compilerˉresources,
-                        Compilerˉdiagnostic.Channel,
-                        Nativeˉfileˉinput.Hostˉfileˉsystem(),
-                        Nativeˉfileˉoutput.Hostˉfileˉsystem())));
-            Equal(string.Empty, Compilerˉoutput.Readˉtext());
+            var Measurement = X64ˉnativeˉexecutor.Measureˉi32(
+                Compilerˉnative.Fragment,
+                maximumˉinstructions: 8_000_000_000,
+                hostˉservices: new(
+                    Compilerˉoutput.Channel,
+                    Compilerˉauthorized,
+                    Compilerˉresources,
+                    Compilerˉdiagnostic.Channel,
+                    Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                    Nativeˉfileˉoutput.Hostˉfileˉsystem()));
+            Equal(0, Measurement.Scalar);
+            Equal(0u, Measurement.Recordˉarenaˉused);
+            Equal(64_476_249u, Measurement.Textˉarenaˉused);
+            Equal(
+                "source wvb status=Valid functions=328 code-bytes=481356 module-bytes=599868\n",
+                Compilerˉoutput.Readˉtext());
             Equal(string.Empty, Compilerˉdiagnostic.Readˉtext());
-            False(File.Exists(Outputˉpath), "The bounded native bootstrap failure created an output module.");
+            Sequenceˉequal(Compilerˉbytes, File.ReadAllBytes(Outputˉpath));
         }
         finally
         {

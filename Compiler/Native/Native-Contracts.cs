@@ -6,8 +6,8 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 21;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v21";
+    public const int ABI_VERSION = 22;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v22";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
     public const int MAXIMUM_CODE_BYTES = 32 * 1024 * 1024;
@@ -17,6 +17,12 @@ public static class Nativeˉcontract
     public const int BORROWED_BYTES_POINTER_OFFSET = 0;
     public const int BORROWED_BYTES_LENGTH_OFFSET = 8;
     public const int BORROWED_BYTES_RESERVED_OFFSET = 12;
+    public const int DYNAMIC_BYTES_HEADER_BYTES = 8;
+    public const int DYNAMIC_BYTES_MINIMUM_OWNED_LENGTH = 64;
+    public const int DYNAMIC_BYTES_MAXIMUM_CAPACITY = 4 * 1024 * 1024;
+    public const int DYNAMIC_BYTES_MAXIMUM_DOUBLED_LENGTH =
+        DYNAMIC_BYTES_MAXIMUM_CAPACITY / 2;
+    public const uint DYNAMIC_BYTES_FIRST_GENERATION = 1;
     public const int BORROWED_TEXT_POINTER_OFFSET = 0;
     public const int BORROWED_TEXT_LENGTH_OFFSET = 8;
     public const int BORROWED_TEXT_RESERVED_OFFSET = 12;
@@ -29,7 +35,7 @@ public static class Nativeˉcontract
     public const int MAXIMUM_STACK_CALL_BYTES =
         MAXIMUM_STACK_CALL_PARAMETERS * VALUE_SLOT_BYTES;
     public const int MAXIMUM_RECORD_ARENA_BYTES = 2 * 1024 * 1024;
-    public const int MAXIMUM_TEXT_ARENA_BYTES = 16 * 1024 * 1024;
+    public const int MAXIMUM_TEXT_ARENA_BYTES = 64 * 1024 * 1024;
     public const int MAXIMUM_ENUM_METADATA_BYTES = 32 * 1024 * 1024;
     public const int MAXIMUM_DESCRIPTOR_OWNERSHIP_ACTIONS = 4 * 1024 * 1024;
 }
