@@ -1,27 +1,27 @@
 <#
 .SYNOPSIS
-Synchronizes the six standard Windvale development lanes.
+Synchronizes the ten standard Windvale development lanes.
 
 .EXAMPLE
 Sync-Development-Lanes.ps1
-Fetches and fast-forwards clean dev01 through dev06 lanes on main.
+Fetches and fast-forwards clean dev01 through dev10 lanes on main.
 
 .EXAMPLE
 Sync-Development-Lanes.ps1 -CreateMissing
-Clones missing lanes from dev01's origin, then synchronizes all six lanes.
+Clones missing lanes from dev01's origin, then synchronizes all ten lanes.
 
 .EXAMPLE
 Sync-Development-Lanes.ps1 -StatusOnly
 Refreshes remote refs and reports lane state without changing a checkout.
 
 .EXAMPLE
-Sync-Development-Lanes.ps1 -Lane 2,4..6 -SwitchToMain -Push
+Sync-Development-Lanes.ps1 -Lane 2,7..10 -SwitchToMain -Push
 Switches clean selected lanes to main, fast-forwards them, and pushes a clean
 main lane when it is ahead of origin/main.
 #>
 [CmdletBinding()]
 param(
-  [object[]]$Lane = (1..6),
+  [object[]]$Lane = (1..10),
   [string]$Root = (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))),
   [string]$Remote = 'origin',
   [string]$MainBranch = 'main',
@@ -36,7 +36,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$VALID_LANES = 1..6
+$VALID_LANES = 1..10
 
 function Invoke-Git {
   param(
@@ -78,7 +78,7 @@ function Resolve-Lanes {
       } elseif ($Token -match '^\d+$') {
         $Resolved.Add([int]$Token)
       } else {
-        throw "Invalid lane '$Token'. Use values such as 1, dev01, 1,2, or 4..6."
+        throw "Invalid lane '$Token'. Use values such as 1, dev01, 1,2, or 7..10."
       }
     }
   }
@@ -86,7 +86,7 @@ function Resolve-Lanes {
   $Unique = @($Resolved | Sort-Object -Unique)
   if ($Unique.Count -eq 0) { throw 'At least one development lane must be selected.' }
   $Invalid = @($Unique | Where-Object { $_ -notin $VALID_LANES })
-  if ($Invalid.Count -gt 0) { throw "Windvale lanes must be between 1 and 6. Invalid: $($Invalid -join ', ')." }
+  if ($Invalid.Count -gt 0) { throw "Windvale lanes must be between 1 and 10. Invalid: $($Invalid -join ', ')." }
   $Unique
 }
 
