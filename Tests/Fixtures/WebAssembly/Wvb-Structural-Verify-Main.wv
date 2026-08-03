@@ -1,0 +1,359 @@
+module WebAssemblyˉwvbˉstructuralˉverify profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    let Invalid: bytes = Bytesˉfromˉu8(0u8);
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 12u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, 0u32)) != 87u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, 1u32)) != 86u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, 2u32)) != 66u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, 3u32)) != 49u32 { return Invalid; }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return Invalid; }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return Invalid; }
+
+    var Cursor: u32 = 12u32;
+    var Expectedˉkind: u32 = 1u32;
+    var Payload: u32 = 0u32;
+    var Payloadˉlength: u32 = 0u32;
+    var Payloadˉend: u32 = 0u32;
+    var Payloadˉcursor: u32 = 0u32;
+    var Count: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Innerˉindex: u32 = 0u32;
+    var Length: u32 = 0u32;
+    var Raw: u32 = 0u32;
+    var Width: u32 = 0u32;
+    var Functionˉcount: u32 = 0u32;
+    var Typeˉcount: u32 = 0u32;
+    var Expectedˉcodeˉoffset: u32 = 0u32;
+
+    while Expectedˉkind <= 7u32 {
+        if Cursor > Total { return Invalid; }
+        if 8u32 > Total - Cursor { return Invalid; }
+        Payload = Cursor + 8u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != Expectedˉkind {
+            return Invalid;
+        }
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32)) != 0u32 {
+            return Invalid;
+        }
+        if Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 {
+            return Invalid;
+        }
+        Payloadˉlength = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        if Payloadˉlength > Total - Payload { return Invalid; }
+        Payloadˉend = Payload + Payloadˉlength;
+        Payloadˉcursor = Payload;
+
+        if Expectedˉkind == 1u32 {
+            if Payloadˉlength < 5u32 { return Invalid; }
+            Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+            if Raw < 1u32 { return Invalid; }
+            if Raw > 3u32 { return Invalid; }
+            Payloadˉcursor = Payloadˉcursor + 1u32;
+            Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+            if Length < 1u32 { return Invalid; }
+            if Length > 255u32 { return Invalid; }
+            Payloadˉcursor = Payloadˉcursor + 4u32;
+            if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
+            Payloadˉcursor = Payloadˉcursor + Length;
+        }
+
+        if Expectedˉkind == 2u32 {
+            if Payloadˉlength < 4u32 { return Invalid; }
+            Count = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+            if Count > 32u32 { return Invalid; }
+            Payloadˉcursor = Payloadˉcursor + 4u32;
+            Index = 0u32;
+            while Index < Count {
+                if Payloadˉcursor > Payloadˉend { return Invalid; }
+                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                if Length < 1u32 { return Invalid; }
+                if Length > 255u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + Length;
+                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                if Length > 4096u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Innerˉindex = 0u32;
+                while Innerˉindex < Length {
+                    Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+                    if Raw < 1u32 { return Invalid; }
+                    if Raw > 6u32 { return Invalid; }
+                    Payloadˉcursor = Payloadˉcursor + 1u32;
+                    Innerˉindex = Innerˉindex + 1u32;
+                }
+                if Payloadˉcursor >= Payloadˉend { return Invalid; }
+                Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+                if Raw > 6u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 1u32;
+                Index = Index + 1u32;
+            }
+        }
+
+        if Expectedˉkind == 3u32 {
+            if Payloadˉlength < 4u32 { return Invalid; }
+            Count = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+            if Count > 4096u32 { return Invalid; }
+            Payloadˉcursor = Payloadˉcursor + 4u32;
+            Index = 0u32;
+            while Index < Count {
+                if Payloadˉcursor > Payloadˉend { return Invalid; }
+                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                if Length < 1u32 { return Invalid; }
+                if Length > 255u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + Length;
+                if 5u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+                if Raw < 3u32 { return Invalid; }
+                if Raw > 5u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 1u32;
+                Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                if Raw == 4u32 {
+                    if Length > 262144u32 { return Invalid; }
+                    Innerˉindex = 0u32;
+                    while Innerˉindex < Length {
+                        if Payloadˉcursor > Payloadˉend { return Invalid; }
+                        if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                        Payloadˉcursor = Payloadˉcursor + 4u32;
+                        Innerˉindex = Innerˉindex + 1u32;
+                    }
+                } else {
+                    if Raw == 3u32 {
+                        if Length > 1048576u32 { return Invalid; }
+                    }
+                    if Raw == 5u32 {
+                        if Length > 4194304u32 { return Invalid; }
+                    }
+                    if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
+                    Payloadˉcursor = Payloadˉcursor + Length;
+                }
+                Index = Index + 1u32;
+            }
+        }
+
+        if Expectedˉkind == 4u32 {
+            if Payloadˉlength < 4u32 { return Invalid; }
+            Functionˉcount = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+            if Functionˉcount > 4096u32 { return Invalid; }
+            Payloadˉcursor = Payloadˉcursor + 4u32;
+            Index = 0u32;
+            Expectedˉcodeˉoffset = 0u32;
+            while Index < Functionˉcount {
+                if Payloadˉcursor > Payloadˉend { return Invalid; }
+                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                if Length < 1u32 { return Invalid; }
+                if Length > 255u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + Length;
+                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Count = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                if Count > 4096u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                Innerˉindex = 0u32;
+                while Innerˉindex < Count {
+                    if Payloadˉcursor >= Payloadˉend { return Invalid; }
+                    Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+                    if Raw < 1u32 { return Invalid; }
+                    if Raw > 8u32 { return Invalid; }
+                    Payloadˉcursor = Payloadˉcursor + 1u32;
+                    if Raw >= 7u32 {
+                        if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                        Payloadˉcursor = Payloadˉcursor + 4u32;
+                    }
+                    Innerˉindex = Innerˉindex + 1u32;
+                }
+                if Payloadˉcursor >= Payloadˉend { return Invalid; }
+                Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+                if Raw > 8u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 1u32;
+                if Raw >= 7u32 {
+                    if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                    Payloadˉcursor = Payloadˉcursor + 4u32;
+                }
+                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Count = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                if Count > 4096u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                Innerˉindex = 0u32;
+                while Innerˉindex < Count {
+                    if Payloadˉcursor >= Payloadˉend { return Invalid; }
+                    Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+                    if Raw < 1u32 { return Invalid; }
+                    if Raw > 8u32 { return Invalid; }
+                    Payloadˉcursor = Payloadˉcursor + 1u32;
+                    if Raw >= 7u32 {
+                        if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                        Payloadˉcursor = Payloadˉcursor + 4u32;
+                    }
+                    Innerˉindex = Innerˉindex + 1u32;
+                }
+                if 12u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                if Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor) != Expectedˉcodeˉoffset {
+                    return Invalid;
+                }
+                Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor + 4u32);
+                if Length > 1048576u32 { return Invalid; }
+                if Expectedˉcodeˉoffset > 4194304u32 { return Invalid; }
+                if Length > 4194304u32 - Expectedˉcodeˉoffset { return Invalid; }
+                Expectedˉcodeˉoffset = Expectedˉcodeˉoffset + Length;
+                if Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor + 8u32) > 4096u32 {
+                    return Invalid;
+                }
+                Payloadˉcursor = Payloadˉcursor + 12u32;
+                Index = Index + 1u32;
+            }
+        }
+
+        if Expectedˉkind == 5u32 {
+            if Payloadˉlength != Expectedˉcodeˉoffset { return Invalid; }
+            Index = 0u32;
+            while Payloadˉcursor < Payloadˉend {
+                Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+                Width = 0u32;
+                if Raw == 1u32 { Width = 5u32; }
+                if Raw == 2u32 { Width = 2u32; }
+                if Raw >= 3u32 {
+                    if Raw <= 7u32 { Width = 5u32; }
+                }
+                if Raw == 8u32 { Width = 2u32; }
+                if Raw == 9u32 { Width = 5u32; }
+                if Raw == 10u32 { Width = 5u32; }
+                if Raw >= 11u32 {
+                    if Raw <= 22u32 { Width = 1u32; }
+                }
+                if Raw >= 32u32 {
+                    if Raw <= 40u32 { Width = 1u32; }
+                }
+                if Raw == 48u32 { Width = 5u32; }
+                if Raw == 49u32 { Width = 5u32; }
+                if Raw == 64u32 { Width = 5u32; }
+                if Raw == 65u32 { Width = 5u32; }
+                if Raw == 80u32 { Width = 1u32; }
+                if Raw == 81u32 { Width = 1u32; }
+                if Raw >= 96u32 {
+                    if Raw <= 103u32 { Width = 1u32; }
+                }
+                if Raw == 104u32 { Width = 5u32; }
+                if Raw == 105u32 { Width = 5u32; }
+                if Raw == 106u32 { Width = 9u32; }
+                if Raw >= 107u32 {
+                    if Raw <= 125u32 { Width = 1u32; }
+                }
+                if Width == 0u32 { return Invalid; }
+                if Width > Payloadˉend - Payloadˉcursor { return Invalid; }
+                if Raw == 2u32 {
+                    Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor + 1u32));
+                    if Length > 1u32 { return Invalid; }
+                }
+                Payloadˉcursor = Payloadˉcursor + Width;
+                if Index >= 100000u32 { return Invalid; }
+                Index = Index + 1u32;
+            }
+        }
+
+        if Expectedˉkind == 6u32 {
+            if Payloadˉlength < 4u32 { return Invalid; }
+            Count = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+            if Count > Functionˉcount { return Invalid; }
+            Payloadˉcursor = Payloadˉcursor + 4u32;
+            Index = 0u32;
+            while Index < Count {
+                if Payloadˉcursor > Payloadˉend { return Invalid; }
+                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                if Length < 1u32 { return Invalid; }
+                if Length > 255u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + Length;
+                if 5u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor)) != 1u32 {
+                    return Invalid;
+                }
+                if Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor + 1u32) >= Functionˉcount {
+                    return Invalid;
+                }
+                Payloadˉcursor = Payloadˉcursor + 5u32;
+                Index = Index + 1u32;
+            }
+        }
+
+        if Expectedˉkind == 7u32 {
+            if Payloadˉlength < 4u32 { return Invalid; }
+            Typeˉcount = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+            if Typeˉcount > 1024u32 { return Invalid; }
+            Payloadˉcursor = Payloadˉcursor + 4u32;
+            Index = 0u32;
+            while Index < Typeˉcount {
+                if Payloadˉcursor > Payloadˉend { return Invalid; }
+                if 5u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+                if Raw < 1u32 { return Invalid; }
+                if Raw > 2u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 1u32;
+                Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                if Length < 1u32 { return Invalid; }
+                if Length > 255u32 { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Payloadˉcursor = Payloadˉcursor + Length;
+                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                Count = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                if Count < 1u32 { return Invalid; }
+                if Raw == 1u32 {
+                    if Count > 64u32 { return Invalid; }
+                } else {
+                    if Count > 256u32 { return Invalid; }
+                }
+                Payloadˉcursor = Payloadˉcursor + 4u32;
+                Innerˉindex = 0u32;
+                while Innerˉindex < Count {
+                    if Payloadˉcursor > Payloadˉend { return Invalid; }
+                    if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                    Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
+                    if Length < 1u32 { return Invalid; }
+                    if Length > 255u32 { return Invalid; }
+                    Payloadˉcursor = Payloadˉcursor + 4u32;
+                    if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
+                    Payloadˉcursor = Payloadˉcursor + Length;
+                    if Raw == 1u32 {
+                        if Payloadˉcursor >= Payloadˉend { return Invalid; }
+                        Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
+                        if Length < 1u32 { return Invalid; }
+                        if Length > 8u32 { return Invalid; }
+                        if Length == 7u32 { return Invalid; }
+                        Payloadˉcursor = Payloadˉcursor + 1u32;
+                        if Length == 8u32 {
+                            if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                            Payloadˉcursor = Payloadˉcursor + 4u32;
+                        }
+                    } else {
+                        if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                        Payloadˉcursor = Payloadˉcursor + 4u32;
+                    }
+                    Innerˉindex = Innerˉindex + 1u32;
+                }
+                Index = Index + 1u32;
+            }
+        }
+
+        if Payloadˉcursor != Payloadˉend { return Invalid; }
+        Cursor = Payloadˉend;
+        Expectedˉkind = Expectedˉkind + 1u32;
+    }
+
+    if Cursor != Total { return Invalid; }
+    return Bytesˉfromˉu8(1u8);
+}

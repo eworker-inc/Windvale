@@ -32,6 +32,10 @@ $RuntimeU16GuardSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/R
 $RuntimeArenaSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-Arena-Main.wv'
 $RuntimeU32GuardSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-U32-Guard-Main.wv'
 $WvbEnvelopeVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Envelope-Verify-Main.wv'
+$WvbStructuralVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Structural-Verify-Main.wv'
+$StructuralDataSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Data-And-Text.wv'
+$StructuralTypesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Nominal-Types.wv'
+$StructuralCapabilitiesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv'
 $EngineVerifier = Join-Path $RepositoryRoot 'Tools/Verify/Verify-WebAssembly-Engine.mjs'
 $BackendWvb = Join-Path $ArtifactDirectory 'Windvale-WebAssembly.wvb'
 $SuccessWvb = Join-Path $ArtifactDirectory 'Checked-Add-Main.wvb'
@@ -57,6 +61,10 @@ $RuntimeU16GuardWvb = Join-Path $ArtifactDirectory 'Runtime-U16-Guard-Main.wvb'
 $RuntimeArenaWvb = Join-Path $ArtifactDirectory 'Runtime-Arena-Main.wvb'
 $RuntimeU32GuardWvb = Join-Path $ArtifactDirectory 'Runtime-U32-Guard-Main.wvb'
 $WvbEnvelopeVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Envelope-Verify-Main.wvb'
+$WvbStructuralVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Structural-Verify-Main.wvb'
+$StructuralDataWvb = Join-Path $ArtifactDirectory 'Structural-Data-And-Text.wvb'
+$StructuralTypesWvb = Join-Path $ArtifactDirectory 'Structural-Nominal-Types.wvb'
+$StructuralCapabilitiesWvb = Join-Path $ArtifactDirectory 'Structural-Hosted-Capabilities.wvb'
 $SuccessWasm = Join-Path $ArtifactDirectory 'Checked-Add-Main.wasm'
 $OverflowWasm = Join-Path $ArtifactDirectory 'Checked-Add-Overflow-Main.wasm'
 $StraightWasm = Join-Path $ArtifactDirectory 'Straight-I32-Main.wasm'
@@ -80,6 +88,7 @@ $RuntimeU16GuardWasm = Join-Path $ArtifactDirectory 'Runtime-U16-Guard-Main.wasm
 $RuntimeArenaWasm = Join-Path $ArtifactDirectory 'Runtime-Arena-Main.wasm'
 $RuntimeU32GuardWasm = Join-Path $ArtifactDirectory 'Runtime-U32-Guard-Main.wasm'
 $WvbEnvelopeVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Envelope-Verify-Main.wasm'
+$WvbStructuralVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Structural-Verify-Main.wasm'
 
 New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
 
@@ -117,6 +126,10 @@ Invoke-Windvale @('compile', $RuntimeU16GuardSource, '-o', $RuntimeU16GuardWvb)
 Invoke-Windvale @('compile', $RuntimeArenaSource, '-o', $RuntimeArenaWvb)
 Invoke-Windvale @('compile', $RuntimeU32GuardSource, '-o', $RuntimeU32GuardWvb)
 Invoke-Windvale @('compile', $WvbEnvelopeVerifySource, '-o', $WvbEnvelopeVerifyWvb)
+Invoke-Windvale @('compile', $WvbStructuralVerifySource, '-o', $WvbStructuralVerifyWvb)
+Invoke-Windvale @('compile', $StructuralDataSource, '-o', $StructuralDataWvb)
+Invoke-Windvale @('compile', $StructuralTypesSource, '-o', $StructuralTypesWvb)
+Invoke-Windvale @('compile', $StructuralCapabilitiesSource, '-o', $StructuralCapabilitiesWvb)
 
 $RunArguments = @(
     'run', $BackendWvb,
@@ -152,6 +165,7 @@ Invoke-Windvale ($RunArguments + @($RuntimeU16GuardWvb, $RuntimeU16GuardWasm))
 Invoke-Windvale ($RunArguments + @($RuntimeArenaWvb, $RuntimeArenaWasm))
 Invoke-Windvale ($RunArguments + @($RuntimeU32GuardWvb, $RuntimeU32GuardWasm))
 Invoke-Windvale ($RunArguments + @($WvbEnvelopeVerifyWvb, $WvbEnvelopeVerifyWasm))
+Invoke-Windvale ($RunArguments + @($WvbStructuralVerifyWvb, $WvbStructuralVerifyWasm))
 
 node $EngineVerifier `
     $SuccessWasm `
@@ -177,7 +191,12 @@ node $EngineVerifier `
     $RuntimeArenaWasm `
     $RuntimeU32GuardWasm `
     $WvbEnvelopeVerifyWasm `
-    $WvbEnvelopeVerifyWvb
+    $WvbEnvelopeVerifyWvb `
+    $WvbStructuralVerifyWasm `
+    $WvbStructuralVerifyWvb `
+    $StructuralDataWvb `
+    $StructuralTypesWvb `
+    $StructuralCapabilitiesWvb
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

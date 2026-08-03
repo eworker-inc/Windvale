@@ -309,5 +309,8 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Wvb-Envelope-Verify-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Envelope-Verify-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Wvb-Structural-Verify-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Structural-Verify-Main.wv" />
   </ItemGroup>
 </Project>

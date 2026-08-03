@@ -1,6 +1,6 @@
 # Windvale experimental WebAssembly target
 
-- Status: Implemented locally through experimental profile 10 and cross-host qualified through profile 5, but not an accepted permanent target
+- Status: Implemented locally through experimental profile 11 and cross-host qualified through profile 10, but not an accepted permanent target
 - Target identifier: `wasm32-browser-v1-experimental`
 - WebAssembly binary version: 1
 - Portable input identity: canonical WVB 1.6
@@ -15,7 +15,7 @@ The implementation is `Compiler/Windvale/WebAssembly-Core.wv`. `Examples/Compile
 
 WVB verification remains mandatory before a WebAssembly execution path may trust a module. The current hosted shell nevertheless treats its raw file input as untrusted and revalidates every byte range and every field needed by this profile. It rejects a truncated header, wrong version or section count, malformed or reordered section envelope, oversized payload length, trailing bytes, unsupported profile, unsupported module shape, unsupported function metadata, and unsupported code before producing output.
 
-This selector is not a general Windvale-native WVB semantic verifier. A future browser execution path must either consume independently verified evidence or qualify a complete Windvale-native verifier before removing the Stage 0 verifier.
+This selector is not a general Windvale-native WVB semantic verifier. Profile 11 can execute a Windvale-written verifier that completely consumes the seven bounded section payloads, but it does not yet prove canonical names, identities, indices, type flow, control flow, or authorization. A future browser execution path must qualify that remaining semantic layer before removing the Stage 0 verifier.
 
 ## Accepted WVB profiles
 
@@ -148,6 +148,14 @@ Every absolute control target must be function entry or immediately follow a dec
 
 The retained profile-10 consumer is `Wvb-Envelope-Verify-Main.wv`. Given arbitrary input bytes, it returns `[1]` only when the input is a completely consumed WVB 1.6 envelope with magic `WVB1`, version `1.6`, section count seven, section kinds one through seven in order, zero section flags and reserved fields, and every payload extent in range. It returns `[0]` for an invalid envelope. This is outer-envelope verification, not complete validation of section payloads or executable semantics.
 
+### Profile 11: bounded WVB section-payload verification
+
+Profile 11 retains profile 10's operations and execution ABI while scaling the one accepted runtime function to at most 2,047 nonparameter locals, 32,768 code bytes, and 100,000 decoded instructions. The selector records instruction boundaries once in an immutable byte mask and uses the mask for bounded control-target checks. The emitted control wrapper accumulates one basic block at a time before appending it to the complete Wasm body. These are selector construction changes; every dynamic WVB operation remains metered and prior generated artifacts retain their exact bytes.
+
+The retained consumer is `Wvb-Structural-Verify-Main.wv`. It requires the profile-10 envelope and then completely consumes all seven payload schemas under explicit bounds. It checks module profile/name extents; capability name and primitive-signature shapes; data names, kinds, counts, and payload extents; function names, type encodings, contiguous code ranges, and declared limits; complete known-opcode widths and canonical boolean operands; function-export target ranges; and record/enum names, item counts, and item payload extents. Valid input returns `[1]`; any structural rejection returns `[0]`.
+
+Profile 11 is deliberately not the mandatory semantic verifier. It does not yet validate UTF-8 or source-name grammar, uniqueness or canonical declaration order, capability catalog identities, nominal-type target identities, instruction indices and branch targets, typed stack and local-initialization flow, control joins and reachability, maximum-stack agreement, export uniqueness, or capability authorization.
+
 ## Profile 1 output module
 
 Successful lowering emits a WebAssembly binary version-1 module with these sections in ascending order:
@@ -259,7 +267,7 @@ The retained profile-7 true-route fixture defines `Add`, looping `Build`, and ex
 
 The matching false-route fixture has 722-byte WVB SHA-256 `77e65ba692c8abc87dbac4dfeba174f3afc9191ac784b47a65becae8f0df2752`. It calls `Add` from the `else` route, succeeds as `0/42/153`, returns `3011/0/152` one instruction below it, and emits a 2,729-byte artifact with SHA-256 `35d75c30ef03dbb693a976cfaa31405ce90ecca4d393c5e93de8953fcf4658da`.
 
-## Execution ABI 3 and profiles 8 and 9 output
+## Execution ABI 3 and profiles 8 through 11 output
 
 Profile 8 emits an import-free WebAssembly binary version-1 module with one fixed, non-growable 129-page memory. Page zero is reserved. The host owns a 4 MiB input window beginning at byte 65,536; the guest owns a separate 4 MiB output window beginning at byte 4,259,840. The regions are disjoint, checked before access, and exactly fill the remaining memory.
 
@@ -267,7 +275,7 @@ The module exports these values in this exact order:
 
 | Export | WebAssembly kind | Contract |
 | --- | --- | --- |
-| `Windvale.run` | function `(i32, i32) -> i32` | Accepts instruction budget and input byte length; returns `0` or a profile-defined Windvale status. Profiles 8 and 9 currently use `3008`, `3011`, `3014`, `3015`, `3016`, and `3018`. |
+| `Windvale.run` | function `(i32, i32) -> i32` | Accepts instruction budget and input byte length; returns `0` or a profile-defined Windvale status. Profiles 8 through 11 currently use `3007`, `3008`, `3011`, `3014`, `3015`, `3016`, and `3018`. |
 | `Windvale.abi` | immutable `i32` global | Contains execution ABI version `3`. |
 | `Windvale.memory` | memory | The fixed 129-page linear memory. |
 | `Windvale.input_offset` | immutable `i32` global | Contains `65,536`. |
@@ -312,6 +320,12 @@ The retained profile-10 envelope verifier has 2,837-byte WVB SHA-256 `1362b2707a
 f493777450b720ef786b60502528819969ad9e0322aa55a9c0259f6de20850fc
 ```
 
+The retained profile-11 structural verifier has 19,755-byte WVB SHA-256 `72da44ba1292ed3ef4ac62c239dd937862636229a7d60302305a7dd19ac27376`. It returns `[1]` for its own completely consumed payloads after 1,446,276 instructions and emits a 113,385-byte Wasm module with SHA-256:
+
+```text
+46fe579fb7082dd4b0dd981e09f6b953127e52c9c6993d7885ca130725762677
+```
+
 ## Limits and failure behavior
 
 - Input WVB is limited to the current 4 MiB immutable-`bytes` value and hosted-file boundary. This is narrower than WVB's general 16 MiB module limit.
@@ -320,7 +334,8 @@ f493777450b720ef786b60502528819969ad9e0322aa55a9c0259f6de20850fc
 - Profile 8 admits one exact text or bytes identity function and independently limits both input and output to 4,194,304 bytes in fixed disjoint memory windows.
 - Profile 9 admits one straight-line bytes function, at most 255 nonparameter primitive/bytes locals, stack depth four, 16,384 code bytes, and 4,096 instructions. Each bytes value and the aggregate output arena are independently limited to 4,194,304 bytes.
 - Profile 10 retains profile 9's type, code, stack, memory, value, and arena bounds while admitting checked unsigned arithmetic and terminator-aligned control targets.
-- Encoded WebAssembly output is limited to 65,536 bytes for every experimental profile.
+- Profile 11 retains profile 10's operation, stack, memory, value, and arena model while increasing the one-function selector ceiling to 2,047 nonparameter locals, 32,768 code bytes, and 100,000 instructions.
+- Encoded WebAssembly output is limited to 524,288 bytes for every experimental profile.
 - All offset and length checks precede reads or additions that depend on untrusted values.
 - Failure returns a typed status and an empty output value.
 - The hosted shell writes no output resource on failure.
@@ -355,7 +370,9 @@ Profile 9 additionally requires independent reconstruction of source local types
 
 Profile 10 additionally requires independent reconstruction of every WVB control target and terminator-aligned basic block, complete decoding of the generated dispatch loop and program-counter accesses, exact dynamic success and exhaustion budgets, valid and malformed WVB envelope results, deterministic repeat bytes, and rejection of a target inside an instruction operand before publication.
 
-On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles twenty-three profile-2 through profile-10 fixtures, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine. The ABI-2 cases require exact success, one-instruction-short exhaustion, reset across repeated runs, shared-budget call execution, calls within both conditional routes, callee-overflow propagation, and nonterminating-loop containment. The ABI-3 cases additionally exercise exact-capacity bytes, curated UTF-8 boundaries, deterministic randomized agreement with Node.js's fatal UTF-8 decoder, general byte construction, checked unsigned overflow and underflow, distinct value, narrowing, range, and aggregate-allocation failures, and valid plus hostile WVB envelopes through the Windvale-native verifier.
+Profile 11 additionally requires exact payload consumption for all seven WVB sections; positive modules with nonempty data/text, nominal types, and hosted capabilities; one targeted malformed case per section; independent decoding of more than 1,000 source locals and 4,000 source instructions; exact self-verification and one-instruction-short budgets; and deterministic 512-KiB-bounded output identity.
+
+On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles twenty-four profile-2 through profile-11 lowering fixtures plus three positive structural-input modules, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine. The ABI-2 cases require exact success, one-instruction-short exhaustion, reset across repeated runs, shared-budget call execution, calls within both conditional routes, callee-overflow propagation, and nonterminating-loop containment. The ABI-3 cases additionally exercise exact-capacity bytes, curated UTF-8 boundaries, deterministic randomized agreement with Node.js's fatal UTF-8 decoder, general byte construction, checked unsigned overflow and underflow, distinct value, narrowing, range, and aggregate-allocation failures, and valid plus hostile WVB envelopes and section payloads through the Windvale-native verifiers.
 
 Exact profile-4 implementation commit `1342f63bc7eaae17a526ca440b075c2abf3c3b31` passed GitHub [Verify run 30770158910](https://github.com/eworker-inc/Windvale/actions/runs/30770158910). Its Windows and digest-pinned Debian jobs each passed the complete repository verifier with zero-warning builds, all 68 Seed tests, and all 25 OS tests. This establishes deterministic equality for the retained profile-4 WVB and WebAssembly identities and the exact `0/42/157`, `3011/0/156`, and nonterminating `3011/0/50` execution evidence on both hosts.
 
@@ -377,7 +394,9 @@ The exact implementation commit also passed GitHub [Deploy homepage run 30770158
 
 [Decision 0128](../Documents/Decisions/0128-Bounded-WebAssembly-Runtime-Values.md) advances the selector locally to profile 9 while retaining ABI 3. The independent C# decoder and Node.js engine cover primitive and bytes locals, byte reads and slices, widening, little-endian construction, concatenation, output normalization, exact metering, deterministic identities, an exact 4 MiB result, and distinct `WVR3008`, `WVR3011`, `WVR3015`, `WVR3016`, and `WVR3018` failures. The static page remains on the profile-8 text artifact; cross-host and cross-browser qualification remain pending.
 
-[Decision 0131](../Documents/Decisions/0131-Windvale-Native-WebAssembly-Wvb-Envelope-Verifier.md) advances the selector locally to profile 10 while retaining ABI 3. Compiler-produced nested conditionals and a loop lower through a validated basic-block dispatcher, allowing the first Windvale-written WVB 1.6 envelope verifier to execute as import-free Wasm. The reference runtime, independent C# decoder, and Node.js agree on valid, truncated, hostile-length, bad-magic, trailing-data, deterministic-repeat, and one-instruction-short cases. The static page remains on profile 8; cross-host and cross-browser qualification remain pending.
+[Decision 0131](../Documents/Decisions/0131-Windvale-Native-WebAssembly-Wvb-Envelope-Verifier.md) advances the selector to profile 10 while retaining ABI 3. Compiler-produced nested conditionals and a loop lower through a validated basic-block dispatcher, allowing the first Windvale-written WVB 1.6 envelope verifier to execute as import-free Wasm. The reference runtime, independent C# decoder, and Node.js agree on valid, truncated, hostile-length, bad-magic, trailing-data, deterministic-repeat, and one-instruction-short cases. Exact descendant `ea1aa89` qualifies the portable envelope-verifier path on Windows and Debian; the static page remains on profile 8, and cross-browser qualification remains pending.
+
+[Decision 0134](../Documents/Decisions/0134-Windvale-Native-WebAssembly-Wvb-Structural-Verifier.md) advances the selector locally to profile 11. A one-pass boundary mask and per-basic-block emission keep a 4,062-instruction Windvale verifier inside the retained hosted selector gate. Its import-free Wasm completely consumes bounded WVB 1.6 module, capabilities, data, functions, code, exports, and types payloads and rejects a targeted corruption in every section. It is structural rather than semantic verification; the static page remains on profile 8, and cross-host and cross-browser qualification remain pending.
 
 ## Non-claims
 
@@ -387,11 +406,11 @@ This profile does not establish:
 - a direct source-to-WebAssembly compiler;
 - a general WVB-to-WebAssembly backend;
 - a complete Windvale-native WVB semantic verifier or interpreter;
-- recursion, function values, indirect calls, `break`, `continue`, arbitrary or unbounded instruction streams, general text operations beyond identity, descriptor-bearing calls, records, enums, reclaiming allocation, collection, or capabilities in WebAssembly;
+- recursion, function values, indirect calls, `break`, `continue`, arbitrary or unbounded instruction streams, general text operations beyond identity, descriptor-bearing calls, executable records or enums, reclaiming allocation, collection, or browser capability imports;
 - compilation of the Windvale compiler itself to WebAssembly;
 - replacement of the .NET playground path; or
 - production browser isolation.
 
 ## Next extension boundary
 
-The next backend slice should extend the envelope verifier into bounded WVB section-payload and semantic verification, adding only text, record, enum, call, or memory operations required by the measured Windvale implementation. Recursion, indirect calls, `break`, `continue`, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, the Stage 0 compiler, verifier, `.wv` lowerer execution, and fallback interpreter should move off the UI thread before the playground is treated as hardened against hostile inputs.
+The next backend slice should extend structural payload acceptance into bounded WVB semantic verification: canonical names and ordering, capability/type/index identity, typed instruction and local flow, control targets and joins, reachability, and declared maximum-stack agreement. Add only text, record, enum, call, or memory operations required by that measured implementation. Recursion, indirect calls, `break`, `continue`, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, the Stage 0 compiler, verifier, `.wv` lowerer execution, and fallback interpreter should move off the UI thread before the playground is treated as hardened against hostile inputs.

@@ -77,7 +77,7 @@ The Stage 0 host enforces these ceilings:
 | Diagnostic output | 65,536 UTF-8 bytes |
 | Inspection report shown to the UI | 262,144 characters plus a truncation marker |
 | Windvale backend execution | 100,000,000 reference instructions and 128 call frames |
-| Generated WebAssembly | 65,536 bytes |
+| Generated WebAssembly | 524,288 bytes |
 | Disposable worker wall clock | 2,000 milliseconds |
 
 The normal runtime trap codes continue to describe instruction, call-depth, authorization, entry-point, type, and execution failures. A rejected output write is surfaced through the existing hosted-output runtime boundary.
@@ -103,7 +103,7 @@ It returns immutable evidence containing:
 
 The engine contains no browser, DOM, file, network, or deployment API. The Blazor WebAssembly project is one UI adapter over that testable boundary.
 
-The reusable engine also exposes the bounded WebAssembly lowerer as a separate immutable result. It embeds the portable backend and hosted shell as `.wv` source, compiles the composition once through Stage 0, requires backend WVB SHA-256 `57a5ccad81801ba29cce6b3c4b8944132bbe153b96abb72cd2a1fb3113affaa5`, and publishes no Wasm on selector failure. The browser adapter transfers successful bytes to a new module worker, which applies `WebAssembly.validate`, rejects all imports, checks the exact ABI-0, ABI-1, ABI-2, or ABI-3 exports, and is terminated after success, failure, or timeout. ABI 3 additionally validates its fixed memory extent and non-growth, disjoint 4 MiB regions, input length, output descriptor, and strict UTF-8 output before returning a bounded copied buffer; earlier ABIs return only scalar evidence. The lowerer now admits the bounded profile-10 runtime-control subset, while the static direct page deliberately retains its profile-8 text artifact.
+The reusable engine also exposes the bounded WebAssembly lowerer as a separate immutable result. It embeds the portable backend and hosted shell as `.wv` source, compiles the composition once through Stage 0, requires backend WVB SHA-256 `1b55616aa64af2324f7ec7f7c4cb1afa05a1e63af829e9ca032af8c1952382c8`, and publishes no Wasm on selector failure. The browser adapter transfers successful bytes to a new module worker, which applies `WebAssembly.validate`, rejects all imports, checks the exact ABI-0, ABI-1, ABI-2, or ABI-3 exports, and is terminated after success, failure, or timeout. ABI 3 additionally validates its fixed memory extent and non-growth, disjoint 4 MiB regions, input length, output descriptor, and strict UTF-8 output before returning a bounded copied buffer; earlier ABIs return only scalar evidence. The lowerer now admits profile 11's bounded runtime-control scale and Windvale-native structural WVB verifier, while the static direct page deliberately retains its smaller profile-8 text artifact. The 512 KiB generated-module ceiling contains the 113,385-byte verifier without changing the static page or worker lifetime.
 
 The UI adapter hosts a locally bundled Monaco editor. Its Windvale tokenizer mirrors the implemented lexical categories in `Tools/Editors/Windvale/syntaxes/Windvale.tmLanguage.json`; it is presentation support rather than a source-language contract or compiler front end. Compiler diagnostics with source locations are projected into editor markers, while the compiler remains their authority. Editor text crosses into the reusable engine only when a run is requested.
 

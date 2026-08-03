@@ -238,9 +238,20 @@ const EXPECTED = [
         kind: 1,
         runtime: "wvb-envelope",
     },
+    {
+        name: "Windvale-native WVB structural verifier",
+        path: process.argv[26],
+        inputPath: process.argv[27],
+        acceptedInputPaths: [process.argv[28], process.argv[29], process.argv[30]],
+        sha256: "46fe579fb7082dd4b0dd981e09f6b953127e52c9c6993d7885ca130725762677",
+        bytes: 113385,
+        abi: 3,
+        kind: 1,
+        runtime: "wvb-structural",
+    },
 ];
 
-if (process.argv.length !== 26) {
+if (process.argv.length !== 31) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -252,7 +263,8 @@ if (process.argv.length !== 26) {
             "<memory-bytes.wasm> <memory-text.wasm> <runtime-values.wasm> " +
             "<runtime-concat.wasm> <runtime-u16.wasm> <runtime-arena.wasm> " +
             "<runtime-u32.wasm> <wvb-envelope-verifier.wasm> " +
-            "<wvb-envelope-verifier.wvb>",
+            "<wvb-envelope-verifier.wvb> <wvb-structural-verifier.wasm> " +
+            "<wvb-structural-verifier.wvb> <data.wvb> <types.wvb> <capabilities.wvb>",
     );
 }
 
@@ -590,6 +602,85 @@ function verifyRuntime(expected, module, exports, digest) {
             ["hostile section length", hostileLength, 460],
         ]) {
             const result = runMemory(exports, input, 2_206);
+            try {
+                requireMemoryResult(
+                    expected.path,
+                    result,
+                    0,
+                    instructions,
+                    Uint8Array.from([0]),
+                );
+            } catch (error) {
+                throw new Error(`${expected.path}: ${name}: ${error.message}`);
+            }
+        }
+    } else if (expected.runtime === "wvb-structural") {
+        const valid = readFileSync(expected.inputPath);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, valid, 1_446_276),
+            0,
+            1_446_276,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, valid, 1_446_275),
+            3011,
+            1_446_275,
+        );
+
+        const acceptedSteps = [103_696, 94_466, 28_803];
+        for (let index = 0; index < expected.acceptedInputPaths.length; index++) {
+            requireMemoryResult(
+                expected.path,
+                runMemory(
+                    exports,
+                    readFileSync(expected.acceptedInputPaths[index]),
+                    acceptedSteps[index],
+                ),
+                0,
+                acceptedSteps[index],
+                Uint8Array.from([1]),
+            );
+        }
+
+        function findSections(bytes) {
+            const sections = [];
+            let cursor = 12;
+            for (let kind = 1; kind <= 7; kind++) {
+                const length = bytes.readUInt32LE(cursor + 4);
+                sections.push({ payload: cursor + 8, length });
+                cursor += 8 + length;
+            }
+            return sections;
+        }
+
+        const sections = findSections(valid);
+        const malformed = [];
+        let value = Buffer.from(valid);
+        value[sections[0].payload] = 0;
+        malformed.push(["bad module profile", value, 432]);
+        value = Buffer.from(valid);
+        value.writeUInt32LE(33, sections[1].payload);
+        malformed.push(["capability count", value, 834]);
+        value = Buffer.from(valid);
+        value.writeUInt32LE(4_097, sections[2].payload);
+        malformed.push(["data count", value, 1_171]);
+        value = Buffer.from(valid);
+        value.writeUInt32LE(4_097, sections[3].payload);
+        malformed.push(["function count", value, 1_508]);
+        value = Buffer.from(valid);
+        value[sections[4].payload] = 0xFF;
+        malformed.push(["unknown opcode", value, 100_118]);
+        value = Buffer.from(valid);
+        value.writeUInt32LE(1, sections[5].payload + 13);
+        malformed.push(["export target", value, 1_445_857]);
+        value = Buffer.from(valid);
+        value.writeUInt32LE(1, sections[6].payload);
+        malformed.push(["truncated type payload", value, 1_446_254]);
+        for (const [name, input, instructions] of malformed) {
+            const result = runMemory(exports, input, 1_446_276);
             try {
                 requireMemoryResult(
                     expected.path,

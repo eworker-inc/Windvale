@@ -99,9 +99,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "20afbc028e5a0da2cb2f542e7ec783ddecf6104eaa098698cee76984d045d2ac";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "57a5ccad81801ba29cce6b3c4b8944132bbe153b96abb72cd2a1fb3113affaa5";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "68942010c7e87a8b9a5069930e1eaa8f8296bf8cd93cafac372aaa7fc5d21d8c";
+    private const string WEBASSEMBLY_CORE_SHA256 = "6c3ead31aa5dc50baa441b8f3021678761b7d5b6c2aaa0f549e73f5b028a8b35";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "1b55616aa64af2324f7ec7f7c4cb1afa05a1e63af829e9ca032af8c1952382c8";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "7fb1ad3d96288b299c55804e5c510bd30d187a0720ec555eaa36f967900ae645";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -151,6 +151,8 @@ internal static class Program
     private const string WEBASSEMBLY_RUNTIME_U32_GUARD_SHA256 = "f645c0ff095eb06c825fea056659545cc258d857da55fc9dfd1a928812373f61";
     private const string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_WVB_SHA256 = "1362b2707a4ff442a1458e3f821e01108bb948858db21e022bfee05869c2fb86";
     private const string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SHA256 = "f493777450b720ef786b60502528819969ad9e0322aa55a9c0259f6de20850fc";
+    private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_WVB_SHA256 = "72da44ba1292ed3ef4ac62c239dd937862636229a7d60302305a7dd19ac27376";
+    private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SHA256 = "46fe579fb7082dd4b0dd981e09f6b953127e52c9c6993d7885ca130725762677";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -700,6 +702,8 @@ internal static class Program
         "Windvale.Seed.Tests.WebAssembly-Runtime-U32-Guard-Main.wv");
     private static readonly string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Wvb-Envelope-Verify-Main.wv");
+    private static readonly string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Wvb-Structural-Verify-Main.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -9385,6 +9389,117 @@ internal static class Program
             Envelopeˉlowered.Writtenˉbytes,
             Envelopeˉrepeat.Writtenˉbytes);
 
+        var Structuralˉverifierˉwvb = Compileˉsuccess(
+            WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SOURCE);
+        Equal(
+            WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Structuralˉverifierˉwvb));
+        var Structuralˉverifierˉverified = Moduleˉcodec.Readˉandˉverify(
+            Structuralˉverifierˉwvb);
+        Equal(1_096, Structuralˉverifierˉverified.Functions[0].Declaration.Allˉlocalˉtypes.Length);
+        Equal(4_062, Structuralˉverifierˉverified.Functions[0].Instructions.Length);
+        var Structuralˉoptions = Runtimeˉoptions.Portableˉdefaults with
+        {
+            Maximumˉinstructions = 2_000_000,
+        };
+        var Structuralˉreference = new Referenceˉruntime(
+            Structuralˉverifierˉverified,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Structuralˉoptions).Runˉmainˉbytes(
+                ImmutableArray.Create(Structuralˉverifierˉwvb));
+        Sequenceˉequal(ImmutableArray.Create<byte>(1), Structuralˉreference.Bytes);
+        Equal(1_446_276L, Structuralˉreference.Executedˉinstructions);
+        foreach (var Acceptedˉsource in new[]
+        {
+            SOURCE_WVB_DATA_AND_TEXT_SOURCE,
+            SOURCE_WVB_NOMINAL_TYPES_SOURCE,
+            SOURCE_WVB_HOSTED_CAPABILITIES_SOURCE,
+        })
+        {
+            var Acceptedˉwvb = Compileˉsuccess(Acceptedˉsource);
+            var Accepted = new Referenceˉruntime(
+                Structuralˉverifierˉverified,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Structuralˉoptions).Runˉmainˉbytes(
+                    ImmutableArray.Create(Acceptedˉwvb));
+            Sequenceˉequal(ImmutableArray.Create<byte>(1), Accepted.Bytes);
+        }
+
+        var Structuralˉsections = new[]
+        {
+            Sectionˉkind.Module,
+            Sectionˉkind.Capabilities,
+            Sectionˉkind.Data,
+            Sectionˉkind.Functions,
+            Sectionˉkind.Code,
+            Sectionˉkind.Exports,
+            Sectionˉkind.Types,
+        };
+        for (var Sectionˉindex = 0; Sectionˉindex < Structuralˉsections.Length; Sectionˉindex++)
+        {
+            var Malformed = Structuralˉverifierˉwvb.ToArray();
+            var Payloadˉoffset = Findˉsectionˉpayload(
+                Malformed, Structuralˉsections[Sectionˉindex]);
+            if (Sectionˉindex == 0)
+            {
+                Malformed[Payloadˉoffset] = 0;
+            }
+            else if (Sectionˉindex == 1)
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Malformed.AsSpan(Payloadˉoffset, 4), 33u);
+            }
+            else if (Sectionˉindex == 2)
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Malformed.AsSpan(Payloadˉoffset, 4), 4_097u);
+            }
+            else if (Sectionˉindex == 3)
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Malformed.AsSpan(Payloadˉoffset, 4), 4_097u);
+            }
+            else if (Sectionˉindex == 4)
+            {
+                Malformed[Payloadˉoffset] = 0xFF;
+            }
+            else if (Sectionˉindex == 5)
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Malformed.AsSpan(Payloadˉoffset + 13, 4), 1u);
+            }
+            else
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Malformed.AsSpan(Payloadˉoffset, 4), 1u);
+            }
+            var Rejected = new Referenceˉruntime(
+                Structuralˉverifierˉverified,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Structuralˉoptions).Runˉmainˉbytes(
+                    ImmutableArray.Create(Malformed));
+            Sequenceˉequal(ImmutableArray.Create<byte>(0), Rejected.Bytes);
+        }
+
+        var Structuralˉlowered = Runˉwebassemblyˉtool(
+            Tool, Structuralˉverifierˉwvb);
+        Equal(0, Structuralˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=113385 execution-abi=3\n",
+            Structuralˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Structuralˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉruntimeˉwebassembly(
+            Structuralˉlowered.Writtenˉbytes.AsSpan(),
+            Structuralˉverifierˉverified);
+        var Structuralˉrepeat = Runˉwebassemblyˉtool(
+            Tool, Structuralˉverifierˉwvb);
+        Sequenceˉequal(
+            Structuralˉlowered.Writtenˉbytes,
+            Structuralˉrepeat.Writtenˉbytes);
+
         var Invalidˉruntimeˉtarget = Envelopeˉverifierˉwvb.ToArray();
         var Envelopeˉcode = Findˉsectionˉpayload(
             Invalidˉruntimeˉtarget, Sectionˉkind.Code);
@@ -15336,7 +15451,7 @@ internal static class Program
         Equal(Valueˉtype.Bytes, Function.Declaration.Parameterˉtypes[0].Kind);
         Equal(Valueˉtype.Bytes, Function.Declaration.Returnˉtype.Kind);
         True(
-            Function.Declaration.Localˉtypes.Length is >= 0 and <= 255,
+            Function.Declaration.Localˉtypes.Length is >= 0 and <= 2_047,
             "The runtime-value local count is outside the profile.");
         True(
             Function.Declaration.Localˉtypes.All(Type =>
@@ -15346,7 +15461,7 @@ internal static class Program
         var Hasˉcontrol = Function.Instructions.Any(Instruction =>
             Instruction.Opcode is Opcode.Jump or Opcode.Branchˉfalse);
         True(
-            Function.Instructions.Length is >= 1 and <= 4_096 &&
+            Function.Instructions.Length is >= 1 and <= 100_000 &&
                 Function.Instructions.Any(Instruction =>
                     Instruction.Opcode == Opcode.Return) &&
                 Function.Instructions[^1].Opcode is
@@ -15575,10 +15690,14 @@ internal static class Program
         Reader.Require(
             Meterˉglobalˉreads == Function.Instructions.Length * 2,
             "The runtime-value instruction meter count changed.");
+        var Returnˉcount = Function.Instructions.Count(Instruction =>
+            Instruction.Opcode == Opcode.Return);
         Reader.Require(
-            Outputˉlengthˉwrites == 2,
+            Outputˉlengthˉwrites == Returnˉcount + 1,
             "The runtime-value output publication count changed.");
-        Reader.Require(Memoryˉcopies >= 1, "The runtime-value body does not publish through memory copy.");
+        Reader.Require(
+            Memoryˉcopies >= Returnˉcount,
+            "The runtime-value body does not publish each return through memory copy.");
         Reader.Require(
             !Hasˉcontrol ||
                 (Loopˉcount == 1 &&

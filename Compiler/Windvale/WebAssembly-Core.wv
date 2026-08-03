@@ -717,23 +717,14 @@ export fn Compilerˉwebassemblyˉruntimeˉcontrolˉfollowsˉterminator(
     Target: u32
 ) -> bool {
     if Target == 0u32 { return true; }
-    var Cursor: u32 = 0u32;
-    var Previous: u32 = Length;
-    while Cursor < Target {
-        Previous = Cursor;
-        let Width: u32 = Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
-            Input, Offset, Length, Cursor
-        );
-        if Width == 0u32 { return false; }
-        Cursor = Cursor + Width;
-        if Cursor > Target { return false; }
+    if Target >= Length { return false; }
+    if Bytesˉreadˉu8(Input, Offset + Target - 1u32) == 81u8 {
+        return true;
     }
-    if Cursor != Target { return false; }
-    if Previous == Length { return false; }
-    let Opcode: u8 = Bytesˉreadˉu8(Input, Offset + Previous);
+    if Target < 5u32 { return false; }
+    let Opcode: u8 = Bytesˉreadˉu8(Input, Offset + Target - 5u32);
     if Opcode == 48u8 { return true; }
-    if Opcode == 49u8 { return true; }
-    return Opcode == 81u8;
+    return Opcode == 49u8;
 }
 
 export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
@@ -773,7 +764,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
         return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
     }
     let Nonparameterˉlocals: u32 = Bytesˉreadˉu32ˉlittle(Input, Function + 18u32);
-    if Nonparameterˉlocals > 255u32 {
+    if Nonparameterˉlocals > 2047u32 {
         return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
     }
     let Localˉtypesˉoffset: u32 = Function + 22u32;
@@ -803,7 +794,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
     let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Metadata + 4u32);
     let Maximumˉstack: u32 = Bytesˉreadˉu32ˉlittle(Input, Metadata + 8u32);
     if Codeˉlength == 0u32 { return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure(); }
-    if Codeˉlength > 16384u32 { return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure(); }
+    if Codeˉlength > 32768u32 { return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure(); }
     if Codeˉlength != Code.Payloadˉlength {
         return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
     }
@@ -821,6 +812,36 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
             0u32,
             false
         );
+    var Boundaries: bytes = Compilerˉwebassemblyˉempty(Input);
+    var Boundaryˉcursor: u32 = 0u32;
+    while Boundaryˉcursor < Codeˉlength {
+        let Boundaryˉwidth: u32 =
+            Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
+                Input,
+                Code.Payloadˉoffset,
+                Codeˉlength,
+                Boundaryˉcursor
+            );
+        if Boundaryˉwidth == 0u32 {
+            return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
+        }
+        Boundaries = Bytesˉconcat(
+            Boundaries,
+            Compilerˉwebassemblyˉbyte(1u32)
+        );
+        var Boundaryˉbyte: u32 = 1u32;
+        while Boundaryˉbyte < Boundaryˉwidth {
+            Boundaries = Bytesˉconcat(
+                Boundaries,
+                Compilerˉwebassemblyˉbyte(0u32)
+            );
+            Boundaryˉbyte = Boundaryˉbyte + 1u32;
+        }
+        Boundaryˉcursor = Boundaryˉcursor + Boundaryˉwidth;
+    }
+    if Bytesˉlength(Boundaries) != Codeˉlength {
+        return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
+    }
     var Initialized: bytes = Compilerˉwebassemblyˉruntimeˉmaskˉmake(Localˉcount);
     Initialized = Compilerˉwebassemblyˉruntimeˉmaskˉset(Initialized, 0u32);
     var Stack: Compilerˉwebassemblyˉruntimeˉstack =
@@ -831,7 +852,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
     var Hasˉcontrol: bool = false;
     var Lastˉterminator: bool = false;
     while Cursor < Codeˉlength {
-        if Instructionˉcount >= 4096u32 {
+        if Instructionˉcount >= 100000u32 {
             return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
         }
         let Opcode: u8 = Bytesˉreadˉu8(Input, Code.Payloadˉoffset + Cursor);
@@ -994,9 +1015,10 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
             let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Code.Payloadˉoffset + Cursor + 1u32
             );
-            if !Compilerˉwebassemblyˉruntimeˉcontrolˉisˉboundary(
-                Input, Code.Payloadˉoffset, Codeˉlength, Jumpˉtarget
-            ) {
+            if Jumpˉtarget >= Codeˉlength {
+                return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
+            }
+            if Bytesˉreadˉu8(Boundaries, Jumpˉtarget) != 1u8 {
                 return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
             }
             if !Compilerˉwebassemblyˉruntimeˉcontrolˉfollowsˉterminator(
@@ -1016,9 +1038,10 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
             let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Code.Payloadˉoffset + Cursor + 1u32
             );
-            if !Compilerˉwebassemblyˉruntimeˉcontrolˉisˉboundary(
-                Input, Code.Payloadˉoffset, Codeˉlength, Branchˉtarget
-            ) {
+            if Branchˉtarget >= Codeˉlength {
+                return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
+            }
+            if Bytesˉreadˉu8(Boundaries, Branchˉtarget) != 1u8 {
                 return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
             }
             if !Compilerˉwebassemblyˉruntimeˉcontrolˉfollowsˉterminator(
@@ -4036,21 +4059,22 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
 
     var Cursor: u32 = 0u32;
     var Openˉblock: bool = false;
+    var Block: bytes = Compilerˉwebassemblyˉempty(Input);
     while Cursor < Function.Codeˉlength {
         if !Openˉblock {
-            Body = Bytesˉconcat(
-                Body,
+            Block = Bytesˉconcat(
+                Block,
                 Compilerˉwebassemblyˉindexedˉinstruction(
                     32u32, Programˉcounter
                 )
             );
-            Body = Bytesˉconcat(
-                Body,
+            Block = Bytesˉconcat(
+                Block,
                 Compilerˉwebassemblyˉpositiveˉi32ˉconstant(Cursor)
             );
-            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(70u32));
-            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(4u32));
-            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
+            Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉbyte(70u32));
+            Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉbyte(4u32));
+            Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉbyte(64u32));
             Openˉblock = true;
         }
 
@@ -4059,77 +4083,83 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
             Input, Codeˉoffset, Function.Codeˉlength, Cursor
         );
         if Opcode == 48u8 {
-            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉmemoryˉmeter());
-            Body = Bytesˉconcat(
-                Body,
+            Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉmemoryˉmeter());
+            Block = Bytesˉconcat(
+                Block,
                 Compilerˉwebassemblyˉpositiveˉi32ˉconstant(
                     Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32)
                 )
             );
-            Body = Bytesˉconcat(
-                Body,
+            Block = Bytesˉconcat(
+                Block,
                 Compilerˉwebassemblyˉindexedˉinstruction(
                     33u32, Programˉcounter
                 )
             );
-            Body = Bytesˉconcat(
-                Body,
+            Block = Bytesˉconcat(
+                Block,
                 Compilerˉwebassemblyˉindexedˉinstruction(12u32, 1u32)
             );
-            Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+            Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉbyte(11u32));
+            Body = Bytesˉconcat(Body, Block);
+            Block = Compilerˉwebassemblyˉempty(Input);
             Openˉblock = false;
         } else {
             if Opcode == 49u8 {
-                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉmemoryˉmeter());
-                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(4u32));
-                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
-                Body = Bytesˉconcat(
-                    Body,
+                Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉmemoryˉmeter());
+                Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉbyte(4u32));
+                Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉbyte(64u32));
+                Block = Bytesˉconcat(
+                    Block,
                     Compilerˉwebassemblyˉpositiveˉi32ˉconstant(Cursor + Width)
                 );
-                Body = Bytesˉconcat(
-                    Body,
+                Block = Bytesˉconcat(
+                    Block,
                     Compilerˉwebassemblyˉindexedˉinstruction(
                         33u32, Programˉcounter
                     )
                 );
-                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(5u32));
-                Body = Bytesˉconcat(
-                    Body,
+                Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉbyte(5u32));
+                Block = Bytesˉconcat(
+                    Block,
                     Compilerˉwebassemblyˉpositiveˉi32ˉconstant(
                         Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32)
                     )
                 );
-                Body = Bytesˉconcat(
-                    Body,
+                Block = Bytesˉconcat(
+                    Block,
                     Compilerˉwebassemblyˉindexedˉinstruction(
                         33u32, Programˉcounter
                     )
                 );
-                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
-                Body = Bytesˉconcat(
-                    Body,
+                Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉbyte(11u32));
+                Block = Bytesˉconcat(
+                    Block,
                     Compilerˉwebassemblyˉindexedˉinstruction(12u32, 1u32)
                 );
-                Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+                Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉbyte(11u32));
+                Body = Bytesˉconcat(Body, Block);
+                Block = Compilerˉwebassemblyˉempty(Input);
                 Openˉblock = false;
             } else {
                 if Opcode == 81u8 {
-                    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉmemoryˉmeter());
-                    Body = Bytesˉconcat(
-                        Body,
+                    Block = Bytesˉconcat(Block, Compilerˉwebassemblyˉmemoryˉmeter());
+                    Block = Bytesˉconcat(
+                        Block,
                         Compilerˉwebassemblyˉencodeˉruntimeˉreturn(
                             Descriptorˉfirst, First, Second
                         )
                     );
-                    Body = Bytesˉconcat(
-                        Body,
+                    Block = Bytesˉconcat(
+                        Block,
                         Compilerˉwebassemblyˉbyte(11u32)
                     );
+                    Body = Bytesˉconcat(Body, Block);
+                    Block = Compilerˉwebassemblyˉempty(Input);
                     Openˉblock = false;
                 } else {
-                    Body = Bytesˉconcat(
-                        Body,
+                    Block = Bytesˉconcat(
+                        Block,
                         Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
                             Input,
                             Codeˉoffset + Cursor,
@@ -5691,7 +5721,7 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
                 Code.Payloadˉoffset,
                 Runtimeˉfunction
             );
-        if Bytesˉlength(Runtimeˉwebassembly) > 65536u32 {
+        if Bytesˉlength(Runtimeˉwebassembly) > 524288u32 {
             return Compilerˉwebassemblyˉfailure(
                 Input,
                 Compilerˉwebassemblyˉstatus.Outputˉlimit
