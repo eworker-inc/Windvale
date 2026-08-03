@@ -4037,6 +4037,10 @@ internal static class Program
             throw new InvalidOperationException("Native lowering omitted descriptor ownership.");
         var Repeated = Second.Module.Descriptorˉownership ??
             throw new InvalidOperationException("Repeated native lowering omitted descriptor ownership.");
+        var Emission = First.Module.Descriptorˉallocatorˉemission ??
+            throw new InvalidOperationException("Native lowering omitted descriptor allocator emission.");
+        var Repeatedˉemission = Second.Module.Descriptorˉallocatorˉemission ??
+            throw new InvalidOperationException("Repeated native lowering omitted descriptor allocator emission.");
 
         Equal(Nativeˉdescriptorˉownershipˉplanner.FORMAT_VERSION, Plan.Formatˉversion);
         True(Plan.Terminalˉfailureˉdiscardsˉarena,
@@ -4053,6 +4057,52 @@ internal static class Program
         Equal(
             Projection.Ownershipˉactions,
             checked(Projection.Allocatorˉleafˉcalls + Projection.Ownershipˉmovementˉactions));
+        Nativeˉdescriptorˉallocatorˉemissionˉverifier.Verify(First.Module, Emission);
+        Equal(
+            Nativeˉdescriptorˉallocatorˉemissionˉcontract.FORMAT_VERSION,
+            Emission.Formatˉversion);
+        Equal(8u, Emission.Candidateˉcontextˉformatˉversion);
+        Equal(128u, Emission.Candidateˉcontextˉsize);
+        Equal(112, Emission.Allocatorˉstateˉpointerˉoffset);
+        Equal(120, Emission.Allocatorˉleafˉpointerˉoffset);
+        Equal(3, Emission.Requestˉframeˉcells);
+        Equal(Projection.Allocatorˉleafˉcalls, Emission.Allocatorˉleafˉinvocations);
+        Equal(Projection.Ownershipˉmovementˉactions, Emission.Ownershipˉmovementˉactions);
+        Sequenceˉequal(
+            Emission.Functions.SelectMany(Function => Function.Emissions),
+            Repeatedˉemission.Functions.SelectMany(Function => Function.Emissions));
+        var Emissions = Emission.Functions.SelectMany(Function => Function.Emissions).ToArray();
+        True(
+            Emissions.Any(Value => Value.Phase ==
+                Nativeˉdescriptorˉallocatorˉemissionˉphase.Operationˉbefore),
+            "The allocator emission plan omitted replacement-before-copy operations.");
+        True(
+            Emissions.Any(Value => Value.Phase ==
+                Nativeˉdescriptorˉallocatorˉemissionˉphase.Operationˉallocation),
+            "The allocator emission plan omitted acquisition operations.");
+        True(
+            Emissions.Any(Value => Value.Phase ==
+                Nativeˉdescriptorˉallocatorˉemissionˉphase.Operationˉafter),
+            "The allocator emission plan omitted post-definition or last-use operations.");
+        True(
+            Emissions.Any(Value => Value.Phase ==
+                Nativeˉdescriptorˉallocatorˉemissionˉphase.Terminatorˉcleanup),
+            "The allocator emission plan omitted return cleanup.");
+        True(
+            Emissions.Any(Value =>
+                Value.Source.Addressing ==
+                    Nativeˉdescriptorˉownerˉaddressing.Indirectˉrecord),
+            "The allocator emission plan omitted borrowed record-field addressing.");
+        True(
+            Emission.Functions.Any(Function =>
+                Function.Generatedˉcodeˉinvocations > 0 &&
+                Function.Requestˉbaseˉcell == Function.Existingˉframeˉcells &&
+                Function.Projectedˉframeˉcells ==
+                    Function.Existingˉframeˉcells +
+                        Nativeˉdescriptorˉallocatorˉemissionˉcontract.REQUEST_FRAME_CELLS &&
+                Function.Preservesˉinstructionˉbudget &&
+                Function.Preservesˉcallˉdepth),
+            "The allocator emission plan omitted bounded request scratch or budget preservation.");
         True(Plan.Functions.Sum(Function => Function.Acquireˉactions) > 0,
             "The ownership plan omitted allocated descriptor results.");
         True(Plan.Functions.Sum(Function => Function.Borrowˉactions) > 0,
@@ -4100,6 +4150,46 @@ internal static class Program
             () => Nativeˉdescriptorˉownershipˉverifier.Verify(
                 First.Module,
                 Plan with { Totalˉactions = checked(Plan.Totalˉactions + 1) }));
+
+        var Emissionˉfunctionˉindex = Enumerable.Range(0, Emission.Functions.Length)
+            .FirstOrDefault(Index => !Emission.Functions[Index].Emissions.IsEmpty, -1);
+        True(Emissionˉfunctionˉindex >= 0, "The allocator emission plan unexpectedly has no calls.");
+        var Emissionˉfunction = Emission.Functions[Emissionˉfunctionˉindex];
+        var Corruptˉemissions = Emissionˉfunction.Emissions.SetItem(
+            0,
+            Emissionˉfunction.Emissions[0] with
+            {
+                Phase = (Nativeˉdescriptorˉallocatorˉemissionˉphase)0,
+            });
+        Throwsˉnative(
+            "WVN2905",
+            () => Nativeˉdescriptorˉallocatorˉemissionˉverifier.Verify(
+                First.Module,
+                Emission with
+                {
+                    Functions = Emission.Functions.SetItem(
+                        Emissionˉfunctionˉindex,
+                        Emissionˉfunction with { Emissions = Corruptˉemissions }),
+                }));
+        Throwsˉnative(
+            "WVN2905",
+            () => Nativeˉdescriptorˉallocatorˉemissionˉverifier.Verify(
+                First.Module,
+                Emission with
+                {
+                    Allocatorˉleafˉinvocations = checked(
+                        Emission.Allocatorˉleafˉinvocations + 1),
+                }));
+        Throwsˉnative(
+            "WVN2905",
+            () => Nativeˉdescriptorˉallocatorˉemissionˉverifier.Verify(
+                First.Module,
+                Emission with
+                {
+                    Functions = Emission.Functions.SetItem(
+                        Emissionˉfunctionˉindex,
+                        null!),
+                }));
     }
 
     private static void Nativeˉdescriptorˉallocatorˉreclaims()
@@ -7314,6 +7404,12 @@ internal static class Program
             .SelectMany(Function => Function.Actions)
             .ToImmutableArray();
         var Allocatorˉprojection = Nativeˉdescriptorˉallocatorˉprojector.Project(Ownership);
+        var Allocatorˉemission = Compilerˉnative.Module.Descriptorˉallocatorˉemission ??
+            throw new InvalidOperationException(
+                "The exact native compiler omitted descriptor allocator emission.");
+        Nativeˉdescriptorˉallocatorˉemissionˉverifier.Verify(
+            Compilerˉnative.Module,
+            Allocatorˉemission);
         True(Ownershipˉactions.Any(Action => Action.Kind ==
                 Nativeˉdescriptorˉownershipˉactionˉkind.Borrowˉstatic),
             "The exact compiler ownership plan omitted static descriptor borrowing.");
@@ -7355,6 +7451,45 @@ internal static class Program
             $"largest-index={Largestˉownershipˉfunction.Functionˉindex} " +
             $"largest-name={Largestˉownershipˉfunction.Functionˉname} " +
             $"action-map={Nativeˉdescriptorˉownershipˉdigest(Ownership)}");
+        var Allocatorˉemissions = Allocatorˉemission.Functions
+            .SelectMany(Function => Function.Emissions)
+            .ToImmutableArray();
+        var Largestˉallocatorˉfunction = Allocatorˉemission.Functions.MaxBy(
+            Function => Function.Allocatorˉleafˉinvocations)!;
+        Equal(
+            "NATIVE_DESCRIPTOR_ALLOCATOR_EMISSION format=1 context=8/128 " +
+            "state-offset=112 leaf-offset=120 request-cells=3 functions=328 " +
+            "ownership-actions=186557 leaf-invocations=180190 movement-actions=6367 " +
+            "generated=180168 service=22 request-functions=265 entry=0 before=25918 " +
+            "allocation=435 after=44904 cleanup=108933 direct-locations=209836 " +
+            "indirect-locations=5126 max-frame=1492 largest-invocations=46834 " +
+            "largest-index=204 largest-name=Compilerˉsourceˉwirˉcompileˉblock " +
+            "emission-map=b1e985c17c64f98993964bb399b3a9e47cc5666f1fc03d6727a05d5b5da46ff6",
+            $"NATIVE_DESCRIPTOR_ALLOCATOR_EMISSION format={Allocatorˉemission.Formatˉversion} " +
+            $"context={Allocatorˉemission.Candidateˉcontextˉformatˉversion}/" +
+            $"{Allocatorˉemission.Candidateˉcontextˉsize} " +
+            $"state-offset={Allocatorˉemission.Allocatorˉstateˉpointerˉoffset} " +
+            $"leaf-offset={Allocatorˉemission.Allocatorˉleafˉpointerˉoffset} " +
+            $"request-cells={Allocatorˉemission.Requestˉframeˉcells} " +
+            $"functions={Allocatorˉemission.Functions.Length} " +
+            $"ownership-actions={Allocatorˉemission.Ownershipˉactions} " +
+            $"leaf-invocations={Allocatorˉemission.Allocatorˉleafˉinvocations} " +
+            $"movement-actions={Allocatorˉemission.Ownershipˉmovementˉactions} " +
+            $"generated={Allocatorˉemission.Functions.Sum(Function => Function.Generatedˉcodeˉinvocations)} " +
+            $"service={Allocatorˉemission.Functions.Sum(Function => Function.Runtimeˉserviceˉinvocations)} " +
+            $"request-functions={Allocatorˉemission.Functions.Count(Function => Function.Requestˉbaseˉcell >= 0)} " +
+            $"entry={Allocatorˉemissions.Count(Emission => Emission.Phase == Nativeˉdescriptorˉallocatorˉemissionˉphase.Functionˉentry)} " +
+            $"before={Allocatorˉemissions.Count(Emission => Emission.Phase == Nativeˉdescriptorˉallocatorˉemissionˉphase.Operationˉbefore)} " +
+            $"allocation={Allocatorˉemissions.Count(Emission => Emission.Phase == Nativeˉdescriptorˉallocatorˉemissionˉphase.Operationˉallocation)} " +
+            $"after={Allocatorˉemissions.Count(Emission => Emission.Phase == Nativeˉdescriptorˉallocatorˉemissionˉphase.Operationˉafter)} " +
+            $"cleanup={Allocatorˉemissions.Count(Emission => Emission.Phase == Nativeˉdescriptorˉallocatorˉemissionˉphase.Terminatorˉcleanup)} " +
+            $"direct-locations={Allocatorˉemissions.Sum(Emission => (Emission.Target.Addressing == Nativeˉdescriptorˉownerˉaddressing.Directˉframe ? 1 : 0) + (Emission.Source.Addressing == Nativeˉdescriptorˉownerˉaddressing.Directˉframe ? 1 : 0))} " +
+            $"indirect-locations={Allocatorˉemissions.Sum(Emission => (Emission.Target.Addressing == Nativeˉdescriptorˉownerˉaddressing.Indirectˉrecord ? 1 : 0) + (Emission.Source.Addressing == Nativeˉdescriptorˉownerˉaddressing.Indirectˉrecord ? 1 : 0))} " +
+            $"max-frame={Allocatorˉemission.Functions.Max(Function => Function.Projectedˉframeˉcells)} " +
+            $"largest-invocations={Largestˉallocatorˉfunction.Allocatorˉleafˉinvocations} " +
+            $"largest-index={Largestˉallocatorˉfunction.Functionˉindex} " +
+            $"largest-name={Largestˉallocatorˉfunction.Functionˉname} " +
+            $"emission-map={Nativeˉdescriptorˉallocatorˉemissionˉdigest(Allocatorˉemission)}");
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
             $"windvale-native-bootstrap-{Guid.NewGuid():N}");
@@ -19957,6 +20092,61 @@ internal static class Program
             }
         }
         return Convert.ToHexString(Hash.GetHashAndReset()).ToLowerInvariant();
+    }
+
+    private static string Nativeˉdescriptorˉallocatorˉemissionˉdigest(
+        Nativeˉdescriptorˉallocatorˉemissionˉplan plan)
+    {
+        using var Hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        Appendˉi32(Hash, checked((int)plan.Formatˉversion));
+        Appendˉi32(Hash, checked((int)plan.Candidateˉcontextˉformatˉversion));
+        Appendˉi32(Hash, checked((int)plan.Candidateˉcontextˉsize));
+        Appendˉi32(Hash, plan.Allocatorˉstateˉpointerˉoffset);
+        Appendˉi32(Hash, plan.Allocatorˉleafˉpointerˉoffset);
+        Appendˉi32(Hash, plan.Requestˉframeˉcells);
+        Appendˉi32(Hash, plan.Ownershipˉactions);
+        Appendˉi32(Hash, plan.Allocatorˉleafˉinvocations);
+        Appendˉi32(Hash, plan.Ownershipˉmovementˉactions);
+        Appendˉi32(Hash, plan.Functions.Length);
+        foreach (var Function in plan.Functions)
+        {
+            Appendˉi32(Hash, Function.Functionˉindex);
+            var Name = Encoding.UTF8.GetBytes(Function.Functionˉname);
+            Appendˉi32(Hash, Name.Length);
+            Hash.AppendData(Name);
+            Appendˉi32(Hash, Function.Ownershipˉactions);
+            Appendˉi32(Hash, Function.Allocatorˉleafˉinvocations);
+            Appendˉi32(Hash, Function.Generatedˉcodeˉinvocations);
+            Appendˉi32(Hash, Function.Runtimeˉserviceˉinvocations);
+            Appendˉi32(Hash, Function.Requestˉbaseˉcell);
+            Appendˉi32(Hash, Function.Existingˉframeˉcells);
+            Appendˉi32(Hash, Function.Projectedˉframeˉcells);
+            Appendˉi32(Hash, Function.Preservesˉinstructionˉbudget ? 1 : 0);
+            Appendˉi32(Hash, Function.Preservesˉcallˉdepth ? 1 : 0);
+            Appendˉi32(Hash, Function.Emissions.Length);
+            foreach (var Emission in Function.Emissions)
+            {
+                Appendˉi32(Hash, Emission.Ownershipˉactionˉindex);
+                Appendˉi32(Hash, Emission.Block);
+                Appendˉi32(Hash, Emission.Operation);
+                Appendˉi32(Hash, (int)Emission.Ownershipˉkind);
+                Appendˉi32(Hash, (int)Emission.Allocatorˉoperation);
+                Appendˉi32(Hash, (int)Emission.Phase);
+                Appendˉi32(Hash, (int)Emission.Invocationˉsite);
+                Appendˉdescriptorˉownerˉlocation(Hash, Emission.Target);
+                Appendˉdescriptorˉownerˉlocation(Hash, Emission.Source);
+            }
+        }
+        return Convert.ToHexString(Hash.GetHashAndReset()).ToLowerInvariant();
+    }
+
+    private static void Appendˉdescriptorˉownerˉlocation(
+        IncrementalHash hash,
+        Nativeˉdescriptorˉownerˉlocation location)
+    {
+        Appendˉi32(hash, (int)location.Addressing);
+        Appendˉi32(hash, location.Baseˉframeˉcell);
+        Appendˉi32(hash, location.Ownerˉbyteˉdisplacement);
     }
 
     private static void Appendˉdescriptorˉcarrier(

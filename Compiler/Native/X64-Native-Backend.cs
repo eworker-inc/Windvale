@@ -150,7 +150,10 @@ public static class X64ˉnativeˉbackend
             Requiredˉservices);
         var Ownership = Nativeˉdescriptorˉownershipˉplanner.Plan(Unplanned);
         Nativeˉdescriptorˉownershipˉverifier.Verify(Unplanned, Ownership);
-        return Unplanned with { Descriptorˉownership = Ownership };
+        var Owned = Unplanned with { Descriptorˉownership = Ownership };
+        var Allocatorˉemission = Nativeˉdescriptorˉallocatorˉemissionˉplanner.Plan(Owned);
+        Nativeˉdescriptorˉallocatorˉemissionˉverifier.Verify(Owned, Allocatorˉemission);
+        return Owned with { Descriptorˉallocatorˉemission = Allocatorˉemission };
     }
 
     private static Nativeˉfunction Lowerˉverifiedˉfunction(
@@ -913,11 +916,15 @@ public static class X64ˉnativeˉbackend
             module.Requiredˉservices.Any(Service => !Enum.IsDefined(Service)) ||
             module.Requiredˉservices.Distinct().Count() != module.Requiredˉservices.Length ||
             !module.Requiredˉservices.SequenceEqual(module.Requiredˉservices.Order()) ||
-            module.Descriptorˉownership is null)
+            module.Descriptorˉownership is null ||
+            module.Descriptorˉallocatorˉemission is null)
         {
             Fail("WVN2901", "The x86-64 selector received an unsupported native machine-IR shape.");
         }
         Nativeˉdescriptorˉownershipˉverifier.Verify(module, module.Descriptorˉownership);
+        Nativeˉdescriptorˉallocatorˉemissionˉverifier.Verify(
+            module,
+            module.Descriptorˉallocatorˉemission);
         if (module.Types.Any(Type =>
                 Type is null ||
                 !Seedˉnames.Isˉidentifier(Type.Name) ||

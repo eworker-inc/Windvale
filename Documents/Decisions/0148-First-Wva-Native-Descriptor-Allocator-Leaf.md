@@ -1,7 +1,7 @@
 # Decision 0148: First WVA native descriptor allocator leaf
 
 - Date: 2026-08-03
-- Status: Implemented with local Windows evidence; cross-host qualification pending
+- Status: Cross-host qualified at exact commit `85af9c502467b236877fc77dcdac344c56b09735`
 - Retains: Native ABI 21, execution-context version 7, service-table version 5, target `x86-64-wvb-baseline-v21`, WVB 1.6, WVO 1.0, the existing 16-byte descriptor, the 16 MiB dynamic-value arena, and every selected ABI-21 machine byte
 - Refines: [Decision 0143](0143-Bounded-First-Fit-Dynamic-Arena-Replay.md) and [Decision 0147](0147-Native-Descriptor-Ownership-Plan.md)
 
@@ -46,11 +46,15 @@ The exact 328-function compiler's 186,557-action ownership plan projects to 435 
 
 The allocator, focused ownership, and exact-compiler boundary tests pass locally after zero-warning Release builds. Change-aware Windows verification then completes another zero-warning build and passes all 84 selected Seed tests in 343.962 suite seconds; the golden compiler contract takes 215.835 seconds and the allocator case takes eight milliseconds. This is proportional Windows development evidence rather than cross-host qualification. Because no ABI-21 selected fragment, host container, OS input, or guest artifact changes, QEMU is not rerun.
 
+Exact commit `85af9c502467b236877fc77dcdac344c56b09735` passes GitHub [Verify run 30795423694](https://github.com/eworker-inc/Windvale/actions/runs/30795423694). Windows and digest-pinned Debian 12 each complete a zero-warning build and all 84 selected Seed tests. Windows takes 319.682 suite seconds, including 201.809 seconds for the golden compiler contract and nine milliseconds for the allocator. Debian takes 250.651 suite seconds, including 157.529 seconds for the golden contract and six milliseconds for the allocator. This qualifies the WVA/WVO identity, loader, live platform-common calling contract, independent model, and integrated repository state across both hosts.
+
 ## Consequences
 
 The next selector transition starts from executable, Windvale-owned allocator mechanics rather than a new C# runtime behavior. The WVA source is the transferred implementation; the C# model remains an independent Stage 0 oracle and recovery seam.
 
 This decision does not yet make native execution reclaim dynamic descriptors. A successor ABI must define the descriptor owner-token field, allocator state placement, operation lowering, success/failure propagation, independent selected-instruction proof, and coordinated host/OS consumer rebuild. That transition should begin with a small descriptor-bearing fixture before selecting the complete compiler.
+
+[Decision 0151](0151-Native-Descriptor-Allocator-Emission-Schedule.md) subsequently fixes the complete physical owner locations, action phases, candidate context pointers, request scratch, generated/service ownership, and volatile-budget preservation for those calls. Decision 0150's ABI-22 generation/checkpoint policy does not call the leaf, so the schedule remains pre-selection evidence for later full-allocator integration.
 
 This is not a garbage collector, general heap, public allocator API, concurrency contract, unwind mechanism, native self-hosting result, or .NET-retirement qualification. WVA assembly and WVO embedding still use the Stage 0 toolchain in the normal build.
 

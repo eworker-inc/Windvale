@@ -520,6 +520,7 @@ public sealed record Nativeˉmodule(
     ImmutableArray<Nativeˉservice> Requiredˉservices)
 {
     public Nativeˉdescriptorˉownershipˉplan? Descriptorˉownership { get; init; }
+    public Nativeˉdescriptorˉallocatorˉemissionˉplan? Descriptorˉallocatorˉemission { get; init; }
 }
 
 public enum Nativeˉsymbolˉbinding : byte
