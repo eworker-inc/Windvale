@@ -105,10 +105,12 @@ public static class Kernelˉprocessˉimage
         var Interpreterˉmodule = Moduleˉcodec.Readˉandˉverify(Interpreterˉcompilation.Moduleˉbytes.AsSpan());
         Verifyˉinterpreter(Interpreterˉmodule);
         var Interpreterˉnative = X64ˉnativeˉbackend.Compile(Interpreterˉmodule);
-        var Executeˉmain = Interpreterˉnative.Module.Functions.Single(Function =>
-            Function.Name == "Executeˉmain");
-        var Executeˉmainˉframeˉslots = Executeˉmain.Allˉlocalˉtypes.Length +
-            Executeˉmain.Valueˉslotˉcount;
+        var Recordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(Interpreterˉnative.Module);
+        var Executeˉmainˉindex = Interpreterˉnative.Module.Functions
+            .Select((Function, Index) => (Function, Index))
+            .Single(Entry => Entry.Function.Name == "Executeˉmain")
+            .Index;
+        var Executeˉmainˉframeˉslots = Recordˉstorage[Executeˉmainˉindex].Projectedˉframeˉcells;
         if (Executeˉmainˉframeˉslots != Kernelˉprocessˉcontract.CLIENT_INTERPRETER_FRAME_SLOTS)
         {
             throw new InvalidOperationException(
@@ -251,12 +253,14 @@ public static class Kernelˉprocessˉimage
         }
         var Active = new bool[module.Functions.Length];
         var Memoized = new ulong[module.Functions.Length];
+        var Recordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(module);
         return checked(sizeof(ulong) + Measureˉnativeˉstackˉpath(
-            module, Entryˉindex, Active, Memoized));
+            module, Recordˉstorage, Entryˉindex, Active, Memoized));
     }
 
     private static ulong Measureˉnativeˉstackˉpath(
         Nativeˉmodule module,
+        ImmutableArray<Nativeˉfunctionˉrecordˉstorage> recordˉstorage,
         int functionˉindex,
         bool[] active,
         ulong[] memoized)
@@ -287,12 +291,11 @@ public static class Kernelˉprocessˉimage
             }
             Maximumˉcalleeˉbytes = Math.Max(
                 Maximumˉcalleeˉbytes,
-                Measureˉnativeˉstackˉpath(module, Target, active, memoized));
+                Measureˉnativeˉstackˉpath(
+                    module, recordˉstorage, Target, active, memoized));
         }
         active[functionˉindex] = false;
-        var Frameˉslots = checked(Function.Allˉlocalˉtypes.Length + Function.Valueˉslotˉcount +
-            (Function.Returnˉtype is Nativeˉvalueˉtype.Borrowedˉtext or
-                Nativeˉvalueˉtype.Borrowedˉbytes ? 1 : 0));
+        var Frameˉslots = recordˉstorage[functionˉindex].Projectedˉframeˉcells;
         var Result = checked((ulong)Frameˉslots * Nativeˉcontract.VALUE_SLOT_BYTES +
             sizeof(ulong) + Maximumˉcalleeˉbytes);
         memoized[functionˉindex] = Result;

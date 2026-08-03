@@ -6,11 +6,11 @@ namespace Windvale.Compiler.Native;
 
 public static class Nativeˉcontract
 {
-    public const int ABI_VERSION = 20;
-    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v20";
+    public const int ABI_VERSION = 21;
+    public const string X64_BASELINE_TARGET = "x86-64-wvb-baseline-v21";
     public const long DEFAULT_MAXIMUM_INSTRUCTIONS = 1_000_000;
     public const int DEFAULT_MAXIMUM_CALL_DEPTH = 1024;
-    public const int MAXIMUM_CODE_BYTES = 8 * 1024 * 1024;
+    public const int MAXIMUM_CODE_BYTES = 32 * 1024 * 1024;
     public const int MAXIMUM_FRAME_SLOTS = 2048;
     public const int MAXIMUM_VALUE_IDENTIFIERS = 100_000;
     public const int VALUE_SLOT_BYTES = 16;

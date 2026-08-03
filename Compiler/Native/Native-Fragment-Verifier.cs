@@ -180,9 +180,8 @@ public static class Nativeˉfragmentˉverifier
                         Valueˉtype.U32 or
                         Valueˉtype.Text or
                         Valueˉtype.Bytes or
-                        Valueˉtype.Record or
                         Valueˉtype.Enum) ||
-                    (Field.Type.Kind is Valueˉtype.Record or Valueˉtype.Enum
+                    (Field.Type.Kind == Valueˉtype.Enum
                         ? (uint)Field.Type.Nominalˉtypeˉindex >= (uint)types.Length
                         : Field.Type.Nominalˉtypeˉindex != -1)) ||
                 Record.Fields.Select(Field => Field.Name).Distinct(StringComparer.Ordinal).Count() !=
@@ -399,8 +398,11 @@ public static class Nativeˉfragmentˉverifier
         {
             Index += 3;
         }
-        var Hasˉhiddenˉresult = Tryˉstoreˉrax(Code, Index, Frameˉbytes, out var Hiddenˉresultˉslot) &&
-            Hiddenˉresultˉslot == Frameˉbytes / Nativeˉcontract.VALUE_SLOT_BYTES - 1;
+        var Hasˉhiddenˉresult = Tryˉstoreˉrax(
+            Code,
+            Index,
+            Frameˉbytes,
+            out var Hiddenˉresultˉslot);
         if (Isˉmain && Hasˉentryˉresultˉbridge != Hasˉhiddenˉresult)
         {
             Failˉshape();
@@ -414,9 +416,15 @@ public static class Nativeˉfragmentˉverifier
             Failˉshape();
         }
         Index += 2;
-        var Initializedˉbytes = Frameˉbytes - (Hasˉhiddenˉresult ? Nativeˉcontract.VALUE_SLOT_BYTES : 0);
-        for (var Dword = 0; Dword < Initializedˉbytes / sizeof(int); Dword++)
+        for (var Dword = 0; Dword < Frameˉbytes / sizeof(int); Dword++)
         {
+            if (Hasˉhiddenˉresult &&
+                Dword >= Hiddenˉresultˉslot * (Nativeˉcontract.VALUE_SLOT_BYTES / sizeof(int)) &&
+                Dword < (Hiddenˉresultˉslot + 1) *
+                    (Nativeˉcontract.VALUE_SLOT_BYTES / sizeof(int)))
+            {
+                continue;
+            }
             if (!Tryˉstoreˉeaxˉdword(Code, Index, Frameˉbytes, out var Initialized) ||
                 Initialized != Dword)
             {
@@ -447,12 +455,31 @@ public static class Nativeˉfragmentˉverifier
             .Where(Item => Item.Kind == Decodedˉargumentˉkind.Borrowedˉbytes)
             .Select(Item => Item.Slot)
             .ToHashSet();
+        var Recordˉslots = Parameterˉkinds
+            .Select((Kind, Slot) => (Kind, Slot))
+            .Where(Item => Item.Kind == Decodedˉargumentˉkind.Record)
+            .Select(Item => Item.Slot)
+            .ToHashSet();
+        while (Tryˉdecodeˉrecordˉcopy(
+            Code,
+            ref Index,
+            End,
+            Frameˉbytes,
+            fragment.Types,
+            Recordˉslots,
+            out var Parameterˉcopyˉsource,
+            out var Parameterˉcopyˉtarget,
+            out _))
+        {
+            if (Parameterˉcopyˉsource != Parameterˉcopyˉtarget ||
+                (uint)Parameterˉcopyˉtarget >= (uint)Parameterˉkinds.Count ||
+                Parameterˉkinds[Parameterˉcopyˉtarget] != Decodedˉargumentˉkind.Record)
+            {
+                Failˉshape();
+            }
+            Recordˉslots.Add(Parameterˉcopyˉtarget);
+        }
         var Staticˉdescriptorˉdata = new Dictionary<int, Nativeˉsymbol>();
-        var Usesˉtypedˉrecordˉtags = fragment.Types
-            .OfType<Recordˉtypeˉdeclaration>()
-            .Any(Record => Record.Fields.Any(Field =>
-                Field.Type.Kind is Valueˉtype.Text or Valueˉtype.Bytes));
-
         var Restoreˉbytes = Isˉmain ? 13 : 11;
         var Statusˉbytes = Isˉmain ? 23 : 21;
         var Propagate = End - Suffixˉbytes;
@@ -494,6 +521,47 @@ public static class Nativeˉfragmentˉverifier
             {
                 Index += 10;
                 Groups.Add(new(Groupˉstart, true, false, true, []));
+                continue;
+            }
+
+            if (Hasˉhiddenˉresult &&
+                Tryˉdecodeˉrecordˉtypeˉtag(
+                    Code,
+                    Index,
+                    fragment.Types,
+                    out _,
+                    out var Returnˉrecord) &&
+                Tryˉloadˉrdx(
+                    Code,
+                    Index + 6,
+                    Frameˉbytes,
+                    out var Recordˉhiddenˉreturnˉslot) &&
+                Recordˉhiddenˉreturnˉslot == Hiddenˉresultˉslot &&
+                Tryˉloadˉrax(
+                    Code,
+                    Index + 14,
+                    Frameˉbytes,
+                    out var Recordˉreturnˉslot) &&
+                Recordˉslots.Contains(Recordˉreturnˉslot) &&
+                Tryˉdecodeˉrecordˉreturnˉfields(
+                    Code,
+                    Index + 22,
+                    Propagate,
+                    Returnˉrecord.Fields.Length,
+                    out var Afterˉrecordˉfields) &&
+                Matches(Code, Afterˉrecordˉfields, 0x31, 0xC0, 0x48, 0x81, 0xC4) &&
+                Readˉi32(Code, Afterˉrecordˉfields + 5) == Frameˉbytes &&
+                Matchesˉrestoreˉdepthˉandˉreturn(
+                    Code,
+                    Afterˉrecordˉfields + 9,
+                    Isˉmain))
+            {
+                Index = checked(Afterˉrecordˉfields + (Isˉmain ? 15 : 13));
+                Returnˉkind = Mergeˉreturnˉkind(
+                    Returnˉkind,
+                    Decodedˉreturnˉkind.Record);
+                Returns++;
+                Groups.Add(new(Groupˉstart, false, true, false, []));
                 continue;
             }
 
@@ -553,6 +621,7 @@ public static class Nativeˉfragmentˉverifier
                 Frameˉbytes,
                 Propagate,
                 functions,
+                fragment.Types,
                 out var Call))
             {
                 if (Call.Returnˉkind == Decodedˉreturnˉkind.Descriptor)
@@ -561,14 +630,26 @@ public static class Nativeˉfragmentˉverifier
                     Staticˉdescriptorˉdata.Remove(Call.Resultˉslot);
                 }
                 else if (Call.Returnˉkind == Decodedˉreturnˉkind.Scalar &&
-                    Borrowedˉbytesˉslots.Contains(Call.Resultˉslot))
+                    (Borrowedˉbytesˉslots.Contains(Call.Resultˉslot) ||
+                        Recordˉslots.Contains(Call.Resultˉslot)))
                 {
                     Failˉshape();
+                }
+                else if (Call.Returnˉkind == Decodedˉreturnˉkind.Record)
+                {
+                    Recordˉslots.Add(Call.Resultˉslot);
+                    Borrowedˉbytesˉslots.Remove(Call.Resultˉslot);
+                    Staticˉdescriptorˉdata.Remove(Call.Resultˉslot);
                 }
                 for (var Argument = 0; Argument < Call.Argumentˉkinds.Length; Argument++)
                 {
                     if (Call.Argumentˉkinds[Argument] == Decodedˉargumentˉkind.Borrowedˉbytes &&
                         !Borrowedˉbytesˉslots.Contains(Call.Argumentˉslots[Argument]))
+                    {
+                        Failˉshape();
+                    }
+                    if (Call.Argumentˉkinds[Argument] == Decodedˉargumentˉkind.Record &&
+                        !Recordˉslots.Contains(Call.Argumentˉslots[Argument]))
                     {
                         Failˉshape();
                     }
@@ -897,16 +978,57 @@ public static class Nativeˉfragmentˉverifier
                 ref Index,
                 Propagate,
                 Frameˉbytes,
-                Recordˉarena,
                 fragment.Types,
-                Usesˉtypedˉrecordˉtags,
                 Borrowedˉbytesˉslots,
-                out var Recordˉcreateˉresult))
+                out var Recordˉcreateˉresult,
+                out _))
             {
                 if (Borrowedˉbytesˉslots.Contains(Recordˉcreateˉresult))
                 {
                     Failˉshape();
                 }
+                Recordˉslots.Add(Recordˉcreateˉresult);
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            if (Tryˉdecodeˉrecordˉcopy(
+                Code,
+                ref Index,
+                Propagate,
+                Frameˉbytes,
+                fragment.Types,
+                Recordˉslots,
+                out _,
+                out var Recordˉcopyˉtarget,
+                out _))
+            {
+                Recordˉslots.Add(Recordˉcopyˉtarget);
+                Borrowedˉbytesˉslots.Remove(Recordˉcopyˉtarget);
+                Staticˉdescriptorˉdata.Remove(Recordˉcopyˉtarget);
+                Groups.Add(new(Groupˉstart, true, false, false, []));
+                continue;
+            }
+
+            var Recordˉreferenceˉafter = Index;
+            if (Tryˉdecodeˉrecordˉreferenceˉcopy(
+                Code,
+                ref Recordˉreferenceˉafter,
+                Propagate,
+                Frameˉbytes,
+                fragment.Types,
+                Recordˉslots,
+                out var Recordˉreferenceˉtarget) &&
+                (Recordˉreferenceˉafter == Propagate ||
+                    Matches(
+                        Code,
+                        Recordˉreferenceˉafter,
+                        0x49, 0x83, 0xEB, 0x01, 0x0F, 0x82)))
+            {
+                Index = Recordˉreferenceˉafter;
+                Recordˉslots.Add(Recordˉreferenceˉtarget);
+                Borrowedˉbytesˉslots.Remove(Recordˉreferenceˉtarget);
+                Staticˉdescriptorˉdata.Remove(Recordˉreferenceˉtarget);
                 Groups.Add(new(Groupˉstart, true, false, false, []));
                 continue;
             }
@@ -916,13 +1038,15 @@ public static class Nativeˉfragmentˉverifier
                 ref Index,
                 Propagate,
                 Frameˉbytes,
-                Recordˉarena,
                 fragment.Types,
-                Usesˉtypedˉrecordˉtags,
-                Borrowedˉbytesˉslots,
+                Recordˉslots,
                 out var Recordˉfieldˉresult,
                 out var Recordˉfieldˉisˉdescriptor))
             {
+                if (Recordˉslots.Contains(Recordˉfieldˉresult))
+                {
+                    Failˉshape();
+                }
                 if (Recordˉfieldˉisˉdescriptor)
                 {
                     Borrowedˉbytesˉslots.Add(Recordˉfieldˉresult);
@@ -971,7 +1095,14 @@ public static class Nativeˉfragmentˉverifier
                 Overflow,
                 out var Scalarˉresult))
             {
-                Failˉshape();
+                Fail(
+                    "WVN3030",
+                    $"The x86-64 baseline fragment contains an undecodable ABI-21 group " +
+                    $"in function '{symbol.Name}' at code offset {Groupˉstart}: " +
+                    Convert.ToHexString(
+                        Code.Slice(
+                            Groupˉstart,
+                            Math.Min(48, Propagate - Groupˉstart))));
             }
             if (Borrowedˉbytesˉslots.Contains(Scalarˉresult))
             {
@@ -1049,6 +1180,7 @@ public static class Nativeˉfragmentˉverifier
         int frameˉbytes,
         int propagate,
         Dictionary<int, Nativeˉsymbol> functions,
+        ImmutableArray<Nominalˉtypeˉdeclaration> types,
         out Decodedˉcall call)
     {
         call = new(0, [], [], Decodedˉreturnˉkind.Void, -1);
@@ -1058,6 +1190,17 @@ public static class Nativeˉfragmentˉverifier
         }
         var Functionˉcode = code[..end];
         var Cursor = index;
+        Recordˉtypeˉdeclaration? Recordˉreturn = null;
+        if (Tryˉdecodeˉrecordˉtypeˉtag(
+            Functionˉcode,
+            Cursor,
+            types,
+            out _,
+            out var Taggedˉreturn))
+        {
+            Recordˉreturn = Taggedˉreturn;
+            Cursor += 6;
+        }
         var Argumentˉkinds = new List<Decodedˉargumentˉkind>();
         var Argumentˉslots = new List<int>();
         while (Argumentˉkinds.Count < Nativeˉcontract.REGISTER_CALL_PARAMETERS &&
@@ -1111,16 +1254,35 @@ public static class Nativeˉfragmentˉverifier
         }
         var Returnˉkind = Decodedˉreturnˉkind.Void;
         var Resultˉslot = -1;
+        var Resultˉbackingˉslot = -1;
         if (Matches(Functionˉcode, Cursor, 0x48, 0x8D, 0x84, 0x24) &&
             Tryˉreadˉadjustedˉslot(
                 Functionˉcode,
                 Cursor + 4,
                 frameˉbytes,
                 Stackˉbytes,
-                out Resultˉslot))
+                out Resultˉbackingˉslot))
         {
-            Returnˉkind = Decodedˉreturnˉkind.Descriptor;
+            Returnˉkind = Recordˉreturn is null
+                ? Decodedˉreturnˉkind.Descriptor
+                : Decodedˉreturnˉkind.Record;
+            if (Recordˉreturn is null)
+            {
+                Resultˉslot = Resultˉbackingˉslot;
+            }
+            if (Recordˉreturn is not null &&
+                !Rangeˉfitsˉframe(
+                    Resultˉbackingˉslot,
+                    Recordˉreturn.Fields.Length,
+                    frameˉbytes))
+            {
+                return false;
+            }
             Cursor += 8;
+        }
+        else if (Recordˉreturn is not null)
+        {
+            return false;
         }
         if (Cursor >= end || Functionˉcode[Cursor] != 0xE8 ||
             !Tryˉreadˉtarget(Functionˉcode, Cursor + 1, out var Target) ||
@@ -1150,7 +1312,26 @@ public static class Nativeˉfragmentˉverifier
             return false;
         }
         Cursor += 16;
-        if (Returnˉkind != Decodedˉreturnˉkind.Descriptor &&
+        if (Returnˉkind == Decodedˉreturnˉkind.Record)
+        {
+            if (!Matches(Functionˉcode, Cursor, 0x48, 0x8D, 0x84, 0x24) ||
+                !Tryˉreadˉslot(
+                    Functionˉcode,
+                    Cursor + 4,
+                    frameˉbytes,
+                    out var Repeatedˉbacking) ||
+                Repeatedˉbacking != Resultˉbackingˉslot ||
+                !Tryˉstoreˉrax(
+                    Functionˉcode,
+                    Cursor + 8,
+                    frameˉbytes,
+                    out Resultˉslot))
+            {
+                return false;
+            }
+            Cursor += 16;
+        }
+        else if (Returnˉkind != Decodedˉreturnˉkind.Descriptor &&
             Tryˉstoreˉeax(Functionˉcode, Cursor, frameˉbytes, out Resultˉslot))
         {
             Returnˉkind = Decodedˉreturnˉkind.Scalar;
@@ -2442,101 +2623,156 @@ public static class Nativeˉfragmentˉverifier
         ref int index,
         int end,
         int frameˉbytes,
-        int arenaˉtrap,
         ImmutableArray<Nominalˉtypeˉdeclaration> types,
-        bool usesˉtypedˉrecordˉtags,
         HashSet<int> borrowedˉdescriptorˉslots,
-        out int resultˉslot)
+        out int resultˉslot,
+        out int backingˉslot)
     {
         resultˉslot = 0;
+        backingˉslot = 0;
         var Cursor = index;
-        Recordˉtypeˉdeclaration? Record = null;
-        if (usesˉtypedˉrecordˉtags)
-        {
-            if (!Matches(code, Cursor, 0x41, 0xB8))
-            {
-                return false;
-            }
-            var Type = Readˉi32(code, Cursor + 2);
-            if ((uint)Type >= (uint)types.Length ||
-                types[Type] is not Recordˉtypeˉdeclaration Typedˉrecord)
-            {
-                return false;
-            }
-            Record = Typedˉrecord;
-            Cursor += 6;
-        }
-        if (!Matches(
-                code,
-                Cursor,
-                0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
-                0x89, 0xC1,
-                0x81, 0xC1))
+        if (!Tryˉdecodeˉrecordˉtypeˉtag(
+            code,
+            Cursor,
+            types,
+            out _,
+            out var Record))
         {
             return false;
         }
-        var Allocationˉbytes = Readˉi32(code, Cursor + 8);
-        if (Allocationˉbytes is < Nativeˉcontract.VALUE_SLOT_BYTES or
-                > Bytecodeˉlimits.MAX_RECORD_FIELDS * Nativeˉcontract.VALUE_SLOT_BYTES ||
-            Allocationˉbytes % Nativeˉcontract.VALUE_SLOT_BYTES != 0 ||
-            !Matches(code, Cursor + 12, 0x0F, 0x82) ||
-            !Tryˉreadˉtarget(code, Cursor + 14, out var Overflowˉtarget) ||
-            Overflowˉtarget != arenaˉtrap ||
-            !Matches(
-                code,
-                Cursor + 18,
-                0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET,
-                0x0F, 0x87) ||
-            !Tryˉreadˉtarget(code, Cursor + 24, out var Capacityˉtarget) ||
-            Capacityˉtarget != arenaˉtrap ||
-            !Matches(
-                code,
-                Cursor + 28,
-                0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET) ||
-            !Tryˉstoreˉeax(code, Cursor + 32, frameˉbytes, out resultˉslot) ||
-            !Matches(
-                code,
-                Cursor + 39,
-                0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET,
-                0x48, 0x01, 0xC2))
+        Cursor += 6;
+        for (var Field = 0; Field < Record.Fields.Length; Field++)
         {
-            return false;
-        }
-
-        Cursor += 46;
-        var Fieldˉcount = Allocationˉbytes / Nativeˉcontract.VALUE_SLOT_BYTES;
-        if (Record is not null && Record.Fields.Length != Fieldˉcount)
-        {
-            return false;
-        }
-        for (var Field = 0; Field < Fieldˉcount; Field++)
-        {
-            var Fieldˉoffset = Field * Nativeˉcontract.VALUE_SLOT_BYTES;
-            var Isˉdescriptor = Record is not null &&
-                Record.Fields[Field].Type.Kind is (Valueˉtype.Text or Valueˉtype.Bytes);
+            var Isˉdescriptor = Record.Fields[Field].Type.Kind is
+                Valueˉtype.Text or Valueˉtype.Bytes;
             if (!Tryˉloadˉrax(code, Cursor, frameˉbytes, out var Sourceˉslot) ||
                 Isˉdescriptor != borrowedˉdescriptorˉslots.Contains(Sourceˉslot) ||
-                !Matches(code, Cursor + 8, 0x48, 0x89, 0x82) ||
-                Readˉi32(code, Cursor + 11) != Fieldˉoffset ||
+                !Tryˉstoreˉrax(code, Cursor + 8, frameˉbytes, out var Lowˉtarget) ||
                 !Tryˉloadˉraxˉatˉfield(
                     code,
-                    Cursor + 15,
+                    Cursor + 16,
                     frameˉbytes,
                     sizeof(ulong),
                     out var Highˉsource) ||
                 Highˉsource != Sourceˉslot ||
-                !Matches(code, Cursor + 23, 0x48, 0x89, 0x82) ||
-                Readˉi32(code, Cursor + 26) != Fieldˉoffset + sizeof(ulong))
+                !Tryˉstoreˉraxˉatˉfield(
+                    code,
+                    Cursor + 24,
+                    frameˉbytes,
+                    sizeof(ulong),
+                    out var Highˉtarget) ||
+                Highˉtarget != Lowˉtarget ||
+                (Field == 0 ? (backingˉslot = Lowˉtarget) : Lowˉtarget) !=
+                    checked(backingˉslot + Field))
             {
                 return false;
             }
-            Cursor += 30;
+            Cursor += 32;
         }
+        if (!Matches(code, Cursor, 0x48, 0x8D, 0x84, 0x24) ||
+            !Tryˉreadˉslot(code, Cursor + 4, frameˉbytes, out var Addressˉslot) ||
+            Addressˉslot != backingˉslot ||
+            !Tryˉstoreˉrax(code, Cursor + 8, frameˉbytes, out resultˉslot) ||
+            !Rangeˉfitsˉframe(backingˉslot, Record.Fields.Length, frameˉbytes) ||
+            Isˉcellˉinˉrange(resultˉslot, backingˉslot, Record.Fields.Length))
+        {
+            return false;
+        }
+        Cursor += 16;
         if (Cursor > end)
         {
             return false;
         }
         index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉrecordˉcopy(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        ImmutableArray<Nominalˉtypeˉdeclaration> types,
+        HashSet<int> recordˉslots,
+        out int sourceˉslot,
+        out int targetˉslot,
+        out int backingˉslot)
+    {
+        sourceˉslot = 0;
+        targetˉslot = 0;
+        backingˉslot = 0;
+        var Cursor = index;
+        if (!Tryˉdecodeˉrecordˉtypeˉtag(
+                code,
+                Cursor,
+                types,
+                out _,
+                out var Record) ||
+            !Tryˉloadˉrdx(code, Cursor + 6, frameˉbytes, out sourceˉslot) ||
+            !recordˉslots.Contains(sourceˉslot))
+        {
+            return false;
+        }
+        Cursor += 14;
+        for (var Field = 0; Field < Record.Fields.Length; Field++)
+        {
+            var Sourceˉoffset = checked(Field * Nativeˉcontract.VALUE_SLOT_BYTES);
+            if (!Matches(code, Cursor, 0x48, 0x8B, 0x82) ||
+                Readˉi32(code, Cursor + 3) != Sourceˉoffset ||
+                !Tryˉstoreˉrax(code, Cursor + 7, frameˉbytes, out var Lowˉtarget) ||
+                !Matches(code, Cursor + 15, 0x48, 0x8B, 0x82) ||
+                Readˉi32(code, Cursor + 18) != checked(Sourceˉoffset + sizeof(ulong)) ||
+                !Tryˉstoreˉraxˉatˉfield(
+                    code,
+                    Cursor + 22,
+                    frameˉbytes,
+                    sizeof(ulong),
+                    out var Highˉtarget) ||
+                Highˉtarget != Lowˉtarget ||
+                (Field == 0 ? (backingˉslot = Lowˉtarget) : Lowˉtarget) !=
+                    checked(backingˉslot + Field))
+            {
+                return false;
+            }
+            Cursor += 30;
+        }
+        if (!Matches(code, Cursor, 0x48, 0x8D, 0x84, 0x24) ||
+            !Tryˉreadˉslot(code, Cursor + 4, frameˉbytes, out var Addressˉslot) ||
+            Addressˉslot != backingˉslot ||
+            !Tryˉstoreˉrax(code, Cursor + 8, frameˉbytes, out targetˉslot) ||
+            !Rangeˉfitsˉframe(backingˉslot, Record.Fields.Length, frameˉbytes) ||
+            Isˉcellˉinˉrange(targetˉslot, backingˉslot, Record.Fields.Length))
+        {
+            return false;
+        }
+        Cursor += 16;
+        if (Cursor > end)
+        {
+            return false;
+        }
+        index = Cursor;
+        return true;
+    }
+
+    private static bool Tryˉdecodeˉrecordˉreferenceˉcopy(
+        ReadOnlySpan<byte> code,
+        ref int index,
+        int end,
+        int frameˉbytes,
+        ImmutableArray<Nominalˉtypeˉdeclaration> types,
+        HashSet<int> recordˉslots,
+        out int targetˉslot)
+    {
+        targetˉslot = 0;
+        if (!Tryˉdecodeˉrecordˉtypeˉtag(code, index, types, out _, out _) ||
+            !Tryˉloadˉrax(code, index + 6, frameˉbytes, out var Sourceˉslot) ||
+            !recordˉslots.Contains(Sourceˉslot) ||
+            !Tryˉstoreˉrax(code, index + 14, frameˉbytes, out targetˉslot) ||
+            index + 22 > end)
+        {
+            return false;
+        }
+        index += 22;
         return true;
     }
 
@@ -2545,67 +2781,44 @@ public static class Nativeˉfragmentˉverifier
         ref int index,
         int end,
         int frameˉbytes,
-        int arenaˉtrap,
         ImmutableArray<Nominalˉtypeˉdeclaration> types,
-        bool usesˉtypedˉrecordˉtags,
-        HashSet<int> borrowedˉdescriptorˉslots,
+        HashSet<int> recordˉslots,
         out int resultˉslot,
         out bool isˉdescriptor)
     {
         resultˉslot = 0;
         isˉdescriptor = false;
         var Cursor = index;
-        Recordˉtypeˉdeclaration? Record = null;
-        if (usesˉtypedˉrecordˉtags)
-        {
-            if (!Matches(code, Cursor, 0x41, 0xB8))
-            {
-                return false;
-            }
-            var Type = Readˉi32(code, Cursor + 2);
-            if ((uint)Type >= (uint)types.Length ||
-                types[Type] is not Recordˉtypeˉdeclaration Typedˉrecord)
-            {
-                return false;
-            }
-            Record = Typedˉrecord;
-            Cursor += 6;
-        }
-        if (!Tryˉloadˉeax(code, Cursor, frameˉbytes, out var Recordˉslot) ||
-            borrowedˉdescriptorˉslots.Contains(Recordˉslot) ||
-            !Matches(code, Cursor + 7, 0x89, 0xC1, 0x81, 0xC1))
+        if (!Tryˉdecodeˉrecordˉtypeˉtag(
+                code,
+                Cursor,
+                types,
+                out _,
+                out var Record) ||
+            !Tryˉloadˉrdx(code, Cursor + 6, frameˉbytes, out var Recordˉslot) ||
+            !recordˉslots.Contains(Recordˉslot))
         {
             return false;
         }
-        var Endˉoffset = Readˉi32(code, Cursor + 11);
-        var Fieldˉindex = Endˉoffset / Nativeˉcontract.VALUE_SLOT_BYTES - 1;
-        if (Endˉoffset is < Nativeˉcontract.VALUE_SLOT_BYTES or
-                > Bytecodeˉlimits.MAX_RECORD_FIELDS * Nativeˉcontract.VALUE_SLOT_BYTES ||
-            Endˉoffset % Nativeˉcontract.VALUE_SLOT_BYTES != 0 ||
-            (Record is not null && (uint)Fieldˉindex >= (uint)Record.Fields.Length) ||
-            !Matches(code, Cursor + 15, 0x0F, 0x82) ||
-            !Tryˉreadˉtarget(code, Cursor + 17, out var Overflowˉtarget) ||
-            Overflowˉtarget != arenaˉtrap ||
-            !Matches(
-                code,
-                Cursor + 21,
-                0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
-                0x0F, 0x87) ||
-            !Tryˉreadˉtarget(code, Cursor + 27, out var Boundsˉtarget) ||
-            Boundsˉtarget != arenaˉtrap ||
-            !Matches(
-                code,
-                Cursor + 31,
-                0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET,
-                0x48, 0x01, 0xC2,
-                0x48, 0x8B, 0x82) ||
-            Readˉi32(code, Cursor + 41) != Endˉoffset - Nativeˉcontract.VALUE_SLOT_BYTES ||
-            !Tryˉstoreˉrax(code, Cursor + 45, frameˉbytes, out resultˉslot) ||
-            !Matches(code, Cursor + 53, 0x48, 0x8B, 0x82) ||
-            Readˉi32(code, Cursor + 56) != Endˉoffset - sizeof(ulong) ||
+        Cursor += 14;
+        if (!Matches(code, Cursor, 0x48, 0x8B, 0x82))
+        {
+            return false;
+        }
+        var Sourceˉoffset = Readˉi32(code, Cursor + 3);
+        if (Sourceˉoffset < 0 ||
+            Sourceˉoffset % Nativeˉcontract.VALUE_SLOT_BYTES != 0)
+        {
+            return false;
+        }
+        var Fieldˉindex = Sourceˉoffset / Nativeˉcontract.VALUE_SLOT_BYTES;
+        if ((uint)Fieldˉindex >= (uint)Record.Fields.Length ||
+            !Tryˉstoreˉrax(code, Cursor + 7, frameˉbytes, out resultˉslot) ||
+            !Matches(code, Cursor + 15, 0x48, 0x8B, 0x82) ||
+            Readˉi32(code, Cursor + 18) != checked(Sourceˉoffset + sizeof(ulong)) ||
             !Tryˉstoreˉraxˉatˉfield(
                 code,
-                Cursor + 60,
+                Cursor + 22,
                 frameˉbytes,
                 sizeof(ulong),
                 out var Highˉresult) ||
@@ -2613,9 +2826,9 @@ public static class Nativeˉfragmentˉverifier
         {
             return false;
         }
-        Cursor += 68;
-        isˉdescriptor = Record is not null &&
-            Record.Fields[Fieldˉindex].Type.Kind is (Valueˉtype.Text or Valueˉtype.Bytes);
+        Cursor += 30;
+        isˉdescriptor = Record.Fields[Fieldˉindex].Type.Kind is
+            Valueˉtype.Text or Valueˉtype.Bytes;
         if (Cursor > end)
         {
             return false;
@@ -2623,6 +2836,66 @@ public static class Nativeˉfragmentˉverifier
         index = Cursor;
         return true;
     }
+
+    private static bool Tryˉdecodeˉrecordˉreturnˉfields(
+        ReadOnlySpan<byte> code,
+        int index,
+        int end,
+        int fieldˉcount,
+        out int after)
+    {
+        after = index;
+        for (var Field = 0; Field < fieldˉcount; Field++)
+        {
+            var Fieldˉoffset = checked(Field * Nativeˉcontract.VALUE_SLOT_BYTES);
+            if (!Matches(code, after, 0x48, 0x8B, 0x88) ||
+                Readˉi32(code, after + 3) != Fieldˉoffset ||
+                !Matches(code, after + 7, 0x48, 0x89, 0x8A) ||
+                Readˉi32(code, after + 10) != Fieldˉoffset ||
+                !Matches(code, after + 14, 0x48, 0x8B, 0x88) ||
+                Readˉi32(code, after + 17) != checked(Fieldˉoffset + sizeof(ulong)) ||
+                !Matches(code, after + 21, 0x48, 0x89, 0x8A) ||
+                Readˉi32(code, after + 24) != checked(Fieldˉoffset + sizeof(ulong)))
+            {
+                return false;
+            }
+            after += 28;
+        }
+        return after <= end;
+    }
+
+    private static bool Tryˉdecodeˉrecordˉtypeˉtag(
+        ReadOnlySpan<byte> code,
+        int offset,
+        ImmutableArray<Nominalˉtypeˉdeclaration> types,
+        out int type,
+        out Recordˉtypeˉdeclaration record)
+    {
+        type = -1;
+        record = null!;
+        if (!Matches(code, offset, 0x41, 0xB8))
+        {
+            return false;
+        }
+        type = Readˉi32(code, offset + 2);
+        if ((uint)type >= (uint)types.Length ||
+            types[type] is not Recordˉtypeˉdeclaration Record ||
+            Record.Fields.IsDefaultOrEmpty ||
+            Record.Fields.Any(Field => Field.Type.Kind == Valueˉtype.Record))
+        {
+            return false;
+        }
+        record = Record;
+        return true;
+    }
+
+    private static bool Rangeˉfitsˉframe(int startˉcell, int cells, int frameˉbytes) =>
+        startˉcell >= 0 &&
+        cells > 0 &&
+        ((long)startˉcell + cells) * Nativeˉcontract.VALUE_SLOT_BYTES <= frameˉbytes;
+
+    private static bool Isˉcellˉinˉrange(int cell, int start, int cells) =>
+        cell >= start && cell < checked(start + cells);
 
     private static bool Tryˉdecodeˉslotˉtransformation(
         ReadOnlySpan<byte> code,
@@ -2830,12 +3103,28 @@ public static class Nativeˉfragmentˉverifier
             3 => new byte[] { 0x48, 0x8D, 0x94, 0x24 },
             _ => [],
         };
+        var Recordˉprefix = argument switch
+        {
+            0 => new byte[] { 0x4C, 0x8B, 0x84, 0x24 },
+            1 => new byte[] { 0x4C, 0x8B, 0x8C, 0x24 },
+            2 => new byte[] { 0x48, 0x8B, 0x8C, 0x24 },
+            3 => new byte[] { 0x48, 0x8B, 0x94, 0x24 },
+            _ => [],
+        };
         length = Scalarˉprefix.Length + sizeof(int);
         kind = Decodedˉargumentˉkind.Scalar;
         slot = 0;
         if (Scalarˉprefix.Length != 0 &&
             Matches(code, offset, Scalarˉprefix) &&
             Tryˉreadˉslot(code, offset + Scalarˉprefix.Length, frameˉbytes, out slot))
+        {
+            return true;
+        }
+        length = Recordˉprefix.Length + sizeof(int);
+        kind = Decodedˉargumentˉkind.Record;
+        if (Recordˉprefix.Length != 0 &&
+            Matches(code, offset, Recordˉprefix) &&
+            Tryˉreadˉslot(code, offset + Recordˉprefix.Length, frameˉbytes, out slot))
         {
             return true;
         }
@@ -2881,32 +3170,44 @@ public static class Nativeˉfragmentˉverifier
 
         length = 32;
         kind = Decodedˉargumentˉkind.Borrowedˉbytes;
-        if (offset > code.Length - 32 ||
-            !Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) ||
-            !Tryˉreadˉadjustedˉslot(
+        if (offset <= code.Length - 32 &&
+            Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) &&
+            Tryˉreadˉadjustedˉslot(
                 code,
                 offset + 4,
                 frameˉbytes,
                 stackˉbytes,
-                out slot) ||
-            !Matches(code, offset + 8, 0x48, 0x89, 0x84, 0x24) ||
-            Readˉi32(code, offset + 12) != Outgoingˉoffset ||
-            !Matches(code, offset + 16, 0x48, 0x8B, 0x84, 0x24) ||
-            !Tryˉreadˉadjustedˉslotˉfield(
+                out slot) &&
+            Matches(code, offset + 8, 0x48, 0x89, 0x84, 0x24) &&
+            Readˉi32(code, offset + 12) == Outgoingˉoffset &&
+            Matches(code, offset + 16, 0x48, 0x8B, 0x84, 0x24) &&
+            Tryˉreadˉadjustedˉslotˉfield(
                 code,
                 offset + 20,
                 frameˉbytes,
                 stackˉbytes,
                 sizeof(ulong),
                 sizeof(ulong),
-                out var Highˉslot) ||
-            Highˉslot != slot ||
-            !Matches(code, offset + 24, 0x48, 0x89, 0x84, 0x24) ||
-            Readˉi32(code, offset + 28) != checked(Outgoingˉoffset + sizeof(ulong)))
+                out var Highˉslot) &&
+            Highˉslot == slot &&
+            Matches(code, offset + 24, 0x48, 0x89, 0x84, 0x24) &&
+            Readˉi32(code, offset + 28) == checked(Outgoingˉoffset + sizeof(ulong)))
         {
-            return false;
+            return true;
         }
-        return true;
+
+        length = 16;
+        kind = Decodedˉargumentˉkind.Record;
+        return offset <= code.Length - 16 &&
+            Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) &&
+            Tryˉreadˉadjustedˉslot(
+                code,
+                offset + 4,
+                frameˉbytes,
+                stackˉbytes,
+                out slot) &&
+            Matches(code, offset + 8, 0x48, 0x89, 0x84, 0x24) &&
+            Readˉi32(code, offset + 12) == Outgoingˉoffset;
     }
 
     private static bool Tryˉstoreˉargument(
@@ -2937,25 +3238,33 @@ public static class Nativeˉfragmentˉverifier
 
             length = 32;
             kind = Decodedˉargumentˉkind.Borrowedˉbytes;
-            if (offset < 0 ||
-                offset > code.Length - 32 ||
-                !Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) ||
-                Readˉi32(code, offset + 4) != Incomingˉoffset ||
-                !Tryˉstoreˉrax(code, offset + 8, frameˉbytes, out var Stackˉpointerˉslot) ||
-                Stackˉpointerˉslot != argument ||
-                !Matches(code, offset + 16, 0x48, 0x8B, 0x84, 0x24) ||
-                Readˉi32(code, offset + 20) != checked(Incomingˉoffset + sizeof(ulong)) ||
-                !Tryˉstoreˉraxˉatˉfield(
+            if (offset >= 0 &&
+                offset <= code.Length - 32 &&
+                Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) &&
+                Readˉi32(code, offset + 4) == Incomingˉoffset &&
+                Tryˉstoreˉrax(code, offset + 8, frameˉbytes, out var Stackˉpointerˉslot) &&
+                Stackˉpointerˉslot == argument &&
+                Matches(code, offset + 16, 0x48, 0x8B, 0x84, 0x24) &&
+                Readˉi32(code, offset + 20) == checked(Incomingˉoffset + sizeof(ulong)) &&
+                Tryˉstoreˉraxˉatˉfield(
                     code,
                     offset + 24,
                     frameˉbytes,
                     sizeof(ulong),
-                    out var Stackˉhighˉslot) ||
-                Stackˉhighˉslot != argument)
+                    out var Stackˉhighˉslot) &&
+                Stackˉhighˉslot == argument)
             {
-                return false;
+                return true;
             }
-            return true;
+
+            length = 16;
+            kind = Decodedˉargumentˉkind.Record;
+            return offset >= 0 &&
+                offset <= code.Length - 16 &&
+                Matches(code, offset, 0x48, 0x8B, 0x84, 0x24) &&
+                Readˉi32(code, offset + 4) == Incomingˉoffset &&
+                Tryˉstoreˉrax(code, offset + 8, frameˉbytes, out var Stackˉrecordˉslot) &&
+                Stackˉrecordˉslot == argument;
         }
 
         var Prefix = argument switch
@@ -2972,6 +3281,24 @@ public static class Nativeˉfragmentˉverifier
             Matches(code, offset, Prefix) &&
             Tryˉreadˉslot(code, offset + Prefix.Length, frameˉbytes, out var Slot) &&
             Slot == argument)
+        {
+            return true;
+        }
+
+        var Storeˉrecord = argument switch
+        {
+            0 => new byte[] { 0x4C, 0x89, 0x84, 0x24 },
+            1 => new byte[] { 0x4C, 0x89, 0x8C, 0x24 },
+            2 => new byte[] { 0x48, 0x89, 0x8C, 0x24 },
+            3 => new byte[] { 0x48, 0x89, 0x94, 0x24 },
+            _ => [],
+        };
+        length = Storeˉrecord.Length + sizeof(int);
+        kind = Decodedˉargumentˉkind.Record;
+        if (Storeˉrecord.Length != 0 &&
+            Matches(code, offset, Storeˉrecord) &&
+            Tryˉreadˉslot(code, offset + Storeˉrecord.Length, frameˉbytes, out var Recordˉslot) &&
+            Recordˉslot == argument)
         {
             return true;
         }
@@ -3232,6 +3559,7 @@ public static class Nativeˉfragmentˉverifier
     {
         Scalar = 1,
         Borrowedˉbytes = 2,
+        Record = 3,
     }
 
     private enum Decodedˉreturnˉkind : byte
@@ -3239,6 +3567,7 @@ public static class Nativeˉfragmentˉverifier
         Void = 0,
         Scalar = 1,
         Descriptor = 2,
+        Record = 3,
     }
 
     private sealed record Decodedˉfunction(
@@ -3262,7 +3591,10 @@ public static class Nativeˉfragmentˉverifier
 
     [DoesNotReturn]
     private static void Failˉshape() =>
-        Fail("WVN3030", "The x86-64 baseline fragment is outside the independently decoded context, service, call, and data target shape.");
+        Fail(
+            "WVN3030",
+            "The x86-64 baseline fragment is outside the independently decoded context, " +
+            "service, call, record, and data target shape.");
 
     [DoesNotReturn]
     private static void Fail(string code, string message) =>

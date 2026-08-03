@@ -496,7 +496,7 @@ NATIVE_PUBLICATION_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_PUBLICATION_SOURCE" -o "$NATIVE_PUBLICATION_MODULE"
 NATIVE_PUBLICATION_HASH=$(sha256sum "$NATIVE_PUBLICATION_MODULE" | awk '{print $1}')
-if [ "$NATIVE_PUBLICATION_HASH" != '19e111490cba6f3dcae963169be82c8033d267ea505c30850502ae36fb36e13c' ]; then
+if [ "$NATIVE_PUBLICATION_HASH" != 'f2c315c4c52099b8682396358563eef2eb9dceecf1feb84ce5bef5f8465bdeba' ]; then
     echo "The Windvale native-publication core has an unexpected digest: $NATIVE_PUBLICATION_HASH" >&2
     exit 1
 fi
@@ -514,7 +514,7 @@ dotnet "$TOOL_DLL" \
     --module "$NATIVE_PUBLICATION_SOURCE" \
     -o "$NATIVE_PUBLICATION_BRIDGE_MODULE"
 NATIVE_PUBLICATION_BRIDGE_HASH=$(sha256sum "$NATIVE_PUBLICATION_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_PUBLICATION_BRIDGE_HASH" != '5ad896d92368dcadc61f358d51f5786408d9f1dc977efa5f522f99230f3ed51e' ]; then
+if [ "$NATIVE_PUBLICATION_BRIDGE_HASH" != 'b21e1136fc9087f530391127a1e1400e7248fa1831a51f00d86d467cf5133cb0' ]; then
     echo "The Windvale native-publication bridge has an unexpected digest: $NATIVE_PUBLICATION_BRIDGE_HASH" >&2
     exit 1
 fi

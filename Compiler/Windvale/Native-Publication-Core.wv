@@ -131,7 +131,7 @@ export fn Nativeˉpublicationˉplan(Input: bytes) -> Nativeˉpublicationˉresult
             Input, Nativeˉpublicationˉstatus.Invalidˉfragment, 12u32
         );
     }
-    if Fragmentˉbytes > 8388608u32 {
+    if Fragmentˉbytes > 33554432u32 {
         return Nativeˉpublicationˉfailure(
             Input, Nativeˉpublicationˉstatus.Invalidˉfragment, 12u32
         );

@@ -916,6 +916,15 @@ public static class X64ˉnativeˉbackend
         {
             Validateˉfunction(module, Function);
         }
+        var Recordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(module);
+        if (Recordˉstorage.Any(Storage =>
+                Storage.Projectedˉframeˉcells > Nativeˉcontract.MAXIMUM_FRAME_SLOTS ||
+                Storage.Containsˉnestedˉrecordˉfields))
+        {
+            Fail(
+                "WVN2901",
+                "ABI 21 requires bounded direct-record frame storage without nested record fields.");
+        }
         foreach (var Data in module.Data)
         {
             if (Data is null ||
@@ -927,11 +936,6 @@ public static class X64ˉnativeˉbackend
                 Fail("WVN2901", "The x86-64 selector received invalid immutable data metadata.");
             }
         }
-        var Usesˉtypedˉrecordˉtags = module.Types
-            .OfType<Recordˉtypeˉdeclaration>()
-            .Any(Record => Record.Fields.Any(Field =>
-                Field.Type.Kind is Valueˉtype.Text or Valueˉtype.Bytes));
-
         var Code = new List<byte>();
         var Functionˉoffsets = new int[module.Functions.Length];
         var Functionˉsizes = new int[module.Functions.Length];
@@ -941,17 +945,23 @@ public static class X64ˉnativeˉbackend
         for (var Functionˉindex = 0; Functionˉindex < module.Functions.Length; Functionˉindex++)
         {
             var Function = module.Functions[Functionˉindex];
+            var Storage = Recordˉstorage[Functionˉindex];
             Functionˉoffsets[Functionˉindex] = Code.Count;
             var Allˉlocals = Function.Allˉlocalˉtypes;
             var Usedˉslots = checked(Allˉlocals.Length + Function.Valueˉslotˉcount);
-            var Hasˉhiddenˉresult = Isˉnativeˉdescriptorˉtype(Function.Returnˉtype);
-            var Frameˉslots = checked(Usedˉslots + (Hasˉhiddenˉresult ? 1 : 0));
+            var Hasˉhiddenˉresult = Isˉnativeˉdescriptorˉtype(Function.Returnˉtype) ||
+                Function.Returnˉtype == Nativeˉvalueˉtype.Record;
+            var Hiddenˉresultˉslot = Function.Returnˉtype == Nativeˉvalueˉtype.Record
+                ? Storage.Recordˉreturnˉpointerˉcell
+                : Hasˉhiddenˉresult
+                    ? Usedˉslots
+                    : -1;
+            var Frameˉslots = Storage.Projectedˉframeˉcells;
             var Frameˉbytes = checked(Frameˉslots * Nativeˉcontract.VALUE_SLOT_BYTES);
             var Overflowˉpatches = new List<int>();
             var Instructionˉlimitˉpatches = new List<int>();
             var Boundsˉpatches = new List<int>();
             var Byteˉboundsˉpatches = new List<int>();
-            var Recordˉarenaˉpatches = new List<int>();
             var Runtimeˉserviceˉpatches = new List<int>();
             var Invalidˉutf8ˉpatches = new List<int>();
             var Propagateˉpatches = new List<int>();
@@ -979,11 +989,17 @@ public static class X64ˉnativeˉbackend
                     // Windows first and System V fourth arguments, which are both RCX.
                     Code.AddRange([0x48, 0x89, 0xC8]); // mov rax, rcx
                 }
-                Emitˉstoreˉrax(Code, Usedˉslots);
+                Emitˉstoreˉrax(Code, Hiddenˉresultˉslot);
             }
             Code.AddRange([0x31, 0xC0]);
-            for (var Offset = 0; Offset < Usedˉslots * Nativeˉcontract.VALUE_SLOT_BYTES; Offset += sizeof(int))
+            for (var Offset = 0; Offset < Frameˉbytes; Offset += sizeof(int))
             {
+                if (Hasˉhiddenˉresult &&
+                    Offset >= Slotˉoffset(Hiddenˉresultˉslot) &&
+                    Offset < checked(Slotˉoffset(Hiddenˉresultˉslot) + Nativeˉcontract.VALUE_SLOT_BYTES))
+                {
+                    continue;
+                }
                 Emitˉstoreˉeaxˉatˉoffset(Code, Offset);
             }
             for (var Parameter = 0; Parameter < Function.Parameterˉtypes.Length; Parameter++)
@@ -993,6 +1009,20 @@ public static class X64ˉnativeˉbackend
                     Parameter,
                     Function.Parameterˉtypes[Parameter],
                     Frameˉbytes);
+            }
+            for (var Parameter = 0; Parameter < Function.Parameterˉtypes.Length; Parameter++)
+            {
+                if (Function.Parameterˉtypes[Parameter] == Nativeˉvalueˉtype.Record &&
+                    Storage.Localˉrecordˉfieldˉoffsets[Parameter] >= 0)
+                {
+                    Emitˉrecordˉcopy(
+                        Code,
+                        Parameter,
+                        Storage.Localˉrecordˉfieldˉoffsets[Parameter],
+                        Parameter,
+                        Function.Allˉlocalˉnominalˉtypeˉindices[Parameter],
+                        module.Types);
+                }
             }
 
             foreach (var Block in Function.Blocks)
@@ -1041,10 +1071,48 @@ public static class X64ˉnativeˉbackend
                                 Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET);
                             break;
                         case Nativeˉlocalˉload Load:
-                            Emitˉcopy(Code, Load.Local, Valueˉslot(Function, Load.Result), Load.Type);
+                            if (Load.Type == Nativeˉvalueˉtype.Record)
+                            {
+                                Emitˉrecordˉcopy(
+                                    Code,
+                                    Load.Local,
+                                    Storage.Valueˉrecordˉfieldˉoffsets[Load.Result],
+                                    Valueˉslot(Function, Load.Result),
+                                    Function.Allˉlocalˉnominalˉtypeˉindices[Load.Local],
+                                    module.Types);
+                            }
+                            else
+                            {
+                                Emitˉcopy(Code, Load.Local, Valueˉslot(Function, Load.Result), Load.Type);
+                            }
                             break;
                         case Nativeˉlocalˉstore Store:
-                            Emitˉcopy(Code, Valueˉslot(Function, Store.Value), Store.Local, Store.Type);
+                            if (Store.Type == Nativeˉvalueˉtype.Record)
+                            {
+                                var Localˉbacking = Storage.Localˉrecordˉfieldˉoffsets[Store.Local];
+                                if (Localˉbacking >= 0)
+                                {
+                                    Emitˉrecordˉcopy(
+                                        Code,
+                                        Valueˉslot(Function, Store.Value),
+                                        Localˉbacking,
+                                        Store.Local,
+                                        Function.Allˉlocalˉnominalˉtypeˉindices[Store.Local],
+                                        module.Types);
+                                }
+                                else
+                                {
+                                    Emitˉrecordˉreferenceˉcopy(
+                                        Code,
+                                        Valueˉslot(Function, Store.Value),
+                                        Store.Local,
+                                        Function.Allˉlocalˉnominalˉtypeˉindices[Store.Local]);
+                                }
+                            }
+                            else
+                            {
+                                Emitˉcopy(Code, Valueˉslot(Function, Store.Value), Store.Local, Store.Type);
+                            }
                             break;
                         case Nativeˉi32ˉbinary Binary:
                             Emitˉloadˉeax(Code, Valueˉslot(Function, Binary.Left));
@@ -1295,16 +1363,13 @@ public static class X64ˉnativeˉbackend
                                 Code,
                                 Function,
                                 Create,
-                                Usesˉtypedˉrecordˉtags,
-                                Recordˉarenaˉpatches);
+                                Storage.Valueˉrecordˉfieldˉoffsets[Create.Result]);
                             break;
                         case Nativeˉrecordˉfield Field:
                             Emitˉrecordˉfield(
                                 Code,
                                 Function,
-                                Field,
-                                Usesˉtypedˉrecordˉtags,
-                                Recordˉarenaˉpatches);
+                                Field);
                             break;
                         case Nativeˉdataˉlength Length:
                             Emitˉconstant(Code, Length.Length, Valueˉslot(Function, Length.Result));
@@ -1384,6 +1449,12 @@ public static class X64ˉnativeˉbackend
                                 Runtimeˉserviceˉpatches);
                             break;
                         case Nativeˉcall Call:
+                            if (Call.Type == Nativeˉvalueˉtype.Record)
+                            {
+                                Emitˉrecordˉtypeˉtag(
+                                    Code,
+                                    Function.Valueˉnominalˉtypeˉindices[Call.Result]);
+                            }
                             var Callˉstackˉbytes = Stackˉcallˉbytes(Call.Arguments.Length);
                             for (var Argument = 0;
                                 Argument < Math.Min(
@@ -1419,6 +1490,13 @@ public static class X64ˉnativeˉbackend
                                     Valueˉslot(Function, Call.Result),
                                     Callˉstackˉbytes);
                             }
+                            else if (Call.Type == Nativeˉvalueˉtype.Record)
+                            {
+                                Emitˉloadˉframeˉaddressˉrax(
+                                    Code,
+                                    Storage.Valueˉrecordˉfieldˉoffsets[Call.Result],
+                                    Callˉstackˉbytes);
+                            }
                             Code.Add(0xE8);
                             Callˉpatches.Add(new(Code.Count, Call.Function));
                             Addˉi32(Code, 0);
@@ -1429,7 +1507,14 @@ public static class X64ˉnativeˉbackend
                             Code.AddRange([0x48, 0x89, 0xC2, 0x48, 0xC1, 0xEA, 0x20, 0x48, 0x85, 0xD2, 0x0F, 0x85]);
                             Propagateˉpatches.Add(Code.Count);
                             Addˉi32(Code, 0);
-                            if (!Isˉnativeˉdescriptorˉtype(Call.Type))
+                            if (Call.Type == Nativeˉvalueˉtype.Record)
+                            {
+                                Emitˉloadˉframeˉaddressˉrax(
+                                    Code,
+                                    Storage.Valueˉrecordˉfieldˉoffsets[Call.Result]);
+                                Emitˉstoreˉrax(Code, Valueˉslot(Function, Call.Result));
+                            }
+                            else if (!Isˉnativeˉdescriptorˉtype(Call.Type))
                             {
                                 Emitˉstoreˉeax(Code, Valueˉslot(Function, Call.Result));
                             }
@@ -1495,12 +1580,23 @@ public static class X64ˉnativeˉbackend
                         Emitˉdirectˉbranch(Code, 0xE9, Branch.Falseˉblock, Branchˉpatches);
                         break;
                     case Nativeˉreturn Return:
-                        if (Isˉnativeˉdescriptorˉtype(Function.Returnˉtype))
+                        if (Function.Returnˉtype == Nativeˉvalueˉtype.Record)
+                        {
+                            Emitˉrecordˉfunctionˉreturn(
+                                Code,
+                                Valueˉslot(Function, Return.Value),
+                                Hiddenˉresultˉslot,
+                                Function.Returnˉnominalˉtypeˉindex,
+                                module.Types,
+                                Frameˉbytes,
+                                Isˉmain);
+                        }
+                        else if (Isˉnativeˉdescriptorˉtype(Function.Returnˉtype))
                         {
                             Emitˉdescriptorˉfunctionˉreturn(
                                 Code,
                                 Valueˉslot(Function, Return.Value),
-                                Usedˉslots,
+                                Hiddenˉresultˉslot,
                                 Frameˉbytes,
                                 Isˉmain);
                         }
@@ -1532,7 +1628,6 @@ public static class X64ˉnativeˉbackend
             Emitˉstatusˉtrap(Code, Frameˉbytes, RUNTIME_SERVICE_STATUS, Isˉmain);
             var Invalidˉutf8ˉoffset = Code.Count;
             Emitˉstatusˉtrap(Code, Frameˉbytes, 0x0000_0008_0000_0000UL, Isˉmain);
-            var Recordˉarenaˉoffset = Code.Count;
             Emitˉstatusˉtrap(Code, Frameˉbytes, RECORD_ARENA_STATUS, Isˉmain);
             var Depthˉoffset = Code.Count;
             Code.AddRange([0x49, 0xFF, 0xC2, 0x48, 0xB8]);
@@ -1566,10 +1661,6 @@ public static class X64ˉnativeˉbackend
             foreach (var Patchˉoffset in Invalidˉutf8ˉpatches)
             {
                 Writeˉrelativeˉi32(Code, Patchˉoffset, Invalidˉutf8ˉoffset);
-            }
-            foreach (var Patchˉoffset in Recordˉarenaˉpatches)
-            {
-                Writeˉrelativeˉi32(Code, Patchˉoffset, Recordˉarenaˉoffset);
             }
             foreach (var Patchˉoffset in Propagateˉpatches)
             {
@@ -1645,9 +1736,13 @@ public static class X64ˉnativeˉbackend
                         0L,
                         (Total, Block) => checked(Total + Block.Operations.Length)),
                     Zeroedˉframeˉslots: checked(
-                        module.Functions[Functionˉindex].Parameterˉtypes.Length +
-                        module.Functions[Functionˉindex].Localˉtypes.Length +
-                        module.Functions[Functionˉindex].Valueˉslotˉcount)))
+                        Recordˉstorage[Functionˉindex].Projectedˉframeˉcells -
+                        (Isˉnativeˉdescriptorˉtype(
+                                module.Functions[Functionˉindex].Returnˉtype) ||
+                            module.Functions[Functionˉindex].Returnˉtype ==
+                                Nativeˉvalueˉtype.Record
+                            ? 1
+                            : 0))))
                 .ToImmutableArray();
             var Operationˉcount = Functionˉevidence.Aggregate(
                 0L,
@@ -1662,9 +1757,7 @@ public static class X64ˉnativeˉbackend
                 .Take(5)
                 .Select(Entry =>
                 {
-                    var Frameˉslots = checked(
-                        Entry.Zeroedˉframeˉslots +
-                        (Isˉnativeˉdescriptorˉtype(Entry.Function.Returnˉtype) ? 1 : 0));
+                    var Frameˉslots = Recordˉstorage[Entry.Index].Projectedˉframeˉcells;
                     return
                         $"'{Entry.Function.Name}' bytes={Entry.Bytes}, operations={Entry.Operations}, " +
                         $"blocks={Entry.Function.Blocks.Length}, frame-slots={Frameˉslots}";
@@ -1742,7 +1835,9 @@ public static class X64ˉnativeˉbackend
                 (Isˉnativeˉdescriptorˉtype(function.Returnˉtype) ? 1 : 0) is < 0 or > Nativeˉcontract.MAXIMUM_FRAME_SLOTS ||
             !Isˉnativeˉreturnˉtype(function.Returnˉtype) ||
             function.Parameterˉtypes.Any(Type =>
-                !Isˉnativeˉscalarˉtype(Type) && !Isˉnativeˉdescriptorˉtype(Type)) ||
+                !Isˉnativeˉscalarˉtype(Type) &&
+                !Isˉnativeˉdescriptorˉtype(Type) &&
+                Type != Nativeˉvalueˉtype.Record) ||
             function.Localˉtypes.Any(Type => Type is not (
                 Nativeˉvalueˉtype.I32 or
                 Nativeˉvalueˉtype.Bool or
@@ -2353,7 +2448,6 @@ public static class X64ˉnativeˉbackend
                     Valueˉtype.U32 or
                     Valueˉtype.Text or
                     Valueˉtype.Bytes or
-                    Valueˉtype.Record or
                     Valueˉtype.Enum),
             _ => false,
         };
@@ -2401,11 +2495,12 @@ public static class X64ˉnativeˉbackend
             Nativeˉvalueˉtype.Bool or
             Nativeˉvalueˉtype.U8 or
             Nativeˉvalueˉtype.U32 or
-            Nativeˉvalueˉtype.Enum or
-            Nativeˉvalueˉtype.Record;
+            Nativeˉvalueˉtype.Enum;
 
     private static bool Isˉnativeˉreturnˉtype(Nativeˉvalueˉtype type) =>
-        Isˉnativeˉscalarˉtype(type) || Isˉnativeˉdescriptorˉtype(type) || type == Nativeˉvalueˉtype.Void;
+        Isˉnativeˉscalarˉtype(type) ||
+        Isˉnativeˉdescriptorˉtype(type) ||
+        type is Nativeˉvalueˉtype.Record or Nativeˉvalueˉtype.Void;
 
     private static Nativeˉvalueˉtype Toˉnativeˉtype(Valueˉshape type) =>
         type.Kind switch
@@ -2946,85 +3041,29 @@ public static class X64ˉnativeˉbackend
         List<byte> code,
         Nativeˉfunction function,
         Nativeˉrecordˉcreate create,
-        bool emitˉtypeˉtag,
-        List<int> arenaˉpatches)
+        int backingˉcell)
     {
-        if (emitˉtypeˉtag)
-        {
-            code.AddRange([0x41, 0xB8]);
-            Addˉi32(code, create.Type);
-        }
-        var Allocationˉbytes = checked(create.Fields.Length * Nativeˉcontract.VALUE_SLOT_BYTES);
-        code.AddRange(
-        [
-            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
-            0x89, 0xC1,
-            0x81, 0xC1,
-        ]);
-        Addˉi32(code, Allocationˉbytes);
-        code.AddRange([0x0F, 0x82]);
-        arenaˉpatches.Add(code.Count);
-        Addˉi32(code, 0);
-        code.AddRange(
-        [
-            0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET,
-            0x0F, 0x87,
-        ]);
-        arenaˉpatches.Add(code.Count);
-        Addˉi32(code, 0);
-        code.AddRange(
-        [
-            0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
-        ]);
-        Emitˉstoreˉeax(code, Valueˉslot(function, create.Result));
-        code.AddRange(
-        [
-            0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET,
-            0x48, 0x01, 0xC2,
-        ]);
+        Emitˉrecordˉtypeˉtag(code, create.Type);
         for (var Field = 0; Field < create.Fields.Length; Field++)
         {
             var Sourceˉslot = Valueˉslot(function, create.Fields[Field]);
-            var Targetˉoffset = checked(Field * Nativeˉcontract.VALUE_SLOT_BYTES);
+            var Targetˉcell = checked(backingˉcell + Field);
             Emitˉloadˉrax(code, Sourceˉslot);
-            code.AddRange([0x48, 0x89, 0x82]);
-            Addˉi32(code, Targetˉoffset);
+            Emitˉstoreˉrax(code, Targetˉcell);
             Emitˉloadˉraxˉatˉfield(code, Sourceˉslot, sizeof(ulong));
-            code.AddRange([0x48, 0x89, 0x82]);
-            Addˉi32(code, checked(Targetˉoffset + sizeof(ulong)));
+            Emitˉstoreˉraxˉatˉfield(code, Targetˉcell, sizeof(ulong));
         }
+        Emitˉloadˉframeˉaddressˉrax(code, backingˉcell);
+        Emitˉstoreˉrax(code, Valueˉslot(function, create.Result));
     }
 
     private static void Emitˉrecordˉfield(
         List<byte> code,
         Nativeˉfunction function,
-        Nativeˉrecordˉfield field,
-        bool emitˉtypeˉtag,
-        List<int> arenaˉpatches)
+        Nativeˉrecordˉfield field)
     {
-        if (emitˉtypeˉtag)
-        {
-            code.AddRange([0x41, 0xB8]);
-            Addˉi32(code, field.Type);
-        }
-        Emitˉloadˉeax(code, Valueˉslot(function, field.Record));
-        code.AddRange([0x89, 0xC1, 0x81, 0xC1]);
-        Addˉi32(code, checked((field.Field + 1) * Nativeˉcontract.VALUE_SLOT_BYTES));
-        code.AddRange([0x0F, 0x82]);
-        arenaˉpatches.Add(code.Count);
-        Addˉi32(code, 0);
-        code.AddRange(
-        [
-            0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
-            0x0F, 0x87,
-        ]);
-        arenaˉpatches.Add(code.Count);
-        Addˉi32(code, 0);
-        code.AddRange(
-        [
-            0x49, 0x8B, 0x57, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET,
-            0x48, 0x01, 0xC2,
-        ]);
+        Emitˉrecordˉtypeˉtag(code, field.Type);
+        Emitˉloadˉrdx(code, Valueˉslot(function, field.Record));
         var Sourceˉoffset = checked(field.Field * Nativeˉcontract.VALUE_SLOT_BYTES);
         code.AddRange([0x48, 0x8B, 0x82]);
         Addˉi32(code, Sourceˉoffset);
@@ -3032,6 +3071,68 @@ public static class X64ˉnativeˉbackend
         code.AddRange([0x48, 0x8B, 0x82]);
         Addˉi32(code, checked(Sourceˉoffset + sizeof(ulong)));
         Emitˉstoreˉraxˉatˉfield(code, Valueˉslot(function, field.Result), sizeof(ulong));
+    }
+
+    private static void Emitˉrecordˉcopy(
+        List<byte> code,
+        int sourceˉhandleˉcell,
+        int targetˉbackingˉcell,
+        int targetˉhandleˉcell,
+        int type,
+        ImmutableArray<Nominalˉtypeˉdeclaration> types)
+    {
+        var Record = Requireˉdirectˉrecord(types, type);
+        if (targetˉbackingˉcell < 0)
+        {
+            Fail("WVN2901", "ABI 21 record copying requires owned frame backing.");
+        }
+        Emitˉrecordˉtypeˉtag(code, type);
+        Emitˉloadˉrdx(code, sourceˉhandleˉcell);
+        for (var Field = 0; Field < Record.Fields.Length; Field++)
+        {
+            var Sourceˉoffset = checked(Field * Nativeˉcontract.VALUE_SLOT_BYTES);
+            var Targetˉcell = checked(targetˉbackingˉcell + Field);
+            code.AddRange([0x48, 0x8B, 0x82]);
+            Addˉi32(code, Sourceˉoffset);
+            Emitˉstoreˉrax(code, Targetˉcell);
+            code.AddRange([0x48, 0x8B, 0x82]);
+            Addˉi32(code, checked(Sourceˉoffset + sizeof(ulong)));
+            Emitˉstoreˉraxˉatˉfield(code, Targetˉcell, sizeof(ulong));
+        }
+        Emitˉloadˉframeˉaddressˉrax(code, targetˉbackingˉcell);
+        Emitˉstoreˉrax(code, targetˉhandleˉcell);
+    }
+
+    private static void Emitˉrecordˉreferenceˉcopy(
+        List<byte> code,
+        int sourceˉhandleˉcell,
+        int targetˉhandleˉcell,
+        int type)
+    {
+        Emitˉrecordˉtypeˉtag(code, type);
+        Emitˉloadˉrax(code, sourceˉhandleˉcell);
+        Emitˉstoreˉrax(code, targetˉhandleˉcell);
+    }
+
+    private static void Emitˉrecordˉtypeˉtag(List<byte> code, int type)
+    {
+        code.AddRange([0x41, 0xB8]);
+        Addˉi32(code, type);
+    }
+
+    private static Recordˉtypeˉdeclaration Requireˉdirectˉrecord(
+        ImmutableArray<Nominalˉtypeˉdeclaration> types,
+        int type)
+    {
+        if ((uint)type >= (uint)types.Length ||
+            types[type] is not Recordˉtypeˉdeclaration ||
+            ((Recordˉtypeˉdeclaration)types[type]).Fields.IsDefaultOrEmpty ||
+            ((Recordˉtypeˉdeclaration)types[type]).Fields.Any(
+                Field => Field.Type.Kind == Valueˉtype.Record))
+        {
+            Fail("WVN2901", "ABI 21 requires a direct non-nested record identity.");
+        }
+        return (Recordˉtypeˉdeclaration)types[type];
     }
 
     private static void Emitˉdescriptorˉserviceˉinput(
@@ -3072,6 +3173,19 @@ public static class X64ˉnativeˉbackend
     {
         code.AddRange([0x48, 0x8D, 0x84, 0x24]);
         Addˉi32(code, checked(Slotˉoffset(slot) + stackˉadjustment));
+    }
+
+    private static void Emitˉloadˉframeˉaddressˉrax(
+        List<byte> code,
+        int cell,
+        int stackˉadjustment = 0)
+    {
+        if (cell < 0)
+        {
+            Fail("WVN2901", "ABI 21 requires a nonnegative frame-storage cell.");
+        }
+        code.AddRange([0x48, 0x8D, 0x84, 0x24]);
+        Addˉi32(code, checked(Slotˉoffset(cell) + stackˉadjustment));
     }
 
     private static void Emitˉloadˉdescriptorˉoutputˉrcx(List<byte> code, int slot)
@@ -3120,6 +3234,21 @@ public static class X64ˉnativeˉbackend
         int slot,
         Nativeˉvalueˉtype type)
     {
+        if (type == Nativeˉvalueˉtype.Record)
+        {
+            code.AddRange(argument switch
+            {
+                0 => [0x4C, 0x8B, 0x84, 0x24],
+                1 => [0x4C, 0x8B, 0x8C, 0x24],
+                2 => [0x48, 0x8B, 0x8C, 0x24],
+                3 => [0x48, 0x8B, 0x94, 0x24],
+                _ => throw new Nativeˉbackendˉexception(
+                    "WVN2901",
+                    "The native call exceeds its register-argument limit."),
+            });
+            Addˉi32(code, Slotˉoffset(slot));
+            return;
+        }
         code.AddRange((argument, Isˉnativeˉdescriptorˉtype(type)) switch
         {
             (0, false) => [0x44, 0x8B, 0x84, 0x24],
@@ -3146,6 +3275,14 @@ public static class X64ˉnativeˉbackend
             (argument - Nativeˉcontract.REGISTER_CALL_PARAMETERS) *
             Nativeˉcontract.VALUE_SLOT_BYTES);
         var Sourceˉoffset = checked(Slotˉoffset(slot) + stackˉbytes);
+        if (type == Nativeˉvalueˉtype.Record)
+        {
+            code.AddRange([0x48, 0x8B, 0x84, 0x24]);
+            Addˉi32(code, Sourceˉoffset);
+            code.AddRange([0x48, 0x89, 0x84, 0x24]);
+            Addˉi32(code, Outgoingˉoffset);
+            return;
+        }
         if (Isˉnativeˉdescriptorˉtype(type))
         {
             code.AddRange([0x48, 0x8B, 0x84, 0x24]);
@@ -3177,6 +3314,13 @@ public static class X64ˉnativeˉbackend
                 frameˉbytes + sizeof(ulong) +
                 (argument - Nativeˉcontract.REGISTER_CALL_PARAMETERS) *
                 Nativeˉcontract.VALUE_SLOT_BYTES);
+            if (type == Nativeˉvalueˉtype.Record)
+            {
+                code.AddRange([0x48, 0x8B, 0x84, 0x24]);
+                Addˉi32(code, Incomingˉoffset);
+                Emitˉstoreˉrax(code, argument);
+                return;
+            }
             if (Isˉnativeˉdescriptorˉtype(type))
             {
                 code.AddRange([0x48, 0x8B, 0x84, 0x24]);
@@ -3191,6 +3335,22 @@ public static class X64ˉnativeˉbackend
             code.AddRange([0x8B, 0x84, 0x24]);
             Addˉi32(code, Incomingˉoffset);
             Emitˉstoreˉeax(code, argument);
+            return;
+        }
+
+        if (type == Nativeˉvalueˉtype.Record)
+        {
+            code.AddRange(argument switch
+            {
+                0 => [0x4C, 0x89, 0x84, 0x24],
+                1 => [0x4C, 0x89, 0x8C, 0x24],
+                2 => [0x48, 0x89, 0x8C, 0x24],
+                3 => [0x48, 0x89, 0x94, 0x24],
+                _ => throw new Nativeˉbackendˉexception(
+                    "WVN2901",
+                    "The native function exceeds its register-parameter limit."),
+            });
+            Addˉi32(code, Slotˉoffset(argument));
             return;
         }
 
@@ -3366,6 +3526,35 @@ public static class X64ˉnativeˉbackend
         code.AddRange([0x48, 0x89, 0x02]);
         Emitˉloadˉraxˉatˉfield(code, resultˉslot, sizeof(ulong));
         code.AddRange([0x48, 0x89, 0x42, 0x08, 0x31, 0xC0]);
+        Emitˉfunctionˉreturn(code, frameˉbytes, restoreˉcontext);
+    }
+
+    private static void Emitˉrecordˉfunctionˉreturn(
+        List<byte> code,
+        int resultˉhandleˉcell,
+        int hiddenˉresultˉcell,
+        int type,
+        ImmutableArray<Nominalˉtypeˉdeclaration> types,
+        int frameˉbytes,
+        bool restoreˉcontext)
+    {
+        var Record = Requireˉdirectˉrecord(types, type);
+        Emitˉrecordˉtypeˉtag(code, type);
+        Emitˉloadˉrdx(code, hiddenˉresultˉcell);
+        Emitˉloadˉrax(code, resultˉhandleˉcell);
+        for (var Field = 0; Field < Record.Fields.Length; Field++)
+        {
+            var Fieldˉoffset = checked(Field * Nativeˉcontract.VALUE_SLOT_BYTES);
+            code.AddRange([0x48, 0x8B, 0x88]);
+            Addˉi32(code, Fieldˉoffset);
+            code.AddRange([0x48, 0x89, 0x8A]);
+            Addˉi32(code, Fieldˉoffset);
+            code.AddRange([0x48, 0x8B, 0x88]);
+            Addˉi32(code, checked(Fieldˉoffset + sizeof(ulong)));
+            code.AddRange([0x48, 0x89, 0x8A]);
+            Addˉi32(code, checked(Fieldˉoffset + sizeof(ulong)));
+        }
+        code.AddRange([0x31, 0xC0]);
         Emitˉfunctionˉreturn(code, frameˉbytes, restoreˉcontext);
     }
 

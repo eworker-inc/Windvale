@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`linux-x64-console-v1` is the first deterministic Linux host-executable target. It packages one already verified ABI-20 x86-64 native fragment as a sectionless, import-free ELF64 static position-independent application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and ELF adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without a dynamic loader, libc, or .NET.
+`linux-x64-console-v1` is the first deterministic Linux host-executable target. It packages one already verified ABI-21 x86-64 native fragment as a sectionless, import-free ELF64 static position-independent application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and ELF adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without a dynamic loader, libc, or .NET.
 
 This is the Linux twin of `windows-x64-console-v1`. It is a narrow executable-boundary proof, not a general Linux runtime, hosted-capability container, native compiler executable, or .NET-retirement milestone.
 
@@ -10,7 +10,7 @@ This is the Linux twin of `windows-x64-console-v1`. It is a narrow executable-bo
 
 The Windows and Linux adapters share one preparation boundary. It accepts a native fragment only after the independent native fragment verifier succeeds, then requires:
 
-- target `x86-64-wvb-baseline-v20` and native ABI 20;
+- target `x86-64-wvb-baseline-v21` and native ABI 21;
 - exactly one exported, non-empty `Main() -> i32` entry;
 - no required runtime services, and therefore no hosted capabilities;
 - WVO production within the existing 4 MiB object bound;
@@ -33,7 +33,7 @@ The ELF entry is an exact 158-byte Linux x86-64 stub followed by zero padding to
 7. preserves successful results from `0` through `255` and maps every other successful result or packed nonzero native status to result `1`; and
 8. terminates through Linux x86-64 `exit` syscall 60, followed by an unreachable WVA `trap` boundary.
 
-The private stack mapping prevents the program from inheriting a smaller ambient shell stack limit. Its 64 MiB size covers the retained 1,024-call budget at the current 32 KiB maximum generated frame plus bounded outgoing cells. The fixed execution limits remain ABI 20's defaults: 1,000,000 charged instructions and call depth 1,024.
+The private stack mapping prevents the program from inheriting a smaller ambient shell stack limit. Its 64 MiB size covers the retained 1,024-call budget at the current 32 KiB maximum generated frame plus bounded outgoing cells. The fixed execution limits remain ABI 21's defaults: 1,000,000 charged instructions and call depth 1,024.
 
 Linux wait status exposes only eight process-result bits. The startup check prevents implicit truncation by admitting exactly `0` through `255`, matching the Windows container's portable process-result contract; the underlying Windvale `Main() -> i32` semantics remain unchanged. Version 1 emits no diagnostic text for a native trap.
 
@@ -43,11 +43,11 @@ The executable uses only its two entry syscalls and has no ELF imports, interpre
 
 | Region | Virtual bytes | Initial rule |
 | --- | ---: | --- |
-| ABI-20 execution context | 112 | Exact version, size, budgets, arena lengths, and otherwise zero |
-| Record arena | 2,097,152 | Loader-zeroed; context base is installed by the entry stub |
+| ABI-21 execution context | 112 | Exact version, size, budgets, arena lengths, and otherwise zero |
+| Record arena | 2,097,152 | Retained loader-zeroed compatibility extent; context base is installed by the entry stub |
 | Dynamic text/byte arena | 16,777,216 | Loader-zeroed; context base is installed by the entry stub |
 
-Only the 112-byte context is present in the file. The remaining writable virtual extent is zero-filled by the ELF loader. Service, argument, output, file-input, and file-output pointers remain zero.
+Only the 112-byte context is present in the file. The remaining writable virtual extent is zero-filled by the ELF loader. Service, argument, output, file-input, and file-output pointers remain zero. Dynamic text and byte allocations retain checked cursor and bounds behavior. ABI-21 generated records use verified frame-owned backing, do not read or advance the retained record arena, and leave its cursor at zero.
 
 ## Canonical ELF64 layout
 

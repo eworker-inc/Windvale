@@ -51,13 +51,13 @@ public static class Kernelˉprocessˉcontract
     public const uint THREAD_STATE_FAULTED = 4;
     public const uint THREAD_STATE_WAITING = 5;
     public const uint INIT_MEMORY_PAGE_BUDGET = 5;
-    public const uint CLIENT_MEMORY_PAGE_BUDGET = 111;
+    public const uint CLIENT_MEMORY_PAGE_BUDGET = 118;
     public const uint INIT_INSTRUCTION_BUDGET = 64;
     public const uint CLIENT_INSTRUCTION_BUDGET = 189_114;
     public const uint INIT_CALL_DEPTH_BUDGET = 1;
     public const uint CLIENT_CALL_DEPTH_BUDGET = 5;
-    public const int CLIENT_INTERPRETER_FRAME_SLOTS = 745;
-    public const ulong CLIENT_NATIVE_STACK_USED_BYTES = 23_824;
+    public const int CLIENT_INTERPRETER_FRAME_SLOTS = 755;
+    public const ulong CLIENT_NATIVE_STACK_USED_BYTES = 24_240;
     public const uint HANDLE_BUDGET = 1;
     public const uint INIT_SYSCALL_BUDGET = 5;
     public const uint CLIENT_SYSCALL_BUDGET = 2;
@@ -76,7 +76,7 @@ public static class Kernelˉprocessˉcontract
     public const uint SYSCALL_GRANT_BOOT_RESOURCE = 4;
     public const uint RESOURCE_SET_TOKEN = 0x0002_0001;
     public const ulong INIT_ALLOCATION_PAGES = 9;
-    public const ulong CLIENT_ALLOCATION_PAGES = 113;
+    public const ulong CLIENT_ALLOCATION_PAGES = 120;
     public const ulong TABLE_PAGES = 4;
     public const ulong TABLE_BYTES = TABLE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
     public const ulong PML4_PAGE = 0;
@@ -85,7 +85,7 @@ public static class Kernelˉprocessˉcontract
     public const ulong USER_PT_PAGE = 3;
     public const ulong USER_CODE_PAGE = 4;
     public const ulong INIT_CODE_PAGES = 1;
-    public const ulong CLIENT_CODE_PAGES = 102;
+    public const ulong CLIENT_CODE_PAGES = 109;
     public const ulong INIT_STACK_PAGES = 1;
     public const ulong CLIENT_STACK_PAGES = 6;
     public const ulong CLIENT_STACK_BYTES = CLIENT_STACK_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
@@ -117,7 +117,7 @@ public static class Kernelˉprocessˉcontract
     public const uint BOOT_RESOURCE_RESERVED_OFFSET = 24;
     public const uint CLIENT_RECORD_ARENA_OFFSET = 512;
     public const uint CLIENT_RECORD_ARENA_BYTES = 1_024;
-    public const uint CLIENT_RECORD_ARENA_USED_BYTES = 528;
+    public const uint CLIENT_RECORD_ARENA_USED_BYTES = 0;
     public const ulong ENTRY_USER = 1UL << 2;
     public const uint INIT_RECORD_OFFSET = 256;
     public const uint CLIENT_RECORD_OFFSET = 768;

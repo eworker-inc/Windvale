@@ -51,15 +51,15 @@ internal static class Program
     private const string NATIVE_STENCIL_CORE_SHA256 = "d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f";
     private const string NATIVE_STENCIL_BRIDGE_SHA256 = "5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9";
     private const string NATIVE_STENCIL_DEMO_SHA256 = "651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15";
-    private const string NATIVE_PUBLICATION_CORE_SHA256 = "19e111490cba6f3dcae963169be82c8033d267ea505c30850502ae36fb36e13c";
-    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "5ad896d92368dcadc61f358d51f5786408d9f1dc977efa5f522f99230f3ed51e";
+    private const string NATIVE_PUBLICATION_CORE_SHA256 = "f2c315c4c52099b8682396358563eef2eb9dceecf1feb84ce5bef5f8465bdeba";
+    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "b21e1136fc9087f530391127a1e1400e7248fa1831a51f00d86d467cf5133cb0";
     private const string NATIVE_PUBLICATION_LIFETIME_CORE_SHA256 = "52b1cb6dd0d7fa9d17c1cba50b527912876e4acf1cd9663846ce915b4c56aed5";
     private const string NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256 = "74dfaf40bb6ea83f0fd72757c9c4cb85f5c8dd28a41f3993325871d348e88d32";
     private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "b609fb7d442bbe1685c1058c71eb011d43b291df505697a97c233ca7063a2044";
     private const string PROJECT_MANIFEST_TOOL_SHA256 = "50ab9aa5048ab844a816d0f7f12fb691cb69f57c4a71f7eb18ebc7fb4aaf0b0c";
-    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "78cc236076bca41a80539653de093a9cfea5dd2e5eb0fd6403675332b9d6d78c";
-    private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "d667d2e7657670a1fd27fd2fa08639c020c853f3cfc9bf7d99e3d023e31a55a2";
+    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "f5f3c244f250e70c8b2c0ea64bdb3c85c32c398df2f051e81802c372a783e6b0";
+    private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "3cb76bcbe51d18f93fbee1c57059b67149ba0d1fb151e5f3a5701feb55304dc2";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
     private const string BYTE_ORDERING_SHA256 = "194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1";
@@ -94,7 +94,7 @@ internal static class Program
     private const string SOURCE_WVB_SHA256 = "9c3f4f6839274766a3633784716147e03e3bce47ec1103dac0eb0d998a1b4b9a";
     private const string SOURCE_WVB_DEMO_SHA256 = "acf1f5cbde6e2ba3d831ed8390dac85f812d13525847619b3c85903bb7a44c8f";
     private const string SOURCE_WVB_TOOL_SHA256 = "9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066";
-    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "8e74707df03a535e3ef68cfcfc8da6fa68fda29ccf4344e272fc50c8a5845bab";
+    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "29a8b354e185fad4b4d8967ee8e263ce68cb9939373d91fb1e7919be887c8569";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
@@ -866,7 +866,7 @@ internal static class Program
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
-        new("native exact compiler exposes the bounded full-bootstrap record-lifetime boundary", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreachesˉrecordˉboundary),
+        new("native exact compiler exposes the bounded full-bootstrap text-lifetime boundary", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreachesˉtextˉboundary),
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
@@ -1738,8 +1738,8 @@ internal static class Program
             },
             First.Fragment.Code.Take(13));
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
-        Equal(20, Nativeˉcontract.ABI_VERSION);
-        Equal(8_388_608, Nativeˉcontract.MAXIMUM_CODE_BYTES);
+        Equal(21, Nativeˉcontract.ABI_VERSION);
+        Equal(33_554_432, Nativeˉcontract.MAXIMUM_CODE_BYTES);
         Equal(2_097_152, Nativeˉcontract.MAXIMUM_RECORD_ARENA_BYTES);
         Equal(2_048, Nativeˉcontract.MAXIMUM_FRAME_SLOTS);
         Equal(100_000, Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS);
@@ -3907,12 +3907,12 @@ internal static class Program
         var Corruptedˉrecord = First.Fragment.Code.ToArray();
         var Recordˉcreate = Corruptedˉrecord.AsSpan().IndexOf(new byte[]
         {
-            0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET,
-            0x89, 0xC1, 0x81, 0xC1,
+            0x41, 0xB8, 0x00, 0x00, 0x00, 0x00,
+            0x48, 0x8B, 0x84, 0x24,
         });
-        True(Recordˉcreate >= 0, "Native nominal fragment omitted the record arena allocation sequence.");
+        True(Recordˉcreate >= 0, "Native nominal fragment omitted its typed frame-record construction.");
         BinaryPrimitives.WriteInt32LittleEndian(
-            Corruptedˉrecord.AsSpan(Recordˉcreate + 8, sizeof(int)),
+            Corruptedˉrecord.AsSpan(Recordˉcreate + 18, sizeof(int)),
             0);
         Throwsˉnative(
             "WVN3030",
@@ -3926,8 +3926,8 @@ internal static class Program
             """));
         Throwsˉnative("WVN2001", () => _ = X64ˉnativeˉbackend.Compile(Nonzeroˉdefault));
 
-        var Arenaˉexhaustion = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
-            module Nativeˉrecordˉarena profile portable;
+        var Repeatedˉconstruction = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉrecordˉframe profile portable;
             record Nativeˉcell { Value: i32; }
             export fn Main() -> i32 {
                 var Index: i32 = 0;
@@ -3939,11 +3939,12 @@ internal static class Program
                 return Cell.Value;
             }
             """));
-        Throwsˉnativeˉtrap(
-            "WVR3017",
-            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
-                X64ˉnativeˉbackend.Compile(Arenaˉexhaustion).Fragment,
-                maximumˉinstructions: 4_000_000));
+        var Repeatedˉnative = X64ˉnativeˉbackend.Compile(Repeatedˉconstruction);
+        var Repeatedˉmeasurement = X64ˉnativeˉexecutor.Measureˉi32(
+            Repeatedˉnative.Fragment,
+            maximumˉinstructions: 4_000_000);
+        Equal(131_071, Repeatedˉmeasurement.Scalar);
+        Equal(0u, Repeatedˉmeasurement.Recordˉarenaˉused);
     }
 
     private static void Nativeˉdynamicˉtextˉagrees()
@@ -6753,7 +6754,7 @@ internal static class Program
             $"largest-name={Largestˉrecordˉframe.Functionˉname} " +
             $"nested={Compilerˉrecordˉstorage.Count(Function => Function.Containsˉnestedˉrecordˉfields)} " +
             $"offset-map={Nativeˉrecordˉstorageˉdigest(Compilerˉrecordˉstorage)}");
-        Equal(4_556_121, Compilerˉnative.Fragment.Code.Length);
+        Equal(16_905_513, Compilerˉnative.Fragment.Code.Length);
         Equal(
             SOURCE_WVB_TOOL_NATIVE_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Compilerˉnative.Fragment.Code.AsSpan()));
@@ -6788,7 +6789,7 @@ internal static class Program
                     Nativeˉfileˉinput.Hostˉfileˉsystem(),
                     Nativeˉfileˉoutput.Hostˉfileˉsystem()));
             Equal(0, Compilerˉmeasurement.Scalar);
-            Equal(1_480_096u, Compilerˉmeasurement.Recordˉarenaˉused);
+            Equal(0u, Compilerˉmeasurement.Recordˉarenaˉused);
             Equal(4_340_388u, Compilerˉmeasurement.Textˉarenaˉused);
             Equal(
                 "source wvb status=Valid functions=4 code-bytes=532 module-bytes=815\n",
@@ -6804,7 +6805,7 @@ internal static class Program
         }
     }
 
-    private static void Nativeˉcompilerˉbootstrapˉreachesˉrecordˉboundary()
+    private static void Nativeˉcompilerˉbootstrapˉreachesˉtextˉboundary()
     {
         var Compilerˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_TOOL_SOURCE,
@@ -6862,7 +6863,7 @@ internal static class Program
                 .Select(Capability => Capability.Name)
                 .ToImmutableHashSet(StringComparer.Ordinal);
             Throwsˉnativeˉtrap(
-                "WVR3017",
+                "WVR3018",
                 () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                     Compilerˉnative.Fragment,
                     maximumˉinstructions: 8_000_000_000,
@@ -7344,18 +7345,21 @@ internal static class Program
 
         var Corruptedˉrecordˉtag = First.Fragment.Code.ToArray();
         var Recordˉtag = Enumerable
-            .Range(0, Corruptedˉrecordˉtag.Length - 13)
+            .Range(0, Corruptedˉrecordˉtag.Length - 22)
             .Where(Index =>
                 Corruptedˉrecordˉtag[Index] == 0x41 &&
                 Corruptedˉrecordˉtag[Index + 1] == 0xB8 &&
-                Corruptedˉrecordˉtag[Index + 6] == 0x41 &&
+                Corruptedˉrecordˉtag[Index + 6] == 0x48 &&
                 Corruptedˉrecordˉtag[Index + 7] == 0x8B &&
-                Corruptedˉrecordˉtag[Index + 8] == 0x47 &&
-                Corruptedˉrecordˉtag[Index + 9] ==
-                    Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET)
+                Corruptedˉrecordˉtag[Index + 8] == 0x84 &&
+                Corruptedˉrecordˉtag[Index + 9] == 0x24 &&
+                Corruptedˉrecordˉtag[Index + 14] == 0x48 &&
+                Corruptedˉrecordˉtag[Index + 15] == 0x89 &&
+                Corruptedˉrecordˉtag[Index + 16] == 0x84 &&
+                Corruptedˉrecordˉtag[Index + 17] == 0x24)
             .DefaultIfEmpty(-1)
             .First();
-        True(Recordˉtag >= 0, "The native project tool omitted typed record construction.");
+        True(Recordˉtag >= 0, "The native project tool omitted typed frame-record movement.");
         BinaryPrimitives.WriteInt32LittleEndian(
             Corruptedˉrecordˉtag.AsSpan(Recordˉtag + 2, sizeof(int)),
             int.MaxValue);
