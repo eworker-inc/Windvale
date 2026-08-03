@@ -66,6 +66,12 @@ Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS
 
 Fast and changed-file runs are development feedback, not qualification evidence. GitHub runs the independent dual-host Qualification gate for implementation and specification changes. Do not duplicate that gate locally merely because a commit or push follows. Record which broader checks were not run and why.
 
+### Qualification follow-ups
+
+After an exact implementation commit has passed the complete Windows/Linux Qualification gate, a follow-up that only records that result must not repeat the same long gate. Keep the promotion in the decision status, qualification-evidence ledger, progress/roadmap, changelog, and other ordinary documentation; run changed-document link/path inspection and `git diff --check`. Specifications should define the contract and link to its decision/evidence rather than require a second commit merely to replace “candidate” with “qualified.”
+
+This shortcut applies only when code, tests, contract semantics, serialized bytes, artifact identities, and verifier expectations are unchanged. Any follow-up that changes those boundaries—or makes a new claim not established by the completed run—still requires the proportional focused checks and, when applicable, a fresh cross-host Qualification.
+
 ## Direct WebAssembly verification
 
 On Windows, rebuild the Windvale-authored backend, lower thirteen retained fixtures spanning checked arithmetic, bounded straight-line `i32`, metered loops, sequential conditionals, and bounded direct calls through the `.wv` hosted tool, verify exact artifact sizes and hashes, and execute all thirteen modules in Node.js with:
