@@ -1,7 +1,7 @@
 # Decision 0143: Bounded first-fit dynamic-arena replay
 
 - Date: 2026-08-03
-- Status: Implemented with local Windows evidence; cross-host qualification pending
+- Status: Support and bounded fixtures cross-host qualified; exact compiler replay remains local Windows evidence
 - Retains: Native ABI 21, execution-context version 7, target `x86-64-wvb-baseline-v21`, the 16 MiB dynamic-value capacity, and immutable `text`/`bytes` semantics
 - Refines: [Decision 0137](0137-Bounded-Owned-Values-Before-Dynamic-Collections.md) and [Decision 0141](0141-Exact-Compiler-Dynamic-Value-Lifetime.md)
 
@@ -41,13 +41,15 @@ The focused construction, lifetime, coalescing, exhaustion, reset, and CLI cases
 
 Change-aware Windows verification selects the qualification-scale compiler/runtime path, completes a zero-warning Release build, and passes all 81 selected Seed tests in 350.412 suite seconds. The 246.518-second golden compiler contract and the new four-millisecond allocator/coalescing case both pass. This development gate is proportional local evidence, not cross-host qualification.
 
+Exact implementation commit `c5e72bb12f6c7d1ec54033d299403a1128eb1bef` passes GitHub [Verify run 30790280704](https://github.com/eworker-inc/Windvale/actions/runs/30790280704). Windows and digest-pinned Debian 12 both pass the bounded allocator fixture, the complete Seed and OS suites, the golden compiler contract, and the native CLI gate. This qualifies the replay machinery and ordinary fixture on both hosts; the 6.7-billion-instruction exact compiler replay remains Windows-local evidence.
+
 ## Consequences
 
 The existing 16 MiB capacity is sufficient for an ordinary, implementable first-fit/coalescing policy over the exact compiler, including explicit header/alignment charges and real fragmentation. A larger arena, rope representation, tracing collector, or compiler-name special case is not the first repair.
 
 Actual native ownership still needs a verifiable identity. The existing 16-byte descriptor already has an unused `u32` reserved word: a future ABI candidate can use zero for borrowed values and a nonzero arena-relative owner token for allocated backings. Slices can preserve that token while changing their data pointer and length. A 16-byte block header can then carry bounded physical-link, payload, state, and reference information without widening every descriptor. This representation remains a planning input, not implemented ABI behavior.
 
-The next slice must preserve descriptor ownership in native machine IR and derive deterministic retain, release, transfer, frame-cleanup, direct-record-field, call-argument, and caller-owned-return actions. An independent verifier must reconstruct that plan before allocator leaves or generated ownership instructions are admitted. Only then should a successor ABI replace the monotonic cursor.
+[Decision 0147](0147-Native-Descriptor-Ownership-Plan.md) now publishes those native machine-IR descriptor carriers and deterministic retain, release, transfer, frame-cleanup, direct-record-field, call-argument, and caller-owned-return actions. A separately implemented oracle reconstructs the complete plan before selection. The next slice can consume that verified plan in a successor ABI with an owner token and allocator operations instead of replacing the monotonic cursor implicitly.
 
 This decision does not implement native reclamation, select permanent collection semantics, add dynamic collection syntax, advance WVB 1.7 into native execution, qualify native compiler self-reproduction, retire .NET, or advance the OS guest ABI.
 

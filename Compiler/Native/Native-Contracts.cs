@@ -31,6 +31,7 @@ public static class Nativeˉcontract
     public const int MAXIMUM_RECORD_ARENA_BYTES = 2 * 1024 * 1024;
     public const int MAXIMUM_TEXT_ARENA_BYTES = 16 * 1024 * 1024;
     public const int MAXIMUM_ENUM_METADATA_BYTES = 32 * 1024 * 1024;
+    public const int MAXIMUM_DESCRIPTOR_OWNERSHIP_ACTIONS = 4 * 1024 * 1024;
 }
 
 public static class Nativeˉexecutionˉcontextˉcontract
@@ -408,6 +409,77 @@ public sealed record Nativeˉblock(
     ImmutableArray<Nativeˉoperation> Operations,
     Nativeˉterminator Terminator);
 
+public enum Nativeˉdescriptorˉcarrierˉkind : byte
+{
+    None = 0,
+    Parameter = 1,
+    Local = 2,
+    Value = 3,
+    Recordˉparameterˉfield = 4,
+    Recordˉlocalˉfield = 5,
+    Recordˉvalueˉfield = 6,
+    Functionˉreturn = 7,
+}
+
+public sealed record Nativeˉdescriptorˉcarrier(
+    Nativeˉdescriptorˉcarrierˉkind Kind,
+    int Function,
+    int Binding,
+    int Field)
+{
+    public static Nativeˉdescriptorˉcarrier None { get; } = new(
+        Nativeˉdescriptorˉcarrierˉkind.None,
+        -1,
+        -1,
+        -1);
+}
+
+public enum Nativeˉdescriptorˉownershipˉactionˉkind : byte
+{
+    Borrowˉstatic = 1,
+    Borrowˉhost = 2,
+    Acquire = 3,
+    Retain = 4,
+    Release = 5,
+    Borrowˉcall = 6,
+    Acceptˉreturn = 7,
+    Transferˉreturn = 8,
+}
+
+// Operation -1 is function entry; Operations.Length identifies the terminator.
+public sealed record Nativeˉdescriptorˉownershipˉaction(
+    int Block,
+    int Operation,
+    Nativeˉdescriptorˉownershipˉactionˉkind Kind,
+    Nativeˉdescriptorˉcarrier Target,
+    Nativeˉdescriptorˉcarrier Source);
+
+public sealed record Nativeˉfunctionˉdescriptorˉownership(
+    int Functionˉindex,
+    string Functionˉname,
+    int Descriptorˉparameterˉbindings,
+    int Assignedˉdescriptorˉparameterˉbindings,
+    int Descriptorˉlocalˉbindings,
+    int Recordˉparameterˉdescriptorˉfields,
+    int Assignedˉrecordˉparameterˉdescriptorˉfields,
+    int Recordˉlocalˉdescriptorˉfields,
+    int Descriptorˉvalueˉidentifiers,
+    int Recordˉvalueˉdescriptorˉfields,
+    int Acquireˉactions,
+    int Borrowˉactions,
+    int Retainˉactions,
+    int Releaseˉactions,
+    int Callˉborrowˉactions,
+    int Acceptedˉreturnˉactions,
+    int Transferredˉreturnˉactions,
+    ImmutableArray<Nativeˉdescriptorˉownershipˉaction> Actions);
+
+public sealed record Nativeˉdescriptorˉownershipˉplan(
+    uint Formatˉversion,
+    bool Terminalˉfailureˉdiscardsˉarena,
+    int Totalˉactions,
+    ImmutableArray<Nativeˉfunctionˉdescriptorˉownership> Functions);
+
 public sealed record Nativeˉfunction(
     string Name,
     ImmutableArray<Nativeˉvalueˉtype> Parameterˉtypes,
@@ -439,7 +511,10 @@ public sealed record Nativeˉmodule(
     ImmutableArray<Nativeˉfunction> Functions,
     ImmutableArray<Nativeˉdata> Data,
     ImmutableArray<Nominalˉtypeˉdeclaration> Types,
-    ImmutableArray<Nativeˉservice> Requiredˉservices);
+    ImmutableArray<Nativeˉservice> Requiredˉservices)
+{
+    public Nativeˉdescriptorˉownershipˉplan? Descriptorˉownership { get; init; }
+}
 
 public enum Nativeˉsymbolˉbinding : byte
 {

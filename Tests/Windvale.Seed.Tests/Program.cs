@@ -874,6 +874,7 @@ internal static class Program
         new("native console application publication is atomic", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic),
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
+        new("native descriptor ownership is deterministic and independently reconstructed", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Nativeˉdescriptorˉownershipˉisˉplanned),
         new("native dynamic text, descriptor returns, and void calls agree across runtimes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉdynamicˉtextˉagrees),
         new("Windvale-written wvdump structural parser runs through JIT and WVO AOT", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvdumpˉstructuralˉparserˉruns),
         new("complete Windvale-written wvdump agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvdumpˉcompleteˉruns),
@@ -3972,6 +3973,101 @@ internal static class Program
         Equal(0u, Repeatedˉmeasurement.Recordˉarenaˉused);
     }
 
+    private static void Nativeˉdescriptorˉownershipˉisˉplanned()
+    {
+        const string Source = """
+            module Nativeˉdescriptorˉownership profile portable;
+            record Nativeˉbyteˉpair { Whole: bytes; Part: bytes; }
+            data Prefix: bytes = [7];
+
+            fn Build() -> Nativeˉbyteˉpair {
+                let Whole: bytes = Bytesˉconcat(
+                    Prefix,
+                    Bytesˉfromˉu16ˉlittle(2u32)
+                );
+                let Part: bytes = Bytesˉslice(Whole, 0u32, 1u32);
+                return Nativeˉbyteˉpair(Whole, Part);
+            }
+
+            fn Select(Value: Nativeˉbyteˉpair) -> bytes {
+                return Value.Part;
+            }
+
+            export fn Main() -> i32 {
+                var Replaced: bytes = Bytesˉfromˉu32ˉlittle(7u32);
+                let Built: Nativeˉbyteˉpair = Build();
+                Replaced = Select(Built);
+                Bytesˉconcat(Built.Whole, Replaced);
+                return 0;
+            }
+            """;
+        var Verified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        var First = X64ˉnativeˉbackend.Compile(Verified);
+        var Second = X64ˉnativeˉbackend.Compile(Verified);
+        var Plan = First.Module.Descriptorˉownership ??
+            throw new InvalidOperationException("Native lowering omitted descriptor ownership.");
+        var Repeated = Second.Module.Descriptorˉownership ??
+            throw new InvalidOperationException("Repeated native lowering omitted descriptor ownership.");
+
+        Equal(Nativeˉdescriptorˉownershipˉplanner.FORMAT_VERSION, Plan.Formatˉversion);
+        True(Plan.Terminalˉfailureˉdiscardsˉarena,
+            "The ownership plan omitted terminal arena teardown.");
+        Equal(
+            Plan.Totalˉactions,
+            Plan.Functions.Sum(Function => Function.Actions.Length));
+        Sequenceˉequal(
+            Plan.Functions.SelectMany(Function => Function.Actions),
+            Repeated.Functions.SelectMany(Function => Function.Actions));
+        Nativeˉdescriptorˉownershipˉverifier.Verify(First.Module, Plan);
+        True(Plan.Functions.Sum(Function => Function.Acquireˉactions) > 0,
+            "The ownership plan omitted allocated descriptor results.");
+        True(Plan.Functions.Sum(Function => Function.Borrowˉactions) > 0,
+            "The ownership plan omitted static borrowed descriptors.");
+        True(Plan.Functions.Sum(Function => Function.Retainˉactions) > 0,
+            "The ownership plan omitted aliases, locals, or record fields.");
+        True(Plan.Functions.Sum(Function => Function.Releaseˉactions) > 0,
+            "The ownership plan omitted last-use or frame cleanup.");
+        True(Plan.Functions.Sum(Function => Function.Callˉborrowˉactions) > 0,
+            "The ownership plan omitted borrowed call arguments.");
+        True(Plan.Functions.Sum(Function => Function.Acceptedˉreturnˉactions) > 0,
+            "The ownership plan omitted caller-owned result acceptance.");
+        True(Plan.Functions.Sum(Function => Function.Transferredˉreturnˉactions) > 0,
+            "The ownership plan omitted callee-to-caller return transfer.");
+        True(Plan.Functions.Sum(Function => Function.Recordˉvalueˉdescriptorˉfields) > 0,
+            "The ownership plan omitted descriptor-bearing direct records.");
+        Equal(0, X64ˉnativeˉexecutor.Executeˉi32(First.Fragment));
+
+        var Corruptedˉfunctionˉindex = Enumerable.Range(0, Plan.Functions.Length)
+            .FirstOrDefault(
+                Index => !Plan.Functions[Index].Actions.IsEmpty,
+                -1);
+        True(Corruptedˉfunctionˉindex >= 0, "The ownership plan unexpectedly has no actions.");
+        var Originalˉfunction = Plan.Functions[Corruptedˉfunctionˉindex];
+        var Originalˉaction = Originalˉfunction.Actions[0];
+        var Corruptedˉactions = Originalˉfunction.Actions.SetItem(
+            0,
+            Originalˉaction with
+            {
+                Kind = Originalˉaction.Kind ==
+                    Nativeˉdescriptorˉownershipˉactionˉkind.Release
+                        ? Nativeˉdescriptorˉownershipˉactionˉkind.Retain
+                        : Nativeˉdescriptorˉownershipˉactionˉkind.Release,
+            });
+        var Corruptedˉfunctions = Plan.Functions.SetItem(
+            Corruptedˉfunctionˉindex,
+            Originalˉfunction with { Actions = Corruptedˉactions });
+        Throwsˉnative(
+            "WVN2903",
+            () => Nativeˉdescriptorˉownershipˉverifier.Verify(
+                First.Module,
+                Plan with { Functions = Corruptedˉfunctions }));
+        Throwsˉnative(
+            "WVN2903",
+            () => Nativeˉdescriptorˉownershipˉverifier.Verify(
+                First.Module,
+                Plan with { Totalˉactions = checked(Plan.Totalˉactions + 1) }));
+    }
+
     private static void Nativeˉdynamicˉtextˉagrees()
     {
         const string Source = """
@@ -6847,6 +6943,50 @@ internal static class Program
             Compilerˉrecords.Sum(Record =>
                 Record.Fields.Count(Field => Field.Type.Kind == Valueˉtype.Record)));
         var Compilerˉnative = X64ˉnativeˉbackend.Compile(Compilerˉtool);
+        var Ownership = Compilerˉnative.Module.Descriptorˉownership ??
+            throw new InvalidOperationException("The exact native compiler omitted descriptor ownership.");
+        Nativeˉdescriptorˉownershipˉverifier.Verify(Compilerˉnative.Module, Ownership);
+        var Ownershipˉactions = Ownership.Functions
+            .SelectMany(Function => Function.Actions)
+            .ToImmutableArray();
+        True(Ownershipˉactions.Any(Action => Action.Kind ==
+                Nativeˉdescriptorˉownershipˉactionˉkind.Borrowˉstatic),
+            "The exact compiler ownership plan omitted static descriptor borrowing.");
+        True(Ownershipˉactions.Any(Action => Action.Kind ==
+                Nativeˉdescriptorˉownershipˉactionˉkind.Borrowˉhost),
+            "The exact compiler ownership plan omitted host snapshot borrowing.");
+        var Largestˉownershipˉfunction = Ownership.Functions.MaxBy(
+            Function => Function.Actions.Length)!;
+        Equal(
+            "NATIVE_DESCRIPTOR_OWNERSHIP format=1 functions=328 actions=186557 " +
+            "parameters=293 assigned-parameters=0 locals=3190 " +
+            "record-parameter-fields=524 assigned-record-parameter-fields=0 " +
+            "record-local-fields=9287 values=6182 record-value-fields=17898 " +
+            "acquire=435 borrow=172 retain=34772 release=144983 call-borrow=3546 " +
+            "accept-return=1660 transfer-return=989 largest-actions=48242 " +
+            "largest-index=204 largest-name=Compilerˉsourceˉwirˉcompileˉblock " +
+            "action-map=8681cfd9d8c96e3d5dc70c2b97f62795c2e29b632fb66065f2dea8ca102b0511",
+            $"NATIVE_DESCRIPTOR_OWNERSHIP format={Ownership.Formatˉversion} " +
+            $"functions={Ownership.Functions.Length} actions={Ownership.Totalˉactions} " +
+            $"parameters={Ownership.Functions.Sum(Function => Function.Descriptorˉparameterˉbindings)} " +
+            $"assigned-parameters={Ownership.Functions.Sum(Function => Function.Assignedˉdescriptorˉparameterˉbindings)} " +
+            $"locals={Ownership.Functions.Sum(Function => Function.Descriptorˉlocalˉbindings)} " +
+            $"record-parameter-fields={Ownership.Functions.Sum(Function => Function.Recordˉparameterˉdescriptorˉfields)} " +
+            $"assigned-record-parameter-fields={Ownership.Functions.Sum(Function => Function.Assignedˉrecordˉparameterˉdescriptorˉfields)} " +
+            $"record-local-fields={Ownership.Functions.Sum(Function => Function.Recordˉlocalˉdescriptorˉfields)} " +
+            $"values={Ownership.Functions.Sum(Function => Function.Descriptorˉvalueˉidentifiers)} " +
+            $"record-value-fields={Ownership.Functions.Sum(Function => Function.Recordˉvalueˉdescriptorˉfields)} " +
+            $"acquire={Ownership.Functions.Sum(Function => Function.Acquireˉactions)} " +
+            $"borrow={Ownership.Functions.Sum(Function => Function.Borrowˉactions)} " +
+            $"retain={Ownership.Functions.Sum(Function => Function.Retainˉactions)} " +
+            $"release={Ownership.Functions.Sum(Function => Function.Releaseˉactions)} " +
+            $"call-borrow={Ownership.Functions.Sum(Function => Function.Callˉborrowˉactions)} " +
+            $"accept-return={Ownership.Functions.Sum(Function => Function.Acceptedˉreturnˉactions)} " +
+            $"transfer-return={Ownership.Functions.Sum(Function => Function.Transferredˉreturnˉactions)} " +
+            $"largest-actions={Largestˉownershipˉfunction.Actions.Length} " +
+            $"largest-index={Largestˉownershipˉfunction.Functionˉindex} " +
+            $"largest-name={Largestˉownershipˉfunction.Functionˉname} " +
+            $"action-map={Nativeˉdescriptorˉownershipˉdigest(Ownership)}");
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
             $"windvale-native-bootstrap-{Guid.NewGuid():N}");
@@ -19052,6 +19192,58 @@ internal static class Program
             Appendˉi32(Hash, Function.Containsˉnestedˉrecordˉfields ? 1 : 0);
         }
         return Convert.ToHexString(Hash.GetHashAndReset()).ToLowerInvariant();
+    }
+
+    private static string Nativeˉdescriptorˉownershipˉdigest(
+        Nativeˉdescriptorˉownershipˉplan plan)
+    {
+        using var Hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        Appendˉi32(Hash, checked((int)plan.Formatˉversion));
+        Appendˉi32(Hash, plan.Terminalˉfailureˉdiscardsˉarena ? 1 : 0);
+        Appendˉi32(Hash, plan.Totalˉactions);
+        Appendˉi32(Hash, plan.Functions.Length);
+        foreach (var Function in plan.Functions)
+        {
+            Appendˉi32(Hash, Function.Functionˉindex);
+            var Name = Encoding.UTF8.GetBytes(Function.Functionˉname);
+            Appendˉi32(Hash, Name.Length);
+            Hash.AppendData(Name);
+            Appendˉi32(Hash, Function.Descriptorˉparameterˉbindings);
+            Appendˉi32(Hash, Function.Assignedˉdescriptorˉparameterˉbindings);
+            Appendˉi32(Hash, Function.Descriptorˉlocalˉbindings);
+            Appendˉi32(Hash, Function.Recordˉparameterˉdescriptorˉfields);
+            Appendˉi32(Hash, Function.Assignedˉrecordˉparameterˉdescriptorˉfields);
+            Appendˉi32(Hash, Function.Recordˉlocalˉdescriptorˉfields);
+            Appendˉi32(Hash, Function.Descriptorˉvalueˉidentifiers);
+            Appendˉi32(Hash, Function.Recordˉvalueˉdescriptorˉfields);
+            Appendˉi32(Hash, Function.Acquireˉactions);
+            Appendˉi32(Hash, Function.Borrowˉactions);
+            Appendˉi32(Hash, Function.Retainˉactions);
+            Appendˉi32(Hash, Function.Releaseˉactions);
+            Appendˉi32(Hash, Function.Callˉborrowˉactions);
+            Appendˉi32(Hash, Function.Acceptedˉreturnˉactions);
+            Appendˉi32(Hash, Function.Transferredˉreturnˉactions);
+            Appendˉi32(Hash, Function.Actions.Length);
+            foreach (var Action in Function.Actions)
+            {
+                Appendˉi32(Hash, Action.Block);
+                Appendˉi32(Hash, Action.Operation);
+                Appendˉi32(Hash, (int)Action.Kind);
+                Appendˉdescriptorˉcarrier(Hash, Action.Target);
+                Appendˉdescriptorˉcarrier(Hash, Action.Source);
+            }
+        }
+        return Convert.ToHexString(Hash.GetHashAndReset()).ToLowerInvariant();
+    }
+
+    private static void Appendˉdescriptorˉcarrier(
+        IncrementalHash hash,
+        Nativeˉdescriptorˉcarrier carrier)
+    {
+        Appendˉi32(hash, (int)carrier.Kind);
+        Appendˉi32(hash, carrier.Function);
+        Appendˉi32(hash, carrier.Binding);
+        Appendˉi32(hash, carrier.Field);
     }
 
     private static void Appendˉoffsets(
