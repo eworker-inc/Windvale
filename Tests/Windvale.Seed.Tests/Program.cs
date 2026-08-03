@@ -177,8 +177,8 @@ internal static class Program
     private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_SHA256 = "6fc1e02498de6345b441d0f34e52fe9d0c014642fc637f9066623b07b4329240";
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_WVB_SHA256 = "7848041e406b0f92ab3219e9a7052e9cca337014fa9698978bf2c894c689532b";
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_SHA256 = "597c0f8313aac9fbcb1ba50fbcd4e25937f0cc464d090d491570f8eeb559253d";
-    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "cb6c3c8528a6da45c3f2cfd0c7faf63663b9015f9d58bd28996b789602dadd19";
-    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SHA256 = "f1ed2586544c92bce64cd45ae00ae44a34086f80fa0d08efc8ae8f6b5b3e7e47";
+    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "b27b36959f0c8ac045d3fa653e728a1aa261a858dc0e4d7af4ff2aec527bd8d9";
+    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SHA256 = "c35e3b5144cb8883667bb22462d54318561857691d6af26c7fc6e2bce959d752";
     private const string SOURCE_WVB_BYTES_ENTRY_GUEST_SHA256 = "b27ca1d0afcd379273f35e755eff12ccc5674762fe01381232eea36714d09bf1";
     private const string SOURCE_WVB_FUNCTION_ONLY_SHA256 = "9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_GUEST_SHA256 = "6e8c2c29dc5f42d5dc2a7283604acca8d183325d9ae972c1dce3430aa7976414";
@@ -12887,7 +12887,7 @@ internal static class Program
 
         var Scalarˉinterpreterˉwvb = Compileˉsuccess(
             WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE);
-        Equal(67_251, Scalarˉinterpreterˉwvb.Length);
+        Equal(67_209, Scalarˉinterpreterˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Scalarˉinterpreterˉwvb));
@@ -12897,10 +12897,10 @@ internal static class Program
         var Scalarˉinterpreterˉmain = Scalarˉinterpreterˉverified.Functions[0];
         Equal("Main", Scalarˉinterpreterˉmain.Declaration.Name);
         Equal(1, Scalarˉinterpreterˉmain.Declaration.Parameterˉtypes.Length);
-        Equal(4_094, Scalarˉinterpreterˉmain.Declaration.Localˉtypes.Length);
-        Equal(62_984, Scalarˉinterpreterˉmain.Declaration.Codeˉlength);
+        Equal(4_088, Scalarˉinterpreterˉmain.Declaration.Localˉtypes.Length);
+        Equal(62_948, Scalarˉinterpreterˉmain.Declaration.Codeˉlength);
         Equal(3, Scalarˉinterpreterˉmain.Declaration.Maximumˉstackˉdepth);
-        Equal(13_781, Scalarˉinterpreterˉmain.Instructions.Length);
+        Equal(13_769, Scalarˉinterpreterˉmain.Instructions.Length);
 
         ImmutableArray<byte> Buildˉscalarˉrequest(
             IEnumerable<byte> Candidate,
@@ -13032,7 +13032,7 @@ internal static class Program
             8);
         var Functionˉonlyˉinterpreted = Runˉscalarˉinterpreter(
             Functionˉonlyˉrequest);
-        Equal(217_595L, Functionˉonlyˉinterpreted.Executedˉinstructions);
+        Equal(221_014L, Functionˉonlyˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 6, 199),
             Readˉscalarˉresponse(Functionˉonlyˉinterpreted.Bytes));
@@ -13056,7 +13056,7 @@ internal static class Program
             1_000,
             8);
         var Bytesˉentryˉinterpreted = Runˉscalarˉinterpreter(Bytesˉentryˉrequest);
-        Equal(18_251L, Bytesˉentryˉinterpreted.Executedˉinstructions);
+        Equal(18_484L, Bytesˉentryˉinterpreted.Executedˉinstructions);
         var Bytesˉentryˉresponse = Readˉbytesˉresponse(Bytesˉentryˉinterpreted.Bytes);
         Equal(13u, Bytesˉentryˉresponse.Executedˉinstructions);
         Sequenceˉequal(new byte[] { 1, 2, 3, 42 }, Bytesˉentryˉresponse.Bytes);
@@ -13080,7 +13080,7 @@ internal static class Program
                 1,
                 64),
             50_000_000);
-        Equal(44_163_574L, Compilerˉmemoryˉpreflight.Executedˉinstructions);
+        Equal(44_171_762L, Compilerˉmemoryˉpreflight.Executedˉinstructions);
         Equal(20, Compilerˉmemoryˉpreflight.Bytes.Length);
         Equal(
             0x4F58_5657u,
@@ -13102,6 +13102,27 @@ internal static class Program
             0u,
             BinaryPrimitives.ReadUInt32LittleEndian(
                 Compilerˉmemoryˉpreflight.Bytes.AsSpan(16, 4)));
+        var Compilerˉmemoryˉmaximumˉsuccess = Runˉscalarˉinterpreter(
+            Buildˉbytesˉrequest(
+                Compilerˉmemoryˉwvb,
+                Buildˉsingleˉsourceˉset(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
+                1_511,
+                64),
+            50_000_000);
+        Equal(49_727_640L, Compilerˉmemoryˉmaximumˉsuccess.Executedˉinstructions);
+        Equal(20, Compilerˉmemoryˉmaximumˉsuccess.Bytes.Length);
+        Equal(
+            3011u,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Compilerˉmemoryˉmaximumˉsuccess.Bytes.AsSpan(8, 4)));
+        Equal(
+            1_511u,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Compilerˉmemoryˉmaximumˉsuccess.Bytes.AsSpan(12, 4)));
+        Equal(
+            0u,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Compilerˉmemoryˉmaximumˉsuccess.Bytes.AsSpan(16, 4)));
 
         var Scalarˉguestˉwvb = Compileˉsuccess(
             SOURCE_WVB_SCALAR_INTERPRETER_GUEST_SOURCE);
@@ -13114,20 +13135,20 @@ internal static class Program
             Runˉreferenceˉwebassemblyˉi32(Scalarˉguestˉwvb));
         var Scalarˉguestˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Scalarˉguestˉwvb, 1_000, 8));
-        Equal(454_248L, Scalarˉguestˉinterpreted.Executedˉinstructions);
+        Equal(460_149L, Scalarˉguestˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 42, 351),
             Readˉscalarˉresponse(Scalarˉguestˉinterpreted.Bytes));
 
         var Guestˉlimited = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Functionˉonlyˉwvb, 198, 8));
-        Equal(216_916L, Guestˉlimited.Executedˉinstructions);
+        Equal(220_341L, Guestˉlimited.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3011, 0, 198),
             Readˉscalarˉresponse(Guestˉlimited.Bytes));
         var Depthˉlimited = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Functionˉonlyˉwvb, 1_000, 1));
-        Equal(84_759L, Depthˉlimited.Executedˉinstructions);
+        Equal(85_303L, Depthˉlimited.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3004, 0, 27),
             Readˉscalarˉresponse(Depthˉlimited.Bytes));
@@ -13139,7 +13160,7 @@ internal static class Program
             Moduleˉdigest.Calculateˉsha256(I32ˉoverflowˉwvb));
         Equal(3007, Runˉreferenceˉwebassemblyˉi32(I32ˉoverflowˉwvb).Status);
         Equal(
-            15_880L,
+            16_081L,
             Runˉscalarˉoverflow(Buildˉscalarˉrequest(I32ˉoverflowˉwvb, 1_000, 8)));
         var U32ˉoverflowˉwvb = Compileˉsuccess(
             SOURCE_WVB_SCALAR_INTERPRETER_U32_OVERFLOW_SOURCE);
@@ -13148,7 +13169,7 @@ internal static class Program
             Moduleˉdigest.Calculateˉsha256(U32ˉoverflowˉwvb));
         Equal(3007, Runˉreferenceˉwebassemblyˉi32(U32ˉoverflowˉwvb).Status);
         Equal(
-            24_648L,
+            24_849L,
             Runˉscalarˉoverflow(Buildˉscalarˉrequest(U32ˉoverflowˉwvb, 1_000, 8)));
 
         byte[] Compileˉtextˉbytesˉguest(
@@ -13172,7 +13193,7 @@ internal static class Program
             Runˉreferenceˉwebassemblyˉi32(Textˉbytesˉguestˉwvb));
         var Textˉbytesˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Textˉbytesˉguestˉwvb, 4_096, 8));
-        Equal(482_106L, Textˉbytesˉinterpreted.Executedˉinstructions);
+        Equal(487_003L, Textˉbytesˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 42, 298),
             Readˉscalarˉresponse(Textˉbytesˉinterpreted.Bytes));
@@ -13186,7 +13207,7 @@ internal static class Program
             Runˉreferenceˉwebassemblyˉi32(Utf8ˉboundariesˉwvb));
         var Utf8ˉboundariesˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Utf8ˉboundariesˉwvb, 4_096, 8));
-        Equal(312_704L, Utf8ˉboundariesˉinterpreted.Executedˉinstructions);
+        Equal(315_177L, Utf8ˉboundariesˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 42, 153),
             Readˉscalarˉresponse(Utf8ˉboundariesˉinterpreted.Bytes));
@@ -13200,7 +13221,7 @@ internal static class Program
             () => Runˉreferenceˉwebassemblyˉi32(Invalidˉutf8ˉwvb));
         var Invalidˉutf8ˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Invalidˉutf8ˉwvb, 4_096, 8));
-        Equal(18_926L, Invalidˉutf8ˉinterpreted.Executedˉinstructions);
+        Equal(19_139L, Invalidˉutf8ˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3014, 0, 11),
             Readˉscalarˉresponse(Invalidˉutf8ˉinterpreted.Bytes));
@@ -13214,7 +13235,7 @@ internal static class Program
             () => Runˉreferenceˉwebassemblyˉi32(Rangeˉfailureˉwvb));
         var Rangeˉfailureˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Rangeˉfailureˉwvb, 4_096, 8));
-        Equal(22_752L, Rangeˉfailureˉinterpreted.Executedˉinstructions);
+        Equal(23_013L, Rangeˉfailureˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3008, 0, 14),
             Readˉscalarˉresponse(Rangeˉfailureˉinterpreted.Bytes));
@@ -13228,7 +13249,7 @@ internal static class Program
             () => Runˉreferenceˉwebassemblyˉi32(U16ˉfailureˉwvb));
         var U16ˉfailureˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(U16ˉfailureˉwvb, 4_096, 8));
-        Equal(10_238L, U16ˉfailureˉinterpreted.Executedˉinstructions);
+        Equal(10_339L, U16ˉfailureˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3016, 0, 4),
             Readˉscalarˉresponse(U16ˉfailureˉinterpreted.Bytes));
@@ -13240,7 +13261,7 @@ internal static class Program
         Equal(0, Runˉreferenceˉwebassemblyˉi32(Valueˉfailureˉwvb).Status);
         var Valueˉfailureˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Valueˉfailureˉwvb, 4_096, 8));
-        Equal(249_425L, Valueˉfailureˉinterpreted.Executedˉinstructions);
+        Equal(253_966L, Valueˉfailureˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3015, 0, 256),
             Readˉscalarˉresponse(Valueˉfailureˉinterpreted.Bytes));
@@ -13257,7 +13278,7 @@ internal static class Program
         Equal(0, Runˉreferenceˉwebassemblyˉi32(Heapˉfailureˉwvb).Status);
         var Heapˉfailureˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Heapˉfailureˉwvb, 4_096, 8));
-        Equal(378_933L, Heapˉfailureˉinterpreted.Executedˉinstructions);
+        Equal(385_741L, Heapˉfailureˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3018, 0, 388),
             Readˉscalarˉresponse(Heapˉfailureˉinterpreted.Bytes));
@@ -13272,14 +13293,14 @@ internal static class Program
         var Formattingˉquoteˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Formattingˉquoteˉwvb, 4_096, 8),
             4_000_000);
-        Equal(3_453_969L, Formattingˉquoteˉinterpreted.Executedˉinstructions);
+        Equal(3_519_301L, Formattingˉquoteˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 42, 4_070),
             Readˉscalarˉresponse(Formattingˉquoteˉinterpreted.Bytes));
 
         var Semanticˉdataˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Semanticˉdataˉwvb, 4_096, 8));
-        Equal(369_113L, Semanticˉdataˉinterpreted.Executedˉinstructions);
+        Equal(372_970L, Semanticˉdataˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 13, 233),
             Readˉscalarˉresponse(Semanticˉdataˉinterpreted.Bytes));
@@ -13294,7 +13315,7 @@ internal static class Program
         var Sha256ˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Sha256ˉwvb, 4_096, 8),
             4_000_000);
-        Equal(3_337_181L, Sha256ˉinterpreted.Executedˉinstructions);
+        Equal(3_401_462L, Sha256ˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 42, 3_996),
             Readˉscalarˉresponse(Sha256ˉinterpreted.Bytes));
@@ -13309,7 +13330,7 @@ internal static class Program
             Runˉreferenceˉwebassemblyˉi32(Nominalˉtypesˉwvb));
         var Nominalˉtypesˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Nominalˉtypesˉwvb, 4_096, 8));
-        Equal(308_376L, Nominalˉtypesˉinterpreted.Executedˉinstructions);
+        Equal(311_657L, Nominalˉtypesˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 11, 197),
             Readˉscalarˉresponse(Nominalˉtypesˉinterpreted.Bytes));
@@ -13346,7 +13367,7 @@ internal static class Program
             Runˉreferenceˉwebassemblyˉi32(Defaultˉrecordˉwvb));
         var Defaultˉrecordˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Defaultˉrecordˉwvb, 4_096, 8));
-        Equal(67_741L, Defaultˉrecordˉinterpreted.Executedˉinstructions);
+        Equal(68_358L, Defaultˉrecordˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 2, 37),
             Readˉscalarˉresponse(Defaultˉrecordˉinterpreted.Bytes));
@@ -13363,7 +13384,7 @@ internal static class Program
             10_000_000);
         var Recordˉarenaˉresponse = Readˉscalarˉresponse(
             Recordˉarenaˉinterpreted.Bytes);
-        Equal(1_980_719L, Recordˉarenaˉinterpreted.Executedˉinstructions);
+        Equal(2_019_332L, Recordˉarenaˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3017, 0, 2_411),
             Recordˉarenaˉresponse);
@@ -13377,8 +13398,8 @@ internal static class Program
             "The scalar WVB interpreter did not lower: " +
                 Scalarˉinterpreterˉlowered.Diagnostics +
                 Scalarˉinterpreterˉlowered.Output);
-        Equal(412_367, Scalarˉinterpreterˉlowered.Writtenˉbytes.Length);
-        Equal(286_009_307L, Scalarˉinterpreterˉlowered.Executedˉinstructions);
+        Equal(412_498, Scalarˉinterpreterˉlowered.Writtenˉbytes.Length);
+        Equal(269_459_085L, Scalarˉinterpreterˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SHA256,
             Moduleˉdigest.Calculateˉsha256(

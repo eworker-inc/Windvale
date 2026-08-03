@@ -302,8 +302,8 @@ const EXPECTED = [
         bytesEntryPath: process.argv[64],
         portableCompilerPath: process.argv[65],
         portableSourcePath: process.argv[66],
-        sha256: "f1ed2586544c92bce64cd45ae00ae44a34086f80fa0d08efc8ae8f6b5b3e7e47",
-        bytes: 412367,
+        sha256: "c35e3b5144cb8883667bb22462d54318561857691d6af26c7fc6e2bce959d752",
+        bytes: 412498,
         abi: 3,
         kind: 1,
         runtime: "wvb-scalar-interpreter",
@@ -1339,27 +1339,27 @@ function verifyRuntime(expected, module, exports, digest) {
         const functionRequest = scalarRequest(candidates[0]);
         requireScalarResult(
             "function/control guest",
-            runMemory(exports, functionRequest, 217_595),
+            runMemory(exports, functionRequest, 221_014),
             0,
-            217_595,
+            221_014,
             0,
             199,
             6,
         );
         requireScalarResult(
             "function/control guest repeat",
-            runMemory(exports, functionRequest, 217_595),
+            runMemory(exports, functionRequest, 221_014),
             0,
-            217_595,
+            221_014,
             0,
             199,
             6,
         );
         requireScalarResult(
             "outer instruction exhaustion",
-            runMemory(exports, functionRequest, 217_594),
+            runMemory(exports, functionRequest, 221_013),
             3011,
-            217_594,
+            221_013,
             0,
             0,
             0,
@@ -1367,8 +1367,8 @@ function verifyRuntime(expected, module, exports, digest) {
         const bytesEntryRequest = bytesRequest(bytesEntry, Buffer.from([1, 2, 3]));
         requireBytesResult(
             "bytes entry and return",
-            runMemory(exports, bytesEntryRequest, 18_251),
-            18_251,
+            runMemory(exports, bytesEntryRequest, 18_484),
+            18_484,
             13,
             Buffer.from([1, 2, 3, 42]),
         );
@@ -1393,9 +1393,30 @@ function verifyRuntime(expected, module, exports, digest) {
                 bytesRequest(portableCompiler, portableCompilerInput, 1, 64),
                 50_000_000,
             ),
-            44_163_574,
+            44_171_762,
             3011,
             1,
+        );
+        requireBytesFailure(
+            "portable compiler exact maximum successful budget",
+            runMemory(
+                exports,
+                bytesRequest(portableCompiler, portableCompilerInput, 1_511, 64),
+                50_000_000,
+            ),
+            49_727_640,
+            3011,
+            1_511,
+        );
+        requireMemoryResult(
+            expected.path,
+            runMemory(
+                exports,
+                bytesRequest(portableCompiler, portableCompilerInput, 1_512, 64),
+                50_000_000,
+            ),
+            3018,
+            49_727_825,
         );
         requireMemoryResult(
             expected.path,
@@ -1405,157 +1426,157 @@ function verifyRuntime(expected, module, exports, digest) {
                 50_000_000,
             ),
             3018,
-            44_978_597,
+            49_727_825,
         );
         requireScalarResult(
             "complete scalar guest",
-            runMemory(exports, scalarRequest(candidates[1]), 454_248),
+            runMemory(exports, scalarRequest(candidates[1]), 460_149),
             0,
-            454_248,
+            460_149,
             0,
             351,
             42,
         );
         requireScalarResult(
             "guest instruction exhaustion",
-            runMemory(exports, scalarRequest(candidates[0], 198, 8), 216_916),
+            runMemory(exports, scalarRequest(candidates[0], 198, 8), 220_341),
             0,
-            216_916,
+            220_341,
             3011,
             198,
             0,
         );
         requireScalarResult(
             "guest call-depth exhaustion",
-            runMemory(exports, scalarRequest(candidates[0], 1_000, 1), 84_759),
+            runMemory(exports, scalarRequest(candidates[0], 1_000, 1), 85_303),
             0,
-            84_759,
+            85_303,
             3004,
             27,
             0,
         );
         requireScalarResult(
             "checked i32 overflow",
-            runMemory(exports, scalarRequest(candidates[2]), 15_880),
+            runMemory(exports, scalarRequest(candidates[2]), 16_081),
             3007,
-            15_880,
+            16_081,
             0,
             0,
             0,
         );
         requireScalarResult(
             "checked u32 overflow",
-            runMemory(exports, scalarRequest(candidates[3]), 24_648),
+            runMemory(exports, scalarRequest(candidates[3]), 24_849),
             3007,
-            24_648,
+            24_849,
             0,
             0,
             0,
         );
         requireScalarResult(
             "text/bytes values and descriptor calls",
-            runMemory(exports, scalarRequest(candidates[4], 4_096), 482_106),
+            runMemory(exports, scalarRequest(candidates[4], 4_096), 487_003),
             0,
-            482_106,
+            487_003,
             0,
             298,
             42,
         );
         requireScalarResult(
             "strict UTF-8 boundaries",
-            runMemory(exports, scalarRequest(candidates[5], 4_096), 312_704),
+            runMemory(exports, scalarRequest(candidates[5], 4_096), 315_177),
             0,
-            312_704,
+            315_177,
             0,
             153,
             42,
         );
         requireScalarResult(
             "invalid UTF-8 decoding",
-            runMemory(exports, scalarRequest(candidates[6], 4_096), 18_926),
+            runMemory(exports, scalarRequest(candidates[6], 4_096), 19_139),
             0,
-            18_926,
+            19_139,
             3014,
             11,
             0,
         );
         requireScalarResult(
             "byte range failure",
-            runMemory(exports, scalarRequest(candidates[7], 4_096), 22_752),
+            runMemory(exports, scalarRequest(candidates[7], 4_096), 23_013),
             0,
-            22_752,
+            23_013,
             3008,
             14,
             0,
         );
         requireScalarResult(
             "u16 narrowing failure",
-            runMemory(exports, scalarRequest(candidates[8], 4_096), 10_238),
+            runMemory(exports, scalarRequest(candidates[8], 4_096), 10_339),
             0,
-            10_238,
+            10_339,
             3016,
             4,
             0,
         );
         requireScalarResult(
             "per-value byte limit",
-            runMemory(exports, scalarRequest(candidates[9], 4_096), 249_425),
+            runMemory(exports, scalarRequest(candidates[9], 4_096), 253_966),
             0,
-            249_425,
+            253_966,
             3015,
             256,
             0,
         );
         requireScalarResult(
             "SHA-256 aggregate heap limit",
-            runMemory(exports, scalarRequest(candidates[10], 4_096), 378_933),
+            runMemory(exports, scalarRequest(candidates[10], 4_096), 385_741),
             0,
-            378_933,
+            385_741,
             3018,
             388,
             0,
         );
         requireScalarResult(
             "integer formatting and UTF-16-compatible text quoting",
-            runMemory(exports, scalarRequest(candidates[11], 4_096), 3_453_969),
+            runMemory(exports, scalarRequest(candidates[11], 4_096), 3_519_301),
             0,
-            3_453_969,
+            3_519_301,
             0,
             4_070,
             42,
         );
         requireScalarResult(
             "compiler-produced data/text and quoting",
-            runMemory(exports, scalarRequest(candidates[12], 4_096), 369_113),
+            runMemory(exports, scalarRequest(candidates[12], 4_096), 372_970),
             0,
-            369_113,
+            372_970,
             0,
             233,
             13,
         );
         requireScalarResult(
             "SHA-256 padding and multi-block vectors",
-            runMemory(exports, scalarRequest(candidates[13], 4_096), 3_337_181),
+            runMemory(exports, scalarRequest(candidates[13], 4_096), 3_401_462),
             0,
-            3_337_181,
+            3_401_462,
             0,
             3_996,
             42,
         );
         requireScalarResult(
             "compiler-produced records and enums",
-            runMemory(exports, scalarRequest(candidates[14], 4_096), 308_376),
+            runMemory(exports, scalarRequest(candidates[14], 4_096), 311_657),
             0,
-            308_376,
+            311_657,
             0,
             197,
             11,
         );
         requireScalarResult(
             "record and enum construction",
-            runMemory(exports, scalarRequest(candidates[15], 4_096), 92_732),
+            runMemory(exports, scalarRequest(candidates[15], 4_096), 93_829),
             0,
-            92_732,
+            93_829,
             0,
             67,
             42,
@@ -1579,9 +1600,9 @@ function verifyRuntime(expected, module, exports, digest) {
         );
         requireScalarResult(
             "default record and first enum member",
-            runMemory(exports, scalarRequest(defaultLocal, 4_096), 67_741),
+            runMemory(exports, scalarRequest(defaultLocal, 4_096), 68_358),
             0,
-            67_741,
+            68_358,
             0,
             37,
             2,
@@ -1589,18 +1610,18 @@ function verifyRuntime(expected, module, exports, digest) {
         const recordArenaRequest = scalarRequest(candidates[16], 4_096);
         requireScalarResult(
             "record arena exhaustion",
-            runMemory(exports, recordArenaRequest, 1_980_719),
+            runMemory(exports, recordArenaRequest, 2_019_332),
             0,
-            1_980_719,
+            2_019_332,
             3017,
             2_411,
             0,
         );
         requireScalarResult(
             "record arena reset",
-            runMemory(exports, recordArenaRequest, 1_980_719),
+            runMemory(exports, recordArenaRequest, 2_019_332),
             0,
-            1_980_719,
+            2_019_332,
             3017,
             2_411,
             0,
