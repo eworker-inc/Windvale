@@ -76,7 +76,7 @@ A malformed request may produce request identifier zero when no valid nonzero id
 
 ## Transport ownership and lifecycle
 
-The Stage 0 `Resourceˉserviceˉexchange` is a format-blind oracle for the intended bounded transport. It owns one copied message and two generation-1 endpoints:
+The shared Stage 0 `Boundedˉserviceˉexchange` is a format-blind oracle for the intended bounded transport. It owns one copied message and two generation-1 endpoints. Decision 0154 extracts the mechanism from its original resource-named owner so the resource and directory protocols demonstrably share the same boundary:
 
 - client endpoint `0x00010000`: `send-request` and `receive-reply`;
 - service endpoint `0x00010001`: `receive-request` and `send-reply`.

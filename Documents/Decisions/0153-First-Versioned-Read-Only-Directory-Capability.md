@@ -1,7 +1,7 @@
 # Decision 0153: First versioned read-only directory capability
 
 - Date: 2026-08-03
-- Status: Implemented candidate with local Windows evidence; cross-host and Windvale OS binding pending
+- Status: Cross-host-qualified application contract; Windvale OS guest binding pending
 - Advances: Stage 0 capability catalog/reference runtime and `Libraries/Platform/Filesystem`
 - Retains: Canonical WVB 1.6/1.7 encoding, current profile bytes, ABI 22, Probe 34, `WVRS 1`, hosted resource leaves, and no runtime module linker
 - Refines: [Decision 0140](0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md), [Decision 0145](0145-First-Capability-Bearing-Static-Library.md), and [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
@@ -30,7 +30,9 @@ The current WVB format also lacks independent platform scope and an explicit cap
 
 The focused fixture statically internalizes the Windvale library, preserves one canonical capability requirement, and reproduces identical WVB bytes. An explicitly authorized provider supplies exact middle, tail, and end-of-file chunks; not-found and beyond-end reads return typed results; invalid names and limits do not reach the provider. Missing authorization fails as `WVR3010`, missing transitive approval fails as `WVC0013`, and inconsistent providers plus malformed raw capability responses fail as `WVR3030`.
 
-After integration with Decision 0152, the final expanded fixture passes in 522 milliseconds after a zero-warning Release build. Neighboring hosted-resource and transitive-approval fixtures pass in 144 and 169 milliseconds after zero-warning builds. Earlier change-aware Windows verification before the independent Decision 0152 rebase passes all 85 then-selected Seed tests in 375.273 suite seconds, including the required 224.556-second golden contract. This is local development feedback rather than cross-host qualification. The exact test and broader verification identities are recorded in [Seed verification evidence](../Project/Seed-Verification-Evidence.md). Cross-host evidence remains pending until GitHub verifies the committed candidate.
+After integration with Decision 0152, the final expanded fixture passes in 522 milliseconds after a zero-warning Release build. Neighboring hosted-resource and transitive-approval fixtures pass in 144 and 169 milliseconds after zero-warning builds. Earlier change-aware Windows verification before the independent Decision 0152 rebase passes all 85 then-selected Seed tests in 375.273 suite seconds, including the required 224.556-second golden contract.
+
+Exact commit `2fcd66a15d10a88d9c6644c78909ab52b57c526e` passes GitHub [Verify run 30800812738](https://github.com/eworker-inc/Windvale/actions/runs/30800812738). Independent Windows and digest-pinned Debian jobs complete the zero-warning build, all selected Seed and OS tests, golden compiler contract, and native CLI gate. The exact test and broader verification identities are recorded in [Seed verification evidence](../Project/Seed-Verification-Evidence.md). This qualifies the application-facing contract and reference provider boundary across both hosts; native lowering and live Windvale OS guest adoption remain pending.
 
 ## Consequences
 
@@ -38,7 +40,7 @@ Windvale now owns the first reusable filesystem-shaped application API and typed
 
 The compatibility name is temporary debt, not the final module model. Independent platform scope, canonical capability name/major metadata, optional interfaces, and multiple typed instances remain required. The Windvale-written compiler still owns only its qualified seven-capability baseline and must adopt the new catalog entry before native self-hosting can consume this library.
 
-The next OS slice should bind this exact semantic operation to one independently verified Windvale OS runtime/service protocol, preserving the current kernel's format-blind IPC and generation-safe peer cleanup. It must not repurpose the existing package-resource `WVRS 1` name space as a filesystem root.
+[Decision 0154](0154-First-Windvale-Directory-Service-Ipc.md) now binds this exact semantic operation to an independently verified Windvale-owned `WVDQ 1` / `WVDR 1` service protocol while preserving format-blind IPC. Live guest adoption, page mappings, endpoint lifetime, and QEMU evidence remain a separate slice; it must not repurpose the existing package-resource `WVRS 1` name space as a filesystem root.
 
 ## Reconsider when
 

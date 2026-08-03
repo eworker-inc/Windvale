@@ -55,7 +55,8 @@ public static class Resourceˉserviceˉipcˉcontract
     public const int REQUEST_HEADER_BYTES = 32;
     public const int RESPONSE_HEADER_BYTES = 112;
     public const int MAXIMUM_NAME_BYTES = 1_024;
-    public const int MAXIMUM_MESSAGE_BYTES = 4_096;
+    public const int MAXIMUM_MESSAGE_BYTES =
+        Boundedˉserviceˉexchangeˉcontract.MAXIMUM_MESSAGE_BYTES;
     public const int MAXIMUM_DATA_BYTES = MAXIMUM_MESSAGE_BYTES - RESPONSE_HEADER_BYTES;
     public const int DIGEST_BYTES = 64;
 
@@ -405,135 +406,5 @@ public static class Resourceˉserviceˉhandler
             (uint)Entry.Kind,
             Resourceˉstoreˉcontract.ENTRY_FLAGS,
             Entry.Data.AsSpan());
-    }
-}
-
-public enum Resourceˉserviceˉexchangeˉstate
-{
-    Empty,
-    Requestˉready,
-    Serviceˉprocessing,
-    Replyˉready,
-    Completed,
-    Peerˉexited,
-    Closed,
-}
-
-public static class Resourceˉserviceˉexchangeˉcontract
-{
-    public const uint CLIENT_ENDPOINT = 0x0001_0000;
-    public const uint SERVICE_ENDPOINT = 0x0001_0001;
-    public const uint RIGHT_SEND_REQUEST = 1U << 0;
-    public const uint RIGHT_RECEIVE_REPLY = 1U << 1;
-    public const uint RIGHT_RECEIVE_REQUEST = 1U << 2;
-    public const uint RIGHT_SEND_REPLY = 1U << 3;
-    public const uint CLIENT_RIGHTS = RIGHT_SEND_REQUEST | RIGHT_RECEIVE_REPLY;
-    public const uint SERVICE_RIGHTS = RIGHT_RECEIVE_REQUEST | RIGHT_SEND_REPLY;
-}
-
-public sealed class Resourceˉserviceˉexchange
-{
-    private ImmutableArray<byte> Message = ImmutableArray<byte>.Empty;
-
-    public Resourceˉserviceˉexchangeˉstate State { get; private set; }
-
-    public void Sendˉrequest(uint endpoint, uint rights, ReadOnlySpan<byte> request)
-    {
-        Requireˉendpoint(endpoint, rights,
-            Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.RIGHT_SEND_REQUEST);
-        Requireˉstate(Resourceˉserviceˉexchangeˉstate.Empty);
-        Message = Copyˉmessage(request);
-        State = Resourceˉserviceˉexchangeˉstate.Requestˉready;
-    }
-
-    public ImmutableArray<byte> Receiveˉrequest(uint endpoint, uint rights)
-    {
-        Requireˉendpoint(endpoint, rights,
-            Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.RIGHT_RECEIVE_REQUEST);
-        Requireˉstate(Resourceˉserviceˉexchangeˉstate.Requestˉready);
-        var Result = Message.ToArray().ToImmutableArray();
-        Message = ImmutableArray<byte>.Empty;
-        State = Resourceˉserviceˉexchangeˉstate.Serviceˉprocessing;
-        return Result;
-    }
-
-    public void Sendˉreply(uint endpoint, uint rights, ReadOnlySpan<byte> reply)
-    {
-        Requireˉendpoint(endpoint, rights,
-            Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.RIGHT_SEND_REPLY);
-        Requireˉstate(Resourceˉserviceˉexchangeˉstate.Serviceˉprocessing);
-        Message = Copyˉmessage(reply);
-        State = Resourceˉserviceˉexchangeˉstate.Replyˉready;
-    }
-
-    public ImmutableArray<byte> Receiveˉreply(uint endpoint, uint rights)
-    {
-        Requireˉendpoint(endpoint, rights,
-            Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.RIGHT_RECEIVE_REPLY);
-        Requireˉstate(Resourceˉserviceˉexchangeˉstate.Replyˉready);
-        var Result = Message.ToArray().ToImmutableArray();
-        Message = ImmutableArray<byte>.Empty;
-        State = Resourceˉserviceˉexchangeˉstate.Completed;
-        return Result;
-    }
-
-    public void Peerˉexit()
-    {
-        if (State is Resourceˉserviceˉexchangeˉstate.Peerˉexited or
-            Resourceˉserviceˉexchangeˉstate.Closed)
-        {
-            throw new Resourceˉserviceˉipcˉexception(
-                "WVRI4002", "The resource-service exchange is already terminal.");
-        }
-        Message = ImmutableArray<byte>.Empty;
-        State = Resourceˉserviceˉexchangeˉstate.Peerˉexited;
-    }
-
-    public void Close()
-    {
-        if (State is not (Resourceˉserviceˉexchangeˉstate.Completed or
-            Resourceˉserviceˉexchangeˉstate.Peerˉexited))
-        {
-            throw new Resourceˉserviceˉipcˉexception(
-                "WVRI4002", "The resource-service exchange is not terminal.");
-        }
-        Message = ImmutableArray<byte>.Empty;
-        State = Resourceˉserviceˉexchangeˉstate.Closed;
-    }
-
-    private static ImmutableArray<byte> Copyˉmessage(ReadOnlySpan<byte> bytes)
-    {
-        if (bytes.Length is < 1 or > Resourceˉserviceˉipcˉcontract.MAXIMUM_MESSAGE_BYTES)
-        {
-            throw new Resourceˉserviceˉipcˉexception(
-                "WVRI4003", "The opaque resource-service message exceeds the transport limit.");
-        }
-        return bytes.ToArray().ToImmutableArray();
-    }
-
-    private static void Requireˉendpoint(
-        uint endpoint,
-        uint rights,
-        uint expectedˉendpoint,
-        uint requiredˉright)
-    {
-        if (endpoint != expectedˉendpoint || (rights & requiredˉright) == 0)
-        {
-            throw new Resourceˉserviceˉipcˉexception(
-                "WVRI4001", "The resource-service endpoint is unauthorized for this operation.");
-        }
-    }
-
-    private void Requireˉstate(Resourceˉserviceˉexchangeˉstate expected)
-    {
-        if (State != expected)
-        {
-            throw new Resourceˉserviceˉipcˉexception(
-                "WVRI4002", "The resource-service exchange transition is invalid.");
-        }
     }
 }

@@ -32,6 +32,9 @@ internal static class Program
         new("resource IPC emits bounded verified WVRQ and WVRY", Resourceˉipcˉemitsˉboundedˉrequestˉreply),
         new("resource IPC rejects malformed and hostile envelopes", Resourceˉipcˉrejectsˉmalformedˉenvelopes),
         new("Windvale resource service completes one live IPC lookup", Resourceˉserviceˉcompletesˉliveˉipcˉlookup),
+        new("directory IPC emits bounded WVDQ requests and exact WVDR replies", Directoryˉipcˉemitsˉboundedˉrequestˉreply),
+        new("directory IPC rejects malformed and hostile envelopes", Directoryˉipcˉrejectsˉmalformedˉenvelopes),
+        new("Windvale directory service completes one live bounded read", Directoryˉserviceˉcompletesˉliveˉread),
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
         new("kernel paging planner enforces bounded W^X identity tables", Pagingˉplannerˉenforcesˉboundedˉidentityˉtables),
         new("kernel WVA shims bridge Main, normalized traps, and Q35 shutdown", Kernelˉassemblyˉshimˉbridgesˉmain),
@@ -664,17 +667,17 @@ internal static class Program
         var Store = Resourceˉstoreˉcodec.Write(Buildˉresourceˉstoreˉentries());
         var Request = Resourceˉserviceˉipcˉcodec.Writeˉrequest(
             0x5749, "boot:main.configuration", 4);
-        var Exchange = new Resourceˉserviceˉexchange();
+        var Exchange = new Boundedˉserviceˉexchange();
         Exchange.Sendˉrequest(
-            Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
             Request.AsSpan());
-        Equal(Resourceˉserviceˉexchangeˉstate.Requestˉready, Exchange.State);
+        Equal(Boundedˉserviceˉexchangeˉstate.Requestˉready, Exchange.State);
         var Serviceˉrequest = Exchange.Receiveˉrequest(
-            Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.SERVICE_RIGHTS);
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_RIGHTS);
         Sequenceˉequal(Request, Serviceˉrequest);
-        Equal(Resourceˉserviceˉexchangeˉstate.Serviceˉprocessing, Exchange.State);
+        Equal(Boundedˉserviceˉexchangeˉstate.Serviceˉprocessing, Exchange.State);
 
         var Interpreted = Runˉresourceˉserviceˉbridge(Module, Store, Serviceˉrequest);
         var Oracle = Resourceˉserviceˉhandler.Handle(Store.AsSpan(), Serviceˉrequest.AsSpan());
@@ -701,44 +704,44 @@ internal static class Program
             Resourceˉserviceˉhandler.Handle([], Request.AsSpan()),
             Runˉresourceˉserviceˉbridge(Module, [], Request).Bytes);
         Exchange.Sendˉreply(
-            Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.SERVICE_RIGHTS,
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_RIGHTS,
             Interpreted.Bytes.AsSpan());
         var Clientˉreply = Exchange.Receiveˉreply(
-            Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS);
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_RIGHTS);
         var Response = Resourceˉserviceˉipcˉcodec.Verifyˉresponse(Clientˉreply.AsSpan());
         Equal(Resourceˉserviceˉstatus.Success, Response.Status);
         Equal(3u, Response.Identifier);
         Sequenceˉequal([(byte)3, 5, 8, 13], Response.Data);
-        Equal(Resourceˉserviceˉexchangeˉstate.Completed, Exchange.State);
+        Equal(Boundedˉserviceˉexchangeˉstate.Completed, Exchange.State);
         Exchange.Close();
-        Equal(Resourceˉserviceˉexchangeˉstate.Closed, Exchange.State);
+        Equal(Boundedˉserviceˉexchangeˉstate.Closed, Exchange.State);
 
-        var Opaque = new Resourceˉserviceˉexchange();
+        var Opaque = new Boundedˉserviceˉexchange();
         Opaque.Sendˉrequest(
-            Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
             [0xA5]);
         Sequenceˉequal([0xA5], Opaque.Receiveˉrequest(
-            Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
-            Resourceˉserviceˉexchangeˉcontract.SERVICE_RIGHTS));
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_RIGHTS));
         Opaque.Peerˉexit();
         Opaque.Close();
 
-        Throwsˉresourceˉserviceˉipc("WVRI4001", () =>
-            new Resourceˉserviceˉexchange().Sendˉrequest(
-                Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
-                Resourceˉserviceˉexchangeˉcontract.SERVICE_RIGHTS,
+        Throwsˉboundedˉserviceˉexchange("WVSI4001", () =>
+            new Boundedˉserviceˉexchange().Sendˉrequest(
+                Boundedˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+                Boundedˉserviceˉexchangeˉcontract.SERVICE_RIGHTS,
                 Request.AsSpan()));
-        Throwsˉresourceˉserviceˉipc("WVRI4002", () =>
-            new Resourceˉserviceˉexchange().Receiveˉreply(
-                Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
-                Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS));
-        Throwsˉresourceˉserviceˉipc("WVRI4003", () =>
-            new Resourceˉserviceˉexchange().Sendˉrequest(
-                Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
-                Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
+        Throwsˉboundedˉserviceˉexchange("WVSI4002", () =>
+            new Boundedˉserviceˉexchange().Receiveˉreply(
+                Boundedˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+                Boundedˉserviceˉexchangeˉcontract.CLIENT_RIGHTS));
+        Throwsˉboundedˉserviceˉexchange("WVSI4003", () =>
+            new Boundedˉserviceˉexchange().Sendˉrequest(
+                Boundedˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+                Boundedˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
                 new byte[Resourceˉserviceˉipcˉcontract.MAXIMUM_MESSAGE_BYTES + 1]));
 
         Assertˉruntimeˉfailure("WVR3010", () =>
@@ -756,6 +759,267 @@ internal static class Program
         Equal(
             "c13d94aa5fc02676ddbaac315c4b55f0c26dbfd28bbd4f821123f67112db1b3f",
             Objectˉdigest.Calculateˉsha256(Bridgeˉresult.Moduleˉbytes.AsSpan()));
+    }
+
+    private static void Directoryˉipcˉemitsˉboundedˉrequestˉreply()
+    {
+        const string NAME = "kernel.wv";
+        var First = Directoryˉserviceˉipcˉcodec.Writeˉrequest(NAME, 1_024, 3_072);
+        var Second = Directoryˉserviceˉipcˉcodec.Writeˉrequest(NAME, 1_024, 3_072);
+        Sequenceˉequal(First, Second);
+        Equal(Directoryˉserviceˉipcˉcontract.REQUEST_HEADER_BYTES + NAME.Length, First.Length);
+        Equal(Directoryˉserviceˉipcˉcontract.REQUEST_MAGIC,
+            BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()));
+        Equal(Directoryˉserviceˉipcˉcontract.FORMAT_VERSION,
+            BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()[4..]));
+
+        var Request = Directoryˉserviceˉipcˉcodec.Verifyˉrequest(First.AsSpan());
+        Equal(Directoryˉserviceˉrequestˉstatus.Valid, Request.Status);
+        Equal(1_024u, Request.Offset);
+        Equal(3_072u, Request.Maximumˉbytes);
+        Equal(NAME, Request.Name);
+
+        var Snapshot = new Testˉdirectoryˉsnapshot();
+        var Reply = Directoryˉserviceˉhandler.Handle(Snapshot, First.AsSpan());
+        Equal(Directoryˉserviceˉipcˉcontract.MAXIMUM_RESPONSE_BYTES, Reply.Length);
+        True(Reply.Length < Boundedˉserviceˉexchangeˉcontract.MAXIMUM_MESSAGE_BYTES,
+            "The maximal WVDR reply no longer fits the bounded channel.");
+        var Response = Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+            Reply.AsSpan(), NAME, 1_024, 3_072);
+        Equal(Directoryˉserviceˉstatus.Valid, Response.Status);
+        Equal(4_096u, Response.Fileˉlength);
+        Equal(1_024u, Response.Returnedˉoffset);
+        Sequenceˉequal(
+            Testˉdirectoryˉsnapshot.FILE_BYTES.AsSpan(1_024, 3_072).ToArray().ToImmutableArray(),
+            Response.Bytes);
+
+        var Endˉrequest = Directoryˉserviceˉipcˉcodec.Writeˉrequest(NAME, 4_096, 0);
+        var End = Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+            Directoryˉserviceˉhandler.Handle(Snapshot, Endˉrequest.AsSpan()).AsSpan(),
+            NAME, 4_096, 0);
+        Equal(Directoryˉserviceˉstatus.Valid, End.Status);
+        True(End.Bytes.IsEmpty, "An end-of-file directory read returned bytes.");
+
+        var Beyondˉrequest = Directoryˉserviceˉipcˉcodec.Writeˉrequest(NAME, 4_097, 0);
+        var Beyond = Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+            Directoryˉserviceˉhandler.Handle(Snapshot, Beyondˉrequest.AsSpan()).AsSpan(),
+            NAME, 4_097, 0);
+        Equal(Directoryˉserviceˉstatus.Invalidˉoffset, Beyond.Status);
+        Equal(4_096u, Beyond.Fileˉlength);
+
+        var Missingˉrequest = Directoryˉserviceˉipcˉcodec.Writeˉrequest("missing.wv", 0, 8);
+        Equal(Directoryˉserviceˉstatus.Notˉfound,
+            Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                Directoryˉserviceˉhandler.Handle(Snapshot, Missingˉrequest.AsSpan()).AsSpan(),
+                "missing.wv", 0, 8).Status);
+        var Folderˉrequest = Directoryˉserviceˉipcˉcodec.Writeˉrequest("folder", 0, 8);
+        Equal(Directoryˉserviceˉstatus.Notˉfile,
+            Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                Directoryˉserviceˉhandler.Handle(Snapshot, Folderˉrequest.AsSpan()).AsSpan(),
+                "folder", 0, 8).Status);
+
+        var Calls = Snapshot.Stage0ˉcalls;
+        var Invalidˉname = Directoryˉserviceˉipcˉcodec.Writeˉrequest("../kernel.wv", 5, 8);
+        Equal(Directoryˉserviceˉstatus.Invalidˉname,
+            Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                Directoryˉserviceˉhandler.Handle(Snapshot, Invalidˉname.AsSpan()).AsSpan(),
+                "../kernel.wv", 5, 8).Status);
+        var Invalidˉlimit = Directoryˉserviceˉipcˉcodec.Writeˉrequest(NAME, uint.MaxValue, 1);
+        Equal(Directoryˉserviceˉstatus.Invalidˉlimit,
+            Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                Directoryˉserviceˉhandler.Handle(Snapshot, Invalidˉlimit.AsSpan()).AsSpan(),
+                NAME, uint.MaxValue, 1).Status);
+        Equal(Calls, Snapshot.Stage0ˉcalls);
+
+        var Maximumˉname = new string('A', Directoryˉserviceˉipcˉcontract.MAXIMUM_NAME_BYTES);
+        Equal(Directoryˉserviceˉipcˉcontract.MAXIMUM_REQUEST_BYTES,
+            Directoryˉserviceˉipcˉcodec.Writeˉrequest(Maximumˉname, 0, 0).Length);
+        Throwsˉdirectoryˉserviceˉipc("WVDI3001", () =>
+            _ = Directoryˉserviceˉipcˉcodec.Writeˉrequest(Maximumˉname + "A", 0, 0));
+    }
+
+    private static void Directoryˉipcˉrejectsˉmalformedˉenvelopes()
+    {
+        const string NAME = "kernel.wv";
+        var Request = Directoryˉserviceˉipcˉcodec.Writeˉrequest(NAME, 7, 16);
+        Rejectˉdirectoryˉrequest(ImmutableArray<byte>.Empty, "WVDI1001");
+        Rejectˉdirectoryˉrequest(
+            new byte[Directoryˉserviceˉipcˉcontract.MAXIMUM_REQUEST_BYTES + 1], "WVDI1001");
+        Rejectˉdirectoryˉrequest(Replaceˉu32(Request, 0, 0), "WVDI1002");
+        Rejectˉdirectoryˉrequest(Replaceˉu32(Request, 4, 2), "WVDI1002");
+        Rejectˉdirectoryˉrequest(Replaceˉu32(Request, 8, (uint)Request.Length + 1), "WVDI1003");
+        Rejectˉdirectoryˉrequest(Replaceˉu32(Request, 20, 0), "WVDI1003");
+        Rejectˉdirectoryˉrequest(Replaceˉu32(Request, 24, 1), "WVDI1003");
+        Rejectˉdirectoryˉrequest(
+            Replaceˉbyte(Request, Directoryˉserviceˉipcˉcontract.REQUEST_HEADER_BYTES, (byte)'/'),
+            "WVDI1004");
+        Rejectˉdirectoryˉrequest(
+            Replaceˉu32(Request, 16, Directoryˉserviceˉipcˉcontract.MAXIMUM_CHUNK_BYTES + 1),
+            "WVDI1005");
+
+        var Snapshot = new Testˉdirectoryˉsnapshot();
+        True(Directoryˉserviceˉhandler.Handle(
+            Snapshot, Replaceˉu32(Request, 0, 0).AsSpan()).IsEmpty,
+            "A structurally malformed directory request produced a reply.");
+        var Invalidˉnameˉrequest = Replaceˉbyte(
+            Request, Directoryˉserviceˉipcˉcontract.REQUEST_HEADER_BYTES, (byte)'/');
+        Equal(Directoryˉserviceˉstatus.Invalidˉname,
+            Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                Directoryˉserviceˉhandler.Handle(Snapshot, Invalidˉnameˉrequest.AsSpan()).AsSpan(),
+                "/ernel.wv", 7, 16).Status);
+
+        var Reply = Directoryˉserviceˉhandler.Handle(Snapshot, Request.AsSpan());
+        Rejectˉdirectoryˉresponse(
+            ImmutableArray<byte>.Empty, NAME, 7, 16, "WVDI2001");
+        Rejectˉdirectoryˉresponse(
+            new byte[Directoryˉserviceˉipcˉcontract.MAXIMUM_RESPONSE_BYTES + 1],
+            NAME, 7, 16, "WVDI2001");
+        Rejectˉdirectoryˉresponse(Replaceˉu32(Reply, 0, 0), NAME, 7, 16, "WVDI2002");
+        Rejectˉdirectoryˉresponse(Replaceˉu32(Reply, 4, 2), NAME, 7, 16, "WVDI2002");
+        Rejectˉdirectoryˉresponse(Replaceˉu32(Reply, 8, 11), NAME, 7, 16, "WVDI2003");
+        Rejectˉdirectoryˉresponse(Replaceˉu32(Reply, 16, 8), NAME, 7, 16, "WVDI2003");
+        Rejectˉdirectoryˉresponse(Replaceˉu32(Reply, 20, 15), NAME, 7, 16, "WVDI2003");
+        Rejectˉdirectoryˉresponse(Replaceˉu32(Reply, 12, 8), NAME, 7, 16, "WVDI2004");
+
+        Throwsˉdirectoryˉserviceˉipc("WVDI3002", () =>
+            _ = Directoryˉserviceˉhandler.Handle(
+                new Invalidˉdirectoryˉserviceˉsnapshot(), Request.AsSpan()));
+
+        var Exchange = new Boundedˉserviceˉexchange();
+        Exchange.Sendˉrequest(
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
+            Replaceˉu32(Request, 0, 0).AsSpan());
+        _ = Exchange.Receiveˉrequest(
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_RIGHTS);
+        Exchange.Peerˉexit();
+        Equal(Boundedˉserviceˉexchangeˉstate.Peerˉexited, Exchange.State);
+        Throwsˉboundedˉserviceˉexchange("WVSI4002", () =>
+            _ = Exchange.Receiveˉreply(
+                Boundedˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+                Boundedˉserviceˉexchangeˉcontract.CLIENT_RIGHTS));
+        Exchange.Close();
+
+        var Random = new Random(0x57564449);
+        for (var Case = 0; Case < 256; Case++)
+        {
+            var Requestˉbytes = new byte[Random.Next(0,
+                Boundedˉserviceˉexchangeˉcontract.MAXIMUM_MESSAGE_BYTES + 1)];
+            Random.NextBytes(Requestˉbytes);
+            _ = Directoryˉserviceˉipcˉcodec.Parseˉrequest(Requestˉbytes);
+
+            var Responseˉbytes = new byte[Random.Next(0,
+                Directoryˉserviceˉipcˉcontract.MAXIMUM_RESPONSE_BYTES + 2)];
+            Random.NextBytes(Responseˉbytes);
+            try
+            {
+                _ = Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                    Responseˉbytes, NAME, 7, 16);
+            }
+            catch (Directoryˉserviceˉipcˉexception)
+            {
+            }
+        }
+    }
+
+    private static void Directoryˉserviceˉcompletesˉliveˉread()
+    {
+        var Coreˉsource = Loadˉresourceˉstoreˉsource(
+            "Windvale.Os.Services.Directory-Service-Core.wv");
+        var Bridgeˉsource = Loadˉresourceˉstoreˉsource(
+            "Windvale.Os.Services.Directory-Service-Bridge.wv");
+        var Firstˉcore = Seedˉcompiler.Compile(
+            Coreˉsource, "Operating-System/Services/Directory-Service-Core.wv");
+        var Secondˉcore = Seedˉcompiler.Compile(
+            Coreˉsource, "Operating-System/Services/Directory-Service-Core.wv");
+        True(Firstˉcore.Success,
+            "The Windvale directory-service core did not compile: " +
+                string.Join(" | ", Firstˉcore.Diagnostics));
+        True(Secondˉcore.Success, "The repeated directory-service core compilation failed.");
+        Sequenceˉequal(Firstˉcore.Moduleˉbytes, Secondˉcore.Moduleˉbytes);
+
+        var Firstˉbridge = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Directory-Service-Bridge.wv", Bridgeˉsource),
+            [new("Operating-System/Services/Directory-Service-Core.wv", Coreˉsource)]);
+        var Secondˉbridge = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Directory-Service-Bridge.wv", Bridgeˉsource),
+            [new("Operating-System/Services/Directory-Service-Core.wv", Coreˉsource)]);
+        True(Firstˉbridge.Success,
+            "The hosted Windvale directory-service bridge did not compile: " +
+                string.Join(" | ", Firstˉbridge.Diagnostics));
+        True(Secondˉbridge.Success, "The repeated directory-service bridge compilation failed.");
+        Sequenceˉequal(Firstˉbridge.Moduleˉbytes, Secondˉbridge.Moduleˉbytes);
+
+        var Module = Moduleˉcodec.Readˉandˉverify(Firstˉbridge.Moduleˉbytes.AsSpan());
+        Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
+        Equal(2, Module.Module.Capabilities.Length);
+        Equal(Capabilityˉcatalog.FILE_READ_BYTES, Module.Module.Capabilities[0].Name);
+        Equal(Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1,
+            Module.Module.Capabilities[1].Name);
+
+        var Request = Directoryˉserviceˉipcˉcodec.Writeˉrequest("kernel.wv", 5, 13);
+        var Exchange = new Boundedˉserviceˉexchange();
+        Exchange.Sendˉrequest(
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
+            Request.AsSpan());
+        var Serviceˉrequest = Exchange.Receiveˉrequest(
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_RIGHTS);
+        var Runtimeˉsnapshot = new Testˉdirectoryˉsnapshot();
+        var Interpreted = Runˉdirectoryˉserviceˉbridge(
+            Module, Serviceˉrequest, Runtimeˉsnapshot);
+        var Oracle = Directoryˉserviceˉhandler.Handle(
+            new Testˉdirectoryˉsnapshot(), Serviceˉrequest.AsSpan());
+        Sequenceˉequal(Oracle, Interpreted.Bytes);
+
+        Exchange.Sendˉreply(
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.SERVICE_RIGHTS,
+            Interpreted.Bytes.AsSpan());
+        var Clientˉreply = Exchange.Receiveˉreply(
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+            Boundedˉserviceˉexchangeˉcontract.CLIENT_RIGHTS);
+        var Response = Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+            Clientˉreply.AsSpan(), "kernel.wv", 5, 13);
+        Equal(Directoryˉserviceˉstatus.Valid, Response.Status);
+        Sequenceˉequal(
+            Testˉdirectoryˉsnapshot.FILE_BYTES.AsSpan(5, 13).ToArray().ToImmutableArray(),
+            Response.Bytes);
+        Exchange.Close();
+
+        var Invalidˉname = Directoryˉserviceˉipcˉcodec.Writeˉrequest("bad/name", 9, 4);
+        Sequenceˉequal(
+            Directoryˉserviceˉhandler.Handle(
+                new Testˉdirectoryˉsnapshot(), Invalidˉname.AsSpan()),
+            Runˉdirectoryˉserviceˉbridge(Module, Invalidˉname, Runtimeˉsnapshot).Bytes);
+        var Invalidˉlimit = Directoryˉserviceˉipcˉcodec.Writeˉrequest(
+            "kernel.wv", uint.MaxValue, 1);
+        Sequenceˉequal(
+            Directoryˉserviceˉhandler.Handle(
+                new Testˉdirectoryˉsnapshot(), Invalidˉlimit.AsSpan()),
+            Runˉdirectoryˉserviceˉbridge(Module, Invalidˉlimit, Runtimeˉsnapshot).Bytes);
+        var Malformed = Replaceˉu32(Request, 0, 0);
+        True(Runˉdirectoryˉserviceˉbridge(Module, Malformed, Runtimeˉsnapshot).Bytes.IsEmpty,
+            "The Windvale service replied to a structurally malformed request.");
+        Equal(1, Runtimeˉsnapshot.Runtimeˉcalls);
+
+        Assertˉruntimeˉfailure("WVR3010", () =>
+            _ = Runˉdirectoryˉserviceˉbridge(
+                Module, Request, Runtimeˉsnapshot, authorizeˉdirectory: false));
+        Assertˉruntimeˉfailure("WVR3010", () =>
+            _ = Runˉdirectoryˉserviceˉbridge(
+                Module, Request, Runtimeˉsnapshot, authorizeˉfile: false));
+        Assertˉruntimeˉfailure("WVR3022", () =>
+            _ = Runˉdirectoryˉserviceˉbridge(
+                Module, Request, Runtimeˉsnapshot, includeˉrequest: false));
+        Equal(8_389, Firstˉcore.Moduleˉbytes.Length);
+        Equal("7433ffde4399862eb2cdf46c0ea43d8d39fc7aec56b2182d6e7789bcb29b2179",
+            Objectˉdigest.Calculateˉsha256(Firstˉcore.Moduleˉbytes.AsSpan()));
+        Equal(8_492, Firstˉbridge.Moduleˉbytes.Length);
+        Equal("465b66c8fd21683c33cb9157fa13830c655147a36af50cc0961331fb5967ba2a",
+            Objectˉdigest.Calculateˉsha256(Firstˉbridge.Moduleˉbytes.AsSpan()));
     }
 
     private static void Pageˉallocatorˉisˉboundedˉandˉzeroing()
@@ -2883,6 +3147,35 @@ internal static class Program
             new(Grants)).Runˉmainˉbytes();
     }
 
+    private static Runtimeˉbytesˉresult Runˉdirectoryˉserviceˉbridge(
+        Verifiedˉmodule module,
+        ImmutableArray<byte> request,
+        IReadˉonlyˉdirectory directory,
+        bool authorizeˉfile = true,
+        bool authorizeˉdirectory = true,
+        bool includeˉrequest = true)
+    {
+        var Resources = new Hostedˉresourceˉcontext(
+            [],
+            TextWriter.Null,
+            TextWriter.Null,
+            new Directoryˉserviceˉreader(request, includeˉrequest),
+            readˉonlyˉdirectory: directory);
+        var Grants = ImmutableHashSet.CreateBuilder<string>(StringComparer.Ordinal);
+        if (authorizeˉfile)
+        {
+            Grants.Add(Capabilityˉcatalog.FILE_READ_BYTES);
+        }
+        if (authorizeˉdirectory)
+        {
+            Grants.Add(Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1);
+        }
+        return new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(Resources),
+            new(Grants.ToImmutable())).Runˉmainˉbytes();
+    }
+
     private static ImmutableArray<byte> Replaceˉu32(
         ImmutableArray<byte> source,
         int offset,
@@ -2981,6 +3274,85 @@ internal static class Program
             $"A malformed resource response was accepted instead of producing {expectedˉcode}.");
     }
 
+    private static void Rejectˉdirectoryˉrequest(
+        ImmutableArray<byte> source,
+        string expectedˉcode) =>
+        Rejectˉdirectoryˉrequest(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉdirectoryˉrequest(byte[] source, string expectedˉcode) =>
+        Rejectˉdirectoryˉrequest(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉdirectoryˉrequest(
+        ReadOnlySpan<byte> source,
+        string expectedˉcode)
+    {
+        try
+        {
+            _ = Directoryˉserviceˉipcˉcodec.Verifyˉrequest(source);
+        }
+        catch (Directoryˉserviceˉipcˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A malformed directory request was accepted instead of producing {expectedˉcode}.");
+    }
+
+    private static void Rejectˉdirectoryˉresponse(
+        ImmutableArray<byte> source,
+        string name,
+        uint offset,
+        uint maximumˉbytes,
+        string expectedˉcode) =>
+        Rejectˉdirectoryˉresponse(
+            source.AsSpan(), name, offset, maximumˉbytes, expectedˉcode);
+
+    private static void Rejectˉdirectoryˉresponse(
+        byte[] source,
+        string name,
+        uint offset,
+        uint maximumˉbytes,
+        string expectedˉcode) =>
+        Rejectˉdirectoryˉresponse(
+            source.AsSpan(), name, offset, maximumˉbytes, expectedˉcode);
+
+    private static void Rejectˉdirectoryˉresponse(
+        ReadOnlySpan<byte> source,
+        string name,
+        uint offset,
+        uint maximumˉbytes,
+        string expectedˉcode)
+    {
+        try
+        {
+            _ = Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                source, name, offset, maximumˉbytes);
+        }
+        catch (Directoryˉserviceˉipcˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A malformed directory response was accepted instead of producing {expectedˉcode}.");
+    }
+
+    private static void Throwsˉdirectoryˉserviceˉipc(string expectedˉcode, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Directoryˉserviceˉipcˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A directory IPC operation succeeded instead of producing {expectedˉcode}.");
+    }
+
     private static void Throwsˉresourceˉserviceˉipc(string expectedˉcode, Action action)
     {
         try
@@ -2994,6 +3366,21 @@ internal static class Program
         }
         throw new InvalidOperationException(
             $"A resource IPC operation succeeded instead of producing {expectedˉcode}.");
+    }
+
+    private static void Throwsˉboundedˉserviceˉexchange(string expectedˉcode, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Boundedˉserviceˉexchangeˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A bounded service exchange succeeded instead of producing {expectedˉcode}.");
     }
 
     private static void Assertˉruntimeˉfailure(string expectedˉcode, Action action)
@@ -3147,6 +3534,102 @@ internal static class Program
             }
             return Bytes;
         }
+    }
+
+    private sealed class Directoryˉserviceˉreader(
+        ImmutableArray<byte> request,
+        bool includeˉrequest) : IHostedˉfileˉreader
+    {
+        public ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes)
+        {
+            if (!includeˉrequest || resourceˉname != "ipc:directory-read.wvdq" ||
+                request.Length > maximumˉbytes)
+            {
+                throw new Hostedˉfileˉexception(
+                    Hostedˉfileˉerror.Notˉfound,
+                    "The bounded directory-service request was not found.");
+            }
+            return request;
+        }
+    }
+
+    private sealed class Testˉdirectoryˉsnapshot :
+        IDirectoryˉserviceˉsnapshot,
+        IReadˉonlyˉdirectory
+    {
+        public static readonly ImmutableArray<byte> FILE_BYTES = Buildˉbytes();
+
+        public int Stage0ˉcalls { get; private set; }
+        public int Runtimeˉcalls { get; private set; }
+
+        Directoryˉserviceˉresult IDirectoryˉserviceˉsnapshot.Readˉbytes(
+            string name,
+            uint offset,
+            uint maximumˉbytes)
+        {
+            Stage0ˉcalls++;
+            var Result = Read(name, offset, maximumˉbytes);
+            return new(Result.Status, Result.Fileˉlength, Result.Bytes);
+        }
+
+        Readˉonlyˉdirectoryˉresult IReadˉonlyˉdirectory.Readˉbytes(
+            string name,
+            uint offset,
+            uint maximumˉbytes)
+        {
+            Runtimeˉcalls++;
+            var Result = Read(name, offset, maximumˉbytes);
+            return new(
+                (Readˉonlyˉdirectoryˉstatus)(uint)Result.Status,
+                Result.Fileˉlength,
+                Result.Bytes);
+        }
+
+        private static Directoryˉserviceˉresult Read(
+            string name,
+            uint offset,
+            uint maximumˉbytes)
+        {
+            if (name == "folder")
+            {
+                return new(Directoryˉserviceˉstatus.Notˉfile, 0, []);
+            }
+            if (name != "kernel.wv")
+            {
+                return new(Directoryˉserviceˉstatus.Notˉfound, 0, []);
+            }
+            if (offset > (uint)FILE_BYTES.Length)
+            {
+                return new(
+                    Directoryˉserviceˉstatus.Invalidˉoffset,
+                    checked((uint)FILE_BYTES.Length),
+                    []);
+            }
+            var Length = Math.Min(maximumˉbytes, checked((uint)FILE_BYTES.Length) - offset);
+            return new(
+                Directoryˉserviceˉstatus.Valid,
+                checked((uint)FILE_BYTES.Length),
+                FILE_BYTES.AsSpan(checked((int)offset), checked((int)Length)).ToArray().ToImmutableArray());
+        }
+
+        private static ImmutableArray<byte> Buildˉbytes()
+        {
+            var Bytes = new byte[4_096];
+            for (var Index = 0; Index < Bytes.Length; Index++)
+            {
+                Bytes[Index] = checked((byte)(Index % 251));
+            }
+            return Bytes.ToImmutableArray();
+        }
+    }
+
+    private sealed class Invalidˉdirectoryˉserviceˉsnapshot : IDirectoryˉserviceˉsnapshot
+    {
+        public Directoryˉserviceˉresult Readˉbytes(
+            string name,
+            uint offset,
+            uint maximumˉbytes) =>
+            new(Directoryˉserviceˉstatus.Valid, 0, []);
     }
 
     private sealed record Testˉcase(string Name, Action Body);

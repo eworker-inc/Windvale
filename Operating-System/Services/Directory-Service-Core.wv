@@ -1,0 +1,259 @@
+module Directoryˉservice profile portable;
+
+enum Directoryˉserviceˉrequestˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Invalidˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉname = 5;
+    Invalidˉlimit = 6;
+}
+
+record Directoryˉserviceˉrequest {
+    Status: Directoryˉserviceˉrequestˉstatus;
+    Offset: u32;
+    Maximumˉbytes: u32;
+    Name: text;
+    Failureˉoffset: u32;
+}
+
+export fn Directoryˉserviceˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Directoryˉserviceˉappendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Directoryˉserviceˉfailure(
+    Input: bytes,
+    Status: u32,
+    Offset: u32
+) -> bytes {
+    var Result: bytes = Directoryˉserviceˉempty(Input);
+    Result = Directoryˉserviceˉappendˉu32(Result, 1380210263u32);
+    Result = Directoryˉserviceˉappendˉu32(Result, 1u32);
+    Result = Directoryˉserviceˉappendˉu32(Result, Status);
+    Result = Directoryˉserviceˉappendˉu32(Result, 0u32);
+    Result = Directoryˉserviceˉappendˉu32(Result, Offset);
+    return Directoryˉserviceˉappendˉu32(Result, 0u32);
+}
+
+export fn Directoryˉserviceˉinvalidˉrequest(
+    Status: Directoryˉserviceˉrequestˉstatus,
+    Offset: u32,
+    Maximumˉbytes: u32,
+    Failureˉoffset: u32
+) -> Directoryˉserviceˉrequest {
+    return Directoryˉserviceˉrequest(
+        Status,
+        Offset,
+        Maximumˉbytes,
+        "",
+        Failureˉoffset
+    );
+}
+
+export fn Directoryˉserviceˉnameˉbyteˉisˉvalid(Value: u32) -> bool {
+    if Value >= 48u32 { if Value <= 57u32 { return true; } }
+    if Value >= 65u32 { if Value <= 90u32 { return true; } }
+    if Value >= 97u32 { if Value <= 122u32 { return true; } }
+    if Value == 45u32 { return true; }
+    if Value == 46u32 { return true; }
+    if Value == 95u32 { return true; }
+    return false;
+}
+
+export fn Directoryˉserviceˉnameˉisˉvalid(
+    Input: bytes,
+    Start: u32,
+    Length: u32
+) -> bool {
+    if Length == 0u32 { return false; }
+    if Length > 255u32 { return false; }
+    if Length == 1u32 {
+        if Bytesˉreadˉu8(Input, Start) == 46u8 { return false; }
+    }
+    if Length == 2u32 {
+        if Bytesˉreadˉu8(Input, Start) == 46u8 {
+            if Bytesˉreadˉu8(Input, Start + 1u32) == 46u8 { return false; }
+        }
+    }
+
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Start + Index));
+        if !Directoryˉserviceˉnameˉbyteˉisˉvalid(Value) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Directoryˉserviceˉparseˉrequest(Input: bytes) -> Directoryˉserviceˉrequest {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 28u32 {
+        return Directoryˉserviceˉinvalidˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉsize,
+            0u32,
+            0u32,
+            Total
+        );
+    }
+    if Total > 283u32 {
+        var Failureˉoffset: u32 = Total;
+        if Failureˉoffset > 4096u32 { Failureˉoffset = 4096u32; }
+        return Directoryˉserviceˉinvalidˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉsize,
+            0u32,
+            0u32,
+            Failureˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1363433047u32 {
+        return Directoryˉserviceˉinvalidˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉmagic,
+            0u32,
+            0u32,
+            0u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Directoryˉserviceˉinvalidˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉversion,
+            0u32,
+            0u32,
+            4u32
+        );
+    }
+
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Maximumˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Nameˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Directoryˉserviceˉinvalidˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉheader,
+            Offset,
+            Maximumˉbytes,
+            8u32
+        );
+    }
+    if Nameˉbytes > 255u32 {
+        return Directoryˉserviceˉinvalidˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉheader,
+            Offset,
+            Maximumˉbytes,
+            8u32
+        );
+    }
+    if Nameˉbytes != Total - 28u32 {
+        return Directoryˉserviceˉinvalidˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉheader,
+            Offset,
+            Maximumˉbytes,
+            8u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 24u32) != 0u32 {
+        return Directoryˉserviceˉinvalidˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉheader,
+            Offset,
+            Maximumˉbytes,
+            8u32
+        );
+    }
+    if !Directoryˉserviceˉnameˉisˉvalid(Input, 28u32, Nameˉbytes) {
+        return Directoryˉserviceˉinvalidˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉname,
+            Offset,
+            Maximumˉbytes,
+            28u32
+        );
+    }
+
+    let Name: text = Textˉfromˉutf8(Bytesˉslice(Input, 28u32, Nameˉbytes));
+    if Maximumˉbytes > 3072u32 {
+        return Directoryˉserviceˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉlimit,
+            Offset,
+            Maximumˉbytes,
+            Name,
+            16u32
+        );
+    }
+    if Offset > 4294967295u32 - Maximumˉbytes {
+        return Directoryˉserviceˉrequest(
+            Directoryˉserviceˉrequestˉstatus.Invalidˉlimit,
+            Offset,
+            Maximumˉbytes,
+            Name,
+            16u32
+        );
+    }
+    return Directoryˉserviceˉrequest(
+        Directoryˉserviceˉrequestˉstatus.Valid,
+        Offset,
+        Maximumˉbytes,
+        Name,
+        0u32
+    );
+}
+
+export fn Directoryˉserviceˉshouldˉinvokeˉprovider(
+    Request: Directoryˉserviceˉrequest
+) -> bool {
+    return Request.Status == Directoryˉserviceˉrequestˉstatus.Valid;
+}
+
+export fn Directoryˉserviceˉproviderˉresponseˉisˉvalid(
+    Response: bytes,
+    Request: Directoryˉserviceˉrequest
+) -> bool {
+    let Total: u32 = Bytesˉlength(Response);
+    if Request.Status != Directoryˉserviceˉrequestˉstatus.Valid { return false; }
+    if Total < 24u32 { return false; }
+    if Total > 3096u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1380210263u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 { return false; }
+
+    let Status: u32 = Bytesˉreadˉu32ˉlittle(Response, 8u32);
+    let Fileˉlength: u32 = Bytesˉreadˉu32ˉlittle(Response, 12u32);
+    let Returnedˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Response, 16u32);
+    let Chunkˉlength: u32 = Bytesˉreadˉu32ˉlittle(Response, 20u32);
+    if Status > 8u32 { return false; }
+    if Returnedˉoffset != Request.Offset { return false; }
+    if Chunkˉlength != Total - 24u32 { return false; }
+    if Chunkˉlength > Request.Maximumˉbytes { return false; }
+
+    if Status == 0u32 {
+        if Request.Offset > Fileˉlength { return false; }
+        let Remaining: u32 = Fileˉlength - Request.Offset;
+        var Expected: u32 = Request.Maximumˉbytes;
+        if Remaining < Expected { Expected = Remaining; }
+        return Chunkˉlength == Expected;
+    }
+    if Status == 8u32 {
+        if Request.Offset <= Fileˉlength { return false; }
+        return Chunkˉlength == 0u32;
+    }
+    if Fileˉlength != 0u32 { return false; }
+    return Chunkˉlength == 0u32;
+}
+
+export fn Directoryˉserviceˉhandleˉresponse(
+    Requestˉbytes: bytes,
+    Providerˉresponse: bytes
+) -> bytes {
+    let Request: Directoryˉserviceˉrequest =
+        Directoryˉserviceˉparseˉrequest(Requestˉbytes);
+    if Request.Status == Directoryˉserviceˉrequestˉstatus.Invalidˉname {
+        return Directoryˉserviceˉfailure(Requestˉbytes, 9u32, Request.Offset);
+    }
+    if Request.Status == Directoryˉserviceˉrequestˉstatus.Invalidˉlimit {
+        return Directoryˉserviceˉfailure(Requestˉbytes, 10u32, Request.Offset);
+    }
+    if !Directoryˉserviceˉproviderˉresponseˉisˉvalid(Providerˉresponse, Request) {
+        return Directoryˉserviceˉempty(Requestˉbytes);
+    }
+    return Providerˉresponse;
+}
