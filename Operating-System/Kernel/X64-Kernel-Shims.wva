@@ -1,16 +1,20 @@
 windvale-assembly 1
 
+symbol local function Windvale_kernel_x64_exception_serial_write in .text
+symbol local data Windvale_kernel_x64_general_protection_marker in .rodata
+symbol local data Windvale_kernel_x64_invalid_opcode_marker in .rodata
+symbol local data Windvale_kernel_x64_malformed_frame_marker in .rodata
 symbol export function Windvale_kernel_write_byte in .text
 symbol export function Windvale_kernel_wva_main in .text
 symbol export function Windvale_kernel_x64_exception_13_entry in .text
 symbol export function Windvale_kernel_x64_exception_6_entry in .text
+symbol export function Windvale_kernel_x64_exception_terminal in .text
 symbol export function Windvale_kernel_x64_page_protection_enable in .text
 symbol export function Windvale_kernel_x64_page_table_activate in .text
 symbol export function Windvale_kernel_x64_process_exception_13_entry in .text
 symbol export function Windvale_kernel_x64_process_exception_14_entry in .text
 symbol export function Windvale_kernel_x64_process_exception_6_entry in .text
 symbol export function Windvale_kernel_x64_q35_shutdown in .text
-symbol import function Windvale_kernel_x64_exception_terminal
 symbol import function Windvale_kernel_x64_process_exception
 symbol import function Windvale_kernel_x64_write_byte
 symbol import function Windvale_kernel_x64_wvb_admission
@@ -59,5 +63,67 @@ out_u16
 disable_interrupts
 halt
 jump Windvale_kernel_x64_q35_shutdown
+end define
+define Windvale_kernel_x64_exception_terminal
+load_memory_u64 rax rsp none 1 0
+compare_i32 rax 6
+branch not_equal exception_check_general_protection
+load_memory_u64 rax rsp none 1 8
+compare_i32 rax 0
+branch not_equal exception_malformed_frame
+load_address rsi Windvale_kernel_x64_invalid_opcode_marker
+move_u32 ecx 56
+call Windvale_kernel_x64_exception_serial_write
+jump_label exception_terminate
+label exception_check_general_protection
+load_memory_u64 rax rsp none 1 0
+compare_i32 rax 13
+branch not_equal exception_malformed_frame
+load_memory_u64 rax rsp none 1 8
+compare_i32 rax 0
+branch not_equal exception_malformed_frame
+load_address rsi Windvale_kernel_x64_general_protection_marker
+move_u32 ecx 61
+call Windvale_kernel_x64_exception_serial_write
+jump_label exception_terminate
+label exception_malformed_frame
+load_address rsi Windvale_kernel_x64_malformed_frame_marker
+move_u32 ecx 45
+call Windvale_kernel_x64_exception_serial_write
+label exception_terminate
+move_u32 edx 244
+move_u32 eax 1
+out_u16
+disable_interrupts
+label exception_panic_halt
+halt
+jump_label exception_panic_halt
+end define
+define Windvale_kernel_x64_exception_serial_write
+label exception_serial_next
+move_u32 edx 1021
+label exception_serial_wait
+in_u8
+test_i8 al 32
+branch equal exception_serial_wait
+move_u32 edx 1016
+load_memory_u8 al rsi none 1 0
+out_u8
+add_i32 rsi 1
+subtract_i32 ecx 1
+branch not_equal exception_serial_next
+return
+end define
+end section
+
+section rodata .rodata align 1
+define Windvale_kernel_x64_invalid_opcode_marker
+bytes 112 97 110 105 99 61 105 110 118 97 108 105 100 45 111 112 99 111 100 101 10 118 101 99 116 111 114 61 54 10 101 114 114 111 114 45 99 111 100 101 61 48 10 115 116 97 116 117 115 61 112 97 110 105 99 10
+end define
+define Windvale_kernel_x64_general_protection_marker
+bytes 112 97 110 105 99 61 103 101 110 101 114 97 108 45 112 114 111 116 101 99 116 105 111 110 10 118 101 99 116 111 114 61 49 51 10 101 114 114 111 114 45 99 111 100 101 61 48 10 115 116 97 116 117 115 61 112 97 110 105 99 10
+end define
+define Windvale_kernel_x64_malformed_frame_marker
+bytes 112 97 110 105 99 61 109 97 108 102 111 114 109 101 100 45 101 120 99 101 112 116 105 111 110 45 102 114 97 109 101 10 115 116 97 116 117 115 61 112 97 110 105 99 10
 end define
 end section

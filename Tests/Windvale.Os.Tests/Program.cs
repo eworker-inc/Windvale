@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using Windvale.Bytecode;
 using Windvale.Bootstrap;
 using Windvale.Compiler;
@@ -499,21 +500,17 @@ internal static class Program
         Sequenceˉequal(First.Objectˉbytes, Second.Objectˉbytes);
         Sequenceˉequal(First.Codeˉbytes, Second.Codeˉbytes);
         Equal(First.Installerˉbytes, Second.Installerˉbytes);
-        Equal(First.Terminalˉoffset, Second.Terminalˉoffset);
-        True(First.Installerˉbytes <= First.Terminalˉoffset, "The terminal handler overlaps the exception installer.");
-        Equal(4_667, First.Objectˉbytes.Length);
-        Equal(
-            "49f15606d2cd41236f87e8a7a7e24a9532683ffe9d5a59795dc8084288b2f84a",
-            Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
-        Equal(4_348, First.Codeˉbytes.Length);
-        Equal(
-            "9307e2e9e4471d15448326ab2a86464f652fadfe60901226ef32b02e4dc9f8b9",
-            Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
         Equal(222u, First.Installerˉbytes);
-        Equal(224u, First.Terminalˉoffset);
-        Equal(0u, First.Terminalˉoffset % 16);
+        Equal(222, First.Codeˉbytes.Length);
+        Equal(483, First.Objectˉbytes.Length);
+        Equal(
+            "9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c",
+            Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
+        Equal(
+            "b7fd72dbc78d6f02511f9769a727421c7cb91409eef2164b4a51aced4dc2df14",
+            Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
 
-        Equal(2, Kernelˉexceptionˉcontract.FORMAT_VERSION);
+        Equal(3, Kernelˉexceptionˉcontract.FORMAT_VERSION);
         Equal(6u, Kernelˉexceptionˉcontract.INVALID_OPCODE_VECTOR);
         Equal(13u, Kernelˉexceptionˉcontract.GENERAL_PROTECTION_VECTOR);
         Equal(4_096u, Kernelˉexceptionˉcontract.IDT_PAGE_BYTES);
@@ -541,24 +538,21 @@ internal static class Program
         Equal(1, Object.Sections.Length);
         True(Object.Sections[0].Kind == Objectˉsectionˉkind.Code, "The exception object section is not code.");
         Sequenceˉequal(First.Codeˉbytes, Object.Sections[0].Data);
-        Equal(4, Object.Symbols.Length);
+        Equal(3, Object.Symbols.Length);
         Equal(Kernelˉexceptionˉcontract.INSTALL_SYMBOL, Object.Symbols[0].Name);
         True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The exception installer is not exported.");
         Equal(First.Installerˉbytes, Object.Symbols[0].Size);
-        Equal(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL, Object.Symbols[1].Name);
-        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Export, "The normalized terminal handler is not exported.");
-        Equal(First.Terminalˉoffset, Object.Symbols[1].Offset);
-        Equal(Kernelˉexceptionˉcontract.GENERAL_PROTECTION_ENTRY_SYMBOL, Object.Symbols[2].Name);
-        True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Import, "The vector-13 WVA entry is not imported.");
-        Equal(Kernelˉexceptionˉcontract.INVALID_OPCODE_ENTRY_SYMBOL, Object.Symbols[3].Name);
-        True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Import, "The vector-6 WVA entry is not imported.");
+        Equal(Kernelˉexceptionˉcontract.GENERAL_PROTECTION_ENTRY_SYMBOL, Object.Symbols[1].Name);
+        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Import, "The vector-13 WVA entry is not imported.");
+        Equal(Kernelˉexceptionˉcontract.INVALID_OPCODE_ENTRY_SYMBOL, Object.Symbols[2].Name);
+        True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Import, "The vector-6 WVA entry is not imported.");
         Equal(2, Object.Relocations.Length);
         True(Object.Relocations[0].Kind == Objectˉrelocationˉkind.Relativeˉi32, "The vector-6 gate target is not relative.");
-        Equal(3u, Object.Relocations[0].Symbolˉindex);
+        Equal(2u, Object.Relocations[0].Symbolˉindex);
         Equal(63u, Object.Relocations[0].Offset);
         Equal(-4L, Object.Relocations[0].Addend);
         True(Object.Relocations[1].Kind == Objectˉrelocationˉkind.Relativeˉi32, "The vector-13 gate target is not relative.");
-        Equal(2u, Object.Relocations[1].Symbolˉindex);
+        Equal(1u, Object.Relocations[1].Symbolˉindex);
         Equal(115u, Object.Relocations[1].Offset);
         Equal(-4L, Object.Relocations[1].Addend);
 
@@ -568,16 +562,8 @@ internal static class Program
         Equal(1, Countˉsequence(First.Codeˉbytes, [0x41, 0xC6, 0x80, 0xD5, 0x00, 0x00, 0x00, 0x8E]));
         Equal(1, Countˉsequence(First.Codeˉbytes, [0x66, 0x41, 0xC7, 0x80, 0xE0, 0x00, 0x00, 0x00, 0xDF, 0x00]));
         Equal(1, Countˉsequence(First.Codeˉbytes, [0xFA, 0x41, 0x0F, 0x01, 0x98, 0xE0, 0x00, 0x00, 0x00]));
-        Equal(1, Countˉsequence(First.Codeˉbytes, [0x48, 0x83, 0x3C, 0x24, 0x06]));
-        Equal(1, Countˉsequence(First.Codeˉbytes, [0x48, 0x83, 0x3C, 0x24, 0x0D]));
-        Equal(
-            Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER.Length +
-                Kernelˉexceptionˉcontract.GENERAL_PROTECTION_PANIC_MARKER.Length +
-                Kernelˉexceptionˉcontract.MALFORMED_FRAME_PANIC_MARKER.Length,
-            Countˉsequence(First.Codeˉbytes, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
-        Equal(1, Countˉsequence(
-            First.Codeˉbytes,
-            [0xBA, 0xF4, 0x00, 0x00, 0x00, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xEF, 0xFA, 0xF4, 0xE9]));
+        Equal(0, Countˉsequence(First.Codeˉbytes, [0xEC]));
+        Equal(0, Countˉsequence(First.Codeˉbytes, [0xEE]));
         Equal(0, Countˉsequence(First.Codeˉbytes, [0x0F, 0x0B]));
         Equal(0, Countˉsequence(First.Codeˉbytes, [0x48, 0xCF]));
     }
@@ -1729,9 +1715,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         Sequenceˉequal(First, Second);
-        Equal(531_968, First.Length);
+        Equal(527_872, First.Length);
         Equal(
-            "68319856b2913b3c857012d3fd38f147cf2a2307afacc9ffc8c8a33c005d0cf9",
+            "329e6ccae1189e41d6ac71b69843d70e71c19ec87f3592eee2460c13c1d0b69b",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and deliberate user-fault images are identical.");
@@ -1746,9 +1732,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(531_456, First.Length);
+        Equal(527_360, First.Length);
         Equal(
-            "b8f0e656066b1e4f28edc4124eca6eea18130a0d6c0f4a9018e8ae817a0fa985",
+            "e19480e144e7488c87ca0a14159aef118c40568630977914b16a3d790f3e2629",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -1760,9 +1746,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(531_456, First.Length);
+        Equal(527_360, First.Length);
         Equal(
-            "0322ce3d3a9fecfa5c84809d8594f4f3ea643aaff2776f8d25668f1d723b9b54",
+            "447669821f1d58b753097d5ab71450d628bddc7513268edbb3d7bf11e9a64c62",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -1784,9 +1770,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         Sequenceˉequal(First, Second);
-        Equal(531_456, First.Length);
+        Equal(527_360, First.Length);
         Equal(
-            "1a0bd9f37c595d4170bd05fe83cc05dc344d2223674a01812f253ceb77893e40",
+            "9edb691565d6f08a8a589667bea3a024f1982310566e2e3f9fdeecb3ed55927c",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -1834,11 +1820,10 @@ internal static class Program
         Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x78]));
         Equal(1, Countˉsequence(Code, [0x49, 0x8D, 0xA6, 0x00, 0x50, 0x00, 0x00]));
         Equal(9, Countˉsequence(Code, [0xFC, 0xF3, 0x48, 0xAB]));
-        Equal(
-            1 + Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER.Length +
-                Kernelˉexceptionˉcontract.GENERAL_PROTECTION_PANIC_MARKER.Length +
-                Kernelˉexceptionˉcontract.MALFORMED_FRAME_PANIC_MARKER.Length,
+        Equal(1,
             Countˉsequence(Code, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
+        Equal(1,
+            Countˉsequence(Code, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xF6, 0xC0, 0x20, 0x0F, 0x84]));
         Equal(1, Countˉsequence(
             Code,
             [0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
@@ -1889,81 +1874,49 @@ internal static class Program
         var First = Kernelˉassemblyˉshim.Buildˉobject();
         var Second = Kernelˉassemblyˉshim.Buildˉobject();
         Sequenceˉequal(First, Second);
-        Equal(1_123, First.Length);
+        Equal(1_894, First.Length);
         Equal(
-            "8a6f54950f15c7331107a5bfa7bd2d863f64b25d395b7cfd9983c31130599363",
+            "845d45d6787ec819ca300ffc81a9ffe3e86c7b3998f3dd2a50a017a353d86193",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.AsSpan()).Value;
-        Equal(1, Object.Sections.Length);
+        Equal(2, Object.Sections.Length);
         True(Object.Sections[0].Kind == Objectˉsectionˉkind.Code, "The WVA shim is not code.");
+        Equal(333u, Object.Sections[0].Memoryˉsize);
+        True(Object.Sections[1].Kind == Objectˉsectionˉkind.Readˉonlyˉdata,
+            "The WVA terminal markers are not read-only data.");
+        Equal(162u, Object.Sections[1].Memoryˉsize);
         Sequenceˉequal(
-            [(byte)0xE9, 0, 0, 0, 0, 0xE9, 0, 0, 0, 0,
-                0x68, 0x0D, 0x00, 0x00, 0x00, 0xE9, 0, 0, 0, 0,
-                0x68, 0x00, 0x00, 0x00, 0x00, 0x68, 0x06, 0x00, 0x00, 0x00,
-                0xE9, 0, 0, 0, 0,
-                0xB9, 0x80, 0x00, 0x00, 0xC0, 0x0F, 0x32, 0x0F, 0xBA, 0xE8, 0x0B,
-                0x0F, 0x30, 0x0F, 0x20, 0xC0, 0x48, 0x0F, 0xBA, 0xE8, 0x10,
-                0x0F, 0x22, 0xC0, 0xC3,
-                0x0F, 0x22, 0xD8, 0x0F, 0x20, 0xD8, 0xC3,
-                0x68, 0x0D, 0x00, 0x00, 0x00, 0xE9, 0, 0, 0, 0,
-                0x68, 0x0E, 0x00, 0x00, 0x00, 0xE9, 0, 0, 0, 0,
-                0x68, 0x00, 0x00, 0x00, 0x00, 0x68, 0x06, 0x00, 0x00, 0x00,
-                0xE9, 0, 0, 0, 0,
-                0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
-                0x66, 0xEF, 0xFA, 0xF4, 0xE9, 0, 0, 0, 0],
-            Object.Sections[0].Data);
-        Equal(14, Object.Symbols.Length);
-        Equal(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Object.Symbols[0].Name);
-        True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Export, "The WVA console shim is not exported.");
-        Equal(Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL, Object.Symbols[1].Name);
-        True(Object.Symbols[1].Binding == Objectˉsymbolˉbinding.Export, "The WVA Main shim is not exported.");
-        Equal(Kernelˉexceptionˉcontract.GENERAL_PROTECTION_ENTRY_SYMBOL, Object.Symbols[2].Name);
-        True(Object.Symbols[2].Binding == Objectˉsymbolˉbinding.Export, "The vector-13 WVA entry is not exported.");
-        Equal(10u, Object.Symbols[2].Size);
-        Equal(Kernelˉexceptionˉcontract.INVALID_OPCODE_ENTRY_SYMBOL, Object.Symbols[3].Name);
-        True(Object.Symbols[3].Binding == Objectˉsymbolˉbinding.Export, "The vector-6 WVA entry is not exported.");
-        Equal(15u, Object.Symbols[3].Size);
-        Equal(Kernelˉpagingˉcontract.PROTECTION_ENABLE_SYMBOL, Object.Symbols[4].Name);
-        True(Object.Symbols[4].Binding == Objectˉsymbolˉbinding.Export, "The page-protection shim is not exported.");
-        Equal(25u, Object.Symbols[4].Size);
-        Equal(Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL, Object.Symbols[5].Name);
-        True(Object.Symbols[5].Binding == Objectˉsymbolˉbinding.Export, "The page-table activation shim is not exported.");
-        Equal(7u, Object.Symbols[5].Size);
-        Equal(Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL, Object.Symbols[6].Name);
-        True(Object.Symbols[6].Binding == Objectˉsymbolˉbinding.Export,
-            "The process vector-13 WVA entry is not exported.");
-        Equal(10u, Object.Symbols[6].Size);
-        Equal(Kernelˉprocessˉcontract.EXCEPTION_14_ENTRY_SYMBOL, Object.Symbols[7].Name);
-        True(Object.Symbols[7].Binding == Objectˉsymbolˉbinding.Export,
-            "The process vector-14 WVA entry is not exported.");
-        Equal(10u, Object.Symbols[7].Size);
-        Equal(Kernelˉprocessˉcontract.EXCEPTION_6_ENTRY_SYMBOL, Object.Symbols[8].Name);
+            Encoding.ASCII.GetBytes(
+                Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER +
+                Kernelˉexceptionˉcontract.GENERAL_PROTECTION_PANIC_MARKER +
+                Kernelˉexceptionˉcontract.MALFORMED_FRAME_PANIC_MARKER).ToImmutableArray(),
+            Object.Sections[1].Data);
+        Equal(18, Object.Symbols.Length);
+        Equal("Windvale_kernel_x64_exception_serial_write", Object.Symbols[0].Name);
+        True(Object.Symbols[0].Binding == Objectˉsymbolˉbinding.Local,
+            "The WVA serial loop is not object-local.");
+        Equal(48u, Object.Symbols[0].Size);
+        Equal(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL, Object.Symbols[8].Name);
         True(Object.Symbols[8].Binding == Objectˉsymbolˉbinding.Export,
-            "The process vector-6 WVA entry is not exported.");
-        Equal(15u, Object.Symbols[8].Size);
-        Equal(Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL, Object.Symbols[9].Name);
-        True(Object.Symbols[9].Binding == Objectˉsymbolˉbinding.Export, "The Q35 shutdown shim is not exported.");
-        Equal(19u, Object.Symbols[9].Size);
-        Equal(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL, Object.Symbols[10].Name);
-        True(Object.Symbols[10].Binding == Objectˉsymbolˉbinding.Import,
-            "The normalized terminal handler is not imported by WVA.");
-        Equal(Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL, Object.Symbols[11].Name);
-        True(Object.Symbols[11].Binding == Objectˉsymbolˉbinding.Import,
+            "The normalized terminal handler is not WVA-owned.");
+        Equal(164u, Object.Symbols[8].Size);
+        Equal(Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL, Object.Symbols[14].Name);
+        Equal(Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL, Object.Symbols[15].Name);
+        True(Object.Symbols[15].Binding == Objectˉsymbolˉbinding.Import,
             "The process exception handler is not imported by WVA.");
-        Equal(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL, Object.Symbols[12].Name);
-        True(Object.Symbols[12].Binding == Objectˉsymbolˉbinding.Import, "The x64 byte writer is not imported by WVA.");
-        Equal(Kernelˉwvbˉadmissionˉcontract.BRIDGE_SYMBOL, Object.Symbols[13].Name);
-        True(Object.Symbols[13].Binding == Objectˉsymbolˉbinding.Import, "The WVB admission bridge is not imported by WVA.");
-        Equal(8, Object.Relocations.Length);
-        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 1, 12, -4), Object.Relocations[0]);
-        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 6, 13, -4), Object.Relocations[1]);
-        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 16, 10, -4), Object.Relocations[2]);
-        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 31, 10, -4), Object.Relocations[3]);
-        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 73, 11, -4), Object.Relocations[4]);
-        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 83, 11, -4), Object.Relocations[5]);
-        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 98, 11, -4), Object.Relocations[6]);
-        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 117, 9, -4), Object.Relocations[7]);
+        Equal(14, Object.Relocations.Length);
+        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 16, 8, -4),
+            Object.Relocations[2]);
+        Equal(new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 31, 8, -4),
+            Object.Relocations[3]);
+        Equal(3, Object.Relocations.Count(Relocation => Relocation.Symbolˉindex == 0));
+        Equal(1, Countˉsequence(Object.Sections[0].Data,
+            [0xBA, 0xFD, 0x03, 0, 0, 0xEC, 0xF6, 0xC0, 0x20, 0x0F, 0x84]));
+        Equal(1, Countˉsequence(Object.Sections[0].Data,
+            [0x8A, 0x84, 0x26, 0, 0, 0, 0, 0xEE]));
+        Equal(1, Countˉsequence(Object.Sections[0].Data,
+            [0xBA, 0xF4, 0, 0, 0, 0xB8, 1, 0, 0, 0, 0x66, 0xEF, 0xFA, 0xF4]));
     }
 
     private static void Kernelˉnativeˉprobeˉisˉportableˉandˉbounded()

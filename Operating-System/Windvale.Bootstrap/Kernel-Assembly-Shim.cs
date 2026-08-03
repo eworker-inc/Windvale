@@ -8,8 +8,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉassemblyˉcontract
 {
-    public const int FORMAT_VERSION = 8;
-    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v8";
+    public const int FORMAT_VERSION = 9;
+    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v9";
     public const string MAIN_SHIM_SYMBOL = "Windvale_kernel_wva_main";
     public const string Q35_SHUTDOWN_SYMBOL = "Windvale_kernel_x64_q35_shutdown";
     public const string X64_WRITE_BYTE_SYMBOL = "Windvale_kernel_x64_write_byte";
@@ -30,215 +30,82 @@ public static class Kernelˉassemblyˉshim
         }
 
         var Object = Objectˉcodec.Readˉandˉverify(Assembly.Objectˉbytes.AsSpan()).Value;
+        var Expectedˉmarkers = Encoding.ASCII.GetBytes(
+            Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER +
+            Kernelˉexceptionˉcontract.GENERAL_PROTECTION_PANIC_MARKER +
+            Kernelˉexceptionˉcontract.MALFORMED_FRAME_PANIC_MARKER);
+        ImmutableArray<Objectˉsymbol> Expectedˉsymbols =
+        [
+            new("Windvale_kernel_x64_exception_serial_write", Objectˉsymbolˉbinding.Local,
+                Objectˉsymbolˉkind.Function, 0, 285, 48),
+            new("Windvale_kernel_x64_general_protection_marker", Objectˉsymbolˉbinding.Local,
+                Objectˉsymbolˉkind.Data, 1, 56, 61),
+            new("Windvale_kernel_x64_invalid_opcode_marker", Objectˉsymbolˉbinding.Local,
+                Objectˉsymbolˉkind.Data, 1, 0, 56),
+            new("Windvale_kernel_x64_malformed_frame_marker", Objectˉsymbolˉbinding.Local,
+                Objectˉsymbolˉkind.Data, 1, 117, 45),
+            new(X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 0, 5),
+            new(Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 5, 5),
+            new(Kernelˉexceptionˉcontract.GENERAL_PROTECTION_ENTRY_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 10, 10),
+            new(Kernelˉexceptionˉcontract.INVALID_OPCODE_ENTRY_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 20, 15),
+            new(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 121, 164),
+            new(Kernelˉpagingˉcontract.PROTECTION_ENABLE_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 35, 25),
+            new(Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 60, 7),
+            new(Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 67, 10),
+            new(Kernelˉprocessˉcontract.EXCEPTION_14_ENTRY_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 77, 10),
+            new(Kernelˉprocessˉcontract.EXCEPTION_6_ENTRY_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 87, 15),
+            new(Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL, Objectˉsymbolˉbinding.Export,
+                Objectˉsymbolˉkind.Function, 0, 102, 19),
+            Import(Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL),
+            Import(Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL),
+            Import(Kernelˉwvbˉadmissionˉcontract.BRIDGE_SYMBOL),
+        ];
+        ImmutableArray<Objectˉrelocation> Expectedˉrelocations =
+        [
+            Relative(1, 16), Relative(6, 17), Relative(16, 8), Relative(31, 8),
+            Relative(73, 15), Relative(83, 15), Relative(98, 15), Relative(117, 14),
+            Relative(166, 2), Relative(176, 0), Relative(230, 1), Relative(240, 0),
+            Relative(252, 3), Relative(262, 0),
+        ];
+        ReadOnlySpan<byte> Serialˉwriter =
+        [
+            0xBA, 0xFD, 0x03, 0, 0, 0xEC, 0xF6, 0xC0, 0x20,
+            0x0F, 0x84, 0xF6, 0xFF, 0xFF, 0xFF,
+            0xBA, 0xF8, 0x03, 0, 0, 0x8A, 0x84, 0x26, 0, 0, 0, 0, 0xEE,
+            0x48, 0x81, 0xC6, 1, 0, 0, 0, 0x81, 0xE9, 1, 0, 0, 0,
+            0x0F, 0x85, 0xD1, 0xFF, 0xFF, 0xFF, 0xC3,
+        ];
         if (Object.Architecture != Objectˉarchitecture.X86ˉ64 ||
-            Object.Sections.Length != 1 ||
-            Object.Sections[0].Kind != Objectˉsectionˉkind.Code ||
-            Object.Sections[0].Alignment != 16 ||
-            !Object.Sections[0].Data.AsSpan().SequenceEqual(
-                new byte[] {
-                    0xE9, 0, 0, 0, 0,
-                    0xE9, 0, 0, 0, 0,
-                    0x68, 0x0D, 0x00, 0x00, 0x00,
-                    0xE9, 0, 0, 0, 0,
-                    0x68, 0x00, 0x00, 0x00, 0x00,
-                    0x68, 0x06, 0x00, 0x00, 0x00,
-                    0xE9, 0, 0, 0, 0,
-                    0xB9, 0x80, 0x00, 0x00, 0xC0,
-                    0x0F, 0x32, 0x0F, 0xBA, 0xE8, 0x0B, 0x0F, 0x30,
-                    0x0F, 0x20, 0xC0, 0x48, 0x0F, 0xBA, 0xE8, 0x10,
-                    0x0F, 0x22, 0xC0, 0xC3,
-                    0x0F, 0x22, 0xD8, 0x0F, 0x20, 0xD8, 0xC3,
-                    0x68, 0x0D, 0x00, 0x00, 0x00, 0xE9, 0, 0, 0, 0,
-                    0x68, 0x0E, 0x00, 0x00, 0x00, 0xE9, 0, 0, 0, 0,
-                    0x68, 0x00, 0x00, 0x00, 0x00, 0x68, 0x06, 0x00, 0x00, 0x00,
-                    0xE9, 0, 0, 0, 0,
-                    0xBA, 0x04, 0x06, 0x00, 0x00,
-                    0xB8, 0x00, 0x20, 0x00, 0x00,
-                    0x66, 0xEF,
-                    0xFA,
-                    0xF4,
-                    0xE9, 0, 0, 0, 0,
-                }) ||
-            Object.Symbols.Length != 14 ||
-            Object.Symbols[0] is not
+            Object.Sections.Length != 2 ||
+            Object.Sections[0] is not
             {
-                Name: X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 0,
-                Size: 5,
+                Name: ".text",
+                Kind: Objectˉsectionˉkind.Code,
+                Alignment: 16,
+                Memoryˉsize: 333,
             } ||
-            Object.Symbols[1] is not
+            Object.Sections[0].Data.Length != 333 ||
+            Object.Sections[1] is not
             {
-                Name: Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 5,
-                Size: 5,
+                Name: ".rodata",
+                Kind: Objectˉsectionˉkind.Readˉonlyˉdata,
+                Alignment: 1,
+                Memoryˉsize: 162,
             } ||
-            Object.Symbols[2] is not
-            {
-                Name: Kernelˉexceptionˉcontract.GENERAL_PROTECTION_ENTRY_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 10,
-                Size: 10,
-            } ||
-            Object.Symbols[3] is not
-            {
-                Name: Kernelˉexceptionˉcontract.INVALID_OPCODE_ENTRY_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 20,
-                Size: 15,
-            } ||
-            Object.Symbols[4] is not
-            {
-                Name: Kernelˉpagingˉcontract.PROTECTION_ENABLE_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 35,
-                Size: 25,
-            } ||
-            Object.Symbols[5] is not
-            {
-                Name: Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 60,
-                Size: 7,
-            } ||
-            Object.Symbols[6] is not
-            {
-                Name: Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 67,
-                Size: 10,
-            } ||
-            Object.Symbols[7] is not
-            {
-                Name: Kernelˉprocessˉcontract.EXCEPTION_14_ENTRY_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 77,
-                Size: 10,
-            } ||
-            Object.Symbols[8] is not
-            {
-                Name: Kernelˉprocessˉcontract.EXCEPTION_6_ENTRY_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 87,
-                Size: 15,
-            } ||
-            Object.Symbols[9] is not
-            {
-                Name: Kernelˉassemblyˉcontract.Q35_SHUTDOWN_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 102,
-                Size: 19,
-            } ||
-            Object.Symbols[10] is not
-            {
-                Name: Kernelˉexceptionˉcontract.TERMINAL_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Import,
-                Kind: Objectˉsymbolˉkind.Function,
-            } ||
-            Object.Symbols[11] is not
-            {
-                Name: Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Import,
-                Kind: Objectˉsymbolˉkind.Function,
-            } ||
-            Object.Symbols[12] is not
-            {
-                Name: Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Import,
-                Kind: Objectˉsymbolˉkind.Function,
-            } ||
-            Object.Symbols[13] is not
-            {
-                Name: Kernelˉwvbˉadmissionˉcontract.BRIDGE_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Import,
-                Kind: Objectˉsymbolˉkind.Function,
-            } ||
-            Object.Relocations.Length != 8 ||
-            Object.Relocations[0] is not
-            {
-                Kind: Objectˉrelocationˉkind.Relativeˉi32,
-                Sectionˉindex: 0,
-                Offset: 1,
-                Symbolˉindex: 12,
-                Addend: -4,
-            } ||
-            Object.Relocations[1] is not
-            {
-                Kind: Objectˉrelocationˉkind.Relativeˉi32,
-                Sectionˉindex: 0,
-                Offset: 6,
-                Symbolˉindex: 13,
-                Addend: -4,
-            } ||
-            Object.Relocations[2] is not
-            {
-                Kind: Objectˉrelocationˉkind.Relativeˉi32,
-                Sectionˉindex: 0,
-                Offset: 16,
-                Symbolˉindex: 10,
-                Addend: -4,
-            } ||
-            Object.Relocations[3] is not
-            {
-                Kind: Objectˉrelocationˉkind.Relativeˉi32,
-                Sectionˉindex: 0,
-                Offset: 31,
-                Symbolˉindex: 10,
-                Addend: -4,
-            } ||
-            Object.Relocations[4] is not
-            {
-                Kind: Objectˉrelocationˉkind.Relativeˉi32,
-                Sectionˉindex: 0,
-                Offset: 73,
-                Symbolˉindex: 11,
-                Addend: -4,
-            } ||
-            Object.Relocations[5] is not
-            {
-                Kind: Objectˉrelocationˉkind.Relativeˉi32,
-                Sectionˉindex: 0,
-                Offset: 83,
-                Symbolˉindex: 11,
-                Addend: -4,
-            } ||
-            Object.Relocations[6] is not
-            {
-                Kind: Objectˉrelocationˉkind.Relativeˉi32,
-                Sectionˉindex: 0,
-                Offset: 98,
-                Symbolˉindex: 11,
-                Addend: -4,
-            } ||
-            Object.Relocations[7] is not
-            {
-                Kind: Objectˉrelocationˉkind.Relativeˉi32,
-                Sectionˉindex: 0,
-                Offset: 117,
-                Symbolˉindex: 9,
-                Addend: -4,
-            })
+            !Object.Sections[1].Data.AsSpan().SequenceEqual(Expectedˉmarkers) ||
+            !Object.Sections[0].Data.AsSpan(285, 48).SequenceEqual(Serialˉwriter) ||
+            !Object.Symbols.AsSpan().SequenceEqual(Expectedˉsymbols.AsSpan()) ||
+            !Object.Relocations.AsSpan().SequenceEqual(Expectedˉrelocations.AsSpan()))
         {
             throw new InvalidOperationException(
                 $"The kernel WVA shim violated '{Kernelˉassemblyˉcontract.TARGET_NAME}'.");
@@ -246,6 +113,13 @@ public static class Kernelˉassemblyˉshim
 
         return Assembly.Objectˉbytes;
     }
+
+    private static Objectˉsymbol Import(string name) =>
+        new(name, Objectˉsymbolˉbinding.Import, Objectˉsymbolˉkind.Function,
+            Objectˉlimits.UNDEFINED_SECTION, 0, 0);
+
+    private static Objectˉrelocation Relative(uint offset, uint symbolˉindex) =>
+        new(Objectˉrelocationˉkind.Relativeˉi32, 0, offset, symbolˉindex, -4);
 
     private static string Loadˉsource()
     {

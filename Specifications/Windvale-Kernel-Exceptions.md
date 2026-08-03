@@ -6,6 +6,8 @@ Kernel CPU exceptions version 1 remains cross-host qualified for firmware probe 
 
 Version 2 is cross-host qualified at exact commit `12e9e2e` through the pre-paging firmware probe-20 baseline and retained unchanged through qualified probe 29. It retains vector 6, adds general protection vector 13, and moves both entry-normalization stubs into WVA while one bounded Stage 0 object still owns descriptor publication and terminal policy. [Decision 0086](../Documents/Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) and [kernel trap frame version 1](Windvale-Kernel-Trap-Frame.md) own the boundary. Probes 22 through 29 add a process-private IDT extension for vectors 6, 13, and 14 plus CPL3 containment without changing the qualified ring-0 terminal contract.
 
+Version 3 is the current locally verified candidate. It keeps descriptor publication in the bounded Stage 0 object but moves the complete common terminal handler, marker data, polled-COM1 byte loop, Q35 panic exit, and fallback halt loop into canonical WVA/WVO. WVA's typed byte/word expansion removes the former assembler blocker; [Decision 0125](../Documents/Decisions/0125-Typed-Wva-Byte-Word-And-Terminal-Migration.md) records the migration. Cross-host and pinned-QEMU requalification remain pending, so version 2 remains the latest qualified terminal evidence.
+
 CPU exceptions remain distinct from Windvale runtime traps such as `WVR3007`. Runtime traps are checked semantic results and do not raise processor faults.
 
 ## Ownership and installation
@@ -27,7 +29,7 @@ The IDT contains exactly 14 addressable 16-byte entries. Vectors other than 6 an
 
 Both 16-byte little-endian descriptors have this logical shape:
 
-| Bytes | Field | Version 2 rule |
+| Bytes | Field | Version 2/3 rule |
 | ---: | --- | --- |
 | `0..1` | Handler offset `15..0` | Low WVA-entry address bits |
 | `2..3` | Segment selector | Live ring-0 `CS`, nonzero |
@@ -44,9 +46,10 @@ Reconstructing the three offset fields yields the exact linked WVA entry target.
 `Operating-System/Kernel/X64-Kernel-Shims.wva` exports:
 
 - `Windvale_kernel_x64_exception_6_entry`, which pushes synthetic error code 0, pushes vector 6, and jumps to the common terminal handler; and
-- `Windvale_kernel_x64_exception_13_entry`, which preserves the CPU-pushed error code, pushes vector 13, and jumps to the same handler.
+- `Windvale_kernel_x64_exception_13_entry`, which preserves the CPU-pushed error code, pushes vector 13, and jumps to the same handler; and
+- `Windvale_kernel_x64_exception_terminal`, the version-3 common handler over the normalized frame.
 
-Both use WVA `push_i32`, which creates one sign-extended 64-bit stack cell in x86-64 mode. The resulting 40-byte same-privilege record is defined by [Windvale-Kernel-Trap-Frame.md](Windvale-Kernel-Trap-Frame.md). WVA owns the architecture-dependent normalization bytes; Stage 0 assembles, verifies, links, and packages them.
+Both entries use WVA `push_i32`, which creates one sign-extended 64-bit stack cell in x86-64 mode. The resulting 40-byte same-privilege record is defined by [Windvale-Kernel-Trap-Frame.md](Windvale-Kernel-Trap-Frame.md). WVA owns the architecture-dependent normalization and terminal bytes; Stage 0 assembles, verifies, links, and packages them.
 
 ## Process-private extension
 
@@ -93,18 +96,20 @@ The complete scenario-specific panic suffix and host code 3 are both required ev
 
 ## Construction, validation, and evidence
 
-The Stage 0 object exports the installer and common terminal handler, and imports the two WVA entry symbols. Its typed relocations are the only address transfer from descriptor construction to WVA. Before PE publication, focused tests lock:
+The version-3 Stage 0 object exports only the installer and imports the two WVA entry symbols. Its typed relocations are the only address transfer from descriptor construction to WVA. The WVA object exports both entries and the common terminal handler and retains its serial writer as a local function. Before PE publication, focused tests lock:
 
-- the exact WVA object architecture, code, symbols, definition offsets/sizes, `push_i32` bytes, and five relocations;
+- the exact WVA object architecture, code and read-only data, symbols, definition offsets/sizes, typed frame loads/comparisons, marker selection, byte-wide serial loop, port operations, and fourteen relocations;
 - the exception object's architecture, code section, exports, imports, two relocation fields/addends, and exact object/code identities;
 - full-page clearing, live `CS` capture, both complete gate stores, IDTR offset/limit, `CLI`, and `LIDT`;
-- normalized frame offsets and both terminal marker writers; and
+- normalized frame offsets and all three terminal markers; and
 - absence of `UD2` and `IRETQ` from the exception object itself.
 
-The qualified pre-process seam records a 620-byte WVA object with SHA-256 `4bb07c28877905de6e57d79454e33402de4ac54048d5ce09a26b49ad0d8347a5`; a 4,667-byte exception WVO with SHA-256 `49f15606d2cd41236f87e8a7a7e24a9532683ffe9d5a59795dc8084288b2f84a`; and 4,348 code bytes with SHA-256 `9307e2e9e4471d15448326ab2a86464f652fadfe60901226ef32b02e4dc9f8b9`. The installer occupies 222 bytes and the common terminal handler begins at aligned offset 224. Probe 22's expanded WVA seam is 1,123 bytes with SHA-256 `8a6f54950f15c7331107a5bfa7bd2d863f64b25d395b7cfd9983c31130599363`; the separate terminal exception object remains byte-for-byte unchanged.
+The qualified version-2 pre-process seam records a 620-byte WVA object with SHA-256 `4bb07c28877905de6e57d79454e33402de4ac54048d5ce09a26b49ad0d8347a5`; a 4,667-byte exception WVO with SHA-256 `49f15606d2cd41236f87e8a7a7e24a9532683ffe9d5a59795dc8084288b2f84a`; and 4,348 code bytes with SHA-256 `9307e2e9e4471d15448326ab2a86464f652fadfe60901226ef32b02e4dc9f8b9`. The installer occupies 222 bytes and the common terminal handler begins at aligned offset 224. Probe 22's expanded WVA seam is 1,123 bytes with SHA-256 `8a6f54950f15c7331107a5bfa7bd2d863f64b25d395b7cfd9983c31130599363`; the separate terminal exception object remains byte-for-byte unchanged in that qualified baseline.
+
+The locally verified version-3 candidate produces a 1,894-byte WVA object with SHA-256 `845d45d6787ec819ca300ffc81a9ffe3e86c7b3998f3dd2a50a017a353d86193`. It contains 333 code bytes, 162 marker bytes, an exported 164-byte terminal at code offset 121, and one 48-byte local serial writer at offset 285. The installer-only Stage 0 object is 483 bytes with SHA-256 `9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c`; its complete 222-byte code has SHA-256 `b7fd72dbc78d6f02511f9769a727421c7cb91409eef2164b4a51aced4dc2df14`.
 
 Real pinned QEMU 11.0/Q35/TCG execution passes all three scenarios: normal exits cleanly with host code 0, and both fault paths emit their exact normalized records and exit with expected host code 3. Static fixtures cannot substitute for live `CS`, `LIDT`, processor exception delivery, or the CPU-pushed vector-13 error cell.
 
 ## Limits
 
-The qualified version-2 terminal contract still provides no page-fault `CR2`, double-fault containment, IST, NMI, IRQ, PIC/APIC, interrupt enablement, register-save frame, nested-fault policy, `IRETQ`, recovery, unwinding, SMP, scheduler integration, or WVR-to-CPU mapping. Probe 29's process-private extension retains one TSS, bounded interpreter-process fault containment, and atomic post-fault cleanup of both resource aliases but no general dispatcher, page-fault policy, resumption, signal model, or process-facing exception ABI. The shared terminal handler remains Stage 0 C#-emitted machine code: expanded WVA now has comparisons, local conditional control, arithmetic immediates, and 32/64-bit indexed memory, but still lacks its byte-wide serial operations, complete terminal mechanics, specified migration boundary, and replacement evidence; system-profile `.wv` policy still requires bounded unsafe memory plus a specified kernel call convention.
+The version-3 candidate still provides no page-fault `CR2`, double-fault containment, IST, NMI, IRQ, PIC/APIC, interrupt enablement, register-save frame, nested-fault policy, `IRETQ`, recovery, unwinding, SMP, scheduler integration, or WVR-to-CPU mapping. Probe 29's process-private extension retains one TSS, bounded interpreter-process fault containment, and atomic post-fault cleanup of both resource aliases but no general dispatcher, page-fault policy, resumption, signal model, or process-facing exception ABI. Moving the bounded terminal mechanics into WVA does not move exception policy into ordinary `.wv`; that still requires bounded unsafe memory and a specified kernel call convention.

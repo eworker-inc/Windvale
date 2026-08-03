@@ -50,6 +50,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Bounded acyclic calls → real Wasm functions → one shared ABI-2 instruction budget across callees
 - ✅ Pinned generated Wasm → static JavaScript host → disposable browser worker without loading .NET
 - ✅ WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
+- 🚧 Typed byte/word WVA + exact C# differential oracle → WVA-owned exception terminal and one bounded COM1 byte loop; Windows Development passes 75/75 Seed and 25/25 OS tests, with cross-host and pinned-QEMU requalification pending
 - ✅ WVA paging mechanics → kernel-owned low-1-GiB W^X identity root
 - ✅ One embedded WVB → in-guest Windvale admission → its AOT form
 - ✅ Fixed admission → separate CPL3 root → capability-checked send/receive/exit

@@ -1,0 +1,51 @@
+windvale-assembly 1
+
+symbol local data Value in .data
+symbol export function Main in .text
+
+section code .text align 16
+define Main
+move_u8 al 255
+move_u8 spl 4
+move_u8 r15b 15
+move_u16 ax 65535
+move_u16 r12w 4660
+move al spl
+add r8b dil
+subtract ax r15w
+test r12w dx
+multiply ax r8w
+add_i8 dil -1
+test_i8 r12b 32
+compare_i16 r9w -32768
+and_i16 ax 32767
+shift_left bpl 7
+shift_right_signed r15w 15
+set_condition equal spl
+set_condition greater r14b
+zero_extend_u8 eax spl
+zero_extend_u8 r8 r15b
+zero_extend_u16 ecx r9w
+sign_extend_i8 r10d dil
+sign_extend_i16 r11 r12w
+load_u8 bl Value
+load_u8 spl Value
+load_u16 r8w Value
+store_u8 Value r15b
+store_u16 Value dx
+load_memory_u8 al rsp none 1 0
+load_memory_u8 spl r9 r10 2 -4
+store_memory_u8 r12 none 1 16 dil
+load_memory_u16 r8w rbx rsi 4 32
+store_memory_u16 r13 r14 8 -8 r15w
+in_u8
+out_u8
+return
+end define
+end section
+
+section data .data align 2
+define Value
+bytes 0 0
+end define
+end section

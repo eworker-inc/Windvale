@@ -286,7 +286,23 @@ internal static class Assemblyˉparser
                         Assemblyˉstatementˉkind.Shiftˉleft or Assemblyˉstatementˉkind.Shiftˉright or
                         Assemblyˉstatementˉkind.Shiftˉrightˉsigned or
                         Assemblyˉstatementˉkind.Loadˉmemoryˉu32 or Assemblyˉstatementˉkind.Loadˉmemoryˉu64 or
-                        Assemblyˉstatementˉkind.Storeˉmemoryˉu32 or Assemblyˉstatementˉkind.Storeˉmemoryˉu64;
+                        Assemblyˉstatementˉkind.Storeˉmemoryˉu32 or Assemblyˉstatementˉkind.Storeˉmemoryˉu64 or
+                        Assemblyˉstatementˉkind.Moveˉu8 or Assemblyˉstatementˉkind.Moveˉu16 or
+                        Assemblyˉstatementˉkind.Addˉi8 or Assemblyˉstatementˉkind.Subtractˉi8 or
+                        Assemblyˉstatementˉkind.Andˉi8 or Assemblyˉstatementˉkind.Orˉi8 or
+                        Assemblyˉstatementˉkind.Xorˉi8 or Assemblyˉstatementˉkind.Compareˉi8 or
+                        Assemblyˉstatementˉkind.Testˉi8 or Assemblyˉstatementˉkind.Addˉi16 or
+                        Assemblyˉstatementˉkind.Subtractˉi16 or Assemblyˉstatementˉkind.Andˉi16 or
+                        Assemblyˉstatementˉkind.Orˉi16 or Assemblyˉstatementˉkind.Xorˉi16 or
+                        Assemblyˉstatementˉkind.Compareˉi16 or Assemblyˉstatementˉkind.Testˉi16 or
+                        Assemblyˉstatementˉkind.Loadˉu8 or Assemblyˉstatementˉkind.Loadˉu16 or
+                        Assemblyˉstatementˉkind.Storeˉu8 or Assemblyˉstatementˉkind.Storeˉu16 or
+                        Assemblyˉstatementˉkind.Loadˉmemoryˉu8 or Assemblyˉstatementˉkind.Loadˉmemoryˉu16 or
+                        Assemblyˉstatementˉkind.Storeˉmemoryˉu8 or Assemblyˉstatementˉkind.Storeˉmemoryˉu16 or
+                        Assemblyˉstatementˉkind.Setˉcondition or Assemblyˉstatementˉkind.Zeroˉextendˉu8 or
+                        Assemblyˉstatementˉkind.Zeroˉextendˉu16 or Assemblyˉstatementˉkind.Signˉextendˉi8 or
+                        Assemblyˉstatementˉkind.Signˉextendˉi16 or Assemblyˉstatementˉkind.Inˉu8 or
+                        Assemblyˉstatementˉkind.Outˉu8;
                     var Materializedˉdataˉstatement = Statement.Kind is
                         Assemblyˉstatementˉkind.Bytes or Assemblyˉstatementˉkind.U32 or
                         Assemblyˉstatementˉkind.I32 or Assemblyˉstatementˉkind.Addressˉu32;
@@ -325,7 +341,9 @@ internal static class Assemblyˉparser
                         {
                             return Diagnostic("WVA1009", Statement.Span, $"Instruction target '{Statement.Name}' is not a function.");
                         }
-                        if (Statement.Kind is Assemblyˉstatementˉkind.Loadˉu32 or Assemblyˉstatementˉkind.Loadˉu64 or
+                        if (Statement.Kind is Assemblyˉstatementˉkind.Loadˉu8 or Assemblyˉstatementˉkind.Loadˉu16 or
+                            Assemblyˉstatementˉkind.Loadˉu32 or Assemblyˉstatementˉkind.Loadˉu64 or
+                            Assemblyˉstatementˉkind.Storeˉu8 or Assemblyˉstatementˉkind.Storeˉu16 or
                             Assemblyˉstatementˉkind.Storeˉu32 or Assemblyˉstatementˉkind.Storeˉu64 &&
                             Target.Kind != Objectˉsymbolˉkind.Data)
                         {
@@ -484,9 +502,10 @@ internal static class Assemblyˉparser
                 if (tokens.Count != 3 ||
                     !Tryˉtypedˉregister(tokens[1].Text, out var Destination) ||
                     !Tryˉtypedˉregister(tokens[2].Text, out var Source) ||
-                    Destination.Width != Source.Width)
+                    Destination.Width != Source.Width ||
+                    tokens[0].Text == "multiply" && Destination.Width == 8)
                 {
-                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires two registers of the same 32- or 64-bit width."));
+                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires two registers of the same width; multiply supports 16, 32, or 64 bits."));
                 }
                 var Registerˉkind = tokens[0].Text switch
                 {
@@ -508,7 +527,9 @@ internal static class Assemblyˉparser
             case "xor_i32":
             case "compare_i32":
             case "test_i32":
-                if (tokens.Count != 3 || !Tryˉtypedˉregister(tokens[1].Text, out var Immediateˉregister))
+                if (tokens.Count != 3 ||
+                    !Tryˉtypedˉregister(tokens[1].Text, out var Immediateˉregister) ||
+                    Immediateˉregister.Width is not (32 or 64))
                 {
                     return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires a 32- or 64-bit register and signed 32-bit immediate."));
                 }
@@ -527,6 +548,54 @@ internal static class Assemblyˉparser
                     _ => Assemblyˉstatementˉkind.Testˉi32,
                 };
                 return (new(Immediateˉkind, null, Immediate, 0, [], Span, Immediateˉregister), null);
+            case "add_i8":
+            case "subtract_i8":
+            case "and_i8":
+            case "or_i8":
+            case "xor_i8":
+            case "compare_i8":
+            case "test_i8":
+            case "add_i16":
+            case "subtract_i16":
+            case "and_i16":
+            case "or_i16":
+            case "xor_i16":
+            case "compare_i16":
+            case "test_i16":
+                var Narrowˉwidth = tokens[0].Text.EndsWith("i8", StringComparison.Ordinal) ? (byte)8 : (byte)16;
+                if (tokens.Count != 3 ||
+                    !Tryˉtypedˉregister(tokens[1].Text, out var Narrowˉimmediateˉregister) ||
+                    Narrowˉimmediateˉregister.Width != Narrowˉwidth)
+                {
+                    return (null, Diagnostic("WVA1003", Span,
+                        $"'{tokens[0].Text}' requires a {Narrowˉwidth}-bit register and signed {Narrowˉwidth}-bit immediate."));
+                }
+                if (!Tryˉi32(tokens[2].Text, out var Narrowˉimmediate) ||
+                    Narrowˉwidth == 8 && Narrowˉimmediate is < sbyte.MinValue or > sbyte.MaxValue ||
+                    Narrowˉwidth == 16 && Narrowˉimmediate is < short.MinValue or > short.MaxValue)
+                {
+                    return (null, Diagnostic("WVA1005", line, tokens[2].Column,
+                        $"Immediate is outside the i{Narrowˉwidth} range."));
+                }
+                var Narrowˉimmediateˉkind = tokens[0].Text switch
+                {
+                    "add_i8" => Assemblyˉstatementˉkind.Addˉi8,
+                    "subtract_i8" => Assemblyˉstatementˉkind.Subtractˉi8,
+                    "and_i8" => Assemblyˉstatementˉkind.Andˉi8,
+                    "or_i8" => Assemblyˉstatementˉkind.Orˉi8,
+                    "xor_i8" => Assemblyˉstatementˉkind.Xorˉi8,
+                    "compare_i8" => Assemblyˉstatementˉkind.Compareˉi8,
+                    "test_i8" => Assemblyˉstatementˉkind.Testˉi8,
+                    "add_i16" => Assemblyˉstatementˉkind.Addˉi16,
+                    "subtract_i16" => Assemblyˉstatementˉkind.Subtractˉi16,
+                    "and_i16" => Assemblyˉstatementˉkind.Andˉi16,
+                    "or_i16" => Assemblyˉstatementˉkind.Orˉi16,
+                    "xor_i16" => Assemblyˉstatementˉkind.Xorˉi16,
+                    "compare_i16" => Assemblyˉstatementˉkind.Compareˉi16,
+                    _ => Assemblyˉstatementˉkind.Testˉi16,
+                };
+                return (new(Narrowˉimmediateˉkind, null, Narrowˉimmediate, 0, [], Span,
+                    Narrowˉimmediateˉregister), null);
             case "rotate_left":
             case "rotate_right":
             case "shift_left":
@@ -534,7 +603,8 @@ internal static class Assemblyˉparser
             case "shift_right_signed":
                 if (tokens.Count != 3 || !Tryˉtypedˉregister(tokens[1].Text, out var Shiftˉregister))
                 {
-                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires a 32- or 64-bit register and count."));
+                    return (null, Diagnostic("WVA1003", Span,
+                        $"'{tokens[0].Text}' requires an 8-, 16-, 32-, or 64-bit register and count."));
                 }
                 if (!Tryˉu32(tokens[2].Text, out var Shiftˉcount) || Shiftˉcount >= Shiftˉregister.Width)
                 {
@@ -569,8 +639,16 @@ internal static class Assemblyˉparser
                 return (new(Controlˉkind, null, 0, 0, [], Span, Controlˉregister), null);
             case "load_u32":
             case "load_u64":
+            case "load_u8":
+            case "load_u16":
             case "load_address":
-                var Requiredˉloadˉwidth = tokens[0].Text == "load_u32" ? (byte)32 : (byte)64;
+                var Requiredˉloadˉwidth = tokens[0].Text switch
+                {
+                    "load_u8" => (byte)8,
+                    "load_u16" => (byte)16,
+                    "load_u32" => (byte)32,
+                    _ => (byte)64,
+                };
                 if (tokens.Count != 3 ||
                     !Tryˉtypedˉregister(tokens[1].Text, out var Loadˉregister) ||
                     Loadˉregister.Width != Requiredˉloadˉwidth ||
@@ -580,6 +658,8 @@ internal static class Assemblyˉparser
                 }
                 var Loadˉkind = tokens[0].Text switch
                 {
+                    "load_u8" => Assemblyˉstatementˉkind.Loadˉu8,
+                    "load_u16" => Assemblyˉstatementˉkind.Loadˉu16,
                     "load_u32" => Assemblyˉstatementˉkind.Loadˉu32,
                     "load_u64" => Assemblyˉstatementˉkind.Loadˉu64,
                     _ => Assemblyˉstatementˉkind.Loadˉaddress,
@@ -587,7 +667,15 @@ internal static class Assemblyˉparser
                 return (new(Loadˉkind, tokens[2].Text, 0, 0, [], Span, Loadˉregister), null);
             case "store_u32":
             case "store_u64":
-                var Requiredˉstoreˉwidth = tokens[0].Text == "store_u32" ? (byte)32 : (byte)64;
+            case "store_u8":
+            case "store_u16":
+                var Requiredˉstoreˉwidth = tokens[0].Text switch
+                {
+                    "store_u8" => (byte)8,
+                    "store_u16" => (byte)16,
+                    "store_u32" => (byte)32,
+                    _ => (byte)64,
+                };
                 if (tokens.Count != 3 ||
                     !Objectˉverifier.Isˉmachineˉname(tokens[1].Text) ||
                     !Tryˉtypedˉregister(tokens[2].Text, out var Storeˉregister) ||
@@ -595,8 +683,15 @@ internal static class Assemblyˉparser
                 {
                     return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires a symbol name and {Requiredˉstoreˉwidth}-bit register."));
                 }
+                var Storeˉkind = tokens[0].Text switch
+                {
+                    "store_u8" => Assemblyˉstatementˉkind.Storeˉu8,
+                    "store_u16" => Assemblyˉstatementˉkind.Storeˉu16,
+                    "store_u32" => Assemblyˉstatementˉkind.Storeˉu32,
+                    _ => Assemblyˉstatementˉkind.Storeˉu64,
+                };
                 return (new(
-                    tokens[0].Text == "store_u32" ? Assemblyˉstatementˉkind.Storeˉu32 : Assemblyˉstatementˉkind.Storeˉu64,
+                    Storeˉkind,
                     tokens[1].Text,
                     0,
                     0,
@@ -607,8 +702,18 @@ internal static class Assemblyˉparser
             case "load_memory_u64":
             case "store_memory_u32":
             case "store_memory_u64":
+            case "load_memory_u8":
+            case "load_memory_u16":
+            case "store_memory_u8":
+            case "store_memory_u16":
                 var Isˉmemoryˉload = tokens[0].Text.StartsWith("load_", StringComparison.Ordinal);
-                var Memoryˉwidth = tokens[0].Text.EndsWith("u32", StringComparison.Ordinal) ? (byte)32 : (byte)64;
+                var Memoryˉwidth = tokens[0].Text switch
+                {
+                    "load_memory_u8" or "store_memory_u8" => (byte)8,
+                    "load_memory_u16" or "store_memory_u16" => (byte)16,
+                    "load_memory_u32" or "store_memory_u32" => (byte)32,
+                    _ => (byte)64,
+                };
                 if (tokens.Count != 6)
                 {
                     return (null, Diagnostic("WVA1003", Span,
@@ -649,8 +754,12 @@ internal static class Assemblyˉparser
                 }
                 var Memoryˉkind = tokens[0].Text switch
                 {
+                    "load_memory_u8" => Assemblyˉstatementˉkind.Loadˉmemoryˉu8,
+                    "load_memory_u16" => Assemblyˉstatementˉkind.Loadˉmemoryˉu16,
                     "load_memory_u32" => Assemblyˉstatementˉkind.Loadˉmemoryˉu32,
                     "load_memory_u64" => Assemblyˉstatementˉkind.Loadˉmemoryˉu64,
+                    "store_memory_u8" => Assemblyˉstatementˉkind.Storeˉmemoryˉu8,
+                    "store_memory_u16" => Assemblyˉstatementˉkind.Storeˉmemoryˉu16,
                     "store_memory_u32" => Assemblyˉstatementˉkind.Storeˉmemoryˉu32,
                     _ => Assemblyˉstatementˉkind.Storeˉmemoryˉu64,
                 };
@@ -666,12 +775,48 @@ internal static class Assemblyˉparser
                     Thirdˉregister: Indexˉregister,
                     Scale: (byte)Scale,
                     Hasˉindex: Hasˉindex), null);
+            case "set_condition":
+                if (tokens.Count != 3 ||
+                    !Tryˉcondition(tokens[1].Text, out var Setˉcondition) ||
+                    !Tryˉtypedˉregister(tokens[2].Text, out var Setˉregister) ||
+                    Setˉregister.Width != 8)
+                {
+                    return (null, Diagnostic("WVA1003", Span,
+                        "'set_condition' requires a condition and 8-bit register."));
+                }
+                return (new(Assemblyˉstatementˉkind.Setˉcondition, null, 0, 0, [], Span,
+                    Setˉregister, Condition: Setˉcondition), null);
+            case "zero_extend_u8":
+            case "zero_extend_u16":
+            case "sign_extend_i8":
+            case "sign_extend_i16":
+                var Extensionˉsourceˉwidth = tokens[0].Text.EndsWith("8", StringComparison.Ordinal) ? (byte)8 : (byte)16;
+                if (tokens.Count != 3 ||
+                    !Tryˉtypedˉregister(tokens[1].Text, out var Extensionˉdestination) ||
+                    Extensionˉdestination.Width is not (32 or 64) ||
+                    !Tryˉtypedˉregister(tokens[2].Text, out var Extensionˉsource) ||
+                    Extensionˉsource.Width != Extensionˉsourceˉwidth)
+                {
+                    return (null, Diagnostic("WVA1003", Span,
+                        $"'{tokens[0].Text}' requires a 32- or 64-bit destination and {Extensionˉsourceˉwidth}-bit source."));
+                }
+                var Extensionˉkind = tokens[0].Text switch
+                {
+                    "zero_extend_u8" => Assemblyˉstatementˉkind.Zeroˉextendˉu8,
+                    "zero_extend_u16" => Assemblyˉstatementˉkind.Zeroˉextendˉu16,
+                    "sign_extend_i8" => Assemblyˉstatementˉkind.Signˉextendˉi8,
+                    _ => Assemblyˉstatementˉkind.Signˉextendˉi16,
+                };
+                return (new(Extensionˉkind, null, 0, 0, [], Span,
+                    Extensionˉdestination, Extensionˉsource), null);
             case "nop":
             case "return":
             case "trap":
             case "disable_interrupts":
             case "halt":
             case "out_u16":
+            case "in_u8":
+            case "out_u8":
             case "enable_page_protection":
             case "activate_page_table":
             case "syscall":
@@ -687,6 +832,8 @@ internal static class Assemblyˉparser
                     "disable_interrupts" => Assemblyˉstatementˉkind.Disableˉinterrupts,
                     "halt" => Assemblyˉstatementˉkind.Halt,
                     "out_u16" => Assemblyˉstatementˉkind.Outˉu16,
+                    "in_u8" => Assemblyˉstatementˉkind.Inˉu8,
+                    "out_u8" => Assemblyˉstatementˉkind.Outˉu8,
                     "enable_page_protection" => Assemblyˉstatementˉkind.Enableˉpageˉprotection,
                     "activate_page_table" => Assemblyˉstatementˉkind.Activateˉpageˉtable,
                     _ => Assemblyˉstatementˉkind.Syscall,
@@ -725,6 +872,31 @@ internal static class Assemblyˉparser
                     return (null, Diagnostic("WVA1005", line, tokens[2].Column, "Value is outside the u32 range."));
                 }
                 return (new(Assemblyˉstatementˉkind.Moveˉu32, null, Unsigned, Register, [], Span), null);
+            case "move_u8":
+            case "move_u16":
+                var Moveˉwidth = tokens[0].Text == "move_u8" ? (byte)8 : (byte)16;
+                if (tokens.Count != 3 ||
+                    !Tryˉtypedˉregister(tokens[1].Text, out var Moveˉregister) ||
+                    Moveˉregister.Width != Moveˉwidth)
+                {
+                    return (null, Diagnostic("WVA1003", Span,
+                        $"'{tokens[0].Text}' requires a {Moveˉwidth}-bit register and unsigned {Moveˉwidth}-bit integer."));
+                }
+                if (!Tryˉu32(tokens[2].Text, out var Moveˉvalue) ||
+                    Moveˉwidth == 8 && Moveˉvalue > byte.MaxValue ||
+                    Moveˉwidth == 16 && Moveˉvalue > ushort.MaxValue)
+                {
+                    return (null, Diagnostic("WVA1005", line, tokens[2].Column,
+                        $"Value is outside the u{Moveˉwidth} range."));
+                }
+                return (new(
+                    Moveˉwidth == 8 ? Assemblyˉstatementˉkind.Moveˉu8 : Assemblyˉstatementˉkind.Moveˉu16,
+                    null,
+                    Moveˉvalue,
+                    0,
+                    [],
+                    Span,
+                    Moveˉregister), null);
             case "push_i32":
                 if (tokens.Count != 2)
                 {
@@ -814,6 +986,34 @@ internal static class Assemblyˉparser
 
     private static bool Tryˉtypedˉregister(string text, out Assemblyˉregister value)
     {
+        var Registerˉ8 = text switch
+        {
+            "al" => 0, "cl" => 1, "dl" => 2, "bl" => 3,
+            "spl" => 4, "bpl" => 5, "sil" => 6, "dil" => 7,
+            "r8b" => 8, "r9b" => 9, "r10b" => 10, "r11b" => 11,
+            "r12b" => 12, "r13b" => 13, "r14b" => 14, "r15b" => 15,
+            _ => -1,
+        };
+        if (Registerˉ8 >= 0)
+        {
+            value = new((byte)Registerˉ8, 8);
+            return true;
+        }
+
+        var Registerˉ16 = text switch
+        {
+            "ax" => 0, "cx" => 1, "dx" => 2, "bx" => 3,
+            "sp" => 4, "bp" => 5, "si" => 6, "di" => 7,
+            "r8w" => 8, "r9w" => 9, "r10w" => 10, "r11w" => 11,
+            "r12w" => 12, "r13w" => 13, "r14w" => 14, "r15w" => 15,
+            _ => -1,
+        };
+        if (Registerˉ16 >= 0)
+        {
+            value = new((byte)Registerˉ16, 16);
+            return true;
+        }
+
         if (Tryˉregister(text, out var Registerˉ32))
         {
             value = new(Registerˉ32, 32);

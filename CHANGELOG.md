@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Typed WVA 8- and 16-bit register families, byte/word register and RIP/SIB-memory operations, signed width-appropriate immediates, width-bounded shifts, condition-result materialization, zero/sign extension, and byte port I/O in both the Windvale assembler and independent C# oracle, with exact-byte, differential, boundary, and malformed-input coverage.
 - Deterministic WVA signed-immediate ALU/test, signed multiply, bounded rotate/shift, and typed SIB base/index/scale/`disp32` memory operations in both the Windvale assembler and independent C# oracle.
 - An expanded WVA x86-64 foundation with typed 32/64-bit general-purpose registers, definition-local labels and deterministic near fixups, register move/ALU/compare/test operations, conditional branches, stack and indirect-control operations, and RIP-relative symbol addressing in both the Windvale assembler and independent C# oracle.
 - The [Windvale Community Source License 1.0](LICENSE), [E-Worker Inc](https://eworker.ca) stewardship, contributor agreement, and third-party notice policy.
@@ -67,6 +68,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Changed
 
+- The x86-64 kernel exception terminal, its three marker records, and its bounded polled-COM1 byte loop now assemble from canonical WVA/WVO; the Stage 0 exception object retains only checked IDT descriptor construction.
 - The Windvale-written lexer uses bounded keyword, identifier, and Unicode-whitespace dispatch while preserving the Seed lexical contract.
 - Compiler folders now describe implementation roles: `Compiler/Windvale` contains the Windvale-written compiler, while `Compiler/Reference` contains the independent C# reference/recovery compiler.
 - Assembler folders now describe implementation roles: `Assembler/Windvale` contains the Windvale-written assembler, while `Assembler/Reference` contains the independent C# Stage 0 reference/recovery assembler. Canonical WVA inputs remain under `Examples/Assembler`.

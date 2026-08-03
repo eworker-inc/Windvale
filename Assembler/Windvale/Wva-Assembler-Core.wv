@@ -642,6 +642,44 @@ fn Registerˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
     return Tokenˉequalsˉtext(Input, Value, "r15d");
 }
 
+fn Registerˉbyteˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
+    if Tokenˉequalsˉtext(Input, Value, "al") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "cl") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "dl") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "bl") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "spl") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "bpl") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "sil") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "dil") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r8b") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r9b") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r10b") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r11b") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r12b") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r13b") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r14b") { return true; }
+    return Tokenˉequalsˉtext(Input, Value, "r15b");
+}
+
+fn Registerˉwordˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
+    if Tokenˉequalsˉtext(Input, Value, "ax") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "cx") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "dx") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "bx") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "sp") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "bp") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "si") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "di") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r8w") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r9w") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r10w") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r11w") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r12w") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r13w") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r14w") { return true; }
+    return Tokenˉequalsˉtext(Input, Value, "r15w");
+}
+
 fn Registerˉwideˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
     if Tokenˉequalsˉtext(Input, Value, "rax") { return true; }
     if Tokenˉequalsˉtext(Input, Value, "rcx") { return true; }
@@ -662,6 +700,8 @@ fn Registerˉwideˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
 }
 
 fn Typedˉregisterˉwidth(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Registerˉbyteˉisˉvalid(Input, Value) { return 8u32; }
+    if Registerˉwordˉisˉvalid(Input, Value) { return 16u32; }
     if Registerˉisˉvalid(Input, Value) { return 32u32; }
     if Registerˉwideˉisˉvalid(Input, Value) { return 64u32; }
     return 0u32;
@@ -705,12 +745,52 @@ fn Memoryˉstatementˉkind(Input: bytes, Value: Wvaˉtoken) -> u32 {
     if Tokenˉequalsˉtext(Input, Value, "load_memory_u64") { return 54u32; }
     if Tokenˉequalsˉtext(Input, Value, "store_memory_u32") { return 55u32; }
     if Tokenˉequalsˉtext(Input, Value, "store_memory_u64") { return 56u32; }
+    if Tokenˉequalsˉtext(Input, Value, "load_memory_u8") { return 77u32; }
+    if Tokenˉequalsˉtext(Input, Value, "load_memory_u16") { return 78u32; }
+    if Tokenˉequalsˉtext(Input, Value, "store_memory_u8") { return 79u32; }
+    if Tokenˉequalsˉtext(Input, Value, "store_memory_u16") { return 80u32; }
     return 0u32;
+}
+
+fn Narrowˉimmediateˉstatementˉkind(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Tokenˉequalsˉtext(Input, Value, "add_i8") { return 59u32; }
+    if Tokenˉequalsˉtext(Input, Value, "subtract_i8") { return 60u32; }
+    if Tokenˉequalsˉtext(Input, Value, "and_i8") { return 61u32; }
+    if Tokenˉequalsˉtext(Input, Value, "or_i8") { return 62u32; }
+    if Tokenˉequalsˉtext(Input, Value, "xor_i8") { return 63u32; }
+    if Tokenˉequalsˉtext(Input, Value, "compare_i8") { return 64u32; }
+    if Tokenˉequalsˉtext(Input, Value, "test_i8") { return 65u32; }
+    if Tokenˉequalsˉtext(Input, Value, "add_i16") { return 66u32; }
+    if Tokenˉequalsˉtext(Input, Value, "subtract_i16") { return 67u32; }
+    if Tokenˉequalsˉtext(Input, Value, "and_i16") { return 68u32; }
+    if Tokenˉequalsˉtext(Input, Value, "or_i16") { return 69u32; }
+    if Tokenˉequalsˉtext(Input, Value, "xor_i16") { return 70u32; }
+    if Tokenˉequalsˉtext(Input, Value, "compare_i16") { return 71u32; }
+    if Tokenˉequalsˉtext(Input, Value, "test_i16") { return 72u32; }
+    return 0u32;
+}
+
+fn Memoryˉstatementˉisˉstore(Kind: u32) -> bool {
+    if Kind == 55u32 { return true; }
+    if Kind == 56u32 { return true; }
+    if Kind == 79u32 { return true; }
+    return Kind == 80u32;
+}
+
+fn Memoryˉstatementˉwidth(Kind: u32) -> u32 {
+    if Kind == 77u32 { return 8u32; }
+    if Kind == 79u32 { return 8u32; }
+    if Kind == 78u32 { return 16u32; }
+    if Kind == 80u32 { return 16u32; }
+    if Kind == 54u32 { return 64u32; }
+    if Kind == 56u32 { return 64u32; }
+    return 32u32;
 }
 
 fn Expandedˉcodeˉstatementˉisˉrecognized(Input: bytes, Value: Wvaˉtoken) -> bool {
     if Binaryˉstatementˉkind(Input, Value) != 0u32 { return true; }
     if Immediateˉstatementˉkind(Input, Value) != 0u32 { return true; }
+    if Narrowˉimmediateˉstatementˉkind(Input, Value) != 0u32 { return true; }
     if Shiftˉstatementˉkind(Input, Value) != 0u32 { return true; }
     if Memoryˉstatementˉkind(Input, Value) != 0u32 { return true; }
     if Tokenˉequalsˉtext(Input, Value, "label") { return true; }
@@ -724,6 +804,19 @@ fn Expandedˉcodeˉstatementˉisˉrecognized(Input: bytes, Value: Wvaˉtoken) ->
     if Tokenˉequalsˉtext(Input, Value, "load_u64") { return true; }
     if Tokenˉequalsˉtext(Input, Value, "store_u32") { return true; }
     if Tokenˉequalsˉtext(Input, Value, "store_u64") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "move_u8") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "move_u16") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "load_u8") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "load_u16") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "store_u8") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "store_u16") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "set_condition") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "zero_extend_u8") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "zero_extend_u16") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "sign_extend_i8") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "sign_extend_i16") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "in_u8") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "out_u8") { return true; }
     return Tokenˉequalsˉtext(Input, Value, "load_address");
 }
 
@@ -831,10 +924,15 @@ fn Statementˉsuccess(
     );
 }
 
+fn Byteˉregisterˉrequiresˉrex(Input: bytes, Value: Wvaˉtoken) -> bool {
+    if Typedˉregisterˉwidth(Input, Value) != 8u32 { return false; }
+    return Registerˉindex(Input, Value) >= 4u32;
+}
+
 fn Statementˉisˉallowed(Sectionˉkind: u32, Statementˉkind: u32) -> bool {
     if Sectionˉkind == 1u32 {
         if Statementˉkind <= 7u32 { return true; }
-        if Statementˉkind >= 13u32 { return Statementˉkind <= 56u32; }
+        if Statementˉkind >= 13u32 { return Statementˉkind <= 87u32; }
         return false;
     }
     if Sectionˉkind == 2u32 {
@@ -891,6 +989,98 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
         return Statementˉsuccess(22u32, 6u32, Reference, false, First);
     }
 
+    if Tokenˉequalsˉtext(Input, First, "in_u8") {
+        if Line.Tokens != 1u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        return Statementˉsuccess(86u32, 1u32, Reference, false, First);
+    }
+    if Tokenˉequalsˉtext(Input, First, "out_u8") {
+        if Line.Tokens != 1u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        return Statementˉsuccess(87u32, 1u32, Reference, false, First);
+    }
+
+    if Tokenˉequalsˉtext(Input, First, "move_u8") {
+        if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        let Moveˉu8ˉregister: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        if !Registerˉbyteˉisˉvalid(Input, Moveˉu8ˉregister) {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        let Moveˉu8ˉvalue: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+        let Moveˉu8ˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Moveˉu8ˉvalue);
+        if !Moveˉu8ˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu8ˉvalue); }
+        if Moveˉu8ˉparsed.Value > 255u32 {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu8ˉvalue);
+        }
+        Size = 2u32;
+        if Byteˉregisterˉrequiresˉrex(Input, Moveˉu8ˉregister) { Size = 3u32; }
+        return Statementˉsuccess(57u32, Size, Reference, false, First);
+    }
+    if Tokenˉequalsˉtext(Input, First, "move_u16") {
+        if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        let Moveˉu16ˉregister: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        if !Registerˉwordˉisˉvalid(Input, Moveˉu16ˉregister) {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        let Moveˉu16ˉvalue: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+        let Moveˉu16ˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Moveˉu16ˉvalue);
+        if !Moveˉu16ˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu16ˉvalue); }
+        if Moveˉu16ˉparsed.Value > 65535u32 {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu16ˉvalue);
+        }
+        Size = 4u32;
+        if Registerˉindex(Input, Moveˉu16ˉregister) >= 8u32 { Size = 5u32; }
+        return Statementˉsuccess(58u32, Size, Reference, false, First);
+    }
+
+    if Tokenˉequalsˉtext(Input, First, "set_condition") {
+        if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        let Setˉcondition: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        let Setˉregister: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+        if Conditionˉtag(Input, Setˉcondition) > 15u32 {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        if !Registerˉbyteˉisˉvalid(Input, Setˉregister) {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        Size = 3u32;
+        if Byteˉregisterˉrequiresˉrex(Input, Setˉregister) { Size = 4u32; }
+        return Statementˉsuccess(81u32, Size, Reference, false, First);
+    }
+
+    var Extensionˉkind: u32 = 0u32;
+    if Tokenˉequalsˉtext(Input, First, "zero_extend_u8") { Extensionˉkind = 82u32; }
+    if Tokenˉequalsˉtext(Input, First, "zero_extend_u16") { Extensionˉkind = 83u32; }
+    if Tokenˉequalsˉtext(Input, First, "sign_extend_i8") { Extensionˉkind = 84u32; }
+    if Tokenˉequalsˉtext(Input, First, "sign_extend_i16") { Extensionˉkind = 85u32; }
+    if Extensionˉkind != 0u32 {
+        if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        let Extensionˉdestination: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        let Extensionˉsource: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+        let Extensionˉdestinationˉwidth: u32 = Typedˉregisterˉwidth(Input, Extensionˉdestination);
+        if Extensionˉdestinationˉwidth != 32u32 {
+            if Extensionˉdestinationˉwidth != 64u32 {
+                return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+            }
+        }
+        var Extensionˉsourceˉwidth: u32 = 8u32;
+        if Extensionˉkind == 83u32 { Extensionˉsourceˉwidth = 16u32; }
+        if Extensionˉkind == 85u32 { Extensionˉsourceˉwidth = 16u32; }
+        if Typedˉregisterˉwidth(Input, Extensionˉsource) != Extensionˉsourceˉwidth {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        Size = 3u32;
+        if Extensionˉdestinationˉwidth == 64u32 { Size = 4u32; }
+        else {
+            if Registerˉindex(Input, Extensionˉdestination) >= 8u32 { Size = 4u32; }
+            else {
+                if Registerˉindex(Input, Extensionˉsource) >= 8u32 { Size = 4u32; }
+                else {
+                    if Byteˉregisterˉrequiresˉrex(Input, Extensionˉsource) { Size = 4u32; }
+                }
+            }
+        }
+        return Statementˉsuccess(Extensionˉkind, Size, Reference, false, First);
+    }
+
     let Binaryˉkind: u32 = Binaryˉstatementˉkind(Input, First);
     if Binaryˉkind != 0u32 {
         if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
@@ -900,13 +1090,25 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
         let Sourceˉwidth: u32 = Typedˉregisterˉwidth(Input, Source);
         if Destinationˉwidth == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
         if Destinationˉwidth != Sourceˉwidth { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        if Binaryˉkind == 40u32 {
+            if Destinationˉwidth == 8u32 {
+                return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+            }
+        }
         Size = 2u32;
         if Binaryˉkind == 40u32 { Size = 3u32; }
+        if Destinationˉwidth == 16u32 { Size = Size + 1u32; }
         if Destinationˉwidth == 64u32 { Size = Size + 1u32; }
         else {
             if Registerˉindex(Input, Destination) >= 8u32 { Size = Size + 1u32; }
             else {
                 if Registerˉindex(Input, Source) >= 8u32 { Size = Size + 1u32; }
+                else {
+                    if Byteˉregisterˉrequiresˉrex(Input, Destination) { Size = Size + 1u32; }
+                    else {
+                        if Byteˉregisterˉrequiresˉrex(Input, Source) { Size = Size + 1u32; }
+                    }
+                }
             }
         }
         return Statementˉsuccess(Binaryˉkind, Size, Reference, false, First);
@@ -917,7 +1119,11 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
         if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
         let Immediateˉregister: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
         let Immediateˉwidth: u32 = Typedˉregisterˉwidth(Input, Immediateˉregister);
-        if Immediateˉwidth == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        if Immediateˉwidth != 32u32 {
+            if Immediateˉwidth != 64u32 {
+                return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+            }
+        }
         let Immediateˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
         let Immediateˉparsed: Wvaˉi32ˉparse = Parseˉi32(Input, Immediateˉtoken);
         if !Immediateˉparsed.Valid {
@@ -929,6 +1135,32 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
             if Registerˉindex(Input, Immediateˉregister) >= 8u32 { Size = 7u32; }
         }
         return Statementˉsuccess(Immediateˉkind, Size, Reference, false, First);
+    }
+
+    let Narrowˉimmediateˉkind: u32 = Narrowˉimmediateˉstatementˉkind(Input, First);
+    if Narrowˉimmediateˉkind != 0u32 {
+        if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        let Narrowˉregister: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        var Narrowˉwidth: u32 = 8u32;
+        if Narrowˉimmediateˉkind >= 66u32 { Narrowˉwidth = 16u32; }
+        if Typedˉregisterˉwidth(Input, Narrowˉregister) != Narrowˉwidth {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        let Narrowˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+        let Narrowˉparsed: Wvaˉi32ˉparse = Parseˉi32(Input, Narrowˉtoken);
+        if !Narrowˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Narrowˉtoken); }
+        if Narrowˉwidth == 8u32 {
+            if Narrowˉparsed.Value < -128 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Narrowˉtoken); }
+            if Narrowˉparsed.Value > 127 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Narrowˉtoken); }
+            Size = 3u32;
+            if Byteˉregisterˉrequiresˉrex(Input, Narrowˉregister) { Size = 4u32; }
+        } else {
+            if Narrowˉparsed.Value < -32768 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Narrowˉtoken); }
+            if Narrowˉparsed.Value > 32767 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Narrowˉtoken); }
+            Size = 5u32;
+            if Registerˉindex(Input, Narrowˉregister) >= 8u32 { Size = 6u32; }
+        }
+        return Statementˉsuccess(Narrowˉimmediateˉkind, Size, Reference, false, First);
     }
 
     let Shiftˉkind: u32 = Shiftˉstatementˉkind(Input, First);
@@ -944,9 +1176,13 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Shiftˉtoken);
         }
         Size = 3u32;
+        if Shiftˉwidth == 16u32 { Size = 4u32; }
         if Shiftˉwidth == 64u32 { Size = 4u32; }
         else {
-            if Registerˉindex(Input, Shiftˉregister) >= 8u32 { Size = 4u32; }
+            if Registerˉindex(Input, Shiftˉregister) >= 8u32 { Size = Size + 1u32; }
+            else {
+                if Byteˉregisterˉrequiresˉrex(Input, Shiftˉregister) { Size = Size + 1u32; }
+            }
         }
         return Statementˉsuccess(Shiftˉkind, Size, Reference, false, First);
     }
@@ -959,16 +1195,14 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
         var Indexˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 3u32);
         var Scaleˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 4u32);
         var Displacementˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 5u32);
-        if Memoryˉkind >= 55u32 {
+        if Memoryˉstatementˉisˉstore(Memoryˉkind) {
             Baseˉtoken = Lineˉtoken(Input, Line, 1u32);
             Indexˉtoken = Lineˉtoken(Input, Line, 2u32);
             Scaleˉtoken = Lineˉtoken(Input, Line, 3u32);
             Displacementˉtoken = Lineˉtoken(Input, Line, 4u32);
             Valueˉtoken = Lineˉtoken(Input, Line, 5u32);
         }
-        var Memoryˉwidth: u32 = 32u32;
-        if Memoryˉkind == 54u32 { Memoryˉwidth = 64u32; }
-        if Memoryˉkind == 56u32 { Memoryˉwidth = 64u32; }
+        let Memoryˉwidth: u32 = Memoryˉstatementˉwidth(Memoryˉkind);
         if Typedˉregisterˉwidth(Input, Valueˉtoken) != Memoryˉwidth {
             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, Valueˉtoken);
         }
@@ -1005,14 +1239,20 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Displacementˉtoken);
         }
         Size = 7u32;
+        if Memoryˉwidth == 16u32 { Size = 8u32; }
         if Memoryˉwidth == 64u32 { Size = 8u32; }
         else {
-            if Registerˉindex(Input, Valueˉtoken) >= 8u32 { Size = 8u32; }
+            if Registerˉindex(Input, Valueˉtoken) >= 8u32 { Size = Size + 1u32; }
             else {
-                if Registerˉindex(Input, Baseˉtoken) >= 8u32 { Size = 8u32; }
+                if Registerˉindex(Input, Baseˉtoken) >= 8u32 { Size = Size + 1u32; }
                 else {
                     if Hasˉindex {
-                        if Registerˉindex(Input, Indexˉtoken) >= 8u32 { Size = 8u32; }
+                        if Registerˉindex(Input, Indexˉtoken) >= 8u32 { Size = Size + 1u32; }
+                        else {
+                            if Byteˉregisterˉrequiresˉrex(Input, Valueˉtoken) { Size = Size + 1u32; }
+                        }
+                    } else {
+                        if Byteˉregisterˉrequiresˉrex(Input, Valueˉtoken) { Size = Size + 1u32; }
                     }
                 }
             }
@@ -1043,6 +1283,10 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
     if Tokenˉequalsˉtext(Input, First, "store_u32") { Ripˉkind = 37u32; }
     if Tokenˉequalsˉtext(Input, First, "store_u64") { Ripˉkind = 38u32; }
     if Tokenˉequalsˉtext(Input, First, "load_address") { Ripˉkind = 39u32; }
+    if Tokenˉequalsˉtext(Input, First, "load_u8") { Ripˉkind = 73u32; }
+    if Tokenˉequalsˉtext(Input, First, "load_u16") { Ripˉkind = 74u32; }
+    if Tokenˉequalsˉtext(Input, First, "store_u8") { Ripˉkind = 75u32; }
+    if Tokenˉequalsˉtext(Input, First, "store_u16") { Ripˉkind = 76u32; }
     if Ripˉkind != 0u32 {
         if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
         var Ripˉregister: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
@@ -1051,11 +1295,23 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
         if Ripˉkind == 36u32 { Requiredˉwidth = 64u32; }
         if Ripˉkind == 38u32 { Requiredˉwidth = 64u32; }
         if Ripˉkind == 39u32 { Requiredˉwidth = 64u32; }
+        if Ripˉkind == 73u32 { Requiredˉwidth = 8u32; }
+        if Ripˉkind == 74u32 { Requiredˉwidth = 16u32; }
+        if Ripˉkind == 75u32 { Requiredˉwidth = 8u32; }
+        if Ripˉkind == 76u32 { Requiredˉwidth = 16u32; }
         if Ripˉkind == 37u32 {
             Reference = Lineˉtoken(Input, Line, 1u32);
             Ripˉregister = Lineˉtoken(Input, Line, 2u32);
         }
         if Ripˉkind == 38u32 {
+            Reference = Lineˉtoken(Input, Line, 1u32);
+            Ripˉregister = Lineˉtoken(Input, Line, 2u32);
+        }
+        if Ripˉkind == 75u32 {
+            Reference = Lineˉtoken(Input, Line, 1u32);
+            Ripˉregister = Lineˉtoken(Input, Line, 2u32);
+        }
+        if Ripˉkind == 76u32 {
             Reference = Lineˉtoken(Input, Line, 1u32);
             Ripˉregister = Lineˉtoken(Input, Line, 2u32);
         }
@@ -1066,8 +1322,14 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
         }
         Size = 6u32;
+        if Requiredˉwidth == 16u32 { Size = 7u32; }
         if Requiredˉwidth == 64u32 { Size = 7u32; }
-        if Registerˉindex(Input, Ripˉregister) >= 8u32 { Size = 7u32; }
+        else {
+            if Registerˉindex(Input, Ripˉregister) >= 8u32 { Size = Size + 1u32; }
+            else {
+                if Byteˉregisterˉrequiresˉrex(Input, Ripˉregister) { Size = Size + 1u32; }
+            }
+        }
         return Statementˉsuccess(Ripˉkind, Size, Reference, true, First);
     }
 
@@ -2541,34 +2803,64 @@ fn Encodeˉwvoˉheader(
 }
 
 fn Registerˉindex(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Tokenˉequalsˉtext(Input, Value, "al") { return 0u32; }
+    if Tokenˉequalsˉtext(Input, Value, "ax") { return 0u32; }
     if Tokenˉequalsˉtext(Input, Value, "eax") { return 0u32; }
     if Tokenˉequalsˉtext(Input, Value, "rax") { return 0u32; }
+    if Tokenˉequalsˉtext(Input, Value, "cl") { return 1u32; }
+    if Tokenˉequalsˉtext(Input, Value, "cx") { return 1u32; }
     if Tokenˉequalsˉtext(Input, Value, "ecx") { return 1u32; }
     if Tokenˉequalsˉtext(Input, Value, "rcx") { return 1u32; }
+    if Tokenˉequalsˉtext(Input, Value, "dl") { return 2u32; }
+    if Tokenˉequalsˉtext(Input, Value, "dx") { return 2u32; }
     if Tokenˉequalsˉtext(Input, Value, "edx") { return 2u32; }
     if Tokenˉequalsˉtext(Input, Value, "rdx") { return 2u32; }
+    if Tokenˉequalsˉtext(Input, Value, "bl") { return 3u32; }
+    if Tokenˉequalsˉtext(Input, Value, "bx") { return 3u32; }
     if Tokenˉequalsˉtext(Input, Value, "ebx") { return 3u32; }
     if Tokenˉequalsˉtext(Input, Value, "rbx") { return 3u32; }
+    if Tokenˉequalsˉtext(Input, Value, "spl") { return 4u32; }
+    if Tokenˉequalsˉtext(Input, Value, "sp") { return 4u32; }
     if Tokenˉequalsˉtext(Input, Value, "esp") { return 4u32; }
     if Tokenˉequalsˉtext(Input, Value, "rsp") { return 4u32; }
+    if Tokenˉequalsˉtext(Input, Value, "bpl") { return 5u32; }
+    if Tokenˉequalsˉtext(Input, Value, "bp") { return 5u32; }
     if Tokenˉequalsˉtext(Input, Value, "ebp") { return 5u32; }
     if Tokenˉequalsˉtext(Input, Value, "rbp") { return 5u32; }
+    if Tokenˉequalsˉtext(Input, Value, "sil") { return 6u32; }
+    if Tokenˉequalsˉtext(Input, Value, "si") { return 6u32; }
     if Tokenˉequalsˉtext(Input, Value, "esi") { return 6u32; }
     if Tokenˉequalsˉtext(Input, Value, "rsi") { return 6u32; }
+    if Tokenˉequalsˉtext(Input, Value, "dil") { return 7u32; }
+    if Tokenˉequalsˉtext(Input, Value, "di") { return 7u32; }
     if Tokenˉequalsˉtext(Input, Value, "edi") { return 7u32; }
     if Tokenˉequalsˉtext(Input, Value, "rdi") { return 7u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r8b") { return 8u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r8w") { return 8u32; }
     if Tokenˉequalsˉtext(Input, Value, "r8d") { return 8u32; }
     if Tokenˉequalsˉtext(Input, Value, "r8") { return 8u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r9b") { return 9u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r9w") { return 9u32; }
     if Tokenˉequalsˉtext(Input, Value, "r9d") { return 9u32; }
     if Tokenˉequalsˉtext(Input, Value, "r9") { return 9u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r10b") { return 10u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r10w") { return 10u32; }
     if Tokenˉequalsˉtext(Input, Value, "r10d") { return 10u32; }
     if Tokenˉequalsˉtext(Input, Value, "r10") { return 10u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r11b") { return 11u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r11w") { return 11u32; }
     if Tokenˉequalsˉtext(Input, Value, "r11d") { return 11u32; }
     if Tokenˉequalsˉtext(Input, Value, "r11") { return 11u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r12b") { return 12u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r12w") { return 12u32; }
     if Tokenˉequalsˉtext(Input, Value, "r12d") { return 12u32; }
     if Tokenˉequalsˉtext(Input, Value, "r12") { return 12u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r13b") { return 13u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r13w") { return 13u32; }
     if Tokenˉequalsˉtext(Input, Value, "r13d") { return 13u32; }
     if Tokenˉequalsˉtext(Input, Value, "r13") { return 13u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r14b") { return 14u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r14w") { return 14u32; }
     if Tokenˉequalsˉtext(Input, Value, "r14d") { return 14u32; }
     if Tokenˉequalsˉtext(Input, Value, "r14") { return 14u32; }
     return 15u32;
@@ -2595,6 +2887,32 @@ fn Encodeˉrex(Width: u32, Register: u32, Index: u32, Memory: u32) -> bytes {
     return Singleˉbyte(Value);
 }
 
+fn Encodeˉrexˉforced(
+    Width: u32,
+    Register: u32,
+    Index: u32,
+    Memory: u32,
+    Force: bool
+) -> bytes {
+    let Result: bytes = Encodeˉrex(Width, Register, Index, Memory);
+    if !Force { return Result; }
+    if Bytesˉlength(Result) != 0u32 { return Result; }
+    return Singleˉbyte(64u32);
+}
+
+fn Encodeˉoperandˉprefix(Width: u32) -> bytes {
+    if Width == 16u32 { return Singleˉbyte(102u32); }
+    return Emptyˉbytes;
+}
+
+fn Bytesˉfromˉi8ˉlittle(Value: i32) -> bytes {
+    return Bytesˉslice(Bytesˉfromˉi32ˉlittle(Value), 0u32, 1u32);
+}
+
+fn Bytesˉfromˉi16ˉlittle(Value: i32) -> bytes {
+    return Bytesˉslice(Bytesˉfromˉi32ˉlittle(Value), 0u32, 2u32);
+}
+
 fn Encodeˉmodrm(Register: u32, Memory: u32) -> bytes {
     return Singleˉbyte(
         192u32 + Registerˉlowˉindex(Register) * 8u32 + Registerˉlowˉindex(Memory)
@@ -2611,11 +2929,23 @@ fn Encodeˉmemoryˉmodrm(Register: u32) -> bytes {
 
 fn Immediateˉgroup(Kind: u32) -> u32 {
     if Kind == 41u32 { return 0u32; }
+    if Kind == 59u32 { return 0u32; }
+    if Kind == 66u32 { return 0u32; }
     if Kind == 42u32 { return 5u32; }
+    if Kind == 60u32 { return 5u32; }
+    if Kind == 67u32 { return 5u32; }
     if Kind == 43u32 { return 4u32; }
+    if Kind == 61u32 { return 4u32; }
+    if Kind == 68u32 { return 4u32; }
     if Kind == 44u32 { return 1u32; }
+    if Kind == 62u32 { return 1u32; }
+    if Kind == 69u32 { return 1u32; }
     if Kind == 45u32 { return 6u32; }
+    if Kind == 63u32 { return 6u32; }
+    if Kind == 70u32 { return 6u32; }
     if Kind == 46u32 { return 7u32; }
+    if Kind == 64u32 { return 7u32; }
+    if Kind == 71u32 { return 7u32; }
     return 0u32;
 }
 
@@ -2659,6 +2989,8 @@ fn Encodeˉstatement(
     Definitionˉoffset: u32
 ) -> bytes {
     let Statement: Wvaˉstatementˉcheck = Checkˉstatement(Input, Line, Sectionˉkind);
+    if Statement.Kind == 86u32 { return Singleˉbyte(236u32); }
+    if Statement.Kind == 87u32 { return Singleˉbyte(238u32); }
     if Statement.Kind == 1u32 { return Singleˉbyte(144u32); }
     if Statement.Kind == 2u32 { return Singleˉbyte(195u32); }
     if Statement.Kind == 3u32 { return Singleˉbyte(204u32); }
@@ -2779,8 +3111,22 @@ fn Encodeˉstatement(
             let Destinationˉindex: u32 = Registerˉindex(Input, Destination);
             let Sourceˉindex: u32 = Registerˉindex(Input, Source);
             let Width: u32 = Typedˉregisterˉwidth(Input, Destination);
-            var Binaryˉbytes: bytes = Encodeˉrex(Width, Sourceˉindex, 0u32, Destinationˉindex);
-            Binaryˉbytes = Appendˉbytes(Binaryˉbytes, Singleˉbyte(Binaryˉopcode(Statement.Kind)));
+            var Binaryˉbytes: bytes = Encodeˉoperandˉprefix(Width);
+            var Binaryˉforceˉrex: bool = Byteˉregisterˉrequiresˉrex(Input, Destination);
+            if Byteˉregisterˉrequiresˉrex(Input, Source) { Binaryˉforceˉrex = true; }
+            Binaryˉbytes = Appendˉbytes(
+                Binaryˉbytes,
+                Encodeˉrexˉforced(
+                    Width,
+                    Sourceˉindex,
+                    0u32,
+                    Destinationˉindex,
+                    Binaryˉforceˉrex
+                )
+            );
+            var Binaryˉoperation: u32 = Binaryˉopcode(Statement.Kind);
+            if Width == 8u32 { Binaryˉoperation = Binaryˉoperation - 1u32; }
+            Binaryˉbytes = Appendˉbytes(Binaryˉbytes, Singleˉbyte(Binaryˉoperation));
             return Appendˉbytes(Binaryˉbytes, Encodeˉmodrm(Sourceˉindex, Destinationˉindex));
         }
     }
@@ -2836,11 +3182,15 @@ fn Encodeˉstatement(
         let Multiplyˉdestination: u32 = Registerˉindex(Input, Multiplyˉdestinationˉtoken);
         let Multiplyˉsource: u32 = Registerˉindex(Input, Multiplyˉsourceˉtoken);
         let Multiplyˉwidth: u32 = Typedˉregisterˉwidth(Input, Multiplyˉdestinationˉtoken);
-        var Multiplyˉbytes: bytes = Encodeˉrex(
-            Multiplyˉwidth,
-            Multiplyˉdestination,
-            0u32,
-            Multiplyˉsource
+        var Multiplyˉbytes: bytes = Encodeˉoperandˉprefix(Multiplyˉwidth);
+        Multiplyˉbytes = Appendˉbytes(
+            Multiplyˉbytes,
+            Encodeˉrex(
+                Multiplyˉwidth,
+                Multiplyˉdestination,
+                0u32,
+                Multiplyˉsource
+            )
         );
         Multiplyˉbytes = Appendˉbytes(Multiplyˉbytes, Singleˉbyte(15u32));
         Multiplyˉbytes = Appendˉbytes(Multiplyˉbytes, Singleˉbyte(175u32));
@@ -2886,8 +3236,20 @@ fn Encodeˉstatement(
                 Input,
                 Lineˉtoken(Input, Line, 2u32)
             );
-            var Shiftˉbytes: bytes = Encodeˉrex(Shiftˉwidth, 0u32, 0u32, Shiftˉregister);
-            Shiftˉbytes = Appendˉbytes(Shiftˉbytes, Singleˉbyte(193u32));
+            var Shiftˉbytes: bytes = Encodeˉoperandˉprefix(Shiftˉwidth);
+            Shiftˉbytes = Appendˉbytes(
+                Shiftˉbytes,
+                Encodeˉrexˉforced(
+                    Shiftˉwidth,
+                    0u32,
+                    0u32,
+                    Shiftˉregister,
+                    Byteˉregisterˉrequiresˉrex(Input, Shiftˉregisterˉtoken)
+                )
+            );
+            var Shiftˉopcode: u32 = 193u32;
+            if Shiftˉwidth == 8u32 { Shiftˉopcode = 192u32; }
+            Shiftˉbytes = Appendˉbytes(Shiftˉbytes, Singleˉbyte(Shiftˉopcode));
             Shiftˉbytes = Appendˉbytes(
                 Shiftˉbytes,
                 Encodeˉmodrm(Shiftˉgroup(Statement.Kind), Shiftˉregister)
@@ -2895,14 +3257,176 @@ fn Encodeˉstatement(
             return Appendˉbytes(Shiftˉbytes, Singleˉbyte(Shiftˉparsed.Value));
         }
     }
-    if Statement.Kind >= 53u32 {
-        if Statement.Kind <= 56u32 {
+    if Statement.Kind == 57u32 {
+        let Moveˉu8ˉregisterˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        let Moveˉu8ˉregister: u32 = Registerˉindex(Input, Moveˉu8ˉregisterˉtoken);
+        let Moveˉu8ˉvalue: Foundationˉu32ˉparse = Parseˉu32(
+            Input,
+            Lineˉtoken(Input, Line, 2u32)
+        );
+        var Moveˉu8ˉbytes: bytes = Encodeˉrexˉforced(
+            8u32,
+            0u32,
+            0u32,
+            Moveˉu8ˉregister,
+            Byteˉregisterˉrequiresˉrex(Input, Moveˉu8ˉregisterˉtoken)
+        );
+        Moveˉu8ˉbytes = Appendˉbytes(
+            Moveˉu8ˉbytes,
+            Singleˉbyte(176u32 + Registerˉlowˉindex(Moveˉu8ˉregister))
+        );
+        return Appendˉbytes(Moveˉu8ˉbytes, Singleˉbyte(Moveˉu8ˉvalue.Value));
+    }
+    if Statement.Kind == 58u32 {
+        let Moveˉu16ˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
+        let Moveˉu16ˉvalue: Foundationˉu32ˉparse = Parseˉu32(
+            Input,
+            Lineˉtoken(Input, Line, 2u32)
+        );
+        var Moveˉu16ˉbytes: bytes = Singleˉbyte(102u32);
+        Moveˉu16ˉbytes = Appendˉbytes(
+            Moveˉu16ˉbytes,
+            Encodeˉrex(16u32, 0u32, 0u32, Moveˉu16ˉregister)
+        );
+        Moveˉu16ˉbytes = Appendˉbytes(
+            Moveˉu16ˉbytes,
+            Singleˉbyte(184u32 + Registerˉlowˉindex(Moveˉu16ˉregister))
+        );
+        return Appendˉbytes(Moveˉu16ˉbytes, Bytesˉfromˉu16ˉlittle(Moveˉu16ˉvalue.Value));
+    }
+    if Statement.Kind >= 59u32 {
+        if Statement.Kind <= 72u32 {
+            let Narrowˉregisterˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+            let Narrowˉregister: u32 = Registerˉindex(Input, Narrowˉregisterˉtoken);
+            var Narrowˉwidth: u32 = 8u32;
+            if Statement.Kind >= 66u32 { Narrowˉwidth = 16u32; }
+            let Narrowˉimmediate: Wvaˉi32ˉparse = Parseˉi32(
+                Input,
+                Lineˉtoken(Input, Line, 2u32)
+            );
+            var Narrowˉbytes: bytes = Encodeˉoperandˉprefix(Narrowˉwidth);
+            Narrowˉbytes = Appendˉbytes(
+                Narrowˉbytes,
+                Encodeˉrexˉforced(
+                    Narrowˉwidth,
+                    0u32,
+                    0u32,
+                    Narrowˉregister,
+                    Byteˉregisterˉrequiresˉrex(Input, Narrowˉregisterˉtoken)
+                )
+            );
+            var Narrowˉopcode: u32 = 128u32;
+            if Statement.Kind == 65u32 { Narrowˉopcode = 246u32; }
+            if Narrowˉwidth == 16u32 {
+                Narrowˉopcode = 129u32;
+                if Statement.Kind == 72u32 { Narrowˉopcode = 247u32; }
+            }
+            Narrowˉbytes = Appendˉbytes(Narrowˉbytes, Singleˉbyte(Narrowˉopcode));
+            Narrowˉbytes = Appendˉbytes(
+                Narrowˉbytes,
+                Encodeˉmodrm(Immediateˉgroup(Statement.Kind), Narrowˉregister)
+            );
+            if Narrowˉwidth == 8u32 {
+                return Appendˉbytes(
+                    Narrowˉbytes,
+                    Bytesˉfromˉi8ˉlittle(Narrowˉimmediate.Value)
+                );
+            }
+            return Appendˉbytes(
+                Narrowˉbytes,
+                Bytesˉfromˉi16ˉlittle(Narrowˉimmediate.Value)
+            );
+        }
+    }
+    if Statement.Kind >= 73u32 {
+        if Statement.Kind <= 76u32 {
+            var Narrowˉripˉregisterˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+            if Statement.Kind >= 75u32 {
+                Narrowˉripˉregisterˉtoken = Lineˉtoken(Input, Line, 2u32);
+            }
+            let Narrowˉripˉregister: u32 = Registerˉindex(Input, Narrowˉripˉregisterˉtoken);
+            var Narrowˉripˉwidth: u32 = 8u32;
+            if Statement.Kind == 74u32 { Narrowˉripˉwidth = 16u32; }
+            if Statement.Kind == 76u32 { Narrowˉripˉwidth = 16u32; }
+            var Narrowˉripˉbytes: bytes = Encodeˉoperandˉprefix(Narrowˉripˉwidth);
+            Narrowˉripˉbytes = Appendˉbytes(
+                Narrowˉripˉbytes,
+                Encodeˉrexˉforced(
+                    Narrowˉripˉwidth,
+                    Narrowˉripˉregister,
+                    0u32,
+                    0u32,
+                    Byteˉregisterˉrequiresˉrex(Input, Narrowˉripˉregisterˉtoken)
+                )
+            );
+            var Narrowˉripˉopcode: u32 = 138u32;
+            if Statement.Kind == 74u32 { Narrowˉripˉopcode = 139u32; }
+            if Statement.Kind == 75u32 { Narrowˉripˉopcode = 136u32; }
+            if Statement.Kind == 76u32 { Narrowˉripˉopcode = 137u32; }
+            Narrowˉripˉbytes = Appendˉbytes(
+                Narrowˉripˉbytes,
+                Singleˉbyte(Narrowˉripˉopcode)
+            );
+            Narrowˉripˉbytes = Appendˉbytes(
+                Narrowˉripˉbytes,
+                Encodeˉripˉmodrm(Narrowˉripˉregister)
+            );
+            return Appendˉbytes(Narrowˉripˉbytes, Bytesˉfromˉu32ˉlittle(0u32));
+        }
+    }
+    if Statement.Kind == 81u32 {
+        let Setˉregisterˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+        let Setˉregister: u32 = Registerˉindex(Input, Setˉregisterˉtoken);
+        var Setˉbytes: bytes = Encodeˉrexˉforced(
+            8u32,
+            0u32,
+            0u32,
+            Setˉregister,
+            Byteˉregisterˉrequiresˉrex(Input, Setˉregisterˉtoken)
+        );
+        Setˉbytes = Appendˉbytes(Setˉbytes, Singleˉbyte(15u32));
+        Setˉbytes = Appendˉbytes(
+            Setˉbytes,
+            Singleˉbyte(144u32 + Conditionˉtag(Input, Lineˉtoken(Input, Line, 1u32)))
+        );
+        return Appendˉbytes(Setˉbytes, Encodeˉmodrm(0u32, Setˉregister));
+    }
+    if Statement.Kind >= 82u32 {
+        if Statement.Kind <= 85u32 {
+            let Extensionˉdestinationˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+            let Extensionˉsourceˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+            let Extensionˉdestination: u32 = Registerˉindex(Input, Extensionˉdestinationˉtoken);
+            let Extensionˉsource: u32 = Registerˉindex(Input, Extensionˉsourceˉtoken);
+            let Extensionˉwidth: u32 = Typedˉregisterˉwidth(Input, Extensionˉdestinationˉtoken);
+            var Extensionˉbytes: bytes = Encodeˉrexˉforced(
+                Extensionˉwidth,
+                Extensionˉdestination,
+                0u32,
+                Extensionˉsource,
+                Byteˉregisterˉrequiresˉrex(Input, Extensionˉsourceˉtoken)
+            );
+            Extensionˉbytes = Appendˉbytes(Extensionˉbytes, Singleˉbyte(15u32));
+            var Extensionˉopcode: u32 = 182u32;
+            if Statement.Kind == 83u32 { Extensionˉopcode = 183u32; }
+            if Statement.Kind == 84u32 { Extensionˉopcode = 190u32; }
+            if Statement.Kind == 85u32 { Extensionˉopcode = 191u32; }
+            Extensionˉbytes = Appendˉbytes(
+                Extensionˉbytes,
+                Singleˉbyte(Extensionˉopcode)
+            );
+            return Appendˉbytes(
+                Extensionˉbytes,
+                Encodeˉmodrm(Extensionˉdestination, Extensionˉsource)
+            );
+        }
+    }
+    if Memoryˉstatementˉkind(Input, Lineˉtoken(Input, Line, 0u32)) != 0u32 {
             var Memoryˉvalueˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
             var Memoryˉbaseˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
             var Memoryˉindexˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 3u32);
             var Memoryˉscaleˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 4u32);
             var Memoryˉdisplacementˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 5u32);
-            if Statement.Kind >= 55u32 {
+            if Memoryˉstatementˉisˉstore(Statement.Kind) {
                 Memoryˉbaseˉtoken = Lineˉtoken(Input, Line, 1u32);
                 Memoryˉindexˉtoken = Lineˉtoken(Input, Line, 2u32);
                 Memoryˉscaleˉtoken = Lineˉtoken(Input, Line, 3u32);
@@ -2917,22 +3441,29 @@ fn Encodeˉstatement(
                 Memoryˉindex = Registerˉindex(Input, Memoryˉindexˉtoken);
                 Memoryˉrexˉindex = Memoryˉindex;
             }
-            var Memoryˉwidth: u32 = 32u32;
-            if Statement.Kind == 54u32 { Memoryˉwidth = 64u32; }
-            if Statement.Kind == 56u32 { Memoryˉwidth = 64u32; }
+            let Memoryˉwidth: u32 = Memoryˉstatementˉwidth(Statement.Kind);
             let Memoryˉscale: Foundationˉu32ˉparse = Parseˉu32(Input, Memoryˉscaleˉtoken);
             let Memoryˉdisplacement: Wvaˉi32ˉparse = Parseˉi32(
                 Input,
                 Memoryˉdisplacementˉtoken
             );
-            var Memoryˉbytes: bytes = Encodeˉrex(
-                Memoryˉwidth,
-                Memoryˉvalue,
-                Memoryˉrexˉindex,
-                Memoryˉbase
+            var Memoryˉbytes: bytes = Encodeˉoperandˉprefix(Memoryˉwidth);
+            Memoryˉbytes = Appendˉbytes(
+                Memoryˉbytes,
+                Encodeˉrexˉforced(
+                    Memoryˉwidth,
+                    Memoryˉvalue,
+                    Memoryˉrexˉindex,
+                    Memoryˉbase,
+                    Byteˉregisterˉrequiresˉrex(Input, Memoryˉvalueˉtoken)
+                )
             );
             var Memoryˉopcode: u32 = 139u32;
-            if Statement.Kind >= 55u32 { Memoryˉopcode = 137u32; }
+            if Memoryˉstatementˉisˉstore(Statement.Kind) { Memoryˉopcode = 137u32; }
+            if Memoryˉwidth == 8u32 {
+                if Memoryˉstatementˉisˉstore(Statement.Kind) { Memoryˉopcode = 136u32; }
+                else { Memoryˉopcode = 138u32; }
+            }
             Memoryˉbytes = Appendˉbytes(Memoryˉbytes, Singleˉbyte(Memoryˉopcode));
             Memoryˉbytes = Appendˉbytes(Memoryˉbytes, Encodeˉmemoryˉmodrm(Memoryˉvalue));
             Memoryˉbytes = Appendˉbytes(
@@ -2947,7 +3478,6 @@ fn Encodeˉstatement(
                 Memoryˉbytes,
                 Bytesˉfromˉi32ˉlittle(Memoryˉdisplacement.Value)
             );
-        }
     }
     return Emptyˉbytes;
 }

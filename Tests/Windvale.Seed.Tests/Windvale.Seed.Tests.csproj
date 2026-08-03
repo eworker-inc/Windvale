@@ -31,6 +31,9 @@
       Include="../../Linker/Startup/Linux-X64-Console.wva"
       LogicalName="Windvale.Seed.Tests.Linux-X64-Console.wva" />
     <EmbeddedResource
+      Include="../../Examples/Assembler/Typed-Scalar-X64.wva"
+      LogicalName="Windvale.Seed.Tests.Typed-Scalar-X64.wva" />
+    <EmbeddedResource
       Include="../../Assembler/Windvale/Wva-Assembler-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wva-Assembler-Core.wv" />
     <EmbeddedResource

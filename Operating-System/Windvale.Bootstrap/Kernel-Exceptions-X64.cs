@@ -1,13 +1,12 @@
 using System.Collections.Immutable;
-using System.Text;
 using Windvale.ObjectModel;
 
 namespace Windvale.Bootstrap;
 
 public static class Kernelˉexceptionˉcontract
 {
-    public const int FORMAT_VERSION = 2;
-    public const string TARGET_NAME = "x86-64-kernel-exceptions-v2";
+    public const int FORMAT_VERSION = 3;
+    public const string TARGET_NAME = "x86-64-kernel-exceptions-v3";
     public const string INSTALL_SYMBOL = "Windvale_kernel_x64_exception_install";
     public const string TERMINAL_SYMBOL = "Windvale_kernel_x64_exception_terminal";
     public const string GENERAL_PROTECTION_ENTRY_SYMBOL = "Windvale_kernel_x64_exception_13_entry";
@@ -38,16 +37,11 @@ public static class Kernelˉexceptionˉcontract
 public sealed record Kernelˉexceptionˉartifacts(
     ImmutableArray<byte> Objectˉbytes,
     ImmutableArray<byte> Codeˉbytes,
-    uint Installerˉbytes,
-    uint Terminalˉoffset);
+    uint Installerˉbytes);
 
 public static class Kernelˉexceptionˉx64
 {
     private const string INSTALL_FAILURE_LABEL = "exception_install_failure";
-    private const string CHECK_GENERAL_PROTECTION_LABEL = "exception_check_general_protection";
-    private const string MALFORMED_FRAME_LABEL = "exception_malformed_frame";
-    private const string TERMINATE_LABEL = "exception_terminate";
-    private const string PANIC_HALT_LABEL = "exception_panic_halt";
     private const byte CONDITION_EQUAL = 0x84;
     private const byte CONDITION_NOT_EQUAL = 0x85;
 
@@ -57,9 +51,6 @@ public static class Kernelˉexceptionˉx64
         var Relocations = ImmutableArray.CreateBuilder<Objectˉrelocation>();
         Emitˉinstaller(Output, Relocations);
         var Installerˉbytes = Output.Position;
-        Output.Align(16);
-        var Terminalˉoffset = Output.Position;
-        Emitˉterminalˉhandler(Output);
         var Code = Output.Build();
 
         var Object = new Objectˉfile(
@@ -73,13 +64,6 @@ public static class Kernelˉexceptionˉx64
                     0,
                     0,
                     Installerˉbytes),
-                new(
-                    Kernelˉexceptionˉcontract.TERMINAL_SYMBOL,
-                    Objectˉsymbolˉbinding.Export,
-                    Objectˉsymbolˉkind.Function,
-                    0,
-                    Terminalˉoffset,
-                    checked((uint)Code.Length - Terminalˉoffset)),
                 new(
                     Kernelˉexceptionˉcontract.GENERAL_PROTECTION_ENTRY_SYMBOL,
                     Objectˉsymbolˉbinding.Import,
@@ -97,8 +81,8 @@ public static class Kernelˉexceptionˉx64
             ],
             Relocations.ToImmutable());
         var Objectˉbytes = Objectˉcodec.Write(Object).ToImmutableArray();
-        Verifyˉobject(Objectˉbytes, Code, Installerˉbytes, Terminalˉoffset, Relocations.ToImmutable());
-        return new(Objectˉbytes, Code, Installerˉbytes, Terminalˉoffset);
+        Verifyˉobject(Objectˉbytes, Code, Installerˉbytes, Relocations.ToImmutable());
+        return new(Objectˉbytes, Code, Installerˉbytes);
     }
 
     private static void Emitˉinstaller(
@@ -125,9 +109,9 @@ public static class Kernelˉexceptionˉx64
         output.Jumpˉif(CONDITION_EQUAL, INSTALL_FAILURE_LABEL);
         output.Emit(0xA8, 0x03);
         output.Jumpˉif(CONDITION_NOT_EQUAL, INSTALL_FAILURE_LABEL);
-        Emitˉentryˉaddress(Output: output, Relocations: relocations, Symbolˉindex: 3);
-        Emitˉgate(output, Kernelˉexceptionˉcontract.INVALID_OPCODE_GATE_OFFSET);
         Emitˉentryˉaddress(Output: output, Relocations: relocations, Symbolˉindex: 2);
+        Emitˉgate(output, Kernelˉexceptionˉcontract.INVALID_OPCODE_GATE_OFFSET);
+        Emitˉentryˉaddress(Output: output, Relocations: relocations, Symbolˉindex: 1);
         Emitˉgate(output, Kernelˉexceptionˉcontract.GENERAL_PROTECTION_GATE_OFFSET);
 
         // The ten-byte IDTR operand follows the admitted table and is outside its limit.
@@ -221,63 +205,10 @@ public static class Kernelˉexceptionˉx64
         output.Emitˉu32(value);
     }
 
-    private static void Emitˉterminalˉhandler(X64ˉcodeˉbuilder output)
-    {
-        output.Emit(0x48, 0x83, 0x3C, 0x24, (byte)Kernelˉexceptionˉcontract.INVALID_OPCODE_VECTOR);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, CHECK_GENERAL_PROTECTION_LABEL);
-        output.Emit(0x48, 0x83, 0x7C, 0x24, (byte)Kernelˉexceptionˉcontract.NORMALIZED_ERROR_CODE_OFFSET, 0x00);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, MALFORMED_FRAME_LABEL);
-        Emitˉserialˉmarker(output, Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER, "invalid_opcode");
-        output.Jump(TERMINATE_LABEL);
-
-        output.Mark(CHECK_GENERAL_PROTECTION_LABEL);
-        output.Emit(0x48, 0x83, 0x3C, 0x24, (byte)Kernelˉexceptionˉcontract.GENERAL_PROTECTION_VECTOR);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, MALFORMED_FRAME_LABEL);
-        output.Emit(0x48, 0x83, 0x7C, 0x24, (byte)Kernelˉexceptionˉcontract.NORMALIZED_ERROR_CODE_OFFSET, 0x00);
-        output.Jumpˉif(CONDITION_NOT_EQUAL, MALFORMED_FRAME_LABEL);
-        Emitˉserialˉmarker(output, Kernelˉexceptionˉcontract.GENERAL_PROTECTION_PANIC_MARKER, "general_protection");
-        output.Jump(TERMINATE_LABEL);
-
-        output.Mark(MALFORMED_FRAME_LABEL);
-        Emitˉserialˉmarker(output, Kernelˉexceptionˉcontract.MALFORMED_FRAME_PANIC_MARKER, "malformed_frame");
-
-        output.Mark(TERMINATE_LABEL);
-        output.Emit(0xBA);
-        output.Emitˉu32(0x00F4);
-        output.Emit(0xB8);
-        output.Emitˉu32(1);
-        output.Emit(0xEF, 0xFA);
-        output.Mark(PANIC_HALT_LABEL);
-        output.Emit(0xF4);
-        output.Jump(PANIC_HALT_LABEL);
-    }
-
-    private static void Emitˉserialˉmarker(X64ˉcodeˉbuilder output, string marker, string labelˉprefix)
-    {
-        var Index = 0;
-        foreach (var Value in Encoding.ASCII.GetBytes(marker))
-        {
-            output.Emit(0xBA);
-            output.Emitˉu32(0x03FD);
-            var Waitˉlabel = labelˉprefix + "_write_wait_" +
-                Index.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            output.Mark(Waitˉlabel);
-            output.Emit(0xEC, 0xA8, 0x20);
-            output.Jumpˉif(CONDITION_EQUAL, Waitˉlabel);
-            output.Emit(0xBA);
-            output.Emitˉu32(0x03F8);
-            output.Emit(0xB8);
-            output.Emitˉu32(Value);
-            output.Emit(0xEE);
-            Index++;
-        }
-    }
-
     private static void Verifyˉobject(
         ImmutableArray<byte> objectˉbytes,
         ImmutableArray<byte> code,
         uint installerˉbytes,
-        uint terminalˉoffset,
         ImmutableArray<Objectˉrelocation> relocations)
     {
         var Object = Objectˉcodec.Readˉandˉverify(objectˉbytes.AsSpan()).Value;
@@ -291,7 +222,7 @@ public static class Kernelˉexceptionˉx64
             } ||
             Object.Sections[0].Memoryˉsize != (uint)code.Length ||
             !Object.Sections[0].Data.AsSpan().SequenceEqual(code.AsSpan()) ||
-            Object.Symbols.Length != 4 ||
+            Object.Symbols.Length != 3 ||
             Object.Symbols[0] is not
             {
                 Name: Kernelˉexceptionˉcontract.INSTALL_SYMBOL,
@@ -303,20 +234,11 @@ public static class Kernelˉexceptionˉx64
             Object.Symbols[0].Size != installerˉbytes ||
             Object.Symbols[1] is not
             {
-                Name: Kernelˉexceptionˉcontract.TERMINAL_SYMBOL,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-            } ||
-            Object.Symbols[1].Offset != terminalˉoffset ||
-            Object.Symbols[1].Size != checked((uint)code.Length - terminalˉoffset) ||
-            Object.Symbols[2] is not
-            {
                 Name: Kernelˉexceptionˉcontract.GENERAL_PROTECTION_ENTRY_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Import,
                 Kind: Objectˉsymbolˉkind.Function,
             } ||
-            Object.Symbols[3] is not
+            Object.Symbols[2] is not
             {
                 Name: Kernelˉexceptionˉcontract.INVALID_OPCODE_ENTRY_SYMBOL,
                 Binding: Objectˉsymbolˉbinding.Import,
