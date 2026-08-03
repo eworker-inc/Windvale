@@ -1,4 +1,4 @@
-# Decision 0167: Direct packaged-compiler Stage 2 reproduction
+# Decision 0168: Direct packaged-compiler Stage 2 reproduction
 
 - Date: 2026-08-03
 - Status: Implemented and locally verified on Windows; equivalent Linux execution gate implemented but awaiting a Linux host report
