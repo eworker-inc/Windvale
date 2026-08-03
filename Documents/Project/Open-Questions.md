@@ -1,6 +1,6 @@
 # Windvale open questions
 
-This list records unresolved choices only. Accepted product-wide direction is recorded by [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md), [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [Decision 0180](../Decisions/0180-Compiler-Runtime-And-Native-Toolchain-Boundaries.md), [Decision 0181](../Decisions/0181-Next-Windvale-Os-Mechanism-Contracts.md), [Decision 0182](../Decisions/0182-Browser-And-WebAssembly-Product-Direction.md), [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md), and [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md). Implementation details remain open when those decisions deliberately require a measured consumer, hardware inventory, or qualification gate.
+This list records unresolved choices only. Accepted product-wide direction is recorded by [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md), [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [Decision 0180](../Decisions/0180-Compiler-Runtime-And-Native-Toolchain-Boundaries.md), [Decision 0181](../Decisions/0181-Next-Windvale-Os-Mechanism-Contracts.md), [Decision 0182](../Decisions/0182-Browser-And-WebAssembly-Product-Direction.md), [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md), [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md), [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md), [Decision 0192](../Decisions/0192-Capability-Oriented-User-Space-Network-Stack.md), and [Decision 0193](../Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md). Implementation details remain open when those decisions deliberately require a measured consumer, hardware inventory, or qualification gate.
 
 ## Language and application model
 
@@ -38,6 +38,50 @@ This list records unresolved choices only. Accepted product-wide direction is re
 - Does the first suitable physical Windvale machine select VMX or SVM, and what exact private-memory, reset-state, exit, budget, and teardown records qualify the minimal profile?
 - Which secondary non-display GPU or accelerator can prove isolated IOMMU ownership, interrupt remapping, reset, DMA revocation, teardown, and rebind before exclusive passthrough is accepted?
 - Which pinned workloads and per-machine noise measurements establish the first VM, memory, storage, network, graphics, and compute regression thresholds?
+
+## Console, shell, and CLI
+
+The [console architecture guide](../Architecture/Console-Shell-And-Cli.md) fixes the device/terminal/shell/application split, capability-bound clean launch, explicit standard streams, small shell direction, and implementation order. The remaining questions are focused contracts:
+
+- Which bounded serial-input adapter and exact UTF-8/control-event profile should qualify the first terminal session without making ANSI escape bytes the semantic interface?
+- What exact terminal event, resize, disconnect, interrupt, end-of-input, editing, output-batch, and scrollback records and limits are sufficient for the first serial shell?
+- Which versioned byte-stream operations and records define read, write, exact partial progress, backpressure, end of stream, cancellation, peer loss, and teardown for standard input, output, and diagnostics?
+- Which exact immutable launch-plan and command-resolution encodings bind package/module identity, entry point, arguments, streams, current directory, optional environment, capability grants, resource domain, cancellation, supervision, and completion?
+- What is the smallest deterministic shell grammar for quoting, sequencing, pipelines, redirection, status chaining, and one-argument variables, and what parser/input limits qualify it?
+- Which canonical first command catalog and optional alias policy provide useful recovery, module inspection, process/service observation, package resolution, and filesystem work without turning commands into shell authority?
+- How should a directory capability expose a stable user-facing current-location identity and redirection target without making a native path the shared contract?
+- Which structured completion record and default pipeline-status policy preserve every stage result while remaining simple interactively?
+- What bounded history/configuration format, sensitive-input suppression, and storage grant are safe before startup customization is accepted?
+- Which measured consumer first justifies schema-versioned typed pipelines above the universal byte-stream base?
+- Which multi-user login, identity-directory, administrative-elevation, session-ownership, and session-replacement evidence is required beyond Decision 0193's provisioned first remote profile?
+
+## Network stack
+
+The [network-stack architecture](../Architecture/Network-Stack.md) fixes the protocol-blind kernel, isolated NIC driver, initially unified user-space protocol service, semantic capability API, standards-based dual-stack direction, copied-first data path, modern `virtio-net` device, and implementation order. The remaining questions are measured contracts:
+
+- Which exact link-port request, completion, link-state, reset, buffer-ownership, peer-loss, and generation records qualify the simulated link and first isolated NIC driver?
+- Which modern `virtio-net` feature subset, queue and descriptor limits, interrupt behavior, fixed buffer pool, MTU, DMA mapping, IOMMU evidence, and reset sequence define the first device profile?
+- Which address, prefix, port, interface, route, connection, listener, datagram, resolver, configuration, and provider-evidence records form the smallest dual-stack semantic API without exposing native socket types?
+- Which grant constraints bind names, address prefixes, transports, ports, interfaces, directions, rates, bytes, connection counts, deadlines, and lifetimes, and how does resolve-and-connect preserve one authorization decision across DNS changes?
+- Which bounded IPv4 and IPv6 header, option, extension, fragmentation, reassembly, ICMP, Neighbor Discovery, Duplicate Address Detection, and address-lifetime policies qualify the first general host profile?
+- Which monotonic-timer resolution, retransmission, congestion-control, ephemeral-port, initial-sequence, receive-window, close, reset, and half-open-connection policies qualify the first TCP implementation?
+- Which DHCP, DNS cache, negative-result, search-name, address-selection, route-selection, provider-restart, and configuration rollback rules are sufficient for the first configured network?
+- Which entropy, trust-store, certificate, peer-name, key-custody, civil-time, protocol-version, revocation, and test-vector evidence qualifies the first TLS 1.3 secure-connection provider?
+- Which measured copy volume first justifies a versioned shared packet or stream ring, and which ownership, generation, notification, batching, zero-copy, multiqueue, RSS, or offload rules preserve exact validation and teardown?
+- Which virtual-port, bridge, filter, NAT, routing, audit, capture, and attachment contracts safely connect a future Windvale-hosted guest without making VM management grant host-network authority?
+- Which physical NIC and Hyper-V synthetic adapter provide the first non-QEMU evidence after the modern `virtio-net` path is qualified?
+
+## Remote terminal protocol
+
+The [remote-terminal architecture](../Architecture/Remote-Terminal-Protocol.md) fixes the secure-stream carrier, one-connection/one-session first profile, separate identity and authorization, typed terminal control, bounded framing, disabled TLS early data, connection-owned teardown, and later compatibility-adapter direction. The remaining questions require measured implementation evidence:
+
+- Which published protocol name, ALPN identifier, port, discovery rule, frame type numbers, flag assignments, maximum payload, and version-negotiation encoding qualify the first `WVTS/1` specification?
+- Which certificate or raw-public-key representation, signature suite, provisioning artifact, key store, pinning rule, rotation, revocation, recovery, and audit records qualify the first mutually authenticated client and server identities?
+- Which exact rights-limited remote-session profiles, listener bindings, connection limits, source constraints, authorization results, and optional elevation ceremony are useful without creating ambient remote-root authority?
+- Which canonical key/modifier set, strict-UTF-8 text limits, resize bounds, normal/diagnostic ordering evidence, completion records, and terminal echo behavior are sufficient for the first line-oriented client?
+- Which input, output, diagnostic, parser, control-reserve, authentication-attempt, session, rate, timeout, cancellation, drain, and forced-teardown limits preserve recovery under a hostile or stalled peer?
+- Which exact deterministic and fuzz corpus covers split/coalesced reads, truncation, oversize, invalid UTF-8, invalid enums, unsupported versions/features, illegal state transitions, replay attempts, backpressure, provider loss, and disconnect cleanup?
+- Which real workload first justifies multiple sessions, detach/resume, roaming, keepalive, richer terminal operations, SSH interoperability, WebSocket/browser carriage, or a QUIC stream?
 
 ## Browser and WebAssembly
 

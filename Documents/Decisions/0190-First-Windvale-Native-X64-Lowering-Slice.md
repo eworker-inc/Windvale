@@ -1,4 +1,4 @@
-# Decision 0188: First Windvale-native x86-64 lowering slice
+# Decision 0190: First Windvale-native x86-64 lowering slice
 
 - Date: 2026-08-03
 - Status: Implemented; cross-host qualification pending

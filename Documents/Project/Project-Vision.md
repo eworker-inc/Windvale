@@ -49,6 +49,7 @@ The umbrella project is named **Windvale**. Its major tools should initially use
 - Measure AI contribution through completed specifications, tests, reproducibility, understandable changes, and defects found—not line-count claims.
 - Keep each layer independently testable and replaceable through explicit contracts.
 - Keep packages immutable and content-addressed, dependency and authority selection locked, and time, entropy, networking, diagnostics, and updates behind explicit contracts rather than ambient host behavior.
+- Implement standard Internet protocols behind a capability-oriented user-space network service and isolated device drivers; keep packet parsing, DNS, routing, TCP, and secure-transport policy outside the kernel.
 
 ## First convincing system
 
@@ -61,6 +62,12 @@ The first Windvale OS milestone should be a small vertical system rather than a 
 - Expose a minimal filesystem or packaged-resource model.
 - Demonstrate the same bytecode module on Windows, Linux, and Windvale OS.
 - Shut down cleanly and produce machine-readable test evidence.
+
+[Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md) defines the later interactive command path without enlarging this first milestone: device or transport adapters, a terminal service, a capability-restricted shell, and ordinary CLI applications remain separate. Commands launch from immutable identity-bound plans with explicit streams, grants, and resource ceilings; the kernel retains only its independent emergency diagnostic path.
+
+[Decision 0192](../Decisions/0192-Capability-Oriented-User-Space-Network-Stack.md) defines later networking without making it a first-system requirement: the kernel supplies interrupt, timer, IPC, DMA/IOMMU, accounting, and teardown mechanisms; an isolated driver owns the NIC; one user-space service initially owns the standards-based IP, UDP, and TCP path; and applications receive semantic rights-limited network capabilities. Local console work proceeds independently, while authenticated remote sessions wait for qualified secure networking.
+
+[Decision 0193](../Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md) keeps that eventual remote path small: one authenticated secure connection creates one rights-limited terminal session and shell resource domain through a supervised adapter. Windvale owns the bounded terminal messages and lifecycle while TCP, TLS, identity, authorization, and the existing terminal service retain their separate responsibilities.
 
 The accepted first boot environment is x86-64 with UEFI 2.11, QEMU as the primary automated VM, and Hyper-V Generation 2 as the later Windows compatibility target. [Decisions 0044](../Decisions/0044-First-X64-Uefi-Boot-Environment.md) through qualified [0100](../Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) establish deterministic PE32+, firmware exit, kernel handoff, owned memory/stack/page tables, WVA shutdown and normalized faults, fixed in-guest WVB admission, protected processes, a Windvale init service, Windvale-written bytecode interpretation at CPL3, a typed WVB/execution-budget pair, per-opcode budget enforcement, automatic terminal cleanup, and one exact generation-safe process-root reclaim/reuse cycle. Probe 30 is the cross-host baseline at exact implementation commit `4a077ab`; all four pinned-QEMU scenarios also pass on Windows. This is substantial vertical source-to-machine evidence, not yet an arbitrary or general WVB loader/verifier, dynamic resource namespace, general ownership-transfer/allocator system, JIT, scheduler, general trap system, or complete kernel runtime.
 

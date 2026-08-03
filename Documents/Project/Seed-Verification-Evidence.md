@@ -1636,7 +1636,7 @@ Exact implementation commit `aae6818e3226e9e7e88d205b4666fb9904e4735b` passes Gi
 
 ## First Windvale-native ABI-22 x86-64 selector slice
 
-[Decision 0188](../Decisions/0188-First-Windvale-Native-X64-Lowering-Slice.md) transfers the current constant-return selector rather than replaying Decision 0059's obsolete six-byte prototype. The portable Windvale core independently admits one canonical capability-free WVB 1.6 `Main() -> i32` shape and emits the same 406-byte ABI-22 fragment inside the same 479-byte standard WVO as the complete Stage 0 backend. Exact oracle comparison passes for source immediates 42 and 43, so the selected value is not a fixed fixture.
+[Decision 0190](../Decisions/0190-First-Windvale-Native-X64-Lowering-Slice.md) transfers the current constant-return selector rather than replaying Decision 0059's obsolete six-byte prototype. The portable Windvale core independently admits one canonical capability-free WVB 1.6 `Main() -> i32` shape and emits the same 406-byte ABI-22 fragment inside the same 479-byte standard WVO as the complete Stage 0 backend. Exact oracle comparison passes for source immediates 42 and 43, so the selected value is not a fixed fixture.
 
 The core, memory-adapter, and hosted-tool WVB SHA-256 identities are `654251d1aad3f8099bedb49193ec3a4a92ebeab99f0a7315c4fed780b4535620`, `e5c7472f9eca2a36fa7b63009fb01bdeb38c97229e5a8c7e880ea7c5800a8252`, and `a0e1894ce9ca79cb9181936f8d5f0ca0a114da3eb62a5c26c149720a1f707fe7`. The hosted tool lowers through the complete backend to 343,453 code bytes and a 344,531-byte WVO. Current-host native execution reads the input once, publishes the byte-identical object once, and rejects a truncated WVB while preserving a pre-existing sentinel output.
 

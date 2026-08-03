@@ -330,6 +330,52 @@ The completion gate is the central Windvale portability proof: one module artifa
 
 The completion gate is a source release that another person can inspect, build, verify, and recover from documented inputs.
 
+### Future branch - console, shell, and CLI
+
+[Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md) and the [console architecture guide](../Architecture/Console-Shell-And-Cli.md) accept this future product structure without making it an active implementation claim:
+
+1. Complete timer preemption, independently lived memory, a flat resource domain, and clean dynamic launch before treating an interactive shell as reliable process infrastructure.
+2. Isolate ordinary serial output while retaining the kernel emergency sink, then add one bounded serial-input adapter and terminal session.
+3. Launch one single-session shell as an ordinary capability-restricted application through exact command resolution and an immutable launch plan.
+4. Bind arguments, standard input, standard output, diagnostics, current directory, optional environment, exact capability instances, resource ceilings, cancellation, supervision, and completion explicitly; inherit none ambiently.
+5. Keep the first grammar to commands, arguments, quoting, and `--`; add sequencing, bounded byte pipelines, redirection, status chaining, and one-argument variables only with their underlying contracts.
+6. Use ordinary verified Windvale programs for substantial automation; keep a language REPL separate and defer POSIX compatibility, typed pipelines, background jobs, graphical terminals, remote sessions, and multi-user login.
+7. Keep inspection, filesystem, package, shutdown, and future VM operations as separate applications with exact capabilities rather than privileged shell built-ins.
+
+The first completion gate is one QEMU serial session that survives malformed input and a failed command, resolves and launches an exact verified application inside a bounded resource domain, preserves separate output and diagnostics, reports structured completion, tears down every process and stream endpoint, and leaves the kernel emergency sink usable. Pipelines, filesystem redirection, history, background jobs, and remote access are not part of that first gate.
+
+### Future branch - network stack
+
+[Decision 0192](../Decisions/0192-Capability-Oriented-User-Space-Network-Stack.md) and the [network-stack architecture guide](../Architecture/Network-Stack.md) accept this future product structure without making it an active implementation claim:
+
+1. Complete timer/preemption, independently lived memory, resource domains, dynamic launch, service supervision, PCI discovery, interrupts, shared memory, DMA/IOMMU ownership, and deterministic teardown before treating a NIC as an isolated recoverable service.
+2. Implement packet parsers, serializers, checksums, route selection, virtual time, loopback, and a deterministic simulated link as capability-free or semantic code reusable on Windows and Linux.
+3. Add one isolated modern `virtio-net` driver with fixed buffers, one RX/TX queue pair, the smallest feature set, bounded polling only for bring-up, and interrupt-driven completion before usability is claimed.
+4. Add Ethernet, ARP, static IPv4, ICMPv4, and UDP against an isolated deterministic peer before DHCP, DNS, TCP, TLS, applications, remote terminals, or public-Internet access.
+5. Keep public address and transport types dual-stack; add IPv6 link-local addressing, ICMPv6, Neighbor Discovery, Duplicate Address Detection, SLAAC, and version-neutral routing before accepting a general host profile.
+6. Add configuration, DHCPv4, DNS, address and route lifetimes, then bounded TCP with retransmission, congestion control, close, reset, peer loss, and complete timer/state teardown.
+7. Bind resolve, connect, datagram, listen, accept, and later secure-connect operations as independently rights-limited semantic capabilities; do not expose ambient sockets, raw packets, capture, forwarding, or configuration to ordinary applications.
+8. Begin with fixed pools and bounded copies. Add shared rings, batching, zero-copy, multiqueue, RSS, offloads, service sharding, and physical device breadth only when a measured workload justifies each complexity.
+9. Qualify TLS 1.3 only after entropy, trust, peer identity, key protection, civil-time policy, cryptographic test vectors, authorization, revocation, and bounded handshake behavior exist.
+10. Add authenticated remote terminals, package and browser clients, VM virtual ports, bridges, routing, NAT, filtering, capture, QUIC, physical NICs, and Hyper-V adapters as later separately authorized gates.
+
+The first completion gate is one pinned QEMU guest using a modern single-queue `virtio-net` device to exchange exact bounded Ethernet, ARP, static IPv4, ICMP, and UDP traffic with an isolated deterministic peer. Malformed packets, loss, duplication, reordering, delay, queue exhaustion, interrupt storms, link removal, driver fault, reset, DMA revocation, provider loss, and complete buffer reclamation are tested. This gate makes no TCP, DNS, TLS, remote-terminal, VM-network, or public-Internet claim.
+
+### Future branch - simple remote terminal
+
+[Decision 0193](../Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md) and the [remote-terminal architecture guide](../Architecture/Remote-Terminal-Protocol.md) accept this later connection without making it an implementation claim:
+
+1. Complete the local terminal service, one shell, immutable launch, standard streams, typed cancellation, structured completion, and resource-domain teardown before adding a remote adapter.
+2. Complete TCP listen/connect, secure entropy, current TLS 1.3, server and client identity verification, key protection, authorization, revocation, and bounded secure-stream closure.
+3. Implement provisional `WVTS/1` as capability-free framing and state logic on Windows and Linux, including split/coalesced reads, malformed input, fixed bounds, illegal states, provider loss, and deterministic teardown.
+4. Permit only in-memory, deterministic simulated, or build-restricted loopback carriers before TLS; provide no production plaintext listener or security downgrade.
+5. Build one Windvale terminal client for Windows and Linux and prove it against a hosted reference adapter with pinned identities and one exact rights-limited policy.
+6. Add one supervised Windvale OS adapter with exact listener, secure-stream, identity/authorization, terminal, launch, and resource-domain grants; neither the kernel nor shell parses the protocol.
+7. Keep the first profile to one connection, one session, text, canonical keys, resize, interrupt, end-input, normal/diagnostic output, orderly close, structured completion, and bounded error.
+8. Disable TLS early data; make disconnect tear down the session; defer multiplexing, detach/resume, forwarding, file transfer, graphical surfaces, SSH, WebSocket, and QUIC.
+
+The first completion gate uses one pinned Windows or Linux client identity and one pinned Windvale OS server identity on an isolated network. It negotiates the exact protocol, creates one rights-limited session, exercises every first-profile message, reports structured completion, closes securely, and releases every process, endpoint, timer, buffer, listener grant, identity reference, and session generation. Unauthenticated, unauthorized, replayed, malformed, oversized, stalled, backpressured, and disconnected peers remain contained within exact budgets.
+
 ### Future branch - virtualization and accelerator hosting
 
 [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md) accepts this long-range structure without making it an active milestone or implementation claim:
@@ -382,6 +428,9 @@ The following choices are intentionally deferred until the preceding experiment 
 - Decision 0182 accepts an early experimental Windvale-native browser route, later .NET-free default gate, typed-WIR direct compilation, separate permanent-host/target decisions, bounded event stream, and Module Inspector sample without claiming implementation or permanence.
 - Decision 0183 accepts immutable content-addressed packages and lockfiles, independent contract versioning, explicit time/entropy/network capabilities, trusted-release evidence, a maintained threat model, bounded observability, and x86-64-first qualification.
 - Decision 0184 accepts staged syntax evolution: local inference, typed constants, and named records first; then structured control, module qualification, exhaustive enum match, payload variants/results, bounded collections, and scoped capabilities. Operators remain checked, same-type, non-overloadable, and explicitly separated between assignment, equality, arithmetic, Boolean, ordering, and future unsigned bitwise behavior.
+- Decision 0191 accepts a device/terminal/shell/application split, immutable capability-bound command launch, explicit standard streams, a deliberately small shell grammar, structured completion, and an independent kernel emergency sink without claiming implementation.
+- Decision 0192 accepts one bounded user-space network service behind an isolated link driver, a protocol-blind mechanism-only kernel boundary, standards-based dual-stack protocols, semantic rights-limited network capabilities, copied-first data planes, modern single-queue `virtio-net`, and deterministic staged qualification without claiming implementation.
+- Decision 0193 accepts provisional `WVTS/1` over an authenticated secure ordered stream, with one connection owning one bounded session and shell resource domain, separate identity and authorization, typed terminal control, no production plaintext or replayable early data, disconnect teardown, and compatibility carriers deferred without claiming implementation.
 - Public compatibility and support windows wait for the licensed release foundation.
 
 At each checkpoint the project may keep, revise, or replace the proposed mechanism. It may not silently lower the verification gate or declare a narrower demonstration to be the original milestone.
