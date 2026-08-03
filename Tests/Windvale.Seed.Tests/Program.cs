@@ -33,6 +33,9 @@ internal static class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "654251d1aad3f8099bedb49193ec3a4a92ebeab99f0a7315c4fed780b4535620";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "e5c7472f9eca2a36fa7b63009fb01bdeb38c97229e5a8c7e880ea7c5800a8252";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "a0e1894ce9ca79cb9181936f8d5f0ca0a114da3eb62a5c26c149720a1f707fe7";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "7fe718d644e426b9a90e3bd1dcc51c4e1bb1ac4af439cd4bbcda2cf7d01f276a";
@@ -691,6 +694,15 @@ internal static class Program
         "Windvale.Seed.Tests.Source-Wvb-Tool.wv");
     private static readonly string SOURCE_WVB_MEMORY_ADAPTER_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Memory-Adapter.wv");
+
+    private static readonly string NATIVE_X64_LOWERING_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-X64-Lowering-Core.wv");
+
+    private static readonly string NATIVE_X64_LOWERING_MEMORY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-X64-Lowering-Memory-Adapter.wv");
+
+    private static readonly string NATIVE_X64_LOWERING_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-X64-Lowering-Tool.wv");
 
     private static readonly string SOURCE_WVB_FUNCTION_ONLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Function-Only.wv");
@@ -1957,6 +1969,7 @@ internal static class Program
         Equal(1, Verifiedˉobject.Symbols.Length);
         True(Verifiedˉobject.Symbols.Any(Symbol => Symbol.Name == "Main"), "Native WVO omitted Main.");
         Equal(0, Verifiedˉobject.Relocations.Length);
+        Windvaleˉnativeˉx64ˉloweringˉagrees(Wvbˉbytes, Firstˉobject);
 
         var Linked = Linkˉsuccess(
             [Firstˉobject.ToArray()],
@@ -2593,6 +2606,151 @@ internal static class Program
             15,
             X64ˉnativeˉexecutor.Executeˉi32(
                 X64ˉnativeˉbackend.Compile(Fiveˉparameterˉverified).Fragment));
+    }
+
+    private static void Windvaleˉnativeˉx64ˉloweringˉagrees(
+        byte[] wvbˉbytes,
+        ImmutableArray<byte> expectedˉobject)
+    {
+        var Coreˉbytes = Compileˉsuccess(NATIVE_X64_LOWERING_CORE_SOURCE);
+        Equal(
+            NATIVE_X64_LOWERING_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Coreˉbytes));
+        var Memoryˉcompilation = Seedˉcompiler.Compileˉmodules(
+            new("Native-X64-Lowering-Memory-Adapter.wv", NATIVE_X64_LOWERING_MEMORY_SOURCE),
+            [new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE)]);
+        if (!Memoryˉcompilation.Success)
+        {
+            throw new InvalidOperationException(
+                "Windvale native x64 memory adapter compilation failed: " +
+                string.Join(" | ", Memoryˉcompilation.Diagnostics));
+        }
+        var Memoryˉbytes = Memoryˉcompilation.Moduleˉbytes.ToArray();
+        Equal(
+            NATIVE_X64_LOWERING_MEMORY_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Memoryˉbytes));
+        var Memory = Moduleˉcodec.Readˉandˉverify(Memoryˉbytes);
+        var Memoryˉruntime = new Referenceˉruntime(
+            Memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 });
+        var Memoryˉresult = Memoryˉruntime.Runˉmainˉbytes(wvbˉbytes.ToImmutableArray());
+        Sequenceˉequal(expectedˉobject, Memoryˉresult.Bytes);
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Memory,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
+                .Runˉmainˉbytes(wvbˉbytes[..^1].ToImmutableArray()).Bytes.Length);
+
+        var Toolˉcompilation = Seedˉcompiler.Compileˉmodules(
+            new("Native-X64-Lowering-Tool.wv", NATIVE_X64_LOWERING_TOOL_SOURCE),
+            [new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE)]);
+        if (!Toolˉcompilation.Success)
+        {
+            throw new InvalidOperationException(
+                "Windvale native x64 tool compilation failed: " +
+                string.Join(" | ", Toolˉcompilation.Diagnostics));
+        }
+        var Toolˉbytes = Toolˉcompilation.Moduleˉbytes.ToArray();
+        Equal(
+            NATIVE_X64_LOWERING_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Reference = Runˉnativeˉx64ˉloweringˉtool(Tool, wvbˉbytes);
+        Equal(0, Reference.Exitˉcode);
+        Equal("native x64 status=Valid abi=22 code-bytes=406 object-bytes=479\n", Reference.Output);
+        Equal(string.Empty, Reference.Diagnostics);
+        Equal(1, Reference.Readˉcount);
+        Equal(1, Reference.Writeˉcount);
+        Equal("output.wvo", Reference.Writtenˉresourceˉname);
+        Sequenceˉequal(expectedˉobject, Reference.Writtenˉbytes);
+
+        const string Nextˉconstantˉsource = """
+            module Nativeˉconstant profile portable;
+            export fn Main() -> i32 { return 43; }
+            """;
+        var Nextˉwvb = Compileˉsuccess(Nextˉconstantˉsource);
+        var Nextˉoracle = Nativeˉobjectˉsink.Writeˉwvo(
+            X64ˉnativeˉbackend.Compile(Moduleˉcodec.Readˉandˉverify(Nextˉwvb)).Fragment);
+        var Nextˉreference = Runˉnativeˉx64ˉloweringˉtool(Tool, Nextˉwvb);
+        Equal(0, Nextˉreference.Exitˉcode);
+        Sequenceˉequal(Nextˉoracle, Nextˉreference.Writtenˉbytes);
+
+        var Toolˉnative = X64ˉnativeˉbackend.Compile(Tool);
+        _ = Nativeˉfragmentˉverifier.Verify(Toolˉnative.Fragment);
+        var Toolˉnativeˉobject = Nativeˉobjectˉsink.Writeˉwvo(Toolˉnative.Fragment);
+        _ = Objectˉcodec.Readˉandˉverify(Toolˉnativeˉobject.AsSpan());
+        var Directoryˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-x64-lowering-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Directoryˉpath);
+        try
+        {
+            var Inputˉpath = Path.Combine(Directoryˉpath, "input.wvb");
+            var Outputˉpath = Path.Combine(Directoryˉpath, "output.wvo");
+            File.WriteAllBytes(Inputˉpath, wvbˉbytes);
+            using var Output = new Nativeˉoutputˉcapture();
+            using var Diagnostic = new Nativeˉoutputˉcapture();
+            var Resources = new Hostedˉresourceˉcontext(
+                [Inputˉpath, Outputˉpath],
+                TextWriter.Null,
+                TextWriter.Null);
+            var Authorized = Tool.Module.Capabilities
+                .Select(Capability => Capability.Name)
+                .ToImmutableHashSet(StringComparer.Ordinal);
+            var Host = new Nativeˉhostˉservices(
+                Output.Channel,
+                Authorized,
+                Resources,
+                Diagnostic.Channel,
+                Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                Nativeˉfileˉoutput.Hostˉfileˉsystem());
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    Toolˉnative.Fragment,
+                    maximumˉinstructions: Reference.Executedˉinstructions,
+                    hostˉservices: Host));
+            Equal(Reference.Output, Output.Readˉtext());
+            Equal(Reference.Diagnostics, Diagnostic.Readˉtext());
+            Sequenceˉequal(expectedˉobject, File.ReadAllBytes(Outputˉpath));
+
+            File.WriteAllBytes(Inputˉpath, wvbˉbytes[..^1]);
+            var Sentinel = new byte[] { 0x57, 0x56, 0x4F, 0x21 };
+            File.WriteAllBytes(Outputˉpath, Sentinel);
+            using var Rejectedˉoutput = new Nativeˉoutputˉcapture();
+            using var Rejectedˉdiagnostic = new Nativeˉoutputˉcapture();
+            var Rejectedˉhost = new Nativeˉhostˉservices(
+                Rejectedˉoutput.Channel,
+                Authorized,
+                Resources,
+                Rejectedˉdiagnostic.Channel,
+                Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                Nativeˉfileˉoutput.Hostˉfileˉsystem());
+            Equal(
+                1,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    Toolˉnative.Fragment,
+                    maximumˉinstructions: 10_000_000,
+                    hostˉservices: Rejectedˉhost));
+            Equal(string.Empty, Rejectedˉoutput.Readˉtext());
+            Equal("native x64 status=Invalidˉwvb\n", Rejectedˉdiagnostic.Readˉtext());
+            Sequenceˉequal(Sentinel, File.ReadAllBytes(Outputˉpath));
+        }
+        finally
+        {
+            Directory.Delete(Directoryˉpath, recursive: true);
+        }
+
+        Console.WriteLine(
+            $"NATIVE_X64_LOWERING_MEASUREMENT " +
+            $"core={Moduleˉdigest.Calculateˉsha256(Coreˉbytes)} " +
+            $"memory={Moduleˉdigest.Calculateˉsha256(Memoryˉbytes)} " +
+            $"tool={Moduleˉdigest.Calculateˉsha256(Toolˉbytes)} " +
+            $"tool-native-code={Toolˉnative.Fragment.Code.Length} " +
+            $"tool-native-wvo={Toolˉnativeˉobject.Length}");
     }
 
     private static void Windowsˉconsoleˉapplicationˉruns()
@@ -20372,6 +20530,44 @@ internal static class Program
             Result.Executedˉinstructions);
     }
 
+    private static Nativeˉx64ˉloweringˉtoolˉresult Runˉnativeˉx64ˉloweringˉtool(
+        Verifiedˉmodule module,
+        IEnumerable<byte> input,
+        long maximumˉinstructions = 10_000_000)
+    {
+        var Input = input.ToImmutableArray();
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Reader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            Equal("input.wvb", Name);
+            True(Input.Length <= Maximumˉbytes, "The native x64 lowering input limit was too small.");
+            return Input;
+        });
+        var Writer = new Capturingˉfileˉwriter();
+        var Authorized = module.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Result = new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["input.wvb", "output.wvo"],
+                Output,
+                Diagnostics,
+                Reader,
+                Writer)),
+            new(Authorized, Maximumˉinstructions: maximumˉinstructions)).Runˉmain();
+        return new(
+            Result.Exitˉcode,
+            Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal),
+            Diagnostics.ToString().Replace("\r\n", "\n", StringComparison.Ordinal),
+            Reader.Readˉcount,
+            Writer.Writeˉcount,
+            Writer.Resourceˉname,
+            Writer.Bytes,
+            Result.Executedˉinstructions);
+    }
+
     private static WebAssemblyˉexecutionˉresult Runˉreferenceˉwebassemblyˉi32(
         IEnumerable<byte> input,
         long maximumˉinstructions = 1_000_000)
@@ -24204,6 +24400,16 @@ internal static class Program
         long Executedˉinstructions);
 
     private sealed record WebAssemblyˉtoolˉresult(
+        int Exitˉcode,
+        string Output,
+        string Diagnostics,
+        int Readˉcount,
+        int Writeˉcount,
+        string Writtenˉresourceˉname,
+        ImmutableArray<byte> Writtenˉbytes,
+        long Executedˉinstructions);
+
+    private sealed record Nativeˉx64ˉloweringˉtoolˉresult(
         int Exitˉcode,
         string Output,
         string Diagnostics,

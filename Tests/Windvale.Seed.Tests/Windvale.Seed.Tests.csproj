@@ -241,6 +241,15 @@
       Include="../../Compiler/Windvale/Source-Wvb-Memory-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Memory-Adapter.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Core.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Memory-Adapter.wv" />
+    <EmbeddedResource
+      Include="../../Examples/Compiler/Native-X64-Lowering-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Tool.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Function-Only.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Function-Only.wv" />
     <EmbeddedResource

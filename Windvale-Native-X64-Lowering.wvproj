@@ -1,0 +1,4 @@
+windvale-project 1
+root "Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Core.wv"
+emit wvb
