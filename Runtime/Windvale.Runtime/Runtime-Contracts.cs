@@ -230,6 +230,12 @@ internal sealed class Runtimeˉdynamicˉrootˉset
 
     public ImmutableArray<Runtimeˉdynamicˉrootˉset> Backingˉmembers { get; }
 
+    public int Allocatorˉoffset { get; set; } = -1;
+
+    public int Allocatorˉchargedˉbytes { get; set; }
+
+    public bool Isˉallocatorˉallocated { get; set; }
+
     // Composite sets contain only unique backing leaves, never another composite.
     public bool Isˉbacking => Backingˉmembers.IsDefault;
 
@@ -296,7 +302,9 @@ public sealed record Runtimeˉoptions(
     bool Collectˉfunctionˉsteps = false,
     bool Collectˉfunctionˉrecordˉfields = false,
     bool Collectˉfunctionˉdynamicˉvalues = false,
-    bool Collectˉdynamicˉvalueˉlifetime = false)
+    bool Collectˉdynamicˉvalueˉlifetime = false,
+    bool Collectˉdynamicˉallocatorˉtrace = false,
+    int Dynamicˉallocatorˉarenaˉbytes = 16 * 1024 * 1024)
 {
     public static Runtimeˉoptions Portableˉdefaults { get; } = new(
         ImmutableHashSet.Create<string>(StringComparer.Ordinal));
@@ -358,6 +366,25 @@ public sealed record Runtimeˉdynamicˉvalueˉlifetime(
     Runtimeˉdynamicˉvalueˉkind? Peakˉoperationˉkind,
     long Retainedˉvalues,
     long Retainedˉbytes);
+
+public sealed record Runtimeˉdynamicˉallocatorˉtrace(
+    int Arenaˉbytes,
+    int Headerˉbytes,
+    int Alignmentˉbytes,
+    long Allocations,
+    long Reusedˉallocations,
+    long Peakˉpayloadˉbytes,
+    long Peakˉchargedˉbytes,
+    int Peakˉblocks,
+    int Maximumˉaddressedˉbytes,
+    int Peakˉexternalˉfragmentationˉbytes,
+    int Maximumˉfreeˉspans,
+    long Failedˉallocations,
+    int Firstˉfailureˉpayloadˉbytes,
+    int Firstˉfailureˉchargedˉbytes,
+    int Firstˉfailureˉlargestˉfreeˉspanˉbytes,
+    int Retainedˉblocks,
+    long Retainedˉchargedˉbytes);
 
 public static class Hostedˉresourceˉlimits
 {

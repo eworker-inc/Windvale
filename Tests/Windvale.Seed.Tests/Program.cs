@@ -928,6 +928,7 @@ internal static class Program
         new("reference runtime reports per-function record construction pressure", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉrecordˉpressureˉisˉreported),
         new("reference runtime reports dynamic-value construction by function and class", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉdynamicˉvalueˉpressureˉisˉreported),
         new("reference runtime reports dynamic-value lifetime through aliases and records", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉdynamicˉvalueˉlifetimeˉisˉreported),
+        new("reference runtime replays bounded dynamic allocation and coalescing", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉdynamicˉallocatorˉtraceˉisˉreported),
         new("bounded random input never escapes diagnostic boundaries", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_ASSEMBLER], Randomˉinputˉisˉcontained),
         new(GOLDEN_TEST_NAME, [TEST_AREA_GOLDEN], Goldenˉhashesˉmatch),
     ];
@@ -14270,6 +14271,101 @@ internal static class Program
         Equal(4L, Failedˉreport.Constructedˉbytes);
         Equal(0L, Failedˉreport.Retainedˉvalues);
         Equal(0L, Failedˉreport.Retainedˉbytes);
+    }
+
+    private static void Runtimeˉdynamicˉallocatorˉtraceˉisˉreported()
+    {
+        const string Source = """
+            module Runtimeˉdynamicˉallocatorˉtrace profile portable;
+            fn Build() -> i32 {
+                let First: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+                let Second: bytes = Bytesˉfromˉu32ˉlittle(2u32);
+                return 0;
+            }
+            export fn Main() -> i32 {
+                Build();
+                Textˉquote("1234567890123456789012345678901");
+                return 0;
+            }
+            """;
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        var Disabled = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults);
+        Equal(0, Disabled.Runˉmain().Exitˉcode);
+        Equal<Runtimeˉdynamicˉallocatorˉtrace?>(
+            null,
+            Disabled.Readˉdynamicˉallocatorˉtrace());
+
+        var Enabled = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Collectˉdynamicˉallocatorˉtrace = true,
+                Dynamicˉallocatorˉarenaˉbytes = 64,
+            });
+        Equal(0, Enabled.Runˉmain().Exitˉcode);
+        var Firstˉreport = Enabled.Readˉdynamicˉallocatorˉtrace();
+        Equal(
+            new Runtimeˉdynamicˉallocatorˉtrace(
+                Arenaˉbytes: 64,
+                Headerˉbytes: 16,
+                Alignmentˉbytes: 16,
+                Allocations: 3,
+                Reusedˉallocations: 1,
+                Peakˉpayloadˉbytes: 33,
+                Peakˉchargedˉbytes: 64,
+                Peakˉblocks: 1,
+                Maximumˉaddressedˉbytes: 64,
+                Peakˉexternalˉfragmentationˉbytes: 0,
+                Maximumˉfreeˉspans: 1,
+                Failedˉallocations: 0,
+                Firstˉfailureˉpayloadˉbytes: 0,
+                Firstˉfailureˉchargedˉbytes: 0,
+                Firstˉfailureˉlargestˉfreeˉspanˉbytes: 0,
+                Retainedˉblocks: 0,
+                Retainedˉchargedˉbytes: 0),
+            Firstˉreport);
+        Equal(0, Enabled.Runˉmain().Exitˉcode);
+        Equal(Firstˉreport, Enabled.Readˉdynamicˉallocatorˉtrace());
+
+        var Exhausted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Collectˉdynamicˉallocatorˉtrace = true,
+                Dynamicˉallocatorˉarenaˉbytes = 48,
+            });
+        Throwsˉruntime("WVR3018", () => _ = Exhausted.Runˉmain());
+        var Failure = Exhausted.Readˉdynamicˉallocatorˉtrace()!;
+        Equal(1L, Failure.Allocations);
+        Equal(1L, Failure.Failedˉallocations);
+        Equal(4, Failure.Firstˉfailureˉpayloadˉbytes);
+        Equal(32, Failure.Firstˉfailureˉchargedˉbytes);
+        Equal(16, Failure.Firstˉfailureˉlargestˉfreeˉspanˉbytes);
+        Equal(0, Failure.Retainedˉblocks);
+        Equal(0L, Failure.Retainedˉchargedˉbytes);
+
+        var Misalignedˉarenaˉrejected = false;
+        try
+        {
+            _ = new Referenceˉruntime(
+                Module,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults with
+                {
+                    Collectˉdynamicˉallocatorˉtrace = true,
+                    Dynamicˉallocatorˉarenaˉbytes = 63,
+                });
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            Misalignedˉarenaˉrejected = true;
+        }
+        True(Misalignedˉarenaˉrejected, "The diagnostic allocator accepted a misaligned arena.");
     }
 
     private static void Goldenˉhashesˉmatch()

@@ -44,6 +44,15 @@ public sealed class Referenceˉruntime
                 nameof(options),
                 "The maximum call depth must be positive.");
         }
+        if (options.Collectˉdynamicˉallocatorˉtrace &&
+            (options.Dynamicˉallocatorˉarenaˉbytes < Runtimeˉdynamicˉallocatorˉtraceˉstate.ALIGNMENT_BYTES ||
+             options.Dynamicˉallocatorˉarenaˉbytes % Runtimeˉdynamicˉallocatorˉtraceˉstate.ALIGNMENT_BYTES != 0))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options),
+                $"The diagnostic dynamic arena must be a positive multiple of " +
+                $"{Runtimeˉdynamicˉallocatorˉtraceˉstate.ALIGNMENT_BYTES} bytes.");
+        }
 
         Verifiedˉmodule = verifiedˉmodule;
         Capabilityˉhost = capabilityˉhost;
@@ -65,8 +74,12 @@ public sealed class Referenceˉruntime
             Functionˉdynamicˉvalueˉcounts = new long[verifiedˉmodule.Functions.Length, Kinds];
             Functionˉdynamicˉvalueˉbytes = new long[verifiedˉmodule.Functions.Length, Kinds];
         }
-        Dynamicˉlifetime = options.Collectˉdynamicˉvalueˉlifetime
-            ? new Runtimeˉdynamicˉlifetimeˉtracker()
+        Dynamicˉlifetime = options.Collectˉdynamicˉvalueˉlifetime ||
+            options.Collectˉdynamicˉallocatorˉtrace
+            ? new Runtimeˉdynamicˉlifetimeˉtracker(
+                options.Collectˉdynamicˉallocatorˉtrace
+                    ? options.Dynamicˉallocatorˉarenaˉbytes
+                    : null)
             : null;
     }
 
@@ -168,18 +181,35 @@ public sealed class Referenceˉruntime
             Dynamicˉlifetime.Liveˉbytes);
     }
 
+    public Runtimeˉdynamicˉallocatorˉtrace? Readˉdynamicˉallocatorˉtrace() =>
+        Dynamicˉlifetime?.Readˉallocatorˉtrace();
+
     public Runtimeˉresult Runˉmain()
     {
         var Mainˉexport = Prepareˉmain(Valueˉtype.I32, "fn() -> i32");
-        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, null, 0, 1);
-        return new(Result!.Value.I32ˉvalue, Executedˉinstructions);
+        try
+        {
+            var Result = Executeˉfunction(Mainˉexport.Targetˉindex, null, 0, 1);
+            return new(Result!.Value.I32ˉvalue, Executedˉinstructions);
+        }
+        finally
+        {
+            Dynamicˉlifetime?.Completeˉrun();
+        }
     }
 
     public Runtimeˉbytesˉresult Runˉmainˉbytes()
     {
         var Mainˉexport = Prepareˉmain(Valueˉtype.Bytes, "fn() -> bytes");
-        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, null, 0, 1);
-        return new(Result!.Value.Bytesˉvalue.Toˉimmutableˉarray(), Executedˉinstructions);
+        try
+        {
+            var Result = Executeˉfunction(Mainˉexport.Targetˉindex, null, 0, 1);
+            return new(Result!.Value.Bytesˉvalue.Toˉimmutableˉarray(), Executedˉinstructions);
+        }
+        finally
+        {
+            Dynamicˉlifetime?.Completeˉrun();
+        }
     }
 
     public Runtimeˉbytesˉresult Runˉmainˉbytes(ImmutableArray<byte> input)
@@ -190,8 +220,15 @@ public sealed class Referenceˉruntime
             "fn(bytes) -> bytes");
         using var Arguments = new Runtimeˉstack(1, Dynamicˉlifetime);
         Arguments.Push(Runtimeˉvalue.Fromˉbytes(input));
-        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, Arguments, 1, 1);
-        return new(Result!.Value.Bytesˉvalue.Toˉimmutableˉarray(), Executedˉinstructions);
+        try
+        {
+            var Result = Executeˉfunction(Mainˉexport.Targetˉindex, Arguments, 1, 1);
+            return new(Result!.Value.Bytesˉvalue.Toˉimmutableˉarray(), Executedˉinstructions);
+        }
+        finally
+        {
+            Dynamicˉlifetime?.Completeˉrun();
+        }
     }
 
     public Runtimeˉtextˉresult Runˉmainˉtext(string input)
@@ -203,8 +240,15 @@ public sealed class Referenceˉruntime
             "fn(text) -> text");
         using var Arguments = new Runtimeˉstack(1, Dynamicˉlifetime);
         Arguments.Push(Runtimeˉvalue.Fromˉtext(input));
-        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, Arguments, 1, 1);
-        return new(Result!.Value.Textˉvalue!, Executedˉinstructions);
+        try
+        {
+            var Result = Executeˉfunction(Mainˉexport.Targetˉindex, Arguments, 1, 1);
+            return new(Result!.Value.Textˉvalue!, Executedˉinstructions);
+        }
+        finally
+        {
+            Dynamicˉlifetime?.Completeˉrun();
+        }
     }
 
     private Exportˉdeclaration Prepareˉmain(Valueˉshape returnˉtype, string signature)
@@ -1221,6 +1265,16 @@ public sealed class Referenceˉruntime
 
     private sealed class Runtimeˉdynamicˉlifetimeˉtracker
     {
+        private readonly Runtimeˉdynamicˉallocatorˉtraceˉstate? Allocator;
+        private readonly List<Runtimeˉdynamicˉrootˉset> Pendingˉreleases = [];
+
+        public Runtimeˉdynamicˉlifetimeˉtracker(int? allocatorˉarenaˉbytes)
+        {
+            Allocator = allocatorˉarenaˉbytes is { } Arenaˉbytes
+                ? new Runtimeˉdynamicˉallocatorˉtraceˉstate(Arenaˉbytes)
+                : null;
+        }
+
         public long Constructedˉvalues { get; private set; }
 
         public long Constructedˉbytes { get; private set; }
@@ -1268,7 +1322,15 @@ public sealed class Referenceˉruntime
                 Peakˉoperationˉkind = kind;
             }
 
-            return Runtimeˉdynamicˉrootˉset.Createˉbacking(bytes);
+            var Backing = Runtimeˉdynamicˉrootˉset.Createˉbacking(bytes);
+            if (Allocator is not null)
+            {
+                Flushˉpending(
+                    firstˉinput?.Dynamicˉroots,
+                    secondˉinput?.Dynamicˉroots);
+                Allocator.Allocate(Backing);
+            }
+            return Backing;
         }
 
         public void Addˉroots(Runtimeˉvalue value)
@@ -1336,7 +1398,17 @@ public sealed class Referenceˉruntime
             Peakˉoperationˉbytes = 0;
             Peakˉoperationˉfunctionˉindex = -1;
             Peakˉoperationˉkind = null;
+            Pendingˉreleases.Clear();
+            Allocator?.Reset();
         }
+
+        public void Completeˉrun()
+        {
+            Flushˉpending(null, null);
+        }
+
+        public Runtimeˉdynamicˉallocatorˉtrace? Readˉallocatorˉtrace() =>
+            Allocator?.Read();
 
         private static void Addˉunrootedˉinputs(
             Runtimeˉdynamicˉrootˉset? first,
@@ -1391,6 +1463,16 @@ public sealed class Referenceˉruntime
                 return;
             }
 
+            if (Allocator is not null)
+            {
+                if (!backing.Isˉallocatorˉallocated)
+                {
+                    throw new InvalidOperationException(
+                        "Dynamic-value allocator tracking observed a revived released backing.");
+                }
+                Pendingˉreleases.Remove(backing);
+            }
+
             Liveˉvalues = checked(Liveˉvalues + 1);
             Liveˉbytes = checked(Liveˉbytes + backing.Backingˉbytes);
         }
@@ -1410,6 +1492,10 @@ public sealed class Referenceˉruntime
 
             Liveˉvalues--;
             Liveˉbytes -= backing.Backingˉbytes;
+            if (Allocator is not null)
+            {
+                Pendingˉreleases.Add(backing);
+            }
         }
 
         private static void Addˉunrootedˉbacking(
@@ -1441,6 +1527,280 @@ public sealed class Referenceˉruntime
 
             return roots.Backingˉmembers.Contains(backing);
         }
+
+        private void Flushˉpending(
+            Runtimeˉdynamicˉrootˉset? firstˉinput,
+            Runtimeˉdynamicˉrootˉset? secondˉinput)
+        {
+            if (Allocator is null)
+            {
+                return;
+            }
+
+            for (var Index = Pendingˉreleases.Count - 1; Index >= 0; Index--)
+            {
+                var Backing = Pendingˉreleases[Index];
+                if (Backing.Rootˉcount != 0)
+                {
+                    Pendingˉreleases.RemoveAt(Index);
+                    continue;
+                }
+                if (Containsˉbacking(firstˉinput, Backing) ||
+                    Containsˉbacking(secondˉinput, Backing))
+                {
+                    continue;
+                }
+
+                Allocator.Release(Backing);
+                Pendingˉreleases.RemoveAt(Index);
+            }
+        }
+    }
+
+    private sealed class Runtimeˉdynamicˉallocatorˉtraceˉstate
+    {
+        public const int HEADER_BYTES = 16;
+        public const int ALIGNMENT_BYTES = 16;
+
+        private readonly int Arenaˉbytes;
+        private readonly List<Runtimeˉdynamicˉfreeˉspan> Freeˉspans = [];
+        private long Allocations;
+        private long Reusedˉallocations;
+        private long Allocatedˉpayloadˉbytes;
+        private long Allocatedˉchargedˉbytes;
+        private int Allocatedˉblocks;
+        private long Peakˉpayloadˉbytes;
+        private long Peakˉchargedˉbytes;
+        private int Peakˉblocks;
+        private int Maximumˉaddressedˉbytes;
+        private int Peakˉexternalˉfragmentationˉbytes;
+        private int Maximumˉfreeˉspans;
+        private long Failedˉallocations;
+        private int Firstˉfailureˉpayloadˉbytes;
+        private int Firstˉfailureˉchargedˉbytes;
+        private int Firstˉfailureˉlargestˉfreeˉspanˉbytes;
+
+        public Runtimeˉdynamicˉallocatorˉtraceˉstate(int arenaˉbytes)
+        {
+            Arenaˉbytes = arenaˉbytes;
+            Initializeˉfreeˉspan();
+        }
+
+        public void Allocate(Runtimeˉdynamicˉrootˉset backing)
+        {
+            if (!backing.Isˉbacking || backing.Isˉallocatorˉallocated)
+            {
+                throw new InvalidOperationException(
+                    "Dynamic allocator tracing requires one unallocated backing leaf.");
+            }
+
+            var Chargedˉbytes = Charge(backing.Backingˉbytes);
+            var Spanˉindex = -1;
+            for (var Index = 0; Index < Freeˉspans.Count; Index++)
+            {
+                if (Freeˉspans[Index].Bytes >= Chargedˉbytes)
+                {
+                    Spanˉindex = Index;
+                    break;
+                }
+            }
+
+            if (Spanˉindex < 0)
+            {
+                Failedˉallocations = checked(Failedˉallocations + 1);
+                if (Failedˉallocations == 1)
+                {
+                    Firstˉfailureˉpayloadˉbytes = backing.Backingˉbytes;
+                    Firstˉfailureˉchargedˉbytes = Chargedˉbytes;
+                    Firstˉfailureˉlargestˉfreeˉspanˉbytes = Largestˉfreeˉspan();
+                }
+                throw new Runtimeˉexception(
+                    "WVR3018",
+                    $"The diagnostic first-fit dynamic arena exhausted its " +
+                    $"{Arenaˉbytes}-byte limit while placing a {Chargedˉbytes}-byte block.");
+            }
+
+            var Span = Freeˉspans[Spanˉindex];
+            var Offset = Span.Offset;
+            if (Span.Bytes == Chargedˉbytes)
+            {
+                Freeˉspans.RemoveAt(Spanˉindex);
+            }
+            else
+            {
+                Freeˉspans[Spanˉindex] = new(
+                    checked(Span.Offset + Chargedˉbytes),
+                    Span.Bytes - Chargedˉbytes);
+            }
+
+            if (Offset < Maximumˉaddressedˉbytes)
+            {
+                Reusedˉallocations = checked(Reusedˉallocations + 1);
+            }
+            backing.Allocatorˉoffset = Offset;
+            backing.Allocatorˉchargedˉbytes = Chargedˉbytes;
+            backing.Isˉallocatorˉallocated = true;
+            Allocations = checked(Allocations + 1);
+            Allocatedˉpayloadˉbytes = checked(
+                Allocatedˉpayloadˉbytes + backing.Backingˉbytes);
+            Allocatedˉchargedˉbytes = checked(Allocatedˉchargedˉbytes + Chargedˉbytes);
+            Allocatedˉblocks = checked(Allocatedˉblocks + 1);
+            Maximumˉaddressedˉbytes = Math.Max(
+                Maximumˉaddressedˉbytes,
+                checked(Offset + Chargedˉbytes));
+            if (Allocatedˉchargedˉbytes > Peakˉchargedˉbytes ||
+                (Allocatedˉchargedˉbytes == Peakˉchargedˉbytes &&
+                 Allocatedˉpayloadˉbytes > Peakˉpayloadˉbytes))
+            {
+                Peakˉpayloadˉbytes = Allocatedˉpayloadˉbytes;
+                Peakˉchargedˉbytes = Allocatedˉchargedˉbytes;
+                Peakˉblocks = Allocatedˉblocks;
+            }
+            Updateˉfreeˉmetrics();
+        }
+
+        public void Release(Runtimeˉdynamicˉrootˉset backing)
+        {
+            if (!backing.Isˉbacking || !backing.Isˉallocatorˉallocated ||
+                backing.Allocatorˉoffset < 0 || backing.Allocatorˉchargedˉbytes <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Dynamic allocator tracing observed an invalid backing release.");
+            }
+
+            var Released = new Runtimeˉdynamicˉfreeˉspan(
+                backing.Allocatorˉoffset,
+                backing.Allocatorˉchargedˉbytes);
+            var Insertˉindex = 0;
+            while (Insertˉindex < Freeˉspans.Count &&
+                   Freeˉspans[Insertˉindex].Offset < Released.Offset)
+            {
+                Insertˉindex++;
+            }
+            Freeˉspans.Insert(Insertˉindex, Released);
+            Coalesceˉat(Insertˉindex);
+
+            Allocatedˉpayloadˉbytes -= backing.Backingˉbytes;
+            Allocatedˉchargedˉbytes -= backing.Allocatorˉchargedˉbytes;
+            Allocatedˉblocks--;
+            backing.Allocatorˉoffset = -1;
+            backing.Allocatorˉchargedˉbytes = 0;
+            backing.Isˉallocatorˉallocated = false;
+            Updateˉfreeˉmetrics();
+        }
+
+        public Runtimeˉdynamicˉallocatorˉtrace Read() => new(
+            Arenaˉbytes,
+            HEADER_BYTES,
+            ALIGNMENT_BYTES,
+            Allocations,
+            Reusedˉallocations,
+            Peakˉpayloadˉbytes,
+            Peakˉchargedˉbytes,
+            Peakˉblocks,
+            Maximumˉaddressedˉbytes,
+            Peakˉexternalˉfragmentationˉbytes,
+            Maximumˉfreeˉspans,
+            Failedˉallocations,
+            Firstˉfailureˉpayloadˉbytes,
+            Firstˉfailureˉchargedˉbytes,
+            Firstˉfailureˉlargestˉfreeˉspanˉbytes,
+            Allocatedˉblocks,
+            Allocatedˉchargedˉbytes);
+
+        public void Reset()
+        {
+            if (Allocatedˉblocks != 0 || Allocatedˉpayloadˉbytes != 0 ||
+                Allocatedˉchargedˉbytes != 0 || Freeˉspans.Count != 1 ||
+                Freeˉspans[0] != new Runtimeˉdynamicˉfreeˉspan(0, Arenaˉbytes))
+            {
+                throw new InvalidOperationException(
+                    "Dynamic allocator tracing did not recover its complete coalesced arena.");
+            }
+
+            Allocations = 0;
+            Reusedˉallocations = 0;
+            Peakˉpayloadˉbytes = 0;
+            Peakˉchargedˉbytes = 0;
+            Peakˉblocks = 0;
+            Maximumˉaddressedˉbytes = 0;
+            Peakˉexternalˉfragmentationˉbytes = 0;
+            Maximumˉfreeˉspans = 1;
+            Failedˉallocations = 0;
+            Firstˉfailureˉpayloadˉbytes = 0;
+            Firstˉfailureˉchargedˉbytes = 0;
+            Firstˉfailureˉlargestˉfreeˉspanˉbytes = 0;
+        }
+
+        private int Charge(int payloadˉbytes)
+        {
+            if (payloadˉbytes < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(payloadˉbytes));
+            }
+            var Withˉheader = checked(payloadˉbytes + HEADER_BYTES);
+            return checked(
+                ((Withˉheader + ALIGNMENT_BYTES - 1) / ALIGNMENT_BYTES) * ALIGNMENT_BYTES);
+        }
+
+        private void Coalesceˉat(int index)
+        {
+            if (index > 0)
+            {
+                var Previous = Freeˉspans[index - 1];
+                var Current = Freeˉspans[index];
+                if (checked(Previous.Offset + Previous.Bytes) == Current.Offset)
+                {
+                    Freeˉspans[index - 1] = new(
+                        Previous.Offset,
+                        checked(Previous.Bytes + Current.Bytes));
+                    Freeˉspans.RemoveAt(index);
+                    index--;
+                }
+            }
+
+            if (index + 1 < Freeˉspans.Count)
+            {
+                var Current = Freeˉspans[index];
+                var Next = Freeˉspans[index + 1];
+                if (checked(Current.Offset + Current.Bytes) == Next.Offset)
+                {
+                    Freeˉspans[index] = new(
+                        Current.Offset,
+                        checked(Current.Bytes + Next.Bytes));
+                    Freeˉspans.RemoveAt(index + 1);
+                }
+            }
+        }
+
+        private void Initializeˉfreeˉspan()
+        {
+            Freeˉspans.Clear();
+            Freeˉspans.Add(new(0, Arenaˉbytes));
+            Maximumˉfreeˉspans = 1;
+        }
+
+        private int Largestˉfreeˉspan()
+        {
+            var Largest = 0;
+            foreach (var Span in Freeˉspans)
+            {
+                Largest = Math.Max(Largest, Span.Bytes);
+            }
+            return Largest;
+        }
+
+        private void Updateˉfreeˉmetrics()
+        {
+            var Totalˉfree = checked(Arenaˉbytes - (int)Allocatedˉchargedˉbytes);
+            var Externalˉfragmentation = checked(Totalˉfree - Largestˉfreeˉspan());
+            Peakˉexternalˉfragmentationˉbytes = Math.Max(
+                Peakˉexternalˉfragmentationˉbytes,
+                Externalˉfragmentation);
+            Maximumˉfreeˉspans = Math.Max(Maximumˉfreeˉspans, Freeˉspans.Count);
+        }
+
+        private readonly record struct Runtimeˉdynamicˉfreeˉspan(int Offset, int Bytes);
     }
 
     private static Runtimeˉbyteˉslice Sliceˉbytes(

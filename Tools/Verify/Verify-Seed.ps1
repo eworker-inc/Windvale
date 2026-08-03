@@ -556,6 +556,14 @@ if (
 ) {
     throw 'The Seed CLI did not report deterministic dynamic-value lifetime pressure.'
 }
+$DynamicAllocatorOutput = dotnet $ToolDll run $ByteConstructionDemoModule --report-dynamic-allocator 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    $DynamicAllocatorOutput -notcontains 'Result: 0' -or
+    ($DynamicAllocatorOutput -join "`n") -notmatch '(?m)^Dynamic allocator arena-bytes=16777216 header-bytes=16 alignment-bytes=16 allocations=35 reused=12 peak-payload-bytes=6291475 peak-charged-bytes=6291600 peak-blocks=5 maximum-addressed-bytes=8389040 peak-fragmentation-bytes=4194640 maximum-free-spans=3 failed=0 first-failure-payload-bytes=0 first-failure-charged-bytes=0 first-failure-largest-free-span-bytes=0 retained-blocks=0 retained-charged-bytes=0$'
+) {
+    throw 'The Seed CLI did not report deterministic first-fit dynamic allocation evidence.'
+}
 
 $NativeStencilSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Stencil-Core.wv'
 dotnet $ToolDll `

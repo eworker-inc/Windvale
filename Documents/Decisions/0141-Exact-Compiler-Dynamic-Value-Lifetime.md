@@ -1,7 +1,7 @@
 # Decision 0141: Exact-compiler dynamic-value lifetime
 
 - Date: 2026-08-03
-- Status: Implemented with local Windows evidence; cross-host qualification pending
+- Status: Support and bounded fixture cross-host qualified; exact compiler profile has local Windows evidence
 - Retains: Native ABI 21, execution-context version 7, target `x86-64-wvb-baseline-v21`, the 16 MiB dynamic-value arena, and immutable `text`/`bytes` semantics
 - Refines: [Decision 0136](0136-Exact-Compiler-Dynamic-Value-Pressure.md) and [Decision 0137](0137-Bounded-Owned-Values-Before-Dynamic-Collections.md)
 
@@ -36,6 +36,8 @@ Two local Windows Release runs reproduce the exact result and artifact identity 
 
 The candidate then fast-forwards over Decisions 0137 through 0139. Their WVB 1.7 and WebAssembly additions do not execute in the canonical WVB 1.6 bootstrap profile. After integration, change-aware Windows verification completes a zero-warning Release build and passes all 80 selected Seed tests in 314.943 suite seconds, including the 219.181-second golden compiler contract and the three-millisecond warm lifetime case. The multi-billion-instruction lifetime profile is not repeated after that additive integration.
 
+Exact implementation commit `f6952a1b2cf18222de77b0260060dcff3a9ed4bc` passes GitHub [Verify run 30788097110](https://github.com/eworker-inc/Windvale/actions/runs/30788097110). The complete Windows and pinned-Debian verifier jobs both pass, including the deterministic bounded lifetime CLI fixture. The multi-billion-instruction exact compiler profile remains Windows-local evidence rather than an ordinary dual-host gate.
+
 The focused test covers disabled behavior, slices sharing backing, record-held aliases, caller/callee transfer, frame-local retention, allocation copy overlap, zero retained roots, and reset rather than accumulation across repeated runs. The Windows and Linux CLI verifiers require the exact bounded Foundation report. No WVB/WVO bytes, source semantics, native ABI, generated machine bytes, OS source, or guest artifact changes in this measurement slice. QEMU is not rerun because no OS input changed.
 
 ## Consequences
@@ -43,6 +45,8 @@ The focused test covers disabled behavior, slices sharing backing, record-held a
 Windvale does not need to accept a 902 MiB arena or select a general garbage collector to clear this compiler blocker. The evidence supports an explicit bounded ownership/reclamation mechanism consistent with Decision 0137, while keeping immutable values and shared backing observable only through value semantics.
 
 The 16 MiB capacity has meaningful measured headroom, but fragmentation and tracking costs are still open. The next native slice must prove an allocator policy from the exact trace before it changes the execution context, service table, generated ownership operations, or failure codes. The implementation must be shared runtime machinery rather than a compiler-name or function-name special case.
+
+[Decision 0143](0143-Bounded-First-Fit-Dynamic-Arena-Replay.md) completes that replay. A concrete 16-byte-header, 16-byte-aligned, address-ordered first-fit policy finishes the exact compiler inside the retained arena, including fragmentation, and recovers all storage. Native descriptor ownership planning and independent verification are now the next boundary.
 
 This decision does not qualify native Stage 1-to-Stage 2 reproduction, select permanent collection semantics, add dynamic collection syntax, advance WVB 1.7 into the native backend, retire .NET, or advance the OS guest ABI.
 

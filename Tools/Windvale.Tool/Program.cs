@@ -534,6 +534,7 @@ internal static class Program
                 "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
                 "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
                 "[--report-function-dynamic-values] [--report-dynamic-lifetime] " +
+                "[--report-dynamic-allocator] " +
                 "[-- <argument>...]");
         }
 
@@ -546,6 +547,7 @@ internal static class Program
         var Reportˉfunctionˉrecordˉfields = false;
         var Reportˉfunctionˉdynamicˉvalues = false;
         var Reportˉdynamicˉlifetime = false;
+        var Reportˉdynamicˉallocator = false;
         for (var Index = 1; Index < arguments.Length; Index++)
         {
             switch (arguments[Index])
@@ -581,6 +583,9 @@ internal static class Program
                 case "--report-dynamic-lifetime":
                     Reportˉdynamicˉlifetime = true;
                     break;
+                case "--report-dynamic-allocator":
+                    Reportˉdynamicˉallocator = true;
+                    break;
                 case "--":
                     Programˉarguments.AddRange(arguments[(Index + 1)..]);
                     Index = arguments.Length;
@@ -606,7 +611,8 @@ internal static class Program
                 Collectˉfunctionˉsteps: Reportˉfunctionˉsteps,
                 Collectˉfunctionˉrecordˉfields: Reportˉfunctionˉrecordˉfields,
                 Collectˉfunctionˉdynamicˉvalues: Reportˉfunctionˉdynamicˉvalues,
-                Collectˉdynamicˉvalueˉlifetime: Reportˉdynamicˉlifetime));
+                Collectˉdynamicˉvalueˉlifetime: Reportˉdynamicˉlifetime,
+                Collectˉdynamicˉallocatorˉtrace: Reportˉdynamicˉallocator));
         Runtimeˉresult Result;
         try
         {
@@ -661,6 +667,29 @@ internal static class Program
                     $"kind={Peakˉkind} " +
                     $"index={Lifetime.Peakˉoperationˉfunctionˉindex} " +
                     $"name={Lifetime.Peakˉoperationˉfunctionˉname ?? "none"}");
+            }
+            if (Reportˉdynamicˉallocator)
+            {
+                var Allocator = Runtime.Readˉdynamicˉallocatorˉtrace()!;
+                Console.Error.WriteLine(
+                    $"Dynamic allocator arena-bytes={Allocator.Arenaˉbytes} " +
+                    $"header-bytes={Allocator.Headerˉbytes} " +
+                    $"alignment-bytes={Allocator.Alignmentˉbytes} " +
+                    $"allocations={Allocator.Allocations} " +
+                    $"reused={Allocator.Reusedˉallocations} " +
+                    $"peak-payload-bytes={Allocator.Peakˉpayloadˉbytes} " +
+                    $"peak-charged-bytes={Allocator.Peakˉchargedˉbytes} " +
+                    $"peak-blocks={Allocator.Peakˉblocks} " +
+                    $"maximum-addressed-bytes={Allocator.Maximumˉaddressedˉbytes} " +
+                    $"peak-fragmentation-bytes={Allocator.Peakˉexternalˉfragmentationˉbytes} " +
+                    $"maximum-free-spans={Allocator.Maximumˉfreeˉspans} " +
+                    $"failed={Allocator.Failedˉallocations} " +
+                    $"first-failure-payload-bytes={Allocator.Firstˉfailureˉpayloadˉbytes} " +
+                    $"first-failure-charged-bytes={Allocator.Firstˉfailureˉchargedˉbytes} " +
+                    $"first-failure-largest-free-span-bytes=" +
+                    $"{Allocator.Firstˉfailureˉlargestˉfreeˉspanˉbytes} " +
+                    $"retained-blocks={Allocator.Retainedˉblocks} " +
+                    $"retained-charged-bytes={Allocator.Retainedˉchargedˉbytes}");
             }
         }
         Console.WriteLine($"Result: {Result.Exitˉcode}");
@@ -769,6 +798,7 @@ internal static class Program
             "  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
             "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
             "[--report-function-dynamic-values] [--report-dynamic-lifetime] " +
+            "[--report-dynamic-allocator] " +
             "[-- <argument>...]");
         output.WriteLine("  windvale help");
     }

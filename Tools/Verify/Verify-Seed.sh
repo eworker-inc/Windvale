@@ -466,6 +466,11 @@ DYNAMIC_LIFETIME_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$DYNAMIC_LIFETIME_OUTPUT" | grep -F 'Result: 0' >/dev/null
 printf '%s\n' "$DYNAMIC_LIFETIME_OUTPUT" | grep -F \
     'Dynamic lifetime constructed-bytes=8388672 constructed-values=35 peak-live-bytes=6291475 peak-live-values=5 peak-operation-bytes=6291475 peak-operation-values=5 retained-bytes=0 retained-values=0 kind=bytes.concat index=0 name=Foundationˉbytesˉrepeat' >/dev/null
+DYNAMIC_ALLOCATOR_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$BYTE_CONSTRUCTION_DEMO_MODULE" --report-dynamic-allocator 2>&1)
+printf '%s\n' "$DYNAMIC_ALLOCATOR_OUTPUT" | grep -F 'Result: 0' >/dev/null
+printf '%s\n' "$DYNAMIC_ALLOCATOR_OUTPUT" | grep -F \
+    'Dynamic allocator arena-bytes=16777216 header-bytes=16 alignment-bytes=16 allocations=35 reused=12 peak-payload-bytes=6291475 peak-charged-bytes=6291600 peak-blocks=5 maximum-addressed-bytes=8389040 peak-fragmentation-bytes=4194640 maximum-free-spans=3 failed=0 first-failure-payload-bytes=0 first-failure-charged-bytes=0 first-failure-largest-free-span-bytes=0 retained-blocks=0 retained-charged-bytes=0' >/dev/null
 
 NATIVE_STENCIL_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Core.wv"
 dotnet "$TOOL_DLL" \
