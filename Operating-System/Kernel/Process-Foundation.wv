@@ -55,10 +55,20 @@ fn Hasˉresourceˉgeneration(
 
 fn Hasˉexecutionˉgeneration(Generation: u32) -> bool {
     var Channelˉstate: u32 = 0u32;
+    var Requestˉbytes: u32 = 0u32;
+    var Replyˉbytes: u32 = 0u32;
     var Message: i32 = 0;
 
     if Generation < 1u32 { return false; }
     if Generation > 2u32 { return false; }
+    if Channelˉstate != 0u32 { return false; }
+    Requestˉbytes = 55u32;
+    Channelˉstate = 2u32;
+    if Requestˉbytes != 55u32 { return false; }
+    if Channelˉstate != 2u32 { return false; }
+    Replyˉbytes = 116u32;
+    Channelˉstate = 0u32;
+    if Replyˉbytes != 116u32 { return false; }
     if Channelˉstate != 0u32 { return false; }
     Message = 6;
     Channelˉstate = 1u32;
@@ -92,34 +102,35 @@ export fn Main() -> i32 {
     if !Hasˉidentity(Budgetˉdigest, Expectedˉbudgetˉdigest) { return 0; }
     if !Hasˉidentity(Serviceˉdigest, Expectedˉserviceˉdigest) { return 0; }
 
-    // Two address spaces and threads share one kernel-owned capacity-one
-    // result channel. Init owns one exact atomic two-resource grant right.
+    // Two address spaces and threads share one kernel-owned versioned
+    // capacity-one request/reply and result channel. Init owns one exact
+    // atomic two-resource grant right.
     let Initˉprocessˉid: u32 = 1u32;
     let Clientˉprocessˉid: u32 = 2u32;
     let Initˉmemoryˉpages: u32 = 5u32;
-    let Interpreterˉmemoryˉpages: u32 = 159u32;
+    let Interpreterˉmemoryˉpages: u32 = 118u32;
     let Initˉinstructionˉbudget: u32 = 64u32;
     let Interpreterˉinstructionˉbudget: u32 = 189114u32;
     let Interpreterˉcallˉdepth: u32 = 5u32;
     let Initˉprofile: u32 = 1u32;
     let Interpreterˉprofile: u32 = 6u32;
     let Handleˉbudget: u32 = 1u32;
-    let Initˉsyscallˉbudget: u32 = 5u32;
-    let Interpreterˉsyscallˉbudget: u32 = 2u32;
+    let Initˉsyscallˉbudget: u32 = 7u32;
+    let Interpreterˉsyscallˉbudget: u32 = 3u32;
     if Initˉprocessˉid != 1u32 { return 0; }
     if Clientˉprocessˉid != 2u32 { return 0; }
     if Initˉmemoryˉpages != 5u32 { return 0; }
-    if Interpreterˉmemoryˉpages != 159u32 { return 0; }
+    if Interpreterˉmemoryˉpages != 118u32 { return 0; }
     if Initˉinstructionˉbudget != 64u32 { return 0; }
     if Interpreterˉinstructionˉbudget != 189114u32 { return 0; }
     if Interpreterˉcallˉdepth != 5u32 { return 0; }
     if Initˉprofile != 1u32 { return 0; }
     if Interpreterˉprofile != 6u32 { return 0; }
     if Handleˉbudget != 1u32 { return 0; }
-    if Initˉsyscallˉbudget != 5u32 { return 0; }
-    if Interpreterˉsyscallˉbudget != 2u32 { return 0; }
-    if !Hasˉchannelˉendpoint(0u32, 1u32, 6u32, 6u32) { return 0; }
-    if !Hasˉchannelˉendpoint(0u32, 1u32, 1u32, 1u32) { return 0; }
+    if Initˉsyscallˉbudget != 7u32 { return 0; }
+    if Interpreterˉsyscallˉbudget != 3u32 { return 0; }
+    if !Hasˉchannelˉendpoint(0u32, 1u32, 46u32, 46u32) { return 0; }
+    if !Hasˉchannelˉendpoint(0u32, 1u32, 17u32, 17u32) { return 0; }
 
     let Resourceˉsetˉtoken: u32 = 131073u32;
     let Moduleˉresourceˉid: u32 = 1u32;
@@ -142,6 +153,6 @@ export fn Main() -> i32 {
     if !Hasˉreuseˉcontract() { return 0; }
     if !Hasˉresourceˉgeneration(2u32, 1u32, 131074u32) { return 0; }
     if !Hasˉexecutionˉgeneration(2u32) { return 0; }
-    if 2u32 + 2u32 + 1u32 != Initˉsyscallˉbudget { return 0; }
+    if 3u32 + 3u32 + 1u32 != Initˉsyscallˉbudget { return 0; }
     return 97;
 }

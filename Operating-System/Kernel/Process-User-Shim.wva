@@ -1,9 +1,109 @@
 windvale-assembly 1
+symbol local data Windvale_resource_configuration_request in .rodata
 symbol export function Windvale_process_user_entry in .text
 symbol import function Windvale_user_bytecode_interpreter_main
 
 section code .text align 16
 define Windvale_process_user_entry
+load_address r8 Windvale_resource_configuration_request
+move_u32 r9d 55
+move r10 rdx
+add_i32 r10 2048
+move_u32 edi 2048
+move_u32 ebx 6
+move_u32 esi 65536
+syscall
+compare_i32 eax 116
+branch not_equal resource_reply_failure
+move r8 rdx
+add_i32 r8 2048
+load_memory_u32 eax r8 none 1 0
+compare_i32 eax 1498568279
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 4
+compare_i32 eax 1
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 8
+compare_i32 eax 116
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 12
+compare_i32 eax 1
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 16
+compare_i32 eax 0
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 20
+compare_i32 eax 0
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 24
+compare_i32 eax 0
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 28
+compare_i32 eax 3
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 32
+compare_i32 eax 3
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 36
+compare_i32 eax 7
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 40
+compare_i32 eax 4
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 44
+compare_i32 eax 0
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 48
+compare_i32 eax 1664235833
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 52
+compare_i32 eax 892822886
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 56
+compare_i32 eax 1714565219
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 60
+compare_i32 eax 828518705
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 64
+compare_i32 eax 1664508215
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 68
+compare_i32 eax 845361509
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 72
+compare_i32 eax 859333732
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 76
+compare_i32 eax 959722340
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 80
+compare_i32 eax 1700935732
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 84
+compare_i32 eax 842555955
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 88
+compare_i32 eax 1647391075
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 92
+compare_i32 eax 946156086
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 96
+compare_i32 eax 1664233523
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 100
+compare_i32 eax 1717723704
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 104
+compare_i32 eax 962802485
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 108
+compare_i32 eax 1684169523
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 112
+compare_i32 eax 218629379
+branch not_equal resource_reply_failure
 call Windvale_user_bytecode_interpreter_main
 move_u32 ebx 1
 move_u32 esi 65536
@@ -11,6 +111,16 @@ syscall
 move_u32 eax 6
 move_u32 ebx 3
 syscall
+label resource_reply_failure
 trap
+end define
+end section
+
+section rodata .rodata align 4
+define Windvale_resource_configuration_request
+bytes 87 86 82 81 1 0 0 0 55 0 0 0 1 0 0 0
+bytes 1 0 0 0 4 0 0 0 23 0 0 0 0 0 0 0
+bytes 98 111 111 116 58 109 97 105 110 46 99 111 110 102 105 103
+bytes 117 114 97 116 105 111 110
 end define
 end section

@@ -79,7 +79,7 @@ public static class Kernelˉprocessˉimage
             Serviceˉassembly.Objectˉbytes,
             Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.INIT_SERVICE_MAIN_SYMBOL,
-            5);
+            7);
         var Serviceˉlink = Linkˉcompiler.Link(
             [new(Serviceˉassembly.Objectˉbytes), new(Serviceˉobject)],
             new(0, Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL));
@@ -177,7 +177,7 @@ public static class Kernelˉprocessˉimage
             Userˉassembly.Objectˉbytes,
             Kernelˉprocessˉcontract.USER_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL,
-            userˉfault ? 1 : 2);
+            userˉfault ? 2 : 3);
         var Userˉlink = Linkˉcompiler.Link(
             [
                 new(Userˉassembly.Objectˉbytes),
@@ -385,27 +385,24 @@ public static class Kernelˉprocessˉimage
         int expectedˉsyscalls)
     {
         var Object = Objectˉcodec.Readˉandˉverify(objectˉbytes.AsSpan()).Value;
-        if (Object.Sections.Length != 1 ||
-            Object.Sections[0].Kind != Objectˉsectionˉkind.Code ||
-            Object.Symbols.Length != 2 ||
-            Object.Symbols[0] is not
-            {
-                Name: var Entryˉname,
-                Binding: Objectˉsymbolˉbinding.Export,
-                Kind: Objectˉsymbolˉkind.Function,
-                Sectionˉindex: 0,
-                Offset: 0,
-            } ||
-            Object.Symbols[1] is not
-            {
-                Name: var Mainˉname,
-                Binding: Objectˉsymbolˉbinding.Import,
-                Kind: Objectˉsymbolˉkind.Function,
-            } ||
-            Entryˉname != entryˉsymbol ||
-            Mainˉname != mainˉsymbol ||
-            Object.Relocations.Length != 1 ||
-            Countˉsequence(Object.Sections[0].Data.AsSpan(), [0x0F, 0x05]) != expectedˉsyscalls)
+        var Codeˉsections = Object.Sections
+            .Select((Section, Index) => (Section, Index))
+            .Where(Item => Item.Section.Kind == Objectˉsectionˉkind.Code)
+            .ToArray();
+        var Entry = Object.Symbols.SingleOrDefault(Symbol =>
+            Symbol.Name == entryˉsymbol &&
+            Symbol.Binding == Objectˉsymbolˉbinding.Export &&
+            Symbol.Kind == Objectˉsymbolˉkind.Function);
+        var Main = Object.Symbols.SingleOrDefault(Symbol =>
+            Symbol.Name == mainˉsymbol &&
+            Symbol.Binding == Objectˉsymbolˉbinding.Import &&
+            Symbol.Kind == Objectˉsymbolˉkind.Function);
+        if (Codeˉsections.Length != 1 ||
+            Object.Sections.Any(Section => Section.Kind is not
+                (Objectˉsectionˉkind.Code or Objectˉsectionˉkind.Readˉonlyˉdata)) ||
+            Entry is null || Entry.Sectionˉindex != Codeˉsections[0].Index || Entry.Offset != 0 ||
+            Main is null || Object.Relocations.IsEmpty ||
+            Countˉsequence(Codeˉsections[0].Section.Data.AsSpan(), [0x0F, 0x05]) != expectedˉsyscalls)
         {
             throw new InvalidOperationException("A process WVA shim violated its fixed syscall contract.");
         }

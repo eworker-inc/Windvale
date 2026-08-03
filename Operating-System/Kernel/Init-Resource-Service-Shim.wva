@@ -1,4 +1,5 @@
 windvale-assembly 1
+symbol local data Windvale_resource_configuration_reply in .rodata
 symbol export function Windvale_init_resource_user_entry in .text
 symbol import function Windvale_init_resource_service_main
 
@@ -9,21 +10,116 @@ call Windvale_init_resource_service_main
 move_u32 ebx 4
 move_u32 esi 65536
 syscall
-move_u32 ebx 2
+move r8 rdx
+add_i32 r8 1024
+move_u32 r9d 1056
+move_u32 ebx 5
+move_u32 esi 65536
+syscall
+compare_i32 eax 55
+branch not_equal resource_request_failure
+move r8 rdx
+add_i32 r8 1024
+load_memory_u32 eax r8 none 1 0
+compare_i32 eax 1364350551
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 4
+compare_i32 eax 1
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 8
+compare_i32 eax 55
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 12
+compare_i32 eax 1
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 16
+compare_i32 eax 1
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 20
+compare_i32 eax 4
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 24
+compare_i32 eax 23
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 28
+compare_i32 eax 0
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 32
+compare_i32 eax 1953460066
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 36
+compare_i32 eax 1767992634
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 40
+compare_i32 eax 1868770926
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 44
+compare_i32 eax 1734960750
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 48
+compare_i32 eax 1952543349
+branch not_equal resource_request_failure
+load_memory_u16 ax r8 none 1 52
+compare_i16 ax 28521
+branch not_equal resource_request_failure
+load_memory_u8 al r8 none 1 54
+compare_i8 al 110
+branch not_equal resource_request_failure
+load_address r8 Windvale_resource_configuration_reply
+move_u32 r9d 116
+move_u32 ebx 7
 move_u32 esi 65536
 syscall
 # The coordinator reclaims and rebuilds the terminal client before resuming
-# this service. Regrant the same ordered set to generation 2, wait for its
-# independently interpreted result, and only then exit.
+# this service. Regrant the same ordered set to generation 2 and repeat the
+# bounded request/reply before accepting its independently interpreted result.
 move_u32 eax 131073
 move_u32 ebx 4
 move_u32 esi 65536
 syscall
-move_u32 ebx 2
+move r8 rdx
+add_i32 r8 1024
+move_u32 r9d 1056
+move_u32 ebx 5
+move_u32 esi 65536
+syscall
+compare_i32 eax 55
+branch not_equal resource_request_failure
+move r8 rdx
+add_i32 r8 1024
+load_memory_u32 eax r8 none 1 0
+compare_i32 eax 1364350551
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 8
+compare_i32 eax 55
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 12
+compare_i32 eax 1
+branch not_equal resource_request_failure
+load_memory_u32 eax r8 none 1 24
+compare_i32 eax 23
+branch not_equal resource_request_failure
+load_address r8 Windvale_resource_configuration_reply
+move_u32 r9d 116
+move_u32 ebx 7
 move_u32 esi 65536
 syscall
 move_u32 ebx 3
 syscall
+label resource_request_failure
 trap
+end define
+end section
+
+section rodata .rodata align 4
+define Windvale_resource_configuration_reply
+bytes 87 86 82 89 1 0 0 0 116 0 0 0 1 0 0 0
+bytes 0 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0
+bytes 3 0 0 0 7 0 0 0 4 0 0 0 0 0 0 0
+bytes 57 57 50 99 102 101 55 53 99 48 50 102 49 49 98 49
+bytes 55 97 54 99 101 49 99 50 100 100 56 51 100 51 52 57
+bytes 52 56 98 101 51 98 56 50 99 49 49 98 54 50 101 56
+bytes 51 48 50 99 56 98 98 102 53 51 99 57 51 99 98 100
+bytes 3 5 8 13
 end define
 end section

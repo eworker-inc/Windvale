@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`WVRQ 1` and `WVRY 1` are the implemented-candidate bounded request/reply contracts owned by [Decision 0129](../Documents/Decisions/0129-Bounded-Resource-Service-Request-Reply.md). They carry one opaque resource-name lookup to a user-space service and return at most one 4 KiB message. The transport copies bytes and enforces endpoint rights and lifecycle; only the service interprets the resource name or validates [`WVRS 1`](Windvale-Resource-Store.md).
+`WVRQ 1` and `WVRY 1` are the implemented-candidate bounded request/reply contracts owned by [Decision 0129](../Documents/Decisions/0129-Bounded-Resource-Service-Request-Reply.md). [Decision 0135](../Documents/Decisions/0135-Bounded-Guest-Resource-Request-Reply.md) adopts one exact exchange in the live Probe-33 guest through `WVCHAN02`. They carry one opaque resource-name lookup to a user-space service and return at most one 4 KiB message. The kernel transport copies bytes and enforces endpoint rights and lifecycle; only user space interprets the resource name or response format.
 
 This is a narrow resource-service protocol, not a general IPC ABI or filesystem. It provides no host paths, directories, enumeration, handles, mutation, storage device, service discovery, transferable capability, or ambient namespace.
 
@@ -99,4 +99,6 @@ The capacity-one boundary rejects a second send, receive-before-ready, reply-bef
 
 The focused OS suite proves deterministic construction, the exact one-page response boundary, the first oversized resource result, strict request and response verification, canonical failure envelopes, 512 deterministic hostile request/response inputs, transport authorization and lifecycle, peer-exit cleanup, capability denial, missing inputs, and one live lookup of `boot:main.configuration` returning identifier `3`, kind `opaque-bytes`, attributes `7`, and bytes `[3,5,8,13]`.
 
-This candidate does not change `WVPROC11`, `WVCHAN01`, `WVRES004`, `WVBR002`, syscall numbers, the current boot image, or pinned QEMU identities. It is hosted in-process evidence for the protocol and user-space policy boundary, not evidence that the live guest already runs the service. The next guest slice must assign a kernel ABI version, checked user-buffer copy rules, wait/wake behavior, service death propagation, an immutable `WVRS 1` boot capability, and cleanup without teaching the kernel resource-name semantics.
+Probe 33 advances to `WVPROC12` and `WVCHAN02`, adds checked one-page user-buffer copy rules and synchronous wait/wake behavior, and proves the exact configuration request/reply twice in pinned QEMU before the existing terminal cleanup. Request sources are RX, destinations are registered RW/NX windows, and endpoint rights remain directional.
+
+The guest service response is currently a fixed WVA-owned canonical envelope for `boot:main.configuration`; the complete portable `WVRS 1` validator and dynamic handler still run only in hosted evidence. The next filesystem slice must give the guest service an independently lived immutable `WVRS 1` capability, execute dynamic lookup there, and define service-death propagation without teaching the kernel resource-name semantics.

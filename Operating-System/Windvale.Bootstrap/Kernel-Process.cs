@@ -7,8 +7,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 11;
-    public const string TARGET_NAME = "x86-64-kernel-process-v11";
+    public const int FORMAT_VERSION = 12;
+    public const string TARGET_NAME = "x86-64-kernel-process-v12";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
@@ -59,21 +59,30 @@ public static class Kernelˉprocessˉcontract
     public const int CLIENT_INTERPRETER_FRAME_SLOTS = 755;
     public const ulong CLIENT_NATIVE_STACK_USED_BYTES = 24_240;
     public const uint HANDLE_BUDGET = 1;
-    public const uint INIT_SYSCALL_BUDGET = 5;
-    public const uint CLIENT_SYSCALL_BUDGET = 2;
+    public const uint INIT_SYSCALL_BUDGET = 7;
+    public const uint CLIENT_SYSCALL_BUDGET = 3;
     public const uint CHANNEL_CAPACITY = 1;
     public const uint CAPABILITY_SLOT = 0;
     public const uint CAPABILITY_GENERATION = 1;
     public const uint CAPABILITY_RIGHT_SEND = 1U << 0;
     public const uint CAPABILITY_RIGHT_RECEIVE = 1U << 1;
     public const uint CAPABILITY_RIGHT_GRANT_BOOT_RESOURCE = 1U << 2;
+    public const uint CAPABILITY_RIGHT_RECEIVE_RESOURCE_REQUEST = 1U << 3;
+    public const uint CAPABILITY_RIGHT_CALL_RESOURCE_SERVICE = 1U << 4;
+    public const uint CAPABILITY_RIGHT_REPLY_RESOURCE_REQUEST = 1U << 5;
     public const uint INIT_CAPABILITY_RIGHTS =
-        CAPABILITY_RIGHT_RECEIVE | CAPABILITY_RIGHT_GRANT_BOOT_RESOURCE;
+        CAPABILITY_RIGHT_RECEIVE | CAPABILITY_RIGHT_GRANT_BOOT_RESOURCE |
+        CAPABILITY_RIGHT_RECEIVE_RESOURCE_REQUEST | CAPABILITY_RIGHT_REPLY_RESOURCE_REQUEST;
+    public const uint CLIENT_CAPABILITY_RIGHTS =
+        CAPABILITY_RIGHT_SEND | CAPABILITY_RIGHT_CALL_RESOURCE_SERVICE;
     public const uint CAPABILITY_REFERENCE = (CAPABILITY_GENERATION << 16) | CAPABILITY_SLOT;
     public const uint SYSCALL_SEND = 1;
     public const uint SYSCALL_RECEIVE = 2;
     public const uint SYSCALL_EXIT = 3;
     public const uint SYSCALL_GRANT_BOOT_RESOURCE = 4;
+    public const uint SYSCALL_RECEIVE_RESOURCE_REQUEST = 5;
+    public const uint SYSCALL_CALL_RESOURCE_SERVICE = 6;
+    public const uint SYSCALL_REPLY_RESOURCE_REQUEST = 7;
     public const uint RESOURCE_SET_TOKEN = 0x0002_0001;
     public const ulong INIT_ALLOCATION_PAGES = 9;
     public const ulong CLIENT_ALLOCATION_PAGES = 120;
@@ -123,8 +132,8 @@ public static class Kernelˉprocessˉcontract
     public const uint CLIENT_RECORD_OFFSET = 768;
     public const uint CHANNEL_RECORD_OFFSET = 1_040;
     public const uint RECORD_BYTES = 264;
-    public const ulong RECORD_MAGIC = 0x3131_434F_5250_5657;
-    public const uint RECORD_VERSION = 11;
+    public const ulong RECORD_MAGIC = 0x3231_434F_5250_5657;
+    public const uint RECORD_VERSION = 12;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -157,9 +166,11 @@ public static class Kernelˉprocessˉcontract
     public const uint RUNTIME_PROFILE_GRANTED_BOOT_RESOURCE_INTERPRETER = 6;
     public const uint WAIT_REASON_NONE = 0;
     public const uint WAIT_REASON_CHANNEL_RECEIVE = 1;
-    public const ulong CHANNEL_MAGIC = 0x3130_4E41_4843_5657;
-    public const uint CHANNEL_VERSION = 1;
-    public const uint CHANNEL_RECORD_BYTES = 64;
+    public const uint WAIT_REASON_RESOURCE_REQUEST = 2;
+    public const uint WAIT_REASON_RESOURCE_REPLY = 3;
+    public const ulong CHANNEL_MAGIC = 0x3230_4E41_4843_5657;
+    public const uint CHANNEL_VERSION = 2;
+    public const uint CHANNEL_RECORD_BYTES = 96;
     public const uint CHANNEL_STATE_OFFSET = 16;
     public const uint CHANNEL_MESSAGE_OFFSET = 20;
     public const uint CHANNEL_SENDER_OFFSET = 24;
@@ -169,6 +180,17 @@ public static class Kernelˉprocessˉcontract
     public const uint CHANNEL_WAITER_OFFSET = 40;
     public const uint CHANNEL_WAKE_COUNT_OFFSET = 44;
     public const uint CHANNEL_CAPACITY_OFFSET = 48;
+    public const uint CHANNEL_REQUEST_COUNT_OFFSET = 52;
+    public const uint CHANNEL_REPLY_COUNT_OFFSET = 56;
+    public const uint CHANNEL_BYTE_LENGTH_OFFSET = 60;
+    public const uint CHANNEL_SERVICE_DESTINATION_OFFSET = 64;
+    public const uint CHANNEL_SERVICE_CAPACITY_OFFSET = 72;
+    public const uint CHANNEL_CLIENT_DESTINATION_OFFSET = 80;
+    public const uint CHANNEL_CLIENT_CAPACITY_OFFSET = 88;
+    public const uint CHANNEL_STATE_REQUEST_DELIVERED = 2;
+    public const uint MAXIMUM_CHANNEL_MESSAGE_BYTES = 4_096;
+    public const uint RESOURCE_CONFIGURATION_REQUEST_BYTES = 55;
+    public const uint RESOURCE_CONFIGURATION_REPLY_BYTES = 116;
     public const uint RESOURCE_RECORD_OFFSET = CHANNEL_RECORD_OFFSET + CHANNEL_RECORD_BYTES;
     public const uint SECOND_RESOURCE_RECORD_OFFSET = RESOURCE_RECORD_OFFSET + RESOURCE_RECORD_BYTES;
     public const uint RESOURCE_COUNT = 2;
@@ -308,7 +330,7 @@ public static class Kernelˉprocessˉplanner
                 Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION or
                 Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION &&
             definition.Role == Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER &&
-            definition.Capabilityˉrights == Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND;
+            definition.Capabilityˉrights == Kernelˉprocessˉcontract.CLIENT_CAPABILITY_RIGHTS;
         if ((!Isˉinit && !Isˉclient) ||
             definition.Channelˉaddress == 0 ||
             (definition.Channelˉaddress & (sizeof(ulong) - 1)) != 0 ||

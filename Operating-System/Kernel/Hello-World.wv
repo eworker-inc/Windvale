@@ -15,7 +15,7 @@ data Resourceˉrevokedˉmarker: text = "resource-revoked=pass";
 data Processˉreuseˉmarker: text = "process-reuse=pass";
 data Runtimeˉmarker: text = "wvb-runtime=interpreted";
 data Initˉserviceˉmarker: text = "init-service=pass";
-data Ipcˉmarker: text = "ipc=cross-process";
+data Ipcˉmarker: text = "ipc=resource-request-reply";
 
 export fn Main() -> i32 {
     console.write_line(Memoryˉmarker);

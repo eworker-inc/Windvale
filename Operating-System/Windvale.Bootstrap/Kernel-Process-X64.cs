@@ -18,8 +18,12 @@ public static class Kernelˉprocessˉx64
     private const string FAILURE_LABEL = "process_failure";
     private const string SERVICE_BLOCKED_LABEL = "process_service_blocked";
     private const string CLIENT_COMPLETION_LABEL = "process_client_completion";
+    private const string SERVICE_REPLY_BLOCKED_LABEL = "process_service_reply_blocked";
+    private const string CLIENT_TERMINAL_LABEL = "process_client_terminal";
     private const string SECOND_SERVICE_BLOCKED_LABEL = "process_second_service_blocked";
     private const string SECOND_CLIENT_COMPLETION_LABEL = "process_second_client_completion";
+    private const string SECOND_SERVICE_REPLY_BLOCKED_LABEL = "process_second_service_reply_blocked";
+    private const string SECOND_CLIENT_TERMINAL_LABEL = "process_second_client_terminal";
     private const string COMPLETION_LABEL = "process_completion";
     private const string PT_LOOP_LABEL = "process_pt_loop";
     private const string PT_NULL_DONE_LABEL = "process_pt_null_done";
@@ -27,6 +31,9 @@ public static class Kernelˉprocessˉx64
     private const string SYSCALL_RECEIVE_LABEL = "process_syscall_receive";
     private const string SYSCALL_EXIT_LABEL = "process_syscall_exit";
     private const string SYSCALL_GRANT_RESOURCE_LABEL = "process_syscall_grant_resource";
+    private const string SYSCALL_RECEIVE_RESOURCE_REQUEST_LABEL = "process_syscall_receive_resource_request";
+    private const string SYSCALL_CALL_RESOURCE_SERVICE_LABEL = "process_syscall_call_resource_service";
+    private const string SYSCALL_REPLY_RESOURCE_REQUEST_LABEL = "process_syscall_reply_resource_request";
     private const string SYSCALL_RESUME_LABEL = "process_syscall_resume";
     private const string SYSCALL_FAILURE_LABEL = "process_syscall_failure";
     private const string EXCEPTION_KERNEL_LABEL = "process_exception_kernel";
@@ -246,7 +253,7 @@ public static class Kernelˉprocessˉx64
             Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
             Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
             Kernelˉprocessˉcontract.FIRST_CLIENT_GENERATION,
-            Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
+            Kernelˉprocessˉcontract.CLIENT_CAPABILITY_RIGHTS,
             Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         Emitˉcopyˉkernelˉtables(output);
         Emitˉpopulateˉprocessˉtable(
@@ -268,8 +275,8 @@ public static class Kernelˉprocessˉx64
         Emitˉinstallˉdescriptorˉstate(output, relocations);
         Emitˉconfigureˉsyscallˉmsrs(output);
 
-        // Windvale init grants its resource, then deterministically blocks on
-        // the still-empty result channel.
+        // Windvale init grants its resource, registers its request destination,
+        // then deterministically blocks on the channel.
         Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
         Emitˉactivateˉrecordˉroot(output, relocations);
         Emitˉsetˉkernelˉgsˉbase(output);
@@ -285,13 +292,15 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 2);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
-            Kernelˉprocessˉcontract.WAIT_REASON_CHANNEL_RECEIVE);
+            Kernelˉprocessˉcontract.WAIT_REASON_RESOURCE_REQUEST);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉloadˉgsˉchannelˉr10(output);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
             Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REQUEST_COUNT_OFFSET, 0);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉvalidateˉborrowedˉresource(
             output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
@@ -305,6 +314,87 @@ public static class Kernelˉprocessˉx64
         Emitˉenterˉinitialˉprocess(output, CLIENT_COMPLETION_LABEL, Kernelˉprocessˉcontract.CLIENT_STACK_PAGES);
 
         output.Mark(CLIENT_COMPLETION_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+            Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_WAITING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_RESOURCE_REPLY);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉloadˉgsˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_STATE_REQUEST_DELIVERED);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REQUEST_COUNT_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_BYTE_LENGTH_OFFSET,
+            Kernelˉprocessˉcontract.RESOURCE_CONFIGURATION_REQUEST_BYTES);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+
+        // The request is now copied. Resume only the registered service and
+        // return the exact opaque byte count from its receive operation.
+        output.Emit(0x0F, 0x01, 0xF8);
+        Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
+        Emitˉactivateˉrecordˉroot(output, relocations);
+        Emitˉsetˉkernelˉgsˉbase(output);
+        output.Loadˉripˉrelativeˉrdx(SERVICE_REPLY_BLOCKED_LABEL);
+        output.Emit(0x49, 0x89, 0x95);
+        output.Emitˉu32(Kernelˉprocessˉcontract.KERNEL_RESUME_OFFSET);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_RUNNING);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_NONE);
+        output.Emit(0xB8);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_CONFIGURATION_REQUEST_BYTES);
+        Emitˉresumeˉsavedˉprocess(output);
+
+        output.Mark(SERVICE_REPLY_BLOCKED_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+            Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_WAITING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 3);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_CHANNEL_RECEIVE);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉloadˉgsˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REPLY_COUNT_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_BYTE_LENGTH_OFFSET,
+            Kernelˉprocessˉcontract.RESOURCE_CONFIGURATION_REPLY_BYTES);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+
+        output.Emit(0x0F, 0x01, 0xF8);
+        Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
+        Emitˉactivateˉrecordˉroot(output, relocations);
+        Emitˉsetˉkernelˉgsˉbase(output);
+        output.Loadˉripˉrelativeˉrdx(CLIENT_TERMINAL_LABEL);
+        output.Emit(0x49, 0x89, 0x95);
+        output.Emitˉu32(Kernelˉprocessˉcontract.KERNEL_RESUME_OFFSET);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_RUNNING);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_NONE);
+        output.Emit(0xB8);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_CONFIGURATION_REPLY_BYTES);
+        Emitˉresumeˉsavedˉprocess(output);
+
+        output.Mark(CLIENT_TERMINAL_LABEL);
         if (userˉfault)
         {
             Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
@@ -318,7 +408,7 @@ public static class Kernelˉprocessˉx64
             output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
             Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.FAULT_ERROR_OFFSET, 0);
             output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
-            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 1);
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 2);
             output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         }
         else
@@ -366,7 +456,8 @@ public static class Kernelˉprocessˉx64
         Emitˉreclaimˉandˉrebuildˉclient(output, relocations, image);
 
         // Consume generation 1's message and resume init. Its WVA seam issues
-        // a second grant and receive, then blocks at the new coordinator label.
+        // a second grant and receive-request, then blocks at the new coordinator
+        // label.
         Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
         Emitˉsetˉkernelˉgsˉbase(output);
         output.Loadˉripˉrelativeˉrdx(SECOND_SERVICE_BLOCKED_LABEL);
@@ -397,10 +488,10 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
             Kernelˉprocessˉcontract.THREAD_STATE_WAITING);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
-        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 4);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 5);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
-            Kernelˉprocessˉcontract.WAIT_REASON_CHANNEL_RECEIVE);
+            Kernelˉprocessˉcontract.WAIT_REASON_RESOURCE_REQUEST);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉloadˉgsˉchannelˉr10(output);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
@@ -413,6 +504,10 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_RECEIVE_COUNT_OFFSET, 1);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAKE_COUNT_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REQUEST_COUNT_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REPLY_COUNT_OFFSET, 1);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉvalidateˉborrowedˉresource(
             output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
@@ -428,6 +523,85 @@ public static class Kernelˉprocessˉx64
             output, SECOND_CLIENT_COMPLETION_LABEL, Kernelˉprocessˉcontract.CLIENT_STACK_PAGES);
 
         output.Mark(SECOND_CLIENT_COMPLETION_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+            Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_WAITING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 1);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_RESOURCE_REPLY);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉloadˉgsˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_STATE_REQUEST_DELIVERED);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REQUEST_COUNT_OFFSET, 2);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_BYTE_LENGTH_OFFSET,
+            Kernelˉprocessˉcontract.RESOURCE_CONFIGURATION_REQUEST_BYTES);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+
+        output.Emit(0x0F, 0x01, 0xF8);
+        Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
+        Emitˉactivateˉrecordˉroot(output, relocations);
+        Emitˉsetˉkernelˉgsˉbase(output);
+        output.Loadˉripˉrelativeˉrdx(SECOND_SERVICE_REPLY_BLOCKED_LABEL);
+        output.Emit(0x49, 0x89, 0x95);
+        output.Emitˉu32(Kernelˉprocessˉcontract.KERNEL_RESUME_OFFSET);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_RUNNING);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_NONE);
+        output.Emit(0xB8);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_CONFIGURATION_REQUEST_BYTES);
+        Emitˉresumeˉsavedˉprocess(output);
+
+        output.Mark(SECOND_SERVICE_REPLY_BLOCKED_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+            Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_WAITING);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 6);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_CHANNEL_RECEIVE);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉloadˉgsˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REPLY_COUNT_OFFSET, 2);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_BYTE_LENGTH_OFFSET,
+            Kernelˉprocessˉcontract.RESOURCE_CONFIGURATION_REPLY_BYTES);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+
+        output.Emit(0x0F, 0x01, 0xF8);
+        Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
+        Emitˉactivateˉrecordˉroot(output, relocations);
+        Emitˉsetˉkernelˉgsˉbase(output);
+        output.Loadˉripˉrelativeˉrdx(SECOND_CLIENT_TERMINAL_LABEL);
+        output.Emit(0x49, 0x89, 0x95);
+        output.Emitˉu32(Kernelˉprocessˉcontract.KERNEL_RESUME_OFFSET);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_RUNNING);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_NONE);
+        output.Emit(0xB8);
+        output.Emitˉu32(Kernelˉprocessˉcontract.RESOURCE_CONFIGURATION_REPLY_BYTES);
+        Emitˉresumeˉsavedˉprocess(output);
+
+        output.Mark(SECOND_CLIENT_TERMINAL_LABEL);
         if (userˉfault)
         {
             Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
@@ -441,7 +615,7 @@ public static class Kernelˉprocessˉx64
             output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
             Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.FAULT_ERROR_OFFSET, 0);
             output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
-            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 1);
+            Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 2);
             output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         }
         else
@@ -478,7 +652,7 @@ public static class Kernelˉprocessˉx64
             output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
 
         // Generation 2 is terminal. Switch back to init, consume its message,
-        // and let the five-syscall service exit through the final label.
+        // and let the seven-syscall service exit through the final label.
         output.Emit(0x0F, 0x01, 0xF8);
         Emitˉloadˉstackˉr13(output, INIT_RECORD_SLOT_OFFSET);
         Emitˉactivateˉrecordˉroot(output, relocations);
@@ -527,6 +701,10 @@ public static class Kernelˉprocessˉx64
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAKE_COUNT_OFFSET, 2);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REQUEST_COUNT_OFFSET, 2);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REPLY_COUNT_OFFSET, 2);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         Emitˉvalidateˉreleasedˉresource(
             output, FAILURE_LABEL, checked((uint)image.Admittedˉprogramˉbytes.Length));
 
@@ -565,7 +743,7 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
             Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         output.Jumpˉif(CONDITION_NOT_EQUAL, EXCEPTION_FAILURE_LABEL);
-        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 1);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET, 2);
         output.Jumpˉif(CONDITION_NOT_EQUAL, EXCEPTION_FAILURE_LABEL);
         Emitˉloadˉgsˉchannelˉr10(output);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 1);
@@ -605,7 +783,6 @@ public static class Kernelˉprocessˉx64
         Emitˉstoreˉgsˉrsp(output, Kernelˉprocessˉcontract.USER_STACK_POINTER_OFFSET);
         Emitˉstoreˉgsˉrcx(output, Kernelˉprocessˉcontract.USER_INSTRUCTION_POINTER_OFFSET);
         Emitˉstoreˉgsˉr11(output, Kernelˉprocessˉcontract.USER_FLAGS_OFFSET);
-        Emitˉstoreˉgsˉrdx(output, Kernelˉprocessˉcontract.USER_CONTEXT_POINTER_OFFSET);
         Emitˉloadˉgsˉrsp(output, Kernelˉprocessˉcontract.KERNEL_STACK_OFFSET);
         output.Emit(0x83, 0xFB, (byte)Kernelˉprocessˉcontract.SYSCALL_SEND);
         output.Jumpˉif(CONDITION_EQUAL, SYSCALL_SEND_LABEL);
@@ -615,6 +792,12 @@ public static class Kernelˉprocessˉx64
         output.Jumpˉif(CONDITION_EQUAL, SYSCALL_EXIT_LABEL);
         output.Emit(0x83, 0xFB, (byte)Kernelˉprocessˉcontract.SYSCALL_GRANT_BOOT_RESOURCE);
         output.Jumpˉif(CONDITION_EQUAL, SYSCALL_GRANT_RESOURCE_LABEL);
+        output.Emit(0x83, 0xFB, (byte)Kernelˉprocessˉcontract.SYSCALL_RECEIVE_RESOURCE_REQUEST);
+        output.Jumpˉif(CONDITION_EQUAL, SYSCALL_RECEIVE_RESOURCE_REQUEST_LABEL);
+        output.Emit(0x83, 0xFB, (byte)Kernelˉprocessˉcontract.SYSCALL_CALL_RESOURCE_SERVICE);
+        output.Jumpˉif(CONDITION_EQUAL, SYSCALL_CALL_RESOURCE_SERVICE_LABEL);
+        output.Emit(0x83, 0xFB, (byte)Kernelˉprocessˉcontract.SYSCALL_REPLY_RESOURCE_REQUEST);
+        output.Jumpˉif(CONDITION_EQUAL, SYSCALL_REPLY_RESOURCE_REQUEST_LABEL);
         output.Jump(SYSCALL_FAILURE_LABEL);
 
         output.Mark(SYSCALL_GRANT_RESOURCE_LABEL);
@@ -654,6 +837,119 @@ public static class Kernelˉprocessˉx64
         Emitˉincrementˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET);
         output.Emit(0x31, 0xC0);
         output.Jump(SYSCALL_RESUME_LABEL);
+
+        output.Mark(SYSCALL_RECEIVE_RESOURCE_REQUEST_LABEL);
+        Emitˉvalidateˉcapability(
+            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_RECEIVE_RESOURCE_REQUEST);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
+            Kernelˉprocessˉcontract.ROLE_INIT_SERVICE);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        Emitˉrequireˉsyscallˉbudget(output);
+        Emitˉvalidateˉdataˉrange(output, addressˉisˉr10: false, lengthˉisˉedi: false);
+        Emitˉloadˉgsˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET, 0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x4D, 0x89, 0x42,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_SERVICE_DESTINATION_OFFSET));
+        output.Emit(0x45, 0x89, 0x4A,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_SERVICE_CAPACITY_OFFSET));
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+        Emitˉincrementˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET);
+        Emitˉstoreˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_WAITING);
+        Emitˉstoreˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_RESOURCE_REQUEST);
+        Emitˉjumpˉgs(output, Kernelˉprocessˉcontract.KERNEL_RESUME_OFFSET);
+
+        output.Mark(SYSCALL_CALL_RESOURCE_SERVICE_LABEL);
+        Emitˉvalidateˉcapability(
+            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_CALL_RESOURCE_SERVICE);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
+            Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        Emitˉrequireˉsyscallˉbudget(output);
+        Emitˉvalidateˉcodeˉrange(output);
+        Emitˉvalidateˉdataˉrange(output, addressˉisˉr10: true, lengthˉisˉedi: true);
+        // Preserve the reply destination in the architecturally clobbered R11
+        // before R10 becomes the shared record. R12 remains the kernel-state base.
+        output.Emit(0x4D, 0x89, 0xD3);
+        Emitˉloadˉgsˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        // The service registered a destination large enough for the opaque request.
+        output.Emit(0x45, 0x39, 0x4A,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_SERVICE_CAPACITY_OFFSET));
+        output.Jumpˉif(CONDITION_BELOW, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x4D, 0x89, 0x5A,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_CLIENT_DESTINATION_OFFSET));
+        output.Emit(0x41, 0x89, 0x7A,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_CLIENT_CAPACITY_OFFSET));
+        output.Emit(0x45, 0x89, 0x4A,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_BYTE_LENGTH_OFFSET));
+        // All process physical pages remain supervisor-visible through the
+        // checked identity map; only the validated user extents are copied.
+        output.Emit(0x4C, 0x89, 0xC6);
+        output.Emit(0x49, 0x8B, 0x7A,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_SERVICE_DESTINATION_OFFSET));
+        output.Emit(0x44, 0x89, 0xC9, 0xFC, 0xF3, 0xA4);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_STATE_REQUEST_DELIVERED);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_SENDER_OFFSET,
+            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
+        Emitˉincrementˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REQUEST_COUNT_OFFSET);
+        Emitˉincrementˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET);
+        Emitˉstoreˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_WAITING);
+        Emitˉstoreˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_RESOURCE_REPLY);
+        Emitˉjumpˉgs(output, Kernelˉprocessˉcontract.KERNEL_RESUME_OFFSET);
+
+        output.Mark(SYSCALL_REPLY_RESOURCE_REQUEST_LABEL);
+        Emitˉvalidateˉcapability(
+            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_REPLY_RESOURCE_REQUEST);
+        Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
+            Kernelˉprocessˉcontract.ROLE_INIT_SERVICE);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        Emitˉrequireˉsyscallˉbudget(output);
+        Emitˉvalidateˉcodeˉrange(output);
+        Emitˉloadˉgsˉchannelˉr10(output);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_STATE_REQUEST_DELIVERED);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x45, 0x39, 0x4A,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_CLIENT_CAPACITY_OFFSET));
+        output.Jumpˉif(CONDITION_BELOW, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x45, 0x89, 0x4A,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_BYTE_LENGTH_OFFSET));
+        output.Emit(0x4C, 0x89, 0xC6);
+        output.Emit(0x49, 0x8B, 0x7A,
+            checked((byte)Kernelˉprocessˉcontract.CHANNEL_CLIENT_DESTINATION_OFFSET));
+        output.Emit(0x44, 0x89, 0xC9, 0xFC, 0xF3, 0xA4);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_SENDER_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_RECEIVER_OFFSET,
+            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID);
+        Emitˉstoreˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_ID);
+        Emitˉincrementˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_REPLY_COUNT_OFFSET);
+        Emitˉincrementˉgsˉu32(output, Kernelˉprocessˉcontract.SYSCALL_COUNT_OFFSET);
+        Emitˉstoreˉgsˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_WAITING);
+        Emitˉstoreˉgsˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_CHANNEL_RECEIVE);
+        Emitˉjumpˉgs(output, Kernelˉprocessˉcontract.KERNEL_RESUME_OFFSET);
 
         output.Mark(SYSCALL_RECEIVE_LABEL);
         Emitˉvalidateˉcapability(output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_RECEIVE);
@@ -705,7 +1001,7 @@ public static class Kernelˉprocessˉx64
         output.Mark(SYSCALL_RESUME_LABEL);
         Emitˉloadˉgsˉrcx(output, Kernelˉprocessˉcontract.USER_INSTRUCTION_POINTER_OFFSET);
         Emitˉloadˉgsˉr11(output, Kernelˉprocessˉcontract.USER_FLAGS_OFFSET);
-        Emitˉloadˉgsˉrdx(output, Kernelˉprocessˉcontract.USER_CONTEXT_POINTER_OFFSET);
+        Emitˉloadˉgsˉrdx(output, Kernelˉprocessˉcontract.USER_DATA_ADDRESS_OFFSET);
         Emitˉloadˉgsˉrsp(output, Kernelˉprocessˉcontract.USER_STACK_POINTER_OFFSET);
         output.Emit(0x0F, 0x01, 0xF8, 0x48, 0x0F, 0x07);
     }
@@ -911,7 +1207,7 @@ public static class Kernelˉprocessˉx64
             Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
             Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
             Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION,
-            Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND,
+            Kernelˉprocessˉcontract.CLIENT_CAPABILITY_RIGHTS,
             Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         Emitˉcopyˉkernelˉtables(output);
         Emitˉpopulateˉprocessˉtable(
@@ -1322,7 +1618,7 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x4D, 0x8B, 0x9D);
         output.Emitˉu32(Kernelˉprocessˉcontract.USER_FLAGS_OFFSET);
         output.Emit(0x49, 0x8B, 0x95);
-        output.Emitˉu32(Kernelˉprocessˉcontract.USER_CONTEXT_POINTER_OFFSET);
+        output.Emitˉu32(Kernelˉprocessˉcontract.USER_DATA_ADDRESS_OFFSET);
         output.Emit(0x49, 0x8B, 0xA5);
         output.Emitˉu32(Kernelˉprocessˉcontract.USER_STACK_POINTER_OFFSET);
         output.Emit(0x48, 0x0F, 0x07);
@@ -1392,6 +1688,58 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(Kernelˉprocessˉcontract.CAPABILITY_RIGHTS_OFFSET);
         output.Emitˉu32(right);
         output.Jumpˉif(CONDITION_EQUAL, SYSCALL_FAILURE_LABEL);
+    }
+
+    private static void Emitˉvalidateˉcodeˉrange(X64ˉcodeˉbuilder output)
+    {
+        // R8/R9D describe a nonempty source wholly inside this process's RX image.
+        output.Emit(0x45, 0x85, 0xC9);
+        output.Jumpˉif(CONDITION_EQUAL, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x41, 0x81, 0xF9);
+        output.Emitˉu32(Kernelˉprocessˉcontract.MAXIMUM_CHANNEL_MESSAGE_BYTES);
+        output.Jumpˉif(CONDITION_ABOVE, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x65, 0x48, 0x8B, 0x04, 0x25);
+        output.Emitˉu32(Kernelˉprocessˉcontract.USER_CODE_ADDRESS_OFFSET);
+        output.Emit(0x49, 0x39, 0xC0);
+        output.Jumpˉif(CONDITION_BELOW, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x4C, 0x89, 0xC2, 0x44, 0x89, 0xC9, 0x48, 0x01, 0xCA);
+        output.Jumpˉif(CONDITION_BELOW, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x65, 0x8B, 0x0C, 0x25);
+        output.Emitˉu32(Kernelˉprocessˉcontract.CODE_PAGE_COUNT_OFFSET);
+        output.Emit(0x48, 0xC1, 0xE1, 0x0C, 0x48, 0x01, 0xC8, 0x48, 0x39, 0xC2);
+        output.Jumpˉif(CONDITION_ABOVE, SYSCALL_FAILURE_LABEL);
+    }
+
+    private static void Emitˉvalidateˉdataˉrange(
+        X64ˉcodeˉbuilder output,
+        bool addressˉisˉr10,
+        bool lengthˉisˉedi)
+    {
+        // The one-page RW/NX process data extent is the only IPC destination.
+        output.Emit(lengthˉisˉedi ? [0x85, 0xFF] : [0x45, 0x85, 0xC9]);
+        output.Jumpˉif(CONDITION_EQUAL, SYSCALL_FAILURE_LABEL);
+        if (lengthˉisˉedi)
+        {
+            output.Emit(0x81, 0xFF);
+        }
+        else
+        {
+            output.Emit(0x41, 0x81, 0xF9);
+        }
+        output.Emitˉu32(Kernelˉprocessˉcontract.MAXIMUM_CHANNEL_MESSAGE_BYTES);
+        output.Jumpˉif(CONDITION_ABOVE, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x65, 0x48, 0x8B, 0x04, 0x25);
+        output.Emitˉu32(Kernelˉprocessˉcontract.USER_DATA_ADDRESS_OFFSET);
+        output.Emit(addressˉisˉr10 ? [0x49, 0x39, 0xC2] : [0x49, 0x39, 0xC0]);
+        output.Jumpˉif(CONDITION_BELOW, SYSCALL_FAILURE_LABEL);
+        output.Emit(addressˉisˉr10 ? [0x4C, 0x89, 0xD2] : [0x4C, 0x89, 0xC2]);
+        output.Emit(lengthˉisˉedi ? [0x89, 0xF9] : [0x44, 0x89, 0xC9]);
+        output.Emit(0x48, 0x01, 0xCA);
+        output.Jumpˉif(CONDITION_BELOW, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x48, 0x05);
+        output.Emitˉu32(checked((uint)Kernelˉpagingˉcontract.PAGE_BYTES));
+        output.Emit(0x48, 0x39, 0xC2);
+        output.Jumpˉif(CONDITION_ABOVE, SYSCALL_FAILURE_LABEL);
     }
 
     private static void Emitˉgrantˉbootˉresource(
