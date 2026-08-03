@@ -330,18 +330,20 @@ internal static class Program
             }
         }
 
-        File.WriteAllBytes(Outputˉpath, Bytes);
-        if (target == Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME && OperatingSystem.IsLinux())
+        if (target == Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME ||
+            target == Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME)
         {
-            File.SetUnixFileMode(
-                Outputˉpath,
-                UnixFileMode.UserRead |
-                    UnixFileMode.UserWrite |
-                    UnixFileMode.UserExecute |
-                    UnixFileMode.GroupRead |
-                    UnixFileMode.GroupExecute |
-                    UnixFileMode.OtherRead |
-                    UnixFileMode.OtherExecute);
+            Action<string>? Prepareˉtemporary = null;
+            if (target == Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME &&
+                OperatingSystem.IsLinux())
+            {
+                Prepareˉtemporary = Prepareˉlinuxˉexecutable;
+            }
+            Atomicˉfileˉpublisher.Publish(Outputˉpath, Bytes, Prepareˉtemporary);
+        }
+        else
+        {
+            File.WriteAllBytes(Outputˉpath, Bytes);
         }
         Console.WriteLine($"Compiled: {Outputˉpath}");
         if (target != "wvb")
@@ -351,6 +353,23 @@ internal static class Program
         Console.WriteLine(
             $"SHA-256: {Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant()}");
         return EXIT_SUCCESS;
+    }
+
+    private static void Prepareˉlinuxˉexecutable(string path)
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            throw new PlatformNotSupportedException("Linux executable mode requires Linux.");
+        }
+        File.SetUnixFileMode(
+            path,
+            UnixFileMode.UserRead |
+                UnixFileMode.UserWrite |
+                UnixFileMode.UserExecute |
+                UnixFileMode.GroupRead |
+                UnixFileMode.GroupExecute |
+                UnixFileMode.OtherRead |
+                UnixFileMode.OtherExecute);
     }
 
     private static int Inspect(string[] arguments)

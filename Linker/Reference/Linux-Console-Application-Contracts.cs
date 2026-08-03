@@ -70,8 +70,8 @@ public static class Linuxˉconsoleˉapplicationˉcontract
 {
     public const int FORMAT_VERSION = 1;
     public const string TARGET_NAME = "linux-x64-console-v1";
-    public const int STARTUP_BYTES = 124;
-    public const int NATIVE_IMAGE_OFFSET = 128;
+    public const int STARTUP_BYTES = 131;
+    public const int NATIVE_IMAGE_OFFSET = 144;
     public const uint HEADER_BYTES = 0x1000;
     public const uint TEXT_VIRTUAL_ADDRESS = 0x1000;
     public const uint RECORD_ARENA_BYTES = Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES;

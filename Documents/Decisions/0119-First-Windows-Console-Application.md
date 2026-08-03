@@ -1,7 +1,7 @@
 # Decision 0119: First Windows console application target
 
 - Date: 2026-08-02
-- Status: Windows qualification passed locally; cross-host deterministic construction pending
+- Status: Implemented candidate; normalized Windows execution passes locally and dual-host qualification is pending
 - Target: `windows-x64-console-v1`
 - Retains: Canonical WVB 1.6, native ABI 20/context 7, WVO 1.0, `flat-x86-64-v1`, the 4 MiB object/link limits, and the .NET retirement gate
 
@@ -18,15 +18,16 @@ Waiting for complete native compiler reproduction would leave the process-contai
 - Reuse the existing native fragment verifier, WVO sink, and base-zero flat linker. Require linked bytes and entry evidence to reproduce the verified fragment exactly.
 - Package the result as a deterministic, import-free PE32+ console application with a fixed RIP-relative entry stub.
 - Carry ABI-20 context version 7 plus fixed 2 MiB record and 16 MiB dynamic-value arenas in a writable loader-zeroed section.
-- Use the existing default instruction and call-depth budgets. Return a successful `i32` as the process result and map every packed trap status to result `1`.
+- Use the existing default instruction and call-depth budgets. Preserve successful results from `0` through `255` and map every other successful `i32` or packed trap status to process result `1`, matching Linux without changing source semantics.
 - Independently verify the complete PE container, entry stub, relative targets, context, arenas, relocation block, sizes, permissions, and padding before publication.
+- Stage the complete verified executable under a unique sibling name and publish it through one atomic replacement so a prepublication failure leaves the requested output missing or unchanged.
 - Keep source-to-WVB compilation and native packaging in Stage 0. The produced executable loads no .NET runtime, but its construction is not a native bootstrap.
 
 ## Initial evidence
 
-On Windows, the current implementation produces a deterministic 5,120-byte executable from `Examples/Seed/Sum-Data.wv`, SHA-256 `c6c4568f0a47e36ce8fdb145f4c3de3ce9a28bb2fb1935add75d44e48a2ac805`. Windows loads it directly and reports process result `29`. Focused tests also execute the existing nominal-record and dynamic-byte fixtures to result `42`, proving both fixed arena pointers, and map a checked-overflow native status to process result `1`.
+On Windows, the current implementation produces a deterministic 5,120-byte executable from `Examples/Seed/Sum-Data.wv`, SHA-256 `486b758bac7d62456114f31a41754a3b4eb061db150cae12fbcb2b3ba17b3bdf`. Windows loads it directly and reports process result `29`. Focused tests also execute the existing nominal-record and dynamic-byte fixtures to result `42`, proving both fixed arena pointers, map a checked-overflow native status to process result `1`, and require exact portable process results at `0`, `1`, and `255` while mapping `-1`, `256`, and `2,147,483,647` to `1`.
 
-The same focused case covers deterministic repetition, independent recovery of exact native bytes and `Main`, required-service and descriptor-entry rejection, changed-fragment rejection, truncated/oversized/trailing files, targeted corruption in every PE/startup/context/relocation class, and bounded random hostile input. The complete local Windows qualification gate passes a zero-warning Release build, all 71 Seed tests including the golden compiler contract, all 25 OS tests, Linux-x64 CLI publication, and the complete native CLI path including exact PE construction and Windows execution. This is Windows evidence, not Windows/Linux cross-host qualification.
+The same focused case covers deterministic repetition, independent recovery of exact native bytes and `Main`, required-service and descriptor-entry rejection, changed-fragment rejection, truncated/oversized/trailing files, targeted corruption in every PE/startup/context/relocation class, and bounded random hostile input. It passes after the portable-result update with a zero-warning build and direct Windows execution. The earlier pre-normalization candidate completed the local Windows Qualification gate; the updated exact bytes still require fresh Windows/Linux Qualification before this decision is promoted.
 
 ## Consequences
 

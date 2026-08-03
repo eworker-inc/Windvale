@@ -70,7 +70,7 @@ public static class Windowsˉconsoleˉapplicationˉcontract
 {
     public const int FORMAT_VERSION = 1;
     public const string TARGET_NAME = "windows-x64-console-v1";
-    public const int STARTUP_BYTES = 67;
+    public const int STARTUP_BYTES = 74;
     public const int NATIVE_IMAGE_OFFSET = 80;
     public const uint RECORD_ARENA_BYTES = Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES;
     public const uint TEXT_ARENA_BYTES = Nativeˉconsoleˉapplicationˉcontract.TEXT_ARENA_BYTES;

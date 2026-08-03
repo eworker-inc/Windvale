@@ -5,6 +5,9 @@
     <Description>Windvale Seed command-line tool.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Windvale.Seed.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../../Assembler/Reference/Windvale.Assembler.csproj" />
     <ProjectReference Include="../../Compiler/Native/Windvale.NativeCompiler.csproj" />
     <ProjectReference Include="../../Compiler/Reference/Windvale.Compiler.csproj" />

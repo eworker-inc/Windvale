@@ -22,7 +22,7 @@ The format adapters and their untrusted-byte verifiers remain separate. Portable
 
 ## Process entry and result
 
-The ELF entry is an exact 124-byte Linux x86-64 stub followed by zero padding to byte 128 and then the unchanged linked native image. The stub:
+The ELF entry is an exact 131-byte Linux x86-64 stub followed by zero padding to byte 144 and then the unchanged linked native image. The stub:
 
 1. invokes Linux x86-64 `mmap` syscall 9 for a private anonymous 64 MiB read/write stack mapping;
 2. exits with result `1` if the mapping fails, otherwise switches to its aligned upper boundary;
@@ -30,12 +30,12 @@ The ELF entry is an exact 124-byte Linux x86-64 stub followed by zero padding to
 4. publishes RIP-relative record- and text-arena bases into that context;
 5. supplies the context through both retained System V bridge positions in `RSI` and `RDX` and clears the other argument registers;
 6. calls the native fragment's exported `Main` through one relative displacement;
-7. selects the successful low `i32` result or maps every packed nonzero native status to result `1`; and
+7. preserves successful results from `0` through `255` and maps every other successful result or packed nonzero native status to result `1`; and
 8. terminates through Linux x86-64 `exit` syscall 60, followed by an unreachable `UD2` boundary.
 
 The private stack mapping prevents the program from inheriting a smaller ambient shell stack limit. Its 64 MiB size covers the retained 1,024-call budget at the current 32 KiB maximum generated frame plus bounded outgoing cells. The fixed execution limits remain ABI 20's defaults: 1,000,000 charged instructions and call depth 1,024.
 
-Linux wait status exposes only the low eight bits of the supplied process result. Version 1 emits no diagnostic text for a native trap.
+Linux wait status exposes only eight process-result bits. The startup check prevents implicit truncation by admitting exactly `0` through `255`, matching the Windows container's portable process-result contract; the underlying Windvale `Main() -> i32` semantics remain unchanged. Version 1 emits no diagnostic text for a native trap.
 
 ## Memory contract
 
@@ -64,7 +64,7 @@ All integers are little-endian. Unlisted and padding bytes are zero. File and lo
 
 There is no `PT_INTERP`, `PT_DYNAMIC`, writable/executable load, section table, symbol table, relocation table, debug data, build ID, or runtime dependency. Equal file offsets and virtual addresses plus RIP-relative executable references allow the kernel to choose one position-independent load bias without fixups.
 
-The complete file is bounded to 4,202,608 bytes. Canonical `Sum-Data.wv` produces an 8,304-byte ELF with SHA-256 `8e4eede684330e1797a7ff4d512ffe52684f1257cdbd97aa3d5ea06a13bea88c`.
+The complete file is bounded to 4,202,608 bytes. Canonical `Sum-Data.wv` produces an 8,304-byte ELF with SHA-256 `cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6`.
 
 ## Independent verification
 

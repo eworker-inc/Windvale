@@ -18,17 +18,19 @@ A literal PE translation would be misleading. Linux enters an ELF at `_start` ra
 - Package the result as a deterministic sectionless ELF64 static PIE with separate read-only header, read/execute code, and read/write data loads.
 - Include no interpreter, dynamic table, imported symbol, relocation, libc, or .NET runtime dependency.
 - Own a 64 MiB private anonymous stack through Linux x86-64 `mmap` syscall 9 before invoking Windvale code; terminate only through `exit` syscall 60.
+- Preserve successful process results from `0` through `255` and map every other successful `i32` or native failure to `1`, matching the Windows target without changing source-level `Main() -> i32` semantics.
 - Retain the ABI-20 context, fixed 2 MiB record arena, 16 MiB dynamic-value arena, default instruction budget, and default call-depth budget.
 - Carry format version 1 in an exact `Windvale` ELF note and independently verify the complete container, load permissions and extents, startup/syscall sequence, relative targets, context, and padding before publication.
 - Require PE and ELF recovery to produce the same native bytes and `Main` offset.
 - Set executable mode `0755` when the CLI runs on Linux. Treat Unix mode as installation metadata rather than part of deterministic artifact bytes.
+- Stage the complete verified ELF and its executable mode under a unique sibling name before one atomic replacement so a prepublication failure leaves the requested output missing or unchanged.
 - Keep the C# implementation as Stage 0 oracle/recovery code. Name a portable `.wv` constructor/verifier and `.wva` startup template as the next ownership transfer rather than treating C# as permanent product code.
 
 ## Initial evidence
 
-On Windows, the implementation deterministically constructs an 8,304-byte ELF from `Examples/Seed/Sum-Data.wv`, SHA-256 `8e4eede684330e1797a7ff4d512ffe52684f1257cdbd97aa3d5ea06a13bea88c`. An external file classifier identifies it as a statically linked, sectionless, x86-64 ELF shared object. The independently verified PE and ELF containers recover byte-identical native images and the same `Main` offset.
+On Windows, the implementation deterministically constructs an 8,304-byte ELF from `Examples/Seed/Sum-Data.wv`, SHA-256 `cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6`. An external file classifier identifies it as a statically linked, sectionless, x86-64 ELF shared object. The independently verified PE and ELF containers recover byte-identical native images and the same `Main` offset.
 
-The focused test passes a zero-warning build and covers deterministic repetition; malformed fragment, hosted-service, and descriptor-entry rejection; truncated, oversized, trailing, and targeted corruptions across every ELF/header/note/startup/context/padding diagnostic class; and bounded random hostile inputs. Linux-only branches directly execute sum, nominal-record, dynamic-byte, and checked-overflow fixtures. This Windows construction result does not claim those branches have run; direct Debian execution and the repository's dual-host Qualification gate remain pending.
+The focused construction test passes a zero-warning build and covers deterministic repetition; malformed fragment, hosted-service, and descriptor-entry rejection; truncated, oversized, trailing, and targeted corruptions across every ELF/header/note/startup/context/padding diagnostic class; and bounded random hostile inputs. Linux-only branches directly execute sum, nominal-record, dynamic-byte, checked-overflow, and the six shared process-result boundary fixtures. This Windows construction result does not claim those branches have run; direct Debian execution and the repository's dual-host Qualification gate remain pending.
 
 ## Consequences
 

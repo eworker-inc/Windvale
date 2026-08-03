@@ -222,7 +222,7 @@ public static class Linuxˉconsoleˉapplicationˉverifier
                 0xB8, 0x09, 0x00, 0x00, 0x00,
                 0x0F, 0x05,
                 0x48, 0x3D, 0x01, 0xF0, 0xFF, 0xFF,
-                0x73, 0x41,
+                0x73, 0x48,
                 0x48, 0x8D, 0xA0, 0x00, 0x00, 0x00, 0x04,
                 0x48, 0x8D, 0x15,
             ],
@@ -279,7 +279,9 @@ public static class Linuxˉconsoleˉapplicationˉverifier
                 0x48, 0x89, 0xC2,
                 0x48, 0xC1, 0xEA, 0x20,
                 0x85, 0xD2,
-                0x74, 0x05,
+                0x75, 0x07,
+                0x3D, 0xFF, 0x00, 0x00, 0x00,
+                0x76, 0x05,
                 0xB8, 0x01, 0x00, 0x00, 0x00,
                 0x89, 0xC7,
                 0xB8, 0x3C, 0x00, 0x00, 0x00,
@@ -287,7 +289,7 @@ public static class Linuxˉconsoleˉapplicationˉverifier
                 0x0F, 0x0B,
             ],
             "WVL2006",
-            "The native status mapping or Linux exit boundary is invalid.");
+            "The native status, portable process-result, or Linux exit boundary is invalid.");
 
         var Callˉtarget = checked(
             (long)Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS +

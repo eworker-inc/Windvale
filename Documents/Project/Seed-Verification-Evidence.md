@@ -1138,6 +1138,14 @@ Windows Development completes a zero-warning Release build, all 73 regular Seed 
 
 The retained Linux-only branches directly execute sum, nominal-record, dynamic-byte, and checked-overflow fixtures, and the Linux qualification script requires exact bytes, mode `0755`, and result `29`. This checkout has no Linux execution environment, so those direct-process assertions and the dual-host Qualification gate remain pending; this section records construction and verification evidence only.
 
+## Local paired console-container hardening evidence
+
+The paired startup contracts now preserve successful results `0` through `255` and map every other successful `i32` or native failure to process result `1`. Canonical `Sum-Data.wv` remains 5,120 PE bytes with updated SHA-256 `486b758bac7d62456114f31a41754a3b4eb061db150cae12fbcb2b3ba17b3bdf`; the ELF remains 8,304 bytes with updated SHA-256 `cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6`. The PE directly executes shared boundary results `-1`, `0`, `1`, `255`, `256`, and `2,147,483,647` as exact process results `1`, `0`, `1`, `255`, `1`, and `1`. The equivalent Linux branches are retained for Debian execution.
+
+Executable CLI output is written and flushed under a unique sibling path, prepared with exact mode `0755` on Linux, and then published through one replacement. An injected failure after the temporary write preserves the original requested output and leaves no temporary sibling; the successful replacement and Windows executable mode-independent path also pass.
+
+The zero-warning Development build executes 74 regular tests. Seventy-three pass, including Linux construction/verification in 15 ms and atomic publication in 200 ms; the sole failure is a stale PE padding-corruption coordinate newly occupied by the seven-byte result check. Correcting only that test to derive the first padding byte from the declared startup length is followed by a zero-warning focused rerun: the complete Windows container case and all direct result boundaries pass in 1.058 seconds. The failed Seed phase prevents that Development invocation from reaching the unchanged OS suite, and it is not repeated solely to restate unaffected evidence. Fresh dual-host Qualification remains pending.
+
 ## Qualified bounded exact-compiler publication
 
 [Decision 0111](../Decisions/0111-Bounded-Exact-Compiler-Fragment-Publication.md) attributes the exact compiler's 4,556,121 selected bytes before revising a security boundary. Function code accounts for 4,555,263 bytes across 328 functions and 191,632 machine-IR operations; alignment and immutable data account for only 858 bytes. The 48,578 zeroed frame slots currently emit 1,360,840 bytes, so eliminating all frame initialization would still leave 3,195,281 bytes. This rules out a local encoding change as an honest way to retain the 1 MiB whole-fragment ceiling.

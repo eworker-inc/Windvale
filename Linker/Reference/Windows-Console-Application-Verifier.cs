@@ -262,13 +262,15 @@ public static class Windowsˉconsoleˉapplicationˉverifier
                 0x48, 0x89, 0xC2,
                 0x48, 0xC1, 0xEA, 0x20,
                 0x85, 0xD2,
-                0x74, 0x05,
+                0x75, 0x07,
+                0x3D, 0xFF, 0x00, 0x00, 0x00,
+                0x76, 0x05,
                 0xB8, 0x01, 0x00, 0x00, 0x00,
                 0x48, 0x83, 0xC4, 0x28,
                 0xC3,
             ],
             "WVW2008",
-            "The startup status-to-exit epilogue is invalid.");
+            "The startup status and portable process-result mapping are invalid.");
 
         var Callˉtarget = checked((long)TEXT_RVA + 46 + Readˉi32(bytes, Startup + 42));
         var Nativeˉstart = checked(

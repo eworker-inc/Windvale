@@ -15,6 +15,7 @@
     <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
     <ProjectReference Include="../../Tools/Windvale.Playground.Engine/Windvale.Playground.Engine.csproj" />
     <ProjectReference Include="../../Tools/Windvale.Project/Windvale.Project.csproj" />
+    <ProjectReference Include="../../Tools/Windvale.Tool/Windvale.Tool.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource

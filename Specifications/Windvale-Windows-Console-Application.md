@@ -22,17 +22,17 @@ Portable operations that use generated record or dynamic byte storage remain adm
 
 ## Process entry and result
 
-The PE entry is an exact 67-byte Windows x64 stub followed by zero padding to byte 80 and then the unchanged linked native image. The stub:
+The PE entry is an exact 74-byte Windows x64 stub followed by zero padding to byte 80 and then the unchanged linked native image. The stub:
 
 1. reserves the required Windows x64 shadow/alignment space;
 2. obtains the writable execution context through RIP-relative addressing;
 3. publishes RIP-relative record- and text-arena bases into that context;
 4. supplies the context in `RDX` and its retained Windows/System-V bridge duplicate in `R8`;
 5. calls the native fragment's exported `Main` through one relative displacement;
-6. returns the successful low `i32` result as the Windows process result; and
-7. maps every packed nonzero native status to process result `1`.
+6. returns successful `i32` results from `0` through `255` unchanged; and
+7. maps every other successful result and every packed nonzero native status to process result `1`.
 
-The fixed execution limits are ABI 20's defaults: 1,000,000 charged instructions and call depth 1,024. Windows terminates the process when its primary entry thread returns. Version 1 emits no diagnostic text for a native trap; the exit value only distinguishes success from failure.
+The fixed execution limits are ABI 20's defaults: 1,000,000 charged instructions and call depth 1,024. Windows terminates the process when its primary entry thread returns. Restricting the portable process-result range to `0` through `255` makes direct process observation identical to Linux; the underlying Windvale `Main() -> i32` semantics remain unchanged. Version 1 emits no diagnostic text for a native trap.
 
 ## Memory contract
 

@@ -107,6 +107,8 @@ internal static class Nativeˉconsoleˉapplicationˉpreparer
 
 public static class Nativeˉconsoleˉapplicationˉcontract
 {
+    public const uint MAXIMUM_PORTABLE_PROCESS_RESULT = 255;
+    public const uint FAILURE_PROCESS_RESULT = 1;
     public const uint RECORD_ARENA_BYTES = 2 * 1024 * 1024;
     public const uint TEXT_ARENA_BYTES = 16 * 1024 * 1024;
     public const uint DATA_VIRTUAL_BYTES =
