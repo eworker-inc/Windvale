@@ -3913,6 +3913,19 @@ internal static class Program
 
     private static void Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic()
     {
+        Sequenceˉequal(
+            [".wvb", ".exe", ".elf", ".exe", ".elf", ".exe", ".elf"],
+            new[]
+            {
+                "wvb",
+                Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME,
+                Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME,
+                Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME,
+                Linuxˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME,
+                Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME,
+                Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME,
+            }.Select(Windvale.Tool.Program.Targetˉoutputˉextension));
+
         var Directoryˉpath = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(),
             $"windvale-atomic-publication-{Guid.NewGuid():N}");

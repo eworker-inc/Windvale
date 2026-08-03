@@ -150,16 +150,18 @@ internal static class Program
 
         var Outputˉpath = Requestedˉoutputˉpath ?? Path.ChangeExtension(
             Sourceˉpath,
-            Target switch
-            {
-                "wvb" => ".wvb",
-                Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME => ".exe",
-                Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME => ".exe",
-                Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME => ".exe",
-                _ => ".elf",
-            });
+            Targetˉoutputˉextension(Target));
         return Compileˉsourceˉfiles(Sourceˉpath, Dependencyˉpaths, Outputˉpath, Target);
     }
+
+    internal static string Targetˉoutputˉextension(string target) => target switch
+    {
+        "wvb" => ".wvb",
+        Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME => ".exe",
+        Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME => ".exe",
+        Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME => ".exe",
+        _ => ".elf",
+    };
 
     private static int Build(string[] arguments)
     {
@@ -217,13 +219,7 @@ internal static class Program
                 $"A compilation may contain at most {Seedˉcompiler.MAX_SOURCE_MODULES} source modules.");
             return EXIT_COMPILATION;
         }
-        var Expectedˉextension = target switch
-        {
-            "wvb" => ".wvb",
-            Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME => ".exe",
-            Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME => ".exe",
-            _ => ".elf",
-        };
+        var Expectedˉextension = Targetˉoutputˉextension(target);
         if (!StringComparer.OrdinalIgnoreCase.Equals(
             Path.GetExtension(Outputˉpath),
             Expectedˉextension))
