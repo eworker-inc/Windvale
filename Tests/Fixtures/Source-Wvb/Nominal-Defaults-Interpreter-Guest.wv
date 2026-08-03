@@ -1,0 +1,36 @@
+module Sourceˉwvbˉnominalˉdefaultsˉinterpreterˉguest profile portable;
+
+enum Guestˉstate {
+    First = 7;
+    Second = 9;
+}
+
+record Guestˉvalue {
+    State: Guestˉstate;
+    Count: i32;
+    Ready: bool;
+    Label: text;
+    Payload: bytes;
+}
+
+data Emptyˉpayload: bytes = [];
+
+export fn Main() -> i32 {
+    let Actual: Guestˉvalue = Guestˉvalue(
+        Guestˉstate.Second,
+        5,
+        true,
+        "set",
+        Emptyˉpayload
+    );
+    if Actual.State != Guestˉstate.Second { return 2; }
+    let Later: Guestˉvalue = Guestˉvalue(
+        Guestˉstate.Second,
+        6,
+        true,
+        "later",
+        Emptyˉpayload
+    );
+    if !Later.Ready { return 3; }
+    return 42;
+}

@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Bounded record and enum values in the retained profile-16 Wasm-hosted WVB interpreter: typed eight-byte cells, deterministic nominal defaults, field/member operations, enum-name publication, a 4 KiB append-only record arena with exact `WVR3017`, and complete-verifier-first differential evidence without changing execution ABI 3 or earlier Wasm artifacts.
 - Import-free `bytes.sha256_hex` lowering in WebAssembly profile 16, with explicit target-side padding, schedule, compression, and lowercase hexadecimal output; the complete-verifier-first Wasm-hosted interpreter now covers empty, boundary-padding, and multi-block SHA-256 inputs without JavaScript or Web Crypto imports.
 - Cross-host-qualified Probe 36 service-failure containment: `WVPROC15`/`WVCHAN04` record one exact init fault, scrub the live copied-message channel, wake the blocked client once with transport result `-1`, revoke its resources, and reach clean shutdown; all 87 Seed and 38 OS tests pass on Windows/Debian and five pinned Windows QEMU scenarios pass without a compiler or ABI change.
 - Explicit bounded large-native WVO/link admission for the measured ABI-22 compiler: the unchanged WVO 1.0 codec and one shared linker now admit a deterministic 17,147,219-byte compiler object and reproduce its exact 17,130,441 native bytes under a 20 MiB opt-in profile, while standard 4 MiB object/link behavior, ordinary Windvale byte values, and existing application/container bytes remain unchanged.

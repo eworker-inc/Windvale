@@ -1,0 +1,36 @@
+module Sourceˉwvbˉrecordˉarenaˉinterpreterˉfailure profile portable;
+
+record Guestˉrecordˉsixteen {
+    A: i32;
+    B: i32;
+    C: i32;
+    D: i32;
+    E: i32;
+    F: i32;
+    G: i32;
+    H: i32;
+    I: i32;
+    J: i32;
+    K: i32;
+    L: i32;
+    M: i32;
+    N: i32;
+    O: i32;
+    P: i32;
+}
+
+export fn Main() -> i32 {
+    var Value: Guestˉrecordˉsixteen = Guestˉrecordˉsixteen(
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0
+    );
+    var Index: i32 = 0;
+    while Index < 33 {
+        Value = Guestˉrecordˉsixteen(
+            Index, Index, Index, Index, Index, Index, Index, Index,
+            Index, Index, Index, Index, Index, Index, Index, Index
+        );
+        Index = Index + 1;
+    }
+    return Value.A + 42;
+}
