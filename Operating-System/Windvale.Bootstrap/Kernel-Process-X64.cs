@@ -260,6 +260,7 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(CLIENT_RECORD_SLOT_OFFSET);
 
         Emitˉinitializeˉchannel(output);
+        Emitˉinitializeˉendpoint(output);
 
         // Build the init/resource-owner root first. The boot WVB is visible only
         // in this root until Windvale init authorizes one immutable borrow.
@@ -585,7 +586,15 @@ public static class Kernelˉprocessˉx64
                 Kernelˉprocessˉcontract.INIT_PROCESS_ID,
                 Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_FAULTED,
                 wakeˉwaiter: true);
+            Emitˉcloseˉendpoint(
+                output,
+                Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_FAULTED,
+                Kernelˉprocessˉcontract.SERVICE_FAULT_ENDPOINT_RESOLUTION_COUNT);
             Emitˉvalidateˉserviceˉfaultˉchannel(output);
+            Emitˉvalidateˉclosedˉendpoint(
+                output,
+                Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_FAULTED,
+                Kernelˉprocessˉcontract.SERVICE_FAULT_ENDPOINT_RESOLUTION_COUNT);
 
             output.Emit(0x0F, 0x01, 0xF8);
             Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
@@ -1113,6 +1122,14 @@ public static class Kernelˉprocessˉx64
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.RESULT_OFFSET,
             Kernelˉprocessˉcontract.EXPECTED_RESULT);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        Emitˉcloseˉendpoint(
+            output,
+            Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_EXITED,
+            Kernelˉprocessˉcontract.NORMAL_ENDPOINT_RESOLUTION_COUNT);
+        Emitˉvalidateˉclosedˉendpoint(
+            output,
+            Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_EXITED,
+            Kernelˉprocessˉcontract.NORMAL_ENDPOINT_RESOLUTION_COUNT);
         Emitˉloadˉgsˉchannelˉr10(output);
         Emitˉcompareˉchannelˉu32(output, Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET, 0);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -1267,7 +1284,7 @@ public static class Kernelˉprocessˉx64
 
         output.Mark(SYSCALL_GRANT_RESOURCE_LABEL);
         Emitˉvalidateˉcapability(
-            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_GRANT_BOOT_RESOURCE);
+            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_GRANT_BOOT_RESOURCE, provider: true);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
             Kernelˉprocessˉcontract.ROLE_INIT_SERVICE);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
@@ -1281,7 +1298,8 @@ public static class Kernelˉprocessˉx64
         output.Jump(SYSCALL_RESUME_LABEL);
 
         output.Mark(SYSCALL_SEND_LABEL);
-        Emitˉvalidateˉcapability(output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND);
+        Emitˉvalidateˉcapability(
+            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_SEND, provider: false);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
             Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
@@ -1305,7 +1323,7 @@ public static class Kernelˉprocessˉx64
 
         output.Mark(SYSCALL_RECEIVE_SERVICE_REQUEST_LABEL);
         Emitˉvalidateˉcapability(
-            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_RECEIVE_SERVICE_REQUEST);
+            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_RECEIVE_SERVICE_REQUEST, provider: true);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
             Kernelˉprocessˉcontract.ROLE_INIT_SERVICE);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
@@ -1332,7 +1350,7 @@ public static class Kernelˉprocessˉx64
 
         output.Mark(SYSCALL_CALL_SERVICE_LABEL);
         Emitˉvalidateˉcapability(
-            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_CALL_SERVICE);
+            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_CALL_SERVICE, provider: false);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
             Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
@@ -1381,7 +1399,7 @@ public static class Kernelˉprocessˉx64
 
         output.Mark(SYSCALL_REPLY_SERVICE_REQUEST_LABEL);
         Emitˉvalidateˉcapability(
-            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_REPLY_SERVICE_REQUEST);
+            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_REPLY_SERVICE_REQUEST, provider: true);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
             Kernelˉprocessˉcontract.ROLE_INIT_SERVICE);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
@@ -1420,7 +1438,8 @@ public static class Kernelˉprocessˉx64
         Emitˉjumpˉgs(output, Kernelˉprocessˉcontract.KERNEL_RESUME_OFFSET);
 
         output.Mark(SYSCALL_RECEIVE_LABEL);
-        Emitˉvalidateˉcapability(output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_RECEIVE);
+        Emitˉvalidateˉcapability(
+            output, Kernelˉprocessˉcontract.CAPABILITY_RIGHT_RECEIVE, provider: true);
         Emitˉcompareˉgsˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET,
             Kernelˉprocessˉcontract.ROLE_INIT_SERVICE);
         output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
@@ -1504,6 +1523,158 @@ public static class Kernelˉprocessˉx64
             output,
             Kernelˉprocessˉcontract.CHANNEL_RECORD_OFFSET + Kernelˉprocessˉcontract.CHANNEL_CAPACITY_OFFSET,
             Kernelˉprocessˉcontract.CHANNEL_CAPACITY);
+    }
+
+    private static void Emitˉinitializeˉendpoint(X64ˉcodeˉbuilder output)
+    {
+        output.Emit(0x49, 0x8D, 0xBC, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_RECORD_OFFSET);
+        output.Emit(0x31, 0xC0, 0xB9);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES / sizeof(ulong));
+        output.Emit(0xFC, 0xF3, 0x48, 0xAB, 0x48, 0xB8);
+        output.Emitˉu64(Kernelˉprocessˉcontract.ENDPOINT_MAGIC);
+        output.Emit(0x49, 0x89, 0x84, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_RECORD_OFFSET);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (8, Kernelˉprocessˉcontract.ENDPOINT_VERSION),
+            (12, Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES),
+            (Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN),
+            (Kernelˉprocessˉcontract.ENDPOINT_REFERENCE_OFFSET,
+                Kernelˉprocessˉcontract.CAPABILITY_REFERENCE),
+            (Kernelˉprocessˉcontract.ENDPOINT_KIND_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_KIND_SERVICE),
+            (Kernelˉprocessˉcontract.ENDPOINT_CAPACITY_OFFSET,
+                Kernelˉprocessˉcontract.CHANNEL_CAPACITY),
+            (Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_PROCESS_OFFSET,
+                Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE),
+            (Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET,
+                Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE),
+        })
+        {
+            Emitˉstoreˉstateˉu32(
+                output,
+                Kernelˉprocessˉcontract.ENDPOINT_RECORD_OFFSET + Field.Offset,
+                Field.Value);
+        }
+        output.Emit(0x49, 0x8D, 0x84, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.CHANNEL_RECORD_OFFSET);
+        output.Emit(0x49, 0x89, 0x84, 0x24);
+        output.Emitˉu32(
+            Kernelˉprocessˉcontract.ENDPOINT_RECORD_OFFSET +
+            Kernelˉprocessˉcontract.ENDPOINT_CHANNEL_ADDRESS_OFFSET);
+    }
+
+    private static void Emitˉrebindˉendpointˉclient(X64ˉcodeˉbuilder output)
+    {
+        Emitˉloadˉstateˉendpointˉr11(output);
+        Emitˉvalidateˉendpointˉheader(output);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN),
+            (Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET,
+                Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE),
+            (Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET, 8),
+            (Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET, 0),
+            (Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OPEN),
+        })
+        {
+            Emitˉcompareˉendpointˉu32(output, Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        }
+        Emitˉstoreˉendpointˉu32(
+            output,
+            Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET,
+            Kernelˉprocessˉcontract.SECOND_CLIENT_PROCESS_REFERENCE);
+    }
+
+    private static void Emitˉcloseˉendpoint(
+        X64ˉcodeˉbuilder output,
+        uint providerˉstatus,
+        uint expectedˉresolutionˉcount)
+    {
+        Emitˉloadˉstateˉendpointˉr11(output);
+        Emitˉvalidateˉendpointˉheader(output);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN),
+            (Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET,
+                expectedˉresolutionˉcount),
+            (Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET, 0),
+            (Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OPEN),
+        })
+        {
+            Emitˉcompareˉendpointˉu32(output, Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        }
+        Emitˉstoreˉendpointˉu32(
+            output,
+            Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET,
+            Kernelˉprocessˉcontract.ENDPOINT_STATE_CLOSED);
+        Emitˉstoreˉendpointˉu32(output, Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET, 1);
+        Emitˉstoreˉendpointˉu32(
+            output,
+            Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OFFSET,
+            providerˉstatus);
+    }
+
+    private static void Emitˉvalidateˉclosedˉendpoint(
+        X64ˉcodeˉbuilder output,
+        uint providerˉstatus,
+        uint expectedˉresolutionˉcount)
+    {
+        Emitˉloadˉstateˉendpointˉr11(output);
+        Emitˉvalidateˉendpointˉheader(output);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_STATE_CLOSED),
+            (Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET,
+                expectedˉresolutionˉcount),
+            (Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET, 1),
+            (Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OFFSET, providerˉstatus),
+        })
+        {
+            Emitˉcompareˉendpointˉu32(output, Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        }
+    }
+
+    private static void Emitˉvalidateˉendpointˉheader(X64ˉcodeˉbuilder output)
+    {
+        output.Emit(0x48, 0xBA);
+        output.Emitˉu64(Kernelˉprocessˉcontract.ENDPOINT_MAGIC);
+        output.Emit(0x49, 0x39, 0x13);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (8, Kernelˉprocessˉcontract.ENDPOINT_VERSION),
+            (12, Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES),
+            (Kernelˉprocessˉcontract.ENDPOINT_REFERENCE_OFFSET,
+                Kernelˉprocessˉcontract.CAPABILITY_REFERENCE),
+            (Kernelˉprocessˉcontract.ENDPOINT_KIND_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_KIND_SERVICE),
+            (Kernelˉprocessˉcontract.ENDPOINT_CAPACITY_OFFSET,
+                Kernelˉprocessˉcontract.CHANNEL_CAPACITY),
+            (Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_PROCESS_OFFSET,
+                Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE),
+            (Kernelˉprocessˉcontract.ENDPOINT_RESERVED_OFFSET, 0),
+        })
+        {
+            Emitˉcompareˉendpointˉu32(output, Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
+        }
+        output.Emit(0x49, 0x8B, 0x53,
+            checked((byte)Kernelˉprocessˉcontract.ENDPOINT_CHANNEL_ADDRESS_OFFSET));
+        output.Emit(0x49, 0x8D, 0x8C, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.CHANNEL_RECORD_OFFSET);
+        output.Emit(0x48, 0x39, 0xCA);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
     }
 
     private static void Emitˉterminateˉchannelˉpeer(
@@ -2006,6 +2177,7 @@ public static class Kernelˉprocessˉx64
             Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET,
             Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET,
             true);
+        Emitˉrebindˉendpointˉclient(output);
         Emitˉvalidateˉexhaustedˉallocator(output);
     }
 
@@ -2118,9 +2290,9 @@ public static class Kernelˉprocessˉx64
             capabilityˉrights);
         Emitˉstoreˉrecordˉu32(output, 124, Kernelˉprocessˉcontract.CHANNEL_CAPACITY);
         output.Emit(0x49, 0x8D, 0x84, 0x24);
-        output.Emitˉu32(Kernelˉprocessˉcontract.CHANNEL_RECORD_OFFSET);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_RECORD_OFFSET);
         output.Emit(0x49, 0x89, 0x85);
-        output.Emitˉu32(Kernelˉprocessˉcontract.CHANNEL_ADDRESS_OFFSET);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_ADDRESS_OFFSET);
         Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.ROLE_OFFSET, role);
         Emitˉstoreˉrecordˉu32(
             output, Kernelˉprocessˉcontract.STACK_PAGE_COUNT_OFFSET, checked((uint)Stackˉpages));
@@ -2517,7 +2689,10 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(offset);
     }
 
-    private static void Emitˉvalidateˉcapability(X64ˉcodeˉbuilder output, uint right)
+    private static void Emitˉvalidateˉcapability(
+        X64ˉcodeˉbuilder output,
+        uint right,
+        bool provider)
     {
         output.Emit(0x81, 0xFE);
         output.Emitˉu32(Kernelˉprocessˉcontract.CAPABILITY_REFERENCE);
@@ -2526,6 +2701,63 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(Kernelˉprocessˉcontract.CAPABILITY_RIGHTS_OFFSET);
         output.Emitˉu32(right);
         output.Jumpˉif(CONDITION_EQUAL, SYSCALL_FAILURE_LABEL);
+
+        // Resolve the process-local capability entry through the kernel-owned
+        // endpoint object. R11 is architecturally clobbered by SYSCALL and its
+        // user value is already retained in the process record.
+        output.Emit(0x65, 0x4C, 0x8B, 0x1C, 0x25);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_ADDRESS_OFFSET);
+        output.Emit(0x49, 0x8D, 0x94, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_RECORD_OFFSET);
+        output.Emit(0x49, 0x39, 0xD3);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x48, 0xBA);
+        output.Emitˉu64(Kernelˉprocessˉcontract.ENDPOINT_MAGIC);
+        output.Emit(0x49, 0x39, 0x13);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (8, Kernelˉprocessˉcontract.ENDPOINT_VERSION),
+            (12, Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES),
+            (Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN),
+            (Kernelˉprocessˉcontract.ENDPOINT_KIND_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_KIND_SERVICE),
+            (Kernelˉprocessˉcontract.ENDPOINT_CAPACITY_OFFSET,
+                Kernelˉprocessˉcontract.CHANNEL_CAPACITY),
+            (Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_PROCESS_OFFSET,
+                Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE),
+            (Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET, 0),
+            (Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OFFSET,
+                Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OPEN),
+            (Kernelˉprocessˉcontract.ENDPOINT_RESERVED_OFFSET, 0),
+        })
+        {
+            output.Emit(0x41, 0x81, 0x7B, checked((byte)Field.Offset));
+            output.Emitˉu32(Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        }
+        output.Emit(0x41, 0x39, 0x73,
+            checked((byte)Kernelˉprocessˉcontract.ENDPOINT_REFERENCE_OFFSET));
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x49, 0x8B, 0x53,
+            checked((byte)Kernelˉprocessˉcontract.ENDPOINT_CHANNEL_ADDRESS_OFFSET));
+        output.Emit(0x49, 0x8D, 0x8C, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.CHANNEL_RECORD_OFFSET);
+        output.Emit(0x48, 0x39, 0xCA);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+
+        // Match the endpoint participant to this exact process generation.
+        output.Emit(0x65, 0x8B, 0x14, 0x25);
+        output.Emitˉu32(Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET);
+        output.Emit(0xC1, 0xE2, 0x10, 0x65, 0x0B, 0x14, 0x25);
+        output.Emitˉu32(24);
+        output.Emit(0x41, 0x39, 0x53, checked((byte)(provider
+            ? Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_PROCESS_OFFSET
+            : Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET)));
+        output.Jumpˉif(CONDITION_NOT_EQUAL, SYSCALL_FAILURE_LABEL);
+        output.Emit(0x41, 0xFF, 0x43,
+            checked((byte)Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET));
     }
 
     private static void Emitˉvalidateˉcodeˉrange(X64ˉcodeˉbuilder output)
@@ -3243,13 +3475,41 @@ public static class Kernelˉprocessˉx64
     private static void Emitˉloadˉgsˉchannelˉr10(X64ˉcodeˉbuilder output)
     {
         output.Emit(0x65, 0x4C, 0x8B, 0x14, 0x25);
-        output.Emitˉu32(Kernelˉprocessˉcontract.CHANNEL_ADDRESS_OFFSET);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_ADDRESS_OFFSET);
+        output.Emit(0x4D, 0x8B, 0x52,
+            checked((byte)Kernelˉprocessˉcontract.ENDPOINT_CHANNEL_ADDRESS_OFFSET));
     }
 
     private static void Emitˉloadˉrecordˉchannelˉr10(X64ˉcodeˉbuilder output)
     {
         output.Emit(0x4D, 0x8B, 0x95);
-        output.Emitˉu32(Kernelˉprocessˉcontract.CHANNEL_ADDRESS_OFFSET);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_ADDRESS_OFFSET);
+        output.Emit(0x4D, 0x8B, 0x52,
+            checked((byte)Kernelˉprocessˉcontract.ENDPOINT_CHANNEL_ADDRESS_OFFSET));
+    }
+
+    private static void Emitˉloadˉstateˉendpointˉr11(X64ˉcodeˉbuilder output)
+    {
+        output.Emit(0x4D, 0x8D, 0x9C, 0x24);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ENDPOINT_RECORD_OFFSET);
+    }
+
+    private static void Emitˉcompareˉendpointˉu32(
+        X64ˉcodeˉbuilder output,
+        uint offset,
+        uint value)
+    {
+        output.Emit(0x41, 0x81, 0x7B, checked((byte)offset));
+        output.Emitˉu32(value);
+    }
+
+    private static void Emitˉstoreˉendpointˉu32(
+        X64ˉcodeˉbuilder output,
+        uint offset,
+        uint value)
+    {
+        output.Emit(0x41, 0xC7, 0x43, checked((byte)offset));
+        output.Emitˉu32(value);
     }
 
     private static void Emitˉcompareˉchannelˉu32(X64ˉcodeˉbuilder output, uint offset, uint value)

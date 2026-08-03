@@ -373,7 +373,7 @@ public static class Kernelˉprocessˉimage
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
                 Data.Length: 12,
-                Functions.Length: 7,
+                Functions.Length: 8,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||

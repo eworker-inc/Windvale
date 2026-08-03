@@ -27,10 +27,58 @@ fn Hasˉidentity(Input: bytes, Expected: bytes) -> bool {
     return true;
 }
 
-fn Hasˉchannelˉendpoint(Slot: u32, Generation: u32, Rights: u32, Expectedˉrights: u32) -> bool {
+fn Hasˉserviceˉendpoint(
+    Slot: u32,
+    Generation: u32,
+    Rights: u32,
+    Expectedˉrights: u32,
+    Participantˉreference: u32,
+    Expectedˉparticipantˉreference: u32
+) -> bool {
     if Slot != 0u32 { return false; }
     if Generation != 1u32 { return false; }
     if Rights != Expectedˉrights { return false; }
+    if Participantˉreference != Expectedˉparticipantˉreference { return false; }
+    return true;
+}
+
+fn Hasˉendpointˉlifecycleˉcontract() -> bool {
+    let Endpointˉreference: u32 = 65536u32;
+    let Endpointˉkind: u32 = 1u32;
+    let Endpointˉcapacity: u32 = 1u32;
+    let Providerˉreference: u32 = 65537u32;
+    var Clientˉreference: u32 = 65538u32;
+    var Endpointˉstate: u32 = 1u32;
+    var Resolutionˉcount: u32 = 0u32;
+    var Closeˉcount: u32 = 0u32;
+    var Providerˉstatus: u32 = 0u32;
+
+    if Endpointˉreference != 65536u32 { return false; }
+    if Endpointˉkind != 1u32 { return false; }
+    if Endpointˉcapacity != 1u32 { return false; }
+    if Providerˉreference != 65537u32 { return false; }
+    if Clientˉreference != 65538u32 { return false; }
+    if Endpointˉstate != 1u32 { return false; }
+
+    // Five init operations and three client operations resolve through the
+    // object before generation 1 is terminal. Rebinding changes only the
+    // client process reference; the endpoint identity and provider persist.
+    Resolutionˉcount = 8u32;
+    Clientˉreference = 131074u32;
+    if Resolutionˉcount != 8u32 { return false; }
+    if Clientˉreference != 131074u32 { return false; }
+
+    // The same operation shape resolves eight more times for generation 2.
+    // Provider exit then closes the endpoint exactly once without exposing the
+    // retained channel address to either process.
+    Resolutionˉcount = 16u32;
+    Endpointˉstate = 2u32;
+    Closeˉcount = Closeˉcount + 1u32;
+    Providerˉstatus = 1u32;
+    if Resolutionˉcount != 16u32 { return false; }
+    if Endpointˉstate != 2u32 { return false; }
+    if Closeˉcount != 1u32 { return false; }
+    if Providerˉstatus != 1u32 { return false; }
     return true;
 }
 
@@ -95,6 +143,10 @@ fn Hasˉexecutionˉgeneration(Generation: u32) -> bool {
 }
 
 fn Hasˉserviceˉfailureˉcontract() -> bool {
+    var Endpointˉstate: u32 = 1u32;
+    var Endpointˉresolutions: u32 = 0u32;
+    var Endpointˉcloseˉcount: u32 = 0u32;
+    var Endpointˉproviderˉstatus: u32 = 0u32;
     var Channelˉstate: u32 = 0u32;
     var Channelˉwaiter: u32 = 1u32;
     var Retainedˉrequestˉbytes: u32 = 0u32;
@@ -130,6 +182,12 @@ fn Hasˉserviceˉfailureˉcontract() -> bool {
     if Serviceˉthreadˉstate != 4u32 { return false; }
     if Serviceˉfaultˉvector != 13u32 { return false; }
 
+    // Grant, receive, reply, receive, and the two client calls all resolved
+    // through the still-open provider endpoint before the service trapped.
+    Endpointˉresolutions = 6u32;
+    if Endpointˉstate != 1u32 { return false; }
+    if Endpointˉresolutions != 6u32 { return false; }
+
     // Closing the failed service peer clears every transient field before the
     // waiting client is resumed with the transport-level peer-fault sentinel.
     Channelˉstate = 0u32;
@@ -140,6 +198,9 @@ fn Hasˉserviceˉfailureˉcontract() -> bool {
     Peerˉstatus = 2u32;
     Peerˉprocess = 1u32;
     Closeˉcount = Closeˉcount + 1u32;
+    Endpointˉstate = 2u32;
+    Endpointˉcloseˉcount = Endpointˉcloseˉcount + 1u32;
+    Endpointˉproviderˉstatus = 2u32;
     Wakeˉresult = -1;
     if Channelˉstate != 0u32 { return false; }
     if Channelˉwaiter != 0u32 { return false; }
@@ -149,6 +210,9 @@ fn Hasˉserviceˉfailureˉcontract() -> bool {
     if Peerˉstatus != 2u32 { return false; }
     if Peerˉprocess != 1u32 { return false; }
     if Closeˉcount != 1u32 { return false; }
+    if Endpointˉstate != 2u32 { return false; }
+    if Endpointˉcloseˉcount != 1u32 { return false; }
+    if Endpointˉproviderˉstatus != 2u32 { return false; }
     if Wakeˉresult != -1 { return false; }
 
     Clientˉsyscalls = Clientˉsyscalls + 1u32;
@@ -213,8 +277,9 @@ export fn Main() -> i32 {
     if Handleˉbudget != 1u32 { return 0; }
     if Initˉsyscallˉbudget != 11u32 { return 0; }
     if Interpreterˉsyscallˉbudget != 4u32 { return 0; }
-    if !Hasˉchannelˉendpoint(0u32, 1u32, 46u32, 46u32) { return 0; }
-    if !Hasˉchannelˉendpoint(0u32, 1u32, 17u32, 17u32) { return 0; }
+    if !Hasˉserviceˉendpoint(0u32, 1u32, 46u32, 46u32, 65537u32, 65537u32) { return 0; }
+    if !Hasˉserviceˉendpoint(0u32, 1u32, 17u32, 17u32, 65538u32, 65538u32) { return 0; }
+    if !Hasˉendpointˉlifecycleˉcontract() { return 0; }
 
     let Resourceˉsetˉtoken: u32 = 131073u32;
     let Moduleˉresourceˉid: u32 = 1u32;

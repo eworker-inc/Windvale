@@ -1,7 +1,7 @@
 # Decision 0161: Exact compiler service bundle and manifest
 
 - Date: 2026-08-03
-- Status: Implemented with focused local Windows evidence; cross-host qualification pending
+- Status: Qualified on Windows and digest-pinned Debian
 - Adds: paired exact-compiler native service bundles and `WVHA 1`
 - Retains: ABI 22, context 7, service table 5, WVB 1.6, WVO 1.0, standard 4 MiB admission, and every version-1/version-2 PE/ELF byte
 
@@ -37,6 +37,10 @@ The focused exact-compiler transport case passes after a zero-warning Release so
 Both bundles begin with the exact compiler native image SHA-256 `af8db63675a2441e57a763ca4caa411419a84879cf01a1eb62b4be7556487cab`. The target-neutral leaf identities and placements agree. Only console, diagnostic, file-input, and file-output adapters are platform-specific.
 
 This is focused local Windows evidence. Exact identities are pinned so GitHub's independent Windows and digest-pinned Debian Qualification jobs must reproduce the same candidate bytes before a cross-host claim is made.
+
+## Cross-host evidence
+
+Exact descendant `db20fefaa3333b7b78392ba12141d1ae2b6bb0c2` passes GitHub [Verify run 30816153900](https://github.com/eworker-inc/Windvale/actions/runs/30816153900). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 87 Seed tests including the golden compiler contract, all 38 OS tests, and the native CLI gate. Both exact service bundles and `WVHA 1` manifests retain their pinned identities.
 
 ## Consequences
 

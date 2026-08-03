@@ -9,6 +9,7 @@ data Stackˉmarker: text = "kernel-stack=pass";
 data Pagingˉmarker: text = "paging=owned";
 data Admissionˉmarker: text = "wvb-admission=pass";
 data Processˉmarker: text = "processes=isolated";
+data Endpointˉmarker: text = "service-endpoint=bound";
 data Resourceˉgrantˉmarker: text = "resource-grant=pass";
 data Typedˉresourcesˉmarker: text = "typed-resources=pass";
 data Resourceˉrevokedˉmarker: text = "resource-revoked=pass";
@@ -23,6 +24,7 @@ export fn Main() -> i32 {
     console.write_line(Pagingˉmarker);
     console.write_line(Admissionˉmarker);
     console.write_line(Processˉmarker);
+    console.write_line(Endpointˉmarker);
     console.write_line(Resourceˉgrantˉmarker);
     console.write_line(Typedˉresourcesˉmarker);
     console.write_line(Resourceˉrevokedˉmarker);

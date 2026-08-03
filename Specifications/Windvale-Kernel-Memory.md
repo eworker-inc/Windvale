@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 14 is the cross-host-qualified Probe-35 contract owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It adds an immutable `WVDS 1` mapping, dedicated init/client service-response pages, and the larger rebuilt client while retaining version 13's compact stacks, checked LIFO tail release, and same-root reuse. Probe 36 and qualified [Decision 0165](../Documents/Decisions/0165-Contained-Windvale-Service-Failure.md) retain this exact memory contract while advancing only the process/channel records and service-failure state transition. Exact implementation commit `8c7f82a1acb5c55c81845a3d868925f7a91ff23a` passes all 87 Seed tests and all 38 OS tests on Windows and digest-pinned Debian; all five Probe-36 pinned-QEMU scenarios pass on Windows.
+Kernel memory version 14 is the cross-host-qualified Probe-35 contract owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It adds an immutable `WVDS 1` mapping, dedicated init/client service-response pages, and the larger rebuilt client while retaining version 13's compact stacks, checked LIFO tail release, and same-root reuse. Qualified Probe 36 retains the same contract for service-failure containment. Locally verified Probe 37 and [Decision 0172](../Documents/Decisions/0172-First-Kernel-Owned-Service-Endpoint.md) also retain the arena and mappings while using previously zero state-page bytes for `WVENDP01`; cross-host qualification of that composition remains pending.
 
 This is one bounded deterministic boot arena, not a general physical-memory manager. Release is LIFO-only and can restore only a caller-proven suffix ending at the current cursor.
 
@@ -24,7 +24,7 @@ The fixed 588 KiB layout is:
 
 The complete 602,112-byte arena is zeroed before publication. Stack top is `arena + 0x5000`, aligned to 16 bytes.
 
-Probes 35 and 36 consume the free extent exactly:
+Probes 35 through 37 consume the free extent exactly:
 
 | Pages | Owner |
 | --- | --- |
@@ -55,7 +55,7 @@ The first page begins with this 64-byte little-endian header:
 | `0x30` | 8 | Handoff-copy address | `arena + 64` |
 | `0x38` | 8 | First allocation address | zero until IDT allocation succeeds |
 
-The state page stores `WVKHAND1` at `0x40`, `WVKPAG04` at `0x80`, `WVPROC15` at `0x100` and `0x300`, GDT/TSS at `0x210`, and `WVCHAN04` at `0x410`. Four 128-byte `WVRES006` records begin at `0x480`, `0x500`, `0x580`, and `0x600`. Probe 35 used `WVPROC14` and `WVCHAN03` at the same offsets and sizes.
+The Probe-37 state page stores `WVKHAND1` at `0x40`, `WVKPAG04` at `0x80`, `WVPROC16` at `0x100` and `0x300`, GDT/TSS at `0x210`, `WVCHAN04` at `0x410`, and the 64-byte `WVENDP01` at `0x480`. Four 128-byte `WVRES006` records begin at `0x4C0`, `0x540`, `0x5C0`, and `0x640`. Probe 36 used `WVPROC15`, no separate endpoint, and resource offsets `0x480` through `0x600`; no allocation or user mapping changes in Probe 37.
 
 ## Bounded allocation and tail release ABI
 
@@ -69,4 +69,4 @@ Version 14 retains no free list or allocation-boundary records. The protected-pr
 
 The retained diagnostics are `WVOS4001` invalid map envelope, `WVOS4002` unaligned descriptor, `WVOS4003` zero-page descriptor, `WVOS4004` address overflow, `WVOS4005` no eligible arena, and `WVOS4006` overlap. Malformed and random inputs remain bounded.
 
-Version 14 does not claim all physical memory, loader-range reclamation, arbitrary release order, free lists, coalescing, runtime allocation policy, general process creation, concurrent root reuse, SMP, general interrupts, or hardware qualification. Probe 36 preserves Probe 35's exact release/reallocate cycle on normal and client-fault paths while retaining the immutable init store and directory snapshot outside the reclaimed client suffix. Its service-fault path stops after contained cleanup of generation 1 and therefore makes no additional reclamation claim.
+Version 14 does not claim all physical memory, loader-range reclamation, arbitrary release order, free lists, coalescing, runtime allocation policy, general process creation, concurrent root reuse, SMP, general interrupts, or hardware qualification. Probes 36 and 37 preserve Probe 35's exact release/reallocate cycle on normal and client-fault paths while retaining the immutable init store and directory snapshot outside the reclaimed client suffix. Their service-fault path stops after contained cleanup of generation 1 and therefore makes no additional reclamation claim.

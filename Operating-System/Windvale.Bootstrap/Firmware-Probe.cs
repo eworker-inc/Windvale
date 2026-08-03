@@ -17,12 +17,12 @@ public enum Firmwareˉprobeˉscenario
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 36;
+    public const int FORMAT_VERSION = 37;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 36\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 37\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -32,6 +32,7 @@ public static class Firmwareˉprobe
     public const string PAGING_OWNED_MARKER = "paging=owned\n";
     public const string WVB_ADMISSION_MARKER = "wvb-admission=pass\n";
     public const string PROCESS_MARKER = "processes=isolated\n";
+    public const string ENDPOINT_MARKER = "service-endpoint=bound\n";
     public const string WVB_RUNTIME_MARKER = "wvb-runtime=interpreted\n";
     public const string INIT_SERVICE_MARKER = "init-service=pass\n";
     public const string DIRECTORY_SERVICE_MARKER = "directory-service=pass\n";
@@ -57,7 +58,8 @@ public static class Firmwareˉprobe
     public const string SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
-        WVB_ADMISSION_MARKER + PROCESS_MARKER + RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
+        WVB_ADMISSION_MARKER + PROCESS_MARKER + ENDPOINT_MARKER +
+        RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
         RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
         WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER + DIRECTORY_SERVICE_MARKER +
         IPC_MARKER + HELLO_WORLD_MARKER +
@@ -66,7 +68,8 @@ public static class Firmwareˉprobe
     public const string USER_FAULT_SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
-        WVB_ADMISSION_MARKER + PROCESS_MARKER + RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
+        WVB_ADMISSION_MARKER + PROCESS_MARKER + ENDPOINT_MARKER +
+        RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
         RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
         WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER + DIRECTORY_SERVICE_MARKER +
         IPC_MARKER + HELLO_WORLD_MARKER +
@@ -75,7 +78,8 @@ public static class Firmwareˉprobe
     public const string SERVICE_FAULT_SERIAL_MARKER =
         ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
-        WVB_ADMISSION_MARKER + PROCESS_MARKER + RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
+        WVB_ADMISSION_MARKER + PROCESS_MARKER + ENDPOINT_MARKER +
+        RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
         RESOURCE_REVOKED_MARKER + WVB_RUNTIME_MARKER + SERVICE_FAULT_CONTAINED_MARKER +
         SERVICE_PEER_LOSS_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +

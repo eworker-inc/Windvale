@@ -14,8 +14,8 @@ public enum Kernelˉprocessˉscenario
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 15;
-    public const string TARGET_NAME = "x86-64-kernel-process-v15";
+    public const int FORMAT_VERSION = 16;
+    public const string TARGET_NAME = "x86-64-kernel-process-v16";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
@@ -146,8 +146,8 @@ public static class Kernelˉprocessˉcontract
     public const uint CLIENT_RECORD_OFFSET = 768;
     public const uint CHANNEL_RECORD_OFFSET = 1_040;
     public const uint RECORD_BYTES = 272;
-    public const ulong RECORD_MAGIC = 0x3531_434F_5250_5657;
-    public const uint RECORD_VERSION = 15;
+    public const ulong RECORD_MAGIC = 0x3631_434F_5250_5657;
+    public const uint RECORD_VERSION = 16;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -168,7 +168,7 @@ public static class Kernelˉprocessˉcontract
     public const uint RESULT_OFFSET = 180;
     public const uint FAULT_VECTOR_OFFSET = 184;
     public const uint FAULT_ERROR_OFFSET = 188;
-    public const uint CHANNEL_ADDRESS_OFFSET = 192;
+    public const uint ENDPOINT_ADDRESS_OFFSET = 192;
     public const uint ROLE_OFFSET = 200;
     public const uint WAIT_REASON_OFFSET = 204;
     public const uint USER_CONTEXT_POINTER_OFFSET = 208;
@@ -215,7 +215,30 @@ public static class Kernelˉprocessˉcontract
     public const uint RESOURCE_CONFIGURATION_REPLY_BYTES = 116;
     public const uint DIRECTORY_READ_REQUEST_BYTES = 37;
     public const uint DIRECTORY_READ_REPLY_BYTES = 3_096;
-    public const uint RESOURCE_RECORD_OFFSET = CHANNEL_RECORD_OFFSET + CHANNEL_RECORD_BYTES;
+    public const uint ENDPOINT_RECORD_OFFSET = CHANNEL_RECORD_OFFSET + CHANNEL_RECORD_BYTES;
+    public const uint ENDPOINT_RECORD_BYTES = 64;
+    public const ulong ENDPOINT_MAGIC = 0x3130_5044_4E45_5657;
+    public const uint ENDPOINT_VERSION = 1;
+    public const uint ENDPOINT_STATE_OFFSET = 16;
+    public const uint ENDPOINT_REFERENCE_OFFSET = 20;
+    public const uint ENDPOINT_KIND_OFFSET = 24;
+    public const uint ENDPOINT_CAPACITY_OFFSET = 28;
+    public const uint ENDPOINT_PROVIDER_PROCESS_OFFSET = 32;
+    public const uint ENDPOINT_CLIENT_PROCESS_OFFSET = 36;
+    public const uint ENDPOINT_CHANNEL_ADDRESS_OFFSET = 40;
+    public const uint ENDPOINT_RESOLUTION_COUNT_OFFSET = 48;
+    public const uint ENDPOINT_CLOSE_COUNT_OFFSET = 52;
+    public const uint ENDPOINT_PROVIDER_STATUS_OFFSET = 56;
+    public const uint ENDPOINT_RESERVED_OFFSET = 60;
+    public const uint ENDPOINT_STATE_OPEN = 1;
+    public const uint ENDPOINT_STATE_CLOSED = 2;
+    public const uint ENDPOINT_KIND_SERVICE = 1;
+    public const uint ENDPOINT_PROVIDER_STATUS_OPEN = 0;
+    public const uint ENDPOINT_PROVIDER_STATUS_EXITED = 1;
+    public const uint ENDPOINT_PROVIDER_STATUS_FAULTED = 2;
+    public const uint NORMAL_ENDPOINT_RESOLUTION_COUNT = 16;
+    public const uint SERVICE_FAULT_ENDPOINT_RESOLUTION_COUNT = 6;
+    public const uint RESOURCE_RECORD_OFFSET = ENDPOINT_RECORD_OFFSET + ENDPOINT_RECORD_BYTES;
     public const uint SECOND_RESOURCE_RECORD_OFFSET = RESOURCE_RECORD_OFFSET + RESOURCE_RECORD_BYTES;
     public const uint STORE_RESOURCE_RECORD_OFFSET = SECOND_RESOURCE_RECORD_OFFSET + RESOURCE_RECORD_BYTES;
     public const uint DIRECTORY_RESOURCE_RECORD_OFFSET = STORE_RESOURCE_RECORD_OFFSET + RESOURCE_RECORD_BYTES;
@@ -290,7 +313,7 @@ public sealed record Kernelˉprocessˉdefinition(
     uint Processˉgeneration,
     uint Role,
     uint Capabilityˉrights,
-    ulong Channelˉaddress);
+    ulong Endpointˉaddress);
 
 public sealed record Kernelˉprocessˉdiagnostic(string Code, string Message);
 
@@ -384,11 +407,11 @@ public static class Kernelˉprocessˉplanner
             definition.Role == Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER &&
             definition.Capabilityˉrights == Kernelˉprocessˉcontract.CLIENT_CAPABILITY_RIGHTS;
         if ((!Isˉinit && !Isˉclient) ||
-            definition.Channelˉaddress == 0 ||
-            (definition.Channelˉaddress & (sizeof(ulong) - 1)) != 0 ||
-            definition.Channelˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES)
+            definition.Endpointˉaddress == 0 ||
+            (definition.Endpointˉaddress & (sizeof(ulong) - 1)) != 0 ||
+            definition.Endpointˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES)
         {
-            return Fail("WVOS6006", "The process identity, role, reduced endpoint rights, or shared-channel address is invalid.");
+            return Fail("WVOS6006", "The process identity, role, reduced endpoint rights, or endpoint-object address is invalid.");
         }
 
         var Allocationˉpages = Isˉinit
@@ -672,7 +695,7 @@ public static class Kernelˉprocessˉplanner
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(120), definition.Capabilityˉrights);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(124), Kernelˉprocessˉcontract.CHANNEL_CAPACITY);
         BinaryPrimitives.WriteUInt64LittleEndian(
-            Record.AsSpan((int)Kernelˉprocessˉcontract.CHANNEL_ADDRESS_OFFSET), definition.Channelˉaddress);
+            Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_ADDRESS_OFFSET), definition.Endpointˉaddress);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.ROLE_OFFSET), definition.Role);
         BinaryPrimitives.WriteUInt32LittleEndian(
@@ -1435,4 +1458,176 @@ public static class Kernelˉchannelˉpeerˉlifecycle
         BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[8..]) == Kernelˉprocessˉcontract.CHANNEL_VERSION &&
         BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[12..]) ==
             Kernelˉprocessˉcontract.CHANNEL_RECORD_BYTES;
+}
+
+public sealed record Kernelˉendpointˉresolution(
+    ImmutableArray<byte> Endpointˉrecord,
+    ulong Channelˉaddress);
+
+public static class Kernelˉserviceˉendpointˉlifecycle
+{
+    public static ImmutableArray<byte> Create(ulong channelˉaddress)
+    {
+        if (channelˉaddress == 0 ||
+            (channelˉaddress & (sizeof(ulong) - 1)) != 0 ||
+            channelˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES)
+        {
+            throw new ArgumentOutOfRangeException(nameof(channelˉaddress));
+        }
+
+        var Record = new byte[Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES];
+        BinaryPrimitives.WriteUInt64LittleEndian(Record, Kernelˉprocessˉcontract.ENDPOINT_MAGIC);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan(8), Kernelˉprocessˉcontract.ENDPOINT_VERSION);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan(12), Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET),
+            Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_REFERENCE_OFFSET),
+            Kernelˉprocessˉcontract.CAPABILITY_REFERENCE);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_KIND_OFFSET),
+            Kernelˉprocessˉcontract.ENDPOINT_KIND_SERVICE);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_CAPACITY_OFFSET),
+            Kernelˉprocessˉcontract.CHANNEL_CAPACITY);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_PROCESS_OFFSET),
+            Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET),
+            Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE);
+        BinaryPrimitives.WriteUInt64LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_CHANNEL_ADDRESS_OFFSET),
+            channelˉaddress);
+        return Record.ToImmutableArray();
+    }
+
+    public static Kernelˉendpointˉresolution Resolve(
+        ImmutableArray<byte> record,
+        uint capabilityˉreference,
+        uint participantˉreference,
+        bool provider)
+    {
+        var Participantˉoffset = provider
+            ? Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_PROCESS_OFFSET
+            : Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET;
+        if (!Hasˉheader(record) ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET..]) !=
+                Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_REFERENCE_OFFSET..]) != capabilityˉreference ||
+            capabilityˉreference != Kernelˉprocessˉcontract.CAPABILITY_REFERENCE ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_KIND_OFFSET..]) !=
+                Kernelˉprocessˉcontract.ENDPOINT_KIND_SERVICE ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_CAPACITY_OFFSET..]) !=
+                Kernelˉprocessˉcontract.CHANNEL_CAPACITY ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Participantˉoffset..]) != participantˉreference ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OFFSET..]) !=
+                Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OPEN ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET..]) != 0 ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_RESERVED_OFFSET..]) != 0)
+        {
+            throw new InvalidOperationException("The service endpoint resolution is invalid, stale, or closed.");
+        }
+
+        var Channelˉaddress = BinaryPrimitives.ReadUInt64LittleEndian(record.AsSpan()[
+            (int)Kernelˉprocessˉcontract.ENDPOINT_CHANNEL_ADDRESS_OFFSET..]);
+        if (Channelˉaddress == 0 ||
+            (Channelˉaddress & (sizeof(ulong) - 1)) != 0 ||
+            Channelˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES)
+        {
+            throw new InvalidOperationException("The service endpoint channel binding is invalid.");
+        }
+
+        var Result = record.ToArray();
+        var Resolutionˉcount = BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Result.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET),
+            checked(Resolutionˉcount + 1));
+        return new(Result.ToImmutableArray(), Channelˉaddress);
+    }
+
+    public static ImmutableArray<byte> Rebindˉclient(
+        ImmutableArray<byte> record,
+        uint previousˉclientˉreference,
+        uint nextˉclientˉreference)
+    {
+        if (!Hasˉheader(record) ||
+            previousˉclientˉreference != Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE ||
+            nextˉclientˉreference != Kernelˉprocessˉcontract.SECOND_CLIENT_PROCESS_REFERENCE ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET..]) !=
+                Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET..]) !=
+                previousˉclientˉreference ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET..]) != 8 ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET..]) != 0)
+        {
+            throw new InvalidOperationException("The service endpoint client rebind is invalid or stale.");
+        }
+
+        var Result = record.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Result.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET),
+            nextˉclientˉreference);
+        return Result.ToImmutableArray();
+    }
+
+    public static ImmutableArray<byte> Closeˉprovider(
+        ImmutableArray<byte> record,
+        uint providerˉstatus,
+        uint expectedˉresolutionˉcount)
+    {
+        if (!Hasˉheader(record) ||
+            providerˉstatus is not (Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_EXITED or
+                Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_FAULTED) ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET..]) !=
+                Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OFFSET..]) !=
+                Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OPEN ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET..]) !=
+                expectedˉresolutionˉcount ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET..]) != 0)
+        {
+            throw new InvalidOperationException("The service endpoint provider close is invalid or stale.");
+        }
+
+        var Result = record.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Result.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_STATE_OFFSET),
+            Kernelˉprocessˉcontract.ENDPOINT_STATE_CLOSED);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Result.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET), 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Result.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_STATUS_OFFSET),
+            providerˉstatus);
+        return Result.ToImmutableArray();
+    }
+
+    private static bool Hasˉheader(ImmutableArray<byte> record) =>
+        record.Length == Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES &&
+        BinaryPrimitives.ReadUInt64LittleEndian(record.AsSpan()) ==
+            Kernelˉprocessˉcontract.ENDPOINT_MAGIC &&
+        BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[8..]) ==
+            Kernelˉprocessˉcontract.ENDPOINT_VERSION &&
+        BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[12..]) ==
+            Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES;
 }

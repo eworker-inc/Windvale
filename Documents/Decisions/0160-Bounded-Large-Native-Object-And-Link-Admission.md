@@ -1,7 +1,7 @@
 # Decision 0160: Bounded large-native object and link admission
 
 - Date: 2026-08-03
-- Status: Implemented with focused local Windows evidence; cross-host qualification pending
+- Status: Qualified on Windows and digest-pinned Debian
 - Adds: explicit `Largeˉnative` WVO admission and `flat-x86-64-large-v1`
 - Retains: WVO 1.0 bytes, `flat-x86-64-v1`, the ordinary 4 MiB Windvale byte-value limit, ABI 22, and all version-1/version-2 PE and ELF bytes
 
@@ -36,6 +36,10 @@ The focused compiler/object/link test passes after a zero-warning Release soluti
 The restored linked image is byte-identical to the already-qualified native fragment. Standard WVO writing fails with `WVO2017`; standard reading of the large artifact fails with `WVO1001`; standard linking fails with `WVL1002`. Explicit large-native admission succeeds deterministically. Aggregate input beyond 20 MiB fails with `WVL1003`, 20 MiB materialized image input succeeds, plus-one memory fails with `WVO2017`, plus-one encoded input fails with `WVO1001`, and an unknown link profile fails with `WVL1001`.
 
 This is focused local Windows evidence. GitHub's independent Windows and digest-pinned Debian Qualification jobs remain responsible for the cross-host claim.
+
+## Cross-host evidence
+
+Exact descendant `db20fefaa3333b7b78392ba12141d1ae2b6bb0c2` passes GitHub [Verify run 30816153900](https://github.com/eworker-inc/Windvale/actions/runs/30816153900). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 87 Seed tests including the golden compiler contract, all 38 OS tests, and the native CLI gate. The exact large WVO, linked image, and standard-profile rejection remain deterministic on both hosts.
 
 ## Consequences
 

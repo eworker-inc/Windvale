@@ -35,6 +35,10 @@ The focused Release test passes with zero warnings on Windows. Two independent c
 
 The Windows loader ran the raw candidate, startup converted and published both arguments, the exact native compiler read the source through the bounded snapshot service, durably wrote the output, emitted the canonical status line, returned zero, and produced the byte-identical expected 815-byte WVB. The child image contains no CLR directory or CLR imports; .NET participates only in the retained Stage 0 parent construction and verification process.
 
+## Cross-host evidence
+
+Exact descendant `db20fefaa3333b7b78392ba12141d1ae2b6bb0c2` passes GitHub [Verify run 30816153900](https://github.com/eworker-inc/Windvale/actions/runs/30816153900). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 87 Seed tests including the golden compiler contract, all 38 OS tests, and the native CLI gate. The paired containers retain their pinned identities, and each directly reproduces the exact 599,868-byte compiler WVB from the canonical twelve-source inventory without a named .NET runtime in the child.
+
 ## Consequences
 
 At this decision boundary, both permanent hosts had deterministic format-3 executable candidates derived from the same ABI-22 compiler and verified service bundle. Windows had direct loader and small-source execution evidence while Linux had construction/parser evidence only. Decision 0168 subsequently advances the Windows stack contract and cross-host qualifies canonical Stage 2 reproduction on both hosts.

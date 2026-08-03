@@ -1,7 +1,7 @@
 # Decision 0163: Bounded hosted compiler runtime data
 
 - Date: 2026-08-03
-- Status: Implemented with focused local Windows evidence; cross-host qualification pending
+- Status: Qualified on Windows and digest-pinned Debian
 - Adds: fixed paired format-3 initial runtime headers and RW/NX layout plans
 - Retains: ABI 22, context 7, service table 5, exact native/service bundles, standard 4 MiB behavior, and all existing PE/ELF bytes
 
@@ -34,6 +34,10 @@ The focused case passes after a zero-warning Release build. Both plans share arg
 The verifier checks all fixed context and table fields, the eight-billion budget, both arena sizes, target identities, file bounds, initial zero pointers, reserved bytes, exact `WVHA 1`, and actual service-bundle input. Mutated budget, output flags, snapshot capacity, adapter metadata, and cross-target inputs fail closed.
 
 This is focused local Windows construction and verification evidence. GitHub's independent Windows and digest-pinned Debian Qualification jobs remain responsible for cross-host identity.
+
+## Cross-host evidence
+
+Exact descendant `db20fefaa3333b7b78392ba12141d1ae2b6bb0c2` passes GitHub [Verify run 30816153900](https://github.com/eworker-inc/Windvale/actions/runs/30816153900). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 87 Seed tests including the golden compiler contract, all 38 OS tests, and the native CLI gate. Both platform plans retain their exact sizes and initial-header identities.
 
 ## Consequences
 

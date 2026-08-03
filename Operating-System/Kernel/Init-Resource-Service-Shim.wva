@@ -46,9 +46,9 @@ move_u32 ebx 7
 move_u32 esi 65536
 syscall
 
-# Generation 1 is terminal before the coordinator reopens the same logical
-# endpoint for generation 2. The store mapping and its capability record live
-# independently, so only the client grant is repeated.
+# Generation 1 is terminal before the coordinator reopens WVCHAN04 and rebinds
+# WVENDP01 to generation 2. The endpoint identity, provider, store mapping, and
+# capability record persist, so only the client reference and grant are renewed.
 move_u32 eax 131073
 move_u32 ebx 4
 move_u32 esi 65536
