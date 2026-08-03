@@ -106,6 +106,26 @@ load_u64 <Reg64> <Dataˉsymbol>
 store_u32 <Dataˉsymbol> <Reg32>
 store_u64 <Dataˉsymbol> <Reg64>
 load_address <Reg64> <Symbol>
+
+multiply <Reg32|Reg64> <sameˉwidthˉregister>
+add_i32 <Reg32|Reg64> <i32>
+subtract_i32 <Reg32|Reg64> <i32>
+and_i32 <Reg32|Reg64> <i32>
+or_i32 <Reg32|Reg64> <i32>
+xor_i32 <Reg32|Reg64> <i32>
+compare_i32 <Reg32|Reg64> <i32>
+test_i32 <Reg32|Reg64> <i32>
+
+rotate_left <Reg32|Reg64> <count>
+rotate_right <Reg32|Reg64> <count>
+shift_left <Reg32|Reg64> <count>
+shift_right <Reg32|Reg64> <count>
+shift_right_signed <Reg32|Reg64> <count>
+
+load_memory_u32 <Reg32> <Base64> <Index64|none> <scale> <i32ˉdisplacement>
+load_memory_u64 <Reg64> <Base64> <Index64|none> <scale> <i32ˉdisplacement>
+store_memory_u32 <Base64> <Index64|none> <scale> <i32ˉdisplacement> <Reg32>
+store_memory_u64 <Base64> <Index64|none> <scale> <i32ˉdisplacement> <Reg64>
 ```
 
 `Condition` is one of:
@@ -158,8 +178,29 @@ The expanded encodings use the standard x86-64 REX, ModRM, and near-control form
 | `store_u32 Symbol Reg` | `[REX.R] 89 /r rip+disp32` | `relative-i32`, displacement field, addend `-4` |
 | `store_u64 Symbol Reg` | `REX.W/R 89 /r rip+disp32` | `relative-i32`, displacement field, addend `-4` |
 | `load_address Reg Symbol` | `REX.W/R 8D /r rip+disp32` | `relative-i32`, displacement field, addend `-4` |
+| `multiply Dest Source` | `[REX.W/R/B] 0F AF /r` | none |
+| `add_i32 Reg Value` | `[REX.W/B] 81 /0 imm32` | none |
+| `subtract_i32 Reg Value` | `[REX.W/B] 81 /5 imm32` | none |
+| `and_i32 Reg Value` | `[REX.W/B] 81 /4 imm32` | none |
+| `or_i32 Reg Value` | `[REX.W/B] 81 /1 imm32` | none |
+| `xor_i32 Reg Value` | `[REX.W/B] 81 /6 imm32` | none |
+| `compare_i32 Reg Value` | `[REX.W/B] 81 /7 imm32` | none |
+| `test_i32 Reg Value` | `[REX.W/B] F7 /0 imm32` | none |
+| `rotate_left Reg Count` | `[REX.W/B] C1 /0 imm8` | none |
+| `rotate_right Reg Count` | `[REX.W/B] C1 /1 imm8` | none |
+| `shift_left Reg Count` | `[REX.W/B] C1 /4 imm8` | none |
+| `shift_right Reg Count` | `[REX.W/B] C1 /5 imm8` | none |
+| `shift_right_signed Reg Count` | `[REX.W/B] C1 /7 imm8` | none |
+| `load_memory_u32 Reg Base Index Scale Disp` | `[REX.R/X/B] 8B /r sib disp32` | none |
+| `load_memory_u64 Reg Base Index Scale Disp` | `REX.W/R/X/B 8B /r sib disp32` | none |
+| `store_memory_u32 Base Index Scale Disp Reg` | `[REX.R/X/B] 89 /r sib disp32` | none |
+| `store_memory_u64 Base Index Scale Disp Reg` | `REX.W/R/X/B 89 /r sib disp32` | none |
 
 Destination registers are written first in WVA syntax. `move`, arithmetic, logical, comparison, and test operands must have identical widths. The register-to-register arithmetic and logical statements leave the architectural flags defined by the corresponding x86-64 instruction; `compare` and `test` exist specifically to establish those flags for `branch`. Conditions use the complete ordinary x86 condition-code order from `overflow` (`cc=0`) through signed `greater` (`cc=15`).
+
+The `_i32` operations always carry one exact signed 32-bit immediate. A 32-bit operation consumes its two's-complement bit pattern; a 64-bit operation uses the x86-64 sign-extended `imm32` form. `multiply` is two-operand signed `IMUL`: it writes the low-width product to the destination and sets overflow/carry when the mathematical product is not representable. Rotate and shift counts are explicit decimal values from zero through 31 for `Reg32` and zero through 63 for `Reg64`; WVA rejects values that x86 would otherwise mask implicitly.
+
+Memory operations encode exactly `[Base64 + Index64 * scale + i32 displacement]` with one SIB byte and an unconditional four-byte displacement. `scale` is 1, 2, 4, or 8. `none` selects no index and requires scale 1. `rsp` cannot be an index; `r12` is valid because REX.X distinguishes it from the SIB no-index field. Any `Reg64` is a valid base, including `rbp` and `r13`, because the fixed `disp32` form removes their zero-displacement ambiguity. WVA performs no pointer, bounds, alignment, alias, or capability proof for these system-level machine addresses; the owning ABI or unsafe boundary must supply it.
 
 Labels use the WVO machine-name grammar, are scoped to one definition, and emit no WVO symbol. A label name must be unique within that definition. `jump_label` and `branch` require exactly one matching local label and always encode deterministic near `rel32` displacements; the assembler does not shorten branches. Existing `jump` remains a symbol-oriented inter-definition operation with a WVO relocation.
 
@@ -196,7 +237,7 @@ The section stores no encoded bytes. Definition offsets and sizes advance throug
 
 ## Validation and determinism
 
-Assembly fails before output when source structure, names, ordering, integer widths, section ownership, definitions, references, instruction contexts, limits, or WVO invariants are invalid. `call` and `jump` require a declared function target; `address_u32` accepts any declared symbol. The resulting object passes the independent WVO verifier before bytes are returned.
+Assembly fails before output when source structure, names, ordering, integer widths, register widths, memory base/index/scale/displacement shape, shift count, section ownership, definitions, references, instruction contexts, limits, or WVO invariants are invalid. `call` and `jump` require a declared function target; `address_u32` accepts any declared symbol. The resulting object passes the independent WVO verifier before bytes are returned.
 
 Identical WVA text and assembler version produce identical WVO bytes on every host. Source paths, timestamps, comments, whitespace, and line-ending choice are not serialized.
 
@@ -210,4 +251,4 @@ Identical WVA text and assembler version produce identical WVO bytes on every ho
 
 ## Deliberate omissions
 
-WVA 1 still has no general base/index/scale memory operands, 8- or 16-bit general register operations, arithmetic immediates, multiplication, division, shifts, rotates, conditional moves, condition-result materialization, short-branch relaxation, 64-bit immediates or absolute addresses, SIMD, floating point, other privileged operations, macros, includes, expressions, constants, debug records, ABI aliases, automatic section creation, or final-image directives. Add further operations with an exact operand, encoding, validation, and verification rule rather than an opaque executable-byte escape.
+WVA 1 still has no 8- or 16-bit general register or memory operations, division, variable-count shifts, double-width multiply results, conditional moves, condition-result materialization, short-branch or displacement relaxation, 64-bit immediates or absolute addresses, segment/address-size overrides, SIMD, floating point, other privileged operations, macros, includes, expressions, constants, debug records, ABI aliases, automatic section creation, or final-image directives. Memory operands deliberately require a base and fixed `disp32`; absolute, RIP-relative-with-addend, base-less index, and address-expression syntax remain separate future contracts. Add further operations with an exact operand, encoding, validation, and verification rule rather than an opaque executable-byte escape.

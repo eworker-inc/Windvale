@@ -1,30 +1,34 @@
 windvale-assembly 1
 
 # The expanded WVA 1 x86-64 foundation keeps local control flow inside one
-# definition and represents symbol references with typed WVO relocations.
-symbol local data Value in .data
+# definition, represents symbol references with typed WVO relocations, and
+# uses explicit deterministic SIB memory operands.
+symbol local data Values in .data
 symbol export function Main in .text
 
 section code .text align 16
 define Main
 move_u32 r8d 1
-move rax r8
-load_u32 ecx Value
+load_address r10 Values
+load_memory_u64 rax r10 r8 8 0
+add_i32 rax 4
+multiply rax r8
+shift_left r8 1
 label Repeat
-test ecx ecx
+compare_i32 rax 0
 branch equal Done
-add rax r8
-subtract ecx r8d
+subtract_i32 rax 1
 jump_label Repeat
 label Done
-store_u64 Value rax
-load_address r10 Value
+store_memory_u64 r10 r8 8 0 rax
 return
 end define
 end section
 
 section data .data align 8
-define Value
+define Values
+bytes 2 0 0 0 0 0 0 0
 bytes 3 0 0 0 0 0 0 0
+bytes 5 0 0 0 0 0 0 0
 end define
 end section

@@ -104,7 +104,7 @@ The object verifier returns a `Verifiedˉobject`; both CLI object commands decod
 - Bounded WVA 1 line and token scanning over immutable source bytes
 - Complete grammar, declaration, ordering, context, local-label, reference, register-width, and limit validation
 - Named-definition offset and size derivation
-- Typed 32/64-bit GPR, REX/ModRM, local-control, stack, indirect-control, RIP-relative, machine, and data encodings
+- Typed 32/64-bit GPR, REX/ModRM/SIB, local-control, immediate scalar, multiply, shift/rotate, stack, indirect-control, RIP-relative, indexed-memory, machine, and data encodings
 - Canonical WVO relocation and object-byte construction
 - Hosted input/output composition with publication only after complete success
 
@@ -112,7 +112,7 @@ The object verifier returns a `Verifiedˉobject`; both CLI object commands decod
 
 `Assembler/Reference/` owns the independent C# Stage 0 and recovery implementation:
 
-- WVA 1 line/token parsing, typed operands, local fixups, and stable source diagnostics
+- WVA 1 line/token parsing, typed register/memory/immediate operands, local fixups, and stable source diagnostics
 - Canonical symbol and section declaration validation
 - Named-definition offset and size derivation
 - The same expanded x86-64 instruction and data encodings through an independent encoder

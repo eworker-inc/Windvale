@@ -277,7 +277,16 @@ internal static class Assemblyˉparser
                         Assemblyˉstatementˉkind.Popˉregister or Assemblyˉstatementˉkind.Callˉregister or
                         Assemblyˉstatementˉkind.Jumpˉregister or Assemblyˉstatementˉkind.Loadˉu32 or
                         Assemblyˉstatementˉkind.Loadˉu64 or Assemblyˉstatementˉkind.Storeˉu32 or
-                        Assemblyˉstatementˉkind.Storeˉu64 or Assemblyˉstatementˉkind.Loadˉaddress;
+                        Assemblyˉstatementˉkind.Storeˉu64 or Assemblyˉstatementˉkind.Loadˉaddress or
+                        Assemblyˉstatementˉkind.Multiply or Assemblyˉstatementˉkind.Addˉi32 or
+                        Assemblyˉstatementˉkind.Subtractˉi32 or Assemblyˉstatementˉkind.Andˉi32 or
+                        Assemblyˉstatementˉkind.Orˉi32 or Assemblyˉstatementˉkind.Xorˉi32 or
+                        Assemblyˉstatementˉkind.Compareˉi32 or Assemblyˉstatementˉkind.Testˉi32 or
+                        Assemblyˉstatementˉkind.Rotateˉleft or Assemblyˉstatementˉkind.Rotateˉright or
+                        Assemblyˉstatementˉkind.Shiftˉleft or Assemblyˉstatementˉkind.Shiftˉright or
+                        Assemblyˉstatementˉkind.Shiftˉrightˉsigned or
+                        Assemblyˉstatementˉkind.Loadˉmemoryˉu32 or Assemblyˉstatementˉkind.Loadˉmemoryˉu64 or
+                        Assemblyˉstatementˉkind.Storeˉmemoryˉu32 or Assemblyˉstatementˉkind.Storeˉmemoryˉu64;
                     var Materializedˉdataˉstatement = Statement.Kind is
                         Assemblyˉstatementˉkind.Bytes or Assemblyˉstatementˉkind.U32 or
                         Assemblyˉstatementˉkind.I32 or Assemblyˉstatementˉkind.Addressˉu32;
@@ -471,6 +480,7 @@ internal static class Assemblyˉparser
             case "xor":
             case "compare":
             case "test":
+            case "multiply":
                 if (tokens.Count != 3 ||
                     !Tryˉtypedˉregister(tokens[1].Text, out var Destination) ||
                     !Tryˉtypedˉregister(tokens[2].Text, out var Source) ||
@@ -487,9 +497,58 @@ internal static class Assemblyˉparser
                     "or" => Assemblyˉstatementˉkind.Or,
                     "xor" => Assemblyˉstatementˉkind.Xor,
                     "compare" => Assemblyˉstatementˉkind.Compare,
+                    "multiply" => Assemblyˉstatementˉkind.Multiply,
                     _ => Assemblyˉstatementˉkind.Test,
                 };
                 return (new(Registerˉkind, null, 0, 0, [], Span, Destination, Source), null);
+            case "add_i32":
+            case "subtract_i32":
+            case "and_i32":
+            case "or_i32":
+            case "xor_i32":
+            case "compare_i32":
+            case "test_i32":
+                if (tokens.Count != 3 || !Tryˉtypedˉregister(tokens[1].Text, out var Immediateˉregister))
+                {
+                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires a 32- or 64-bit register and signed 32-bit immediate."));
+                }
+                if (!Tryˉi32(tokens[2].Text, out var Immediate))
+                {
+                    return (null, Diagnostic("WVA1005", line, tokens[2].Column, "Immediate is outside the i32 range."));
+                }
+                var Immediateˉkind = tokens[0].Text switch
+                {
+                    "add_i32" => Assemblyˉstatementˉkind.Addˉi32,
+                    "subtract_i32" => Assemblyˉstatementˉkind.Subtractˉi32,
+                    "and_i32" => Assemblyˉstatementˉkind.Andˉi32,
+                    "or_i32" => Assemblyˉstatementˉkind.Orˉi32,
+                    "xor_i32" => Assemblyˉstatementˉkind.Xorˉi32,
+                    "compare_i32" => Assemblyˉstatementˉkind.Compareˉi32,
+                    _ => Assemblyˉstatementˉkind.Testˉi32,
+                };
+                return (new(Immediateˉkind, null, Immediate, 0, [], Span, Immediateˉregister), null);
+            case "rotate_left":
+            case "rotate_right":
+            case "shift_left":
+            case "shift_right":
+            case "shift_right_signed":
+                if (tokens.Count != 3 || !Tryˉtypedˉregister(tokens[1].Text, out var Shiftˉregister))
+                {
+                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires a 32- or 64-bit register and count."));
+                }
+                if (!Tryˉu32(tokens[2].Text, out var Shiftˉcount) || Shiftˉcount >= Shiftˉregister.Width)
+                {
+                    return (null, Diagnostic("WVA1005", line, tokens[2].Column, $"Shift count must be from 0 through {Shiftˉregister.Width - 1}."));
+                }
+                var Shiftˉkind = tokens[0].Text switch
+                {
+                    "rotate_left" => Assemblyˉstatementˉkind.Rotateˉleft,
+                    "rotate_right" => Assemblyˉstatementˉkind.Rotateˉright,
+                    "shift_left" => Assemblyˉstatementˉkind.Shiftˉleft,
+                    "shift_right" => Assemblyˉstatementˉkind.Shiftˉright,
+                    _ => Assemblyˉstatementˉkind.Shiftˉrightˉsigned,
+                };
+                return (new(Shiftˉkind, null, Shiftˉcount, 0, [], Span, Shiftˉregister), null);
             case "push":
             case "pop":
             case "call_register":
@@ -544,6 +603,69 @@ internal static class Assemblyˉparser
                     [],
                     Span,
                     Storeˉregister), null);
+            case "load_memory_u32":
+            case "load_memory_u64":
+            case "store_memory_u32":
+            case "store_memory_u64":
+                var Isˉmemoryˉload = tokens[0].Text.StartsWith("load_", StringComparison.Ordinal);
+                var Memoryˉwidth = tokens[0].Text.EndsWith("u32", StringComparison.Ordinal) ? (byte)32 : (byte)64;
+                if (tokens.Count != 6)
+                {
+                    return (null, Diagnostic("WVA1003", Span,
+                        $"'{tokens[0].Text}' requires value, base, index-or-none, scale, and displacement operands."));
+                }
+                var Valueˉtoken = Isˉmemoryˉload ? tokens[1] : tokens[5];
+                var Baseˉtoken = Isˉmemoryˉload ? tokens[2] : tokens[1];
+                var Indexˉtoken = Isˉmemoryˉload ? tokens[3] : tokens[2];
+                var Scaleˉtoken = Isˉmemoryˉload ? tokens[4] : tokens[3];
+                var Displacementˉtoken = Isˉmemoryˉload ? tokens[5] : tokens[4];
+                if (!Tryˉtypedˉregister(Valueˉtoken.Text, out var Valueˉregister) ||
+                    Valueˉregister.Width != Memoryˉwidth ||
+                    !Tryˉtypedˉregister(Baseˉtoken.Text, out var Baseˉregister) ||
+                    Baseˉregister.Width != 64)
+                {
+                    return (null, Diagnostic("WVA1003", Span,
+                        $"'{tokens[0].Text}' requires a {Memoryˉwidth}-bit value register and 64-bit base register."));
+                }
+                var Hasˉindex = Indexˉtoken.Text != "none";
+                var Indexˉregister = default(Assemblyˉregister);
+                if (Hasˉindex &&
+                    (!Tryˉtypedˉregister(Indexˉtoken.Text, out Indexˉregister) ||
+                        Indexˉregister.Width != 64 || Indexˉregister.Index == 4 && !Indexˉregister.Isˉextended))
+                {
+                    return (null, Diagnostic("WVA1003", Span,
+                        "Memory index must be 'none' or a 64-bit register other than rsp."));
+                }
+                if (!Tryˉu32(Scaleˉtoken.Text, out var Scale) || Scale is not (1 or 2 or 4 or 8) ||
+                    !Hasˉindex && Scale != 1)
+                {
+                    return (null, Diagnostic("WVA1005", line, Scaleˉtoken.Column,
+                        "Memory scale must be 1, 2, 4, or 8; 'none' requires scale 1."));
+                }
+                if (!Tryˉi32(Displacementˉtoken.Text, out var Displacement))
+                {
+                    return (null, Diagnostic("WVA1005", line, Displacementˉtoken.Column,
+                        "Memory displacement is outside the i32 range."));
+                }
+                var Memoryˉkind = tokens[0].Text switch
+                {
+                    "load_memory_u32" => Assemblyˉstatementˉkind.Loadˉmemoryˉu32,
+                    "load_memory_u64" => Assemblyˉstatementˉkind.Loadˉmemoryˉu64,
+                    "store_memory_u32" => Assemblyˉstatementˉkind.Storeˉmemoryˉu32,
+                    _ => Assemblyˉstatementˉkind.Storeˉmemoryˉu64,
+                };
+                return (new(
+                    Memoryˉkind,
+                    null,
+                    Displacement,
+                    0,
+                    [],
+                    Span,
+                    Valueˉregister,
+                    Baseˉregister,
+                    Thirdˉregister: Indexˉregister,
+                    Scale: (byte)Scale,
+                    Hasˉindex: Hasˉindex), null);
             case "nop":
             case "return":
             case "trap":

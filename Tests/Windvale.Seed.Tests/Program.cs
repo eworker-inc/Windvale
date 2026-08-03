@@ -28,7 +28,7 @@ internal static class Program
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_ASSEMBLER_CORE_SHA256 = "dbdbae4fae2c19ec67e7f06824b91488ceccb65f1668520a759d62c7577521b7";
+    private const string WVA_ASSEMBLER_CORE_SHA256 = "6c96bc45cd9ce17016773391e1b39da27953355d2d462c29d90887f0b510a0fc";
     private const string WVLINK_CORE_SHA256 = "091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
@@ -787,6 +787,7 @@ internal static class Program
         new("Windvale-written object core matches the Stage 0 oracle", [TEST_AREA_OBJECT_MODEL, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvoˉobjectˉcoreˉmatchesˉoracle),
         new("WVA assembler emits canonical sections, symbols, and relocations", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL], Assemblerˉemitsˉcanonicalˉobject),
         new("WVA assembler encodes expanded x86-64 registers, control flow, and RIP-relative data", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL], Assemblerˉencodesˉexpandedˉx64),
+        new("WVA assembler encodes immediate, multiply, shift, and indexed-memory operations", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER], Assemblerˉencodesˉscalarˉx64),
         new("WVA assembler rejects malformed and inconsistent source", [TEST_AREA_ASSEMBLER], Assemblerˉrejectsˉinvalidˉsource),
         new("Windvale-written WVA assembler enforces source and token boundaries", [TEST_AREA_ASSEMBLER, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvaˉassemblerˉcoreˉrecognizesˉsource),
         new("Windvale-written WVA assembler matches Stage 0 semantics and bytes", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvaˉassemblerˉmatchesˉoracle),
@@ -9124,7 +9125,7 @@ internal static class Program
         var Example = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(EXPANDED_X64_ASSEMBLY_SOURCE)).Value;
         Equal(2, Example.Sections.Length);
         Equal(2, Example.Symbols.Length);
-        Equal(3, Example.Relocations.Length);
+        Equal(1, Example.Relocations.Length);
 
         const string Registerˉsource = """
             windvale-assembly 1
@@ -9350,6 +9351,75 @@ internal static class Program
                     Linked.Imageˉbytes.AsSpan((int)Item.Offset, sizeof(int)))));
     }
 
+    private static void Assemblerˉencodesˉscalarˉx64()
+    {
+        const string Source = """
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            add_i32 eax -1
+            subtract_i32 r8 16
+            and_i32 ecx -2147483648
+            or_i32 r10d 2147483647
+            xor_i32 r11 -1
+            compare_i32 edx 42
+            test_i32 r12 -1
+            multiply eax ecx
+            multiply r8 r15
+            rotate_left eax 1
+            rotate_right r8d 2
+            shift_left rax 3
+            shift_right r9d 4
+            shift_right_signed r10 63
+            load_memory_u32 eax rbx none 1 -4
+            load_memory_u32 eax rbx none 1 -2147483648
+            load_memory_u32 eax rbx none 1 2147483647
+            load_memory_u64 r8 r9 r10 4 16
+            load_memory_u64 rax rbx r12 1 0
+            store_memory_u32 r12 r13 8 0 r14d
+            store_memory_u64 rbp rsi 2 -8 rdx
+            return
+            end define
+            end section
+            """;
+        var Bytes = Assembleˉsuccess(Source);
+        Sequenceˉequal(Bytes, Assembleˉsuccess(Source));
+        var Object = Objectˉcodec.Readˉandˉverify(Bytes).Value;
+        Sequenceˉequal<byte>(
+            [
+                0x81, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF,
+                0x49, 0x81, 0xE8, 0x10, 0, 0, 0,
+                0x81, 0xE1, 0, 0, 0, 0x80,
+                0x41, 0x81, 0xCA, 0xFF, 0xFF, 0xFF, 0x7F,
+                0x49, 0x81, 0xF3, 0xFF, 0xFF, 0xFF, 0xFF,
+                0x81, 0xFA, 0x2A, 0, 0, 0,
+                0x49, 0xF7, 0xC4, 0xFF, 0xFF, 0xFF, 0xFF,
+                0x0F, 0xAF, 0xC1,
+                0x4D, 0x0F, 0xAF, 0xC7,
+                0xC1, 0xC0, 0x01,
+                0x41, 0xC1, 0xC8, 0x02,
+                0x48, 0xC1, 0xE0, 0x03,
+                0x41, 0xC1, 0xE9, 0x04,
+                0x49, 0xC1, 0xFA, 0x3F,
+                0x8B, 0x84, 0x23, 0xFC, 0xFF, 0xFF, 0xFF,
+                0x8B, 0x84, 0x23, 0, 0, 0, 0x80,
+                0x8B, 0x84, 0x23, 0xFF, 0xFF, 0xFF, 0x7F,
+                0x4F, 0x8B, 0x84, 0x91, 0x10, 0, 0, 0,
+                0x4A, 0x8B, 0x84, 0x23, 0, 0, 0, 0,
+                0x47, 0x89, 0xB4, 0xEC, 0, 0, 0, 0,
+                0x48, 0x89, 0x94, 0x75, 0xF8, 0xFF, 0xFF, 0xFF,
+                0xC3,
+            ],
+            Object.Sections.Single().Data);
+        Equal(0, Object.Relocations.Length);
+
+        var Linked = Linkˉsuccess(
+            [Bytes],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Sequenceˉequal(Object.Sections.Single().Data, Linked.Imageˉbytes);
+    }
+
     private static void Assemblerˉrejectsˉinvalidˉsource()
     {
         Hasˉassemblyˉdiagnostic("section code .text align 16", "WVA1001");
@@ -9519,6 +9589,96 @@ internal static class Program
             section data .data align 4
             define Value
             label Bad
+            end define
+            end section
+            """, "WVA1008");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            add_i32 eax 2147483648
+            end define
+            end section
+            """, "WVA1005");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            multiply eax rax
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            shift_left eax 32
+            end define
+            end section
+            """, "WVA1005");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            shift_right rax 64
+            end define
+            end section
+            """, "WVA1005");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            load_memory_u32 eax rbx rsp 1 0
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            load_memory_u64 rax eax none 1 0
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            store_memory_u32 rbx none 2 0 eax
+            end define
+            end section
+            """, "WVA1005");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            load_memory_u32 eax rbx rcx 3 0
+            end define
+            end section
+            """, "WVA1005");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            load_memory_u32 eax rbx none 1 -2147483649
+            end define
+            end section
+            """, "WVA1005");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol local data Value in .data
+            section data .data align 4
+            define Value
+            add_i32 eax 1
             end define
             end section
             """, "WVA1008");
@@ -10603,6 +10763,42 @@ internal static class Program
             Assembleˉsuccess(EXPANDED_X64_ASSEMBLY_SOURCE),
             Expandedˉexample.Writer.Bytes);
 
+        const string Scalarˉx64ˉsource = """
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            add_i32 eax -1
+            subtract_i32 r8 16
+            and_i32 ecx -2147483648
+            or_i32 r10d 2147483647
+            xor_i32 r11 -1
+            compare_i32 edx 42
+            test_i32 r12 -1
+            multiply eax ecx
+            multiply r8 r15
+            rotate_left eax 1
+            rotate_right r8d 2
+            shift_left rax 3
+            shift_right r9d 4
+            shift_right_signed r10 63
+            load_memory_u32 eax rbx none 1 -4
+            load_memory_u32 eax rbx none 1 -2147483648
+            load_memory_u32 eax rbx none 1 2147483647
+            load_memory_u64 r8 r9 r10 4 16
+            load_memory_u64 rax rbx r12 1 0
+            store_memory_u32 r12 r13 8 0 r14d
+            store_memory_u64 rbp rsi 2 -8 rdx
+            return
+            end define
+            end section
+            """;
+        var Scalar = Runˉsource(Scalarˉx64ˉsource);
+        Equal(0, Scalar.Result.Exitˉcode);
+        Equal(string.Empty, Scalar.Diagnostics);
+        Sequenceˉequal(Assembleˉsuccess(Scalarˉx64ˉsource), Scalar.Writer.Bytes);
+        _ = Objectˉcodec.Readˉandˉverify(Scalar.Writer.Bytes.AsSpan());
+
         const string Emptyˉobjectˉsource = """
             windvale-assembly 1
             section code .text align 1
@@ -10697,6 +10893,51 @@ internal static class Program
                 end define
                 end section
                 """, "WVA1008"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                add_i32 eax 2147483648
+                end define
+                end section
+                """, "WVA1005"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                multiply eax rax
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                shift_left eax 32
+                end define
+                end section
+                """, "WVA1005"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                load_memory_u32 eax rbx rsp 1 0
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                store_memory_u32 rbx none 2 0 eax
+                end define
+                end section
+                """, "WVA1005"),
             ("""
                 windvale-assembly 1
                 symbol export function Main in .text
