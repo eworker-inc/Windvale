@@ -1,0 +1,322 @@
+module Directoryˉsnapshot profile portable;
+
+enum Directoryˉsnapshotˉlookupˉstatus {
+    Valid = 0;
+    Notˉfound = 1;
+    Notˉfile = 2;
+    Invalidˉoffset = 3;
+    Invalidˉsnapshot = 4;
+}
+
+record Directoryˉsnapshotˉresult {
+    Status: Directoryˉsnapshotˉlookupˉstatus;
+    Fileˉlength: u32;
+    Dataˉoffset: u32;
+    Dataˉlength: u32;
+    Failureˉoffset: u32;
+}
+
+export fn Directoryˉsnapshotˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Directoryˉsnapshotˉappendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Directoryˉsnapshotˉinvalid(Failureˉoffset: u32) -> Directoryˉsnapshotˉresult {
+    return Directoryˉsnapshotˉresult(
+        Directoryˉsnapshotˉlookupˉstatus.Invalidˉsnapshot,
+        0u32,
+        0u32,
+        0u32,
+        Failureˉoffset
+    );
+}
+
+export fn Directoryˉsnapshotˉnameˉbyteˉisˉvalid(Value: u32) -> bool {
+    if Value >= 48u32 { if Value <= 57u32 { return true; } }
+    if Value >= 65u32 { if Value <= 90u32 { return true; } }
+    if Value >= 97u32 { if Value <= 122u32 { return true; } }
+    if Value == 45u32 { return true; }
+    if Value == 46u32 { return true; }
+    if Value == 95u32 { return true; }
+    return false;
+}
+
+export fn Directoryˉsnapshotˉnameˉisˉvalid(
+    Snapshot: bytes,
+    Offset: u32,
+    Length: u32
+) -> bool {
+    if Length == 0u32 { return false; }
+    if Length > 255u32 { return false; }
+    if Length == 1u32 {
+        if Bytesˉreadˉu8(Snapshot, Offset) == 46u8 { return false; }
+    }
+    if Length == 2u32 {
+        if Bytesˉreadˉu8(Snapshot, Offset) == 46u8 {
+            if Bytesˉreadˉu8(Snapshot, Offset + 1u32) == 46u8 { return false; }
+        }
+    }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Snapshot, Offset + Index));
+        if !Directoryˉsnapshotˉnameˉbyteˉisˉvalid(Value) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Directoryˉsnapshotˉnameˉisˉafter(
+    Snapshot: bytes,
+    Previousˉoffset: u32,
+    Previousˉlength: u32,
+    Currentˉoffset: u32,
+    Currentˉlength: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    var Limit: u32 = Previousˉlength;
+    if Currentˉlength < Limit { Limit = Currentˉlength; }
+    while Index < Limit {
+        let Previous: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Snapshot, Previousˉoffset + Index)
+        );
+        let Current: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Snapshot, Currentˉoffset + Index)
+        );
+        if Current > Previous { return true; }
+        if Current < Previous { return false; }
+        Index = Index + 1u32;
+    }
+    return Currentˉlength > Previousˉlength;
+}
+
+export fn Directoryˉsnapshotˉnameˉequals(
+    Snapshot: bytes,
+    Offset: u32,
+    Length: u32,
+    Name: bytes
+) -> bool {
+    if Length != Bytesˉlength(Name) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Snapshot, Offset + Index) != Bytesˉreadˉu8(Name, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Directoryˉsnapshotˉlookup(
+    Snapshot: bytes,
+    Name: text,
+    Readˉoffset: u32,
+    Maximumˉbytes: u32
+) -> Directoryˉsnapshotˉresult {
+    let Total: u32 = Bytesˉlength(Snapshot);
+    if Total < 32u32 { return Directoryˉsnapshotˉinvalid(Total); }
+    if Total > 4096u32 { return Directoryˉsnapshotˉinvalid(4096u32); }
+    if Bytesˉreadˉu32ˉlittle(Snapshot, 0u32) != 1396987479u32 {
+        return Directoryˉsnapshotˉinvalid(0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Snapshot, 4u32) != 1u32 {
+        return Directoryˉsnapshotˉinvalid(4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Snapshot, 8u32) != Total {
+        return Directoryˉsnapshotˉinvalid(8u32);
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Snapshot, 12u32);
+    if Count == 0u32 { return Directoryˉsnapshotˉinvalid(12u32); }
+    if Count > 64u32 { return Directoryˉsnapshotˉinvalid(12u32); }
+    if Bytesˉreadˉu32ˉlittle(Snapshot, 16u32) != 32u32 {
+        return Directoryˉsnapshotˉinvalid(16u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Snapshot, 20u32) != 32u32 {
+        return Directoryˉsnapshotˉinvalid(20u32);
+    }
+    let Nameˉregion: u32 = Bytesˉreadˉu32ˉlittle(Snapshot, 24u32);
+    if Nameˉregion != 32u32 + Count * 32u32 {
+        return Directoryˉsnapshotˉinvalid(24u32);
+    }
+    let Dataˉregion: u32 = Bytesˉreadˉu32ˉlittle(Snapshot, 28u32);
+    if Dataˉregion < Nameˉregion { return Directoryˉsnapshotˉinvalid(28u32); }
+    if Dataˉregion > Total { return Directoryˉsnapshotˉinvalid(28u32); }
+    var Alignedˉregion: u32 = 0u32;
+    while Alignedˉregion < Dataˉregion {
+        Alignedˉregion = Alignedˉregion + 4u32;
+    }
+    if Alignedˉregion != Dataˉregion { return Directoryˉsnapshotˉinvalid(28u32); }
+
+    let Encodedˉname: bytes = Textˉtoˉutf8(Name);
+    var Expectedˉname: u32 = Nameˉregion;
+    var Expectedˉdata: u32 = Dataˉregion;
+    var Previousˉoffset: u32 = 0u32;
+    var Previousˉlength: u32 = 0u32;
+    var Found: bool = false;
+    var Foundˉkind: u32 = 0u32;
+    var Foundˉdataˉoffset: u32 = 0u32;
+    var Foundˉdataˉlength: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Entry: u32 = 32u32 + Index * 32u32;
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Snapshot, Entry);
+        let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Snapshot, Entry + 4u32);
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Snapshot, Entry + 8u32);
+        let Dataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Snapshot, Entry + 12u32);
+        let Dataˉlength: u32 = Bytesˉreadˉu32ˉlittle(Snapshot, Entry + 16u32);
+        if Kind == 0u32 { return Directoryˉsnapshotˉinvalid(Entry); }
+        if Kind > 2u32 { return Directoryˉsnapshotˉinvalid(Entry); }
+        if Nameˉoffset != Expectedˉname { return Directoryˉsnapshotˉinvalid(Entry + 4u32); }
+        if Nameˉlength == 0u32 { return Directoryˉsnapshotˉinvalid(Entry + 8u32); }
+        if Nameˉlength > 255u32 { return Directoryˉsnapshotˉinvalid(Entry + 8u32); }
+        if Nameˉoffset > Dataˉregion { return Directoryˉsnapshotˉinvalid(Entry + 4u32); }
+        if Nameˉlength > Dataˉregion - Nameˉoffset {
+            return Directoryˉsnapshotˉinvalid(Entry + 8u32);
+        }
+        if Bytesˉreadˉu32ˉlittle(Snapshot, Entry + 20u32) != 0u32 {
+            return Directoryˉsnapshotˉinvalid(Entry + 20u32);
+        }
+        if Bytesˉreadˉu32ˉlittle(Snapshot, Entry + 24u32) != 0u32 {
+            return Directoryˉsnapshotˉinvalid(Entry + 24u32);
+        }
+        if Bytesˉreadˉu32ˉlittle(Snapshot, Entry + 28u32) != 0u32 {
+            return Directoryˉsnapshotˉinvalid(Entry + 28u32);
+        }
+        if !Directoryˉsnapshotˉnameˉisˉvalid(Snapshot, Nameˉoffset, Nameˉlength) {
+            return Directoryˉsnapshotˉinvalid(Nameˉoffset);
+        }
+        if Index > 0u32 {
+            if !Directoryˉsnapshotˉnameˉisˉafter(
+                Snapshot,
+                Previousˉoffset,
+                Previousˉlength,
+                Nameˉoffset,
+                Nameˉlength
+            ) {
+                return Directoryˉsnapshotˉinvalid(Nameˉoffset);
+            }
+        }
+        if Kind == 1u32 {
+            if Dataˉoffset != Expectedˉdata {
+                return Directoryˉsnapshotˉinvalid(Entry + 12u32);
+            }
+            if Dataˉoffset > Total { return Directoryˉsnapshotˉinvalid(Entry + 12u32); }
+            if Dataˉlength > Total - Dataˉoffset {
+                return Directoryˉsnapshotˉinvalid(Entry + 16u32);
+            }
+            Expectedˉdata = Dataˉoffset + Dataˉlength;
+        } else {
+            if Dataˉoffset != 0u32 { return Directoryˉsnapshotˉinvalid(Entry + 12u32); }
+            if Dataˉlength != 0u32 { return Directoryˉsnapshotˉinvalid(Entry + 16u32); }
+        }
+        if Directoryˉsnapshotˉnameˉequals(
+            Snapshot, Nameˉoffset, Nameˉlength, Encodedˉname
+        ) {
+            Found = true;
+            Foundˉkind = Kind;
+            Foundˉdataˉoffset = Dataˉoffset;
+            Foundˉdataˉlength = Dataˉlength;
+        }
+        Expectedˉname = Nameˉoffset + Nameˉlength;
+        Previousˉoffset = Nameˉoffset;
+        Previousˉlength = Nameˉlength;
+        Index = Index + 1u32;
+    }
+    while Expectedˉname < Dataˉregion {
+        if Bytesˉreadˉu8(Snapshot, Expectedˉname) != 0u8 {
+            return Directoryˉsnapshotˉinvalid(Expectedˉname);
+        }
+        Expectedˉname = Expectedˉname + 1u32;
+    }
+    if Expectedˉdata != Total { return Directoryˉsnapshotˉinvalid(Expectedˉdata); }
+    if !Found {
+        return Directoryˉsnapshotˉresult(
+            Directoryˉsnapshotˉlookupˉstatus.Notˉfound,
+            0u32,
+            0u32,
+            0u32,
+            0u32
+        );
+    }
+    if Foundˉkind != 1u32 {
+        return Directoryˉsnapshotˉresult(
+            Directoryˉsnapshotˉlookupˉstatus.Notˉfile,
+            0u32,
+            0u32,
+            0u32,
+            0u32
+        );
+    }
+    if Readˉoffset > Foundˉdataˉlength {
+        return Directoryˉsnapshotˉresult(
+            Directoryˉsnapshotˉlookupˉstatus.Invalidˉoffset,
+            Foundˉdataˉlength,
+            0u32,
+            0u32,
+            0u32
+        );
+    }
+    let Remaining: u32 = Foundˉdataˉlength - Readˉoffset;
+    var Returned: u32 = Maximumˉbytes;
+    if Remaining < Returned { Returned = Remaining; }
+    return Directoryˉsnapshotˉresult(
+        Directoryˉsnapshotˉlookupˉstatus.Valid,
+        Foundˉdataˉlength,
+        Foundˉdataˉoffset + Readˉoffset,
+        Returned,
+        0u32
+    );
+}
+
+export fn Directoryˉsnapshotˉresponse(
+    Snapshot: bytes,
+    Status: u32,
+    Fileˉlength: u32,
+    Offset: u32,
+    Dataˉoffset: u32,
+    Dataˉlength: u32
+) -> bytes {
+    var Result: bytes = Directoryˉsnapshotˉempty(Snapshot);
+    Result = Directoryˉsnapshotˉappendˉu32(Result, 1380210263u32);
+    Result = Directoryˉsnapshotˉappendˉu32(Result, 1u32);
+    Result = Directoryˉsnapshotˉappendˉu32(Result, Status);
+    Result = Directoryˉsnapshotˉappendˉu32(Result, Fileˉlength);
+    Result = Directoryˉsnapshotˉappendˉu32(Result, Offset);
+    Result = Directoryˉsnapshotˉappendˉu32(Result, Dataˉlength);
+    if Dataˉlength == 0u32 { return Result; }
+    return Bytesˉconcat(Result, Bytesˉslice(Snapshot, Dataˉoffset, Dataˉlength));
+}
+
+export fn Directoryˉsnapshotˉread(
+    Snapshot: bytes,
+    Name: text,
+    Offset: u32,
+    Maximumˉbytes: u32
+) -> bytes {
+    let Lookup: Directoryˉsnapshotˉresult =
+        Directoryˉsnapshotˉlookup(Snapshot, Name, Offset, Maximumˉbytes);
+    if Lookup.Status == Directoryˉsnapshotˉlookupˉstatus.Invalidˉsnapshot {
+        return Directoryˉsnapshotˉempty(Snapshot);
+    }
+    if Lookup.Status == Directoryˉsnapshotˉlookupˉstatus.Notˉfound {
+        return Directoryˉsnapshotˉresponse(Snapshot, 1u32, 0u32, Offset, 0u32, 0u32);
+    }
+    if Lookup.Status == Directoryˉsnapshotˉlookupˉstatus.Notˉfile {
+        return Directoryˉsnapshotˉresponse(Snapshot, 2u32, 0u32, Offset, 0u32, 0u32);
+    }
+    if Lookup.Status == Directoryˉsnapshotˉlookupˉstatus.Invalidˉoffset {
+        return Directoryˉsnapshotˉresponse(
+            Snapshot, 8u32, Lookup.Fileˉlength, Offset, 0u32, 0u32
+        );
+    }
+    return Directoryˉsnapshotˉresponse(
+        Snapshot,
+        0u32,
+        Lookup.Fileˉlength,
+        Offset,
+        Lookup.Dataˉoffset,
+        Lookup.Dataˉlength
+    );
+}

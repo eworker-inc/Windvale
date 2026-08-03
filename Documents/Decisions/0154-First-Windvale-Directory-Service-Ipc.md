@@ -38,7 +38,7 @@ This is proportional local protocol evidence. Cross-host verification, live gues
 
 Windvale now owns a strict OS-facing adapter protocol for its first typed filesystem capability. The kernel remains unaware of names and `WVDR`; the service remains unaware of native paths; and the application contract does not change between hosted and eventual Windvale OS execution.
 
-The next guest slice is now mechanically bounded. It must add a dedicated page-sized reply window, map one init-owned immutable directory snapshot separately from the package-resource store, bind one rights-limited endpoint/generation, invoke the exact WVDQ/WVDR protocol from a checked runtime adapter, and prove success plus malformed request, service death, client death, cleanup, and repeatability in QEMU. The measured 3,096-byte response rules out reusing Probe 34's existing reply windows.
+[Decision 0155](0155-First-Immutable-Windvale-Directory-Snapshot.md) now defines the required provider value as one verified `WVDS 1` page distinct from the package-resource store. The remaining guest slice must add a dedicated page-sized reply window, map that init-owned snapshot, bind one rights-limited endpoint/generation, invoke the exact WVDQ/WVDR protocol from a checked runtime adapter, and prove success plus malformed request, service death, client death, cleanup, and repeatability in QEMU. The measured 3,096-byte response rules out reusing Probe 34's existing reply windows.
 
 This decision does not implement that guest adapter, a filesystem root, enumeration, nested paths, handles, mutation, persistence, a block device, DMA, caching, service discovery, concurrent calls, or a general VFS.
 

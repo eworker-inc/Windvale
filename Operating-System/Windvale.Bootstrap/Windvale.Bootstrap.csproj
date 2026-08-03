@@ -30,5 +30,8 @@
     <EmbeddedResource Include="../Services/Resource-Service-Bridge.wv" LogicalName="Windvale.Os.Services.Resource-Service-Bridge.wv" />
     <EmbeddedResource Include="../Services/Directory-Service-Core.wv" LogicalName="Windvale.Os.Services.Directory-Service-Core.wv" />
     <EmbeddedResource Include="../Services/Directory-Service-Bridge.wv" LogicalName="Windvale.Os.Services.Directory-Service-Bridge.wv" />
+    <EmbeddedResource Include="../Services/Directory-Snapshot.wv" LogicalName="Windvale.Os.Services.Directory-Snapshot.wv" />
+    <EmbeddedResource Include="../Services/Directory-Snapshot-Service.wv" LogicalName="Windvale.Os.Services.Directory-Snapshot-Service.wv" />
+    <EmbeddedResource Include="../Services/Directory-Snapshot-Bridge.wv" LogicalName="Windvale.Os.Services.Directory-Snapshot-Bridge.wv" />
   </ItemGroup>
 </Project>

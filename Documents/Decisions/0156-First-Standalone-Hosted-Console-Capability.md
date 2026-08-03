@@ -1,4 +1,4 @@
-# Decision 0152: First standalone hosted console capability
+# Decision 0156: First standalone hosted console capability
 
 - Date: 2026-08-03
 - Status: Implemented and cross-host qualified

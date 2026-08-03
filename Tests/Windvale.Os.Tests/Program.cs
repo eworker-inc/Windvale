@@ -35,6 +35,9 @@ internal static class Program
         new("directory IPC emits bounded WVDQ requests and exact WVDR replies", Directoryˉipcˉemitsˉboundedˉrequestˉreply),
         new("directory IPC rejects malformed and hostile envelopes", Directoryˉipcˉrejectsˉmalformedˉenvelopes),
         new("Windvale directory service completes one live bounded read", Directoryˉserviceˉcompletesˉliveˉread),
+        new("directory snapshot emits one deterministic verified WVDS page", Directoryˉsnapshotˉemitsˉdeterministicˉpage),
+        new("directory snapshot rejects malformed and hostile images", Directoryˉsnapshotˉrejectsˉmalformedˉimages),
+        new("Windvale snapshot service completes one maximal directory read", Directoryˉsnapshotˉserviceˉcompletesˉmaximalˉread),
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
         new("kernel paging planner enforces bounded W^X identity tables", Pagingˉplannerˉenforcesˉboundedˉidentityˉtables),
         new("kernel WVA shims bridge Main, normalized traps, and Q35 shutdown", Kernelˉassemblyˉshimˉbridgesˉmain),
@@ -1019,6 +1022,252 @@ internal static class Program
             Objectˉdigest.Calculateˉsha256(Firstˉcore.Moduleˉbytes.AsSpan()));
         Equal(8_492, Firstˉbridge.Moduleˉbytes.Length);
         Equal("465b66c8fd21683c33cb9157fa13830c655147a36af50cc0961331fb5967ba2a",
+            Objectˉdigest.Calculateˉsha256(Firstˉbridge.Moduleˉbytes.AsSpan()));
+    }
+
+    private static void Directoryˉsnapshotˉemitsˉdeterministicˉpage()
+    {
+        var Fileˉbytes = Buildˉdirectoryˉsnapshotˉfile();
+        var File = new Directoryˉsnapshotˉentry(
+            Directoryˉsnapshotˉkind.File, "kernel.wv", Fileˉbytes);
+        var Folder = new Directoryˉsnapshotˉentry(
+            Directoryˉsnapshotˉkind.Other, "folder", []);
+        var First = Directoryˉsnapshotˉcodec.Write([File, Folder]);
+        var Second = Directoryˉsnapshotˉcodec.Write([Folder, File]);
+        Sequenceˉequal(First, Second);
+        Equal(3_184, First.Length);
+        True(First.Length <= Directoryˉsnapshotˉcontract.MAXIMUM_SNAPSHOT_BYTES,
+            "The canonical directory snapshot no longer fits one page.");
+        Equal(Directoryˉsnapshotˉcontract.MAGIC,
+            BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()));
+        Equal(2u, BinaryPrimitives.ReadUInt32LittleEndian(
+            First.AsSpan()[Directoryˉsnapshotˉcontract.ENTRY_COUNT_OFFSET..]));
+        Equal(96u, BinaryPrimitives.ReadUInt32LittleEndian(
+            First.AsSpan()[Directoryˉsnapshotˉcontract.NAME_REGION_OFFSET_OFFSET..]));
+        Equal(112u, BinaryPrimitives.ReadUInt32LittleEndian(
+            First.AsSpan()[Directoryˉsnapshotˉcontract.DATA_REGION_OFFSET_OFFSET..]));
+
+        var Verified = Directoryˉsnapshotˉcodec.Verify(First.AsSpan());
+        Equal(2, Verified.Entries.Length);
+        Equal("folder", Verified.Entries[0].Name);
+        Equal(Directoryˉsnapshotˉkind.Other, Verified.Entries[0].Kind);
+        True(Verified.Entries[0].Data.IsEmpty,
+            "The non-file directory entry unexpectedly owns bytes.");
+        Equal("kernel.wv", Verified.Entries[1].Name);
+        Equal(Directoryˉsnapshotˉkind.File, Verified.Entries[1].Kind);
+        Sequenceˉequal(Fileˉbytes, Verified.Entries[1].Data);
+
+        var Provider = new Directoryˉsnapshotˉprovider(First);
+        var Request = Directoryˉserviceˉipcˉcodec.Writeˉrequest("kernel.wv", 0, 3_072);
+        var Reply = Directoryˉserviceˉhandler.Handle(Provider, Request.AsSpan());
+        Equal(Directoryˉserviceˉipcˉcontract.MAXIMUM_RESPONSE_BYTES, Reply.Length);
+        var Response = Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+            Reply.AsSpan(), "kernel.wv", 0, 3_072);
+        Equal(Directoryˉserviceˉstatus.Valid, Response.Status);
+        Equal(3_072u, Response.Fileˉlength);
+        Sequenceˉequal(Fileˉbytes, Response.Bytes);
+
+        var Folderˉrequest = Directoryˉserviceˉipcˉcodec.Writeˉrequest("folder", 0, 8);
+        Equal(Directoryˉserviceˉstatus.Notˉfile,
+            Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                Directoryˉserviceˉhandler.Handle(Provider, Folderˉrequest.AsSpan()).AsSpan(),
+                "folder", 0, 8).Status);
+        var Missingˉrequest = Directoryˉserviceˉipcˉcodec.Writeˉrequest("missing.wv", 0, 8);
+        Equal(Directoryˉserviceˉstatus.Notˉfound,
+            Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                Directoryˉserviceˉhandler.Handle(Provider, Missingˉrequest.AsSpan()).AsSpan(),
+                "missing.wv", 0, 8).Status);
+        var Beyondˉrequest = Directoryˉserviceˉipcˉcodec.Writeˉrequest("kernel.wv", 3_073, 0);
+        Equal(Directoryˉserviceˉstatus.Invalidˉoffset,
+            Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                Directoryˉserviceˉhandler.Handle(Provider, Beyondˉrequest.AsSpan()).AsSpan(),
+                "kernel.wv", 3_073, 0).Status);
+        Equal("0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a",
+            Objectˉdigest.Calculateˉsha256(First.AsSpan()));
+    }
+
+    private static void Directoryˉsnapshotˉrejectsˉmalformedˉimages()
+    {
+        var Snapshot = Buildˉdirectoryˉsnapshot();
+        Rejectˉdirectoryˉsnapshot(ImmutableArray<byte>.Empty, "WVDS1001");
+        Rejectˉdirectoryˉsnapshot(
+            new byte[Directoryˉsnapshotˉcontract.MAXIMUM_SNAPSHOT_BYTES + 1], "WVDS1001");
+        Rejectˉdirectoryˉsnapshot(Replaceˉu32(Snapshot, 0, 0), "WVDS1002");
+        Rejectˉdirectoryˉsnapshot(Replaceˉu32(Snapshot, 4, 2), "WVDS1002");
+        Rejectˉdirectoryˉsnapshot(
+            Replaceˉu32(Snapshot, Directoryˉsnapshotˉcontract.TOTAL_BYTES_OFFSET,
+                checked((uint)Snapshot.Length + 1)), "WVDS1003");
+        Rejectˉdirectoryˉsnapshot(
+            Replaceˉu32(Snapshot, Directoryˉsnapshotˉcontract.ENTRY_COUNT_OFFSET, 0),
+            "WVDS1003");
+        Rejectˉdirectoryˉsnapshot(
+            Replaceˉu32(Snapshot, Directoryˉsnapshotˉcontract.ENTRY_COUNT_OFFSET, 65),
+            "WVDS1003");
+        Rejectˉdirectoryˉsnapshot(
+            Replaceˉu32(Snapshot, Directoryˉsnapshotˉcontract.ENTRY_REGION_OFFSET_OFFSET, 36),
+            "WVDS1003");
+        Rejectˉdirectoryˉsnapshot(
+            Replaceˉu32(Snapshot, Directoryˉsnapshotˉcontract.ENTRY_BYTES_OFFSET, 28),
+            "WVDS1003");
+        Rejectˉdirectoryˉsnapshot(
+            Replaceˉu32(Snapshot, Directoryˉsnapshotˉcontract.NAME_REGION_OFFSET_OFFSET, 100),
+            "WVDS1003");
+        Rejectˉdirectoryˉsnapshot(
+            Replaceˉu32(Snapshot, Directoryˉsnapshotˉcontract.DATA_REGION_OFFSET_OFFSET, 111),
+            "WVDS1003");
+        Rejectˉdirectoryˉsnapshot(Replaceˉu32(Snapshot, 32, 0), "WVDS1004");
+        Rejectˉdirectoryˉsnapshot(Replaceˉu32(Snapshot, 36, 97), "WVDS1004");
+        Rejectˉdirectoryˉsnapshot(Replaceˉu32(Snapshot, 40, 0), "WVDS1004");
+        Rejectˉdirectoryˉsnapshot(Replaceˉu32(Snapshot, 52, 1), "WVDS1004");
+        Rejectˉdirectoryˉsnapshot(Replaceˉbyte(Snapshot, 96, (byte)'/'), "WVDS1005");
+        Rejectˉdirectoryˉsnapshot(Replaceˉbyte(Snapshot, 96, (byte)'z'), "WVDS1005");
+        Rejectˉdirectoryˉsnapshot(Replaceˉu32(Snapshot, 44, 1), "WVDS1006");
+        Rejectˉdirectoryˉsnapshot(Replaceˉu32(Snapshot, 76, 113), "WVDS1006");
+        Rejectˉdirectoryˉsnapshot(Replaceˉbyte(Snapshot, 111, 1), "WVDS1007");
+        Rejectˉdirectoryˉsnapshot(
+            Replaceˉu32(Snapshot.Add(0), Directoryˉsnapshotˉcontract.TOTAL_BYTES_OFFSET,
+                checked((uint)Snapshot.Length + 1)), "WVDS1007");
+
+        Throwsˉdirectoryˉsnapshot("WVDS2001", () =>
+            _ = Directoryˉsnapshotˉcodec.Write([]));
+        Throwsˉdirectoryˉsnapshot("WVDS2001", () =>
+            _ = Directoryˉsnapshotˉcodec.Write(default));
+        Throwsˉdirectoryˉsnapshot("WVDS2001", () =>
+            _ = Directoryˉsnapshotˉcodec.Write(
+                ImmutableArray.CreateRange<Directoryˉsnapshotˉentry>([null!])));
+        Throwsˉdirectoryˉsnapshot("WVDS2001", () =>
+            _ = Directoryˉsnapshotˉcodec.Write([
+                new(Directoryˉsnapshotˉkind.Other, "folder", [1])
+            ]));
+        Throwsˉdirectoryˉsnapshot("WVDS2001", () =>
+            _ = Directoryˉsnapshotˉcodec.Write([
+                new(Directoryˉsnapshotˉkind.File, "same", []),
+                new(Directoryˉsnapshotˉkind.Other, "same", [])
+            ]));
+        Throwsˉdirectoryˉsnapshot("WVDS2001", () =>
+            _ = Directoryˉsnapshotˉcodec.Write([
+                new(Directoryˉsnapshotˉkind.File, "large", new byte[4_096].ToImmutableArray())
+            ]));
+
+        var Random = new Random(0x57564453);
+        for (var Case = 0; Case < 256; Case++)
+        {
+            var Bytes = new byte[Random.Next(0,
+                Directoryˉsnapshotˉcontract.MAXIMUM_SNAPSHOT_BYTES + 2)];
+            Random.NextBytes(Bytes);
+            try
+            {
+                _ = Directoryˉsnapshotˉcodec.Verify(Bytes);
+            }
+            catch (Directoryˉsnapshotˉexception)
+            {
+            }
+        }
+    }
+
+    private static void Directoryˉsnapshotˉserviceˉcompletesˉmaximalˉread()
+    {
+        var Coreˉsource = Loadˉresourceˉstoreˉsource(
+            "Windvale.Os.Services.Directory-Service-Core.wv");
+        var Snapshotˉsource = Loadˉresourceˉstoreˉsource(
+            "Windvale.Os.Services.Directory-Snapshot.wv");
+        var Serviceˉsource = Loadˉresourceˉstoreˉsource(
+            "Windvale.Os.Services.Directory-Snapshot-Service.wv");
+        var Bridgeˉsource = Loadˉresourceˉstoreˉsource(
+            "Windvale.Os.Services.Directory-Snapshot-Bridge.wv");
+
+        var Firstˉsnapshot = Seedˉcompiler.Compile(
+            Snapshotˉsource, "Operating-System/Services/Directory-Snapshot.wv");
+        var Secondˉsnapshot = Seedˉcompiler.Compile(
+            Snapshotˉsource, "Operating-System/Services/Directory-Snapshot.wv");
+        True(Firstˉsnapshot.Success,
+            "The Windvale directory snapshot did not compile: " +
+                string.Join(" | ", Firstˉsnapshot.Diagnostics));
+        True(Secondˉsnapshot.Success, "The repeated directory-snapshot compilation failed.");
+        Sequenceˉequal(Firstˉsnapshot.Moduleˉbytes, Secondˉsnapshot.Moduleˉbytes);
+
+        var Dependencies = ImmutableArray.Create(
+            new Sourceˉmoduleˉinput(
+                "Operating-System/Services/Directory-Service-Core.wv", Coreˉsource),
+            new Sourceˉmoduleˉinput(
+                "Operating-System/Services/Directory-Snapshot.wv", Snapshotˉsource));
+        var Firstˉservice = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Directory-Snapshot-Service.wv", Serviceˉsource),
+            Dependencies);
+        var Secondˉservice = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Directory-Snapshot-Service.wv", Serviceˉsource),
+            Dependencies);
+        True(Firstˉservice.Success,
+            "The Windvale snapshot service did not compile: " +
+                string.Join(" | ", Firstˉservice.Diagnostics));
+        True(Secondˉservice.Success, "The repeated snapshot-service compilation failed.");
+        Sequenceˉequal(Firstˉservice.Moduleˉbytes, Secondˉservice.Moduleˉbytes);
+
+        var Bridgeˉdependencies = Dependencies.Add(
+            new("Operating-System/Services/Directory-Snapshot-Service.wv", Serviceˉsource));
+        var Firstˉbridge = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Directory-Snapshot-Bridge.wv", Bridgeˉsource),
+            Bridgeˉdependencies);
+        var Secondˉbridge = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Directory-Snapshot-Bridge.wv", Bridgeˉsource),
+            Bridgeˉdependencies);
+        True(Firstˉbridge.Success,
+            "The hosted Windvale snapshot bridge did not compile: " +
+                string.Join(" | ", Firstˉbridge.Diagnostics));
+        True(Secondˉbridge.Success, "The repeated snapshot-bridge compilation failed.");
+        Sequenceˉequal(Firstˉbridge.Moduleˉbytes, Secondˉbridge.Moduleˉbytes);
+
+        var Module = Moduleˉcodec.Readˉandˉverify(Firstˉbridge.Moduleˉbytes.AsSpan());
+        Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
+        Equal(1, Module.Module.Capabilities.Length);
+        Equal(Capabilityˉcatalog.FILE_READ_BYTES, Module.Module.Capabilities[0].Name);
+
+        var Snapshot = Buildˉdirectoryˉsnapshot();
+        var Request = Directoryˉserviceˉipcˉcodec.Writeˉrequest("kernel.wv", 0, 3_072);
+        var Interpreted = Runˉdirectoryˉsnapshotˉbridge(Module, Snapshot, Request);
+        var Oracle = Directoryˉserviceˉhandler.Handle(
+            new Directoryˉsnapshotˉprovider(Snapshot), Request.AsSpan());
+        Sequenceˉequal(Oracle, Interpreted.Bytes);
+        Equal(Directoryˉserviceˉipcˉcontract.MAXIMUM_RESPONSE_BYTES,
+            Interpreted.Bytes.Length);
+        Sequenceˉequal(Buildˉdirectoryˉsnapshotˉfile(),
+            Directoryˉserviceˉipcˉcodec.Verifyˉresponse(
+                Interpreted.Bytes.AsSpan(), "kernel.wv", 0, 3_072).Bytes);
+
+        var Folderˉrequest = Directoryˉserviceˉipcˉcodec.Writeˉrequest("folder", 0, 8);
+        Sequenceˉequal(
+            Directoryˉserviceˉhandler.Handle(
+                new Directoryˉsnapshotˉprovider(Snapshot), Folderˉrequest.AsSpan()),
+            Runˉdirectoryˉsnapshotˉbridge(Module, Snapshot, Folderˉrequest).Bytes);
+        var Invalidˉname = Directoryˉserviceˉipcˉcodec.Writeˉrequest("bad/name", 9, 4);
+        Sequenceˉequal(
+            Directoryˉserviceˉhandler.Handle(
+                new Directoryˉsnapshotˉprovider(Snapshot), Invalidˉname.AsSpan()),
+            Runˉdirectoryˉsnapshotˉbridge(Module, Snapshot, Invalidˉname).Bytes);
+        True(Runˉdirectoryˉsnapshotˉbridge(
+            Module, Replaceˉu32(Snapshot, 0, 0), Request).Bytes.IsEmpty,
+            "A malformed immutable snapshot produced a directory reply.");
+        True(Runˉdirectoryˉsnapshotˉbridge(
+            Module, Snapshot, Replaceˉu32(Request, 0, 0)).Bytes.IsEmpty,
+            "A malformed request produced a snapshot-service reply.");
+
+        Assertˉruntimeˉfailure("WVR3010", () =>
+            _ = Runˉdirectoryˉsnapshotˉbridge(Module, Snapshot, Request, authorize: false));
+        Assertˉruntimeˉfailure("WVR3022", () =>
+            _ = Runˉdirectoryˉsnapshotˉbridge(
+                Module, Snapshot, Request, includeˉsnapshot: false));
+        Assertˉruntimeˉfailure("WVR3022", () =>
+            _ = Runˉdirectoryˉsnapshotˉbridge(
+                Module, Snapshot, Request, includeˉrequest: false));
+
+        Equal(12_121, Firstˉsnapshot.Moduleˉbytes.Length);
+        Equal("7741b8a4005aff12276d3e151b2e991192d132585ceb758f8155d6eab098a137",
+            Objectˉdigest.Calculateˉsha256(Firstˉsnapshot.Moduleˉbytes.AsSpan()));
+        Equal(20_061, Firstˉservice.Moduleˉbytes.Length);
+        Equal("fc77da4c957dd7c44087012c3f911124b7904ec968ef3b21fc768ca0d6078316",
+            Objectˉdigest.Calculateˉsha256(Firstˉservice.Moduleˉbytes.AsSpan()));
+        Equal(20_294, Firstˉbridge.Moduleˉbytes.Length);
+        Equal("3f45fffcc9aee26fec35661c8a4ecf1b7b27e4f0a3fb0f0027fed0a78580fa4b",
             Objectˉdigest.Calculateˉsha256(Firstˉbridge.Moduleˉbytes.AsSpan()));
     }
 
@@ -3097,6 +3346,24 @@ internal static class Program
         ];
     }
 
+    private static ImmutableArray<byte> Buildˉdirectoryˉsnapshot()
+    {
+        return Directoryˉsnapshotˉcodec.Write([
+            new(Directoryˉsnapshotˉkind.File, "kernel.wv", Buildˉdirectoryˉsnapshotˉfile()),
+            new(Directoryˉsnapshotˉkind.Other, "folder", [])
+        ]);
+    }
+
+    private static ImmutableArray<byte> Buildˉdirectoryˉsnapshotˉfile()
+    {
+        var Result = new byte[3_072];
+        for (var Index = 0; Index < Result.Length; Index++)
+        {
+            Result[Index] = checked((byte)(Index % 251));
+        }
+        return Result.ToImmutableArray();
+    }
+
     private static string Loadˉresourceˉstoreˉsource(string resourceˉname)
     {
         using var Stream = typeof(Resourceˉstoreˉcodec).Assembly.GetManifestResourceStream(resourceˉname) ??
@@ -3174,6 +3441,29 @@ internal static class Program
             module,
             new Referenceˉcapabilityˉhost(Resources),
             new(Grants.ToImmutable())).Runˉmainˉbytes();
+    }
+
+    private static Runtimeˉbytesˉresult Runˉdirectoryˉsnapshotˉbridge(
+        Verifiedˉmodule module,
+        ImmutableArray<byte> snapshot,
+        ImmutableArray<byte> request,
+        bool authorize = true,
+        bool includeˉsnapshot = true,
+        bool includeˉrequest = true)
+    {
+        var Resources = new Hostedˉresourceˉcontext(
+            [],
+            TextWriter.Null,
+            TextWriter.Null,
+            new Directoryˉsnapshotˉserviceˉreader(
+                snapshot, request, includeˉsnapshot, includeˉrequest));
+        var Grants = authorize
+            ? ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.FILE_READ_BYTES)
+            : ImmutableHashSet.Create<string>(StringComparer.Ordinal);
+        return new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(Resources),
+            new(Grants)).Runˉmainˉbytes();
     }
 
     private static ImmutableArray<byte> Replaceˉu32(
@@ -3351,6 +3641,46 @@ internal static class Program
         }
         throw new InvalidOperationException(
             $"A directory IPC operation succeeded instead of producing {expectedˉcode}.");
+    }
+
+    private static void Rejectˉdirectoryˉsnapshot(
+        ImmutableArray<byte> source,
+        string expectedˉcode) =>
+        Rejectˉdirectoryˉsnapshot(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉdirectoryˉsnapshot(byte[] source, string expectedˉcode) =>
+        Rejectˉdirectoryˉsnapshot(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉdirectoryˉsnapshot(
+        ReadOnlySpan<byte> source,
+        string expectedˉcode)
+    {
+        try
+        {
+            _ = Directoryˉsnapshotˉcodec.Verify(source);
+        }
+        catch (Directoryˉsnapshotˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A malformed directory snapshot was accepted instead of producing {expectedˉcode}.");
+    }
+
+    private static void Throwsˉdirectoryˉsnapshot(string expectedˉcode, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Directoryˉsnapshotˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A directory-snapshot operation succeeded instead of producing {expectedˉcode}.");
     }
 
     private static void Throwsˉresourceˉserviceˉipc(string expectedˉcode, Action action)
@@ -3550,6 +3880,30 @@ internal static class Program
                     "The bounded directory-service request was not found.");
             }
             return request;
+        }
+    }
+
+    private sealed class Directoryˉsnapshotˉserviceˉreader(
+        ImmutableArray<byte> snapshot,
+        ImmutableArray<byte> request,
+        bool includeˉsnapshot,
+        bool includeˉrequest) : IHostedˉfileˉreader
+    {
+        public ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes)
+        {
+            var Bytes = resourceˉname switch
+            {
+                "boot:directory.wvds" when includeˉsnapshot => snapshot,
+                "ipc:directory-read.wvdq" when includeˉrequest => request,
+                _ => default,
+            };
+            if (Bytes.IsDefault || Bytes.Length > maximumˉbytes)
+            {
+                throw new Hostedˉfileˉexception(
+                    Hostedˉfileˉerror.Notˉfound,
+                    "The bounded directory-snapshot service input was not found.");
+            }
+            return Bytes;
         }
     }
 
