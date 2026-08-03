@@ -4,6 +4,7 @@ using Windvale.Bytecode;
 
 namespace Windvale.Compiler.Native;
 
+// Published offsets are absolute 16-byte cells in the projected frame; -1 means no owned backing.
 public sealed record Nativeˉfunctionˉrecordˉstorage(
     int Functionˉindex,
     string Functionˉname,
@@ -12,13 +13,19 @@ public sealed record Nativeˉfunctionˉrecordˉstorage(
     int Assignedˉrecordˉparameterˉbindings,
     int Recordˉlocalˉbindings,
     int Declaredˉrecordˉlocalˉfieldˉcells,
+    int Persistentˉrecordˉbaseˉcell,
     int Persistentˉrecordˉfieldˉcells,
+    ImmutableArray<int> Localˉrecordˉfieldˉoffsets,
     int Recordˉvalueˉidentifiers,
     int Recordˉvalueˉslots,
     int Blockˉrecordˉfieldˉcells,
     int Peakˉliveˉrecordˉfieldˉcells,
+    int Scratchˉrecordˉbaseˉcell,
+    int Scratchˉrecordˉfieldˉcells,
+    ImmutableArray<int> Valueˉrecordˉfieldˉoffsets,
     bool Returnsˉrecord,
     int Recordˉreturnˉfieldˉcells,
+    int Recordˉreturnˉpointerˉcell,
     int Projectedˉframeˉcells,
     int Maximumˉrecordˉfieldˉcells,
     bool Containsˉnestedˉrecordˉfields);
@@ -104,7 +111,7 @@ public static class Nativeˉrecordˉstorageˉplanner
             Containsˉnestedˉrecordˉfields |= Record.Fields.Any(
                 Field => Field.Type.Kind == Valueˉtype.Record);
         }
-        var Persistentˉrecordˉfieldˉcells = Measureˉpersistentˉrecordˉfields(
+        var Persistentˉallocation = Planˉpersistentˉrecordˉfields(
             module,
             function,
             Storedˉrecordˉparameters);
@@ -152,7 +159,7 @@ public static class Nativeˉrecordˉstorageˉplanner
         var Blockˉrecordˉfieldˉcells = Recordˉslotˉwidths.Values.Aggregate(
             0,
             (Total, Width) => checked(Total + Width));
-        var Peakˉliveˉrecordˉfieldˉcells = Measureˉpeakˉliveˉrecordˉfields(
+        var Valueˉallocation = Planˉrecordˉvalueˉfields(
             module,
             function,
             Recordˉvalueˉidentifiers);
@@ -170,12 +177,26 @@ public static class Nativeˉrecordˉstorageˉplanner
             function.Allˉlocalˉtypes.Length +
             function.Valueˉslotˉcount +
             Existingˉhiddenˉresultˉcells);
-        var Projectedˉframeˉcells = checked(
-            Existingˉframeˉcells +
-            Persistentˉrecordˉfieldˉcells +
-            Peakˉliveˉrecordˉfieldˉcells +
-            Projectedˉhiddenˉresultˉcells -
-            Existingˉhiddenˉresultˉcells);
+        var Persistentˉrecordˉbaseˉcell = Existingˉframeˉcells;
+        var Scratchˉrecordˉbaseˉcell = checked(
+            Persistentˉrecordˉbaseˉcell + Persistentˉallocation.Requiredˉfieldˉcells);
+        var Recordˉreturnˉpointerˉcell = Returnsˉrecord
+            ? checked(Scratchˉrecordˉbaseˉcell + Valueˉallocation.Requiredˉfieldˉcells)
+            : -1;
+        var Projectedˉframeˉcells = Returnsˉrecord
+            ? checked(Recordˉreturnˉpointerˉcell + 1)
+            : checked(Scratchˉrecordˉbaseˉcell + Valueˉallocation.Requiredˉfieldˉcells);
+        if (Projectedˉhiddenˉresultˉcells - Existingˉhiddenˉresultˉcells !=
+            (Returnsˉrecord ? 1 : 0))
+        {
+            Fail("The native record-storage planner derived an inconsistent result-cell layout.");
+        }
+        var Localˉrecordˉfieldˉoffsets = Persistentˉallocation.Offsets
+            .Select(Offset => Offset < 0 ? -1 : checked(Persistentˉrecordˉbaseˉcell + Offset))
+            .ToImmutableArray();
+        var Valueˉrecordˉfieldˉoffsets = Valueˉallocation.Offsets
+            .Select(Offset => Offset < 0 ? -1 : checked(Scratchˉrecordˉbaseˉcell + Offset))
+            .ToImmutableArray();
 
         return new(
             functionˉindex,
@@ -185,19 +206,25 @@ public static class Nativeˉrecordˉstorageˉplanner
             Storedˉrecordˉparameters.Count,
             Recordˉlocalˉbindings,
             Declaredˉrecordˉlocalˉfieldˉcells,
-            Persistentˉrecordˉfieldˉcells,
+            Persistentˉrecordˉbaseˉcell,
+            Persistentˉallocation.Requiredˉfieldˉcells,
+            Localˉrecordˉfieldˉoffsets,
             Recordˉvalueˉidentifiers,
             Recordˉslotˉwidths.Count,
             Blockˉrecordˉfieldˉcells,
-            Peakˉliveˉrecordˉfieldˉcells,
+            Valueˉallocation.Peakˉliveˉfieldˉcells,
+            Scratchˉrecordˉbaseˉcell,
+            Valueˉallocation.Requiredˉfieldˉcells,
+            Valueˉrecordˉfieldˉoffsets,
             Returnsˉrecord,
             Recordˉreturnˉfieldˉcells,
+            Recordˉreturnˉpointerˉcell,
             Projectedˉframeˉcells,
             Maximumˉrecordˉfieldˉcells,
             Containsˉnestedˉrecordˉfields);
     }
 
-    private static int Measureˉpersistentˉrecordˉfields(
+    private static Nativeˉrecordˉoffsetˉallocation Planˉpersistentˉrecordˉfields(
         Nativeˉmodule module,
         Nativeˉfunction function,
         IReadOnlySet<int> storedˉrecordˉparameters)
@@ -340,34 +367,10 @@ public static class Nativeˉrecordˉstorageˉplanner
             }
         }
 
-        var Allocations = new Dictionary<int, (int Offset, int Width)>();
-        var Requiredˉfieldˉcells = 0;
-        foreach (var Local in Interference.Keys
-            .OrderByDescending(Local => Recordˉlocalˉwidth(module, function, Local))
-            .ThenBy(Local => Local))
-        {
-            var Width = Recordˉlocalˉwidth(module, function, Local);
-            var Candidate = 0;
-            foreach (var Allocation in Interference[Local]
-                .Where(Allocations.ContainsKey)
-                .Select(Other => Allocations[Other])
-                .OrderBy(Allocation => Allocation.Offset))
-            {
-                if (checked(Candidate + Width) <= Allocation.Offset)
-                {
-                    break;
-                }
-                if (Candidate < checked(Allocation.Offset + Allocation.Width))
-                {
-                    Candidate = checked(Allocation.Offset + Allocation.Width);
-                }
-            }
-            Allocations.Add(Local, (Candidate, Width));
-            Requiredˉfieldˉcells = Math.Max(
-                Requiredˉfieldˉcells,
-                checked(Candidate + Width));
-        }
-        return Requiredˉfieldˉcells;
+        return Allocateˉrecordˉoffsets(
+            function.Allˉlocalˉtypes.Length,
+            Interference,
+            Local => Recordˉlocalˉwidth(module, function, Local));
     }
 
     private static bool Isˉframeˉrecordˉlocal(
@@ -407,12 +410,13 @@ public static class Nativeˉrecordˉstorageˉplanner
         int local) =>
         Requireˉrecord(module, function.Allˉlocalˉnominalˉtypeˉindices[local]).Fields.Length;
 
-    private static int Measureˉpeakˉliveˉrecordˉfields(
+    private static Nativeˉrecordˉvalueˉallocation Planˉrecordˉvalueˉfields(
         Nativeˉmodule module,
         Nativeˉfunction function,
         int expectedˉrecordˉvalues)
     {
         var Definedˉrecordˉvalues = new HashSet<int>();
+        var Interference = new Dictionary<int, HashSet<int>>();
         var Peak = 0;
         foreach (var Block in function.Blocks)
         {
@@ -441,9 +445,20 @@ public static class Nativeˉrecordˉstorageˉplanner
                 var Result = Recordˉresult(function, Operation);
                 if (Result >= 0)
                 {
-                    if (!Definedˉrecordˉvalues.Add(Result) || !Live.Add(Result))
+                    if (!Definedˉrecordˉvalues.Add(Result) ||
+                        !Interference.TryAdd(Result, []))
                     {
                         Fail("The native record-storage planner received a duplicate record result.");
+                    }
+                    foreach (var Other in Live)
+                    {
+                        // A destination must coexist with every operand consumed by this operation.
+                        Interference[Result].Add(Other);
+                        Interference[Other].Add(Result);
+                    }
+                    if (!Live.Add(Result))
+                    {
+                        Fail("The native record-storage planner received an already-live record result.");
                     }
                     Liveˉfieldˉcells = checked(
                         Liveˉfieldˉcells + Recordˉwidth(module, function, Result));
@@ -483,7 +498,53 @@ public static class Nativeˉrecordˉstorageˉplanner
         {
             Fail("The native record-storage planner could not account for every record result.");
         }
-        return Peak;
+        var Allocation = Allocateˉrecordˉoffsets(
+            function.Valueˉtypes.Length,
+            Interference,
+            Value => Recordˉwidth(module, function, Value));
+        return new(
+            Peak,
+            Allocation.Requiredˉfieldˉcells,
+            Allocation.Offsets);
+    }
+
+    private static Nativeˉrecordˉoffsetˉallocation Allocateˉrecordˉoffsets(
+        int identifierˉcount,
+        IReadOnlyDictionary<int, HashSet<int>> interference,
+        Func<int, int> width)
+    {
+        var Offsets = Enumerable.Repeat(-1, identifierˉcount).ToArray();
+        var Allocations = new Dictionary<int, (int Offset, int Width)>();
+        var Requiredˉfieldˉcells = 0;
+        // Width-first first-fit is deterministic; only proven non-interfering identities may overlap.
+        foreach (var Identifier in interference.Keys
+            .OrderByDescending(width)
+            .ThenBy(Identifier => Identifier))
+        {
+            var Width = width(Identifier);
+            var Candidate = 0;
+            foreach (var Allocation in interference[Identifier]
+                .Where(Allocations.ContainsKey)
+                .Select(Other => Allocations[Other])
+                .OrderBy(Allocation => Allocation.Offset)
+                .ThenBy(Allocation => Allocation.Width))
+            {
+                if (checked(Candidate + Width) <= Allocation.Offset)
+                {
+                    break;
+                }
+                if (Candidate < checked(Allocation.Offset + Allocation.Width))
+                {
+                    Candidate = checked(Allocation.Offset + Allocation.Width);
+                }
+            }
+            Allocations.Add(Identifier, (Candidate, Width));
+            Offsets[Identifier] = Candidate;
+            Requiredˉfieldˉcells = Math.Max(
+                Requiredˉfieldˉcells,
+                checked(Candidate + Width));
+        }
+        return new(Requiredˉfieldˉcells, Offsets.ToImmutableArray());
     }
 
     private static void Releaseˉlastˉuses(
@@ -603,4 +664,13 @@ public static class Nativeˉrecordˉstorageˉplanner
     [DoesNotReturn]
     private static void Fail(string message) =>
         throw new Nativeˉbackendˉexception("WVN2901", message);
+
+    private sealed record Nativeˉrecordˉoffsetˉallocation(
+        int Requiredˉfieldˉcells,
+        ImmutableArray<int> Offsets);
+
+    private sealed record Nativeˉrecordˉvalueˉallocation(
+        int Peakˉliveˉfieldˉcells,
+        int Requiredˉfieldˉcells,
+        ImmutableArray<int> Offsets);
 }

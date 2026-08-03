@@ -68,6 +68,8 @@ The planner remains Stage 0 evidence. It neither changes the current `WVR3017` b
 
 A reclaiming implementation must retain record handles while separating their storage classes: borrowed parameter storage, liveness-reused persistent local backing, block-local result scratch, and caller-owned result destinations. A record local load must preserve value semantics even if the local is overwritten while the loaded value remains live.
 
+[Decision 0118](0118-Deterministic-Native-Record-Storage-Offsets.md) implements the next required planning seam: exact absolute frame-cell maps plus independent lifetime/overlap reconstruction. It retains ABI 20; selector and decoder adoption remain the next boundary.
+
 Nested records remain outside the proposed first ABI-21 admission because copying one direct field cell would retain a pointer into storage whose lifetime may end. They require a recursive layout/copy contract or a separately owned representation.
 
 ## Reconsider when

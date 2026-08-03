@@ -2426,11 +2426,25 @@ internal static class Program
         Sequenceˉequal(First.Fragment.Code, Second.Fragment.Code);
         Nativeˉshapesˉmatchˉverifiedˉwvb(Verified, First);
         var Recordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(First.Module);
+        Nativeˉrecordˉstorageˉisˉvalid(First.Module, Recordˉstorage);
+        var Repeatedˉrecordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(Second.Module);
         Equal(
-            "0:Advance:1:3:9:3:3:32;" +
-            "1:Main:0:4:12:3:6:25;" +
-            "2:Make:0:1:3:3:3:20;" +
-            "3:Read:1:4:12:3:3:30",
+            Nativeˉrecordˉstorageˉdigest(Recordˉstorage),
+            Nativeˉrecordˉstorageˉdigest(Repeatedˉrecordˉstorage));
+        for (var Function = 0; Function < Recordˉstorage.Length; Function++)
+        {
+            Sequenceˉequal(
+                Recordˉstorage[Function].Localˉrecordˉfieldˉoffsets,
+                Repeatedˉrecordˉstorage[Function].Localˉrecordˉfieldˉoffsets);
+            Sequenceˉequal(
+                Recordˉstorage[Function].Valueˉrecordˉfieldˉoffsets,
+                Repeatedˉrecordˉstorage[Function].Valueˉrecordˉfieldˉoffsets);
+        }
+        Equal(
+            "0:Advance:1:3:9:25:3:3:28:3:31:32;" +
+            "1:Main:0:4:12:16:3:6:19:6:-1:25;" +
+            "2:Make:0:1:3:13:3:3:16:3:19:20;" +
+            "3:Read:1:4:12:24:3:3:27:3:-1:30",
             string.Join(
                 ";",
                 Recordˉstorage.Select(Function =>
@@ -2438,8 +2452,12 @@ internal static class Program
                     $"{Function.Recordˉparameterˉbindings}:" +
                     $"{Function.Recordˉlocalˉbindings}:" +
                     $"{Function.Declaredˉrecordˉlocalˉfieldˉcells}:" +
+                    $"{Function.Persistentˉrecordˉbaseˉcell}:" +
                     $"{Function.Persistentˉrecordˉfieldˉcells}:" +
                     $"{Function.Peakˉliveˉrecordˉfieldˉcells}:" +
+                    $"{Function.Scratchˉrecordˉbaseˉcell}:" +
+                    $"{Function.Scratchˉrecordˉfieldˉcells}:" +
+                    $"{Function.Recordˉreturnˉpointerˉcell}:" +
                     $"{Function.Projectedˉframeˉcells}")));
         Equal(2, First.Module.Types.Length);
         True(
@@ -5269,28 +5287,35 @@ internal static class Program
         Nativeˉshapesˉmatchˉverifiedˉwvb(Compilerˉtool, Compilerˉnative);
         var Compilerˉrecordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(
             Compilerˉnative.Module);
+        Nativeˉrecordˉstorageˉisˉvalid(
+            Compilerˉnative.Module,
+            Compilerˉrecordˉstorage);
         var Largestˉrecordˉframe = Compilerˉrecordˉstorage.MaxBy(
             Function => Function.Projectedˉframeˉcells)!;
         True(
             Compilerˉrecordˉstorage.All(Function =>
                 Function.Persistentˉrecordˉfieldˉcells <=
                     Function.Declaredˉrecordˉlocalˉfieldˉcells &&
-                Function.Peakˉliveˉrecordˉfieldˉcells <=
+                Function.Peakˉliveˉrecordˉfieldˉcells ==
+                    Function.Scratchˉrecordˉfieldˉcells &&
+                Function.Scratchˉrecordˉfieldˉcells <=
                     Function.Blockˉrecordˉfieldˉcells &&
+                Function.Projectedˉframeˉcells <= Nativeˉcontract.MAXIMUM_FRAME_SLOTS &&
                 Function.Projectedˉframeˉcells == checked(
                     Function.Existingˉframeˉcells +
                     Function.Persistentˉrecordˉfieldˉcells +
-                    Function.Peakˉliveˉrecordˉfieldˉcells +
+                    Function.Scratchˉrecordˉfieldˉcells +
                     (Function.Returnsˉrecord ? 1 : 0))),
             "Native record-storage accounting violated its bounded frame model.");
         Equal(
             "NATIVE_RECORD_STORAGE functions=328 record-functions=253 " +
             "parameters=308 assigned-parameters=0 locals=8097 declared=137512 persistent=9291 " +
-            "block=88669 peak-live=7463 values=14948 slots=4484 " +
+            "block=88669 peak-live=7463 scratch=7463 values=14948 slots=4484 " +
             "return-functions=206 return-fields=3222 max-frame=1489 " +
             "largest-declared=13512 largest-persistent=196 largest-peak=114 " +
-            "max-existing=1178 max-width=34 largest-index=204 " +
-            "largest-name=Compilerˉsourceˉwirˉcompileˉblock nested=0",
+            "largest-scratch=114 max-existing=1178 max-width=34 largest-index=204 " +
+            "largest-name=Compilerˉsourceˉwirˉcompileˉblock nested=0 " +
+            "offset-map=aff287fba46a840e454e4cc7bf4751d3152474caf09331a526f3730ba280816e",
             $"NATIVE_RECORD_STORAGE functions={Compilerˉrecordˉstorage.Length} " +
             $"record-functions={Compilerˉrecordˉstorage.Count(Function => Function.Recordˉvalueˉidentifiers > 0 || Function.Recordˉparameterˉbindings > 0 || Function.Recordˉlocalˉbindings > 0 || Function.Returnsˉrecord)} " +
             $"parameters={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉparameterˉbindings)} " +
@@ -5300,6 +5325,7 @@ internal static class Program
             $"persistent={Compilerˉrecordˉstorage.Sum(Function => Function.Persistentˉrecordˉfieldˉcells)} " +
             $"block={Compilerˉrecordˉstorage.Sum(Function => Function.Blockˉrecordˉfieldˉcells)} " +
             $"peak-live={Compilerˉrecordˉstorage.Sum(Function => Function.Peakˉliveˉrecordˉfieldˉcells)} " +
+            $"scratch={Compilerˉrecordˉstorage.Sum(Function => Function.Scratchˉrecordˉfieldˉcells)} " +
             $"values={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉvalueˉidentifiers)} " +
             $"slots={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉvalueˉslots)} " +
             $"return-functions={Compilerˉrecordˉstorage.Count(Function => Function.Returnsˉrecord)} " +
@@ -5308,11 +5334,13 @@ internal static class Program
             $"largest-declared={Largestˉrecordˉframe.Declaredˉrecordˉlocalˉfieldˉcells} " +
             $"largest-persistent={Largestˉrecordˉframe.Persistentˉrecordˉfieldˉcells} " +
             $"largest-peak={Largestˉrecordˉframe.Peakˉliveˉrecordˉfieldˉcells} " +
+            $"largest-scratch={Largestˉrecordˉframe.Scratchˉrecordˉfieldˉcells} " +
             $"max-existing={Compilerˉrecordˉstorage.Max(Function => Function.Existingˉframeˉcells)} " +
             $"max-width={Compilerˉrecordˉstorage.Max(Function => Function.Maximumˉrecordˉfieldˉcells)} " +
             $"largest-index={Largestˉrecordˉframe.Functionˉindex} " +
             $"largest-name={Largestˉrecordˉframe.Functionˉname} " +
-            $"nested={Compilerˉrecordˉstorage.Count(Function => Function.Containsˉnestedˉrecordˉfields)}");
+            $"nested={Compilerˉrecordˉstorage.Count(Function => Function.Containsˉnestedˉrecordˉfields)} " +
+            $"offset-map={Nativeˉrecordˉstorageˉdigest(Compilerˉrecordˉstorage)}");
         Equal(4_556_121, Compilerˉnative.Fragment.Code.Length);
         Equal(
             SOURCE_WVB_TOOL_NATIVE_CODE_SHA256,
@@ -13540,6 +13568,410 @@ internal static class Program
                 }
             }
         }
+    }
+
+    private static void Nativeˉrecordˉstorageˉisˉvalid(
+        Nativeˉmodule module,
+        ImmutableArray<Nativeˉfunctionˉrecordˉstorage> storage)
+    {
+        Equal(module.Functions.Length, storage.Length);
+        for (var Functionˉindex = 0; Functionˉindex < module.Functions.Length; Functionˉindex++)
+        {
+            var Function = module.Functions[Functionˉindex];
+            var Plan = storage[Functionˉindex];
+            Equal(Functionˉindex, Plan.Functionˉindex);
+            Equal(Function.Name, Plan.Functionˉname);
+            Equal(Function.Allˉlocalˉtypes.Length, Plan.Localˉrecordˉfieldˉoffsets.Length);
+            Equal(Function.Valueˉtypes.Length, Plan.Valueˉrecordˉfieldˉoffsets.Length);
+            Equal(Plan.Existingˉframeˉcells, Plan.Persistentˉrecordˉbaseˉcell);
+            Equal(
+                checked(Plan.Persistentˉrecordˉbaseˉcell + Plan.Persistentˉrecordˉfieldˉcells),
+                Plan.Scratchˉrecordˉbaseˉcell);
+            Equal(
+                checked(
+                    Plan.Scratchˉrecordˉbaseˉcell +
+                    Plan.Scratchˉrecordˉfieldˉcells +
+                    (Plan.Returnsˉrecord ? 1 : 0)),
+                Plan.Projectedˉframeˉcells);
+            Equal(
+                Plan.Returnsˉrecord
+                    ? checked(Plan.Projectedˉframeˉcells - 1)
+                    : -1,
+                Plan.Recordˉreturnˉpointerˉcell);
+
+            var Assignedˉrecordˉparameters = Function.Blocks
+                .SelectMany(Block => Block.Operations)
+                .OfType<Nativeˉlocalˉstore>()
+                .Where(Store =>
+                    Store.Local >= 0 &&
+                    Store.Local < Function.Parameterˉtypes.Length &&
+                    Store.Type == Nativeˉvalueˉtype.Record)
+                .Select(Store => Store.Local)
+                .ToHashSet();
+            Equal(Assignedˉrecordˉparameters.Count, Plan.Assignedˉrecordˉparameterˉbindings);
+
+            bool Isˉbackedˉrecordˉlocal(int local) =>
+                Function.Allˉlocalˉtypes[local] == Nativeˉvalueˉtype.Record &&
+                (local >= Function.Parameterˉtypes.Length ||
+                    Assignedˉrecordˉparameters.Contains(local));
+
+            int Localˉwidth(int local) => Nativeˉtestˉrecordˉwidth(
+                module,
+                Function.Allˉlocalˉnominalˉtypeˉindices[local]);
+
+            var Maximumˉpersistentˉend = Plan.Persistentˉrecordˉbaseˉcell;
+            for (var Local = 0; Local < Function.Allˉlocalˉtypes.Length; Local++)
+            {
+                var Offset = Plan.Localˉrecordˉfieldˉoffsets[Local];
+                if (!Isˉbackedˉrecordˉlocal(Local))
+                {
+                    Equal(-1, Offset);
+                    continue;
+                }
+                if (Offset >= 0)
+                {
+                    True(
+                        Offset >= Plan.Persistentˉrecordˉbaseˉcell,
+                        "Native record-local storage begins before its persistent region.");
+                    var End = checked(Offset + Localˉwidth(Local));
+                    True(
+                        End <= Plan.Scratchˉrecordˉbaseˉcell,
+                        "Native record-local storage exceeds its persistent region.");
+                    Maximumˉpersistentˉend = Math.Max(Maximumˉpersistentˉend, End);
+                }
+            }
+            Equal(
+                Plan.Persistentˉrecordˉfieldˉcells,
+                checked(Maximumˉpersistentˉend - Plan.Persistentˉrecordˉbaseˉcell));
+
+            var Blockˉindices = Function.Blocks
+                .Select((Block, Index) => (Block.Id, Index))
+                .ToDictionary(Entry => Entry.Id, Entry => Entry.Index);
+            var Uses = new HashSet<int>[Function.Blocks.Length];
+            var Definitions = new HashSet<int>[Function.Blocks.Length];
+            var Successors = new int[Function.Blocks.Length][];
+            for (var Blockˉindex = 0; Blockˉindex < Function.Blocks.Length; Blockˉindex++)
+            {
+                var Use = new HashSet<int>();
+                var Definition = new HashSet<int>();
+                foreach (var Operation in Function.Blocks[Blockˉindex].Operations)
+                {
+                    switch (Operation)
+                    {
+                        case Nativeˉlocalˉload Load when Isˉbackedˉrecordˉlocal(Load.Local):
+                            if (!Definition.Contains(Load.Local))
+                            {
+                                Use.Add(Load.Local);
+                            }
+                            break;
+                        case Nativeˉlocalˉstore Store when Isˉbackedˉrecordˉlocal(Store.Local):
+                            Definition.Add(Store.Local);
+                            break;
+                    }
+                }
+                Uses[Blockˉindex] = Use;
+                Definitions[Blockˉindex] = Definition;
+                Successors[Blockˉindex] = Function.Blocks[Blockˉindex].Terminator switch
+                {
+                    Nativeˉjump Jump => [Blockˉindices[Jump.Targetˉblock]],
+                    Nativeˉbranch Branch =>
+                    [
+                        Blockˉindices[Branch.Trueˉblock],
+                        Blockˉindices[Branch.Falseˉblock],
+                    ],
+                    _ => [],
+                };
+            }
+
+            var Liveˉin = Enumerable.Range(0, Function.Blocks.Length)
+                .Select(_ => new HashSet<int>())
+                .ToArray();
+            var Liveˉout = Enumerable.Range(0, Function.Blocks.Length)
+                .Select(_ => new HashSet<int>())
+                .ToArray();
+            bool Changed;
+            do
+            {
+                Changed = false;
+                for (var Blockˉindex = Function.Blocks.Length - 1; Blockˉindex >= 0; Blockˉindex--)
+                {
+                    var Newˉout = new HashSet<int>();
+                    foreach (var Successor in Successors[Blockˉindex])
+                    {
+                        Newˉout.UnionWith(Liveˉin[Successor]);
+                    }
+                    var Newˉin = new HashSet<int>(Newˉout);
+                    Newˉin.ExceptWith(Definitions[Blockˉindex]);
+                    Newˉin.UnionWith(Uses[Blockˉindex]);
+                    if (!Newˉout.SetEquals(Liveˉout[Blockˉindex]) ||
+                        !Newˉin.SetEquals(Liveˉin[Blockˉindex]))
+                    {
+                        Liveˉout[Blockˉindex] = Newˉout;
+                        Liveˉin[Blockˉindex] = Newˉin;
+                        Changed = true;
+                    }
+                }
+            }
+            while (Changed);
+
+            void Requireˉlocalˉseparation(HashSet<int> live)
+            {
+                foreach (var Local in live)
+                {
+                    True(
+                        Plan.Localˉrecordˉfieldˉoffsets[Local] >= 0,
+                        "A live record local omitted its persistent offset.");
+                }
+                var Ordered = live.Order().ToArray();
+                for (var Left = 0; Left < Ordered.Length; Left++)
+                {
+                    for (var Right = Left + 1; Right < Ordered.Length; Right++)
+                    {
+                        True(
+                            !Nativeˉstorageˉrangesˉoverlap(
+                                Plan.Localˉrecordˉfieldˉoffsets[Ordered[Left]],
+                                Localˉwidth(Ordered[Left]),
+                                Plan.Localˉrecordˉfieldˉoffsets[Ordered[Right]],
+                                Localˉwidth(Ordered[Right])),
+                            "Simultaneously live record locals share persistent storage.");
+                    }
+                }
+            }
+
+            for (var Blockˉindex = 0; Blockˉindex < Function.Blocks.Length; Blockˉindex++)
+            {
+                var Live = new HashSet<int>(Liveˉout[Blockˉindex]);
+                Requireˉlocalˉseparation(Live);
+                var Operations = Function.Blocks[Blockˉindex].Operations;
+                for (var Operationˉindex = Operations.Length - 1; Operationˉindex >= 0; Operationˉindex--)
+                {
+                    switch (Operations[Operationˉindex])
+                    {
+                        case Nativeˉlocalˉstore Store when Isˉbackedˉrecordˉlocal(Store.Local):
+                            Live.Remove(Store.Local);
+                            break;
+                        case Nativeˉlocalˉload Load when Isˉbackedˉrecordˉlocal(Load.Local):
+                            Live.Add(Load.Local);
+                            break;
+                    }
+                    Requireˉlocalˉseparation(Live);
+                }
+            }
+
+            var Maximumˉscratchˉend = Plan.Scratchˉrecordˉbaseˉcell;
+            for (var Value = 0; Value < Function.Valueˉtypes.Length; Value++)
+            {
+                var Offset = Plan.Valueˉrecordˉfieldˉoffsets[Value];
+                if (Function.Valueˉtypes[Value] != Nativeˉvalueˉtype.Record)
+                {
+                    Equal(-1, Offset);
+                    continue;
+                }
+                True(
+                    Offset >= Plan.Scratchˉrecordˉbaseˉcell,
+                    "Native record-result storage begins before its scratch region.");
+                var End = checked(
+                    Offset + Nativeˉtestˉrecordˉwidth(
+                        module,
+                        Function.Valueˉnominalˉtypeˉindices[Value]));
+                True(
+                    End <= checked(
+                        Plan.Scratchˉrecordˉbaseˉcell +
+                        Plan.Scratchˉrecordˉfieldˉcells),
+                    "Native record-result storage exceeds its scratch region.");
+                Maximumˉscratchˉend = Math.Max(Maximumˉscratchˉend, End);
+            }
+            Equal(
+                Plan.Scratchˉrecordˉfieldˉcells,
+                checked(Maximumˉscratchˉend - Plan.Scratchˉrecordˉbaseˉcell));
+
+            var Definedˉrecordˉvalues = new HashSet<int>();
+            foreach (var Block in Function.Blocks)
+            {
+                var Lastˉuses = new Dictionary<int, int>();
+                for (var Operationˉindex = 0;
+                    Operationˉindex < Block.Operations.Length;
+                    Operationˉindex++)
+                {
+                    foreach (var Value in Nativeˉtestˉrecordˉuses(
+                        Function,
+                        Block.Operations[Operationˉindex]))
+                    {
+                        Lastˉuses[Value] = Operationˉindex;
+                    }
+                }
+                foreach (var Value in Nativeˉtestˉrecordˉuses(Function, Block.Terminator))
+                {
+                    Lastˉuses[Value] = Block.Operations.Length;
+                }
+
+                var Live = new HashSet<int>();
+                for (var Operationˉindex = 0;
+                    Operationˉindex < Block.Operations.Length;
+                    Operationˉindex++)
+                {
+                    var Operation = Block.Operations[Operationˉindex];
+                    var Result = Nativeˉtestˉrecordˉresult(Function, Operation);
+                    if (Result >= 0)
+                    {
+                        True(
+                            Definedˉrecordˉvalues.Add(Result),
+                            "Native record result is defined more than once.");
+                        foreach (var Other in Live)
+                        {
+                            True(
+                                !Nativeˉstorageˉrangesˉoverlap(
+                                    Plan.Valueˉrecordˉfieldˉoffsets[Result],
+                                    Nativeˉtestˉrecordˉvalueˉwidth(module, Function, Result),
+                                    Plan.Valueˉrecordˉfieldˉoffsets[Other],
+                                    Nativeˉtestˉrecordˉvalueˉwidth(module, Function, Other)),
+                                "Simultaneously live record results share scratch storage.");
+                        }
+                        Live.Add(Result);
+                    }
+
+                    foreach (var Value in Nativeˉtestˉrecordˉuses(Function, Operation).Distinct())
+                    {
+                        True(Live.Contains(Value), "Native record operand is not live at its use.");
+                        if (Lastˉuses[Value] == Operationˉindex)
+                        {
+                            Live.Remove(Value);
+                        }
+                    }
+                    if (Result >= 0 && !Lastˉuses.ContainsKey(Result))
+                    {
+                        Live.Remove(Result);
+                    }
+                }
+
+                foreach (var Value in Nativeˉtestˉrecordˉuses(Function, Block.Terminator))
+                {
+                    True(Live.Contains(Value), "Native record return is not live at its terminator.");
+                    Live.Remove(Value);
+                }
+                Equal(0, Live.Count);
+            }
+            Equal(
+                Function.Valueˉtypes.Count(Type => Type == Nativeˉvalueˉtype.Record),
+                Definedˉrecordˉvalues.Count);
+        }
+    }
+
+    private static int Nativeˉtestˉrecordˉresult(
+        Nativeˉfunction function,
+        Nativeˉoperation operation)
+    {
+        var Result = operation switch
+        {
+            Nativeˉlocalˉload Load => Load.Result,
+            Nativeˉrecordˉcreate Create => Create.Result,
+            Nativeˉrecordˉfield Field => Field.Result,
+            Nativeˉcall Call => Call.Result,
+            _ => -1,
+        };
+        return Result >= 0 && function.Valueˉtypes[Result] == Nativeˉvalueˉtype.Record
+            ? Result
+            : -1;
+    }
+
+    private static IEnumerable<int> Nativeˉtestˉrecordˉuses(
+        Nativeˉfunction function,
+        Nativeˉoperation operation)
+    {
+        IEnumerable<int> Values = operation switch
+        {
+            Nativeˉlocalˉstore Store => [Store.Value],
+            Nativeˉrecordˉcreate Create => Create.Fields,
+            Nativeˉrecordˉfield Field => [Field.Record],
+            Nativeˉcall Call => Call.Arguments,
+            Nativeˉvoidˉcall Call => Call.Arguments,
+            _ => [],
+        };
+        return Values.Where(Value => function.Valueˉtypes[Value] == Nativeˉvalueˉtype.Record);
+    }
+
+    private static IEnumerable<int> Nativeˉtestˉrecordˉuses(
+        Nativeˉfunction function,
+        Nativeˉterminator terminator) =>
+        terminator is Nativeˉreturn Return &&
+            function.Valueˉtypes[Return.Value] == Nativeˉvalueˉtype.Record
+                ? [Return.Value]
+                : [];
+
+    private static int Nativeˉtestˉrecordˉvalueˉwidth(
+        Nativeˉmodule module,
+        Nativeˉfunction function,
+        int value) =>
+        Nativeˉtestˉrecordˉwidth(
+            module,
+            function.Valueˉnominalˉtypeˉindices[value]);
+
+    private static int Nativeˉtestˉrecordˉwidth(
+        Nativeˉmodule module,
+        int typeˉindex) =>
+        ((Recordˉtypeˉdeclaration)module.Types[typeˉindex]).Fields.Length;
+
+    private static bool Nativeˉstorageˉrangesˉoverlap(
+        int leftˉoffset,
+        int leftˉwidth,
+        int rightˉoffset,
+        int rightˉwidth) =>
+        leftˉwidth > 0 &&
+        rightˉwidth > 0 &&
+        leftˉoffset < checked(rightˉoffset + rightˉwidth) &&
+        rightˉoffset < checked(leftˉoffset + leftˉwidth);
+
+    private static string Nativeˉrecordˉstorageˉdigest(
+        ImmutableArray<Nativeˉfunctionˉrecordˉstorage> storage)
+    {
+        using var Hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        foreach (var Function in storage)
+        {
+            Appendˉi32(Hash, Function.Functionˉindex);
+            var Name = Encoding.UTF8.GetBytes(Function.Functionˉname);
+            Appendˉi32(Hash, Name.Length);
+            Hash.AppendData(Name);
+            Appendˉi32(Hash, Function.Existingˉframeˉcells);
+            Appendˉi32(Hash, Function.Recordˉparameterˉbindings);
+            Appendˉi32(Hash, Function.Assignedˉrecordˉparameterˉbindings);
+            Appendˉi32(Hash, Function.Recordˉlocalˉbindings);
+            Appendˉi32(Hash, Function.Declaredˉrecordˉlocalˉfieldˉcells);
+            Appendˉi32(Hash, Function.Persistentˉrecordˉbaseˉcell);
+            Appendˉi32(Hash, Function.Persistentˉrecordˉfieldˉcells);
+            Appendˉoffsets(Hash, Function.Localˉrecordˉfieldˉoffsets);
+            Appendˉi32(Hash, Function.Recordˉvalueˉidentifiers);
+            Appendˉi32(Hash, Function.Recordˉvalueˉslots);
+            Appendˉi32(Hash, Function.Blockˉrecordˉfieldˉcells);
+            Appendˉi32(Hash, Function.Peakˉliveˉrecordˉfieldˉcells);
+            Appendˉi32(Hash, Function.Scratchˉrecordˉbaseˉcell);
+            Appendˉi32(Hash, Function.Scratchˉrecordˉfieldˉcells);
+            Appendˉoffsets(Hash, Function.Valueˉrecordˉfieldˉoffsets);
+            Appendˉi32(Hash, Function.Returnsˉrecord ? 1 : 0);
+            Appendˉi32(Hash, Function.Recordˉreturnˉfieldˉcells);
+            Appendˉi32(Hash, Function.Recordˉreturnˉpointerˉcell);
+            Appendˉi32(Hash, Function.Projectedˉframeˉcells);
+            Appendˉi32(Hash, Function.Maximumˉrecordˉfieldˉcells);
+            Appendˉi32(Hash, Function.Containsˉnestedˉrecordˉfields ? 1 : 0);
+        }
+        return Convert.ToHexString(Hash.GetHashAndReset()).ToLowerInvariant();
+    }
+
+    private static void Appendˉoffsets(
+        IncrementalHash hash,
+        ImmutableArray<int> offsets)
+    {
+        Appendˉi32(hash, offsets.Length);
+        foreach (var Offset in offsets)
+        {
+            Appendˉi32(hash, Offset);
+        }
+    }
+
+    private static void Appendˉi32(IncrementalHash hash, int value)
+    {
+        Span<byte> Bytes = stackalloc byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32LittleEndian(Bytes, value);
+        hash.AppendData(Bytes);
     }
 
     private sealed class Nativeˉoutputˉcapture : IDisposable
