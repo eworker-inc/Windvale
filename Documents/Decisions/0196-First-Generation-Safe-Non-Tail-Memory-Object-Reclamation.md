@@ -1,7 +1,7 @@
 # Decision 0196: First generation-safe non-tail memory-object reclamation
 
 - Date: 2026-08-03
-- Status: Implemented; cross-host qualification pending
+- Status: Cross-host qualified
 - Advances: [Decision 0181](0181-Next-Windvale-Os-Mechanism-Contracts.md)
 - Retains: qualified Probe 39, `WVPROC17`, paging 5, ABI 22/context 7, and the private timer evidence
 - Contract: [Windvale kernel memory](../../Specifications/Windvale-Kernel-Memory.md)
@@ -35,12 +35,13 @@ The page vector is explicit now so future objects can be backed by noncontiguous
 - The exact WVA object is relocation-free and independently verified. Windows x64 focused tests execute it directly through the controlled native publication lifetime; the complete firmware path supplies architecture-real QEMU evidence.
 - This is not a general heap, buddy allocator, slab allocator, virtual-memory manager, memory capability API, dynamic process loader, or SMP allocator.
 
-## Candidate evidence
+## Qualification evidence
 
 - The focused OS suite contains 39 tests, including strict object-codec rejection, wrong-generation no-mutation, full zeroing, live-directory preservation, same-root reuse, deterministic machine artifacts, and direct Windows-x64 execution of the assembled WVA leaf.
 - The exact memory-object WVA is 2,538 bytes with SHA-256 `fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee`; its 2,374-byte text contains the 1,389-byte allocator and 985-byte releaser.
 - Probe-40 deterministic EFI identities are recorded in [Windvale-Os-Boot-Probe.md](../../Specifications/Windvale-Os-Boot-Probe.md).
-- All five local pinned Windows QEMU scenarios pass with exact Probe-40 transcripts and deterministic EFI identities. Independent Windows/Linux qualification remains a single post-push gate because this slice changes implementation and specifications.
+- All five local pinned Windows QEMU scenarios pass with exact Probe-40 transcripts and deterministic EFI identities.
+- Exact implementation commit `c4008e75db061df375eb323d75a818863aee553f` passes GitHub [Verify run 30853255559](https://github.com/eworker-inc/Windvale/actions/runs/30853255559): Windows and digest-pinned Debian each complete a zero-warning Release build, all 87 Seed tests, all 39 OS tests, and the complete native CLI gate.
 
 ## Reconsider when
 
