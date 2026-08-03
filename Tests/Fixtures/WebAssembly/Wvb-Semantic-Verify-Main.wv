@@ -857,6 +857,7 @@ fn Eˉfunctions(Input: bytes) -> bytes {
         Cursor = Name + Nameˉlength;
         Parameterˉcount = Bytesˉreadˉu32ˉlittle(Input, Cursor);
         Cursor = Cursor + 4u32;
+        if Parameterˉcount > 8192u32 { return Invalid; }
         Localˉcount = 0u32;
         Shapeˉstage = 0u32;
         Shapeˉindex = 0u32;
@@ -869,7 +870,7 @@ fn Eˉfunctions(Input: bytes) -> bytes {
                 if Shapeˉstage == 2u32 {
                     Localˉcount = Bytesˉreadˉu32ˉlittle(Input, Cursor);
                     Cursor = Cursor + 4u32;
-                    if Localˉcount > 4096u32 - Parameterˉcount {
+                    if Localˉcount > 8192u32 - Parameterˉcount {
                         return Invalid;
                     }
                     Shapeˉcount = Localˉcount;

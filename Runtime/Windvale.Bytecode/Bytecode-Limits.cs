@@ -9,7 +9,7 @@ public static class Bytecodeˉlimits
     public const int MAX_CAPABILITIES = 32;
     public const int MAX_DATA_DECLARATIONS = 4096;
     public const int MAX_FUNCTIONS = 4096;
-    public const int MAX_PARAMETERS_OR_LOCALS = 4096;
+    public const int MAX_PARAMETERS_OR_LOCALS = 8192;
     public const int MAX_CODE_BYTES_PER_FUNCTION = 1024 * 1024;
     public const int MAX_INSTRUCTIONS_PER_FUNCTION = 100_000;
     public const int MAX_OPERAND_STACK = 4096;

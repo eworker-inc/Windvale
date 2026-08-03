@@ -437,6 +437,16 @@ export fn Main(Request: bytes) -> bytes {
             Bytesˉslice(Zeroˉlocals, 8u32, Functionˉcursor - 8u32)
         );
     }
+    var Recordˉzeroˉslots: bytes = Zeroˉcell;
+    var Recordˉzeroˉslotsˉlength: u32 = 8u32;
+    while Recordˉzeroˉslotsˉlength < 4096u32 {
+        Recordˉzeroˉslots = Bytesˉconcat(
+            Recordˉzeroˉslots,
+            Recordˉzeroˉslots
+        );
+        Recordˉzeroˉslotsˉlength = Recordˉzeroˉslotsˉlength * 2u32;
+    }
+    var Recordˉmetadata: bytes = Recordˉzeroˉslots;
     var Records: bytes = Invalid;
     // Reuse completed-preflight slots as execution state: Functionˉindex is the
     // current function, Aggregateˉinstructions is PC, Exportˉindex is depth,
@@ -1229,7 +1239,6 @@ export fn Main(Request: bytes) -> bytes {
             );
             let Recordˉfieldˉbytes: u32 = Recordˉfieldˉcount * 8u32;
             let Recordˉstackˉlength: u32 = Bytesˉlength(Stack);
-            let Recordˉoffset: u32 = Bytesˉlength(Records);
             let Recordˉfields: bytes = Bytesˉslice(
                 Stack,
                 Recordˉstackˉlength - Recordˉfieldˉbytes,
@@ -1240,14 +1249,242 @@ export fn Main(Request: bytes) -> bytes {
                 0u32,
                 Recordˉstackˉlength - Recordˉfieldˉbytes
             );
-            if Recordˉoffset > 4096u32 - Recordˉfieldˉbytes {
+
+            var Recordˉslot: u32 = 512u32;
+            if Recordˉfieldˉcount == 0u32 {
+                Recordˉslot = 4294967295u32;
+            } else {
+                var Recordˉallocationˉpass: u32 = 0u32;
+                while Recordˉallocationˉpass < 2u32 {
+                    if Recordˉslot == 512u32 {
+                        var Recordˉcandidateˉslot: u32 = 0u32;
+                        var Recordˉscanˉslot: u32 = 0u32;
+                        while Recordˉscanˉslot < 512u32 {
+                            let Recordˉstoredˉsize: u32 =
+                                Bytesˉreadˉu32ˉlittle(
+                                    Recordˉmetadata,
+                                    Recordˉscanˉslot * 8u32 + 4u32
+                                );
+                            if Recordˉstoredˉsize == 0u32 {
+                                Recordˉscanˉslot = Recordˉscanˉslot + 1u32;
+                            } else {
+                                if Recordˉslot == 512u32 {
+                                    if Recordˉcandidateˉslot
+                                        <= Recordˉscanˉslot {
+                                        if Recordˉfieldˉcount
+                                            <= Recordˉscanˉslot
+                                                - Recordˉcandidateˉslot {
+                                            Recordˉslot =
+                                                Recordˉcandidateˉslot;
+                                        }
+                                    }
+                                }
+                                Recordˉcandidateˉslot = Recordˉscanˉslot
+                                    + Recordˉstoredˉsize;
+                                Recordˉscanˉslot = Recordˉcandidateˉslot;
+                            }
+                        }
+                        if Recordˉslot == 512u32 {
+                            if Recordˉcandidateˉslot <= 512u32 {
+                                if Recordˉfieldˉcount
+                                    <= 512u32 - Recordˉcandidateˉslot {
+                                    Recordˉslot = Recordˉcandidateˉslot;
+                                }
+                            }
+                        }
+
+                        if Recordˉslot == 512u32 {
+                            if Recordˉallocationˉpass == 0u32 {
+                                var Recordˉmarks: bytes = Bytesˉslice(
+                                    Recordˉzeroˉslots,
+                                    0u32,
+                                    512u32
+                                );
+                                var Recordˉreachableˉvalues: bytes =
+                                    Bytesˉconcat(Locals, Stack);
+                                Recordˉreachableˉvalues = Bytesˉconcat(
+                                    Recordˉreachableˉvalues,
+                                    Frames
+                                );
+                                Recordˉreachableˉvalues = Bytesˉconcat(
+                                    Recordˉreachableˉvalues,
+                                    Recordˉfields
+                                );
+                                var Recordˉreachableˉcursor: u32 = 0u32;
+                                while Recordˉreachableˉcursor
+                                    < Bytesˉlength(Recordˉreachableˉvalues) {
+                                    let Recordˉreachableˉremaining: u32 =
+                                        Bytesˉlength(Recordˉreachableˉvalues)
+                                            - Recordˉreachableˉcursor;
+                                    if Recordˉreachableˉremaining >= 8u32 {
+                                        let Recordˉreachableˉslot: u32 =
+                                            Bytesˉreadˉu32ˉlittle(
+                                                Recordˉreachableˉvalues,
+                                                Recordˉreachableˉcursor
+                                            );
+                                        let Recordˉreachableˉtype: u32 =
+                                            Bytesˉreadˉu32ˉlittle(
+                                                Recordˉreachableˉvalues,
+                                                Recordˉreachableˉcursor + 4u32
+                                            );
+                                        if Recordˉreachableˉslot < 512u32 {
+                                            let Recordˉreachableˉentry: u32 =
+                                                Recordˉreachableˉslot * 8u32;
+                                            let Recordˉreachableˉowner: u32 =
+                                                Bytesˉreadˉu32ˉlittle(
+                                                    Recordˉmetadata,
+                                                    Recordˉreachableˉentry
+                                                );
+                                            let Recordˉreachableˉsize: u32 =
+                                                Bytesˉreadˉu32ˉlittle(
+                                                    Recordˉmetadata,
+                                                    Recordˉreachableˉentry
+                                                        + 4u32
+                                                );
+                                            if Recordˉreachableˉsize > 0u32 {
+                                                if Recordˉreachableˉowner
+                                                    == Recordˉreachableˉtype {
+                                                    if U32ˉfromˉu8(
+                                                        Bytesˉreadˉu8(
+                                                            Recordˉmarks,
+                                                            Recordˉreachableˉslot
+                                                        )
+                                                    ) == 0u32 {
+                                                        let Recordˉmarkˉprefix:
+                                                            bytes = Bytesˉslice(
+                                                                Recordˉmarks,
+                                                                0u32,
+                                                                Recordˉreachableˉslot
+                                                            );
+                                                        let Recordˉmarkˉsuffix:
+                                                            bytes = Bytesˉslice(
+                                                                Recordˉmarks,
+                                                                Recordˉreachableˉslot
+                                                                    + 1u32,
+                                                                511u32
+                                                                    - Recordˉreachableˉslot
+                                                            );
+                                                        Recordˉmarks = Bytesˉconcat(
+                                                            Bytesˉconcat(
+                                                                Recordˉmarkˉprefix,
+                                                                Bytesˉfromˉu8(1u8)
+                                                            ),
+                                                            Recordˉmarkˉsuffix
+                                                        );
+                                                        Recordˉreachableˉvalues =
+                                                            Bytesˉconcat(
+                                                                Recordˉreachableˉvalues,
+                                                                Bytesˉslice(
+                                                                    Records,
+                                                                    Recordˉreachableˉslot
+                                                                        * 8u32,
+                                                                    Recordˉreachableˉsize
+                                                                        * 8u32
+                                                                )
+                                                            );
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Recordˉreachableˉcursor =
+                                        Recordˉreachableˉcursor + 4u32;
+                                }
+
+                                var Recordˉnextˉmetadata: bytes = Invalid;
+                                Recordˉscanˉslot = 0u32;
+                                while Recordˉscanˉslot < 512u32 {
+                                    let Recordˉmetadataˉentry: u32 =
+                                        Recordˉscanˉslot * 8u32;
+                                    let Recordˉmetadataˉsize: u32 =
+                                        Bytesˉreadˉu32ˉlittle(
+                                            Recordˉmetadata,
+                                            Recordˉmetadataˉentry + 4u32
+                                        );
+                                    var Recordˉmetadataˉvalue: bytes =
+                                        Zeroˉcell;
+                                    if Recordˉmetadataˉsize > 0u32 {
+                                        if U32ˉfromˉu8(Bytesˉreadˉu8(
+                                            Recordˉmarks,
+                                            Recordˉscanˉslot
+                                        )) != 0u32 {
+                                            Recordˉmetadataˉvalue = Bytesˉslice(
+                                                Recordˉmetadata,
+                                                Recordˉmetadataˉentry,
+                                                8u32
+                                            );
+                                        }
+                                    }
+                                    Recordˉnextˉmetadata = Bytesˉconcat(
+                                        Recordˉnextˉmetadata,
+                                        Recordˉmetadataˉvalue
+                                    );
+                                    Recordˉscanˉslot =
+                                        Recordˉscanˉslot + 1u32;
+                                }
+                                Recordˉmetadata = Recordˉnextˉmetadata;
+                            }
+                        }
+                    }
+                    Recordˉallocationˉpass =
+                        Recordˉallocationˉpass + 1u32;
+                }
+            }
+
+            if Recordˉslot == 512u32 {
                 Sectionˉkind = 3017u32;
             } else {
-                Records = Bytesˉconcat(Records, Recordˉfields);
+                if Recordˉfieldˉcount > 0u32 {
+                    let Recordˉmetadataˉoffset: u32 =
+                        Recordˉslot * 8u32;
+                    let Recordˉmetadataˉprefix: bytes = Bytesˉslice(
+                        Recordˉmetadata,
+                        0u32,
+                        Recordˉmetadataˉoffset
+                    );
+                    let Recordˉmetadataˉsuffix: bytes = Bytesˉslice(
+                        Recordˉmetadata,
+                        Recordˉmetadataˉoffset + 8u32,
+                        4088u32 - Recordˉmetadataˉoffset
+                    );
+                    let Recordˉmetadataˉallocation: bytes = Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Recordˉtype + 1u32),
+                        Bytesˉfromˉu32ˉlittle(Recordˉfieldˉcount)
+                    );
+                    Recordˉmetadata = Bytesˉconcat(
+                        Bytesˉconcat(
+                            Recordˉmetadataˉprefix,
+                            Recordˉmetadataˉallocation
+                        ),
+                        Recordˉmetadataˉsuffix
+                    );
+
+                    let Recordˉbyteˉoffset: u32 = Recordˉslot * 8u32;
+                    let Recordˉbyteˉend: u32 = Recordˉbyteˉoffset
+                        + Recordˉfieldˉbytes;
+                    if Recordˉbyteˉend > Bytesˉlength(Records) {
+                        Records = Bytesˉconcat(Records, Recordˉfields);
+                    } else {
+                        let Recordˉprefix: bytes = Bytesˉslice(
+                            Records,
+                            0u32,
+                            Recordˉbyteˉoffset
+                        );
+                        let Recordˉsuffix: bytes = Bytesˉslice(
+                            Records,
+                            Recordˉbyteˉend,
+                            Bytesˉlength(Records) - Recordˉbyteˉend
+                        );
+                        Records = Bytesˉconcat(
+                            Bytesˉconcat(Recordˉprefix, Recordˉfields),
+                            Recordˉsuffix
+                        );
+                    }
+                }
                 Stack = Bytesˉconcat(
                     Stack,
                     Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(Recordˉoffset),
+                        Bytesˉfromˉu32ˉlittle(Recordˉslot),
                         Bytesˉfromˉu32ˉlittle(Recordˉtype + 1u32)
                     )
                 );
@@ -1261,7 +1498,7 @@ export fn Main(Request: bytes) -> bytes {
                 Payload + 1u32
             );
             let Fieldˉstackˉlength: u32 = Bytesˉlength(Stack);
-            let Fieldˉrecordˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            let Fieldˉrecordˉslot: u32 = Bytesˉreadˉu32ˉlittle(
                 Stack,
                 Fieldˉstackˉlength - 8u32
             );
@@ -1305,7 +1542,7 @@ export fn Main(Request: bytes) -> bytes {
                 Scannedˉfield = Scannedˉfield + 1u32;
             }
             var Fieldˉvalue: bytes = Zeroˉcell;
-            if Fieldˉrecordˉoffset == 4294967295u32 {
+            if Fieldˉrecordˉslot == 4294967295u32 {
                 let Defaultˉfieldˉkind: u32 = U32ˉfromˉu8(
                     Bytesˉreadˉu8(Module, Selectedˉfieldˉcursor)
                 );
@@ -1347,7 +1584,7 @@ export fn Main(Request: bytes) -> bytes {
             } else {
                 Fieldˉvalue = Bytesˉslice(
                     Records,
-                    Fieldˉrecordˉoffset + Fieldˉindex * 8u32,
+                    Fieldˉrecordˉslot * 8u32 + Fieldˉindex * 8u32,
                     8u32
                 );
             }

@@ -296,7 +296,7 @@ Verification is required before execution and rejects a module unless:
 - Nominal types: 1,024
 - Fields per record: 64
 - Members per enum: 256
-- Parameters or locals per function: 4,096
+- Parameters plus locals per function: 8,192
 - Code per function: 1 MiB
 - Instructions per function: 100,000
 - Operand stack: 4,096 values

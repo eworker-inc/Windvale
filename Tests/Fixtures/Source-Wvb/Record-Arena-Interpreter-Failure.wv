@@ -19,6 +19,13 @@ record Guestˉrecordˉsixteen {
     P: i32;
 }
 
+fn Makeˉrecord(Value: i32) -> Guestˉrecordˉsixteen {
+    return Guestˉrecordˉsixteen(
+        Value, Value, Value, Value, Value, Value, Value, Value,
+        Value, Value, Value, Value, Value, Value, Value, Value
+    );
+}
+
 export fn Main() -> i32 {
     var Value: Guestˉrecordˉsixteen = Guestˉrecordˉsixteen(
         0, 0, 0, 0, 0, 0, 0, 0,
@@ -32,5 +39,70 @@ export fn Main() -> i32 {
         );
         Index = Index + 1;
     }
-    return Value.A + 42;
+    let R0: Guestˉrecordˉsixteen = Makeˉrecord(0);
+    let R1: Guestˉrecordˉsixteen = Makeˉrecord(1);
+    let R2: Guestˉrecordˉsixteen = Makeˉrecord(2);
+    let R3: Guestˉrecordˉsixteen = Makeˉrecord(3);
+    let R4: Guestˉrecordˉsixteen = Makeˉrecord(4);
+    let R5: Guestˉrecordˉsixteen = Makeˉrecord(5);
+    let R6: Guestˉrecordˉsixteen = Makeˉrecord(6);
+    let R7: Guestˉrecordˉsixteen = Makeˉrecord(7);
+    let R8: Guestˉrecordˉsixteen = Makeˉrecord(8);
+    let R9: Guestˉrecordˉsixteen = Makeˉrecord(9);
+    let R10: Guestˉrecordˉsixteen = Makeˉrecord(10);
+    let R11: Guestˉrecordˉsixteen = Makeˉrecord(11);
+    let R12: Guestˉrecordˉsixteen = Makeˉrecord(12);
+    let R13: Guestˉrecordˉsixteen = Makeˉrecord(13);
+    let R14: Guestˉrecordˉsixteen = Makeˉrecord(14);
+    let R15: Guestˉrecordˉsixteen = Makeˉrecord(15);
+    let R16: Guestˉrecordˉsixteen = Makeˉrecord(16);
+    let R17: Guestˉrecordˉsixteen = Makeˉrecord(17);
+    let R18: Guestˉrecordˉsixteen = Makeˉrecord(18);
+    let R19: Guestˉrecordˉsixteen = Makeˉrecord(19);
+    let R20: Guestˉrecordˉsixteen = Makeˉrecord(20);
+    let R21: Guestˉrecordˉsixteen = Makeˉrecord(21);
+    let R22: Guestˉrecordˉsixteen = Makeˉrecord(22);
+    let R23: Guestˉrecordˉsixteen = Makeˉrecord(23);
+    let R24: Guestˉrecordˉsixteen = Makeˉrecord(24);
+    let R25: Guestˉrecordˉsixteen = Makeˉrecord(25);
+    let R26: Guestˉrecordˉsixteen = Makeˉrecord(26);
+    let R27: Guestˉrecordˉsixteen = Makeˉrecord(27);
+    let R28: Guestˉrecordˉsixteen = Makeˉrecord(28);
+    let R29: Guestˉrecordˉsixteen = Makeˉrecord(29);
+    let R30: Guestˉrecordˉsixteen = Makeˉrecord(30);
+    let R31: Guestˉrecordˉsixteen = Makeˉrecord(31);
+    return Value.A
+        + R0.A
+        + R1.A
+        + R2.A
+        + R3.A
+        + R4.A
+        + R5.A
+        + R6.A
+        + R7.A
+        + R8.A
+        + R9.A
+        + R10.A
+        + R11.A
+        + R12.A
+        + R13.A
+        + R14.A
+        + R15.A
+        + R16.A
+        + R17.A
+        + R18.A
+        + R19.A
+        + R20.A
+        + R21.A
+        + R22.A
+        + R23.A
+        + R24.A
+        + R25.A
+        + R26.A
+        + R27.A
+        + R28.A
+        + R29.A
+        + R30.A
+        + R31.A
+        + 42;
 }
