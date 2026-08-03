@@ -109,9 +109,9 @@ internal static class Program
     private const string COMPILER_WVB_VERIFIER_SHA256 = "028af7f7a69d3ea434cfaf5e4122cf09878dfb10593c03af34351844715d49f5";
     private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "109a093fc9ff0a9f18c4125d635d2713111bf0c61ca71f4eb38e85850430900c";
     private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "35dc54aa0d5055cdce6df3ad1af4e921bbd1f53151835d22c63979b57cbb8716";
-    private const string COMPILER_BUILD_DRIVER_SHA256 = "eb8d22a344a04e705c6e978ce3ddb941ca47686a8a79fa089db254cc3ede73fd";
-    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "204aa0ac555d47d72fc40424c0cb5c9cf30afc4f89d4b8ff4addaadf0a086677";
-    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "e6a618364150d9631cf49ddecd090d8f8750d4bd6232680984584899113ba6cb";
+    private const string COMPILER_BUILD_DRIVER_SHA256 = "ed3a1d7ab0079af604ae692da98db048747ddf74f491ee4f3f25f42d353063d1";
+    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "92ce5643e5e1685a2c292e6e97c17013d7f2153d8976c749415d2d0a1a7310ab";
+    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "4b90674255d11ee4b6ffc375eaa80575dd1fe39b6d7f2b5d6ba4d246f3a7d99e";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
@@ -9107,13 +9107,16 @@ internal static class Program
             additionalˉdependencies:
             [
                 new(
+                    "Project-Manifest-Core.wv",
+                    PROJECT_MANIFEST_CORE_SOURCE),
+                new(
                     "Compiler-Wvb-Verifier-Semantic-Core.wv",
                     COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
                 new(
                     "Compiler-Wvb-Verifier-Executable-Core.wv",
                     COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
             ]);
-        Equal(718_058, Driverˉbytes.Length);
+        Equal(749_460, Driverˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_SHA256,
             Objectˉdigest.Calculateˉsha256(Driverˉbytes));
@@ -9177,7 +9180,7 @@ internal static class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(18_099_712, Firstˉwindows.Imageˉbytes.Length);
+        Equal(18_483_200, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -9209,7 +9212,7 @@ internal static class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(18_100_224, Firstˉlinux.Imageˉbytes.Length);
+        Equal(18_485_248, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
@@ -9290,6 +9293,15 @@ internal static class Program
             var Sourceˉpath = Path.Combine(Directoryˉpath, "Function-Only.wv");
             var Invalidˉpath = Path.Combine(Directoryˉpath, "Invalid.wv");
             var Outputˉpath = Path.Combine(Directoryˉpath, "Output.wvb");
+            var Projectˉsourceˉdirectory = Path.Combine(Directoryˉpath, "Source");
+            var Projectˉpath = Path.Combine(Directoryˉpath, "Composition.wvproj");
+            var Invalidˉprojectˉpath = Path.Combine(
+                Directoryˉpath, "Invalid.wvproj");
+            var Duplicateˉprojectˉpath = Path.Combine(
+                Directoryˉpath, "Duplicate.wvproj");
+            var Projectˉoutputˉpath = Path.Combine(
+                Directoryˉpath, "Composition.wvb");
+            Directory.CreateDirectory(Projectˉsourceˉdirectory);
             File.WriteAllBytes(Driverˉpath, Driverˉbytes);
             File.WriteAllText(
                 Sourceˉpath,
@@ -9299,6 +9311,42 @@ internal static class Program
                 Invalidˉpath,
                 "this is not Windvale",
                 new UTF8Encoding(false));
+            File.WriteAllText(
+                Path.Combine(Projectˉsourceˉdirectory, "Root.wv"),
+                COMPOSITION_ROOT_SOURCE,
+                new UTF8Encoding(false));
+            File.WriteAllText(
+                Path.Combine(Projectˉsourceˉdirectory, "Leaf.wv"),
+                COMPOSITION_LEAF_SOURCE,
+                new UTF8Encoding(false));
+            File.WriteAllText(
+                Path.Combine(Projectˉsourceˉdirectory, "Middle.wv"),
+                COMPOSITION_MIDDLE_SOURCE,
+                new UTF8Encoding(false));
+            File.WriteAllText(
+                Projectˉpath,
+                "windvale-project 1\n" +
+                "root \"Source/Root.wv\"\n" +
+                "source \"Source/Leaf.wv\"\n" +
+                "source \"Source/Middle.wv\"\n" +
+                "emit wvb\n",
+                new UTF8Encoding(false));
+            File.WriteAllText(
+                Invalidˉprojectˉpath,
+                "windvale-project 2\nroot \"Source/Root.wv\"\nemit wvb\n",
+                new UTF8Encoding(false));
+            File.WriteAllText(
+                Duplicateˉprojectˉpath,
+                "windvale-project 1\n" +
+                "root \"Source/Root.wv\"\n" +
+                "source \"Source/root.wv\"\n" +
+                "emit wvb\n",
+                new UTF8Encoding(false));
+
+            var Nativeˉprojectˉpath = Projectˉpath.Replace('\\', '/');
+            var Nativeˉinvalidˉprojectˉpath = Invalidˉprojectˉpath.Replace('\\', '/');
+            var Nativeˉduplicateˉprojectˉpath = Duplicateˉprojectˉpath.Replace('\\', '/');
+            var Nativeˉprojectˉoutputˉpath = Projectˉoutputˉpath.Replace('\\', '/');
 
             var Cliˉtarget = OperatingSystem.IsWindows()
                 ? Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME
@@ -9327,6 +9375,16 @@ internal static class Program
                 "wir-status=Sourceˉbindings function=0 operation=0\n";
             var Sameˉresourceˉerror =
                 "build status=Invalidˉinvocation reason=output-is-input\n";
+            var Expectedˉprojectˉoutput =
+                "build status=Published verification=compiler-aligned functions=4 " +
+                "code-bytes=280 module-bytes=714\n";
+            var Invalidˉprojectˉerror =
+                "build status=Projectˉrejected code=WVP1001 line=1 column=1\n";
+            var Duplicateˉprojectˉerror =
+                "build status=Projectˉrejected code=WVP1007 line=3 column=9\n";
+            var Expectedˉprojectˉbytes = Compileˉcompositionˉsuccess(
+                new("leaf.wv", COMPOSITION_LEAF_SOURCE),
+                new("middle.wv", COMPOSITION_MIDDLE_SOURCE));
             var Sentinel = "preserve-existing-output"u8.ToArray();
             if (OperatingSystem.IsWindows())
             {
@@ -9342,6 +9400,44 @@ internal static class Program
                 Sequenceˉequal(
                     Compileˉsuccess(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
                     File.ReadAllBytes(Outputˉpath));
+                Equal(
+                    0,
+                    Executeˉwindowsˉapplication(
+                        Firstˉwindows.Imageˉbytes,
+                        Expectedˉprojectˉoutput,
+                        ["--project", Nativeˉprojectˉpath, Nativeˉprojectˉoutputˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        loadedˉmodules: Loadedˉmodules));
+                Sequenceˉequal(
+                    Expectedˉprojectˉbytes,
+                    File.ReadAllBytes(Projectˉoutputˉpath));
+                File.WriteAllBytes(Projectˉoutputˉpath, Sentinel);
+                Equal(
+                    1,
+                    Executeˉwindowsˉapplication(
+                        Firstˉwindows.Imageˉbytes,
+                        arguments:
+                        [
+                            "--project",
+                            Nativeˉinvalidˉprojectˉpath,
+                            Nativeˉprojectˉoutputˉpath,
+                        ],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: Invalidˉprojectˉerror));
+                Sequenceˉequal(Sentinel, File.ReadAllBytes(Projectˉoutputˉpath));
+                Equal(
+                    1,
+                    Executeˉwindowsˉapplication(
+                        Firstˉwindows.Imageˉbytes,
+                        arguments:
+                        [
+                            "--project",
+                            Nativeˉduplicateˉprojectˉpath,
+                            Nativeˉprojectˉoutputˉpath,
+                        ],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: Duplicateˉprojectˉerror));
+                Sequenceˉequal(Sentinel, File.ReadAllBytes(Projectˉoutputˉpath));
                 File.WriteAllBytes(Outputˉpath, Sentinel);
                 Equal(
                     1,
@@ -9381,6 +9477,44 @@ internal static class Program
                 Sequenceˉequal(
                     Compileˉsuccess(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
                     File.ReadAllBytes(Outputˉpath));
+                Equal(
+                    0,
+                    Executeˉlinuxˉapplication(
+                        Firstˉlinux.Imageˉbytes,
+                        Expectedˉprojectˉoutput,
+                        ["--project", Nativeˉprojectˉpath, Nativeˉprojectˉoutputˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        loadedˉmappings: Loadedˉmappings));
+                Sequenceˉequal(
+                    Expectedˉprojectˉbytes,
+                    File.ReadAllBytes(Projectˉoutputˉpath));
+                File.WriteAllBytes(Projectˉoutputˉpath, Sentinel);
+                Equal(
+                    1,
+                    Executeˉlinuxˉapplication(
+                        Firstˉlinux.Imageˉbytes,
+                        arguments:
+                        [
+                            "--project",
+                            Nativeˉinvalidˉprojectˉpath,
+                            Nativeˉprojectˉoutputˉpath,
+                        ],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: Invalidˉprojectˉerror));
+                Sequenceˉequal(Sentinel, File.ReadAllBytes(Projectˉoutputˉpath));
+                Equal(
+                    1,
+                    Executeˉlinuxˉapplication(
+                        Firstˉlinux.Imageˉbytes,
+                        arguments:
+                        [
+                            "--project",
+                            Nativeˉduplicateˉprojectˉpath,
+                            Nativeˉprojectˉoutputˉpath,
+                        ],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: Duplicateˉprojectˉerror));
+                Sequenceˉequal(Sentinel, File.ReadAllBytes(Projectˉoutputˉpath));
                 File.WriteAllBytes(Outputˉpath, Sentinel);
                 Equal(
                     1,

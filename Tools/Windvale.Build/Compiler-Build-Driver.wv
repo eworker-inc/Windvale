@@ -3,6 +3,7 @@ module Windvaleˉcompilerˉbuildˉdriver profile hosted;
 import Compilerˉsourceˉwvb;
 import Compilerˉsourceˉsymbols;
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic;
+import Windvaleˉproject;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -10,6 +11,22 @@ capability file.read_bytes;
 capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
+
+record Compilerˉbuildˉdriverˉprojectˉprefix {
+    Valid: bool;
+    Value: bytes;
+}
+
+record Compilerˉbuildˉdriverˉprojectˉpaths {
+    Valid: bool;
+    Outputˉisˉinput: bool;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+fn Compilerˉbuildˉdriverˉempty() -> bytes {
+    return Textˉtoˉutf8("");
+}
 
 fn Compilerˉbuildˉdriverˉheader(Modules: u32) -> bytes {
     var Header: bytes = Textˉtoˉutf8("WVSS");
@@ -19,30 +36,191 @@ fn Compilerˉbuildˉdriverˉheader(Modules: u32) -> bytes {
     return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
 }
 
-fn Compilerˉbuildˉdriverˉinput(Modules: u32) -> bytes {
-    let Empty: bytes = Textˉtoˉutf8("");
-    var Directory: bytes = Empty;
-    var Sourceˉoffset: u32 = 16u32 + Modules * 8u32;
+fn Compilerˉbuildˉdriverˉexplicitˉinput(Modules: u32) -> bytes {
+    let Headerˉbytes: u32 = 16u32 + Modules * 8u32;
+    var Directory: bytes = Compilerˉbuildˉdriverˉempty();
+    var Payload: bytes = Compilerˉbuildˉdriverˉempty();
+    var Payloadˉbytes: u32 = 0u32;
     var Index: u32 = 0u32;
     while Index < Modules {
         let Source: bytes = file.read_bytes(process.argument(Index));
         let Length: u32 = Bytesˉlength(Source);
-        if Length == 0u32 { return Empty; }
-        if Length > 4194304u32 - Sourceˉoffset { return Empty; }
-        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Sourceˉoffset));
+        if Length == 0u32 { return Compilerˉbuildˉdriverˉempty(); }
+        if Payloadˉbytes > 4194304u32 - Headerˉbytes {
+            return Compilerˉbuildˉdriverˉempty();
+        }
+        if Length > 4194304u32 - Headerˉbytes - Payloadˉbytes {
+            return Compilerˉbuildˉdriverˉempty();
+        }
+        Directory = Bytesˉconcat(
+            Directory, Bytesˉfromˉu32ˉlittle(Headerˉbytes + Payloadˉbytes)
+        );
         Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Length));
-        Sourceˉoffset = Sourceˉoffset + Length;
+        Payload = Bytesˉconcat(Payload, Source);
+        Payloadˉbytes = Payloadˉbytes + Length;
         Index = Index + 1u32;
     }
-    var Result: bytes = Bytesˉconcat(
-        Compilerˉbuildˉdriverˉheader(Modules), Directory
+    return Bytesˉconcat(
+        Bytesˉconcat(Compilerˉbuildˉdriverˉheader(Modules), Directory), Payload
     );
-    Index = 0u32;
-    while Index < Modules {
-        Result = Bytesˉconcat(Result, file.read_bytes(process.argument(Index)));
+}
+
+fn Compilerˉbuildˉdriverˉasciiˉfold(Value: u8) -> u32 {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Character >= 65u32 {
+        if Character <= 90u32 { return Character + 32u32; }
+    }
+    return Character;
+}
+
+fn Compilerˉbuildˉdriverˉresourceˉequals(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Compilerˉbuildˉdriverˉasciiˉfold(Bytesˉreadˉu8(First, Index)) !=
+            Compilerˉbuildˉdriverˉasciiˉfold(Bytesˉreadˉu8(Second, Index)) {
+            return false;
+        }
         Index = Index + 1u32;
     }
-    return Result;
+    return true;
+}
+
+fn Compilerˉbuildˉdriverˉhasˉsuffix(Value: bytes, Suffix: text) -> bool {
+    let Suffixˉbytes: bytes = Textˉtoˉutf8(Suffix);
+    let Valueˉlength: u32 = Bytesˉlength(Value);
+    let Suffixˉlength: u32 = Bytesˉlength(Suffixˉbytes);
+    if Valueˉlength < Suffixˉlength { return false; }
+    return Compilerˉsourceˉsymbolsˉnameˉequals(
+        Value, Valueˉlength - Suffixˉlength, Suffixˉlength, Suffix
+    );
+}
+
+fn Compilerˉbuildˉdriverˉderiveˉprojectˉprefix(
+    Manifestˉname: bytes
+) -> Compilerˉbuildˉdriverˉprojectˉprefix {
+    let Length: u32 = Bytesˉlength(Manifestˉname);
+    var Prefixˉbytes: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Character: u8 = Bytesˉreadˉu8(Manifestˉname, Index);
+        if Character == 92u8 {
+            return Compilerˉbuildˉdriverˉprojectˉprefix(
+                false, Compilerˉbuildˉdriverˉempty()
+            );
+        }
+        if Character == 47u8 { Prefixˉbytes = Index + 1u32; }
+        Index = Index + 1u32;
+    }
+    return Compilerˉbuildˉdriverˉprojectˉprefix(
+        true, Bytesˉslice(Manifestˉname, 0u32, Prefixˉbytes)
+    );
+}
+
+fn Compilerˉbuildˉdriverˉprojectˉresource(
+    Prefix: bytes,
+    Path: Windvaleˉprojectˉpath
+) -> bytes {
+    return Bytesˉconcat(Prefix, Path.Value);
+}
+
+fn Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
+    Manifest: bytes,
+    Scan: Windvaleˉprojectˉscan,
+    Prefix: bytes,
+    Manifestˉname: bytes,
+    Outputˉname: bytes
+) -> Compilerˉbuildˉdriverˉprojectˉpaths {
+    if Compilerˉbuildˉdriverˉresourceˉequals(Manifestˉname, Outputˉname) {
+        return Compilerˉbuildˉdriverˉprojectˉpaths(false, true, 0u32, 0u32);
+    }
+    var Index: u32 = 0u32;
+    while Index < Scan.Modules {
+        let Path: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(
+            Manifest, Scan, Index
+        );
+        if !Path.Found {
+            return Compilerˉbuildˉdriverˉprojectˉpaths(
+                false, false, Path.Line, Path.Column
+            );
+        }
+        let Resource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(Prefix, Path);
+        if Compilerˉbuildˉdriverˉresourceˉequals(Resource, Outputˉname) {
+            return Compilerˉbuildˉdriverˉprojectˉpaths(
+                false, true, Path.Line, Path.Column
+            );
+        }
+        var Previousˉindex: u32 = 0u32;
+        while Previousˉindex < Index {
+            let Previousˉpath: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(
+                Manifest, Scan, Previousˉindex
+            );
+            let Previousˉresource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(
+                Prefix, Previousˉpath
+            );
+            if Compilerˉbuildˉdriverˉresourceˉequals(
+                Resource, Previousˉresource
+            ) {
+                return Compilerˉbuildˉdriverˉprojectˉpaths(
+                    false, false, Path.Line, Path.Column
+                );
+            }
+            Previousˉindex = Previousˉindex + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    return Compilerˉbuildˉdriverˉprojectˉpaths(true, false, 0u32, 0u32);
+}
+
+fn Compilerˉbuildˉdriverˉprojectˉinput(
+    Manifest: bytes,
+    Scan: Windvaleˉprojectˉscan,
+    Prefix: bytes
+) -> bytes {
+    let Headerˉbytes: u32 = 16u32 + Scan.Modules * 8u32;
+    var Directory: bytes = Compilerˉbuildˉdriverˉempty();
+    var Payload: bytes = Compilerˉbuildˉdriverˉempty();
+    var Payloadˉbytes: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Scan.Modules {
+        let Path: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(
+            Manifest, Scan, Index
+        );
+        let Resource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(Prefix, Path);
+        let Source: bytes = file.read_bytes(Textˉfromˉutf8(Resource));
+        let Length: u32 = Bytesˉlength(Source);
+        if Length == 0u32 { return Compilerˉbuildˉdriverˉempty(); }
+        if Payloadˉbytes > 4194304u32 - Headerˉbytes {
+            return Compilerˉbuildˉdriverˉempty();
+        }
+        if Length > 4194304u32 - Headerˉbytes - Payloadˉbytes {
+            return Compilerˉbuildˉdriverˉempty();
+        }
+        Directory = Bytesˉconcat(
+            Directory, Bytesˉfromˉu32ˉlittle(Headerˉbytes + Payloadˉbytes)
+        );
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Length));
+        Payload = Bytesˉconcat(Payload, Source);
+        Payloadˉbytes = Payloadˉbytes + Length;
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(
+        Bytesˉconcat(Compilerˉbuildˉdriverˉheader(Scan.Modules), Directory), Payload
+    );
+}
+
+fn Compilerˉbuildˉdriverˉprojectˉfailure(
+    Status: Windvaleˉprojectˉstatus,
+    Line: u32,
+    Column: u32
+) -> text {
+    var Report: text = "build status=Projectˉrejected code=";
+    Report = Textˉconcat(Report, Windvaleˉprojectˉdiagnosticˉcode(Status));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Line));
+    Report = Textˉconcat(Report, " column=");
+    return Textˉconcat(Report, U32ˉformat(Column));
 }
 
 fn Compilerˉbuildˉdriverˉcompileˉfailure(
@@ -69,40 +247,8 @@ fn Compilerˉbuildˉdriverˉsuccess(
     return Textˉconcat(Report, U32ˉformat(Bytesˉlength(Summary.Bytecode)));
 }
 
-export fn Main() -> i32 {
-    let Arguments: u32 = process.argument_count();
-    if Arguments < 2u32 {
-        diagnostic.write_line(
-            "Usage: wvbuild <root.wv> [sorted-dependency.wv ...] <output.wvb>"
-        );
-        return 64;
-    }
-    let Modules: u32 = Arguments - 1u32;
-    if Modules > 64u32 {
-        diagnostic.write_line("build status=Invalidˉinvocation reason=module-limit");
-        return 64;
-    }
-    let Outputˉpath: text = process.argument(Modules);
-    var Inputˉindex: u32 = 0u32;
-    while Inputˉindex < Modules {
-        let Inputˉpath: bytes = Textˉtoˉutf8(process.argument(Inputˉindex));
-        if Compilerˉsourceˉsymbolsˉnameˉequals(
-            Inputˉpath,
-            0u32,
-            Bytesˉlength(Inputˉpath),
-            Outputˉpath
-        ) {
-            diagnostic.write_line(
-                "build status=Invalidˉinvocation reason=output-is-input"
-            );
-            return 64;
-        }
-        Inputˉindex = Inputˉindex + 1u32;
-    }
-
-    let Summary: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
-        Compilerˉbuildˉdriverˉinput(Modules)
-    );
+fn Compilerˉbuildˉdriverˉpublish(Input: bytes, Outputˉpath: text) -> i32 {
+    let Summary: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(Input);
     if Summary.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         diagnostic.write_line(Compilerˉbuildˉdriverˉcompileˉfailure(Summary));
         return 1;
@@ -125,4 +271,124 @@ export fn Main() -> i32 {
     file.write_bytes(Outputˉpath, Summary.Bytecode);
     console.write_line(Compilerˉbuildˉdriverˉsuccess(Summary));
     return 0;
+}
+
+fn Compilerˉbuildˉdriverˉisˉprojectˉmode(Value: text) -> bool {
+    let Bytes: bytes = Textˉtoˉutf8(Value);
+    return Compilerˉsourceˉsymbolsˉnameˉequals(
+        Bytes, 0u32, Bytesˉlength(Bytes), "--project"
+    );
+}
+
+fn Compilerˉbuildˉdriverˉrunˉproject(Arguments: u32) -> i32 {
+    if Arguments != 3u32 {
+        diagnostic.write_line("Usage: wvbuild --project <project.wvproj> <output.wvb>");
+        return 64;
+    }
+    let Manifestˉpath: text = process.argument(1u32);
+    let Outputˉpath: text = process.argument(2u32);
+    let Manifestˉname: bytes = Textˉtoˉutf8(Manifestˉpath);
+    let Outputˉname: bytes = Textˉtoˉutf8(Outputˉpath);
+    if !Compilerˉbuildˉdriverˉhasˉsuffix(Manifestˉname, ".wvproj") {
+        diagnostic.write_line(
+            "build status=Invalidˉinvocation reason=project-extension"
+        );
+        return 64;
+    }
+    if !Compilerˉbuildˉdriverˉhasˉsuffix(Outputˉname, ".wvb") {
+        diagnostic.write_line(
+            "build status=Invalidˉinvocation reason=output-extension"
+        );
+        return 64;
+    }
+    let Prefix: Compilerˉbuildˉdriverˉprojectˉprefix =
+        Compilerˉbuildˉdriverˉderiveˉprojectˉprefix(Manifestˉname);
+    if !Prefix.Valid {
+        diagnostic.write_line(
+            "build status=Invalidˉinvocation reason=project-resource-name"
+        );
+        return 64;
+    }
+
+    let Manifest: bytes = file.read_bytes(Manifestˉpath);
+    let Scan: Windvaleˉprojectˉscan = Windvaleˉprojectˉscanˉmanifest(Manifest);
+    if Scan.Status != Windvaleˉprojectˉstatus.Valid {
+        diagnostic.write_line(Compilerˉbuildˉdriverˉprojectˉfailure(
+            Scan.Status, Scan.Failureˉline, Scan.Failureˉcolumn
+        ));
+        return 1;
+    }
+    if Scan.Modules > 63u32 {
+        let Excess: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(
+            Manifest, Scan, 63u32
+        );
+        diagnostic.write_line(Compilerˉbuildˉdriverˉprojectˉfailure(
+            Windvaleˉprojectˉstatus.Sourceˉlimit, Excess.Line, Excess.Column
+        ));
+        return 1;
+    }
+
+    let Paths: Compilerˉbuildˉdriverˉprojectˉpaths =
+        Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
+            Manifest, Scan, Prefix.Value, Manifestˉname, Outputˉname
+        );
+    if !Paths.Valid {
+        if Paths.Outputˉisˉinput {
+            diagnostic.write_line(
+                "build status=Invalidˉinvocation reason=output-is-input"
+            );
+            return 64;
+        }
+        diagnostic.write_line(Compilerˉbuildˉdriverˉprojectˉfailure(
+            Windvaleˉprojectˉstatus.Duplicateˉpath,
+            Paths.Failureˉline,
+            Paths.Failureˉcolumn
+        ));
+        return 1;
+    }
+
+    return Compilerˉbuildˉdriverˉpublish(
+        Compilerˉbuildˉdriverˉprojectˉinput(Manifest, Scan, Prefix.Value),
+        Outputˉpath
+    );
+}
+
+fn Compilerˉbuildˉdriverˉrunˉexplicit(Arguments: u32) -> i32 {
+    if Arguments < 2u32 {
+        diagnostic.write_line(
+            "Usage: wvbuild <root.wv> [dependency.wv ...] <output.wvb>"
+        );
+        return 64;
+    }
+    let Modules: u32 = Arguments - 1u32;
+    if Modules > 64u32 {
+        diagnostic.write_line("build status=Invalidˉinvocation reason=module-limit");
+        return 64;
+    }
+    let Outputˉpath: text = process.argument(Modules);
+    let Outputˉname: bytes = Textˉtoˉutf8(Outputˉpath);
+    var Inputˉindex: u32 = 0u32;
+    while Inputˉindex < Modules {
+        let Inputˉname: bytes = Textˉtoˉutf8(process.argument(Inputˉindex));
+        if Compilerˉbuildˉdriverˉresourceˉequals(Inputˉname, Outputˉname) {
+            diagnostic.write_line(
+                "build status=Invalidˉinvocation reason=output-is-input"
+            );
+            return 64;
+        }
+        Inputˉindex = Inputˉindex + 1u32;
+    }
+    return Compilerˉbuildˉdriverˉpublish(
+        Compilerˉbuildˉdriverˉexplicitˉinput(Modules), Outputˉpath
+    );
+}
+
+export fn Main() -> i32 {
+    let Arguments: u32 = process.argument_count();
+    if Arguments > 0u32 {
+        if Compilerˉbuildˉdriverˉisˉprojectˉmode(process.argument(0u32)) {
+            return Compilerˉbuildˉdriverˉrunˉproject(Arguments);
+        }
+    }
+    return Compilerˉbuildˉdriverˉrunˉexplicit(Arguments);
 }

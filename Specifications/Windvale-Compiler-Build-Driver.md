@@ -4,15 +4,31 @@
 
 `WVHB 1` is the implemented manifest for the first Windvale-native source-to-verified-WVB build driver. The same canonical Windvale application packages as deterministic Windows and Linux x86-64 processes and runs without loading .NET. Stage 0 still constructs, native-lowers, packages, and independently verifies the driver itself; cross-host qualification remains pending.
 
-The driver is intentionally narrow. It accepts one root source, zero or more dependencies already ordered for the current source composer, and one output path:
+The driver is intentionally narrow. Its explicit-source form accepts one root source, zero or more dependencies, and one output path:
 
 ```text
-wvbuild <root.wv> [sorted-dependency.wv ...] <output.wvb>
+wvbuild <root.wv> [dependency.wv ...] <output.wvb>
 ```
 
-It supports at most 64 source modules and rejects an output resource name exactly equal to any input resource name. On success it constructs `WVSS 1`, invokes the Windvale compiler in memory, invokes the portable compiler-aligned WVB verifier over the candidate bytes, performs exactly one `file.write_bytes` only after verifier acceptance, reports the published function/code/module sizes, and returns `0`. Invocation failure returns `64`; compilation or verifier rejection reports a stable diagnostic and returns `1`.
+Its project form consumes the existing Windvale Project 1 parser and requires an explicit output:
 
-The canonical project is [`Windvale-Compiler-Build-Driver.wvproj`](../Windvale-Compiler-Build-Driver.wvproj). It composes the compiler sources from [`Windvale-Compiler.wvproj`](../Windvale-Compiler.wvproj), the portable verifier core, and `Tools/Windvale.Build/Compiler-Build-Driver.wv` as its only hosted adapter.
+```text
+wvbuild --project <project.wvproj> <output.wvb>
+```
+
+The explicit form supports at most 64 source modules. The project form supports at most 63 modules because its manifest occupies one of the fixed profile's 64 retained file snapshots. Both forms read each source resource exactly once, construct `WVSS 1` in memory, invoke the Windvale compiler, invoke the portable compiler-aligned WVB verifier over the candidate bytes, and perform exactly one `file.write_bytes` only after verifier acceptance. Success reports the published function/code/module sizes and returns `0`; invocation failure returns `64`; project, compilation, or verifier rejection reports a stable diagnostic and returns `1`.
+
+The canonical project is [`Windvale-Compiler-Build-Driver.wvproj`](../Windvale-Compiler-Build-Driver.wvproj). It composes the compiler sources from [`Windvale-Compiler.wvproj`](../Windvale-Compiler.wvproj), the portable Project 1 parser, the portable verifier core, and `Tools/Windvale.Build/Compiler-Build-Driver.wv` as its only hosted adapter.
+
+## Project resource boundary
+
+Project mode reads the manifest once, validates it through `Windvaleˉprojectˉscanˉmanifest`, and obtains the root followed by the manifest's source entries through `Windvaleˉprojectˉpathˉat`. Source `import` declarations remain the semantic dependency graph; the driver neither discovers files nor guesses dependency order.
+
+The hosted adapter derives each source resource name by retaining the manifest resource-name prefix through its final `/` and appending the Project 1 canonical relative path. The manifest argument therefore uses `/` as the profile's resource separator on both hosts; `\` is rejected instead of being given platform-dependent meaning. This is resource-name derivation inside the hosted adapter, not native path interpretation in the portable parser.
+
+Before any source read, the driver rejects a resource name equal to an earlier source or the output. Comparison folds ASCII `A` through `Z`, making the accepted project subset conservative on case-sensitive Linux providers while preventing the ordinary Windows case alias. The adapter cannot resolve links, mount aliases, short names, or other provider identities; those remain excluded until a canonical resource-identity capability exists. `.wvproj` and `.wvb` suffixes are exact and mandatory in project mode.
+
+Project failures use the existing `WVP1001` through `WVP1007` identities with one-based line and column evidence. The native 63-module bound reports `WVP1005`; conservative duplicate rejection reports `WVP1007` before source access. Malformed projects and compilation failures leave an existing output unchanged.
 
 ## Verification and publication boundary
 
@@ -25,9 +41,9 @@ The canonical project is [`Windvale-Compiler-Build-Driver.wvproj`](../Windvale-C
 | `2` | typed-execution rejection |
 | `3` | control-reachability rejection |
 
-The driver never calls `file.write_bytes` after an invocation, source, compilation, or verifier failure. Those deterministic failures therefore leave an existing output unchanged. The successful output is the exact verifier-accepted byte value; no separate candidate file or host process can replace it between verification and the write call.
+The driver never calls `file.write_bytes` after an invocation, manifest, resource-set, source, compilation, or verifier failure. Those deterministic failures therefore leave an existing output unchanged. The successful output is the exact verifier-accepted byte value; no separate candidate file or host process can replace it between verification and the write call.
 
-This is not yet an atomic replacement contract. `file.write_bytes` retains its existing durable, whole-value but non-atomic host semantics. A host I/O failure may leave its separately specified result and is not reported as deterministic output preservation. The driver can reject exact input/output name equality but cannot prove that different host path spellings identify different files; canonical resource identity requires a separate provider contract. Atomic replacement, directory durability, and indeterminate-mutation evidence require a distinct future filesystem capability rather than silently strengthening this operation.
+This is not yet an atomic replacement contract. `file.write_bytes` retains its existing durable, whole-value but non-atomic host semantics. A host I/O failure may leave its separately specified result and is not reported as deterministic output preservation. Conservative resource-name comparison is not canonical resource identity. Atomic replacement, directory durability, alias identity, and indeterminate-mutation evidence require distinct future provider contracts rather than silently strengthening this operation.
 
 ## Authority and native services
 
@@ -63,11 +79,11 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 ## Canonical identities
 
-The canonical driver WVB is 718,058 bytes with SHA-256 `eb8d22a344a04e705c6e978ce3ddb941ca47686a8a79fa089db254cc3ede73fd`.
+The canonical driver WVB is 749,460 bytes with SHA-256 `ed3a1d7ab0079af604ae692da98db048747ddf74f491ee4f3f25f42d353063d1`.
 
-`windows-x64-build-driver-v1` emits an 18,099,712-byte PE32+ application with SHA-256 `204aa0ac555d47d72fc40424c0cb5c9cf30afc4f89d4b8ff4addaadf0a086677`.
+`windows-x64-build-driver-v1` emits an 18,483,200-byte PE32+ application with SHA-256 `92ce5643e5e1685a2c292e6e97c17013d7f2153d8976c749415d2d0a1a7310ab`.
 
-`linux-x64-build-driver-v1` emits an 18,100,224-byte sectionless static-PIE ELF application with SHA-256 `e6a618364150d9631cf49ddecd090d8f8750d4bd6232680984584899113ba6cb`.
+`linux-x64-build-driver-v1` emits an 18,485,248-byte sectionless static-PIE ELF application with SHA-256 `4b90674255d11ee4b6ffc375eaa80575dd1fe39b6d7f2b5d6ba4d246f3a7d99e`.
 
 The Stage 0 construction route is:
 
@@ -77,8 +93,8 @@ windvale aot Windvale-Compiler-Build-Driver.wvb --target windows-x64-build-drive
 windvale aot Windvale-Compiler-Build-Driver.wvb --target linux-x64-build-driver-v1
 ```
 
-The existing exact-compiler AOT test constructs this project once, verifies deterministic paired packages, drives malformed outer inputs through both independent parsers, exercises the public current-host AOT route, compiles a real module through the raw application, verifies exact output bytes, rejects malformed source without changing an existing output, rejects exact source/output resource-name equality without changing the source, and inspects current-host modules or mappings for .NET.
+The existing exact-compiler AOT test constructs this project once, verifies deterministic paired packages, drives malformed outer inputs through both independent parsers, exercises the public current-host AOT route, and runs the native driver in both explicit and project modes. Project evidence parses a real manifest, resolves a three-module composition beneath the manifest resource prefix, compares exact output bytes with the reference compiler, rejects malformed and conservatively duplicate manifests without changing an existing output, and inspects current-host modules or mappings for .NET. No new top-level compiler construction is added.
 
 ## Retirement boundary
 
-This milestone removes .NET from one useful execution path: a previously packaged Windvale-native driver can compile and verifier-admit ordinary source into canonical WVB on Windows or Linux. It does not yet read `.wvproj`, discover or sort dependencies, package WVB as native PE/ELF, run tests, assemble, link, inspect, or atomically replace the produced WVB. Stage 0 still builds and packages the driver and remains the recovery oracle. Decision 0057's complete dual-host native-retirement gate remains mandatory.
+This milestone removes .NET from another useful execution path: a previously packaged Windvale-native driver can parse a bounded `.wvproj`, read its explicit source set, compile it, verifier-admit the result, and publish canonical WVB on Windows or Linux. It does not discover files, consume packages or project references, native-lower WVB, package applications as PE/ELF, run tests, assemble, link, inspect, or atomically replace output. The shared x64 lowering backend remains C#-owned; moving only outer PE/ELF headers would not create a .NET-free source-to-executable path. Stage 0 still builds and packages the driver and remains the recovery oracle. Decision 0057's complete dual-host native-retirement gate remains mandatory.

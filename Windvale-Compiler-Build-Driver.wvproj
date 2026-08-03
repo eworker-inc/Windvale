@@ -11,6 +11,7 @@ source "Compiler/Windvale/Source-Wir-Core.wv"
 source "Compiler/Windvale/Source-Wvb-Core.wv"
 source "Foundation/Byte-Construction.wv"
 source "Foundation/Decimal-Parsing.wv"
+source "Tools/Windvale.Project/Project-Manifest-Core.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
 emit wvb

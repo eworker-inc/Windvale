@@ -31,7 +31,7 @@ Integrate the proof into the existing exact-compiler AOT case. Reuse its compile
 - Deterministic failures occur before the sole output call and preserve an existing output.
 - A host write failure remains governed by the non-atomic `file.write_bytes` contract. This milestone does not claim atomic source-visible publication.
 - Exact resource-name equality is rejected, but distinct path aliases cannot be proven distinct without a future canonical resource-identity contract.
-- The driver consumes explicit, already ordered source paths. Project manifests, dependency discovery, native packaging, tests, assembler/linker/inspector orchestration, and normal repository automation remain Stage 0 work.
+- The original driver consumes explicit source paths. Decision 0187 extends the same application with bounded Project 1 input while dependency discovery, native packaging, tests, assembler/linker/inspector orchestration, and normal repository automation remain Stage 0 work.
 - The format-3 compiler artifacts and their qualified identities remain unchanged.
 - Cross-host qualification is still required before this slice counts toward a dual-host retirement claim.
 
@@ -39,7 +39,7 @@ Integrate the proof into the existing exact-compiler AOT case. Reuse its compile
 
 Reconsider this fixed profile when one of these becomes true:
 
-- the driver must consume `.wvproj` and derive dependency order itself;
+- the project adapter requires a canonical resource-identity provider or a larger retained-snapshot profile;
 - a named atomic-replacement capability has exact Windows/Linux progress, durability, and indeterminate-failure semantics;
 - compiler/verifier isolation justifies a versioned child-process capability and rights-limited launch plan;
 - the compiler-aligned verifier no longer admits the compiler's normal WVB output;
