@@ -257,7 +257,7 @@ export fn Main(Request: bytes) -> bytes {
             if Scanˉopcode == 117u32 { Supported = true; }
             if Scanˉopcode == 118u32 { Supported = true; }
             if Scanˉopcode >= 119u32 {
-                if Scanˉopcode <= 124u32 { Supported = true; }
+                if Scanˉopcode <= 125u32 { Supported = true; }
             }
             if Supported {
                 Supported = true;
@@ -1699,6 +1699,37 @@ export fn Main(Request: bytes) -> bytes {
             }
         }
         if Opcode == 124u32 {
+            Pc = Pc + 1u32;
+            Handled = true;
+        }
+        if Opcode == 125u32 {
+            let Sha256ˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Sha256ˉsourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Sha256ˉstackˉlength - 8u32
+            );
+            let Sha256ˉsourceˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Sha256ˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉslice(Stack, 0u32, Sha256ˉstackˉlength - 8u32);
+            let Sha256ˉvalue: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(
+                Bytesˉslice(Heap, Sha256ˉsourceˉoffset, Sha256ˉsourceˉlength)
+            ));
+            let Sha256ˉoffset: u32 = Bytesˉlength(Heap);
+            if Sha256ˉoffset > 65536u32 - 64u32 {
+                Guestˉstatus = 3018u32;
+                Running = false;
+            } else {
+                Heap = Bytesˉconcat(Heap, Sha256ˉvalue);
+                Stack = Bytesˉconcat(
+                    Stack,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Sha256ˉoffset),
+                        Bytesˉfromˉu32ˉlittle(64u32)
+                    )
+                );
+            }
             Pc = Pc + 1u32;
             Handled = true;
         }

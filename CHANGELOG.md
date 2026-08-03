@@ -8,6 +8,8 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Import-free `bytes.sha256_hex` lowering in WebAssembly profile 16, with explicit target-side padding, schedule, compression, and lowercase hexadecimal output; the complete-verifier-first Wasm-hosted interpreter now covers empty, boundary-padding, and multi-block SHA-256 inputs without JavaScript or Web Crypto imports.
+
 - Explicit bounded large-native WVO/link admission for the measured ABI-22 compiler: the unchanged WVO 1.0 codec and one shared linker now admit a deterministic 17,147,219-byte compiler object and reproduce its exact 17,130,441 native bytes under a 20 MiB opt-in profile, while standard 4 MiB object/link behavior, ordinary Windvale byte values, and existing application/container bytes remain unchanged.
 - Exact Windows and Linux compiler service bundles plus fixed `WVHA 1` candidate manifests: the measured compiler binds its canonical six capabilities to exactly ten required ABI-22 services, explicit platform adapters, table slots, placements, sizes, and digests without changing existing PE/ELF targets or claiming runnable format-3 containers.
 

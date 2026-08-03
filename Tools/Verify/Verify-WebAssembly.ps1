@@ -288,10 +288,21 @@ $ExecutableSemanticRunArguments = @(
     '--max-steps', '225000000',
     '--'
 )
+$ScalarInterpreterRunArguments = @(
+    'run', $BackendWvb,
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'file.write_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count',
+    '--max-steps', '300000000',
+    '--'
+)
 Invoke-Windvale ($ExecutableSemanticRunArguments + @(
     $WvbExecutableVerifyWvb,
     $WvbExecutableVerifyWasm))
-Invoke-Windvale ($ExecutableSemanticRunArguments + @(
+Invoke-Windvale ($ScalarInterpreterRunArguments + @(
     $WvbScalarInterpreterWvb,
     $WvbScalarInterpreterWasm))
 

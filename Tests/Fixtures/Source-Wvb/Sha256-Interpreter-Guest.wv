@@ -1,9 +1,55 @@
 module Sourceˉwvbˉsha256ˉinterpreter profile portable;
 
-data Value: bytes = [97, 98, 99];
+data Abc: bytes = [97, 98, 99];
+data Repeatedˉa: bytes = [
+    97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97,
+    97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97,
+    97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97,
+    97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97,
+    97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97
+];
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu32ˉlittle(Left, Index)
+            != Bytesˉreadˉu32ˉlittle(Right, Index) {
+            return false;
+        }
+        Index = Index + 4u32;
+    }
+    return true;
+}
+
+fn Digestˉmatches(Value: bytes, Expected: text) -> bool {
+    return Bytesˉequal(
+        Textˉtoˉutf8(Bytesˉsha256ˉhex(Value)),
+        Textˉtoˉutf8(Expected)
+    );
+}
 
 export fn Main() -> i32 {
-    let Digest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Value));
-    if Bytesˉlength(Digest) != 64u32 { return 1; }
+    if !Digestˉmatches(
+        Bytesˉslice(Repeatedˉa, 0u32, 0u32),
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ) { return 1; }
+    if !Digestˉmatches(
+        Abc,
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    ) { return 2; }
+    if !Digestˉmatches(
+        Bytesˉslice(Repeatedˉa, 0u32, 55u32),
+        "9f4390f8d30c2dd92ec9f095b65e2b9ae9b0a925a5258e241c9f1e910f734318"
+    ) { return 3; }
+    if !Digestˉmatches(
+        Bytesˉslice(Repeatedˉa, 0u32, 56u32),
+        "b35439a4ac6f0948b6d6f9e3c6af0f5f590ce20f1bde7090ef7970686ec6738a"
+    ) { return 4; }
+    if !Digestˉmatches(
+        Repeatedˉa,
+        "635361c48bb9eab14198e76ea8ab7f1a41685d6ad62aa9146d301d4f17eb0ae0"
+    ) { return 5; }
     return 42;
 }
