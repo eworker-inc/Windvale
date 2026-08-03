@@ -1,0 +1,5 @@
+module WebAssemblyˉruntimeˉu16ˉguard profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    return Bytesˉfromˉu16ˉlittle(Bytesˉreadˉu32ˉlittle(Input, 0u32));
+}

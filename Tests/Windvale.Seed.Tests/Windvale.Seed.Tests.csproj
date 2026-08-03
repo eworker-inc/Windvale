@@ -279,5 +279,17 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Memory-Text-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Memory-Text-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Runtime-Values-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Runtime-Values-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Runtime-Concat-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Runtime-Concat-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Runtime-U16-Guard-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Runtime-U16-Guard-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Runtime-Arena-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Runtime-Arena-Main.wv" />
   </ItemGroup>
 </Project>

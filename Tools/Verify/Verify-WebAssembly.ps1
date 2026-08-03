@@ -26,6 +26,10 @@ $CallsWithControlSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/
 $CallsWithControlElseSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Calls-With-Control-Else-Main.wv'
 $MemoryBytesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Memory-Bytes-Main.wv'
 $MemoryTextSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Memory-Text-Main.wv'
+$RuntimeValuesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-Values-Main.wv'
+$RuntimeConcatSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-Concat-Main.wv'
+$RuntimeU16GuardSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-U16-Guard-Main.wv'
+$RuntimeArenaSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-Arena-Main.wv'
 $EngineVerifier = Join-Path $RepositoryRoot 'Tools/Verify/Verify-WebAssembly-Engine.mjs'
 $BackendWvb = Join-Path $ArtifactDirectory 'Windvale-WebAssembly.wvb'
 $SuccessWvb = Join-Path $ArtifactDirectory 'Checked-Add-Main.wvb'
@@ -45,6 +49,10 @@ $CallsWithControlWvb = Join-Path $ArtifactDirectory 'Calls-With-Control-Main.wvb
 $CallsWithControlElseWvb = Join-Path $ArtifactDirectory 'Calls-With-Control-Else-Main.wvb'
 $MemoryBytesWvb = Join-Path $ArtifactDirectory 'Memory-Bytes-Main.wvb'
 $MemoryTextWvb = Join-Path $ArtifactDirectory 'Memory-Text-Main.wvb'
+$RuntimeValuesWvb = Join-Path $ArtifactDirectory 'Runtime-Values-Main.wvb'
+$RuntimeConcatWvb = Join-Path $ArtifactDirectory 'Runtime-Concat-Main.wvb'
+$RuntimeU16GuardWvb = Join-Path $ArtifactDirectory 'Runtime-U16-Guard-Main.wvb'
+$RuntimeArenaWvb = Join-Path $ArtifactDirectory 'Runtime-Arena-Main.wvb'
 $SuccessWasm = Join-Path $ArtifactDirectory 'Checked-Add-Main.wasm'
 $OverflowWasm = Join-Path $ArtifactDirectory 'Checked-Add-Overflow-Main.wasm'
 $StraightWasm = Join-Path $ArtifactDirectory 'Straight-I32-Main.wasm'
@@ -62,6 +70,10 @@ $CallsWithControlWasm = Join-Path $ArtifactDirectory 'Calls-With-Control-Main.wa
 $CallsWithControlElseWasm = Join-Path $ArtifactDirectory 'Calls-With-Control-Else-Main.wasm'
 $MemoryBytesWasm = Join-Path $ArtifactDirectory 'Memory-Bytes-Main.wasm'
 $MemoryTextWasm = Join-Path $ArtifactDirectory 'Memory-Text-Main.wasm'
+$RuntimeValuesWasm = Join-Path $ArtifactDirectory 'Runtime-Values-Main.wasm'
+$RuntimeConcatWasm = Join-Path $ArtifactDirectory 'Runtime-Concat-Main.wasm'
+$RuntimeU16GuardWasm = Join-Path $ArtifactDirectory 'Runtime-U16-Guard-Main.wasm'
+$RuntimeArenaWasm = Join-Path $ArtifactDirectory 'Runtime-Arena-Main.wasm'
 
 New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
 
@@ -93,6 +105,10 @@ Invoke-Windvale @('compile', $CallsWithControlSource, '-o', $CallsWithControlWvb
 Invoke-Windvale @('compile', $CallsWithControlElseSource, '-o', $CallsWithControlElseWvb)
 Invoke-Windvale @('compile', $MemoryBytesSource, '-o', $MemoryBytesWvb)
 Invoke-Windvale @('compile', $MemoryTextSource, '-o', $MemoryTextWvb)
+Invoke-Windvale @('compile', $RuntimeValuesSource, '-o', $RuntimeValuesWvb)
+Invoke-Windvale @('compile', $RuntimeConcatSource, '-o', $RuntimeConcatWvb)
+Invoke-Windvale @('compile', $RuntimeU16GuardSource, '-o', $RuntimeU16GuardWvb)
+Invoke-Windvale @('compile', $RuntimeArenaSource, '-o', $RuntimeArenaWvb)
 
 $RunArguments = @(
     'run', $BackendWvb,
@@ -122,6 +138,10 @@ Invoke-Windvale ($RunArguments + @($CallsWithControlWvb, $CallsWithControlWasm))
 Invoke-Windvale ($RunArguments + @($CallsWithControlElseWvb, $CallsWithControlElseWasm))
 Invoke-Windvale ($RunArguments + @($MemoryBytesWvb, $MemoryBytesWasm))
 Invoke-Windvale ($RunArguments + @($MemoryTextWvb, $MemoryTextWasm))
+Invoke-Windvale ($RunArguments + @($RuntimeValuesWvb, $RuntimeValuesWasm))
+Invoke-Windvale ($RunArguments + @($RuntimeConcatWvb, $RuntimeConcatWasm))
+Invoke-Windvale ($RunArguments + @($RuntimeU16GuardWvb, $RuntimeU16GuardWasm))
+Invoke-Windvale ($RunArguments + @($RuntimeArenaWvb, $RuntimeArenaWasm))
 
 node $EngineVerifier `
     $SuccessWasm `
@@ -140,7 +160,11 @@ node $EngineVerifier `
     $CallsWithControlWasm `
     $CallsWithControlElseWasm `
     $MemoryBytesWasm `
-    $MemoryTextWasm
+    $MemoryTextWasm `
+    $RuntimeValuesWasm `
+    $RuntimeConcatWasm `
+    $RuntimeU16GuardWasm `
+    $RuntimeArenaWasm
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

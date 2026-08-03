@@ -1,0 +1,5 @@
+module WebAssemblyˉruntimeˉconcat profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    return Bytesˉconcat(Input, Input);
+}

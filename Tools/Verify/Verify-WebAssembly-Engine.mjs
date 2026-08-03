@@ -183,9 +183,45 @@ const EXPECTED = [
         abi: 3,
         kind: 2,
     },
+    {
+        name: "linear-memory runtime values",
+        path: process.argv[19],
+        sha256: "7bd5d2b0bc256503cd07dc300e528da38f8a09bcfec4c2b1007c1994db1b88f4",
+        bytes: 4878,
+        abi: 3,
+        kind: 1,
+        runtime: "values",
+    },
+    {
+        name: "linear-memory bounded concatenation",
+        path: process.argv[20],
+        sha256: "94533e9d01bdfcc606a3225ac28c774ecadd3cc0e0eccb02a7dba4f3fdb4ccb2",
+        bytes: 718,
+        abi: 3,
+        kind: 1,
+        runtime: "concat",
+    },
+    {
+        name: "linear-memory u16 construction guard",
+        path: process.argv[21],
+        sha256: "f312812fedae4c8dd45ffcb022301c1e85d7bdad4c71906a771cfc95333cde41",
+        bytes: 797,
+        abi: 3,
+        kind: 1,
+        runtime: "u16",
+    },
+    {
+        name: "linear-memory aggregate arena guard",
+        path: process.argv[22],
+        sha256: "0e37802a606ee67abd467ddc5da84f0d18807bb86b8bf497c4bdf0a41fa5a089",
+        bytes: 921,
+        abi: 3,
+        kind: 1,
+        runtime: "arena",
+    },
 ];
 
-if (process.argv.length !== 19) {
+if (process.argv.length !== 23) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -194,7 +230,8 @@ if (process.argv.length !== 19) {
             "<structured-control.wasm> <structured-control-else.wasm> " +
             "<sequential-if.wasm> <bounded-calls.wasm> <bounded-calls-overflow.wasm> " +
             "<calls-with-control.wasm> <calls-with-control-else.wasm> " +
-            "<memory-bytes.wasm> <memory-text.wasm>",
+            "<memory-bytes.wasm> <memory-text.wasm> <runtime-values.wasm> " +
+            "<runtime-concat.wasm> <runtime-u16.wasm> <runtime-arena.wasm>",
     );
 }
 
@@ -242,7 +279,7 @@ function requireMemoryResult(path, actual, expectedStatus, expectedInstructions,
     }
 }
 
-function verifyMemory(expected, module, exports, digest) {
+function verifyMemoryContract(expected, module, exports) {
     if (WebAssembly.Module.imports(module).length !== 0) {
         throw new Error(`${expected.path}: the memory module unexpectedly imports a host capability.`);
     }
@@ -275,7 +312,10 @@ function verifyMemory(expected, module, exports, digest) {
     if (!growthRejected || memory.buffer.byteLength !== 129 * 65_536) {
         throw new Error(`${expected.path}: the fixed memory unexpectedly grew.`);
     }
+}
 
+function verifyMemory(expected, module, exports, digest) {
+    verifyMemoryContract(expected, module, exports);
     const ordinary = expected.kind === 1
         ? Uint8Array.from([0x00, 0xFF, 0x01, 0x02, 0x03, 0x80, 0x40])
         : new TextEncoder().encode("Hello, 世界 🌬️");
@@ -387,6 +427,114 @@ function verifyMemory(expected, module, exports, digest) {
     );
 }
 
+function verifyRuntime(expected, module, exports, digest) {
+    verifyMemoryContract(expected, module, exports);
+    const capacity = exports["Windvale.input_capacity"].value;
+    const ordinary = Uint8Array.from([0xAA, 0x34, 0x12, 0x78, 0x56, 0x34, 0x12]);
+
+    if (expected.runtime === "values") {
+        const output = Uint8Array.from([
+            0x07, 0x00, 0x00, 0x00,
+            0xAA,
+            0xAA, 0x00, 0x00, 0x00,
+            0x34, 0x12,
+            0x34, 0x12, 0x78, 0x56,
+            0x78, 0x56, 0x34, 0x12,
+        ]);
+        requireMemoryResult(expected.path, runMemory(exports, ordinary, 155), 0, 155, output);
+        requireMemoryResult(expected.path, runMemory(exports, ordinary, 154), 3011, 154);
+        requireMemoryResult(expected.path, runMemory(exports, new Uint8Array(), 1_000), 3008, 26);
+    } else if (expected.runtime === "concat") {
+        const small = Uint8Array.from([1, 2, 3]);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, small, 10),
+            0,
+            10,
+            Uint8Array.from([1, 2, 3, 1, 2, 3]),
+        );
+        requireMemoryResult(expected.path, runMemory(exports, small, 9), 3011, 9);
+
+        const boundary = new Uint8Array(2_097_152);
+        const boundaryOutput = new Uint8Array(4_194_304);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, boundary, 10),
+            0,
+            10,
+            boundaryOutput,
+        );
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, new Uint8Array(2_097_153), 10),
+            3015,
+            7,
+        );
+    } else if (expected.runtime === "u16") {
+        const small = Uint8Array.from([0x34, 0x12, 0x00, 0x00]);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, small, 13),
+            0,
+            13,
+            Uint8Array.from([0x34, 0x12]),
+        );
+        requireMemoryResult(expected.path, runMemory(exports, small, 12), 3011, 12);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, Uint8Array.from([0x00, 0x00, 0x01, 0x00]), 13),
+            3016,
+            10,
+        );
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, Uint8Array.from([1, 2, 3]), 13),
+            3008,
+            7,
+        );
+    } else if (expected.runtime === "arena") {
+        const small = Uint8Array.from([2, 3]);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, small, 17),
+            0,
+            17,
+            Uint8Array.from([1, 2, 3]),
+        );
+        requireMemoryResult(expected.path, runMemory(exports, small, 16), 3011, 16);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, new Uint8Array(capacity - 1), 17),
+            3018,
+            14,
+        );
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, new Uint8Array(capacity), 17),
+            3015,
+            14,
+        );
+    } else {
+        throw new Error(`${expected.path}: unknown runtime-value verification profile.`);
+    }
+
+    requireMemoryResult(
+        expected.path,
+        {
+            status: exports["Windvale.run"](1_000, capacity + 1),
+            instructions: exports["Windvale.instructions"].value,
+            outputLength: exports["Windvale.output_length"].value,
+            output: new Uint8Array(),
+        },
+        3008,
+        0,
+    );
+    console.log(
+        `${expected.path}: ${expected.name}; ABI 3 runtime=${expected.runtime} ` +
+            `capacity=${capacity} SHA-256=${digest}`,
+    );
+}
+
 for (const expected of EXPECTED) {
     const bytes = readFileSync(expected.path);
     const digest = createHash("sha256").update(bytes).digest("hex");
@@ -411,7 +559,11 @@ for (const expected of EXPECTED) {
         throw new Error(`${expected.path}: execution ABI is not ${expected.abi}.`);
     }
     if (expected.abi === 3) {
-        verifyMemory(expected, module, exports, digest);
+        if (expected.runtime) {
+            verifyRuntime(expected, module, exports, digest);
+        } else {
+            verifyMemory(expected, module, exports, digest);
+        }
         continue;
     }
 

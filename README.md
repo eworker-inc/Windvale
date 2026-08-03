@@ -43,7 +43,7 @@ Experimental `windows-x64-console-v1` and `linux-x64-console-v1` targets now pac
 
 **[Open the Windvale Playground](https://windvale.ca/playground/)**
 
-The separate **[direct WebAssembly demo](https://windvale.ca/playground/wasm-demo/)** starts no Blazor or .NET runtime. It checks and executes one pinned, independently verified Windvale-generated artifact in the same disposable worker. The displayed source is read-only: artifact production and the editable compiler path still use Stage 0.
+The separate **[direct WebAssembly demo](https://windvale.ca/playground/wasm-demo/)** starts no Blazor or .NET runtime. It checks and executes one pinned, independently verified Windvale-generated artifact in the same disposable worker and accepts editable text input. Artifact production and the general source compiler path still use Stage 0.
 
 Run it locally:
 
@@ -53,7 +53,7 @@ dotnet run --project Tools/Windvale.Playground
 
 The [playground host specification](Specifications/Browser-Playground.md) defines its limits and non-claims. This is a browser host for the language, not a browser boot of Windvale OS and not yet an accepted permanent WebAssembly compiler target.
 
-The separate [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) proves the first lower layer in Windvale source: portable `.wv` code revalidates canonical WVB and lowers bounded scalar streams, loops, sequential `if`/`if/else` regions, and an acyclic direct-call graph to deterministic import-free Wasm. Execution ABI 1 preserves checked arithmetic and exact straight-line accounting; ABI 2 carries one exact instruction budget through control flow and callees and contains exhaustion as `WVR3011`. The playground executes selected output in a disposable worker, and its separate direct demo needs no .NET runtime; artifact production, verification, and the editable general path still use Stage 0.
+The separate [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) proves the first lower layer in Windvale source: portable `.wv` code revalidates canonical WVB and lowers bounded scalar streams, loops, sequential `if`/`if/else` regions, an acyclic direct-call graph, fixed UTF-8/byte buffers, and a straight-line primitive/bytes runtime to deterministic import-free Wasm. Execution ABI 1 preserves checked arithmetic, ABI 2 carries one exact instruction budget through control flow and callees, and ABI 3 adds fixed 4 MiB input/output regions with explicit range and allocation failures. The playground executes selected output in a disposable worker, and its separate direct demo needs no .NET runtime; artifact production, verification, and the general editable compiler path still use Stage 0.
 
 ## Quick start
 

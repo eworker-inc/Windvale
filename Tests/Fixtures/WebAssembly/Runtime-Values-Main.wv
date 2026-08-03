@@ -1,0 +1,21 @@
+module WebAssemblyˉruntimeˉvalues profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    let Ready: bool = true;
+    let Stopped: bool = false;
+    let Readyˉcopy: bool = Ready;
+    let Length: u32 = Bytesˉlength(Input);
+    let First: u8 = Bytesˉreadˉu8(Input, 0u32);
+    let Firstˉwide: u32 = U32ˉfromˉu8(First);
+    let Middle: bytes = Bytesˉslice(Input, 1u32, 4u32);
+    let Unsigned: u32 = Bytesˉreadˉu32ˉlittle(Middle, 0u32);
+    let Narrow: u32 = Bytesˉreadˉu16ˉlittle(Input, 1u32);
+    let Signed: i32 = Bytesˉreadˉi32ˉlittle(Input, 3u32);
+    var Output: bytes = Bytesˉfromˉu32ˉlittle(Length);
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu8(First));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Firstˉwide));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(Narrow));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Unsigned));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉi32ˉlittle(Signed));
+    return Output;
+}

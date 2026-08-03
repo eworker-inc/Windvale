@@ -1,6 +1,6 @@
 # Windvale experimental WebAssembly target
 
-- Status: Implemented locally through experimental profile 8 and cross-host qualified through profile 5, but not an accepted permanent target
+- Status: Implemented locally through experimental profile 9 and cross-host qualified through profile 5, but not an accepted permanent target
 - Target identifier: `wasm32-browser-v1-experimental`
 - WebAssembly binary version: 1
 - Portable input identity: canonical WVB 1.6
@@ -121,6 +121,20 @@ The module remains canonical WVB 1.6, portable, capability-free, and single-func
 
 This deliberately narrow identity profile establishes transport and validation semantics before general dynamic values. It does not yet lower arbitrary text or byte operations, calls, branches, allocation, records, or enums. `bytes` are opaque and may contain any octets. `text` input is validated inside the generated guest by a strict UTF-8 state machine that rejects truncation, invalid continuation ranges, overlong encodings, surrogate code points, and values above U+10FFFF.
 
+### Profile 9: bounded straight-line runtime values
+
+Profile 9 accepts one canonical portable, capability-free `Main(Input: bytes) -> bytes` function with:
+
+- zero through 255 nonparameter locals of type `i32`, `bool`, `u8`, `u32`, or `bytes`;
+- one through 16,384 code bytes, one through 4,096 instructions, and declared maximum operand-stack depth one through four;
+- `i32`, `bool`, `u8`, and `u32` constants; `local.load`; `local.store`; `pop`; and one final `return`;
+- `bytes.length`, `bytes.slice`, `bytes.read_u8`, `bytes.read_u16_little`, `bytes.read_u32_little`, `bytes.read_i32_little`, `u32.from_u8`, `bytes.concat`, `bytes.from_u8`, `bytes.from_u16_little`, `bytes.from_u32_little`, and `bytes.from_i32_little`; and
+- exact static operand types, in-range local indices, proof that every nonparameter local is stored before it is loaded, agreement with the declared maximum stack, and exactly one `bytes` value at the final return.
+
+Internally, generated code represents a bytes value as an `i64` descriptor with a low unsigned 32-bit pointer and high unsigned 32-bit length. The input value and its slices borrow storage; constructed values use a checked monotonic arena over the existing output window. Concatenation copies both inputs into one fresh extent. Fixed-width constructors store one, two, or four little-endian bytes in a fresh extent. The returned descriptor is copied to the output base before its length is published, so the internal descriptor and temporary layout do not cross the host ABI.
+
+Each bytes value is independently bounded to 4 MiB and aggregate construction is bounded by the same 4 MiB arena. Range errors return `WVR3008`; value-size overflow returns `WVR3015`; an out-of-range u16 constructor input returns `WVR3016`; aggregate arena exhaustion returns `WVR3018`; and instruction exhaustion retains `WVR3011`. Every failure leaves output length zero. Profile 9 does not yet compose these values with profile-3 arithmetic, profile-7 calls/control, general text operations, records, or enums.
+
 ## Profile 1 output module
 
 Successful lowering emits a WebAssembly binary version-1 module with these sections in ascending order:
@@ -232,7 +246,7 @@ The retained profile-7 true-route fixture defines `Add`, looping `Build`, and ex
 
 The matching false-route fixture has 722-byte WVB SHA-256 `77e65ba692c8abc87dbac4dfeba174f3afc9191ac784b47a65becae8f0df2752`. It calls `Add` from the `else` route, succeeds as `0/42/153`, returns `3011/0/152` one instruction below it, and emits a 2,729-byte artifact with SHA-256 `35d75c30ef03dbb693a976cfaa31405ce90ecca4d393c5e93de8953fcf4658da`.
 
-## Execution ABI 3 and profile 8 output
+## Execution ABI 3 and profiles 8 and 9 output
 
 Profile 8 emits an import-free WebAssembly binary version-1 module with one fixed, non-growable 129-page memory. Page zero is reserved. The host owns a 4 MiB input window beginning at byte 65,536; the guest owns a separate 4 MiB output window beginning at byte 4,259,840. The regions are disjoint, checked before access, and exactly fill the remaining memory.
 
@@ -240,7 +254,7 @@ The module exports these values in this exact order:
 
 | Export | WebAssembly kind | Contract |
 | --- | --- | --- |
-| `Windvale.run` | function `(i32, i32) -> i32` | Accepts instruction budget and input byte length; returns `0`, `3008`, `3011`, or `3014`. |
+| `Windvale.run` | function `(i32, i32) -> i32` | Accepts instruction budget and input byte length; returns `0` or a profile-defined Windvale status. Profiles 8 and 9 currently use `3008`, `3011`, `3014`, `3015`, `3016`, and `3018`. |
 | `Windvale.abi` | immutable `i32` global | Contains execution ABI version `3`. |
 | `Windvale.memory` | memory | The fixed 129-page linear memory. |
 | `Windvale.input_offset` | immutable `i32` global | Contains `65,536`. |
@@ -255,6 +269,8 @@ Before calling `Windvale.run`, a conforming host validates the export set, immut
 
 `WVR3008` reports a negative or over-capacity input length before any instruction is charged. `WVR3011` preserves the ABI-2 budget contract. `WVR3014` reports malformed text input before the first WVB instruction. The guest resets output length and instruction count before all validation and execution. A successful identity run charges four instructions and copies with WebAssembly `memory.copy`; budget three returns `3011` with empty output and three charged instructions. Memory outside the published successful output length may retain stale bytes and is never result evidence.
 
+Profile 9 additionally uses `WVR3008` for a slice or byte-read range failure, `WVR3015` when one constructed bytes value exceeds output capacity, `WVR3016` when a u16 constructor receives more than 65,535, and `WVR3018` when aggregate monotonic allocation exhausts the output arena. Every operation is metered before its validation or memory access, so the reported count includes the failing WVB operation. Only the successful final copy and length store publish output.
+
 The retained bytes fixture has 179-byte WVB SHA-256 `3d751ca734faed1832b4d33a9f0cfc605b695f3ae8156e3d431504798869c8d9`. It emits a 435-byte Wasm module with SHA-256:
 
 ```text
@@ -267,12 +283,21 @@ The retained text fixture has 178-byte WVB SHA-256 `c19463d24d65c1bc46dca48dcda8
 c3635b8df4ed9d471faad7e653e975662099c0a2336639586915ce50b768542d
 ```
 
+The retained profile-9 runtime fixture has 914-byte WVB SHA-256 `6436f97c0e9abf131cc3a503c4449104706aa66eb0292a282a978fb7a5c5e100`. It composes every admitted primitive family and byte operation, succeeds with a 19-byte result after 155 instructions, and emits a 4,878-byte Wasm module with SHA-256:
+
+```text
+7bd5d2b0bc256503cd07dc300e528da38f8a09bcfec4c2b1007c1994db1b88f4
+```
+
+Focused concatenation, u16-guard, and aggregate-arena artifacts have respective deterministic Wasm identities `94533e9d01bdfcc606a3225ac28c774ecadd3cc0e0eccb02a7dba4f3fdb4ccb2`, `f312812fedae4c8dd45ffcb022301c1e85d7bdad4c71906a771cfc95333cde41`, and `0e37802a606ee67abd467ddc5da84f0d18807bb86b8bf497c4bdf0a41fa5a089`.
+
 ## Limits and failure behavior
 
 - Input WVB is limited to the current 4 MiB immutable-`bytes` value and hosted-file boundary. This is narrower than WVB's general 16 MiB module limit.
 - Profiles 3 through 5 are independently bounded to 256 locals, 16,384 code bytes, and 4,096 instructions. Profile 3 admits maximum operand-stack depth through 256; profiles 4 and 5 require exactly two.
 - Profiles 6 and 7 admit two through eight functions, zero through two parameters per function, 256 combined parameters and locals per function, stack depth one or two, and the same per-function code and instruction bounds; aggregate code and instruction limits are 32,768 bytes and 8,192 instructions. Profile 7 additionally admits compiler-produced `bool` locals.
 - Profile 8 admits one exact text or bytes identity function and independently limits both input and output to 4,194,304 bytes in fixed disjoint memory windows.
+- Profile 9 admits one straight-line bytes function, at most 255 nonparameter primitive/bytes locals, stack depth four, 16,384 code bytes, and 4,096 instructions. Each bytes value and the aggregate output arena are independently limited to 4,194,304 bytes.
 - Encoded WebAssembly output is limited to 65,536 bytes for every experimental profile.
 - All offset and length checks precede reads or additions that depend on untrusted values.
 - Failure returns a typed status and an empty output value.
@@ -304,7 +329,9 @@ Profile 7 additionally requires the profile-5 edge and join reconstruction and p
 
 Profile 8 additionally requires independent reconstruction of the exact function shape, type, memory declaration, export order, layout globals, wrapper, meter, UTF-8 validator, and memory copy; empty, ordinary, Unicode, arbitrary-byte, and exact-4-MiB boundary round trips; malformed UTF-8 agreement with an independent strict decoder; input-length and budget failures with invalid output descriptors; fixed-memory growth rejection; and deterministic repeat behavior.
 
-On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles seventeen profile-2 through profile-8 fixtures, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine. The ABI-2 cases require exact success, one-instruction-short exhaustion, reset across repeated runs, shared-budget call execution, calls within both conditional routes, callee-overflow propagation, and nonterminating-loop containment. The ABI-3 cases additionally exercise exact-capacity bytes, curated UTF-8 boundaries, and deterministic randomized agreement with Node.js's fatal UTF-8 decoder.
+Profile 9 additionally requires independent reconstruction of source local types, definite initialization, operand types, the complete generated local and opcode stream, exact meter count, fixed memory, descriptor-only internal locals, ordered exports, final output normalization, and bulk-memory operations. Execution evidence must cover every admitted value/byte operation, reference-runtime agreement, deterministic repeat output, one-instruction-short exhaustion, read and slice range failures, exact 4 MiB value success, `WVR3015` one byte above it, u16 success and `WVR3016`, distinct aggregate `WVR3018`, invalid input lengths before metering, and fixed-memory growth rejection.
+
+On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles twenty-one profile-2 through profile-9 fixtures, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine. The ABI-2 cases require exact success, one-instruction-short exhaustion, reset across repeated runs, shared-budget call execution, calls within both conditional routes, callee-overflow propagation, and nonterminating-loop containment. The ABI-3 cases additionally exercise exact-capacity bytes, curated UTF-8 boundaries, deterministic randomized agreement with Node.js's fatal UTF-8 decoder, general byte construction, and distinct value, narrowing, range, and aggregate-allocation failures.
 
 Exact profile-4 implementation commit `1342f63bc7eaae17a526ca440b075c2abf3c3b31` passed GitHub [Verify run 30770158910](https://github.com/eworker-inc/Windvale/actions/runs/30770158910). Its Windows and digest-pinned Debian jobs each passed the complete repository verifier with zero-warning builds, all 68 Seed tests, and all 25 OS tests. This establishes deterministic equality for the retained profile-4 WVB and WebAssembly identities and the exact `0/42/157`, `3011/0/156`, and nonterminating `3011/0/50` execution evidence on both hosts.
 
@@ -324,6 +351,8 @@ The exact implementation commit also passed GitHub [Deploy homepage run 30770158
 
 [Decision 0123](../Documents/Decisions/0123-Versioned-WebAssembly-Linear-Memory-And-Utf8-Buffers.md) advances the selector, shared worker, and .NET-free page locally to profile 8 and execution ABI 3. Node.js validates arbitrary-byte and strict-UTF-8 round trips through fixed 4 MiB regions, exact-boundary copies, memory non-growth, deterministic budget and range failures, and 20,000 generated byte sequences against an independent fatal UTF-8 decoder. On 2026-08-02, a Chromium-based in-app browser round-trips both default and edited multilingual values, reports exact `0/4` success and `3011/3` exhaustion, zero .NET/Blazor requests, and no console warning or error. Cross-host and cross-browser qualification remain pending.
 
+[Decision 0128](../Documents/Decisions/0128-Bounded-WebAssembly-Runtime-Values.md) advances the selector locally to profile 9 while retaining ABI 3. The independent C# decoder and Node.js engine cover primitive and bytes locals, byte reads and slices, widening, little-endian construction, concatenation, output normalization, exact metering, deterministic identities, an exact 4 MiB result, and distinct `WVR3008`, `WVR3011`, `WVR3015`, `WVR3016`, and `WVR3018` failures. The static page remains on the profile-8 text artifact; cross-host and cross-browser qualification remain pending.
+
 ## Non-claims
 
 This profile does not establish:
@@ -332,11 +361,11 @@ This profile does not establish:
 - a direct source-to-WebAssembly compiler;
 - a general WVB-to-WebAssembly backend;
 - a Windvale-native general WVB verifier or interpreter;
-- recursion, function values, indirect calls, nested or overlapping control-flow regions, `break`, `continue`, arbitrary or unbounded instruction streams, general text or bytes operations beyond the two identity shapes, other scalar families, records, enums, memory allocation, collection, or capabilities in WebAssembly;
+- recursion, function values, indirect calls, nested or overlapping control-flow regions, `break`, `continue`, arbitrary or unbounded instruction streams, general text operations beyond identity, composition of runtime descriptors with scalar arithmetic or structured calls/control, records, enums, reclaiming allocation, collection, or capabilities in WebAssembly;
 - compilation of the Windvale compiler itself to WebAssembly;
 - replacement of the .NET playground path; or
 - production browser isolation.
 
 ## Next extension boundary
 
-The next backend slice should implement the compiler-required scalar, text, bytes, record, enum, and bounded allocation runtime over ABI 3, beginning with representative operations whose reference semantics and resource failures can be compared exactly. Nested regions are an alternative semantic extension. Recursion, indirect calls, `break`, `continue`, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, the Stage 0 compiler, verifier, `.wv` lowerer execution, and fallback interpreter should move off the UI thread before the playground is treated as hardened against hostile inputs.
+The next backend slice should use profile 9's byte reader and construction foundation to implement the first Windvale-native WVB envelope verifier, while adding only the scalar arithmetic/control operations that a measured verifier fixture requires. General text construction, records, and enums remain the rest of the compiler-runtime value gate. Nested regions are an alternative semantic extension. Recursion, indirect calls, `break`, `continue`, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, the Stage 0 compiler, verifier, `.wv` lowerer execution, and fallback interpreter should move off the UI thread before the playground is treated as hardened against hostile inputs.

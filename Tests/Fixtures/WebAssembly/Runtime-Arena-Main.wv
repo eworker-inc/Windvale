@@ -1,0 +1,6 @@
+module WebAssemblyˉruntimeˉarena profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    let Prefix: bytes = Bytesˉfromˉu8(1u8);
+    return Bytesˉconcat(Prefix, Input);
+}
