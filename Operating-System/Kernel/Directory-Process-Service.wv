@@ -1,0 +1,15 @@
+module Directoryˉprocessˉservice profile portable;
+
+// The statically constructed directory provider owns one immutable snapshot
+// and one receive/reply endpoint. The WVA seam validates and copies the first
+// fixed WVDQ/WVDR exchange; this Windvale policy fixes the provider identity
+// and the terminal result consumed by the process contract.
+export fn Main() -> i32 {
+    let Directoryˉresourceˉid: u32 = 5u32;
+    let Directoryˉendpointˉreference: u32 = 65537u32;
+    let Directoryˉprocessˉreference: u32 = 65539u32;
+    if Directoryˉresourceˉid != 5u32 { return 0; }
+    if Directoryˉendpointˉreference != 65537u32 { return 0; }
+    if Directoryˉprocessˉreference != 65539u32 { return 0; }
+    return 6;
+}

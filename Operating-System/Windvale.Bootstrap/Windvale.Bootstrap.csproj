@@ -17,6 +17,8 @@
     <EmbeddedResource Include="../Kernel/Hello-Service-Fault.wv" LogicalName="Windvale.Os.Kernel.Hello-Service-Fault.wv" />
     <EmbeddedResource Include="../Kernel/Init-Resource-Service.wv" LogicalName="Windvale.Os.Kernel.Init-Resource-Service.wv" />
     <EmbeddedResource Include="../Kernel/Init-Resource-Service-Shim.wva" LogicalName="Windvale.Os.Kernel.Init-Resource-Service-Shim.wva" />
+    <EmbeddedResource Include="../Kernel/Directory-Process-Service.wv" LogicalName="Windvale.Os.Kernel.Directory-Process-Service.wv" />
+    <EmbeddedResource Include="../Kernel/Directory-Process-Service-Shim.wva" LogicalName="Windvale.Os.Kernel.Directory-Process-Service-Shim.wva" />
     <EmbeddedResource Include="../Kernel/Native-Wvb-Probe.wv" LogicalName="Windvale.Os.Kernel.Native-Wvb-Probe.wv" />
     <EmbeddedResource Include="../Kernel/Process-Foundation.wv" LogicalName="Windvale.Os.Kernel.Process-Foundation.wv" />
     <EmbeddedResource Include="../Kernel/Process-User-Fault-Shim.wva" LogicalName="Windvale.Os.Kernel.Process-User-Fault-Shim.wva" />

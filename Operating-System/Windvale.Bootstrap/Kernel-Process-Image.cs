@@ -19,6 +19,11 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     ImmutableArray<byte> Initˉserviceˉshimˉobjectˉbytes,
     ImmutableArray<byte> Initˉserviceˉimageˉbytes,
     ImmutableArray<byte> Initˉserviceˉdigest,
+    ImmutableArray<byte> Directoryˉserviceˉmoduleˉbytes,
+    ImmutableArray<byte> Directoryˉserviceˉnativeˉobjectˉbytes,
+    ImmutableArray<byte> Directoryˉserviceˉshimˉobjectˉbytes,
+    ImmutableArray<byte> Directoryˉserviceˉimageˉbytes,
+    ImmutableArray<byte> Directoryˉserviceˉdigest,
     ImmutableArray<byte> Interpreterˉmoduleˉbytes,
     ImmutableArray<byte> Interpreterˉnativeˉobjectˉbytes,
     ImmutableArray<byte> Interpreterˉdigest,
@@ -42,6 +47,9 @@ public static class Kernelˉprocessˉimage
     private const string POLICY_RESOURCE = "Windvale.Os.Kernel.Process-Foundation.wv";
     private const string INIT_SERVICE_RESOURCE = "Windvale.Os.Kernel.Init-Resource-Service.wv";
     private const string INIT_SERVICE_SHIM_RESOURCE = "Windvale.Os.Kernel.Init-Resource-Service-Shim.wva";
+    private const string DIRECTORY_SERVICE_RESOURCE = "Windvale.Os.Kernel.Directory-Process-Service.wv";
+    private const string DIRECTORY_SERVICE_SHIM_RESOURCE =
+        "Windvale.Os.Kernel.Directory-Process-Service-Shim.wva";
     private const string INTERPRETER_RESOURCE = "Windvale.Os.Runtime.Bytecode-Interpreter.wv";
     private const string BOOT_RESOURCE_SERVICE_RESOURCE = "Windvale.Os.Runtime.Boot-Resource-Service.wva";
     private const string BOOT_RESOURCE_SERVICE_SYMBOL = "Windvale_os_boot_resource_read_bytes";
@@ -92,7 +100,7 @@ public static class Kernelˉprocessˉimage
             Serviceˉassembly.Objectˉbytes,
             Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.INIT_SERVICE_MAIN_SYMBOL,
-            11);
+            9);
         var Serviceˉlink = Linkˉcompiler.Link(
             [new(Serviceˉassembly.Objectˉbytes), new(Serviceˉobject)],
             new(0, Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL));
@@ -108,6 +116,55 @@ public static class Kernelˉprocessˉimage
         {
             throw new InvalidOperationException(
                 $"The init/resource service image has an unexpected WVB identity: {Serviceˉidentity}.");
+        }
+
+        var Directoryˉserviceˉcompilation = Seedˉcompiler.Compile(
+            Loadˉsource(DIRECTORY_SERVICE_RESOURCE), "Directory-Process-Service.wv");
+        if (!Directoryˉserviceˉcompilation.Success)
+        {
+            throw new InvalidOperationException(
+                $"The Windvale directory process service did not compile: " +
+                Directoryˉserviceˉcompilation.Diagnostics[0]);
+        }
+        var Directoryˉserviceˉmodule = Moduleˉcodec.Readˉandˉverify(
+            Directoryˉserviceˉcompilation.Moduleˉbytes.AsSpan());
+        Verifyˉdirectoryˉservice(Directoryˉserviceˉmodule);
+        var Directoryˉserviceˉnative = X64ˉnativeˉbackend.Compile(Directoryˉserviceˉmodule);
+        var Directoryˉserviceˉobject = Kernelˉwvbˉadmission.Renameˉmainˉexport(
+            Nativeˉobjectˉsink.Writeˉwvo(Directoryˉserviceˉnative.Fragment),
+            Kernelˉprocessˉcontract.DIRECTORY_SERVICE_MAIN_SYMBOL);
+        var Directoryˉserviceˉassembly = Assemblyˉcompiler.Assemble(
+            Loadˉsource(DIRECTORY_SERVICE_SHIM_RESOURCE));
+        if (!Directoryˉserviceˉassembly.Success)
+        {
+            throw new InvalidOperationException(
+                $"The directory process shim did not assemble: " +
+                $"{Directoryˉserviceˉassembly.Diagnostics[0].Code}: " +
+                Directoryˉserviceˉassembly.Diagnostics[0].Message);
+        }
+        Verifyˉshim(
+            Directoryˉserviceˉassembly.Objectˉbytes,
+            Kernelˉprocessˉcontract.DIRECTORY_SERVICE_ENTRY_SYMBOL,
+            Kernelˉprocessˉcontract.DIRECTORY_SERVICE_MAIN_SYMBOL,
+            5);
+        var Directoryˉserviceˉlink = Linkˉcompiler.Link(
+            [new(Directoryˉserviceˉassembly.Objectˉbytes), new(Directoryˉserviceˉobject)],
+            new(0, Kernelˉprocessˉcontract.DIRECTORY_SERVICE_ENTRY_SYMBOL));
+        Verifyˉlinkedˉimage(
+            Directoryˉserviceˉlink,
+            "directory process service",
+            Kernelˉprocessˉcontract.DIRECTORY_CODE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES);
+        var Directoryˉserviceˉdigest = SHA256.HashData(
+            Directoryˉserviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
+        var Directoryˉserviceˉidentity = Convert.ToHexString(
+            Directoryˉserviceˉdigest.AsSpan());
+        if (!Directoryˉserviceˉidentity.Equals(
+                "33B0E425BD6E2A1CD6AE8F95D4645748A6031B93684A9B1AC4D0E56E8408BEF7",
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"The directory process service has an unexpected WVB identity: " +
+                $"{Directoryˉserviceˉidentity}.");
         }
 
         var Interpreterˉsource = Loadˉsource(INTERPRETER_RESOURCE);
@@ -243,6 +300,11 @@ public static class Kernelˉprocessˉimage
             Serviceˉassembly.Objectˉbytes,
             Serviceˉlink.Imageˉbytes,
             Serviceˉdigest,
+            Directoryˉserviceˉcompilation.Moduleˉbytes,
+            Directoryˉserviceˉobject,
+            Directoryˉserviceˉassembly.Objectˉbytes,
+            Directoryˉserviceˉlink.Imageˉbytes,
+            Directoryˉserviceˉdigest,
             Interpreterˉcompilation.Moduleˉbytes,
             Interpreterˉobject,
             Interpreterˉdigest,
@@ -372,8 +434,8 @@ public static class Kernelˉprocessˉimage
                 Name: "Processˉfoundation",
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
-                Data.Length: 12,
-                Functions.Length: 8,
+                Data.Length: 14,
+                Functions.Length: 10,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||
@@ -438,6 +500,25 @@ public static class Kernelˉprocessˉimage
         {
             throw new InvalidOperationException(
                 $"The Windvale init/resource service violated '{Kernelˉprocessˉcontract.TARGET_NAME}'.");
+        }
+    }
+
+    private static void Verifyˉdirectoryˉservice(Verifiedˉmodule module)
+    {
+        if (module.Module is not
+            {
+                Name: "Directoryˉprocessˉservice",
+                Profile: Moduleˉprofile.Portable,
+                Capabilities.Length: 0,
+                Data.Length: 0,
+                Functions.Length: 1,
+                Exports.Length: 1,
+                Types.Length: 0,
+            })
+        {
+            throw new InvalidOperationException(
+                $"The Windvale directory process service violated " +
+                $"'{Kernelˉprocessˉcontract.TARGET_NAME}'.");
         }
     }
 

@@ -1,8 +1,8 @@
 module Processˉfoundation profile portable;
 
 // Exact SHA-256 identities of the CPL3 interpreter, admitted WVB, execution
-// budget, Windvale init owner, package-resource store, and directory snapshot.
-// All six match before pages are published.
+// budget, Windvale resource owner, Windvale directory owner, package-resource
+// store, and directory snapshot. All seven match before pages are published.
 data Interpreterˉdigest: bytes = [54, 105, 233, 77, 113, 43, 213, 167, 143, 0, 97, 226, 157, 128, 84, 237, 59, 84, 182, 135, 239, 201, 80, 129, 20, 247, 155, 183, 138, 168, 131, 47];
 data Expectedˉinterpreterˉdigest: bytes = [54, 105, 233, 77, 113, 43, 213, 167, 143, 0, 97, 226, 157, 128, 84, 237, 59, 84, 182, 135, 239, 201, 80, 129, 20, 247, 155, 183, 138, 168, 131, 47];
 data Programˉdigest: bytes = [156, 207, 237, 5, 9, 232, 75, 252, 99, 151, 156, 109, 193, 49, 112, 193, 71, 98, 239, 189, 170, 68, 139, 76, 88, 148, 50, 95, 49, 170, 119, 97];
@@ -11,6 +11,8 @@ data Budgetˉdigest: bytes = [173, 215, 242, 164, 132, 63, 140, 81, 44, 14, 40, 
 data Expectedˉbudgetˉdigest: bytes = [173, 215, 242, 164, 132, 63, 140, 81, 44, 14, 40, 117, 84, 101, 129, 219, 17, 185, 186, 34, 126, 224, 8, 181, 247, 25, 223, 172, 177, 37, 222, 118];
 data Serviceˉdigest: bytes = [5, 84, 216, 3, 64, 68, 11, 248, 137, 95, 11, 240, 102, 211, 85, 218, 131, 51, 119, 145, 245, 64, 79, 43, 114, 202, 109, 162, 20, 102, 68, 103];
 data Expectedˉserviceˉdigest: bytes = [5, 84, 216, 3, 64, 68, 11, 248, 137, 95, 11, 240, 102, 211, 85, 218, 131, 51, 119, 145, 245, 64, 79, 43, 114, 202, 109, 162, 20, 102, 68, 103];
+data Directoryˉserviceˉdigest: bytes = [51, 176, 228, 37, 189, 110, 42, 28, 214, 174, 143, 149, 212, 100, 87, 72, 166, 3, 27, 147, 104, 74, 155, 26, 196, 208, 229, 110, 132, 8, 190, 247];
+data Expectedˉdirectoryˉserviceˉdigest: bytes = [51, 176, 228, 37, 189, 110, 42, 28, 214, 174, 143, 149, 212, 100, 87, 72, 166, 3, 27, 147, 104, 74, 155, 26, 196, 208, 229, 110, 132, 8, 190, 247];
 data Storeˉdigest: bytes = [224, 108, 184, 139, 201, 124, 138, 140, 132, 19, 196, 118, 196, 30, 200, 110, 175, 184, 209, 238, 63, 171, 13, 174, 232, 227, 181, 14, 120, 128, 35, 184];
 data Expectedˉstoreˉdigest: bytes = [224, 108, 184, 139, 201, 124, 138, 140, 132, 19, 196, 118, 196, 30, 200, 110, 175, 184, 209, 238, 63, 171, 13, 174, 232, 227, 181, 14, 120, 128, 35, 184];
 data Directoryˉsnapshotˉdigest: bytes = [15, 121, 58, 65, 167, 1, 36, 11, 156, 244, 17, 121, 218, 250, 37, 35, 132, 180, 60, 210, 50, 20, 100, 111, 240, 33, 210, 69, 101, 124, 35, 90];
@@ -33,9 +35,10 @@ fn Hasˉserviceˉendpoint(
     Rights: u32,
     Expectedˉrights: u32,
     Participantˉreference: u32,
-    Expectedˉparticipantˉreference: u32
+    Expectedˉparticipantˉreference: u32,
+    Expectedˉslot: u32
 ) -> bool {
-    if Slot != 0u32 { return false; }
+    if Slot != Expectedˉslot { return false; }
     if Generation != 1u32 { return false; }
     if Rights != Expectedˉrights { return false; }
     if Participantˉreference != Expectedˉparticipantˉreference { return false; }
@@ -43,43 +46,84 @@ fn Hasˉserviceˉendpoint(
 }
 
 fn Hasˉendpointˉlifecycleˉcontract() -> bool {
-    let Endpointˉreference: u32 = 65536u32;
+    let Resourceˉendpointˉreference: u32 = 65536u32;
+    let Directoryˉendpointˉreference: u32 = 65537u32;
     let Endpointˉkind: u32 = 1u32;
     let Endpointˉcapacity: u32 = 1u32;
-    let Providerˉreference: u32 = 65537u32;
+    let Resourceˉproviderˉreference: u32 = 65537u32;
+    let Directoryˉproviderˉreference: u32 = 65539u32;
     var Clientˉreference: u32 = 65538u32;
     var Endpointˉstate: u32 = 1u32;
-    var Resolutionˉcount: u32 = 0u32;
-    var Closeˉcount: u32 = 0u32;
-    var Providerˉstatus: u32 = 0u32;
+    var Resourceˉresolutions: u32 = 0u32;
+    var Directoryˉresolutions: u32 = 0u32;
+    var Resourceˉcloseˉcount: u32 = 0u32;
+    var Directoryˉcloseˉcount: u32 = 0u32;
 
-    if Endpointˉreference != 65536u32 { return false; }
+    if Resourceˉendpointˉreference != 65536u32 { return false; }
+    if Directoryˉendpointˉreference != 65537u32 { return false; }
     if Endpointˉkind != 1u32 { return false; }
     if Endpointˉcapacity != 1u32 { return false; }
-    if Providerˉreference != 65537u32 { return false; }
+    if Resourceˉproviderˉreference != 65537u32 { return false; }
+    if Directoryˉproviderˉreference != 65539u32 { return false; }
     if Clientˉreference != 65538u32 { return false; }
     if Endpointˉstate != 1u32 { return false; }
 
-    // Five init operations and three client operations resolve through the
-    // object before generation 1 is terminal. Rebinding changes only the
-    // client process reference; the endpoint identity and provider persist.
-    Resolutionˉcount = 8u32;
+    // One resource generation performs six endpoint resolutions; one
+    // directory generation performs three. Rebinding changes only the client
+    // process reference while both endpoint identities and providers persist.
+    Resourceˉresolutions = 6u32;
+    Directoryˉresolutions = 3u32;
     Clientˉreference = 131074u32;
-    if Resolutionˉcount != 8u32 { return false; }
+    if Resourceˉresolutions != 6u32 { return false; }
+    if Directoryˉresolutions != 3u32 { return false; }
     if Clientˉreference != 131074u32 { return false; }
 
-    // The same operation shape resolves eight more times for generation 2.
-    // Provider exit then closes the endpoint exactly once without exposing the
-    // retained channel address to either process.
-    Resolutionˉcount = 16u32;
+    Resourceˉresolutions = 12u32;
+    Directoryˉresolutions = 6u32;
     Endpointˉstate = 2u32;
-    Closeˉcount = Closeˉcount + 1u32;
-    Providerˉstatus = 1u32;
-    if Resolutionˉcount != 16u32 { return false; }
+    Resourceˉcloseˉcount = Resourceˉcloseˉcount + 1u32;
+    Directoryˉcloseˉcount = Directoryˉcloseˉcount + 1u32;
+    if Resourceˉresolutions != 12u32 { return false; }
+    if Directoryˉresolutions != 6u32 { return false; }
     if Endpointˉstate != 2u32 { return false; }
-    if Closeˉcount != 1u32 { return false; }
-    if Providerˉstatus != 1u32 { return false; }
+    if Resourceˉcloseˉcount != 1u32 { return false; }
+    if Directoryˉcloseˉcount != 1u32 { return false; }
     return true;
+}
+
+fn Isˉrunnable(Processˉstate: u32, Threadˉstate: u32) -> bool {
+    if Processˉstate != 1u32 {
+        if Processˉstate != 2u32 { return false; }
+    }
+    return Threadˉstate == 1u32;
+}
+
+fn Selectˉnextˉrunnable(
+    Initˉprocess: u32,
+    Initˉthread: u32,
+    Clientˉprocess: u32,
+    Clientˉthread: u32,
+    Directoryˉprocess: u32,
+    Directoryˉthread: u32,
+    Cursor: u32
+) -> u32 {
+    if Cursor > 2u32 { return 0u32; }
+    if Cursor == 0u32 {
+        if Isˉrunnable(Initˉprocess, Initˉthread) { return 1u32; }
+        if Isˉrunnable(Clientˉprocess, Clientˉthread) { return 2u32; }
+        if Isˉrunnable(Directoryˉprocess, Directoryˉthread) { return 3u32; }
+    }
+    if Cursor == 1u32 {
+        if Isˉrunnable(Clientˉprocess, Clientˉthread) { return 2u32; }
+        if Isˉrunnable(Directoryˉprocess, Directoryˉthread) { return 3u32; }
+        if Isˉrunnable(Initˉprocess, Initˉthread) { return 1u32; }
+    }
+    if Cursor == 2u32 {
+        if Isˉrunnable(Directoryˉprocess, Directoryˉthread) { return 3u32; }
+        if Isˉrunnable(Initˉprocess, Initˉthread) { return 1u32; }
+        if Isˉrunnable(Clientˉprocess, Clientˉthread) { return 2u32; }
+    }
+    return 0u32;
 }
 
 fn Hasˉresourceˉgeneration(
@@ -182,11 +226,11 @@ fn Hasˉserviceˉfailureˉcontract() -> bool {
     if Serviceˉthreadˉstate != 4u32 { return false; }
     if Serviceˉfaultˉvector != 13u32 { return false; }
 
-    // Grant, receive, reply, receive, and the two client calls all resolved
-    // through the still-open provider endpoint before the service trapped.
-    Endpointˉresolutions = 6u32;
+    // The directory provider receive and client call resolve through the
+    // still-open directory endpoint before that provider traps.
+    Endpointˉresolutions = 2u32;
     if Endpointˉstate != 1u32 { return false; }
-    if Endpointˉresolutions != 6u32 { return false; }
+    if Endpointˉresolutions != 2u32 { return false; }
 
     // Closing the failed service peer clears every transient field before the
     // waiting client is resumed with the transport-level peer-fault sentinel.
@@ -196,7 +240,7 @@ fn Hasˉserviceˉfailureˉcontract() -> bool {
     Retainedˉserviceˉdestination = 0u32;
     Retainedˉclientˉdestination = 0u32;
     Peerˉstatus = 2u32;
-    Peerˉprocess = 1u32;
+    Peerˉprocess = 3u32;
     Closeˉcount = Closeˉcount + 1u32;
     Endpointˉstate = 2u32;
     Endpointˉcloseˉcount = Endpointˉcloseˉcount + 1u32;
@@ -208,7 +252,7 @@ fn Hasˉserviceˉfailureˉcontract() -> bool {
     if Retainedˉserviceˉdestination != 0u32 { return false; }
     if Retainedˉclientˉdestination != 0u32 { return false; }
     if Peerˉstatus != 2u32 { return false; }
-    if Peerˉprocess != 1u32 { return false; }
+    if Peerˉprocess != 3u32 { return false; }
     if Closeˉcount != 1u32 { return false; }
     if Endpointˉstate != 2u32 { return false; }
     if Endpointˉcloseˉcount != 1u32 { return false; }
@@ -244,42 +288,60 @@ export fn Main() -> i32 {
     if !Hasˉidentity(Programˉdigest, Expectedˉprogramˉdigest) { return 0; }
     if !Hasˉidentity(Budgetˉdigest, Expectedˉbudgetˉdigest) { return 0; }
     if !Hasˉidentity(Serviceˉdigest, Expectedˉserviceˉdigest) { return 0; }
+    if !Hasˉidentity(
+        Directoryˉserviceˉdigest,
+        Expectedˉdirectoryˉserviceˉdigest
+    ) { return 0; }
     if !Hasˉidentity(Storeˉdigest, Expectedˉstoreˉdigest) { return 0; }
     if !Hasˉidentity(
         Directoryˉsnapshotˉdigest,
         Expectedˉdirectoryˉsnapshotˉdigest
     ) { return 0; }
 
-    // Two address spaces and threads share one kernel-owned versioned,
-    // format-blind capacity-one channel for ordered resource, directory, and
-    // result exchanges. Init owns one exact atomic two-resource grant right.
+    // Three address spaces and threads use two kernel-owned, format-blind,
+    // capacity-one service endpoints. Init owns the resource channel and one
+    // exact atomic two-resource grant; directory owns the snapshot channel.
     let Initˉprocessˉid: u32 = 1u32;
     let Clientˉprocessˉid: u32 = 2u32;
-    let Initˉmemoryˉpages: u32 = 9u32;
+    let Directoryˉprocessˉid: u32 = 3u32;
+    let Initˉmemoryˉpages: u32 = 8u32;
+    let Directoryˉmemoryˉpages: u32 = 6u32;
     let Interpreterˉmemoryˉpages: u32 = 120u32;
     let Initˉinstructionˉbudget: u32 = 64u32;
     let Interpreterˉinstructionˉbudget: u32 = 189114u32;
     let Interpreterˉcallˉdepth: u32 = 5u32;
     let Initˉprofile: u32 = 2u32;
     let Interpreterˉprofile: u32 = 7u32;
-    let Handleˉbudget: u32 = 1u32;
-    let Initˉsyscallˉbudget: u32 = 11u32;
+    let Providerˉhandleˉbudget: u32 = 1u32;
+    let Clientˉhandleˉbudget: u32 = 2u32;
+    let Initˉsyscallˉbudget: u32 = 9u32;
+    let Directoryˉsyscallˉbudget: u32 = 5u32;
     let Interpreterˉsyscallˉbudget: u32 = 4u32;
     if Initˉprocessˉid != 1u32 { return 0; }
     if Clientˉprocessˉid != 2u32 { return 0; }
-    if Initˉmemoryˉpages != 9u32 { return 0; }
+    if Directoryˉprocessˉid != 3u32 { return 0; }
+    if Initˉmemoryˉpages != 8u32 { return 0; }
+    if Directoryˉmemoryˉpages != 6u32 { return 0; }
     if Interpreterˉmemoryˉpages != 120u32 { return 0; }
     if Initˉinstructionˉbudget != 64u32 { return 0; }
     if Interpreterˉinstructionˉbudget != 189114u32 { return 0; }
     if Interpreterˉcallˉdepth != 5u32 { return 0; }
     if Initˉprofile != 2u32 { return 0; }
     if Interpreterˉprofile != 7u32 { return 0; }
-    if Handleˉbudget != 1u32 { return 0; }
-    if Initˉsyscallˉbudget != 11u32 { return 0; }
+    if Providerˉhandleˉbudget != 1u32 { return 0; }
+    if Clientˉhandleˉbudget != 2u32 { return 0; }
+    if Initˉsyscallˉbudget != 9u32 { return 0; }
+    if Directoryˉsyscallˉbudget != 5u32 { return 0; }
     if Interpreterˉsyscallˉbudget != 4u32 { return 0; }
-    if !Hasˉserviceˉendpoint(0u32, 1u32, 46u32, 46u32, 65537u32, 65537u32) { return 0; }
-    if !Hasˉserviceˉendpoint(0u32, 1u32, 17u32, 17u32, 65538u32, 65538u32) { return 0; }
+    if !Hasˉserviceˉendpoint(0u32, 1u32, 46u32, 46u32, 65537u32, 65537u32, 0u32) { return 0; }
+    if !Hasˉserviceˉendpoint(1u32, 1u32, 46u32, 46u32, 65539u32, 65539u32, 1u32) { return 0; }
+    if !Hasˉserviceˉendpoint(0u32, 1u32, 17u32, 17u32, 65538u32, 65538u32, 0u32) { return 0; }
+    if !Hasˉserviceˉendpoint(1u32, 1u32, 17u32, 17u32, 65538u32, 65538u32, 1u32) { return 0; }
     if !Hasˉendpointˉlifecycleˉcontract() { return 0; }
+    if Selectˉnextˉrunnable(1u32, 1u32, 1u32, 1u32, 1u32, 1u32, 2u32) != 3u32 { return 0; }
+    if Selectˉnextˉrunnable(2u32, 5u32, 1u32, 1u32, 2u32, 5u32, 0u32) != 2u32 { return 0; }
+    if Selectˉnextˉrunnable(2u32, 5u32, 2u32, 5u32, 2u32, 1u32, 0u32) != 3u32 { return 0; }
+    if Selectˉnextˉrunnable(3u32, 3u32, 4u32, 4u32, 2u32, 5u32, 0u32) != 0u32 { return 0; }
 
     let Resourceˉsetˉtoken: u32 = 131073u32;
     let Moduleˉresourceˉid: u32 = 1u32;
@@ -303,13 +365,15 @@ export fn Main() -> i32 {
     if !Hasˉresourceˉgeneration(2u32, 1u32, 131074u32) { return 0; }
     if !Hasˉexecutionˉgeneration(2u32) { return 0; }
     // The same measured image also admits a bounded failure scenario: a
-    // malformed directory request faults init, closes WVCHAN04, wakes its one
-    // waiting client with -1, and lets that client exit after three syscalls.
+    // malformed directory request faults the directory provider, closes only
+    // its endpoint, wakes its one waiting client with -1, and contains init.
     if !Hasˉserviceˉfailureˉcontract() { return 0; }
-    // Init performs two grants, four receive registrations, four replies, and
-    // one exit. Each normal client performs two calls, one result send, and
-    // one exit.
-    if 2u32 + 4u32 + 4u32 + 1u32 != Initˉsyscallˉbudget { return 0; }
+    // Init performs two grants, two request receives, two replies, two result
+    // receives, and one exit. Directory performs two request receives, two
+    // replies, and one exit. Each normal client performs two calls, one result
+    // send, and one exit.
+    if 2u32 + 2u32 + 2u32 + 2u32 + 1u32 != Initˉsyscallˉbudget { return 0; }
+    if 2u32 + 2u32 + 1u32 != Directoryˉsyscallˉbudget { return 0; }
     if 2u32 + 1u32 + 1u32 != Interpreterˉsyscallˉbudget { return 0; }
     return 97;
 }

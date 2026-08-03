@@ -111,7 +111,7 @@ move r10 rdx
 add_i32 r10 4096
 move_u32 edi 4096
 move_u32 ebx 6
-move_u32 esi 65536
+move_u32 esi 65537
 syscall
 compare_i32 eax 3096
 branch not_equal resource_reply_failure

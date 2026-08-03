@@ -118,7 +118,7 @@ move r10 rbx
 add_i32 r10 4096
 move_u32 edi 4096
 move_u32 ebx 6
-move_u32 esi 65536
+move_u32 esi 65537
 syscall
 compare_i32 eax -1
 branch not_equal service_failure

@@ -16,19 +16,19 @@ $ErrorActionPreference = 'Stop'
 $ExpectedQemuExitCode = if ($Scenario -in @('normal', 'user-fault', 'service-fault')) { 0 } else { 3 }
 $ExpectedSerialMarker = switch ($Scenario) {
     'normal' {
-        "windvale-os-boot 37`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nservice-endpoint=bound`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nprocess-reuse=pass`nwvb-runtime=interpreted`ninit-service=pass`ndirectory-service=pass`nipc=resource-and-directory`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`nshutdown=poweroff`n"
+        "windvale-os-boot 38`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`ndirectory-process=isolated`ndispatcher=ready-wait`nservice-endpoints=2`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nprocess-reuse=pass`nwvb-runtime=interpreted`ninit-service=pass`ndirectory-service=pass`nipc=resource-and-directory`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`nshutdown=poweroff`n"
     }
     'invalid-opcode' {
-        "windvale-os-boot 37`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nservice-endpoint=bound`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nprocess-reuse=pass`nwvb-runtime=interpreted`ninit-service=pass`ndirectory-service=pass`nipc=resource-and-directory`nHello from Windvale`npanic=invalid-opcode`nvector=6`nerror-code=0`nstatus=panic`n"
+        "windvale-os-boot 38`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`ndirectory-process=isolated`ndispatcher=ready-wait`nservice-endpoints=2`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nprocess-reuse=pass`nwvb-runtime=interpreted`ninit-service=pass`ndirectory-service=pass`nipc=resource-and-directory`nHello from Windvale`npanic=invalid-opcode`nvector=6`nerror-code=0`nstatus=panic`n"
     }
     'general-protection' {
-        "windvale-os-boot 37`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nservice-endpoint=bound`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nprocess-reuse=pass`nwvb-runtime=interpreted`ninit-service=pass`ndirectory-service=pass`nipc=resource-and-directory`nHello from Windvale`npanic=general-protection`nvector=13`nerror-code=0`nstatus=panic`n"
+        "windvale-os-boot 38`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`ndirectory-process=isolated`ndispatcher=ready-wait`nservice-endpoints=2`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nprocess-reuse=pass`nwvb-runtime=interpreted`ninit-service=pass`ndirectory-service=pass`nipc=resource-and-directory`nHello from Windvale`npanic=general-protection`nvector=13`nerror-code=0`nstatus=panic`n"
     }
     'user-fault' {
-        "windvale-os-boot 37`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nservice-endpoint=bound`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nprocess-reuse=pass`nwvb-runtime=interpreted`ninit-service=pass`ndirectory-service=pass`nipc=resource-and-directory`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nuser-fault=contained`nstatus=pass`nshutdown=poweroff`n"
+        "windvale-os-boot 38`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`ndirectory-process=isolated`ndispatcher=ready-wait`nservice-endpoints=2`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nprocess-reuse=pass`nwvb-runtime=interpreted`ninit-service=pass`ndirectory-service=pass`nipc=resource-and-directory`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nuser-fault=contained`nstatus=pass`nshutdown=poweroff`n"
     }
     'service-fault' {
-        "windvale-os-boot 37`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`nservice-endpoint=bound`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nwvb-runtime=interpreted`nservice-fault=contained`nipc=service-peer-loss`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`nshutdown=poweroff`n"
+        "windvale-os-boot 38`nentry=pass`nsystem-table=pass`nmemory-map=pass`nboot-services=exited`nmemory-owned=pass`nallocator=pass`nkernel-stack=pass`npaging=owned`nwvb-admission=pass`nprocesses=isolated`ndirectory-process=isolated`ndispatcher=ready-wait`nservice-endpoints=2`nresource-grant=pass`ntyped-resources=pass`nresource-revoked=pass`nwvb-runtime=interpreted`nservice-fault=contained`nipc=service-peer-loss`nHello from Windvale`ncpu-exceptions=armed`nnative-context=pass`nnative-wvb=pass`nwindvale-source=pass`nstatus=pass`nshutdown=poweroff`n"
     }
 }
 $OppositeTerminalMarker = if ($Scenario -in @('normal', 'user-fault', 'service-fault')) {
@@ -225,24 +225,24 @@ try {
         Scenario = $Scenario
         Architecture = 'x86-64'
         ApplicationFormat = 'pe32-plus-uefi-application-v3'
-        ProbeVersion = 37
+        ProbeVersion = 38
         EfiBytes = $EfiIdentity.Length
         EfiSha256 = $EfiSha256
         SerialMarker = switch ($Scenario) {
             'normal' {
-                'windvale-os-boot-37-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-service-endpoint-bound-resource-grant-pass-typed-resources-pass-resource-revoked-pass-process-reuse-pass-wvb-runtime-interpreted-init-service-pass-directory-service-pass-ipc-resource-and-directory-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff'
+                'windvale-os-boot-38-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-directory-process-isolated-dispatcher-ready-wait-service-endpoints-2-resource-grant-pass-typed-resources-pass-resource-revoked-pass-process-reuse-pass-wvb-runtime-interpreted-init-service-pass-directory-service-pass-ipc-resource-and-directory-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff'
             }
             'invalid-opcode' {
-                'windvale-os-boot-37-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-service-endpoint-bound-resource-grant-pass-typed-resources-pass-resource-revoked-pass-process-reuse-pass-wvb-runtime-interpreted-init-service-pass-directory-service-pass-ipc-resource-and-directory-hello-panic-invalid-opcode-vector-6-error-code-0-status-panic'
+                'windvale-os-boot-38-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-directory-process-isolated-dispatcher-ready-wait-service-endpoints-2-resource-grant-pass-typed-resources-pass-resource-revoked-pass-process-reuse-pass-wvb-runtime-interpreted-init-service-pass-directory-service-pass-ipc-resource-and-directory-hello-panic-invalid-opcode-vector-6-error-code-0-status-panic'
             }
             'general-protection' {
-                'windvale-os-boot-37-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-service-endpoint-bound-resource-grant-pass-typed-resources-pass-resource-revoked-pass-process-reuse-pass-wvb-runtime-interpreted-init-service-pass-directory-service-pass-ipc-resource-and-directory-hello-panic-general-protection-vector-13-error-code-0-status-panic'
+                'windvale-os-boot-38-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-directory-process-isolated-dispatcher-ready-wait-service-endpoints-2-resource-grant-pass-typed-resources-pass-resource-revoked-pass-process-reuse-pass-wvb-runtime-interpreted-init-service-pass-directory-service-pass-ipc-resource-and-directory-hello-panic-general-protection-vector-13-error-code-0-status-panic'
             }
             'user-fault' {
-                'windvale-os-boot-37-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-service-endpoint-bound-resource-grant-pass-typed-resources-pass-resource-revoked-pass-process-reuse-pass-wvb-runtime-interpreted-init-service-pass-directory-service-pass-ipc-resource-and-directory-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-user-fault-contained-status-pass-shutdown-poweroff'
+                'windvale-os-boot-38-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-directory-process-isolated-dispatcher-ready-wait-service-endpoints-2-resource-grant-pass-typed-resources-pass-resource-revoked-pass-process-reuse-pass-wvb-runtime-interpreted-init-service-pass-directory-service-pass-ipc-resource-and-directory-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-user-fault-contained-status-pass-shutdown-poweroff'
             }
             'service-fault' {
-                'windvale-os-boot-37-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-service-endpoint-bound-resource-grant-pass-typed-resources-pass-resource-revoked-pass-wvb-runtime-interpreted-service-fault-contained-ipc-service-peer-loss-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff'
+                'windvale-os-boot-38-entry-system-table-memory-map-boot-services-exited-memory-owned-allocator-kernel-stack-paging-owned-wvb-admission-processes-isolated-directory-process-isolated-dispatcher-ready-wait-service-endpoints-2-resource-grant-pass-typed-resources-pass-resource-revoked-pass-wvb-runtime-interpreted-service-fault-contained-ipc-service-peer-loss-hello-cpu-exceptions-armed-native-context-native-wvb-windvale-source-status-pass-shutdown-poweroff'
             }
         }
         QemuExitCode = $Process.ExitCode
@@ -252,7 +252,7 @@ try {
     if ($PassThru) {
         $Report
     } elseif (!$Quiet) {
-        Write-Output 'windvale-os-boot-report 37'
+        Write-Output 'windvale-os-boot-report 38'
         Write-Output "status=$($Report.Status)"
         Write-Output "scenario=$($Report.Scenario)"
         Write-Output "architecture=$($Report.Architecture)"

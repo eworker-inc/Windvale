@@ -14,13 +14,15 @@ public enum Kernelˉprocessˉscenario
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 16;
-    public const string TARGET_NAME = "x86-64-kernel-process-v16";
+    public const int FORMAT_VERSION = 17;
+    public const string TARGET_NAME = "x86-64-kernel-process-v17";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
     public const string INIT_SERVICE_ENTRY_SYMBOL = "Windvale_init_resource_user_entry";
     public const string INIT_SERVICE_MAIN_SYMBOL = "Windvale_init_resource_service_main";
+    public const string DIRECTORY_SERVICE_ENTRY_SYMBOL = "Windvale_directory_process_user_entry";
+    public const string DIRECTORY_SERVICE_MAIN_SYMBOL = "Windvale_directory_process_service_main";
     public const string BYTECODE_INTERPRETER_MAIN_SYMBOL = "Windvale_user_bytecode_interpreter_main";
     public const string BOOT_RESOURCE_SERVICE_SYMBOL = "Windvale_os_boot_resource_read_bytes";
     public const string SYSCALL_ENTRY_SYMBOL = "Windvale_kernel_x64_process_syscall";
@@ -38,6 +40,9 @@ public static class Kernelˉprocessˉcontract
     public const uint INIT_PROCESS_GENERATION = 1;
     public const uint CLIENT_PROCESS_ID = 2;
     public const uint CLIENT_THREAD_ID = 2;
+    public const uint DIRECTORY_PROCESS_ID = 3;
+    public const uint DIRECTORY_THREAD_ID = 3;
+    public const uint DIRECTORY_PROCESS_GENERATION = 1;
     public const uint FIRST_CLIENT_GENERATION = 1;
     public const uint SECOND_CLIENT_GENERATION = 2;
     public const uint INIT_PROCESS_REFERENCE =
@@ -46,8 +51,11 @@ public static class Kernelˉprocessˉcontract
         (FIRST_CLIENT_GENERATION << 16) | CLIENT_PROCESS_ID;
     public const uint SECOND_CLIENT_PROCESS_REFERENCE =
         (SECOND_CLIENT_GENERATION << 16) | CLIENT_PROCESS_ID;
+    public const uint DIRECTORY_PROCESS_REFERENCE =
+        (DIRECTORY_PROCESS_GENERATION << 16) | DIRECTORY_PROCESS_ID;
     public const uint ROLE_INIT_SERVICE = 1;
     public const uint ROLE_BYTECODE_INTERPRETER = 2;
+    public const uint ROLE_DIRECTORY_SERVICE = 3;
     public const uint RUNTIME_KIND_AOT_SERVICE = 1;
     public const uint RUNTIME_KIND_BYTECODE_INTERPRETER = 2;
     public const uint PROCESS_STATE_READY = 1;
@@ -59,20 +67,26 @@ public static class Kernelˉprocessˉcontract
     public const uint THREAD_STATE_EXITED = 3;
     public const uint THREAD_STATE_FAULTED = 4;
     public const uint THREAD_STATE_WAITING = 5;
-    public const uint INIT_MEMORY_PAGE_BUDGET = 9;
+    public const uint INIT_MEMORY_PAGE_BUDGET = 8;
     public const uint CLIENT_MEMORY_PAGE_BUDGET = 120;
+    public const uint DIRECTORY_MEMORY_PAGE_BUDGET = 6;
     public const uint INIT_INSTRUCTION_BUDGET = 64;
     public const uint CLIENT_INSTRUCTION_BUDGET = 189_114;
+    public const uint DIRECTORY_INSTRUCTION_BUDGET = 64;
     public const uint INIT_CALL_DEPTH_BUDGET = 1;
     public const uint CLIENT_CALL_DEPTH_BUDGET = 5;
+    public const uint DIRECTORY_CALL_DEPTH_BUDGET = 1;
     public const int CLIENT_INTERPRETER_FRAME_SLOTS = 755;
     public const ulong CLIENT_NATIVE_STACK_USED_BYTES = 24_240;
-    public const uint HANDLE_BUDGET = 1;
-    public const uint INIT_SYSCALL_BUDGET = 11;
+    public const uint PROVIDER_HANDLE_BUDGET = 1;
+    public const uint CLIENT_HANDLE_BUDGET = 2;
+    public const uint INIT_SYSCALL_BUDGET = 9;
     public const uint CLIENT_SYSCALL_BUDGET = 4;
+    public const uint DIRECTORY_SYSCALL_BUDGET = 5;
     public const uint SERVICE_FAULT_CLIENT_SYSCALL_BUDGET = 3;
     public const uint CHANNEL_CAPACITY = 1;
-    public const uint CAPABILITY_SLOT = 0;
+    public const uint RESOURCE_CAPABILITY_SLOT = 0;
+    public const uint DIRECTORY_CAPABILITY_SLOT = 1;
     public const uint CAPABILITY_GENERATION = 1;
     public const uint CAPABILITY_RIGHT_SEND = 1U << 0;
     public const uint CAPABILITY_RIGHT_RECEIVE = 1U << 1;
@@ -85,7 +99,12 @@ public static class Kernelˉprocessˉcontract
         CAPABILITY_RIGHT_RECEIVE_SERVICE_REQUEST | CAPABILITY_RIGHT_REPLY_SERVICE_REQUEST;
     public const uint CLIENT_CAPABILITY_RIGHTS =
         CAPABILITY_RIGHT_SEND | CAPABILITY_RIGHT_CALL_SERVICE;
-    public const uint CAPABILITY_REFERENCE = (CAPABILITY_GENERATION << 16) | CAPABILITY_SLOT;
+    public const uint RESOURCE_CAPABILITY_REFERENCE =
+        (CAPABILITY_GENERATION << 16) | RESOURCE_CAPABILITY_SLOT;
+    public const uint DIRECTORY_CAPABILITY_REFERENCE =
+        (CAPABILITY_GENERATION << 16) | DIRECTORY_CAPABILITY_SLOT;
+    public const uint CAPABILITY_REFERENCE = RESOURCE_CAPABILITY_REFERENCE;
+    public const uint CAPABILITY_SLOT = RESOURCE_CAPABILITY_SLOT;
     public const uint SYSCALL_SEND = 1;
     public const uint SYSCALL_RECEIVE = 2;
     public const uint SYSCALL_EXIT = 3;
@@ -94,7 +113,8 @@ public static class Kernelˉprocessˉcontract
     public const uint SYSCALL_CALL_SERVICE = 6;
     public const uint SYSCALL_REPLY_SERVICE_REQUEST = 7;
     public const uint RESOURCE_SET_TOKEN = 0x0002_0001;
-    public const ulong INIT_ALLOCATION_PAGES = 13;
+    public const ulong INIT_ALLOCATION_PAGES = 12;
+    public const ulong DIRECTORY_ALLOCATION_PAGES = 10;
     public const ulong CLIENT_ALLOCATION_PAGES = 122;
     public const ulong TABLE_PAGES = 4;
     public const ulong TABLE_BYTES = TABLE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
@@ -105,16 +125,22 @@ public static class Kernelˉprocessˉcontract
     public const ulong USER_CODE_PAGE = 4;
     public const ulong INIT_CODE_PAGES = 2;
     public const ulong CLIENT_CODE_PAGES = 110;
+    public const ulong DIRECTORY_CODE_PAGES = 2;
     public const ulong INIT_STACK_PAGES = 1;
     public const ulong CLIENT_STACK_PAGES = 6;
+    public const ulong DIRECTORY_STACK_PAGES = 1;
     public const ulong CLIENT_STACK_BYTES = CLIENT_STACK_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
     public const ulong INIT_STACK_PAGE = USER_CODE_PAGE + INIT_CODE_PAGES;
     public const ulong INIT_DATA_PAGE = INIT_STACK_PAGE + INIT_STACK_PAGES;
     public const ulong INIT_RUNTIME_INPUT_PAGE = INIT_DATA_PAGE + 1;
     public const ulong INIT_RUNTIME_BUDGET_PAGE = INIT_RUNTIME_INPUT_PAGE + 1;
     public const ulong INIT_RESOURCE_STORE_PAGE = INIT_RUNTIME_BUDGET_PAGE + 1;
-    public const ulong INIT_DIRECTORY_SNAPSHOT_PAGE = INIT_RESOURCE_STORE_PAGE + 1;
-    public const ulong INIT_SERVICE_RESPONSE_PAGE = INIT_DIRECTORY_SNAPSHOT_PAGE + 1;
+    public const ulong INIT_SERVICE_RESPONSE_PAGE = INIT_RESOURCE_STORE_PAGE + 1;
+    public const ulong DIRECTORY_STACK_PAGE = USER_CODE_PAGE + DIRECTORY_CODE_PAGES;
+    public const ulong DIRECTORY_DATA_PAGE = DIRECTORY_STACK_PAGE + DIRECTORY_STACK_PAGES;
+    public const ulong DIRECTORY_SNAPSHOT_PAGE = DIRECTORY_DATA_PAGE + 1;
+    public const ulong DIRECTORY_SERVICE_RESPONSE_PAGE = DIRECTORY_SNAPSHOT_PAGE + 1;
+    public const ulong INIT_DIRECTORY_SNAPSHOT_PAGE = DIRECTORY_SNAPSHOT_PAGE;
     public const ulong CLIENT_STACK_PAGE = USER_CODE_PAGE + CLIENT_CODE_PAGES;
     public const ulong CLIENT_DATA_PAGE = CLIENT_STACK_PAGE + CLIENT_STACK_PAGES;
     public const ulong CLIENT_SERVICE_RESPONSE_PAGE = CLIENT_DATA_PAGE + 1;
@@ -144,10 +170,10 @@ public static class Kernelˉprocessˉcontract
     public const ulong ENTRY_USER = 1UL << 2;
     public const uint INIT_RECORD_OFFSET = 256;
     public const uint CLIENT_RECORD_OFFSET = 768;
-    public const uint CHANNEL_RECORD_OFFSET = 1_040;
-    public const uint RECORD_BYTES = 272;
-    public const ulong RECORD_MAGIC = 0x3631_434F_5250_5657;
-    public const uint RECORD_VERSION = 16;
+    public const uint CHANNEL_RECORD_OFFSET = 1_056;
+    public const uint RECORD_BYTES = 288;
+    public const ulong RECORD_MAGIC = 0x3731_434F_5250_5657;
+    public const uint RECORD_VERSION = 17;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -177,7 +203,12 @@ public static class Kernelˉprocessˉcontract
     public const uint RUNTIME_KIND_OFFSET = 252;
     public const uint PROCESS_GENERATION_OFFSET = 256;
     public const uint USER_SERVICE_RESPONSE_ADDRESS_OFFSET = 264;
+    public const uint SECOND_CAPABILITY_REFERENCE_OFFSET = 272;
+    public const uint SECOND_CAPABILITY_RIGHTS_OFFSET = 276;
+    public const uint SECOND_ENDPOINT_ADDRESS_OFFSET = 280;
     public const uint RUNTIME_PROFILE_RESOURCE_DIRECTORY_OWNER = 2;
+    public const uint RUNTIME_PROFILE_RESOURCE_OWNER = 2;
+    public const uint RUNTIME_PROFILE_DIRECTORY_OWNER = 4;
     public const uint RUNTIME_PROFILE_GRANTED_RESOURCE_DIRECTORY_INTERPRETER = 7;
     public const uint WAIT_REASON_NONE = 0;
     public const uint WAIT_REASON_CHANNEL_RECEIVE = 1;
@@ -236,8 +267,12 @@ public static class Kernelˉprocessˉcontract
     public const uint ENDPOINT_PROVIDER_STATUS_OPEN = 0;
     public const uint ENDPOINT_PROVIDER_STATUS_EXITED = 1;
     public const uint ENDPOINT_PROVIDER_STATUS_FAULTED = 2;
-    public const uint NORMAL_ENDPOINT_RESOLUTION_COUNT = 16;
-    public const uint SERVICE_FAULT_ENDPOINT_RESOLUTION_COUNT = 6;
+    public const uint NORMAL_RESOURCE_ENDPOINT_RESOLUTION_COUNT = 12;
+    public const uint NORMAL_DIRECTORY_ENDPOINT_RESOLUTION_COUNT = 6;
+    public const uint SERVICE_FAULT_DIRECTORY_ENDPOINT_RESOLUTION_COUNT = 2;
+    public const uint NORMAL_ENDPOINT_RESOLUTION_COUNT = NORMAL_RESOURCE_ENDPOINT_RESOLUTION_COUNT;
+    public const uint SERVICE_FAULT_ENDPOINT_RESOLUTION_COUNT =
+        SERVICE_FAULT_DIRECTORY_ENDPOINT_RESOLUTION_COUNT;
     public const uint RESOURCE_RECORD_OFFSET = ENDPOINT_RECORD_OFFSET + ENDPOINT_RECORD_BYTES;
     public const uint SECOND_RESOURCE_RECORD_OFFSET = RESOURCE_RECORD_OFFSET + RESOURCE_RECORD_BYTES;
     public const uint STORE_RESOURCE_RECORD_OFFSET = SECOND_RESOURCE_RECORD_OFFSET + RESOURCE_RECORD_BYTES;
@@ -247,6 +282,11 @@ public static class Kernelˉprocessˉcontract
     public const uint RESOURCE_RECORD_BYTES = 128;
     public const uint RESOURCE_RECORD_SET_BYTES = RESOURCE_COUNT * RESOURCE_RECORD_BYTES;
     public const uint RESOURCE_STATE_BYTES = RESOURCE_RECORD_COUNT * RESOURCE_RECORD_BYTES;
+    public const uint DIRECTORY_PROCESS_RECORD_OFFSET =
+        DIRECTORY_RESOURCE_RECORD_OFFSET + RESOURCE_RECORD_BYTES;
+    public const uint DIRECTORY_CHANNEL_RECORD_OFFSET = DIRECTORY_PROCESS_RECORD_OFFSET + RECORD_BYTES;
+    public const uint DIRECTORY_ENDPOINT_RECORD_OFFSET =
+        DIRECTORY_CHANNEL_RECORD_OFFSET + CHANNEL_RECORD_BYTES;
     public const ulong RESOURCE_MAGIC = 0x3630_3053_4552_5657;
     public const uint RESOURCE_VERSION = 6;
     public const uint RESOURCE_STATE_OWNED = 1;
@@ -294,16 +334,20 @@ public static class Kernelˉprocessˉcontract
     public const uint DIRECTORY_RESOURCE_ATTRIBUTES =
         RESOURCE_BASE_FLAGS | (RESOURCE_KIND_WVDS_SNAPSHOT << (int)RESOURCE_KIND_SHIFT);
     public const uint INIT_STORE_DESCRIPTOR_OFFSET = 384;
-    public const uint INIT_DIRECTORY_DESCRIPTOR_OFFSET = 416;
-    public const uint INIT_DIRECTORY_DESCRIPTOR_GENERATION = 1;
+    public const uint DIRECTORY_DESCRIPTOR_OFFSET = 384;
+    public const uint DIRECTORY_DESCRIPTOR_GENERATION = 1;
+    public const uint INIT_DIRECTORY_DESCRIPTOR_OFFSET = DIRECTORY_DESCRIPTOR_OFFSET;
+    public const uint INIT_DIRECTORY_DESCRIPTOR_GENERATION = DIRECTORY_DESCRIPTOR_GENERATION;
+    public const uint HANDLE_BUDGET = PROVIDER_HANDLE_BUDGET;
     public const uint INIT_REQUEST_BUFFER_OFFSET = 1_024;
     public const uint INIT_REQUEST_BUFFER_BYTES = 1_056;
     public const uint INIT_RESPONSE_BUFFER_OFFSET = 2_080;
     public const uint INIT_RESPONSE_BUFFER_BYTES = 2_016;
-    public const uint GDT_OFFSET = 528;
+    public const uint GDT_OFFSET = 544;
     public const uint GDT_BYTES = 56;
-    public const uint GDTR_OFFSET = 592;
-    public const uint TSS_OFFSET = 608;
+    public const uint GDTR_OFFSET = 608;
+    public const uint GDTR_BYTES = 10;
+    public const uint TSS_OFFSET = 624;
     public const uint TSS_BYTES = 104;
 }
 
@@ -313,7 +357,10 @@ public sealed record Kernelˉprocessˉdefinition(
     uint Processˉgeneration,
     uint Role,
     uint Capabilityˉrights,
-    ulong Endpointˉaddress);
+    ulong Endpointˉaddress,
+    uint Capabilityˉreference = Kernelˉprocessˉcontract.RESOURCE_CAPABILITY_REFERENCE,
+    uint Secondˉcapabilityˉrights = 0,
+    ulong Secondˉendpointˉaddress = 0);
 
 public sealed record Kernelˉprocessˉdiagnostic(string Code, string Message);
 
@@ -371,6 +418,81 @@ public sealed record Kernelˉresourceˉrevocationˉresult(
     public bool Success => Plan is not null && Diagnostics.IsEmpty;
 }
 
+public sealed record Kernelˉdispatchˉselection(
+    int Recordˉindex,
+    uint Processˉreference,
+    uint Nextˉcursor);
+
+public static class Kernelˉreadyˉdispatcher
+{
+    public const int RECORD_COUNT = 3;
+
+    public static Kernelˉdispatchˉselection? Select(
+        IReadOnlyList<ImmutableArray<byte>> records,
+        uint cursor)
+    {
+        ArgumentNullException.ThrowIfNull(records);
+        if (records.Count != RECORD_COUNT || cursor >= RECORD_COUNT)
+        {
+            throw new ArgumentOutOfRangeException(nameof(cursor));
+        }
+
+        var Expectedˉprocessˉids = new[]
+        {
+            Kernelˉprocessˉcontract.INIT_PROCESS_ID,
+            Kernelˉprocessˉcontract.CLIENT_PROCESS_ID,
+            Kernelˉprocessˉcontract.DIRECTORY_PROCESS_ID,
+        };
+        for (var Index = 0; Index < RECORD_COUNT; Index++)
+        {
+            var Record = records[Index];
+            if (Record.Length != Kernelˉprocessˉcontract.RECORD_BYTES ||
+                BinaryPrimitives.ReadUInt64LittleEndian(Record.AsSpan()) !=
+                    Kernelˉprocessˉcontract.RECORD_MAGIC ||
+                BinaryPrimitives.ReadUInt32LittleEndian(Record.AsSpan()[8..]) !=
+                    Kernelˉprocessˉcontract.RECORD_VERSION ||
+                BinaryPrimitives.ReadUInt32LittleEndian(Record.AsSpan()[12..]) !=
+                    Kernelˉprocessˉcontract.RECORD_BYTES ||
+                BinaryPrimitives.ReadUInt32LittleEndian(Record.AsSpan()[24..]) !=
+                    Expectedˉprocessˉids[Index])
+            {
+                throw new InvalidOperationException(
+                    "The ready/wait dispatcher received a malformed or misordered process record.");
+            }
+        }
+
+        for (var Distance = 0; Distance < RECORD_COUNT; Distance++)
+        {
+            var Index = checked((int)((cursor + Distance) % RECORD_COUNT));
+            var Record = records[Index].AsSpan();
+            var Processˉstate = BinaryPrimitives.ReadUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET..]);
+            var Threadˉstate = BinaryPrimitives.ReadUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.THREAD_STATE_OFFSET..]);
+            if (Processˉstate is not (Kernelˉprocessˉcontract.PROCESS_STATE_READY or
+                    Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING) ||
+                Threadˉstate != Kernelˉprocessˉcontract.THREAD_STATE_READY)
+            {
+                continue;
+            }
+
+            var Processˉid = BinaryPrimitives.ReadUInt32LittleEndian(Record[24..]);
+            var Generation = BinaryPrimitives.ReadUInt32LittleEndian(
+                Record[(int)Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET..]);
+            if (Generation == 0 || Generation > ushort.MaxValue || Processˉid > ushort.MaxValue)
+            {
+                throw new InvalidOperationException(
+                    "The ready/wait dispatcher received an invalid process generation.");
+            }
+            return new(
+                Index,
+                (Generation << 16) | Processˉid,
+                checked((uint)((Index + 1) % RECORD_COUNT)));
+        }
+        return null;
+    }
+}
+
 public static class Kernelˉprocessˉplanner
 {
     private const int ENTRIES_PER_TABLE = 512;
@@ -406,47 +528,90 @@ public static class Kernelˉprocessˉplanner
                 Kernelˉprocessˉcontract.SECOND_CLIENT_GENERATION &&
             definition.Role == Kernelˉprocessˉcontract.ROLE_BYTECODE_INTERPRETER &&
             definition.Capabilityˉrights == Kernelˉprocessˉcontract.CLIENT_CAPABILITY_RIGHTS;
-        if ((!Isˉinit && !Isˉclient) ||
+        var Isˉdirectory = definition is
+        {
+            Processˉid: Kernelˉprocessˉcontract.DIRECTORY_PROCESS_ID,
+            Threadˉid: Kernelˉprocessˉcontract.DIRECTORY_THREAD_ID,
+            Processˉgeneration: Kernelˉprocessˉcontract.DIRECTORY_PROCESS_GENERATION,
+            Role: Kernelˉprocessˉcontract.ROLE_DIRECTORY_SERVICE,
+            Capabilityˉrights: Kernelˉprocessˉcontract.INIT_CAPABILITY_RIGHTS,
+            Capabilityˉreference: Kernelˉprocessˉcontract.DIRECTORY_CAPABILITY_REFERENCE,
+        };
+        if ((!Isˉinit && !Isˉclient && !Isˉdirectory) ||
+            ((Isˉinit || Isˉclient) &&
+                definition.Capabilityˉreference !=
+                    Kernelˉprocessˉcontract.RESOURCE_CAPABILITY_REFERENCE) ||
             definition.Endpointˉaddress == 0 ||
             (definition.Endpointˉaddress & (sizeof(ulong) - 1)) != 0 ||
-            definition.Endpointˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES)
+            definition.Endpointˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES ||
+            (Isˉclient
+                ? definition.Secondˉcapabilityˉrights != Kernelˉprocessˉcontract.CLIENT_CAPABILITY_RIGHTS ||
+                  definition.Secondˉendpointˉaddress == 0 ||
+                  (definition.Secondˉendpointˉaddress & (sizeof(ulong) - 1)) != 0 ||
+                  definition.Secondˉendpointˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES
+                : definition.Secondˉcapabilityˉrights != 0 || definition.Secondˉendpointˉaddress != 0))
         {
             return Fail("WVOS6006", "The process identity, role, reduced endpoint rights, or endpoint-object address is invalid.");
         }
 
         var Allocationˉpages = Isˉinit
             ? Kernelˉprocessˉcontract.INIT_ALLOCATION_PAGES
-            : Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.DIRECTORY_ALLOCATION_PAGES
+                : Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES;
         var Codeˉpages = Isˉinit
             ? Kernelˉprocessˉcontract.INIT_CODE_PAGES
-            : Kernelˉprocessˉcontract.CLIENT_CODE_PAGES;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.DIRECTORY_CODE_PAGES
+                : Kernelˉprocessˉcontract.CLIENT_CODE_PAGES;
         var Stackˉpage = Isˉinit
             ? Kernelˉprocessˉcontract.INIT_STACK_PAGE
-            : Kernelˉprocessˉcontract.CLIENT_STACK_PAGE;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.DIRECTORY_STACK_PAGE
+                : Kernelˉprocessˉcontract.CLIENT_STACK_PAGE;
         var Stackˉpages = Isˉinit
             ? Kernelˉprocessˉcontract.INIT_STACK_PAGES
-            : Kernelˉprocessˉcontract.CLIENT_STACK_PAGES;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.DIRECTORY_STACK_PAGES
+                : Kernelˉprocessˉcontract.CLIENT_STACK_PAGES;
         var Dataˉpage = Isˉinit
             ? Kernelˉprocessˉcontract.INIT_DATA_PAGE
-            : Kernelˉprocessˉcontract.CLIENT_DATA_PAGE;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.DIRECTORY_DATA_PAGE
+                : Kernelˉprocessˉcontract.CLIENT_DATA_PAGE;
         var Memoryˉpageˉbudget = Isˉinit
             ? Kernelˉprocessˉcontract.INIT_MEMORY_PAGE_BUDGET
-            : Kernelˉprocessˉcontract.CLIENT_MEMORY_PAGE_BUDGET;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.DIRECTORY_MEMORY_PAGE_BUDGET
+                : Kernelˉprocessˉcontract.CLIENT_MEMORY_PAGE_BUDGET;
         var Instructionˉbudget = Isˉinit
             ? Kernelˉprocessˉcontract.INIT_INSTRUCTION_BUDGET
-            : Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.DIRECTORY_INSTRUCTION_BUDGET
+                : Kernelˉprocessˉcontract.CLIENT_INSTRUCTION_BUDGET;
         var Callˉdepthˉbudget = Isˉinit
             ? Kernelˉprocessˉcontract.INIT_CALL_DEPTH_BUDGET
-            : Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.DIRECTORY_CALL_DEPTH_BUDGET
+                : Kernelˉprocessˉcontract.CLIENT_CALL_DEPTH_BUDGET;
         var Runtimeˉkind = Isˉinit
             ? Kernelˉprocessˉcontract.RUNTIME_KIND_AOT_SERVICE
-            : Kernelˉprocessˉcontract.RUNTIME_KIND_BYTECODE_INTERPRETER;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.RUNTIME_KIND_AOT_SERVICE
+                : Kernelˉprocessˉcontract.RUNTIME_KIND_BYTECODE_INTERPRETER;
         var Runtimeˉprofile = Isˉinit
-            ? Kernelˉprocessˉcontract.RUNTIME_PROFILE_RESOURCE_DIRECTORY_OWNER
-            : Kernelˉprocessˉcontract.RUNTIME_PROFILE_GRANTED_RESOURCE_DIRECTORY_INTERPRETER;
+            ? Kernelˉprocessˉcontract.RUNTIME_PROFILE_RESOURCE_OWNER
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.RUNTIME_PROFILE_DIRECTORY_OWNER
+                : Kernelˉprocessˉcontract.RUNTIME_PROFILE_GRANTED_RESOURCE_DIRECTORY_INTERPRETER;
         var Syscallˉbudget = Isˉinit
             ? Kernelˉprocessˉcontract.INIT_SYSCALL_BUDGET
-            : Kernelˉprocessˉcontract.CLIENT_SYSCALL_BUDGET;
+            : Isˉdirectory
+                ? Kernelˉprocessˉcontract.DIRECTORY_SYSCALL_BUDGET
+                : Kernelˉprocessˉcontract.CLIENT_SYSCALL_BUDGET;
+        var Handleˉbudget = Isˉclient
+            ? Kernelˉprocessˉcontract.CLIENT_HANDLE_BUDGET
+            : Kernelˉprocessˉcontract.PROVIDER_HANDLE_BUDGET;
         var Allocationˉbytes = Allocationˉpages * Kernelˉpagingˉcontract.PAGE_BYTES;
         if (allocationˉaddress == 0 ||
             (allocationˉaddress & (Kernelˉpagingˉcontract.PAGE_BYTES - 1)) != 0 ||
@@ -480,10 +645,14 @@ public static class Kernelˉprocessˉplanner
                     Kernelˉprocessˉcontract.EXECUTION_BUDGET ||
                   resourceˉstore.Length is < Resourceˉstoreˉcontract.HEADER_BYTES or >
                     (int)Kernelˉpagingˉcontract.PAGE_BYTES ||
-                  directoryˉsnapshot.Length is < 68 or >
-                    (int)Kernelˉpagingˉcontract.PAGE_BYTES ||
+                  !directoryˉsnapshot.IsEmpty ||
                   bootˉresourceˉserviceˉoffset != 0 ||
                   !SHA256.HashData(runtimeˉinput).AsSpan().SequenceEqual(programˉdigest))) ||
+            (Isˉdirectory &&
+                (!runtimeˉinput.IsEmpty || !runtimeˉbudget.IsEmpty || !resourceˉstore.IsEmpty ||
+                 directoryˉsnapshot.Length is < 68 or > (int)Kernelˉpagingˉcontract.PAGE_BYTES ||
+                 bootˉresourceˉserviceˉoffset != 0 ||
+                 !SHA256.HashData(directoryˉsnapshot).AsSpan().SequenceEqual(programˉdigest))) ||
             (Isˉclient &&
                 (!runtimeˉinput.IsEmpty || !runtimeˉbudget.IsEmpty || !resourceˉstore.IsEmpty ||
                  !directoryˉsnapshot.IsEmpty ||
@@ -497,27 +666,33 @@ public static class Kernelˉprocessˉplanner
         var Userˉcodeˉaddress = Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.USER_CODE_PAGE);
         var Userˉstackˉaddress = Pageˉaddress(allocationˉaddress, Stackˉpage);
         var Userˉdataˉaddress = Pageˉaddress(allocationˉaddress, Dataˉpage);
-        var Userˉruntimeˉinputˉaddress = Pageˉaddress(
-            allocationˉaddress,
-            Isˉinit
-                ? Kernelˉprocessˉcontract.INIT_RUNTIME_INPUT_PAGE
-                : Kernelˉprocessˉcontract.CLIENT_RUNTIME_INPUT_PAGE);
-        var Userˉruntimeˉbudgetˉaddress = Pageˉaddress(
-            allocationˉaddress,
-            Isˉinit
-                ? Kernelˉprocessˉcontract.INIT_RUNTIME_BUDGET_PAGE
-                : Kernelˉprocessˉcontract.CLIENT_RUNTIME_BUDGET_PAGE);
+        var Userˉruntimeˉinputˉaddress = Isˉdirectory
+            ? 0
+            : Pageˉaddress(
+                allocationˉaddress,
+                Isˉinit
+                    ? Kernelˉprocessˉcontract.INIT_RUNTIME_INPUT_PAGE
+                    : Kernelˉprocessˉcontract.CLIENT_RUNTIME_INPUT_PAGE);
+        var Userˉruntimeˉbudgetˉaddress = Isˉdirectory
+            ? 0
+            : Pageˉaddress(
+                allocationˉaddress,
+                Isˉinit
+                    ? Kernelˉprocessˉcontract.INIT_RUNTIME_BUDGET_PAGE
+                    : Kernelˉprocessˉcontract.CLIENT_RUNTIME_BUDGET_PAGE);
         var Userˉresourceˉstoreˉaddress = Isˉinit
             ? Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.INIT_RESOURCE_STORE_PAGE)
             : 0;
-        var Userˉdirectoryˉsnapshotˉaddress = Isˉinit
-            ? Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.INIT_DIRECTORY_SNAPSHOT_PAGE)
+        var Userˉdirectoryˉsnapshotˉaddress = Isˉdirectory
+            ? Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.DIRECTORY_SNAPSHOT_PAGE)
             : 0;
         var Userˉserviceˉresponseˉaddress = Pageˉaddress(
             allocationˉaddress,
             Isˉinit
                 ? Kernelˉprocessˉcontract.INIT_SERVICE_RESPONSE_PAGE
-                : Kernelˉprocessˉcontract.CLIENT_SERVICE_RESPONSE_PAGE);
+                : Isˉdirectory
+                    ? Kernelˉprocessˉcontract.DIRECTORY_SERVICE_RESPONSE_PAGE
+                    : Kernelˉprocessˉcontract.CLIENT_SERVICE_RESPONSE_PAGE);
         var Executableˉend = kernelˉpaging.Executableˉaddress + Kernelˉpagingˉcontract.EXECUTABLE_BYTES;
         if (allocationˉaddress < Executableˉend && Allocationˉend > kernelˉpaging.Executableˉaddress)
         {
@@ -533,13 +708,16 @@ public static class Kernelˉprocessˉplanner
             {
                 return Fail("WVOS6008", "The init resource-store capability is malformed.");
             }
+        }
+        if (Isˉdirectory)
+        {
             try
             {
                 _ = Directoryˉsnapshotˉcodec.Verify(directoryˉsnapshot);
             }
             catch (Directoryˉsnapshotˉexception)
             {
-                return Fail("WVOS6008", "The init directory-snapshot capability is malformed.");
+                return Fail("WVOS6008", "The directory process snapshot capability is malformed.");
             }
         }
 
@@ -591,20 +769,28 @@ public static class Kernelˉprocessˉplanner
         Writeˉuserˉentry(Tables, Regionˉaddress, Userˉserviceˉresponseˉaddress,
             Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE |
             Kernelˉprocessˉcontract.ENTRY_USER | Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
-        if (Isˉinit)
+        if (Isˉinit || Isˉdirectory)
         {
-            Writeˉuserˉentry(Tables, Regionˉaddress, Userˉruntimeˉinputˉaddress,
-                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
-                Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
-            Writeˉuserˉentry(Tables, Regionˉaddress, Userˉruntimeˉbudgetˉaddress,
-                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
-                Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
-            Writeˉuserˉentry(Tables, Regionˉaddress, Userˉresourceˉstoreˉaddress,
-                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
-                Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
-            Writeˉuserˉentry(Tables, Regionˉaddress, Userˉdirectoryˉsnapshotˉaddress,
-                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
-                Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+            if (Isˉinit)
+            {
+                foreach (var Address in new[]
+                {
+                    Userˉruntimeˉinputˉaddress,
+                    Userˉruntimeˉbudgetˉaddress,
+                    Userˉresourceˉstoreˉaddress,
+                })
+                {
+                    Writeˉuserˉentry(Tables, Regionˉaddress, Address,
+                        Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
+                        Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+                }
+            }
+            else
+            {
+                Writeˉuserˉentry(Tables, Regionˉaddress, Userˉdirectoryˉsnapshotˉaddress,
+                    Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
+                    Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+            }
         }
         else
         {
@@ -627,7 +813,7 @@ public static class Kernelˉprocessˉplanner
         BinaryPrimitives.WriteUInt32LittleEndian(Data.AsSpan(4), Nativeˉexecutionˉcontextˉcontract.SIZE);
         BinaryPrimitives.WriteUInt64LittleEndian(Data.AsSpan(8), Instructionˉbudget);
         BinaryPrimitives.WriteUInt64LittleEndian(Data.AsSpan(16), Callˉdepthˉbudget);
-        if (!Isˉinit)
+        if (Isˉclient)
         {
             BinaryPrimitives.WriteUInt64LittleEndian(
                 Data.AsSpan(Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET),
@@ -645,7 +831,7 @@ public static class Kernelˉprocessˉplanner
         var Resourceˉstoreˉbytes = Isˉinit
             ? new byte[Kernelˉpagingˉcontract.PAGE_BYTES]
             : [];
-        var Directoryˉsnapshotˉbytes = Isˉinit
+        var Directoryˉsnapshotˉbytes = Isˉdirectory
             ? new byte[Kernelˉpagingˉcontract.PAGE_BYTES]
             : [];
         var Serviceˉresponseˉbytes = new byte[Kernelˉpagingˉcontract.PAGE_BYTES];
@@ -654,22 +840,25 @@ public static class Kernelˉprocessˉplanner
             runtimeˉinput.CopyTo(Runtimeˉinputˉbytes);
             runtimeˉbudget.CopyTo(Runtimeˉbudgetˉbytes);
             resourceˉstore.CopyTo(Resourceˉstoreˉbytes);
-            directoryˉsnapshot.CopyTo(Directoryˉsnapshotˉbytes);
             BinaryPrimitives.WriteUInt64LittleEndian(
                 Data.AsSpan((int)Kernelˉprocessˉcontract.INIT_STORE_DESCRIPTOR_OFFSET),
                 Userˉresourceˉstoreˉaddress);
             BinaryPrimitives.WriteUInt32LittleEndian(
                 Data.AsSpan((int)Kernelˉprocessˉcontract.INIT_STORE_DESCRIPTOR_OFFSET + sizeof(ulong)),
                 checked((uint)resourceˉstore.Length));
+        }
+        if (Isˉdirectory)
+        {
+            directoryˉsnapshot.CopyTo(Directoryˉsnapshotˉbytes);
             BinaryPrimitives.WriteUInt64LittleEndian(
-                Data.AsSpan((int)Kernelˉprocessˉcontract.INIT_DIRECTORY_DESCRIPTOR_OFFSET),
+                Data.AsSpan((int)Kernelˉprocessˉcontract.DIRECTORY_DESCRIPTOR_OFFSET),
                 Userˉdirectoryˉsnapshotˉaddress);
             BinaryPrimitives.WriteUInt32LittleEndian(
-                Data.AsSpan((int)Kernelˉprocessˉcontract.INIT_DIRECTORY_DESCRIPTOR_OFFSET + sizeof(ulong)),
+                Data.AsSpan((int)Kernelˉprocessˉcontract.DIRECTORY_DESCRIPTOR_OFFSET + sizeof(ulong)),
                 checked((uint)directoryˉsnapshot.Length));
             BinaryPrimitives.WriteUInt32LittleEndian(
-                Data.AsSpan((int)Kernelˉprocessˉcontract.INIT_DIRECTORY_DESCRIPTOR_OFFSET + 12),
-                Kernelˉprocessˉcontract.INIT_DIRECTORY_DESCRIPTOR_GENERATION);
+                Data.AsSpan((int)Kernelˉprocessˉcontract.DIRECTORY_DESCRIPTOR_OFFSET + 12),
+                Kernelˉprocessˉcontract.DIRECTORY_DESCRIPTOR_GENERATION);
         }
 
         var Record = new byte[Kernelˉprocessˉcontract.RECORD_BYTES];
@@ -687,11 +876,11 @@ public static class Kernelˉprocessˉplanner
         BinaryPrimitives.WriteUInt64LittleEndian(Record.AsSpan(88), Userˉdataˉaddress);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(96), Memoryˉpageˉbudget);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(100), Instructionˉbudget);
-        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(104), Kernelˉprocessˉcontract.HANDLE_BUDGET);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(104), Handleˉbudget);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.SYSCALL_BUDGET_OFFSET), Syscallˉbudget);
-        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(112), Kernelˉprocessˉcontract.CAPABILITY_SLOT);
-        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(116), Kernelˉprocessˉcontract.CAPABILITY_GENERATION);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(112), definition.Capabilityˉreference & 0xFFFF);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(116), definition.Capabilityˉreference >> 16);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(120), definition.Capabilityˉrights);
         BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(124), Kernelˉprocessˉcontract.CHANNEL_CAPACITY);
         BinaryPrimitives.WriteUInt64LittleEndian(
@@ -714,6 +903,15 @@ public static class Kernelˉprocessˉplanner
         BinaryPrimitives.WriteUInt64LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.USER_SERVICE_RESPONSE_ADDRESS_OFFSET),
             Userˉserviceˉresponseˉaddress);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.SECOND_CAPABILITY_REFERENCE_OFFSET),
+            Isˉclient ? Kernelˉprocessˉcontract.DIRECTORY_CAPABILITY_REFERENCE : 0);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.SECOND_CAPABILITY_RIGHTS_OFFSET),
+            definition.Secondˉcapabilityˉrights);
+        BinaryPrimitives.WriteUInt64LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.SECOND_ENDPOINT_ADDRESS_OFFSET),
+            definition.Secondˉendpointˉaddress);
 
         return new(new(
             allocationˉaddress,
@@ -1386,7 +1584,8 @@ public static class Kernelˉchannelˉpeerˉlifecycle
     {
         if (!Hasˉheader(record) ||
             processˉid is not (Kernelˉprocessˉcontract.INIT_PROCESS_ID or
-                Kernelˉprocessˉcontract.CLIENT_PROCESS_ID) ||
+                Kernelˉprocessˉcontract.CLIENT_PROCESS_ID or
+                Kernelˉprocessˉcontract.DIRECTORY_PROCESS_ID) ||
             peerˉstatus is not (Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_EXITED or
                 Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_FAULTED) ||
             BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
@@ -1466,11 +1665,22 @@ public sealed record Kernelˉendpointˉresolution(
 
 public static class Kernelˉserviceˉendpointˉlifecycle
 {
-    public static ImmutableArray<byte> Create(ulong channelˉaddress)
+    public static ImmutableArray<byte> Create(
+        ulong channelˉaddress,
+        uint capabilityˉreference = Kernelˉprocessˉcontract.RESOURCE_CAPABILITY_REFERENCE,
+        uint providerˉreference = Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE,
+        uint clientˉreference = Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE)
     {
         if (channelˉaddress == 0 ||
             (channelˉaddress & (sizeof(ulong) - 1)) != 0 ||
-            channelˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES)
+            channelˉaddress >= Kernelˉpagingˉcontract.IDENTITY_BYTES ||
+            capabilityˉreference is not (Kernelˉprocessˉcontract.RESOURCE_CAPABILITY_REFERENCE or
+                Kernelˉprocessˉcontract.DIRECTORY_CAPABILITY_REFERENCE) ||
+            providerˉreference is not (Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE or
+                Kernelˉprocessˉcontract.DIRECTORY_PROCESS_REFERENCE) ||
+            clientˉreference != Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE ||
+            (capabilityˉreference == Kernelˉprocessˉcontract.RESOURCE_CAPABILITY_REFERENCE) !=
+                (providerˉreference == Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE))
         {
             throw new ArgumentOutOfRangeException(nameof(channelˉaddress));
         }
@@ -1486,7 +1696,7 @@ public static class Kernelˉserviceˉendpointˉlifecycle
             Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_REFERENCE_OFFSET),
-            Kernelˉprocessˉcontract.CAPABILITY_REFERENCE);
+            capabilityˉreference);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_KIND_OFFSET),
             Kernelˉprocessˉcontract.ENDPOINT_KIND_SERVICE);
@@ -1495,10 +1705,10 @@ public static class Kernelˉserviceˉendpointˉlifecycle
             Kernelˉprocessˉcontract.CHANNEL_CAPACITY);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_PROVIDER_PROCESS_OFFSET),
-            Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE);
+            providerˉreference);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET),
-            Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE);
+            clientˉreference);
         BinaryPrimitives.WriteUInt64LittleEndian(
             Record.AsSpan((int)Kernelˉprocessˉcontract.ENDPOINT_CHANNEL_ADDRESS_OFFSET),
             channelˉaddress);
@@ -1520,7 +1730,8 @@ public static class Kernelˉserviceˉendpointˉlifecycle
                 Kernelˉprocessˉcontract.ENDPOINT_STATE_OPEN ||
             BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
                 (int)Kernelˉprocessˉcontract.ENDPOINT_REFERENCE_OFFSET..]) != capabilityˉreference ||
-            capabilityˉreference != Kernelˉprocessˉcontract.CAPABILITY_REFERENCE ||
+            capabilityˉreference is not (Kernelˉprocessˉcontract.RESOURCE_CAPABILITY_REFERENCE or
+                Kernelˉprocessˉcontract.DIRECTORY_CAPABILITY_REFERENCE) ||
             BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
                 (int)Kernelˉprocessˉcontract.ENDPOINT_KIND_OFFSET..]) !=
                 Kernelˉprocessˉcontract.ENDPOINT_KIND_SERVICE ||
@@ -1573,7 +1784,8 @@ public static class Kernelˉserviceˉendpointˉlifecycle
                 (int)Kernelˉprocessˉcontract.ENDPOINT_CLIENT_PROCESS_OFFSET..]) !=
                 previousˉclientˉreference ||
             BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
-                (int)Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET..]) != 8 ||
+                (int)Kernelˉprocessˉcontract.ENDPOINT_RESOLUTION_COUNT_OFFSET..]) !=
+                    Expectedˉfirstˉgenerationˉresolutions(record) ||
             BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
                 (int)Kernelˉprocessˉcontract.ENDPOINT_CLOSE_COUNT_OFFSET..]) != 0)
         {
@@ -1630,4 +1842,15 @@ public static class Kernelˉserviceˉendpointˉlifecycle
             Kernelˉprocessˉcontract.ENDPOINT_VERSION &&
         BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[12..]) ==
             Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES;
+
+    private static uint Expectedˉfirstˉgenerationˉresolutions(ImmutableArray<byte> record) =>
+        BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+            (int)Kernelˉprocessˉcontract.ENDPOINT_REFERENCE_OFFSET..]) switch
+        {
+            Kernelˉprocessˉcontract.RESOURCE_CAPABILITY_REFERENCE =>
+                Kernelˉprocessˉcontract.NORMAL_RESOURCE_ENDPOINT_RESOLUTION_COUNT / 2,
+            Kernelˉprocessˉcontract.DIRECTORY_CAPABILITY_REFERENCE =>
+                Kernelˉprocessˉcontract.NORMAL_DIRECTORY_ENDPOINT_RESOLUTION_COUNT / 2,
+            _ => 0,
+        };
 }

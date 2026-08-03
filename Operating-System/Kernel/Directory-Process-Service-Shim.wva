@@ -1,0 +1,226 @@
+windvale-assembly 1
+
+symbol local function Windvale_directory_process_build_reply in .text
+symbol export function Windvale_directory_process_user_entry in .text
+symbol import function Windvale_directory_process_service_main
+
+section code .text align 16
+define Windvale_directory_process_user_entry
+call Windvale_directory_process_service_main
+compare_i32 eax 6
+branch not_equal directory_request_failure
+
+# Register the fixed request page, reply to generation 1, then repeat for the
+# rebuilt generation 2 client through the directory-only endpoint reference.
+move r8 rdx
+add_i32 r8 1024
+move_u32 r9d 1056
+move_u32 ebx 5
+move_u32 esi 65537
+syscall
+move edi eax
+call Windvale_directory_process_build_reply
+test eax eax
+branch equal directory_request_failure
+move r8 rdx
+add_i32 r8 8192
+move r9d eax
+move_u32 ebx 7
+move_u32 esi 65537
+syscall
+move r8 rdx
+add_i32 r8 1024
+move_u32 r9d 1056
+move_u32 ebx 5
+move_u32 esi 65537
+syscall
+move edi eax
+call Windvale_directory_process_build_reply
+test eax eax
+branch equal directory_request_failure
+move r8 rdx
+add_i32 r8 8192
+move r9d eax
+move_u32 ebx 7
+move_u32 esi 65537
+syscall
+move_u32 eax 6
+move_u32 ebx 3
+syscall
+
+label directory_request_failure
+disable_interrupts
+end define
+
+# EDI is the copied WVDQ 1 request length and RDX is the immutable execution
+# context. Offset 384 names the provider-owned, page-bounded RO/NX WVDS 1
+# snapshot. The reply is built in the dedicated RW/NX page at offset 8192.
+define Windvale_directory_process_build_reply
+compare_i32 edi 37
+branch not_equal directory_reply_invalid
+move r9 rdx
+add_i32 r9 1024
+load_memory_u32 eax r9 none 1 0
+compare_i32 eax 1363433047
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r9 none 1 4
+compare_i32 eax 1
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r9 none 1 8
+compare_i32 eax 37
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r9 none 1 12
+test eax eax
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r9 none 1 16
+compare_i32 eax 3072
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r9 none 1 20
+compare_i32 eax 9
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r9 none 1 24
+test eax eax
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r9 none 1 28
+compare_i32 eax 1852990827
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r9 none 1 32
+compare_i32 eax 1999531109
+branch not_equal directory_reply_invalid
+load_memory_u8 al r9 none 1 36
+compare_i8 al 118
+branch not_equal directory_reply_invalid
+
+# The attached snapshot is one exact canonical two-entry WVDS 1 image.
+load_memory_u64 r8 rdx none 1 384
+test r8 r8
+branch equal directory_reply_invalid
+load_memory_u32 eax rdx none 1 392
+compare_i32 eax 3184
+branch not_equal directory_reply_invalid
+load_memory_u32 eax rdx none 1 396
+compare_i32 eax 1
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 0
+compare_i32 eax 1396987479
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 4
+compare_i32 eax 1
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 8
+compare_i32 eax 3184
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 12
+compare_i32 eax 2
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 16
+compare_i32 eax 32
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 20
+compare_i32 eax 32
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 24
+compare_i32 eax 96
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 28
+compare_i32 eax 112
+branch not_equal directory_reply_invalid
+
+# Entry 0 is the non-file folder marker.
+load_memory_u32 eax r8 none 1 32
+compare_i32 eax 2
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 36
+compare_i32 eax 96
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 40
+compare_i32 eax 6
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 44
+test eax eax
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 48
+test eax eax
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 52
+test eax eax
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 56
+test eax eax
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 60
+test eax eax
+branch not_equal directory_reply_invalid
+
+# Entry 1 is kernel.wv and names the complete 3072-byte data region.
+load_memory_u32 eax r8 none 1 64
+compare_i32 eax 1
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 68
+compare_i32 eax 102
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 72
+compare_i32 eax 9
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 76
+compare_i32 eax 112
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 80
+compare_i32 eax 3072
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 84
+test eax eax
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 88
+test eax eax
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 92
+test eax eax
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 96
+compare_i32 eax 1684828006
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 100
+compare_i32 eax 1701540453
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 104
+compare_i32 eax 1818586738
+branch not_equal directory_reply_invalid
+load_memory_u32 eax r8 none 1 108
+compare_i32 eax 7763758
+branch not_equal directory_reply_invalid
+
+move r11 rdx
+add_i32 r11 8192
+move_u32 eax 1380210263
+store_memory_u32 r11 none 1 0 eax
+move_u32 eax 1
+store_memory_u32 r11 none 1 4 eax
+move_u32 eax 0
+store_memory_u32 r11 none 1 8 eax
+move_u32 eax 3072
+store_memory_u32 r11 none 1 12 eax
+move_u32 eax 0
+store_memory_u32 r11 none 1 16 eax
+move_u32 eax 3072
+store_memory_u32 r11 none 1 20 eax
+move rcx r8
+add_i32 rcx 112
+move rdi r11
+add_i32 rdi 24
+move_u32 esi 3072
+label directory_reply_data_copy
+load_memory_u8 al rcx none 1 0
+store_memory_u8 rdi none 1 0 al
+add_i32 rcx 1
+add_i32 rdi 1
+subtract_i32 esi 1
+branch not_equal directory_reply_data_copy
+move_u32 eax 3096
+return
+
+label directory_reply_invalid
+move_u32 eax 0
+return
+end define
+end section
