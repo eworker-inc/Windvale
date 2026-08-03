@@ -464,12 +464,12 @@ This profile does not establish:
 - WebAssembly as a permanent Windvale host or distribution format;
 - a direct source-to-WebAssembly compiler;
 - a general WVB-to-WebAssembly backend;
-- a complete Windvale-native WVB semantic verifier or interpreter;
-- recursion, function values, indirect calls, `break`, `continue`, arbitrary or unbounded instruction streams, general text operations beyond identity, descriptor-bearing calls, executable records or enums, reclaiming allocation, collection, or browser capability imports;
+- a general-WVB verifier with nonempty stack joins or a Windvale-native WVB interpreter;
+- recursion, function values, indirect calls, `break`, `continue`, arbitrary or unbounded instruction streams, general text operations beyond identity, executable records or enums, reclaiming allocation, collection, or browser capability imports;
 - compilation of the Windvale compiler itself to WebAssembly;
 - replacement of the .NET playground path; or
 - production browser isolation.
 
 ## Next extension boundary
 
-The next backend slice should extend structural payload acceptance into bounded WVB semantic verification: canonical names and ordering, capability/type/index identity, typed instruction and local flow, control targets and joins, reachability, and declared maximum-stack agreement. Add only text, record, enum, call, or memory operations required by that measured implementation. Recursion, indirect calls, `break`, `continue`, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, the Stage 0 compiler, verifier, `.wv` lowerer execution, and fallback interpreter should move off the UI thread before the playground is treated as hardened against hostile inputs.
+The next measured slice should compose Decision 0149's verifier with the first Windvale-written WVB interpreter rather than widening the selector into a second general backend. Begin with bounded compiler-produced portable WVB using scalar values, terminator-aligned control, and direct calls; prove reference-interpreter agreement and exact instruction exhaustion before adding text/bytes and executable record/enum carriers. Capability execution remains separately authorized by the worker. Once that runtime path is stable, execute the Windvale compiler's verified WVB in the same guest and connect source input to canonical WVB output. Recursion, indirect calls, `break`, `continue`, reclaiming allocation, and browser capability imports remain outside the profile until each has an explicit resource and evidence contract. The verifier, interpreter, source compiler, and result execution must all move into one disposable worker before the editable playground becomes the default .NET-free path.
