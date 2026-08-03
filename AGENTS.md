@@ -87,6 +87,7 @@ Carry the established [E-Worker](https://eworker.ca) host-code convention into W
 - Prefer focused modules named after their owned capability over broad `Helpers`, `Utils`, `Common`, or numbered-part files.
 - Add succinct comments only for invariants, format rules, unsafe reasoning, or other non-obvious logic.
 - Keep dependencies explicit; importing a declaration must not perform global registration or other runtime work.
+- Repository-maintained text uses LF line endings except Windows command files. Keep text and binary classifications explicit in `.gitattributes`; do not rely on a contributor's global `core.autocrlf` setting.
 
 ## Testing and verification
 

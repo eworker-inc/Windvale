@@ -8,7 +8,19 @@
 *.yml text eol=lf
 *.yaml text eol=lf
 *.svg text eol=lf
-*.ps1 text eol=crlf
+*.txt text eol=lf
+*.xml text eol=lf
+*.cs text eol=lf
+*.csproj text eol=lf
+*.props text eol=lf
+*.slnx text eol=lf
+*.razor text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.wvproj text eol=lf
+*.ps1 text eol=lf
 *.cmd text eol=crlf
 *.sh text eol=lf
 *.c text eol=lf
@@ -24,4 +36,10 @@
 *.efi binary
 *.img binary
 *.vhdx binary
+*.png binary
+*.jpg binary
+*.woff2 binary
+LICENSE text eol=lf
+_headers text eol=lf
+.nojekyll text eol=lf
 Tools/Windvale.Playground/wwwroot/editor/notices/monaco-editor-ThirdPartyNotices.txt whitespace=-blank-at-eof
