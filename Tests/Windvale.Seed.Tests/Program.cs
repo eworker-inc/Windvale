@@ -34,6 +34,7 @@ internal static class Program
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "c6c4568f0a47e36ce8fdb145f4c3de3ce9a28bb2fb1935add75d44e48a2ac805";
+    private const string LINUX_CONSOLE_SUM_SHA256 = "8e4eede684330e1797a7ff4d512ffe52684f1257cdbd97aa3d5ea06a13bea88c";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
@@ -741,6 +742,7 @@ internal static class Program
         new("compiler output is deterministic and canonical", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Compilerˉisˉdeterministic),
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
         new("portable Windvale emits a deterministic Windows x64 console executable", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windowsˉconsoleˉapplicationˉruns),
+        new("portable Windvale emits a deterministic Linux x64 console executable", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Linuxˉconsoleˉapplicationˉruns),
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
         new("native dynamic text, descriptor returns, and void calls agree across runtimes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉdynamicˉtextˉagrees),
@@ -2442,6 +2444,178 @@ internal static class Program
         {
             File.Delete(Path);
         }
+    }
+
+    private static void Linuxˉconsoleˉapplicationˉruns()
+    {
+        var Sumˉfragment = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(SUM_SOURCE))).Fragment;
+        var First = Linuxˉconsoleˉapplicationˉwriter.Write(Sumˉfragment);
+        var Second = Linuxˉconsoleˉapplicationˉwriter.Write(Sumˉfragment);
+        True(
+            First.Success,
+            First.Diagnostics.IsEmpty
+                ? "Linux console application construction failed."
+                : First.Diagnostics[0].Message);
+        True(Second.Success, "Repeated Linux console application construction failed.");
+        Sequenceˉequal(First.Imageˉbytes, Second.Imageˉbytes);
+        Equal(8_304, First.Imageˉbytes.Length);
+        Equal(
+            LINUX_CONSOLE_SUM_SHA256,
+            Convert.ToHexString(SHA256.HashData(First.Imageˉbytes.AsSpan())).ToLowerInvariant());
+
+        var Verified = Linuxˉconsoleˉapplicationˉverifier.Verify(First.Imageˉbytes.AsSpan());
+        Sequenceˉequal(Sumˉfragment.Code, Verified.Nativeˉimageˉbytes);
+        Equal(
+            Sumˉfragment.Symbols.Single(Symbol =>
+                Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
+                Symbol.Name == "Main").Offset,
+            Verified.Nativeˉentryˉoffset);
+
+        var Windows = Windowsˉconsoleˉapplicationˉwriter.Write(Sumˉfragment);
+        True(Windows.Success, "The paired Windows console target rejected the shared native fragment.");
+        var Verifiedˉwindows = Windowsˉconsoleˉapplicationˉverifier.Verify(Windows.Imageˉbytes.AsSpan());
+        Sequenceˉequal(Verifiedˉwindows.Nativeˉimageˉbytes, Verified.Nativeˉimageˉbytes);
+        Equal(Verifiedˉwindows.Nativeˉentryˉoffset, Verified.Nativeˉentryˉoffset);
+
+        Equal("WVL1001", Linuxˉconsoleˉapplicationˉwriter.Write(null!).Diagnostics.Single().Code);
+        var Changedˉfragment = Sumˉfragment with
+        {
+            Code = Sumˉfragment.Code.SetItem(0, (byte)(Sumˉfragment.Code[0] ^ 1)),
+        };
+        Equal(
+            "WVL1001",
+            Linuxˉconsoleˉapplicationˉwriter.Write(Changedˉfragment).Diagnostics.Single().Code);
+
+        var Hostedˉfragment = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(HELLO_SOURCE))).Fragment;
+        Equal(
+            "WVL1002",
+            Linuxˉconsoleˉapplicationˉwriter.Write(Hostedˉfragment).Diagnostics.Single().Code);
+
+        const string Byteˉresultˉsource = """
+            module Nativeˉlinuxˉbyteˉresult profile portable;
+            export fn Main() -> bytes { return Bytesˉfromˉu8(42u8); }
+            """;
+        var Byteˉresultˉfragment = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Byteˉresultˉsource))).Fragment;
+        Equal(
+            "WVL1002",
+            Linuxˉconsoleˉapplicationˉwriter.Write(Byteˉresultˉfragment).Diagnostics.Single().Code);
+
+        Rejectˉlinuxˉapplication(
+            First.Imageˉbytes.AsSpan(0, First.Imageˉbytes.Length - 1),
+            "WVL2001");
+        Rejectˉlinuxˉapplication(
+            new byte[Linuxˉconsoleˉapplicationˉcontract.MAX_APPLICATION_BYTES + 1],
+            "WVL2001");
+        Rejectˉlinuxˉapplication(Mutateˉbyte(First.Imageˉbytes, 0), "WVL2002");
+        Rejectˉlinuxˉapplication(Mutateˉbyte(First.Imageˉbytes, 64), "WVL2003");
+        Rejectˉlinuxˉapplication(Mutateˉbyte(First.Imageˉbytes, 152), "WVL2004");
+        Rejectˉlinuxˉapplication(Mutateˉbyte(First.Imageˉbytes, 0x180), "WVL2005");
+        Rejectˉlinuxˉapplication(Mutateˉbyte(First.Imageˉbytes, 0x1000), "WVL2006");
+        Rejectˉlinuxˉapplication(Mutateˉbyte(First.Imageˉbytes, 344), "WVL2008");
+        var Dataˉoffset = checked((int)BinaryPrimitives.ReadUInt64LittleEndian(
+            First.Imageˉbytes.AsSpan(184, sizeof(ulong))));
+        Rejectˉlinuxˉapplication(
+            Mutateˉbyte(First.Imageˉbytes, Dataˉoffset),
+            "WVL2007");
+        Rejectˉlinuxˉapplication(First.Imageˉbytes.Add(0).AsSpan(), "WVL2001");
+
+        var Random = new Random(0x57564C);
+        for (var Case = 0; Case < 128; Case++)
+        {
+            var Bytes = new byte[Random.Next(0, 9_001)];
+            Random.NextBytes(Bytes);
+            try
+            {
+                _ = Linuxˉconsoleˉapplicationˉverifier.Verify(Bytes);
+            }
+            catch (Linuxˉconsoleˉapplicationˉexception)
+            {
+            }
+        }
+
+        if (!OperatingSystem.IsLinux())
+        {
+            return;
+        }
+
+        Equal(29, Executeˉlinuxˉapplication(First.Imageˉbytes));
+        var Nominal = Linuxˉconsoleˉapplicationˉwriter.Write(
+            X64ˉnativeˉbackend.Compile(
+                Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_NOMINAL_SOURCE))).Fragment);
+        True(Nominal.Success, "The Linux target rejected the record-arena fixture.");
+        Equal(42, Executeˉlinuxˉapplication(Nominal.Imageˉbytes));
+
+        var Dynamicˉbytes = Linuxˉconsoleˉapplicationˉwriter.Write(
+            X64ˉnativeˉbackend.Compile(
+                Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_BYTES_SOURCE))).Fragment);
+        True(Dynamicˉbytes.Success, "The Linux target rejected the dynamic-byte arena fixture.");
+        Equal(42, Executeˉlinuxˉapplication(Dynamicˉbytes.Imageˉbytes));
+
+        const string Overflowˉsource = """
+            module Nativeˉlinuxˉoverflowˉapplication profile portable;
+            export fn Main() -> i32 { return 2147483647 + 1; }
+            """;
+        var Overflow = Linuxˉconsoleˉapplicationˉwriter.Write(
+            X64ˉnativeˉbackend.Compile(
+                Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Overflowˉsource))).Fragment);
+        True(Overflow.Success, "The Linux target rejected the checked-overflow fixture.");
+        Equal(1, Executeˉlinuxˉapplication(Overflow.Imageˉbytes));
+    }
+
+    private static int Executeˉlinuxˉapplication(ImmutableArray<byte> image)
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            throw new PlatformNotSupportedException("Direct ELF execution requires Linux.");
+        }
+        var Path = System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(),
+            $"windvale-linux-console-{Guid.NewGuid():N}.elf");
+        try
+        {
+            File.WriteAllBytes(Path, image.AsSpan());
+            File.SetUnixFileMode(
+                Path,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            using var Process = System.Diagnostics.Process.Start(new ProcessStartInfo
+            {
+                FileName = Path,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            }) ?? throw new InvalidOperationException("Linux did not start the generated application.");
+            if (!Process.WaitForExit(10_000))
+            {
+                Process.Kill(entireProcessTree: true);
+                throw new InvalidOperationException("The generated Linux application did not exit.");
+            }
+            Equal(string.Empty, Process.StandardOutput.ReadToEnd());
+            Equal(string.Empty, Process.StandardError.ReadToEnd());
+            return Process.ExitCode;
+        }
+        finally
+        {
+            File.Delete(Path);
+        }
+    }
+
+    private static void Rejectˉlinuxˉapplication(
+        ReadOnlySpan<byte> bytes,
+        string expectedˉcode)
+    {
+        try
+        {
+            _ = Linuxˉconsoleˉapplicationˉverifier.Verify(bytes);
+        }
+        catch (Linuxˉconsoleˉapplicationˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException("The malformed Linux console application was accepted.");
     }
 
     private static byte[] Mutateˉbyte(ImmutableArray<byte> source, int offset)

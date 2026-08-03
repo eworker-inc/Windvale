@@ -61,6 +61,6 @@ Decisions 0058 through qualified 0103, 0105, 0108, 0109, 0111, and 0112 establis
 
 1. Run the complete native Stage 1 to Stage 2 reproduction boundary rather than inferring closure from one source fixture.
 2. Resolve the exact compiler's separate 4 MiB WVO/object and flat-linker AOT boundaries through measured ceiling revision, multiple objects, or function/data-granular publication.
-3. Generalize the first capability-free Windows PE container into hosted PE/COFF and ELF targets plus standalone Windows/Linux capability and process hosts only after measured cases identify their exact required contracts.
+3. Generalize the paired capability-free Windows PE and Linux ELF containers into hosted targets plus standalone Windows/Linux capability and process hosts only after measured cases identify their exact required contracts.
 4. Generalize exactly one measured boundary after Probe 32: support a non-tail lifetime only when it creates allocator pressure, broaden the interpreter for a real module, separate resource lifetimes only for a real consumer, or add a third runnable only when it creates scheduler pressure. Keep broader traps, virtual memory, and lifecycle adapters separate.
 5. Satisfy the remaining Decision 0057 native-retirement conditions, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.

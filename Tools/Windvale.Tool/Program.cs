@@ -97,7 +97,7 @@ internal static class Program
     {
         const string Usage =
             "Usage: windvale compile <source.wv> [--module <dependency.wv>]... " +
-            "[--target <wvb|windows-x64-console-v1>] [-o <artifact>]";
+            "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1>] [-o <artifact>]";
         if (arguments.Length == 0 || arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
             return Usageˉerror(Usage);
@@ -134,14 +134,22 @@ internal static class Program
             return Usageˉerror($"Unknown, duplicate, or incomplete compile option '{arguments[Index]}'.");
         }
 
-        if (Target is not ("wvb" or Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME))
+        if (Target is not (
+            "wvb" or
+            Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME or
+            Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME))
         {
             return Usageˉerror($"Unknown compile target '{Target}'.");
         }
 
         var Outputˉpath = Requestedˉoutputˉpath ?? Path.ChangeExtension(
             Sourceˉpath,
-            Target == "wvb" ? ".wvb" : ".exe");
+            Target switch
+            {
+                "wvb" => ".wvb",
+                Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME => ".exe",
+                _ => ".elf",
+            });
         return Compileˉsourceˉfiles(Sourceˉpath, Dependencyˉpaths, Outputˉpath, Target);
     }
 
@@ -201,7 +209,12 @@ internal static class Program
                 $"A compilation may contain at most {Seedˉcompiler.MAX_SOURCE_MODULES} source modules.");
             return EXIT_COMPILATION;
         }
-        var Expectedˉextension = target == "wvb" ? ".wvb" : ".exe";
+        var Expectedˉextension = target switch
+        {
+            "wvb" => ".wvb",
+            Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME => ".exe",
+            _ => ".elf",
+        };
         if (!StringComparer.OrdinalIgnoreCase.Equals(
             Path.GetExtension(Outputˉpath),
             Expectedˉextension))
@@ -270,7 +283,7 @@ internal static class Program
         }
 
         var Bytes = Result.Moduleˉbytes.ToArray();
-        if (target == Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME)
+        if (target != "wvb")
         {
             Nativeˉfragment Fragment;
             try
@@ -285,21 +298,51 @@ internal static class Program
                 return EXIT_COMPILATION;
             }
 
-            var Application = Windowsˉconsoleˉapplicationˉwriter.Write(Fragment);
-            if (!Application.Success)
+            if (target == Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME)
             {
-                foreach (var Diagnostic in Application.Diagnostics)
+                var Application = Windowsˉconsoleˉapplicationˉwriter.Write(Fragment);
+                if (!Application.Success)
                 {
-                    Console.Error.WriteLine(
-                        $"{Sourceˉpath}: error {Diagnostic.Code} " +
-                        $"[{Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME}]: {Diagnostic.Message}");
+                    foreach (var Diagnostic in Application.Diagnostics)
+                    {
+                        Console.Error.WriteLine(
+                            $"{Sourceˉpath}: error {Diagnostic.Code} " +
+                            $"[{Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME}]: {Diagnostic.Message}");
+                    }
+                    return EXIT_COMPILATION;
                 }
-                return EXIT_COMPILATION;
+                Bytes = Application.Imageˉbytes.ToArray();
             }
-            Bytes = Application.Imageˉbytes.ToArray();
+            else
+            {
+                var Application = Linuxˉconsoleˉapplicationˉwriter.Write(Fragment);
+                if (!Application.Success)
+                {
+                    foreach (var Diagnostic in Application.Diagnostics)
+                    {
+                        Console.Error.WriteLine(
+                            $"{Sourceˉpath}: error {Diagnostic.Code} " +
+                            $"[{Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME}]: {Diagnostic.Message}");
+                    }
+                    return EXIT_COMPILATION;
+                }
+                Bytes = Application.Imageˉbytes.ToArray();
+            }
         }
 
         File.WriteAllBytes(Outputˉpath, Bytes);
+        if (target == Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME && OperatingSystem.IsLinux())
+        {
+            File.SetUnixFileMode(
+                Outputˉpath,
+                UnixFileMode.UserRead |
+                    UnixFileMode.UserWrite |
+                    UnixFileMode.UserExecute |
+                    UnixFileMode.GroupRead |
+                    UnixFileMode.GroupExecute |
+                    UnixFileMode.OtherRead |
+                    UnixFileMode.OtherExecute);
+        }
         Console.WriteLine($"Compiled: {Outputˉpath}");
         if (target != "wvb")
         {
@@ -635,7 +678,7 @@ internal static class Program
         output.WriteLine("Commands:");
         output.WriteLine(
             "  windvale compile <source.wv> [--module <dependency.wv>]... " +
-            "[--target <wvb|windows-x64-console-v1>] [-o <artifact>]");
+            "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");

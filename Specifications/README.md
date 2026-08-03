@@ -51,6 +51,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 
 - [Native execution context and ABI](Windvale-Native-Execution-Context.md)
 - [Windows x64 console application target](Windvale-Windows-Console-Application.md)
+- [Linux x64 console application target](Windvale-Linux-Console-Application.md)
 - [WVA native stencils](Wva-Native-Stencil.md)
 - [Native publication plan](Windvale-Native-Publication-Plan.md)
 - [Native publication lifetime](Windvale-Native-Publication-Lifetime.md)

@@ -119,6 +119,7 @@ fi
 
 SUM_MODULE="$ARTIFACTS/Sum-Data.wvb"
 SUM_WINDOWS_APPLICATION="$ARTIFACTS/Sum-Data-Windows.exe"
+SUM_LINUX_APPLICATION="$ARTIFACTS/Sum-Data-Linux.elf"
 HELLO_MODULE="$ARTIFACTS/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
 COMPOSITION_MODULE="$ARTIFACTS/Module-Composition-Demo.wvb"
@@ -210,6 +211,33 @@ WINDOWS_APPLICATION_BYTES=$(wc -c < "$SUM_WINDOWS_APPLICATION" | tr -d ' ')
 if [ "$WINDOWS_APPLICATION_HASH" != 'c6c4568f0a47e36ce8fdb145f4c3de3ce9a28bb2fb1935add75d44e48a2ac805' ] || \
    [ "$WINDOWS_APPLICATION_BYTES" != '5120' ]; then
     echo 'The Seed CLI Windows application identity is not canonical.' >&2
+    exit 1
+fi
+
+LINUX_APPLICATION_OUTPUT=$(dotnet "$TOOL_DLL" \
+    compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" \
+    --target linux-x64-console-v1 \
+    -o "$SUM_LINUX_APPLICATION")
+printf '%s\n' "$LINUX_APPLICATION_OUTPUT" | \
+    grep -F 'Target: linux-x64-console-v1' >/dev/null
+printf '%s\n' "$LINUX_APPLICATION_OUTPUT" | \
+    grep -F 'SHA-256: 8e4eede684330e1797a7ff4d512ffe52684f1257cdbd97aa3d5ea06a13bea88c' >/dev/null
+LINUX_APPLICATION_HASH=$(sha256sum "$SUM_LINUX_APPLICATION" | awk '{print $1}')
+LINUX_APPLICATION_BYTES=$(wc -c < "$SUM_LINUX_APPLICATION" | tr -d ' ')
+LINUX_APPLICATION_MODE=$(stat -c '%a' "$SUM_LINUX_APPLICATION")
+if [ "$LINUX_APPLICATION_HASH" != '8e4eede684330e1797a7ff4d512ffe52684f1257cdbd97aa3d5ea06a13bea88c' ] || \
+   [ "$LINUX_APPLICATION_BYTES" != '8304' ] || \
+   [ "$LINUX_APPLICATION_MODE" != '755' ]; then
+    echo 'The Seed CLI Linux application identity or executable mode is not canonical.' >&2
+    exit 1
+fi
+if "$SUM_LINUX_APPLICATION"; then
+    LINUX_APPLICATION_EXIT=0
+else
+    LINUX_APPLICATION_EXIT=$?
+fi
+if [ "$LINUX_APPLICATION_EXIT" != '29' ]; then
+    echo "The generated Linux application returned $LINUX_APPLICATION_EXIT instead of 29." >&2
     exit 1
 fi
 

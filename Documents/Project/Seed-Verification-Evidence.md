@@ -1122,6 +1122,16 @@ The independent verifier recovers the exact native bytes and `Main` offset and r
 
 The complete local Windows qualification command finishes in 549.4 seconds. It produces a zero-warning Release build, passes all 71 Seed tests in 281.905 seconds including the 206.219-second golden compiler contract, passes all 25 OS tests, publishes the Linux-x64 framework-dependent CLI, and completes the native CLI gate including exact application hash and direct Windows execution. The prior change-aware gate independently passes the same 71 Seed tests. Debian construction, report comparison, and GitHub qualification remain pending, so this evidence does not yet claim cross-host qualification.
 
+## Local Linux console application construction evidence
+
+[Decision 0122](../Decisions/0122-First-Linux-Console-Application.md) adds target `linux-x64-console-v1` over the same verified fragment preparation, WVO production, and base-zero flat-link reproduction as the Windows target. The adapter emits a sectionless static-PIE ELF64 with separate read-only, executable, and writable loads, a non-executable stack declaration, an exact Windvale version note, and direct `mmap`/`exit` startup syscalls. Its writable extent carries the same ABI-20 context and fixed 2 MiB record plus 16 MiB dynamic-value arenas.
+
+On Windows, canonical `Sum-Data.wv` deterministically produces 8,304 bytes with SHA-256 `8e4eede684330e1797a7ff4d512ffe52684f1257cdbd97aa3d5ea06a13bea88c`; an external file classifier recognizes it as a statically linked, sectionless x86-64 ELF shared object. Independent PE and ELF verification recovers identical native bytes and the same `Main` offset. The focused Linux-container test passes with zero build warnings and covers deterministic repetition, all writer rejection classes, all eight ELF verifier diagnostic classes, targeted field/startup/context/padding mutations, and bounded random hostile inputs.
+
+Windows Development completes a zero-warning Release build, all 73 regular Seed tests, and all 25 bounded OS tests in 79.9 seconds wall time; Seed in-process time is 61.964 seconds. The paired Windows application test passes in 305 ms after the shared preparation refactor, and Linux construction, verification, malformed-input, and PE/ELF parity pass in 14 ms.
+
+The retained Linux-only branches directly execute sum, nominal-record, dynamic-byte, and checked-overflow fixtures, and the Linux qualification script requires exact bytes, mode `0755`, and result `29`. This checkout has no Linux execution environment, so those direct-process assertions and the dual-host Qualification gate remain pending; this section records construction and verification evidence only.
+
 ## Qualified bounded exact-compiler publication
 
 [Decision 0111](../Decisions/0111-Bounded-Exact-Compiler-Fragment-Publication.md) attributes the exact compiler's 4,556,121 selected bytes before revising a security boundary. Function code accounts for 4,555,263 bytes across 328 functions and 191,632 machine-IR operations; alignment and immutable data account for only 858 bytes. The 48,578 zeroed frame slots currently emit 1,360,840 bytes, so eliminating all frame initialization would still leave 3,195,281 bytes. This rules out a local encoding change as an honest way to retain the 1 MiB whole-fragment ceiling.

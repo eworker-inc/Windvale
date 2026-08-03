@@ -21,78 +21,28 @@ public static class Windowsˉconsoleˉapplicationˉwriter
 
     public static Windowsˉconsoleˉapplicationˉresult Write(Nativeˉfragment fragment)
     {
-        Nativeˉentryˉresultˉkind Entryˉresult;
-        try
+        var Prepared = Nativeˉconsoleˉapplicationˉpreparer.Prepare(fragment);
+        if (!Prepared.Success)
         {
-            Entryˉresult = Nativeˉfragmentˉverifier.Verifyˉentryˉresultˉkind(fragment);
-        }
-        catch (Exception Exception) when (
-            Exception is ArgumentNullException or Nativeˉbackendˉexception)
-        {
+            var Code = Prepared.Failure switch
+            {
+                Nativeˉconsoleˉapplicationˉinputˉfailure.Unverifiedˉfragment => "WVW1001",
+                Nativeˉconsoleˉapplicationˉinputˉfailure.Unsupportedˉentry => "WVW1002",
+                Nativeˉconsoleˉapplicationˉinputˉfailure.Linkˉfailure => "WVW1003",
+                _ => "WVW1003",
+            };
             return Windowsˉconsoleˉapplicationˉresult.Failed(
-                "WVW1001",
-                $"The Windows console target requires a verified native fragment: {Exception.Message}");
+                Code,
+                Prepared.Message);
         }
 
-        if (Entryˉresult != Nativeˉentryˉresultˉkind.Scalar ||
-            !fragment.Requiredˉservices.IsEmpty)
-        {
-            return Windowsˉconsoleˉapplicationˉresult.Failed(
-                "WVW1002",
-                "Version 1 requires a capability-free scalar Main entry and no runtime services.");
-        }
-
-        var Entry = fragment.Symbols.SingleOrDefault(Symbol =>
-            Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
-            Symbol.Kind == Nativeˉsymbolˉkind.Function &&
-            StringComparer.Ordinal.Equals(Symbol.Name, "Main"));
-        if (Entry is null || Entry.Size == 0)
-        {
-            return Windowsˉconsoleˉapplicationˉresult.Failed(
-                "WVW1002",
-                "Version 1 requires one non-empty exported Main function.");
-        }
-
-        Linkˉresult Link;
-        try
-        {
-            var Objectˉbytes = Nativeˉobjectˉsink.Writeˉwvo(fragment);
-            Link = Linkˉcompiler.Link(
-                [new(Objectˉbytes)],
-                new(0, "Main"));
-        }
-        catch (Exception Exception) when (
-            Exception is Nativeˉbackendˉexception or
-                ObjectModel.Objectˉexception or
-                OverflowException)
-        {
-            return Windowsˉconsoleˉapplicationˉresult.Failed(
-                "WVW1003",
-                $"The native fragment could not enter the bounded WVO/AOT path: {Exception.Message}");
-        }
-
-        if (!Link.Success ||
-            Link.Baseˉaddress != 0 ||
-            Link.Sectionˉcount < 1 ||
-            Link.Codeˉsectionˉcount < 1 ||
-            Link.Codeˉsectionˉcount + Link.Readˉonlyˉsectionˉcount != Link.Sectionˉcount ||
-            Link.Absoluteˉrelocationˉcount != 0 ||
-            Link.Relativeˉrelocationˉcount != Link.Relocationˉcount ||
-            Link.Entryˉaddress != Entry.Offset ||
-            !Link.Imageˉbytes.AsSpan().SequenceEqual(fragment.Code.AsSpan()))
-        {
-            var Detail = Link.Diagnostics.IsEmpty
-                ? "The linked image did not reproduce the verified fragment and entry."
-                : Link.Diagnostics[0].Message;
-            return Windowsˉconsoleˉapplicationˉresult.Failed("WVW1003", Detail);
-        }
-
-        var Image = Buildˉimage(Link.Imageˉbytes.AsSpan(), Link.Entryˉaddress);
+        var Input = Prepared.Input!;
+        var Image = Buildˉimage(Input.Imageˉbytes.AsSpan(), Input.Entryˉoffset);
         try
         {
             var Verified = Windowsˉconsoleˉapplicationˉverifier.Verify(Image.AsSpan());
-            if (Verified.Nativeˉentryˉoffset != Link.Entryˉaddress ||
-                !Verified.Nativeˉimageˉbytes.AsSpan().SequenceEqual(Link.Imageˉbytes.AsSpan()))
+            if (Verified.Nativeˉentryˉoffset != Input.Entryˉoffset ||
+                !Verified.Nativeˉimageˉbytes.AsSpan().SequenceEqual(Input.Imageˉbytes.AsSpan()))
             {
                 return Windowsˉconsoleˉapplicationˉresult.Failed(
                     "WVW1004",
@@ -157,7 +107,7 @@ public static class Windowsˉconsoleˉapplicationˉwriter
         Writeˉu32(Result, Optional + 60, HEADERS_BYTES);
         Writeˉu16(Result, Optional + 68, 3);
         Writeˉu16(Result, Optional + 70, 0x0160);
-        Writeˉu64(Result, Optional + 72, 0x0400_0000);
+        Writeˉu64(Result, Optional + 72, Windowsˉconsoleˉapplicationˉcontract.STACK_BYTES);
         Writeˉu64(Result, Optional + 80, 0x0001_0000);
         Writeˉu64(Result, Optional + 88, 0x0010_0000);
         Writeˉu64(Result, Optional + 96, 0x0000_1000);

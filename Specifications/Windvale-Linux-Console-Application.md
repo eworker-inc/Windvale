@@ -1,0 +1,105 @@
+# Windvale Linux console application target
+
+## Status and purpose
+
+`linux-x64-console-v1` is the first deterministic Linux host-executable target. It packages one already verified ABI-20 x86-64 native fragment as a sectionless, import-free ELF64 static position-independent application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and ELF adapter construct the file, while the resulting application executes without a dynamic loader, libc, or .NET.
+
+This is the Linux twin of `windows-x64-console-v1`. It is a narrow executable-boundary proof, not a general Linux runtime, hosted-capability container, native compiler executable, or .NET-retirement milestone.
+
+## Input boundary
+
+The Windows and Linux adapters share one preparation boundary. It accepts a native fragment only after the independent native fragment verifier succeeds, then requires:
+
+- target `x86-64-wvb-baseline-v20` and native ABI 20;
+- exactly one exported, non-empty `Main() -> i32` entry;
+- no required runtime services, and therefore no hosted capabilities;
+- WVO production within the existing 4 MiB object bound;
+- a successful base-zero `flat-x86-64-v1` link containing only code and read-only data;
+- relative-i32 relocations only; and
+- linked bytes and the entry offset exactly reproducing the verified native fragment.
+
+The format adapters and their untrusted-byte verifiers remain separate. Portable generated record and dynamic byte storage is admitted within the fixed arenas below. Operations requiring the runtime service table are rejected.
+
+## Process entry and result
+
+The ELF entry is an exact 124-byte Linux x86-64 stub followed by zero padding to byte 128 and then the unchanged linked native image. The stub:
+
+1. invokes Linux x86-64 `mmap` syscall 9 for a private anonymous 64 MiB read/write stack mapping;
+2. exits with result `1` if the mapping fails, otherwise switches to its aligned upper boundary;
+3. obtains the writable execution context through RIP-relative addressing;
+4. publishes RIP-relative record- and text-arena bases into that context;
+5. supplies the context through both retained System V bridge positions in `RSI` and `RDX` and clears the other argument registers;
+6. calls the native fragment's exported `Main` through one relative displacement;
+7. selects the successful low `i32` result or maps every packed nonzero native status to result `1`; and
+8. terminates through Linux x86-64 `exit` syscall 60, followed by an unreachable `UD2` boundary.
+
+The private stack mapping prevents the program from inheriting a smaller ambient shell stack limit. Its 64 MiB size covers the retained 1,024-call budget at the current 32 KiB maximum generated frame plus bounded outgoing cells. The fixed execution limits remain ABI 20's defaults: 1,000,000 charged instructions and call depth 1,024.
+
+Linux wait status exposes only the low eight bits of the supplied process result. Version 1 emits no diagnostic text for a native trap.
+
+## Memory contract
+
+The executable uses only its two entry syscalls and has no ELF imports, interpreter, dynamic table, or heap allocation. Its writable load segment contains:
+
+| Region | Virtual bytes | Initial rule |
+| --- | ---: | --- |
+| ABI-20 execution context | 112 | Exact version, size, budgets, arena lengths, and otherwise zero |
+| Record arena | 2,097,152 | Loader-zeroed; context base is installed by the entry stub |
+| Dynamic text/byte arena | 16,777,216 | Loader-zeroed; context base is installed by the entry stub |
+
+Only the 112-byte context is present in the file. The remaining writable virtual extent is zero-filled by the ELF loader. Service, argument, output, file-input, and file-output pointers remain zero.
+
+## Canonical ELF64 layout
+
+All integers are little-endian. Unlisted and padding bytes are zero. File and load alignment is 4 KiB.
+
+| Region | Contract |
+| --- | --- |
+| ELF header | ELF64, little-endian, System V, x86-64, `ET_DYN`, entry `0x1000`, no section table |
+| Header `PT_LOAD` | Read-only page containing the ELF/program headers and version note |
+| Code `PT_LOAD` | Read/execute; exact startup, alignment padding, and native linked image |
+| Data `PT_LOAD` | Read/write; fixed context plus loader-zeroed arenas |
+| `PT_NOTE` | Read-only `Windvale` owner, note type 1, format version 1 |
+| `PT_GNU_STACK` | Read/write and non-executable; records the owned 64 MiB requirement |
+
+There is no `PT_INTERP`, `PT_DYNAMIC`, writable/executable load, section table, symbol table, relocation table, debug data, build ID, or runtime dependency. Equal file offsets and virtual addresses plus RIP-relative executable references allow the kernel to choose one position-independent load bias without fixups.
+
+The complete file is bounded to 4,202,608 bytes. Canonical `Sum-Data.wv` produces an 8,304-byte ELF with SHA-256 `8e4eede684330e1797a7ff4d512ffe52684f1257cdbd97aa3d5ea06a13bea88c`.
+
+## Independent verification
+
+`Linuxˉconsoleˉapplicationˉverifier.Verify` treats the ELF as untrusted bytes. It checks the outer size before fixed reads; the complete ELF identification and header; all five exact program headers; load sizes, permissions, address/offset agreement, and derived extents; the version note; every padding region; the exact startup instruction shapes and four relative targets; the mmap and exit syscall boundaries; and the initial execution context. It returns the recovered native bytes and native entry offset only after complete validation.
+
+The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests require the PE and ELF verifiers to recover the same native image and `Main` offset.
+
+## Diagnostics
+
+Writer failures return no application bytes:
+
+| Code | Meaning |
+| --- | --- |
+| `WVL1001` | Null, malformed, unknown-target, or otherwise unverified native fragment. |
+| `WVL1002` | Descriptor entry, required runtime service, capability, or missing scalar `Main`. |
+| `WVL1003` | WVO production, object limit, link failure, or failure to reproduce the native fragment. |
+| `WVL1004` | Independent ELF verification or recovered-input comparison failure. |
+
+The untrusted-byte verifier throws a bounded format exception:
+
+| Code | Meaning |
+| --- | --- |
+| `WVL2001` | File size, derived extent, or trailing-byte failure. |
+| `WVL2002` | ELF identification or main-header failure. |
+| `WVL2003` | Program-header kind, position, or fixed metadata failure. |
+| `WVL2004` | Linked-code size or memory-size failure. |
+| `WVL2005` | Windvale version-note failure. |
+| `WVL2006` | Startup instruction, stack mapping, relative target, entry call, or exit mapping failure. |
+| `WVL2007` | Initial execution-context or arena-bound failure. |
+| `WVL2008` | Nonzero canonical padding. |
+
+## Publication and deliberate limits
+
+The CLI defaults this target to `.elf`. On Linux it sets mode `0755` after writing the completely verified bytes; cross-construction on Windows cannot carry Unix executable-mode metadata and the transferred file must be made executable by its packaging or installation step.
+
+Version 1 has no console output, arguments, environment access, file access, diagnostic channel, runtime-service table, dynamic linking, libc, persistent heap, threads, unwind metadata, debugger metadata, signing, embedded WVB, load-time WVB verification, or install-time cache identity.
+
+The C# adapter is the Stage 0 oracle and recovery implementation. Its pure container constructor and verifier are named replacement seams for a portable Windvale `.wv` core; the exact startup template is a named `.wva` ownership seam. Normal construction moves only after the Windvale implementations reproduce exact ELF bytes and rejection behavior across Windows and Linux.

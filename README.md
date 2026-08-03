@@ -39,7 +39,7 @@ Windvale is not production-stable. Native compiler execution, the general native
 
 The experimental Stage 0 playground compiles, verifies, and runs Windvale entirely in the browser through .NET WebAssembly. It reuses the C# reference compiler and interpreter as the current semantic oracle, produces canonical WVB, and exposes only explicitly checked console and diagnostic capabilities. Its bounded portable subset is also lowered by the Windvale-authored backend and executed in a disposable Web Worker for differential evidence.
 
-An experimental `windows-x64-console-v1` target now packages capability-free scalar programs as deterministic import-free PE32+ applications. The generated `.exe` runs without loading .NET, while its compiler and packager remain Stage 0 hosted and its cross-host qualification is pending.
+Experimental `windows-x64-console-v1` and `linux-x64-console-v1` targets now package capability-free scalar programs as deterministic import-free PE32+ and sectionless static-PIE ELF applications. The generated `.exe` and `.elf` run without loading .NET, while their compiler and packagers remain Stage 0 hosted and cross-host qualification of the paired containers is pending.
 
 **[Open the Windvale Playground](https://windvale.ca/playground/)**
 

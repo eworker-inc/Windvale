@@ -136,6 +136,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $SumModule = Join-Path $Artifacts 'Sum-Data.wvb'
 $SumWindowsApplication = Join-Path $Artifacts 'Sum-Data-Windows.exe'
+$SumLinuxApplication = Join-Path $Artifacts 'Sum-Data-Linux.elf'
 $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $CompositionModule = Join-Path $Artifacts 'Module-Composition-Demo.wvb'
@@ -239,6 +240,26 @@ if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
     if ($LASTEXITCODE -ne 29) {
         throw "The generated Windows application returned $LASTEXITCODE instead of 29."
     }
+}
+
+$LinuxApplicationOutput = dotnet $ToolDll compile `
+    (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') `
+    --target linux-x64-console-v1 `
+    -o $SumLinuxApplication
+if (
+    $LASTEXITCODE -ne 0 -or
+    $LinuxApplicationOutput -notcontains 'Target: linux-x64-console-v1' -or
+    $LinuxApplicationOutput -notcontains 'SHA-256: 8e4eede684330e1797a7ff4d512ffe52684f1257cdbd97aa3d5ea06a13bea88c'
+) {
+    $LinuxApplicationText = $LinuxApplicationOutput -join ' | '
+    throw "The Seed CLI failed to produce the canonical Linux application (exit $LASTEXITCODE; output: $LinuxApplicationText)."
+}
+$LinuxApplicationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SumLinuxApplication).Hash.ToLowerInvariant()
+if (
+    (Get-Item -LiteralPath $SumLinuxApplication).Length -ne 8304 -or
+    $LinuxApplicationHash -ne '8e4eede684330e1797a7ff4d512ffe52684f1257cdbd97aa3d5ea06a13bea88c'
+) {
+    throw 'The Seed CLI Linux application identity is not canonical.'
 }
 
 $VerifyOutput = dotnet $ToolDll verify $SumModule

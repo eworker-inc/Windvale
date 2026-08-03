@@ -107,7 +107,15 @@ dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv --
 $LASTEXITCODE # 29
 ```
 
-This target currently accepts only capability-free `Main() -> i32` and uses the Stage 0 compiler/tool host to construct the `.exe`; the generated process does not load .NET. See the [Windows console application specification](../../Specifications/Windvale-Windows-Console-Application.md) for its fixed ABI-20 context, arenas, verification, and deliberate limits.
+On Linux, build and run the matching sectionless static-PIE target with:
+
+```sh
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv --target linux-x64-console-v1 -o artifacts/Sum-Data.elf
+./artifacts/Sum-Data.elf
+echo $? # 29
+```
+
+Both targets currently accept only capability-free `Main() -> i32` and use the Stage 0 compiler/tool host to construct the container; the generated process does not load .NET. See the [Windows](../../Specifications/Windvale-Windows-Console-Application.md) and [Linux](../../Specifications/Windvale-Linux-Console-Application.md) console application specifications for their fixed ABI-20 context, arenas, verification, and deliberate limits.
 
 The result is `Result: 29`.
 

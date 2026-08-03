@@ -2,15 +2,15 @@ using System.Collections.Immutable;
 
 namespace Windvale.Linker;
 
-public sealed record Windowsˉconsoleˉapplicationˉdiagnostic(
+public sealed record Linuxˉconsoleˉapplicationˉdiagnostic(
     string Code,
     string Message);
 
-public sealed class Windowsˉconsoleˉapplicationˉresult
+public sealed class Linuxˉconsoleˉapplicationˉresult
 {
-    private Windowsˉconsoleˉapplicationˉresult(
+    private Linuxˉconsoleˉapplicationˉresult(
         ImmutableArray<byte> imageˉbytes,
-        ImmutableArray<Windowsˉconsoleˉapplicationˉdiagnostic> diagnostics)
+        ImmutableArray<Linuxˉconsoleˉapplicationˉdiagnostic> diagnostics)
     {
         Imageˉbytes = imageˉbytes;
         Diagnostics = diagnostics;
@@ -20,21 +20,21 @@ public sealed class Windowsˉconsoleˉapplicationˉresult
 
     public ImmutableArray<byte> Imageˉbytes { get; }
 
-    public ImmutableArray<Windowsˉconsoleˉapplicationˉdiagnostic> Diagnostics { get; }
+    public ImmutableArray<Linuxˉconsoleˉapplicationˉdiagnostic> Diagnostics { get; }
 
-    internal static Windowsˉconsoleˉapplicationˉresult Succeeded(
+    internal static Linuxˉconsoleˉapplicationˉresult Succeeded(
         ImmutableArray<byte> imageˉbytes) =>
         new(imageˉbytes, []);
 
-    internal static Windowsˉconsoleˉapplicationˉresult Failed(
+    internal static Linuxˉconsoleˉapplicationˉresult Failed(
         string code,
         string message) =>
         new([], [new(code, message)]);
 }
 
-public sealed class Verifiedˉwindowsˉconsoleˉapplication
+public sealed class Verifiedˉlinuxˉconsoleˉapplication
 {
-    internal Verifiedˉwindowsˉconsoleˉapplication(
+    internal Verifiedˉlinuxˉconsoleˉapplication(
         ImmutableArray<byte> nativeˉimageˉbytes,
         uint nativeˉentryˉoffset)
     {
@@ -47,9 +47,9 @@ public sealed class Verifiedˉwindowsˉconsoleˉapplication
     public uint Nativeˉentryˉoffset { get; }
 }
 
-public sealed class Windowsˉconsoleˉapplicationˉexception : Exception
+public sealed class Linuxˉconsoleˉapplicationˉexception : Exception
 {
-    public Windowsˉconsoleˉapplicationˉexception(
+    public Linuxˉconsoleˉapplicationˉexception(
         string code,
         string message,
         int? byteˉoffset = null)
@@ -66,15 +66,17 @@ public sealed class Windowsˉconsoleˉapplicationˉexception : Exception
     public int? Byteˉoffset { get; }
 }
 
-public static class Windowsˉconsoleˉapplicationˉcontract
+public static class Linuxˉconsoleˉapplicationˉcontract
 {
     public const int FORMAT_VERSION = 1;
-    public const string TARGET_NAME = "windows-x64-console-v1";
-    public const int STARTUP_BYTES = 67;
-    public const int NATIVE_IMAGE_OFFSET = 80;
+    public const string TARGET_NAME = "linux-x64-console-v1";
+    public const int STARTUP_BYTES = 124;
+    public const int NATIVE_IMAGE_OFFSET = 128;
+    public const uint HEADER_BYTES = 0x1000;
+    public const uint TEXT_VIRTUAL_ADDRESS = 0x1000;
     public const uint RECORD_ARENA_BYTES = Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES;
     public const uint TEXT_ARENA_BYTES = Nativeˉconsoleˉapplicationˉcontract.TEXT_ARENA_BYTES;
     public const uint DATA_VIRTUAL_BYTES = Nativeˉconsoleˉapplicationˉcontract.DATA_VIRTUAL_BYTES;
     public const ulong STACK_BYTES = Nativeˉconsoleˉapplicationˉcontract.STACK_BYTES;
-    public const int MAX_APPLICATION_BYTES = 4_196_352;
+    public const int MAX_APPLICATION_BYTES = 4_202_608;
 }
