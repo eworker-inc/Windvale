@@ -39,7 +39,7 @@ This is focused local Windows evidence. GitHub's independent Windows and digest-
 
 ## Consequences
 
-The exact compiler now crosses the WVO and linker boundary without changing existing application bytes or weakening every consumer's limits. The next packaging slice can extend the independently verified PE/ELF container planners and writers to this measured image while serializing the compiler's exact six capabilities and complete service set.
+The exact compiler now crosses the WVO and linker boundary without changing existing application bytes or weakening every consumer's limits. [Decision 0161](0161-Exact-Compiler-Service-Bundle-And-Manifest.md) implements the next packaging slice: paired exact service bundles and a fixed manifest serialize the compiler's six capabilities and ten actually required services before PE/ELF startup work begins.
 
 This decision does not yet produce a compiler executable, expose a public large-link CLI, transfer large-object transport into Windvale, add compiler service adapters, directly run a packaged compiler, reproduce Stage 2 without .NET, or satisfy the native-retirement gate. Stage 0 remains the reference/recovery path.
 

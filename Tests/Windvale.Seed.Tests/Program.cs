@@ -97,6 +97,10 @@ internal static class Program
     private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "af8db63675a2441e57a763ca4caa411419a84879cf01a1eb62b4be7556487cab";
     private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "ee1c77763ad7440ad87ec10c4b7def67f9ec296eb366277cfe219617c76dda4b";
     private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "86e32c67a41ccb31053d4905191e32dd2aaafd59e4b73416ea2b401e83adc973";
+    private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "6d524aa9b96d0f624b0b449937ec6c0987a57e2c002af8276784c63a185efef6";
+    private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "635c432f6af1349c54fee66a43aab7e89471ff5a42a04e6d1cdb29718ebc217d";
+    private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "99da55911c81218ac74442a695d340ed440c74515b830bcc659bd4b7df7b2d4b";
+    private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "179887b6dec8fd987301a07c290cda93e0833c6827d73d5e62f1ebcf05007d69";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
@@ -7691,9 +7695,9 @@ internal static class Program
             [Firstˉobject.ToArray()],
             new(0, "Main", Linkˉadmissionˉprofile.Largeˉnative));
         Equal(Measurement.Linkedˉimageˉbytes, Firstˉlink.Imageˉbytes.Length);
-        Equal(
-            Compilerˉnative.Fragment.Symbols.Single(Symbol => Symbol.Name == "Main").Offset,
-            Firstˉlink.Entryˉaddress);
+        var Nativeˉentry = Compilerˉnative.Fragment.Symbols
+            .Single(Symbol => Symbol.Name == "Main").Offset;
+        Equal(Nativeˉentry, Firstˉlink.Entryˉaddress);
         Sequenceˉequal(Firstˉlink.Imageˉbytes, Secondˉlink.Imageˉbytes);
         Sequenceˉequal(Firstˉlink.Mapˉbytes, Secondˉlink.Mapˉbytes);
         Equal(
@@ -7705,6 +7709,147 @@ internal static class Program
         Contains(
             System.Text.Encoding.UTF8.GetString(Firstˉlink.Mapˉbytes.AsSpan()),
             $"target name={Linkˉcontract.LARGE_NATIVE_TARGET_NAME} architecture=x86-64");
+
+        Sequenceˉequal(
+            [
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.FILE_WRITE_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            ],
+            Compilerˉtool.Module.Capabilities.Select(Capability => Capability.Name));
+        Sequenceˉequal(
+            [
+                Nativeˉservice.Consoleˉwriteˉline,
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉservice.Processˉargument,
+                Nativeˉservice.Fileˉreadˉbytes,
+                Nativeˉservice.Textˉutf8ˉisˉvalid,
+                Nativeˉservice.Diagnosticˉwriteˉline,
+                Nativeˉservice.Enumˉname,
+                Nativeˉservice.Textˉconcat,
+                Nativeˉservice.U32ˉformat,
+                Nativeˉservice.Fileˉwriteˉbytes,
+            ],
+            Compilerˉnative.Fragment.Requiredˉservices);
+        var Windowsˉbundle = X64ˉnativeˉserviceˉbundle.Build(
+            Compilerˉnative.Fragment,
+            Nativeˉserviceˉplatform.Windows);
+        var Linuxˉbundle = X64ˉnativeˉserviceˉbundle.Build(
+            Compilerˉnative.Fragment,
+            Nativeˉserviceˉplatform.Linux);
+        Equal(17_143_635, Windowsˉbundle.Imageˉbytes.Length);
+        Equal(
+            SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256,
+            Objectˉdigest.Calculateˉsha256(Windowsˉbundle.Imageˉbytes.AsSpan()));
+        Equal(17_143_351, Linuxˉbundle.Imageˉbytes.Length);
+        Equal(
+            SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256,
+            Objectˉdigest.Calculateˉsha256(Linuxˉbundle.Imageˉbytes.AsSpan()));
+        foreach (var Bundle in new[] { Windowsˉbundle, Linuxˉbundle })
+        {
+            Equal(Compilerˉnative.Fragment.Code.Length, Bundle.Nativeˉimageˉbytes);
+            Sequenceˉequal(
+                Compilerˉnative.Fragment.Code,
+                Bundle.Imageˉbytes.Take(Bundle.Nativeˉimageˉbytes));
+            Sequenceˉequal(
+                Compilerˉnative.Fragment.Requiredˉservices,
+                Bundle.Placements.Select(Placement => Placement.Service));
+            Equal(10, Bundle.Placements.Length);
+        }
+        Sequenceˉequal(
+            Windowsˉbundle.Placements
+                .Where(Placement => Placement.Service is not (
+                    Nativeˉservice.Consoleˉwriteˉline or
+                    Nativeˉservice.Diagnosticˉwriteˉline or
+                    Nativeˉservice.Fileˉreadˉbytes or
+                    Nativeˉservice.Fileˉwriteˉbytes))
+                .Select(Placement => (Placement.Service, Placement.Adapter, Placement.Sha256)),
+            Linuxˉbundle.Placements
+                .Where(Placement => Placement.Service is not (
+                    Nativeˉservice.Consoleˉwriteˉline or
+                    Nativeˉservice.Diagnosticˉwriteˉline or
+                    Nativeˉservice.Fileˉreadˉbytes or
+                    Nativeˉservice.Fileˉwriteˉbytes))
+                .Select(Placement => (Placement.Service, Placement.Adapter, Placement.Sha256)));
+
+        var Windowsˉmetadata = Hostedˉcompilerˉapplicationˉmetadata.Build(
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            Compilerˉtool.Module.Capabilities,
+            Windowsˉbundle,
+            4096,
+            Nativeˉentry);
+        var Linuxˉmetadata = Hostedˉcompilerˉapplicationˉmetadata.Build(
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            Compilerˉtool.Module.Capabilities,
+            Linuxˉbundle,
+            4096,
+            Nativeˉentry);
+        Equal(
+            SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256,
+            Objectˉdigest.Calculateˉsha256(Windowsˉmetadata.AsSpan()));
+        Equal(
+            SOURCE_WVB_TOOL_LINUX_METADATA_SHA256,
+            Objectˉdigest.Calculateˉsha256(Linuxˉmetadata.AsSpan()));
+        foreach (var Case in new[]
+        {
+            (Target: Consoleˉapplicationˉtarget.Windowsˉx64,
+                Bundle: Windowsˉbundle, Metadata: Windowsˉmetadata),
+            (Target: Consoleˉapplicationˉtarget.Linuxˉx64,
+                Bundle: Linuxˉbundle, Metadata: Linuxˉmetadata),
+        })
+        {
+            var Verified = Hostedˉcompilerˉapplicationˉmetadata.Verify(
+                Case.Metadata.AsSpan(),
+                Case.Target,
+                Case.Bundle,
+                Case.Bundle.Imageˉbytes.AsSpan());
+            Equal(Hostedˉcompilerˉapplicationˉmetadata.SIZE, Case.Metadata.Length);
+            Equal(Nativeˉentry, Verified.Nativeˉentryˉoffset);
+            Sequenceˉequal(
+                Compilerˉtool.Module.Capabilities.Select(Capability => (
+                    Capability.Name,
+                    Parameters: string.Join(',', Capability.Parameterˉtypes),
+                    Capability.Returnˉtype)),
+                Verified.Capabilities.Select(Capability => (
+                    Capability.Name,
+                    Parameters: string.Join(',', Capability.Parameterˉtypes),
+                    Capability.Returnˉtype)));
+            Sequenceˉequal(Case.Bundle.Placements, Verified.Services);
+            foreach (var Offset in new[]
+            {
+                32,
+                Hostedˉcompilerˉapplicationˉmetadata.CAPABILITY_OFFSET,
+                Hostedˉcompilerˉapplicationˉmetadata.SERVICE_OFFSET + 12,
+                Hostedˉcompilerˉapplicationˉmetadata.SERVICE_OFFSET + 32,
+            })
+            {
+                var Corrupted = Case.Metadata.ToArray();
+                Corrupted[Offset] ^= 0x01;
+                Throwsˉinvalidˉdata(() =>
+                    _ = Hostedˉcompilerˉapplicationˉmetadata.Verify(
+                        Corrupted,
+                        Case.Target,
+                        Case.Bundle,
+                        Case.Bundle.Imageˉbytes.AsSpan()));
+            }
+            var Corruptedˉbundle = Case.Bundle.Imageˉbytes.ToArray();
+            Corruptedˉbundle[Case.Bundle.Placements[0].Imageˉoffset] ^= 0x01;
+            Throwsˉinvalidˉdata(() =>
+                _ = Hostedˉcompilerˉapplicationˉmetadata.Verify(
+                    Case.Metadata.AsSpan(),
+                    Case.Target,
+                    Case.Bundle,
+                    Corruptedˉbundle));
+        }
+        Throwsˉinvalidˉdata(() =>
+            _ = Hostedˉcompilerˉapplicationˉmetadata.Verify(
+                Windowsˉmetadata.AsSpan(),
+                Consoleˉapplicationˉtarget.Linuxˉx64,
+                Windowsˉbundle,
+                Windowsˉbundle.Imageˉbytes.AsSpan()));
 
         var Aggregateˉoverflowˉdata = new byte[
             Linkˉlimits.LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES - Firstˉobject.Length + 1];
@@ -7759,6 +7904,12 @@ internal static class Program
             $"wvo-sha256={Objectˉdigest.Calculateˉsha256(Firstˉobject.AsSpan())} " +
             $"image-sha256={Objectˉdigest.Calculateˉsha256(Firstˉlink.Imageˉbytes.AsSpan())} " +
             $"map-sha256={Objectˉdigest.Calculateˉsha256(Firstˉlink.Mapˉbytes.AsSpan())} " +
+            $"windows-bundle={Windowsˉbundle.Imageˉbytes.Length} " +
+            $"windows-bundle-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉbundle.Imageˉbytes.AsSpan())} " +
+            $"windows-metadata-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉmetadata.AsSpan())} " +
+            $"linux-bundle={Linuxˉbundle.Imageˉbytes.Length} " +
+            $"linux-bundle-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉbundle.Imageˉbytes.AsSpan())} " +
+            $"linux-metadata-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉmetadata.AsSpan())} " +
             $"wvo={Measurement.Encodedˉobjectˉbytes} memory={Measurement.Materializedˉsectionˉbytes} " +
             $"linked={Measurement.Linkedˉimageˉbytes} text={Measurement.Textˉbytes} " +
             $"rodata={Measurement.Readˉonlyˉdataˉbytes} sections={Measurement.Sections} " +
