@@ -19,7 +19,7 @@ public static class Moduleˉinspector
         ArgumentNullException.ThrowIfNull(verifiedˉmodule);
         var Module = verifiedˉmodule.Module;
         var Output = new StringBuilder();
-        Output.AppendLine($"Windvale bytecode {Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}");
+        Output.AppendLine($"Windvale bytecode {Moduleˉcodec.MAJOR_VERSION}.{Module.Formatˉminorˉversion}");
         Output.AppendLine($"SHA-256: {Moduleˉdigest.Calculateˉsha256(originalˉbytes)}");
         Output.AppendLine($"Module: {Module.Name}");
         Output.AppendLine($"Profile: {Formatˉprofile(Module.Profile)}");
@@ -126,10 +126,12 @@ public static class Moduleˉinspector
         {
             Valueˉtype.Void => "void",
             Valueˉtype.I32 => "i32",
+            Valueˉtype.I64 => "i64",
             Valueˉtype.Bool => "bool",
             Valueˉtype.Text => "text",
             Valueˉtype.U8 => "u8",
             Valueˉtype.U32 => "u32",
+            Valueˉtype.U64 => "u64",
             Valueˉtype.Bytes => "bytes",
             Valueˉtype.Record => "record",
             Valueˉtype.Enum => "enum",
@@ -163,9 +165,11 @@ public static class Moduleˉinspector
         return instruction.Opcode switch
         {
             Opcode.I32ˉconst => $"i32.const {instruction.Signedˉoperand}",
+            Opcode.I64ˉconst => $"i64.const {instruction.Signedˉwideˉoperand}",
             Opcode.Boolˉconst => $"bool.const {(instruction.Unsignedˉoperand == 1 ? "true" : "false")}",
             Opcode.U8ˉconst => $"u8.const {instruction.Unsignedˉoperand}",
             Opcode.U32ˉconst => $"u32.const {instruction.Unsignedˉoperand}",
+            Opcode.U64ˉconst => $"u64.const {instruction.Unsignedˉwideˉoperand}",
             Opcode.Textˉconst => $"text.const data[{instruction.Unsignedˉoperand}] ({module.Data[(int)instruction.Unsignedˉoperand].Name})",
             Opcode.Bytesˉconst => $"bytes.const data[{instruction.Unsignedˉoperand}] ({module.Data[(int)instruction.Unsignedˉoperand].Name})",
             Opcode.Localˉload => $"local.load {instruction.Unsignedˉoperand}",
@@ -186,8 +190,10 @@ public static class Moduleˉinspector
             Opcode.Enumˉnotˉequal => "enum.not_equal",
             Opcode.Enumˉname => "enum.name",
             Opcode.I32ˉformat => "i32.format",
+            Opcode.I64ˉformat => "i64.format",
             Opcode.U8ˉformat => "u8.format",
             Opcode.U32ˉformat => "u32.format",
+            Opcode.U64ˉformat => "u64.format",
             Opcode.Textˉconcat => "text.concat",
             Opcode.Textˉutf8ˉisˉvalid => "text.utf8_is_valid",
             Opcode.Textˉfromˉutf8 => "text.from_utf8",
@@ -204,15 +210,28 @@ public static class Moduleˉinspector
             Opcode.I32ˉsubtract => "i32.subtract",
             Opcode.I32ˉmultiply => "i32.multiply",
             Opcode.I32ˉnegate => "i32.negate",
+            Opcode.I64ˉadd => "i64.add",
+            Opcode.I64ˉsubtract => "i64.subtract",
+            Opcode.I64ˉmultiply => "i64.multiply",
+            Opcode.I64ˉnegate => "i64.negate",
             Opcode.U32ˉadd => "u32.add",
             Opcode.U32ˉsubtract => "u32.subtract",
             Opcode.U32ˉmultiply => "u32.multiply",
+            Opcode.U64ˉadd => "u64.add",
+            Opcode.U64ˉsubtract => "u64.subtract",
+            Opcode.U64ˉmultiply => "u64.multiply",
             Opcode.I32ˉequal => "i32.equal",
             Opcode.I32ˉnotˉequal => "i32.not_equal",
             Opcode.I32ˉless => "i32.less",
             Opcode.I32ˉlessˉequal => "i32.less_equal",
             Opcode.I32ˉgreater => "i32.greater",
             Opcode.I32ˉgreaterˉequal => "i32.greater_equal",
+            Opcode.I64ˉequal => "i64.equal",
+            Opcode.I64ˉnotˉequal => "i64.not_equal",
+            Opcode.I64ˉless => "i64.less",
+            Opcode.I64ˉlessˉequal => "i64.less_equal",
+            Opcode.I64ˉgreater => "i64.greater",
+            Opcode.I64ˉgreaterˉequal => "i64.greater_equal",
             Opcode.Boolˉequal => "bool.equal",
             Opcode.Boolˉnotˉequal => "bool.not_equal",
             Opcode.Boolˉnot => "bool.not",
@@ -222,6 +241,12 @@ public static class Moduleˉinspector
             Opcode.U32ˉlessˉequal => "u32.less_equal",
             Opcode.U32ˉgreater => "u32.greater",
             Opcode.U32ˉgreaterˉequal => "u32.greater_equal",
+            Opcode.U64ˉequal => "u64.equal",
+            Opcode.U64ˉnotˉequal => "u64.not_equal",
+            Opcode.U64ˉless => "u64.less",
+            Opcode.U64ˉlessˉequal => "u64.less_equal",
+            Opcode.U64ˉgreater => "u64.greater",
+            Opcode.U64ˉgreaterˉequal => "u64.greater_equal",
             Opcode.U8ˉequal => "u8.equal",
             Opcode.U8ˉnotˉequal => "u8.not_equal",
             Opcode.Jump => $"jump {instruction.Unsignedˉoperand:X4}",

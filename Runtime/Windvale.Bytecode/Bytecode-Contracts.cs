@@ -20,6 +20,8 @@ public enum Valueˉtype : byte
     Bytes = 6,
     Record = 7,
     Enum = 8,
+    I64 = 9,
+    U64 = 10,
 }
 
 public readonly record struct Valueˉshape(Valueˉtype Kind, int Nominalˉtypeˉindex = -1)
@@ -136,6 +138,30 @@ public enum Opcode : byte
     Textˉtoˉutf8 = 0x7C,
     Bytesˉsha256ˉhex = 0x7D,
 
+    I64ˉconst = 0x80,
+    U64ˉconst = 0x81,
+    I64ˉadd = 0x82,
+    I64ˉsubtract = 0x83,
+    I64ˉmultiply = 0x84,
+    I64ˉnegate = 0x85,
+    U64ˉadd = 0x86,
+    U64ˉsubtract = 0x87,
+    U64ˉmultiply = 0x88,
+    I64ˉequal = 0x89,
+    I64ˉnotˉequal = 0x8A,
+    I64ˉless = 0x8B,
+    I64ˉlessˉequal = 0x8C,
+    I64ˉgreater = 0x8D,
+    I64ˉgreaterˉequal = 0x8E,
+    U64ˉequal = 0x8F,
+    U64ˉnotˉequal = 0x90,
+    U64ˉless = 0x91,
+    U64ˉlessˉequal = 0x92,
+    U64ˉgreater = 0x93,
+    U64ˉgreaterˉequal = 0x94,
+    I64ˉformat = 0x95,
+    U64ˉformat = 0x96,
+
     Jump = 0x30,
     Branchˉfalse = 0x31,
 
@@ -205,6 +231,8 @@ public sealed record Bytecodeˉmodule(
     ImmutableArray<Exportˉdeclaration> Exports)
 {
     public ImmutableArray<Nominalˉtypeˉdeclaration> Types { get; init; } = [];
+
+    public ushort Formatˉminorˉversion { get; init; } = Moduleˉcodec.BASE_MINOR_VERSION;
 }
 
 public sealed record Decodedˉinstruction(
@@ -213,7 +241,9 @@ public sealed record Decodedˉinstruction(
     Opcode Opcode,
     int Signedˉoperand = 0,
     uint Unsignedˉoperand = 0,
-    uint Secondˉunsignedˉoperand = 0);
+    uint Secondˉunsignedˉoperand = 0,
+    long Signedˉwideˉoperand = 0,
+    ulong Unsignedˉwideˉoperand = 0);
 
 public sealed record Verifiedˉfunction(
     Functionˉdeclaration Declaration,

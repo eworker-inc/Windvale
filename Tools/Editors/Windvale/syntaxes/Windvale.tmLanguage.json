@@ -200,7 +200,7 @@
       "patterns": [
         {
           "name": "storage.type.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:i32|u8|u32|bool|text|bytes|void)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![A-Za-z0-9_ˉ])(?:i32|i64|u8|u32|u64|bool|text|bytes|void)(?![A-Za-z0-9_ˉ])"
         }
       ]
     },
@@ -223,7 +223,7 @@
     "numbers": {
       "patterns": [
         {
-          "match": "(?<![A-Za-z0-9_ˉ])([0-9]+)(u8|u32)?(?![A-Za-z0-9_ˉ])",
+          "match": "(?<![A-Za-z0-9_ˉ])([0-9]+)(u8|u32|i64|u64)?(?![A-Za-z0-9_ˉ])",
           "captures": {
             "1": {
               "name": "constant.numeric.integer.decimal.windvale"

@@ -570,8 +570,10 @@ internal sealed class Sourceˉparser
         var Kind = Token.Kind switch
         {
             Tokenˉkind.I32 => Typeˉsyntaxˉkind.I32,
+            Tokenˉkind.I64 => Typeˉsyntaxˉkind.I64,
             Tokenˉkind.U8 => Typeˉsyntaxˉkind.U8,
             Tokenˉkind.U32 => Typeˉsyntaxˉkind.U32,
+            Tokenˉkind.U64 => Typeˉsyntaxˉkind.U64,
             Tokenˉkind.Bool => Typeˉsyntaxˉkind.Bool,
             Tokenˉkind.Text => Typeˉsyntaxˉkind.Text,
             Tokenˉkind.Bytes => Typeˉsyntaxˉkind.Bytes,

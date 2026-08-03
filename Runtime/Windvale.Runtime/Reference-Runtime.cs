@@ -296,6 +296,9 @@ public sealed class Referenceˉruntime
                     case Opcode.I32ˉconst:
                         Stack.Push(Runtimeˉvalue.Fromˉi32(Instruction.Signedˉoperand));
                         break;
+                    case Opcode.I64ˉconst:
+                        Stack.Push(Runtimeˉvalue.Fromˉi64(Instruction.Signedˉwideˉoperand));
+                        break;
                     case Opcode.Boolˉconst:
                         Stack.Push(Runtimeˉvalue.Fromˉbool(Instruction.Unsignedˉoperand == 1));
                         break;
@@ -304,6 +307,9 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.U32ˉconst:
                         Stack.Push(Runtimeˉvalue.Fromˉu32(Instruction.Unsignedˉoperand));
+                        break;
+                    case Opcode.U64ˉconst:
+                        Stack.Push(Runtimeˉvalue.Fromˉu64(Instruction.Unsignedˉwideˉoperand));
                         break;
                     case Opcode.Textˉconst:
                         var Text = (Textˉdataˉdeclaration)Verifiedˉmodule.Module.Data[(int)Instruction.Unsignedˉoperand];
@@ -388,6 +394,18 @@ public sealed class Referenceˉruntime
                     case Opcode.I32ˉnegate:
                         Stack.Push(Runtimeˉvalue.Fromˉi32(checked(-Stack.Pop().I32ˉvalue)));
                         break;
+                    case Opcode.I64ˉadd:
+                        Applyˉi64ˉbinary(Stack, (Left, Right) => checked(Left + Right));
+                        break;
+                    case Opcode.I64ˉsubtract:
+                        Applyˉi64ˉbinary(Stack, (Left, Right) => checked(Left - Right));
+                        break;
+                    case Opcode.I64ˉmultiply:
+                        Applyˉi64ˉbinary(Stack, (Left, Right) => checked(Left * Right));
+                        break;
+                    case Opcode.I64ˉnegate:
+                        Stack.Push(Runtimeˉvalue.Fromˉi64(checked(-Stack.Pop().I64ˉvalue)));
+                        break;
                     case Opcode.U32ˉadd:
                         Applyˉu32ˉbinary(Stack, (Left, Right) => checked(Left + Right));
                         break;
@@ -396,6 +414,15 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.U32ˉmultiply:
                         Applyˉu32ˉbinary(Stack, (Left, Right) => checked(Left * Right));
+                        break;
+                    case Opcode.U64ˉadd:
+                        Applyˉu64ˉbinary(Stack, (Left, Right) => checked(Left + Right));
+                        break;
+                    case Opcode.U64ˉsubtract:
+                        Applyˉu64ˉbinary(Stack, (Left, Right) => checked(Left - Right));
+                        break;
+                    case Opcode.U64ˉmultiply:
+                        Applyˉu64ˉbinary(Stack, (Left, Right) => checked(Left * Right));
                         break;
                     case Opcode.I32ˉequal:
                         Applyˉi32ˉcomparison(Stack, (Left, Right) => Left == Right);
@@ -414,6 +441,24 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.I32ˉgreaterˉequal:
                         Applyˉi32ˉcomparison(Stack, (Left, Right) => Left >= Right);
+                        break;
+                    case Opcode.I64ˉequal:
+                        Applyˉi64ˉcomparison(Stack, (Left, Right) => Left == Right);
+                        break;
+                    case Opcode.I64ˉnotˉequal:
+                        Applyˉi64ˉcomparison(Stack, (Left, Right) => Left != Right);
+                        break;
+                    case Opcode.I64ˉless:
+                        Applyˉi64ˉcomparison(Stack, (Left, Right) => Left < Right);
+                        break;
+                    case Opcode.I64ˉlessˉequal:
+                        Applyˉi64ˉcomparison(Stack, (Left, Right) => Left <= Right);
+                        break;
+                    case Opcode.I64ˉgreater:
+                        Applyˉi64ˉcomparison(Stack, (Left, Right) => Left > Right);
+                        break;
+                    case Opcode.I64ˉgreaterˉequal:
+                        Applyˉi64ˉcomparison(Stack, (Left, Right) => Left >= Right);
                         break;
                     case Opcode.Boolˉequal:
                         Applyˉboolˉcomparison(Stack, (Left, Right) => Left == Right);
@@ -441,6 +486,24 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.U32ˉgreaterˉequal:
                         Applyˉu32ˉcomparison(Stack, (Left, Right) => Left >= Right);
+                        break;
+                    case Opcode.U64ˉequal:
+                        Applyˉu64ˉcomparison(Stack, (Left, Right) => Left == Right);
+                        break;
+                    case Opcode.U64ˉnotˉequal:
+                        Applyˉu64ˉcomparison(Stack, (Left, Right) => Left != Right);
+                        break;
+                    case Opcode.U64ˉless:
+                        Applyˉu64ˉcomparison(Stack, (Left, Right) => Left < Right);
+                        break;
+                    case Opcode.U64ˉlessˉequal:
+                        Applyˉu64ˉcomparison(Stack, (Left, Right) => Left <= Right);
+                        break;
+                    case Opcode.U64ˉgreater:
+                        Applyˉu64ˉcomparison(Stack, (Left, Right) => Left > Right);
+                        break;
+                    case Opcode.U64ˉgreaterˉequal:
+                        Applyˉu64ˉcomparison(Stack, (Left, Right) => Left >= Right);
                         break;
                     case Opcode.U8ˉequal:
                         Applyˉu8ˉcomparison(Stack, (Left, Right) => Left == Right);
@@ -481,6 +544,10 @@ public sealed class Referenceˉruntime
                             I32ˉformatted.Length);
                         Stack.Push(Runtimeˉvalue.Fromˉtext(I32ˉformatted));
                         break;
+                    case Opcode.I64ˉformat:
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(
+                            Stack.Pop().I64ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        break;
                     case Opcode.U8ˉformat:
                         var U8ˉformatted = Stack.Pop().U8ˉvalue.ToString(CultureInfo.InvariantCulture);
                         Recordˉdynamicˉvalue(
@@ -496,6 +563,10 @@ public sealed class Referenceˉruntime
                             Runtimeˉdynamicˉvalueˉkind.U32ˉformat,
                             U32ˉformatted.Length);
                         Stack.Push(Runtimeˉvalue.Fromˉtext(U32ˉformatted));
+                        break;
+                    case Opcode.U64ˉformat:
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(
+                            Stack.Pop().U64ˉvalue.ToString(CultureInfo.InvariantCulture)));
                         break;
                     case Opcode.U32ˉfromˉu8:
                         Stack.Push(Runtimeˉvalue.Fromˉu32(Stack.Pop().U8ˉvalue));
@@ -874,6 +945,24 @@ public sealed class Referenceˉruntime
         stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
     }
 
+    private static void Applyˉi64ˉbinary(
+        Runtimeˉstack stack,
+        Func<long, long, long> operation)
+    {
+        var Right = stack.Pop().I64ˉvalue;
+        var Left = stack.Pop().I64ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉi64(operation(Left, Right)));
+    }
+
+    private static void Applyˉi64ˉcomparison(
+        Runtimeˉstack stack,
+        Func<long, long, bool> operation)
+    {
+        var Right = stack.Pop().I64ˉvalue;
+        var Left = stack.Pop().I64ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+    }
+
     private static void Applyˉu32ˉbinary(
         Runtimeˉstack stack,
         Func<uint, uint, uint> operation)
@@ -889,6 +978,24 @@ public sealed class Referenceˉruntime
     {
         var Right = stack.Pop().U32ˉvalue;
         var Left = stack.Pop().U32ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+    }
+
+    private static void Applyˉu64ˉbinary(
+        Runtimeˉstack stack,
+        Func<ulong, ulong, ulong> operation)
+    {
+        var Right = stack.Pop().U64ˉvalue;
+        var Left = stack.Pop().U64ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉu64(operation(Left, Right)));
+    }
+
+    private static void Applyˉu64ˉcomparison(
+        Runtimeˉstack stack,
+        Func<ulong, ulong, bool> operation)
+    {
+        var Right = stack.Pop().U64ˉvalue;
+        var Left = stack.Pop().U64ˉvalue;
         stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
     }
 

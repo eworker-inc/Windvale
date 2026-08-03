@@ -10,12 +10,22 @@ public static class Moduleˉcodec
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public const ushort MAJOR_VERSION = 1;
-    public const ushort MINOR_VERSION = 6;
+    public const ushort BASE_MINOR_VERSION = 6;
+    public const ushort MINOR_VERSION = 7;
 
     public static byte[] Write(Bytecodeˉmodule module)
     {
         ArgumentNullException.ThrowIfNull(module);
-        Moduleˉverifier.Verify(module);
+        var Verified = Moduleˉverifier.Verify(module with
+        {
+            Formatˉminorˉversion = MINOR_VERSION,
+        });
+        module = module with
+        {
+            Formatˉminorˉversion = Requiresˉversionˉ1ˉ7(Verified)
+                ? MINOR_VERSION
+                : BASE_MINOR_VERSION,
+        };
 
         var Moduleˉpayload = Buildˉpayload(Writer =>
         {
@@ -144,7 +154,7 @@ public static class Moduleˉcodec
         var Rootˉwriter = new Byteˉwriter(Stream);
         Rootˉwriter.Writeˉbytes(MAGIC);
         Rootˉwriter.Writeˉu16(MAJOR_VERSION);
-        Rootˉwriter.Writeˉu16(MINOR_VERSION);
+        Rootˉwriter.Writeˉu16(module.Formatˉminorˉversion);
         Rootˉwriter.Writeˉu32(Bytecodeˉlimits.SECTION_COUNT);
         Writeˉsection(Rootˉwriter, Sectionˉkind.Module, Moduleˉpayload);
         Writeˉsection(Rootˉwriter, Sectionˉkind.Capabilities, Capabilityˉpayload);
@@ -181,7 +191,8 @@ public static class Moduleˉcodec
 
         var Majorˉversion = Reader.Readˉu16();
         var Minorˉversion = Reader.Readˉu16();
-        if (Majorˉversion != MAJOR_VERSION || Minorˉversion != MINOR_VERSION)
+        if (Majorˉversion != MAJOR_VERSION ||
+            Minorˉversion is not (BASE_MINOR_VERSION or MINOR_VERSION))
         {
             throw new Moduleˉformatˉexception(
                 "WVB1003",
@@ -238,6 +249,7 @@ public static class Moduleˉcodec
             Exports)
         {
             Types = Types,
+            Formatˉminorˉversion = Minorˉversion,
         };
     }
 
@@ -245,6 +257,32 @@ public static class Moduleˉcodec
     {
         return Moduleˉverifier.Verify(Read(bytes));
     }
+
+    private static bool Requiresˉversionˉ1ˉ7(Verifiedˉmodule module)
+    {
+        static bool Isˉwide(Valueˉshape Shape) =>
+            Shape.Kind is Valueˉtype.I64 or Valueˉtype.U64;
+
+        if (module.Module.Capabilities.Any(Capability =>
+                Capability.Parameterˉtypes.Any(Type => Isˉwide(Type)) ||
+                Isˉwide(Capability.Returnˉtype)) ||
+            module.Module.Functions.Any(Function =>
+                Function.Parameterˉtypes.Any(Isˉwide) ||
+                Isˉwide(Function.Returnˉtype) ||
+                Function.Localˉtypes.Any(Isˉwide)) ||
+            module.Module.Types.OfType<Recordˉtypeˉdeclaration>().Any(Record =>
+                Record.Fields.Any(Field => Isˉwide(Field.Type))))
+        {
+            return true;
+        }
+
+        return module.Functions
+            .SelectMany(Function => Function.Instructions)
+            .Any(Instruction => Isˉversionˉ1ˉ7ˉopcode(Instruction.Opcode));
+    }
+
+    internal static bool Isˉversionˉ1ˉ7ˉopcode(Opcode opcode) =>
+        opcode is >= Opcode.I64ˉconst and <= Opcode.U64ˉformat;
 
     private static ImmutableArray<Capabilityˉdeclaration> Readˉcapabilities(ref Byteˉreader reader)
     {

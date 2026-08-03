@@ -122,6 +122,10 @@ internal static class Bytecodeˉlowering
                     Emitˉi32(Opcode.I32ˉconst, instruction.Integerˉoperand, pop: 0, push: 1);
                     Storeˉresult(instruction);
                     break;
+                case Wirˉoperation.I64ˉconstant:
+                    Emitˉi64(Opcode.I64ˉconst, instruction.Wideˉintegerˉoperand, pop: 0, push: 1);
+                    Storeˉresult(instruction);
+                    break;
                 case Wirˉoperation.U8ˉconstant:
                     Emitˉbyte(
                         Opcode.U8ˉconst,
@@ -132,6 +136,14 @@ internal static class Bytecodeˉlowering
                     break;
                 case Wirˉoperation.U32ˉconstant:
                     Emitˉu32(Opcode.U32ˉconst, instruction.Unsignedˉintegerˉoperand, pop: 0, push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.U64ˉconstant:
+                    Emitˉu64(
+                        Opcode.U64ˉconst,
+                        instruction.Unsignedˉwideˉintegerˉoperand,
+                        pop: 0,
+                        push: 1);
                     Storeˉresult(instruction);
                     break;
                 case Wirˉoperation.Boolˉconstant:
@@ -232,6 +244,15 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.I32ˉlessˉequal:
                 case Wirˉoperation.I32ˉgreater:
                 case Wirˉoperation.I32ˉgreaterˉequal:
+                case Wirˉoperation.I64ˉadd:
+                case Wirˉoperation.I64ˉsubtract:
+                case Wirˉoperation.I64ˉmultiply:
+                case Wirˉoperation.I64ˉequal:
+                case Wirˉoperation.I64ˉnotˉequal:
+                case Wirˉoperation.I64ˉless:
+                case Wirˉoperation.I64ˉlessˉequal:
+                case Wirˉoperation.I64ˉgreater:
+                case Wirˉoperation.I64ˉgreaterˉequal:
                 case Wirˉoperation.Boolˉequal:
                 case Wirˉoperation.Boolˉnotˉequal:
                 case Wirˉoperation.U32ˉadd:
@@ -243,6 +264,15 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.U32ˉlessˉequal:
                 case Wirˉoperation.U32ˉgreater:
                 case Wirˉoperation.U32ˉgreaterˉequal:
+                case Wirˉoperation.U64ˉadd:
+                case Wirˉoperation.U64ˉsubtract:
+                case Wirˉoperation.U64ˉmultiply:
+                case Wirˉoperation.U64ˉequal:
+                case Wirˉoperation.U64ˉnotˉequal:
+                case Wirˉoperation.U64ˉless:
+                case Wirˉoperation.U64ˉlessˉequal:
+                case Wirˉoperation.U64ˉgreater:
+                case Wirˉoperation.U64ˉgreaterˉequal:
                 case Wirˉoperation.U8ˉequal:
                 case Wirˉoperation.U8ˉnotˉequal:
                 case Wirˉoperation.Enumˉequal:
@@ -254,11 +284,14 @@ internal static class Bytecodeˉlowering
                     Storeˉresult(instruction);
                     break;
                 case Wirˉoperation.I32ˉnegate:
+                case Wirˉoperation.I64ˉnegate:
                 case Wirˉoperation.Boolˉnot:
                 case Wirˉoperation.Enumˉname:
                 case Wirˉoperation.I32ˉformat:
+                case Wirˉoperation.I64ˉformat:
                 case Wirˉoperation.U8ˉformat:
                 case Wirˉoperation.U32ˉformat:
+                case Wirˉoperation.U64ˉformat:
                 case Wirˉoperation.U32ˉfromˉu8:
                 case Wirˉoperation.Textˉutf8ˉisˉvalid:
                 case Wirˉoperation.Textˉfromˉutf8:
@@ -418,6 +451,15 @@ internal static class Bytecodeˉlowering
             Applyˉstack(pop, push);
         }
 
+        private void Emitˉi64(Opcode opcode, long operand, int pop, int push)
+        {
+            Bytes.Add((byte)opcode);
+            Span<byte> Buffer = stackalloc byte[sizeof(long)];
+            BinaryPrimitives.WriteInt64LittleEndian(Buffer, operand);
+            Bytes.AddRange(Buffer);
+            Applyˉstack(pop, push);
+        }
+
         private void Emitˉu32(Opcode opcode, int operand, int pop, int push)
         {
             if (operand < 0)
@@ -432,6 +474,15 @@ internal static class Bytecodeˉlowering
         {
             Bytes.Add((byte)opcode);
             Writeˉu32(operand);
+            Applyˉstack(pop, push);
+        }
+
+        private void Emitˉu64(Opcode opcode, ulong operand, int pop, int push)
+        {
+            Bytes.Add((byte)opcode);
+            Span<byte> Buffer = stackalloc byte[sizeof(ulong)];
+            BinaryPrimitives.WriteUInt64LittleEndian(Buffer, operand);
+            Bytes.AddRange(Buffer);
             Applyˉstack(pop, push);
         }
 
@@ -505,6 +556,16 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.I32ˉlessˉequal => Opcode.I32ˉlessˉequal,
                 Wirˉoperation.I32ˉgreater => Opcode.I32ˉgreater,
                 Wirˉoperation.I32ˉgreaterˉequal => Opcode.I32ˉgreaterˉequal,
+                Wirˉoperation.I64ˉadd => Opcode.I64ˉadd,
+                Wirˉoperation.I64ˉsubtract => Opcode.I64ˉsubtract,
+                Wirˉoperation.I64ˉmultiply => Opcode.I64ˉmultiply,
+                Wirˉoperation.I64ˉnegate => Opcode.I64ˉnegate,
+                Wirˉoperation.I64ˉequal => Opcode.I64ˉequal,
+                Wirˉoperation.I64ˉnotˉequal => Opcode.I64ˉnotˉequal,
+                Wirˉoperation.I64ˉless => Opcode.I64ˉless,
+                Wirˉoperation.I64ˉlessˉequal => Opcode.I64ˉlessˉequal,
+                Wirˉoperation.I64ˉgreater => Opcode.I64ˉgreater,
+                Wirˉoperation.I64ˉgreaterˉequal => Opcode.I64ˉgreaterˉequal,
                 Wirˉoperation.Boolˉequal => Opcode.Boolˉequal,
                 Wirˉoperation.Boolˉnotˉequal => Opcode.Boolˉnotˉequal,
                 Wirˉoperation.Boolˉnot => Opcode.Boolˉnot,
@@ -523,14 +584,25 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.U32ˉlessˉequal => Opcode.U32ˉlessˉequal,
                 Wirˉoperation.U32ˉgreater => Opcode.U32ˉgreater,
                 Wirˉoperation.U32ˉgreaterˉequal => Opcode.U32ˉgreaterˉequal,
+                Wirˉoperation.U64ˉadd => Opcode.U64ˉadd,
+                Wirˉoperation.U64ˉsubtract => Opcode.U64ˉsubtract,
+                Wirˉoperation.U64ˉmultiply => Opcode.U64ˉmultiply,
+                Wirˉoperation.U64ˉequal => Opcode.U64ˉequal,
+                Wirˉoperation.U64ˉnotˉequal => Opcode.U64ˉnotˉequal,
+                Wirˉoperation.U64ˉless => Opcode.U64ˉless,
+                Wirˉoperation.U64ˉlessˉequal => Opcode.U64ˉlessˉequal,
+                Wirˉoperation.U64ˉgreater => Opcode.U64ˉgreater,
+                Wirˉoperation.U64ˉgreaterˉequal => Opcode.U64ˉgreaterˉequal,
                 Wirˉoperation.U8ˉequal => Opcode.U8ˉequal,
                 Wirˉoperation.U8ˉnotˉequal => Opcode.U8ˉnotˉequal,
                 Wirˉoperation.Enumˉequal => Opcode.Enumˉequal,
                 Wirˉoperation.Enumˉnotˉequal => Opcode.Enumˉnotˉequal,
                 Wirˉoperation.Enumˉname => Opcode.Enumˉname,
                 Wirˉoperation.I32ˉformat => Opcode.I32ˉformat,
+                Wirˉoperation.I64ˉformat => Opcode.I64ˉformat,
                 Wirˉoperation.U8ˉformat => Opcode.U8ˉformat,
                 Wirˉoperation.U32ˉformat => Opcode.U32ˉformat,
+                Wirˉoperation.U64ˉformat => Opcode.U64ˉformat,
                 Wirˉoperation.U32ˉfromˉu8 => Opcode.U32ˉfromˉu8,
                 Wirˉoperation.Textˉconcat => Opcode.Textˉconcat,
                 Wirˉoperation.Textˉutf8ˉisˉvalid => Opcode.Textˉutf8ˉisˉvalid,

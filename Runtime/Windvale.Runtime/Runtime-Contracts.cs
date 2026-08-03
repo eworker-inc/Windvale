@@ -50,20 +50,24 @@ public readonly record struct Runtimeˉvalue
     private Runtimeˉvalue(
         Valueˉshape type,
         int i32,
+        long i64,
         bool boolean,
         string? text,
         byte u8,
         uint u32,
+        ulong u64,
         int enumˉvalue,
         Runtimeˉbyteˉslice bytes,
         Runtimeˉrecordˉvalue? record)
     {
         Type = type;
         I32ˉvalue = i32;
+        I64ˉvalue = i64;
         Boolˉvalue = boolean;
         Textˉvalue = text;
         U8ˉvalue = u8;
         U32ˉvalue = u32;
+        U64ˉvalue = u64;
         Enumˉvalue = enumˉvalue;
         Bytesˉvalue = bytes;
         Recordˉvalue = record;
@@ -73,6 +77,8 @@ public readonly record struct Runtimeˉvalue
 
     public int I32ˉvalue { get; }
 
+    public long I64ˉvalue { get; }
+
     public bool Boolˉvalue { get; }
 
     public string? Textˉvalue { get; }
@@ -81,6 +87,8 @@ public readonly record struct Runtimeˉvalue
 
     public uint U32ˉvalue { get; }
 
+    public ulong U64ˉvalue { get; }
+
     public int Enumˉvalue { get; }
 
     public Runtimeˉbyteˉslice Bytesˉvalue { get; }
@@ -88,28 +96,34 @@ public readonly record struct Runtimeˉvalue
     public Runtimeˉrecordˉvalue? Recordˉvalue { get; }
 
     public static Runtimeˉvalue Fromˉi32(int value) =>
-        new(Valueˉtype.I32, value, false, null, 0, 0, 0, default, null);
+        new(Valueˉtype.I32, value, 0, false, null, 0, 0, 0, 0, default, null);
+
+    public static Runtimeˉvalue Fromˉi64(long value) =>
+        new(Valueˉtype.I64, 0, value, false, null, 0, 0, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉbool(bool value) =>
-        new(Valueˉtype.Bool, 0, value, null, 0, 0, 0, default, null);
+        new(Valueˉtype.Bool, 0, 0, value, null, 0, 0, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉtext(string value) =>
-        new(Valueˉtype.Text, 0, false, value, 0, 0, 0, default, null);
+        new(Valueˉtype.Text, 0, 0, false, value, 0, 0, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉu8(byte value) =>
-        new(Valueˉtype.U8, 0, false, null, value, 0, 0, default, null);
+        new(Valueˉtype.U8, 0, 0, false, null, value, 0, 0, 0, default, null);
 
     public static Runtimeˉvalue Fromˉu32(uint value) =>
-        new(Valueˉtype.U32, 0, false, null, 0, value, 0, default, null);
+        new(Valueˉtype.U32, 0, 0, false, null, 0, value, 0, 0, default, null);
+
+    public static Runtimeˉvalue Fromˉu64(ulong value) =>
+        new(Valueˉtype.U64, 0, 0, false, null, 0, 0, value, 0, default, null);
 
     public static Runtimeˉvalue Fromˉbytes(ImmutableArray<byte> values) =>
         Fromˉbytes(new Runtimeˉbyteˉslice(values, 0, values.Length));
 
     public static Runtimeˉvalue Fromˉbytes(Runtimeˉbyteˉslice value) =>
-        new(Valueˉtype.Bytes, 0, false, null, 0, 0, 0, value, null);
+        new(Valueˉtype.Bytes, 0, 0, false, null, 0, 0, 0, 0, value, null);
 
     public static Runtimeˉvalue Fromˉenum(int typeˉindex, int value) =>
-        new(Valueˉshape.Forˉenum(typeˉindex), 0, false, null, 0, 0, value, default, null);
+        new(Valueˉshape.Forˉenum(typeˉindex), 0, 0, false, null, 0, 0, 0, value, default, null);
 
     public static Runtimeˉvalue Fromˉrecord(
         int typeˉindex,
@@ -117,8 +131,10 @@ public readonly record struct Runtimeˉvalue
         new(
             Valueˉshape.Forˉrecord(typeˉindex),
             0,
+            0,
             false,
             null,
+            0,
             0,
             0,
             0,
@@ -132,10 +148,12 @@ public readonly record struct Runtimeˉvalue
         return type.Kind switch
         {
             Valueˉtype.I32 => Fromˉi32(0),
+            Valueˉtype.I64 => Fromˉi64(0),
             Valueˉtype.Bool => Fromˉbool(false),
             Valueˉtype.Text => Fromˉtext(string.Empty),
             Valueˉtype.U8 => Fromˉu8(0),
             Valueˉtype.U32 => Fromˉu32(0),
+            Valueˉtype.U64 => Fromˉu64(0),
             Valueˉtype.Bytes => Fromˉbytes(ImmutableArray<byte>.Empty),
             Valueˉtype.Record => Defaultˉrecord(type.Nominalˉtypeˉindex, nominalˉtypes),
             Valueˉtype.Enum => Defaultˉenum(type.Nominalˉtypeˉindex, nominalˉtypes),

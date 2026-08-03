@@ -27,19 +27,21 @@ let Status: Wvbˉstatus = Wvbˉstatus.Valid;
 
 ```text
 I32ˉformat(Value: i32) -> text
+I64ˉformat(Value: i64) -> text
 U8ˉformat(Value: u8) -> text
 U32ˉformat(Value: u32) -> text
+U64ˉformat(Value: u64) -> text
 Textˉconcat(Left: text, Right: text) -> text
 Enumˉname(Value: <enum>) -> text
 ```
 
-Integer formatting is invariant base 10. It never uses host locale, grouping separators, a leading plus sign, or padding. `i32` preserves a leading minus sign for negative values. Enum naming returns declared identifier text rather than its backing number.
+Integer formatting is invariant base 10. It never uses host locale, grouping separators, a leading plus sign, or padding. `i32` and `i64` preserve a leading minus sign for negative values. Enum naming returns declared identifier text rather than its backing number.
 
 `Textˉconcat` measures the combined strict UTF-8 byte length before concatenating. It traps with `WVR3012` if the result would exceed the 1 MiB text-value limit. This provides a deterministic allocation bound; it is not truncation.
 
 ## Bytecode and runtime
 
-The tagged Types-section representation introduced in WVB 1.3 remains part of current WVB 1.6. Enum value shapes carry exact nominal type indices. `enum.const` identifies both type and member, enum comparison requires matching shapes, and `enum.name` resolves only a value that the verifier has already proved belongs to that enum.
+The tagged Types-section representation introduced in WVB 1.3 remains part of WVB 1.6 and 1.7. Enum value shapes carry exact nominal type indices. `enum.const` identifies both type and member, enum comparison requires matching shapes, and `enum.name` resolves only a value that the verifier has already proved belongs to that enum. WVB 1.7 adds `i64` and `u64` formatting without changing enum encoding.
 
 The reference runtime stores an enum's declared `i32` value plus its nominal shape. Numeric formatting uses invariant .NET conversion only as the Stage 0 implementation of the specified text; the output contract is Windvale-defined.
 

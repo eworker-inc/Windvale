@@ -1,6 +1,6 @@
 # Windvale progress
 
-> Status snapshot: 2 August 2026
+> Status snapshot: 3 August 2026
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Windvale roadmap phase map showing qualified, ongoing, current, in-progress, and planned phases" width="100%"></a>
 
@@ -32,9 +32,12 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
 | WebAssembly interoperability | 🚧 In progress | The portable `.wv` selector now reaches local profile 11 over execution ABI 3. A deterministic 113,385-byte import-free Wasm artifact runs a Windvale-written verifier that completely consumes all seven bounded WVB 1.6 payload schemas and accepts nonempty data/text, nominal-type, and hosted-capability modules. Profile 8's editable .NET-free page remains intact; profile 10 is cross-host qualified. | Add canonical name/order, capability/type/index, typed-flow, control/reachability, and maximum-stack semantics; then add measured text/record/enum execution and obtain cross-host profile-11 plus cross-browser evidence. |
 
+The current unqualified language candidate adds checked `i64`/`u64` to Stage 0, conditional WVB 1.7, and the reference runtime while retaining exact WVB 1.6 for existing modules. Backend expansion is deliberately visible rather than implied: native reports `WVN2003`, and the Windvale-written compiler, WebAssembly, and OS profiles remain 1.6. Bounded owned values and builders are the accepted prerequisite for the dynamic collections needed by future database work.
+
 ## Working end to end
 
 - ✅ Windvale source → canonical WVB → verification → execution on Windows or Linux
+- 🚧 `i64`/`u64` source → conditional WVB 1.7 → checked reference execution; native, WebAssembly, self-hosted compiler, and OS lowering remain
 - ✅ Windvale assembly → verified WVO → deterministic linked x86-64 image
 - ✅ Portable WVB → shared WVO/AOT backend → linked UEFI image → kernel-owned execution
 - ✅ Hosted `Wv-Dump-Core.wv` → W^X/WVO execution → deterministic report for a real WVB

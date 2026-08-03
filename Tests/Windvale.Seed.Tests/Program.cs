@@ -915,6 +915,7 @@ internal static class Program
         new("immutable nominal records cross function boundaries", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Immutableˉrecordsˉrun),
         new("nominal enums and bounded formatting execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Enumsˉandˉformattingˉrun),
         new("Seed arithmetic and comparison operators execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Operatorsˉrun),
+        new("WVB 1.7 checked 64-bit scalars execute in the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wideˉscalarsˉrun),
         new("source diagnostics contain stable codes and locations", [TEST_AREA_COMPILER], Sourceˉdiagnosticsˉareˉuseful),
         new("binary reader rejects malformed envelopes and UTF-8", [TEST_AREA_BYTECODE], Malformedˉmodulesˉareˉrejected),
         new("verifier rejects unsafe instruction streams", [TEST_AREA_BYTECODE], Unsafeˉbytecodeˉisˉrejected),
@@ -13324,6 +13325,18 @@ internal static class Program
             """;
         Hasˉdiagnostic(U32ˉoverflow, "WVC1001");
 
+        const string I64ˉoverflow = """
+            module Broken profile portable;
+            export fn Main() -> i32 { 9223372036854775808i64; return 0; }
+            """;
+        Hasˉdiagnostic(I64ˉoverflow, "WVC1001");
+
+        const string U64ˉoverflow = """
+            module Broken profile portable;
+            export fn Main() -> i32 { 18446744073709551616u64; return 0; }
+            """;
+        Hasˉdiagnostic(U64ˉoverflow, "WVC1001");
+
         const string Byteˉdataˉoverflow = """
             module Broken profile portable;
             data Values: bytes = [256];
@@ -13380,6 +13393,79 @@ internal static class Program
         Equal(8, Runˉportable(Source));
     }
 
+    private static void Wideˉscalarsˉrun()
+    {
+        const string Source = """
+            module Wideˉscalars profile hosted;
+
+            capability console.write_line;
+
+            record Wideˉpair {
+                Signed: i64;
+                Unsigned: u64;
+            }
+
+            fn Make() -> Wideˉpair {
+                return Wideˉpair(-9i64, 18446744073709551615u64);
+            }
+
+            export fn Main() -> i32 {
+                let Pair: Wideˉpair = Make();
+                var Score: i32 = 0;
+                if Pair.Signed + 10i64 == 1i64 { Score = Score + 1; }
+                if Pair.Signed < 0i64 { Score = Score + 1; }
+                if -Pair.Signed == 9i64 { Score = Score + 1; }
+                if Pair.Unsigned - 1u64 == 18446744073709551614u64 { Score = Score + 1; }
+                if Pair.Unsigned > 4294967295u64 { Score = Score + 1; }
+                if 3i64 * 7i64 >= 21i64 { Score = Score + 1; }
+                if 3u64 * 7u64 <= 21u64 { Score = Score + 1; }
+                console.write_line(Textˉconcat(
+                    I64ˉformat(-9223372036854775807i64 - 1i64),
+                    Textˉconcat(" ", U64ˉformat(Pair.Unsigned))
+                ));
+                return Score;
+            }
+            """;
+
+        var Bytes = Compileˉsuccess(Source);
+        Equal(Moduleˉcodec.MINOR_VERSION, BinaryPrimitives.ReadUInt16LittleEndian(Bytes.AsSpan(6)));
+        var Legacyˉbytes = Compileˉsuccess(SUM_SOURCE);
+        Equal(
+            Moduleˉcodec.BASE_MINOR_VERSION,
+            BinaryPrimitives.ReadUInt16LittleEndian(Legacyˉbytes.AsSpan(6)));
+
+        var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        Equal(Moduleˉcodec.MINOR_VERSION, Module.Module.Formatˉminorˉversion);
+        var Pair = (Recordˉtypeˉdeclaration)Module.Module.Types.Single();
+        Equal(Valueˉtype.I64, Pair.Fields[0].Type);
+        Equal(Valueˉtype.U64, Pair.Fields[1].Type);
+        Sequenceˉequal(Bytes, Moduleˉcodec.Write(Module.Module));
+
+        var Inspection = Moduleˉinspector.Inspect(Module, Bytes);
+        Contains(Inspection, "Windvale bytecode 1.7");
+        Contains(Inspection, "i64.const 9");
+        Contains(Inspection, "i64.negate");
+        Contains(Inspection, "u64.const 18446744073709551615");
+        Contains(Inspection, "i64.add");
+        Contains(Inspection, "u64.subtract");
+        Contains(Inspection, "i64.format");
+        Contains(Inspection, "u64.format");
+
+        var Output = new StringWriter();
+        var Result = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(Output),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Authorizedˉcapabilities = ImmutableHashSet.Create(
+                    StringComparer.Ordinal,
+                    Capabilityˉcatalog.CONSOLE_WRITE_LINE),
+            }).Runˉmain();
+        Equal(7, Result.Exitˉcode);
+        Equal("-9223372036854775808 18446744073709551615\n", Output.ToString());
+        Throwsˉnative("WVN2003", () => X64ˉnativeˉbackend.Compile(Module));
+    }
+
     private static void Malformedˉmodulesˉareˉrejected()
     {
         var Valid = Compileˉsuccess(SUM_SOURCE);
@@ -13391,6 +13477,16 @@ internal static class Program
         var Badˉversion = (byte[])Valid.Clone();
         Badˉversion[4] = 2;
         Throwsˉbytecode("WVB1003", () => Moduleˉcodec.Readˉandˉverify(Badˉversion));
+
+        const string Wideˉsource = """
+            module Wideˉversion profile portable;
+            export fn Main() -> i32 { 1i64; return 0; }
+            """;
+        var Badˉwideˉversion = Compileˉsuccess(Wideˉsource);
+        BinaryPrimitives.WriteUInt16LittleEndian(
+            Badˉwideˉversion.AsSpan(6),
+            Moduleˉcodec.BASE_MINOR_VERSION);
+        Throwsˉbytecode("WVB2107", () => Moduleˉcodec.Readˉandˉverify(Badˉwideˉversion));
 
         var Badˉsectionˉcount = (byte[])Valid.Clone();
         BinaryPrimitives.WriteUInt32LittleEndian(Badˉsectionˉcount.AsSpan(8), 5);
@@ -13447,6 +13543,16 @@ internal static class Program
         Throwsˉbytecode(
             "WVB2006",
             () => Moduleˉverifier.Verify(Buildˉmodule([(byte)Opcode.I32ˉconst], Valueˉtype.I32, maximumˉstack: 1)));
+
+        Throwsˉbytecode(
+            "WVB2006",
+            () => Moduleˉverifier.Verify(Buildˉmodule(
+                [(byte)Opcode.I64ˉconst],
+                Valueˉtype.I64,
+                maximumˉstack: 1) with
+            {
+                Formatˉminorˉversion = Moduleˉcodec.MINOR_VERSION,
+            }));
 
         Throwsˉbytecode(
             "WVB2231",
@@ -13755,6 +13861,33 @@ internal static class Program
             }
             """;
         Throwsˉruntime("WVR3007", () => Runˉportable(U32ˉunderflow));
+
+        const string I64ˉoverflow = """
+            module I64ˉoverflow profile portable;
+            export fn Main() -> i32 {
+                9223372036854775807i64 + 1i64;
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3007", () => Runˉportable(I64ˉoverflow));
+
+        const string U64ˉoverflow = """
+            module U64ˉoverflow profile portable;
+            export fn Main() -> i32 {
+                18446744073709551615u64 + 1u64;
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3007", () => Runˉportable(U64ˉoverflow));
+
+        const string U64ˉunderflow = """
+            module U64ˉunderflow profile portable;
+            export fn Main() -> i32 {
+                0u64 - 1u64;
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3007", () => Runˉportable(U64ˉunderflow));
 
         var Oversizedˉtextˉresult = Buildˉmodule(
             [

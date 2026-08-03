@@ -22,6 +22,22 @@ public static class X64ˉnativeˉbackend
     {
         ArgumentNullException.ThrowIfNull(verifiedˉmodule);
         var Module = verifiedˉmodule.Module;
+        static bool Isˉwide(Valueˉshape Type) =>
+            Type.Kind is Valueˉtype.I64 or Valueˉtype.U64;
+        if (Module.Functions.Any(Function =>
+                Function.Parameterˉtypes.Any(Isˉwide) ||
+                Isˉwide(Function.Returnˉtype) ||
+                Function.Localˉtypes.Any(Isˉwide)) ||
+            Module.Types.OfType<Recordˉtypeˉdeclaration>().Any(Record =>
+                Record.Fields.Any(Field => Isˉwide(Field.Type))) ||
+            verifiedˉmodule.Functions.SelectMany(Function => Function.Instructions).Any(
+                Instruction => Instruction.Opcode is >= Opcode.I64ˉconst and <= Opcode.U64ˉformat))
+        {
+            Fail(
+                "WVN2003",
+                "The baseline x86-64 backend does not yet lower WVB 1.7 i64 or u64 values; use the reference runtime for this scalar profile.");
+        }
+
         var Isˉportable = Module.Profile == Moduleˉprofile.Portable && Module.Capabilities.IsEmpty;
         var Isˉhosted = Module.Profile == Moduleˉprofile.Hosted &&
             !Module.Capabilities.IsEmpty &&

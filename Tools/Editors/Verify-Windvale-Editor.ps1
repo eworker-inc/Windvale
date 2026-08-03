@@ -122,7 +122,7 @@ $KeywordCases = [ordered]@{
     'control-keywords' = @('if', 'else', 'while', 'return')
     'storage-keywords' = @('let', 'var')
     'profile-keywords' = @('portable', 'hosted', 'system')
-    'type-keywords' = @('i32', 'u8', 'u32', 'bool', 'text', 'bytes', 'void')
+    'type-keywords' = @('i32', 'i64', 'u8', 'u32', 'u64', 'bool', 'text', 'bytes', 'void')
     'boolean-literals' = @('true', 'false')
     'built-in-functions' = @('length')
 }
@@ -141,10 +141,20 @@ foreach ($Identifier in @('moduleˉname', 'trueˉvalue', 'i32ˉvalue', 'lengthen
 }
 
 $NumberPattern = Get-RulePattern $Grammar 'numbers'
-foreach ($Number in @('0', '2147483647', '0u8', '255u8', '0u32', '4294967295u32')) {
+foreach ($Number in @(
+    '0',
+    '2147483647',
+    '0i64',
+    '9223372036854775807i64',
+    '0u8',
+    '255u8',
+    '0u32',
+    '4294967295u32',
+    '0u64',
+    '18446744073709551615u64')) {
     Assert-FullMatch $NumberPattern $Number 'Numeric token'
 }
-foreach ($Identifier in @('Value0', '0u32suffix', 'Fieldˉ0u8')) {
+foreach ($Identifier in @('Value0', '0u32suffix', '0u64suffix', 'Fieldˉ0u8')) {
     Assert-Condition (!$NumberPattern.IsMatch($Identifier)) "Identifier '$Identifier' is incorrectly matched as a numeric token."
 }
 

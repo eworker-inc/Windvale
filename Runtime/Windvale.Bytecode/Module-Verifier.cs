@@ -17,6 +17,15 @@ public static class Moduleˉverifier
         {
             var Functionˉcode = module.Code.AsSpan(Function.Codeˉoffset, Function.Codeˉlength);
             var Instructions = Instructionˉcodec.Decode(Functionˉcode, Function.Name);
+            if (module.Formatˉminorˉversion == Moduleˉcodec.BASE_MINOR_VERSION &&
+                Instructions.Any(Instruction =>
+                    Moduleˉcodec.Isˉversionˉ1ˉ7ˉopcode(Instruction.Opcode)))
+            {
+                Fail(
+                    "WVB2107",
+                    $"Function '{Function.Name}' uses a WVB 1.7 opcode in a WVB 1.6 module.");
+            }
+
             Verifyˉfunction(module, Function, Instructions);
             Verifiedˉfunctions.Add(new(Function, Instructions));
         }
@@ -26,6 +35,30 @@ public static class Moduleˉverifier
 
     private static void Verifyˉmoduleˉmetadata(Bytecodeˉmodule module)
     {
+        if (module.Formatˉminorˉversion is not (
+            Moduleˉcodec.BASE_MINOR_VERSION or Moduleˉcodec.MINOR_VERSION))
+        {
+            Fail(
+                "WVB2107",
+                $"Module model version 1.{module.Formatˉminorˉversion} is not supported.");
+        }
+
+        static bool Isˉwide(Valueˉshape Shape) =>
+            Shape.Kind is Valueˉtype.I64 or Valueˉtype.U64;
+        if (module.Formatˉminorˉversion == Moduleˉcodec.BASE_MINOR_VERSION &&
+            (module.Capabilities.Any(Capability =>
+                Capability.Parameterˉtypes.Any(Type => Isˉwide(Type)) ||
+                Isˉwide(Capability.Returnˉtype)) ||
+            module.Functions.Any(Function =>
+                Function.Parameterˉtypes.Any(Isˉwide) ||
+                Isˉwide(Function.Returnˉtype) ||
+                Function.Localˉtypes.Any(Isˉwide)) ||
+            module.Types.OfType<Recordˉtypeˉdeclaration>().Any(Record =>
+                Record.Fields.Any(Field => Isˉwide(Field.Type)))))
+        {
+            Fail("WVB2107", "A WVB 1.6 module contains a WVB 1.7 value type.");
+        }
+
         if (!Seedˉnames.Isˉidentifier(module.Name))
         {
             Fail("WVB2100", $"Module name '{module.Name}' is not a Seed identifier.");
@@ -441,6 +474,9 @@ public static class Moduleˉverifier
             case Opcode.I32ˉconst:
                 Push(stack, Valueˉtype.I32);
                 break;
+            case Opcode.I64ˉconst:
+                Push(stack, Valueˉtype.I64);
+                break;
             case Opcode.Boolˉconst:
                 Push(stack, Valueˉtype.Bool);
                 break;
@@ -449,6 +485,9 @@ public static class Moduleˉverifier
                 break;
             case Opcode.U32ˉconst:
                 Push(stack, Valueˉtype.U32);
+                break;
+            case Opcode.U64ˉconst:
+                Push(stack, Valueˉtype.U64);
                 break;
             case Opcode.Textˉconst:
                 Requireˉdataˉtype(module, instruction, Dataˉtype.Text, function.Name);
@@ -510,12 +549,30 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.I32);
                 break;
+            case Opcode.I64ˉadd:
+            case Opcode.I64ˉsubtract:
+            case Opcode.I64ˉmultiply:
+                Pop(stack, Valueˉtype.I64, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.I64, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.I64);
+                break;
+            case Opcode.I64ˉnegate:
+                Pop(stack, Valueˉtype.I64, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.I64);
+                break;
             case Opcode.U32ˉadd:
             case Opcode.U32ˉsubtract:
             case Opcode.U32ˉmultiply:
                 Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
                 Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.U32);
+                break;
+            case Opcode.U64ˉadd:
+            case Opcode.U64ˉsubtract:
+            case Opcode.U64ˉmultiply:
+                Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U64);
                 break;
             case Opcode.I32ˉequal:
             case Opcode.I32ˉnotˉequal:
@@ -525,6 +582,16 @@ public static class Moduleˉverifier
             case Opcode.I32ˉgreaterˉequal:
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bool);
+                break;
+            case Opcode.I64ˉequal:
+            case Opcode.I64ˉnotˉequal:
+            case Opcode.I64ˉless:
+            case Opcode.I64ˉlessˉequal:
+            case Opcode.I64ˉgreater:
+            case Opcode.I64ˉgreaterˉequal:
+                Pop(stack, Valueˉtype.I64, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.I64, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Bool);
                 break;
             case Opcode.Boolˉequal:
@@ -545,6 +612,16 @@ public static class Moduleˉverifier
             case Opcode.U32ˉgreaterˉequal:
                 Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
                 Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bool);
+                break;
+            case Opcode.U64ˉequal:
+            case Opcode.U64ˉnotˉequal:
+            case Opcode.U64ˉless:
+            case Opcode.U64ˉlessˉequal:
+            case Opcode.U64ˉgreater:
+            case Opcode.U64ˉgreaterˉequal:
+                Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Bool);
                 break;
             case Opcode.U8ˉequal:
@@ -589,12 +666,20 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Text);
                 break;
+            case Opcode.I64ˉformat:
+                Pop(stack, Valueˉtype.I64, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Text);
+                break;
             case Opcode.U8ˉformat:
                 Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Text);
                 break;
             case Opcode.U32ˉformat:
                 Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Text);
+                break;
+            case Opcode.U64ˉformat:
+                Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Text);
                 break;
             case Opcode.U32ˉfromˉu8:
@@ -992,6 +1077,14 @@ public static class Moduleˉverifier
         string position)
     {
         Verifyˉvalueˉtype(shape.Kind, allowˉvoid, position);
+        if (module.Formatˉminorˉversion == Moduleˉcodec.BASE_MINOR_VERSION &&
+            shape.Kind is Valueˉtype.I64 or Valueˉtype.U64)
+        {
+            Fail(
+                "WVB2107",
+                $"Value type '{shape.Kind}' requires WVB 1.{Moduleˉcodec.MINOR_VERSION} for a {position}.");
+        }
+
         if (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum)
         {
             if ((uint)shape.Nominalˉtypeˉindex >= (uint)module.Types.Length)

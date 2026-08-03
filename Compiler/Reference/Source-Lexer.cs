@@ -32,8 +32,10 @@ internal sealed class Sourceˉlexer(
             ["true"] = Tokenˉkind.True,
             ["false"] = Tokenˉkind.False,
             ["i32"] = Tokenˉkind.I32,
+            ["i64"] = Tokenˉkind.I64,
             ["u8"] = Tokenˉkind.U8,
             ["u32"] = Tokenˉkind.U32,
+            ["u64"] = Tokenˉkind.U64,
             ["bool"] = Tokenˉkind.Bool,
             ["text"] = Tokenˉkind.Text,
             ["bytes"] = Tokenˉkind.Bytes,
@@ -117,6 +119,44 @@ internal sealed class Sourceˉlexer(
                 }
 
                 return Token(Tokenˉkind.Integer, Start, Startˉline, Startˉcolumn, Rawˉu32);
+            }
+
+            if (Hasˉnumericˉsuffix("i64"))
+            {
+                Advance();
+                Advance();
+                Advance();
+                var Digits = source[Start..Digitˉend];
+                if (!long.TryParse(Digits, NumberStyles.None, CultureInfo.InvariantCulture, out var Rawˉi64))
+                {
+                    diagnostics.Report(
+                        "WVC1001",
+                        "lexer",
+                        Span(Start, Startˉline, Startˉcolumn),
+                        "The decimal i64 literal is outside the positive range 0 through 9223372036854775807.");
+                    return Token(Tokenˉkind.Integer, Start, Startˉline, Startˉcolumn, 0L);
+                }
+
+                return Token(Tokenˉkind.Integer, Start, Startˉline, Startˉcolumn, Rawˉi64);
+            }
+
+            if (Hasˉnumericˉsuffix("u64"))
+            {
+                Advance();
+                Advance();
+                Advance();
+                var Digits = source[Start..Digitˉend];
+                if (!ulong.TryParse(Digits, NumberStyles.None, CultureInfo.InvariantCulture, out var Rawˉu64))
+                {
+                    diagnostics.Report(
+                        "WVC1001",
+                        "lexer",
+                        Span(Start, Startˉline, Startˉcolumn),
+                        "The decimal u64 literal is outside the range 0 through 18446744073709551615.");
+                    return Token(Tokenˉkind.Integer, Start, Startˉline, Startˉcolumn, 0UL);
+                }
+
+                return Token(Tokenˉkind.Integer, Start, Startˉline, Startˉcolumn, Rawˉu64);
             }
 
             var Text = source[Start..Digitˉend];

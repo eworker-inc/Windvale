@@ -4,6 +4,8 @@
 
 This document specifies the source-language subset implemented by Windvale Seed. It is deliberately small and may break during early development. Source is strict UTF-8. Identifiers are case-sensitive ASCII segments joined by U+02C9 and match `[A-Za-z_][A-Za-z0-9_]*(ˉ[A-Za-z_][A-Za-z0-9_]*)*`. Official source follows [Windvale source naming conventions](Source-Naming.md).
 
+The C# Stage 0 compiler and reference runtime implement the complete surface below. `i64` and `u64` use the WVB 1.7 extension; the Windvale-written compiler, baseline native backend, WebAssembly profiles, and Windvale OS consumers remain explicit WVB 1.6 subsets until their separately verified lowering contracts advance.
+
 ## Module shape
 
 Every source file contains one module declaration followed by zero or more source imports, capability declarations, immutable data declarations, record declarations, enum declarations, and function declarations. Imports, when present, must precede every other declaration.
@@ -32,8 +34,10 @@ An imported module must use `profile portable`, may contain only imports, record
 
 - `void` is valid only as a function or capability return type.
 - `i32` is a signed 32-bit integer. Arithmetic overflow traps deterministically.
+- `i64` is a signed 64-bit integer. Arithmetic overflow traps deterministically.
 - `u8` is an unsigned 8-bit integer used for individual byte values.
 - `u32` is an unsigned 32-bit integer used for byte offsets, lengths, and binary fields. Arithmetic overflow and underflow trap deterministically.
+- `u64` is an unsigned 64-bit integer for persistent identities, counters, and binary fields that exceed `u32`. Arithmetic overflow and underflow trap deterministically.
 - `bool` contains only `true` or `false`.
 - `text` is immutable, valid Unicode stored canonically as UTF-8 in modules.
 - `bytes` is an immutable sequence of bytes. A slice is an immutable view over an existing sequence.
@@ -41,7 +45,7 @@ An imported module must use `profile portable`, may contain only imports, record
 - A declared enum name is an immutable nominal scalar type with explicitly valued, named members.
 - `[i32]` is immutable module data. It is not a general runtime array type in Seed.
 
-Parameters and local variables may have `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, or a declared record or enum type. Functions may return the same value types. Module data may be `text`, `[i32]`, or `bytes`.
+Parameters and local variables may have `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, `text`, `bytes`, or a declared record or enum type. Functions may return the same value types. Module data may be `text`, `[i32]`, or `bytes`.
 
 ## Declarations
 
@@ -88,8 +92,10 @@ return [<expression>];
 Seed supports:
 
 - Decimal `i32` literals
+- Decimal `i64` literals with an `i64` suffix, from `0i64` through `9223372036854775807i64`
 - Decimal `u8` literals with a `u8` suffix, from `0u8` through `255u8`
 - Decimal `u32` literals with a `u32` suffix, from `0u32` through `4294967295u32`
+- Decimal `u64` literals with a `u64` suffix, from `0u64` through `18446744073709551615u64`
 - `true` and `false`
 - String literals with `\"`, `\\`, `\n`, `\r`, `\t`, and `\uXXXX` escapes
 - Local and parameter reads
@@ -103,10 +109,10 @@ Seed supports:
 - Named field access from a local or parameter: `Value.Left`
 - Nominal enum member values: `Wvbˉstatus.Valid`
 - Parentheses
-- Unary `-` for `i32` and `!` for `bool`
-- `*`, `+`, and `-` on two `i32` values or two `u32` values
-- `<`, `<=`, `>`, and `>=` on two `i32` values or two `u32` values
-- `==` and `!=` on two values of the same `i32`, `u8`, `u32`, `bool`, or nominal enum type
+- Unary `-` for `i32` or `i64`, and `!` for `bool`
+- `*`, `+`, and `-` on two values of the same `i32`, `i64`, `u32`, or `u64` type
+- `<`, `<=`, `>`, and `>=` on two values of the same `i32`, `i64`, `u32`, or `u64` type
+- `==` and `!=` on two values of the same `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, or nominal enum type
 
 Operators use conventional precedence. Binary operands are evaluated from left to right. Seed does not include implicit conversions.
 
@@ -131,8 +137,10 @@ Bytesˉfromˉi32ˉlittle(Value: i32) -> bytes
 Bytesˉsha256ˉhex(Value: bytes) -> text
 U32ˉfromˉu8(Value: u8) -> u32
 I32ˉformat(Value: i32) -> text
+I64ˉformat(Value: i64) -> text
 U8ˉformat(Value: u8) -> text
 U32ˉformat(Value: u32) -> text
+U64ˉformat(Value: u64) -> text
 Textˉconcat(Left: text, Right: text) -> text
 Textˉutf8ˉisˉvalid(Value: bytes) -> bool
 Textˉfromˉutf8(Value: bytes) -> text
@@ -155,7 +163,7 @@ The little-endian reads consume exactly 1, 2, or 4 bytes beginning at `Offset`; 
 - Invalid strict UTF-8 decoding or encoding traps with `WVR3014`; validation returns `false` for malformed input bytes.
 - Text quoting traps before allocation when its ASCII result would exceed the value limit.
 - Calling consumes arguments from left to right and creates a new frame.
-- Bytecode local slots have deterministic defaults (`0`, `false`, empty text, empty bytes, the first declared enum member, or a recursively defaulted immutable record); Windvale source still requires every `let` or `var` declaration to have an initializer.
+- Bytecode local slots have deterministic defaults (`0` at the declared integer width, `false`, empty text, empty bytes, the first declared enum member, or a recursively defaulted immutable record); Windvale source still requires every `let` or `var` declaration to have an initializer.
 - The runtime enforces implementation limits for instructions and call depth.
 - Module capability imports must be authorized explicitly and supported by the selected host before execution.
 - Pure portable execution cannot observe the host operating system.

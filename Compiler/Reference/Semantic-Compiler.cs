@@ -469,8 +469,10 @@ internal static class Semanticˉcompiler
             {
                 Typeˉsyntaxˉkind.Void => Valueˉtype.Void,
                 Typeˉsyntaxˉkind.I32 => Valueˉtype.I32,
+                Typeˉsyntaxˉkind.I64 => Valueˉtype.I64,
                 Typeˉsyntaxˉkind.U8 => Valueˉtype.U8,
                 Typeˉsyntaxˉkind.U32 => Valueˉtype.U32,
+                Typeˉsyntaxˉkind.U64 => Valueˉtype.U64,
                 Typeˉsyntaxˉkind.Bool => Valueˉtype.Bool,
                 Typeˉsyntaxˉkind.Text => Valueˉtype.Text,
                 Typeˉsyntaxˉkind.Bytes => Valueˉtype.Bytes,
@@ -852,6 +854,10 @@ internal static class Semanticˉcompiler
                     Wirˉoperation.I32ˉconstant,
                     Valueˉtype.I32,
                     integerˉoperand: Integer),
+                long I64 => Result(
+                    Wirˉoperation.I64ˉconstant,
+                    Valueˉtype.I64,
+                    wideˉintegerˉoperand: I64),
                 byte U8 => Result(
                     Wirˉoperation.U8ˉconstant,
                     Valueˉtype.U8,
@@ -860,6 +866,10 @@ internal static class Semanticˉcompiler
                     Wirˉoperation.U32ˉconstant,
                     Valueˉtype.U32,
                     unsignedˉintegerˉoperand: U32),
+                ulong U64 => Result(
+                    Wirˉoperation.U64ˉconstant,
+                    Valueˉtype.U64,
+                    unsignedˉwideˉintegerˉoperand: U64),
                 bool Boolean => Result(
                     Wirˉoperation.Boolˉconstant,
                     Valueˉtype.Bool,
@@ -916,8 +926,21 @@ internal static class Semanticˉcompiler
             var Operand = Compileˉexpression(expression.Operand);
             if (expression.Operator == Tokenˉkind.Minus)
             {
-                Requireˉtype(Operand, Valueˉtype.I32, expression.Operand.Span, "unary '-' operand");
-                return Result(Wirˉoperation.I32ˉnegate, Valueˉtype.I32, [Operand.Temporary]);
+                if (Operand.Type.Kind is not (Valueˉtype.I32 or Valueˉtype.I64))
+                {
+                    Report(
+                        "WVC2070",
+                        expression.Operand.Span,
+                        $"The unary '-' operand has type {Formatˉtype(Operand.Type)}; i32 or i64 is required.");
+                    return Invalidˉvalue(expression.Span);
+                }
+
+                return Result(
+                    Operand.Type.Kind == Valueˉtype.I32
+                        ? Wirˉoperation.I32ˉnegate
+                        : Wirˉoperation.I64ˉnegate,
+                    Operand.Type,
+                    [Operand.Temporary]);
             }
 
             Requireˉtype(Operand, Valueˉtype.Bool, expression.Operand.Span, "unary '!' operand");
@@ -935,12 +958,13 @@ internal static class Semanticˉcompiler
                 case Tokenˉkind.Plus:
                 case Tokenˉkind.Minus:
                 case Tokenˉkind.Star:
-                    if (Left.Type != Right.Type || Left.Type.Kind is not (Valueˉtype.I32 or Valueˉtype.U32))
+                    if (Left.Type != Right.Type || Left.Type.Kind is not (
+                        Valueˉtype.I32 or Valueˉtype.I64 or Valueˉtype.U32 or Valueˉtype.U64))
                     {
                         Report(
                             "WVC2068",
                             expression.Span,
-                            "Arithmetic requires two i32 values or two u32 values of the same type.");
+                            "Arithmetic requires two i32, i64, u32, or u64 values of the same type.");
                         return Invalidˉvalue(expression.Span);
                     }
 
@@ -950,9 +974,15 @@ internal static class Semanticˉcompiler
                             (Valueˉtype.I32, Tokenˉkind.Plus) => Wirˉoperation.I32ˉadd,
                             (Valueˉtype.I32, Tokenˉkind.Minus) => Wirˉoperation.I32ˉsubtract,
                             (Valueˉtype.I32, _) => Wirˉoperation.I32ˉmultiply,
+                            (Valueˉtype.I64, Tokenˉkind.Plus) => Wirˉoperation.I64ˉadd,
+                            (Valueˉtype.I64, Tokenˉkind.Minus) => Wirˉoperation.I64ˉsubtract,
+                            (Valueˉtype.I64, _) => Wirˉoperation.I64ˉmultiply,
                             (Valueˉtype.U32, Tokenˉkind.Plus) => Wirˉoperation.U32ˉadd,
                             (Valueˉtype.U32, Tokenˉkind.Minus) => Wirˉoperation.U32ˉsubtract,
-                            _ => Wirˉoperation.U32ˉmultiply,
+                            (Valueˉtype.U32, _) => Wirˉoperation.U32ˉmultiply,
+                            (Valueˉtype.U64, Tokenˉkind.Plus) => Wirˉoperation.U64ˉadd,
+                            (Valueˉtype.U64, Tokenˉkind.Minus) => Wirˉoperation.U64ˉsubtract,
+                            _ => Wirˉoperation.U64ˉmultiply,
                         },
                         Left.Type,
                         Operands);
@@ -960,12 +990,13 @@ internal static class Semanticˉcompiler
                 case Tokenˉkind.Lessˉequals:
                 case Tokenˉkind.Greater:
                 case Tokenˉkind.Greaterˉequals:
-                    if (Left.Type != Right.Type || Left.Type.Kind is not (Valueˉtype.I32 or Valueˉtype.U32))
+                    if (Left.Type != Right.Type || Left.Type.Kind is not (
+                        Valueˉtype.I32 or Valueˉtype.I64 or Valueˉtype.U32 or Valueˉtype.U64))
                     {
                         Report(
                             "WVC2069",
                             expression.Span,
-                            "Ordering requires two i32 values or two u32 values of the same type.");
+                            "Ordering requires two i32, i64, u32, or u64 values of the same type.");
                         return Invalidˉvalue(expression.Span);
                     }
 
@@ -976,10 +1007,18 @@ internal static class Semanticˉcompiler
                             (Valueˉtype.I32, Tokenˉkind.Lessˉequals) => Wirˉoperation.I32ˉlessˉequal,
                             (Valueˉtype.I32, Tokenˉkind.Greater) => Wirˉoperation.I32ˉgreater,
                             (Valueˉtype.I32, _) => Wirˉoperation.I32ˉgreaterˉequal,
+                            (Valueˉtype.I64, Tokenˉkind.Less) => Wirˉoperation.I64ˉless,
+                            (Valueˉtype.I64, Tokenˉkind.Lessˉequals) => Wirˉoperation.I64ˉlessˉequal,
+                            (Valueˉtype.I64, Tokenˉkind.Greater) => Wirˉoperation.I64ˉgreater,
+                            (Valueˉtype.I64, _) => Wirˉoperation.I64ˉgreaterˉequal,
                             (Valueˉtype.U32, Tokenˉkind.Less) => Wirˉoperation.U32ˉless,
                             (Valueˉtype.U32, Tokenˉkind.Lessˉequals) => Wirˉoperation.U32ˉlessˉequal,
                             (Valueˉtype.U32, Tokenˉkind.Greater) => Wirˉoperation.U32ˉgreater,
-                            _ => Wirˉoperation.U32ˉgreaterˉequal,
+                            (Valueˉtype.U32, _) => Wirˉoperation.U32ˉgreaterˉequal,
+                            (Valueˉtype.U64, Tokenˉkind.Less) => Wirˉoperation.U64ˉless,
+                            (Valueˉtype.U64, Tokenˉkind.Lessˉequals) => Wirˉoperation.U64ˉlessˉequal,
+                            (Valueˉtype.U64, Tokenˉkind.Greater) => Wirˉoperation.U64ˉgreater,
+                            _ => Wirˉoperation.U64ˉgreaterˉequal,
                         },
                         Valueˉtype.Bool,
                         Operands);
@@ -988,15 +1027,17 @@ internal static class Semanticˉcompiler
                     if (Left.Type != Right.Type ||
                         Left.Type.Kind is not (
                             Valueˉtype.I32 or
+                            Valueˉtype.I64 or
                             Valueˉtype.U8 or
                             Valueˉtype.U32 or
+                            Valueˉtype.U64 or
                             Valueˉtype.Bool or
                             Valueˉtype.Enum))
                     {
                         Report(
                             "WVC2062",
                             expression.Span,
-                            "Equality requires two i32, u8, u32, bool, or identical enum values.");
+                            "Equality requires two i32, i64, u8, u32, u64, bool, or identical enum values.");
                         return Invalidˉvalue(expression.Span);
                     }
 
@@ -1005,10 +1046,14 @@ internal static class Semanticˉcompiler
                         {
                             (Valueˉtype.I32, Tokenˉkind.Equalsˉequals) => Wirˉoperation.I32ˉequal,
                             (Valueˉtype.I32, _) => Wirˉoperation.I32ˉnotˉequal,
+                            (Valueˉtype.I64, Tokenˉkind.Equalsˉequals) => Wirˉoperation.I64ˉequal,
+                            (Valueˉtype.I64, _) => Wirˉoperation.I64ˉnotˉequal,
                             (Valueˉtype.U8, Tokenˉkind.Equalsˉequals) => Wirˉoperation.U8ˉequal,
                             (Valueˉtype.U8, _) => Wirˉoperation.U8ˉnotˉequal,
                             (Valueˉtype.U32, Tokenˉkind.Equalsˉequals) => Wirˉoperation.U32ˉequal,
                             (Valueˉtype.U32, _) => Wirˉoperation.U32ˉnotˉequal,
+                            (Valueˉtype.U64, Tokenˉkind.Equalsˉequals) => Wirˉoperation.U64ˉequal,
+                            (Valueˉtype.U64, _) => Wirˉoperation.U64ˉnotˉequal,
                             (Valueˉtype.Bool, Tokenˉkind.Equalsˉequals) => Wirˉoperation.Boolˉequal,
                             (Valueˉtype.Bool, _) => Wirˉoperation.Boolˉnotˉequal,
                             (Valueˉtype.Enum, Tokenˉkind.Equalsˉequals) => Wirˉoperation.Enumˉequal,
@@ -1289,6 +1334,8 @@ internal static class Semanticˉcompiler
             int integerˉoperand = 0,
             uint unsignedˉintegerˉoperand = 0,
             uint secondˉunsignedˉintegerˉoperand = 0,
+            long wideˉintegerˉoperand = 0,
+            ulong unsignedˉwideˉintegerˉoperand = 0,
             string? nameˉoperand = null)
         {
             var Temporary = Emitˉresult(
@@ -1298,6 +1345,8 @@ internal static class Semanticˉcompiler
                 integerˉoperand,
                 unsignedˉintegerˉoperand,
                 secondˉunsignedˉintegerˉoperand,
+                wideˉintegerˉoperand,
+                unsignedˉwideˉintegerˉoperand,
                 nameˉoperand);
             return new(type, Temporary);
         }
@@ -1309,6 +1358,8 @@ internal static class Semanticˉcompiler
             int integerˉoperand = 0,
             uint unsignedˉintegerˉoperand = 0,
             uint secondˉunsignedˉintegerˉoperand = 0,
+            long wideˉintegerˉoperand = 0,
+            ulong unsignedˉwideˉintegerˉoperand = 0,
             string? nameˉoperand = null)
         {
             var Temporary = Temporaryˉtypes.Count;
@@ -1320,6 +1371,8 @@ internal static class Semanticˉcompiler
                 Integerˉoperand: integerˉoperand,
                 Unsignedˉintegerˉoperand: unsignedˉintegerˉoperand,
                 Secondˉunsignedˉintegerˉoperand: secondˉunsignedˉintegerˉoperand,
+                Wideˉintegerˉoperand: wideˉintegerˉoperand,
+                Unsignedˉwideˉintegerˉoperand: unsignedˉwideˉintegerˉoperand,
                 Nameˉoperand: nameˉoperand));
             return Temporary;
         }
@@ -1403,8 +1456,10 @@ internal static class Semanticˉcompiler
             {
                 Typeˉsyntaxˉkind.Void => Valueˉtype.Void,
                 Typeˉsyntaxˉkind.I32 => Valueˉtype.I32,
+                Typeˉsyntaxˉkind.I64 => Valueˉtype.I64,
                 Typeˉsyntaxˉkind.U8 => Valueˉtype.U8,
                 Typeˉsyntaxˉkind.U32 => Valueˉtype.U32,
+                Typeˉsyntaxˉkind.U64 => Valueˉtype.U64,
                 Typeˉsyntaxˉkind.Bool => Valueˉtype.Bool,
                 Typeˉsyntaxˉkind.Text => Valueˉtype.Text,
                 Typeˉsyntaxˉkind.Bytes => Valueˉtype.Bytes,
@@ -1435,8 +1490,10 @@ internal static class Semanticˉcompiler
             {
                 Valueˉtype.Void => "void",
                 Valueˉtype.I32 => "i32",
+                Valueˉtype.I64 => "i64",
                 Valueˉtype.U8 => "u8",
                 Valueˉtype.U32 => "u32",
+                Valueˉtype.U64 => "u64",
                 Valueˉtype.Bool => "bool",
                 Valueˉtype.Text => "text",
                 Valueˉtype.Bytes => "bytes",

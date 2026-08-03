@@ -2,7 +2,7 @@
 
 ## Status
 
-This document specifies Windvale bytecode module version 1.6 used by Seed. Windvale is in early development; version 1.6 identifies the binary grammar and is not yet a long-term compatibility promise. Version 1.6 adds the exact SHA-256 identity operation required by the accepted deterministic linker-map contract. It does not require a backward reader for versions 1.0 through 1.5.
+This document specifies the Windvale bytecode 1.6 base and its 1.7 64-bit scalar extension. Windvale is in early development; these versions identify binary vocabularies and are not yet a long-term compatibility promise. Version 1.6 adds the exact SHA-256 identity operation required by the accepted deterministic linker-map contract. Version 1.7 adds checked `i64` and `u64` stack values, operations, and formatting without changing the section grammar. The canonical writer emits 1.6 unless a module uses the 1.7 vocabulary. Readers do not accept versions 1.0 through 1.5.
 
 ## Encoding
 
@@ -19,9 +19,11 @@ This document specifies Windvale bytecode module version 1.6 used by Seed. Windv
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 6
+u16      minor version: 6 or 7, selected by the module vocabulary
 u32      section count: 7
 ```
+
+A 1.6 module must not contain value types `9` or `10` or opcodes `80` through `96`. The verifier rejects such a mismatched header rather than interpreting the extension under the older contract.
 
 Every section has this envelope:
 
@@ -135,7 +137,7 @@ repeat:
       i32  member value
 ```
 
-Nominal types are grouped by kind, then strictly sorted by ordinal name, and names are unique across all kinds. Record field order is declaration order and therefore constructor order; field names are unique within the record. Seed requires between 1 and 64 fields. Fields may use `i32`, `bool`, `text`, `u8`, `u32`, `bytes`, or a nominal enum, but not `void` or another record. Enums contain 1 through 256 uniquely named members with unique `i32` values; member order is declaration order.
+Nominal types are grouped by kind, then strictly sorted by ordinal name, and names are unique across all kinds. Record field order is declaration order and therefore constructor order; field names are unique within the record. Seed requires between 1 and 64 fields. Fields may use `i32`, `i64`, `bool`, `text`, `u8`, `u32`, `u64`, `bytes`, or a nominal enum, but not `void` or another record. Enums contain 1 through 256 uniquely named members with unique `i32` values; member order is declaration order.
 
 ## Value types
 
@@ -149,11 +151,15 @@ Nominal types are grouped by kind, then strictly sorted by ordinal name, and nam
 6 bytes
 7 record
 8 enum
+9 i64 (WVB 1.7)
+10 u64 (WVB 1.7)
 ```
 
 `void` is valid only as a return type. Immutable integer arrays are module data and are not operand-stack values. A `bytes` value is an immutable sequence or slice view and can be stored in locals, passed to functions, and returned.
 
 Function parameter, result, local, and record-field types use a value shape. A primitive shape is its one-byte value type. A nominal shape is byte `7` for a record or byte `8` for an enum followed by a `u32` index into the Types section. Nominal identity is exact: separately declared records or enums remain different operand-stack types even when their contents match.
+
+`i64` and `u64` are ordinary scalar shapes only in WVB 1.7. They do not widen counts, indices, lengths, code offsets, enum backing values, or existing binary Foundation operations, which remain explicitly `u32` or `i32`.
 
 ## Instruction encoding
 
@@ -223,6 +229,30 @@ Function parameter, result, local, and record-field types use a value shape. A p
 7C text.to_utf8       consumes text, produces its strict UTF-8 bytes
 7D bytes.sha256_hex   consumes bytes, produces 64 lowercase ASCII hex characters
 
+80 i64.const          i64 little-endian value (WVB 1.7)
+81 u64.const          u64 little-endian value (WVB 1.7)
+82 i64.add
+83 i64.subtract
+84 i64.multiply
+85 i64.negate
+86 u64.add
+87 u64.subtract
+88 u64.multiply
+89 i64.equal
+8A i64.not_equal
+8B i64.less
+8C i64.less_equal
+8D i64.greater
+8E i64.greater_equal
+8F u64.equal
+90 u64.not_equal
+91 u64.less
+92 u64.less_equal
+93 u64.greater
+94 u64.greater_equal
+95 i64.format          consumes i64, produces invariant decimal text
+96 u64.format          consumes u64, produces invariant decimal text
+
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
 
@@ -238,6 +268,7 @@ Function parameter, result, local, and record-field types use a value shape. A p
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
+- The minor version matches the vocabulary: WVB 1.6 contains no 64-bit scalar types or extension opcodes, while WVB 1.7 may contain both the base and extension vocabularies.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
 - Every local, data, function, and capability index is valid and has the required type.

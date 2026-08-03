@@ -43,6 +43,8 @@ public static class Instructionˉcodec
             var Signedˉoperand = 0;
             uint Unsignedˉoperand = 0;
             uint Secondˉunsignedˉoperand = 0;
+            long Signedˉwideˉoperand = 0;
+            ulong Unsignedˉwideˉoperand = 0;
 
             switch (Opcode)
             {
@@ -50,6 +52,18 @@ public static class Instructionˉcodec
                     Requireˉoperand(code, Offset, sizeof(int), functionˉname, Start);
                     Signedˉoperand = BinaryPrimitives.ReadInt32LittleEndian(code[Offset..]);
                     Offset += sizeof(int);
+                    break;
+
+                case Opcode.I64ˉconst:
+                    Requireˉoperand(code, Offset, sizeof(long), functionˉname, Start);
+                    Signedˉwideˉoperand = BinaryPrimitives.ReadInt64LittleEndian(code[Offset..]);
+                    Offset += sizeof(long);
+                    break;
+
+                case Opcode.U64ˉconst:
+                    Requireˉoperand(code, Offset, sizeof(ulong), functionˉname, Start);
+                    Unsignedˉwideˉoperand = BinaryPrimitives.ReadUInt64LittleEndian(code[Offset..]);
+                    Offset += sizeof(ulong);
                     break;
 
                 case Opcode.Boolˉconst:
@@ -102,7 +116,9 @@ public static class Instructionˉcodec
                 Opcode,
                 Signedˉoperand,
                 Unsignedˉoperand,
-                Secondˉunsignedˉoperand));
+                Secondˉunsignedˉoperand,
+                Signedˉwideˉoperand,
+                Unsignedˉwideˉoperand));
         }
 
         if (Instructions.Count == 0)
@@ -120,6 +136,7 @@ public static class Instructionˉcodec
         return opcode switch
         {
             Opcode.I32ˉconst => 5,
+            Opcode.I64ˉconst or Opcode.U64ˉconst => 9,
             Opcode.Boolˉconst or Opcode.U8ˉconst => 2,
             Opcode.Enumˉconst => 9,
             Opcode.Textˉconst or
