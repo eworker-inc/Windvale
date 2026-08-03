@@ -10,6 +10,7 @@ $ToolProject = Join-Path $RepositoryRoot 'Tools/Windvale.Tool/Windvale.Tool.cspr
 $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
 $BackendProject = Join-Path $RepositoryRoot 'Windvale-WebAssembly.wvproj'
 $CompilerProject = Join-Path $RepositoryRoot 'Windvale-Compiler.wvproj'
+$CompilerMemoryProject = Join-Path $RepositoryRoot 'Windvale-Compiler-Memory.wvproj'
 $SuccessSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Main.wv'
 $OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Overflow-Main.wv'
 $StraightSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Straight-I32-Main.wv'
@@ -45,6 +46,7 @@ $WvbCompilerSemanticVerifySource = Join-Path $ArtifactDirectory 'Wvb-Compiler-Se
 $WvbCompilerTypedVerifySource = Join-Path $ArtifactDirectory 'Wvb-Compiler-Typed-Verify-Main.wv'
 $WvbCompilerControlVerifySource = Join-Path $ArtifactDirectory 'Wvb-Compiler-Control-Verify-Main.wv'
 $ScalarFunctionOnlySource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Function-Only.wv'
+$BytesEntrySource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Bytes-Entry-Guest.wv'
 $ScalarGuestSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Scalar-Interpreter-Guest.wv'
 $ScalarI32OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Scalar-Interpreter-I32-Overflow.wv'
 $ScalarU32OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Scalar-Interpreter-U32-Overflow.wv'
@@ -97,7 +99,9 @@ $WvbCompilerTypedVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Compiler-Typed-Ve
 $WvbCompilerControlVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Compiler-Control-Verify-Main.wvb'
 $WvbScalarInterpreterWvb = Join-Path $ArtifactDirectory 'Wvb-Scalar-Interpreter-Main.wvb'
 $CompilerWvb = Join-Path $ArtifactDirectory 'Windvale-Compiler.wvb'
+$CompilerMemoryWvb = Join-Path $ArtifactDirectory 'Windvale-Compiler-Memory.wvb'
 $ScalarFunctionOnlyWvb = Join-Path $ArtifactDirectory 'Scalar-Function-Only.wvb'
+$BytesEntryWvb = Join-Path $ArtifactDirectory 'Bytes-Entry-Guest.wvb'
 $ScalarGuestWvb = Join-Path $ArtifactDirectory 'Scalar-Interpreter-Guest.wvb'
 $ScalarI32OverflowWvb = Join-Path $ArtifactDirectory 'Scalar-Interpreter-I32-Overflow.wvb'
 $ScalarU32OverflowWvb = Join-Path $ArtifactDirectory 'Scalar-Interpreter-U32-Overflow.wvb'
@@ -299,8 +303,10 @@ Invoke-Windvale @(
     '--module', $WvbCompilerExecutablePhaseSource,
     '-o', $WvbCompilerControlVerifyWvb)
 Invoke-Windvale @('build', $CompilerProject, '-o', $CompilerWvb)
+Invoke-Windvale @('build', $CompilerMemoryProject, '-o', $CompilerMemoryWvb)
 Invoke-Windvale @('compile', $WvbScalarInterpreterSource, '-o', $WvbScalarInterpreterWvb)
 Invoke-Windvale @('compile', $ScalarFunctionOnlySource, '-o', $ScalarFunctionOnlyWvb)
+Invoke-Windvale @('compile', $BytesEntrySource, '-o', $BytesEntryWvb)
 Invoke-Windvale @('compile', $ScalarGuestSource, '-o', $ScalarGuestWvb)
 Invoke-Windvale @('compile', $ScalarI32OverflowSource, '-o', $ScalarI32OverflowWvb)
 Invoke-Windvale @('compile', $ScalarU32OverflowSource, '-o', $ScalarU32OverflowWvb)
@@ -468,7 +474,9 @@ node $EngineVerifier `
     $WvbCompilerSemanticVerifyWasm `
     $WvbCompilerTypedVerifyWasm `
     $WvbCompilerControlVerifyWasm `
-    $CompilerWvb
+    $CompilerWvb `
+    $BytesEntryWvb `
+    $CompilerMemoryWvb
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

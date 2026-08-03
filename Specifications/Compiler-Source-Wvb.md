@@ -17,6 +17,29 @@ On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one comp
 
 The status contract distinguishes upstream WVIR rejection, declarations, shapes and operations, invalid data, and WVB limits. Its existing module-count and profile statuses remain reserved for stable diagnostic numbering; every currently validated WVSS module count and root profile is accepted.
 
+## Portable in-memory adapter
+
+`Compiler/Windvale/Source-Wvb-Memory-Adapter.wv` is the capability-free execution adapter for hosts that already own immutable source bytes, including the browser playground. Its exported contract is:
+
+```text
+Main(Input: bytes) -> bytes
+```
+
+`Input` is one complete canonical WVSS 1 value. The adapter passes it unchanged to `Compilerˉcompileˉsourceˉwvb`; it does not resolve paths, enumerate files, read process arguments, write output, or print diagnostics. `Windvale-Compiler-Memory.wvproj` builds the adapter with the same compiler-core source inventory as the hosted tool.
+
+The returned `WVCO 1` value has this exact little-endian layout:
+
+| Offset | Size | Field |
+| ---: | ---: | --- |
+| 0 | 4 | ASCII `WVCO` |
+| 4 | 2 | Major version `1` |
+| 6 | 2 | Minor version `0` |
+| 8 | 4 | Kind: `0` WVB success, `1` UTF-8 diagnostic |
+| 12 | 4 | Payload length |
+| 16 | `Payload length` | Exact payload bytes |
+
+The payload must end exactly at the response length. Success carries the complete canonical WVB returned by the portable compiler. Failure carries strict UTF-8 text with stable `source-wvb status=`, `wir-status=`, `function=`, and `operation=` fields derived from the compiler summary. A consumer must reject an unknown version or kind, overflow, inconsistent length, malformed UTF-8 diagnostic, malformed WVB success payload, or trailing bytes before publication.
+
 ## Accepted subset
 
 The backend accepts:

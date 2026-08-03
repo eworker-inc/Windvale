@@ -1,0 +1,5 @@
+module Bytesˉentryˉguest profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu8(42u8));
+}

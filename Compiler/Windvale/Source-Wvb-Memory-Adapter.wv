@@ -1,0 +1,39 @@
+module Compilerˉsourceˉwvbˉmemoryˉadapter profile portable;
+
+import Compilerˉsourceˉwvb;
+
+fn Compilerˉsourceˉwvbˉmemoryˉheader(Kind: u32, Length: u32) -> bytes {
+    var Header: bytes = Textˉtoˉutf8("WVCO");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Kind));
+    return Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Length));
+}
+
+fn Compilerˉsourceˉwvbˉmemoryˉdiagnostic(
+    Summary: Compilerˉsourceˉwvbˉsummary
+) -> bytes {
+    var Report: text = "source-wvb status=";
+    Report = Textˉconcat(Report, Enumˉname(Summary.Status));
+    Report = Textˉconcat(Report, " wir-status=");
+    Report = Textˉconcat(Report, Enumˉname(Summary.Wirˉstatus));
+    Report = Textˉconcat(Report, " function=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉfunction));
+    Report = Textˉconcat(Report, " operation=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoperation));
+    return Textˉtoˉutf8(Report);
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Summary: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(Input);
+    var Kind: u32 = 0u32;
+    var Payload: bytes = Summary.Bytecode;
+    if Summary.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+        Kind = 1u32;
+        Payload = Compilerˉsourceˉwvbˉmemoryˉdiagnostic(Summary);
+    }
+    return Bytesˉconcat(
+        Compilerˉsourceˉwvbˉmemoryˉheader(Kind, Bytesˉlength(Payload)),
+        Payload
+    );
+}

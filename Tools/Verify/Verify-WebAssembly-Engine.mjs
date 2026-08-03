@@ -299,8 +299,10 @@ const EXPECTED = [
             process.argv[41], process.argv[57], process.argv[42],
             process.argv[58], process.argv[59],
         ],
-        sha256: "8c23fe32341aaf37fb2bd0d517e531a03937f00ce416175976f76f59f5380b55",
-        bytes: 404340,
+        bytesEntryPath: process.argv[64],
+        portableCompilerPath: process.argv[65],
+        sha256: "7ea0058b7f4f2b4c6886f5f968fb239bd995f263a44f9e56f1bf5a91bf2c2c23",
+        bytes: 410698,
         abi: 3,
         kind: 1,
         runtime: "wvb-scalar-interpreter",
@@ -311,6 +313,7 @@ const EXPECTED = [
         typedPath: process.argv[61],
         controlPath: process.argv[62],
         inputPath: process.argv[63],
+        portableInputPath: process.argv[65],
         sha256: "3a760d39b9ce0bac50b3eea0b0000a986a60363a7d222d7de1587f6b19fadd1e",
         typedSha256: "6fc1e02498de6345b441d0f34e52fe9d0c014642fc637f9066623b07b4329240",
         controlSha256: "597c0f8313aac9fbcb1ba50fbcd4e25937f0cc464d090d491570f8eeb559253d",
@@ -323,7 +326,7 @@ const EXPECTED = [
     },
 ];
 
-if (process.argv.length !== 64) {
+if (process.argv.length !== 66) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -350,7 +353,8 @@ if (process.argv.length !== 64) {
             "<heap-failure.wvb> <formatting-quote.wvb> <sha256.wvb> " +
             "<nominal-defaults.wvb> <record-arena-failure.wvb> " +
             "<compiler-semantic-verifier.wasm> <compiler-typed-verifier.wasm> " +
-            "<compiler-control-verifier.wasm> <windvale-compiler.wvb>",
+            "<compiler-control-verifier.wasm> <windvale-compiler.wvb> " +
+            "<bytes-entry-guest.wvb> <windvale-compiler-memory.wvb>",
     );
 }
 
@@ -1122,6 +1126,37 @@ function verifyRuntime(expected, module, exports, digest) {
             1_952_101_000,
             Uint8Array.from([1]),
         );
+        const portableCompiler = readFileSync(expected.portableInputPath);
+        if (
+            portableCompiler.length !== 597_545 ||
+            createHash("sha256").update(portableCompiler).digest("hex") !==
+                "5b819f86ffa05feaae1e27feb0b6fe6eda5034f1b229d4d9917ac7fa8041a0d4"
+        ) {
+            throw new Error(
+                `${expected.portableInputPath}: the exact portable compiler WVB identity changed.`,
+            );
+        }
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, portableCompiler, 1_380_573_747),
+            0,
+            1_380_573_747,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.typedPath,
+            runMemory(typedExports, portableCompiler, 2_430_056_746),
+            0,
+            2_430_056_746,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.controlPath,
+            runMemory(controlExports, portableCompiler, 1_951_031_795),
+            0,
+            1_951_031_795,
+            Uint8Array.from([1]),
+        );
     } else if (expected.runtime === "wvb-scalar-interpreter") {
         const verifierBytes = readFileSync(expected.verifierPath);
         const verifierModule = new WebAssembly.Module(verifierBytes);
@@ -1148,6 +1183,21 @@ function verifyRuntime(expected, module, exports, digest) {
             3011,
             verifierSteps[0] - 1,
         );
+        const bytesEntry = readFileSync(expected.bytesEntryPath);
+        if (
+            bytesEntry.length !== 209 ||
+            createHash("sha256").update(bytesEntry).digest("hex") !==
+                "b27ca1d0afcd379273f35e755eff12ccc5674762fe01381232eea36714d09bf1"
+        ) {
+            throw new Error(`${expected.bytesEntryPath}: the bytes-entry WVB identity changed.`);
+        }
+        requireMemoryResult(
+            expected.verifierPath,
+            runMemory(verifierExports, bytesEntry, 46_285),
+            0,
+            46_285,
+            Uint8Array.from([1]),
+        );
 
         function scalarRequest(candidate, guestBudget = 1_000, maximumCallDepth = 8) {
             const request = Buffer.alloc(16 + candidate.length);
@@ -1157,6 +1207,25 @@ function verifyRuntime(expected, module, exports, digest) {
             request.writeUInt32LE(guestBudget, 8);
             request.writeUInt32LE(maximumCallDepth, 12);
             candidate.copy(request, 16);
+            return request;
+        }
+
+        function bytesRequest(
+            candidate,
+            input,
+            guestBudget = 1_000,
+            maximumCallDepth = 8,
+        ) {
+            const request = Buffer.alloc(24 + candidate.length + input.length);
+            request.writeUInt32LE(0x49585657, 0);
+            request.writeUInt16LE(2, 4);
+            request.writeUInt16LE(0, 6);
+            request.writeUInt32LE(guestBudget, 8);
+            request.writeUInt32LE(maximumCallDepth, 12);
+            request.writeUInt32LE(candidate.length, 16);
+            request.writeUInt32LE(input.length, 20);
+            candidate.copy(request, 24);
+            Buffer.from(input).copy(request, 24 + candidate.length);
             return request;
         }
 
@@ -1195,183 +1264,234 @@ function verifyRuntime(expected, module, exports, digest) {
             }
         }
 
+        function requireBytesResult(name, actual, outerInstructions, guestInstructions, result) {
+            if (
+                actual.status !== 0 ||
+                actual.instructions !== outerInstructions ||
+                actual.output.length !== 20 + result.length
+            ) {
+                throw new Error(
+                    `${expected.path}: ${name}: expected outer status/instructions/length ` +
+                        `0/${outerInstructions}/${20 + result.length}, found ` +
+                        `${actual.status}/${actual.instructions}/${actual.output.length}.`,
+                );
+            }
+            const output = Buffer.from(actual.output);
+            if (
+                output.readUInt32LE(0) !== 0x4F585657 ||
+                output.readUInt16LE(4) !== 2 ||
+                output.readUInt16LE(6) !== 0 ||
+                output.readUInt32LE(8) !== 0 ||
+                output.readUInt32LE(12) !== guestInstructions ||
+                output.readUInt32LE(16) !== result.length ||
+                !output.subarray(20).equals(Buffer.from(result))
+            ) {
+                throw new Error(`${expected.path}: ${name}: the WVXO2 response is invalid.`);
+            }
+        }
+
         const functionRequest = scalarRequest(candidates[0]);
         requireScalarResult(
             "function/control guest",
-            runMemory(exports, functionRequest, 220_935),
+            runMemory(exports, functionRequest, 220_920),
             0,
-            220_935,
+            220_920,
             0,
             199,
             6,
         );
         requireScalarResult(
             "function/control guest repeat",
-            runMemory(exports, functionRequest, 220_935),
+            runMemory(exports, functionRequest, 220_920),
             0,
-            220_935,
+            220_920,
             0,
             199,
             6,
         );
         requireScalarResult(
             "outer instruction exhaustion",
-            runMemory(exports, functionRequest, 220_934),
+            runMemory(exports, functionRequest, 220_919),
             3011,
-            220_934,
+            220_919,
             0,
             0,
             0,
         );
+        const bytesEntryRequest = bytesRequest(bytesEntry, Buffer.from([1, 2, 3]));
+        requireBytesResult(
+            "bytes entry and return",
+            runMemory(exports, bytesEntryRequest, 22_065),
+            22_065,
+            13,
+            Buffer.from([1, 2, 3, 42]),
+        );
+        const truncatedBytesRequest = bytesEntryRequest.subarray(
+            0,
+            bytesEntryRequest.length - 1,
+        );
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, truncatedBytesRequest, 255),
+            0,
+            255,
+        );
+        const portableCompiler = readFileSync(expected.portableCompilerPath);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, bytesRequest(portableCompiler, Buffer.alloc(0)), 1_000_000),
+            0,
+            96_927,
+        );
         requireScalarResult(
             "complete scalar guest",
-            runMemory(exports, scalarRequest(candidates[1]), 457_305),
+            runMemory(exports, scalarRequest(candidates[1]), 457_329),
             0,
-            457_305,
+            457_329,
             0,
             351,
             42,
         );
         requireScalarResult(
             "guest instruction exhaustion",
-            runMemory(exports, scalarRequest(candidates[0], 198, 8), 220_252),
+            runMemory(exports, scalarRequest(candidates[0], 198, 8), 220_241),
             0,
-            220_252,
+            220_241,
             3011,
             198,
             0,
         );
         requireScalarResult(
             "guest call-depth exhaustion",
-            runMemory(exports, scalarRequest(candidates[0], 1_000, 1), 88_407),
+            runMemory(exports, scalarRequest(candidates[0], 1_000, 1), 88_498),
             0,
-            88_407,
+            88_498,
             3004,
             27,
             0,
         );
         requireScalarResult(
             "checked i32 overflow",
-            runMemory(exports, scalarRequest(candidates[2]), 19_660),
+            runMemory(exports, scalarRequest(candidates[2]), 19_700),
             3007,
-            19_660,
+            19_700,
             0,
             0,
             0,
         );
         requireScalarResult(
             "checked u32 overflow",
-            runMemory(exports, scalarRequest(candidates[3]), 28_428),
+            runMemory(exports, scalarRequest(candidates[3]), 28_468),
             3007,
-            28_428,
+            28_468,
             0,
             0,
             0,
         );
         requireScalarResult(
             "text/bytes values and descriptor calls",
-            runMemory(exports, scalarRequest(candidates[4], 4_096), 485_437),
+            runMemory(exports, scalarRequest(candidates[4], 4_096), 485_316),
             0,
-            485_437,
+            485_316,
             0,
             298,
             42,
         );
         requireScalarResult(
             "strict UTF-8 boundaries",
-            runMemory(exports, scalarRequest(candidates[5], 4_096), 316_926),
+            runMemory(exports, scalarRequest(candidates[5], 4_096), 316_308),
             0,
-            316_926,
+            316_308,
             0,
             153,
             42,
         );
         requireScalarResult(
             "invalid UTF-8 decoding",
-            runMemory(exports, scalarRequest(candidates[6], 4_096), 22_709),
+            runMemory(exports, scalarRequest(candidates[6], 4_096), 22_746),
             0,
-            22_709,
+            22_746,
             3014,
             11,
             0,
         );
         requireScalarResult(
             "byte range failure",
-            runMemory(exports, scalarRequest(candidates[7], 4_096), 26_537),
+            runMemory(exports, scalarRequest(candidates[7], 4_096), 26_566),
             0,
-            26_537,
+            26_566,
             3008,
             14,
             0,
         );
         requireScalarResult(
             "u16 narrowing failure",
-            runMemory(exports, scalarRequest(candidates[8], 4_096), 14_035),
+            runMemory(exports, scalarRequest(candidates[8], 4_096), 14_076),
             0,
-            14_035,
+            14_076,
             3016,
             4,
             0,
         );
         requireScalarResult(
             "per-value byte limit",
-            runMemory(exports, scalarRequest(candidates[9], 4_096), 252_498),
+            runMemory(exports, scalarRequest(candidates[9], 4_096), 252_538),
             0,
-            252_498,
+            252_538,
             3015,
             256,
             0,
         );
         requireScalarResult(
             "SHA-256 aggregate heap limit",
-            runMemory(exports, scalarRequest(candidates[10], 4_096), 381_752),
+            runMemory(exports, scalarRequest(candidates[10], 4_096), 381_699),
             0,
-            381_752,
+            381_699,
             3018,
             388,
             0,
         );
         requireScalarResult(
             "integer formatting and UTF-16-compatible text quoting",
-            runMemory(exports, scalarRequest(candidates[11], 4_096), 3_451_378),
+            runMemory(exports, scalarRequest(candidates[11], 4_096), 3_450_074),
             0,
-            3_451_378,
+            3_450_074,
             0,
             4_070,
             42,
         );
         requireScalarResult(
             "compiler-produced data/text and quoting",
-            runMemory(exports, scalarRequest(candidates[12], 4_096), 372_579),
+            runMemory(exports, scalarRequest(candidates[12], 4_096), 372_431),
             0,
-            372_579,
+            372_431,
             0,
             233,
             13,
         );
         requireScalarResult(
             "SHA-256 padding and multi-block vectors",
-            runMemory(exports, scalarRequest(candidates[13], 4_096), 3_334_583),
+            runMemory(exports, scalarRequest(candidates[13], 4_096), 3_333_341),
             0,
-            3_334_583,
+            3_333_341,
             0,
             3_996,
             42,
         );
         requireScalarResult(
             "compiler-produced records and enums",
-            runMemory(exports, scalarRequest(candidates[14], 4_096), 311_902),
+            runMemory(exports, scalarRequest(candidates[14], 4_096), 311_790),
             0,
-            311_902,
+            311_790,
             0,
             197,
             11,
         );
         requireScalarResult(
             "record and enum construction",
-            runMemory(exports, scalarRequest(candidates[15], 4_096), 96_474),
+            runMemory(exports, scalarRequest(candidates[15], 4_096), 96_444),
             0,
-            96_474,
+            96_444,
             0,
             67,
             42,
@@ -1395,9 +1515,9 @@ function verifyRuntime(expected, module, exports, digest) {
         );
         requireScalarResult(
             "default record and first enum member",
-            runMemory(exports, scalarRequest(defaultLocal, 4_096), 71_515),
+            runMemory(exports, scalarRequest(defaultLocal, 4_096), 71_513),
             0,
-            71_515,
+            71_513,
             0,
             37,
             2,
@@ -1405,18 +1525,18 @@ function verifyRuntime(expected, module, exports, digest) {
         const recordArenaRequest = scalarRequest(candidates[16], 4_096);
         requireScalarResult(
             "record arena exhaustion",
-            runMemory(exports, recordArenaRequest, 1_980_130),
+            runMemory(exports, recordArenaRequest, 1_979_679),
             0,
-            1_980_130,
+            1_979_679,
             3017,
             2_411,
             0,
         );
         requireScalarResult(
             "record arena reset",
-            runMemory(exports, recordArenaRequest, 1_980_130),
+            runMemory(exports, recordArenaRequest, 1_979_679),
             0,
-            1_980_130,
+            1_979_679,
             3017,
             2_411,
             0,

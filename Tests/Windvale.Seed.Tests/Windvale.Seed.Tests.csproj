@@ -232,11 +232,17 @@
       Include="../../Examples/Compiler/Source-Wvb-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Tool.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Source-Wvb-Memory-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Memory-Adapter.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Function-Only.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Function-Only.wv" />
     <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Scalar-Interpreter-Guest.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-Guest.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Bytes-Entry-Guest.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Bytes-Entry-Guest.wv" />
     <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Scalar-Interpreter-I32-Overflow.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-I32-Overflow.wv" />
