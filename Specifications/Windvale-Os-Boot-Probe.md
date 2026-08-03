@@ -12,7 +12,7 @@ The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`E
 
 The builder compiles system-profile `Hello-World.wv`; portable admission, process-policy, init, exact `Tests/Fixtures/Source-Wvb/Function-Only.wv`, and retained-native modules; hosted `Bytecode-Interpreter.wv`; and the kernel/init/service/client WVA shims. Portable modules pass through canonical WVB, mandatory verification, ABI-22 native selection and fragment verification, and WVO. Stage 0 rewrites only verified link-facing symbols.
 
-The existing Stage 0 and Windvale-written compilers must emit byte-identical canonical WVB for `Function-Only.wv`, and those bytes must equal the embedded admission identity. Probe 35 does not change the compiler or ABI-22 backend.
+The existing Stage 0 and Windvale-written compilers must emit byte-identical canonical WVB for `Function-Only.wv`, and those bytes must equal the embedded admission identity. The portable process policy is an 8,001-byte canonical WVB with SHA-256 `73f67a7c8294b7a2d3e2633fab482fa8eabe53a14dc8883821dacd7812b822aa`; its 53,456-byte ABI-22 WVO has SHA-256 `edf5d9a767a46b91577b739f6dbcf6c57a963c91c18cab5b8364746b3451dd44`. Probe 35 does not change the compiler or ABI-22 backend.
 
 Stage 0 creates the loader, memory, exception, paging, admission bridge, process machine, retained bridge, x64 byte adapter, canonical three-entry `WVRS 1` store, and canonical two-entry `WVDS 1` snapshot. It independently verifies both immutable values and their complete SHA-256 identities before machine publication. The linker reconstructs the base-zero image and passes verified code and read-only data to UEFI application writer 3.
 
@@ -22,10 +22,10 @@ Candidate image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
-| `normal` | 576,512 | `61ae551f668b5771028997e66cf3bfcdf8dd6a78eab3302de1ac8f01874d7629` | 0 |
-| `invalid-opcode` | 576,512 | `e33070af62f39a2d57ba7f295650c9f871ea080104869317d5903c31e90c69c0` | 3 |
-| `general-protection` | 576,512 | `164f1daef6b654291bcfcb170dac2b392925e69234078a4fe584566d4a812c5c` | 3 |
-| `user-fault` | 577,024 | `faeb76a6957e09b5b07b19b3f2df52923a63e03f2f27dd7a5e5f8c5d82144fcb` | 0 |
+| `normal` | 582,144 | `a1157d2f367cee2755120264621c9d9f5d5f410ade3d54fd27bca5a50ded9b9f` | 0 |
+| `invalid-opcode` | 582,144 | `c1ada91a1928e380166ba87b4d454415e8c0256218f4b98cad3feee57d674af3` | 3 |
+| `general-protection` | 582,144 | `bbc472e29d38ff327dbb90f63ae994731fd07c97aa09bc8b3f36fd179744a946` | 3 |
+| `user-fault` | 582,656 | `3ad6ab38405d78ee8af73758a203633a00c2a5e8e4d07cd6a964b7a24f446c16` | 0 |
 
 All four identities pass the Windows pinned-QEMU gate with complete exact serial markers. Fresh Debian and complete cross-host qualification remain pending; no Debian QEMU execution is claimed.
 

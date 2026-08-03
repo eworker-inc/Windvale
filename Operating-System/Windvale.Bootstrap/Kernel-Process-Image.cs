@@ -356,7 +356,7 @@ public static class Kernelˉprocessˉimage
                 Name: "Processˉfoundation",
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
-                Data.Length: 8,
+                Data.Length: 12,
                 Functions.Length: 6,
                 Exports.Length: 1,
                 Types.Length: 0,

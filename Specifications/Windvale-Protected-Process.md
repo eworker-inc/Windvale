@@ -8,7 +8,7 @@ Version 13 remains the current cross-host-qualified baseline. Version 14 has loc
 
 ## Ownership split
 
-- `Process-Foundation.wv` binds init, interpreter, program, budget, roles, ordered grants, two generations, exact reuse, cleanup, and result policy.
+- `Process-Foundation.wv` binds init, interpreter, program, budget, the exact boot-store and directory-snapshot identities, roles, ordered grants, both service exchanges, two generations, page/profile/syscall budgets, exact reuse, cleanup, and result policy.
 - `Init-Resource-Service.wv` selects ordered boot resource identifiers `(1,2)`. Its WVA seam serves both the measured `WVRS 1` lookup and the measured `WVDQ 1` / `WVDR 1` directory read.
 - `Bytecode-Interpreter.wv` reads both granted runtime resources, validates runtime profile 7, charges the guest budget, and interprets the admitted program.
 - `Boot-Resource-Service.wva` owns exact typed lookup for the two `WVBR002` entries used by the interpreter runtime.
@@ -102,8 +102,8 @@ The contained user-fault scenario sends `6` then executes privileged `CLI`; clea
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Process-policy WVB | 6,973 | `04c91ebca24d72ba13ab3b8c6d3d0fb4a1ad0be807de58584caa4df5005ab956` |
-| Process-policy WVO | 47,624 | `6e01b565ddaeeea3dd0c2b4e4f4cc7f928b51cb305491892e7bda9a794babe0d` |
+| Process-policy WVB | 8,001 | `73f67a7c8294b7a2d3e2633fab482fa8eabe53a14dc8883821dacd7812b822aa` |
+| Process-policy WVO | 53,456 | `edf5d9a767a46b91577b739f6dbcf6c57a963c91c18cab5b8364746b3451dd44` |
 | Init WVB | 525 | `0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467` |
 | Init WVA object | 3,119 | `64214b7b3ce90365f4ee9962ba1fbdb416f14ce4316b8b309106b8523a80c917` |
 | Linked init image | 6,119 | `d8285cf68d0df45afe9d78f4dc65de427ed9e58b6d24c962f3b4dc9cb7bd9f18` |

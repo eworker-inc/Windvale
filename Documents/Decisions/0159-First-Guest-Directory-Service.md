@@ -23,7 +23,8 @@ The smallest useful adoption slice must therefore map the exact immutable snapsh
 - Require init to grant the existing boot resources, serve the exact `WVRQ 1` lookup, re-register its receive window, validate the exact 37-byte `WVDQ 1` request, validate the measured `WVDS 1` metadata, and construct the exact 3,096-byte `WVDR 1` success in its dedicated response page.
 - Require each client generation to complete the existing resource call, then call the directory service for `kernel.wv`, validate the complete reply, and check every returned file byte against `i mod 251` before running the retained interpreter and returning `6`.
 - Preserve cleanup and reuse: generation 1 exits or faults terminally, channel state is cleared, the 122-page client tail is zeroed and released, the same root is rebuilt as generation 2, and the directory request succeeds again without remapping the snapshot into either client.
-- Keep machine construction, page-table publication, syscall dispatch, copying, and PE/UEFI packaging as explicit Stage 0 replacement seams. The service policy and request/reply mechanics are WVA-authored; the longer-term owner remains Windvale `.wv` plus narrow WVA machine leaves once the system target can express the required checked memory/state operations.
+- Require portable `Process-Foundation.wv` to bind the exact store and snapshot identities, init/client page budgets `9/120`, runtime profiles `2/7`, both ordered service exchanges in each generation, and syscall budgets `11/4` before machine state is published.
+- Keep machine construction, page-table publication, syscall dispatch, copying, checked service-byte mechanics, and PE/UEFI packaging as explicit Stage 0/WVA replacement seams. Their longer-term owner remains Windvale `.wv` plus narrow WVA machine leaves once the system target can express the required checked memory/state operations.
 - Do not change the compiler for this slice. The existing ABI-22 backend and WVA instruction surface are sufficient; unrelated compiler evolution can proceed independently.
 
 ## Exact candidate
@@ -32,6 +33,8 @@ The canonical directory snapshot remains 3,184 bytes with SHA-256 `0f793a41a7012
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
+| Process-policy WVB | 8,001 | `73f67a7c8294b7a2d3e2633fab482fa8eabe53a14dc8883821dacd7812b822aa` |
+| Process-policy WVO | 53,456 | `edf5d9a767a46b91577b739f6dbcf6c57a963c91c18cab5b8364746b3451dd44` |
 | Init WVA object | 3,119 | `64214b7b3ce90365f4ee9962ba1fbdb416f14ce4316b8b309106b8523a80c917` |
 | Linked init image | 6,119 | `d8285cf68d0df45afe9d78f4dc65de427ed9e58b6d24c962f3b4dc9cb7bd9f18` |
 | Normal client WVA object | 1,369 | `8ea2869d5e2a54c2a3392acb59cabee7bbf639bb0dd228fad08618ad47b1fd73` |
@@ -45,14 +48,14 @@ The deterministic firmware candidates are:
 
 | Scenario | EFI bytes | SHA-256 | Host code |
 | --- | ---: | --- | ---: |
-| Normal | 576,512 | `61ae551f668b5771028997e66cf3bfcdf8dd6a78eab3302de1ac8f01874d7629` | 0 |
-| Invalid opcode | 576,512 | `e33070af62f39a2d57ba7f295650c9f871ea080104869317d5903c31e90c69c0` | 3 |
-| General protection | 576,512 | `164f1daef6b654291bcfcb170dac2b392925e69234078a4fe584566d4a812c5c` | 3 |
-| Contained user fault | 577,024 | `faeb76a6957e09b5b07b19b3f2df52923a63e03f2f27dd7a5e5f8c5d82144fcb` | 0 |
+| Normal | 582,144 | `a1157d2f367cee2755120264621c9d9f5d5f410ade3d54fd27bca5a50ded9b9f` | 0 |
+| Invalid opcode | 582,144 | `c1ada91a1928e380166ba87b4d454415e8c0256218f4b98cad3feee57d674af3` | 3 |
+| General protection | 582,144 | `bbc472e29d38ff327dbb90f63ae994731fd07c97aa09bc8b3f36fd179744a946` | 3 |
+| Contained user fault | 582,656 | `3ad6ab38405d78ee8af73758a203633a00c2a5e8e4d07cd6a964b7a24f446c16` | 0 |
 
 ## Evidence
 
-A zero-warning Release build and all 37 focused OS tests pass locally on Windows. The suite covers exact object and firmware reproduction, separate response mappings, snapshot mapping and padding, the attached directory resource, process-record response addresses, malformed snapshot rejection, exact WVA object shapes and syscall counts, generation-safe cleanup, and hostile lower-level `WVDS`/`WVDQ`/`WVDR` cases.
+A zero-warning Release build and all 37 focused OS tests pass locally on Windows. The suite covers exact object and firmware reproduction, the policy WVB's exact store/snapshot identities, separate response mappings, snapshot mapping and padding, the attached directory resource, process-record response addresses, malformed snapshot rejection, exact WVA object shapes and syscall counts, generation-safe cleanup, and hostile lower-level `WVDS`/`WVDQ`/`WVDR` cases.
 
 All four pinned QEMU/OVMF scenarios pass. Normal and contained-fault paths emit `directory-service=pass` and `ipc=resource-and-directory`; both independently rebuilt clients complete the maximal 3,096-byte reply and validate all 3,072 file bytes. The two CPL0 fault scenarios retain their exact terminal markers and host code 3. Cross-host build/test evidence and GitHub qualification remain pending, so this decision does not yet claim a qualified Windows/Linux checkpoint.
 
@@ -60,7 +63,7 @@ All four pinned QEMU/OVMF scenarios pass. Normal and contained-fault paths emit 
 
 Windvale now has an end-to-end guest instance of its first filesystem-shaped capability: application semantics, checked IPC, immutable provider bytes, isolated mappings, a format-blind kernel transport, and repeatable lifecycle evidence. The kernel still knows no paths, filenames, directory layout, or filesystem response format.
 
-The next architecture work should separate the directory endpoint from the boot-resource endpoint when more than one service or client is introduced, and should move checked service policy from WVA into `.wv` as the system target gains the required bounded memory/state operations. A later storage track can add enumeration or a block-backed provider behind new capability contracts; it should not reinterpret this immutable read contract.
+The next architecture work should separate the directory endpoint from the boot-resource endpoint when an independently lived second service or concurrent caller makes that distinction measurable, and should move the remaining checked service-byte and dispatch policy from WVA into `.wv` as the system target gains the required bounded memory/state operations. A later storage track can add enumeration or a block-backed provider behind new capability contracts; it should not reinterpret this immutable read contract.
 
 This decision does not implement nested paths, enumeration, open handles, mutation, persistence, a filesystem root, mounts, cache coherence, concurrent calls, cancellation, transferable capabilities, service discovery, block I/O, drivers, DMA, SMP, Hyper-V, physical-hardware qualification, or .NET retirement.
 

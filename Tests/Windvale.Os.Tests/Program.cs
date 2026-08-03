@@ -1584,11 +1584,11 @@ internal static class Program
         var Second = Kernelˉprocessˉimage.Build(Admission, false);
         var Faultˉfirst = Kernelˉprocessˉimage.Build(Admission, true);
         var Faultˉsecond = Kernelˉprocessˉimage.Build(Admission, true);
-        Equal(6_973, First.Policyˉmoduleˉbytes.Length);
-        Equal("04c91ebca24d72ba13ab3b8c6d3d0fb4a1ad0be807de58584caa4df5005ab956",
+        Equal(8_001, First.Policyˉmoduleˉbytes.Length);
+        Equal("73f67a7c8294b7a2d3e2633fab482fa8eabe53a14dc8883821dacd7812b822aa",
             Objectˉdigest.Calculateˉsha256(First.Policyˉmoduleˉbytes.AsSpan()));
-        Equal(47_624, First.Policyˉnativeˉobjectˉbytes.Length);
-        Equal("6e01b565ddaeeea3dd0c2b4e4f4cc7f928b51cb305491892e7bda9a794babe0d",
+        Equal(53_456, First.Policyˉnativeˉobjectˉbytes.Length);
+        Equal("edf5d9a767a46b91577b739f6dbcf6c57a963c91c18cab5b8364746b3451dd44",
             Objectˉdigest.Calculateˉsha256(First.Policyˉnativeˉobjectˉbytes.AsSpan()));
         Equal(525, First.Initˉserviceˉmoduleˉbytes.Length);
         Equal("0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467",
@@ -1668,6 +1668,23 @@ internal static class Program
         Equal("Processˉfoundation", Policy.Module.Name);
         True(Policy.Module.Profile == Moduleˉprofile.Portable, "The process policy is not portable Windvale.");
         Equal(0, Policy.Module.Capabilities.Length);
+        Equal(12, Policy.Module.Data.Length);
+        var Storeˉdigestˉtext = Convert.ToHexString(
+            First.Resourceˉstoreˉdigest.AsSpan()).ToLowerInvariant();
+        var Directoryˉsnapshotˉdigestˉtext = Convert.ToHexString(
+            First.Directoryˉsnapshotˉdigest.AsSpan()).ToLowerInvariant();
+        Equal(Storeˉdigestˉtext, Convert.ToHexString(
+            ((Bytesˉdataˉdeclaration)Policy.Module.Data.Single(
+                Data => Data.Name == "Storeˉdigest")).Values.AsSpan()).ToLowerInvariant());
+        Equal(Storeˉdigestˉtext, Convert.ToHexString(
+            ((Bytesˉdataˉdeclaration)Policy.Module.Data.Single(
+                Data => Data.Name == "Expectedˉstoreˉdigest")).Values.AsSpan()).ToLowerInvariant());
+        Equal(Directoryˉsnapshotˉdigestˉtext, Convert.ToHexString(
+            ((Bytesˉdataˉdeclaration)Policy.Module.Data.Single(
+                Data => Data.Name == "Directoryˉsnapshotˉdigest")).Values.AsSpan()).ToLowerInvariant());
+        Equal(Directoryˉsnapshotˉdigestˉtext, Convert.ToHexString(
+            ((Bytesˉdataˉdeclaration)Policy.Module.Data.Single(
+                Data => Data.Name == "Expectedˉdirectoryˉsnapshotˉdigest")).Values.AsSpan()).ToLowerInvariant());
         Equal(Kernelˉprocessˉcontract.POLICY_TOKEN,
             Runˉportableˉmain(First.Policyˉmoduleˉbytes).Exitˉcode);
         Equal((int)Kernelˉprocessˉcontract.RESOURCE_SET_TOKEN,
@@ -2954,9 +2971,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         Sequenceˉequal(First, Second);
-        Equal(577_024, First.Length);
+        Equal(582_656, First.Length);
         Equal(
-            "faeb76a6957e09b5b07b19b3f2df52923a63e03f2f27dd7a5e5f8c5d82144fcb",
+            "3ad6ab38405d78ee8af73758a203633a00c2a5e8e4d07cd6a964b7a24f446c16",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and deliberate user-fault images are identical.");
@@ -2971,9 +2988,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(576_512, First.Length);
+        Equal(582_144, First.Length);
         Equal(
-            "61ae551f668b5771028997e66cf3bfcdf8dd6a78eab3302de1ac8f01874d7629",
+            "a1157d2f367cee2755120264621c9d9f5d5f410ade3d54fd27bca5a50ded9b9f",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -2985,9 +3002,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(576_512, First.Length);
+        Equal(582_144, First.Length);
         Equal(
-            "e33070af62f39a2d57ba7f295650c9f871ea080104869317d5903c31e90c69c0",
+            "c1ada91a1928e380166ba87b4d454415e8c0256218f4b98cad3feee57d674af3",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -3009,9 +3026,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         Sequenceˉequal(First, Second);
-        Equal(576_512, First.Length);
+        Equal(582_144, First.Length);
         Equal(
-            "164f1daef6b654291bcfcb170dac2b392925e69234078a4fe584566d4a812c5c",
+            "bbc472e29d38ff327dbb90f63ae994731fd07c97aa09bc8b3f36fd179744a946",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
