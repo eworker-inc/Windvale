@@ -278,9 +278,19 @@ const EXPECTED = [
         kind: 1,
         runtime: "wvb-semantic-expanded",
     },
+    {
+        name: "Windvale-native WVB executable verifier",
+        path: process.argv[40],
+        acceptedInputPaths: [process.argv[41], process.argv[42], process.argv[43]],
+        sha256: "6060b8198405b5f8763890ef5b53482398e1e0c7716f91ab279d9307db8d077b",
+        bytes: 722837,
+        abi: 3,
+        kind: 1,
+        runtime: "wvb-executable",
+    },
 ];
 
-if (process.argv.length !== 40) {
+if (process.argv.length !== 44) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -297,7 +307,9 @@ if (process.argv.length !== 40) {
             "<runtime-calls.wasm> <wvb-semantic-verifier.wasm> " +
             "<semantic-data.wvb> <semantic-types.wvb> <semantic-capabilities.wvb> " +
             "<wvb-semantic-expanded.wasm> <expanded-data.wvb> " +
-            "<expanded-types.wvb> <expanded-capabilities.wvb>",
+            "<expanded-types.wvb> <expanded-capabilities.wvb> " +
+            "<wvb-executable.wasm> <executable-data.wvb> " +
+            "<executable-types.wvb> <executable-capabilities.wvb>",
     );
 }
 
@@ -775,6 +787,239 @@ function verifyRuntime(expected, module, exports, digest) {
             3011,
             acceptedSteps[0] - 1,
         );
+    } else if (expected.runtime === "wvb-executable") {
+        const acceptedSteps = [4_181_579, 3_250_582, 241_607];
+        for (let index = 0; index < expected.acceptedInputPaths.length; index++) {
+            requireMemoryResult(
+                expected.path,
+                runMemory(
+                    exports,
+                    readFileSync(expected.acceptedInputPaths[index]),
+                    acceptedSteps[index],
+                ),
+                0,
+                acceptedSteps[index],
+                Uint8Array.from([1]),
+            );
+        }
+        requireMemoryResult(
+            expected.path,
+            runMemory(
+                exports,
+                readFileSync(expected.acceptedInputPaths[0]),
+                acceptedSteps[0] - 1,
+            ),
+            3011,
+            acceptedSteps[0] - 1,
+        );
+
+        const [data, types, capabilities] = expected.acceptedInputPaths.map(path =>
+            readFileSync(path));
+        function executableSections(bytes) {
+            const sections = [];
+            let cursor = 12;
+            for (let kind = 1; kind <= 7; kind++) {
+                const length = bytes.readUInt32LE(cursor + 4);
+                sections[kind] = { payload: cursor + 8, length };
+                cursor += 8 + length;
+            }
+            return sections;
+        }
+        function executableShape(bytes, cursor) {
+            const kind = bytes[cursor++];
+            let nominal = -1;
+            if (kind >= 7) {
+                nominal = bytes.readUInt32LE(cursor);
+                cursor += 4;
+            }
+            return { kind, nominal, cursor };
+        }
+        function executableInstructionWidth(opcode) {
+            if (opcode === 2 || opcode === 8) { return 2; }
+            if (opcode === 106 || opcode === 128 || opcode === 129) { return 9; }
+            if ([1, 3, 4, 5, 6, 7, 9, 10, 48, 49, 64, 65, 104, 105]
+                .includes(opcode)) {
+                return 5;
+            }
+            return 1;
+        }
+        function executableFunctions(bytes) {
+            const sections = executableSections(bytes);
+            let cursor = sections[4].payload;
+            const count = bytes.readUInt32LE(cursor);
+            cursor += 4;
+            const functions = [];
+            for (let functionIndex = 0; functionIndex < count; functionIndex++) {
+                const nameLength = bytes.readUInt32LE(cursor);
+                cursor += 4;
+                const name = bytes.subarray(cursor, cursor + nameLength).toString("utf8");
+                cursor += nameLength;
+                const parameterCount = bytes.readUInt32LE(cursor);
+                cursor += 4;
+                const parameters = [];
+                for (let index = 0; index < parameterCount; index++) {
+                    const shape = executableShape(bytes, cursor);
+                    parameters.push(shape);
+                    cursor = shape.cursor;
+                }
+                const result = executableShape(bytes, cursor);
+                cursor = result.cursor;
+                const localCount = bytes.readUInt32LE(cursor);
+                cursor += 4;
+                const locals = [];
+                for (let index = 0; index < localCount; index++) {
+                    const shape = executableShape(bytes, cursor);
+                    locals.push(shape);
+                    cursor = shape.cursor;
+                }
+                const codeOffset = bytes.readUInt32LE(cursor);
+                const codeLength = bytes.readUInt32LE(cursor + 4);
+                const maximumOffset = cursor + 8;
+                const maximum = bytes.readUInt32LE(maximumOffset);
+                cursor += 12;
+                const instructions = [];
+                let instructionOffset = 0;
+                while (instructionOffset < codeLength) {
+                    const absolute = sections[5].payload + codeOffset + instructionOffset;
+                    const opcode = bytes[absolute];
+                    const width = executableInstructionWidth(opcode);
+                    const operand = width >= 5 ? bytes.readUInt32LE(absolute + 1) : 0;
+                    instructions.push({ absolute, offset: instructionOffset, opcode, operand });
+                    instructionOffset += width;
+                }
+                functions.push({
+                    name,
+                    parameters,
+                    locals,
+                    maximumOffset,
+                    maximum,
+                    instructions,
+                });
+            }
+            return functions;
+        }
+        function executableMatch(functionDeclaration, wanted) {
+            const index = functionDeclaration.instructions.findIndex(wanted);
+            if (index < 0) {
+                throw new Error(
+                    `${expected.path}: executable input has no requested instruction.`,
+                );
+            }
+            return { index, instruction: functionDeclaration.instructions[index] };
+        }
+
+        const nominalFunctions = executableFunctions(types);
+        const nominalMain = nominalFunctions.find(item => item.name === "Main");
+        const envelopeLocal = nominalMain.parameters.length + nominalMain.locals.findIndex(
+            shape => shape.kind === 7 && shape.nominal === 0);
+        const i32Local = nominalMain.parameters.length + nominalMain.locals.findIndex(
+            shape => shape.kind === 1);
+        const signalEnumLocal = nominalMain.parameters.length + nominalMain.locals.findIndex(
+            shape => shape.kind === 8 && shape.nominal === 2);
+        if (envelopeLocal < 0 || i32Local < 0 || signalEnumLocal < 0) {
+            throw new Error(`${expected.path}: executable mutation locals are absent.`);
+        }
+
+        const malformed = [];
+        function executableCorrupt(name, original, mutate) {
+            const value = Buffer.from(original);
+            mutate(value);
+            malformed.push([name, value]);
+        }
+        executableCorrupt("operator stack kind", types, value => {
+            const found = executableMatch(
+                nominalMain,
+                instruction => instruction.opcode === 16,
+            );
+            value[found.instruction.absolute] = 38;
+        });
+        executableCorrupt("local store kind", types, value => {
+            const found = executableMatch(
+                nominalMain,
+                instruction => instruction.opcode === 104 && instruction.operand === 1,
+            );
+            const store = nominalMain.instructions[found.index + 1];
+            value.writeUInt32LE(envelopeLocal, store.absolute + 1);
+        });
+        executableCorrupt("call argument identity", types, value => {
+            const found = executableMatch(
+                nominalMain,
+                instruction => instruction.opcode === 64 && instruction.operand === 0,
+            );
+            const load = nominalMain.instructions[found.index - 1];
+            value.writeUInt32LE(envelopeLocal, load.absolute + 1);
+        });
+        executableCorrupt("record receiver identity", types, value => {
+            const found = executableMatch(
+                nominalMain,
+                instruction => instruction.opcode === 105 && instruction.operand === 1,
+            );
+            const load = nominalMain.instructions[found.index - 1];
+            value.writeUInt32LE(envelopeLocal, load.absolute + 1);
+        });
+        executableCorrupt("enum operand identity", types, value => {
+            const found = executableMatch(
+                nominalMain,
+                instruction => instruction.opcode === 108,
+            );
+            const load = nominalMain.instructions[found.index - 1];
+            value.writeUInt32LE(signalEnumLocal, load.absolute + 1);
+        });
+        executableCorrupt("branch condition kind", types, value => {
+            const found = executableMatch(
+                nominalMain,
+                instruction => instruction.opcode === 49,
+            );
+            const load = nominalMain.instructions[found.index - 1];
+            value.writeUInt32LE(i32Local, load.absolute + 1);
+        });
+        executableCorrupt("unreachable instruction region", types, value => {
+            const found = executableMatch(
+                nominalMain,
+                instruction => instruction.opcode === 49,
+            );
+            const jump = nominalMain.instructions[found.index + 1];
+            value.writeUInt32LE(found.instruction.operand, jump.absolute + 1);
+        });
+        executableCorrupt("declared maximum stack", types, value => {
+            value.writeUInt32LE(nominalMain.maximum + 1, nominalMain.maximumOffset);
+        });
+        const capabilityFunctions = executableFunctions(capabilities);
+        const writeBytes = capabilityFunctions.find(item => item.name === "Writeˉbytes");
+        executableCorrupt("capability argument kind", capabilities, value => {
+            const found = executableMatch(
+                writeBytes,
+                instruction => instruction.opcode === 65,
+            );
+            const load = writeBytes.instructions[found.index - 2];
+            value.writeUInt32LE(3, load.absolute + 1);
+        });
+
+        const malformedSteps = [
+            1_489_699,
+            962_942,
+            972_877,
+            1_007_979,
+            1_018_861,
+            1_024_723,
+            1_586_834,
+            1_501_929,
+            172_552,
+        ];
+        for (let index = 0; index < malformed.length; index++) {
+            const [name, input] = malformed[index];
+            try {
+                requireMemoryResult(
+                    expected.path,
+                    runMemory(exports, input, malformedSteps[index]),
+                    0,
+                    malformedSteps[index],
+                    new Uint8Array(),
+                );
+            } catch (error) {
+                throw new Error(`${expected.path}: ${name}: ${error.message}`);
+            }
+        }
     } else if (expected.runtime === "wvb-semantic") {
         const [data, types, capabilities] = expected.acceptedInputPaths.map(path =>
             readFileSync(path));

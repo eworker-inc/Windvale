@@ -159,6 +159,8 @@ internal static class Program
     private const string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SHA256 = "a2ef01881a4d381154a0e3feb0cb74cb0cdb3a53631cae1206d2fc03bcabe2fa";
     private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_WVB_SHA256 = "1b88f7cdbaf6d00fcde3ac6dfa09f38ff721e90edf283018378e5004a91340b4";
     private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_SHA256 = "8601f90946c0738ad6ce20c236e219f66e4ee4b2b143242a430c203918b1259a";
+    private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_WVB_SHA256 = "6a26b09c0f96e3fa9edf8c180ee8f4b2551f1b1007f0faabcec39be1106285b4";
+    private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_SHA256 = "6060b8198405b5f8763890ef5b53482398e1e0c7716f91ab279d9307db8d077b";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -720,6 +722,8 @@ internal static class Program
         "Windvale.Seed.Tests.WebAssembly-Wvb-Structural-Verify-Main.wv");
     private static readonly string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Wvb-Semantic-Verify-Main.wv");
+    private static readonly string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_PHASE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Wvb-Executable-Verify-Phase.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -10302,6 +10306,76 @@ internal static class Program
             throw new InvalidOperationException("The WVB has no requested instruction.");
         }
 
+        static int Findˉinstructionˉopcodeˉoffset(
+            byte[] Bytes,
+            Verifiedˉmodule Module,
+            string Functionˉname,
+            Func<Decodedˉinstruction, bool> Match)
+        {
+            var Function = Module.Functions.Single(Item =>
+                Item.Declaration.Name == Functionˉname);
+            var Instruction = Function.Instructions.First(Match);
+            return Findˉsectionˉpayload(Bytes, Sectionˉkind.Code)
+                + Function.Declaration.Codeˉoffset
+                + Instruction.Offset;
+        }
+
+        static int Findˉrelativeˉinstructionˉopcodeˉoffset(
+            byte[] Bytes,
+            Verifiedˉmodule Module,
+            string Functionˉname,
+            Func<Decodedˉinstruction, bool> Match,
+            int Relativeˉindex)
+        {
+            var Function = Module.Functions.Single(Item =>
+                Item.Declaration.Name == Functionˉname);
+            var Matchedˉindex = Function.Instructions
+                .Select((Instruction, Index) => (Instruction, Index))
+                .First(Item => Match(Item.Instruction)).Index;
+            var Wantedˉindex = checked(Matchedˉindex + Relativeˉindex);
+            True(
+                Wantedˉindex >= 0 && Wantedˉindex < Function.Instructions.Length,
+                "The relative WVB instruction is absent.");
+            return Findˉsectionˉpayload(Bytes, Sectionˉkind.Code)
+                + Function.Declaration.Codeˉoffset
+                + Function.Instructions[Wantedˉindex].Offset;
+        }
+
+        static int Findˉmaximumˉstackˉoffset(byte[] Bytes, int Wantedˉfunction)
+        {
+            var Cursor = Findˉsectionˉpayload(Bytes, Sectionˉkind.Functions);
+            var Count = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                Bytes.AsSpan(Cursor, 4)));
+            Cursor += 4;
+            for (var Functionˉindex = 0; Functionˉindex < Count; Functionˉindex++)
+            {
+                var Nameˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4 + Nameˉlength;
+                var Parameterˉcount = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4;
+                for (var Parameterˉindex = 0;
+                    Parameterˉindex < Parameterˉcount;
+                    Parameterˉindex++)
+                {
+                    Cursor = Skipˉshape(Bytes, Cursor);
+                }
+                Cursor = Skipˉshape(Bytes, Cursor);
+                var Localˉcount = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4;
+                for (var Localˉindex = 0; Localˉindex < Localˉcount; Localˉindex++)
+                {
+                    Cursor = Skipˉshape(Bytes, Cursor);
+                }
+                if (Functionˉindex == Wantedˉfunction) { return Cursor + 8; }
+                Cursor += 12;
+            }
+
+            throw new InvalidOperationException("The WVB function index is absent.");
+        }
+
         static void Duplicateˉenumˉvalue(byte[] Bytes)
         {
             var Cursor = Findˉsectionˉpayload(Bytes, Sectionˉkind.Types);
@@ -10584,6 +10658,288 @@ internal static class Program
         Validateˉruntimeˉcallˉwebassembly(
             Expandedˉsemanticˉlowered.Writtenˉbytes.AsSpan(),
             Expandedˉsemanticˉverified);
+
+        var Executableˉsemanticˉsource = WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE
+            .Replace(
+                "module WebAssemblyˉwvbˉsemanticˉverify profile portable;",
+                "module WebAssemblyˉwvbˉsemanticˉverify profile portable;\n\n" +
+                "import WebAssemblyˉwvbˉexecutableˉverify;",
+                StringComparison.Ordinal)
+            .Replace(
+                "State = Gˉtypes(State);\n" +
+                "    if Bytesˉlength(State) == 0u32 { return Invalid; }",
+                "State = Gˉtypes(State);\n" +
+                "    if Bytesˉlength(State) == 0u32 { return Invalid; }\n" +
+                "    State = Hˉexecutable(State);\n" +
+                "    if Bytesˉlength(State) == 0u32 { return Invalid; }\n" +
+                "    State = Iˉcontrol(State);\n" +
+                "    if Bytesˉlength(State) == 0u32 { return Invalid; }",
+                StringComparison.Ordinal);
+        True(
+            Executableˉsemanticˉsource != WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE,
+            "The executable semantic source composition did not apply.");
+        var Executableˉsemanticˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Wvb-Semantic-Executable-Verify-Main.wv", Executableˉsemanticˉsource),
+            [
+                new(
+                    "Wvb-Executable-Verify-Phase.wv",
+                    WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_PHASE_SOURCE),
+            ]);
+        True(
+            Executableˉsemanticˉresult.Success,
+            "The executable semantic verifier did not compile: " +
+                string.Join(" | ", Executableˉsemanticˉresult.Diagnostics));
+        var Executableˉsemanticˉwvb = Executableˉsemanticˉresult.Moduleˉbytes.ToArray();
+        Equal(115_483, Executableˉsemanticˉwvb.Length);
+        Equal(
+            WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Executableˉsemanticˉwvb));
+        var Executableˉsemanticˉverified = Moduleˉcodec.Readˉandˉverify(
+            Executableˉsemanticˉwvb);
+        Equal(10, Executableˉsemanticˉverified.Functions.Length);
+        var Executableˉtypedˉphase = Executableˉsemanticˉverified.Functions.Single(
+            Function => Function.Declaration.Name == "Hˉexecutable");
+        Equal(2_019, Executableˉtypedˉphase.Declaration.Localˉtypes.Length);
+        Equal(32_766, Executableˉtypedˉphase.Declaration.Codeˉlength);
+        var Executableˉcontrolˉphase = Executableˉsemanticˉverified.Functions.Single(
+            Function => Function.Declaration.Name == "Iˉcontrol");
+        Equal(564, Executableˉcontrolˉphase.Declaration.Localˉtypes.Length);
+        Equal(9_793, Executableˉcontrolˉphase.Declaration.Codeˉlength);
+        Equal(
+            108_331,
+            Executableˉsemanticˉverified.Functions.Sum(
+                Function => Function.Declaration.Codeˉlength));
+        var Executableˉsemanticˉoptions = Runtimeˉoptions.Portableˉdefaults with
+        {
+            Maximumˉinstructions = 20_000_000,
+        };
+        foreach (var Accepted in Semanticˉaccepted)
+        {
+            var Executableˉsemanticˉreference = new Referenceˉruntime(
+                Executableˉsemanticˉverified,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Executableˉsemanticˉoptions).Runˉmainˉbytes(
+                    ImmutableArray.Create(Accepted.Bytes));
+            Sequenceˉequal(
+                ImmutableArray.Create<byte>(1),
+                Executableˉsemanticˉreference.Bytes);
+        }
+
+        var Semanticˉtypesˉverified = Moduleˉcodec.Readˉandˉverify(
+            Semanticˉtypesˉwvb);
+        var Semanticˉcapabilitiesˉverified = Moduleˉcodec.Readˉandˉverify(
+            Semanticˉcapabilitiesˉwvb);
+        var Nominalˉmain = Semanticˉtypesˉverified.Functions.Single(Function =>
+            Function.Declaration.Name == "Main");
+        var Envelopeˉlocal = Nominalˉmain.Declaration.Parameterˉtypes.Length
+            + Nominalˉmain.Declaration.Localˉtypes
+                .Select((Shape, Index) => (Shape, Index))
+                .First(Item =>
+                    Item.Shape.Kind == Valueˉtype.Record &&
+                    Item.Shape.Nominalˉtypeˉindex == 0).Index;
+        var I32ˉlocal = Nominalˉmain.Declaration.Parameterˉtypes.Length
+            + Nominalˉmain.Declaration.Localˉtypes
+                .Select((Shape, Index) => (Shape, Index))
+                .First(Item => Item.Shape.Kind == Valueˉtype.I32).Index;
+        var Signalˉenumˉlocal = Nominalˉmain.Declaration.Parameterˉtypes.Length
+            + Nominalˉmain.Declaration.Localˉtypes
+                .Select((Shape, Index) => (Shape, Index))
+                .First(Item =>
+                    Item.Shape.Kind == Valueˉtype.Enum &&
+                    Item.Shape.Nominalˉtypeˉindex == 2).Index;
+
+        var Executableˉmalformed = new List<(string Name, byte[] Bytes)>();
+        void Addˉexecutableˉmalformed(
+            string Name,
+            byte[] Source,
+            Action<byte[]> Corrupt)
+        {
+            var Malformed = Source.ToArray();
+            Corrupt(Malformed);
+            Executableˉmalformed.Add((Name, Malformed));
+        }
+
+        Addˉexecutableˉmalformed(
+            "operator stack kind",
+            Semanticˉtypesˉwvb,
+            Bytes =>
+            {
+                var Offset = Findˉinstructionˉopcodeˉoffset(
+                    Bytes,
+                    Semanticˉtypesˉverified,
+                    "Main",
+                    Instruction => Instruction.Opcode == Opcode.I32ˉadd);
+                Bytes[Offset] = (byte)Opcode.Boolˉequal;
+            });
+        Addˉexecutableˉmalformed(
+            "local store kind",
+            Semanticˉtypesˉwvb,
+            Bytes =>
+            {
+                var Offset = Findˉrelativeˉinstructionˉopcodeˉoffset(
+                    Bytes,
+                    Semanticˉtypesˉverified,
+                    "Main",
+                    Instruction =>
+                        Instruction.Opcode == Opcode.Recordˉcreate &&
+                        Instruction.Unsignedˉoperand == 1u,
+                    1);
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Bytes.AsSpan(Offset + 1, 4), checked((uint)Envelopeˉlocal));
+            });
+        Addˉexecutableˉmalformed(
+            "call argument identity",
+            Semanticˉtypesˉwvb,
+            Bytes =>
+            {
+                var Offset = Findˉrelativeˉinstructionˉopcodeˉoffset(
+                    Bytes,
+                    Semanticˉtypesˉverified,
+                    "Main",
+                    Instruction =>
+                        Instruction.Opcode == Opcode.Call &&
+                        Instruction.Unsignedˉoperand == 0u,
+                    -1);
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Bytes.AsSpan(Offset + 1, 4), checked((uint)Envelopeˉlocal));
+            });
+        Addˉexecutableˉmalformed(
+            "record receiver identity",
+            Semanticˉtypesˉwvb,
+            Bytes =>
+            {
+                var Offset = Findˉrelativeˉinstructionˉopcodeˉoffset(
+                    Bytes,
+                    Semanticˉtypesˉverified,
+                    "Main",
+                    Instruction =>
+                        Instruction.Opcode == Opcode.Recordˉfield &&
+                        Instruction.Unsignedˉoperand == 1u,
+                    -1);
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Bytes.AsSpan(Offset + 1, 4), checked((uint)Envelopeˉlocal));
+            });
+        Addˉexecutableˉmalformed(
+            "enum operand identity",
+            Semanticˉtypesˉwvb,
+            Bytes =>
+            {
+                var Offset = Findˉrelativeˉinstructionˉopcodeˉoffset(
+                    Bytes,
+                    Semanticˉtypesˉverified,
+                    "Main",
+                    Instruction => Instruction.Opcode == Opcode.Enumˉnotˉequal,
+                    -1);
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Bytes.AsSpan(Offset + 1, 4), checked((uint)Signalˉenumˉlocal));
+            });
+        Addˉexecutableˉmalformed(
+            "branch condition kind",
+            Semanticˉtypesˉwvb,
+            Bytes =>
+            {
+                var Offset = Findˉrelativeˉinstructionˉopcodeˉoffset(
+                    Bytes,
+                    Semanticˉtypesˉverified,
+                    "Main",
+                    Instruction => Instruction.Opcode == Opcode.Branchˉfalse,
+                    -1);
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Bytes.AsSpan(Offset + 1, 4), checked((uint)I32ˉlocal));
+            });
+        Addˉexecutableˉmalformed(
+            "unreachable instruction region",
+            Semanticˉtypesˉwvb,
+            Bytes =>
+            {
+                var Firstˉbranch = Nominalˉmain.Instructions.First(Instruction =>
+                    Instruction.Opcode == Opcode.Branchˉfalse);
+                var Offset = Findˉrelativeˉinstructionˉopcodeˉoffset(
+                    Bytes,
+                    Semanticˉtypesˉverified,
+                    "Main",
+                    Instruction => ReferenceEquals(Instruction, Firstˉbranch),
+                    1);
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Bytes.AsSpan(Offset + 1, 4), Firstˉbranch.Unsignedˉoperand);
+            });
+        Addˉexecutableˉmalformed(
+            "declared maximum stack",
+            Semanticˉtypesˉwvb,
+            Bytes =>
+            {
+                var Mainˉindex = Semanticˉtypesˉverified.Functions
+                    .Select((Function, Index) => (Function, Index))
+                    .Single(Item => Item.Function.Declaration.Name == "Main").Index;
+                var Offset = Findˉmaximumˉstackˉoffset(Bytes, Mainˉindex);
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Bytes.AsSpan(Offset, 4),
+                    checked((uint)Nominalˉmain.Declaration.Maximumˉstackˉdepth + 1u));
+            });
+        Addˉexecutableˉmalformed(
+            "capability argument kind",
+            Semanticˉcapabilitiesˉwvb,
+            Bytes =>
+            {
+                var Offset = Findˉrelativeˉinstructionˉopcodeˉoffset(
+                    Bytes,
+                    Semanticˉcapabilitiesˉverified,
+                    "Writeˉbytes",
+                    Instruction => Instruction.Opcode == Opcode.Callˉcapability,
+                    -2);
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Bytes.AsSpan(Offset + 1, 4), 3u);
+            });
+
+        foreach (var Malformed in Executableˉmalformed)
+        {
+            var Oracleˉrejected = false;
+            try
+            {
+                _ = Moduleˉcodec.Readˉandˉverify(Malformed.Bytes);
+            }
+            catch (Bytecodeˉexception)
+            {
+                Oracleˉrejected = true;
+            }
+            True(
+                Oracleˉrejected,
+                $"The Stage 0 verifier accepted executable corruption '{Malformed.Name}'.");
+
+            var Semanticˉonly = new Referenceˉruntime(
+                Semanticˉverifierˉverified,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Semanticˉoptions).Runˉmainˉbytes(
+                    ImmutableArray.Create(Malformed.Bytes));
+            Sequenceˉequal(
+                ImmutableArray.Create<byte>(1),
+                Semanticˉonly.Bytes);
+
+            var Rejected = new Referenceˉruntime(
+                Executableˉsemanticˉverified,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Executableˉsemanticˉoptions).Runˉmainˉbytes(
+                    ImmutableArray.Create(Malformed.Bytes));
+            Sequenceˉequal(ImmutableArray<byte>.Empty, Rejected.Bytes);
+        }
+        var Executableˉsemanticˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Executableˉsemanticˉwvb,
+            225_000_000);
+        True(
+            Executableˉsemanticˉlowered.Exitˉcode == 0,
+            "The executable semantic verifier did not lower: " +
+                Executableˉsemanticˉlowered.Diagnostics +
+                Executableˉsemanticˉlowered.Output);
+        Equal(722_837, Executableˉsemanticˉlowered.Writtenˉbytes.Length);
+        Equal(213_655_515L, Executableˉsemanticˉlowered.Executedˉinstructions);
+        Equal(
+            WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Executableˉsemanticˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉruntimeˉcallˉwebassembly(
+            Executableˉsemanticˉlowered.Writtenˉbytes.AsSpan(),
+            Executableˉsemanticˉverified);
 
         var Overwideˉruntimeˉsource = new StringBuilder(
             "module Webassemblyˉoverwideˉruntime profile portable; " +

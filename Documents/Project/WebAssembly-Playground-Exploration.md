@@ -127,7 +127,9 @@ The direct backend must not become a parallel language implementation. It should
 
 [Decision 0146](../Decisions/0146-Expanded-Descriptor-Bearing-WebAssembly-Call-Graph.md) adds local profile 13 over unchanged execution ABI 3 after the semantic verifier reached both profile-12 capacity limits. It retains every per-function rule and decreasing-ordinal call proof while expanding the bounded graph to sixteen functions, 131,072 aggregate code bytes, 400,000 decoded instructions, and 1 MiB of generated Wasm. A derived nine-function verifier crosses both former limits, lowers to 440,333 import-free bytes, agrees with the reference runtime and Node.js on all three representative inputs, and preserves the original profile-12 artifact byte for byte. The added capacity is reserved for executable type/control-flow proof; the static page remains on profile 8.
 
-This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet implement recursion, `break`, `continue`, general text operations, mixed-signature calls, executable records or enums, reclaiming allocation, browser capability imports, complete executable WVB semantic verification, compiler self-hosting in WebAssembly, cross-browser qualification, or UI-thread containment for Stage 0. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
+[Decision 0149](../Decisions/0149-Windvale-Native-WebAssembly-Wvb-Executable-Verifier.md) uses that capacity for a two-function executable phase composed after the retained semantic checks. The complete ten-function verifier proves typed access to deterministically default-valued locals, operand-stack flow, calls, capability signatures, records, enums, returns, source-compiler-aligned reachability, and exact declared stack depth. It lowers to 722,837 import-free Wasm bytes and agrees with the Stage 0 oracle on three accepted modules plus nine executable mutations under Node.js. General nonempty stack joins and capability authorization remain separate gates; the static page remains on profile 8.
+
+This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet implement recursion, `break`, `continue`, reclaiming allocation, browser capability authorization/imports, general WVB nonempty stack joins, a Wasm-hosted WVB interpreter, compiler self-hosting in WebAssembly, cross-browser qualification, or complete worker containment for the editable pipeline. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
 ## Proposed playground shape
 
@@ -138,7 +140,7 @@ The initial user experience could have four primary views:
 3. **Bytecode** — WVB sections, declarations, functions, data, and decoded instructions.
 4. **Execution** — verifier status, requested and granted capabilities, instruction count, memory limits, and traps.
 
-The surrounding page can use TypeScript or JavaScript, ordinary HTML, and an established browser editor. The generated Wasm subset now executes in a disposable worker; compilation, verification, `.wv` lowering, and fallback execution should follow so expensive or malicious input cannot freeze the page's user-interface thread. The Windvale program itself does not need to contain JavaScript.
+The surrounding page can use TypeScript or JavaScript, ordinary HTML, and an established browser editor. The generated Wasm subset now executes in a disposable worker, and the complete compiler-aligned WVB verifier now executes as import-free Wasm under Node.js. Source compilation, verified-WVB interpretation, authorization, and their worker integration should follow so expensive or malicious input cannot freeze the page's user-interface thread. The Windvale program itself does not need to contain JavaScript.
 
 An initial playground should be deployable as static assets after its toolchain artifacts are produced. A server-executed fallback is possible, but it has materially different cost, isolation, privacy, and abuse-control requirements and should not be confused with client-side execution.
 
@@ -275,7 +277,7 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 ### Exploration spike
 
 1. Prove whether the current C# source compiler, WVB codec/verifier, and reference interpreter can build for browser-hosted .NET WebAssembly without the native project.
-2. Compile and run bounded portable programs in a Web Worker. Implemented locally through profile 13; profile 10 remains the latest cross-host-qualified backend boundary, while the static .NET-free page intentionally remains on profile 8.
+2. Compile and run bounded portable programs in a Web Worker. Lowering and compiler-aligned WVB verification are implemented locally through profile 13; WVB interpreter execution and source compilation remain open. Profile 10 remains the latest cross-host-qualified backend boundary, while the static .NET-free page intentionally remains on profile 8.
 3. Compare its WVB bytes, result or output buffer, trap status, and defined instruction count with the reference path. Implemented for ABI 1 through ABI 3; cross-browser evidence remains open.
 4. Measure compressed download size, cold start, compile time, execution time, peak browser memory, and worker termination behavior.
 5. Record unsupported APIs and required adapter seams before choosing a product route.

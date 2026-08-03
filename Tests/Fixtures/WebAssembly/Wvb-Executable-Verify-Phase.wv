@@ -1,0 +1,940 @@
+module WebAssemblyˉwvbˉexecutableˉverify profile portable;
+
+export fn Hˉexecutable(Input: bytes) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Total: u32 = Bytesˉlength(Input);
+    var Envelope: u32 = 12u32;
+    var Sectionˉkind: u32 = 1u32;
+    var Payload: u32 = 0u32;
+    var Payloadˉlength: u32 = 0u32;
+    var Capabilities: u32 = 0u32;
+    var Functions: u32 = 0u32;
+    var Functionsˉend: u32 = 0u32;
+    var Code: u32 = 0u32;
+    var Codeˉlength: u32 = 0u32;
+    var Types: u32 = 0u32;
+    var Typesˉend: u32 = 0u32;
+    while Sectionˉkind <= 7u32 {
+        Payload = Envelope + 8u32;
+        Payloadˉlength = Bytesˉreadˉu32ˉlittle(Input, Envelope + 4u32);
+        if Sectionˉkind == 2u32 { Capabilities = Payload; }
+        if Sectionˉkind == 4u32 {
+            Functions = Payload;
+            Functionsˉend = Payload + Payloadˉlength;
+        }
+        if Sectionˉkind == 5u32 {
+            Code = Payload;
+            Codeˉlength = Payloadˉlength;
+        }
+        if Sectionˉkind == 7u32 {
+            Types = Payload;
+            Typesˉend = Payload + Payloadˉlength;
+        }
+        Envelope = Payload + Payloadˉlength;
+        Sectionˉkind = Sectionˉkind + 1u32;
+    }
+
+    let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Functions);
+    if Functionˉcount > 256u32 { return Invalid; }
+    if Codeˉlength > 131072u32 { return Invalid; }
+
+    var Functionˉindex: u32 = 0u32;
+    var Functionˉcursor: u32 = Functions + 4u32;
+    var Aggregateˉinstructions: u32 = 0u32;
+    while Functionˉindex < Functionˉcount {
+        var Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcursor);
+        Functionˉcursor = Functionˉcursor + 4u32 + Nameˉlength;
+        let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Functionˉcursor
+        );
+        Functionˉcursor = Functionˉcursor + 4u32;
+        let Parameterˉtypes: u32 = Functionˉcursor;
+        var Shapeˉindex: u32 = 0u32;
+        var Shapeˉkind: u32 = 0u32;
+        while Shapeˉindex < Parameterˉcount {
+            Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
+            Functionˉcursor = Functionˉcursor + 1u32;
+            if Shapeˉkind >= 7u32 {
+                Functionˉcursor = Functionˉcursor + 4u32;
+            }
+            Shapeˉindex = Shapeˉindex + 1u32;
+        }
+        let Returnˉtype: u32 = Functionˉcursor;
+        Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
+        Functionˉcursor = Functionˉcursor + 1u32;
+        if Shapeˉkind >= 7u32 {
+            Functionˉcursor = Functionˉcursor + 4u32;
+        }
+        let Localˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Functionˉcursor
+        );
+        Functionˉcursor = Functionˉcursor + 4u32;
+        let Localˉtypes: u32 = Functionˉcursor;
+        Shapeˉindex = 0u32;
+        while Shapeˉindex < Localˉcount {
+            Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
+            Functionˉcursor = Functionˉcursor + 1u32;
+            if Shapeˉkind >= 7u32 {
+                Functionˉcursor = Functionˉcursor + 4u32;
+            }
+            Shapeˉindex = Shapeˉindex + 1u32;
+        }
+        let Functionˉcodeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Functionˉcursor
+        );
+        let Functionˉcodeˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Functionˉcursor + 4u32
+        );
+        let Declaredˉmaximum: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Functionˉcursor + 8u32
+        );
+        Functionˉcursor = Functionˉcursor + 12u32;
+        if Declaredˉmaximum > 16u32 { return Invalid; }
+
+        let Functionˉcode: u32 = Code + Functionˉcodeˉoffset;
+        var Cursor: u32 = 0u32;
+        var Previousˉopcode: u32 = 0u32;
+        var Stack: bytes = Bytesˉslice(Input, 0u32, 0u32);
+        var Depth: u32 = 0u32;
+        var Maximum: u32 = 0u32;
+        while Cursor < Functionˉcodeˉlength {
+            let Opcode: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Input, Functionˉcode + Cursor)
+            );
+            var Width: u32 = 1u32;
+            if Opcode == 2u32 { Width = 2u32; }
+            if Opcode == 8u32 { Width = 2u32; }
+            if Opcode == 1u32 { Width = 5u32; }
+            if Opcode == 3u32 { Width = 5u32; }
+            if Opcode == 4u32 { Width = 5u32; }
+            if Opcode == 5u32 { Width = 5u32; }
+            if Opcode == 6u32 { Width = 5u32; }
+            if Opcode == 7u32 { Width = 5u32; }
+            if Opcode == 9u32 { Width = 5u32; }
+            if Opcode == 10u32 { Width = 5u32; }
+            if Opcode == 48u32 { Width = 5u32; }
+            if Opcode == 49u32 { Width = 5u32; }
+            if Opcode == 64u32 { Width = 5u32; }
+            if Opcode == 65u32 { Width = 5u32; }
+            if Opcode == 104u32 { Width = 5u32; }
+            if Opcode == 105u32 { Width = 5u32; }
+            if Opcode == 106u32 { Width = 9u32; }
+            if Opcode == 128u32 { Width = 9u32; }
+            if Opcode == 129u32 { Width = 9u32; }
+            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
+            if Aggregateˉinstructions > 16000u32 { return Invalid; }
+
+            var Popˉcount: u32 = 0u32;
+            var Firstˉkind: u32 = 0u32;
+            var Firstˉnominal: u32 = 0u32;
+            var Secondˉkind: u32 = 0u32;
+            var Secondˉnominal: u32 = 0u32;
+            var Thirdˉkind: u32 = 0u32;
+            var Thirdˉnominal: u32 = 0u32;
+            var Hasˉpush: bool = false;
+            var Pushˉkind: u32 = 0u32;
+            var Pushˉnominal: u32 = 0u32;
+            var Handled: bool = false;
+
+            if Opcode == 1u32 { Hasˉpush = true; Pushˉkind = 1u32; Handled = true; }
+            if Opcode == 2u32 { Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            if Opcode == 3u32 { Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+            if Opcode == 6u32 { Hasˉpush = true; Pushˉkind = 1u32; Handled = true; }
+            if Opcode == 8u32 { Hasˉpush = true; Pushˉkind = 4u32; Handled = true; }
+            if Opcode == 9u32 { Hasˉpush = true; Pushˉkind = 5u32; Handled = true; }
+            if Opcode == 10u32 { Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
+            if Opcode == 128u32 { Hasˉpush = true; Pushˉkind = 9u32; Handled = true; }
+            if Opcode == 129u32 { Hasˉpush = true; Pushˉkind = 10u32; Handled = true; }
+
+            if Opcode == 4u32 {
+                let Localˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Functionˉcode + Cursor + 1u32
+                );
+                var Wantedˉshape: u32 = Parameterˉtypes;
+                var Wantedˉindex: u32 = Localˉindex;
+                if Localˉindex >= Parameterˉcount {
+                    Wantedˉshape = Localˉtypes;
+                    Wantedˉindex = Localˉindex - Parameterˉcount;
+                }
+                Shapeˉindex = 0u32;
+                while Shapeˉindex < Wantedˉindex {
+                    Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Wantedˉshape));
+                    Wantedˉshape = Wantedˉshape + 1u32;
+                    if Shapeˉkind >= 7u32 { Wantedˉshape = Wantedˉshape + 4u32; }
+                    Shapeˉindex = Shapeˉindex + 1u32;
+                }
+                Pushˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Wantedˉshape));
+                if Pushˉkind >= 7u32 {
+                    Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Wantedˉshape + 1u32);
+                }
+                Hasˉpush = true;
+                Handled = true;
+            }
+            if Opcode == 5u32 {
+                let Storedˉlocalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Functionˉcode + Cursor + 1u32
+                );
+                var Storedˉshape: u32 = Parameterˉtypes;
+                var Storedˉindex: u32 = Storedˉlocalˉindex;
+                if Storedˉlocalˉindex >= Parameterˉcount {
+                    Storedˉshape = Localˉtypes;
+                    Storedˉindex = Storedˉlocalˉindex - Parameterˉcount;
+                }
+                Shapeˉindex = 0u32;
+                while Shapeˉindex < Storedˉindex {
+                    Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Storedˉshape));
+                    Storedˉshape = Storedˉshape + 1u32;
+                    if Shapeˉkind >= 7u32 { Storedˉshape = Storedˉshape + 4u32; }
+                    Shapeˉindex = Shapeˉindex + 1u32;
+                }
+                Firstˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Storedˉshape));
+                if Firstˉkind >= 7u32 {
+                    Firstˉnominal = Bytesˉreadˉu32ˉlittle(Input, Storedˉshape + 1u32);
+                }
+                Popˉcount = 1u32;
+                Handled = true;
+            }
+
+            if Opcode == 7u32 { Popˉcount = 1u32; Firstˉkind = 1u32; Hasˉpush = true; Pushˉkind = 1u32; Handled = true; }
+            if Opcode == 11u32 { Popˉcount = 1u32; Firstˉkind = 6u32; Hasˉpush = true; Pushˉkind = 5u32; Handled = true; }
+            if Opcode == 12u32 { Popˉcount = 3u32; Firstˉkind = 5u32; Secondˉkind = 5u32; Thirdˉkind = 6u32; Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
+            if Opcode == 13u32 { Popˉcount = 2u32; Firstˉkind = 5u32; Secondˉkind = 6u32; Hasˉpush = true; Pushˉkind = 4u32; Handled = true; }
+            if Opcode == 14u32 { Popˉcount = 2u32; Firstˉkind = 5u32; Secondˉkind = 6u32; Hasˉpush = true; Pushˉkind = 5u32; Handled = true; }
+            if Opcode == 15u32 { Popˉcount = 2u32; Firstˉkind = 5u32; Secondˉkind = 6u32; Hasˉpush = true; Pushˉkind = 5u32; Handled = true; }
+            if Opcode == 114u32 { Popˉcount = 2u32; Firstˉkind = 5u32; Secondˉkind = 6u32; Hasˉpush = true; Pushˉkind = 1u32; Handled = true; }
+
+            if Opcode >= 16u32 {
+                if Opcode <= 18u32 { Popˉcount = 2u32; Firstˉkind = 1u32; Secondˉkind = 1u32; Hasˉpush = true; Pushˉkind = 1u32; Handled = true; }
+            }
+            if Opcode == 19u32 { Popˉcount = 1u32; Firstˉkind = 1u32; Hasˉpush = true; Pushˉkind = 1u32; Handled = true; }
+            if Opcode >= 20u32 {
+                if Opcode <= 22u32 { Popˉcount = 2u32; Firstˉkind = 5u32; Secondˉkind = 5u32; Hasˉpush = true; Pushˉkind = 5u32; Handled = true; }
+            }
+            if Opcode >= 32u32 {
+                if Opcode <= 37u32 { Popˉcount = 2u32; Firstˉkind = 1u32; Secondˉkind = 1u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            }
+            if Opcode >= 38u32 {
+                if Opcode <= 39u32 { Popˉcount = 2u32; Firstˉkind = 2u32; Secondˉkind = 2u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            }
+            if Opcode == 40u32 { Popˉcount = 1u32; Firstˉkind = 2u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            if Opcode >= 96u32 {
+                if Opcode <= 101u32 { Popˉcount = 2u32; Firstˉkind = 5u32; Secondˉkind = 5u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            }
+            if Opcode >= 102u32 {
+                if Opcode <= 103u32 { Popˉcount = 2u32; Firstˉkind = 4u32; Secondˉkind = 4u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            }
+            if Opcode >= 130u32 {
+                if Opcode <= 132u32 { Popˉcount = 2u32; Firstˉkind = 9u32; Secondˉkind = 9u32; Hasˉpush = true; Pushˉkind = 9u32; Handled = true; }
+            }
+            if Opcode == 133u32 { Popˉcount = 1u32; Firstˉkind = 9u32; Hasˉpush = true; Pushˉkind = 9u32; Handled = true; }
+            if Opcode >= 134u32 {
+                if Opcode <= 136u32 { Popˉcount = 2u32; Firstˉkind = 10u32; Secondˉkind = 10u32; Hasˉpush = true; Pushˉkind = 10u32; Handled = true; }
+            }
+            if Opcode >= 137u32 {
+                if Opcode <= 142u32 { Popˉcount = 2u32; Firstˉkind = 9u32; Secondˉkind = 9u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            }
+            if Opcode >= 143u32 {
+                if Opcode <= 148u32 { Popˉcount = 2u32; Firstˉkind = 10u32; Secondˉkind = 10u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            }
+
+            if Opcode == 110u32 { Popˉcount = 1u32; Firstˉkind = 1u32; Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+            if Opcode == 111u32 { Popˉcount = 1u32; Firstˉkind = 4u32; Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+            if Opcode == 112u32 { Popˉcount = 1u32; Firstˉkind = 5u32; Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+            if Opcode == 113u32 { Popˉcount = 2u32; Firstˉkind = 3u32; Secondˉkind = 3u32; Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+            if Opcode == 115u32 { Popˉcount = 1u32; Firstˉkind = 6u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            if Opcode == 116u32 { Popˉcount = 1u32; Firstˉkind = 6u32; Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+            if Opcode == 117u32 { Popˉcount = 1u32; Firstˉkind = 3u32; Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+            if Opcode == 118u32 { Popˉcount = 1u32; Firstˉkind = 4u32; Hasˉpush = true; Pushˉkind = 5u32; Handled = true; }
+            if Opcode == 119u32 { Popˉcount = 2u32; Firstˉkind = 6u32; Secondˉkind = 6u32; Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
+            if Opcode == 120u32 { Popˉcount = 1u32; Firstˉkind = 4u32; Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
+            if Opcode == 121u32 { Popˉcount = 1u32; Firstˉkind = 5u32; Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
+            if Opcode == 122u32 { Popˉcount = 1u32; Firstˉkind = 5u32; Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
+            if Opcode == 123u32 { Popˉcount = 1u32; Firstˉkind = 1u32; Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
+            if Opcode == 124u32 { Popˉcount = 1u32; Firstˉkind = 3u32; Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
+            if Opcode == 125u32 { Popˉcount = 1u32; Firstˉkind = 6u32; Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+            if Opcode == 149u32 { Popˉcount = 1u32; Firstˉkind = 9u32; Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+            if Opcode == 150u32 { Popˉcount = 1u32; Firstˉkind = 10u32; Hasˉpush = true; Pushˉkind = 3u32; Handled = true; }
+
+            if Opcode == 106u32 {
+                Pushˉkind = 8u32;
+                Pushˉnominal = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Functionˉcode + Cursor + 1u32
+                );
+                Hasˉpush = true;
+                Handled = true;
+            }
+            if Opcode == 107u32 {
+                if Depth < 2u32 { return Invalid; }
+                let Rightˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                let Rightˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Rightˉoffset));
+                let Rightˉnominal: u32 = Bytesˉreadˉu32ˉlittle(Stack, Rightˉoffset + 1u32);
+                if Rightˉkind != 8u32 { return Invalid; }
+                Stack = Bytesˉslice(Stack, 0u32, Rightˉoffset);
+                Depth = Depth - 1u32;
+                let Leftˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Leftˉoffset)) != 8u32 { return Invalid; }
+                if Bytesˉreadˉu32ˉlittle(Stack, Leftˉoffset + 1u32) != Rightˉnominal { return Invalid; }
+                Stack = Bytesˉslice(Stack, 0u32, Leftˉoffset);
+                Depth = Depth - 1u32;
+                Hasˉpush = true;
+                Pushˉkind = 2u32;
+                Handled = true;
+            }
+            if Opcode == 108u32 {
+                if Depth < 2u32 { return Invalid; }
+                let Unequalˉrightˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                let Unequalˉrightˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Unequalˉrightˉoffset));
+                let Unequalˉrightˉnominal: u32 = Bytesˉreadˉu32ˉlittle(Stack, Unequalˉrightˉoffset + 1u32);
+                if Unequalˉrightˉkind != 8u32 { return Invalid; }
+                Stack = Bytesˉslice(Stack, 0u32, Unequalˉrightˉoffset);
+                Depth = Depth - 1u32;
+                let Unequalˉleftˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Unequalˉleftˉoffset)) != 8u32 { return Invalid; }
+                if Bytesˉreadˉu32ˉlittle(Stack, Unequalˉleftˉoffset + 1u32) != Unequalˉrightˉnominal { return Invalid; }
+                Stack = Bytesˉslice(Stack, 0u32, Unequalˉleftˉoffset);
+                Depth = Depth - 1u32;
+                Hasˉpush = true;
+                Pushˉkind = 2u32;
+                Handled = true;
+            }
+            if Opcode == 109u32 {
+                if Depth == 0u32 { return Invalid; }
+                let Sourceˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Sourceˉoffset)) != 8u32 { return Invalid; }
+                Stack = Bytesˉslice(Stack, 0u32, Sourceˉoffset);
+                Depth = Depth - 1u32;
+                Hasˉpush = true;
+                Pushˉkind = 3u32;
+                Handled = true;
+            }
+
+            if Opcode == 104u32 {
+                let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Functionˉcode + Cursor + 1u32
+                );
+                var Typeˉcursor: u32 = Types + 4u32;
+                var Currentˉtype: u32 = 0u32;
+                while Currentˉtype < Typeˉindex {
+                    let Typeˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor));
+                    Typeˉcursor = Typeˉcursor + 1u32;
+                    Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor);
+                    Typeˉcursor = Typeˉcursor + 4u32 + Nameˉlength;
+                    let Itemˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor);
+                    Typeˉcursor = Typeˉcursor + 4u32;
+                    var Itemˉindex: u32 = 0u32;
+                    while Itemˉindex < Itemˉcount {
+                        Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor);
+                        Typeˉcursor = Typeˉcursor + 4u32 + Nameˉlength;
+                        if Typeˉkind == 1u32 {
+                            Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor));
+                            Typeˉcursor = Typeˉcursor + 1u32;
+                            if Shapeˉkind >= 7u32 { Typeˉcursor = Typeˉcursor + 4u32; }
+                        } else {
+                            Typeˉcursor = Typeˉcursor + 4u32;
+                        }
+                        Itemˉindex = Itemˉindex + 1u32;
+                    }
+                    Currentˉtype = Currentˉtype + 1u32;
+                }
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor)) != 1u32 { return Invalid; }
+                Typeˉcursor = Typeˉcursor + 1u32;
+                Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor);
+                Typeˉcursor = Typeˉcursor + 4u32 + Nameˉlength;
+                let Fieldˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor);
+                Typeˉcursor = Typeˉcursor + 4u32;
+                if Fieldˉcount > Depth { return Invalid; }
+                var Fieldˉpop: u32 = 0u32;
+                while Fieldˉpop < Fieldˉcount {
+                    let Wantedˉfield: u32 = Fieldˉcount - Fieldˉpop - 1u32;
+                    var Fieldˉcursor: u32 = Typeˉcursor;
+                    var Fieldˉindex: u32 = 0u32;
+                    while Fieldˉindex < Wantedˉfield {
+                        Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Fieldˉcursor);
+                        Fieldˉcursor = Fieldˉcursor + 4u32 + Nameˉlength;
+                        Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Fieldˉcursor));
+                        Fieldˉcursor = Fieldˉcursor + 1u32;
+                        if Shapeˉkind >= 7u32 { Fieldˉcursor = Fieldˉcursor + 4u32; }
+                        Fieldˉindex = Fieldˉindex + 1u32;
+                    }
+                    Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Fieldˉcursor);
+                    Fieldˉcursor = Fieldˉcursor + 4u32 + Nameˉlength;
+                    let Expectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Fieldˉcursor));
+                    var Expectedˉnominal: u32 = 0u32;
+                    if Expectedˉkind >= 7u32 {
+                        Expectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Fieldˉcursor + 1u32);
+                    }
+                    let Actualˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Actualˉoffset)) != Expectedˉkind { return Invalid; }
+                    if Bytesˉreadˉu32ˉlittle(Stack, Actualˉoffset + 1u32) != Expectedˉnominal { return Invalid; }
+                    Stack = Bytesˉslice(Stack, 0u32, Actualˉoffset);
+                    Depth = Depth - 1u32;
+                    Fieldˉpop = Fieldˉpop + 1u32;
+                }
+                Hasˉpush = true;
+                Pushˉkind = 7u32;
+                Pushˉnominal = Typeˉindex;
+                Handled = true;
+            }
+
+            if Opcode == 105u32 {
+                if Depth == 0u32 { return Invalid; }
+                let Fieldˉsourceˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Fieldˉsourceˉoffset)) != 7u32 { return Invalid; }
+                let Fieldˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Stack, Fieldˉsourceˉoffset + 1u32);
+                Stack = Bytesˉslice(Stack, 0u32, Fieldˉsourceˉoffset);
+                Depth = Depth - 1u32;
+                var Fieldˉtypeˉcursor: u32 = Types + 4u32;
+                var Fieldˉcurrentˉtype: u32 = 0u32;
+                while Fieldˉcurrentˉtype < Fieldˉtypeˉindex {
+                    let Fieldˉskippedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Fieldˉtypeˉcursor));
+                    Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 1u32;
+                    Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Fieldˉtypeˉcursor);
+                    Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32 + Nameˉlength;
+                    let Fieldˉskippedˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Fieldˉtypeˉcursor);
+                    Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32;
+                    var Fieldˉskippedˉindex: u32 = 0u32;
+                    while Fieldˉskippedˉindex < Fieldˉskippedˉcount {
+                        Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Fieldˉtypeˉcursor);
+                        Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32 + Nameˉlength;
+                        if Fieldˉskippedˉkind == 1u32 {
+                            Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Fieldˉtypeˉcursor));
+                            Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 1u32;
+                            if Shapeˉkind >= 7u32 { Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32; }
+                        } else {
+                            Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32;
+                        }
+                        Fieldˉskippedˉindex = Fieldˉskippedˉindex + 1u32;
+                    }
+                    Fieldˉcurrentˉtype = Fieldˉcurrentˉtype + 1u32;
+                }
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Fieldˉtypeˉcursor)) != 1u32 { return Invalid; }
+                Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 1u32;
+                Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Fieldˉtypeˉcursor);
+                Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32 + Nameˉlength;
+                let Sourceˉfieldˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Fieldˉtypeˉcursor);
+                Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32;
+                let Fieldˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Functionˉcode + Cursor + 1u32
+                );
+                if Fieldˉoperand >= Sourceˉfieldˉcount { return Invalid; }
+                var Sourceˉfieldˉindex: u32 = 0u32;
+                while Sourceˉfieldˉindex < Fieldˉoperand {
+                    Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Fieldˉtypeˉcursor);
+                    Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32 + Nameˉlength;
+                    Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Fieldˉtypeˉcursor));
+                    Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 1u32;
+                    if Shapeˉkind >= 7u32 { Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32; }
+                    Sourceˉfieldˉindex = Sourceˉfieldˉindex + 1u32;
+                }
+                Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Fieldˉtypeˉcursor);
+                Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32 + Nameˉlength;
+                Pushˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Fieldˉtypeˉcursor));
+                if Pushˉkind >= 7u32 {
+                    Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Fieldˉtypeˉcursor + 1u32);
+                }
+                Hasˉpush = true;
+                Handled = true;
+            }
+
+            if Opcode == 64u32 {
+                let Targetˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Functionˉcode + Cursor + 1u32
+                );
+                var Targetˉcursor: u32 = Functions + 4u32;
+                var Currentˉfunction: u32 = 0u32;
+                while Currentˉfunction < Targetˉindex {
+                    Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Targetˉcursor);
+                    Targetˉcursor = Targetˉcursor + 4u32 + Nameˉlength;
+                    let Skippedˉtargetˉparameters: u32 = Bytesˉreadˉu32ˉlittle(Input, Targetˉcursor);
+                    Targetˉcursor = Targetˉcursor + 4u32;
+                    Shapeˉindex = 0u32;
+                    while Shapeˉindex < Skippedˉtargetˉparameters + 1u32 {
+                        Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉcursor));
+                        Targetˉcursor = Targetˉcursor + 1u32;
+                        if Shapeˉkind >= 7u32 { Targetˉcursor = Targetˉcursor + 4u32; }
+                        Shapeˉindex = Shapeˉindex + 1u32;
+                    }
+                    let Targetˉlocals: u32 = Bytesˉreadˉu32ˉlittle(Input, Targetˉcursor);
+                    Targetˉcursor = Targetˉcursor + 4u32;
+                    Shapeˉindex = 0u32;
+                    while Shapeˉindex < Targetˉlocals {
+                        Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉcursor));
+                        Targetˉcursor = Targetˉcursor + 1u32;
+                        if Shapeˉkind >= 7u32 { Targetˉcursor = Targetˉcursor + 4u32; }
+                        Shapeˉindex = Shapeˉindex + 1u32;
+                    }
+                    Targetˉcursor = Targetˉcursor + 12u32;
+                    Currentˉfunction = Currentˉfunction + 1u32;
+                }
+                Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Targetˉcursor);
+                Targetˉcursor = Targetˉcursor + 4u32 + Nameˉlength;
+                let Targetˉparameters: u32 = Bytesˉreadˉu32ˉlittle(Input, Targetˉcursor);
+                Targetˉcursor = Targetˉcursor + 4u32;
+                let Targetˉparameterˉtypes: u32 = Targetˉcursor;
+                if Targetˉparameters > Depth { return Invalid; }
+                var Argument: u32 = 0u32;
+                while Argument < Targetˉparameters {
+                    let Wantedˉparameter: u32 = Targetˉparameters - Argument - 1u32;
+                    var Argumentˉcursor: u32 = Targetˉparameterˉtypes;
+                    Shapeˉindex = 0u32;
+                    while Shapeˉindex < Wantedˉparameter {
+                        Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Argumentˉcursor));
+                        Argumentˉcursor = Argumentˉcursor + 1u32;
+                        if Shapeˉkind >= 7u32 { Argumentˉcursor = Argumentˉcursor + 4u32; }
+                        Shapeˉindex = Shapeˉindex + 1u32;
+                    }
+                    let Callˉexpectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Argumentˉcursor));
+                    var Callˉexpectedˉnominal: u32 = 0u32;
+                    if Callˉexpectedˉkind >= 7u32 { Callˉexpectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Argumentˉcursor + 1u32); }
+                    let Callˉactualˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Callˉactualˉoffset)) != Callˉexpectedˉkind { return Invalid; }
+                    if Bytesˉreadˉu32ˉlittle(Stack, Callˉactualˉoffset + 1u32) != Callˉexpectedˉnominal { return Invalid; }
+                    Stack = Bytesˉslice(Stack, 0u32, Callˉactualˉoffset);
+                    Depth = Depth - 1u32;
+                    Argument = Argument + 1u32;
+                }
+                var Targetˉreturn: u32 = Targetˉparameterˉtypes;
+                Shapeˉindex = 0u32;
+                while Shapeˉindex < Targetˉparameters {
+                    Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉreturn));
+                    Targetˉreturn = Targetˉreturn + 1u32;
+                    if Shapeˉkind >= 7u32 { Targetˉreturn = Targetˉreturn + 4u32; }
+                    Shapeˉindex = Shapeˉindex + 1u32;
+                }
+                Pushˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉreturn));
+                if Pushˉkind != 0u32 {
+                    if Pushˉkind >= 7u32 { Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Targetˉreturn + 1u32); }
+                    Hasˉpush = true;
+                }
+                Handled = true;
+            }
+
+            if Opcode == 65u32 {
+                let Capabilityˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Functionˉcode + Cursor + 1u32
+                );
+                var Capabilityˉcursor: u32 = Capabilities + 4u32;
+                var Currentˉcapability: u32 = 0u32;
+                while Currentˉcapability < Capabilityˉindex {
+                    Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Capabilityˉcursor);
+                    Capabilityˉcursor = Capabilityˉcursor + 4u32 + Nameˉlength;
+                    let Skippedˉcapabilityˉparameters: u32 = Bytesˉreadˉu32ˉlittle(Input, Capabilityˉcursor);
+                    Capabilityˉcursor = Capabilityˉcursor + 4u32 + Skippedˉcapabilityˉparameters + 1u32;
+                    Currentˉcapability = Currentˉcapability + 1u32;
+                }
+                Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Capabilityˉcursor);
+                Capabilityˉcursor = Capabilityˉcursor + 4u32 + Nameˉlength;
+                let Capabilityˉparameters: u32 = Bytesˉreadˉu32ˉlittle(Input, Capabilityˉcursor);
+                Capabilityˉcursor = Capabilityˉcursor + 4u32;
+                if Capabilityˉparameters > Depth { return Invalid; }
+                var Capabilityˉargument: u32 = 0u32;
+                while Capabilityˉargument < Capabilityˉparameters {
+                    let Capabilityˉexpectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                        Input,
+                        Capabilityˉcursor + Capabilityˉparameters - Capabilityˉargument - 1u32
+                    ));
+                    let Capabilityˉactualˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Capabilityˉactualˉoffset)) != Capabilityˉexpectedˉkind { return Invalid; }
+                    if Bytesˉreadˉu32ˉlittle(Stack, Capabilityˉactualˉoffset + 1u32) != 0u32 { return Invalid; }
+                    Stack = Bytesˉslice(Stack, 0u32, Capabilityˉactualˉoffset);
+                    Depth = Depth - 1u32;
+                    Capabilityˉargument = Capabilityˉargument + 1u32;
+                }
+                Pushˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Input,
+                    Capabilityˉcursor + Capabilityˉparameters
+                ));
+                if Pushˉkind != 0u32 { Hasˉpush = true; }
+                Handled = true;
+            }
+
+            if Opcode == 48u32 {
+                if Depth != 0u32 { return Invalid; }
+                Handled = true;
+            }
+            if Opcode == 49u32 {
+                Popˉcount = 1u32;
+                Firstˉkind = 2u32;
+                Handled = true;
+            }
+            if Opcode == 80u32 {
+                if Depth == 0u32 { return Invalid; }
+                Stack = Bytesˉslice(Stack, 0u32, Bytesˉlength(Stack) - 5u32);
+                Depth = Depth - 1u32;
+                Handled = true;
+            }
+            if Opcode == 81u32 {
+                let Returnˉexpectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Returnˉtype));
+                var Returnˉexpectedˉnominal: u32 = 0u32;
+                if Returnˉexpectedˉkind >= 7u32 {
+                    Returnˉexpectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Returnˉtype + 1u32);
+                }
+                if Returnˉexpectedˉkind != 0u32 {
+                    if Depth == 0u32 { return Invalid; }
+                    let Returnˉactualˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Returnˉactualˉoffset)) != Returnˉexpectedˉkind { return Invalid; }
+                    if Bytesˉreadˉu32ˉlittle(Stack, Returnˉactualˉoffset + 1u32) != Returnˉexpectedˉnominal { return Invalid; }
+                    Stack = Bytesˉslice(Stack, 0u32, Returnˉactualˉoffset);
+                    Depth = Depth - 1u32;
+                }
+                if Depth != 0u32 { return Invalid; }
+                Handled = true;
+            }
+
+            var Popˉindex: u32 = 0u32;
+            while Popˉindex < Popˉcount {
+                if Depth == 0u32 { return Invalid; }
+                var Popˉexpectedˉkind: u32 = Firstˉkind;
+                var Popˉexpectedˉnominal: u32 = Firstˉnominal;
+                if Popˉindex == 1u32 {
+                    Popˉexpectedˉkind = Secondˉkind;
+                    Popˉexpectedˉnominal = Secondˉnominal;
+                }
+                if Popˉindex == 2u32 {
+                    Popˉexpectedˉkind = Thirdˉkind;
+                    Popˉexpectedˉnominal = Thirdˉnominal;
+                }
+                let Popˉactualˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Popˉactualˉoffset)) != Popˉexpectedˉkind { return Invalid; }
+                if Bytesˉreadˉu32ˉlittle(Stack, Popˉactualˉoffset + 1u32) != Popˉexpectedˉnominal { return Invalid; }
+                Stack = Bytesˉslice(Stack, 0u32, Popˉactualˉoffset);
+                Depth = Depth - 1u32;
+                Popˉindex = Popˉindex + 1u32;
+            }
+            if Opcode == 49u32 {
+                if Depth != 0u32 { return Invalid; }
+            }
+
+            if Hasˉpush {
+                var Encodedˉkind: bytes = Bytesˉfromˉu8(0u8);
+                if Pushˉkind == 1u32 { Encodedˉkind = Bytesˉfromˉu8(1u8); }
+                if Pushˉkind == 2u32 { Encodedˉkind = Bytesˉfromˉu8(2u8); }
+                if Pushˉkind == 3u32 { Encodedˉkind = Bytesˉfromˉu8(3u8); }
+                if Pushˉkind == 4u32 { Encodedˉkind = Bytesˉfromˉu8(4u8); }
+                if Pushˉkind == 5u32 { Encodedˉkind = Bytesˉfromˉu8(5u8); }
+                if Pushˉkind == 6u32 { Encodedˉkind = Bytesˉfromˉu8(6u8); }
+                if Pushˉkind == 7u32 { Encodedˉkind = Bytesˉfromˉu8(7u8); }
+                if Pushˉkind == 8u32 { Encodedˉkind = Bytesˉfromˉu8(8u8); }
+                if Pushˉkind == 9u32 { Encodedˉkind = Bytesˉfromˉu8(9u8); }
+                if Pushˉkind == 10u32 { Encodedˉkind = Bytesˉfromˉu8(10u8); }
+                let Encodedˉshape: bytes = Bytesˉconcat(
+                    Encodedˉkind,
+                    Bytesˉfromˉu32ˉlittle(Pushˉnominal)
+                );
+                Stack = Bytesˉconcat(Stack, Encodedˉshape);
+                Depth = Depth + 1u32;
+                if Depth > 16u32 { return Invalid; }
+                if Depth > Maximum { Maximum = Depth; }
+            }
+            if Handled {
+                Handled = true;
+            } else {
+                return Invalid;
+            }
+
+            Previousˉopcode = Opcode;
+            Cursor = Cursor + Width;
+        }
+        if Previousˉopcode != 48u32 {
+            if Previousˉopcode != 49u32 {
+                if Previousˉopcode != 81u32 { return Invalid; }
+            }
+        }
+        if Depth != 0u32 { return Invalid; }
+        if Maximum != Declaredˉmaximum { return Invalid; }
+        Functionˉindex = Functionˉindex + 1u32;
+    }
+    if Functionˉcursor != Functionsˉend { return Invalid; }
+    if Typesˉend > Total { return Invalid; }
+    return Input;
+}
+
+export fn Iˉcontrol(Input: bytes) -> bytes {
+    let Controlˉinvalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Controlˉtotal: u32 = Bytesˉlength(Input);
+    var Controlˉenvelope: u32 = 12u32;
+    var Controlˉsectionˉkind: u32 = 1u32;
+    var Controlˉpayload: u32 = 0u32;
+    var Controlˉpayloadˉlength: u32 = 0u32;
+    var Controlˉfunctions: u32 = 0u32;
+    var Controlˉfunctionsˉend: u32 = 0u32;
+    var Controlˉcode: u32 = 0u32;
+    var Controlˉcodeˉlength: u32 = 0u32;
+    while Controlˉsectionˉkind <= 5u32 {
+        Controlˉpayload = Controlˉenvelope + 8u32;
+        Controlˉpayloadˉlength = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Controlˉenvelope + 4u32
+        );
+        if Controlˉsectionˉkind == 4u32 {
+            Controlˉfunctions = Controlˉpayload;
+            Controlˉfunctionsˉend = Controlˉpayload + Controlˉpayloadˉlength;
+        }
+        if Controlˉsectionˉkind == 5u32 {
+            Controlˉcode = Controlˉpayload;
+            Controlˉcodeˉlength = Controlˉpayloadˉlength;
+        }
+        Controlˉenvelope = Controlˉpayload + Controlˉpayloadˉlength;
+        Controlˉsectionˉkind = Controlˉsectionˉkind + 1u32;
+    }
+
+    let Controlˉfunctionˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Controlˉfunctions
+    );
+    if Controlˉfunctionˉcount > 256u32 { return Controlˉinvalid; }
+    if Controlˉcodeˉlength > 131072u32 { return Controlˉinvalid; }
+
+    var Controlˉfunctionˉindex: u32 = 0u32;
+    var Controlˉfunctionˉcursor: u32 = Controlˉfunctions + 4u32;
+    var Controlˉaggregateˉinstructions: u32 = 0u32;
+    while Controlˉfunctionˉindex < Controlˉfunctionˉcount {
+        let Controlˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Controlˉfunctionˉcursor
+        );
+        Controlˉfunctionˉcursor = Controlˉfunctionˉcursor
+            + 4u32
+            + Controlˉnameˉlength;
+        let Controlˉparameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Controlˉfunctionˉcursor
+        );
+        Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
+        var Controlˉshapeˉindex: u32 = 0u32;
+        var Controlˉshapeˉkind: u32 = 0u32;
+        while Controlˉshapeˉindex < Controlˉparameterˉcount {
+            Controlˉshapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
+                Input,
+                Controlˉfunctionˉcursor
+            ));
+            Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
+            if Controlˉshapeˉkind >= 7u32 {
+                Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
+            }
+            Controlˉshapeˉindex = Controlˉshapeˉindex + 1u32;
+        }
+        Controlˉshapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
+            Input,
+            Controlˉfunctionˉcursor
+        ));
+        Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
+        if Controlˉshapeˉkind >= 7u32 {
+            Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
+        }
+        let Controlˉlocalˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Controlˉfunctionˉcursor
+        );
+        Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
+        Controlˉshapeˉindex = 0u32;
+        while Controlˉshapeˉindex < Controlˉlocalˉcount {
+            Controlˉshapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
+                Input,
+                Controlˉfunctionˉcursor
+            ));
+            Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
+            if Controlˉshapeˉkind >= 7u32 {
+                Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
+            }
+            Controlˉshapeˉindex = Controlˉshapeˉindex + 1u32;
+        }
+        let Controlˉfunctionˉcodeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Controlˉfunctionˉcursor
+        );
+        let Controlˉfunctionˉcodeˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Controlˉfunctionˉcursor + 4u32
+        );
+        Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 12u32;
+
+        let Controlˉfunctionˉcode: u32 = Controlˉcode
+            + Controlˉfunctionˉcodeˉoffset;
+        var Controlˉcursor: u32 = 0u32;
+        var Controlˉpreviousˉopcode: u32 = 0u32;
+        while Controlˉcursor < Controlˉfunctionˉcodeˉlength {
+            if Controlˉcursor > 0u32 {
+                var Controlˉneedsˉpredecessor: bool = false;
+                if Controlˉpreviousˉopcode == 48u32 {
+                    Controlˉneedsˉpredecessor = true;
+                }
+                if Controlˉpreviousˉopcode == 81u32 {
+                    Controlˉneedsˉpredecessor = true;
+                }
+                if Controlˉneedsˉpredecessor {
+                    var Controlˉhasˉpredecessor: bool = false;
+                    var Controlˉpredecessorˉscan: u32 = 0u32;
+                    var Controlˉpredecessorˉopcode: u32 = 0u32;
+                    var Controlˉpredecessorˉwidth: u32 = 1u32;
+                    while Controlˉpredecessorˉscan < Controlˉcursor {
+                        Controlˉpredecessorˉopcode = U32ˉfromˉu8(
+                            Bytesˉreadˉu8(
+                                Input,
+                                Controlˉfunctionˉcode
+                                    + Controlˉpredecessorˉscan
+                            )
+                        );
+                        Controlˉpredecessorˉwidth = 1u32;
+                        if Controlˉpredecessorˉopcode == 2u32 { Controlˉpredecessorˉwidth = 2u32; }
+                        if Controlˉpredecessorˉopcode == 8u32 { Controlˉpredecessorˉwidth = 2u32; }
+                        if Controlˉpredecessorˉopcode == 1u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 3u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 4u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 5u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 6u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 7u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 9u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 10u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 48u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 49u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 64u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 65u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 104u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 105u32 { Controlˉpredecessorˉwidth = 5u32; }
+                        if Controlˉpredecessorˉopcode == 106u32 { Controlˉpredecessorˉwidth = 9u32; }
+                        if Controlˉpredecessorˉopcode == 128u32 { Controlˉpredecessorˉwidth = 9u32; }
+                        if Controlˉpredecessorˉopcode == 129u32 { Controlˉpredecessorˉwidth = 9u32; }
+                        if Controlˉpredecessorˉopcode == 48u32 {
+                            if Bytesˉreadˉu32ˉlittle(
+                                Input,
+                                Controlˉfunctionˉcode
+                                    + Controlˉpredecessorˉscan
+                                    + 1u32
+                            ) == Controlˉcursor {
+                                Controlˉhasˉpredecessor = true;
+                            }
+                        }
+                        if Controlˉpredecessorˉopcode == 49u32 {
+                            if Bytesˉreadˉu32ˉlittle(
+                                Input,
+                                Controlˉfunctionˉcode
+                                    + Controlˉpredecessorˉscan
+                                    + 1u32
+                            ) == Controlˉcursor {
+                                Controlˉhasˉpredecessor = true;
+                            }
+                        }
+                        Controlˉpredecessorˉscan = Controlˉpredecessorˉscan
+                            + Controlˉpredecessorˉwidth;
+                    }
+                    if Controlˉhasˉpredecessor {
+                        Controlˉhasˉpredecessor = true;
+                    } else {
+                        return Controlˉinvalid;
+                    }
+                }
+            }
+
+            let Controlˉopcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                Input,
+                Controlˉfunctionˉcode + Controlˉcursor
+            ));
+            var Controlˉwidth: u32 = 1u32;
+            if Controlˉopcode == 2u32 { Controlˉwidth = 2u32; }
+            if Controlˉopcode == 8u32 { Controlˉwidth = 2u32; }
+            if Controlˉopcode == 1u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 3u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 4u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 5u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 6u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 7u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 9u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 10u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 48u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 49u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 64u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 65u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 104u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 105u32 { Controlˉwidth = 5u32; }
+            if Controlˉopcode == 106u32 { Controlˉwidth = 9u32; }
+            if Controlˉopcode == 128u32 { Controlˉwidth = 9u32; }
+            if Controlˉopcode == 129u32 { Controlˉwidth = 9u32; }
+            Controlˉaggregateˉinstructions = Controlˉaggregateˉinstructions
+                + 1u32;
+            if Controlˉaggregateˉinstructions > 16000u32 {
+                return Controlˉinvalid;
+            }
+
+            var Controlˉhasˉtarget: bool = false;
+            if Controlˉopcode == 48u32 { Controlˉhasˉtarget = true; }
+            if Controlˉopcode == 49u32 { Controlˉhasˉtarget = true; }
+            if Controlˉhasˉtarget {
+                let Controlˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Controlˉfunctionˉcode + Controlˉcursor + 1u32
+                );
+                if Controlˉtarget != 0u32 {
+                    var Controlˉtargetˉscan: u32 = 0u32;
+                    var Controlˉtargetˉprevious: u32 = 0u32;
+                    var Controlˉtargetˉwidth: u32 = 1u32;
+                    while Controlˉtargetˉscan < Controlˉtarget {
+                        Controlˉtargetˉprevious = U32ˉfromˉu8(
+                            Bytesˉreadˉu8(
+                                Input,
+                                Controlˉfunctionˉcode + Controlˉtargetˉscan
+                            )
+                        );
+                        Controlˉtargetˉwidth = 1u32;
+                        if Controlˉtargetˉprevious == 2u32 { Controlˉtargetˉwidth = 2u32; }
+                        if Controlˉtargetˉprevious == 8u32 { Controlˉtargetˉwidth = 2u32; }
+                        if Controlˉtargetˉprevious == 1u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 3u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 4u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 5u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 6u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 7u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 9u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 10u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 48u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 49u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 64u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 65u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 104u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 105u32 { Controlˉtargetˉwidth = 5u32; }
+                        if Controlˉtargetˉprevious == 106u32 { Controlˉtargetˉwidth = 9u32; }
+                        if Controlˉtargetˉprevious == 128u32 { Controlˉtargetˉwidth = 9u32; }
+                        if Controlˉtargetˉprevious == 129u32 { Controlˉtargetˉwidth = 9u32; }
+                        Controlˉtargetˉscan = Controlˉtargetˉscan
+                            + Controlˉtargetˉwidth;
+                    }
+                    if Controlˉtargetˉprevious != 48u32 {
+                        if Controlˉtargetˉprevious != 49u32 {
+                            if Controlˉtargetˉprevious != 81u32 {
+                                return Controlˉinvalid;
+                            }
+                        }
+                    }
+                }
+            }
+
+            Controlˉpreviousˉopcode = Controlˉopcode;
+            Controlˉcursor = Controlˉcursor + Controlˉwidth;
+        }
+        if Controlˉpreviousˉopcode != 48u32 {
+            if Controlˉpreviousˉopcode != 49u32 {
+                if Controlˉpreviousˉopcode != 81u32 {
+                    return Controlˉinvalid;
+                }
+            }
+        }
+        Controlˉfunctionˉindex = Controlˉfunctionˉindex + 1u32;
+    }
+    if Controlˉfunctionˉcursor != Controlˉfunctionsˉend {
+        return Controlˉinvalid;
+    }
+    if Controlˉenvelope > Controlˉtotal { return Controlˉinvalid; }
+    return Input;
+}

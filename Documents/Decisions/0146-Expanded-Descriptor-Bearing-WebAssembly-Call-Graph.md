@@ -17,9 +17,9 @@ The next profile should add only the capacity needed to keep semantic phases sep
 - Accept two through sixteen `bytes -> bytes` functions, with `Main` still the only export and final canonical function. Every call must continue to target a lower canonical ordinal, bounding dynamic call depth to sixteen without recursion.
 - Retain the profile-12 per-function ceilings: 2,047 nonparameter locals, 32,768 code bytes, 100,000 decoded instructions, and operand-stack depth four.
 - Bound profile 13 to 131,072 aggregate code bytes, 400,000 aggregate decoded instructions, and 1,048,576 generated Wasm bytes. The 524,288-byte output ceiling remains active for profile-12-sized inputs.
-- Raise the Stage 0 playground adapter's matching output and construction budgets to 1 MiB and 200,000,000 instructions. The WebAssembly module remains import-free, uses fixed 129-page memory, and exposes the exact ABI-3 export set.
+- Raise the Stage 0 playground adapter's matching output and construction budgets to 1 MiB and 200,000,000 instructions. Decision 0149 subsequently raises only the construction ceiling to the measured 225,000,000 instructions needed by the complete executable verifier. The WebAssembly module remains import-free, uses fixed 129-page memory, and exposes the exact ABI-3 export set.
 - Qualify the boundary with a derived nine-function semantic verifier. It inserts one real `bytes -> bytes` phase between `Main` and the existing nominal-type phase, crossing both old limits without copying or weakening the canonical verifier source. Reject a seventeen-function graph.
-- Treat this as capacity for executable-flow verification, not the executable-flow proof itself. Typed operand stacks, definite local initialization, call value flow, record-field receiver identity, joins, reachability, declared maximum-stack agreement, and capability authorization remain pending.
+- Treat this as capacity for executable-flow verification, not the executable-flow proof itself. Typed operand stacks and local access under WVB's deterministic default-local semantics, call value flow, record-field receiver identity, joins, reachability, declared maximum-stack agreement, and capability authorization remain pending at this decision.
 
 ## Consequences
 
