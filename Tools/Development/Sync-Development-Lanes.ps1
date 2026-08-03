@@ -235,6 +235,8 @@ for ($Index = 0; $Index -lt $SelectedLanes.Count; $Index++) {
       if ($State.Branch -eq $MainBranch) {
         if ($State.TrackedDirty -gt 0 -or $State.Untracked -gt 0) {
           $Notes.Add('Pull skipped because working-tree changes are present.')
+        } elseif ($State.Ahead -gt 0 -and $State.Behind -gt 0) {
+          $Notes.Add("Pull skipped because the lane has diverged from $Remote/$MainBranch. Rebase or merge it manually.")
         } else {
           $Pull = Invoke-Git -Path $Path -Arguments @('pull', '--ff-only', $Remote, $MainBranch) -AllowFailure
           if ($Pull.ExitCode -ne 0) {
