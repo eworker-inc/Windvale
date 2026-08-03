@@ -35,7 +35,7 @@ The page uses a small self-hosted subset of Google Material Symbols Rounded. Its
 
 ## Analytics
 
-All public pages load the shared `analytics.js` bootstrap for the Google Analytics 4 stream `G-3PB4LZFMRE`. The bootstrap records ordinary page views across the home, support, playground, and not-found pages while disabling Google signals and ad-personalization signals. Google Analytics can use first-party analytics cookies and receives usage data directly from the visitor's browser; Windvale does not run a separate analytics backend. The Content Security Policy permits only the Google Tag and GA4 collection origins needed by this configuration, without advertising endpoints.
+All public pages load the shared `analytics.js` bootstrap for the Google Analytics 4 stream `G-3PB4LZFMRE`. The bootstrap records ordinary page views across the home, support, playground, and not-found pages while disabling Google signals and ad-personalization signals. Google Analytics can use first-party analytics cookies and receives usage data directly from the visitor's browser; Windvale does not run a separate analytics backend. Cloudflare may also inject its versioned Web Analytics beacon and report its measurements through the same-origin `/cdn-cgi/rum` endpoint. The Content Security Policy permits only the Google Tag and GA4 collection origins needed by this configuration plus Cloudflare's dedicated beacon origin, without advertising endpoints.
 
 ## Configuring support
 
