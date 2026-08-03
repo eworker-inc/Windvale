@@ -88,7 +88,7 @@ syscall
 move_u32 ebx 3
 syscall
 label resource_request_failure
-trap
+disable_interrupts
 end define
 
 # EDI is the copied request length and RDX is the immutable execution-context

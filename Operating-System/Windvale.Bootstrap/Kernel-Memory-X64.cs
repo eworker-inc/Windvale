@@ -36,7 +36,8 @@ internal static class Kernelˉmemoryˉx64
         if (scenario is not Firmwareˉprobeˉscenario.Normal and
             not Firmwareˉprobeˉscenario.Invalidˉopcode and
             not Firmwareˉprobeˉscenario.Generalˉprotection and
-            not Firmwareˉprobeˉscenario.Userˉfault)
+            not Firmwareˉprobeˉscenario.Userˉfault and
+            not Firmwareˉprobeˉscenario.Serviceˉfault)
         {
             throw new ArgumentOutOfRangeException(nameof(scenario));
         }

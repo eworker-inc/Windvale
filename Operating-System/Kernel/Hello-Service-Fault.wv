@@ -1,0 +1,34 @@
+module Helloˉserviceˉfault profile system;
+
+capability console.write_line;
+
+data Greeting: text = "Hello from Windvale";
+data Memoryˉmarker: text = "memory-owned=pass";
+data Allocatorˉmarker: text = "allocator=pass";
+data Stackˉmarker: text = "kernel-stack=pass";
+data Pagingˉmarker: text = "paging=owned";
+data Admissionˉmarker: text = "wvb-admission=pass";
+data Processˉmarker: text = "processes=isolated";
+data Resourceˉgrantˉmarker: text = "resource-grant=pass";
+data Typedˉresourcesˉmarker: text = "typed-resources=pass";
+data Resourceˉrevokedˉmarker: text = "resource-revoked=pass";
+data Runtimeˉmarker: text = "wvb-runtime=interpreted";
+data Serviceˉfaultˉmarker: text = "service-fault=contained";
+data Peerˉlossˉmarker: text = "ipc=service-peer-loss";
+
+export fn Main() -> i32 {
+    console.write_line(Memoryˉmarker);
+    console.write_line(Allocatorˉmarker);
+    console.write_line(Stackˉmarker);
+    console.write_line(Pagingˉmarker);
+    console.write_line(Admissionˉmarker);
+    console.write_line(Processˉmarker);
+    console.write_line(Resourceˉgrantˉmarker);
+    console.write_line(Typedˉresourcesˉmarker);
+    console.write_line(Resourceˉrevokedˉmarker);
+    console.write_line(Runtimeˉmarker);
+    console.write_line(Serviceˉfaultˉmarker);
+    console.write_line(Peerˉlossˉmarker);
+    console.write_line(Greeting);
+    return 0;
+}

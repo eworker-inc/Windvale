@@ -2,13 +2,13 @@
 
 ## Status and purpose
 
-Protected-process contract version 14 is the cross-host-qualified Probe-35 contract owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It retains version 13's two-generation reclaim/rebuild, boot-resource grant, dynamic `WVRS 1` lookup, and terminal peer cleanup, then executes one maximal immutable directory read through the same format-blind service transport in each generation.
+Protected-process contract version 15 is the implemented Probe-36 candidate owned by [Decision 0165](../Documents/Decisions/0165-Contained-Windvale-Service-Failure.md). It retains version 14's two-generation reclaim/rebuild, boot-resource grant, dynamic `WVRS 1` lookup, maximal immutable directory read, and terminal client cleanup, then proves one exact init-service failure can close the channel and wake its blocked client without a kernel panic.
 
-Version 14 is qualified at exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5`: Windows and digest-pinned Debian pass all 87 Seed tests and all 37 OS tests, while all four pinned-QEMU scenarios pass on Windows. This is an internal experiment, not a stable syscall ABI, process manager, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
+Version 14 remains the cross-host-qualified baseline at exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5`: Windows and digest-pinned Debian pass all 87 Seed tests and all 37 OS tests, while all four Probe-35 pinned-QEMU scenarios pass on Windows. The version-15 candidate passes all 38 focused OS tests and all five Probe-36 pinned-QEMU scenarios on Windows. Cross-host qualification remains pending. This is an internal experiment, not a stable syscall ABI, process manager, supervisor, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
-- `Process-Foundation.wv` binds init, interpreter, program, budget, the exact boot-store and directory-snapshot identities, roles, ordered grants, both service exchanges, two generations, page/profile/syscall budgets, exact reuse, cleanup, and result policy.
+- `Process-Foundation.wv` binds init, interpreter, program, budget, the exact boot-store and directory-snapshot identities, roles, ordered grants, both service exchanges, two generations, page/profile/syscall budgets, exact reuse, cleanup, result policy, and the contained service-failure transition.
 - `Init-Resource-Service.wv` selects ordered boot resource identifiers `(1,2)`. Its WVA seam serves both the measured `WVRS 1` lookup and the measured `WVDQ 1` / `WVDR 1` directory read.
 - `Bytecode-Interpreter.wv` reads both granted runtime resources, validates runtime profile 7, charges the guest budget, and interprets the admitted program.
 - `Boot-Resource-Service.wva` owns exact typed lookup for the two `WVBR002` entries used by the interpreter runtime.
@@ -29,7 +29,7 @@ The kernel treats `WVRS 1` and `WVDS 1` as immutable byte extents with mapping a
 
 The store contains the WVB and budget above plus resource 3, kind `opaque-bytes`, name `boot:main.configuration`, attributes `7`, and bytes `[3,5,8,13]`. The snapshot contains `folder` as `other` and `kernel.wv` as a 3,072-byte file where byte `i` is `i mod 251`.
 
-Init is process/thread `1/1`, generation 1, process reference `65537`, runtime profile 2, instruction/call budgets `64/1`, nine user pages, one handle, and eleven syscalls. The client is process/thread `2/2`, generation 1 then 2, references `65538` then `131074`, runtime profile 7, native instruction/call budgets `189,114/5`, 755 physical frame cells, exact call-graph stack use 24,240 bytes, 118 pre-grant and 120 post-grant user pages, one handle, and four syscalls per normal generation. The fault client uses three syscalls before its deliberate privileged instruction. The separate guest execution budget remains `199` with maximum `256`.
+Init is process/thread `1/1`, generation 1, process reference `65537`, runtime profile 2, instruction/call budgets `64/1`, nine user pages, and one handle. It uses eleven syscalls on the normal two-generation path and faults during its fourth syscall on the service-fault path. The client is process/thread `2/2`, generation 1 then 2, references `65538` then `131074`, runtime profile 7, native instruction/call budgets `189,114/5`, 755 physical frame cells, exact call-graph stack use 24,240 bytes, 118 pre-grant and 120 post-grant user pages, one handle, and four syscalls per normal generation. The contained client-fault and service-fault clients each use three syscalls: the former faults after sending its result, while the latter receives exact peer-loss status and exits cleanly. The separate guest execution budget remains `199` with maximum `256`.
 
 Both retain result `6`, capability slot 0/generation 1, channel capacity 1, and ABI 22/context 7/service-table 5. Process policy must return token `97` before machine state is published.
 
@@ -63,11 +63,11 @@ Each client generation receives this reclaimed 122-page physical extent plus two
 
 No placeholder backs an alias. Neither init-owned store is mapped into a client. Generation-1 cleanup clears both aliases and publications; the complete 122-page extent is zeroed and released. Generation 2 reconstructs every table, image, stack, data, response, context, and record byte at the same physical root with a different logical identity.
 
-## `WVPROC14`, `WVCHAN03`, and `WVRES006`
+## `WVPROC15`, `WVCHAN04`, and `WVRES006`
 
-The state page stores two 272-byte little-endian process records at offsets `0x100` and `0x300`. Version 14 binds:
+The state page stores two 272-byte little-endian process records at offsets `0x100` and `0x300`. Version 15 binds:
 
-- magic/version `WVPROC14` and `14`;
+- magic/version `WVPROC15` and `15`;
 - user-page budgets init `9`, client `120`;
 - init allocation/code pages `13/2`, client allocation/code pages `122/110`;
 - runtime profiles init `2`, client `7`;
@@ -77,11 +77,11 @@ The state page stores two 272-byte little-endian process records at offsets `0x1
 
 Both context pages retain valid context-7 headers under ABI 22. Init data publishes the store descriptor at `0x180`, snapshot descriptor at `0x1A0`, and request windows beginning at `0x400`; its dedicated response page prevents a maximal 3,096-byte reply from overlapping live data. Each rebuilt client begins with runtime service/resource pointers zero and a dormant 1,024-byte compatibility record arena at data offset `0x200`, with used length zero.
 
-`WVCHAN03` remains a 112-byte kernel-owned, capacity-one record at state offset `0x410`. Syscall numbers 5 through 7 retain their wire values but are now service-generic receive, call, and reply operations. They require nonempty extents no larger than 4,096 bytes, checked end arithmetic, RX sources, RW/NX destinations, exact endpoint roles, and directional rights. No user mapping exposes the record.
+`WVCHAN04` remains a 112-byte kernel-owned, capacity-one record at state offset `0x410`. Syscall numbers 5 through 7 retain their wire values as service-generic receive, call, and reply operations. They require nonempty extents no larger than 4,096 bytes, checked end arithmetic, RX sources, RW/NX destinations, exact endpoint roles, and directional rights. No user mapping exposes the record.
 
 Four 128-byte `WVRES006` records track fixed identifiers/kinds, generation-stamped owner/borrower references, exact extents, immutable flags, SHA-256 identities, histories, and target PTEs. Resources 1 and 2 form the client grant set. Resource 4 attaches the 1,195-byte store only to init. Resource 5, kind `wvds-snapshot`, attaches the 3,184-byte snapshot only to init with descriptor generation 1. Neither attached resource participates in `WVBR002` or syscall 4.
 
-Terminal peer cleanup clears message state, sender, receiver, waiter, byte length, and both destination/capacity pairs before recording whether the client exited or faulted, its process reference, and the incremented close count. A checked reopen clears terminal peer evidence before generation 2. Generation 2 ends terminally closed; no request bytes or destination pointers survive either client lifetime.
+Terminal peer cleanup clears message state, sender, receiver, waiter, byte length, and both destination/capacity pairs before recording whether the peer exited or faulted, its process reference, and the incremented close count. If a waiter was retained, closure also increments the wake count exactly once and resumes it with transport result `-1`. A checked reopen clears terminal peer evidence before normal generation 2. Generation 2 ends terminally closed; no request bytes or destination pointers survive either client lifetime.
 
 ## Grant, service calls, execution, cleanup, and reuse
 
@@ -98,24 +98,29 @@ Terminal peer cleanup clears message state, sender, receiver, waiter, byte lengt
 
 The contained user-fault scenario sends `6` then executes privileged `CLI`; cleanup records fault status and still completes. CPL0 invalid-opcode and general-protection scenarios remain terminal.
 
+The contained service-fault scenario branches after generation 1's successful resource lookup. Its client sends 37 bytes whose `WVDQ 1` total-length field declares 36, then blocks in syscall 6. Init rejects the inconsistent request and executes privileged `CLI`, producing vector 13/error 0 at CPL3. The kernel accepts only the exact role, syscall, channel, waiter, counter, and message shape; records init as the faulted peer; clears every transient channel field; increments close and wake counts to one; and resumes the client with exact result `-1`. The client treats this as transport peer loss, exits after three syscalls with result `6`, and has both resource aliases revoked. This scenario deliberately stops before generation 2 and does not imply restart or replacement policy.
+
 ## Deterministic candidate artifacts
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Process-policy WVB | 8,001 | `73f67a7c8294b7a2d3e2633fab482fa8eabe53a14dc8883821dacd7812b822aa` |
-| Process-policy WVO | 53,456 | `edf5d9a767a46b91577b739f6dbcf6c57a963c91c18cab5b8364746b3451dd44` |
+| Process-policy WVB | 10,333 | `32ee6cd53018a71dd7f2c2596f1a2242622a2f261539f70e164cd8b5d84ba43c` |
+| Process-policy WVO | 70,050 | `2f71db723bbcbdedcf5d4f6512230e65537644d02fbda1709debeaf170af58ca` |
 | Init WVB | 525 | `0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467` |
-| Init WVA object | 3,119 | `64214b7b3ce90365f4ee9962ba1fbdb416f14ce4316b8b309106b8523a80c917` |
-| Linked init image | 6,119 | `d8285cf68d0df45afe9d78f4dc65de427ed9e58b6d24c962f3b4dc9cb7bd9f18` |
+| Init WVA object | 3,119 | `792314c634fb1c4d701080a1b9cb12037e21ea242971413a94f86e8569ce766d` |
+| Linked init image | 6,119 | `8ba61e354de025d8b02dedcca22d901936d8aecbf5ff2df728648abc714e5f64` |
 | Boot `WVRS 1` store | 1,195 | `e06cb88bc97c8a8c8413c476c41ec86eafb8d1ee3fab0daee8e3b50e788023b8` |
 | Directory `WVDS 1` snapshot | 3,184 | `0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a` |
 | Interpreter WVB | 56,165 | `3669e94d712bd5a78f0061e29d8054ed3b54b687efc9508114f79bb78aa8832f` |
 | Interpreter WVO | 447,652 | `0748200721cab7d5c3c6a43916fc623dfa0ee35e304fea6ad899877c9601c8e2` |
 | Linked normal client | 448,045 | `369e7f22c8bfd48b033c38407be06ff181372a0891db1108e6b987ac14dd7e9b` |
 | Linked fault client | 448,013 | `8153e1e389ee18068b17bc615d2211737160143565aeb852b137ef31fce5513b` |
-| Normal process-machine WVO | 490,972 | `cbeb8d22c1237d8456c3e68cfb8434a9b48d1ec861e66ce98aca11486fb9c0f0` |
-| Fault process-machine WVO | 491,004 | `04e25f89c1946b02a29af0c738dc5ad74ba042d9106a9d8e76fb60c15738737b` |
+| Service-fault client WVA object | 1,153 | `c5ed46d78cd8b8fba30b3425d23d1d8adcbe3638a7706f81945e2eeebb833214` |
+| Linked service-fault client | 447,821 | `451364e3f4595bf9c44707da8dafae75ebc37c18860f94cebed743817f533bff` |
+| Normal process-machine WVO | 490,972 | `fd4b79bd5fb55df6c6e0f884115947220cf6308e6fbe77f647d6821942cb2dc2` |
+| User-fault process-machine WVO | 491,004 | `57a9874a76d26a1f9af9614051c504ff3022543604db0e9de08a9fe7725bee12` |
+| Service-fault process-machine WVO | 479,556 | `d7220ed33de6f8dac1946a0dc44c87fe4937f7730f3f86997a38d65ddcf5716d` |
 
 ## Deliberate limits
 
-Version 14 retains one exact boot store, one exact directory snapshot, one owner, one logical borrower, two generations, two ordered grants, two service requests per generation, and one exact LIFO reuse. It adds no nested paths, enumeration, open handles, mounts, arbitrary providers, transfer/delegation, concurrent calls, general scheduling, block storage, mutation, persistence, packages, networking, Hyper-V, or physical-hardware evidence.
+Version 15 retains one exact boot store, one exact directory snapshot, one owner, one logical borrower, at most two generations, two ordered grants, bounded service calls, and one exact LIFO reuse on the normal path. It adds one exact peer-loss wakeup, not nested paths, enumeration, open handles, mounts, arbitrary providers, transfer/delegation, concurrent calls, cancellation, timeout, restart, replacement, general supervision, general scheduling, block storage, mutation, persistence, packages, networking, Hyper-V, or physical-hardware evidence.

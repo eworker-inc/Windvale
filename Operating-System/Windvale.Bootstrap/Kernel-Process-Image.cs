@@ -34,7 +34,8 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     ImmutableArray<byte> Directoryˉsnapshotˉbytes,
     ImmutableArray<byte> Directoryˉsnapshotˉdigest,
     ImmutableArray<byte> Clientˉshimˉobjectˉbytes,
-    ImmutableArray<byte> Clientˉimageˉbytes);
+    ImmutableArray<byte> Clientˉimageˉbytes,
+    Kernelˉprocessˉscenario Scenario);
 
 public static class Kernelˉprocessˉimage
 {
@@ -53,12 +54,19 @@ public static class Kernelˉprocessˉimage
     private const string BOOT_CONFIGURATION_NAME = "boot:main.configuration";
     private const string USER_RESOURCE = "Windvale.Os.Kernel.Process-User-Shim.wva";
     private const string USER_FAULT_RESOURCE = "Windvale.Os.Kernel.Process-User-Fault-Shim.wva";
+    private const string SERVICE_FAULT_RESOURCE = "Windvale.Os.Kernel.Process-Service-Fault-Shim.wva";
 
     public static Kernelˉprocessˉimageˉartifacts Build(
         Kernelˉwvbˉadmissionˉartifacts admission,
-        bool userˉfault)
+        Kernelˉprocessˉscenario scenario)
     {
         ArgumentNullException.ThrowIfNull(admission);
+        if (scenario is not Kernelˉprocessˉscenario.Normal and
+            not Kernelˉprocessˉscenario.Userˉfault and
+            not Kernelˉprocessˉscenario.Serviceˉfault)
+        {
+            throw new ArgumentOutOfRangeException(nameof(scenario));
+        }
 
         var Serviceˉcompilation = Seedˉcompiler.Compile(
             Loadˉsource(INIT_SERVICE_RESOURCE), "Init-Resource-Service.wv");
@@ -174,7 +182,14 @@ public static class Kernelˉprocessˉimage
             Nativeˉobjectˉsink.Writeˉwvo(Policyˉnative.Fragment),
             Kernelˉprocessˉcontract.POLICY_SYMBOL);
 
-        var Userˉassembly = Assemblyˉcompiler.Assemble(Loadˉsource(userˉfault ? USER_FAULT_RESOURCE : USER_RESOURCE));
+        var Userˉresource = scenario switch
+        {
+            Kernelˉprocessˉscenario.Normal => USER_RESOURCE,
+            Kernelˉprocessˉscenario.Userˉfault => USER_FAULT_RESOURCE,
+            Kernelˉprocessˉscenario.Serviceˉfault => SERVICE_FAULT_RESOURCE,
+            _ => throw new ArgumentOutOfRangeException(nameof(scenario)),
+        };
+        var Userˉassembly = Assemblyˉcompiler.Assemble(Loadˉsource(Userˉresource));
         if (!Userˉassembly.Success)
         {
             throw new InvalidOperationException(
@@ -185,7 +200,7 @@ public static class Kernelˉprocessˉimage
             Userˉassembly.Objectˉbytes,
             Kernelˉprocessˉcontract.USER_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL,
-            userˉfault ? 3 : 4);
+            scenario == Kernelˉprocessˉscenario.Normal ? 4 : 3);
         var Userˉlink = Linkˉcompiler.Link(
             [
                 new(Userˉassembly.Objectˉbytes),
@@ -243,7 +258,8 @@ public static class Kernelˉprocessˉimage
             Directoryˉsnapshotˉbytes,
             Directoryˉsnapshotˉdigest,
             Userˉassembly.Objectˉbytes,
-            Userˉlink.Imageˉbytes);
+            Userˉlink.Imageˉbytes,
+            scenario);
     }
 
     private static ImmutableArray<byte> Buildˉdirectoryˉsnapshot()
@@ -357,7 +373,7 @@ public static class Kernelˉprocessˉimage
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
                 Data.Length: 12,
-                Functions.Length: 6,
+                Functions.Length: 7,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||

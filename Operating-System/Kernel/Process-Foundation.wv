@@ -94,6 +94,70 @@ fn Hasˉexecutionˉgeneration(Generation: u32) -> bool {
     return true;
 }
 
+fn Hasˉserviceˉfailureˉcontract() -> bool {
+    var Channelˉstate: u32 = 0u32;
+    var Channelˉwaiter: u32 = 1u32;
+    var Retainedˉrequestˉbytes: u32 = 0u32;
+    var Retainedˉserviceˉdestination: u32 = 1u32;
+    var Retainedˉclientˉdestination: u32 = 0u32;
+    var Serviceˉprocessˉstate: u32 = 2u32;
+    var Serviceˉthreadˉstate: u32 = 5u32;
+    var Serviceˉfaultˉvector: u32 = 0u32;
+    var Peerˉstatus: u32 = 0u32;
+    var Peerˉprocess: u32 = 0u32;
+    var Closeˉcount: u32 = 0u32;
+    var Wakeˉresult: i32 = 0;
+    var Clientˉprocessˉstate: u32 = 2u32;
+    var Clientˉsyscalls: u32 = 1u32;
+
+    // The first resource call succeeds. The next exact 37-byte request has a
+    // deliberately inconsistent WVDQ total length and remains opaque to the
+    // channel. The service rejects it and traps while the client is waiting.
+    if Channelˉstate != 0u32 { return false; }
+    if Channelˉwaiter != 1u32 { return false; }
+    Retainedˉrequestˉbytes = 37u32;
+    Retainedˉclientˉdestination = 1u32;
+    Channelˉstate = 2u32;
+    Channelˉwaiter = 2u32;
+    Clientˉsyscalls = Clientˉsyscalls + 1u32;
+    Serviceˉprocessˉstate = 4u32;
+    Serviceˉthreadˉstate = 4u32;
+    Serviceˉfaultˉvector = 13u32;
+    if Channelˉstate != 2u32 { return false; }
+    if Channelˉwaiter != 2u32 { return false; }
+    if Retainedˉrequestˉbytes != 37u32 { return false; }
+    if Serviceˉprocessˉstate != 4u32 { return false; }
+    if Serviceˉthreadˉstate != 4u32 { return false; }
+    if Serviceˉfaultˉvector != 13u32 { return false; }
+
+    // Closing the failed service peer clears every transient field before the
+    // waiting client is resumed with the transport-level peer-fault sentinel.
+    Channelˉstate = 0u32;
+    Channelˉwaiter = 0u32;
+    Retainedˉrequestˉbytes = 0u32;
+    Retainedˉserviceˉdestination = 0u32;
+    Retainedˉclientˉdestination = 0u32;
+    Peerˉstatus = 2u32;
+    Peerˉprocess = 1u32;
+    Closeˉcount = Closeˉcount + 1u32;
+    Wakeˉresult = -1;
+    if Channelˉstate != 0u32 { return false; }
+    if Channelˉwaiter != 0u32 { return false; }
+    if Retainedˉrequestˉbytes != 0u32 { return false; }
+    if Retainedˉserviceˉdestination != 0u32 { return false; }
+    if Retainedˉclientˉdestination != 0u32 { return false; }
+    if Peerˉstatus != 2u32 { return false; }
+    if Peerˉprocess != 1u32 { return false; }
+    if Closeˉcount != 1u32 { return false; }
+    if Wakeˉresult != -1 { return false; }
+
+    Clientˉsyscalls = Clientˉsyscalls + 1u32;
+    Clientˉprocessˉstate = 3u32;
+    if Clientˉsyscalls != 3u32 { return false; }
+    if Clientˉprocessˉstate != 3u32 { return false; }
+    return true;
+}
+
 fn Hasˉreuseˉcontract() -> bool {
     var Clientˉgeneration: u32 = 1u32;
     var Clientˉextentˉstate: u32 = 1u32;
@@ -173,6 +237,10 @@ export fn Main() -> i32 {
     if !Hasˉreuseˉcontract() { return 0; }
     if !Hasˉresourceˉgeneration(2u32, 1u32, 131074u32) { return 0; }
     if !Hasˉexecutionˉgeneration(2u32) { return 0; }
+    // The same measured image also admits a bounded failure scenario: a
+    // malformed directory request faults init, closes WVCHAN04, wakes its one
+    // waiting client with -1, and lets that client exit after three syscalls.
+    if !Hasˉserviceˉfailureˉcontract() { return 0; }
     // Init performs two grants, four receive registrations, four replies, and
     // one exit. Each normal client performs two calls, one result send, and
     // one exit.

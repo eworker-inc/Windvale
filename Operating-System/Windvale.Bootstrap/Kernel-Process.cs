@@ -5,10 +5,17 @@ using Windvale.Compiler.Native;
 
 namespace Windvale.Bootstrap;
 
+public enum Kernelˉprocessˉscenario
+{
+    Normal,
+    Userˉfault,
+    Serviceˉfault,
+}
+
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 14;
-    public const string TARGET_NAME = "x86-64-kernel-process-v14";
+    public const int FORMAT_VERSION = 15;
+    public const string TARGET_NAME = "x86-64-kernel-process-v15";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
@@ -24,6 +31,8 @@ public static class Kernelˉprocessˉcontract
     public const int POLICY_TOKEN = 97;
     public const int EXPECTED_RESULT = 6;
     public const string USER_FAULT_CONTAINED_MARKER = "user-fault=contained\n";
+    public const string SERVICE_FAULT_CONTAINED_MARKER = "service-fault=contained\n";
+    public const uint SERVICE_CALL_PEER_FAULTED = uint.MaxValue;
     public const uint INIT_PROCESS_ID = 1;
     public const uint INIT_THREAD_ID = 1;
     public const uint INIT_PROCESS_GENERATION = 1;
@@ -61,6 +70,7 @@ public static class Kernelˉprocessˉcontract
     public const uint HANDLE_BUDGET = 1;
     public const uint INIT_SYSCALL_BUDGET = 11;
     public const uint CLIENT_SYSCALL_BUDGET = 4;
+    public const uint SERVICE_FAULT_CLIENT_SYSCALL_BUDGET = 3;
     public const uint CHANNEL_CAPACITY = 1;
     public const uint CAPABILITY_SLOT = 0;
     public const uint CAPABILITY_GENERATION = 1;
@@ -136,8 +146,8 @@ public static class Kernelˉprocessˉcontract
     public const uint CLIENT_RECORD_OFFSET = 768;
     public const uint CHANNEL_RECORD_OFFSET = 1_040;
     public const uint RECORD_BYTES = 272;
-    public const ulong RECORD_MAGIC = 0x3431_434F_5250_5657;
-    public const uint RECORD_VERSION = 14;
+    public const ulong RECORD_MAGIC = 0x3531_434F_5250_5657;
+    public const uint RECORD_VERSION = 15;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -173,8 +183,8 @@ public static class Kernelˉprocessˉcontract
     public const uint WAIT_REASON_CHANNEL_RECEIVE = 1;
     public const uint WAIT_REASON_SERVICE_REQUEST = 2;
     public const uint WAIT_REASON_SERVICE_REPLY = 3;
-    public const ulong CHANNEL_MAGIC = 0x3330_4E41_4843_5657;
-    public const uint CHANNEL_VERSION = 3;
+    public const ulong CHANNEL_MAGIC = 0x3430_4E41_4843_5657;
+    public const uint CHANNEL_VERSION = 4;
     public const uint CHANNEL_RECORD_BYTES = 112;
     public const uint CHANNEL_STATE_OFFSET = 16;
     public const uint CHANNEL_MESSAGE_OFFSET = 20;
@@ -1364,6 +1374,8 @@ public static class Kernelˉchannelˉpeerˉlifecycle
         }
 
         var Result = record.ToArray();
+        var Waiter = BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET));
         foreach (var Offset in new[]
         {
             Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET,
@@ -1390,6 +1402,13 @@ public static class Kernelˉchannelˉpeerˉlifecycle
             (int)Kernelˉprocessˉcontract.CHANNEL_CLOSE_COUNT_OFFSET));
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(
             (int)Kernelˉprocessˉcontract.CHANNEL_CLOSE_COUNT_OFFSET), checked(Closeˉcount + 1));
+        if (Waiter != 0)
+        {
+            var Wakeˉcount = BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan(
+                (int)Kernelˉprocessˉcontract.CHANNEL_WAKE_COUNT_OFFSET));
+            BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(
+                (int)Kernelˉprocessˉcontract.CHANNEL_WAKE_COUNT_OFFSET), checked(Wakeˉcount + 1));
+        }
         return Result.ToImmutableArray();
     }
 

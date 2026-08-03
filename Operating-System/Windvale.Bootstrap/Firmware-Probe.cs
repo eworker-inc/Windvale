@@ -12,16 +12,17 @@ public enum Firmwareˉprobeˉscenario
     Invalidˉopcode,
     Generalˉprotection,
     Userˉfault,
+    Serviceˉfault,
 }
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 35;
+    public const int FORMAT_VERSION = 36;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 35\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 36\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -48,6 +49,9 @@ public static class Firmwareˉprobe
     public const string NATIVE_WVB_MARKER = "native-wvb=pass\n";
     public const string WINDVALE_SOURCE_MARKER = "windvale-source=pass\n";
     public const string USER_FAULT_CONTAINED_MARKER = Kernelˉprocessˉcontract.USER_FAULT_CONTAINED_MARKER;
+    public const string SERVICE_FAULT_CONTAINED_MARKER =
+        Kernelˉprocessˉcontract.SERVICE_FAULT_CONTAINED_MARKER;
+    public const string SERVICE_PEER_LOSS_MARKER = "ipc=service-peer-loss\n";
     public const string SUCCESS_MARKER = "status=pass\n";
     public const string SHUTDOWN_MARKER = "shutdown=poweroff\n";
     public const string SERIAL_MARKER =
@@ -68,6 +72,14 @@ public static class Firmwareˉprobe
         IPC_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
         WINDVALE_SOURCE_MARKER + USER_FAULT_CONTAINED_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
+    public const string SERVICE_FAULT_SERIAL_MARKER =
+        ENTRY_MARKER + SYSTEM_TABLE_MARKER + MEMORY_MAP_MARKER + BOOT_SERVICES_MARKER +
+        MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
+        WVB_ADMISSION_MARKER + PROCESS_MARKER + RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
+        RESOURCE_REVOKED_MARKER + WVB_RUNTIME_MARKER + SERVICE_FAULT_CONTAINED_MARKER +
+        SERVICE_PEER_LOSS_MARKER + HELLO_WORLD_MARKER +
+        CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
+        WINDVALE_SOURCE_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
 
     private const string FAILURE_MARKER = "status=fail\n";
     private const string FAILURE_LABEL = "failure";
@@ -79,6 +91,7 @@ public static class Firmwareˉprobe
     private const string EXIT_SUCCESS_LABEL = "exit_success";
     private const string WRITE_BYTE_WAIT_LABEL = "write_byte_wait";
     private const string HELLO_WORLD_RESOURCE = "Windvale.Os.Kernel.Hello-World.wv";
+    private const string SERVICE_FAULT_HELLO_RESOURCE = "Windvale.Os.Kernel.Hello-Service-Fault.wv";
 
     private const byte CONDITION_BELOW = 0x82;
     private const byte CONDITION_EQUAL = 0x84;
@@ -133,24 +146,31 @@ public static class Firmwareˉprobe
         if (scenario is not Firmwareˉprobeˉscenario.Normal and
             not Firmwareˉprobeˉscenario.Invalidˉopcode and
             not Firmwareˉprobeˉscenario.Generalˉprotection and
-            not Firmwareˉprobeˉscenario.Userˉfault)
+            not Firmwareˉprobeˉscenario.Userˉfault and
+            not Firmwareˉprobeˉscenario.Serviceˉfault)
         {
             throw new ArgumentOutOfRangeException(nameof(scenario));
         }
 
-        var Kernel = X64ˉkernelˉcompiler.Compile(Loadˉhelloˉworldˉsource(), "Hello-World.wv");
+        var Kernelˉsourceˉname = scenario == Firmwareˉprobeˉscenario.Serviceˉfault
+            ? "Hello-Service-Fault.wv"
+            : "Hello-World.wv";
+        var Kernel = X64ˉkernelˉcompiler.Compile(
+            Loadˉhelloˉworldˉsource(scenario), Kernelˉsourceˉname);
         if (!Kernel.Success)
         {
             throw new InvalidOperationException(
                 $"The Windvale kernel source did not compile: {Kernel.Diagnostics[0]}");
         }
         var Admission = Kernelˉwvbˉadmission.Build();
-        var Processˉimage = Kernelˉprocessˉimage.Build(
-            Admission,
-            scenario == Firmwareˉprobeˉscenario.Userˉfault);
-        var Process = Kernelˉprocessˉx64.Build(
-            Processˉimage,
-            scenario == Firmwareˉprobeˉscenario.Userˉfault);
+        var Processˉscenario = scenario switch
+        {
+            Firmwareˉprobeˉscenario.Userˉfault => Kernelˉprocessˉscenario.Userˉfault,
+            Firmwareˉprobeˉscenario.Serviceˉfault => Kernelˉprocessˉscenario.Serviceˉfault,
+            _ => Kernelˉprocessˉscenario.Normal,
+        };
+        var Processˉimage = Kernelˉprocessˉimage.Build(Admission, Processˉscenario);
+        var Process = Kernelˉprocessˉx64.Build(Processˉimage, Processˉscenario);
         var Nativeˉprobe = Kernelˉnativeˉprobe.Build();
         var Exceptions = Kernelˉexceptionˉx64.Build();
         var Paging = Kernelˉpagingˉx64.Build();
@@ -541,10 +561,13 @@ public static class Firmwareˉprobe
         return Output.Build();
     }
 
-    private static string Loadˉhelloˉworldˉsource()
+    private static string Loadˉhelloˉworldˉsource(Firmwareˉprobeˉscenario scenario)
     {
-        using var Stream = typeof(Firmwareˉprobe).Assembly.GetManifestResourceStream(HELLO_WORLD_RESOURCE) ??
-            throw new InvalidOperationException($"Embedded Windvale source '{HELLO_WORLD_RESOURCE}' is missing.");
+        var Resource = scenario == Firmwareˉprobeˉscenario.Serviceˉfault
+            ? SERVICE_FAULT_HELLO_RESOURCE
+            : HELLO_WORLD_RESOURCE;
+        using var Stream = typeof(Firmwareˉprobe).Assembly.GetManifestResourceStream(Resource) ??
+            throw new InvalidOperationException($"Embedded Windvale source '{Resource}' is missing.");
         using var Reader = new StreamReader(Stream, new UTF8Encoding(false, true), false);
         return Reader.ReadToEnd();
     }
