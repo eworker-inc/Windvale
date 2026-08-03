@@ -476,7 +476,8 @@ node $EngineVerifier `
     $WvbCompilerControlVerifyWasm `
     $CompilerWvb `
     $BytesEntryWvb `
-    $CompilerMemoryWvb
+    $CompilerMemoryWvb `
+    $ScalarFunctionOnlySource
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

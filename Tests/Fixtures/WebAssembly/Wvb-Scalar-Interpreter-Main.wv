@@ -14,9 +14,9 @@ export fn Main(Request: bytes) -> bytes {
     let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Request, 8u32);
     let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
     if Maximumˉinstructions < 1u32 { return Invalid; }
-    if Maximumˉinstructions > 4096u32 { return Invalid; }
+    if Maximumˉinstructions > 20000000u32 { return Invalid; }
     if Maximumˉcallˉdepth < 1u32 { return Invalid; }
-    if Maximumˉcallˉdepth > 8u32 { return Invalid; }
+    if Maximumˉcallˉdepth > 64u32 { return Invalid; }
 
     var Module: bytes = Invalid;
     var Guestˉinput: bytes = Invalid;
@@ -77,12 +77,6 @@ export fn Main(Request: bytes) -> bytes {
 
     let Zeroˉvalue: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     let Zeroˉcell: bytes = Bytesˉconcat(Zeroˉvalue, Zeroˉvalue);
-    var Zeroˉlocals: bytes = Invalid;
-    var Zeroˉindex: u32 = 0u32;
-    while Zeroˉindex < 128u32 {
-        Zeroˉlocals = Bytesˉconcat(Zeroˉlocals, Zeroˉcell);
-        Zeroˉindex = Zeroˉindex + 1u32;
-    }
 
     let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Types);
     if Typeˉcount > 1024u32 { return Invalid; }
@@ -139,7 +133,7 @@ export fn Main(Request: bytes) -> bytes {
 
     let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Functions);
     if Functionˉcount < 1u32 { return Invalid; }
-    if Functionˉcount > 16u32 { return Invalid; }
+    if Functionˉcount > 4096u32 { return Invalid; }
 
     var Mainˉfound: bool = false;
     var Mainˉindex: u32 = 0u32;
@@ -191,6 +185,7 @@ export fn Main(Request: bytes) -> bytes {
     } else {
         return Invalid;
     }
+    Exportˉindex = 128u32;
 
     var Functionˉindex: u32 = 0u32;
     var Functionˉcursor: u32 = Functions + 4u32;
@@ -212,7 +207,7 @@ export fn Main(Request: bytes) -> bytes {
             Module,
             Functionˉcursor
         );
-        if Parameterˉcount > 8u32 { return Invalid; }
+        if Parameterˉcount > 64u32 { return Invalid; }
         Functionˉparameterˉcounts = Bytesˉconcat(
             Functionˉparameterˉcounts,
             Bytesˉfromˉu32ˉlittle(Parameterˉcount)
@@ -256,7 +251,10 @@ export fn Main(Request: bytes) -> bytes {
             Module,
             Functionˉcursor
         );
-        if Localˉcount > 128u32 - Parameterˉcount { return Invalid; }
+        if Localˉcount > 2048u32 - Parameterˉcount { return Invalid; }
+        if Parameterˉcount + Localˉcount > Exportˉindex {
+            Exportˉindex = Parameterˉcount + Localˉcount;
+        }
         Functionˉcursor = Functionˉcursor + 4u32;
         Shapeˉindex = 0u32;
         while Shapeˉindex < Localˉcount {
@@ -280,7 +278,7 @@ export fn Main(Request: bytes) -> bytes {
             Module,
             Functionˉcursor + 4u32
         );
-        if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor + 8u32) > 16u32 {
+        if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor + 8u32) > 64u32 {
             return Invalid;
         }
         Functionˉcursor = Functionˉcursor + 12u32;
@@ -363,11 +361,19 @@ export fn Main(Request: bytes) -> bytes {
             }
             Scan = Scan + Width;
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-            if Aggregateˉinstructions > 4096u32 { return Invalid; }
+            if Aggregateˉinstructions > 400000u32 { return Invalid; }
         }
         Functionˉindex = Functionˉindex + 1u32;
     }
     if Functionˉcursor != Functionsˉend { return Invalid; }
+
+    var Zeroˉlocals: bytes = Zeroˉcell;
+    Functionˉindex = 1u32;
+    while Functionˉindex < Exportˉindex {
+        Zeroˉlocals = Bytesˉconcat(Zeroˉlocals, Zeroˉlocals);
+        Functionˉindex = Functionˉindex * 2u32;
+    }
+    Functionˉcursor = Bytesˉlength(Zeroˉlocals);
 
     var Currentˉfunction: u32 = Mainˉindex;
     var Currentˉcodeˉoffset: u32 = Mainˉcodeˉoffset;
@@ -383,7 +389,7 @@ export fn Main(Request: bytes) -> bytes {
                 Zeroˉvalue,
                 Bytesˉfromˉu32ˉlittle(Bytesˉlength(Guestˉinput))
             ),
-            Bytesˉslice(Zeroˉlocals, 8u32, 1016u32)
+            Bytesˉslice(Zeroˉlocals, 8u32, Functionˉcursor - 8u32)
         );
     }
     var Records: bytes = Invalid;
@@ -739,7 +745,7 @@ export fn Main(Request: bytes) -> bytes {
             let Storedˉsuffix: bytes = Bytesˉslice(
                 Locals,
                 Storedˉlocalˉoffset + 8u32,
-                1016u32 - Storedˉlocalˉoffset
+                Functionˉcursor - 8u32 - Storedˉlocalˉoffset
             );
             Locals = Bytesˉconcat(
                 Bytesˉconcat(Storedˉprefix, Storedˉvalue),
@@ -2293,7 +2299,7 @@ export fn Main(Request: bytes) -> bytes {
                 let Argumentˉsuffix: bytes = Bytesˉslice(
                     Nextˉlocals,
                     Argumentˉlocalˉoffset + 8u32,
-                    1016u32 - Argumentˉlocalˉoffset
+                    Functionˉcursor - 8u32 - Argumentˉlocalˉoffset
                 );
                 Nextˉlocals = Bytesˉconcat(
                     Bytesˉconcat(Argumentˉprefix, Argumentˉvalue),
@@ -2393,7 +2399,7 @@ export fn Main(Request: bytes) -> bytes {
                 }
                 return Success;
             }
-            let Frameˉoffset: u32 = Framesˉlength - 1040u32;
+            let Frameˉoffset: u32 = Framesˉlength - 16u32 - Functionˉcursor;
             Currentˉfunction = Bytesˉreadˉu32ˉlittle(
                 Frames,
                 Frameˉoffset
@@ -2407,7 +2413,11 @@ export fn Main(Request: bytes) -> bytes {
                 Frames,
                 Frameˉoffset + 12u32
             );
-            Locals = Bytesˉslice(Frames, Frameˉoffset + 16u32, 1024u32);
+            Locals = Bytesˉslice(
+                Frames,
+                Frameˉoffset + 16u32,
+                Functionˉcursor
+            );
             Frames = Bytesˉslice(Frames, 0u32, Frameˉoffset);
             Stack = Bytesˉconcat(Stack, Returnˉresult);
             Callˉdepth = Callˉdepth - 1u32;
