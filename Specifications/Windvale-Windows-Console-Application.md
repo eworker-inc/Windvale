@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`windows-x64-console-v1` is the first deterministic Windows host-executable target. It packages one already verified ABI-20 x86-64 native fragment as an import-free PE32+ console application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and PE adapter construct the file, while the resulting application executes without loading .NET.
+`windows-x64-console-v1` is the first deterministic Windows host-executable target. It packages one already verified ABI-20 x86-64 native fragment as an import-free PE32+ console application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and PE adapter construct the file, while a digest-pinned portable Windvale module supplies every live layout extent and address. The resulting application executes without loading .NET.
 
 This is a narrow executable-boundary proof. It is not a general Windows runtime, hosted-capability container, native compiler executable, or .NET-retirement milestone.
 
@@ -52,6 +52,8 @@ The PE reserves 64 MiB of stack with a 64 KiB initial commit, covering the retai
 
 All integers are little-endian. Unlisted and padding bytes are zero. File alignment is 512 bytes and section alignment is 4 KiB.
 
+Before allocating the file, the adapter evaluates the versioned [Windvale console-application plan](Windvale-Console-Application-Plan.md) over the native-image size and entry offset. It independently recomputes and checks every returned field, then uses only that verified plan for text, data, relocation, entry, and complete-image placement.
+
 | Region | Contract |
 | --- | --- |
 | DOS/PE headers | `MZ`, `e_lfanew = 0x80`, x86-64 COFF, timestamp and symbol metadata zero |
@@ -68,7 +70,7 @@ The complete file is bounded to 4,196,352 bytes. Canonical `Sum-Data.wv` produce
 
 `Windowsˉconsoleˉapplicationˉverifier.Verify` treats the PE as untrusted bytes. It checks the outer size before fixed reads; every DOS, COFF, optional-header, directory, section, permission, raw, virtual, and padding field; the exact startup instruction shapes and all four relative targets; the initial execution context; and the relocation block. It returns the recovered native bytes and native entry offset only after complete validation.
 
-The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests independently assemble the WVA startup, require its exact symbol and relocation contract, instantiate the four final-image displacements, and compare all 98 startup bytes with the PE. The PE verifier validates the container and startup contract; the native fragment verifier remains responsible for generated machine-code semantics before packaging.
+The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests independently compile and evaluate the Windvale layout planner, compare its complete serialized result with the C# oracle, assemble the WVA startup, require its exact symbol and relocation contract, instantiate the four final-image displacements, and compare all 98 startup bytes with the PE. The PE verifier validates the container and startup contract; the native fragment verifier remains responsible for generated machine-code semantics before packaging.
 
 ## Diagnostics
 
@@ -97,4 +99,4 @@ The untrusted-byte verifier throws a bounded format exception:
 
 ## Deliberate limits
 
-Version 1 has no console output despite selecting the Windows console subsystem, arguments, file access, diagnostic channel, runtime-service table, PE imports, separately protected read-only data, persistent heap, thread contract, unwind metadata, debugger metadata, code signing, embedded WVB, load-time WVB verification, or install-time cache identity. The WVA startup is now a Windvale-owned candidate, but the Stage 0 compiler, container constructor, and verifier are still required to construct the executable. Hosted applications and standalone native tools require later target versions rather than implicit access to ambient Windows state.
+Version 1 has no console output despite selecting the Windows console subsystem, arguments, file access, diagnostic channel, runtime-service table, PE imports, separately protected read-only data, persistent heap, thread contract, unwind metadata, debugger metadata, code signing, embedded application WVB, load-time application-WVB verification, or install-time cache identity. Windvale now owns the exact WVA startup and portable layout plan, but the Stage 0 compiler, byte constructor, and untrusted-container verifier are still required to construct the executable. Hosted applications and standalone native tools require later target versions rather than implicit access to ambient Windows state.

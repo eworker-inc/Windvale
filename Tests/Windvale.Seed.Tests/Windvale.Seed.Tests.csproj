@@ -34,6 +34,12 @@
       Include="../../Examples/Assembler/Typed-Scalar-X64.wva"
       LogicalName="Windvale.Seed.Tests.Typed-Scalar-X64.wva" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Console-Application-Plan-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Console-Application-Plan-Core.wv" />
+    <EmbeddedResource
+      Include="../../Linker/Windvale/Console-Application-Plan-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Console-Application-Plan-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Assembler/Windvale/Wva-Assembler-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wva-Assembler-Core.wv" />
     <EmbeddedResource

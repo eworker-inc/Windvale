@@ -10,15 +10,10 @@ public static class Windowsˉconsoleˉapplicationˉwriter
     private const int OPTIONAL_HEADER_OFFSET = 0x98;
     private const int OPTIONAL_HEADER_BYTES = 0xF0;
     private const int SECTION_TABLE_OFFSET = OPTIONAL_HEADER_OFFSET + OPTIONAL_HEADER_BYTES;
-    private const int HEADERS_BYTES = 0x200;
     private const uint FILE_ALIGNMENT = 0x200;
     private const uint SECTION_ALIGNMENT = 0x1000;
     private const uint TEXT_RVA = 0x1000;
     private const ulong IMAGE_BASE = 0x0000_0001_4000_0000;
-    private const uint DATA_RAW_BYTES = 0x200;
-    private const uint RELOCATION_DATA_BYTES = 12;
-    private const uint RELOCATION_RAW_BYTES = 0x200;
-
     public static Windowsˉconsoleˉapplicationˉresult Write(Nativeˉfragment fragment)
     {
         var Prepared = Nativeˉconsoleˉapplicationˉpreparer.Prepare(fragment);
@@ -61,21 +56,11 @@ public static class Windowsˉconsoleˉapplicationˉwriter
 
     private static byte[] Buildˉimage(ReadOnlySpan<byte> nativeˉimage, uint nativeˉentryˉoffset)
     {
-        var Textˉbytes = checked(
-            (uint)Windowsˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET +
-            (uint)nativeˉimage.Length);
-        var Textˉrawˉbytes = Alignˉup(Textˉbytes, FILE_ALIGNMENT);
-        var Dataˉrva = Alignˉup(TEXT_RVA + Textˉbytes, SECTION_ALIGNMENT);
-        var Relocationˉrva = Alignˉup(
-            Dataˉrva + Windowsˉconsoleˉapplicationˉcontract.DATA_VIRTUAL_BYTES,
-            SECTION_ALIGNMENT);
-        var Dataˉrawˉoffset = (uint)HEADERS_BYTES + Textˉrawˉbytes;
-        var Relocationˉrawˉoffset = Dataˉrawˉoffset + DATA_RAW_BYTES;
-        var Imageˉbytes = Relocationˉrawˉoffset + RELOCATION_RAW_BYTES;
-        var Imageˉmemoryˉbytes = Alignˉup(
-            Relocationˉrva + RELOCATION_DATA_BYTES,
-            SECTION_ALIGNMENT);
-        var Result = new byte[Imageˉbytes];
+        var Layout = Consoleˉapplicationˉlayout.Plan(
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            nativeˉimage.Length,
+            nativeˉentryˉoffset);
+        var Result = new byte[Layout.Applicationˉbytes];
 
         Writeˉu16(Result, 0x00, 0x5A4D);
         Writeˉu32(Result, 0x3C, PE_OFFSET);
@@ -90,12 +75,15 @@ public static class Windowsˉconsoleˉapplicationˉwriter
         var Optional = OPTIONAL_HEADER_OFFSET;
         Writeˉu16(Result, Optional + 0, 0x020B);
         Result[Optional + 2] = Windowsˉconsoleˉapplicationˉcontract.FORMAT_VERSION;
-        Writeˉu32(Result, Optional + 4, Textˉrawˉbytes);
-        Writeˉu32(Result, Optional + 8, DATA_RAW_BYTES + RELOCATION_RAW_BYTES);
+        Writeˉu32(Result, Optional + 4, Layout.Textˉfileˉbytes);
+        Writeˉu32(
+            Result,
+            Optional + 8,
+            checked(Layout.Dataˉfileˉbytes + Layout.Metadataˉfileˉbytes));
         Writeˉu32(
             Result,
             Optional + 12,
-            Windowsˉconsoleˉapplicationˉcontract.DATA_VIRTUAL_BYTES - DATA_RAW_BYTES);
+            checked(Layout.Dataˉvirtualˉbytes - Layout.Dataˉfileˉbytes));
         Writeˉu32(Result, Optional + 16, TEXT_RVA);
         Writeˉu32(Result, Optional + 20, TEXT_RVA);
         Writeˉu64(Result, Optional + 24, IMAGE_BASE);
@@ -103,8 +91,8 @@ public static class Windowsˉconsoleˉapplicationˉwriter
         Writeˉu32(Result, Optional + 36, FILE_ALIGNMENT);
         Writeˉu16(Result, Optional + 40, 6);
         Writeˉu16(Result, Optional + 48, 6);
-        Writeˉu32(Result, Optional + 56, Imageˉmemoryˉbytes);
-        Writeˉu32(Result, Optional + 60, HEADERS_BYTES);
+        Writeˉu32(Result, Optional + 56, Layout.Imageˉvirtualˉbytes);
+        Writeˉu32(Result, Optional + 60, checked((uint)Layout.Headerˉbytes));
         Writeˉu16(Result, Optional + 68, 3);
         Writeˉu16(Result, Optional + 70, 0x0160);
         Writeˉu64(Result, Optional + 72, Windowsˉconsoleˉapplicationˉcontract.STACK_BYTES);
@@ -112,14 +100,14 @@ public static class Windowsˉconsoleˉapplicationˉwriter
         Writeˉu64(Result, Optional + 88, 0x0010_0000);
         Writeˉu64(Result, Optional + 96, 0x0000_1000);
         Writeˉu32(Result, Optional + 108, 16);
-        Writeˉu32(Result, Optional + 112 + (5 * 8), Relocationˉrva);
-        Writeˉu32(Result, Optional + 112 + (5 * 8) + 4, RELOCATION_DATA_BYTES);
+        Writeˉu32(Result, Optional + 112 + (5 * 8), Layout.Metadataˉvirtualˉaddress);
+        Writeˉu32(Result, Optional + 112 + (5 * 8) + 4, Layout.Metadataˉvirtualˉbytes);
 
         Writeˉsectionˉname(Result, SECTION_TABLE_OFFSET, ".text");
-        Writeˉu32(Result, SECTION_TABLE_OFFSET + 8, Textˉbytes);
-        Writeˉu32(Result, SECTION_TABLE_OFFSET + 12, TEXT_RVA);
-        Writeˉu32(Result, SECTION_TABLE_OFFSET + 16, Textˉrawˉbytes);
-        Writeˉu32(Result, SECTION_TABLE_OFFSET + 20, HEADERS_BYTES);
+        Writeˉu32(Result, SECTION_TABLE_OFFSET + 8, Layout.Textˉvirtualˉbytes);
+        Writeˉu32(Result, SECTION_TABLE_OFFSET + 12, Layout.Textˉvirtualˉaddress);
+        Writeˉu32(Result, SECTION_TABLE_OFFSET + 16, Layout.Textˉfileˉbytes);
+        Writeˉu32(Result, SECTION_TABLE_OFFSET + 20, checked((uint)Layout.Textˉfileˉoffset));
         Writeˉu32(Result, SECTION_TABLE_OFFSET + 36, 0x6000_0020);
 
         var Dataˉsection = SECTION_TABLE_OFFSET + 40;
@@ -127,28 +115,28 @@ public static class Windowsˉconsoleˉapplicationˉwriter
         Writeˉu32(
             Result,
             Dataˉsection + 8,
-            Windowsˉconsoleˉapplicationˉcontract.DATA_VIRTUAL_BYTES);
-        Writeˉu32(Result, Dataˉsection + 12, Dataˉrva);
-        Writeˉu32(Result, Dataˉsection + 16, DATA_RAW_BYTES);
-        Writeˉu32(Result, Dataˉsection + 20, Dataˉrawˉoffset);
+            Layout.Dataˉvirtualˉbytes);
+        Writeˉu32(Result, Dataˉsection + 12, Layout.Dataˉvirtualˉaddress);
+        Writeˉu32(Result, Dataˉsection + 16, Layout.Dataˉfileˉbytes);
+        Writeˉu32(Result, Dataˉsection + 20, Layout.Dataˉfileˉoffset);
         Writeˉu32(Result, Dataˉsection + 36, 0xC000_0040);
 
         var Relocationˉsection = SECTION_TABLE_OFFSET + 80;
         Writeˉsectionˉname(Result, Relocationˉsection, ".reloc");
-        Writeˉu32(Result, Relocationˉsection + 8, RELOCATION_DATA_BYTES);
-        Writeˉu32(Result, Relocationˉsection + 12, Relocationˉrva);
-        Writeˉu32(Result, Relocationˉsection + 16, RELOCATION_RAW_BYTES);
-        Writeˉu32(Result, Relocationˉsection + 20, Relocationˉrawˉoffset);
+        Writeˉu32(Result, Relocationˉsection + 8, Layout.Metadataˉvirtualˉbytes);
+        Writeˉu32(Result, Relocationˉsection + 12, Layout.Metadataˉvirtualˉaddress);
+        Writeˉu32(Result, Relocationˉsection + 16, Layout.Metadataˉfileˉbytes);
+        Writeˉu32(Result, Relocationˉsection + 20, Layout.Metadataˉfileˉoffset);
         Writeˉu32(Result, Relocationˉsection + 36, 0x4200_0040);
 
         Writeˉstartup(
-            Result.AsSpan(HEADERS_BYTES, Windowsˉconsoleˉapplicationˉcontract.STARTUP_BYTES),
-            Dataˉrva,
+            Result.AsSpan(Layout.Textˉfileˉoffset, Layout.Startupˉbytes),
+            Layout.Dataˉvirtualˉaddress,
             nativeˉentryˉoffset);
         nativeˉimage.CopyTo(Result.AsSpan(
-            HEADERS_BYTES + Windowsˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET));
+            Layout.Textˉfileˉoffset + Layout.Nativeˉimageˉoffset));
 
-        var Contextˉoffset = checked((int)Dataˉrawˉoffset);
+        var Contextˉoffset = checked((int)Layout.Dataˉfileˉoffset);
         Writeˉu32(Result, Contextˉoffset + 0, Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
         Writeˉu32(Result, Contextˉoffset + 4, Nativeˉexecutionˉcontextˉcontract.SIZE);
         Writeˉu64(Result, Contextˉoffset + 8, checked((ulong)Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS));
@@ -162,8 +150,8 @@ public static class Windowsˉconsoleˉapplicationˉwriter
             Contextˉoffset + Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
             Windowsˉconsoleˉapplicationˉcontract.TEXT_ARENA_BYTES);
 
-        Writeˉu32(Result, (int)Relocationˉrawˉoffset, TEXT_RVA);
-        Writeˉu32(Result, (int)Relocationˉrawˉoffset + 4, RELOCATION_DATA_BYTES);
+        Writeˉu32(Result, (int)Layout.Metadataˉfileˉoffset, TEXT_RVA);
+        Writeˉu32(Result, (int)Layout.Metadataˉfileˉoffset + 4, Layout.Metadataˉvirtualˉbytes);
         return Result;
     }
 
@@ -223,9 +211,6 @@ public static class Windowsˉconsoleˉapplicationˉwriter
 
     private static int Relativeˉi32(uint sourceˉend, uint target) =>
         checked((int)((long)target - sourceˉend));
-
-    private static uint Alignˉup(uint value, uint alignment) =>
-        checked((value + alignment - 1) & ~(alignment - 1));
 
     private static void Writeˉsectionˉname(byte[] output, int offset, string value)
     {

@@ -9,11 +9,6 @@ public static class Linuxˉconsoleˉapplicationˉwriter
     private const int ELF_HEADER_BYTES = 64;
     private const int PROGRAM_HEADER_BYTES = 56;
     private const int PROGRAM_HEADER_COUNT = 5;
-    private const int NOTE_OFFSET = 0x180;
-    private const int NOTE_BYTES = 28;
-    private const uint PAGE_BYTES = 0x1000;
-    private const uint CONTEXT_FILE_BYTES = Nativeˉexecutionˉcontextˉcontract.SIZE;
-
     public static Linuxˉconsoleˉapplicationˉresult Write(Nativeˉfragment fragment)
     {
         var Prepared = Nativeˉconsoleˉapplicationˉpreparer.Prepare(fragment);
@@ -54,14 +49,11 @@ public static class Linuxˉconsoleˉapplicationˉwriter
 
     private static byte[] Buildˉimage(ReadOnlySpan<byte> nativeˉimage, uint nativeˉentryˉoffset)
     {
-        var Textˉbytes = checked(
-            (uint)Linuxˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET +
-            (uint)nativeˉimage.Length);
-        var Dataˉoffset = Alignˉup(
-            Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS + Textˉbytes,
-            PAGE_BYTES);
-        var Fileˉbytes = checked(Dataˉoffset + CONTEXT_FILE_BYTES);
-        var Result = new byte[checked((int)Fileˉbytes)];
+        var Layout = Consoleˉapplicationˉlayout.Plan(
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            nativeˉimage.Length,
+            nativeˉentryˉoffset);
+        var Result = new byte[Layout.Applicationˉbytes];
 
         ReadOnlySpan<byte> Identification =
         [
@@ -91,9 +83,9 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             flags: 4,
             fileˉoffset: 0,
             virtualˉaddress: 0,
-            fileˉbytes: Linuxˉconsoleˉapplicationˉcontract.HEADER_BYTES,
-            memoryˉbytes: Linuxˉconsoleˉapplicationˉcontract.HEADER_BYTES,
-            alignment: PAGE_BYTES);
+            fileˉbytes: checked((ulong)Layout.Headerˉbytes),
+            memoryˉbytes: checked((ulong)Layout.Headerˉbytes),
+            alignment: Linuxˉconsoleˉapplicationˉcontract.HEADER_BYTES);
 
         var Textˉload = Headerˉload + PROGRAM_HEADER_BYTES;
         Writeˉprogramˉheader(
@@ -101,11 +93,11 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             Textˉload,
             type: 1,
             flags: 5,
-            fileˉoffset: Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS,
-            virtualˉaddress: Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS,
-            fileˉbytes: Textˉbytes,
-            memoryˉbytes: Textˉbytes,
-            alignment: PAGE_BYTES);
+            fileˉoffset: checked((ulong)Layout.Textˉfileˉoffset),
+            virtualˉaddress: Layout.Textˉvirtualˉaddress,
+            fileˉbytes: Layout.Textˉfileˉbytes,
+            memoryˉbytes: Layout.Textˉvirtualˉbytes,
+            alignment: Linuxˉconsoleˉapplicationˉcontract.HEADER_BYTES);
 
         var Dataˉload = Textˉload + PROGRAM_HEADER_BYTES;
         Writeˉprogramˉheader(
@@ -113,11 +105,11 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             Dataˉload,
             type: 1,
             flags: 6,
-            fileˉoffset: Dataˉoffset,
-            virtualˉaddress: Dataˉoffset,
-            fileˉbytes: CONTEXT_FILE_BYTES,
-            memoryˉbytes: Linuxˉconsoleˉapplicationˉcontract.DATA_VIRTUAL_BYTES,
-            alignment: PAGE_BYTES);
+            fileˉoffset: Layout.Dataˉfileˉoffset,
+            virtualˉaddress: Layout.Dataˉvirtualˉaddress,
+            fileˉbytes: Layout.Dataˉfileˉbytes,
+            memoryˉbytes: Layout.Dataˉvirtualˉbytes,
+            alignment: Linuxˉconsoleˉapplicationˉcontract.HEADER_BYTES);
 
         var Note = Dataˉload + PROGRAM_HEADER_BYTES;
         Writeˉprogramˉheader(
@@ -125,10 +117,10 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             Note,
             type: 4,
             flags: 4,
-            fileˉoffset: NOTE_OFFSET,
-            virtualˉaddress: NOTE_OFFSET,
-            fileˉbytes: NOTE_BYTES,
-            memoryˉbytes: NOTE_BYTES,
+            fileˉoffset: Layout.Metadataˉfileˉoffset,
+            virtualˉaddress: Layout.Metadataˉvirtualˉaddress,
+            fileˉbytes: Layout.Metadataˉfileˉbytes,
+            memoryˉbytes: Layout.Metadataˉvirtualˉbytes,
             alignment: 4);
 
         var Stack = Note + PROGRAM_HEADER_BYTES;
@@ -143,28 +135,27 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             memoryˉbytes: Linuxˉconsoleˉapplicationˉcontract.STACK_BYTES,
             alignment: 16);
 
-        Writeˉu32(Result, NOTE_OFFSET + 0, 9);
-        Writeˉu32(Result, NOTE_OFFSET + 4, sizeof(uint));
-        Writeˉu32(Result, NOTE_OFFSET + 8, 1);
+        var Metadataˉoffset = checked((int)Layout.Metadataˉfileˉoffset);
+        Writeˉu32(Result, Metadataˉoffset + 0, 9);
+        Writeˉu32(Result, Metadataˉoffset + 4, sizeof(uint));
+        Writeˉu32(Result, Metadataˉoffset + 8, 1);
         ReadOnlySpan<byte> Noteˉname = [0x57, 0x69, 0x6E, 0x64, 0x76, 0x61, 0x6C, 0x65, 0x00];
-        Noteˉname.CopyTo(Result.AsSpan(NOTE_OFFSET + 12));
+        Noteˉname.CopyTo(Result.AsSpan(Metadataˉoffset + 12));
         Writeˉu32(
             Result,
-            NOTE_OFFSET + 24,
+            Metadataˉoffset + 24,
             Linuxˉconsoleˉapplicationˉcontract.FORMAT_VERSION);
 
         Writeˉstartup(
             Result.AsSpan(
-                checked((int)Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS),
-                Linuxˉconsoleˉapplicationˉcontract.STARTUP_BYTES),
-            Dataˉoffset,
+                Layout.Textˉfileˉoffset,
+                Layout.Startupˉbytes),
+            Layout.Dataˉvirtualˉaddress,
             nativeˉentryˉoffset);
         nativeˉimage.CopyTo(Result.AsSpan(
-            checked(
-                (int)Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS +
-                Linuxˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET)));
+            Layout.Textˉfileˉoffset + Layout.Nativeˉimageˉoffset));
 
-        var Contextˉoffset = checked((int)Dataˉoffset);
+        var Contextˉoffset = checked((int)Layout.Dataˉfileˉoffset);
         Writeˉu32(Result, Contextˉoffset + 0, Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
         Writeˉu32(Result, Contextˉoffset + 4, Nativeˉexecutionˉcontextˉcontract.SIZE);
         Writeˉu64(Result, Contextˉoffset + 8, checked((ulong)Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS));
@@ -255,9 +246,6 @@ public static class Linuxˉconsoleˉapplicationˉwriter
 
     private static int Relativeˉi32(uint sourceˉend, uint target) =>
         checked((int)((long)target - sourceˉend));
-
-    private static uint Alignˉup(uint value, uint alignment) =>
-        checked((value + alignment - 1) & ~(alignment - 1));
 
     private static void Writeˉprogramˉheader(
         byte[] output,

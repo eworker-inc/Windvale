@@ -35,6 +35,8 @@ internal static class Program
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
+    private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "7fe718d644e426b9a90e3bd1dcc51c4e1bb1ac4af439cd4bbcda2cf7d01f276a";
+    private const string CONSOLE_APPLICATION_PLAN_BRIDGE_SHA256 = "a4421adf6e46f31a5096099b1b164ea93901e97a66ff86b9b5b80ba5e753e790";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
@@ -720,6 +722,12 @@ internal static class Program
         end section
         """;
 
+    private static readonly string CONSOLE_APPLICATION_PLAN_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Console-Application-Plan-Core.wv");
+
+    private static readonly string CONSOLE_APPLICATION_PLAN_BRIDGE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Console-Application-Plan-Bridge.wv");
+
     private static readonly string WVA_ASSEMBLER_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wva-Assembler-Core.wv");
 
@@ -802,6 +810,7 @@ internal static class Program
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
         new("portable Windvale emits a deterministic Windows x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windowsˉconsoleˉapplicationˉruns),
         new("portable Windvale emits a deterministic Linux x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Linuxˉconsoleˉapplicationˉruns),
+        new("Windvale owns bounded Windows and Linux console-application layouts", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉconsoleˉapplicationˉlayoutˉruns),
         new("native console application publication is atomic", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic),
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
@@ -2757,6 +2766,262 @@ internal static class Program
             module Nativeˉprocessˉresult profile portable;
             export fn Main() -> i32 { return {{result}}; }
             """))).Fragment;
+
+    private static void Windvaleˉconsoleˉapplicationˉlayoutˉruns()
+    {
+        var Core = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Linker/Windvale/Console-Application-Plan-Core.wv",
+                CONSOLE_APPLICATION_PLAN_CORE_SOURCE),
+            []);
+        True(
+            Core.Success,
+            "The Windvale console-application plan core did not compile: " +
+                string.Join(" | ", Core.Diagnostics));
+        Equal(8_957, Core.Moduleˉbytes.Length);
+        Equal(
+            CONSOLE_APPLICATION_PLAN_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Core.Moduleˉbytes.AsSpan()));
+
+        var Bridge = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Linker/Windvale/Console-Application-Plan-Bridge.wv",
+                CONSOLE_APPLICATION_PLAN_BRIDGE_SOURCE),
+            [
+                new(
+                    "Linker/Windvale/Console-Application-Plan-Core.wv",
+                    CONSOLE_APPLICATION_PLAN_CORE_SOURCE),
+            ]);
+        True(
+            Bridge.Success,
+            "The Windvale console-application plan bridge did not compile: " +
+                string.Join(" | ", Bridge.Diagnostics));
+        Equal(Consoleˉapplicationˉlayout.PLANNER_CANONICAL_SIZE, Bridge.Moduleˉbytes.Length);
+        Equal(
+            CONSOLE_APPLICATION_PLAN_BRIDGE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Bridge.Moduleˉbytes.AsSpan()));
+        Equal(
+            Consoleˉapplicationˉlayout.PLANNER_CANONICAL_SHA256,
+            CONSOLE_APPLICATION_PLAN_BRIDGE_SHA256);
+        using (var Stream = typeof(Consoleˉapplicationˉlayout).Assembly.GetManifestResourceStream(
+            "Windvale.Linker.Console-Application-Plan-Bridge.wvb") ??
+            throw new InvalidOperationException(
+                "The retained console-application plan bridge was not embedded."))
+        {
+            var Retained = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Retained);
+            Sequenceˉequal(Bridge.Moduleˉbytes, Retained);
+        }
+
+        var Verifiedˉbridge = Moduleˉcodec.Readˉandˉverify(Bridge.Moduleˉbytes.AsSpan());
+        Equal(Moduleˉprofile.Hosted, Verifiedˉbridge.Module.Profile);
+        Equal(
+            Capabilityˉcatalog.FILE_READ_BYTES,
+            Verifiedˉbridge.Module.Capabilities.Single().Name);
+        var Main = Verifiedˉbridge.Module.Exports.Single(Item => Item.Name == "Main");
+        Equal(
+            Valueˉtype.Bytes,
+            Verifiedˉbridge.Module.Functions[Main.Targetˉindex].Returnˉtype.Kind);
+
+        var Windows = Consoleˉapplicationˉlayout.Plan(
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            nativeˉimageˉbytes: 5,
+            nativeˉentryˉoffset: 2);
+        Equal(2_048, Windows.Applicationˉbytes);
+        Equal(512, Windows.Headerˉbytes);
+        Equal(512, Windows.Textˉfileˉoffset);
+        Equal(4_096u, Windows.Textˉvirtualˉaddress);
+        Equal(98, Windows.Startupˉbytes);
+        Equal(112, Windows.Nativeˉimageˉoffset);
+        Equal(5, Windows.Nativeˉimageˉbytes);
+        Equal(2u, Windows.Nativeˉentryˉoffset);
+        Equal(4_210u, Windows.Nativeˉentryˉaddress);
+        Equal(117u, Windows.Textˉvirtualˉbytes);
+        Equal(512u, Windows.Textˉfileˉbytes);
+        Equal(1_024u, Windows.Dataˉfileˉoffset);
+        Equal(8_192u, Windows.Dataˉvirtualˉaddress);
+        Equal(512u, Windows.Dataˉfileˉbytes);
+        Equal(18_874_480u, Windows.Dataˉvirtualˉbytes);
+        Equal(1_536u, Windows.Metadataˉfileˉoffset);
+        Equal(512u, Windows.Metadataˉfileˉbytes);
+        Equal(18_886_656u, Windows.Metadataˉvirtualˉaddress);
+        Equal(12u, Windows.Metadataˉvirtualˉbytes);
+        Equal(18_890_752u, Windows.Imageˉvirtualˉbytes);
+
+        var Linux = Consoleˉapplicationˉlayout.Plan(
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            nativeˉimageˉbytes: 5,
+            nativeˉentryˉoffset: 2);
+        Equal(8_304, Linux.Applicationˉbytes);
+        Equal(4_096, Linux.Headerˉbytes);
+        Equal(4_096, Linux.Textˉfileˉoffset);
+        Equal(4_096u, Linux.Textˉvirtualˉaddress);
+        Equal(158, Linux.Startupˉbytes);
+        Equal(160, Linux.Nativeˉimageˉoffset);
+        Equal(4_258u, Linux.Nativeˉentryˉaddress);
+        Equal(165u, Linux.Textˉvirtualˉbytes);
+        Equal(8_192u, Linux.Dataˉfileˉoffset);
+        Equal(8_192u, Linux.Dataˉvirtualˉaddress);
+        Equal(112u, Linux.Dataˉfileˉbytes);
+        Equal(384u, Linux.Metadataˉfileˉoffset);
+        Equal(28u, Linux.Metadataˉfileˉbytes);
+        Equal(18_882_672u, Linux.Imageˉvirtualˉbytes);
+
+        Equal(
+            Windowsˉconsoleˉapplicationˉcontract.MAX_APPLICATION_BYTES,
+            Consoleˉapplicationˉlayout.Plan(
+                Consoleˉapplicationˉtarget.Windowsˉx64,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES - 1u)
+                .Applicationˉbytes);
+        Equal(
+            Linuxˉconsoleˉapplicationˉcontract.MAX_APPLICATION_BYTES,
+            Consoleˉapplicationˉlayout.Plan(
+                Consoleˉapplicationˉtarget.Linuxˉx64,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES - 1u)
+                .Applicationˉbytes);
+
+        static ImmutableArray<byte> Replaceˉu32(
+            ImmutableArray<byte> input,
+            int offset,
+            uint value)
+        {
+            var Result = input.ToArray();
+            BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(offset), value);
+            return Result.ToImmutableArray();
+        }
+
+        static void Expectˉrequestˉfailure(
+            ImmutableArray<byte> request,
+            Consoleˉapplicationˉplanˉstatus status,
+            uint failureˉoffset)
+        {
+            var Response = Consoleˉapplicationˉlayout.Evaluateˉrequest(request);
+            Equal(Consoleˉapplicationˉlayout.RESPONSE_BYTES, Response.Length);
+            Equal(
+                Consoleˉapplicationˉlayout.RESPONSE_MAGIC,
+                BinaryPrimitives.ReadUInt32LittleEndian(Response.AsSpan()));
+            Equal(
+                Consoleˉapplicationˉlayout.FORMAT_VERSION,
+                BinaryPrimitives.ReadUInt32LittleEndian(Response.AsSpan()[4..]));
+            Equal(
+                (uint)Consoleˉapplicationˉlayout.RESPONSE_BYTES,
+                BinaryPrimitives.ReadUInt32LittleEndian(Response.AsSpan()[8..]));
+            Equal(
+                (uint)status,
+                BinaryPrimitives.ReadUInt32LittleEndian(Response.AsSpan()[12..]));
+            Equal(
+                failureˉoffset,
+                BinaryPrimitives.ReadUInt32LittleEndian(Response.AsSpan()[16..]));
+            for (var Offset = 20; Offset < Consoleˉapplicationˉlayout.RESPONSE_BYTES; Offset += 4)
+            {
+                Equal(0u, BinaryPrimitives.ReadUInt32LittleEndian(Response.AsSpan()[Offset..]));
+            }
+        }
+
+        static void Expectˉresponseˉfailure(
+            ImmutableArray<byte> response,
+            string description)
+        {
+            var Rejected = false;
+            try
+            {
+                _ = Consoleˉapplicationˉlayout.Verifyˉresponse(
+                    Consoleˉapplicationˉtarget.Windowsˉx64,
+                    nativeˉimageˉbytes: 5,
+                    nativeˉentryˉoffset: 2,
+                    response);
+            }
+            catch (Consoleˉapplicationˉplanˉexception)
+            {
+                Rejected = true;
+            }
+            True(Rejected, $"The {description} console-application plan was accepted.");
+        }
+
+        var Request = Consoleˉapplicationˉlayout.Buildˉrequest(
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            nativeˉimageˉbytes: 5,
+            nativeˉentryˉoffset: 2);
+        var Response = Consoleˉapplicationˉlayout.Evaluateˉrequest(Request);
+        Sequenceˉequal(Response, Consoleˉapplicationˉlayout.Evaluateˉrequest(Request));
+        Equal(
+            Windows,
+            Consoleˉapplicationˉlayout.Verifyˉresponse(
+                Consoleˉapplicationˉtarget.Windowsˉx64,
+                nativeˉimageˉbytes: 5,
+                nativeˉentryˉoffset: 2,
+                Response));
+
+        Expectˉrequestˉfailure([], Consoleˉapplicationˉplanˉstatus.Invalidˉsize, 0);
+        Expectˉrequestˉfailure(
+            Request.AsSpan(0, 31).ToArray().ToImmutableArray(),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉsize,
+            31);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 0, 0),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉmagic,
+            0);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 4, 2),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉversion,
+            4);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 8, 33),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉsize,
+            8);
+        Expectˉrequestˉfailure(
+            Request.Add(0),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉsize,
+            8);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 12, 0),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉtarget,
+            12);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 12, 3),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉtarget,
+            12);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 16, 0),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉnativeˉimage,
+            16);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(
+                Request,
+                16,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES + 1u),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉnativeˉimage,
+            16);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 20, 5),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉentry,
+            20);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 24, 1),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉreserved,
+            24);
+        Expectˉrequestˉfailure(
+            Replaceˉu32(Request, 28, 1),
+            Consoleˉapplicationˉplanˉstatus.Invalidˉreserved,
+            28);
+
+        Expectˉresponseˉfailure(default, "uninitialized");
+        Expectˉresponseˉfailure(
+            Response.AsSpan(0, Consoleˉapplicationˉlayout.RESPONSE_BYTES - 1)
+                .ToArray()
+                .ToImmutableArray(),
+            "truncated");
+        Expectˉresponseˉfailure(Response.Add(0), "extended");
+
+        for (var Offset = 0; Offset < Consoleˉapplicationˉlayout.RESPONSE_BYTES; Offset += 4)
+        {
+            var Original = BinaryPrimitives.ReadUInt32LittleEndian(Response.AsSpan()[Offset..]);
+            var Mutated = Replaceˉu32(Response, Offset, Original == uint.MaxValue ? 0 : Original + 1);
+            Expectˉresponseˉfailure(Mutated, $"changed field at offset {Offset}");
+        }
+    }
 
     private static void Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic()
     {

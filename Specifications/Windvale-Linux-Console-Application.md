@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`linux-x64-console-v1` is the first deterministic Linux host-executable target. It packages one already verified ABI-20 x86-64 native fragment as a sectionless, import-free ELF64 static position-independent application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and ELF adapter construct the file, while the resulting application executes without a dynamic loader, libc, or .NET.
+`linux-x64-console-v1` is the first deterministic Linux host-executable target. It packages one already verified ABI-20 x86-64 native fragment as a sectionless, import-free ELF64 static position-independent application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and ELF adapter construct the file, while a digest-pinned portable Windvale module supplies every live layout extent and address. The resulting application executes without a dynamic loader, libc, or .NET.
 
 This is the Linux twin of `windows-x64-console-v1`. It is a narrow executable-boundary proof, not a general Linux runtime, hosted-capability container, native compiler executable, or .NET-retirement milestone.
 
@@ -53,6 +53,8 @@ Only the 112-byte context is present in the file. The remaining writable virtual
 
 All integers are little-endian. Unlisted and padding bytes are zero. File and load alignment is 4 KiB.
 
+Before allocating the file, the adapter evaluates the versioned [Windvale console-application plan](Windvale-Console-Application-Plan.md) over the native-image size and entry offset. It independently recomputes and checks every returned field, then uses only that verified plan for header, text, data, note, entry, and complete-image placement.
+
 | Region | Contract |
 | --- | --- |
 | ELF header | ELF64, little-endian, System V, x86-64, `ET_DYN`, entry `0x1000`, no section table |
@@ -70,7 +72,7 @@ The complete file is bounded to 4,202,608 bytes. Canonical `Sum-Data.wv` produce
 
 `Linuxˉconsoleˉapplicationˉverifier.Verify` treats the ELF as untrusted bytes. It checks the outer size before fixed reads; the complete ELF identification and header; all five exact program headers; load sizes, permissions, address/offset agreement, and derived extents; the version note; every padding region; the exact startup instruction shapes and four relative targets; the mmap and exit syscall boundaries; and the initial execution context. It returns the recovered native bytes and native entry offset only after complete validation.
 
-The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests independently assemble the WVA startup, require its exact symbol and relocation contract, instantiate the four final-image displacements, and compare all 158 startup bytes with the ELF. They also require the PE and ELF verifiers to recover the same native image and `Main` offset.
+The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests independently compile and evaluate the Windvale layout planner, compare its complete serialized result with the C# oracle, assemble the WVA startup, require its exact symbol and relocation contract, instantiate the four final-image displacements, and compare all 158 startup bytes with the ELF. They also require the PE and ELF verifiers to recover the same native image and `Main` offset.
 
 ## Diagnostics
 
@@ -102,4 +104,4 @@ The CLI defaults this target to `.elf`. On Linux it sets mode `0755` after writi
 
 Version 1 has no console output, arguments, environment access, file access, diagnostic channel, runtime-service table, dynamic linking, libc, persistent heap, threads, unwind metadata, debugger metadata, signing, embedded WVB, load-time WVB verification, or install-time cache identity.
 
-The C# adapter is the Stage 0 oracle and recovery implementation. The exact startup is now a Windvale-owned WVA candidate with byte-for-byte oracle agreement. Its pure container constructor and verifier remain named replacement seams for a portable Windvale `.wv` core. Normal construction moves only after the Windvale implementations reproduce exact ELF bytes and rejection behavior across Windows and Linux.
+The C# adapter is the Stage 0 oracle and recovery implementation. Windvale now owns the exact WVA startup and portable layout plan with complete oracle agreement. Its pure byte constructor and untrusted-container verifier remain named replacement seams for portable Windvale `.wv` cores. Normal construction moves only after the Windvale implementations reproduce exact ELF bytes and rejection behavior across Windows and Linux.

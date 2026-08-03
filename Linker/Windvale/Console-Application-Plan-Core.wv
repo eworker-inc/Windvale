@@ -1,0 +1,327 @@
+module Linkerˉconsoleˉapplicationˉplan profile portable;
+
+enum Consoleˉapplicationˉplanˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Invalidˉversion = 3;
+    Invalidˉtarget = 4;
+    Invalidˉnativeˉimage = 5;
+    Invalidˉentry = 6;
+    Invalidˉreserved = 7;
+    Layoutˉlimit = 8;
+}
+
+record Consoleˉapplicationˉplanˉresult {
+    Status: Consoleˉapplicationˉplanˉstatus;
+    Value: bytes;
+    Failureˉoffset: u32;
+}
+
+export fn Consoleˉapplicationˉplanˉappendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Consoleˉapplicationˉplanˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Consoleˉapplicationˉplanˉstatusˉvalue(
+    Status: Consoleˉapplicationˉplanˉstatus
+) -> u32 {
+    if Status == Consoleˉapplicationˉplanˉstatus.Invalidˉsize { return 1u32; }
+    if Status == Consoleˉapplicationˉplanˉstatus.Invalidˉmagic { return 2u32; }
+    if Status == Consoleˉapplicationˉplanˉstatus.Invalidˉversion { return 3u32; }
+    if Status == Consoleˉapplicationˉplanˉstatus.Invalidˉtarget { return 4u32; }
+    if Status == Consoleˉapplicationˉplanˉstatus.Invalidˉnativeˉimage { return 5u32; }
+    if Status == Consoleˉapplicationˉplanˉstatus.Invalidˉentry { return 6u32; }
+    if Status == Consoleˉapplicationˉplanˉstatus.Invalidˉreserved { return 7u32; }
+    if Status == Consoleˉapplicationˉplanˉstatus.Layoutˉlimit { return 8u32; }
+    return 0u32;
+}
+
+export fn Consoleˉapplicationˉplanˉresponse(
+    Input: bytes,
+    Status: Consoleˉapplicationˉplanˉstatus,
+    Failureˉoffset: u32,
+    Target: u32,
+    Applicationˉbytes: u32,
+    Headerˉbytes: u32,
+    Textˉfileˉoffset: u32,
+    Textˉvirtualˉaddress: u32,
+    Startupˉbytes: u32,
+    Nativeˉimageˉoffset: u32,
+    Nativeˉimageˉbytes: u32,
+    Nativeˉentryˉoffset: u32,
+    Nativeˉentryˉaddress: u32,
+    Textˉvirtualˉbytes: u32,
+    Textˉfileˉbytes: u32,
+    Dataˉfileˉoffset: u32,
+    Dataˉvirtualˉaddress: u32,
+    Dataˉfileˉbytes: u32,
+    Dataˉvirtualˉbytes: u32,
+    Metadataˉfileˉoffset: u32,
+    Metadataˉfileˉbytes: u32,
+    Metadataˉvirtualˉaddress: u32,
+    Metadataˉvirtualˉbytes: u32,
+    Imageˉvirtualˉbytes: u32
+) -> bytes {
+    var Result: bytes = Consoleˉapplicationˉplanˉempty(Input);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, 1346590295u32);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, 1u32);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, 108u32);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(
+        Result, Consoleˉapplicationˉplanˉstatusˉvalue(Status)
+    );
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Failureˉoffset);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Target);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Applicationˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Headerˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Textˉfileˉoffset);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Textˉvirtualˉaddress);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Startupˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Nativeˉimageˉoffset);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Nativeˉimageˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Nativeˉentryˉoffset);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Nativeˉentryˉaddress);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Textˉvirtualˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Textˉfileˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Dataˉfileˉoffset);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Dataˉvirtualˉaddress);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Dataˉfileˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Dataˉvirtualˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Metadataˉfileˉoffset);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Metadataˉfileˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Metadataˉvirtualˉaddress);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Metadataˉvirtualˉbytes);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, Imageˉvirtualˉbytes);
+    return Consoleˉapplicationˉplanˉappendˉu32(Result, 0u32);
+}
+
+export fn Consoleˉapplicationˉplanˉfailure(
+    Input: bytes,
+    Status: Consoleˉapplicationˉplanˉstatus,
+    Failureˉoffset: u32
+) -> Consoleˉapplicationˉplanˉresult {
+    return Consoleˉapplicationˉplanˉresult(
+        Status,
+        Consoleˉapplicationˉplanˉresponse(
+            Input,
+            Status,
+            Failureˉoffset,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32
+        ),
+        Failureˉoffset
+    );
+}
+
+export fn Consoleˉapplicationˉplanˉalignmentˉpadding(
+    Value: u32,
+    Alignment: u32
+) -> u32 {
+    var Remainder: u32 = Value;
+    while Remainder >= Alignment {
+        Remainder = Remainder - Alignment;
+    }
+    if Remainder == 0u32 { return 0u32; }
+    return Alignment - Remainder;
+}
+
+export fn Consoleˉapplicationˉplanˉwindows(
+    Input: bytes,
+    Target: u32,
+    Nativeˉimageˉbytes: u32,
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉapplicationˉplanˉresult {
+    let Textˉvirtualˉbytes: u32 = 112u32 + Nativeˉimageˉbytes;
+    let Textˉfileˉbytes: u32 = Textˉvirtualˉbytes +
+        Consoleˉapplicationˉplanˉalignmentˉpadding(Textˉvirtualˉbytes, 512u32);
+    let Dataˉfileˉoffset: u32 = 512u32 + Textˉfileˉbytes;
+    let Metadataˉfileˉoffset: u32 = Dataˉfileˉoffset + 512u32;
+    let Applicationˉbytes: u32 = Metadataˉfileˉoffset + 512u32;
+    let Dataˉbase: u32 = 4096u32 + Textˉvirtualˉbytes;
+    let Dataˉvirtualˉaddress: u32 = Dataˉbase +
+        Consoleˉapplicationˉplanˉalignmentˉpadding(Dataˉbase, 4096u32);
+    let Metadataˉbase: u32 = Dataˉvirtualˉaddress + 18874480u32;
+    let Metadataˉvirtualˉaddress: u32 = Metadataˉbase +
+        Consoleˉapplicationˉplanˉalignmentˉpadding(Metadataˉbase, 4096u32);
+    let Imageˉbase: u32 = Metadataˉvirtualˉaddress + 12u32;
+    let Imageˉvirtualˉbytes: u32 = Imageˉbase +
+        Consoleˉapplicationˉplanˉalignmentˉpadding(Imageˉbase, 4096u32);
+    if Applicationˉbytes > 4196352u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Layoutˉlimit, 16u32
+        );
+    }
+    let Response: bytes = Consoleˉapplicationˉplanˉresponse(
+        Input,
+        Consoleˉapplicationˉplanˉstatus.Valid,
+        32u32,
+        Target,
+        Applicationˉbytes,
+        512u32,
+        512u32,
+        4096u32,
+        98u32,
+        112u32,
+        Nativeˉimageˉbytes,
+        Nativeˉentryˉoffset,
+        4208u32 + Nativeˉentryˉoffset,
+        Textˉvirtualˉbytes,
+        Textˉfileˉbytes,
+        Dataˉfileˉoffset,
+        Dataˉvirtualˉaddress,
+        512u32,
+        18874480u32,
+        Metadataˉfileˉoffset,
+        512u32,
+        Metadataˉvirtualˉaddress,
+        12u32,
+        Imageˉvirtualˉbytes
+    );
+    return Consoleˉapplicationˉplanˉresult(
+        Consoleˉapplicationˉplanˉstatus.Valid, Response, 32u32
+    );
+}
+
+export fn Consoleˉapplicationˉplanˉlinux(
+    Input: bytes,
+    Target: u32,
+    Nativeˉimageˉbytes: u32,
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉapplicationˉplanˉresult {
+    let Textˉvirtualˉbytes: u32 = 160u32 + Nativeˉimageˉbytes;
+    let Dataˉbase: u32 = 4096u32 + Textˉvirtualˉbytes;
+    let Dataˉfileˉoffset: u32 = Dataˉbase +
+        Consoleˉapplicationˉplanˉalignmentˉpadding(Dataˉbase, 4096u32);
+    let Applicationˉbytes: u32 = Dataˉfileˉoffset + 112u32;
+    if Applicationˉbytes > 4202608u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Layoutˉlimit, 16u32
+        );
+    }
+    let Response: bytes = Consoleˉapplicationˉplanˉresponse(
+        Input,
+        Consoleˉapplicationˉplanˉstatus.Valid,
+        32u32,
+        Target,
+        Applicationˉbytes,
+        4096u32,
+        4096u32,
+        4096u32,
+        158u32,
+        160u32,
+        Nativeˉimageˉbytes,
+        Nativeˉentryˉoffset,
+        4256u32 + Nativeˉentryˉoffset,
+        Textˉvirtualˉbytes,
+        Textˉvirtualˉbytes,
+        Dataˉfileˉoffset,
+        Dataˉfileˉoffset,
+        112u32,
+        18874480u32,
+        384u32,
+        28u32,
+        384u32,
+        28u32,
+        Dataˉfileˉoffset + 18874480u32
+    );
+    return Consoleˉapplicationˉplanˉresult(
+        Consoleˉapplicationˉplanˉstatus.Valid, Response, 32u32
+    );
+}
+
+export fn Consoleˉapplicationˉplan(Input: bytes) -> Consoleˉapplicationˉplanˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 32u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉsize, Total
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1363367511u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉmagic, 0u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉversion, 4u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉsize, 8u32
+        );
+    }
+    if Total != 32u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉsize, 8u32
+        );
+    }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Target < 1u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉtarget, 12u32
+        );
+    }
+    if Target > 2u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉtarget, 12u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 24u32) != 0u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉreserved, 24u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉreserved, 28u32
+        );
+    }
+    let Nativeˉimageˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Nativeˉimageˉbytes == 0u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉnativeˉimage, 16u32
+        );
+    }
+    if Nativeˉimageˉbytes > 4194304u32 {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉnativeˉimage, 16u32
+        );
+    }
+    let Nativeˉentryˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Nativeˉentryˉoffset >= Nativeˉimageˉbytes {
+        return Consoleˉapplicationˉplanˉfailure(
+            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉentry, 20u32
+        );
+    }
+    if Target == 1u32 {
+        return Consoleˉapplicationˉplanˉwindows(
+            Input, Target, Nativeˉimageˉbytes, Nativeˉentryˉoffset
+        );
+    }
+    return Consoleˉapplicationˉplanˉlinux(
+        Input, Target, Nativeˉimageˉbytes, Nativeˉentryˉoffset
+    );
+}

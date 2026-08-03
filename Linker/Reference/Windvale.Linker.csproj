@@ -5,5 +5,14 @@
   <ItemGroup>
     <ProjectReference Include="../../Compiler/Native/Windvale.NativeCompiler.csproj" />
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
+    <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Windvale.Seed.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource
+      Include="Consumers/Console-Application-Plan-Bridge.wvb"
+      LogicalName="Windvale.Linker.Console-Application-Plan-Bridge.wvb" />
   </ItemGroup>
 </Project>

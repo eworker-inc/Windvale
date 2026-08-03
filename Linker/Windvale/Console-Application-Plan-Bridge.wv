@@ -1,0 +1,13 @@
+module Linkerˉconsoleˉapplicationˉplanˉbridge profile hosted;
+
+import Linkerˉconsoleˉapplicationˉplan;
+
+capability file.read_bytes;
+
+data Requestˉname: text = "console-application-plan-request.bin";
+
+export fn Main() -> bytes {
+    let Input: bytes = file.read_bytes(Requestˉname);
+    let Plan: Consoleˉapplicationˉplanˉresult = Consoleˉapplicationˉplan(Input);
+    return Plan.Value;
+}
