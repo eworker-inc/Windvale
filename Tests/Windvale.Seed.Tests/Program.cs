@@ -100,7 +100,7 @@ internal static class Program
     private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "6d524aa9b96d0f624b0b449937ec6c0987a57e2c002af8276784c63a185efef6";
     private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "b209eabbced72ccca37a325ac55f1a5198f9c257c6dc9faa5b57954c393c2493";
     private const string SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256 = "5d61f926461fc19e46e04a7e5dd3636fcbaa554e30370fc10a5eeb7992f5e634";
-    private const string SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256 = "8864dd8638a947bd10a13803355783b5f3ead6482889803ef4e2d86a425d2c46";
+    private const string SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256 = "356bd9c6be1a927017e987728b479d105f9852c0c7aad1b8b9e93202ba64010f";
     private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "99da55911c81218ac74442a695d340ed440c74515b830bcc659bd4b7df7b2d4b";
     private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507";
     private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a";
@@ -1000,7 +1000,7 @@ internal static class Program
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
-        new("exact compiler AOT transport pressure is deterministic and measured", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER], Nativeˉcompilerˉaotˉtransportˉisˉmeasured),
+        new("exact compiler AOT transport pressure is deterministic and measured", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉcompilerˉaotˉtransportˉisˉmeasured),
         new("native exact compiler reproduces full Stage 2 under the bounded text arena", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreproducesˉstage2),
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
@@ -2696,7 +2696,8 @@ internal static class Program
         ImmutableArray<byte> image,
         string expectedˉoutput = "",
         IReadOnlyList<string>? arguments = null,
-        int timeoutˉmilliseconds = 10_000)
+        int timeoutˉmilliseconds = 10_000,
+        ISet<string>? loadedˉmodules = null)
     {
         var Path = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(),
@@ -2718,10 +2719,48 @@ internal static class Program
             }
             using var Process = System.Diagnostics.Process.Start(Startˉinfo) ??
                 throw new InvalidOperationException("Windows did not start the generated application.");
-            if (!Process.WaitForExit(timeoutˉmilliseconds))
+            if (loadedˉmodules is null)
             {
-                Process.Kill(entireProcessTree: true);
-                throw new InvalidOperationException("The generated Windows application did not exit.");
+                if (!Process.WaitForExit(timeoutˉmilliseconds))
+                {
+                    Process.Kill(entireProcessTree: true);
+                    throw new InvalidOperationException(
+                        "The generated Windows application did not exit.");
+                }
+            }
+            else
+            {
+                var Timer = Stopwatch.StartNew();
+                while (true)
+                {
+                    if (Process.WaitForExit(0))
+                    {
+                        break;
+                    }
+                    try
+                    {
+                        Captureˉwindowsˉmodules(Process, loadedˉmodules);
+                    }
+                    catch (InvalidOperationException) when (Process.HasExited)
+                    {
+                        break;
+                    }
+                    catch (System.ComponentModel.Win32Exception) when (Process.HasExited)
+                    {
+                        break;
+                    }
+                    var Remaining = timeoutˉmilliseconds - checked((int)Timer.ElapsedMilliseconds);
+                    if (Remaining <= 0)
+                    {
+                        Process.Kill(entireProcessTree: true);
+                        throw new InvalidOperationException(
+                            "The generated Windows application did not exit.");
+                    }
+                    if (Process.WaitForExit(Math.Min(Remaining, 100)))
+                    {
+                        break;
+                    }
+                }
             }
             var Standardˉoutput = Process.StandardOutput.ReadToEnd();
             var Standardˉerror = Process.StandardError.ReadToEnd();
@@ -2735,6 +2774,17 @@ internal static class Program
         finally
         {
             File.Delete(Path);
+        }
+    }
+
+    private static void Captureˉwindowsˉmodules(
+        System.Diagnostics.Process process,
+        ISet<string> loadedˉmodules)
+    {
+        process.Refresh();
+        foreach (ProcessModule Module in process.Modules)
+        {
+            loadedˉmodules.Add(Module.ModuleName);
         }
     }
 
@@ -3945,7 +3995,10 @@ internal static class Program
 
     private static int Executeˉlinuxˉapplication(
         ImmutableArray<byte> image,
-        string expectedˉoutput = "")
+        string expectedˉoutput = "",
+        IReadOnlyList<string>? arguments = null,
+        int timeoutˉmilliseconds = 10_000,
+        ISet<string>? loadedˉmappings = null)
     {
         if (!OperatingSystem.IsLinux())
         {
@@ -3960,25 +4013,88 @@ internal static class Program
             File.SetUnixFileMode(
                 Path,
                 UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-            using var Process = System.Diagnostics.Process.Start(new ProcessStartInfo
+            var Startˉinfo = new ProcessStartInfo
             {
                 FileName = Path,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-            }) ?? throw new InvalidOperationException("Linux did not start the generated application.");
-            if (!Process.WaitForExit(10_000))
+            };
+            foreach (var Argument in arguments ?? [])
             {
-                Process.Kill(entireProcessTree: true);
-                throw new InvalidOperationException("The generated Linux application did not exit.");
+                Startˉinfo.ArgumentList.Add(Argument);
             }
-            Equal(expectedˉoutput, Process.StandardOutput.ReadToEnd());
-            Equal(string.Empty, Process.StandardError.ReadToEnd());
+            using var Process = System.Diagnostics.Process.Start(Startˉinfo) ??
+                throw new InvalidOperationException("Linux did not start the generated application.");
+            if (loadedˉmappings is null)
+            {
+                if (!Process.WaitForExit(timeoutˉmilliseconds))
+                {
+                    Process.Kill(entireProcessTree: true);
+                    throw new InvalidOperationException(
+                        "The generated Linux application did not exit.");
+                }
+            }
+            else
+            {
+                var Timer = Stopwatch.StartNew();
+                while (true)
+                {
+                    if (Process.WaitForExit(0))
+                    {
+                        break;
+                    }
+                    try
+                    {
+                        Captureˉlinuxˉmappings(Process.Id, loadedˉmappings);
+                    }
+                    catch (FileNotFoundException) when (Process.HasExited)
+                    {
+                        break;
+                    }
+                    catch (DirectoryNotFoundException) when (Process.HasExited)
+                    {
+                        break;
+                    }
+                    var Remaining = timeoutˉmilliseconds - checked((int)Timer.ElapsedMilliseconds);
+                    if (Remaining <= 0)
+                    {
+                        Process.Kill(entireProcessTree: true);
+                        throw new InvalidOperationException(
+                            "The generated Linux application did not exit.");
+                    }
+                    if (Process.WaitForExit(Math.Min(Remaining, 100)))
+                    {
+                        break;
+                    }
+                }
+            }
+            var Standardˉoutput = Process.StandardOutput.ReadToEnd();
+            var Standardˉerror = Process.StandardError.ReadToEnd();
+            True(
+                StringComparer.Ordinal.Equals(expectedˉoutput, Standardˉoutput),
+                $"The generated Linux application exited {Process.ExitCode} with " +
+                    $"stdout '{Standardˉoutput}' and stderr '{Standardˉerror}'.");
+            Equal(string.Empty, Standardˉerror);
             return Process.ExitCode;
         }
         finally
         {
             File.Delete(Path);
+        }
+    }
+
+    private static void Captureˉlinuxˉmappings(
+        int processˉid,
+        ISet<string> loadedˉmappings)
+    {
+        foreach (var Line in File.ReadLines($"/proc/{processˉid}/maps"))
+        {
+            var Pathˉstart = Line.IndexOf('/');
+            if (Pathˉstart >= 0)
+            {
+                loadedˉmappings.Add(Line[Pathˉstart..]);
+            }
         }
     }
 
@@ -8148,26 +8264,35 @@ internal static class Program
             Directory.CreateDirectory(Packagedˉcompilerˉdirectory);
             try
             {
-                var Sourceˉpath = Path.Combine(
+                var (Arguments, Outputˉpath) = Writeˉexactˉcompilerˉstage2ˉinputs(
                     Packagedˉcompilerˉdirectory,
-                    "function-only.wv");
-                var Outputˉpath = Path.Combine(
-                    Packagedˉcompilerˉdirectory,
-                    "function-only.wvb");
-                File.WriteAllText(
-                    Sourceˉpath,
-                    SOURCE_WVB_FUNCTION_ONLY_SOURCE,
-                    new UTF8Encoding(false));
+                    "Packaged-Stage2.wvb");
+                var Loadedˉmodules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 Equal(
                     0,
                     Executeˉwindowsˉapplication(
                         Firstˉwindowsˉapplication,
-                        "source wvb status=Valid functions=4 code-bytes=532 module-bytes=815\n",
-                        [Sourceˉpath, Outputˉpath],
-                        timeoutˉmilliseconds: 60_000));
-                Sequenceˉequal(
-                    Compileˉsuccess(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
-                    File.ReadAllBytes(Outputˉpath));
+                        "source wvb status=Valid functions=328 code-bytes=481356 " +
+                            "module-bytes=599868\n",
+                        Arguments,
+                        timeoutˉmilliseconds: 600_000,
+                        loadedˉmodules: Loadedˉmodules));
+                Sequenceˉequal(Compilerˉbytes, File.ReadAllBytes(Outputˉpath));
+                True(
+                    Loadedˉmodules.Contains("KERNEL32.DLL") &&
+                    Loadedˉmodules.Contains("SHELL32.DLL"),
+                    "The direct Windows Stage 2 run did not expose its declared host adapters: " +
+                        string.Join(", ", Loadedˉmodules.Order(StringComparer.OrdinalIgnoreCase)));
+                var Dotnetˉmodules = Loadedˉmodules
+                    .Where(Name => Name.Equals("clr.dll", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Equals("mscoree.dll", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Equals("mscorwks.dll", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("coreclr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase))
+                    .Order(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+                Equal(0, Dotnetˉmodules.Length);
             }
             finally
             {
@@ -8290,6 +8415,48 @@ internal static class Program
             _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
                 [.. Firstˉlinuxˉapplication, 0],
                 Linuxˉbundle));
+
+        if (OperatingSystem.IsLinux())
+        {
+            var Packagedˉcompilerˉdirectory = Path.Combine(
+                Path.GetTempPath(),
+                $"windvale-packaged-compiler-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(Packagedˉcompilerˉdirectory);
+            try
+            {
+                var (Arguments, Outputˉpath) = Writeˉexactˉcompilerˉstage2ˉinputs(
+                    Packagedˉcompilerˉdirectory,
+                    "Packaged-Stage2.wvb");
+                var Loadedˉmappings = new HashSet<string>(StringComparer.Ordinal);
+                Equal(
+                    0,
+                    Executeˉlinuxˉapplication(
+                        Firstˉlinuxˉapplication,
+                        "source wvb status=Valid functions=328 code-bytes=481356 " +
+                            "module-bytes=599868\n",
+                        Arguments,
+                        timeoutˉmilliseconds: 600_000,
+                        loadedˉmappings: Loadedˉmappings));
+                Sequenceˉequal(Compilerˉbytes, File.ReadAllBytes(Outputˉpath));
+                True(
+                    Loadedˉmappings.Any(Name =>
+                        Name.Contains("windvale-linux-console-", StringComparison.Ordinal)),
+                    "The direct Linux Stage 2 run did not expose its executable mapping: " +
+                        string.Join(", ", Loadedˉmappings.Order(StringComparer.Ordinal)));
+                var Dotnetˉmappings = Loadedˉmappings
+                    .Where(Name => Name.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("coreclr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase))
+                    .Order(StringComparer.Ordinal)
+                    .ToArray();
+                Equal(0, Dotnetˉmappings.Length);
+            }
+            finally
+            {
+                Directory.Delete(Packagedˉcompilerˉdirectory, recursive: true);
+            }
+        }
 
         var Aggregateˉoverflowˉdata = new byte[
             Linkˉlimits.LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES - Firstˉobject.Length + 1];
@@ -8480,30 +8647,9 @@ internal static class Program
         Directory.CreateDirectory(Directoryˉpath);
         try
         {
-            var Inventory = new (string Name, string Source)[]
-            {
-                ("Source-Wvb-Tool.wv", SOURCE_WVB_TOOL_SOURCE),
-                ("Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE),
-                ("Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
-                ("Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
-                ("Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE),
-                ("Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
-                ("Source-Set-Core.wv", SOURCE_SET_SOURCE),
-                ("Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE),
-                ("Source-Wir-Core.wv", SOURCE_WIR_SOURCE),
-                ("Source-Wvb-Core.wv", SOURCE_WVB_SOURCE),
-                ("Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
-                ("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
-            };
-            var Arguments = new List<string>();
-            foreach (var Item in Inventory)
-            {
-                var Pathˉname = Path.Combine(Directoryˉpath, Item.Name);
-                File.WriteAllText(Pathˉname, Item.Source, new UTF8Encoding(false));
-                Arguments.Add(Pathˉname);
-            }
-            var Outputˉpath = Path.Combine(Directoryˉpath, "Bootstrap-Stage2.wvb");
-            Arguments.Add(Outputˉpath);
+            var (Arguments, Outputˉpath) = Writeˉexactˉcompilerˉstage2ˉinputs(
+                Directoryˉpath,
+                "Bootstrap-Stage2.wvb");
 
             using var Compilerˉoutput = new Nativeˉoutputˉcapture();
             using var Compilerˉdiagnostic = new Nativeˉoutputˉcapture();
@@ -8537,6 +8683,36 @@ internal static class Program
         {
             Directory.Delete(Directoryˉpath, recursive: true);
         }
+    }
+
+    private static (List<string> Arguments, string Outputˉpath)
+        Writeˉexactˉcompilerˉstage2ˉinputs(string directory, string outputˉname)
+    {
+        var Inventory = new (string Name, string Source)[]
+        {
+            ("Source-Wvb-Tool.wv", SOURCE_WVB_TOOL_SOURCE),
+            ("Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE),
+            ("Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE),
+            ("Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE),
+            ("Source-Graph-Core.wv", SOURCE_GRAPH_SOURCE),
+            ("Source-Lexer-Core.wv", SOURCE_LEXER_SOURCE),
+            ("Source-Set-Core.wv", SOURCE_SET_SOURCE),
+            ("Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE),
+            ("Source-Wir-Core.wv", SOURCE_WIR_SOURCE),
+            ("Source-Wvb-Core.wv", SOURCE_WVB_SOURCE),
+            ("Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+            ("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
+        };
+        var Arguments = new List<string>();
+        foreach (var Item in Inventory)
+        {
+            var Sourceˉpath = Path.Combine(directory, Item.Name);
+            File.WriteAllText(Sourceˉpath, Item.Source, new UTF8Encoding(false));
+            Arguments.Add(Sourceˉpath);
+        }
+        var Outputˉpath = Path.Combine(directory, outputˉname);
+        Arguments.Add(Outputˉpath);
+        return (Arguments, Outputˉpath);
     }
 
     private static void Sourceˉmodulesˉcompose()

@@ -92,7 +92,8 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉverifier
         Requireˉu16(bytes, OPTIONAL + 70, 0x0160, "DLL characteristics");
         Requireˉu64(bytes, OPTIONAL + 72, Nativeˉconsoleˉapplicationˉcontract.STACK_BYTES,
             "stack reserve");
-        Requireˉu64(bytes, OPTIONAL + 80, 0x0001_0000, "stack commit");
+        Requireˉu64(bytes, OPTIONAL + 80, Nativeˉconsoleˉapplicationˉcontract.STACK_BYTES,
+            "stack commit");
         Requireˉu64(bytes, OPTIONAL + 88, 0x0010_0000, "heap reserve");
         Requireˉu64(bytes, OPTIONAL + 96, 0x0000_1000, "heap commit");
         Requireˉu32(bytes, OPTIONAL + 104, 0, "loader flags");

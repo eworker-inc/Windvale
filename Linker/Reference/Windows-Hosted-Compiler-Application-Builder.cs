@@ -71,7 +71,7 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉbuilder
         Writeˉu16(Result, Optional + 68, 3);
         Writeˉu16(Result, Optional + 70, 0x0160);
         Writeˉu64(Result, Optional + 72, Nativeˉconsoleˉapplicationˉcontract.STACK_BYTES);
-        Writeˉu64(Result, Optional + 80, 0x0001_0000);
+        Writeˉu64(Result, Optional + 80, Nativeˉconsoleˉapplicationˉcontract.STACK_BYTES);
         Writeˉu64(Result, Optional + 88, 0x0010_0000);
         Writeˉu64(Result, Optional + 96, 0x0000_1000);
         Writeˉu32(Result, Optional + 108, 16);
