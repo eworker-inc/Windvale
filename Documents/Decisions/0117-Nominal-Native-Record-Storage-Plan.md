@@ -1,7 +1,7 @@
 # Decision 0117: Nominal native record-storage plan
 
 - Date: 2026-08-02
-- Status: Implemented; cross-host qualification pending
+- Status: Qualified at exact implementation commit `57416d0f93c803ef4218b6c0206798f2fd4f362c`
 - Retains: Native ABI 20, execution-context version 7, target `x86-64-wvb-baseline-v20`, the 2,048-cell physical frame ceiling, and the 2 MiB host record arena
 - Refines: [Decision 0105](0105-Typed-Block-Scoped-Native-Value-Slots.md), [Decision 0112](0112-Bounded-Exact-Compiler-Record-Arena.md), and [Decision 0115](0115-Exact-Compiler-Record-Lifetime-Pressure.md)
 
@@ -56,7 +56,9 @@ These sums describe the complete static inventory, not simultaneous process memo
 
 The exact selected fragment remains 4,556,121 bytes with SHA-256 `8e74707df03a535e3ef68cfcfc8da6fa68fda29ccf4344e272fc50c8a5845bab`. The focused nominal test independently compares every retained shape with verified WVB and pins a four-function storage plan. The exact-compiler test pins every aggregate above, the largest function, the frame equation, deterministic native bytes, and independent fragment verification.
 
-Windows Development verification completes a zero-warning Release build, all 69 regular Seed tests, and all 25 bounded OS tests. The Seed suite takes 61.331 seconds; the complete command takes 79.7 seconds. The qualification-only multi-billion-instruction golden contract and cross-host gate remain pending.
+Windows Development verification completes a zero-warning Release build, all 69 regular Seed tests, and all 25 bounded OS tests. The Seed suite takes 61.331 seconds; the complete command takes 79.7 seconds.
+
+Exact implementation commit `57416d0f93c803ef4218b6c0206798f2fd4f362c` passes GitHub [Verify run 30773327094](https://github.com/eworker-inc/Windvale/actions/runs/30773327094). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 70 Seed tests, all 25 OS tests, and the complete native CLI gate. The focused nominal/storage case takes 52 ms on Windows and 32 ms on Linux; the exact native compiler-plan case takes 1.933 and 2.014 seconds; the retained full-bootstrap boundary takes 737 and 669 ms. Windows Seed takes 225.610 seconds with a 167.252-second golden contract; Linux Seed takes 199.654 seconds with a 146.882-second golden contract. The complete host jobs finish in 8m32s and 7m25s. QEMU is not rerun because ABI 20, every generated machine byte, and all OS source/artifact inputs remain unchanged.
 
 ## Consequences
 
