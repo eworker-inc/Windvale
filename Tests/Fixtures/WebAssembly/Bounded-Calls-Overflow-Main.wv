@@ -1,0 +1,9 @@
+module Webassemblyˉboundedˉcallˉoverflow profile portable;
+
+fn Calculate(Left: i32, Right: i32) -> i32 {
+    return Left * Right;
+}
+
+export fn Main() -> i32 {
+    return Calculate(50000, 50000);
+}

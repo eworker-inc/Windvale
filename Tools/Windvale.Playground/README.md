@@ -10,7 +10,7 @@ Direct .NET-free artifact demo: <https://windvale.ca/playground/wasm-demo/>
 
 ## Direct WebAssembly demo
 
-The nested `wwwroot/wasm-demo/` route is ordinary static HTML, CSS, and JavaScript. It does not reference the Blazor bootstrap or any .NET framework asset. It reconstructs the exact 1,923-byte profile-5 artifact containing two loops and one `if/else`, checks SHA-256, and sends it through the same disposable worker used by the differential playground. The page requires ABI `2`: budget 184 must return status `0`, result `42`, and 184 instructions; budget 183 must return status `3011` (`WVR3011`), result zero, and 183 instructions. It also requires zero .NET/Blazor resource requests.
+The nested `wwwroot/wasm-demo/` route is ordinary static HTML, CSS, and JavaScript. It does not reference the Blazor bootstrap or any .NET framework asset. It reconstructs the exact 1,185-byte profile-6 artifact containing three functions and a maximum dynamic call depth of three, checks SHA-256, and sends it through the same disposable worker used by the differential playground. The page requires ABI `2`: budget 66 must return status `0`, result `42`, and 66 instructions; budget 65 must return status `3011` (`WVR3011`), result zero, and 65 instructions. It also requires zero .NET/Blazor resource requests.
 
 The source displayed by this route is read-only provenance. The artifact was produced and qualified through the current Stage 0 toolchain, so this is a .NET-free browser execution path rather than a .NET-free compiler or build workflow. Run its independent static and engine checks with:
 

@@ -30,7 +30,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 | 11. Boot path and kernel | 🚧 In progress | Probe 32 through ABI 20 / `WVKMEM10` is cross-host qualified with the same `WVPROC11` behavior, a 134-page arena, and a 113-page client root; all four local pinned-QEMU scenarios pass. | Let non-tail lifetime pressure, broader traps, Hyper-V, or a third runnable choose the next kernel slice. |
 | 12. Runtime on Windvale OS | ✅ Qualified | Exact `Sum-Data.wv` and `Function-Only.wv` compiler outputs run across both hosts and Windvale OS; the second covers four functions and four scalar families. | Use a third real program or measured native-size pressure to choose further generalization. |
 | 13. Public foundation | 🚧 In progress | The public GitHub repository and its licensing, contribution, security, governance, support, and authorship policies are live. | Record the initial publication baseline and establish ongoing public project operations. |
-| WebAssembly interoperability | 🚧 In progress | The cross-host-qualified portable `.wv` selector emits deterministic Wasm from bounded scalar WVB plus metered loops and sequential `if`/`if/else` regions. The editable playground compares worker evidence with its .NET oracle, while a separate deployed static route executes the pinned 1,923-byte profile-5 artifact without loading .NET. | Add nested control or bounded calls, obtain cross-browser evidence, and move the remaining Stage 0 pipeline off the UI thread. |
+| WebAssembly interoperability | 🚧 In progress | The portable `.wv` selector now emits deterministic Wasm from bounded scalar WVB, metered structured control, and a locally qualified acyclic direct-call graph with one shared budget. The editable playground compares worker evidence with its .NET oracle, while a separate static route executes the pinned 1,185-byte three-function artifact without loading .NET. Profile 5 remains the latest cross-host-qualified boundary. | Compose bounded calls with structured control, obtain cross-host profile-6 and cross-browser evidence, and move the remaining Stage 0 pipeline off the UI thread. |
 
 ## Working end to end
 
@@ -46,6 +46,7 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 - ✅ Checked-add WVB → Windvale-authored selector → execution ABI 1 → result or `WVR3007` plus exact instruction count
 - ✅ Bounded straight-line `i32` WVB → Windvale-authored lowering → checked arithmetic → deterministic Wasm under Node.js
 - ✅ Sequential loops and `if`/`if/else` → ABI-2 instruction metering → exact success and `WVR3011` exhaustion
+- ✅ Bounded acyclic calls → real Wasm functions → one shared ABI-2 instruction budget across callees
 - ✅ Pinned generated Wasm → static JavaScript host → disposable browser worker without loading .NET
 - ✅ WVA trap entries + Q35 adapter → normalized terminal faults + clean VM poweroff
 - ✅ WVA paging mechanics → kernel-owned low-1-GiB W^X identity root

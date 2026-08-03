@@ -245,5 +245,11 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Sequential-If-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Sequential-If-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Bounded-Calls-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Bounded-Calls-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Bounded-Calls-Overflow-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Bounded-Calls-Overflow-Main.wv" />
   </ItemGroup>
 </Project>

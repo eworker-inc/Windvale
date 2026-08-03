@@ -120,16 +120,39 @@ const EXPECTED = [
             { budget: 41, status: 0, result: 42, instructions: 41 },
         ],
     },
+    {
+        name: "bounded direct calls",
+        path: process.argv[13],
+        sha256: "d92667752762a992bdb626e34b83b78ee9c531f167b911737dfbf5f6443f3518",
+        bytes: 1185,
+        abi: 2,
+        runs: [
+            { budget: 66, status: 0, result: 42, instructions: 66 },
+            { budget: 65, status: 3011, result: 0, instructions: 65 },
+            { budget: 66, status: 0, result: 42, instructions: 66 },
+        ],
+    },
+    {
+        name: "bounded direct-call overflow",
+        path: process.argv[14],
+        sha256: "4e936e5c4b077d1bce8719f5cc5c974961088f1171ed00158f9ac251f7652bd7",
+        bytes: 737,
+        abi: 2,
+        runs: [
+            { budget: 100, status: 3007, result: 0, instructions: 14 },
+            { budget: 100, status: 3007, result: 0, instructions: 14 },
+        ],
+    },
 ];
 
-if (process.argv.length !== 13) {
+if (process.argv.length !== 15) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
             "<subtract-overflow.wasm> <multiply-overflow.wasm> <negate-overflow.wasm> " +
             "<metered-loop.wasm> <nonterminating-loop.wasm> " +
             "<structured-control.wasm> <structured-control-else.wasm> " +
-            "<sequential-if.wasm>",
+            "<sequential-if.wasm> <bounded-calls.wasm> <bounded-calls-overflow.wasm>",
     );
 }
 

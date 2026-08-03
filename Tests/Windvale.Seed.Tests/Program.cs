@@ -91,9 +91,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "5b108fb0866913666becf400803ca47b4d8f0e4ef0d7ad76d20eb96a281149a1";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "c1f16695843c0001ffcf2e32ce9cb12f81d8db3b9902d1be6fa9258df52f6386";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "de2755fe9dbb9f00c9905964978f9b53acafb035a7cf475420c9b471a0e155d0";
+    private const string WEBASSEMBLY_CORE_SHA256 = "c84f4cfc0f6040fad4b3bd52baf530b053c2a0ba984b8518d186cf5724b8fadf";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "318acb4cd0deb866c0e9596f1006102943f554db2bde99faec7c6702f05f282d";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "13bad9b2633cde10342ba8a030150c3011cd6f0b80c395b17b9829e42ec4bf9d";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -119,6 +119,10 @@ internal static class Program
     private const string WEBASSEMBLY_STRUCTURED_CONTROL_ELSE_SHA256 = "242116d69f8c28acf4886b1210ffd2b75e622ce92b44586a8a1668188930a84b";
     private const string WEBASSEMBLY_SEQUENTIAL_IF_WVB_SHA256 = "061e1db0f14dd36d32235a44502b0b3accdd5c3cad529c3926a381a293884148";
     private const string WEBASSEMBLY_SEQUENTIAL_IF_SHA256 = "d4fd2bf65a6b4aebf55aaf033e86984a4e882761a4c9a59d85bd7ca8353a21ba";
+    private const string WEBASSEMBLY_BOUNDED_CALLS_WVB_SHA256 = "502f5e9394248db4e21b49a3a98173917c2ff6f9a8252bef606a7a6c845d6482";
+    private const string WEBASSEMBLY_BOUNDED_CALLS_SHA256 = "d92667752762a992bdb626e34b83b78ee9c531f167b911737dfbf5f6443f3518";
+    private const string WEBASSEMBLY_BOUNDED_CALLS_OVERFLOW_WVB_SHA256 = "9e2b2a747287ff49ffce4d34f888b557a48064062e75ff5147bfc0224b54dca2";
+    private const string WEBASSEMBLY_BOUNDED_CALLS_OVERFLOW_SHA256 = "4e936e5c4b077d1bce8719f5cc5c974961088f1171ed00158f9ac251f7652bd7";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -643,6 +647,11 @@ internal static class Program
 
     private static readonly string WEBASSEMBLY_SEQUENTIAL_IF_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Sequential-If-Main.wv");
+
+    private static readonly string WEBASSEMBLY_BOUNDED_CALLS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Bounded-Calls-Main.wv");
+    private static readonly string WEBASSEMBLY_BOUNDED_CALLS_OVERFLOW_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Bounded-Calls-Overflow-Main.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -7649,6 +7658,190 @@ internal static class Program
             Sequentialˉifˉlowered.Writtenˉbytes.AsSpan(),
             Sequentialˉifˉverified);
 
+        var Boundedˉcallsˉwvb = Compileˉsuccess(WEBASSEMBLY_BOUNDED_CALLS_SOURCE);
+        Equal(
+            WEBASSEMBLY_BOUNDED_CALLS_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Boundedˉcallsˉwvb));
+        var Boundedˉcallsˉverified = Moduleˉcodec.Readˉandˉverify(Boundedˉcallsˉwvb);
+        Equal(3, Boundedˉcallsˉverified.Functions.Length);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 66),
+            Runˉreferenceˉwebassemblyˉi32(Boundedˉcallsˉwvb, 66));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3011, 0, 65),
+            Runˉreferenceˉwebassemblyˉi32(Boundedˉcallsˉwvb, 65));
+        var Boundedˉcallsˉlowered = Runˉwebassemblyˉtool(Tool, Boundedˉcallsˉwvb);
+        Equal(0, Boundedˉcallsˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=1185 execution-abi=2\n",
+            Boundedˉcallsˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_BOUNDED_CALLS_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Boundedˉcallsˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉboundedˉcallˉwebassembly(
+            Boundedˉcallsˉlowered.Writtenˉbytes.AsSpan(),
+            Boundedˉcallsˉverified);
+        var Boundedˉcallsˉrepeat = Runˉwebassemblyˉtool(Tool, Boundedˉcallsˉwvb);
+        Equal(0, Boundedˉcallsˉrepeat.Exitˉcode);
+        Sequenceˉequal(
+            Boundedˉcallsˉlowered.Writtenˉbytes,
+            Boundedˉcallsˉrepeat.Writtenˉbytes);
+
+        var Boundedˉcallsˉoverflowˉwvb = Compileˉsuccess(
+            WEBASSEMBLY_BOUNDED_CALLS_OVERFLOW_SOURCE);
+        Equal(
+            WEBASSEMBLY_BOUNDED_CALLS_OVERFLOW_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Boundedˉcallsˉoverflowˉwvb));
+        var Boundedˉcallsˉoverflowˉverified = Moduleˉcodec.Readˉandˉverify(
+            Boundedˉcallsˉoverflowˉwvb);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3007, 0, 14),
+            Runˉreferenceˉwebassemblyˉi32(Boundedˉcallsˉoverflowˉwvb, 100));
+        var Boundedˉcallsˉoverflowˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Boundedˉcallsˉoverflowˉwvb);
+        Equal(0, Boundedˉcallsˉoverflowˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=737 execution-abi=2\n",
+            Boundedˉcallsˉoverflowˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_BOUNDED_CALLS_OVERFLOW_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Boundedˉcallsˉoverflowˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉboundedˉcallˉwebassembly(
+            Boundedˉcallsˉoverflowˉlowered.Writtenˉbytes.AsSpan(),
+            Boundedˉcallsˉoverflowˉverified);
+
+        var Forwardˉcall = Boundedˉcallsˉwvb.ToArray();
+        var Boundedˉcallsˉcode = Findˉsectionˉpayload(Forwardˉcall, Sectionˉkind.Code);
+        var Doubleˉcall = Boundedˉcallsˉverified.Functions[1].Instructions.Single(
+            Instruction => Instruction.Opcode == Opcode.Call);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Forwardˉcall.AsSpan(
+                Boundedˉcallsˉcode +
+                Boundedˉcallsˉverified.Functions[1].Declaration.Codeˉoffset +
+                Doubleˉcall.Offset + 1,
+                4),
+            2u);
+        var Forwardˉcallˉresult = Runˉwebassemblyˉtool(Tool, Forwardˉcall);
+        Equal(1, Forwardˉcallˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Forwardˉcallˉresult.Diagnostics);
+        Equal(0, Forwardˉcallˉresult.Writeˉcount);
+
+        var Wrongˉarityˉcall = Boundedˉcallsˉwvb.ToArray();
+        var Firstˉmainˉcall = Boundedˉcallsˉverified.Functions[2].Instructions.First(
+            Instruction => Instruction.Opcode == Opcode.Call);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Wrongˉarityˉcall.AsSpan(
+                Boundedˉcallsˉcode +
+                Boundedˉcallsˉverified.Functions[2].Declaration.Codeˉoffset +
+                Firstˉmainˉcall.Offset + 1,
+                4),
+            0u);
+        var Wrongˉarityˉresult = Runˉwebassemblyˉtool(Tool, Wrongˉarityˉcall);
+        Equal(1, Wrongˉarityˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Wrongˉarityˉresult.Diagnostics);
+        Equal(0, Wrongˉarityˉresult.Writeˉcount);
+
+        var Wrongˉmainˉname = Boundedˉcallsˉwvb.ToArray();
+        var Mainˉnameˉoffset = Wrongˉmainˉname.AsSpan().IndexOf("Main"u8);
+        True(Mainˉnameˉoffset >= 0, "The bounded-call WVB did not contain Main.");
+        Wrongˉmainˉname[Mainˉnameˉoffset + 3] = (byte)'x';
+        var Wrongˉmainˉnameˉresult = Runˉwebassemblyˉtool(
+            Tool,
+            Wrongˉmainˉname);
+        Equal(1, Wrongˉmainˉnameˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Wrongˉmainˉnameˉresult.Diagnostics);
+        Equal(0, Wrongˉmainˉnameˉresult.Writeˉcount);
+
+        var Maximumˉcallˉgraphˉwvb = Compileˉsuccess(
+            "module Webassemblyˉmaximumˉcalls profile portable; " +
+            "fn A(Value: i32) -> i32 { return Value + 1; } " +
+            "fn B(Value: i32) -> i32 { return A(Value) + 1; } " +
+            "fn C(Value: i32) -> i32 { return B(Value) + 1; } " +
+            "fn D(Value: i32) -> i32 { return C(Value) + 1; } " +
+            "fn E(Value: i32) -> i32 { return D(Value) + 1; } " +
+            "fn F(Value: i32) -> i32 { return E(Value) + 1; } " +
+            "fn G(Value: i32) -> i32 { return F(Value) + 1; } " +
+            "export fn Main() -> i32 { return G(35); }");
+        var Maximumˉcallˉgraphˉverified = Moduleˉcodec.Readˉandˉverify(
+            Maximumˉcallˉgraphˉwvb);
+        Equal(8, Maximumˉcallˉgraphˉverified.Functions.Length);
+        var Maximumˉcallˉgraphˉreference = Runˉreferenceˉwebassemblyˉi32(
+            Maximumˉcallˉgraphˉwvb,
+            1000);
+        Equal(0, Maximumˉcallˉgraphˉreference.Status);
+        Equal(42, Maximumˉcallˉgraphˉreference.Result);
+        var Maximumˉcallˉgraphˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Maximumˉcallˉgraphˉwvb);
+        Equal(0, Maximumˉcallˉgraphˉlowered.Exitˉcode);
+        Validateˉboundedˉcallˉwebassembly(
+            Maximumˉcallˉgraphˉlowered.Writtenˉbytes.AsSpan(),
+            Maximumˉcallˉgraphˉverified);
+
+        var Zeroˉparameterˉcallˉwvb = Compileˉsuccess(
+            "module Webassemblyˉzeroˉparameterˉcall profile portable; " +
+            "fn Answer() -> i32 { return 42; } " +
+            "export fn Main() -> i32 { return Answer(); }");
+        var Zeroˉparameterˉcallˉverified = Moduleˉcodec.Readˉandˉverify(
+            Zeroˉparameterˉcallˉwvb);
+        var Zeroˉparameterˉcallˉreference = Runˉreferenceˉwebassemblyˉi32(
+            Zeroˉparameterˉcallˉwvb,
+            100);
+        Equal(0, Zeroˉparameterˉcallˉreference.Status);
+        Equal(42, Zeroˉparameterˉcallˉreference.Result);
+        var Zeroˉparameterˉcallˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Zeroˉparameterˉcallˉwvb);
+        Equal(0, Zeroˉparameterˉcallˉlowered.Exitˉcode);
+        Validateˉboundedˉcallˉwebassembly(
+            Zeroˉparameterˉcallˉlowered.Writtenˉbytes.AsSpan(),
+            Zeroˉparameterˉcallˉverified);
+
+        var Oversizedˉcallˉgraphˉwvb = Compileˉsuccess(
+            "module Webassemblyˉoversizedˉcalls profile portable; " +
+            "fn A(Value: i32) -> i32 { return Value + 1; } " +
+            "fn B(Value: i32) -> i32 { return A(Value) + 1; } " +
+            "fn C(Value: i32) -> i32 { return B(Value) + 1; } " +
+            "fn D(Value: i32) -> i32 { return C(Value) + 1; } " +
+            "fn E(Value: i32) -> i32 { return D(Value) + 1; } " +
+            "fn F(Value: i32) -> i32 { return E(Value) + 1; } " +
+            "fn G(Value: i32) -> i32 { return F(Value) + 1; } " +
+            "fn H(Value: i32) -> i32 { return G(Value) + 1; } " +
+            "export fn Main() -> i32 { return H(34); }");
+        Equal(
+            9,
+            Moduleˉcodec.Readˉandˉverify(Oversizedˉcallˉgraphˉwvb).Functions.Length);
+        var Oversizedˉcallˉgraphˉresult = Runˉwebassemblyˉtool(
+            Tool,
+            Oversizedˉcallˉgraphˉwvb);
+        Equal(1, Oversizedˉcallˉgraphˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Oversizedˉcallˉgraphˉresult.Diagnostics);
+        Equal(0, Oversizedˉcallˉgraphˉresult.Writeˉcount);
+
+        var Wideˉparameterˉcallˉwvb = Compileˉsuccess(
+            "module Webassemblyˉwideˉparameterˉcall profile portable; " +
+            "fn Combine(A: i32, B: i32, C: i32) -> i32 { return A + B + C; } " +
+            "export fn Main() -> i32 { return Combine(10, 11, 21); }");
+        var Wideˉparameterˉcallˉresult = Runˉwebassemblyˉtool(
+            Tool,
+            Wideˉparameterˉcallˉwvb);
+        Equal(1, Wideˉparameterˉcallˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Wideˉparameterˉcallˉresult.Diagnostics);
+        Equal(0, Wideˉparameterˉcallˉresult.Writeˉcount);
+
         var Invalidˉelseˉtarget = Structuredˉcontrolˉwvb.ToArray();
         var Structuredˉfunction = Structuredˉcontrolˉverified.Functions[0];
         var Elseˉjump = Structuredˉfunction.Instructions.Single(Instruction =>
@@ -12720,6 +12913,299 @@ internal static class Program
         return Trapped
             ? new(3007, 0, Trapˉstep)
             : new(0, Result, Function.Instructions.Length);
+    }
+
+    private static void Validateˉboundedˉcallˉwebassembly(
+        ReadOnlySpan<byte> module,
+        Verifiedˉmodule source)
+    {
+        True(
+            source.Functions.Length is >= 2 and <= 8,
+            "The bounded-call source function count is invalid.");
+        var Mainˉexport = source.Module.Exports.Single(Export => Export.Name == "Main");
+        Equal(source.Functions.Length - 1, Mainˉexport.Targetˉindex);
+        True(
+            source.Functions.All(Function =>
+                Function.Declaration.Parameterˉtypes.Length <= 2 &&
+                Function.Declaration.Parameterˉtypes.All(Type => Type.Kind == Valueˉtype.I32) &&
+                Function.Declaration.Localˉtypes.All(Type => Type.Kind == Valueˉtype.I32) &&
+                Function.Declaration.Returnˉtype.Kind == Valueˉtype.I32),
+            "The bounded-call source contains a type outside the profile.");
+
+        var Reader = new WebAssemblyˉtestˉreader(module);
+        Reader.Readˉheader();
+
+        var Typeˉend = Reader.Readˉsection(1);
+        Reader.Require(
+            Reader.Readˉuleb32() == (uint)source.Functions.Length + 1,
+            "The bounded-call type count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x60, "The bounded-call wrapper type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The bounded-call budget arity is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The bounded-call budget type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The bounded-call status arity is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The bounded-call status type is invalid.");
+        foreach (var Function in source.Functions)
+        {
+            Reader.Require(Reader.Readˉbyte() == 0x60, "A bounded-call function type is invalid.");
+            Reader.Require(
+                Reader.Readˉuleb32() == (uint)Function.Declaration.Parameterˉtypes.Length,
+                "A bounded-call parameter count changed.");
+            foreach (var _ in Function.Declaration.Parameterˉtypes)
+            {
+                Reader.Require(Reader.Readˉbyte() == 0x7F, "A bounded-call parameter type changed.");
+            }
+            Reader.Require(Reader.Readˉuleb32() == 1, "A bounded-call result arity is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x7F, "A bounded-call result type changed.");
+        }
+        Reader.Require(Reader.Position == Typeˉend, "The bounded-call type section has trailing bytes.");
+
+        var Functionˉend = Reader.Readˉsection(3);
+        Reader.Require(
+            Reader.Readˉuleb32() == (uint)source.Functions.Length + 1,
+            "The bounded-call function count is invalid.");
+        for (var Index = 0; Index <= source.Functions.Length; Index++)
+        {
+            Reader.Require(
+                Reader.Readˉuleb32() == (uint)Index,
+                "A bounded-call function type index is invalid.");
+        }
+        Reader.Require(
+            Reader.Position == Functionˉend,
+            "The bounded-call function section has trailing bytes.");
+
+        var Globalˉend = Reader.Readˉsection(6);
+        Reader.Require(Reader.Readˉuleb32() == 5, "The bounded-call global count is invalid.");
+        Reader.Readˉglobal(0, 2);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Require(
+            Reader.Position == Globalˉend,
+            "The bounded-call global section has trailing bytes.");
+
+        var Exportˉend = Reader.Readˉsection(7);
+        Reader.Require(Reader.Readˉuleb32() == 4, "The bounded-call export count is invalid.");
+        Reader.Readˉexport("Windvale.run", 0, 0);
+        Reader.Readˉexport("Windvale.abi", 3, 0);
+        Reader.Readˉexport("Windvale.result", 3, 1);
+        Reader.Readˉexport("Windvale.instructions", 3, 2);
+        Reader.Require(
+            Reader.Position == Exportˉend,
+            "The bounded-call export section has trailing bytes.");
+
+        var Codeˉend = Reader.Readˉsection(10);
+        Reader.Require(
+            Reader.Readˉuleb32() == (uint)source.Functions.Length + 1,
+            "The bounded-call body count is invalid.");
+        var Wrapperˉlength = Reader.Readˉuleb32();
+        Reader.Require(Wrapperˉlength <= int.MaxValue, "The bounded-call wrapper is oversized.");
+        var Wrapperˉend = Reader.Position + (int)Wrapperˉlength;
+        Reader.Require(Reader.Readˉuleb32() == 1, "The bounded-call wrapper local groups are invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The bounded-call wrapper local count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The bounded-call wrapper local type is invalid.");
+        Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The bounded-call result reset is invalid.");
+        Reader.Readˉindexed(0x24, 1);
+        Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The bounded-call counter reset is invalid.");
+        Reader.Readˉindexed(0x24, 2);
+        Reader.Readˉindexed(0x20, 0);
+        Reader.Readˉindexed(0x24, 3);
+        Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The bounded-call status reset is invalid.");
+        Reader.Readˉindexed(0x24, 4);
+        Reader.Readˉindexed(0x10, (uint)Mainˉexport.Targetˉindex + 1);
+        Reader.Readˉindexed(0x21, 1);
+        Reader.Readˉindexed(0x23, 4);
+        Reader.Require(Reader.Readˉbyte() == 0x45, "The bounded-call success check is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x04, "The bounded-call success branch is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x40, "The bounded-call success block type is invalid.");
+        Reader.Readˉindexed(0x20, 1);
+        Reader.Readˉindexed(0x24, 1);
+        Reader.Require(Reader.Readˉbyte() == 0x0B, "The bounded-call success branch is unterminated.");
+        Reader.Readˉindexed(0x23, 4);
+        Reader.Require(Reader.Readˉbyte() == 0x0B, "The bounded-call wrapper is unterminated.");
+        Reader.Require(Reader.Position == Wrapperˉend, "The bounded-call wrapper has trailing bytes.");
+
+        void Readˉmeter()
+        {
+            Reader.Readˉindexed(0x23, 2);
+            Reader.Readˉindexed(0x23, 3);
+            Reader.Require(Reader.Readˉbyte() == 0x4F, "The bounded-call budget comparison is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x04, "The bounded-call exhaustion branch is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x40, "The bounded-call exhaustion block type is invalid.");
+            Reader.Require(Reader.Readˉi32ˉconstant() == 3011, "The bounded-call exhaustion status is invalid.");
+            Reader.Readˉindexed(0x24, 4);
+            Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The bounded-call exhaustion result is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0F, "The bounded-call exhaustion return is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0B, "The bounded-call exhaustion branch is unterminated.");
+            Reader.Readˉindexed(0x23, 2);
+            Reader.Require(Reader.Readˉi32ˉconstant() == 1, "The bounded-call charge is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x6A, "The bounded-call charge addition is invalid.");
+            Reader.Readˉindexed(0x24, 2);
+        }
+
+        void Readˉoverflowˉreturn()
+        {
+            Reader.Require(Reader.Readˉbyte() == 0x04, "The bounded-call overflow branch is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x40, "The bounded-call overflow block type is invalid.");
+            Reader.Require(Reader.Readˉi32ˉconstant() == 3007, "The bounded-call overflow status is invalid.");
+            Reader.Readˉindexed(0x24, 4);
+            Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The bounded-call overflow result is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0F, "The bounded-call overflow return is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0B, "The bounded-call overflow branch is unterminated.");
+        }
+
+        void Readˉcheckedˉadd(uint Left, uint Right, uint Result)
+        {
+            Reader.Readˉindexed(0x21, Right);
+            Reader.Readˉindexed(0x21, Left);
+            Reader.Readˉindexed(0x20, Left);
+            Reader.Readˉindexed(0x20, Right);
+            Reader.Require(Reader.Readˉbyte() == 0x6A, "The bounded-call checked add is invalid.");
+            Reader.Readˉindexed(0x22, Result);
+            Reader.Readˉindexed(0x20, Left);
+            Reader.Require(Reader.Readˉbyte() == 0x73, "The bounded-call checked add xor is invalid.");
+            Reader.Readˉindexed(0x20, Result);
+            Reader.Readˉindexed(0x20, Right);
+            Reader.Require(Reader.Readˉbyte() == 0x73, "The bounded-call checked add xor is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x71, "The bounded-call checked add mask is invalid.");
+            Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The bounded-call checked add sign is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x48, "The bounded-call checked add comparison is invalid.");
+            Readˉoverflowˉreturn();
+            Reader.Readˉindexed(0x20, Result);
+        }
+
+        void Readˉcheckedˉsubtract(uint Left, uint Right, uint Result)
+        {
+            Reader.Readˉindexed(0x21, Right);
+            Reader.Readˉindexed(0x21, Left);
+            Reader.Readˉindexed(0x20, Left);
+            Reader.Readˉindexed(0x20, Right);
+            Reader.Require(Reader.Readˉbyte() == 0x6B, "The bounded-call checked subtraction is invalid.");
+            Reader.Readˉindexed(0x22, Result);
+            Reader.Readˉindexed(0x20, Left);
+            Reader.Require(Reader.Readˉbyte() == 0x73, "The bounded-call checked subtraction xor is invalid.");
+            Reader.Readˉindexed(0x20, Left);
+            Reader.Readˉindexed(0x20, Right);
+            Reader.Require(Reader.Readˉbyte() == 0x73, "The bounded-call checked subtraction xor is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x71, "The bounded-call checked subtraction mask is invalid.");
+            Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The bounded-call checked subtraction sign is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x48, "The bounded-call checked subtraction comparison is invalid.");
+            Readˉoverflowˉreturn();
+            Reader.Readˉindexed(0x20, Result);
+        }
+
+        void Readˉcheckedˉmultiply(uint Left, uint Right, uint Result, uint Wide)
+        {
+            Reader.Readˉindexed(0x21, Right);
+            Reader.Readˉindexed(0x21, Left);
+            Reader.Readˉindexed(0x20, Left);
+            Reader.Require(Reader.Readˉbyte() == 0xAC, "The bounded-call multiply extension is invalid.");
+            Reader.Readˉindexed(0x20, Right);
+            Reader.Require(Reader.Readˉbyte() == 0xAC, "The bounded-call multiply extension is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x7E, "The bounded-call multiply is invalid.");
+            Reader.Readˉindexed(0x22, Wide);
+            Reader.Require(Reader.Readˉbyte() == 0xA7, "The bounded-call multiply wrap is invalid.");
+            Reader.Readˉindexed(0x22, Result);
+            Reader.Require(Reader.Readˉbyte() == 0xAC, "The bounded-call multiply result extension is invalid.");
+            Reader.Readˉindexed(0x20, Wide);
+            Reader.Require(Reader.Readˉbyte() == 0x52, "The bounded-call multiply comparison is invalid.");
+            Readˉoverflowˉreturn();
+            Reader.Readˉindexed(0x20, Result);
+        }
+
+        void Readˉcheckedˉnegate(uint Value)
+        {
+            Reader.Readˉindexed(0x21, Value);
+            Reader.Readˉindexed(0x20, Value);
+            Reader.Require(Reader.Readˉi32ˉconstant() == int.MinValue, "The bounded-call negate minimum is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x46, "The bounded-call negate comparison is invalid.");
+            Readˉoverflowˉreturn();
+            Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The bounded-call negate zero is invalid.");
+            Reader.Readˉindexed(0x20, Value);
+            Reader.Require(Reader.Readˉbyte() == 0x6B, "The bounded-call negate subtraction is invalid.");
+        }
+
+        for (var Functionˉindex = 0; Functionˉindex < source.Functions.Length; Functionˉindex++)
+        {
+            var Function = source.Functions[Functionˉindex];
+            var Bodyˉlength = Reader.Readˉuleb32();
+            Reader.Require(Bodyˉlength <= int.MaxValue, "A bounded-call body is oversized.");
+            var Bodyˉend = Reader.Position + (int)Bodyˉlength;
+            var Localˉcount = Function.Declaration.Allˉlocalˉtypes.Length;
+            var Scratchˉleft = (uint)Localˉcount;
+            var Scratchˉright = Scratchˉleft + 1;
+            var Scratchˉresult = Scratchˉleft + 2;
+            var Scratchˉwide = Scratchˉleft + 3;
+            Reader.Require(Reader.Readˉuleb32() == 2, "A bounded-call local group count is invalid.");
+            Reader.Require(
+                Reader.Readˉuleb32() == (uint)Function.Declaration.Localˉtypes.Length + 3,
+                "A bounded-call i32 local count is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x7F, "A bounded-call local type is invalid.");
+            Reader.Require(Reader.Readˉuleb32() == 1, "A bounded-call i64 local count is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x7E, "A bounded-call wide local type is invalid.");
+
+            foreach (var Instruction in Function.Instructions)
+            {
+                Readˉmeter();
+                switch (Instruction.Opcode)
+                {
+                    case Opcode.I32ˉconst:
+                        Reader.Require(
+                            Reader.Readˉi32ˉconstant() == Instruction.Signedˉoperand,
+                            "A bounded-call constant changed value.");
+                        break;
+                    case Opcode.Localˉload:
+                        Reader.Readˉindexed(0x20, Instruction.Unsignedˉoperand);
+                        break;
+                    case Opcode.Localˉstore:
+                        Reader.Readˉindexed(0x21, Instruction.Unsignedˉoperand);
+                        break;
+                    case Opcode.I32ˉadd:
+                        Readˉcheckedˉadd(Scratchˉleft, Scratchˉright, Scratchˉresult);
+                        break;
+                    case Opcode.I32ˉsubtract:
+                        Readˉcheckedˉsubtract(Scratchˉleft, Scratchˉright, Scratchˉresult);
+                        break;
+                    case Opcode.I32ˉmultiply:
+                        Readˉcheckedˉmultiply(
+                            Scratchˉleft,
+                            Scratchˉright,
+                            Scratchˉresult,
+                            Scratchˉwide);
+                        break;
+                    case Opcode.I32ˉnegate:
+                        Readˉcheckedˉnegate(Scratchˉleft);
+                        break;
+                    case Opcode.Call:
+                        True(
+                            Instruction.Unsignedˉoperand < (uint)Functionˉindex,
+                            "The bounded-call source contains a forward call.");
+                        Reader.Readˉindexed(0x10, Instruction.Unsignedˉoperand + 1);
+                        Reader.Readˉindexed(0x21, Scratchˉleft);
+                        Reader.Readˉindexed(0x23, 4);
+                        Reader.Require(Reader.Readˉbyte() == 0x04, "The bounded-call status branch is invalid.");
+                        Reader.Require(Reader.Readˉbyte() == 0x40, "The bounded-call status block type is invalid.");
+                        Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The bounded-call propagated result is invalid.");
+                        Reader.Require(Reader.Readˉbyte() == 0x0F, "The bounded-call status return is invalid.");
+                        Reader.Require(Reader.Readˉbyte() == 0x0B, "The bounded-call status branch is unterminated.");
+                        Reader.Readˉindexed(0x20, Scratchˉleft);
+                        break;
+                    case Opcode.Pop:
+                        Reader.Require(Reader.Readˉbyte() == 0x1A, "The bounded-call drop opcode is invalid.");
+                        break;
+                    case Opcode.Return:
+                        Reader.Require(Reader.Readˉbyte() == 0x0F, "The bounded-call return opcode is invalid.");
+                        break;
+                    default:
+                        throw new InvalidDataException(
+                            $"Unsupported bounded-call source opcode {Instruction.Opcode}.");
+                }
+            }
+            Reader.Require(Reader.Readˉbyte() == 0x0B, "A bounded-call body is unterminated.");
+            Reader.Require(Reader.Position == Bodyˉend, "A bounded-call body has trailing bytes.");
+        }
+        Reader.Require(Reader.Position == Codeˉend, "The bounded-call code section has trailing bytes.");
+        Reader.Require(Reader.Position == Reader.Length, "The bounded-call module has trailing bytes.");
     }
 
     private static void Validateˉmeteredˉcontrolˉwebassembly(

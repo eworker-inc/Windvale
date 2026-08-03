@@ -1,7 +1,7 @@
 # WebAssembly and browser playground exploration
 
 - Date: 2026-08-01
-- Status: Exploration with an implemented Stage 0 playground and bounded Windvale-authored metered-control-flow backend; not an accepted permanent WebAssembly target
+- Status: Exploration with an implemented Stage 0 playground and bounded Windvale-authored metered-control-flow/direct-call backend; not an accepted permanent WebAssembly target
 
 ## Purpose
 
@@ -109,7 +109,9 @@ The direct backend must not become a parallel language implementation. It should
 
 [Decision 0116](../Decisions/0116-Sequential-WebAssembly-Control-Regions.md) adds cross-host-qualified profile 5 for two or more sequential nonnested regions. The selector classifies compiler-produced `while`, `if`, and `if/else` shapes, rejects crossing or malformed targets, emits direct WebAssembly structured control, and preserves ABI-2 metering. Retained fixtures cover two sequential `if` statements and two loops surrounding both the true and false `if/else` routes. The deployed .NET-free route advances to the 1,923-byte mixed-control artifact at exact budgets 184 and 183.
 
-This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet implement calls, nested control flow, `break`, `continue`, other value families, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, cross-browser qualification, or UI-thread containment for Stage 0. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
+[Decision 0120](../Decisions/0120-Bounded-WebAssembly-Call-Graph.md) adds local profile-6 evidence for two through eight acyclic direct functions with zero through two `i32` parameters. The selector rejects calls that do not target a lower canonical ordinal, which excludes recursion and statically caps depth at eight. It emits real private Wasm functions behind the unchanged ABI-2 wrapper and shares one exact instruction budget and status across all callees. The .NET-free route advances to the 1,185-byte three-function artifact at exact budgets 66 and 65.
+
+This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet compose calls with control flow or implement recursion, nested control flow, `break`, `continue`, other value families, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, cross-browser qualification, or UI-thread containment for Stage 0. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
 ## Proposed playground shape
 
@@ -257,7 +259,7 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 ### Exploration spike
 
 1. Prove whether the current C# source compiler, WVB codec/verifier, and reference interpreter can build for browser-hosted .NET WebAssembly without the native project.
-2. Compile and run bounded portable programs in a Web Worker. Implemented through profile 5 by Decisions 0107, 0113, and 0116.
+2. Compile and run bounded portable programs in a Web Worker. Implemented locally through profile 6 by Decisions 0107, 0113, 0116, and 0120; profile 5 remains the latest cross-host-qualified backend boundary.
 3. Compare its WVB bytes, result, trap status, and defined instruction count with the reference path. Implemented for ABI 1 and ABI 2; cross-browser evidence remains open.
 4. Measure compressed download size, cold start, compile time, execution time, peak browser memory, and worker termination behavior.
 5. Record unsupported APIs and required adapter seams before choosing a product route.
@@ -274,7 +276,7 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 
 1. Retain the established Windows/Linux byte equality for the bounded one-function straight-line `i32` lowerer, execution ABI 1, and the Stage 0 differential oracle.
 2. Retain the implemented disposable-worker path and its canonical WVB plus interpreter/WebAssembly differential evidence while broadening browser coverage.
-3. Extend the implemented single-loop structured control flow to multiple regions or a bounded call graph, then add a UI/event experiment only after each capability, lifetime, resource, and asynchronous execution contract is explicit.
+3. Compose the implemented sequential structured control and bounded call graph, then add a UI/event experiment only after each capability, lifetime, resource, and asynchronous execution contract is explicit.
 4. Decide whether WebAssembly becomes a permanent Windvale host and AOT target.
 
 ## Qualification direction if WebAssembly is accepted

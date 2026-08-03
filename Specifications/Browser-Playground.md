@@ -10,7 +10,7 @@ The browser playground exposes the existing Windvale source-to-WVB-to-runtime pa
 
 This host contract contains the experiment without making .NET or WebAssembly the definition of Windvale semantics. The source language, canonical WVB, verifier, runtime behavior, profiles, and capability names remain owned by their existing specifications.
 
-The separate `/playground/wasm-demo/` route exposes one pinned generated module without starting Blazor or .NET. It verifies the 432-byte artifact identity in ordinary JavaScript and passes the bytes through the same disposable-worker boundary. Its displayed `.wv` source is read-only provenance; it does not provide source compilation.
+The separate `/playground/wasm-demo/` route exposes one pinned generated module without starting Blazor or .NET. It verifies the current 1,185-byte profile-6 artifact identity in ordinary JavaScript and passes the bytes through the same disposable-worker boundary. Its displayed `.wv` source is read-only provenance; it does not provide source compilation.
 
 ## Pipeline
 
@@ -102,7 +102,7 @@ It returns immutable evidence containing:
 
 The engine contains no browser, DOM, file, network, or deployment API. The Blazor WebAssembly project is one UI adapter over that testable boundary.
 
-The reusable engine also exposes the bounded WebAssembly lowerer as a separate immutable result. It embeds the portable backend and hosted shell as `.wv` source, compiles the composition once through Stage 0, requires backend WVB SHA-256 `b47a6f5b89ac0d58dc6cafd6489b1fb12f1a0b9b161c09e8d2ca5a438993076a`, and publishes no Wasm on selector failure. The browser adapter transfers successful bytes to a new module worker, which applies `WebAssembly.validate`, rejects all imports, checks the exact ABI-0 or ABI-1 exports, executes once, returns only bounded scalar evidence, and is terminated after success, failure, or timeout.
+The reusable engine also exposes the bounded WebAssembly lowerer as a separate immutable result. It embeds the portable backend and hosted shell as `.wv` source, compiles the composition once through Stage 0, requires backend WVB SHA-256 `318acb4cd0deb866c0e9596f1006102943f554db2bde99faec7c6702f05f282d`, and publishes no Wasm on selector failure. The browser adapter transfers successful bytes to a new module worker, which applies `WebAssembly.validate`, rejects all imports, checks the exact ABI-0, ABI-1, or ABI-2 exports, executes once, returns only bounded scalar evidence, and is terminated after success, failure, or timeout.
 
 The UI adapter hosts a locally bundled Monaco editor. Its Windvale tokenizer mirrors the implemented lexical categories in `Tools/Editors/Windvale/syntaxes/Windvale.tmLanguage.json`; it is presentation support rather than a source-language contract or compiler front end. Compiler diagnostics with source locations are projected into editor markers, while the compiler remains their authority. Editor text crosses into the reusable engine only when a run is requested.
 

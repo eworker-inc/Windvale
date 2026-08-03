@@ -1,0 +1,13 @@
+module Webassemblyˉboundedˉcalls profile portable;
+
+fn Add(Left: i32, Right: i32) -> i32 {
+    return Left + Right;
+}
+
+fn Double(Value: i32) -> i32 {
+    return Add(Value, Value);
+}
+
+export fn Main() -> i32 {
+    return Add(Double(10), Double(11));
+}
