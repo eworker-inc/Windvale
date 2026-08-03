@@ -6,7 +6,7 @@ This list records unresolved decisions without presenting them as implementation
 
 - Which individual or service accounts should receive each least-privilege GitHub organization role as the maintainer group grows?
 - Should GitHub Discussions be enabled for public design and usage questions?
-- Where will the public project site and long-term release artifacts live?
+- Which durable release and archive service should retain signed long-term artifacts beyond the established public site and GitHub source repository?
 
 ## Language
 
@@ -30,7 +30,7 @@ This list records unresolved decisions without presenting them as implementation
 
 ## Native toolchain
 
-- Which labels, conditional branches, RIP-relative data operations, and 64-bit address forms should follow the accepted WVA 1 core?
+- Which measured consumer should justify WVA division, variable-count shifts, conditional moves, or a shared production machine encoder while preserving the independent oracle?
 - Should a later ergonomic assembly layer sort declarations and expand expressions/macros into canonical WVA, or should those facilities evolve directly in WVA?
 - Which final formats are required for UEFI, the kernel, debug information, and host interoperability?
 - Which later section-permission, archive-search, dead-stripping, and executable-container responsibilities should extend the accepted minimal linker rather than live in target adapters?
@@ -68,8 +68,6 @@ The [WebAssembly playground exploration](WebAssembly-Playground-Exploration.md) 
 
 Decisions 0058 through qualified 0103, 0105, 0108, 0109, 0111, 0112, 0133, and 0150 establish reproducible bytecode compiler convergence, the bounded shared native path through frame-owned direct records and generation-owned dynamic values, all 12 current service leaves and calls through 64 parameters, typed block-scoped physical storage under the unchanged 2,048-cell bound, bounded exact-compiler publication and complete native reproduction, live Windvale-produced service leaves, Windvale-owned executable-image layout and lifetime, WVA-owned Q35 poweroff, normalized no-error/error-code trap entries, the first kernel-owned W^X root, fixed in-guest WVB admission, protected processes, the first Windvale init/resource service, the first user-space Windvale bytecode interpreter, section-derived validation, a typed WVB/execution-budget pair, automatic terminal cleanup, one generation-safe exact tail reclaim/reuse cycle, and two exact compiler-produced WVB programs across hosts and Windvale OS. Decisions 0104, 0106, and 0107 establish a separate WebAssembly interoperability track whose next gate is broader worker containment and cross-browser evidence. The recommended next decisions are:
 
-1. Resolve the exact compiler's separate 4 MiB WVO/object and flat-linker AOT boundaries through measured ceiling revision, multiple objects, or function/data-granular publication.
-2. Serialize hosted capability/runtime requirements, then package the compiler through paired Windows PE and Linux ELF targets without making either host define Windvale semantics.
-3. Add caller-visible descriptor liveness before relocating descriptor-bearing aggregate returns; do not infer aggregate safety from the direct-descriptor proof.
-4. Follow Decision 0173's bounded process sequence from the qualified Probe-37 endpoint baseline: a statically constructed directory-service process, second endpoint, and state-driven ready/wait dispatcher before timer preemption, general memory objects, dynamic launch, supervision, or driver isolation. Keep each later mechanism a separate evidence claim.
-5. Satisfy the remaining Decision 0057 native-retirement conditions, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.
+1. Add caller-visible descriptor liveness before relocating descriptor-bearing aggregate returns; do not infer aggregate safety from the direct-descriptor proof.
+2. Follow Decision 0173's bounded process sequence from the qualified Probe-37 endpoint baseline: a statically constructed directory-service process, second endpoint, and state-driven ready/wait dispatcher before timer preemption, general memory objects, the first flat resource domain, dynamic launch, supervision, or driver isolation. Keep each later mechanism a separate evidence claim.
+3. Satisfy the remaining Decision 0057 native-retirement conditions, archive the final .NET Stage 0 recovery release, and remove .NET from normal automation only from one fully qualified source state.

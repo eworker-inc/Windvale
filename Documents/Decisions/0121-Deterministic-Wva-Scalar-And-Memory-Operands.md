@@ -2,6 +2,7 @@
 
 - Date: 2026-08-02
 - Status: Implemented; Windows qualification passed; cross-host qualification pending
+- Numbering note: This historical record shares number 0121 with [WebAssembly calls with structured control](0121-WebAssembly-Calls-With-Structured-Control.md); references must use the complete title and filename.
 
 ## Context
 

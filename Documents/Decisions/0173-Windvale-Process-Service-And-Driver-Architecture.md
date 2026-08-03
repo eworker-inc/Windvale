@@ -123,12 +123,13 @@ Platform-specific applications, services, and drivers remain valid when their sc
 2. Split the immutable directory provider out of the current combined init/resource/directory process into one statically constructed third process. Give the client a separate resource endpoint and directory endpoint, move the directory snapshot capability to the new provider, and replace the fixed machine sequence with the smallest state-driven ready/wait dispatcher. Do not add dynamic names or restart in this slice.
 3. Add a monotonic timer interrupt and single-CPU fixed-quantum preemption while retaining one thread per process and exact deterministic lifecycle evidence.
 4. Replace exact tail-only process allocation with checked independently lived memory objects and a general bounded physical-page reclamation strategy sufficient for more than one process lifetime.
-5. Add dynamic process and address-space creation from immutable launch plans, starting each process only after complete admission and binding.
-6. Generalize capability-table allocation, rights reduction, explicit transfer, endpoint creation, events or timers, deadlines, and shared memory one measured consumer at a time.
-7. Extract the service-manager role from the combined init/resource provider; add exit observation, dependency policy, and generation-safe replacement without transparent mutation replay.
-8. Move ordinary console/serial output to the first isolated driver service while retaining the kernel emergency sink.
-9. Add one bounded shared-memory device data plane, then storage or networking with measured interrupt, DMA, IOMMU, reset, and teardown behavior.
-10. Add multiple threads, SMP, priorities, affinity, or real-time behavior only after single-CPU lifecycle, revocation, allocator, and page-table invalidation evidence is sound.
+5. Introduce one flat generation-safe resource domain over the statically constructed processes and account its process, thread, memory, endpoint, CPU, and teardown ceilings. Do not add hierarchy or delegation in this slice.
+6. Add dynamic process and address-space creation from immutable launch plans, starting each process only after complete admission, resource-domain membership, and binding.
+7. Generalize capability-table allocation, rights reduction, explicit transfer, endpoint creation, events or timers, deadlines, and shared memory one measured consumer at a time.
+8. Extract the service-manager role from the combined init/resource provider; add exit observation, dependency policy, and generation-safe replacement without transparent mutation replay.
+9. Move ordinary console/serial output to the first isolated driver service while retaining the kernel emergency sink.
+10. Add one bounded shared-memory device data plane, then storage or networking with measured interrupt, DMA, IOMMU, reset, and teardown behavior.
+11. Add multiple threads, SMP, priorities, affinity, or real-time behavior only after single-CPU lifecycle, revocation, allocator, and page-table invalidation evidence is sound.
 
 Each step is a pressure test, not permission to stabilize its first record layout or syscall encoding as a public ABI.
 

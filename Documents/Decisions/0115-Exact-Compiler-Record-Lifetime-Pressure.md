@@ -3,7 +3,7 @@
 - Date: 2026-08-02
 - Status: Qualified at exact integration commit `05e5ef1069eff5283f4f1c46923f40905e04c5db`
 - Retains: Native ABI 20, execution-context version 7, target `x86-64-wvb-baseline-v20`, and the 2 MiB host record arena
-- Refines: [Decision 0058](0058-Reproducible-Compiler-Bootstrap.md), [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), and [Decision 0112](0112-Bounded-Exact-Compiler-Record-Arena.md)
+- Refines: [Decision 0058](0058-Reproducible-Compiler-Bootstrap-Convergence.md), [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), and [Decision 0112](0112-Bounded-Exact-Compiler-Record-Arena.md)
 
 ## Context
 

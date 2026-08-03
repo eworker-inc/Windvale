@@ -2,6 +2,7 @@
 
 - Date: 2026-08-02
 - Status: Implemented with local Windows, Node.js, and Chromium evidence; cross-host and cross-browser qualification pending
+- Numbering note: This historical record shares number 0121 with [Deterministic WVA scalar and memory operands](0121-Deterministic-Wva-Scalar-And-Memory-Operands.md); references must use the complete title and filename.
 - Extends: [Decision 0120](0120-Bounded-WebAssembly-Call-Graph.md)
 - Target: `wasm32-browser-v1-experimental`
 

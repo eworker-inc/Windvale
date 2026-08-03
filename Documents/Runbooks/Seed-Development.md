@@ -135,9 +135,7 @@ dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Hello-Windvale
 ./artifacts/Hello-Windvale.elf
 ```
 
-Version 2 accepts exactly `console.write_line`, serializes and independently verifies its [`WVHC 1`](../../Specifications/Windvale-Hosted-Console-Application.md) capability/service metadata, and retains Stage 0 only as a build-time container adapter.
-
-The result is `Result: 29`.
+Version 2 accepts exactly `console.write_line`, serializes and independently verifies its [`WVHC 1`](../../Specifications/Windvale-Hosted-Console-Application.md) capability/service metadata, and retains Stage 0 only as a build-time container adapter. The application writes `Hello from Windvale` and exits with process result `0`.
 
 ## Run a hosted program
 

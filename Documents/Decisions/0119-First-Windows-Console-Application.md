@@ -2,6 +2,7 @@
 
 - Date: 2026-08-02
 - Status: Cross-host qualified at `ea1aa89`
+- Numbering note: This historical record shares number 0119 with [Expanded WVA x86-64 foundation](0119-Expanded-Wva-X64-Foundation.md); references must use the complete title and filename.
 - Target: `windows-x64-console-v1`
 - Retains: Canonical WVB 1.6, native ABI 20/context 7, WVO 1.0, `flat-x86-64-v1`, the 4 MiB object/link limits, and the .NET retirement gate
 
