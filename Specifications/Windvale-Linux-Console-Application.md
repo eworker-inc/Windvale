@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`linux-x64-console-v1` is the first deterministic Linux host-executable target. It packages one already verified ABI-22 x86-64 native fragment as a sectionless, import-free ELF64 static position-independent application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and ELF adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without a dynamic loader, libc, or .NET.
+`linux-x64-console-v1` is the first deterministic Linux host-executable target. It packages one already verified ABI-22 x86-64 native fragment as a sectionless, import-free ELF64 static position-independent application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and ELF adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without a dynamic loader, libc, or .NET. Version 2 adds the first explicit standalone hosted capability under the shared [`WVHC 1` contract](Windvale-Hosted-Console-Application.md); version 1 and its exact bytes remain unchanged.
 
 This is the Linux twin of `windows-x64-console-v1`. It is a narrow executable-boundary proof, not a general Linux runtime, hosted-capability container, native compiler executable, or .NET-retirement milestone.
 
@@ -75,6 +75,8 @@ The portable [console-application verifier](Windvale-Console-Application-Verific
 The writer requires both verifiers to reproduce the verified flat link before publication. Differential tests independently compile and evaluate the Windvale layout, construction, and verification modules; compare their complete serialized evidence with the C# layout and byte oracles; assemble the WVA startup; require its exact symbol and relocation contract; instantiate the four final-image displacements; and compare all 158 startup bytes with the ELF. The existing malformed ELF corpus drives both completed-container verifiers, and the paired tests require PE and ELF recovery to agree on the same native image and `Main` offset.
 
 ## Diagnostics
+
+Version 2 writer failures use `WVL1101` through `WVL1104` for the same preparation, entry/service, WVO/link, and completed-verification stages. Its untrusted-container verifier reports `WVL2100` for a malformed ELF, startup, runtime table, `WVHC 1` record, digest, extent, or padding field. Version 2 accepts only `console.write_line`, writes through direct Linux syscalls, reserves the ABI-22 64 MiB text arena, and is otherwise specified by the shared hosted-console contract.
 
 Writer failures return no application bytes:
 

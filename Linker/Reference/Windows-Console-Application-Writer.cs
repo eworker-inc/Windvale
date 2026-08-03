@@ -70,6 +70,53 @@ public static class Windowsˉconsoleˉapplicationˉwriter
         return Windowsˉconsoleˉapplicationˉresult.Succeeded(Image.ToImmutableArray());
     }
 
+    public static Windowsˉconsoleˉapplicationˉresult Writeˉhostedˉconsole(
+        Nativeˉfragment fragment)
+    {
+        var Prepared = Nativeˉconsoleˉapplicationˉpreparer.Prepareˉhostedˉconsole(fragment);
+        if (!Prepared.Success)
+        {
+            var Code = Prepared.Failure switch
+            {
+                Nativeˉconsoleˉapplicationˉinputˉfailure.Unverifiedˉfragment => "WVW1101",
+                Nativeˉconsoleˉapplicationˉinputˉfailure.Unsupportedˉentry => "WVW1102",
+                Nativeˉconsoleˉapplicationˉinputˉfailure.Linkˉfailure => "WVW1103",
+                _ => "WVW1103",
+            };
+            return Windowsˉconsoleˉapplicationˉresult.Failed(Code, Prepared.Message);
+        }
+
+        var Input = Prepared.Input!;
+        try
+        {
+            var Image = Hostedˉconsoleˉapplicationˉbuilder.Buildˉwindows(
+                Input.Imageˉbytes.AsSpan(),
+                Input.Entryˉoffset);
+            var Verified = Windowsˉconsoleˉapplicationˉverifier.Verify(Image);
+            if (Verified.Formatˉversion !=
+                    Windowsˉconsoleˉapplicationˉcontract.HOSTED_FORMAT_VERSION ||
+                !Verified.Requiredˉservices.SequenceEqual(Input.Requiredˉservices) ||
+                Verified.Nativeˉentryˉoffset != Input.Entryˉoffset ||
+                !Verified.Nativeˉimageˉbytes.AsSpan().SequenceEqual(Input.Imageˉbytes.AsSpan()))
+            {
+                return Windowsˉconsoleˉapplicationˉresult.Failed(
+                    "WVW1104",
+                    "The independently verified hosted Windows application did not reproduce its native image, entry, and service manifest.");
+            }
+            return Windowsˉconsoleˉapplicationˉresult.Succeeded(Image.ToImmutableArray());
+        }
+        catch (Exception Exception) when (
+            Exception is Windowsˉconsoleˉapplicationˉexception or
+                InvalidDataException or
+                OverflowException or
+                ArgumentException)
+        {
+            return Windowsˉconsoleˉapplicationˉresult.Failed(
+                "WVW1104",
+                $"Hosted Windows application verification failed: {Exception.Message}");
+        }
+    }
+
     private static byte[] Buildˉimage(ReadOnlySpan<byte> nativeˉimage, uint nativeˉentryˉoffset)
     {
         var Layout = Consoleˉapplicationˉlayout.Plan(

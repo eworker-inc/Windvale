@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Windvale.Compiler.Native;
 
 namespace Windvale.Linker;
 
@@ -36,15 +37,23 @@ public sealed class Verifiedˉwindowsˉconsoleˉapplication
 {
     internal Verifiedˉwindowsˉconsoleˉapplication(
         ImmutableArray<byte> nativeˉimageˉbytes,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        int formatˉversion = Windowsˉconsoleˉapplicationˉcontract.FORMAT_VERSION,
+        ImmutableArray<Nativeˉservice> requiredˉservices = default)
     {
         Nativeˉimageˉbytes = nativeˉimageˉbytes;
         Nativeˉentryˉoffset = nativeˉentryˉoffset;
+        Formatˉversion = formatˉversion;
+        Requiredˉservices = requiredˉservices.IsDefault ? [] : requiredˉservices;
     }
 
     public ImmutableArray<byte> Nativeˉimageˉbytes { get; }
 
     public uint Nativeˉentryˉoffset { get; }
+
+    public int Formatˉversion { get; }
+
+    public ImmutableArray<Nativeˉservice> Requiredˉservices { get; }
 }
 
 public sealed class Windowsˉconsoleˉapplicationˉexception : Exception
@@ -77,4 +86,14 @@ public static class Windowsˉconsoleˉapplicationˉcontract
     public const uint DATA_VIRTUAL_BYTES = Nativeˉconsoleˉapplicationˉcontract.DATA_VIRTUAL_BYTES;
     public const ulong STACK_BYTES = Nativeˉconsoleˉapplicationˉcontract.STACK_BYTES;
     public const int MAX_APPLICATION_BYTES = 4_196_352;
+    public const int HOSTED_FORMAT_VERSION = 2;
+    public const string HOSTED_TARGET_NAME = "windows-x64-console-v2";
+    public const int HOSTED_STARTUP_BYTES = 224;
+    public const int HOSTED_OUTPUT_SERVICE_OFFSET = 224;
+    public const int HOSTED_NATIVE_IMAGE_OFFSET = 496;
+    public const uint HOSTED_DATA_FILE_BYTES =
+        Nativeˉconsoleˉapplicationˉcontract.HOSTED_DATA_HEADER_BYTES;
+    public const uint HOSTED_DATA_VIRTUAL_BYTES =
+        Nativeˉconsoleˉapplicationˉcontract.HOSTED_DATA_VIRTUAL_BYTES;
+    public const int HOSTED_MAX_APPLICATION_BYTES = 4_196_864;
 }

@@ -18,6 +18,22 @@ public static class Windowsˉconsoleˉapplicationˉverifier
 
     public static Verifiedˉwindowsˉconsoleˉapplication Verify(ReadOnlySpan<byte> bytes)
     {
+        if (bytes.Length > OPTIONAL_HEADER_OFFSET + 2 &&
+            bytes[OPTIONAL_HEADER_OFFSET + 2] ==
+                Windowsˉconsoleˉapplicationˉcontract.HOSTED_FORMAT_VERSION)
+        {
+            try
+            {
+                return Hostedˉconsoleˉapplicationˉverifier.Verifyˉwindows(bytes);
+            }
+            catch (InvalidDataException Exception)
+            {
+                throw new Windowsˉconsoleˉapplicationˉexception(
+                    "WVW2100",
+                    Exception.Message);
+            }
+        }
+
         if (bytes.Length is < 2_048 or
             > Windowsˉconsoleˉapplicationˉcontract.MAX_APPLICATION_BYTES)
         {

@@ -3,7 +3,7 @@
 ## Commands
 
 ```text
-windvale compile <source.wv> [--module <dependency.wv>]... [--target <wvb|windows-x64-console-v1|linux-x64-console-v1>] [-o <artifact>]
+windvale compile <source.wv> [--module <dependency.wv>]... [--target <wvb|windows-x64-console-v1|linux-x64-console-v1|windows-x64-console-v2|linux-x64-console-v2>] [-o <artifact>]
 windvale build <project.wvproj> [-o <module.wvb>]
 windvale assemble <source.wva> [-o <object.wvo>]
 windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...
@@ -20,6 +20,7 @@ windvale help
 - `compile` reads the strict UTF-8 root source and every explicit repeated `--module` dependency, resolves the complete bounded import graph, composes one module, and verifies the generated WVB. It performs no implicit source lookup. Target `wvb` is the default and writes those deterministic module bytes with a `.wvb` extension.
 - Target `windows-x64-console-v1` passes the verified WVB through the shared native backend, independently verified WVO/flat-link path, and the [Windows console application adapter](Windvale-Windows-Console-Application.md). It requires portable capability-free `Main() -> i32` with no runtime services, defaults to `.exe`, and produces an import-free executable that does not load .NET. Stage 0 and .NET remain build-time dependencies.
 - Target `linux-x64-console-v1` consumes the same verified native fragment and WVO/flat-link evidence through the [Linux console application adapter](Windvale-Linux-Console-Application.md). It has the same capability-free scalar boundary, defaults to `.elf`, and produces a sectionless static-PIE ELF with no interpreter, dynamic loader, libc, or .NET dependency. On Linux, successful CLI publication sets exact mode `0755`.
+- Targets `windows-x64-console-v2` and `linux-x64-console-v2` accept hosted `Main() -> i32` programs whose exact required-service set is `console.write_line`. They serialize the capability, service slot, platform adapter, ABI/runtime versions, extents, and exact native image/output-leaf digests under [`WVHC 1`](Windvale-Hosted-Console-Application.md). The Windows PE imports only `GetStdHandle` and `WriteFile`; the Linux static PIE uses direct syscalls. Both run without loading .NET, while Stage 0 remains a build-time dependency.
 - `compile` requires `.wv` input and the target's `.wvb`, `.exe`, or `.elf` output extension, rejects duplicate source paths, and refuses to overwrite any source input. Executable containers are written and prepared under a unique sibling name before one atomic replacement; compilation, import, native selection, linking, packaging, or prepublication metadata failure leaves the requested executable output missing or unchanged.
 - `build` reads one bounded strict-UTF-8 Windvale Project 1 manifest, resolves its explicit root and dependency paths relative to the manifest, and passes that exact source set through the same compile and mandatory-verification path. The default output replaces `.wvproj` with `.wvb`. Project metadata and paths do not enter WVSS or WVB; [the project specification](Windvale-Project.md) defines the format, limits, and `WVP` diagnostics.
 - `build` requires `.wvproj` input and `.wvb` output paths. A manifest, path, source, import, compilation, or verification failure does not create or modify the output.

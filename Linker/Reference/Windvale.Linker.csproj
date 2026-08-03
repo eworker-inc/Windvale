@@ -5,6 +5,7 @@
   <ItemGroup>
     <ProjectReference Include="../../Compiler/Native/Windvale.NativeCompiler.csproj" />
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
+    <ProjectReference Include="../../Runtime/Windvale.Native/Windvale.Native.csproj" />
     <ProjectReference Include="../../Runtime/Windvale.Runtime/Windvale.Runtime.csproj" />
   </ItemGroup>
   <ItemGroup>

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`windows-x64-console-v1` is the first deterministic Windows host-executable target. It packages one already verified ABI-22 x86-64 native fragment as an import-free PE32+ console application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and PE adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without loading .NET.
+`windows-x64-console-v1` is the first deterministic Windows host-executable target. It packages one already verified ABI-22 x86-64 native fragment as an import-free PE32+ console application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and PE adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without loading .NET. Version 2 adds the first explicit standalone hosted capability under the shared [`WVHC 1` contract](Windvale-Hosted-Console-Application.md); version 1 and its exact bytes remain unchanged.
 
 This is a narrow executable-boundary proof. It is not a general Windows runtime, hosted-capability container, native compiler executable, or .NET-retirement milestone.
 
@@ -73,6 +73,8 @@ The portable [console-application verifier](Windvale-Console-Application-Verific
 The writer requires both verifiers to reproduce the verified flat link before publication. Differential tests independently compile and evaluate the Windvale layout, construction, and verification modules; compare their complete serialized evidence with the C# layout and byte oracles; assemble the WVA startup; require its exact symbol and relocation contract; instantiate the four final-image displacements; and compare all 98 startup bytes with the PE. The existing malformed PE corpus drives both completed-container verifiers. The native fragment verifier remains responsible for generated machine-code semantics before packaging.
 
 ## Diagnostics
+
+Version 2 writer failures use `WVW1101` through `WVW1104` for the same preparation, entry/service, WVO/link, and completed-verification stages. Its untrusted-container verifier reports `WVW2100` for a malformed PE, startup, import table, runtime table, `WVHC 1` record, digest, extent, or padding field. Version 2 accepts only `console.write_line`, imports exactly `GetStdHandle` and `WriteFile`, reserves the ABI-22 64 MiB text arena, and is otherwise specified by the shared hosted-console contract.
 
 Writer failures return no application bytes:
 

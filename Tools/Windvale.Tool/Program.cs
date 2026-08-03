@@ -97,7 +97,8 @@ internal static class Program
     {
         const string Usage =
             "Usage: windvale compile <source.wv> [--module <dependency.wv>]... " +
-            "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1>] [-o <artifact>]";
+            "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1|" +
+            "windows-x64-console-v2|linux-x64-console-v2>] [-o <artifact>]";
         if (arguments.Length == 0 || arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
             return Usageˉerror(Usage);
@@ -137,7 +138,9 @@ internal static class Program
         if (Target is not (
             "wvb" or
             Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME or
-            Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME))
+            Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME or
+            Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
+            Linuxˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME))
         {
             return Usageˉerror($"Unknown compile target '{Target}'.");
         }
@@ -148,6 +151,7 @@ internal static class Program
             {
                 "wvb" => ".wvb",
                 Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME => ".exe",
+                Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME => ".exe",
                 _ => ".elf",
             });
         return Compileˉsourceˉfiles(Sourceˉpath, Dependencyˉpaths, Outputˉpath, Target);
@@ -213,6 +217,7 @@ internal static class Program
         {
             "wvb" => ".wvb",
             Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME => ".exe",
+            Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME => ".exe",
             _ => ".elf",
         };
         if (!StringComparer.OrdinalIgnoreCase.Equals(
@@ -298,16 +303,19 @@ internal static class Program
                 return EXIT_COMPILATION;
             }
 
-            if (target == Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME)
+            if (target is Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME or
+                Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME)
             {
-                var Application = Windowsˉconsoleˉapplicationˉwriter.Write(Fragment);
+                var Application = target == Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME
+                    ? Windowsˉconsoleˉapplicationˉwriter.Write(Fragment)
+                    : Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉconsole(Fragment);
                 if (!Application.Success)
                 {
                     foreach (var Diagnostic in Application.Diagnostics)
                     {
                         Console.Error.WriteLine(
                             $"{Sourceˉpath}: error {Diagnostic.Code} " +
-                            $"[{Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME}]: {Diagnostic.Message}");
+                            $"[{target}]: {Diagnostic.Message}");
                     }
                     return EXIT_COMPILATION;
                 }
@@ -315,14 +323,16 @@ internal static class Program
             }
             else
             {
-                var Application = Linuxˉconsoleˉapplicationˉwriter.Write(Fragment);
+                var Application = target == Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME
+                    ? Linuxˉconsoleˉapplicationˉwriter.Write(Fragment)
+                    : Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉconsole(Fragment);
                 if (!Application.Success)
                 {
                     foreach (var Diagnostic in Application.Diagnostics)
                     {
                         Console.Error.WriteLine(
                             $"{Sourceˉpath}: error {Diagnostic.Code} " +
-                            $"[{Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME}]: {Diagnostic.Message}");
+                            $"[{target}]: {Diagnostic.Message}");
                     }
                     return EXIT_COMPILATION;
                 }
@@ -330,11 +340,11 @@ internal static class Program
             }
         }
 
-        if (target == Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME ||
-            target == Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME)
+        if (target != "wvb")
         {
             Action<string>? Prepareˉtemporary = null;
-            if (target == Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME &&
+            if (target is Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME or
+                    Linuxˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME &&
                 OperatingSystem.IsLinux())
             {
                 Prepareˉtemporary = Prepareˉlinuxˉexecutable;
@@ -786,7 +796,8 @@ internal static class Program
         output.WriteLine("Commands:");
         output.WriteLine(
             "  windvale compile <source.wv> [--module <dependency.wv>]... " +
-            "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1>] [-o <artifact>]");
+            "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1|" +
+            "windows-x64-console-v2|linux-x64-console-v2>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");

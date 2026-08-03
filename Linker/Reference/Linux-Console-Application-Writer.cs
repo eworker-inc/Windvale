@@ -63,6 +63,53 @@ public static class Linuxˉconsoleˉapplicationˉwriter
         return Linuxˉconsoleˉapplicationˉresult.Succeeded(Image.ToImmutableArray());
     }
 
+    public static Linuxˉconsoleˉapplicationˉresult Writeˉhostedˉconsole(
+        Nativeˉfragment fragment)
+    {
+        var Prepared = Nativeˉconsoleˉapplicationˉpreparer.Prepareˉhostedˉconsole(fragment);
+        if (!Prepared.Success)
+        {
+            var Code = Prepared.Failure switch
+            {
+                Nativeˉconsoleˉapplicationˉinputˉfailure.Unverifiedˉfragment => "WVL1101",
+                Nativeˉconsoleˉapplicationˉinputˉfailure.Unsupportedˉentry => "WVL1102",
+                Nativeˉconsoleˉapplicationˉinputˉfailure.Linkˉfailure => "WVL1103",
+                _ => "WVL1103",
+            };
+            return Linuxˉconsoleˉapplicationˉresult.Failed(Code, Prepared.Message);
+        }
+
+        var Input = Prepared.Input!;
+        try
+        {
+            var Image = Hostedˉconsoleˉapplicationˉbuilder.Buildˉlinux(
+                Input.Imageˉbytes.AsSpan(),
+                Input.Entryˉoffset);
+            var Verified = Linuxˉconsoleˉapplicationˉverifier.Verify(Image);
+            if (Verified.Formatˉversion !=
+                    Linuxˉconsoleˉapplicationˉcontract.HOSTED_FORMAT_VERSION ||
+                !Verified.Requiredˉservices.SequenceEqual(Input.Requiredˉservices) ||
+                Verified.Nativeˉentryˉoffset != Input.Entryˉoffset ||
+                !Verified.Nativeˉimageˉbytes.AsSpan().SequenceEqual(Input.Imageˉbytes.AsSpan()))
+            {
+                return Linuxˉconsoleˉapplicationˉresult.Failed(
+                    "WVL1104",
+                    "The independently verified hosted Linux application did not reproduce its native image, entry, and service manifest.");
+            }
+            return Linuxˉconsoleˉapplicationˉresult.Succeeded(Image.ToImmutableArray());
+        }
+        catch (Exception Exception) when (
+            Exception is Linuxˉconsoleˉapplicationˉexception or
+                InvalidDataException or
+                OverflowException or
+                ArgumentException)
+        {
+            return Linuxˉconsoleˉapplicationˉresult.Failed(
+                "WVL1104",
+                $"Hosted Linux application verification failed: {Exception.Message}");
+        }
+    }
+
     private static byte[] Buildˉimage(ReadOnlySpan<byte> nativeˉimage, uint nativeˉentryˉoffset)
     {
         var Layout = Consoleˉapplicationˉlayout.Plan(

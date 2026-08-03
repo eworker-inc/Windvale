@@ -115,7 +115,21 @@ dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv --
 echo $? # 29
 ```
 
-Both targets currently accept only capability-free `Main() -> i32` and use the Stage 0 compiler/tool host to construct the container; the generated process does not load .NET. Successful results `0` through `255` are observable unchanged on both hosts, while any other successful `i32` or native failure becomes process result `1`. The CLI stages the complete executable and Linux mode `0755` under a unique sibling name before one atomic replacement, so prepublication failure leaves an existing requested output unchanged. See the [Windows](../../Specifications/Windvale-Windows-Console-Application.md) and [Linux](../../Specifications/Windvale-Linux-Console-Application.md) console application specifications for their fixed ABI-20 context, arenas, verification, and deliberate limits.
+Both version-1 targets accept only capability-free `Main() -> i32` and use the Stage 0 compiler/tool host to construct the container; the generated process does not load .NET. Successful results `0` through `255` are observable unchanged on both hosts, while any other successful `i32` or native failure becomes process result `1`. The CLI stages the complete executable and Linux mode `0755` under a unique sibling name before one atomic replacement, so prepublication failure leaves an existing requested output unchanged. See the [Windows](../../Specifications/Windvale-Windows-Console-Application.md) and [Linux](../../Specifications/Windvale-Linux-Console-Application.md) console application specifications for their fixed ABI-22 context, arenas, verification, and deliberate limits.
+
+To build the first standalone hosted console application, use the version-2 target with the existing hosted example:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Hello-Windvale.wv --target windows-x64-console-v2 -o artifacts/Hello-Windvale.exe
+& ./artifacts/Hello-Windvale.exe
+```
+
+```sh
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Hello-Windvale.wv --target linux-x64-console-v2 -o artifacts/Hello-Windvale.elf
+./artifacts/Hello-Windvale.elf
+```
+
+Version 2 accepts exactly `console.write_line`, serializes and independently verifies its [`WVHC 1`](../../Specifications/Windvale-Hosted-Console-Application.md) capability/service metadata, and retains Stage 0 only as a build-time container adapter.
 
 The result is `Result: 29`.
 

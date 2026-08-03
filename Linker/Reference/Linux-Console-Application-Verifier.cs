@@ -18,6 +18,22 @@ public static class Linuxˉconsoleˉapplicationˉverifier
 
     public static Verifiedˉlinuxˉconsoleˉapplication Verify(ReadOnlySpan<byte> bytes)
     {
+        if (bytes.Length >= NOTE_OFFSET + NOTE_BYTES &&
+            BinaryPrimitives.ReadUInt32LittleEndian(bytes.Slice(NOTE_OFFSET + 24, sizeof(uint))) ==
+                Linuxˉconsoleˉapplicationˉcontract.HOSTED_FORMAT_VERSION)
+        {
+            try
+            {
+                return Hostedˉconsoleˉapplicationˉverifier.Verifyˉlinux(bytes);
+            }
+            catch (InvalidDataException Exception)
+            {
+                throw new Linuxˉconsoleˉapplicationˉexception(
+                    "WVL2100",
+                    Exception.Message);
+            }
+        }
+
         if (bytes.Length is < 8_304 or > Linuxˉconsoleˉapplicationˉcontract.MAX_APPLICATION_BYTES)
         {
             Fail("WVL2001", "The application length is outside the version 1 bounds.");

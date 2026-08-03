@@ -1,0 +1,70 @@
+windvale-assembly 1
+
+# Canonical Linux x64 hosted-console startup. The Stage 0 linker retains an
+# independently checked C# encoding until the native-retirement gate.
+symbol export function Linux_hosted_console_startup in .text
+symbol import data Execution_context
+symbol import function Native_main
+symbol import function Output_service
+symbol import data Output_table
+symbol import data Record_arena
+symbol import data Service_table
+symbol import data Text_arena
+
+section code .text align 16
+define Linux_hosted_console_startup
+# mmap(NULL, 64 MiB, PROT_READ | PROT_WRITE,
+#      MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0)
+xor edi edi
+move_u32 esi 67108864
+move_u32 edx 3
+move_u32 r10d 131106
+xor r8 r8
+subtract_i32 r8 1
+xor r9d r9d
+move_u32 eax 9
+syscall
+compare_i32 rax -4095
+branch above_equal Failure
+move rsp rax
+add_i32 rsp 67108864
+
+load_address rdx Execution_context
+move rsi rdx
+load_address rax Service_table
+store_memory_u64 rdx none 1 24 rax
+load_address rax Record_arena
+store_memory_u64 rdx none 1 32 rax
+load_address rax Text_arena
+store_memory_u64 rdx none 1 48 rax
+load_address rax Output_table
+store_memory_u64 rdx none 1 88 rax
+
+load_address rdx Service_table
+load_address rax Output_service
+store_memory_u64 rdx none 1 8 rax
+
+load_address rdx Execution_context
+xor edi edi
+xor ecx ecx
+xor r8d r8d
+xor r9d r9d
+call Native_main
+
+# A successful native result is an unpacked i32 in the low half of RAX.
+# Any packed failure or value outside the portable process range maps to 1.
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Failure
+compare_i32 eax 255
+branch below_equal Exit
+label Failure
+move_u32 eax 1
+label Exit
+move edi eax
+move_u32 eax 60
+syscall
+trap
+end define
+end section

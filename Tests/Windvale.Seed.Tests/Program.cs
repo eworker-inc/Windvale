@@ -778,6 +778,12 @@ internal static class Program
     private static readonly string LINUX_CONSOLE_STARTUP_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Linux-X64-Console.wva");
 
+    private static readonly string WINDOWS_HOSTED_CONSOLE_STARTUP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Windows-X64-Hosted-Console.wva");
+
+    private static readonly string LINUX_HOSTED_CONSOLE_STARTUP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Linux-X64-Hosted-Console.wva");
+
     private static readonly string TYPED_SCALAR_X64_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Typed-Scalar-X64.wva");
 
@@ -915,6 +921,7 @@ internal static class Program
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
         new("portable Windvale emits a deterministic Windows x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windowsˉconsoleˉapplicationˉruns),
         new("portable Windvale emits a deterministic Linux x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Linuxˉconsoleˉapplicationˉruns),
+        new("paired hosted console applications serialize one capability and execute", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Hostedˉconsoleˉapplicationsˉrun),
         new("Windvale owns bounded Windows and Linux console-application layout, construction, and verification", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉconsoleˉapplicationˉlayoutˉruns),
         new("native console application publication is atomic", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic),
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
@@ -2624,7 +2631,9 @@ internal static class Program
         }
     }
 
-    private static int Executeˉwindowsˉapplication(ImmutableArray<byte> image)
+    private static int Executeˉwindowsˉapplication(
+        ImmutableArray<byte> image,
+        string expectedˉoutput = "")
     {
         var Path = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(),
@@ -2645,7 +2654,7 @@ internal static class Program
                 Process.Kill(entireProcessTree: true);
                 throw new InvalidOperationException("The generated Windows application did not exit.");
             }
-            Equal(string.Empty, Process.StandardOutput.ReadToEnd());
+            Equal(expectedˉoutput, Process.StandardOutput.ReadToEnd());
             Equal(string.Empty, Process.StandardError.ReadToEnd());
             return Process.ExitCode;
         }
@@ -2873,6 +2882,187 @@ internal static class Program
                 Value);
         }
 
+        Sequenceˉequal(Instantiated, imageˉstartup.ToArray());
+    }
+
+    private static void Hostedˉconsoleˉapplicationsˉrun()
+    {
+        Equal(
+            Windowsˉconsoleˉapplicationˉcontract.HOSTED_MAX_APPLICATION_BYTES,
+            Hostedˉconsoleˉapplicationˉbuilder.Plan(
+                Consoleˉapplicationˉtarget.Windowsˉx64,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES - 1u).Applicationˉbytes);
+        Equal(
+            Linuxˉconsoleˉapplicationˉcontract.HOSTED_MAX_APPLICATION_BYTES,
+            Hostedˉconsoleˉapplicationˉbuilder.Plan(
+                Consoleˉapplicationˉtarget.Linuxˉx64,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES - 1u).Applicationˉbytes);
+
+        var Fragment = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(HELLO_SOURCE))).Fragment;
+        Sequenceˉequal([Nativeˉservice.Consoleˉwriteˉline], Fragment.Requiredˉservices);
+
+        var Windows = Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉconsole(Fragment);
+        var Windowsˉagain = Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉconsole(Fragment);
+        True(Windows.Success, Windows.Diagnostics.IsEmpty
+            ? "The hosted Windows application failed without a diagnostic."
+            : Windows.Diagnostics[0].Message);
+        True(Windowsˉagain.Success, "Repeated hosted Windows construction failed.");
+        Sequenceˉequal(Windows.Imageˉbytes, Windowsˉagain.Imageˉbytes);
+        var Verifiedˉwindows = Windowsˉconsoleˉapplicationˉverifier.Verify(
+            Windows.Imageˉbytes.AsSpan());
+        Equal(Windowsˉconsoleˉapplicationˉcontract.HOSTED_FORMAT_VERSION,
+            Verifiedˉwindows.Formatˉversion);
+        Sequenceˉequal(Fragment.Code, Verifiedˉwindows.Nativeˉimageˉbytes);
+        Sequenceˉequal([Nativeˉservice.Consoleˉwriteˉline], Verifiedˉwindows.Requiredˉservices);
+
+        var Linux = Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉconsole(Fragment);
+        var Linuxˉagain = Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉconsole(Fragment);
+        True(Linux.Success, Linux.Diagnostics.IsEmpty
+            ? "The hosted Linux application failed without a diagnostic."
+            : Linux.Diagnostics[0].Message);
+        True(Linuxˉagain.Success, "Repeated hosted Linux construction failed.");
+        Sequenceˉequal(Linux.Imageˉbytes, Linuxˉagain.Imageˉbytes);
+        var Verifiedˉlinux = Linuxˉconsoleˉapplicationˉverifier.Verify(
+            Linux.Imageˉbytes.AsSpan());
+        Equal(Linuxˉconsoleˉapplicationˉcontract.HOSTED_FORMAT_VERSION,
+            Verifiedˉlinux.Formatˉversion);
+        Sequenceˉequal(Fragment.Code, Verifiedˉlinux.Nativeˉimageˉbytes);
+        Sequenceˉequal([Nativeˉservice.Consoleˉwriteˉline], Verifiedˉlinux.Requiredˉservices);
+        Sequenceˉequal(Verifiedˉwindows.Nativeˉimageˉbytes, Verifiedˉlinux.Nativeˉimageˉbytes);
+        Equal(Verifiedˉwindows.Nativeˉentryˉoffset, Verifiedˉlinux.Nativeˉentryˉoffset);
+
+        var Windowsˉdataˉrva = BinaryPrimitives.ReadUInt32LittleEndian(
+            Windows.Imageˉbytes.AsSpan(0x1BC, sizeof(uint)));
+        Requireˉhostedˉstartupˉmatchesˉwva(
+            WINDOWS_HOSTED_CONSOLE_STARTUP_SOURCE,
+            "Windows_hosted_console_startup",
+            Windows.Imageˉbytes.AsSpan(
+                0x200,
+                Windowsˉconsoleˉapplicationˉcontract.HOSTED_STARTUP_BYTES),
+            0x1000,
+            new Dictionary<string, uint>(StringComparer.Ordinal)
+            {
+                ["Execution_context"] = Windowsˉdataˉrva,
+                ["Service_table"] = Windowsˉdataˉrva + 112,
+                ["Record_arena"] = Windowsˉdataˉrva + 1024,
+                ["Text_arena"] = Windowsˉdataˉrva + 2_098_176,
+                ["Output_table"] = Windowsˉdataˉrva + 216,
+                ["Output_service"] = 0x1000 + 224,
+                ["Windows_get_std_handle_iat"] = Windowsˉdataˉrva + 528,
+                ["Windows_write_file_iat"] = Windowsˉdataˉrva + 536,
+                ["Native_main"] = 0x1000 + 496 + Verifiedˉwindows.Nativeˉentryˉoffset,
+            });
+
+        var Linuxˉdataˉaddress = checked((uint)BinaryPrimitives.ReadUInt64LittleEndian(
+            Linux.Imageˉbytes.AsSpan(192, sizeof(ulong))));
+        Requireˉhostedˉstartupˉmatchesˉwva(
+            LINUX_HOSTED_CONSOLE_STARTUP_SOURCE,
+            "Linux_hosted_console_startup",
+            Linux.Imageˉbytes.AsSpan(
+                0x1000,
+                Linuxˉconsoleˉapplicationˉcontract.HOSTED_STARTUP_BYTES),
+            0x1000,
+            new Dictionary<string, uint>(StringComparer.Ordinal)
+            {
+                ["Execution_context"] = Linuxˉdataˉaddress,
+                ["Service_table"] = Linuxˉdataˉaddress + 112,
+                ["Record_arena"] = Linuxˉdataˉaddress + 1024,
+                ["Text_arena"] = Linuxˉdataˉaddress + 2_098_176,
+                ["Output_table"] = Linuxˉdataˉaddress + 216,
+                ["Output_service"] = 0x1000 + 224,
+                ["Native_main"] = 0x1000 + 448 + Verifiedˉlinux.Nativeˉentryˉoffset,
+            });
+
+        var Windowsˉdataˉfile = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+            Windows.Imageˉbytes.AsSpan(0x1C4, sizeof(uint))));
+        Rejectˉwindowsˉapplication(
+            Mutateˉbyte(Windows.Imageˉbytes, Windowsˉdataˉfile + 272),
+            "WVW2100");
+        Rejectˉwindowsˉapplication(
+            Mutateˉbyte(Windows.Imageˉbytes, 0x200 + 224),
+            "WVW2100");
+        var Rehashedˉwindowsˉleaf = Windows.Imageˉbytes.ToArray();
+        Rehashedˉwindowsˉleaf[0x200 + 224] ^= 1;
+        SHA256.HashData(Rehashedˉwindowsˉleaf.AsSpan(
+            0x200 + 224,
+            X64ˉnativeˉoutputˉservices.WINDOWS_CANONICAL_SIZE)).CopyTo(
+                Rehashedˉwindowsˉleaf.AsSpan(Windowsˉdataˉfile + 272 + 128));
+        Rejectˉwindowsˉapplication(Rehashedˉwindowsˉleaf, "WVW2100");
+        Rejectˉwindowsˉapplication(
+            Mutateˉbyte(Windows.Imageˉbytes, Windowsˉdataˉfile + 464),
+            "WVW2100");
+        Rejectˉwindowsˉapplication(
+            Windows.Imageˉbytes.AsSpan(0, 500),
+            "WVW2100");
+        Rejectˉwindowsˉapplication(Windows.Imageˉbytes.Add(0).AsSpan(), "WVW2100");
+        Rejectˉwindowsˉapplication(
+            Mutateˉbyte(Windows.Imageˉbytes, Windowsˉdataˉfile + 112),
+            "WVW2100");
+        var Linuxˉdataˉfile = checked((int)Linuxˉdataˉaddress);
+        Rejectˉlinuxˉapplication(
+            Mutateˉbyte(Linux.Imageˉbytes, Linuxˉdataˉfile + 272),
+            "WVL2100");
+        Rejectˉlinuxˉapplication(
+            Mutateˉbyte(Linux.Imageˉbytes, 0x1000 + 224),
+            "WVL2100");
+        var Rehashedˉlinuxˉleaf = Linux.Imageˉbytes.ToArray();
+        Rehashedˉlinuxˉleaf[0x1000 + 224] ^= 1;
+        SHA256.HashData(Rehashedˉlinuxˉleaf.AsSpan(
+            0x1000 + 224,
+            X64ˉnativeˉoutputˉservices.LINUX_CANONICAL_SIZE)).CopyTo(
+                Rehashedˉlinuxˉleaf.AsSpan(Linuxˉdataˉfile + 272 + 128));
+        Rejectˉlinuxˉapplication(Rehashedˉlinuxˉleaf, "WVL2100");
+        Rejectˉlinuxˉapplication(Linux.Imageˉbytes.AsSpan(0, 500), "WVL2100");
+        Rejectˉlinuxˉapplication(Linux.Imageˉbytes.Add(0).AsSpan(), "WVL2100");
+        Rejectˉlinuxˉapplication(
+            Mutateˉbyte(Linux.Imageˉbytes, Linuxˉdataˉfile + 216),
+            "WVL2100");
+
+        if (OperatingSystem.IsWindows())
+        {
+            Equal(0, Executeˉwindowsˉapplication(Windows.Imageˉbytes, "Hello from Windvale\n"));
+        }
+        if (OperatingSystem.IsLinux())
+        {
+            Equal(0, Executeˉlinuxˉapplication(Linux.Imageˉbytes, "Hello from Windvale\n"));
+        }
+    }
+
+    private static void Requireˉhostedˉstartupˉmatchesˉwva(
+        string source,
+        string exportˉname,
+        ReadOnlySpan<byte> imageˉstartup,
+        uint startupˉaddress,
+        IReadOnlyDictionary<string, uint> targets)
+    {
+        var Object = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(source)).Value;
+        var Text = Object.Sections.Single();
+        Equal(Objectˉarchitecture.X86ˉ64, Object.Architecture);
+        Equal(exportˉname, Object.Symbols.Single(Symbol =>
+            Symbol.Binding == Objectˉsymbolˉbinding.Export).Name);
+        Equal((uint)imageˉstartup.Length, Text.Memoryˉsize);
+        var Imports = Object.Symbols
+            .Where(Symbol => Symbol.Binding == Objectˉsymbolˉbinding.Import)
+            .Select(Symbol => Symbol.Name)
+            .ToArray();
+        Sequenceˉequal(targets.Keys.Order(StringComparer.Ordinal), Imports);
+
+        var Instantiated = Text.Data.ToArray();
+        foreach (var Relocation in Object.Relocations)
+        {
+            Equal(Objectˉrelocationˉkind.Relativeˉi32, Relocation.Kind);
+            Equal(-4, Relocation.Addend);
+            var Symbol = Object.Symbols[checked((int)Relocation.Symbolˉindex)];
+            True(targets.TryGetValue(Symbol.Name, out var Target),
+                $"The hosted startup imports unexpected symbol '{Symbol.Name}'.");
+            var Fieldˉaddress = checked(startupˉaddress + Relocation.Offset);
+            BinaryPrimitives.WriteInt32LittleEndian(
+                Instantiated.AsSpan(checked((int)Relocation.Offset), sizeof(int)),
+                checked((int)((long)Target - Fieldˉaddress + Relocation.Addend)));
+        }
         Sequenceˉequal(Instantiated, imageˉstartup.ToArray());
     }
 
@@ -3664,7 +3854,9 @@ internal static class Program
                 UnixFileMode.OtherExecute);
     }
 
-    private static int Executeˉlinuxˉapplication(ImmutableArray<byte> image)
+    private static int Executeˉlinuxˉapplication(
+        ImmutableArray<byte> image,
+        string expectedˉoutput = "")
     {
         if (!OperatingSystem.IsLinux())
         {
@@ -3691,7 +3883,7 @@ internal static class Program
                 Process.Kill(entireProcessTree: true);
                 throw new InvalidOperationException("The generated Linux application did not exit.");
             }
-            Equal(string.Empty, Process.StandardOutput.ReadToEnd());
+            Equal(expectedˉoutput, Process.StandardOutput.ReadToEnd());
             Equal(string.Empty, Process.StandardError.ReadToEnd());
             return Process.ExitCode;
         }
