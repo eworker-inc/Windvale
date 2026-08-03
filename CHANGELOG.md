@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- The first Wasm-hosted Windvale WVB interpreter: a separate import-free profile-14 artifact executes complete-verifier-approved scalar calls and control with exact guest/outer budgets, call-depth containment, checked overflow, reference-runtime agreement, and a twenty-nine-artifact Node.js gate.
 - The first capability-bearing static platform-library slice: profile-compatible imports require explicit transitive capability approval, portable `WVRS 1` policy now lives under `Libraries/Foundation`, and a `Libraries/Platform` adapter completes a live hosted store lookup without changing WVB or treating opaque host resources as filesystem paths.
 - Implemented-candidate source `i64`/`u64` scalars and conditional WVB 1.7 emission, including checked arithmetic, comparisons, invariant formatting, strict version/vocabulary validation, reference-runtime execution, editor support, and an explicit `WVN2003` native-backend boundary while legacy modules retain exact WVB 1.6 output.
 - Accepted bounded owned-value semantics as the prerequisite for dynamic sequences, builders, maps, database pages, caches, and resource values; allocating APIs must expose checked charges, budgets, publication, and lifetime rather than inherit host garbage-collection behavior.

@@ -849,8 +849,19 @@ export fn Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
     if Opcode == 13u8 { Width = 1u32; }
     if Opcode == 14u8 { Width = 1u32; }
     if Opcode == 15u8 { Width = 1u32; }
+    if Opcode == 16u8 { Width = 1u32; }
+    if Opcode == 17u8 { Width = 1u32; }
+    if Opcode == 18u8 { Width = 1u32; }
+    if Opcode == 19u8 { Width = 1u32; }
     if Opcode == 20u8 { Width = 1u32; }
     if Opcode == 21u8 { Width = 1u32; }
+    if Opcode == 22u8 { Width = 1u32; }
+    if Opcode == 32u8 { Width = 1u32; }
+    if Opcode == 33u8 { Width = 1u32; }
+    if Opcode == 34u8 { Width = 1u32; }
+    if Opcode == 35u8 { Width = 1u32; }
+    if Opcode == 36u8 { Width = 1u32; }
+    if Opcode == 37u8 { Width = 1u32; }
     if Opcode == 48u8 { Width = 5u32; }
     if Opcode == 49u8 { Width = 5u32; }
     if Opcode == 64u8 { Width = 5u32; }
@@ -1128,13 +1139,42 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
             Handled = true;
         }
+        var I32ˉarithmetic: bool = false;
+        if Opcode == 16u8 { I32ˉarithmetic = true; }
+        if Opcode == 17u8 { I32ˉarithmetic = true; }
+        if Opcode == 18u8 { I32ˉarithmetic = true; }
+        if I32ˉarithmetic {
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 1u8);
+            Handled = true;
+        }
+        if Opcode == 19u8 {
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 1u8);
+            Handled = true;
+        }
         var U32ˉarithmetic: bool = false;
         if Opcode == 20u8 { U32ˉarithmetic = true; }
         if Opcode == 21u8 { U32ˉarithmetic = true; }
+        if Opcode == 22u8 { U32ˉarithmetic = true; }
         if U32ˉarithmetic {
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
+            Handled = true;
+        }
+        var I32ˉcomparison: bool = false;
+        if Opcode == 32u8 { I32ˉcomparison = true; }
+        if Opcode == 33u8 { I32ˉcomparison = true; }
+        if Opcode == 34u8 { I32ˉcomparison = true; }
+        if Opcode == 35u8 { I32ˉcomparison = true; }
+        if Opcode == 36u8 { I32ˉcomparison = true; }
+        if Opcode == 37u8 { I32ˉcomparison = true; }
+        if I32ˉcomparison {
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 2u8);
             Handled = true;
         }
         var U32ˉcomparison: bool = false;
@@ -4244,6 +4284,43 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
             )
         );
     }
+    if Opcode == 16u8 {
+        return Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉcheckedˉaddˉinstructions(
+                First,
+                Second,
+                Third
+            )
+        );
+    }
+    if Opcode == 17u8 {
+        return Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉcheckedˉsubtractˉinstructions(
+                First,
+                Second,
+                Third
+            )
+        );
+    }
+    if Opcode == 18u8 {
+        return Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉcheckedˉmultiplyˉinstructions(
+                First,
+                Second,
+                Third,
+                Descriptorˉresult
+            )
+        );
+    }
+    if Opcode == 19u8 {
+        return Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉcheckedˉnegateˉinstructions(First)
+        );
+    }
     if Opcode == 20u8 {
         Result = Bytesˉconcat(
             Result,
@@ -4322,7 +4399,73 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
         );
         return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(107u32));
     }
+    if Opcode == 22u8 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, Second)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, First)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+        );
+        Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(173u32));
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second)
+        );
+        Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(173u32));
+        Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(126u32));
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(
+                34u32,
+                Descriptorˉresult
+            )
+        );
+        var Multiplicationˉoverflow: bytes =
+            Compilerˉwebassemblyˉindexedˉinstruction(
+                32u32,
+                Descriptorˉresult
+            );
+        Multiplicationˉoverflow = Bytesˉconcat(
+            Multiplicationˉoverflow,
+            Compilerˉwebassemblyˉruntimeˉi64ˉconstant(4294967295u32)
+        );
+        Multiplicationˉoverflow = Bytesˉconcat(
+            Multiplicationˉoverflow,
+            Compilerˉwebassemblyˉbyte(86u32)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(
+                Multiplicationˉoverflow,
+                3007,
+                Privateˉfunction
+            )
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(
+                32u32,
+                Descriptorˉresult
+            )
+        );
+        return Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉbyte(167u32)
+        );
+    }
     var Comparisonˉopcode: u32 = 0u32;
+    if Opcode == 32u8 { Comparisonˉopcode = 70u32; }
+    if Opcode == 33u8 { Comparisonˉopcode = 71u32; }
+    if Opcode == 34u8 { Comparisonˉopcode = 72u32; }
+    if Opcode == 35u8 { Comparisonˉopcode = 76u32; }
+    if Opcode == 36u8 { Comparisonˉopcode = 74u32; }
+    if Opcode == 37u8 { Comparisonˉopcode = 78u32; }
     if Opcode == 96u8 { Comparisonˉopcode = 70u32; }
     if Opcode == 97u8 { Comparisonˉopcode = 71u32; }
     if Opcode == 98u8 { Comparisonˉopcode = 73u32; }

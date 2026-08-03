@@ -1,0 +1,8 @@
+module Sourceˉwvbˉscalarˉinterpreterˉu32ˉoverflow profile portable;
+
+export fn Main() -> i32 {
+    let Maximum: u32 = 4294967295u32;
+    let Overflow: u32 = Maximum * 2u32;
+    if Overflow == 0u32 { return 0; }
+    return 1;
+}

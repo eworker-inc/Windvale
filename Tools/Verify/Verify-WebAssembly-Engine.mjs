@@ -288,9 +288,20 @@ const EXPECTED = [
         kind: 1,
         runtime: "wvb-executable",
     },
+    {
+        name: "Wasm-hosted Windvale WVB scalar interpreter",
+        path: process.argv[44],
+        verifierPath: process.argv[40],
+        candidatePaths: [process.argv[45], process.argv[46], process.argv[47], process.argv[48]],
+        sha256: "683410069c64d0143f748d34cb63f16b7d36c130662c282c003b981b24d37580",
+        bytes: 145469,
+        abi: 3,
+        kind: 1,
+        runtime: "wvb-scalar-interpreter",
+    },
 ];
 
-if (process.argv.length !== 44) {
+if (process.argv.length !== 49) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -309,7 +320,9 @@ if (process.argv.length !== 44) {
             "<wvb-semantic-expanded.wasm> <expanded-data.wvb> " +
             "<expanded-types.wvb> <expanded-capabilities.wvb> " +
             "<wvb-executable.wasm> <executable-data.wvb> " +
-            "<executable-types.wvb> <executable-capabilities.wvb>",
+            "<executable-types.wvb> <executable-capabilities.wvb> " +
+            "<wvb-scalar-interpreter.wasm> <function-only.wvb> " +
+            "<scalar-guest.wvb> <i32-overflow.wvb> <u32-overflow.wvb>",
     );
 }
 
@@ -1020,6 +1033,147 @@ function verifyRuntime(expected, module, exports, digest) {
                 throw new Error(`${expected.path}: ${name}: ${error.message}`);
             }
         }
+    } else if (expected.runtime === "wvb-scalar-interpreter") {
+        const verifierBytes = readFileSync(expected.verifierPath);
+        const verifierModule = new WebAssembly.Module(verifierBytes);
+        const verifierExports = new WebAssembly.Instance(verifierModule).exports;
+        const candidates = expected.candidatePaths.map(path => readFileSync(path));
+        const verifierSteps = [609_651, 3_056_208, 52_228, 170_625];
+        for (let index = 0; index < candidates.length; index++) {
+            requireMemoryResult(
+                expected.verifierPath,
+                runMemory(verifierExports, candidates[index], verifierSteps[index]),
+                0,
+                verifierSteps[index],
+                Uint8Array.from([1]),
+            );
+        }
+        requireMemoryResult(
+            expected.verifierPath,
+            runMemory(verifierExports, candidates[0], verifierSteps[0] - 1),
+            3011,
+            verifierSteps[0] - 1,
+        );
+
+        function scalarRequest(candidate, guestBudget = 1_000, maximumCallDepth = 8) {
+            const request = Buffer.alloc(16 + candidate.length);
+            request.writeUInt32LE(0x49585657, 0);
+            request.writeUInt16LE(1, 4);
+            request.writeUInt16LE(0, 6);
+            request.writeUInt32LE(guestBudget, 8);
+            request.writeUInt32LE(maximumCallDepth, 12);
+            candidate.copy(request, 16);
+            return request;
+        }
+
+        function requireScalarResult(
+            name,
+            actual,
+            outerStatus,
+            outerInstructions,
+            guestStatus,
+            guestInstructions,
+            result,
+        ) {
+            const outputLength = outerStatus === 0 ? 20 : 0;
+            if (
+                actual.status !== outerStatus ||
+                actual.instructions !== outerInstructions ||
+                actual.output.length !== outputLength
+            ) {
+                throw new Error(
+                    `${expected.path}: ${name}: expected outer status/instructions/length ` +
+                        `${outerStatus}/${outerInstructions}/${outputLength}, found ` +
+                        `${actual.status}/${actual.instructions}/${actual.output.length}.`,
+                );
+            }
+            if (outerStatus !== 0) { return; }
+            const output = Buffer.from(actual.output);
+            if (
+                output.readUInt32LE(0) !== 0x4F585657 ||
+                output.readUInt16LE(4) !== 1 ||
+                output.readUInt16LE(6) !== 0 ||
+                output.readUInt32LE(8) !== guestStatus ||
+                output.readUInt32LE(12) !== guestInstructions ||
+                output.readInt32LE(16) !== result
+            ) {
+                throw new Error(`${expected.path}: ${name}: the WVXO response is invalid.`);
+            }
+        }
+
+        const functionRequest = scalarRequest(candidates[0]);
+        requireScalarResult(
+            "function/control guest",
+            runMemory(exports, functionRequest, 121_003),
+            0,
+            121_003,
+            0,
+            199,
+            6,
+        );
+        requireScalarResult(
+            "function/control guest repeat",
+            runMemory(exports, functionRequest, 121_003),
+            0,
+            121_003,
+            0,
+            199,
+            6,
+        );
+        requireScalarResult(
+            "outer instruction exhaustion",
+            runMemory(exports, functionRequest, 121_002),
+            3011,
+            121_002,
+            0,
+            0,
+            0,
+        );
+        requireScalarResult(
+            "complete scalar guest",
+            runMemory(exports, scalarRequest(candidates[1]), 270_950),
+            0,
+            270_950,
+            0,
+            351,
+            42,
+        );
+        requireScalarResult(
+            "guest instruction exhaustion",
+            runMemory(exports, scalarRequest(candidates[0], 198, 8), 120_641),
+            0,
+            120_641,
+            3011,
+            198,
+            0,
+        );
+        requireScalarResult(
+            "guest call-depth exhaustion",
+            runMemory(exports, scalarRequest(candidates[0], 1_000, 1), 48_861),
+            0,
+            48_861,
+            3004,
+            27,
+            0,
+        );
+        requireScalarResult(
+            "checked i32 overflow",
+            runMemory(exports, scalarRequest(candidates[2]), 10_967),
+            3007,
+            10_967,
+            0,
+            0,
+            0,
+        );
+        requireScalarResult(
+            "checked u32 overflow",
+            runMemory(exports, scalarRequest(candidates[3]), 16_983),
+            3007,
+            16_983,
+            0,
+            0,
+            0,
+        );
     } else if (expected.runtime === "wvb-semantic") {
         const [data, types, capabilities] = expected.acceptedInputPaths.map(path =>
             readFileSync(path));

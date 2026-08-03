@@ -220,6 +220,15 @@
       Include="../Fixtures/Source-Wvb/Function-Only.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Function-Only.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Scalar-Interpreter-Guest.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-Guest.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Scalar-Interpreter-I32-Overflow.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-I32-Overflow.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Scalar-Interpreter-U32-Overflow.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-U32-Overflow.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Data-And-Text.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Data-And-Text.wv" />
     <EmbeddedResource
@@ -330,5 +339,8 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Wvb-Executable-Verify-Phase.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Executable-Verify-Phase.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Main.wv" />
   </ItemGroup>
 </Project>

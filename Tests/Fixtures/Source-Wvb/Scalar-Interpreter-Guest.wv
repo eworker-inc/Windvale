@@ -1,0 +1,103 @@
+module Sourceˉwvbˉscalarˉinterpreterˉguest profile portable;
+
+fn I32ˉarithmetic() -> bool {
+    let Added: i32 = 7 + 5;
+    let Subtracted: i32 = Added - 2;
+    let Multiplied: i32 = Subtracted * 4;
+    let Negative: i32 = -2;
+    let Negated: i32 = -Negative;
+    return Multiplied + Negated == 42;
+}
+
+fn I32ˉcomparisons(Left: i32, Right: i32) -> bool {
+    if Left == Right { return false; }
+    if Left != Right {
+    } else {
+        return false;
+    }
+    if Left < Right {
+    } else {
+        return false;
+    }
+    if Left <= Right {
+    } else {
+        return false;
+    }
+    if Right > Left {
+    } else {
+        return false;
+    }
+    return Right >= Left;
+}
+
+fn U32ˉarithmetic() -> bool {
+    let Multiplied: u32 = 6u32 * 7u32;
+    let Added: u32 = Multiplied + 8u32;
+    let Subtracted: u32 = Added - 8u32;
+    return Subtracted == 42u32;
+}
+
+fn U32ˉcomparisons(Left: u32, Right: u32) -> bool {
+    if Left == Right { return false; }
+    if Left != Right {
+    } else {
+        return false;
+    }
+    if Left < Right {
+    } else {
+        return false;
+    }
+    if Left <= Right {
+    } else {
+        return false;
+    }
+    if Right > Left {
+    } else {
+        return false;
+    }
+    return Right >= Left;
+}
+
+fn Boolˉandˉu8(Byte: u8, Enabled: bool) -> bool {
+    if Byte == 255u8 {
+    } else {
+        return false;
+    }
+    if Byte != 0u8 {
+    } else {
+        return false;
+    }
+    if Enabled == true {
+    } else {
+        return false;
+    }
+    if Enabled != false {
+    } else {
+        return false;
+    }
+    return !(!Enabled);
+}
+
+export fn Main() -> i32 {
+    if I32ˉarithmetic() {
+    } else {
+        return 1;
+    }
+    if I32ˉcomparisons(-3, 5) {
+    } else {
+        return 2;
+    }
+    if U32ˉarithmetic() {
+    } else {
+        return 3;
+    }
+    if U32ˉcomparisons(3u32, 5u32) {
+    } else {
+        return 4;
+    }
+    if Boolˉandˉu8(255u8, true) {
+    } else {
+        return 5;
+    }
+    return 42;
+}

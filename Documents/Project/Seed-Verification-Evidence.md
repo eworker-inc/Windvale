@@ -1140,6 +1140,18 @@ The reference runtime and Node.js return `[1]` for compiler-produced data/text, 
 
 The complete twenty-eight-artifact Node.js gate passes locally on Windows under Node.js 24.18.0. This establishes import-free executable-verifier behavior, not cross-host construction or cross-browser qualification. General nonempty stack joins, capability authorization, Wasm-hosted WVB execution, source compilation, and the default-playground switch remain pending.
 
+## Local Wasm-hosted WVB scalar-interpreter evidence
+
+[Decision 0152](../Decisions/0152-First-Wasm-Hosted-Wvb-Scalar-Interpreter.md) adds profile 14 over execution ABI 3. The selector admits checked signed `i32` arithmetic and comparisons plus checked `u32.multiply` in its bounded single-function runtime profile. All twenty-eight earlier generated Wasm artifacts remain byte-identical.
+
+`Wvb-Scalar-Interpreter-Main.wv` compiles to 25,568-byte WVB SHA-256 `f0f51936fec70d64f5d8021733b8d8312bce14ba411d90e4896ef19e317fb7a4`. Its one function has 1,572 nonparameter locals, 23,823 code bytes, 5,208 instructions, and maximum stack three. The backend lowers it in exactly 82,657,852 instructions to 145,469-byte import-free Wasm SHA-256 `683410069c64d0143f748d34cb63f16b7d36c130662c282c003b981b24d37580`.
+
+The complete verifier first accepts all four execution candidates. Exact verifier budgets are 609,651 for `Function-Only.wv`, 3,056,208 for the comprehensive scalar fixture, 52,228 for signed overflow, and 170,625 for unsigned overflow; the first returns `WVR3011` at 609,650. This proves the intended two-artifact composition rather than treating the interpreter's narrower preflight as the trust boundary.
+
+The reference runtime and interpreter both execute `Function-Only.wv` as result `6` in exactly 199 guest instructions and the broader scalar fixture as `42` in 351. The interpreter's outer counts are 121,003 and 270,950. Guest budget 198 returns `3011/198`; call-depth limit one returns `3004/27`; outer budget 121,002 returns `WVR3011`; and signed-addition and unsigned-multiplication overflow return outer `WVR3007` after 10,967 and 16,983 instructions without output. A repeated successful run proves complete wrapper, local, frame, stack, and meter reset.
+
+The focused Seed WebAssembly case passes with exact source, WVB, protocol, differential, lowering, and independent emitted-Wasm decoder assertions. The expanded twenty-nine-artifact `Tools/Verify/Verify-WebAssembly.ps1` gate rebuilds every input, validates and instantiates every Wasm module without imports, and passes under Node.js 24.18.0 on Windows. Change-aware verification also passes the editor contract, a zero-warning Release build, and all 84 selected Seed tests in 363.365 suite seconds; the WebAssembly and golden cases take 55.732 and 211.051 seconds. This is local development evidence. Cross-host construction, Chromium/Firefox/WebKit execution, static-worker packaging, text/bytes and nominal interpreter values, source compilation, and the default-playground switch remain pending.
+
 ## Qualified ABI-19 one-byte construction
 
 Qualified Decision 0108 advances the implementation to `x86-64-wvb-baseline-v19` while retaining WVB 1.6, WVO 1.0, execution context 7, service table 5, the 64-parameter convention, ABI 18's canonical typed block-slot map, and the 2,048-cell physical frame ceiling. Verified `Bytesˉfromˉu8` now lowers from `U8` to a one-byte execution-arena-backed descriptor. The independent decoder reconstructs its checked allocation, length-one descriptor, scalar source, exact byte store, runtime failure edge, and distinct source/result cells. The retained four-byte encoder now rejects the same malicious scalar/result alias.

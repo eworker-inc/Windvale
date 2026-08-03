@@ -1,0 +1,6 @@
+module Sourceˉwvbˉscalarˉinterpreterˉi32ˉoverflow profile portable;
+
+export fn Main() -> i32 {
+    let Maximum: i32 = 2147483647;
+    return Maximum + 1;
+}

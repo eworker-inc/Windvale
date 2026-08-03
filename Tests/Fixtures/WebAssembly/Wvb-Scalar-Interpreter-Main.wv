@@ -1,0 +1,913 @@
+module WebAssemblyˉwvbˉscalarˉinterpreter profile portable;
+
+export fn Main(Request: bytes) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
+    let Requestˉlength: u32 = Bytesˉlength(Request);
+    if Requestˉlength < 17u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Request, 0u32) != 1230526039u32 {
+        return Invalid;
+    }
+    if Bytesˉreadˉu16ˉlittle(Request, 4u32) != 1u32 { return Invalid; }
+    if Bytesˉreadˉu16ˉlittle(Request, 6u32) != 0u32 { return Invalid; }
+    let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Request, 8u32);
+    let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
+    if Maximumˉinstructions < 1u32 { return Invalid; }
+    if Maximumˉinstructions > 4096u32 { return Invalid; }
+    if Maximumˉcallˉdepth < 1u32 { return Invalid; }
+    if Maximumˉcallˉdepth > 8u32 { return Invalid; }
+
+    let Module: bytes = Bytesˉslice(
+        Request,
+        16u32,
+        Requestˉlength - 16u32
+    );
+    let Total: u32 = Bytesˉlength(Module);
+    if Total < 12u32 { return Invalid; }
+
+    var Envelope: u32 = 12u32;
+    var Sectionˉkind: u32 = 1u32;
+    var Payload: u32 = 0u32;
+    var Payloadˉlength: u32 = 0u32;
+    var Capabilities: u32 = 0u32;
+    var Functions: u32 = 0u32;
+    var Functionsˉend: u32 = 0u32;
+    var Code: u32 = 0u32;
+    var Exports: u32 = 0u32;
+    var Types: u32 = 0u32;
+    while Sectionˉkind <= 7u32 {
+        Payload = Envelope + 8u32;
+        Payloadˉlength = Bytesˉreadˉu32ˉlittle(Module, Envelope + 4u32);
+        if Sectionˉkind == 2u32 { Capabilities = Payload; }
+        if Sectionˉkind == 4u32 {
+            Functions = Payload;
+            Functionsˉend = Payload + Payloadˉlength;
+        }
+        if Sectionˉkind == 5u32 { Code = Payload; }
+        if Sectionˉkind == 6u32 { Exports = Payload; }
+        if Sectionˉkind == 7u32 { Types = Payload; }
+        Envelope = Payload + Payloadˉlength;
+        Sectionˉkind = Sectionˉkind + 1u32;
+    }
+    if Envelope != Total { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 20u32)) != 1u32 {
+        return Invalid;
+    }
+    if Bytesˉreadˉu32ˉlittle(Module, Capabilities) != 0u32 {
+        return Invalid;
+    }
+    if Bytesˉreadˉu32ˉlittle(Module, Types) != 0u32 { return Invalid; }
+
+    let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Functions);
+    if Functionˉcount < 1u32 { return Invalid; }
+    if Functionˉcount > 16u32 { return Invalid; }
+
+    var Mainˉfound: bool = false;
+    var Mainˉindex: u32 = 0u32;
+    let Exportˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Exports);
+    var Exportˉindex: u32 = 0u32;
+    var Exportˉcursor: u32 = Exports + 4u32;
+    while Exportˉindex < Exportˉcount {
+        let Exportˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Module,
+            Exportˉcursor
+        );
+        Exportˉcursor = Exportˉcursor + 4u32;
+        var Isˉmain: bool = false;
+        if Exportˉnameˉlength == 4u32 {
+            Isˉmain = true;
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Exportˉcursor)) != 77u32 {
+                Isˉmain = false;
+            }
+            if U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Exportˉcursor + 1u32)
+            ) != 97u32 {
+                Isˉmain = false;
+            }
+            if U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Exportˉcursor + 2u32)
+            ) != 105u32 {
+                Isˉmain = false;
+            }
+            if U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Exportˉcursor + 3u32)
+            ) != 110u32 {
+                Isˉmain = false;
+            }
+        }
+        Exportˉcursor = Exportˉcursor + Exportˉnameˉlength;
+        let Exportˉkind: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Module, Exportˉcursor)
+        );
+        let Exportˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+            Module,
+            Exportˉcursor + 1u32
+        );
+        Exportˉcursor = Exportˉcursor + 5u32;
+        if Isˉmain {
+            if Mainˉfound { return Invalid; }
+            if Exportˉkind != 1u32 { return Invalid; }
+            Mainˉfound = true;
+            Mainˉindex = Exportˉtarget;
+        }
+        Exportˉindex = Exportˉindex + 1u32;
+    }
+    if Mainˉfound {
+        Mainˉfound = true;
+    } else {
+        return Invalid;
+    }
+
+    var Functionˉindex: u32 = 0u32;
+    var Functionˉcursor: u32 = Functions + 4u32;
+    var Aggregateˉinstructions: u32 = 0u32;
+    var Mainˉcodeˉoffset: u32 = 0u32;
+    var Mainˉcodeˉlength: u32 = 0u32;
+    while Functionˉindex < Functionˉcount {
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Module,
+            Functionˉcursor
+        );
+        Functionˉcursor = Functionˉcursor + 4u32 + Nameˉlength;
+        let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Module,
+            Functionˉcursor
+        );
+        if Parameterˉcount > 8u32 { return Invalid; }
+        Functionˉcursor = Functionˉcursor + 4u32;
+        var Shapeˉindex: u32 = 0u32;
+        var Shapeˉkind: u32 = 0u32;
+        while Shapeˉindex < Parameterˉcount {
+            Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
+            if Shapeˉkind != 1u32 {
+                if Shapeˉkind != 2u32 {
+                    if Shapeˉkind != 4u32 {
+                        if Shapeˉkind != 5u32 { return Invalid; }
+                    }
+                }
+            }
+            Functionˉcursor = Functionˉcursor + 1u32;
+            Shapeˉindex = Shapeˉindex + 1u32;
+        }
+        let Returnˉkind: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Module, Functionˉcursor)
+        );
+        if Returnˉkind != 1u32 {
+            if Returnˉkind != 2u32 {
+                if Returnˉkind != 4u32 {
+                    if Returnˉkind != 5u32 { return Invalid; }
+                }
+            }
+        }
+        Functionˉcursor = Functionˉcursor + 1u32;
+        let Localˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Module,
+            Functionˉcursor
+        );
+        if Localˉcount > 32u32 - Parameterˉcount { return Invalid; }
+        Functionˉcursor = Functionˉcursor + 4u32;
+        Shapeˉindex = 0u32;
+        while Shapeˉindex < Localˉcount {
+            Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
+            if Shapeˉkind != 1u32 {
+                if Shapeˉkind != 2u32 {
+                    if Shapeˉkind != 4u32 {
+                        if Shapeˉkind != 5u32 { return Invalid; }
+                    }
+                }
+            }
+            Functionˉcursor = Functionˉcursor + 1u32;
+            Shapeˉindex = Shapeˉindex + 1u32;
+        }
+        let Functionˉcodeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Module,
+            Functionˉcursor
+        );
+        let Functionˉcodeˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Module,
+            Functionˉcursor + 4u32
+        );
+        let Maximumˉstack: u32 = Bytesˉreadˉu32ˉlittle(
+            Module,
+            Functionˉcursor + 8u32
+        );
+        Functionˉcursor = Functionˉcursor + 12u32;
+        if Maximumˉstack > 16u32 { return Invalid; }
+        if Functionˉindex == Mainˉindex {
+            if Parameterˉcount != 0u32 { return Invalid; }
+            if Returnˉkind != 1u32 { return Invalid; }
+            Mainˉcodeˉoffset = Functionˉcodeˉoffset;
+            Mainˉcodeˉlength = Functionˉcodeˉlength;
+        }
+
+        var Scan: u32 = 0u32;
+        while Scan < Functionˉcodeˉlength {
+            let Scanˉopcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                Module,
+                Code + Functionˉcodeˉoffset + Scan
+            ));
+            var Width: u32 = 1u32;
+            var Supported: bool = false;
+            if Scanˉopcode == 1u32 { Width = 5u32; Supported = true; }
+            if Scanˉopcode == 2u32 { Width = 2u32; Supported = true; }
+            if Scanˉopcode == 4u32 { Width = 5u32; Supported = true; }
+            if Scanˉopcode == 5u32 { Width = 5u32; Supported = true; }
+            if Scanˉopcode == 8u32 { Width = 2u32; Supported = true; }
+            if Scanˉopcode == 9u32 { Width = 5u32; Supported = true; }
+            if Scanˉopcode >= 16u32 {
+                if Scanˉopcode <= 22u32 { Supported = true; }
+            }
+            if Scanˉopcode >= 32u32 {
+                if Scanˉopcode <= 40u32 { Supported = true; }
+            }
+            if Scanˉopcode == 48u32 { Width = 5u32; Supported = true; }
+            if Scanˉopcode == 49u32 { Width = 5u32; Supported = true; }
+            if Scanˉopcode == 64u32 { Width = 5u32; Supported = true; }
+            if Scanˉopcode == 80u32 { Supported = true; }
+            if Scanˉopcode == 81u32 { Supported = true; }
+            if Scanˉopcode >= 96u32 {
+                if Scanˉopcode <= 103u32 { Supported = true; }
+            }
+            if Scanˉopcode == 118u32 { Supported = true; }
+            if Supported {
+                Supported = true;
+            } else {
+                return Invalid;
+            }
+            Scan = Scan + Width;
+            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
+            if Aggregateˉinstructions > 4096u32 { return Invalid; }
+        }
+        Functionˉindex = Functionˉindex + 1u32;
+    }
+    if Functionˉcursor != Functionsˉend { return Invalid; }
+
+    let Zeroˉvalue: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    var Zeroˉlocals: bytes = Invalid;
+    var Zeroˉindex: u32 = 0u32;
+    while Zeroˉindex < 32u32 {
+        Zeroˉlocals = Bytesˉconcat(Zeroˉlocals, Zeroˉvalue);
+        Zeroˉindex = Zeroˉindex + 1u32;
+    }
+
+    var Currentˉfunction: u32 = Mainˉindex;
+    var Currentˉcodeˉoffset: u32 = Mainˉcodeˉoffset;
+    var Currentˉcodeˉlength: u32 = Mainˉcodeˉlength;
+    var Pc: u32 = 0u32;
+    var Locals: bytes = Zeroˉlocals;
+    var Stack: bytes = Invalid;
+    var Frames: bytes = Invalid;
+    var Callˉdepth: u32 = 1u32;
+    var Executed: u32 = 0u32;
+    var Running: bool = true;
+    while Running {
+        if Executed >= Maximumˉinstructions {
+            var Exhausted: bytes = Bytesˉfromˉu32ˉlittle(1331189335u32);
+            Exhausted = Bytesˉconcat(
+                Exhausted,
+                Bytesˉfromˉu16ˉlittle(1u32)
+            );
+            Exhausted = Bytesˉconcat(
+                Exhausted,
+                Bytesˉfromˉu16ˉlittle(0u32)
+            );
+            Exhausted = Bytesˉconcat(
+                Exhausted,
+                Bytesˉfromˉu32ˉlittle(3011u32)
+            );
+            Exhausted = Bytesˉconcat(
+                Exhausted,
+                Bytesˉfromˉu32ˉlittle(Executed)
+            );
+            Exhausted = Bytesˉconcat(Exhausted, Zeroˉvalue);
+            return Exhausted;
+        }
+        Executed = Executed + 1u32;
+        let Instruction: u32 = Code + Currentˉcodeˉoffset + Pc;
+        let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Instruction));
+        var Handled: bool = false;
+
+        if Opcode == 1u32 {
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉslice(Module, Instruction + 1u32, 4u32)
+            );
+            Pc = Pc + 5u32;
+            Handled = true;
+        }
+        if Opcode == 2u32 {
+            let Boolˉconstant: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Instruction + 1u32)
+            );
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉfromˉu32ˉlittle(Boolˉconstant)
+            );
+            Pc = Pc + 2u32;
+            Handled = true;
+        }
+        if Opcode == 8u32 {
+            let U8ˉconstant: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Instruction + 1u32)
+            );
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉfromˉu32ˉlittle(U8ˉconstant)
+            );
+            Pc = Pc + 2u32;
+            Handled = true;
+        }
+        if Opcode == 9u32 {
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉslice(Module, Instruction + 1u32, 4u32)
+            );
+            Pc = Pc + 5u32;
+            Handled = true;
+        }
+        if Opcode == 4u32 {
+            let Loadedˉlocalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Instruction + 1u32
+            );
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉslice(Locals, Loadedˉlocalˉindex * 4u32, 4u32)
+            );
+            Pc = Pc + 5u32;
+            Handled = true;
+        }
+        if Opcode == 5u32 {
+            let Storedˉlocalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Instruction + 1u32
+            );
+            let Storeˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Storedˉvalue: bytes = Bytesˉslice(
+                Stack,
+                Storeˉstackˉlength - 4u32,
+                4u32
+            );
+            Stack = Bytesˉslice(Stack, 0u32, Storeˉstackˉlength - 4u32);
+            let Storedˉlocalˉoffset: u32 = Storedˉlocalˉindex * 4u32;
+            let Storedˉprefix: bytes = Bytesˉslice(
+                Locals,
+                0u32,
+                Storedˉlocalˉoffset
+            );
+            let Storedˉsuffix: bytes = Bytesˉslice(
+                Locals,
+                Storedˉlocalˉoffset + 4u32,
+                124u32 - Storedˉlocalˉoffset
+            );
+            Locals = Bytesˉconcat(
+                Bytesˉconcat(Storedˉprefix, Storedˉvalue),
+                Storedˉsuffix
+            );
+            Pc = Pc + 5u32;
+            Handled = true;
+        }
+
+        if Opcode >= 16u32 {
+            if Opcode <= 18u32 {
+                var I32ˉbinaryˉstackˉlength: u32 = Bytesˉlength(Stack);
+                let I32ˉbinaryˉright: i32 = Bytesˉreadˉi32ˉlittle(
+                    Stack,
+                    I32ˉbinaryˉstackˉlength - 4u32
+                );
+                Stack = Bytesˉslice(
+                    Stack,
+                    0u32,
+                    I32ˉbinaryˉstackˉlength - 4u32
+                );
+                I32ˉbinaryˉstackˉlength = Bytesˉlength(Stack);
+                let I32ˉbinaryˉleft: i32 = Bytesˉreadˉi32ˉlittle(
+                    Stack,
+                    I32ˉbinaryˉstackˉlength - 4u32
+                );
+                Stack = Bytesˉslice(
+                    Stack,
+                    0u32,
+                    I32ˉbinaryˉstackˉlength - 4u32
+                );
+                var I32ˉbinaryˉresult: i32 = 0;
+                if Opcode == 16u32 {
+                    I32ˉbinaryˉresult = I32ˉbinaryˉleft + I32ˉbinaryˉright;
+                }
+                if Opcode == 17u32 {
+                    I32ˉbinaryˉresult = I32ˉbinaryˉleft - I32ˉbinaryˉright;
+                }
+                if Opcode == 18u32 {
+                    I32ˉbinaryˉresult = I32ˉbinaryˉleft * I32ˉbinaryˉright;
+                }
+                Stack = Bytesˉconcat(
+                    Stack,
+                    Bytesˉfromˉi32ˉlittle(I32ˉbinaryˉresult)
+                );
+                Pc = Pc + 1u32;
+                Handled = true;
+            }
+        }
+        if Opcode == 19u32 {
+            let I32ˉnegateˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let I32ˉnegateˉvalue: i32 = Bytesˉreadˉi32ˉlittle(
+                Stack,
+                I32ˉnegateˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                I32ˉnegateˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉfromˉi32ˉlittle(-I32ˉnegateˉvalue)
+            );
+            Pc = Pc + 1u32;
+            Handled = true;
+        }
+        if Opcode >= 20u32 {
+            if Opcode <= 22u32 {
+                var U32ˉbinaryˉstackˉlength: u32 = Bytesˉlength(Stack);
+                let U32ˉbinaryˉright: u32 = Bytesˉreadˉu32ˉlittle(
+                    Stack,
+                    U32ˉbinaryˉstackˉlength - 4u32
+                );
+                Stack = Bytesˉslice(
+                    Stack,
+                    0u32,
+                    U32ˉbinaryˉstackˉlength - 4u32
+                );
+                U32ˉbinaryˉstackˉlength = Bytesˉlength(Stack);
+                let U32ˉbinaryˉleft: u32 = Bytesˉreadˉu32ˉlittle(
+                    Stack,
+                    U32ˉbinaryˉstackˉlength - 4u32
+                );
+                Stack = Bytesˉslice(
+                    Stack,
+                    0u32,
+                    U32ˉbinaryˉstackˉlength - 4u32
+                );
+                var U32ˉbinaryˉresult: u32 = 0u32;
+                if Opcode == 20u32 {
+                    U32ˉbinaryˉresult = U32ˉbinaryˉleft + U32ˉbinaryˉright;
+                }
+                if Opcode == 21u32 {
+                    U32ˉbinaryˉresult = U32ˉbinaryˉleft - U32ˉbinaryˉright;
+                }
+                if Opcode == 22u32 {
+                    U32ˉbinaryˉresult = U32ˉbinaryˉleft * U32ˉbinaryˉright;
+                }
+                Stack = Bytesˉconcat(
+                    Stack,
+                    Bytesˉfromˉu32ˉlittle(U32ˉbinaryˉresult)
+                );
+                Pc = Pc + 1u32;
+                Handled = true;
+            }
+        }
+
+        if Opcode >= 32u32 {
+            if Opcode <= 37u32 {
+                var I32ˉcompareˉstackˉlength: u32 = Bytesˉlength(Stack);
+                let I32ˉcompareˉright: i32 = Bytesˉreadˉi32ˉlittle(
+                    Stack,
+                    I32ˉcompareˉstackˉlength - 4u32
+                );
+                Stack = Bytesˉslice(
+                    Stack,
+                    0u32,
+                    I32ˉcompareˉstackˉlength - 4u32
+                );
+                I32ˉcompareˉstackˉlength = Bytesˉlength(Stack);
+                let I32ˉcompareˉleft: i32 = Bytesˉreadˉi32ˉlittle(
+                    Stack,
+                    I32ˉcompareˉstackˉlength - 4u32
+                );
+                Stack = Bytesˉslice(
+                    Stack,
+                    0u32,
+                    I32ˉcompareˉstackˉlength - 4u32
+                );
+                var I32ˉcomparisonˉmatches: bool = false;
+                if Opcode == 32u32 {
+                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
+                        == I32ˉcompareˉright;
+                }
+                if Opcode == 33u32 {
+                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
+                        != I32ˉcompareˉright;
+                }
+                if Opcode == 34u32 {
+                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
+                        < I32ˉcompareˉright;
+                }
+                if Opcode == 35u32 {
+                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
+                        <= I32ˉcompareˉright;
+                }
+                if Opcode == 36u32 {
+                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
+                        > I32ˉcompareˉright;
+                }
+                if Opcode == 37u32 {
+                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
+                        >= I32ˉcompareˉright;
+                }
+                var I32ˉcomparisonˉflag: u32 = 0u32;
+                if I32ˉcomparisonˉmatches {
+                    I32ˉcomparisonˉflag = 1u32;
+                }
+                Stack = Bytesˉconcat(
+                    Stack,
+                    Bytesˉfromˉu32ˉlittle(I32ˉcomparisonˉflag)
+                );
+                Pc = Pc + 1u32;
+                Handled = true;
+            }
+        }
+        if Opcode == 38u32 {
+            var Boolˉequalˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Boolˉequalˉright: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Boolˉequalˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                Boolˉequalˉstackˉlength - 4u32
+            );
+            Boolˉequalˉstackˉlength = Bytesˉlength(Stack);
+            let Boolˉequalˉleft: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Boolˉequalˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                Boolˉequalˉstackˉlength - 4u32
+            );
+            var Boolˉequalˉflag: u32 = 0u32;
+            if Boolˉequalˉleft == Boolˉequalˉright {
+                Boolˉequalˉflag = 1u32;
+            }
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉfromˉu32ˉlittle(Boolˉequalˉflag)
+            );
+            Pc = Pc + 1u32;
+            Handled = true;
+        }
+        if Opcode == 39u32 {
+            var Boolˉnotˉequalˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Boolˉnotˉequalˉright: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Boolˉnotˉequalˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                Boolˉnotˉequalˉstackˉlength - 4u32
+            );
+            Boolˉnotˉequalˉstackˉlength = Bytesˉlength(Stack);
+            let Boolˉnotˉequalˉleft: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Boolˉnotˉequalˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                Boolˉnotˉequalˉstackˉlength - 4u32
+            );
+            var Boolˉnotˉequalˉflag: u32 = 0u32;
+            if Boolˉnotˉequalˉleft != Boolˉnotˉequalˉright {
+                Boolˉnotˉequalˉflag = 1u32;
+            }
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉfromˉu32ˉlittle(Boolˉnotˉequalˉflag)
+            );
+            Pc = Pc + 1u32;
+            Handled = true;
+        }
+        if Opcode == 40u32 {
+            let Boolˉnotˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Boolˉnotˉvalue: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Boolˉnotˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                Boolˉnotˉstackˉlength - 4u32
+            );
+            var Boolˉnotˉflag: u32 = 0u32;
+            if Boolˉnotˉvalue == 0u32 { Boolˉnotˉflag = 1u32; }
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉfromˉu32ˉlittle(Boolˉnotˉflag)
+            );
+            Pc = Pc + 1u32;
+            Handled = true;
+        }
+
+        if Opcode >= 96u32 {
+            if Opcode <= 103u32 {
+                var U32ˉcompareˉstackˉlength: u32 = Bytesˉlength(Stack);
+                let U32ˉcompareˉright: u32 = Bytesˉreadˉu32ˉlittle(
+                    Stack,
+                    U32ˉcompareˉstackˉlength - 4u32
+                );
+                Stack = Bytesˉslice(
+                    Stack,
+                    0u32,
+                    U32ˉcompareˉstackˉlength - 4u32
+                );
+                U32ˉcompareˉstackˉlength = Bytesˉlength(Stack);
+                let U32ˉcompareˉleft: u32 = Bytesˉreadˉu32ˉlittle(
+                    Stack,
+                    U32ˉcompareˉstackˉlength - 4u32
+                );
+                Stack = Bytesˉslice(
+                    Stack,
+                    0u32,
+                    U32ˉcompareˉstackˉlength - 4u32
+                );
+                var U32ˉcomparisonˉmatches: bool = false;
+                if Opcode == 96u32 {
+                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
+                        == U32ˉcompareˉright;
+                }
+                if Opcode == 97u32 {
+                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
+                        != U32ˉcompareˉright;
+                }
+                if Opcode == 98u32 {
+                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
+                        < U32ˉcompareˉright;
+                }
+                if Opcode == 99u32 {
+                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
+                        <= U32ˉcompareˉright;
+                }
+                if Opcode == 100u32 {
+                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
+                        > U32ˉcompareˉright;
+                }
+                if Opcode == 101u32 {
+                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
+                        >= U32ˉcompareˉright;
+                }
+                if Opcode == 102u32 {
+                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
+                        == U32ˉcompareˉright;
+                }
+                if Opcode == 103u32 {
+                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
+                        != U32ˉcompareˉright;
+                }
+                var U32ˉcomparisonˉflag: u32 = 0u32;
+                if U32ˉcomparisonˉmatches {
+                    U32ˉcomparisonˉflag = 1u32;
+                }
+                Stack = Bytesˉconcat(
+                    Stack,
+                    Bytesˉfromˉu32ˉlittle(U32ˉcomparisonˉflag)
+                );
+                Pc = Pc + 1u32;
+                Handled = true;
+            }
+        }
+        if Opcode == 118u32 {
+            Pc = Pc + 1u32;
+            Handled = true;
+        }
+
+        if Opcode == 48u32 {
+            Pc = Bytesˉreadˉu32ˉlittle(Module, Instruction + 1u32);
+            Handled = true;
+        }
+        if Opcode == 49u32 {
+            let Branchˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Condition: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Branchˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                Branchˉstackˉlength - 4u32
+            );
+            if Condition == 0u32 {
+                Pc = Bytesˉreadˉu32ˉlittle(Module, Instruction + 1u32);
+            } else {
+                Pc = Pc + 5u32;
+            }
+            Handled = true;
+        }
+
+        if Opcode == 64u32 {
+            if Callˉdepth >= Maximumˉcallˉdepth {
+                var Depthˉfailure: bytes = Bytesˉfromˉu32ˉlittle(1331189335u32);
+                Depthˉfailure = Bytesˉconcat(
+                    Depthˉfailure,
+                    Bytesˉfromˉu16ˉlittle(1u32)
+                );
+                Depthˉfailure = Bytesˉconcat(
+                    Depthˉfailure,
+                    Bytesˉfromˉu16ˉlittle(0u32)
+                );
+                Depthˉfailure = Bytesˉconcat(
+                    Depthˉfailure,
+                    Bytesˉfromˉu32ˉlittle(3004u32)
+                );
+                Depthˉfailure = Bytesˉconcat(
+                    Depthˉfailure,
+                    Bytesˉfromˉu32ˉlittle(Executed)
+                );
+                Depthˉfailure = Bytesˉconcat(Depthˉfailure, Zeroˉvalue);
+                return Depthˉfailure;
+            }
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Instruction + 1u32
+            );
+            var Targetˉindex: u32 = 0u32;
+            var Targetˉcursor: u32 = Functions + 4u32;
+            while Targetˉindex < Target {
+                let Skippedˉtargetˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                    Module,
+                    Targetˉcursor
+                );
+                Targetˉcursor = Targetˉcursor
+                    + 4u32
+                    + Skippedˉtargetˉnameˉlength;
+                let Skippedˉtargetˉparameterˉcount: u32 =
+                    Bytesˉreadˉu32ˉlittle(
+                    Module,
+                    Targetˉcursor
+                );
+                Targetˉcursor = Targetˉcursor
+                    + 4u32
+                    + Skippedˉtargetˉparameterˉcount;
+                Targetˉcursor = Targetˉcursor + 1u32;
+                let Skippedˉtargetˉlocalˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                    Module,
+                    Targetˉcursor
+                );
+                Targetˉcursor = Targetˉcursor
+                    + 4u32
+                    + Skippedˉtargetˉlocalˉcount;
+                Targetˉcursor = Targetˉcursor + 12u32;
+                Targetˉindex = Targetˉindex + 1u32;
+            }
+            let Targetˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Targetˉcursor
+            );
+            Targetˉcursor = Targetˉcursor + 4u32 + Targetˉnameˉlength;
+            let Targetˉparameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Targetˉcursor
+            );
+            Targetˉcursor = Targetˉcursor + 4u32 + Targetˉparameterˉcount;
+            Targetˉcursor = Targetˉcursor + 1u32;
+            let Targetˉlocalˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Targetˉcursor
+            );
+            Targetˉcursor = Targetˉcursor + 4u32 + Targetˉlocalˉcount;
+            let Targetˉcodeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Targetˉcursor
+            );
+            let Targetˉcodeˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Targetˉcursor + 4u32
+            );
+
+            var Nextˉlocals: bytes = Zeroˉlocals;
+            var Argumentˉindex: u32 = Targetˉparameterˉcount;
+            while Argumentˉindex > 0u32 {
+                Argumentˉindex = Argumentˉindex - 1u32;
+                let Argumentˉstackˉlength: u32 = Bytesˉlength(Stack);
+                let Argumentˉvalue: bytes = Bytesˉslice(
+                    Stack,
+                    Argumentˉstackˉlength - 4u32,
+                    4u32
+                );
+                Stack = Bytesˉslice(
+                    Stack,
+                    0u32,
+                    Argumentˉstackˉlength - 4u32
+                );
+                let Argumentˉlocalˉoffset: u32 = Argumentˉindex * 4u32;
+                let Argumentˉprefix: bytes = Bytesˉslice(
+                    Nextˉlocals,
+                    0u32,
+                    Argumentˉlocalˉoffset
+                );
+                let Argumentˉsuffix: bytes = Bytesˉslice(
+                    Nextˉlocals,
+                    Argumentˉlocalˉoffset + 4u32,
+                    124u32 - Argumentˉlocalˉoffset
+                );
+                Nextˉlocals = Bytesˉconcat(
+                    Bytesˉconcat(Argumentˉprefix, Argumentˉvalue),
+                    Argumentˉsuffix
+                );
+            }
+
+            var Frame: bytes = Bytesˉfromˉu32ˉlittle(Currentˉfunction);
+            Frame = Bytesˉconcat(
+                Frame,
+                Bytesˉfromˉu32ˉlittle(Pc + 5u32)
+            );
+            Frame = Bytesˉconcat(
+                Frame,
+                Bytesˉfromˉu32ˉlittle(Currentˉcodeˉoffset)
+            );
+            Frame = Bytesˉconcat(
+                Frame,
+                Bytesˉfromˉu32ˉlittle(Currentˉcodeˉlength)
+            );
+            Frame = Bytesˉconcat(Frame, Locals);
+            Frames = Bytesˉconcat(Frames, Frame);
+            Currentˉfunction = Target;
+            Currentˉcodeˉoffset = Targetˉcodeˉoffset;
+            Currentˉcodeˉlength = Targetˉcodeˉlength;
+            Pc = 0u32;
+            Locals = Nextˉlocals;
+            Callˉdepth = Callˉdepth + 1u32;
+            Handled = true;
+        }
+
+        if Opcode == 80u32 {
+            let Popˉstackˉlength: u32 = Bytesˉlength(Stack);
+            Stack = Bytesˉslice(Stack, 0u32, Popˉstackˉlength - 4u32);
+            Pc = Pc + 1u32;
+            Handled = true;
+        }
+        if Opcode == 81u32 {
+            let Returnˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Returnˉresult: bytes = Bytesˉslice(
+                Stack,
+                Returnˉstackˉlength - 4u32,
+                4u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                Returnˉstackˉlength - 4u32
+            );
+            let Framesˉlength: u32 = Bytesˉlength(Frames);
+            if Framesˉlength == 0u32 {
+                var Success: bytes = Bytesˉfromˉu32ˉlittle(1331189335u32);
+                Success = Bytesˉconcat(
+                    Success,
+                    Bytesˉfromˉu16ˉlittle(1u32)
+                );
+                Success = Bytesˉconcat(
+                    Success,
+                    Bytesˉfromˉu16ˉlittle(0u32)
+                );
+                Success = Bytesˉconcat(
+                    Success,
+                    Bytesˉfromˉu32ˉlittle(0u32)
+                );
+                Success = Bytesˉconcat(
+                    Success,
+                    Bytesˉfromˉu32ˉlittle(Executed)
+                );
+                Success = Bytesˉconcat(Success, Returnˉresult);
+                return Success;
+            }
+            let Frameˉoffset: u32 = Framesˉlength - 144u32;
+            Currentˉfunction = Bytesˉreadˉu32ˉlittle(
+                Frames,
+                Frameˉoffset
+            );
+            Pc = Bytesˉreadˉu32ˉlittle(Frames, Frameˉoffset + 4u32);
+            Currentˉcodeˉoffset = Bytesˉreadˉu32ˉlittle(
+                Frames,
+                Frameˉoffset + 8u32
+            );
+            Currentˉcodeˉlength = Bytesˉreadˉu32ˉlittle(
+                Frames,
+                Frameˉoffset + 12u32
+            );
+            Locals = Bytesˉslice(Frames, Frameˉoffset + 16u32, 128u32);
+            Frames = Bytesˉslice(Frames, 0u32, Frameˉoffset);
+            Stack = Bytesˉconcat(Stack, Returnˉresult);
+            Callˉdepth = Callˉdepth - 1u32;
+            Handled = true;
+        }
+
+        if Handled {
+            Handled = true;
+        } else {
+            return Invalid;
+        }
+        if Pc > Currentˉcodeˉlength { return Invalid; }
+    }
+    return Invalid;
+}

@@ -1,6 +1,6 @@
 # Windvale experimental WebAssembly target
 
-- Status: Implemented locally through experimental profile 13 and cross-host qualified through profile 10, but not an accepted permanent target
+- Status: Implemented locally through experimental profile 14 and cross-host qualified through profile 10, but not an accepted permanent target
 - Target identifier: `wasm32-browser-v1-experimental`
 - WebAssembly binary version: 1
 - Portable input identity: canonical WVB 1.6
@@ -15,7 +15,7 @@ The implementation is `Compiler/Windvale/WebAssembly-Core.wv`. `Examples/Compile
 
 WVB verification remains mandatory before a WebAssembly execution path may trust a module. The current hosted shell nevertheless treats its raw file input as untrusted and revalidates every byte range and every field needed by this profile. It rejects a truncated header, wrong version or section count, malformed or reordered section envelope, oversized payload length, trailing bytes, unsupported profile, unsupported module shape, unsupported function metadata, and unsupported code before producing output.
 
-This selector is not itself a general Windvale-native WVB semantic verifier. Profile 11 can execute a Windvale-written verifier that completely consumes the seven bounded section payloads, profile 12 can decompose a larger Windvale-written verifier across descriptor-bearing private functions, and profile 13 supplies capacity for the complete compiler-aligned consumer. That retained ten-function consumer proves canonical metadata and references plus typed local, operand-stack, call, capability, record, enum, return, reachability, and declared-stack contracts for the source compiler's empty-stack control boundaries. General WVB graphs with nonempty stack joins and executable capability authorization remain outside this claim. A future default browser execution path must compose this verifier with explicit worker authorization before removing the Stage 0 verifier for hosted modules.
+This selector is not itself a general Windvale-native WVB semantic verifier. Profile 11 can execute a Windvale-written verifier that completely consumes the seven bounded section payloads, profile 12 can decompose a larger Windvale-written verifier across descriptor-bearing private functions, and profile 13 supplies capacity for the complete compiler-aligned consumer. That retained ten-function consumer proves canonical metadata and references plus typed local, operand-stack, call, capability, record, enum, return, reachability, and declared-stack contracts for the source compiler's empty-stack control boundaries. Profile 14 separately lowers the first bounded WVB scalar interpreter. General WVB graphs with nonempty stack joins and executable capability authorization remain outside this claim. A future default browser execution path must compose the verifier, explicit worker authorization, and the selected interpreter profile before removing the Stage 0 path.
 
 ## Accepted WVB profiles
 
@@ -195,6 +195,22 @@ Candidate input is bounded to 256 functions, 131,072 aggregate code bytes, 16,00
 
 The complete consumer has ten functions and 108,331 aggregate code bytes. Its two added phase functions respectively use `2,019 / 32,766 / 3` and `564 / 9,793 / 3` nonparameter locals, code bytes, and maximum stack, preserving every profile-13 per-function ceiling.
 
+### Profile 14: scalar runtime operations and first WVB interpreter
+
+Profile 14 retains profile 11's one `bytes -> bytes` function, execution ABI 3, fixed memory, runtime values, terminator-aligned control, exact metering, 2,047-local, 32,768-code-byte, and 100,000-instruction limits. It additionally admits:
+
+- checked `i32.add`, `i32.subtract`, `i32.multiply`, and `i32.negate`;
+- all six signed `i32` comparisons; and
+- checked `u32.multiply` in addition to profile 10's unsigned addition, subtraction, and comparisons.
+
+The generated code detects every Windvale overflow explicitly. Signed operations reuse the existing widened or sign-bit proofs. Unsigned multiplication widens both operands to `i64`, multiplies, rejects a value above `u32` maximum as `WVR3007`, and wraps to `i32` only after that proof. No target wrapping operation defines a Windvale result.
+
+The retained consumer is `Wvb-Scalar-Interpreter-Main.wv`. It accepts a versioned `WVXI 1` request containing a guest instruction budget, guest call-depth limit, and exact WVB bytes that have already passed the complete Decision 0149 verifier. It returns a fixed `WVXO 1` response containing guest status, charged guest instructions, and one `i32` result. The interpreter preflight is a bounded profile selector and must not be used as the untrusted-input verifier.
+
+The candidate execution subset is portable, capability-free WVB 1.6 with no nominal types; one through sixteen scalar functions; at most eight parameters and thirty-two parameters plus locals per function; declared stack depth at most sixteen; at most 4,096 aggregate instructions; and `Main() -> i32`. It interprets deterministic default-valued `i32`, `u32`, `u8`, and `bool` locals; checked arithmetic and scalar comparisons; boolean operations; `u32.from_u8`; terminator-aligned jumps and branches; direct calls; `pop`; and returns. Guest budget is one through 4,096 and call depth is one through eight.
+
+The complete verifier and interpreter are deliberately separate import-free artifacts. A worker runs the verifier first, applies capability policy, and only then builds `WVXI`. Empty interpreter output after successful verification means the candidate is outside profile 14. `WVXO` status `3011` reports guest instruction exhaustion and `3004` reports guest call-depth exhaustion; an arithmetic trap propagates through the enclosing execution ABI as status `3007` with no output.
+
 ## Profile 1 output module
 
 Successful lowering emits a WebAssembly binary version-1 module with these sections in ascending order:
@@ -306,7 +322,7 @@ The retained profile-7 true-route fixture defines `Add`, looping `Build`, and ex
 
 The matching false-route fixture has 722-byte WVB SHA-256 `77e65ba692c8abc87dbac4dfeba174f3afc9191ac784b47a65becae8f0df2752`. It calls `Add` from the `else` route, succeeds as `0/42/153`, returns `3011/0/152` one instruction below it, and emits a 2,729-byte artifact with SHA-256 `35d75c30ef03dbb693a976cfaa31405ce90ecca4d393c5e93de8953fcf4658da`.
 
-## Execution ABI 3 and profiles 8 through 12 output
+## Execution ABI 3 and profiles 8 through 14 output
 
 Profile 8 emits an import-free WebAssembly binary version-1 module with one fixed, non-growable 129-page memory. Page zero is reserved. The host owns a 4 MiB input window beginning at byte 65,536; the guest owns a separate 4 MiB output window beginning at byte 4,259,840. The regions are disjoint, checked before access, and exactly fill the remaining memory.
 
@@ -314,7 +330,7 @@ The module exports these values in this exact order:
 
 | Export | WebAssembly kind | Contract |
 | --- | --- | --- |
-| `Windvale.run` | function `(i32, i32) -> i32` | Accepts instruction budget and input byte length; returns `0` or a profile-defined Windvale status. Profiles 8 through 12 currently use `3007`, `3008`, `3011`, `3014`, `3015`, `3016`, and `3018`. |
+| `Windvale.run` | function `(i32, i32) -> i32` | Accepts instruction budget and input byte length; returns `0` or a profile-defined Windvale status. Profiles 8 through 14 currently use `3007`, `3008`, `3011`, `3014`, `3015`, `3016`, and `3018`. |
 | `Windvale.abi` | immutable `i32` global | Contains execution ABI version `3`. |
 | `Windvale.memory` | memory | The fixed 129-page linear memory. |
 | `Windvale.input_offset` | immutable `i32` global | Contains `65,536`. |
@@ -382,6 +398,7 @@ The profile-12 descriptor-call fixture has 764-byte WVB SHA-256 `a44c8bdbf9983a7
 - Profile 11 retains profile 10's operation, stack, memory, value, and arena model while increasing the one-function selector ceiling to 2,047 nonparameter locals, 32,768 code bytes, and 100,000 instructions.
 - Profile 12 admits two through eight `bytes -> bytes` functions under those per-function local, code, instruction, stack, memory, value, and arena bounds; aggregate code is at most 65,536 bytes and aggregate instructions at most 200,000.
 - Profile 13 admits two through sixteen `bytes -> bytes` functions under the unchanged per-function bounds; aggregate code is at most 131,072 bytes and aggregate instructions at most 400,000.
+- Profile 14 returns to profile 11's single-function bounds and adds checked signed scalar arithmetic/comparisons plus checked `u32.multiply`. Its retained interpreter independently limits candidates to sixteen functions, eight parameters, thirty-two frame values, stack depth sixteen, 4,096 aggregate instructions, guest budget 4,096, and guest call depth eight.
 - Encoded WebAssembly output is limited to 524,288 bytes for profile-12-sized inputs and 1,048,576 bytes when a profile-13 input crosses a profile-12 function, code, or instruction boundary.
 - All offset and length checks precede reads or additions that depend on untrusted values.
 - Failure returns a typed status and an empty output value.
@@ -423,6 +440,8 @@ Profile 12 additionally requires independent reconstruction of both Wasm types, 
 
 Profile 13 additionally requires preservation of every profile-12 artifact; exact enforcement of the sixteen-function, 131,072-code-byte, 400,000-instruction, and conditional 1-MiB output limits; and rejection of a seventeen-function graph. The compiler-aligned executable consumer additionally requires Stage 0 differential agreement for representative data/text, record/enum, and capability-bearing modules; exact success and one-instruction-short budgets; and hostile cases covering operator stack kinds, local stores, call arguments, record receivers, enum identity, branch conditions, unreachable regions, declared maximum stack, and capability arguments.
 
+Profile 14 additionally requires preservation of every earlier generated Wasm identity; exact signed and unsigned overflow behavior; source-profile and emitted-Wasm validation by the independent C# decoder; complete-verifier admission before interpretation; reference-runtime agreement for scalar arithmetic, comparisons, calls, and control; deterministic repeat; exact guest instruction and call-depth exhaustion; exact outer instruction exhaustion; and execution under an independent WebAssembly engine.
+
 On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles twenty-eight profile-2 through profile-13 lowering fixtures plus three positive WVB input modules, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine. The ABI-2 cases require exact success, one-instruction-short exhaustion, reset across repeated runs, shared-budget call execution, calls within both conditional routes, callee-overflow propagation, and nonterminating-loop containment. The ABI-3 cases additionally exercise exact-capacity bytes, curated UTF-8 boundaries, deterministic randomized agreement with Node.js's fatal UTF-8 decoder, general byte construction, checked unsigned overflow and underflow, distinct value, narrowing, range, and aggregate-allocation failures, descriptor-bearing calls through control, and valid plus hostile WVB envelopes, section payloads, canonical metadata, references, and executable flow through the Windvale-native verifiers.
 
 Exact profile-4 implementation commit `1342f63bc7eaae17a526ca440b075c2abf3c3b31` passed GitHub [Verify run 30770158910](https://github.com/eworker-inc/Windvale/actions/runs/30770158910). Its Windows and digest-pinned Debian jobs each passed the complete repository verifier with zero-warning builds, all 68 Seed tests, and all 25 OS tests. This establishes deterministic equality for the retained profile-4 WVB and WebAssembly identities and the exact `0/42/157`, `3011/0/156`, and nonterminating `3011/0/50` execution evidence on both hosts.
@@ -455,7 +474,9 @@ The exact implementation commit also passed GitHub [Deploy homepage run 30770158
 
 [Decision 0146](../Documents/Decisions/0146-Expanded-Descriptor-Bearing-WebAssembly-Call-Graph.md) advances the selector locally to profile 13 without changing execution ABI 3. It doubles the bounded descriptor graph and preserves the profile-12 semantic artifact byte for byte. A derived nine-function verifier crosses both former aggregate limits and rejects a seventeen-function graph.
 
-[Decision 0149](../Documents/Decisions/0149-Windvale-Native-WebAssembly-Wvb-Executable-Verifier.md) uses profile 13 for the compiler-aligned executable phase. The complete ten-function verifier is 115,483 WVB bytes with SHA-256 `6a26b09c0f96e3fa9edf8c180ee8f4b2551f1b1007f0faabcec39be1106285b4` and lowers in 213,655,515 instructions to 722,837 import-free Wasm bytes with SHA-256 `6060b8198405b5f8763890ef5b53482398e1e0c7716f91ab279d9307db8d077b`. The reference runtime and Node.js accept data/text, record/enum, and capability-declaration modules and reject nine Stage-0-oracle-matched executable mutations. Cross-host construction, cross-browser execution, worker authorization, interpreter/compiler execution, and the default-playground switch remain pending.
+[Decision 0149](../Documents/Decisions/0149-Windvale-Native-WebAssembly-Wvb-Executable-Verifier.md) uses profile 13 for the compiler-aligned executable phase. The complete ten-function verifier is 115,483 WVB bytes with SHA-256 `6a26b09c0f96e3fa9edf8c180ee8f4b2551f1b1007f0faabcec39be1106285b4` and emits 722,837 import-free Wasm bytes with SHA-256 `6060b8198405b5f8763890ef5b53482398e1e0c7716f91ab279d9307db8d077b`. Under the extended profile-14 backend, construction now takes 222,376,689 instructions while the artifact remains byte-identical. The reference runtime and Node.js accept data/text, record/enum, and capability-declaration modules and reject nine Stage-0-oracle-matched executable mutations.
+
+[Decision 0152](../Documents/Decisions/0152-First-Wasm-Hosted-Wvb-Scalar-Interpreter.md) advances the selector locally to profile 14 and adds the first bounded Wasm-hosted WVB interpreter. Its 25,568-byte WVB lowers in 82,657,852 instructions to 145,469 import-free Wasm bytes with SHA-256 `683410069c64d0143f748d34cb63f16b7d36c130662c282c003b981b24d37580`. The actual Node.js pipeline first runs the unchanged complete verifier and then interprets scalar calls/control with exact reference agreement, dual-budget exhaustion, call-depth exhaustion, checked overflow, and deterministic repeat. Text, bytes, nominal aggregates, worker packaging, source compilation, cross-host construction, cross-browser execution, and the default-playground switch remain pending.
 
 ## Non-claims
 
@@ -464,7 +485,7 @@ This profile does not establish:
 - WebAssembly as a permanent Windvale host or distribution format;
 - a direct source-to-WebAssembly compiler;
 - a general WVB-to-WebAssembly backend;
-- a general-WVB verifier with nonempty stack joins or a Windvale-native WVB interpreter;
+- a general-WVB verifier with nonempty stack joins or a general Windvale-native WVB interpreter;
 - recursion, function values, indirect calls, `break`, `continue`, arbitrary or unbounded instruction streams, general text operations beyond identity, executable records or enums, reclaiming allocation, collection, or browser capability imports;
 - compilation of the Windvale compiler itself to WebAssembly;
 - replacement of the .NET playground path; or
@@ -472,4 +493,4 @@ This profile does not establish:
 
 ## Next extension boundary
 
-The next measured slice should compose Decision 0149's verifier with the first Windvale-written WVB interpreter rather than widening the selector into a second general backend. Begin with bounded compiler-produced portable WVB using scalar values, terminator-aligned control, and direct calls; prove reference-interpreter agreement and exact instruction exhaustion before adding text/bytes and executable record/enum carriers. Capability execution remains separately authorized by the worker. Once that runtime path is stable, execute the Windvale compiler's verified WVB in the same guest and connect source input to canonical WVB output. Recursion, indirect calls, `break`, `continue`, reclaiming allocation, and browser capability imports remain outside the profile until each has an explicit resource and evidence contract. The verifier, interpreter, source compiler, and result execution must all move into one disposable worker before the editable playground becomes the default .NET-free path.
+The next measured slice should extend Decision 0152's interpreter with bounded text and byte descriptors, then direct records and enums, while retaining the complete verifier as a separate first stage. Define guest dynamic-value ownership, frame transfer, output normalization, and aggregate memory charging before broadening operations. Capability execution remains separately authorized by the worker. Once that runtime path covers the compiler's required values, execute the Windvale compiler's verified WVB in the same guest and connect source input to canonical WVB output. Recursion, indirect calls, `break`, `continue`, reclaiming allocation, and browser capability imports remain outside the profile until each has an explicit resource and evidence contract. The verifier, interpreter, source compiler, and result execution must all move into one disposable worker before the editable playground becomes the default .NET-free path.
