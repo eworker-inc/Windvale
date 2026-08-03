@@ -1,7 +1,7 @@
 # Decision 0133: Frame-owned direct native records
 
 - Date: 2026-08-02
-- Status: Implemented and Windows-qualified; cross-host qualification pending
+- Status: Cross-host qualified at `ea1aa89`
 - Advances: Native ABI 21, target `x86-64-wvb-baseline-v21`, and kernel memory `WVKMEM11`
 - Retains: Execution-context version 7, service-table version 5, the 2,048-cell frame ceiling, the record-arena fields, Probe 32, protected-process format 11, firmware format 32, and the 34 MiB publication-image ceiling
 - Refines: [Decision 0111](0111-Bounded-Exact-Compiler-Fragment-Publication.md), [Decision 0112](0112-Bounded-Exact-Compiler-Record-Arena.md), [Decision 0115](0115-Exact-Compiler-Record-Lifetime-Pressure.md), [Decision 0117](0117-Nominal-Native-Record-Storage-Plan.md), [Decision 0118](0118-Deterministic-Native-Record-Storage-Offsets.md), [Decision 0119](0119-First-Windows-Console-Application.md), and [Decision 0122](0122-First-Linux-Console-Application.md)
@@ -66,7 +66,7 @@ Immediately before the Decision 0131 WebAssembly and Decision 0132 console-verif
 | General protection | 555,520 | `3a651d555f2c334c53b67385ac1fb731a513deb058e742ba5cbc58a985970de2` | 3 |
 | Contained user fault | 556,032 | `198e01840c888d344e40ef985c574e33c77cdafccf36cdb56f9f9218bf74e8ca` | 0 |
 
-Debian and exact committed-candidate GitHub qualification evidence is pending.
+Exact implementation commit `ea1aa89ba204ead633f8340c61b2bacc716881fd` passes GitHub [Verify run 30783457203](https://github.com/eworker-inc/Windvale/actions/runs/30783457203). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 77 Seed tests, all 31 OS tests, the qualification-only golden contract, and the complete native CLI gate. Windows Seed takes 241.987 seconds with a 169.303-second golden contract; Linux Seed takes 216.976 seconds with a 150.484-second golden contract. The complete jobs finish in 8m58s and 7m44s respectively. This exact descendant also qualifies Decision 0132's portable console verifier on both live host writers. The four pinned-QEMU scenarios were not repeated by GitHub; their exact rebuilt ABI-21 identities and passing Windows evidence remain the local evidence above.
 
 ## Consequences
 

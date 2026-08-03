@@ -1,7 +1,7 @@
 # Decision 0132: Windvale-owned console-application verification
 
 - Date: 2026-08-03
-- Status: Implemented candidate; fresh dual-host qualification pending
+- Status: Cross-host qualified at `ea1aa89`
 - Targets: `windows-x64-console-v1` and `linux-x64-console-v1`
 - Retains: Canonical WVB 1.6, native ABI 20/context 7, the 4 MiB byte-value limit, WVA 1, WVO 1.0, both executable format versions, and the .NET retirement gate
 
@@ -31,7 +31,9 @@ Focused zero-warning Release verification passes the combined layout/constructio
 
 The existing Windows and Linux console tests pass in 1.659 seconds and 608 milliseconds after their complete malformed-input corpora are routed through both verifier implementations. Canonical output remains unchanged: the PE is 5,120 bytes with SHA-256 `5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77`, and the ELF is 8,304 bytes with SHA-256 `8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4`.
 
-Windows Development completes a zero-warning Release build, all 76 regular Seed tests, and all 31 bounded OS tests in 90.6 seconds wall time on the merged candidate. Seed takes 74.315 seconds; the combined ownership test and existing Windows/Linux container cases take 484, 1,430, and 144 milliseconds. The qualification-only golden contract and direct Linux execution are outside Development, so fresh dual-host Qualification remains pending for this candidate.
+Windows Development completes a zero-warning Release build, all 76 regular Seed tests, and all 31 bounded OS tests in 90.6 seconds wall time on the merged candidate. Seed takes 74.315 seconds; the combined ownership test and existing Windows/Linux container cases take 484, 1,430, and 144 milliseconds.
+
+Exact descendant `ea1aa89` passes GitHub [Verify run 30783457203](https://github.com/eworker-inc/Windvale/actions/runs/30783457203) after integrating ABI 21 without changing the canonical PE/ELF bytes. Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 77 Seed tests, all 31 OS tests, the qualification-only golden contract, and the complete native CLI gate. Windows Seed takes 241.987 seconds with a 169.303-second golden contract; Linux Seed takes 216.976 seconds with a 150.484-second golden contract. The complete jobs finish in 8m58s and 7m44s respectively. This qualifies the paired portable verifier and both live host integrations; QEMU was not repeated by this GitHub gate because the separately recorded ABI-21 candidate already retains its exact four-scenario Windows evidence.
 
 ## Consequences
 
@@ -39,7 +41,7 @@ Portable Windvale now owns both exact construction and untrusted completed-conta
 
 C# still materializes the sparse construction recipe, validates `WVCV` host evidence, supplies retained recovery provenance, and independently parses PE/ELF. This is an intentional Stage 0 differential boundary, not a second product compiler or a claim that .NET retirement is complete.
 
-The next native milestone may consume the already proven record-storage offsets in a successor ABI. It must not remove the C# recovery path or claim Stage 1-to-Stage 2 reproduction until the paired host qualification and documented native-retirement gates are satisfied.
+Decision 0133 subsequently consumes the proven record-storage offsets in ABI 21. It retains the C# recovery path and advances full native bootstrap execution to the separately measured dynamic text/byte lifetime boundary; complete Stage 1-to-Stage 2 reproduction and the documented native-retirement gates remain open.
 
 ## Reconsider when
 
