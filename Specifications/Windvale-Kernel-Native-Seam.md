@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Native ABI 22, WVA seam 11, exception version 3, admission bridge 2, retained bridge 10, and paging 4 compose the implemented Probe-35 candidate with interpreter profile 7, memory 14, protected processes 14, channel 3, and resource records 6. [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md) owns the resource-and-directory service composition. All 37 focused OS tests and all four pinned-QEMU scenarios pass locally on Windows; cross-host qualification is pending. Probe 34 under Decisions 0142 and 0150 remains the latest fully qualified baseline.
+Native ABI 22, WVA seam 11, exception version 3, admission bridge 2, retained bridge 10, and paging 4 compose cross-host-qualified Probe 35 with interpreter profile 7, memory 14, protected processes 14, channel 3, and resource records 6. [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md) owns the resource-and-directory service composition. Exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5` passes all 87 Seed tests and all 37 OS tests on Windows and digest-pinned Debian; all four pinned-QEMU scenarios pass on Windows.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 

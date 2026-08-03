@@ -1,6 +1,6 @@
 # Decision 0154: First Windvale directory-service IPC
 
-- Status: Implemented with local Windows evidence; guest adoption implemented by Decision 0159, cross-host qualification pending
+- Status: Qualified through Probe 35 under Decision 0159
 - Date: 2026-08-03
 - Owners: Windvale OS runtime adapter and isolated filesystem-service boundary
 - Contract: [`WVDQ 1` with exact `WVDR 1` replies](../../Specifications/Windvale-Directory-Service-Ipc.md)
@@ -32,13 +32,13 @@ The focused Windows OS suite passes all 34 tests in 13.1 seconds after a zero-wa
 
 Repeated compilation produces an 8,389-byte portable core with SHA-256 `7433ffde4399862eb2cdf46c0ea43d8d39fc7aec56b2182d6e7789bcb29b2179` and an 8,492-byte hosted bridge with SHA-256 `465b66c8fd21683c33cb9157fa13830c655147a36af50cc0961331fb5967ba2a`.
 
-This is proportional local protocol evidence. Cross-host verification, live guest execution, new firmware identities, and QEMU are pending until the candidate is committed and the separate guest-adoption slice is implemented.
+This was proportional local protocol evidence at the isolated decision point. Decision 0159 subsequently supplies cross-host verification, live guest execution, exact firmware identities, and Windows QEMU evidence.
 
 ## Consequences
 
 Windvale now owns a strict OS-facing adapter protocol for its first typed filesystem capability. The kernel remains unaware of names and `WVDR`; the service remains unaware of native paths; and the application contract does not change between hosted and eventual Windvale OS execution.
 
-[Decision 0155](0155-First-Immutable-Windvale-Directory-Snapshot.md) defines the required provider value as one verified `WVDS 1` page distinct from the package-resource store. [Decision 0159](0159-First-Guest-Directory-Service.md) now adopts both contracts in Probe 35 with dedicated page-sized reply mappings, an init-owned snapshot, two generation-safe maximal reads, cleanup/rebuild, and all four local Windows QEMU scenarios. Live malformed-request/service-death injection and cross-host qualification remain later evidence.
+[Decision 0155](0155-First-Immutable-Windvale-Directory-Snapshot.md) defines the required provider value as one verified `WVDS 1` page distinct from the package-resource store. [Decision 0159](0159-First-Guest-Directory-Service.md) adopts both contracts in cross-host-qualified Probe 35 with dedicated page-sized reply mappings, an init-owned snapshot, two generation-safe maximal reads, cleanup/rebuild, and all four Windows QEMU scenarios. Live malformed-request/service-death injection remains later evidence.
 
 This decision does not implement that guest adapter, a filesystem root, enumeration, nested paths, handles, mutation, persistence, a block device, DMA, caching, service discovery, concurrent calls, or a general VFS.
 

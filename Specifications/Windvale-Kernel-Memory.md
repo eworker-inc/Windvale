@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 14 is the implemented Probe-35 candidate owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It adds an immutable `WVDS 1` mapping, dedicated init/client service-response pages, and the larger rebuilt client while retaining version 13's compact stacks, checked LIFO tail release, and same-root reuse. Version 13 remains the current cross-host-qualified baseline under [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md); version 14 has local Windows and pinned-QEMU evidence with cross-host qualification pending.
+Kernel memory version 14 is the cross-host-qualified Probe-35 contract owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It adds an immutable `WVDS 1` mapping, dedicated init/client service-response pages, and the larger rebuilt client while retaining version 13's compact stacks, checked LIFO tail release, and same-root reuse. Exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5` passes all 87 Seed tests and all 37 OS tests on Windows and digest-pinned Debian; all four pinned-QEMU scenarios pass on Windows.
 
 This is one bounded deterministic boot arena, not a general physical-memory manager. Release is LIFO-only and can restore only a caller-proven suffix ending at the current cursor.
 

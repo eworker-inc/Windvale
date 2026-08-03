@@ -1,6 +1,6 @@
 # Decision 0159: First guest directory service
 
-- Status: Implemented candidate with local Windows and pinned-QEMU evidence; cross-host qualification pending
+- Status: Qualified on Windows and Debian; all four pinned-QEMU scenarios pass on Windows
 - Date: 2026-08-03
 - Owners: Windvale OS init service, protected-process service transport, and immutable directory capability
 - Contracts: [`WVDQ 1` / `WVDR 1`](../../Specifications/Windvale-Directory-Service-Ipc.md), [`WVDS 1`](../../Specifications/Windvale-Directory-Snapshot.md), [`WVPROC14`](../../Specifications/Windvale-Protected-Process.md), and [`WVKMEM14`](../../Specifications/Windvale-Kernel-Memory.md)
@@ -27,7 +27,7 @@ The smallest useful adoption slice must therefore map the exact immutable snapsh
 - Keep machine construction, page-table publication, syscall dispatch, copying, checked service-byte mechanics, and PE/UEFI packaging as explicit Stage 0/WVA replacement seams. Their longer-term owner remains Windvale `.wv` plus narrow WVA machine leaves once the system target can express the required checked memory/state operations.
 - Do not change the compiler for this slice. The existing ABI-22 backend and WVA instruction surface are sufficient; unrelated compiler evolution can proceed independently.
 
-## Exact candidate
+## Exact qualified implementation
 
 The canonical directory snapshot remains 3,184 bytes with SHA-256 `0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a`.
 
@@ -44,7 +44,7 @@ The canonical directory snapshot remains 3,184 bytes with SHA-256 `0f793a41a7012
 | Normal process-machine WVO | 490,972 | `cbeb8d22c1237d8456c3e68cfb8434a9b48d1ec861e66ce98aca11486fb9c0f0` |
 | Fault process-machine WVO | 491,004 | `04e25f89c1946b02a29af0c738dc5ad74ba042d9106a9d8e76fb60c15738737b` |
 
-The deterministic firmware candidates are:
+The deterministic firmware identities are:
 
 | Scenario | EFI bytes | SHA-256 | Host code |
 | --- | ---: | --- | ---: |
@@ -57,7 +57,9 @@ The deterministic firmware candidates are:
 
 A zero-warning Release build and all 37 focused OS tests pass locally on Windows. The suite covers exact object and firmware reproduction, the policy WVB's exact store/snapshot identities, separate response mappings, snapshot mapping and padding, the attached directory resource, process-record response addresses, malformed snapshot rejection, exact WVA object shapes and syscall counts, generation-safe cleanup, and hostile lower-level `WVDS`/`WVDQ`/`WVDR` cases.
 
-All four pinned QEMU/OVMF scenarios pass. Normal and contained-fault paths emit `directory-service=pass` and `ipc=resource-and-directory`; both independently rebuilt clients complete the maximal 3,096-byte reply and validate all 3,072 file bytes. The two CPL0 fault scenarios retain their exact terminal markers and host code 3. Cross-host build/test evidence and GitHub qualification remain pending, so this decision does not yet claim a qualified Windows/Linux checkpoint.
+All four pinned QEMU/OVMF scenarios pass. Normal and contained-fault paths emit `directory-service=pass` and `ipc=resource-and-directory`; both independently rebuilt clients complete the maximal 3,096-byte reply and validate all 3,072 file bytes. The two CPL0 fault scenarios retain their exact terminal markers and host code 3.
+
+Exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5` passes GitHub [Verify run 30808267999](https://github.com/eworker-inc/Windvale/actions/runs/30808267999). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 87 Seed tests including the golden compiler contract, all 37 OS tests, and the native CLI gate. Windows Seed takes 365.812 seconds with a 205.197-second golden contract; Linux Seed takes 368.287 seconds with a 201.648-second golden contract. The workflow does not claim Debian QEMU execution.
 
 ## Consequences
 

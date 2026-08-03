@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Firmware Probe 35 is the implemented candidate for the first live guest directory service. It composes ABI 22/context 7, WVA seam 11, admission 4/bridge 2, retained bridge 10, memory 14, paging 4, protected processes 14, channel 3, interpreter profile 7, `WVRES006`, `WVBR002`, `WVRS 1`, and `WVDS 1`.
+Firmware Probe 35 is the cross-host-qualified implementation of the first live guest directory service. It composes ABI 22/context 7, WVA seam 11, admission 4/bridge 2, retained bridge 10, memory 14, paging 4, protected processes 14, channel 3, interpreter profile 7, `WVRES006`, `WVBR002`, `WVRS 1`, and `WVDS 1`.
 
-[Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md) owns Probe 35. All 37 bounded OS tests and all four pinned-QEMU scenarios pass locally on Windows. Cross-host qualification remains pending, so Probe 34 under [Decisions 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) and [0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) remains the latest fully qualified baseline.
+[Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md) owns Probe 35. Exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5` passes all 87 Seed tests and all 37 OS tests on Windows and digest-pinned Debian in GitHub [Verify run 30808267999](https://github.com/eworker-inc/Windvale/actions/runs/30808267999). All four pinned-QEMU scenarios pass on Windows; the workflow does not claim Debian QEMU execution.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 
@@ -27,7 +27,7 @@ Candidate image identities are:
 | `general-protection` | 582,144 | `bbc472e29d38ff327dbb90f63ae994731fd07c97aa09bc8b3f36fd179744a946` | 3 |
 | `user-fault` | 582,656 | `3ad6ab38405d78ee8af73758a203633a00c2a5e8e4d07cd6a964b7a24f446c16` | 0 |
 
-All four identities pass the Windows pinned-QEMU gate with complete exact serial markers. Fresh Debian and complete cross-host qualification remain pending; no Debian QEMU execution is claimed.
+All four identities pass the Windows pinned-QEMU gate with complete exact serial markers. The exact construction is cross-host qualified; no Debian QEMU execution is claimed.
 
 ## Firmware exit and kernel entry
 

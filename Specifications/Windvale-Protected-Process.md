@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Protected-process contract version 14 is the implemented Probe-35 candidate owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It retains version 13's two-generation reclaim/rebuild, boot-resource grant, dynamic `WVRS 1` lookup, and terminal peer cleanup, then executes one maximal immutable directory read through the same format-blind service transport in each generation.
+Protected-process contract version 14 is the cross-host-qualified Probe-35 contract owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It retains version 13's two-generation reclaim/rebuild, boot-resource grant, dynamic `WVRS 1` lookup, and terminal peer cleanup, then executes one maximal immutable directory read through the same format-blind service transport in each generation.
 
-Version 13 remains the current cross-host-qualified baseline. Version 14 has local Windows construction, all 37 focused OS tests, and all four pinned-QEMU scenarios; cross-host qualification is pending. This is an internal experiment, not a stable syscall ABI, process manager, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
+Version 14 is qualified at exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5`: Windows and digest-pinned Debian pass all 87 Seed tests and all 37 OS tests, while all four pinned-QEMU scenarios pass on Windows. This is an internal experiment, not a stable syscall ABI, process manager, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 

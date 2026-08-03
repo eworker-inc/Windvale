@@ -1,6 +1,6 @@
 # Decision 0155: First immutable Windvale directory snapshot
 
-- Status: Implemented with local Windows evidence; guest adoption implemented by Decision 0159, cross-host qualification pending
+- Status: Qualified through Probe 35 under Decision 0159
 - Date: 2026-08-03
 - Owners: Windvale OS init/service data boundary and read-only directory provider
 - Contract: [`WVDS 1`](../../Specifications/Windvale-Directory-Snapshot.md)
@@ -37,7 +37,7 @@ The canonical `WVDS 1` fixture has SHA-256 `0f793a41a701240b9cf41179dafa252384b4
 - 20,061-byte portable composed service, SHA-256 `fc77da4c957dd7c44087012c3f911124b7904ec968ef3b21fc768ca0d6078316`;
 - 20,294-byte hosted differential bridge, SHA-256 `3f45fffcc9aee26fec35661c8a4ecf1b7b27e4f0a3fb0f0027fed0a78580fa4b`.
 
-This is proportional local format/service evidence for the isolated format decision. [Decision 0159](0159-First-Guest-Directory-Service.md) subsequently implements the guest mapping, process/memory/resource versions, new firmware identities, and all four local Windows QEMU scenarios. Fresh cross-host qualification remains pending.
+This is proportional local format/service evidence for the isolated format decision. [Decision 0159](0159-First-Guest-Directory-Service.md) subsequently implements and cross-host qualifies the guest mapping, process/memory/resource versions, and new firmware identities; all four pinned-QEMU scenarios pass on Windows.
 
 ## Consequences
 
