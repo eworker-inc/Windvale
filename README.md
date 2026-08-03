@@ -1,5 +1,9 @@
 # Windvale
 
+![Playful illustrated overview of Windvale's language, runtime, tooling, and operating-system ambitions](Documents/Project/Images/Windvale-Project-Portrait-August-2026.png)
+
+*A playful August 2026 portrait of Windvale's scope: one ambitious computing stack, plenty of open questions, and steady progress from language to operating system.*
+
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
 AI systems produce the source and prose. Humans define the objectives, direct the work, review and test the results, decide what the project accepts and publishes, and remain responsible for publication. [E-Worker Inc](https://eworker.ca) provides project stewardship.
@@ -7,12 +11,6 @@ AI systems produce the source and prose. Humans define the objectives, direct th
 At its center is a **new programming language**, together with its compiler, portable bytecode, verified runtime, assembler, object model, linker, and Foundation library. The long-term integration goal is a **new small operating system** capable of loading and running the same verified Windvale programs that run on Windows and Linux. The language and tools remain independently useful before the operating system is complete.
 
 **[Visit windvale.ca](https://windvale.ca/)** · **[Try the browser playground](https://windvale.ca/playground/)** · **[Support Windvale](https://windvale.ca/support/)**
-
-## Project overview
-
-![Windvale project overview for July 2026](Documents/Project/Images/Windvale-Progress-July-2026.png)
-
-*This July 2026 overview was refreshed on 1 August 2026 and is a periodic visual snapshot. The progress dashboard, accepted decisions, and qualification evidence govern where the project has advanced beyond what the image shows.*
 
 ## What works today
 
