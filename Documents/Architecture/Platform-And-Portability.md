@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted architecture direction, refined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md), and future virtualization/accelerator [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md). Current implementation status remains governed by the corresponding format, runtime, native-target, and OS specifications.
+Accepted architecture direction, refined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md), future virtualization/accelerator [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md), and process/service/driver [Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md). Current implementation status remains governed by the corresponding format, runtime, native-target, and OS specifications.
 
 ## Central distinction
 
@@ -31,7 +31,7 @@ Windvale source supports two durable publication levels and several execution ti
 
 The frontend and semantic model are shared. Backend and execution-tier differences must not silently alter defined behavior. [Native-Execution-And-Dotnet-Retirement.md](Native-Execution-And-Dotnet-Retirement.md) owns the accepted interpreter/JIT/AOT continuum and .NET retirement boundary.
 
-[Windvale-Os-Architecture.md](Windvale-Os-Architecture.md) owns the durable boundary for the third environment: a small capability-oriented kernel written primarily in system-profile Windvale, a bounded WVA machine layer, and isolated Windvale services. It fixes trust and ownership without prematurely freezing the syscall, IPC, scheduler, package, filesystem, or public user-ABI encodings.
+[Windvale-Os-Architecture.md](Windvale-Os-Architecture.md) owns the durable boundary for the third environment: a small capability-oriented kernel written primarily in system-profile Windvale, a bounded WVA machine layer, and one protected process/thread mechanism used by applications, helpers, isolated services, drivers, runtimes, and future VMMs. These roles control launch, supervision, and resource policy but grant no authority; exact capabilities remain the enforcement source. The architecture fixes trust and ownership without prematurely freezing the syscall, IPC, scheduler, package, filesystem, or public user-ABI encodings.
 
 ## First OS boot environment
 
@@ -53,7 +53,7 @@ Candidate [Decision 0085](../Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.m
 
 Candidate [Decision 0086](../Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) adds the first reusable machine-entry shape without changing portable semantics. WVA-authored vector-6 and vector-13 stubs normalize CPU frames with and without error codes into one 40-byte ring-0 prefix. The current common handler remains a bounded Stage 0 terminal-policy seam; recovery, page faults, interrupt routing, and user-mode delivery remain separate contracts.
 
-This is now a functioning but deliberately tiny two-process service and interpreter proof, not a complete kernel or general runtime/trap/process system. It has no general scheduler, preemption, capability transfer, general loader, JIT publication, resource namespace, page-fault policy, double-fault containment, IST, interrupt controller, recovery, or general platform lifecycle coordination. Windvale `WVR` runtime traps remain packed semantic statuses and are not redefined as CPU faults.
+This is now a functioning but deliberately tiny two-process service and interpreter proof, not a complete kernel or general runtime/trap/process system. Cross-host-qualified Probe 37 adds one generation-safe kernel endpoint, but still has no general scheduler, preemption, capability transfer, general loader, JIT publication, resource domain, dynamic launch, resource namespace, page-fault policy, double-fault containment, IST, interrupt controller, supervision, or general platform lifecycle coordination. Windvale `WVR` runtime traps remain packed semantic statuses and are not redefined as CPU faults.
 
 ## Virtual-machine execution providers
 
@@ -70,7 +70,7 @@ VM management does not grant access to firmware, images, host files, disks, netw
 Portability is a property of an individual part and a derived property of the complete dependency graph. It is not a blanket requirement placed on every imported library. Four concerns remain independent:
 
 - **Platform scope:** every environment, an explicit set such as Windows and Linux, or a named target constrained by OS, architecture, ABI, or execution environment when those details are observable.
-- **Authority level:** ordinary application, trusted service, or system/driver code.
+- **Authority level:** ordinary application, explicitly trusted service, or system/driver code. A process role such as `service` does not select this level or grant authority by itself.
 - **Required capabilities:** contracts that must be approved and bound before execution.
 - **Optional capabilities:** extensions whose absence is visible before use and for which the application has an intentional fallback.
 
@@ -115,6 +115,8 @@ Reusable application-facing facilities belong in distinct layers:
 - **System libraries** expose privileged kernel, driver, and machine facilities and require system authority.
 
 An application calls a platform library. The library reaches a small semantic capability. Windows and Linux may bind that capability to an in-process or native adapter; Windvale OS may bind it to a checked runtime adapter that communicates with an isolated service through bounded IPC. The app-facing contract remains independent of the provider mechanism.
+
+Process placement is likewise provider-specific. Windows or Linux may use an in-process adapter, native child process, or supervised service; Windvale OS may use a protected endpoint provider. Decision 0173's clean launch, explicit pre-entry binding, peer-loss, and no-ambient-inheritance rules preserve the semantic boundary without requiring every environment to expose the same native process API.
 
 Static internalization into one canonical WVB is the first implementation direction because it preserves deterministic self-contained artifacts. Dynamic package linking, service discovery, and provider replacement remain later choices. The Stage 0 candidate now admits capability-bearing dependencies only when each importer explicitly re-approves the complete transitive requirement set; final WVB capabilities retain canonical ordinal order and still require a separate runtime grant. [`Libraries/README.md`](../../Libraries/README.md) records the implemented layers and filesystem-facing boundary. A derived native or AOT container must eventually preserve and verify the canonical module identity, independent platform scope, and complete capability requirements; an unannotated machine image must not become the authority source.
 

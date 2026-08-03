@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted long-lived architecture direction. [Decision 0084](../Decisions/0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md) records the kernel and service boundary; [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) records per-part platform scope and the application-library/provider boundary; [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md) records the future VM-host, GPU, and accelerator boundary without claiming an implementation. Implementation remains incremental, and current behavior is defined only by qualified specifications or explicitly labeled candidate evidence.
+Accepted long-lived architecture direction. [Decision 0084](../Decisions/0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md) records the kernel and service boundary; [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) records per-part platform scope and the application-library/provider boundary; [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md) records the future VM-host, GPU, and accelerator boundary; and [Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md) records the process, application, service, supervision, scheduling, and driver direction without claiming those general mechanisms are implemented. Implementation remains incremental, and current behavior is defined only by qualified specifications or explicitly labeled candidate evidence.
 
 This document fixes ownership, trust, and portability rules. It intentionally does not freeze syscall numbers, binary layouts, scheduling policy, package or filesystem formats, or other details that still need measured experiments.
 
@@ -56,7 +56,7 @@ flowchart TB
     Machine --> Hardware
 ```
 
-Some boot-critical adapters still reside with the kernel because the current isolated environment is one deliberately fixed process, not yet a service system. They remain named seams and move outside the kernel when init/resource, IPC, and capability evidence makes that safer and simpler. The design judges each move by trusted-code size, failure containment, performance, and implementation clarity rather than by a kernel-style label.
+Some boot-critical adapters still reside with the kernel because the current isolated environment has only two fixed processes, one combined init/resource/directory provider, one client, and no general scheduler or service manager. They remain named seams and move outside the kernel when process, IPC, scheduling, and capability evidence makes that safer and simpler. The design judges each move by trusted-code size, failure containment, performance, and implementation clarity rather than by a kernel-style label.
 
 ## Stable invariants
 
@@ -73,6 +73,7 @@ The following rules are intended to survive individual ABI and implementation re
 9. C# is a bootstrap and recovery implementation only. New C# at a native or OS boundary must identify the Windvale or WVA component that will replace it.
 10. Running Windvale OS as a guest, using host hardware virtualization, and making Windvale OS a VM host are separate contracts and evidence claims. No selected execution engine silently changes guest semantics or grants device authority.
 11. Guest and accelerator DMA never bypasses explicit ownership, generation, range, budget, and IOMMU enforcement. A missing isolation or reset guarantee disables the attachment rather than weakening the boundary.
+12. Application, helper, service, driver, runtime, and VMM are explicit launch and supervision roles over one process/thread mechanism. A role label grants no authority, capability inheritance, or automatic scheduler priority.
 
 ## Kernel responsibilities
 
@@ -105,13 +106,21 @@ A process is conceptually a protection domain containing:
 - explicit memory, instruction, handle, and other resource budgets;
 - lifecycle, result, fault, and diagnostic state.
 
+A thread is the schedulable execution context: registers, stack, thread-local runtime state, ready or wait state, and CPU accounting. Threads share the process capability table by default and do not manufacture authority. Process lifecycle and thread scheduling state remain distinct: a live multi-threaded process is not itself `running` merely because one of its threads is on a CPU. The current identical-looking process/thread state encodings remain internal experimental evidence, not the general model.
+
+Application, helper, service, driver, runtime, and VMM are policy roles over these objects rather than separate kernel process classes. Capabilities and executable admission enforce authority; roles drive launch, supervision, diagnostics, and resource policy only. Capability-free libraries normally remain in their consumer, and multiple interfaces may share one service process when they have the same authority, budget, update boundary, and failure policy.
+
+A generation-safe flat resource-domain or job object will account aggregate process, thread, memory, handle, endpoint, CPU, pinned-memory, and other limits for one application, service group, or future VM. Every process belongs to exactly one initial domain, but membership does not grant capabilities. Hierarchical jobs, sessions, and containers remain later policy.
+
 This conceptual model is accepted. Cross-host-qualified protected-process [version 16](../../Specifications/Windvale-Protected-Process.md) pressures that representation with separate init and interpreter roots, role-specific W^X extents, init-owned typed RO/NX resources, ordered atomic grants, client aliases, execution-budget enforcement, automatic terminal cleanup, generation-safe same-root reuse, reduced rights, one kernel-owned service endpoint, one capacity-one channel, and closed lifecycle/fault/result evidence. This representation is implementation evidence, not yet a stable public process ABI.
 
 A capability identifies a kernel-mediated object plus permitted operations. The current experiment uses slot 0, generation 1, machine reference 65536, reduced client/init rights, and one `WVENDP01` service object. `WVPROC16` holds the endpoint address rather than a channel address; the kernel resolves the reference, endpoint header/state, provider, exact current client generation, and kernel-only channel binding before channel or resource mutation. The reference still names a deliberately closed boot contract rather than a general object table. General capability allocation, transfer, names, lookup, revocation APIs, and endpoint-generation rollover remain unimplemented. References cannot be recovered from raw addresses, and the current integer encoding remains internal and replaceable.
 
 Application-library capability requirements are distinct from these internal object references. A library declares a versioned semantic requirement, the application explicitly approves its transitive requirements, init or a service manager grants a rights-limited instance, and the runtime binds the semantic operation to that instance. A required binding is established before process entry; an optional extension is reported absent before use. The binding may name an in-process provider on Windows or Linux and an IPC endpoint plus service-owned object on Windvale OS without changing the application-facing library contract. Binding does not promise permanent availability: revocation, stale generation, peer exit, service restart, and device removal remain explicit runtime outcomes.
 
-Expected kernel-object families include processes, threads, address spaces, memory regions, channels or endpoints, interrupt bindings, device-memory ranges, and resource providers. This is a design inventory, not a commitment that every family is a public object or syscall.
+Expected kernel-object families include processes, threads, resource domains, address spaces, memory objects, endpoints and their bounded queues, events or timers, executable publications, interrupt bindings, and exact device resources. This is a design inventory, not a commitment that every family is a public object or syscall.
+
+Windvale's primary creation model is clean spawn from an immutable verified launch plan, not address-space cloning. The plan binds exact module/runtime identities, target and authority metadata, entry state, budgets, resource-domain membership, and initial capability instances. The kernel creates the process non-running and publishes it as runnable only after admission, mappings, budgets, references, and grants all validate. Parentage or supervision conveys lifecycle observation, not ambient capability inheritance. A later compatibility service may emulate a bounded process API without making POSIX `fork`, signals, current directories, environment state, or inherited native handles part of the Windvale foundation.
 
 ## System calls and IPC
 
@@ -119,8 +128,8 @@ The system-call surface should be small, versioned, architecture-neutral at the 
 
 - capability inspection, reduction, transfer, and close;
 - memory creation, mapping, protection, sharing, and release;
-- process and thread creation, start, wait, fault, and exit;
-- channel creation, bounded send, bounded receive, and cancellation;
+- process, thread, and resource-domain creation, start, wait, stop, fault, and exit;
+- endpoint creation, bounded send, bounded receive, reply, cancellation, and close;
 - timer or event waiting;
 - interrupt and device-resource binding for authorized drivers;
 - verified executable admission and publication.
@@ -129,7 +138,7 @@ x86-64 entry, exit, register preservation, and context-switch mechanics belong i
 
 Requests must use checked buffer descriptors and capability references rather than expose native structure layouts. The kernel validates address ranges, arithmetic, access direction, length, alignment, rights, and resource budgets before use. IPC requires bounded message and queue sizes, defined backpressure, and explicit behavior when a peer exits.
 
-Protected-process version 11 retains the first measured register mechanics: `EBX` numbers 1/2/3 select send/receive/exit and number 4 selects the fixed atomic resource-set grant; `ESI` carries capability reference 65536; `EAX` carries the message/result or ordered set token `131073`. It preserves the ABI-17 context pointer in `RDX`, records role-specific extents and generation-stamped process identities, validates two `WVRES004` transitions per generation, and removes both aliases plus `WVBR002` when each fixed borrower becomes terminal. This assignment is experimental and internal. It is not general capability transfer or a public revocation API. Public user-ABI stability, larger-message encoding, copy-versus-map thresholds, ownership migration, independent resource lifetimes, non-tail reclamation, peer lifecycle, scheduling, and backpressure remain deferred.
+Protected-process version 16 retains internal syscall numbers 1 through 7 for the fixed send, receive, exit, grant, service-receive, call, and reply experiment. It keeps capability reference `65536`, ABI 22/context 7, two fixed process records, one capacity-one channel, four fixed resources, and two exact client generations, while `WVENDP01` now resolves provider/client identity and availability before channel or resource mutation. These register assignments and record encodings are replaceable internal evidence. They are not a public ABI, dynamic object table, capability-transfer interface, process manager, scheduler, or backpressure design.
 
 ## Memory and executable publication
 
@@ -165,7 +174,13 @@ The boot container is a target artifact, not a replacement for WVB identity. Its
 
 Resource, package, filesystem, network, compiler, JIT, shell, and GUI policy belongs outside the kernel. Services communicate through bounded IPC and receive only declared capabilities. A service failure should not automatically become a kernel failure.
 
+The first user process evolves into a minimal service manager and launcher rather than a permanent universal provider. It consumes the verified boot plan, starts authorized processes, binds required providers before entry, observes terminal outcomes, and applies explicit restart, degrade, recovery, or shutdown policy. Provider names, dependency graphs, readiness, draining, criticality, and restart rules remain user-space policy; the kernel enforces only process, endpoint, capability, memory, waiting, and lifecycle mechanisms. A provider is not published before initialization and endpoint binding complete. A restarted provider receives a new process generation and binding, and clients observe peer loss before any explicit rebind.
+
+Services are isolation and policy boundaries, not an automatic one-interface-per-process rule. Interfaces with the same authority, aggregate budget, update boundary, and failure/restart policy may share a process. They split when least authority, independent progress, containment, or replacement produces measured value. Ordinary applications and their helpers belong to a flat aggregate resource domain so teardown and quotas cover the complete application without granting helpers implicit authority.
+
 Platform libraries sit above these services. Ordinary applications call typed Windvale library contracts rather than syscalls or raw IPC. A Windvale OS runtime adapter validates values and messages, invokes the granted endpoint, validates the reply, and translates service lifecycle into the specified result. Mutating service protocols must preserve request correlation, exact progress, and indeterminate-completion evidence; neither the runtime nor service manager may blindly replay an uncertain mutation after restart. The kernel remains format-blind: it enforces endpoint identity, rights, buffer access, bounds, ownership, waiting, peer exit, and cleanup without interpreting file paths, resource names, window operations, or network protocols.
+
+Small bounded copied messages remain the control plane. Independent endpoints must define queue and in-flight limits, correlation, peer generation, backpressure, close, and terminal behavior. Explicit capability transfer cannot amplify rights, may reduce them, and defines copy-versus-move ownership. High-throughput storage, network, display, VM, GPU, and accelerator data planes use checked shared-memory objects or bounded rings only after their ownership, layout, notification, resource, and teardown contracts are measured. Service role never authorizes a protocol or makes the kernel parse one.
 
 [Decision 0145](../Decisions/0145-First-Capability-Bearing-Static-Library.md) implements the first Stage 0 application-to-library authority chain without changing the kernel or WVB: a hosted application explicitly re-approves its platform library's transitive `file.read_bytes` requirement, the runtime still grants it separately, and capability-free Foundation validates the resulting immutable store. This is an opaque hosted-resource proof, not yet the typed Windvale OS service adapter or filesystem instance described below.
 
@@ -186,6 +201,8 @@ The filesystem is a family of capabilities rather than one kernel interface. A s
 Drivers are AOT system-profile Windvale modules with explicit authority for the exact MMIO ranges, port-I/O ranges, interrupts, DMA resources, and kernel operations they need. WVA supplies instructions that cannot safely be expressed in `.wv`; it does not own device policy. Early serial, timer, interrupt-controller, or boot-storage code may begin in the kernel to establish the first working machine, but each such adapter needs an isolation or retention rationale.
 
 Moving a driver out of the kernel is valuable only when the process and IPC boundary actually contains its failures without creating unbounded copying, hidden shared memory, or a second authority model. DMA isolation and IOMMU policy require their own later threat and hardware evidence.
+
+Driver failure cleanup first blocks new interrupts and submissions, revokes DMA/IOMMU access, resets or quarantines the device when possible, closes endpoints and wakes waiters, invalidates generations and mappings, and only then releases resources or permits restart. The recommended first isolated driver is ordinary console/serial output: retain the minimal kernel COM1 early-boot and panic sink, but grant normal port-I/O authority to a supervised AOT service. This proves device authority and containment without introducing DMA. Timer and interrupt-controller mechanisms remain kernel-owned initially because scheduling depends on them; storage and networking follow after shared-memory, interrupt, DMA, and teardown evidence exists.
 
 ## Virtualization and accelerator hosting
 
@@ -239,9 +256,11 @@ Each step must be useful, bounded, and independently qualified:
 4. Add one protected user address space, one thread, a capability table, bounded resource accounting, and one IPC channel.
 5. Start a minimal Windvale init/resource service and run the verified module outside the kernel.
 6. Move the interpreter and later JIT into ordinary or isolated processes; enforce verified W^X publication at the kernel boundary.
-7. Add drivers and resource services one measured device and contract at a time.
-8. Prove the exact same WVB bytes, verifier result, outputs, diagnostics, and defined resource counters on Windows, Linux, and Windvale OS.
-9. Only after the required kernel and physical-hardware foundations, add virtualization feature discovery and one device-free one-vCPU hosted proof before any general machine, GPU, or passthrough work.
+7. Generalize one measured process boundary at a time: independent endpoints, a statically constructed third service, and a state-driven single-CPU ready/wait dispatcher before dynamic discovery.
+8. Add a monotonic timer and bounded preemption, then independently lived memory objects, clean spawn from immutable launch plans, flat resource domains, and minimal service supervision.
+9. Move ordinary console/serial output to the first isolated driver while retaining the kernel emergency diagnostic path; add later device services only after their interrupt, shared-memory, DMA, and teardown contracts exist.
+10. Prove the exact same WVB bytes, verifier result, outputs, diagnostics, and defined resource counters on Windows, Linux, and Windvale OS.
+11. Only after the required kernel and physical-hardware foundations, add virtualization feature discovery and one device-free one-vCPU hosted proof before any general machine, GPU, or passthrough work.
 
 The first concrete step-2 migration is implemented locally: typed byte/word WVA now owns the common kernel exception terminal, its bounded COM1 polling loop, panic-marker data, Q35 exit, and fallback halt path. Descriptor construction remains a named Stage 0 seam, and the migrated path is not cross-host or pinned-QEMU qualified until those gates report against the same commit.
 
@@ -287,22 +306,25 @@ Cross-host-qualified [Decision 0165](../Decisions/0165-Contained-Windvale-Servic
 
 Cross-host-qualified [Decision 0172](../Decisions/0172-First-Kernel-Owned-Service-Endpoint.md) retains the same arena, ABI, WVA wire values, resources, and five scenarios while advancing to Probe 37, `WVPROC16`, and `WVENDP01`. Exact commit `2a1461b` passes all 87 Seed and 38 OS tests on Windows and digest-pinned Debian; all five pinned Windows QEMU scenarios pass. The qualified contract replaces raw per-process channel pointers with exact endpoint resolution, rebinds the second client generation, and closes provider availability on normal exit or fault.
 
+[Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md) accepts the general direction without claiming another implementation. Applications, helpers, services, drivers, runtimes, and future VMMs use one process/thread mechanism; roles grant no authority. Process protection state separates from thread scheduling state, clean spawn replaces foundational `fork`, flat resource domains bound aggregate use, init evolves toward a minimal service manager, and endpoint control planes remain distinct from measured shared-memory data planes. The recommended next pressure splits the immutable directory provider into a statically constructed third process with a second endpoint and smallest state-driven dispatcher, followed by timer preemption, independently lived memory, dynamic launch, supervision, and an isolated normal-console driver in separate slices.
+
 This sequence may interleave with native Windows/Linux work. It does not require .NET retirement before useful OS progress, and it does not treat host-built AOT evidence as in-guest verification.
 
 ## Deliberately deferred choices
 
 The following should remain open until a focused implementation supplies evidence:
 
-- stable public syscall numbers, register assignments, and user ABI (the version-6 internal experiment is not frozen);
-- scheduler algorithm, priority model, real-time policy, and SMP strategy;
-- IPC wire encoding, zero-copy thresholds, and service discovery;
+- stable public syscall numbers, register assignments, and user ABI (the current version-16 internal experiment is not frozen);
+- exact timer source, scheduler quantum, priority or reservation model, priority donation, real-time policy, and SMP strategy;
+- IPC wire encoding, queue limits, correlation and cancellation encoding, capability-transfer encoding, zero-copy thresholds, and service discovery;
 - virtual-address layout, page size policy beyond architecture requirements, and shared-memory model;
+- resource-domain encoding, dynamic launch-plan encoding, and any later job hierarchy or session model;
 - language heap, garbage collection, ownership, and reclamation strategy;
 - package/archive format, filesystem on-disk format, namespace encoding, exact common filesystem-core operations, and update mechanism;
-- driver isolation granularity, DMA/IOMMU policy, and supported device families;
+- later driver isolation granularity beyond the recommended normal-console slice, DMA/IOMMU policy, and supported device families;
 - first VMX/SVM backend, minimal guest profile, virtual-device transport, performance budgets, GPU/accelerator provider evidence, and any later snapshot or migration contract;
 - executable cache format and native-code persistence policy;
-- network stack, GUI/compositor, compatibility layers, and application model;
+- network stack, GUI/compositor, compatibility layers, package/application lifecycle, and session model;
 - secure boot, signatures, measured boot, and recovery/update policy.
 
 Deferring these is not indecision. It protects Windvale from supporting an accidental early ABI for years.
@@ -314,6 +336,7 @@ Deferring these is not indecision. It protects Windvale from supporting an accid
 | C# quietly becomes permanent | Every C# OS/native boundary has a named `.wv` or `.wva` destination, and Decision 0057 controls removal from normal use |
 | The kernel grows into every subsystem | Kernel ownership is limited to privilege, isolation, capabilities, IPC, memory, lifecycle, and unavoidable boot mechanisms |
 | A strict microkernel creates complexity before it creates isolation | Early boot-critical code may remain local; movement to services requires measured containment and cost evidence |
+| Role labels, parentage, or restart policy become ambient authority | Applications, helpers, services, drivers, and VMMs share one process mechanism; only explicit generation-safe capability grants authorize operations |
 | The first WVB cannot be verified without already running WVB | Boot an AOT Windvale verifier as a trusted component, then use it to admit canonical WVB |
 | Unsafe system facilities leak into ordinary application code | Authority metadata, syntax, verifier rules, and explicit system capabilities keep privilege separate from platform scope |
 | JIT code weakens the kernel trust boundary | JIT stays outside the kernel; publication is bounded, validated, capability-authorized, and W^X |
