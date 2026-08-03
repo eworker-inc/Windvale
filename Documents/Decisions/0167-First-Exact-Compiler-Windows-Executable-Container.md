@@ -1,4 +1,4 @@
-# Decision 0165: First exact-compiler Windows executable container
+# Decision 0167: First exact-compiler Windows executable container
 
 - Date: 2026-08-03
 - Status: Implemented with focused local Windows construction and execution evidence; Linux execution, cross-host qualification, and direct Stage 2 reproduction pending
