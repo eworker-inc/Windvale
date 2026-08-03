@@ -307,6 +307,9 @@
       Include="../Fixtures/WebAssembly/Runtime-U32-Guard-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Runtime-U32-Guard-Main.wv" />
     <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Runtime-Calls-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Runtime-Calls-Main.wv" />
+    <EmbeddedResource
       Include="../Fixtures/WebAssembly/Wvb-Envelope-Verify-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Envelope-Verify-Main.wv" />
     <EmbeddedResource

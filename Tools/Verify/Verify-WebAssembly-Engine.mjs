@@ -249,9 +249,18 @@ const EXPECTED = [
         kind: 1,
         runtime: "wvb-structural",
     },
+    {
+        name: "linear-memory calls with structured control",
+        path: process.argv[31],
+        sha256: "5ee04d5b3b33399dce61709135709f0d0ebb7d6374e14759d83986859806eadd",
+        bytes: 4086,
+        abi: 3,
+        kind: 1,
+        runtime: "calls",
+    },
 ];
 
-if (process.argv.length !== 31) {
+if (process.argv.length !== 32) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -264,7 +273,8 @@ if (process.argv.length !== 31) {
             "<runtime-concat.wasm> <runtime-u16.wasm> <runtime-arena.wasm> " +
             "<runtime-u32.wasm> <wvb-envelope-verifier.wasm> " +
             "<wvb-envelope-verifier.wvb> <wvb-structural-verifier.wasm> " +
-            "<wvb-structural-verifier.wvb> <data.wvb> <types.wvb> <capabilities.wvb>",
+            "<wvb-structural-verifier.wvb> <data.wvb> <types.wvb> <capabilities.wvb> " +
+            "<runtime-calls.wasm>",
     );
 }
 
@@ -580,6 +590,30 @@ function verifyRuntime(expected, module, exports, digest) {
             47,
         );
         requireMemoryResult(expected.path, runMemory(exports, Uint8Array.from([1, 2, 3]), 57), 3008, 7);
+    } else if (expected.runtime === "calls") {
+        const small = Uint8Array.from([9, 8]);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, small, 127),
+            0,
+            127,
+            Uint8Array.from([9, 9, 8]),
+        );
+        requireMemoryResult(expected.path, runMemory(exports, small, 126), 3011, 126);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, new Uint8Array(), 63),
+            0,
+            63,
+            Uint8Array.from([0, 0]),
+        );
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, small, 127),
+            0,
+            127,
+            Uint8Array.from([9, 9, 8]),
+        );
     } else if (expected.runtime === "wvb-envelope") {
         const valid = readFileSync(expected.inputPath);
         requireMemoryResult(
