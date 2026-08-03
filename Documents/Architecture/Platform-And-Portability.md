@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted architecture direction, refined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md). Current implementation status remains governed by the corresponding format, runtime, native-target, and OS specifications.
+Accepted architecture direction, refined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md), and future virtualization/accelerator [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md). Current implementation status remains governed by the corresponding format, runtime, native-target, and OS specifications.
 
 ## Central distinction
 
@@ -54,6 +54,16 @@ Candidate [Decision 0085](../Decisions/0085-First-Wva-Owned-Q35-Clean-Shutdown.m
 Candidate [Decision 0086](../Decisions/0086-First-Wva-Owned-Normalized-X64-Trap-Entries.md) adds the first reusable machine-entry shape without changing portable semantics. WVA-authored vector-6 and vector-13 stubs normalize CPU frames with and without error codes into one 40-byte ring-0 prefix. The current common handler remains a bounded Stage 0 terminal-policy seam; recovery, page faults, interrupt routing, and user-mode delivery remain separate contracts.
 
 This is now a functioning but deliberately tiny two-process service and interpreter proof, not a complete kernel or general runtime/trap/process system. It has no general scheduler, preemption, capability transfer, general loader, JIT publication, resource namespace, page-fault policy, double-fault containment, IST, interrupt controller, recovery, or general platform lifecycle coordination. Windvale `WVR` runtime traps remain packed semantic statuses and are not redefined as CPU faults.
+
+## Virtual-machine execution providers
+
+Running Windvale OS as a guest and using Windvale OS to host guests are independent roles. [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md) keeps the pinned QEMU/Q35/TCG lane as the reproducible software-emulation oracle while permitting separately reported hardware-accelerated and compatibility providers. QEMU with KVM on Linux or WHPX on Windows uses hardware virtualization for guest CPU execution while QEMU may still supply emulated or paravirtual devices. Direct Hyper-V is a separate machine and firmware contract. A future Windvale OS provider uses its own measured VMX or SVM backend.
+
+Nested virtualization is useful but optional. It may accelerate development inside an existing VM and later let a Windvale guest develop its own VM-host mechanism. It does not improve TCG, replace the exact emulation oracle, or by itself establish a supported, non-nested, physical-hardware, or performance result. Baseline qualification prefers QEMU/KVM and QEMU/WHPX on physical/root hosts and a direct Hyper-V Generation 2 Windvale guest; nested reports identify the complete outer/inner topology separately. A later decision may qualify nested operation when nesting itself is the named feature under test.
+
+A shared VM-management library may define only exact common lifecycle, identity, resource-ceiling, attachment, terminal-result, and diagnostic semantics. Execution selection is explicit—require emulation, require hardware virtualization, or prefer hardware virtualization—and the chosen provider is observable. Machine profiles, snapshots, migration, nested virtualization, native hypervisor controls, and performance tuning remain optional or platform-scoped interfaces when their guarantees differ.
+
+VM management does not grant access to firmware, images, host files, disks, networks, displays, GPUs, AI accelerators, or physical devices. Each is a separately approved and bound capability instance. GPU and accelerator providers expose software, paravirtual shared, hardware-partitioned, or exclusive-passthrough modes explicitly; a part may narrow its target set when it requires one mode or vendor extension. The common contract never hides ownership, simultaneous-sharing, IOMMU, reset, migration, failure, or performance differences behind a generic supported flag.
 
 ## Module scope, authority, and capability requirements
 

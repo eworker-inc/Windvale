@@ -26,6 +26,8 @@ Windvale is a source-available experiment in constructing a small computing stac
 - C# and .NET are the active Stage 0 bootstrap, not permanent product dependencies. Retire them from the normal build, test, packaging, and execution path only after the documented native-retirement gate is qualified on Windows and Linux; preserve recovery provenance explicitly.
 - Applications may target shared Windvale contracts, an explicit subset of environments, or one named platform extension. Portability is a per-part promise and a derived artifact property, not a blanket dependency requirement. Host adapters map shared contracts to Windows, Linux, and Windvale OS.
 - Platform-specific capabilities remain explicit and must not leak into parts that claim portability.
+- Running Windvale OS as a guest, accelerating that guest through a host hypervisor, and making Windvale OS a VM host are separate contracts. Preserve the pinned emulation oracle, report the selected engine/provider and full nested topology, prefer physical/root providers for baseline qualification, and keep nested virtualization optional and developer-oriented rather than a build or semantic dependency unless a named decision qualifies nesting itself.
+- Future Windvale VM hosting keeps privileged guest-memory, vCPU, interrupt, DMA, accounting, and teardown enforcement in the kernel/WVA boundary while machine, firmware, device, GPU, compute, and lifecycle policy remains in isolated services.
 - The OS is a vertical integration target, not a reason to postpone useful host tools and libraries.
 - Keep bootstrap dependencies explicit. A bootstrap tool may be temporary, but its role and replacement path must be documented.
 - Prefer a small coherent path over parallel compilers, runtimes, object models, or compatibility layers.
@@ -71,6 +73,9 @@ Create these source areas only when implementation begins; do not add empty dire
 - Give semantic capability interfaces canonical names, major contract versions, exact signatures, limits, and failure behavior. Binding proves initial availability, not permanent availability; revocation, stale handles, peer exit, and provider restart must remain explicit.
 - Keep shared filesystem semantics small and exact. Put stronger or platform-specific behavior in separate capability interfaces, and never use one operation name for different partial-write, atomicity, durability, path, or failure guarantees.
 - Mutating I/O must distinguish rejection, exact partial progress, completion, and indeterminate completion. Never retry an indeterminate mutation without a specified idempotency contract.
+- Treat guest images, firmware, VM state, page tables, shared queues, shaders, compute kernels, and device commands as untrusted input. Bound VM exits, interrupts, queues, pinned pages, work, diagnostics, and teardown time while reserving host recovery resources.
+- A VM-management capability does not grant storage, network, display, GPU, accelerator, firmware, host-file, or passthrough authority. Bind each attachment separately and expose whether it is software, paravirtual shared, hardware-partitioned, or exclusive passthrough.
+- Never permit device passthrough or guest/accelerator DMA without measured IOMMU, interrupt-remapping, topology, ownership, reset, range, generation, revocation, and teardown evidence. Disable the attachment when any required guarantee is unavailable.
 - Unsafe operations must be syntactically and contractually visible; do not allow safety-sensitive behavior through ordinary convenience APIs.
 - Treat every loaded module, object file, package, symbol table, relocation, and debug record as untrusted input.
 - Use checked arithmetic for file offsets, memory sizes, indices, and address calculations.

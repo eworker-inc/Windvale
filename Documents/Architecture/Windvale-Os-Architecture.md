@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted long-lived architecture direction. [Decision 0084](../Decisions/0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md) records the kernel and service boundary; [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) records per-part platform scope and the application-library/provider boundary. Implementation remains incremental, and current behavior is defined only by qualified specifications or explicitly labeled candidate evidence.
+Accepted long-lived architecture direction. [Decision 0084](../Decisions/0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md) records the kernel and service boundary; [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) records per-part platform scope and the application-library/provider boundary; [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md) records the future VM-host, GPU, and accelerator boundary without claiming an implementation. Implementation remains incremental, and current behavior is defined only by qualified specifications or explicitly labeled candidate evidence.
 
 This document fixes ownership, trust, and portability rules. It intentionally does not freeze syscall numbers, binary layouts, scheduling policy, package or filesystem formats, or other details that still need measured experiments.
 
@@ -71,6 +71,8 @@ The following rules are intended to survive individual ABI and implementation re
 7. CPU faults and Windvale runtime traps remain different contracts. A processor exception does not silently redefine a `WVR` language/runtime result.
 8. Windows, Linux, and Windvale OS implement shared Windvale platform contracts and may expose explicit extensions. None of them defines language semantics, and an application is not required to support every environment when its platform scope is declared honestly.
 9. C# is a bootstrap and recovery implementation only. New C# at a native or OS boundary must identify the Windvale or WVA component that will replace it.
+10. Running Windvale OS as a guest, using host hardware virtualization, and making Windvale OS a VM host are separate contracts and evidence claims. No selected execution engine silently changes guest semantics or grants device authority.
+11. Guest and accelerator DMA never bypasses explicit ownership, generation, range, budget, and IOMMU enforcement. A missing isolation or reset guarantee disables the attachment rather than weakening the boundary.
 
 ## Kernel responsibilities
 
@@ -84,6 +86,7 @@ The kernel owns the mechanisms that require global authority or hardware privile
 - bounded IPC endpoints and transfer of explicitly transferable capabilities;
 - enforcement of executable-publication and verified-module admission policy;
 - timers and interrupt bindings required for scheduling and device progress;
+- when VM hosting is implemented, guest-memory, vCPU, entry/exit, interrupt, accounting, and teardown mechanisms that require hardware privilege;
 - clean platform shutdown and deterministic diagnostic transport;
 - minimal boot-device mechanisms until an isolated driver or service can own them.
 
@@ -182,6 +185,22 @@ Drivers are AOT system-profile Windvale modules with explicit authority for the 
 
 Moving a driver out of the kernel is valuable only when the process and IPC boundary actually contains its failures without creating unbounded copying, hidden shared memory, or a second authority model. DMA isolation and IOMMU policy require their own later threat and hardware evidence.
 
+## Virtualization and accelerator hosting
+
+[Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md) accepts the future structure while deferring implementation. The exact QEMU/Q35/TCG boot lane remains an emulated guest qualification environment. Optional QEMU/KVM, QEMU/WHPX, and direct Hyper-V lanes are separate providers or machine contracts; a future Windvale VMX/SVM backend is not inferred from any of them.
+
+Nested virtualization is an optional development accelerator, not a Windvale dependency or qualification shortcut. Preferred external evidence runs QEMU/KVM or QEMU/WHPX on a physical/root host and runs Windvale directly as a Hyper-V Generation 2 guest beside, rather than inside, a development VM. A nested lane records both hypervisor levels and may provide faster iteration or exercise a future Windvale VMX/SVM backend, but physical Windvale-host evidence remains necessary before qualifying that backend.
+
+Windvale OS will follow the existing kernel/service split when it eventually hosts guests. The kernel owns only privileged guest-memory, vCPU, entry/exit, interrupt, scheduling, accounting, IOMMU, and teardown enforcement. WVA owns irreducible VMX/SVM transitions. An isolated Windvale VMM service owns the machine profile, firmware, images, lifecycle, virtual devices, consoles, and translation of normalized exits. Storage, network, graphics, and compute data planes use bounded versioned shared-memory queues so high throughput does not require placing device policy in the kernel.
+
+The first hosted profile is deliberately smaller than a PC: one x86-64 vCPU, private fixed memory, no general firmware or devices, and one terminal exit. A paravirtual performance profile and a UEFI/ACPI/PCIe compatibility profile evolve separately. Compatibility devices do not burden the fast path, and a fast profile does not pretend to boot arbitrary existing operating systems.
+
+GPU, NPU, FPGA, and similar attachments select an explicit mode rather than a generic device flag: software implementation, host-service-owned paravirtual sharing, hardware/vendor partition, or exclusive passthrough. Display, graphics, portable compute, native-device extensions, partitions, and passthrough remain separate capabilities. Passthrough is exclusive and requires measured IOMMU, interrupt-remapping, topology, reset, MMIO, DMA-revocation, and teardown evidence. Shared accelerators require per-guest memory, queue, feature, execution, fairness, fault, and reset policy and do not imply hostile-tenant isolation merely because the hardware exposes contexts or partitions.
+
+The performance design minimizes exits, copies, notifications, and remote policy on the data path without weakening validation. Invariant VM/vCPU configuration is validated and sealed before entry; guest RAM uses explicit memory objects and preserves locality; vCPUs support reservations and affinity; asynchronous queues batch work and coalesce notifications; and host recovery capacity is reserved before launch. The first production profile does not overcommit CPU or memory. Clean shutdown, pause, provider loss, guest fault, device reset, service failure, and forced termination remain exact different outcomes.
+
+VM hosting is a future optional system capability, not a condition for Windvale OS completeness and not the next mandatory kernel milestone. Feature discovery, one measured CPU-vendor backend, a device-free one-vCPU guest, an isolated VMM, paravirtual devices, IOMMU evidence, and accelerator attachment advance only as separate bounded slices after the required memory, interrupt, timer, scheduler, lifecycle, and physical-hardware foundations exist.
+
 ## Failure and diagnostic model
 
 - A user-process CPU fault terminates or reports against that process once process isolation exists; it should not normally panic the kernel.
@@ -202,6 +221,8 @@ Recovery, retry, restart, and resumable-exception policies must be added deliber
 | Interpreter, baseline JIT, AOT orchestration, and runtime | Windvale outside the kernel, except minimal trusted admission enforcement | C#/.NET remains Stage 0 until the native-retirement gate passes |
 | Kernel and low-level driver machine code | Shared Windvale native backend, deterministic AOT | Stage 0 may build, link, package, and independently inspect it |
 | Files, packages, network, shell, GUI, and most device policy | Isolated Windvale services | Minimal boot adapters may temporarily remain with the kernel |
+| VM lifecycle, firmware, virtual devices, graphics, and compute policy | Isolated Windvale VMM and device/accelerator services | External host providers or imported bounded device components may remain explicit transitional dependencies |
+| VMX/SVM entry, guest-memory enforcement, vCPU state, and IOMMU mechanics | WVA plus system-profile Windvale kernel policy | No implementation allowance is implied before measured hardware and prerequisite kernel evidence exist |
 | PE/COFF, ELF, UEFI, and future boot containers | Explicit target adapters | Current C# target writers are replaceable bootstrap components |
 
 This split avoids two traps: keeping the OS dependent on .NET, and inventing a second kernel-only language implementation that forks Windvale semantics.
@@ -218,6 +239,7 @@ Each step must be useful, bounded, and independently qualified:
 6. Move the interpreter and later JIT into ordinary or isolated processes; enforce verified W^X publication at the kernel boundary.
 7. Add drivers and resource services one measured device and contract at a time.
 8. Prove the exact same WVB bytes, verifier result, outputs, diagnostics, and defined resource counters on Windows, Linux, and Windvale OS.
+9. Only after the required kernel and physical-hardware foundations, add virtualization feature discovery and one device-free one-vCPU hosted proof before any general machine, GPU, or passthrough work.
 
 The first concrete step-2 migration is implemented locally: typed byte/word WVA now owns the common kernel exception terminal, its bounded COM1 polling loop, panic-marker data, Q35 exit, and fallback halt path. Descriptor construction remains a named Stage 0 seam, and the migrated path is not cross-host or pinned-QEMU qualified until those gates report against the same commit.
 
@@ -274,6 +296,7 @@ The following should remain open until a focused implementation supplies evidenc
 - language heap, garbage collection, ownership, and reclamation strategy;
 - package/archive format, filesystem on-disk format, namespace encoding, exact common filesystem-core operations, and update mechanism;
 - driver isolation granularity, DMA/IOMMU policy, and supported device families;
+- first VMX/SVM backend, minimal guest profile, virtual-device transport, performance budgets, GPU/accelerator provider evidence, and any later snapshot or migration contract;
 - executable cache format and native-code persistence policy;
 - network stack, GUI/compositor, compatibility layers, and application model;
 - secure boot, signatures, measured boot, and recovery/update policy.
@@ -293,6 +316,8 @@ Deferring these is not indecision. It protects Windvale from supporting an accid
 | Host or x86 details become language semantics | WVB and semantic operations remain architecture-neutral; WVA and target adapters own mechanics |
 | Early encodings become permanent ABI debt | Stabilize invariants now, version experimental contracts, and defer public binary compatibility |
 | Driver isolation prevents practical progress | Add one measured AOT driver at a time and choose kernel or service placement from containment and cost evidence |
+| VM hosting turns the kernel into a firmware and device emulator | Keep privileged vCPU, memory, interrupt, DMA, and teardown enforcement in the kernel while machine and device policy remains in isolated services |
+| Performance shortcuts weaken guest or DMA isolation | Seal validated invariant state, use bounded shared queues and IOMMU enforcement, reserve recovery resources, and reject attachments whose reset or isolation contract is unavailable |
 | The design becomes documentation without a working path | Advance only through bounded boot, verifier, protection, IPC, service, and cross-host evidence slices |
 
 ## Reconsideration triggers
@@ -305,6 +330,7 @@ Revisit this direction if evidence shows that:
 - Windvale system-profile semantics cannot express kernel policy without an unreviewable unsafe surface;
 - a required architecture cannot implement the semantic syscall and capability contracts;
 - measured IPC, process, or driver costs require moving a specific mechanism across the boundary;
+- sustained hostile-multitenant or measured VM-host evidence requires a smaller hypervisor beneath Windvale rather than the accepted kernel/VMM split;
 - the trusted verifier cannot be isolated or updated without weakening executable admission;
 - recovery evidence requires a maintained non-Windvale implementation rather than an archived Stage 0 path.
 

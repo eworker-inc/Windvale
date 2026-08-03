@@ -324,6 +324,23 @@ The completion gate is the central Windvale portability proof: one module artifa
 
 The completion gate is a source release that another person can inspect, build, verify, and recover from documented inputs.
 
+### Future branch - virtualization and accelerator hosting
+
+[Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md) accepts this long-range structure without making it an active milestone or implementation claim:
+
+1. Preserve pinned QEMU/Q35/TCG as the reproducible emulation oracle; add explicitly reported QEMU/KVM and QEMU/WHPX smoke lanes and direct Hyper-V compatibility only as separate evidence contracts. Prefer physical/root providers for baseline qualification; nested runs are optional developer-speed evidence and must record both hypervisor levels unless a later decision makes nesting the explicit feature under test.
+2. Complete the prerequisite physical-memory, page-fault, interrupt, timer, scheduler, lifecycle, driver, and physical-hardware foundations before Windvale attempts to host an untrusted guest.
+3. Add read-only CPU feature discovery, use nesting for rapid VMX/SVM development when available, then qualify one measured backend on physical Windvale hardware with one vCPU, private memory, no devices, and one terminal exit.
+4. Move VM lifecycle, machine, firmware, exit, and device policy into an isolated Windvale VMM service while the kernel retains only privileged guest-memory, vCPU, interrupt, accounting, IOMMU, and teardown enforcement.
+5. Qualify a minimal Windvale guest profile before adding a paravirtual performance profile or a UEFI/ACPI/PCIe compatibility profile.
+6. Add bounded shared-memory console, timer, block, network, display, graphics, and compute transports one measured need at a time; keep compatibility emulation away from the performance data path.
+7. Require separate capability grants for every image, storage, network, display, GPU, accelerator, partition, or passthrough attachment.
+8. Permit software, paravirtual shared, hardware-partitioned, and exclusive-passthrough accelerator modes only with explicit ownership, budgets, isolation, reset, failure, and teardown guarantees.
+9. Establish reservations, affinity, memory locality, batching, notification coalescing, bounded exit/interrupt rates, and host recovery capacity before permitting CPU or memory overcommit.
+10. Treat the second x86 vendor backend, ordinary Linux/Windows guest compatibility, snapshots, migration, nested virtualization, confidential VMs, and live device reassignment as later independent gates.
+
+The first completion gate is intentionally small: one physical Windvale host executes one device-free guest vCPU through one measured hardware backend, contains every exit within explicit limits, reports one exact terminal result, revokes all guest mappings, and returns to a healthy host. No GPU, passthrough, PC compatibility, or production-performance claim is part of that gate.
+
 ## Cross-cutting qualification rules
 
 Every gate that changes portable semantics or serialized bytes must provide:
@@ -353,6 +370,7 @@ The following choices are intentionally deferred until the preceding experiment 
 - UEFI PE32+ is the accepted first boot-container family. The first host containers are the separate capability-free `windows-x64-console-v1` PE and `linux-x64-console-v1` ELF slices; later hosted PE, ELF, and flat-image priorities must not redefine portable language behavior.
 - Decision 0084 accepts the conceptual kernel/process/capability boundary. Decisions 0091 through qualified 0098 supply protected execution through two fixed typed names, an atomic ordered set, execution-budget policy data, and paired cleanup. Stable public syscalls, general IPC bytes, dynamic names/enumeration, transfer/reclamation, loader formats, scheduler policy, and compatibility remain deferred.
 - Decision 0140 accepts per-part platform scope, explicit transitive capability approval, provider binding, and a small filesystem-core-plus-extensions direction. Exact source/module metadata, typed capability values, filesystem operations, and provider protocols remain implementation decisions requiring measured cases.
+- Decision 0171 accepts a future provider-neutral VM-management boundary, a mechanism-only Windvale virtualization kernel layer, an isolated VMM/device-service layer, explicit GPU/AI-accelerator attachment modes, and performance-with-containment rules. It deliberately implements and qualifies none of them.
 - Public compatibility and support windows wait for the licensed release foundation.
 
 At each checkpoint the project may keep, revise, or replace the proposed mechanism. It may not silently lower the verification gate or declare a narrower demonstration to be the original milestone.

@@ -44,6 +44,11 @@ This list records unresolved decisions without presenting them as implementation
 - Decision 0159 implements one shared format-blind service channel for the package-resource and directory exchanges. Which independently lived second service, third runnable, or concurrent call should first justify separate endpoint objects and service discovery rather than premature generalization?
 - Which first filesystem-core operations have exact shared semantics across Windows, Linux, and Windvale OS providers; which name-comparison, enumeration, offset-width, revocation, and mutation-completion rules do they require; and which guarantees must begin as optional or platform-scoped interfaces under [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md)?
 - Which QEMU and Hyper-V behaviors must be qualified before the first OS milestone is complete?
+- Which physical/root Windows and Linux machines should own the first non-nested WHPX, direct Hyper-V Generation 2, and KVM evidence, and which nested topologies remain baseline developer-only or later require dedicated nesting qualification?
+- After the memory, interrupt, scheduler, lifecycle, and physical-hardware prerequisites exist, should the first measured Windvale VM-host backend be Intel VMX or AMD SVM, and which exact hardware and nested-virtualization limits define its evidence?
+- Which boot resource, terminal exit, virtual timer, console, and shared-queue rules define the minimal and performance-oriented machine profiles accepted by [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md)?
+- Which measured GPU or AI-accelerator hardware can first prove reliable IOMMU isolation, reset, DMA revocation, exclusive passthrough, or hardware partitioning without overstating hostile-tenant isolation?
+- Which workloads and recorded host/provider/topology inputs should establish vCPU-exit, memory, storage, network, graphics, and compute regression budgets without turning performance into portable semantics?
 
 ## Browser and WebAssembly
 
