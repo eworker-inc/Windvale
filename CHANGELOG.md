@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- A compiler-capacity, three-artifact Windvale-native WVB verifier bundle in import-free WebAssembly: independent canonical, typed-execution, and control/reachability meters admit the exact 599,868-byte compiler without weakening verification, changing execution ABI 3, or claiming compiler execution.
 - Bounded record and enum values in the retained profile-16 Wasm-hosted WVB interpreter: typed eight-byte cells, deterministic nominal defaults, field/member operations, enum-name publication, a 4 KiB append-only record arena with exact `WVR3017`, and complete-verifier-first differential evidence without changing execution ABI 3 or earlier Wasm artifacts.
 - Import-free `bytes.sha256_hex` lowering in WebAssembly profile 16, with explicit target-side padding, schedule, compression, and lowercase hexadecimal output; the complete-verifier-first Wasm-hosted interpreter now covers empty, boundary-padding, and multi-block SHA-256 inputs without JavaScript or Web Crypto imports.
 - Cross-host-qualified Probe 36 service-failure containment: `WVPROC15`/`WVCHAN04` record one exact init fault, scrub the live copied-message channel, wake the blocked client once with transport result `-1`, revoke its resources, and reach clean shutdown; all 87 Seed and 38 OS tests pass on Windows/Debian and five pinned Windows QEMU scenarios pass without a compiler or ABI change.

@@ -9,6 +9,7 @@ $ArtifactDirectory = Join-Path $RepositoryRoot 'artifacts/webassembly-verificati
 $ToolProject = Join-Path $RepositoryRoot 'Tools/Windvale.Tool/Windvale.Tool.csproj'
 $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
 $BackendProject = Join-Path $RepositoryRoot 'Windvale-WebAssembly.wvproj'
+$CompilerProject = Join-Path $RepositoryRoot 'Windvale-Compiler.wvproj'
 $SuccessSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Main.wv'
 $OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Overflow-Main.wv'
 $StraightSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Straight-I32-Main.wv'
@@ -39,6 +40,10 @@ $WvbExecutableVerifyPhaseSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebA
 $WvbScalarInterpreterSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv'
 $WvbSemanticExpandedSource = Join-Path $ArtifactDirectory 'Wvb-Semantic-Expanded-Main.wv'
 $WvbExecutableVerifySource = Join-Path $ArtifactDirectory 'Wvb-Executable-Verify-Main.wv'
+$WvbCompilerExecutablePhaseSource = Join-Path $ArtifactDirectory 'Wvb-Compiler-Executable-Verify-Phase.wv'
+$WvbCompilerSemanticVerifySource = Join-Path $ArtifactDirectory 'Wvb-Compiler-Semantic-Verify-Main.wv'
+$WvbCompilerTypedVerifySource = Join-Path $ArtifactDirectory 'Wvb-Compiler-Typed-Verify-Main.wv'
+$WvbCompilerControlVerifySource = Join-Path $ArtifactDirectory 'Wvb-Compiler-Control-Verify-Main.wv'
 $ScalarFunctionOnlySource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Function-Only.wv'
 $ScalarGuestSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Scalar-Interpreter-Guest.wv'
 $ScalarI32OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Scalar-Interpreter-I32-Overflow.wv'
@@ -87,7 +92,11 @@ $WvbStructuralVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Structural-Verify-Ma
 $WvbSemanticVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Semantic-Verify-Main.wvb'
 $WvbSemanticExpandedWvb = Join-Path $ArtifactDirectory 'Wvb-Semantic-Expanded-Main.wvb'
 $WvbExecutableVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Executable-Verify-Main.wvb'
+$WvbCompilerSemanticVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Compiler-Semantic-Verify-Main.wvb'
+$WvbCompilerTypedVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Compiler-Typed-Verify-Main.wvb'
+$WvbCompilerControlVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Compiler-Control-Verify-Main.wvb'
 $WvbScalarInterpreterWvb = Join-Path $ArtifactDirectory 'Wvb-Scalar-Interpreter-Main.wvb'
+$CompilerWvb = Join-Path $ArtifactDirectory 'Windvale-Compiler.wvb'
 $ScalarFunctionOnlyWvb = Join-Path $ArtifactDirectory 'Scalar-Function-Only.wvb'
 $ScalarGuestWvb = Join-Path $ArtifactDirectory 'Scalar-Interpreter-Guest.wvb'
 $ScalarI32OverflowWvb = Join-Path $ArtifactDirectory 'Scalar-Interpreter-I32-Overflow.wvb'
@@ -134,6 +143,9 @@ $WvbStructuralVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Structural-Verify-M
 $WvbSemanticVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Semantic-Verify-Main.wasm'
 $WvbSemanticExpandedWasm = Join-Path $ArtifactDirectory 'Wvb-Semantic-Expanded-Main.wasm'
 $WvbExecutableVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Executable-Verify-Main.wasm'
+$WvbCompilerSemanticVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Compiler-Semantic-Verify-Main.wasm'
+$WvbCompilerTypedVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Compiler-Typed-Verify-Main.wasm'
+$WvbCompilerControlVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Compiler-Control-Verify-Main.wasm'
 $WvbScalarInterpreterWasm = Join-Path $ArtifactDirectory 'Wvb-Scalar-Interpreter-Main.wasm'
 
 New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
@@ -171,6 +183,69 @@ $WvbExecutableVerifyText = $WvbExecutableVerifyText.Replace(
     $WvbExecutableVerifySource,
     $WvbExecutableVerifyText,
     [Text.UTF8Encoding]::new($false))
+
+$WvbCompilerExecutablePhaseText = [IO.File]::ReadAllText($WvbExecutableVerifyPhaseSource)
+$WvbCompilerExecutablePhaseText = $WvbCompilerExecutablePhaseText.Replace(
+    'if Functionˉcount > 256u32 { return Invalid; }',
+    'if Functionˉcount > 4096u32 { return Invalid; }')
+$WvbCompilerExecutablePhaseText = $WvbCompilerExecutablePhaseText.Replace(
+    'if Codeˉlength > 131072u32 { return Invalid; }',
+    'if Codeˉlength > 4194304u32 { return Invalid; }')
+$WvbCompilerExecutablePhaseText = $WvbCompilerExecutablePhaseText.Replace(
+    'if Declaredˉmaximum > 16u32 { return Invalid; }',
+    'if Declaredˉmaximum > 4096u32 { return Invalid; }')
+$WvbCompilerExecutablePhaseText = $WvbCompilerExecutablePhaseText.Replace(
+    'if Depth > 16u32 { return Invalid; }',
+    'if Depth > 4096u32 { return Invalid; }')
+$WvbCompilerExecutablePhaseText = $WvbCompilerExecutablePhaseText.Replace(
+    'if Aggregateˉinstructions > 16000u32 { return Invalid; }',
+    'if Aggregateˉinstructions > 400000u32 { return Invalid; }')
+$WvbCompilerExecutablePhaseText = $WvbCompilerExecutablePhaseText.Replace(
+    'if Controlˉfunctionˉcount > 256u32 { return Controlˉinvalid; }',
+    'if Controlˉfunctionˉcount > 4096u32 { return Controlˉinvalid; }')
+$WvbCompilerExecutablePhaseText = $WvbCompilerExecutablePhaseText.Replace(
+    'if Controlˉcodeˉlength > 131072u32 { return Controlˉinvalid; }',
+    'if Controlˉcodeˉlength > 4194304u32 { return Controlˉinvalid; }')
+$WvbCompilerExecutablePhaseText = $WvbCompilerExecutablePhaseText.Replace(
+    'if Controlˉaggregateˉinstructions > 16000u32 {',
+    'if Controlˉaggregateˉinstructions > 400000u32 {')
+[IO.File]::WriteAllText(
+    $WvbCompilerExecutablePhaseSource,
+    $WvbCompilerExecutablePhaseText,
+    [Text.UTF8Encoding]::new($false))
+
+$WvbCompilerSemanticVerifyText = [IO.File]::ReadAllText($WvbSemanticVerifySource)
+$WvbCompilerSemanticVerifyText = $WvbCompilerSemanticVerifyText.Replace(
+    'if Index >= 100000u32 { return Invalid; }',
+    'if Index >= 400000u32 { return Invalid; }')
+[IO.File]::WriteAllText(
+    $WvbCompilerSemanticVerifySource,
+    $WvbCompilerSemanticVerifyText,
+    [Text.UTF8Encoding]::new($false))
+
+function Write-CompilerVerifierPhase(
+    [string]$Path,
+    [string]$Module,
+    [string]$Function
+) {
+    $Source = "module $Module profile portable;`n`n" +
+        "import WebAssemblyˉwvbˉexecutableˉverify;`n`n" +
+        "export fn Main(Input: bytes) -> bytes {`n" +
+        "    let State: bytes = $Function(Input);`n" +
+        "    if Bytesˉlength(State) == 0u32 { return State; }`n" +
+        "    return Bytesˉfromˉu8(1u8);`n" +
+        "}`n"
+    [IO.File]::WriteAllText($Path, $Source, [Text.UTF8Encoding]::new($false))
+}
+
+Write-CompilerVerifierPhase `
+    $WvbCompilerTypedVerifySource `
+    'WebAssemblyˉwvbˉcompilerˉtypedˉverify' `
+    'Hˉexecutable'
+Write-CompilerVerifierPhase `
+    $WvbCompilerControlVerifySource `
+    'WebAssemblyˉwvbˉcompilerˉcontrolˉverify' `
+    'Iˉcontrol'
 
 dotnet build $ToolProject -c $Configuration
 if ($LASTEXITCODE -ne 0) { throw 'The Windvale tool build failed.' }
@@ -214,6 +289,16 @@ Invoke-Windvale @(
     'compile', $WvbExecutableVerifySource,
     '--module', $WvbExecutableVerifyPhaseSource,
     '-o', $WvbExecutableVerifyWvb)
+Invoke-Windvale @('compile', $WvbCompilerSemanticVerifySource, '-o', $WvbCompilerSemanticVerifyWvb)
+Invoke-Windvale @(
+    'compile', $WvbCompilerTypedVerifySource,
+    '--module', $WvbCompilerExecutablePhaseSource,
+    '-o', $WvbCompilerTypedVerifyWvb)
+Invoke-Windvale @(
+    'compile', $WvbCompilerControlVerifySource,
+    '--module', $WvbCompilerExecutablePhaseSource,
+    '-o', $WvbCompilerControlVerifyWvb)
+Invoke-Windvale @('build', $CompilerProject, '-o', $CompilerWvb)
 Invoke-Windvale @('compile', $WvbScalarInterpreterSource, '-o', $WvbScalarInterpreterWvb)
 Invoke-Windvale @('compile', $ScalarFunctionOnlySource, '-o', $ScalarFunctionOnlyWvb)
 Invoke-Windvale @('compile', $ScalarGuestSource, '-o', $ScalarGuestWvb)
@@ -283,6 +368,9 @@ $SemanticRunArguments = @(
 )
 Invoke-Windvale ($SemanticRunArguments + @($WvbSemanticVerifyWvb, $WvbSemanticVerifyWasm))
 Invoke-Windvale ($SemanticRunArguments + @($WvbSemanticExpandedWvb, $WvbSemanticExpandedWasm))
+Invoke-Windvale ($SemanticRunArguments + @(
+    $WvbCompilerSemanticVerifyWvb,
+    $WvbCompilerSemanticVerifyWasm))
 $ExecutableSemanticRunArguments = @(
     'run', $BackendWvb,
     '--allow', 'console.write_line',
@@ -308,6 +396,12 @@ $ScalarInterpreterRunArguments = @(
 Invoke-Windvale ($ExecutableSemanticRunArguments + @(
     $WvbExecutableVerifyWvb,
     $WvbExecutableVerifyWasm))
+Invoke-Windvale ($ExecutableSemanticRunArguments + @(
+    $WvbCompilerTypedVerifyWvb,
+    $WvbCompilerTypedVerifyWasm))
+Invoke-Windvale ($ExecutableSemanticRunArguments + @(
+    $WvbCompilerControlVerifyWvb,
+    $WvbCompilerControlVerifyWasm))
 Invoke-Windvale ($ScalarInterpreterRunArguments + @(
     $WvbScalarInterpreterWvb,
     $WvbScalarInterpreterWasm))
@@ -370,7 +464,11 @@ node $EngineVerifier `
     $FormattingQuoteWvb `
     $Sha256Wvb `
     $NominalDefaultsWvb `
-    $RecordArenaWvb
+    $RecordArenaWvb `
+    $WvbCompilerSemanticVerifyWasm `
+    $WvbCompilerTypedVerifyWasm `
+    $WvbCompilerControlVerifyWasm `
+    $CompilerWvb
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

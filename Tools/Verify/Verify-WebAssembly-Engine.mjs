@@ -305,9 +305,25 @@ const EXPECTED = [
         kind: 1,
         runtime: "wvb-scalar-interpreter",
     },
+    {
+        name: "compiler-capacity Windvale WVB verifier bundle",
+        path: process.argv[60],
+        typedPath: process.argv[61],
+        controlPath: process.argv[62],
+        inputPath: process.argv[63],
+        sha256: "3a760d39b9ce0bac50b3eea0b0000a986a60363a7d222d7de1587f6b19fadd1e",
+        typedSha256: "6fc1e02498de6345b441d0f34e52fe9d0c014642fc637f9066623b07b4329240",
+        controlSha256: "597c0f8313aac9fbcb1ba50fbcd4e25937f0cc464d090d491570f8eeb559253d",
+        bytes: 440093,
+        typedBytes: 282718,
+        controlBytes: 282718,
+        abi: 3,
+        kind: 1,
+        runtime: "wvb-compiler-verifier",
+    },
 ];
 
-if (process.argv.length !== 60) {
+if (process.argv.length !== 64) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -332,7 +348,9 @@ if (process.argv.length !== 60) {
             "<text-bytes-guest.wvb> <utf8-boundaries.wvb> <invalid-utf8.wvb> " +
             "<range-failure.wvb> <u16-failure.wvb> <value-failure.wvb> " +
             "<heap-failure.wvb> <formatting-quote.wvb> <sha256.wvb> " +
-            "<nominal-defaults.wvb> <record-arena-failure.wvb>",
+            "<nominal-defaults.wvb> <record-arena-failure.wvb> " +
+            "<compiler-semantic-verifier.wasm> <compiler-typed-verifier.wasm> " +
+            "<compiler-control-verifier.wasm> <windvale-compiler.wvb>",
     );
 }
 
@@ -357,7 +375,7 @@ function runMemory(exports, input, budget = 4) {
     exports["Windvale.output_length"].value = -123;
     exports["Windvale.instructions"].value = 99;
     const status = exports["Windvale.run"](budget, input.length);
-    const instructions = exports["Windvale.instructions"].value;
+    const instructions = exports["Windvale.instructions"].value >>> 0;
     const outputLength = exports["Windvale.output_length"].value;
     const output = new Uint8Array(memory.buffer, outputOffset, outputLength).slice();
     return { status, instructions, outputLength, output };
@@ -1043,6 +1061,67 @@ function verifyRuntime(expected, module, exports, digest) {
                 throw new Error(`${expected.path}: ${name}: ${error.message}`);
             }
         }
+    } else if (expected.runtime === "wvb-compiler-verifier") {
+        function compilerPhase(path, expectedDigest, expectedBytes) {
+            const bytes = readFileSync(path);
+            const actualDigest = createHash("sha256").update(bytes).digest("hex");
+            if (actualDigest !== expectedDigest || bytes.length !== expectedBytes) {
+                throw new Error(
+                    `${path}: expected ${expectedBytes}/${expectedDigest}, found ` +
+                        `${bytes.length}/${actualDigest}.`,
+                );
+            }
+            if (!WebAssembly.validate(bytes)) {
+                throw new Error(`${path}: WebAssembly.validate rejected the module.`);
+            }
+            const phaseModule = new WebAssembly.Module(bytes);
+            const phaseExports = new WebAssembly.Instance(phaseModule).exports;
+            if (phaseExports["Windvale.abi"].value !== 3) {
+                throw new Error(`${path}: execution ABI is not 3.`);
+            }
+            verifyMemoryContract(expected, phaseModule, phaseExports);
+            return phaseExports;
+        }
+
+        const typedExports = compilerPhase(
+            expected.typedPath,
+            expected.typedSha256,
+            expected.typedBytes,
+        );
+        const controlExports = compilerPhase(
+            expected.controlPath,
+            expected.controlSha256,
+            expected.controlBytes,
+        );
+        const compiler = readFileSync(expected.inputPath);
+        if (
+            compiler.length !== 599_868 ||
+            createHash("sha256").update(compiler).digest("hex") !==
+                "9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066"
+        ) {
+            throw new Error(`${expected.inputPath}: the exact compiler WVB identity changed.`);
+        }
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, compiler, 1_381_753_055),
+            0,
+            1_381_753_055,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.typedPath,
+            runMemory(typedExports, compiler, 2_434_833_692),
+            0,
+            2_434_833_692,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.controlPath,
+            runMemory(controlExports, compiler, 1_952_101_000),
+            0,
+            1_952_101_000,
+            Uint8Array.from([1]),
+        );
     } else if (expected.runtime === "wvb-scalar-interpreter") {
         const verifierBytes = readFileSync(expected.verifierPath);
         const verifierModule = new WebAssembly.Module(verifierBytes);

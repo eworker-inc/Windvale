@@ -170,6 +170,12 @@ internal static class Program
     private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_SHA256 = "8601f90946c0738ad6ce20c236e219f66e4ee4b2b143242a430c203918b1259a";
     private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_WVB_SHA256 = "6a26b09c0f96e3fa9edf8c180ee8f4b2551f1b1007f0faabcec39be1106285b4";
     private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_SHA256 = "6060b8198405b5f8763890ef5b53482398e1e0c7716f91ab279d9307db8d077b";
+    private const string WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_WVB_SHA256 = "16193b7cd5a16b8e9f1cf3bdb2c72fed1b4abd464e165b42a94b0b593636a1c6";
+    private const string WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_SHA256 = "3a760d39b9ce0bac50b3eea0b0000a986a60363a7d222d7de1587f6b19fadd1e";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_WVB_SHA256 = "bc282d6163b97e70766fb0882395ce594a00ecafb60bea12e4b401e731f3f0be";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_SHA256 = "6fc1e02498de6345b441d0f34e52fe9d0c014642fc637f9066623b07b4329240";
+    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_WVB_SHA256 = "7848041e406b0f92ab3219e9a7052e9cca337014fa9698978bf2c894c689532b";
+    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_SHA256 = "597c0f8313aac9fbcb1ba50fbcd4e25937f0cc464d090d491570f8eeb559253d";
     private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "ce6b7d93896e88aac682c66b9bcaa695e159e582a2a5b3a4b84b48482e608de1";
     private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SHA256 = "8c23fe32341aaf37fb2bd0d517e531a03937f00ce416175976f76f59f5380b55";
     private const string SOURCE_WVB_FUNCTION_ONLY_SHA256 = "9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761";
@@ -12579,6 +12585,170 @@ internal static class Program
         Validateˉruntimeˉcallˉwebassembly(
             Executableˉsemanticˉlowered.Writtenˉbytes.AsSpan(),
             Executableˉsemanticˉverified);
+
+        var Compilerˉcapacityˉphaseˉsource =
+            WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_PHASE_SOURCE
+                .Replace(
+                    "if Functionˉcount > 256u32 { return Invalid; }",
+                    "if Functionˉcount > 4096u32 { return Invalid; }",
+                    StringComparison.Ordinal)
+                .Replace(
+                    "if Codeˉlength > 131072u32 { return Invalid; }",
+                    "if Codeˉlength > 4194304u32 { return Invalid; }",
+                    StringComparison.Ordinal)
+                .Replace(
+                    "if Declaredˉmaximum > 16u32 { return Invalid; }",
+                    "if Declaredˉmaximum > 4096u32 { return Invalid; }",
+                    StringComparison.Ordinal)
+                .Replace(
+                    "if Depth > 16u32 { return Invalid; }",
+                    "if Depth > 4096u32 { return Invalid; }",
+                    StringComparison.Ordinal)
+                .Replace(
+                    "if Aggregateˉinstructions > 16000u32 { return Invalid; }",
+                    "if Aggregateˉinstructions > 400000u32 { return Invalid; }",
+                    StringComparison.Ordinal)
+                .Replace(
+                    "if Controlˉfunctionˉcount > 256u32 { return Controlˉinvalid; }",
+                    "if Controlˉfunctionˉcount > 4096u32 { return Controlˉinvalid; }",
+                    StringComparison.Ordinal)
+                .Replace(
+                    "if Controlˉcodeˉlength > 131072u32 { return Controlˉinvalid; }",
+                    "if Controlˉcodeˉlength > 4194304u32 { return Controlˉinvalid; }",
+                    StringComparison.Ordinal)
+                .Replace(
+                    "if Controlˉaggregateˉinstructions > 16000u32 {",
+                    "if Controlˉaggregateˉinstructions > 400000u32 {",
+                    StringComparison.Ordinal);
+        True(
+            Compilerˉcapacityˉphaseˉsource !=
+                WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_PHASE_SOURCE,
+            "The compiler-capacity executable verifier limits did not expand.");
+        var Compilerˉcapacityˉsemanticˉsource =
+            WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE.Replace(
+                "if Index >= 100000u32 { return Invalid; }",
+                "if Index >= 400000u32 { return Invalid; }",
+                StringComparison.Ordinal);
+        True(
+            Compilerˉcapacityˉsemanticˉsource !=
+                WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE,
+            "The compiler-capacity semantic verifier limit did not expand.");
+        var Compilerˉcapacityˉsemanticˉwvb = Compileˉsuccess(
+            Compilerˉcapacityˉsemanticˉsource);
+
+        byte[] Compileˉcompilerˉcapacityˉphase(
+            string Moduleˉname,
+            string Phaseˉfunction)
+        {
+            var Probeˉsource =
+                $"module {Moduleˉname} profile portable;\n\n" +
+                "import WebAssemblyˉwvbˉexecutableˉverify;\n\n" +
+                "export fn Main(Input: bytes) -> bytes {\n" +
+                $"    let State: bytes = {Phaseˉfunction}(Input);\n" +
+                "    if Bytesˉlength(State) == 0u32 { return State; }\n" +
+                "    return Bytesˉfromˉu8(1u8);\n" +
+                "}\n";
+            var Probeˉresult = Seedˉcompiler.Compileˉmodules(
+                new($"{Moduleˉname}.wv", Probeˉsource),
+                [
+                    new(
+                        "Wvb-Compiler-Executable-Verify-Phase.wv",
+                        Compilerˉcapacityˉphaseˉsource),
+                ]);
+            True(
+                Probeˉresult.Success,
+                $"The compiler-capacity phase '{Phaseˉfunction}' did not compile: " +
+                    string.Join(" | ", Probeˉresult.Diagnostics));
+            return Probeˉresult.Moduleˉbytes.ToArray();
+        }
+
+        var Compilerˉcapacityˉtypedˉwvb = Compileˉcompilerˉcapacityˉphase(
+            "WebAssemblyˉwvbˉcompilerˉtypedˉverify",
+            "Hˉexecutable");
+        var Compilerˉcapacityˉcontrolˉwvb = Compileˉcompilerˉcapacityˉphase(
+            "WebAssemblyˉwvbˉcompilerˉcontrolˉverify",
+            "Iˉcontrol");
+        var Compilerˉtoolˉwvb = Compileˉwithˉsourceˉwvbˉsuccess(
+            SOURCE_WVB_TOOL_SOURCE,
+            "Source-Wvb-Tool.wv");
+        Equal(SOURCE_WVB_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉwvb));
+        var Compilerˉtoolˉverified = Moduleˉcodec.Readˉandˉverify(Compilerˉtoolˉwvb);
+        Equal(328, Compilerˉtoolˉverified.Functions.Length);
+        Equal(
+            481_356,
+            Compilerˉtoolˉverified.Functions.Sum(
+                Function => Function.Declaration.Codeˉlength));
+        Equal(
+            100_194,
+            Compilerˉtoolˉverified.Functions.Sum(Function => Function.Instructions.Length));
+        Equal(
+            1_049,
+            Compilerˉtoolˉverified.Functions.Max(
+                Function => Function.Declaration.Localˉtypes.Length));
+        Equal(
+            34,
+            Compilerˉtoolˉverified.Functions.Max(
+                Function => Function.Declaration.Maximumˉstackˉdepth));
+        var Compilerˉcapacityˉsemanticˉverified = Moduleˉcodec.Readˉandˉverify(
+            Compilerˉcapacityˉsemanticˉwvb);
+        var Compilerˉcapacityˉtypedˉverified = Moduleˉcodec.Readˉandˉverify(
+            Compilerˉcapacityˉtypedˉwvb);
+        var Compilerˉcapacityˉcontrolˉverified = Moduleˉcodec.Readˉandˉverify(
+            Compilerˉcapacityˉcontrolˉwvb);
+        var Compilerˉcapacityˉsemanticˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Compilerˉcapacityˉsemanticˉwvb,
+            225_000_000);
+        var Compilerˉcapacityˉtypedˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Compilerˉcapacityˉtypedˉwvb,
+            225_000_000);
+        var Compilerˉcapacityˉcontrolˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Compilerˉcapacityˉcontrolˉwvb,
+            225_000_000);
+        Equal(0, Compilerˉcapacityˉsemanticˉlowered.Exitˉcode);
+        Equal(0, Compilerˉcapacityˉtypedˉlowered.Exitˉcode);
+        Equal(0, Compilerˉcapacityˉcontrolˉlowered.Exitˉcode);
+        Validateˉruntimeˉcallˉwebassembly(
+            Compilerˉcapacityˉsemanticˉlowered.Writtenˉbytes.AsSpan(),
+            Compilerˉcapacityˉsemanticˉverified);
+        Validateˉruntimeˉcallˉwebassembly(
+            Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.AsSpan(),
+            Compilerˉcapacityˉtypedˉverified);
+        Validateˉruntimeˉcallˉwebassembly(
+            Compilerˉcapacityˉcontrolˉlowered.Writtenˉbytes.AsSpan(),
+            Compilerˉcapacityˉcontrolˉverified);
+        Equal(70_016, Compilerˉcapacityˉsemanticˉwvb.Length);
+        Equal(
+            WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉsemanticˉwvb));
+        Equal(440_093, Compilerˉcapacityˉsemanticˉlowered.Writtenˉbytes.Length);
+        Equal(135_299_773L, Compilerˉcapacityˉsemanticˉlowered.Executedˉinstructions);
+        Equal(
+            WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_SHA256,
+            Objectˉdigest.Calculateˉsha256(
+                Compilerˉcapacityˉsemanticˉlowered.Writtenˉbytes.AsSpan()));
+        Equal(45_546, Compilerˉcapacityˉtypedˉwvb.Length);
+        Equal(
+            WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉtypedˉwvb));
+        Equal(282_718, Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.Length);
+        Equal(85_826_365L, Compilerˉcapacityˉtypedˉlowered.Executedˉinstructions);
+        Equal(
+            WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_SHA256,
+            Objectˉdigest.Calculateˉsha256(
+                Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.AsSpan()));
+        Equal(45_548, Compilerˉcapacityˉcontrolˉwvb.Length);
+        Equal(
+            WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉcontrolˉwvb));
+        Equal(282_718, Compilerˉcapacityˉcontrolˉlowered.Writtenˉbytes.Length);
+        Equal(85_882_186L, Compilerˉcapacityˉcontrolˉlowered.Executedˉinstructions);
+        Equal(
+            WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_SHA256,
+            Objectˉdigest.Calculateˉsha256(
+                Compilerˉcapacityˉcontrolˉlowered.Writtenˉbytes.AsSpan()));
 
         var Scalarˉinterpreterˉwvb = Compileˉsuccess(
             WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE);
