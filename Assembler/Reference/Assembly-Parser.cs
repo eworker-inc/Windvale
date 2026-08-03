@@ -245,6 +245,16 @@ internal static class Assemblyˉparser
                     return Diagnostic("WVA1006", Definition.Span, $"Definition '{Definition.Name}' is duplicated.");
                 }
 
+                var Labels = new Dictionary<string, Assemblyˉspan>(StringComparer.Ordinal);
+                foreach (var Statement in Definition.Statements)
+                {
+                    if (Statement.Kind == Assemblyˉstatementˉkind.Label &&
+                        !Labels.TryAdd(Statement.Name!, Statement.Span))
+                    {
+                        return Diagnostic("WVA1006", Statement.Span, $"Local label '{Statement.Name}' is duplicated.");
+                    }
+                }
+
                 foreach (var Statement in Definition.Statements)
                 {
                     var Codeˉstatement = Statement.Kind is
@@ -257,7 +267,17 @@ internal static class Assemblyˉparser
                         Assemblyˉstatementˉkind.Pushˉi32 or
                         Assemblyˉstatementˉkind.Enableˉpageˉprotection or
                         Assemblyˉstatementˉkind.Activateˉpageˉtable or
-                        Assemblyˉstatementˉkind.Syscall;
+                        Assemblyˉstatementˉkind.Syscall or
+                        Assemblyˉstatementˉkind.Label or Assemblyˉstatementˉkind.Jumpˉlabel or
+                        Assemblyˉstatementˉkind.Branch or Assemblyˉstatementˉkind.Moveˉregister or
+                        Assemblyˉstatementˉkind.Add or Assemblyˉstatementˉkind.Subtract or
+                        Assemblyˉstatementˉkind.And or Assemblyˉstatementˉkind.Or or
+                        Assemblyˉstatementˉkind.Xor or Assemblyˉstatementˉkind.Compare or
+                        Assemblyˉstatementˉkind.Test or Assemblyˉstatementˉkind.Pushˉregister or
+                        Assemblyˉstatementˉkind.Popˉregister or Assemblyˉstatementˉkind.Callˉregister or
+                        Assemblyˉstatementˉkind.Jumpˉregister or Assemblyˉstatementˉkind.Loadˉu32 or
+                        Assemblyˉstatementˉkind.Loadˉu64 or Assemblyˉstatementˉkind.Storeˉu32 or
+                        Assemblyˉstatementˉkind.Storeˉu64 or Assemblyˉstatementˉkind.Loadˉaddress;
                     var Materializedˉdataˉstatement = Statement.Kind is
                         Assemblyˉstatementˉkind.Bytes or Assemblyˉstatementˉkind.U32 or
                         Assemblyˉstatementˉkind.I32 or Assemblyˉstatementˉkind.Addressˉu32;
@@ -273,6 +293,18 @@ internal static class Assemblyˉparser
                         return Diagnostic("WVA1008", Statement.Span, "Statement is not valid in this section kind.");
                     }
 
+                    if (Statement.Kind == Assemblyˉstatementˉkind.Label)
+                    {
+                        continue;
+                    }
+                    if (Statement.Kind is Assemblyˉstatementˉkind.Jumpˉlabel or Assemblyˉstatementˉkind.Branch)
+                    {
+                        if (!Labels.ContainsKey(Statement.Name!))
+                        {
+                            return Diagnostic("WVA1009", Statement.Span, $"Local label '{Statement.Name}' is not defined in this definition.");
+                        }
+                        continue;
+                    }
                     if (Statement.Name is not null)
                     {
                         if (!Symbols.TryGetValue(Statement.Name, out var Target))
@@ -283,6 +315,12 @@ internal static class Assemblyˉparser
                             Target.Kind != Objectˉsymbolˉkind.Function)
                         {
                             return Diagnostic("WVA1009", Statement.Span, $"Instruction target '{Statement.Name}' is not a function.");
+                        }
+                        if (Statement.Kind is Assemblyˉstatementˉkind.Loadˉu32 or Assemblyˉstatementˉkind.Loadˉu64 or
+                            Assemblyˉstatementˉkind.Storeˉu32 or Assemblyˉstatementˉkind.Storeˉu64 &&
+                            Target.Kind != Objectˉsymbolˉkind.Data)
+                        {
+                            return Diagnostic("WVA1009", Statement.Span, $"Memory target '{Statement.Name}' is not data.");
                         }
                         Relocationˉcount++;
                         if (Relocationˉcount > Objectˉlimits.MAX_RELOCATIONS)
@@ -397,6 +435,115 @@ internal static class Assemblyˉparser
         var Span = new Assemblyˉspan(line, tokens[0].Column);
         switch (tokens[0].Text)
         {
+            case "label":
+            case "jump_label":
+                if (tokens.Count != 2 || !Objectˉverifier.Isˉmachineˉname(tokens[1].Text))
+                {
+                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires one local-label name."));
+                }
+                return (new(
+                    tokens[0].Text == "label" ? Assemblyˉstatementˉkind.Label : Assemblyˉstatementˉkind.Jumpˉlabel,
+                    tokens[1].Text,
+                    0,
+                    0,
+                    [],
+                    Span), null);
+            case "branch":
+                if (tokens.Count != 3 ||
+                    !Tryˉcondition(tokens[1].Text, out var Condition) ||
+                    !Objectˉverifier.Isˉmachineˉname(tokens[2].Text))
+                {
+                    return (null, Diagnostic("WVA1003", Span, "'branch' requires a condition and one local-label name."));
+                }
+                return (new(
+                    Assemblyˉstatementˉkind.Branch,
+                    tokens[2].Text,
+                    0,
+                    0,
+                    [],
+                    Span,
+                    Condition: Condition), null);
+            case "move":
+            case "add":
+            case "subtract":
+            case "and":
+            case "or":
+            case "xor":
+            case "compare":
+            case "test":
+                if (tokens.Count != 3 ||
+                    !Tryˉtypedˉregister(tokens[1].Text, out var Destination) ||
+                    !Tryˉtypedˉregister(tokens[2].Text, out var Source) ||
+                    Destination.Width != Source.Width)
+                {
+                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires two registers of the same 32- or 64-bit width."));
+                }
+                var Registerˉkind = tokens[0].Text switch
+                {
+                    "move" => Assemblyˉstatementˉkind.Moveˉregister,
+                    "add" => Assemblyˉstatementˉkind.Add,
+                    "subtract" => Assemblyˉstatementˉkind.Subtract,
+                    "and" => Assemblyˉstatementˉkind.And,
+                    "or" => Assemblyˉstatementˉkind.Or,
+                    "xor" => Assemblyˉstatementˉkind.Xor,
+                    "compare" => Assemblyˉstatementˉkind.Compare,
+                    _ => Assemblyˉstatementˉkind.Test,
+                };
+                return (new(Registerˉkind, null, 0, 0, [], Span, Destination, Source), null);
+            case "push":
+            case "pop":
+            case "call_register":
+            case "jump_register":
+                if (tokens.Count != 2 ||
+                    !Tryˉtypedˉregister(tokens[1].Text, out var Controlˉregister) ||
+                    Controlˉregister.Width != 64)
+                {
+                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires one 64-bit register."));
+                }
+                var Controlˉkind = tokens[0].Text switch
+                {
+                    "push" => Assemblyˉstatementˉkind.Pushˉregister,
+                    "pop" => Assemblyˉstatementˉkind.Popˉregister,
+                    "call_register" => Assemblyˉstatementˉkind.Callˉregister,
+                    _ => Assemblyˉstatementˉkind.Jumpˉregister,
+                };
+                return (new(Controlˉkind, null, 0, 0, [], Span, Controlˉregister), null);
+            case "load_u32":
+            case "load_u64":
+            case "load_address":
+                var Requiredˉloadˉwidth = tokens[0].Text == "load_u32" ? (byte)32 : (byte)64;
+                if (tokens.Count != 3 ||
+                    !Tryˉtypedˉregister(tokens[1].Text, out var Loadˉregister) ||
+                    Loadˉregister.Width != Requiredˉloadˉwidth ||
+                    !Objectˉverifier.Isˉmachineˉname(tokens[2].Text))
+                {
+                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires a {Requiredˉloadˉwidth}-bit register and symbol name."));
+                }
+                var Loadˉkind = tokens[0].Text switch
+                {
+                    "load_u32" => Assemblyˉstatementˉkind.Loadˉu32,
+                    "load_u64" => Assemblyˉstatementˉkind.Loadˉu64,
+                    _ => Assemblyˉstatementˉkind.Loadˉaddress,
+                };
+                return (new(Loadˉkind, tokens[2].Text, 0, 0, [], Span, Loadˉregister), null);
+            case "store_u32":
+            case "store_u64":
+                var Requiredˉstoreˉwidth = tokens[0].Text == "store_u32" ? (byte)32 : (byte)64;
+                if (tokens.Count != 3 ||
+                    !Objectˉverifier.Isˉmachineˉname(tokens[1].Text) ||
+                    !Tryˉtypedˉregister(tokens[2].Text, out var Storeˉregister) ||
+                    Storeˉregister.Width != Requiredˉstoreˉwidth)
+                {
+                    return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' requires a symbol name and {Requiredˉstoreˉwidth}-bit register."));
+                }
+                return (new(
+                    tokens[0].Text == "store_u32" ? Assemblyˉstatementˉkind.Storeˉu32 : Assemblyˉstatementˉkind.Storeˉu64,
+                    tokens[1].Text,
+                    0,
+                    0,
+                    [],
+                    Span,
+                    Storeˉregister), null);
             case "nop":
             case "return":
             case "trap":
@@ -530,6 +677,71 @@ internal static class Assemblyˉparser
             "ebp" => 5,
             "esi" => 6,
             "edi" => 7,
+            "r8d" => 8,
+            "r9d" => 9,
+            "r10d" => 10,
+            "r11d" => 11,
+            "r12d" => 12,
+            "r13d" => 13,
+            "r14d" => 14,
+            "r15d" => 15,
+            _ => byte.MaxValue,
+        };
+        return value != byte.MaxValue;
+    }
+
+    private static bool Tryˉtypedˉregister(string text, out Assemblyˉregister value)
+    {
+        if (Tryˉregister(text, out var Registerˉ32))
+        {
+            value = new(Registerˉ32, 32);
+            return true;
+        }
+
+        var Registerˉ64 = text switch
+        {
+            "rax" => 0,
+            "rcx" => 1,
+            "rdx" => 2,
+            "rbx" => 3,
+            "rsp" => 4,
+            "rbp" => 5,
+            "rsi" => 6,
+            "rdi" => 7,
+            "r8" => 8,
+            "r9" => 9,
+            "r10" => 10,
+            "r11" => 11,
+            "r12" => 12,
+            "r13" => 13,
+            "r14" => 14,
+            "r15" => 15,
+            _ => -1,
+        };
+        value = Registerˉ64 < 0 ? default : new((byte)Registerˉ64, 64);
+        return Registerˉ64 >= 0;
+    }
+
+    private static bool Tryˉcondition(string text, out byte value)
+    {
+        value = text switch
+        {
+            "overflow" => 0,
+            "not_overflow" => 1,
+            "below" => 2,
+            "above_equal" => 3,
+            "equal" => 4,
+            "not_equal" => 5,
+            "below_equal" => 6,
+            "above" => 7,
+            "sign" => 8,
+            "not_sign" => 9,
+            "parity" => 10,
+            "not_parity" => 11,
+            "less" => 12,
+            "greater_equal" => 13,
+            "less_equal" => 14,
+            "greater" => 15,
             _ => byte.MaxValue,
         };
         return value != byte.MaxValue;

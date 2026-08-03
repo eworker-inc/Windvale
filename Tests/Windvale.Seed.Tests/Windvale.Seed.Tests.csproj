@@ -21,6 +21,9 @@
       Include="../../Examples/Assembler/Hello-Object.wva"
       LogicalName="Windvale.Seed.Tests.Hello-Object.wva" />
     <EmbeddedResource
+      Include="../../Examples/Assembler/Expanded-X64.wva"
+      LogicalName="Windvale.Seed.Tests.Expanded-X64.wva" />
+    <EmbeddedResource
       Include="../../Assembler/Windvale/Wva-Assembler-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wva-Assembler-Core.wv" />
     <EmbeddedResource

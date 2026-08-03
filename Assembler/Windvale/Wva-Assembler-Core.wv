@@ -182,6 +182,11 @@ record Wvaˉdefinitionˉrange {
     Size: u32;
 }
 
+record Wvaˉlocalˉlabelˉlookup {
+    Count: u32;
+    Offset: u32;
+}
+
 record Wvaˉobjectˉencoding {
     Status: Wvaˉsemanticˉstatus;
     Contents: bytes;
@@ -626,7 +631,88 @@ fn Registerˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
     if Tokenˉequalsˉtext(Input, Value, "esp") { return true; }
     if Tokenˉequalsˉtext(Input, Value, "ebp") { return true; }
     if Tokenˉequalsˉtext(Input, Value, "esi") { return true; }
-    return Tokenˉequalsˉtext(Input, Value, "edi");
+    if Tokenˉequalsˉtext(Input, Value, "edi") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r8d") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r9d") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r10d") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r11d") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r12d") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r13d") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r14d") { return true; }
+    return Tokenˉequalsˉtext(Input, Value, "r15d");
+}
+
+fn Registerˉwideˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
+    if Tokenˉequalsˉtext(Input, Value, "rax") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "rcx") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "rdx") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "rbx") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "rsp") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "rbp") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "rsi") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "rdi") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r8") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r9") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r10") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r11") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r12") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r13") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "r14") { return true; }
+    return Tokenˉequalsˉtext(Input, Value, "r15");
+}
+
+fn Typedˉregisterˉwidth(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Registerˉisˉvalid(Input, Value) { return 32u32; }
+    if Registerˉwideˉisˉvalid(Input, Value) { return 64u32; }
+    return 0u32;
+}
+
+fn Binaryˉstatementˉkind(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Tokenˉequalsˉtext(Input, Value, "move") { return 23u32; }
+    if Tokenˉequalsˉtext(Input, Value, "add") { return 24u32; }
+    if Tokenˉequalsˉtext(Input, Value, "subtract") { return 25u32; }
+    if Tokenˉequalsˉtext(Input, Value, "and") { return 26u32; }
+    if Tokenˉequalsˉtext(Input, Value, "or") { return 27u32; }
+    if Tokenˉequalsˉtext(Input, Value, "xor") { return 28u32; }
+    if Tokenˉequalsˉtext(Input, Value, "compare") { return 29u32; }
+    if Tokenˉequalsˉtext(Input, Value, "test") { return 30u32; }
+    return 0u32;
+}
+
+fn Expandedˉcodeˉstatementˉisˉrecognized(Input: bytes, Value: Wvaˉtoken) -> bool {
+    if Binaryˉstatementˉkind(Input, Value) != 0u32 { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "label") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "jump_label") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "branch") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "push") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "pop") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "call_register") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "jump_register") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "load_u32") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "load_u64") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "store_u32") { return true; }
+    if Tokenˉequalsˉtext(Input, Value, "store_u64") { return true; }
+    return Tokenˉequalsˉtext(Input, Value, "load_address");
+}
+
+fn Conditionˉtag(Input: bytes, Value: Wvaˉtoken) -> u32 {
+    if Tokenˉequalsˉtext(Input, Value, "overflow") { return 0u32; }
+    if Tokenˉequalsˉtext(Input, Value, "not_overflow") { return 1u32; }
+    if Tokenˉequalsˉtext(Input, Value, "below") { return 2u32; }
+    if Tokenˉequalsˉtext(Input, Value, "above_equal") { return 3u32; }
+    if Tokenˉequalsˉtext(Input, Value, "equal") { return 4u32; }
+    if Tokenˉequalsˉtext(Input, Value, "not_equal") { return 5u32; }
+    if Tokenˉequalsˉtext(Input, Value, "below_equal") { return 6u32; }
+    if Tokenˉequalsˉtext(Input, Value, "above") { return 7u32; }
+    if Tokenˉequalsˉtext(Input, Value, "sign") { return 8u32; }
+    if Tokenˉequalsˉtext(Input, Value, "not_sign") { return 9u32; }
+    if Tokenˉequalsˉtext(Input, Value, "parity") { return 10u32; }
+    if Tokenˉequalsˉtext(Input, Value, "not_parity") { return 11u32; }
+    if Tokenˉequalsˉtext(Input, Value, "less") { return 12u32; }
+    if Tokenˉequalsˉtext(Input, Value, "greater_equal") { return 13u32; }
+    if Tokenˉequalsˉtext(Input, Value, "less_equal") { return 14u32; }
+    if Tokenˉequalsˉtext(Input, Value, "greater") { return 15u32; }
+    return 16u32;
 }
 
 fn Parseˉu32(Input: bytes, Value: Wvaˉtoken) -> Foundationˉu32ˉparse {
@@ -716,7 +802,7 @@ fn Statementˉsuccess(
 fn Statementˉisˉallowed(Sectionˉkind: u32, Statementˉkind: u32) -> bool {
     if Sectionˉkind == 1u32 {
         if Statementˉkind <= 7u32 { return true; }
-        if Statementˉkind >= 13u32 { return Statementˉkind <= 19u32; }
+        if Statementˉkind >= 13u32 { return Statementˉkind <= 39u32; }
         return false;
     }
     if Sectionˉkind == 2u32 {
@@ -737,6 +823,108 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
     var Size: u32 = 0u32;
     var Hasˉreference: bool = false;
     var Reference: Wvaˉtoken = First;
+
+    if Expandedˉcodeˉstatementˉisˉrecognized(Input, First) {
+        if Sectionˉkind != 1u32 {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1008, First);
+        }
+    }
+
+    if Tokenˉequalsˉtext(Input, First, "label") {
+        if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        Reference = Lineˉtoken(Input, Line, 1u32);
+        if !Machineˉnameˉisˉvalid(Input, Reference) {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        return Statementˉsuccess(20u32, 0u32, Reference, false, First);
+    }
+    if Tokenˉequalsˉtext(Input, First, "jump_label") {
+        if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        Reference = Lineˉtoken(Input, Line, 1u32);
+        if !Machineˉnameˉisˉvalid(Input, Reference) {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        return Statementˉsuccess(21u32, 5u32, Reference, false, First);
+    }
+    if Tokenˉequalsˉtext(Input, First, "branch") {
+        if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        let Condition: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        if Conditionˉtag(Input, Condition) > 15u32 {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        Reference = Lineˉtoken(Input, Line, 2u32);
+        if !Machineˉnameˉisˉvalid(Input, Reference) {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        return Statementˉsuccess(22u32, 6u32, Reference, false, First);
+    }
+
+    let Binaryˉkind: u32 = Binaryˉstatementˉkind(Input, First);
+    if Binaryˉkind != 0u32 {
+        if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        let Destination: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        let Source: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+        let Destinationˉwidth: u32 = Typedˉregisterˉwidth(Input, Destination);
+        let Sourceˉwidth: u32 = Typedˉregisterˉwidth(Input, Source);
+        if Destinationˉwidth == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        if Destinationˉwidth != Sourceˉwidth { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        Size = 2u32;
+        if Destinationˉwidth == 64u32 { Size = 3u32; }
+        if Registerˉindex(Input, Destination) >= 8u32 { Size = 3u32; }
+        if Registerˉindex(Input, Source) >= 8u32 { Size = 3u32; }
+        return Statementˉsuccess(Binaryˉkind, Size, Reference, false, First);
+    }
+
+    var Controlˉkind: u32 = 0u32;
+    if Tokenˉequalsˉtext(Input, First, "push") { Controlˉkind = 31u32; }
+    if Tokenˉequalsˉtext(Input, First, "pop") { Controlˉkind = 32u32; }
+    if Tokenˉequalsˉtext(Input, First, "call_register") { Controlˉkind = 33u32; }
+    if Tokenˉequalsˉtext(Input, First, "jump_register") { Controlˉkind = 34u32; }
+    if Controlˉkind != 0u32 {
+        if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        let Controlˉregister: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        if !Registerˉwideˉisˉvalid(Input, Controlˉregister) {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        Size = 1u32;
+        if Controlˉkind >= 33u32 { Size = 2u32; }
+        if Registerˉindex(Input, Controlˉregister) >= 8u32 { Size = Size + 1u32; }
+        return Statementˉsuccess(Controlˉkind, Size, Reference, false, First);
+    }
+
+    var Ripˉkind: u32 = 0u32;
+    if Tokenˉequalsˉtext(Input, First, "load_u32") { Ripˉkind = 35u32; }
+    if Tokenˉequalsˉtext(Input, First, "load_u64") { Ripˉkind = 36u32; }
+    if Tokenˉequalsˉtext(Input, First, "store_u32") { Ripˉkind = 37u32; }
+    if Tokenˉequalsˉtext(Input, First, "store_u64") { Ripˉkind = 38u32; }
+    if Tokenˉequalsˉtext(Input, First, "load_address") { Ripˉkind = 39u32; }
+    if Ripˉkind != 0u32 {
+        if Line.Tokens != 3u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
+        var Ripˉregister: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+        Reference = Lineˉtoken(Input, Line, 2u32);
+        var Requiredˉwidth: u32 = 32u32;
+        if Ripˉkind == 36u32 { Requiredˉwidth = 64u32; }
+        if Ripˉkind == 38u32 { Requiredˉwidth = 64u32; }
+        if Ripˉkind == 39u32 { Requiredˉwidth = 64u32; }
+        if Ripˉkind == 37u32 {
+            Reference = Lineˉtoken(Input, Line, 1u32);
+            Ripˉregister = Lineˉtoken(Input, Line, 2u32);
+        }
+        if Ripˉkind == 38u32 {
+            Reference = Lineˉtoken(Input, Line, 1u32);
+            Ripˉregister = Lineˉtoken(Input, Line, 2u32);
+        }
+        if Typedˉregisterˉwidth(Input, Ripˉregister) != Requiredˉwidth {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        if !Machineˉnameˉisˉvalid(Input, Reference) {
+            return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
+        }
+        Size = 6u32;
+        if Requiredˉwidth == 64u32 { Size = 7u32; }
+        if Registerˉindex(Input, Ripˉregister) >= 8u32 { Size = 7u32; }
+        return Statementˉsuccess(Ripˉkind, Size, Reference, true, First);
+    }
 
     if Tokenˉequalsˉtext(Input, First, "nop") {
         Kind = 1u32;
@@ -784,6 +972,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
                         if !Registerˉisˉvalid(Input, Lineˉtoken(Input, Line, 1u32)) {
                             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
                         }
+                        if Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32)) >= 8u32 { Size = 6u32; }
                         let Moveˉi32ˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
                         let Moveˉi32ˉparsed: Wvaˉi32ˉparse = Parseˉi32(Input, Moveˉi32ˉnumber);
                         if !Moveˉi32ˉparsed.Valid {
@@ -797,6 +986,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
                             if !Registerˉisˉvalid(Input, Lineˉtoken(Input, Line, 1u32)) {
                                 return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
                             }
+                            if Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32)) >= 8u32 { Size = 6u32; }
                             let Moveˉu32ˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
                             let Moveˉu32ˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Moveˉu32ˉnumber);
                             if !Moveˉu32ˉparsed.Valid {
@@ -1115,6 +1305,73 @@ fn Definitionˉwasˉseen(
         );
     }
     return false;
+}
+
+fn Findˉlocalˉlabel(
+    Input: bytes,
+    Definition: Wvaˉtoken,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> Wvaˉlocalˉlabelˉlookup {
+    let Header: Wvaˉline = Readˉmeaningfulˉline(Input, 0u32, 1u32, 1u32);
+    var Current: Wvaˉline = Readˉmeaningfulˉline(
+        Input,
+        Header.Nextˉcursor,
+        Header.Nextˉline,
+        Header.Nextˉcolumn
+    );
+    var Sectionˉkind: u32 = 0u32;
+    var Wantedˉdefinition: bool = false;
+    var Currentˉoffset: u32 = 0u32;
+    var Count: u32 = 0u32;
+    var Foundˉoffset: u32 = 0u32;
+    while Current.Present {
+        let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
+        if Tokenˉequalsˉtext(Input, First, "section") {
+            Sectionˉkind = Sectionˉkindˉtag(Input, Lineˉtoken(Input, Current, 1u32));
+        } else {
+            if Tokenˉequalsˉtext(Input, First, "define") {
+                let Definitionˉname: Wvaˉtoken = Lineˉtoken(Input, Current, 1u32);
+                Wantedˉdefinition = Spansˉequal(
+                    Input,
+                    Definition.Offset,
+                    Definition.Length,
+                    Definitionˉname.Offset,
+                    Definitionˉname.Length
+                );
+                Currentˉoffset = 0u32;
+            } else {
+                if Lineˉisˉend(Input, Current, "define") {
+                    if Wantedˉdefinition { return Wvaˉlocalˉlabelˉlookup(Count, Foundˉoffset); }
+                    Wantedˉdefinition = false;
+                } else {
+                    if Wantedˉdefinition {
+                        let Statement: Wvaˉstatementˉcheck = Checkˉstatement(Input, Current, Sectionˉkind);
+                        if Statement.Kind == 20u32 {
+                            if Spansˉequal(
+                                Input,
+                                Nameˉoffset,
+                                Nameˉlength,
+                                Statement.Referenceˉoffset,
+                                Statement.Referenceˉlength
+                            ) {
+                                Count = Count + 1u32;
+                                if Count == 1u32 { Foundˉoffset = Currentˉoffset; }
+                            }
+                        }
+                        Currentˉoffset = Currentˉoffset + Statement.Size;
+                    }
+                }
+            }
+        }
+        Current = Readˉmeaningfulˉline(
+            Input,
+            Current.Nextˉcursor,
+            Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    return Wvaˉlocalˉlabelˉlookup(Count, Foundˉoffset);
 }
 
 fn Semanticˉfailureˉat(
@@ -1878,6 +2135,7 @@ fn Validateˉwvaˉsemantics(
     var Bodyˉsectionˉoffset: u32 = 0u32;
     var Bodyˉsectionˉlength: u32 = 0u32;
     var Bodyˉsectionˉkind: u32 = 0u32;
+    var Bodyˉdefinitionˉname: Wvaˉtoken = Lineˉtoken(Input, Header, 0u32);
     var Insideˉdefinition: bool = false;
     while Bodyˉcurrent.Present {
         let Bodyˉfirst: Wvaˉtoken = Lineˉtoken(Input, Bodyˉcurrent, 0u32);
@@ -1888,17 +2146,18 @@ fn Validateˉwvaˉsemantics(
             Bodyˉsectionˉkind = Sectionˉkindˉtag(Input, Lineˉtoken(Input, Bodyˉcurrent, 1u32));
         } else {
             if Tokenˉequalsˉtext(Input, Bodyˉfirst, "define") {
-                let Bodyˉdefinitionˉname: Wvaˉtoken = Lineˉtoken(Input, Bodyˉcurrent, 1u32);
+                let Currentˉdefinitionˉname: Wvaˉtoken = Lineˉtoken(Input, Bodyˉcurrent, 1u32);
+                Bodyˉdefinitionˉname = Currentˉdefinitionˉname;
                 let Definitionˉsymbol: Wvaˉsymbolˉlookup = Findˉsymbol(
                     Input,
-                    Bodyˉdefinitionˉname.Offset,
-                    Bodyˉdefinitionˉname.Length
+                    Currentˉdefinitionˉname.Offset,
+                    Currentˉdefinitionˉname.Length
                 );
                 if !Definitionˉsymbol.Found {
-                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Bodyˉdefinitionˉname);
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Currentˉdefinitionˉname);
                 }
                 if Definitionˉsymbol.Binding == 3u32 {
-                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1007, Bodyˉdefinitionˉname);
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1007, Currentˉdefinitionˉname);
                 }
                 if !Spansˉequal(
                     Input,
@@ -1907,10 +2166,10 @@ fn Validateˉwvaˉsemantics(
                     Bodyˉsectionˉoffset,
                     Bodyˉsectionˉlength
                 ) {
-                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1007, Bodyˉdefinitionˉname);
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1007, Currentˉdefinitionˉname);
                 }
-                if Definitionˉwasˉseen(Input, Bodyˉdefinitionˉname, Bodyˉcurrent.Firstˉoffset) {
-                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1006, Bodyˉdefinitionˉname);
+                if Definitionˉwasˉseen(Input, Currentˉdefinitionˉname, Bodyˉcurrent.Firstˉoffset) {
+                    return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1006, Currentˉdefinitionˉname);
                 }
                 Insideˉdefinition = true;
             } else {
@@ -1931,6 +2190,39 @@ fn Validateˉwvaˉsemantics(
                             Bodyˉcurrent,
                             Bodyˉsectionˉkind
                         );
+                        if Bodyˉstatement.Kind == 20u32 {
+                            let Labelˉdefinition: Wvaˉlocalˉlabelˉlookup = Findˉlocalˉlabel(
+                                Input,
+                                Bodyˉdefinitionˉname,
+                                Bodyˉstatement.Referenceˉoffset,
+                                Bodyˉstatement.Referenceˉlength
+                            );
+                            if Labelˉdefinition.Count != 1u32 {
+                                return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1006, Bodyˉfirst);
+                            }
+                        }
+                        if Bodyˉstatement.Kind == 21u32 {
+                            let Jumpˉlabel: Wvaˉlocalˉlabelˉlookup = Findˉlocalˉlabel(
+                                Input,
+                                Bodyˉdefinitionˉname,
+                                Bodyˉstatement.Referenceˉoffset,
+                                Bodyˉstatement.Referenceˉlength
+                            );
+                            if Jumpˉlabel.Count != 1u32 {
+                                return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Bodyˉfirst);
+                            }
+                        }
+                        if Bodyˉstatement.Kind == 22u32 {
+                            let Branchˉlabel: Wvaˉlocalˉlabelˉlookup = Findˉlocalˉlabel(
+                                Input,
+                                Bodyˉdefinitionˉname,
+                                Bodyˉstatement.Referenceˉoffset,
+                                Bodyˉstatement.Referenceˉlength
+                            );
+                            if Branchˉlabel.Count != 1u32 {
+                                return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Bodyˉfirst);
+                            }
+                        }
                         if Bodyˉstatement.Hasˉreference {
                             let Referenceˉsymbol: Wvaˉsymbolˉlookup = Findˉsymbol(
                                 Input,
@@ -1948,6 +2240,13 @@ fn Validateˉwvaˉsemantics(
                             if Bodyˉstatement.Kind == 5u32 {
                                 if Referenceˉsymbol.Kind != 1u32 {
                                     return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Bodyˉfirst);
+                                }
+                            }
+                            if Bodyˉstatement.Kind >= 35u32 {
+                                if Bodyˉstatement.Kind <= 38u32 {
+                                    if Referenceˉsymbol.Kind != 2u32 {
+                                        return Semanticˉfailure(Base, Wvaˉsemanticˉstatus.Wva1009, Bodyˉfirst);
+                                    }
                                 }
                             }
                         }
@@ -2098,16 +2397,90 @@ fn Encodeˉwvoˉheader(
 
 fn Registerˉindex(Input: bytes, Value: Wvaˉtoken) -> u32 {
     if Tokenˉequalsˉtext(Input, Value, "eax") { return 0u32; }
+    if Tokenˉequalsˉtext(Input, Value, "rax") { return 0u32; }
     if Tokenˉequalsˉtext(Input, Value, "ecx") { return 1u32; }
+    if Tokenˉequalsˉtext(Input, Value, "rcx") { return 1u32; }
     if Tokenˉequalsˉtext(Input, Value, "edx") { return 2u32; }
+    if Tokenˉequalsˉtext(Input, Value, "rdx") { return 2u32; }
     if Tokenˉequalsˉtext(Input, Value, "ebx") { return 3u32; }
+    if Tokenˉequalsˉtext(Input, Value, "rbx") { return 3u32; }
     if Tokenˉequalsˉtext(Input, Value, "esp") { return 4u32; }
+    if Tokenˉequalsˉtext(Input, Value, "rsp") { return 4u32; }
     if Tokenˉequalsˉtext(Input, Value, "ebp") { return 5u32; }
+    if Tokenˉequalsˉtext(Input, Value, "rbp") { return 5u32; }
     if Tokenˉequalsˉtext(Input, Value, "esi") { return 6u32; }
-    return 7u32;
+    if Tokenˉequalsˉtext(Input, Value, "rsi") { return 6u32; }
+    if Tokenˉequalsˉtext(Input, Value, "edi") { return 7u32; }
+    if Tokenˉequalsˉtext(Input, Value, "rdi") { return 7u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r8d") { return 8u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r8") { return 8u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r9d") { return 9u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r9") { return 9u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r10d") { return 10u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r10") { return 10u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r11d") { return 11u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r11") { return 11u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r12d") { return 12u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r12") { return 12u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r13d") { return 13u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r13") { return 13u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r14d") { return 14u32; }
+    if Tokenˉequalsˉtext(Input, Value, "r14") { return 14u32; }
+    return 15u32;
 }
 
-fn Encodeˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> bytes {
+fn Registerˉlowˉindex(Value: u32) -> u32 {
+    if Value >= 8u32 { return Value - 8u32; }
+    return Value;
+}
+
+fn Encodeˉrex(Width: u32, Register: u32, Memory: u32) -> bytes {
+    if Width != 64u32 {
+        if Register < 8u32 {
+            if Memory < 8u32 { return Emptyˉbytes; }
+        }
+    }
+    var Value: u32 = 64u32;
+    if Width == 64u32 { Value = Value + 8u32; }
+    if Register >= 8u32 { Value = Value + 4u32; }
+    if Memory >= 8u32 { Value = Value + 1u32; }
+    return Singleˉbyte(Value);
+}
+
+fn Encodeˉmodrm(Register: u32, Memory: u32) -> bytes {
+    return Singleˉbyte(
+        192u32 + Registerˉlowˉindex(Register) * 8u32 + Registerˉlowˉindex(Memory)
+    );
+}
+
+fn Encodeˉripˉmodrm(Register: u32) -> bytes {
+    return Singleˉbyte(Registerˉlowˉindex(Register) * 8u32 + 5u32);
+}
+
+fn Relativeˉi32ˉbits(Target: u32, Nextˉinstruction: u32) -> u32 {
+    if Target >= Nextˉinstruction { return Target - Nextˉinstruction; }
+    let Distance: u32 = Nextˉinstruction - Target;
+    return 4294967295u32 - (Distance - 1u32);
+}
+
+fn Binaryˉopcode(Kind: u32) -> u32 {
+    if Kind == 23u32 { return 137u32; }
+    if Kind == 24u32 { return 1u32; }
+    if Kind == 25u32 { return 41u32; }
+    if Kind == 26u32 { return 33u32; }
+    if Kind == 27u32 { return 9u32; }
+    if Kind == 28u32 { return 49u32; }
+    if Kind == 29u32 { return 57u32; }
+    return 133u32;
+}
+
+fn Encodeˉstatement(
+    Input: bytes,
+    Line: Wvaˉline,
+    Sectionˉkind: u32,
+    Definition: Wvaˉtoken,
+    Definitionˉoffset: u32
+) -> bytes {
     let Statement: Wvaˉstatementˉcheck = Checkˉstatement(Input, Line, Sectionˉkind);
     if Statement.Kind == 1u32 { return Singleˉbyte(144u32); }
     if Statement.Kind == 2u32 { return Singleˉbyte(195u32); }
@@ -2122,8 +2495,11 @@ fn Encodeˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> bytes
         let I32ˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
         let I32ˉnumber: Wvaˉi32ˉparse = Parseˉi32(Input, Lineˉtoken(Input, Line, 2u32));
         return Appendˉbytes(
-            Singleˉbyte(184u32 + I32ˉregister),
-            Bytesˉfromˉi32ˉlittle(I32ˉnumber.Value)
+            Encodeˉrex(32u32, 0u32, I32ˉregister),
+            Appendˉbytes(
+                Singleˉbyte(184u32 + Registerˉlowˉindex(I32ˉregister)),
+                Bytesˉfromˉi32ˉlittle(I32ˉnumber.Value)
+            )
         );
     }
     if Statement.Kind == 7u32 {
@@ -2133,8 +2509,11 @@ fn Encodeˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> bytes
             Lineˉtoken(Input, Line, 2u32)
         );
         return Appendˉbytes(
-            Singleˉbyte(184u32 + U32ˉregister),
-            Bytesˉfromˉu32ˉlittle(Moveˉu32ˉnumber.Value)
+            Encodeˉrex(32u32, 0u32, U32ˉregister),
+            Appendˉbytes(
+                Singleˉbyte(184u32 + Registerˉlowˉindex(U32ˉregister)),
+                Bytesˉfromˉu32ˉlittle(Moveˉu32ˉnumber.Value)
+            )
         );
     }
     if Statement.Kind == 8u32 {
@@ -2187,6 +2566,93 @@ fn Encodeˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> bytes
     if Statement.Kind == 19u32 {
         return Appendˉbytes(Singleˉbyte(15u32), Singleˉbyte(5u32));
     }
+    if Statement.Kind == 20u32 { return Emptyˉbytes; }
+    if Statement.Kind == 21u32 {
+        let Label: Wvaˉlocalˉlabelˉlookup = Findˉlocalˉlabel(
+            Input,
+            Definition,
+            Statement.Referenceˉoffset,
+            Statement.Referenceˉlength
+        );
+        let Displacement: u32 = Relativeˉi32ˉbits(
+            Label.Offset,
+            Definitionˉoffset
+        );
+        return Appendˉbytes(Singleˉbyte(233u32), Bytesˉfromˉu32ˉlittle(Displacement));
+    }
+    if Statement.Kind == 22u32 {
+        let Branchˉlabel: Wvaˉlocalˉlabelˉlookup = Findˉlocalˉlabel(
+            Input,
+            Definition,
+            Statement.Referenceˉoffset,
+            Statement.Referenceˉlength
+        );
+        let Branchˉdisplacement: u32 = Relativeˉi32ˉbits(
+            Branchˉlabel.Offset,
+            Definitionˉoffset
+        );
+        let Condition: u32 = Conditionˉtag(Input, Lineˉtoken(Input, Line, 1u32));
+        var Branchˉbytes: bytes = Appendˉbytes(Singleˉbyte(15u32), Singleˉbyte(128u32 + Condition));
+        return Appendˉbytes(Branchˉbytes, Bytesˉfromˉu32ˉlittle(Branchˉdisplacement));
+    }
+    if Statement.Kind >= 23u32 {
+        if Statement.Kind <= 30u32 {
+            let Destination: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+            let Source: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
+            let Destinationˉindex: u32 = Registerˉindex(Input, Destination);
+            let Sourceˉindex: u32 = Registerˉindex(Input, Source);
+            let Width: u32 = Typedˉregisterˉwidth(Input, Destination);
+            var Binaryˉbytes: bytes = Encodeˉrex(Width, Sourceˉindex, Destinationˉindex);
+            Binaryˉbytes = Appendˉbytes(Binaryˉbytes, Singleˉbyte(Binaryˉopcode(Statement.Kind)));
+            return Appendˉbytes(Binaryˉbytes, Encodeˉmodrm(Sourceˉindex, Destinationˉindex));
+        }
+    }
+    if Statement.Kind == 31u32 {
+        let Pushˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
+        return Appendˉbytes(
+            Encodeˉrex(32u32, 0u32, Pushˉregister),
+            Singleˉbyte(80u32 + Registerˉlowˉindex(Pushˉregister))
+        );
+    }
+    if Statement.Kind == 32u32 {
+        let Popˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
+        return Appendˉbytes(
+            Encodeˉrex(32u32, 0u32, Popˉregister),
+            Singleˉbyte(88u32 + Registerˉlowˉindex(Popˉregister))
+        );
+    }
+    if Statement.Kind == 33u32 {
+        let Callˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
+        var Callˉbytes: bytes = Encodeˉrex(32u32, 0u32, Callˉregister);
+        Callˉbytes = Appendˉbytes(Callˉbytes, Singleˉbyte(255u32));
+        return Appendˉbytes(Callˉbytes, Singleˉbyte(208u32 + Registerˉlowˉindex(Callˉregister)));
+    }
+    if Statement.Kind == 34u32 {
+        let Jumpˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
+        var Jumpˉbytes: bytes = Encodeˉrex(32u32, 0u32, Jumpˉregister);
+        Jumpˉbytes = Appendˉbytes(Jumpˉbytes, Singleˉbyte(255u32));
+        return Appendˉbytes(Jumpˉbytes, Singleˉbyte(224u32 + Registerˉlowˉindex(Jumpˉregister)));
+    }
+    if Statement.Kind >= 35u32 {
+        if Statement.Kind <= 39u32 {
+            var Ripˉregisterˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
+            if Statement.Kind == 37u32 { Ripˉregisterˉtoken = Lineˉtoken(Input, Line, 2u32); }
+            if Statement.Kind == 38u32 { Ripˉregisterˉtoken = Lineˉtoken(Input, Line, 2u32); }
+            let Ripˉregister: u32 = Registerˉindex(Input, Ripˉregisterˉtoken);
+            var Ripˉwidth: u32 = 32u32;
+            if Statement.Kind == 36u32 { Ripˉwidth = 64u32; }
+            if Statement.Kind == 38u32 { Ripˉwidth = 64u32; }
+            if Statement.Kind == 39u32 { Ripˉwidth = 64u32; }
+            var Ripˉbytes: bytes = Encodeˉrex(Ripˉwidth, Ripˉregister, 0u32);
+            var Ripˉopcode: u32 = 139u32;
+            if Statement.Kind == 37u32 { Ripˉopcode = 137u32; }
+            if Statement.Kind == 38u32 { Ripˉopcode = 137u32; }
+            if Statement.Kind == 39u32 { Ripˉopcode = 141u32; }
+            Ripˉbytes = Appendˉbytes(Ripˉbytes, Singleˉbyte(Ripˉopcode));
+            Ripˉbytes = Appendˉbytes(Ripˉbytes, Encodeˉripˉmodrm(Ripˉregister));
+            return Appendˉbytes(Ripˉbytes, Bytesˉfromˉu32ˉlittle(0u32));
+        }
+    }
     return Emptyˉbytes;
 }
 
@@ -2223,6 +2689,8 @@ fn Encodeˉsections(Input: bytes) -> bytes {
     var Sectionˉmemory: u32 = 0u32;
     var Sectionˉcontents: bytes = Emptyˉbytes;
     var Insideˉdefinition: bool = false;
+    var Definitionˉname: Wvaˉtoken = Lineˉtoken(Input, Header, 0u32);
+    var Definitionˉstart: u32 = 0u32;
     while Current.Present {
         let First: Wvaˉtoken = Lineˉtoken(Input, Current, 0u32);
         if Tokenˉequalsˉtext(Input, First, "section") {
@@ -2238,6 +2706,8 @@ fn Encodeˉsections(Input: bytes) -> bytes {
         } else {
             if Tokenˉequalsˉtext(Input, First, "define") {
                 Insideˉdefinition = true;
+                Definitionˉname = Lineˉtoken(Input, Current, 1u32);
+                Definitionˉstart = Sectionˉmemory;
             } else {
                 if Lineˉisˉend(Input, Current, "define") {
                     Insideˉdefinition = false;
@@ -2265,7 +2735,13 @@ fn Encodeˉsections(Input: bytes) -> bytes {
                             if Sectionˉkind != 4u32 {
                                 Sectionˉcontents = Appendˉbytes(
                                     Sectionˉcontents,
-                                    Encodeˉstatement(Input, Current, Sectionˉkind)
+                                    Encodeˉstatement(
+                                        Input,
+                                        Current,
+                                        Sectionˉkind,
+                                        Definitionˉname,
+                                        Sectionˉmemory - Definitionˉstart
+                                    )
                                 );
                             }
                         }
@@ -2502,12 +2978,16 @@ fn Encodeˉrelocations(Input: bytes) -> bytes {
                                     )
                                 );
                             } else {
+                                var Relativeˉoffset: u32 = Currentˉoffset + 1u32;
+                                if Statement.Kind >= 35u32 {
+                                    Relativeˉoffset = Currentˉoffset + Statement.Size - 4u32;
+                                }
                                 Result = Appendˉbytes(
                                     Result,
                                     Encodeˉrelocationˉrecord(
                                         2u32,
                                         Currentˉsectionˉindex,
-                                        Currentˉoffset + 1u32,
+                                        Relativeˉoffset,
                                         Symbolˉindex,
                                         -4
                                     )

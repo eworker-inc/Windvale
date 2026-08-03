@@ -1,0 +1,30 @@
+windvale-assembly 1
+
+# The expanded WVA 1 x86-64 foundation keeps local control flow inside one
+# definition and represents symbol references with typed WVO relocations.
+symbol local data Value in .data
+symbol export function Main in .text
+
+section code .text align 16
+define Main
+move_u32 r8d 1
+move rax r8
+load_u32 ecx Value
+label Repeat
+test ecx ecx
+branch equal Done
+add rax r8
+subtract ecx r8d
+jump_label Repeat
+label Done
+store_u64 Value rax
+load_address r10 Value
+return
+end define
+end section
+
+section data .data align 8
+define Value
+bytes 3 0 0 0 0 0 0 0
+end define
+end section

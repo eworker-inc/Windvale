@@ -40,6 +40,11 @@ public static class Assemblyˉlimits
 
 internal readonly record struct Assemblyˉspan(int Line, int Column);
 
+internal readonly record struct Assemblyˉregister(byte Index, byte Width)
+{
+    public bool Isˉextended => Index >= 8;
+}
+
 internal sealed record Assemblyˉunit(
     ImmutableArray<Assemblyˉsymbol> Symbols,
     ImmutableArray<Assemblyˉsection> Sections);
@@ -79,6 +84,26 @@ internal enum Assemblyˉstatementˉkind
     Enableˉpageˉprotection,
     Activateˉpageˉtable,
     Syscall,
+    Label,
+    Jumpˉlabel,
+    Branch,
+    Moveˉregister,
+    Add,
+    Subtract,
+    And,
+    Or,
+    Xor,
+    Compare,
+    Test,
+    Pushˉregister,
+    Popˉregister,
+    Callˉregister,
+    Jumpˉregister,
+    Loadˉu32,
+    Loadˉu64,
+    Storeˉu32,
+    Storeˉu64,
+    Loadˉaddress,
     Bytes,
     U32,
     I32,
@@ -92,4 +117,7 @@ internal sealed record Assemblyˉstatement(
     long Number,
     byte Register,
     ImmutableArray<byte> Bytes,
-    Assemblyˉspan Span);
+    Assemblyˉspan Span,
+    Assemblyˉregister Firstˉregister = default,
+    Assemblyˉregister Secondˉregister = default,
+    byte Condition = 0);

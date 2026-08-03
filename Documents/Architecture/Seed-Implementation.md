@@ -102,9 +102,9 @@ The object verifier returns a `Verifiedˉobject`; both CLI object commands decod
 `Assembler/Windvale/` owns the assembler implementation written in Windvale:
 
 - Bounded WVA 1 line and token scanning over immutable source bytes
-- Complete initial grammar, declaration, ordering, context, reference, and limit validation
+- Complete grammar, declaration, ordering, context, local-label, reference, register-width, and limit validation
 - Named-definition offset and size derivation
-- The first explicit x86-64 instruction and data encodings
+- Typed 32/64-bit GPR, REX/ModRM, local-control, stack, indirect-control, RIP-relative, machine, and data encodings
 - Canonical WVO relocation and object-byte construction
 - Hosted input/output composition with publication only after complete success
 
@@ -112,10 +112,10 @@ The object verifier returns a `Verifiedˉobject`; both CLI object commands decod
 
 `Assembler/Reference/` owns the independent C# Stage 0 and recovery implementation:
 
-- WVA 1 line/token parsing and stable source diagnostics
+- WVA 1 line/token parsing, typed operands, local fixups, and stable source diagnostics
 - Canonical symbol and section declaration validation
 - Named-definition offset and size derivation
-- The same explicit x86-64 instruction and data encodings
+- The same expanded x86-64 instruction and data encodings through an independent encoder
 - WVO relocation creation and production through the independent object verifier
 
 Both implementations own the same WVA contract and remain byte-for-byte differential oracles. The reference assembler depends only on the object model and returns no bytes until the resulting object passes `Objectˉverifier`; qualification routes Windvale-written output through that independently owned verifier. Neither implementation resolves symbols, chooses final addresses, applies relocations, defines an ABI, or produces an executable image.

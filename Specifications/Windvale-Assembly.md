@@ -54,7 +54,14 @@ Alignment is 1 through 4,096. Definition order determines layout within its sect
 
 ## x86-64 code statements
 
-WVA 1 code definitions support:
+Register operands use these exact names:
+
+```text
+Reg32 = eax ecx edx ebx esp ebp esi edi r8d r9d r10d r11d r12d r13d r14d r15d
+Reg64 = rax rcx rdx rbx rsp rbp rsi rdi r8 r9 r10 r11 r12 r13 r14 r15
+```
+
+WVA 1 code definitions support the original symbol-oriented and machine operations:
 
 ```text
 nop
@@ -62,8 +69,8 @@ return
 trap
 call <Functionˉsymbol>
 jump <Functionˉsymbol>
-move_i32 <eax|ecx|edx|ebx|esp|ebp|esi|edi> <i32>
-move_u32 <eax|ecx|edx|ebx|esp|ebp|esi|edi> <u32>
+move_i32 <Reg32> <i32>
+move_u32 <Reg32> <u32>
 push_i32 <i32>
 enable_page_protection
 activate_page_table
@@ -73,7 +80,42 @@ halt
 out_u16
 ```
 
-Their encodings are:
+They also support definition-local control flow, register operations, and RIP-relative symbol access:
+
+```text
+label <Localˉname>
+jump_label <Localˉname>
+branch <Condition> <Localˉname>
+
+move <Reg32|Reg64> <sameˉwidthˉregister>
+add <Reg32|Reg64> <sameˉwidthˉregister>
+subtract <Reg32|Reg64> <sameˉwidthˉregister>
+and <Reg32|Reg64> <sameˉwidthˉregister>
+or <Reg32|Reg64> <sameˉwidthˉregister>
+xor <Reg32|Reg64> <sameˉwidthˉregister>
+compare <Reg32|Reg64> <sameˉwidthˉregister>
+test <Reg32|Reg64> <sameˉwidthˉregister>
+
+push <Reg64>
+pop <Reg64>
+call_register <Reg64>
+jump_register <Reg64>
+
+load_u32 <Reg32> <Dataˉsymbol>
+load_u64 <Reg64> <Dataˉsymbol>
+store_u32 <Dataˉsymbol> <Reg32>
+store_u64 <Dataˉsymbol> <Reg64>
+load_address <Reg64> <Symbol>
+```
+
+`Condition` is one of:
+
+```text
+overflow not_overflow below above_equal equal not_equal below_equal above
+sign not_sign parity not_parity less greater_equal less_equal greater
+```
+
+The original encodings are:
 
 | Statement | Bytes | Relocation |
 | --- | --- | --- |
@@ -91,6 +133,37 @@ Their encodings are:
 | `disable_interrupts` | `FA` | none |
 | `halt` | `F4` | none |
 | `out_u16` | `66 EF` | none |
+
+The expanded encodings use the standard x86-64 REX, ModRM, and near-control forms:
+
+| Statement | Encoding | Relocation |
+| --- | --- | --- |
+| `label Name` | no bytes | none |
+| `jump_label Name` | `E9 rel32` | none; resolved within the definition |
+| `branch Condition Name` | `0F 80+cc rel32` | none; resolved within the definition |
+| `move Dest Source` | `[REX.W/R/B] 89 /r` | none |
+| `add Dest Source` | `[REX.W/R/B] 01 /r` | none |
+| `subtract Dest Source` | `[REX.W/R/B] 29 /r` | none |
+| `and Dest Source` | `[REX.W/R/B] 21 /r` | none |
+| `or Dest Source` | `[REX.W/R/B] 09 /r` | none |
+| `xor Dest Source` | `[REX.W/R/B] 31 /r` | none |
+| `compare Dest Source` | `[REX.W/R/B] 39 /r` | none |
+| `test Dest Source` | `[REX.W/R/B] 85 /r` | none |
+| `push Reg64` | `[REX.B] 50+rd` | none |
+| `pop Reg64` | `[REX.B] 58+rd` | none |
+| `call_register Reg64` | `[REX.B] FF /2` | none |
+| `jump_register Reg64` | `[REX.B] FF /4` | none |
+| `load_u32 Reg Symbol` | `[REX.R] 8B /r rip+disp32` | `relative-i32`, displacement field, addend `-4` |
+| `load_u64 Reg Symbol` | `REX.W/R 8B /r rip+disp32` | `relative-i32`, displacement field, addend `-4` |
+| `store_u32 Symbol Reg` | `[REX.R] 89 /r rip+disp32` | `relative-i32`, displacement field, addend `-4` |
+| `store_u64 Symbol Reg` | `REX.W/R 89 /r rip+disp32` | `relative-i32`, displacement field, addend `-4` |
+| `load_address Reg Symbol` | `REX.W/R 8D /r rip+disp32` | `relative-i32`, displacement field, addend `-4` |
+
+Destination registers are written first in WVA syntax. `move`, arithmetic, logical, comparison, and test operands must have identical widths. The register-to-register arithmetic and logical statements leave the architectural flags defined by the corresponding x86-64 instruction; `compare` and `test` exist specifically to establish those flags for `branch`. Conditions use the complete ordinary x86 condition-code order from `overflow` (`cc=0`) through signed `greater` (`cc=15`).
+
+Labels use the WVO machine-name grammar, are scoped to one definition, and emit no WVO symbol. A label name must be unique within that definition. `jump_label` and `branch` require exactly one matching local label and always encode deterministic near `rel32` displacements; the assembler does not shorten branches. Existing `jump` remains a symbol-oriented inter-definition operation with a WVO relocation.
+
+RIP-relative loads and stores require a declared data symbol. `load_address` accepts a declared function or data symbol. All five forms leave a four-byte zero placeholder and one canonical `relative-i32` relocation, so WVO 1.0 and the existing linker remain sufficient. A 32-bit destination write follows x86-64 rules and clears its register's high 32 bits.
 
 The move instructions write a 32-bit register and carry the exact little-endian bit pattern of the declared value. In 64-bit mode, `push_i32` decrements `RSP` by eight and stores the immediate sign-extended to one 64-bit stack cell. It exists to construct exact machine-entry records such as normalized exception frames; it does not define a general ABI, stack discipline, calling convention, function prologue, or balanced-stack policy. Those require a separate contract before generated calls are considered executable across a boundary.
 
@@ -137,4 +210,4 @@ Identical WVA text and assembler version produce identical WVO bytes on every ho
 
 ## Deliberate omissions
 
-WVA 1 has no labels inside definitions, conditional branches, memory operands, arbitrary register push/pop, 64-bit immediates, SIMD, floating point, other privileged operations, macros, includes, expressions, constants, debug records, ABI aliases, automatic section creation, or final-image directives. Add an operation only when the linker, native backend, or boot path provides a concrete use and exact verification rule.
+WVA 1 still has no general base/index/scale memory operands, 8- or 16-bit general register operations, arithmetic immediates, multiplication, division, shifts, rotates, conditional moves, condition-result materialization, short-branch relaxation, 64-bit immediates or absolute addresses, SIMD, floating point, other privileged operations, macros, includes, expressions, constants, debug records, ABI aliases, automatic section creation, or final-image directives. Add further operations with an exact operand, encoding, validation, and verification rule rather than an opaque executable-byte escape.

@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- An expanded WVA x86-64 foundation with typed 32/64-bit general-purpose registers, definition-local labels and deterministic near fixups, register move/ALU/compare/test operations, conditional branches, stack and indirect-control operations, and RIP-relative symbol addressing in both the Windvale assembler and independent C# oracle.
 - The [Windvale Community Source License 1.0](LICENSE), [E-Worker Inc](https://eworker.ca) stewardship, contributor agreement, and third-party notice policy.
 - Vendor-neutral AI-authorship and attribution policy.
 - Public contribution, governance, security, support, conduct, and project-identity policies.

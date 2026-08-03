@@ -28,7 +28,7 @@ internal static class Program
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_ASSEMBLER_CORE_SHA256 = "442ad834282d50b5c63d04aafae02a0de4db4b44a1c3c5101623d1e19ce0218e";
+    private const string WVA_ASSEMBLER_CORE_SHA256 = "dbdbae4fae2c19ec67e7f06824b91488ceccb65f1668520a759d62c7577521b7";
     private const string WVLINK_CORE_SHA256 = "091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
@@ -647,6 +647,9 @@ internal static class Program
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
 
+    private static readonly string EXPANDED_X64_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Expanded-X64.wva");
+
     private static readonly string WVA_ASSEMBLER_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wva-Assembler-Core.wv");
 
@@ -772,6 +775,7 @@ internal static class Program
         new("Windvale object codec validates canonical symbols and relocations", [TEST_AREA_OBJECT_MODEL], Objectˉmodelˉroundˉtrip),
         new("Windvale-written object core matches the Stage 0 oracle", [TEST_AREA_OBJECT_MODEL, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvoˉobjectˉcoreˉmatchesˉoracle),
         new("WVA assembler emits canonical sections, symbols, and relocations", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL], Assemblerˉemitsˉcanonicalˉobject),
+        new("WVA assembler encodes expanded x86-64 registers, control flow, and RIP-relative data", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL], Assemblerˉencodesˉexpandedˉx64),
         new("WVA assembler rejects malformed and inconsistent source", [TEST_AREA_ASSEMBLER], Assemblerˉrejectsˉinvalidˉsource),
         new("Windvale-written WVA assembler enforces source and token boundaries", [TEST_AREA_ASSEMBLER, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvaˉassemblerˉcoreˉrecognizesˉsource),
         new("Windvale-written WVA assembler matches Stage 0 semantics and bytes", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvaˉassemblerˉmatchesˉoracle),
@@ -8748,6 +8752,237 @@ internal static class Program
             Mechanics.Relocations.Single());
     }
 
+    private static void Assemblerˉencodesˉexpandedˉx64()
+    {
+        var Example = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(EXPANDED_X64_ASSEMBLY_SOURCE)).Value;
+        Equal(2, Example.Sections.Length);
+        Equal(2, Example.Symbols.Length);
+        Equal(3, Example.Relocations.Length);
+
+        const string Registerˉsource = """
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            move_i32 r8d -1
+            move_u32 r15d 4294967295
+            move rax r8
+            move r9d eax
+            add rax rcx
+            subtract r8 r15
+            and eax ecx
+            or r10d r11d
+            xor r12 r13
+            compare eax edx
+            test r14 r15
+            push rax
+            push r8
+            pop r15
+            call_register rax
+            call_register r9
+            jump_register rbx
+            jump_register r12
+            return
+            end define
+            end section
+            """;
+        var Registers = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(Registerˉsource)).Value;
+        Sequenceˉequal<byte>(
+            [
+                0x41, 0xB8, 0xFF, 0xFF, 0xFF, 0xFF,
+                0x41, 0xBF, 0xFF, 0xFF, 0xFF, 0xFF,
+                0x4C, 0x89, 0xC0,
+                0x41, 0x89, 0xC1,
+                0x48, 0x01, 0xC8,
+                0x4D, 0x29, 0xF8,
+                0x21, 0xC8,
+                0x45, 0x09, 0xDA,
+                0x4D, 0x31, 0xEC,
+                0x39, 0xD0,
+                0x4D, 0x85, 0xFE,
+                0x50, 0x41, 0x50, 0x41, 0x5F,
+                0xFF, 0xD0, 0x41, 0xFF, 0xD1,
+                0xFF, 0xE3, 0x41, 0xFF, 0xE4,
+                0xC3,
+            ],
+            Registers.Sections.Single().Data);
+
+        var Registersˉ32 = new[]
+        {
+            "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi",
+            "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d",
+        };
+        var Registersˉ64 = new[]
+        {
+            "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
+            "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+        };
+        for (var Index = 0; Index < Registersˉ32.Length; Index++)
+        {
+            var Source = $$"""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                move_u32 {{Registersˉ32[Index]}} {{Index}}
+                move {{Registersˉ32[Index]}} {{Registersˉ32[Index]}}
+                move {{Registersˉ64[Index]}} {{Registersˉ64[Index]}}
+                push {{Registersˉ64[Index]}}
+                pop {{Registersˉ64[Index]}}
+                return
+                end define
+                end section
+                """;
+            var Register = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(Source)).Value;
+            var Low = (byte)(Index & 7);
+            var Expected = new List<byte>();
+            if (Index >= 8)
+            {
+                Expected.Add(0x41);
+            }
+            Expected.Add((byte)(0xB8 + Low));
+            Expected.AddRange([(byte)Index, 0, 0, 0]);
+            if (Index >= 8)
+            {
+                Expected.Add(0x45);
+            }
+            Expected.AddRange([0x89, (byte)(0xC0 + Low * 9)]);
+            Expected.Add((byte)(Index >= 8 ? 0x4D : 0x48));
+            Expected.AddRange([0x89, (byte)(0xC0 + Low * 9)]);
+            if (Index >= 8)
+            {
+                Expected.Add(0x41);
+            }
+            Expected.Add((byte)(0x50 + Low));
+            if (Index >= 8)
+            {
+                Expected.Add(0x41);
+            }
+            Expected.Add((byte)(0x58 + Low));
+            Expected.Add(0xC3);
+            Sequenceˉequal<byte>(
+                Expected,
+                Register.Sections.Single().Data);
+        }
+
+        const string Labelˉsource = """
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            label Loop
+            compare eax edx
+            branch equal Done
+            jump_label Loop
+            label Done
+            return
+            end define
+            end section
+            """;
+        var Labels = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(Labelˉsource)).Value;
+        Sequenceˉequal<byte>(
+            [0x39, 0xD0, 0x0F, 0x84, 0x05, 0, 0, 0, 0xE9, 0xF3, 0xFF, 0xFF, 0xFF, 0xC3],
+            Labels.Sections.Single().Data);
+        Equal(0, Labels.Relocations.Length);
+
+        const string Scopedˉlabelˉsource = """
+            windvale-assembly 1
+            symbol local function Other in .text
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            jump_label Again
+            label Again
+            return
+            end define
+            define Other
+            jump_label Again
+            label Again
+            return
+            end define
+            end section
+            """;
+        var Scopedˉlabels = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(Scopedˉlabelˉsource)).Value;
+        Sequenceˉequal<byte>(
+            [0xE9, 0, 0, 0, 0, 0xC3, 0xE9, 0, 0, 0, 0, 0xC3],
+            Scopedˉlabels.Sections.Single().Data);
+
+        var Conditions = new[]
+        {
+            "overflow", "not_overflow", "below", "above_equal",
+            "equal", "not_equal", "below_equal", "above",
+            "sign", "not_sign", "parity", "not_parity",
+            "less", "greater_equal", "less_equal", "greater",
+        };
+        for (var Index = 0; Index < Conditions.Length; Index++)
+        {
+            var Source = $$"""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                branch {{Conditions[Index]}} Done
+                label Done
+                return
+                end define
+                end section
+                """;
+            var Condition = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(Source)).Value;
+            Sequenceˉequal<byte>(
+                [0x0F, (byte)(0x80 + Index), 0, 0, 0, 0, 0xC3],
+                Condition.Sections.Single().Data);
+        }
+
+        const string Ripˉrelativeˉsource = """
+            windvale-assembly 1
+            symbol local data Value in .data
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            load_u32 eax Value
+            load_u32 r8d Value
+            load_u64 rax Value
+            store_u32 Value ecx
+            store_u64 Value r9
+            load_address r10 Value
+            return
+            end define
+            end section
+            section data .data align 4
+            define Value
+            u32 7
+            end define
+            end section
+            """;
+        var Rip = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(Ripˉrelativeˉsource)).Value;
+        Sequenceˉequal<byte>(
+            [
+                0x8B, 0x05, 0, 0, 0, 0,
+                0x44, 0x8B, 0x05, 0, 0, 0, 0,
+                0x48, 0x8B, 0x05, 0, 0, 0, 0,
+                0x89, 0x0D, 0, 0, 0, 0,
+                0x4C, 0x89, 0x0D, 0, 0, 0, 0,
+                0x4C, 0x8D, 0x15, 0, 0, 0, 0,
+                0xC3,
+            ],
+            Rip.Sections[0].Data);
+        Sequenceˉequal<uint>([2, 9, 16, 22, 29, 36], Rip.Relocations.Select(Item => Item.Offset));
+        True(Rip.Relocations.All(Item =>
+            Item.Kind == Objectˉrelocationˉkind.Relativeˉi32 &&
+            Item.Symbolˉindex == 0 &&
+            Item.Addend == -4), "RIP-relative operations must emit canonical relative-i32 relocations.");
+
+        var Linked = Linkˉsuccess(
+            [Assembleˉsuccess(Ripˉrelativeˉsource)],
+            new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
+        Equal(48, Linked.Imageˉbytes.Length);
+        Sequenceˉequal<int>(
+            [38, 31, 24, 18, 11, 4],
+            Rip.Relocations.Select(Item =>
+                BinaryPrimitives.ReadInt32LittleEndian(
+                    Linked.Imageˉbytes.AsSpan((int)Item.Offset, sizeof(int)))));
+    }
+
     private static void Assemblerˉrejectsˉinvalidˉsource()
     {
         Hasˉassemblyˉdiagnostic("section code .text align 16", "WVA1001");
@@ -8839,6 +9074,87 @@ internal static class Program
             end define
             end section
             """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            label Same
+            label Same
+            return
+            end define
+            end section
+            """, "WVA1006");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            jump_label Missing
+            end define
+            end section
+            """, "WVA1009");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol local function Other in .text
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            jump_label Other_label
+            end define
+            define Other
+            label Other_label
+            return
+            end define
+            end section
+            """, "WVA1009");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            branch unknown Done
+            label Done
+            return
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            move eax rax
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            push eax
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            load_u32 eax Main
+            end define
+            end section
+            """, "WVA1009");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol local data Value in .data
+            section data .data align 4
+            define Value
+            label Bad
+            end define
+            end section
+            """, "WVA1008");
     }
 
     private static void Linkerˉproducesˉcanonicalˉflatˉimage()
@@ -9652,7 +9968,7 @@ internal static class Program
                         return Input;
                     }),
                     Writer)),
-                new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
+                new(Authorized, Maximumˉinstructions: 50_000_000)).Runˉmain();
             return (Result, Output.ToString(), Diagnostics.ToString(), Writer);
         }
 
@@ -9766,6 +10082,159 @@ internal static class Program
         Equal(41u, Rangesˉobject.Relocations[0].Offset);
         Equal(47u, Rangesˉobject.Relocations[1].Offset);
         Equal(10u, Rangesˉobject.Relocations[2].Offset);
+
+        const string Allˉregistersˉsource = """
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            move_u32 eax 0
+            move_u32 ecx 1
+            move_u32 edx 2
+            move_u32 ebx 3
+            move_u32 esp 4
+            move_u32 ebp 5
+            move_u32 esi 6
+            move_u32 edi 7
+            move_u32 r8d 8
+            move_u32 r9d 9
+            move_u32 r10d 10
+            move_u32 r11d 11
+            move_u32 r12d 12
+            move_u32 r13d 13
+            move_u32 r14d 14
+            move_u32 r15d 15
+            move rax rax
+            move rcx rcx
+            move rdx rdx
+            move rbx rbx
+            move rsp rsp
+            move rbp rbp
+            move rsi rsi
+            move rdi rdi
+            move r8 r8
+            move r9 r9
+            move r10 r10
+            move r11 r11
+            move r12 r12
+            move r13 r13
+            move r14 r14
+            move r15 r15
+            push rax
+            push rcx
+            push rdx
+            push rbx
+            push rsp
+            push rbp
+            push rsi
+            push rdi
+            push r8
+            push r9
+            push r10
+            push r11
+            push r12
+            push r13
+            push r14
+            push r15
+            pop r15
+            pop r14
+            pop r13
+            pop r12
+            pop r11
+            pop r10
+            pop r9
+            pop r8
+            pop rdi
+            pop rsi
+            pop rbp
+            pop rsp
+            pop rbx
+            pop rdx
+            pop rcx
+            pop rax
+            return
+            end define
+            end section
+            """;
+        var Allˉregisters = Runˉsource(Allˉregistersˉsource);
+        Equal(0, Allˉregisters.Result.Exitˉcode);
+        Equal(string.Empty, Allˉregisters.Diagnostics);
+        Sequenceˉequal(Assembleˉsuccess(Allˉregistersˉsource), Allˉregisters.Writer.Bytes);
+
+        const string Expandedˉx64ˉsource = """
+            windvale-assembly 1
+            symbol local data Value in .data
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            move_i32 r8d -1
+            move_u32 r15d 4294967295
+            move rax r8
+            move r9d eax
+            add rax rcx
+            subtract r8 r15
+            and eax ecx
+            or r10d r11d
+            xor r12 r13
+            compare eax edx
+            test r14 r15
+            push rax
+            push r8
+            pop r15
+            call_register rax
+            call_register r9
+            jump_register rbx
+            jump_register r12
+            label Flow
+            branch overflow Done
+            branch not_overflow Done
+            branch below Done
+            branch above_equal Done
+            branch equal Done
+            branch not_equal Done
+            branch below_equal Done
+            branch above Done
+            branch sign Done
+            branch not_sign Done
+            branch parity Done
+            branch not_parity Done
+            branch less Done
+            branch greater_equal Done
+            branch less_equal Done
+            branch greater Done
+            jump_label Flow
+            label Done
+            load_u32 eax Value
+            load_u32 r8d Value
+            load_u64 rax Value
+            store_u32 Value ecx
+            store_u64 Value r9
+            load_address r10 Value
+            return
+            end define
+            end section
+            section data .data align 4
+            define Value
+            u32 7
+            end define
+            end section
+            """;
+        var Expanded = Runˉsource(Expandedˉx64ˉsource);
+        Equal(0, Expanded.Result.Exitˉcode);
+        Equal(string.Empty, Expanded.Diagnostics);
+        Sequenceˉequal(Assembleˉsuccess(Expandedˉx64ˉsource), Expanded.Writer.Bytes);
+        var Expandedˉobject = Objectˉcodec.Readˉandˉverify(Expanded.Writer.Bytes.AsSpan()).Value;
+        Equal(6, Expandedˉobject.Relocations.Length);
+        True(
+            Expandedˉobject.Relocations.All(Item => Item.Kind == Objectˉrelocationˉkind.Relativeˉi32),
+            "Expanded WVA RIP-relative operations must retain relative-i32 relocations.");
+
+        var Expandedˉexample = Runˉsource(EXPANDED_X64_ASSEMBLY_SOURCE);
+        Equal(0, Expandedˉexample.Result.Exitˉcode);
+        Equal(string.Empty, Expandedˉexample.Diagnostics);
+        Sequenceˉequal(
+            Assembleˉsuccess(EXPANDED_X64_ASSEMBLY_SOURCE),
+            Expandedˉexample.Writer.Bytes);
 
         const string Emptyˉobjectˉsource = """
             windvale-assembly 1
@@ -9969,6 +10438,87 @@ internal static class Program
                 end define
                 end section
                 """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                label Same
+                label Same
+                return
+                end define
+                end section
+                """, "WVA1006"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                jump_label Missing
+                end define
+                end section
+                """, "WVA1009"),
+            ("""
+                windvale-assembly 1
+                symbol local function Other in .text
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                jump_label Other_label
+                end define
+                define Other
+                label Other_label
+                return
+                end define
+                end section
+                """, "WVA1009"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                branch unknown Done
+                label Done
+                return
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                move eax rax
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                push eax
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                load_u32 eax Main
+                end define
+                end section
+                """, "WVA1009"),
+            ("""
+                windvale-assembly 1
+                symbol local data Value in .data
+                section data .data align 4
+                define Value
+                label Bad
+                end define
+                end section
+                """, "WVA1008"),
         };
 
         foreach (var (Source, Code) in Cases)
@@ -9978,7 +10528,11 @@ internal static class Program
             Equal(Code, Oracle.Diagnostics.Single().Code);
 
             var Windvale = Runˉsource(Source);
-            Equal(2, Windvale.Result.Exitˉcode);
+            if (Windvale.Result.Exitˉcode != 2)
+            {
+                throw new InvalidOperationException(
+                    $"The Windvale assembler accepted the {Code} differential rejection fixture: {Source}");
+            }
             Equal(string.Empty, Windvale.Output);
             Contains(Windvale.Diagnostics, $"assembly status={Code} ");
             Equal(0, Windvale.Writer.Writeˉcount);

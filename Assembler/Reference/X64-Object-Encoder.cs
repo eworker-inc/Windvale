@@ -23,6 +23,19 @@ internal static class X64ˉobjectˉencoder
             foreach (var Definition in Section.Definitions)
             {
                 var Offset = Memoryˉsize;
+                var Labels = new Dictionary<string, uint>(StringComparer.Ordinal);
+                var Statementˉoffset = (uint)Output.Count;
+                foreach (var Statement in Definition.Statements)
+                {
+                    if (Statement.Kind == Assemblyˉstatementˉkind.Label)
+                    {
+                        Labels.Add(Statement.Name!, Statementˉoffset);
+                    }
+                    else
+                    {
+                        Statementˉoffset = checked(Statementˉoffset + Encodedˉsize(Statement));
+                    }
+                }
                 foreach (var Statement in Definition.Statements)
                 {
                     if (Section.Kind == Objectˉsectionˉkind.Zeroˉfill)
@@ -36,7 +49,8 @@ internal static class X64ˉobjectˉencoder
                         (uint)Sectionˉindex,
                         Output,
                         Symbolˉindices,
-                        Relocations);
+                        Relocations,
+                        Labels);
                     Memoryˉsize = (uint)Output.Count;
                 }
                 Definitions.Add(Definition.Name, new((uint)Sectionˉindex, Offset, Memoryˉsize - Offset));
@@ -88,7 +102,8 @@ internal static class X64ˉobjectˉencoder
         uint sectionˉindex,
         Byteˉbuffer output,
         IReadOnlyDictionary<string, uint> symbolˉindices,
-        ImmutableArray<Objectˉrelocation>.Builder relocations)
+        ImmutableArray<Objectˉrelocation>.Builder relocations,
+        IReadOnlyDictionary<string, uint> labels)
     {
         switch (statement.Kind)
         {
@@ -149,12 +164,74 @@ internal static class X64ˉobjectˉencoder
                     -4));
                 break;
             case Assemblyˉstatementˉkind.Moveˉi32:
-                output.Writeˉu8((byte)(0xB8 + statement.Register), statement.Span);
+                Writeˉrex(output, widthˉ64: false, register: 0, memory: statement.Register, statement.Span);
+                output.Writeˉu8((byte)(0xB8 + (statement.Register & 7)), statement.Span);
                 output.Writeˉi32((int)statement.Number, statement.Span);
                 break;
             case Assemblyˉstatementˉkind.Moveˉu32:
-                output.Writeˉu8((byte)(0xB8 + statement.Register), statement.Span);
+                Writeˉrex(output, widthˉ64: false, register: 0, memory: statement.Register, statement.Span);
+                output.Writeˉu8((byte)(0xB8 + (statement.Register & 7)), statement.Span);
                 output.Writeˉu32((uint)statement.Number, statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Label:
+                break;
+            case Assemblyˉstatementˉkind.Jumpˉlabel:
+                output.Writeˉu8(0xE9, statement.Span);
+                Writeˉlocalˉdisplacement(output, labels[statement.Name!], statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Branch:
+                output.Writeˉu8(0x0F, statement.Span);
+                output.Writeˉu8((byte)(0x80 + statement.Condition), statement.Span);
+                Writeˉlocalˉdisplacement(output, labels[statement.Name!], statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Moveˉregister:
+            case Assemblyˉstatementˉkind.Add:
+            case Assemblyˉstatementˉkind.Subtract:
+            case Assemblyˉstatementˉkind.And:
+            case Assemblyˉstatementˉkind.Or:
+            case Assemblyˉstatementˉkind.Xor:
+            case Assemblyˉstatementˉkind.Compare:
+            case Assemblyˉstatementˉkind.Test:
+                Writeˉregisterˉbinary(output, statement);
+                break;
+            case Assemblyˉstatementˉkind.Pushˉregister:
+            case Assemblyˉstatementˉkind.Popˉregister:
+                Writeˉrex(
+                    output,
+                    widthˉ64: false,
+                    register: 0,
+                    memory: statement.Firstˉregister.Index,
+                    statement.Span);
+                output.Writeˉu8(
+                    (byte)((statement.Kind == Assemblyˉstatementˉkind.Pushˉregister ? 0x50 : 0x58) +
+                        (statement.Firstˉregister.Index & 7)),
+                    statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Callˉregister:
+            case Assemblyˉstatementˉkind.Jumpˉregister:
+                Writeˉrex(
+                    output,
+                    widthˉ64: false,
+                    register: 0,
+                    memory: statement.Firstˉregister.Index,
+                    statement.Span);
+                output.Writeˉu8(0xFF, statement.Span);
+                output.Writeˉu8(
+                    (byte)((statement.Kind == Assemblyˉstatementˉkind.Callˉregister ? 0xD0 : 0xE0) +
+                        (statement.Firstˉregister.Index & 7)),
+                    statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Loadˉu32:
+            case Assemblyˉstatementˉkind.Loadˉu64:
+            case Assemblyˉstatementˉkind.Loadˉaddress:
+            case Assemblyˉstatementˉkind.Storeˉu32:
+            case Assemblyˉstatementˉkind.Storeˉu64:
+                Writeˉripˉrelative(
+                    output,
+                    statement,
+                    sectionˉindex,
+                    symbolˉindices[statement.Name!],
+                    relocations);
                 break;
             case Assemblyˉstatementˉkind.Bytes:
                 output.Writeˉbytes(statement.Bytes.AsSpan(), statement.Span);
@@ -180,6 +257,131 @@ internal static class X64ˉobjectˉencoder
             default:
                 throw new ArgumentOutOfRangeException(nameof(statement), statement.Kind, null);
         }
+    }
+
+    private static uint Encodedˉsize(Assemblyˉstatement statement) => statement.Kind switch
+    {
+        Assemblyˉstatementˉkind.Label => 0,
+        Assemblyˉstatementˉkind.Nop or Assemblyˉstatementˉkind.Return or
+            Assemblyˉstatementˉkind.Trap or Assemblyˉstatementˉkind.Disableˉinterrupts or
+            Assemblyˉstatementˉkind.Halt => 1,
+        Assemblyˉstatementˉkind.Outˉu16 or Assemblyˉstatementˉkind.Syscall => 2,
+        Assemblyˉstatementˉkind.Call or Assemblyˉstatementˉkind.Jump or
+            Assemblyˉstatementˉkind.Pushˉi32 or Assemblyˉstatementˉkind.Jumpˉlabel => 5,
+        Assemblyˉstatementˉkind.Moveˉi32 or Assemblyˉstatementˉkind.Moveˉu32 =>
+            (uint)(5 + (statement.Register >= 8 ? 1 : 0)),
+        Assemblyˉstatementˉkind.Enableˉpageˉprotection => 24,
+        Assemblyˉstatementˉkind.Activateˉpageˉtable => 6,
+        Assemblyˉstatementˉkind.Branch => 6,
+        Assemblyˉstatementˉkind.Moveˉregister or Assemblyˉstatementˉkind.Add or
+            Assemblyˉstatementˉkind.Subtract or Assemblyˉstatementˉkind.And or
+            Assemblyˉstatementˉkind.Or or Assemblyˉstatementˉkind.Xor or
+            Assemblyˉstatementˉkind.Compare or Assemblyˉstatementˉkind.Test =>
+            (uint)(2 + (Needsˉrex(statement.Firstˉregister, statement.Secondˉregister) ? 1 : 0)),
+        Assemblyˉstatementˉkind.Pushˉregister or Assemblyˉstatementˉkind.Popˉregister =>
+            (uint)(1 + (statement.Firstˉregister.Isˉextended ? 1 : 0)),
+        Assemblyˉstatementˉkind.Callˉregister or Assemblyˉstatementˉkind.Jumpˉregister =>
+            (uint)(2 + (statement.Firstˉregister.Isˉextended ? 1 : 0)),
+        Assemblyˉstatementˉkind.Loadˉu32 or Assemblyˉstatementˉkind.Loadˉu64 or
+            Assemblyˉstatementˉkind.Storeˉu32 or Assemblyˉstatementˉkind.Storeˉu64 or
+            Assemblyˉstatementˉkind.Loadˉaddress =>
+            (uint)(6 + (statement.Firstˉregister.Width == 64 || statement.Firstˉregister.Isˉextended ? 1 : 0)),
+        Assemblyˉstatementˉkind.Bytes => (uint)statement.Bytes.Length,
+        Assemblyˉstatementˉkind.U32 or Assemblyˉstatementˉkind.I32 or
+            Assemblyˉstatementˉkind.Addressˉu32 => 4,
+        Assemblyˉstatementˉkind.Zero => (uint)statement.Number,
+        _ => throw new ArgumentOutOfRangeException(nameof(statement), statement.Kind, null),
+    };
+
+    private static bool Needsˉrex(Assemblyˉregister first, Assemblyˉregister second) =>
+        first.Width == 64 || first.Isˉextended || second.Isˉextended;
+
+    private static void Writeˉrex(
+        Byteˉbuffer output,
+        bool widthˉ64,
+        byte register,
+        byte memory,
+        Assemblyˉspan span)
+    {
+        if (!widthˉ64 && register < 8 && memory < 8)
+        {
+            return;
+        }
+
+        output.Writeˉu8(
+            (byte)(0x40 |
+                (widthˉ64 ? 0x08 : 0) |
+                (register >= 8 ? 0x04 : 0) |
+                (memory >= 8 ? 0x01 : 0)),
+            span);
+    }
+
+    private static void Writeˉregisterˉbinary(Byteˉbuffer output, Assemblyˉstatement statement)
+    {
+        var Destination = statement.Firstˉregister;
+        var Source = statement.Secondˉregister;
+        Writeˉrex(output, Destination.Width == 64, Source.Index, Destination.Index, statement.Span);
+        var Opcode = statement.Kind switch
+        {
+            Assemblyˉstatementˉkind.Moveˉregister => 0x89,
+            Assemblyˉstatementˉkind.Add => 0x01,
+            Assemblyˉstatementˉkind.Subtract => 0x29,
+            Assemblyˉstatementˉkind.And => 0x21,
+            Assemblyˉstatementˉkind.Or => 0x09,
+            Assemblyˉstatementˉkind.Xor => 0x31,
+            Assemblyˉstatementˉkind.Compare => 0x39,
+            Assemblyˉstatementˉkind.Test => 0x85,
+            _ => throw new ArgumentOutOfRangeException(nameof(statement), statement.Kind, null),
+        };
+        output.Writeˉu8((byte)Opcode, statement.Span);
+        output.Writeˉu8(
+            (byte)(0xC0 | ((Source.Index & 7) << 3) | (Destination.Index & 7)),
+            statement.Span);
+    }
+
+    private static void Writeˉlocalˉdisplacement(
+        Byteˉbuffer output,
+        uint target,
+        Assemblyˉspan span)
+    {
+        var Nextˉinstruction = checked((long)output.Count + sizeof(int));
+        var Displacement = checked((long)target - Nextˉinstruction);
+        if (Displacement is < int.MinValue or > int.MaxValue)
+        {
+            throw new Assemblyˉencodingˉexception(
+                new("WVA1011", span.Line, span.Column, "Local branch displacement exceeds the relative-i32 range."));
+        }
+        output.Writeˉi32((int)Displacement, span);
+    }
+
+    private static void Writeˉripˉrelative(
+        Byteˉbuffer output,
+        Assemblyˉstatement statement,
+        uint sectionˉindex,
+        uint symbolˉindex,
+        ImmutableArray<Objectˉrelocation>.Builder relocations)
+    {
+        var Register = statement.Firstˉregister;
+        var Widthˉ64 = statement.Kind is Assemblyˉstatementˉkind.Loadˉu64 or
+            Assemblyˉstatementˉkind.Storeˉu64 or Assemblyˉstatementˉkind.Loadˉaddress;
+        Writeˉrex(output, Widthˉ64, Register.Index, 0, statement.Span);
+        output.Writeˉu8(
+            statement.Kind switch
+            {
+                Assemblyˉstatementˉkind.Storeˉu32 or Assemblyˉstatementˉkind.Storeˉu64 => 0x89,
+                Assemblyˉstatementˉkind.Loadˉaddress => 0x8D,
+                _ => 0x8B,
+            },
+            statement.Span);
+        output.Writeˉu8((byte)(((Register.Index & 7) << 3) | 0x05), statement.Span);
+        var Relativeˉoffset = (uint)output.Count;
+        output.Writeˉu32(0, statement.Span);
+        relocations.Add(new(
+            Objectˉrelocationˉkind.Relativeˉi32,
+            sectionˉindex,
+            Relativeˉoffset,
+            symbolˉindex,
+            -4));
     }
 
     private static uint Addˉmemory(uint current, uint amount, Assemblyˉspan span)
