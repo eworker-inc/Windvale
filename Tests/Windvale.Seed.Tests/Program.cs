@@ -100,6 +100,7 @@ internal static class Program
     private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "6d524aa9b96d0f624b0b449937ec6c0987a57e2c002af8276784c63a185efef6";
     private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "b209eabbced72ccca37a325ac55f1a5198f9c257c6dc9faa5b57954c393c2493";
     private const string SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256 = "5d61f926461fc19e46e04a7e5dd3636fcbaa554e30370fc10a5eeb7992f5e634";
+    private const string SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256 = "8864dd8638a947bd10a13803355783b5f3ead6482889803ef4e2d86a425d2c46";
     private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "99da55911c81218ac74442a695d340ed440c74515b830bcc659bd4b7df7b2d4b";
     private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507";
     private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a";
@@ -839,6 +840,9 @@ internal static class Program
 
     private static readonly string LINUX_HOSTED_COMPILER_STARTUP_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Linux-X64-Hosted-Compiler.wva");
+
+    private static readonly string WINDOWS_HOSTED_COMPILER_STARTUP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Windows-X64-Hosted-Compiler.wva");
 
     private static readonly string TYPED_SCALAR_X64_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Typed-Scalar-X64.wva");
@@ -2690,7 +2694,9 @@ internal static class Program
 
     private static int Executeˉwindowsˉapplication(
         ImmutableArray<byte> image,
-        string expectedˉoutput = "")
+        string expectedˉoutput = "",
+        IReadOnlyList<string>? arguments = null,
+        int timeoutˉmilliseconds = 10_000)
     {
         var Path = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(),
@@ -2698,21 +2704,32 @@ internal static class Program
         try
         {
             File.WriteAllBytes(Path, image.AsSpan());
-            using var Process = System.Diagnostics.Process.Start(new ProcessStartInfo
+            var Startˉinfo = new ProcessStartInfo
             {
                 FileName = Path,
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-            }) ?? throw new InvalidOperationException("Windows did not start the generated application.");
-            if (!Process.WaitForExit(10_000))
+            };
+            foreach (var Argument in arguments ?? [])
+            {
+                Startˉinfo.ArgumentList.Add(Argument);
+            }
+            using var Process = System.Diagnostics.Process.Start(Startˉinfo) ??
+                throw new InvalidOperationException("Windows did not start the generated application.");
+            if (!Process.WaitForExit(timeoutˉmilliseconds))
             {
                 Process.Kill(entireProcessTree: true);
                 throw new InvalidOperationException("The generated Windows application did not exit.");
             }
-            Equal(expectedˉoutput, Process.StandardOutput.ReadToEnd());
-            Equal(string.Empty, Process.StandardError.ReadToEnd());
+            var Standardˉoutput = Process.StandardOutput.ReadToEnd();
+            var Standardˉerror = Process.StandardError.ReadToEnd();
+            True(
+                StringComparer.Ordinal.Equals(expectedˉoutput, Standardˉoutput),
+                $"The generated Windows application exited {Process.ExitCode} with " +
+                    $"stdout '{Standardˉoutput}' and stderr '{Standardˉerror}'.");
+            Equal(string.Empty, Standardˉerror);
             return Process.ExitCode;
         }
         finally
@@ -3119,8 +3136,17 @@ internal static class Program
             Equal(Objectˉrelocationˉkind.Relativeˉi32, Relocation.Kind);
             Equal(-4, Relocation.Addend);
             var Symbol = Object.Symbols[checked((int)Relocation.Symbolˉindex)];
-            True(targets.TryGetValue(Symbol.Name, out var Target),
-                $"The hosted startup imports unexpected symbol '{Symbol.Name}'.");
+            uint Target;
+            if (Symbol.Binding == Objectˉsymbolˉbinding.Import)
+            {
+                True(targets.TryGetValue(Symbol.Name, out Target),
+                    $"The hosted startup imports unexpected symbol '{Symbol.Name}'.");
+            }
+            else
+            {
+                Equal((uint)0, Symbol.Sectionˉindex);
+                Target = checked(startupˉaddress + Symbol.Offset);
+            }
             var Fieldˉaddress = checked(startupˉaddress + Relocation.Offset);
             BinaryPrimitives.WriteInt32LittleEndian(
                 Instantiated.AsSpan(checked((int)Relocation.Offset), sizeof(int)),
@@ -7952,6 +7978,203 @@ internal static class Program
                 Windowsˉbundle,
                 Windowsˉbundle.Imageˉbytes.AsSpan()));
 
+        var Firstˉwindowsˉapplication = Windowsˉhostedˉcompilerˉapplicationˉbuilder.Build(
+            Compilerˉtool.Module.Capabilities,
+            Windowsˉbundle,
+            Nativeˉentry);
+        var Secondˉwindowsˉapplication = Windowsˉhostedˉcompilerˉapplicationˉbuilder.Build(
+            Compilerˉtool.Module.Capabilities,
+            Windowsˉbundle,
+            Nativeˉentry);
+        Sequenceˉequal(Firstˉwindowsˉapplication, Secondˉwindowsˉapplication);
+        Equal(
+            SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉwindowsˉapplication.AsSpan()));
+        var Verifiedˉwindowsˉapplication =
+            Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Firstˉwindowsˉapplication.AsSpan(),
+                Windowsˉbundle);
+        Equal(Nativeˉentry, Verifiedˉwindowsˉapplication.Nativeˉentryˉoffset);
+        Equal(17_157_120, Verifiedˉwindowsˉapplication.Layout.Applicationˉbytes);
+        Equal(17_147_731u, Verifiedˉwindowsˉapplication.Layout.Textˉvirtualˉbytes);
+        Equal(17_147_904u, Verifiedˉwindowsˉapplication.Layout.Textˉfileˉbytes);
+        Equal(17_148_416u, Verifiedˉwindowsˉapplication.Layout.Dataˉfileˉoffset);
+        Equal(17_154_048u, Verifiedˉwindowsˉapplication.Layout.Dataˉsectionˉaddress);
+        Equal(17_158_144u, Verifiedˉwindowsˉapplication.Layout.Runtimeˉaddress);
+        Equal(409_030_656u, Verifiedˉwindowsˉapplication.Layout.Dataˉvirtualˉbytes);
+        Equal(426_188_800u, Verifiedˉwindowsˉapplication.Layout.Imageˉvirtualˉbytes);
+        Sequenceˉequal(Windowsˉbundle.Imageˉbytes,
+            Verifiedˉwindowsˉapplication.Bundleˉimage);
+
+        var Windowsˉapplicationˉlayout = Verifiedˉwindowsˉapplication.Layout;
+        uint Windowsˉserviceˉaddress(Nativeˉservice service) => checked(
+            Windowsˉhostedˉcompilerˉapplicationˉcontract.TEXT_ADDRESS +
+            Windowsˉhostedˉcompilerˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
+            (uint)Windowsˉbundle.Placements.Single(
+                Placement => Placement.Service == service).Imageˉoffset);
+        var Windowsˉstartupˉtargets = new Dictionary<string, uint>(StringComparer.Ordinal)
+        {
+            ["Argument_bytes"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Verifiedˉwindowsˉapplication.Runtime.Layout.Argumentˉbytesˉoffset),
+            ["Argument_table"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Verifiedˉwindowsˉapplication.Runtime.Layout.Argumentˉtableˉoffset),
+            ["Data_arena"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Verifiedˉwindowsˉapplication.Runtime.Layout.Dataˉarenaˉoffset),
+            ["Execution_context"] = Windowsˉapplicationˉlayout.Runtimeˉaddress,
+            ["File_input_scratch"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Verifiedˉwindowsˉapplication.Runtime.Layout.Fileˉinputˉscratchˉoffset),
+            ["File_input_table"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Hostedˉcompilerˉruntimeˉdata.FILE_INPUT_TABLE_OFFSET),
+            ["File_output_scratch"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Verifiedˉwindowsˉapplication.Runtime.Layout.Fileˉoutputˉscratchˉoffset),
+            ["File_output_table"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Hostedˉcompilerˉruntimeˉdata.FILE_OUTPUT_TABLE_OFFSET),
+            ["Name_arena"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Verifiedˉwindowsˉapplication.Runtime.Layout.Nameˉarenaˉoffset),
+            ["Native_main"] = checked(
+                Windowsˉhostedˉcompilerˉapplicationˉcontract.TEXT_ADDRESS +
+                Windowsˉhostedˉcompilerˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
+                Nativeˉentry),
+            ["Output_table"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Hostedˉcompilerˉruntimeˉdata.OUTPUT_TABLE_OFFSET),
+            ["Record_arena"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Verifiedˉwindowsˉapplication.Runtime.Layout.Recordˉarenaˉoffset),
+            ["Service_console_write"] = Windowsˉserviceˉaddress(
+                Nativeˉservice.Consoleˉwriteˉline),
+            ["Service_diagnostic_write"] = Windowsˉserviceˉaddress(
+                Nativeˉservice.Diagnosticˉwriteˉline),
+            ["Service_enum_name"] = Windowsˉserviceˉaddress(Nativeˉservice.Enumˉname),
+            ["Service_file_read"] = Windowsˉserviceˉaddress(Nativeˉservice.Fileˉreadˉbytes),
+            ["Service_file_write"] = Windowsˉserviceˉaddress(Nativeˉservice.Fileˉwriteˉbytes),
+            ["Service_process_argument"] = Windowsˉserviceˉaddress(
+                Nativeˉservice.Processˉargument),
+            ["Service_process_argument_count"] = Windowsˉserviceˉaddress(
+                Nativeˉservice.Processˉargumentˉcount),
+            ["Service_table"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Hostedˉcompilerˉruntimeˉdata.SERVICE_TABLE_OFFSET),
+            ["Service_text_concat"] = Windowsˉserviceˉaddress(Nativeˉservice.Textˉconcat),
+            ["Service_u32_format"] = Windowsˉserviceˉaddress(Nativeˉservice.U32ˉformat),
+            ["Service_utf8"] = Windowsˉserviceˉaddress(Nativeˉservice.Textˉutf8ˉisˉvalid),
+            ["Snapshot_table"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Verifiedˉwindowsˉapplication.Runtime.Layout.Snapshotˉtableˉoffset),
+            ["Text_arena"] = checked(Windowsˉapplicationˉlayout.Runtimeˉaddress +
+                Verifiedˉwindowsˉapplication.Runtime.Layout.Textˉarenaˉoffset),
+            ["Windows_close_handle_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.CLOSE_HANDLE_IAT_OFFSET),
+            ["Windows_command_line_to_argv_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.COMMAND_LINE_TO_ARGV_IAT_OFFSET),
+            ["Windows_create_file_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.CREATE_FILE_IAT_OFFSET),
+            ["Windows_flush_file_buffers_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.FLUSH_FILE_BUFFERS_IAT_OFFSET),
+            ["Windows_get_command_line_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.GET_COMMAND_LINE_IAT_OFFSET),
+            ["Windows_get_file_size_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.GET_FILE_SIZE_IAT_OFFSET),
+            ["Windows_get_last_error_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.GET_LAST_ERROR_IAT_OFFSET),
+            ["Windows_get_std_handle_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.GET_STD_HANDLE_IAT_OFFSET),
+            ["Windows_local_free_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.LOCAL_FREE_IAT_OFFSET),
+            ["Windows_multi_byte_to_wide_char_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.MULTI_BYTE_TO_WIDE_CHAR_IAT_OFFSET),
+            ["Windows_read_file_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.READ_FILE_IAT_OFFSET),
+            ["Windows_wide_char_to_multi_byte_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.WIDE_CHAR_TO_MULTI_BYTE_IAT_OFFSET),
+            ["Windows_write_file_iat"] = checked(
+                Windowsˉapplicationˉlayout.Importˉaddress +
+                Windowsˉhostedˉcompilerˉimports.WRITE_FILE_IAT_OFFSET),
+        };
+        Requireˉhostedˉstartupˉmatchesˉwva(
+            WINDOWS_HOSTED_COMPILER_STARTUP_SOURCE,
+            "Windows_hosted_compiler_startup",
+            Firstˉwindowsˉapplication.AsSpan(
+                Windowsˉapplicationˉlayout.Textˉfileˉoffset,
+                Windowsˉapplicationˉlayout.Startupˉbytes),
+            Windowsˉapplicationˉlayout.Textˉaddress,
+            Windowsˉstartupˉtargets,
+            Windowsˉhostedˉcompilerˉstartup.WVO_SHA256);
+
+        foreach (var Offset in new[]
+        {
+            0,
+            0x98 + 2,
+            Windowsˉapplicationˉlayout.Textˉfileˉoffset,
+            Windowsˉapplicationˉlayout.Textˉfileˉoffset +
+                Windowsˉapplicationˉlayout.Startupˉbytes,
+            Windowsˉapplicationˉlayout.Textˉfileˉoffset +
+                Windowsˉapplicationˉlayout.Bundleˉoffset,
+            checked((int)Windowsˉapplicationˉlayout.Importˉfileˉoffset),
+            checked((int)Windowsˉapplicationˉlayout.Runtimeˉfileˉoffset),
+            checked((int)Windowsˉapplicationˉlayout.Relocationˉfileˉoffset),
+        })
+        {
+            var Corrupted = Firstˉwindowsˉapplication.ToArray();
+            Corrupted[Offset] ^= 0x01;
+            Throwsˉinvalidˉdata(() =>
+                _ = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                    Corrupted,
+                    Windowsˉbundle));
+        }
+        Throwsˉinvalidˉdata(() =>
+            _ = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Firstˉwindowsˉapplication.AsSpan(0,
+                    Firstˉwindowsˉapplication.Length - 1),
+                Windowsˉbundle));
+        Throwsˉinvalidˉdata(() =>
+            _ = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                [.. Firstˉwindowsˉapplication, 0],
+                Windowsˉbundle));
+
+        if (OperatingSystem.IsWindows())
+        {
+            var Packagedˉcompilerˉdirectory = Path.Combine(
+                Path.GetTempPath(),
+                $"windvale-packaged-compiler-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(Packagedˉcompilerˉdirectory);
+            try
+            {
+                var Sourceˉpath = Path.Combine(
+                    Packagedˉcompilerˉdirectory,
+                    "function-only.wv");
+                var Outputˉpath = Path.Combine(
+                    Packagedˉcompilerˉdirectory,
+                    "function-only.wvb");
+                File.WriteAllText(
+                    Sourceˉpath,
+                    SOURCE_WVB_FUNCTION_ONLY_SOURCE,
+                    new UTF8Encoding(false));
+                Equal(
+                    0,
+                    Executeˉwindowsˉapplication(
+                        Firstˉwindowsˉapplication,
+                        "source wvb status=Valid functions=4 code-bytes=532 module-bytes=815\n",
+                        [Sourceˉpath, Outputˉpath],
+                        timeoutˉmilliseconds: 60_000));
+                Sequenceˉequal(
+                    Compileˉsuccess(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
+                    File.ReadAllBytes(Outputˉpath));
+            }
+            finally
+            {
+                Directory.Delete(Packagedˉcompilerˉdirectory, recursive: true);
+            }
+        }
+
         var Firstˉlinuxˉapplication = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
             Compilerˉtool.Module.Capabilities,
             Linuxˉbundle,
@@ -8126,6 +8349,8 @@ internal static class Program
             $"windows-metadata-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉmetadata.AsSpan())} " +
             $"windows-runtime={Hostedˉcompilerˉruntimeˉdata.Plan(Consoleˉapplicationˉtarget.Windowsˉx64).Virtualˉbytes} " +
             $"windows-runtime-header-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉruntime.AsSpan())} " +
+            $"windows-application={Firstˉwindowsˉapplication.Length} " +
+            $"windows-application-sha256={Objectˉdigest.Calculateˉsha256(Firstˉwindowsˉapplication.AsSpan())} " +
             $"linux-bundle={Linuxˉbundle.Imageˉbytes.Length} " +
             $"linux-bundle-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉbundle.Imageˉbytes.AsSpan())} " +
             $"linux-metadata-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉmetadata.AsSpan())} " +
