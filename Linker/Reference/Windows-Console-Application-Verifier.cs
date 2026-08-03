@@ -224,61 +224,70 @@ public static class Windowsˉconsoleˉapplicationˉverifier
     {
         const int Startup = HEADERS_BYTES;
         Requireˉbytes(bytes, Startup + 0,
-            [0x48, 0x83, 0xEC, 0x28, 0x48, 0x8D, 0x15],
+            [0x48, 0x81, 0xEC, 0x28, 0x00, 0x00, 0x00, 0x48, 0x8D, 0x15],
             "WVW2008", "The startup prologue or context load is invalid.");
-        Requireˉrelativeˉtarget(bytes, Startup + 7, TEXT_RVA + 11, dataˉrva,
+        Requireˉrelativeˉtarget(bytes, Startup + 10, TEXT_RVA + 14, dataˉrva,
             "The startup context target is invalid.");
-        Requireˉbytes(bytes, Startup + 11, [0x48, 0x8D, 0x05],
+        Requireˉbytes(bytes, Startup + 14, [0x48, 0x8D, 0x05],
             "WVW2008", "The startup record-arena load is invalid.");
         Requireˉrelativeˉtarget(
             bytes,
-            Startup + 14,
-            TEXT_RVA + 18,
+            Startup + 17,
+            TEXT_RVA + 21,
             dataˉrva + Nativeˉexecutionˉcontextˉcontract.SIZE,
             "The startup record-arena target is invalid.");
         Requireˉbytes(
             bytes,
-            Startup + 18,
-            [0x48, 0x89, 0x42, 0x20, 0x48, 0x8D, 0x05],
+            Startup + 21,
+            [
+                0x48, 0x89, 0x84, 0x22, 0x20, 0x00, 0x00, 0x00,
+                0x48, 0x8D, 0x05,
+            ],
             "WVW2008",
             "The startup record store or text-arena load is invalid.");
         Requireˉrelativeˉtarget(
             bytes,
-            Startup + 25,
-            TEXT_RVA + 29,
+            Startup + 32,
+            TEXT_RVA + 36,
             dataˉrva + Nativeˉexecutionˉcontextˉcontract.SIZE +
                 Windowsˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES,
             "The startup text-arena target is invalid.");
         Requireˉbytes(
             bytes,
-            Startup + 29,
-            [0x48, 0x89, 0x42, 0x30, 0x31, 0xC9, 0x49, 0x89, 0xD0, 0x45, 0x31, 0xC9, 0xE8],
+            Startup + 36,
+            [
+                0x48, 0x89, 0x84, 0x22, 0x30, 0x00, 0x00, 0x00,
+                0x48, 0x31, 0xC9,
+                0x49, 0x89, 0xD0,
+                0x4D, 0x31, 0xC9,
+                0xE8,
+            ],
             "WVW2008",
             "The startup context store or native-entry call is invalid.");
         Requireˉbytes(
             bytes,
-            Startup + 46,
+            Startup + 58,
             [
                 0x48, 0x89, 0xC2,
                 0x48, 0xC1, 0xEA, 0x20,
                 0x85, 0xD2,
-                0x75, 0x07,
-                0x3D, 0xFF, 0x00, 0x00, 0x00,
-                0x76, 0x05,
+                0x0F, 0x85, 0x0C, 0x00, 0x00, 0x00,
+                0x81, 0xF8, 0xFF, 0x00, 0x00, 0x00,
+                0x0F, 0x86, 0x05, 0x00, 0x00, 0x00,
                 0xB8, 0x01, 0x00, 0x00, 0x00,
-                0x48, 0x83, 0xC4, 0x28,
+                0x48, 0x81, 0xC4, 0x28, 0x00, 0x00, 0x00,
                 0xC3,
             ],
             "WVW2008",
             "The startup status and portable process-result mapping are invalid.");
 
-        var Callˉtarget = checked((long)TEXT_RVA + 46 + Readˉi32(bytes, Startup + 42));
+        var Callˉtarget = checked((long)TEXT_RVA + 58 + Readˉi32(bytes, Startup + 54));
         var Nativeˉstart = checked(
             TEXT_RVA + (uint)Windowsˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET);
         Require(
             Callˉtarget >= Nativeˉstart && Callˉtarget < TEXT_RVA + textˉbytes,
             "WVW2008",
-            Startup + 42,
+            Startup + 54,
             "The startup call target is outside the native image.");
         nativeˉentryˉoffset = checked((uint)(Callˉtarget - Nativeˉstart));
     }

@@ -28,7 +28,7 @@ A literal PE translation would be misleading. Linux enters an ELF at `_start` ra
 
 ## Initial evidence
 
-On Windows, the implementation deterministically constructs an 8,304-byte ELF from `Examples/Seed/Sum-Data.wv`, SHA-256 `cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6`. An external file classifier identifies it as a statically linked, sectionless, x86-64 ELF shared object. The independently verified PE and ELF containers recover byte-identical native images and the same `Main` offset.
+On Windows, the implementation deterministically constructs an 8,304-byte ELF from `Examples/Seed/Sum-Data.wv`, SHA-256 `8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4`. An external file classifier identifies it as a statically linked, sectionless, x86-64 ELF shared object. The independently verified PE and ELF containers recover byte-identical native images and the same `Main` offset. Decision 0124 moves the exact startup candidate into WVA while retaining the C# writer as an independently checked recovery oracle.
 
 The focused construction test passes a zero-warning build and covers deterministic repetition; malformed fragment, hosted-service, and descriptor-entry rejection; truncated, oversized, trailing, and targeted corruptions across every ELF/header/note/startup/context/padding diagnostic class; and bounded random hostile inputs. Linux-only branches directly execute sum, nominal-record, dynamic-byte, checked-overflow, and the six shared process-result boundary fixtures. This Windows construction result does not claim those branches have run; direct Debian execution and the repository's dual-host Qualification gate remain pending.
 

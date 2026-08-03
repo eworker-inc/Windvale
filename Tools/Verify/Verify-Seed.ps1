@@ -222,7 +222,7 @@ $WindowsApplicationOutput = dotnet $ToolDll compile `
 if (
     $LASTEXITCODE -ne 0 -or
     $WindowsApplicationOutput -notcontains 'Target: windows-x64-console-v1' -or
-    $WindowsApplicationOutput -notcontains 'SHA-256: 486b758bac7d62456114f31a41754a3b4eb061db150cae12fbcb2b3ba17b3bdf'
+    $WindowsApplicationOutput -notcontains 'SHA-256: 5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77'
 ) {
     $WindowsApplicationText = $WindowsApplicationOutput -join ' | '
     throw "The Seed CLI failed to produce the canonical Windows application (exit $LASTEXITCODE; output: $WindowsApplicationText)."
@@ -230,7 +230,7 @@ if (
 $WindowsApplicationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SumWindowsApplication).Hash.ToLowerInvariant()
 if (
     (Get-Item -LiteralPath $SumWindowsApplication).Length -ne 5120 -or
-    $WindowsApplicationHash -ne '486b758bac7d62456114f31a41754a3b4eb061db150cae12fbcb2b3ba17b3bdf'
+    $WindowsApplicationHash -ne '5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77'
 ) {
     throw 'The Seed CLI Windows application identity is not canonical.'
 }
@@ -249,7 +249,7 @@ $LinuxApplicationOutput = dotnet $ToolDll compile `
 if (
     $LASTEXITCODE -ne 0 -or
     $LinuxApplicationOutput -notcontains 'Target: linux-x64-console-v1' -or
-    $LinuxApplicationOutput -notcontains 'SHA-256: cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6'
+    $LinuxApplicationOutput -notcontains 'SHA-256: 8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4'
 ) {
     $LinuxApplicationText = $LinuxApplicationOutput -join ' | '
     throw "The Seed CLI failed to produce the canonical Linux application (exit $LASTEXITCODE; output: $LinuxApplicationText)."
@@ -257,7 +257,7 @@ if (
 $LinuxApplicationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SumLinuxApplication).Hash.ToLowerInvariant()
 if (
     (Get-Item -LiteralPath $SumLinuxApplication).Length -ne 8304 -or
-    $LinuxApplicationHash -ne 'cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6'
+    $LinuxApplicationHash -ne '8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4'
 ) {
     throw 'The Seed CLI Linux application identity is not canonical.'
 }

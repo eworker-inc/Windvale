@@ -22,7 +22,7 @@ Portable operations that use generated record or dynamic byte storage remain adm
 
 ## Process entry and result
 
-The PE entry is an exact 74-byte Windows x64 stub followed by zero padding to byte 80 and then the unchanged linked native image. The stub:
+The PE entry is an exact 98-byte Windows x64 stub followed by zero padding to byte 112 and then the unchanged linked native image. The stub is expressed by `Linker/Startup/Windows-X64-Console.wva`; its assembled WVO code and four typed relative relocations must reproduce the independently encoded C# recovery writer exactly. The stub:
 
 1. reserves the required Windows x64 shadow/alignment space;
 2. obtains the writable execution context through RIP-relative addressing;
@@ -62,13 +62,13 @@ All integers are little-endian. Unlisted and padding bytes are zero. File alignm
 
 The image is dynamic-base, high-entropy-VA, and NX-compatible. All executable references are relative, so relocation changes preserve them without an absolute fixup. There is no import, export, resource, exception, TLS, debug, or certificate directory.
 
-The complete file is bounded to 4,196,352 bytes. The virtual image additionally contains the fixed arenas and is independently checked with overflow-safe arithmetic.
+The complete file is bounded to 4,196,352 bytes. Canonical `Sum-Data.wv` produces a 5,120-byte PE with SHA-256 `5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77`. The virtual image additionally contains the fixed arenas and is independently checked with overflow-safe arithmetic.
 
 ## Independent verification
 
 `Windowsˉconsoleˉapplicationˉverifier.Verify` treats the PE as untrusted bytes. It checks the outer size before fixed reads; every DOS, COFF, optional-header, directory, section, permission, raw, virtual, and padding field; the exact startup instruction shapes and all four relative targets; the initial execution context; and the relocation block. It returns the recovered native bytes and native entry offset only after complete validation.
 
-The writer invokes that verifier before publication and compares its recovered values with the verified flat link. The PE verifier validates the container and startup contract; the native fragment verifier remains responsible for generated machine-code semantics before packaging.
+The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests independently assemble the WVA startup, require its exact symbol and relocation contract, instantiate the four final-image displacements, and compare all 98 startup bytes with the PE. The PE verifier validates the container and startup contract; the native fragment verifier remains responsible for generated machine-code semantics before packaging.
 
 ## Diagnostics
 
@@ -97,4 +97,4 @@ The untrusted-byte verifier throws a bounded format exception:
 
 ## Deliberate limits
 
-Version 1 has no console output despite selecting the Windows console subsystem, arguments, file access, diagnostic channel, runtime-service table, PE imports, separately protected read-only data, persistent heap, thread contract, unwind metadata, debugger metadata, code signing, embedded WVB, load-time WVB verification, or install-time cache identity. The Stage 0 compiler and verifier are still required to construct the executable. Hosted applications and standalone native tools require later target versions rather than implicit access to ambient Windows state.
+Version 1 has no console output despite selecting the Windows console subsystem, arguments, file access, diagnostic channel, runtime-service table, PE imports, separately protected read-only data, persistent heap, thread contract, unwind metadata, debugger metadata, code signing, embedded WVB, load-time WVB verification, or install-time cache identity. The WVA startup is now a Windvale-owned candidate, but the Stage 0 compiler, container constructor, and verifier are still required to construct the executable. Hosted applications and standalone native tools require later target versions rather than implicit access to ambient Windows state.

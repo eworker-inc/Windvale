@@ -1,0 +1,38 @@
+windvale-assembly 1
+
+# Canonical Windows x64 console startup candidate. The Stage 0 linker retains
+# an independently checked C# encoding until the native-retirement gate.
+symbol export function Windows_console_startup in .text
+symbol import data Execution_context
+symbol import function Native_main
+symbol import data Record_arena
+symbol import data Text_arena
+
+section code .text align 16
+define Windows_console_startup
+subtract_i32 rsp 40
+load_address rdx Execution_context
+load_address rax Record_arena
+store_memory_u64 rdx none 1 32 rax
+load_address rax Text_arena
+store_memory_u64 rdx none 1 48 rax
+xor rcx rcx
+move r8 rdx
+xor r9 r9
+call Native_main
+
+# A successful native result is an unpacked i32 in the low half of RAX.
+# Any packed failure or value outside the portable process range maps to 1.
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Failure
+compare_i32 eax 255
+branch below_equal Mapped
+label Failure
+move_u32 eax 1
+label Mapped
+add_i32 rsp 40
+return
+end define
+end section

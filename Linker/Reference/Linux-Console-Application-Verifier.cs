@@ -217,53 +217,58 @@ public static class Linuxˉconsoleˉapplicationˉverifier
                 0xBE, 0x00, 0x00, 0x00, 0x04,
                 0xBA, 0x03, 0x00, 0x00, 0x00,
                 0x41, 0xBA, 0x22, 0x00, 0x02, 0x00,
-                0x49, 0xC7, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF,
+                0x4D, 0x31, 0xC0,
+                0x49, 0x81, 0xE8, 0x01, 0x00, 0x00, 0x00,
                 0x45, 0x31, 0xC9,
                 0xB8, 0x09, 0x00, 0x00, 0x00,
                 0x0F, 0x05,
-                0x48, 0x3D, 0x01, 0xF0, 0xFF, 0xFF,
-                0x73, 0x48,
-                0x48, 0x8D, 0xA0, 0x00, 0x00, 0x00, 0x04,
+                0x48, 0x81, 0xF8, 0x01, 0xF0, 0xFF, 0xFF,
+                0x0F, 0x83, 0x5C, 0x00, 0x00, 0x00,
+                0x48, 0x89, 0xC4,
+                0x48, 0x81, 0xC4, 0x00, 0x00, 0x00, 0x04,
                 0x48, 0x8D, 0x15,
             ],
             "WVL2006",
             "The mmap-owned stack or context-load prefix is invalid.");
         Requireˉrelativeˉtarget(
             bytes,
-            Startup + 53,
-            Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS + 57,
+            Startup + 64,
+            Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS + 68,
             dataˉaddress,
             "The startup context target is invalid.");
         Requireˉbytes(
             bytes,
-            Startup + 57,
+            Startup + 68,
             [0x48, 0x89, 0xD6, 0x48, 0x8D, 0x05],
             "WVL2006",
             "The System V context duplicate or record-arena load is invalid.");
         Requireˉrelativeˉtarget(
             bytes,
-            Startup + 63,
-            Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS + 67,
+            Startup + 74,
+            Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS + 78,
             dataˉaddress + Nativeˉexecutionˉcontextˉcontract.SIZE,
             "The startup record-arena target is invalid.");
         Requireˉbytes(
             bytes,
-            Startup + 67,
-            [0x48, 0x89, 0x42, 0x20, 0x48, 0x8D, 0x05],
+            Startup + 78,
+            [
+                0x48, 0x89, 0x84, 0x22, 0x20, 0x00, 0x00, 0x00,
+                0x48, 0x8D, 0x05,
+            ],
             "WVL2006",
             "The record-arena store or text-arena load is invalid.");
         Requireˉrelativeˉtarget(
             bytes,
-            Startup + 74,
-            Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS + 78,
+            Startup + 89,
+            Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS + 93,
             dataˉaddress + Nativeˉexecutionˉcontextˉcontract.SIZE +
                 Linuxˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES,
             "The startup text-arena target is invalid.");
         Requireˉbytes(
             bytes,
-            Startup + 78,
+            Startup + 93,
             [
-                0x48, 0x89, 0x42, 0x30,
+                0x48, 0x89, 0x84, 0x22, 0x30, 0x00, 0x00, 0x00,
                 0x31, 0xFF,
                 0x31, 0xC9,
                 0x45, 0x31, 0xC0,
@@ -274,26 +279,26 @@ public static class Linuxˉconsoleˉapplicationˉverifier
             "The text-arena store or native-entry call prefix is invalid.");
         Requireˉbytes(
             bytes,
-            Startup + 97,
+            Startup + 116,
             [
                 0x48, 0x89, 0xC2,
                 0x48, 0xC1, 0xEA, 0x20,
                 0x85, 0xD2,
-                0x75, 0x07,
-                0x3D, 0xFF, 0x00, 0x00, 0x00,
-                0x76, 0x05,
+                0x0F, 0x85, 0x0C, 0x00, 0x00, 0x00,
+                0x81, 0xF8, 0xFF, 0x00, 0x00, 0x00,
+                0x0F, 0x86, 0x05, 0x00, 0x00, 0x00,
                 0xB8, 0x01, 0x00, 0x00, 0x00,
                 0x89, 0xC7,
                 0xB8, 0x3C, 0x00, 0x00, 0x00,
                 0x0F, 0x05,
-                0x0F, 0x0B,
+                0xCC,
             ],
             "WVL2006",
             "The native status, portable process-result, or Linux exit boundary is invalid.");
 
         var Callˉtarget = checked(
             (long)Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS +
-            97 + Readˉi32(bytes, Startup + 93));
+            116 + Readˉi32(bytes, Startup + 112));
         var Nativeˉstart = checked(
             Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS +
             (uint)Linuxˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET);
@@ -301,7 +306,7 @@ public static class Linuxˉconsoleˉapplicationˉverifier
             Callˉtarget >= Nativeˉstart &&
                 Callˉtarget < Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS + textˉbytes,
             "WVL2006",
-            Startup + 93,
+            Startup + 112,
             "The startup call target is outside the native image.");
         nativeˉentryˉoffset = checked((uint)(Callˉtarget - Nativeˉstart));
     }

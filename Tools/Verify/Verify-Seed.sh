@@ -205,10 +205,10 @@ WINDOWS_APPLICATION_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$WINDOWS_APPLICATION_OUTPUT" | \
     grep -F 'Target: windows-x64-console-v1' >/dev/null
 printf '%s\n' "$WINDOWS_APPLICATION_OUTPUT" | \
-    grep -F 'SHA-256: 486b758bac7d62456114f31a41754a3b4eb061db150cae12fbcb2b3ba17b3bdf' >/dev/null
+    grep -F 'SHA-256: 5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77' >/dev/null
 WINDOWS_APPLICATION_HASH=$(sha256sum "$SUM_WINDOWS_APPLICATION" | awk '{print $1}')
 WINDOWS_APPLICATION_BYTES=$(wc -c < "$SUM_WINDOWS_APPLICATION" | tr -d ' ')
-if [ "$WINDOWS_APPLICATION_HASH" != '486b758bac7d62456114f31a41754a3b4eb061db150cae12fbcb2b3ba17b3bdf' ] || \
+if [ "$WINDOWS_APPLICATION_HASH" != '5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77' ] || \
    [ "$WINDOWS_APPLICATION_BYTES" != '5120' ]; then
     echo 'The Seed CLI Windows application identity is not canonical.' >&2
     exit 1
@@ -221,11 +221,11 @@ LINUX_APPLICATION_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$LINUX_APPLICATION_OUTPUT" | \
     grep -F 'Target: linux-x64-console-v1' >/dev/null
 printf '%s\n' "$LINUX_APPLICATION_OUTPUT" | \
-    grep -F 'SHA-256: cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6' >/dev/null
+    grep -F 'SHA-256: 8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4' >/dev/null
 LINUX_APPLICATION_HASH=$(sha256sum "$SUM_LINUX_APPLICATION" | awk '{print $1}')
 LINUX_APPLICATION_BYTES=$(wc -c < "$SUM_LINUX_APPLICATION" | tr -d ' ')
 LINUX_APPLICATION_MODE=$(stat -c '%a' "$SUM_LINUX_APPLICATION")
-if [ "$LINUX_APPLICATION_HASH" != 'cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6' ] || \
+if [ "$LINUX_APPLICATION_HASH" != '8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4' ] || \
    [ "$LINUX_APPLICATION_BYTES" != '8304' ] || \
    [ "$LINUX_APPLICATION_MODE" != '755' ]; then
     echo 'The Seed CLI Linux application identity or executable mode is not canonical.' >&2

@@ -33,8 +33,8 @@ internal static class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string WINDOWS_CONSOLE_SUM_SHA256 = "486b758bac7d62456114f31a41754a3b4eb061db150cae12fbcb2b3ba17b3bdf";
-    private const string LINUX_CONSOLE_SUM_SHA256 = "cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6";
+    private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
+    private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
@@ -677,6 +677,12 @@ internal static class Program
     private static readonly string EXPANDED_X64_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Expanded-X64.wva");
 
+    private static readonly string WINDOWS_CONSOLE_STARTUP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Windows-X64-Console.wva");
+
+    private static readonly string LINUX_CONSOLE_STARTUP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Linux-X64-Console.wva");
+
     private static readonly string WVA_ASSEMBLER_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wva-Assembler-Core.wv");
 
@@ -757,8 +763,8 @@ internal static class Program
         new("hosted resources are explicit, separated, and bounded", [TEST_AREA_RUNTIME], Hostedˉresourcesˉareˉbounded),
         new("compiler output is deterministic and canonical", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Compilerˉisˉdeterministic),
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
-        new("portable Windvale emits a deterministic Windows x64 console executable", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windowsˉconsoleˉapplicationˉruns),
-        new("portable Windvale emits a deterministic Linux x64 console executable", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Linuxˉconsoleˉapplicationˉruns),
+        new("portable Windvale emits a deterministic Windows x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windowsˉconsoleˉapplicationˉruns),
+        new("portable Windvale emits a deterministic Linux x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Linuxˉconsoleˉapplicationˉruns),
         new("native console application publication is atomic", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic),
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
@@ -2339,6 +2345,18 @@ internal static class Program
                 Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
                 Symbol.Name == "Main").Offset,
             Verified.Nativeˉentryˉoffset);
+        var Dataˉrva = BinaryPrimitives.ReadUInt32LittleEndian(
+            First.Imageˉbytes.AsSpan(0x1BC, sizeof(uint)));
+        Requireˉstartupˉmatchesˉwva(
+            WINDOWS_CONSOLE_STARTUP_SOURCE,
+            "Windows_console_startup",
+            First.Imageˉbytes.AsSpan(0x200, Windowsˉconsoleˉapplicationˉcontract.STARTUP_BYTES),
+            startupˉaddress: 0x1000,
+            dataˉaddress: Dataˉrva,
+            recordˉarenaˉbytes: Windowsˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES,
+            nativeˉimageˉoffset: Windowsˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET,
+            nativeˉentryˉoffset: Verified.Nativeˉentryˉoffset,
+            relocationˉoffsets: [10u, 17u, 32u, 54u]);
 
         Equal("WVW1001", Windowsˉconsoleˉapplicationˉwriter.Write(null!).Diagnostics.Single().Code);
         var Changedˉfragment = Sumˉfragment with
@@ -2500,6 +2518,20 @@ internal static class Program
                 Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
                 Symbol.Name == "Main").Offset,
             Verified.Nativeˉentryˉoffset);
+        var Dataˉaddress = checked((uint)BinaryPrimitives.ReadUInt64LittleEndian(
+            First.Imageˉbytes.AsSpan(192, sizeof(ulong))));
+        Requireˉstartupˉmatchesˉwva(
+            LINUX_CONSOLE_STARTUP_SOURCE,
+            "Linux_console_startup",
+            First.Imageˉbytes.AsSpan(
+                checked((int)Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS),
+                Linuxˉconsoleˉapplicationˉcontract.STARTUP_BYTES),
+            startupˉaddress: Linuxˉconsoleˉapplicationˉcontract.TEXT_VIRTUAL_ADDRESS,
+            dataˉaddress: Dataˉaddress,
+            recordˉarenaˉbytes: Linuxˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES,
+            nativeˉimageˉoffset: Linuxˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET,
+            nativeˉentryˉoffset: Verified.Nativeˉentryˉoffset,
+            relocationˉoffsets: [64u, 74u, 89u, 112u]);
 
         var Windows = Windowsˉconsoleˉapplicationˉwriter.Write(Sumˉfragment);
         True(Windows.Success, "The paired Windows console target rejected the shared native fragment.");
@@ -2611,6 +2643,76 @@ internal static class Program
         (256, 1),
         (int.MaxValue, 1),
     ];
+
+    private static void Requireˉstartupˉmatchesˉwva(
+        string source,
+        string exportˉname,
+        ReadOnlySpan<byte> imageˉstartup,
+        uint startupˉaddress,
+        uint dataˉaddress,
+        uint recordˉarenaˉbytes,
+        int nativeˉimageˉoffset,
+        uint nativeˉentryˉoffset,
+        uint[] relocationˉoffsets)
+    {
+        var Object = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(source)).Value;
+        Equal(Objectˉarchitecture.X86ˉ64, Object.Architecture);
+        Equal(1, Object.Sections.Length);
+        var Text = Object.Sections.Single();
+        Equal(".text", Text.Name);
+        Equal(Objectˉsectionˉkind.Code, Text.Kind);
+        Equal(16u, Text.Alignment);
+        Equal((uint)imageˉstartup.Length, Text.Memoryˉsize);
+        Equal(imageˉstartup.Length, Text.Data.Length);
+
+        var Export = Object.Symbols.Single(Symbol =>
+            Symbol.Binding == Objectˉsymbolˉbinding.Export);
+        Equal(exportˉname, Export.Name);
+        Equal(Objectˉsymbolˉkind.Function, Export.Kind);
+        Equal(0u, Export.Sectionˉindex);
+        Equal(0u, Export.Offset);
+        Equal((uint)imageˉstartup.Length, Export.Size);
+        Sequenceˉequal(
+            ["Execution_context", "Native_main", "Record_arena", "Text_arena"],
+            Object.Symbols
+                .Where(Symbol => Symbol.Binding == Objectˉsymbolˉbinding.Import)
+                .Select(Symbol => Symbol.Name));
+        Equal(4, Object.Relocations.Length);
+        Sequenceˉequal(relocationˉoffsets, Object.Relocations.Select(Item => Item.Offset));
+
+        var Instantiated = Text.Data.ToArray();
+        foreach (var Relocation in Object.Relocations)
+        {
+            Equal(Objectˉrelocationˉkind.Relativeˉi32, Relocation.Kind);
+            Equal(0u, Relocation.Sectionˉindex);
+            Equal(-4, Relocation.Addend);
+            var Symbol = Object.Symbols[checked((int)Relocation.Symbolˉindex)];
+            Equal(
+                Symbol.Name == "Native_main"
+                    ? Objectˉsymbolˉkind.Function
+                    : Objectˉsymbolˉkind.Data,
+                Symbol.Kind);
+            var Target = Symbol.Name switch
+            {
+                "Execution_context" => dataˉaddress,
+                "Native_main" => checked(
+                    startupˉaddress + (uint)nativeˉimageˉoffset + nativeˉentryˉoffset),
+                "Record_arena" => checked(
+                    dataˉaddress + Nativeˉexecutionˉcontextˉcontract.SIZE),
+                "Text_arena" => checked(
+                    dataˉaddress + Nativeˉexecutionˉcontextˉcontract.SIZE + recordˉarenaˉbytes),
+                _ => throw new InvalidOperationException(
+                    $"Unexpected startup import '{Symbol.Name}'."),
+            };
+            var Fieldˉaddress = checked(startupˉaddress + Relocation.Offset);
+            var Value = checked((int)((long)Target - Fieldˉaddress + Relocation.Addend));
+            BinaryPrimitives.WriteInt32LittleEndian(
+                Instantiated.AsSpan(checked((int)Relocation.Offset), sizeof(int)),
+                Value);
+        }
+
+        Sequenceˉequal(Instantiated, imageˉstartup.ToArray());
+    }
 
     private static Nativeˉfragment Compileˉnativeˉprocessˉresult(int result) =>
         X64ˉnativeˉbackend.Compile(Moduleˉcodec.Readˉandˉverify(Compileˉsuccess($$"""

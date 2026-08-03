@@ -172,57 +172,53 @@ public static class Windowsˉconsoleˉapplicationˉwriter
         uint dataˉrva,
         uint nativeˉentryˉoffset)
     {
-        ReadOnlySpan<byte> Prefix = [0x48, 0x83, 0xEC, 0x28, 0x48, 0x8D, 0x15];
-        Prefix.CopyTo(output);
-        Writeˉi32(
-            output,
-            7,
-            Relativeˉi32(TEXT_RVA + 11, dataˉrva));
-
-        ReadOnlySpan<byte> Recordˉprefix = [0x48, 0x8D, 0x05];
-        Recordˉprefix.CopyTo(output[11..]);
-        Writeˉi32(
-            output,
-            14,
-            Relativeˉi32(
-                TEXT_RVA + 18,
-                dataˉrva + Nativeˉexecutionˉcontextˉcontract.SIZE));
-
-        ReadOnlySpan<byte> Recordˉstoreˉandˉtextˉprefix =
-            [0x48, 0x89, 0x42, 0x20, 0x48, 0x8D, 0x05];
-        Recordˉstoreˉandˉtextˉprefix.CopyTo(output[18..]);
-        Writeˉi32(
-            output,
-            25,
-            Relativeˉi32(
-                TEXT_RVA + 29,
-                dataˉrva + Nativeˉexecutionˉcontextˉcontract.SIZE +
-                    Windowsˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES));
-
-        ReadOnlySpan<byte> Callˉprefix =
-            [0x48, 0x89, 0x42, 0x30, 0x31, 0xC9, 0x49, 0x89, 0xD0, 0x45, 0x31, 0xC9, 0xE8];
-        Callˉprefix.CopyTo(output[29..]);
-        Writeˉi32(
-            output,
-            42,
-            Relativeˉi32(
-                TEXT_RVA + 46,
-                TEXT_RVA + Windowsˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET +
-                    nativeˉentryˉoffset));
-
-        ReadOnlySpan<byte> Suffix =
+        ReadOnlySpan<byte> Template =
         [
+            0x48, 0x81, 0xEC, 0x28, 0x00, 0x00, 0x00,
+            0x48, 0x8D, 0x15, 0x00, 0x00, 0x00, 0x00,
+            0x48, 0x8D, 0x05, 0x00, 0x00, 0x00, 0x00,
+            0x48, 0x89, 0x84, 0x22, 0x20, 0x00, 0x00, 0x00,
+            0x48, 0x8D, 0x05, 0x00, 0x00, 0x00, 0x00,
+            0x48, 0x89, 0x84, 0x22, 0x30, 0x00, 0x00, 0x00,
+            0x48, 0x31, 0xC9,
+            0x49, 0x89, 0xD0,
+            0x4D, 0x31, 0xC9,
+            0xE8, 0x00, 0x00, 0x00, 0x00,
             0x48, 0x89, 0xC2,
             0x48, 0xC1, 0xEA, 0x20,
             0x85, 0xD2,
-            0x75, 0x07,
-            0x3D, 0xFF, 0x00, 0x00, 0x00,
-            0x76, 0x05,
+            0x0F, 0x85, 0x0C, 0x00, 0x00, 0x00,
+            0x81, 0xF8, 0xFF, 0x00, 0x00, 0x00,
+            0x0F, 0x86, 0x05, 0x00, 0x00, 0x00,
             0xB8, 0x01, 0x00, 0x00, 0x00,
-            0x48, 0x83, 0xC4, 0x28,
+            0x48, 0x81, 0xC4, 0x28, 0x00, 0x00, 0x00,
             0xC3,
         ];
-        Suffix.CopyTo(output[46..]);
+        Template.CopyTo(output);
+        Writeˉi32(
+            output,
+            10,
+            Relativeˉi32(TEXT_RVA + 14, dataˉrva));
+        Writeˉi32(
+            output,
+            17,
+            Relativeˉi32(
+                TEXT_RVA + 21,
+                dataˉrva + Nativeˉexecutionˉcontextˉcontract.SIZE));
+        Writeˉi32(
+            output,
+            32,
+            Relativeˉi32(
+                TEXT_RVA + 36,
+                dataˉrva + Nativeˉexecutionˉcontextˉcontract.SIZE +
+                    Windowsˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES));
+        Writeˉi32(
+            output,
+            54,
+            Relativeˉi32(
+                TEXT_RVA + 58,
+                TEXT_RVA + Windowsˉconsoleˉapplicationˉcontract.NATIVE_IMAGE_OFFSET +
+                    nativeˉentryˉoffset));
     }
 
     private static int Relativeˉi32(uint sourceˉend, uint target) =>

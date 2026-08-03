@@ -22,7 +22,7 @@ The format adapters and their untrusted-byte verifiers remain separate. Portable
 
 ## Process entry and result
 
-The ELF entry is an exact 131-byte Linux x86-64 stub followed by zero padding to byte 144 and then the unchanged linked native image. The stub:
+The ELF entry is an exact 158-byte Linux x86-64 stub followed by zero padding to byte 160 and then the unchanged linked native image. The stub is expressed by `Linker/Startup/Linux-X64-Console.wva`; its assembled WVO code and four typed relative relocations must reproduce the independently encoded C# recovery writer exactly. The stub:
 
 1. invokes Linux x86-64 `mmap` syscall 9 for a private anonymous 64 MiB read/write stack mapping;
 2. exits with result `1` if the mapping fails, otherwise switches to its aligned upper boundary;
@@ -31,7 +31,7 @@ The ELF entry is an exact 131-byte Linux x86-64 stub followed by zero padding to
 5. supplies the context through both retained System V bridge positions in `RSI` and `RDX` and clears the other argument registers;
 6. calls the native fragment's exported `Main` through one relative displacement;
 7. preserves successful results from `0` through `255` and maps every other successful result or packed nonzero native status to result `1`; and
-8. terminates through Linux x86-64 `exit` syscall 60, followed by an unreachable `UD2` boundary.
+8. terminates through Linux x86-64 `exit` syscall 60, followed by an unreachable WVA `trap` boundary.
 
 The private stack mapping prevents the program from inheriting a smaller ambient shell stack limit. Its 64 MiB size covers the retained 1,024-call budget at the current 32 KiB maximum generated frame plus bounded outgoing cells. The fixed execution limits remain ABI 20's defaults: 1,000,000 charged instructions and call depth 1,024.
 
@@ -64,13 +64,13 @@ All integers are little-endian. Unlisted and padding bytes are zero. File and lo
 
 There is no `PT_INTERP`, `PT_DYNAMIC`, writable/executable load, section table, symbol table, relocation table, debug data, build ID, or runtime dependency. Equal file offsets and virtual addresses plus RIP-relative executable references allow the kernel to choose one position-independent load bias without fixups.
 
-The complete file is bounded to 4,202,608 bytes. Canonical `Sum-Data.wv` produces an 8,304-byte ELF with SHA-256 `cb7ece2e53b3d432406d9064ac8343901de261d22f34bcd5f3607da5ce71a9f6`.
+The complete file is bounded to 4,202,608 bytes. Canonical `Sum-Data.wv` produces an 8,304-byte ELF with SHA-256 `8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4`.
 
 ## Independent verification
 
 `Linuxˉconsoleˉapplicationˉverifier.Verify` treats the ELF as untrusted bytes. It checks the outer size before fixed reads; the complete ELF identification and header; all five exact program headers; load sizes, permissions, address/offset agreement, and derived extents; the version note; every padding region; the exact startup instruction shapes and four relative targets; the mmap and exit syscall boundaries; and the initial execution context. It returns the recovered native bytes and native entry offset only after complete validation.
 
-The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests require the PE and ELF verifiers to recover the same native image and `Main` offset.
+The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests independently assemble the WVA startup, require its exact symbol and relocation contract, instantiate the four final-image displacements, and compare all 158 startup bytes with the ELF. They also require the PE and ELF verifiers to recover the same native image and `Main` offset.
 
 ## Diagnostics
 
@@ -102,4 +102,4 @@ The CLI defaults this target to `.elf`. On Linux it sets mode `0755` after writi
 
 Version 1 has no console output, arguments, environment access, file access, diagnostic channel, runtime-service table, dynamic linking, libc, persistent heap, threads, unwind metadata, debugger metadata, signing, embedded WVB, load-time WVB verification, or install-time cache identity.
 
-The C# adapter is the Stage 0 oracle and recovery implementation. Its pure container constructor and verifier are named replacement seams for a portable Windvale `.wv` core; the exact startup template is a named `.wva` ownership seam. Normal construction moves only after the Windvale implementations reproduce exact ELF bytes and rejection behavior across Windows and Linux.
+The C# adapter is the Stage 0 oracle and recovery implementation. The exact startup is now a Windvale-owned WVA candidate with byte-for-byte oracle agreement. Its pure container constructor and verifier remain named replacement seams for a portable Windvale `.wv` core. Normal construction moves only after the Windvale implementations reproduce exact ELF bytes and rejection behavior across Windows and Linux.
