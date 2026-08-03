@@ -54,24 +54,27 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, r
 
 ## Host verification
 
-The verifier has three explicit levels:
+The verifier has four explicit levels:
 
 - `Fast` builds the solution and runs only tests matching one required case-insensitive displayed-name substring. Optional fail-fast and timing-report output make it an inner-loop tool; it cannot publish a conformance report.
+- `Development` builds the solution, runs every regular Seed test plus the bounded OS in-process suite, and excludes the qualification-only golden cross-host contract. It is the default broad development gate and cannot publish a conformance report.
 - `Standard` builds and runs the complete in-process conformance suite and writes the host report, then stops before native CLI verification.
-- `Qualification` is the default. It runs Standard plus the complete native CLI, hosted-boundary, deterministic-artifact, and no-partial-output checks.
+- `Qualification` must be selected explicitly. It runs Standard plus the complete native CLI, hosted-boundary, deterministic-artifact, and no-partial-output checks.
+
+The levels are nested alternatives, not a required sequence. One source state uses the narrowest level that establishes the required evidence; a passing broader level is not followed by narrower reruns.
 
 Every test prints its elapsed milliseconds. `--timing-report <path>` writes a separate local JSON timing document; elapsed time is deliberately excluded from the portable conformance contract. The qualification verifier builds once and invokes the resulting `windvale.dll` directly for CLI checks, avoiding repeated project evaluation without bypassing process, argument, exit-code, or native file behavior.
 
 Windows:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Qualification
 ```
 
 Linux:
 
 ```sh
-./Tools/Verify/Verify-Seed.sh
+VERIFY_LEVEL=qualification ./Tools/Verify/Verify-Seed.sh
 ```
 
 Standard and Qualification build Release binaries, run the complete suite, and write an ignored JSON report under `artifacts/`. The report separates the portable `contract` evidence from host metadata. Fast deliberately writes no conformance report.
@@ -89,7 +92,7 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestFilter 'bodi
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Standard
 ```
 
-Linux uses the corresponding `VERIFY_LEVEL=fast|standard|qualification`, `TEST_FILTER`, `FAIL_FAST=1`, and `TIMING_REPORT_PATH` environment variables. The default remains `qualification` on both hosts.
+Linux uses the corresponding `VERIFY_LEVEL=fast|development|standard|qualification`, `TEST_FILTER`, `FAIL_FAST=1`, and `TIMING_REPORT_PATH` environment variables. The default is `development` on both hosts.
 
 ## Comparing hosts
 

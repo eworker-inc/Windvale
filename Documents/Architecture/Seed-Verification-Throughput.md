@@ -9,7 +9,7 @@ Windvale keeps the complete cross-host qualification gate, but ordinary developm
 - `Fast` builds once and runs an explicit selection of one or more test areas, a case-insensitive displayed-name substring, or their intersection. It may fail fast and may write a local timing report. It does not produce conformance evidence.
 - `Development` builds once and runs every regular in-process test. It excludes only the qualification-only golden cross-host contract, does not write a conformance report, and is the broad check for a coherent development batch.
 - `Standard` builds once, runs all registered in-process conformance tests, and writes the normal host report. It stops before native CLI qualification.
-- `Qualification` is the default and remains the milestone gate. It adds every native CLI, hosted-boundary, deterministic-artifact, and failure-preservation check.
+- `Qualification` remains the explicit milestone gate. It adds every native CLI, hosted-boundary, deterministic-artifact, and failure-preservation check. `Development` is the command-line default so an unqualified local invocation cannot accidentally start the multi-minute qualification path.
 
 Qualification builds the CLI once and invokes the resulting `windvale.dll` directly in each separate process. This preserves command parsing, process exit codes, native file behavior, capability boundaries, and output checks while removing repeated `dotnet run` project evaluation.
 

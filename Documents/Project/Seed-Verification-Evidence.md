@@ -56,7 +56,7 @@
 ## Verified on the implementation host
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Qualification
 ```
 
 The verifier performs a Release build, runs the 60-test conformance suite, produces a Windows report, publishes the CLI as framework-dependent `linux-x64`, and exercises real source composition, project selection, Foundation/compiler module composition, the complete compiler frontend through typed WVIR and the qualified canonical function/data/nominal/capability WVB backend, shared native fragments, Windvale-owned runtime stencils, module, Windvale/Stage 0 assembly, Windvale WVO scan, complete Windvale and Stage 0 link, object, inspect, verify, and runtime CLI paths. It checks dependency-order independence, semantic and binary-evidence rejection, output preservation, capability refusal and authorized execution, deterministic file snapshots, opt-in executed-instruction reporting, SHA-256 sequence/slice behavior, byte-for-byte compiler and assembler equality, independent complete-image reconstruction, exact Windvale/Stage 0 image and map equality, maximum image and map-limit cases, publish-after-success behavior, no file for rejected source/link or a missing parent, and preservation of existing outputs when validation fails. The current WVB 1.6 Windows report SHA-256 is `c34a2199e548631323b2186dda0dcf8ffcb0a3a3c6eb7d53d9a405c314837a4b`.

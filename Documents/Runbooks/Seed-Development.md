@@ -12,6 +12,8 @@ The repository pins the SDK in `global.json` and uses no external NuGet packages
 
 ## Development verification
 
+Choose one verification level for a source state. The levels are nested alternatives, not a checklist: a passing broader level subsumes the narrower levels, and a commit or push does not invalidate that result. Rerun only after relevant inputs change. After fixing a failure, rerun the narrowest affected selection and use at most one broader final gate if warranted.
+
 For the normal Windows inner loop, let changed paths select the relevant test areas:
 
 ```powershell
@@ -48,21 +50,21 @@ Choose the gate that protects the changed boundary:
 | Compiler inventory, project, or convergence change | `Verify-Bootstrap.ps1` or `.sh` once for the final candidate |
 | OS boot, image, firmware, or kernel-seam change | Focused OS tests and the relevant live boot gate |
 
-On Windows, the complete qualification verifier is:
+The no-argument verifier defaults to `Development`. Request complete Qualification explicitly on Windows:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Qualification
 ```
 
 On Linux:
 
 ```sh
-./Tools/Verify/Verify-Seed.sh
+VERIFY_LEVEL=qualification ./Tools/Verify/Verify-Seed.sh
 ```
 
-Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`. Use `VERIFY_LEVEL=development` for the broad regular suite.
+Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`; its default is also `development`.
 
-Fast and changed-file runs are development feedback, not qualification evidence. Record which broader checks were not run and why.
+Fast and changed-file runs are development feedback, not qualification evidence. GitHub runs the independent dual-host Qualification gate for implementation and specification changes. Do not duplicate that gate locally merely because a commit or push follows. Record which broader checks were not run and why.
 
 ## Direct WebAssembly verification
 

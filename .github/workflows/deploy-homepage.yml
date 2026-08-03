@@ -1,22 +1,6 @@
-name: Deploy homepage
+name: Deploy homepage manually
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/deploy-homepage.yml
-      - Compiler/Reference/**
-      - Object-Model/Windvale.ObjectModel/**
-      - Runtime/Windvale.Bytecode/**
-      - Runtime/Windvale.Runtime/**
-      - Tools/Windvale.Playground.Engine/**
-      - Tools/Windvale.Playground/**
-      - Tools/Website/Verify-Wasm-Demo.mjs
-      - Website/**
-      - functions/**
-      - Directory.Build.props
-      - global.json
   workflow_dispatch:
 
 permissions:

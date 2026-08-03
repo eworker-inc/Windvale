@@ -4,7 +4,7 @@ param(
     [string]$Configuration = 'Release',
     [string]$ReportPath,
     [ValidateSet('Fast', 'Development', 'Standard', 'Qualification')]
-    [string]$Level = 'Qualification',
+    [string]$Level = 'Development',
     [string]$TestFilter,
     [ValidateSet('assembler', 'bytecode', 'compiler', 'foundation', 'golden', 'linker', 'object-model', 'runtime')]
     [string[]]$TestArea,

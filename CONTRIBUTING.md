@@ -30,33 +30,31 @@ Every contribution must state:
 - Any incorporated third-party source, data, generated asset, or license obligation.
 - Specific AI provenance only when required by the project-wide policy.
 
-Documentation-only changes normally require `git diff --check`, Markdown link inspection, and direct review of the rendered text. Windvale Seed code changes normally require:
-
-```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
-```
-
-On Linux:
-
-```sh
-./Tools/Verify/Verify-Seed.sh
-```
-
-During iteration, prefer the change-aware development verifier:
+Documentation-only changes normally require `git diff --check`, Markdown link inspection, and direct review of the rendered text. Windvale Seed code changes normally require one proportional local verifier. For focused work, use:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
 ```
 
-When selecting explicitly, use one or more test areas and optionally narrow them with a displayed-name substring:
+For a coherent cross-area batch, the no-argument Seed verifier runs the `Development` suite:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
+```
+
+On Linux, use `VERIFY_LEVEL=development ./Tools/Verify/Verify-Seed.sh`.
+
+Verification levels are alternatives, not a required sequence. Do not run changed-file, Fast, Development, Standard, and Qualification one after another for the same source state. A passing broader tier subsumes narrower tiers, and remains valid until relevant inputs change; committing or pushing is not a reason to repeat it. After a failed check, rerun the narrowest affected selection and use at most one broader final gate if the risk calls for it.
+
+When selecting explicitly, use one or more test areas and optionally narrow them by displayed-name substring:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea compiler,runtime -TestFilter '<substring>' -FailFast
 ```
 
-The available Seed areas are `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. Area selections form a union; an accompanying filter intersects with that union. Fast selection remains Seed-area-only; run `Tests/Windvale.Os.Tests` directly for focused OS work. Use `-Level Development` for every regular Seed test plus the bounded OS in-process suite while deferring the multi-billion-instruction golden cross-host contract. Use `-Level Standard` for the complete Seed in-process conformance suite plus the OS suite without the native CLI qualification pass. Changed-file, Fast, Development, and Standard results are development feedback, not milestone qualification. The default `Qualification` level remains the complete Windows or Linux gate and also executes the OS suite.
+The available Seed areas are `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. Area selections form a union; an accompanying filter intersects with that union. Fast selection remains Seed-area-only; run `Tests/Windvale.Os.Tests` directly for focused OS work. Development runs every regular Seed test plus the bounded OS in-process suite while deferring the multi-billion-instruction golden cross-host contract. Standard runs the complete Seed in-process conformance suite plus the OS suite without the native CLI qualification pass. Qualification must be requested explicitly and adds the complete native CLI gate. Changed-file, Fast, Development, and Standard results are development feedback, not milestone qualification.
 
-Testing is proportional to risk. Ordinary edits should not pay for unrelated multi-minute gates: use focused or change-aware checks first, Development for a coherent batch, and reserve Standard/Qualification for final candidates or changed portable contracts. Run the separate compiler-bootstrap or OS-boot gates only when the compiler inventory/bootstrap boundary or boot/image/kernel boundary changed, or when making the corresponding qualification claim. Always state which broader checks were not run and why.
+Testing is proportional to risk. Ordinary edits should not pay for unrelated multi-minute gates: choose focused or change-aware checks, or Development for a coherent batch, and reserve Standard/Qualification for final candidates or changed portable contracts. GitHub provides the independent dual-host Qualification gate for implementation and specification changes; do not duplicate it locally without a qualification reason. Run the separate compiler-bootstrap or OS-boot gates only when the compiler inventory/bootstrap boundary or boot/image/kernel boundary changed, or when making the corresponding qualification claim. Always state which broader checks were not run and why.
 
 Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require evidence from Windows and real Debian before cross-host qualification is claimed. GitHub-hosted CI is a review gate, not a substitute for the exact cross-host qualification procedure.
 

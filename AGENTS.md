@@ -90,8 +90,9 @@ Carry the established [E-Worker](https://eworker.ca) host-code convention into W
 
 ## Testing and verification
 
-- Run the narrowest reliable verifier for the changed behavior, then broaden only in proportion to risk.
-- Prefer `Tools/Verify/Verify-Changed.ps1` for the Windows inner loop. Its change classifier uses a lightweight scope for ordinary documentation and editor-package-only work, a website scope for static site, browser packaging, Cloudflare function, and website-tool changes, and qualification for specifications, implementation, unrecognized configuration, and mixed higher-risk changes. The website scope runs `Tools/Verify/Verify-Website.ps1` instead of Seed qualification. Use `Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea <area> [-TestFilter '<displayed-name substring>'] -FailFast` when selecting Seed tests explicitly; run `Tests/Windvale.Os.Tests` directly for focused OS work. Use `-Level Development` for every regular Seed test plus the bounded OS in-process suite without the multi-billion-instruction golden contract, and `-Level Standard` for the complete Seed in-process suite plus the OS suite. The default `Qualification` level retains the complete native CLI gate and also executes the OS suite.
+- Choose the narrowest reliable verifier for the changed behavior. Verification levels are alternatives, not a ladder: do not run changed-file, Fast, Development, Standard, and Qualification sequentially for the same source state. A passing broader level subsumes its narrower levels.
+- Run a verifier after a coherent edit, not after every small edit. Reuse a passing result while the files relevant to that verifier remain unchanged, and do not rerun it merely because a commit or push is next. After a failure, rerun the narrowest affected selection; run at most one broader final gate when the resulting risk requires it.
+- Prefer `Tools/Verify/Verify-Changed.ps1` for the Windows inner loop. Its change classifier uses a lightweight scope for ordinary documentation and editor-package-only work, a website scope for static site, browser packaging, Cloudflare function, and website-tool changes, and qualification for specifications, implementation, unrecognized configuration, and mixed higher-risk changes. The website scope runs `Tools/Verify/Verify-Website.ps1` instead of Seed qualification. Use `Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea <area> [-TestFilter '<displayed-name substring>'] -FailFast` when selecting Seed tests explicitly; run `Tests/Windvale.Os.Tests` directly for focused OS work. The no-argument Seed verifier uses `Development`: every regular Seed test plus the bounded OS in-process suite without the multi-billion-instruction golden contract. Use `-Level Standard` for the complete Seed in-process suite plus the OS suite, and request `-Level Qualification` explicitly for the complete native CLI gate.
 - Every parser and binary reader needs valid, boundary, truncated, oversized, inconsistent, and malicious-input coverage.
 - Use golden byte fixtures only where exact bytes are part of the contract. Pair them with structural assertions so failures remain diagnosable.
 - Use differential tests when a temporary C backend, reference VM, native backend, or host adapter should implement the same semantics.
@@ -102,13 +103,13 @@ Carry the established [E-Worker](https://eworker.ca) host-code convention into W
 - Code changes require the relevant package checks and focused conformance tests once those commands exist.
 - State exactly which broader checks were not run and why.
 
-Windvale Seed code changes normally require the host verifier:
+Windvale Seed code changes normally require one local development verifier, selected in proportion to risk. For a focused change, use the change-aware verifier:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
+pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
 ```
 
-On Linux, use `./Tools/Verify/Verify-Seed.sh`. Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require reports from both hosts before cross-host conformance is claimed.
+For a coherent cross-area batch, use `pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1`, whose default is `Development`; on Linux, use `VERIFY_LEVEL=development ./Tools/Verify/Verify-Seed.sh`. Do not run both commands for the same unchanged tree. GitHub owns the independent dual-host Qualification gate for implementation and specification changes. Run local Standard, Qualification, bootstrap, WebAssembly-engine, or live OS-boot gates only when the changed boundary or an explicit qualification claim requires them. Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require reports from both hosts before cross-host conformance is claimed.
 
 ## Documentation discipline
 

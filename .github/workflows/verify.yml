@@ -25,6 +25,7 @@ jobs:
     outputs:
       scope: ${{ steps.classify.outputs.scope }}
       editor: ${{ steps.classify.outputs.editor }}
+      homepage: ${{ steps.classify.outputs.homepage }}
       base_sha: ${{ steps.classify.outputs.base_sha }}
       head_sha: ${{ steps.classify.outputs.head_sha }}
     steps:
@@ -65,6 +66,9 @@ jobs:
           }
           if ('${{ steps.classify.outputs.editor }}' -notin @('true', 'false')) {
             throw 'Editor verification classification failed.'
+          }
+          if ('${{ steps.classify.outputs.homepage }}' -notin @('true', 'false')) {
+            throw 'Homepage deployment classification failed.'
           }
           ./Tools/Verify/Verify-Change-Classification.ps1
           ./Tools/Verify/Verify-Verification-Plan.ps1
@@ -163,7 +167,7 @@ jobs:
       - name: Run Windows verification
         if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
         shell: pwsh
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Qualification
 
   linux-verifier:
     name: Linux verifier
@@ -195,6 +199,8 @@ jobs:
       - name: Run Linux verification
         if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
         shell: bash
+        env:
+          VERIFY_LEVEL: qualification
         run: ./Tools/Verify/Verify-Seed.sh
 
   verification-gate:
@@ -244,3 +250,73 @@ jobs:
               exit 1
               ;;
           esac
+
+  homepage-deployer:
+    name: Publish verified windvale.ca
+    needs:
+      - classify-changes
+      - verification-gate
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.classify-changes.outputs.homepage == 'true' && needs.verification-gate.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pinned .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: Tools/Windvale.Playground/package-lock.json
+
+      - name: Build local playground editor
+        working-directory: Tools/Windvale.Playground
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish standalone WebAssembly application
+        run: >-
+          dotnet publish Tools/Windvale.Playground/Windvale.Playground.csproj
+          --configuration Release
+          --output artifacts/playground
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Assemble versioned same-origin static site
+        shell: bash
+        run: |
+          marker="__WINDVALE_BUILD_VERSION__"
+          versioned_paths=(
+            "artifacts/playground/wwwroot/index.html"
+            "artifacts/playground/wwwroot/js/playground-bootstrap.js"
+          )
+          for versioned_path in "${versioned_paths[@]}"; do
+            grep -Fq "$marker" "$versioned_path"
+            sed -i "s/$marker/$GITHUB_SHA/g" "$versioned_path"
+            if grep -Fq "$marker" "$versioned_path"; then
+              echo "Playground bootstrap version marker remained in $versioned_path." >&2
+              exit 1
+            fi
+          done
+          mkdir -p artifacts/site/playground
+          cp -a Website/. artifacts/site/
+          cp -a artifacts/playground/wwwroot/. artifacts/site/playground/
+
+      - name: Publish verified static site
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: >-
+          npx --yes wrangler@4.118.0 pages deploy artifacts/site
+          --project-name windvale-ca
+          --branch main
+          --commit-hash "${GITHUB_SHA}"
