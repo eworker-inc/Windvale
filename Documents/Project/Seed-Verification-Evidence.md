@@ -3,8 +3,8 @@
 - Evidence date: 2026-08-02
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified implementation commit: `b2197fa4fb78b26d75e4fd5269cde590cbd98dcf`
-- Latest pinned Windvale OS qualified implementation commit: `b2197fa4fb78b26d75e4fd5269cde590cbd98dcf`
+- Latest cross-host Seed qualified implementation commit: `ea1aa89ba204ead633f8340c61b2bacc716881fd`
+- Latest pinned Windvale OS qualified implementation commit: `ea1aa89ba204ead633f8340c61b2bacc716881fd`
 
 ## Requirement evidence
 
