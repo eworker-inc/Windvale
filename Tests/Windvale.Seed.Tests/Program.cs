@@ -106,9 +106,12 @@ internal static class Program
     private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507";
     private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a";
     private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "42f3f947cccca8e44c279afce1b6e944682dc440e0e9cda6546883898d951f31";
-    private const string COMPILER_WVB_VERIFIER_SHA256 = "957384448769a7a5b865301444b06dc9809f8866f515b0f52f9dea20a4f6e011";
-    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "0255c26e067724cce0b2cb061c3abb46ad8832f40bccabe49dcd6d7ca7931e15";
-    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "bbe44c80c8d1ff035f7b0226c7271f4ab0a1c95aec92acc015d9ba169856cc33";
+    private const string COMPILER_WVB_VERIFIER_SHA256 = "028af7f7a69d3ea434cfaf5e4122cf09878dfb10593c03af34351844715d49f5";
+    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "109a093fc9ff0a9f18c4125d635d2713111bf0c61ca71f4eb38e85850430900c";
+    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "35dc54aa0d5055cdce6df3ad1af4e921bbd1f53151835d22c63979b57cbb8716";
+    private const string COMPILER_BUILD_DRIVER_SHA256 = "eb8d22a344a04e705c6e978ce3ddb941ca47686a8a79fa089db254cc3ede73fd";
+    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "204aa0ac555d47d72fc40424c0cb5c9cf30afc4f89d4b8ff4addaadf0a086677";
+    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "e6a618364150d9631cf49ddecd090d8f8750d4bd6232680984584899113ba6cb";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
@@ -870,6 +873,12 @@ internal static class Program
 
     private static readonly string COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Compiler-Wvb-Verifier-Executable-Core.wv");
+
+    private static readonly string COMPILER_WVB_VERIFIER_TOOL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Compiler-Wvb-Verifier-Tool.wv");
+
+    private static readonly string COMPILER_BUILD_DRIVER_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Compiler-Build-Driver.wv");
 
     private static readonly string TYPED_SCALAR_X64_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Typed-Scalar-X64.wva");
@@ -8672,9 +8681,12 @@ internal static class Program
 
         var Compilation = Seedˉcompiler.Compileˉmodules(
             new(
-                "Compiler-Wvb-Verifier-Semantic-Core.wv",
-                COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
+                "Compiler-Wvb-Verifier-Tool.wv",
+                COMPILER_WVB_VERIFIER_TOOL_SOURCE),
             [
+                new(
+                    "Compiler-Wvb-Verifier-Semantic-Core.wv",
+                    COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
                 new(
                     "Compiler-Wvb-Verifier-Executable-Core.wv",
                     COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
@@ -8687,7 +8699,7 @@ internal static class Program
         }
 
         var Verifierˉbytes = Compilation.Moduleˉbytes.ToArray();
-        Equal(118_080, Verifierˉbytes.Length);
+        Equal(118_536, Verifierˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_SHA256,
             Objectˉdigest.Calculateˉsha256(Verifierˉbytes));
@@ -8759,7 +8771,7 @@ internal static class Program
             Windowsˉbundle,
             Nativeˉentry);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(957_440, Firstˉwindows.Imageˉbytes.Length);
+        Equal(960_512, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -8780,7 +8792,7 @@ internal static class Program
             Linuxˉbundle,
             Nativeˉentry);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(958_464, Firstˉlinux.Imageˉbytes.Length);
+        Equal(962_560, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
@@ -9046,6 +9058,347 @@ internal static class Program
                         arguments: [Invalidˉpath],
                         timeoutˉmilliseconds: 600_000,
                         expectedˉerror: "wvb status=Invalid phase=semantic\n"));
+                Equal(
+                    0,
+                    Loadedˉmappings.Count(Name =>
+                        Name.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("coreclr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+            }
+        }
+        finally
+        {
+            Directory.Delete(Directoryˉpath, recursive: true);
+        }
+
+        Compilerˉbuildˉdriverˉpackages(compilerˉfragment);
+    }
+
+    private static void Compilerˉbuildˉdriverˉpackages(
+        Nativeˉfragment compilerˉfragment)
+    {
+        static (int Exitˉcode, string Standardˉoutput, string Standardˉerror) Executeˉtool(
+            params string[] arguments)
+        {
+            var Originalˉoutput = Console.Out;
+            var Originalˉerror = Console.Error;
+            using var Output = new StringWriter(
+                System.Globalization.CultureInfo.InvariantCulture);
+            using var Error = new StringWriter(
+                System.Globalization.CultureInfo.InvariantCulture);
+            try
+            {
+                Console.SetOut(Output);
+                Console.SetError(Error);
+                var Exitˉcode = Windvale.Tool.Program.Main(arguments);
+                return (Exitˉcode, Output.ToString(), Error.ToString());
+            }
+            finally
+            {
+                Console.SetOut(Originalˉoutput);
+                Console.SetError(Originalˉerror);
+            }
+        }
+
+        var Driverˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
+            COMPILER_BUILD_DRIVER_SOURCE,
+            "Compiler-Build-Driver.wv",
+            additionalˉdependencies:
+            [
+                new(
+                    "Compiler-Wvb-Verifier-Semantic-Core.wv",
+                    COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
+                new(
+                    "Compiler-Wvb-Verifier-Executable-Core.wv",
+                    COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
+            ]);
+        Equal(718_058, Driverˉbytes.Length);
+        Equal(
+            COMPILER_BUILD_DRIVER_SHA256,
+            Objectˉdigest.Calculateˉsha256(Driverˉbytes));
+        var Driverˉmodule = Moduleˉcodec.Readˉandˉverify(Driverˉbytes);
+        Equal("Windvaleˉcompilerˉbuildˉdriver", Driverˉmodule.Module.Name);
+        Sequenceˉequal(
+            [
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.FILE_WRITE_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            ],
+            Driverˉmodule.Module.Capabilities.Select(Capability => Capability.Name));
+
+        var Driverˉnative = X64ˉnativeˉbackend.Compile(Driverˉmodule);
+        Nativeˉfragmentˉverifier.Verify(Driverˉnative.Fragment);
+        Sequenceˉequal(compilerˉfragment.Requiredˉservices, Driverˉnative.Fragment.Requiredˉservices);
+        var Nativeˉentry = Driverˉnative.Fragment.Symbols.Single(Symbol =>
+            Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
+            Symbol.Kind == Nativeˉsymbolˉkind.Function &&
+            Symbol.Name == "Main").Offset;
+        var Windowsˉbundle = X64ˉnativeˉserviceˉbundle.Build(
+            Driverˉnative.Fragment,
+            Nativeˉserviceˉplatform.Windows);
+        var Linuxˉbundle = X64ˉnativeˉserviceˉbundle.Build(
+            Driverˉnative.Fragment,
+            Nativeˉserviceˉplatform.Linux);
+        Equal(10, Windowsˉbundle.Placements.Length);
+        Equal(10, Linuxˉbundle.Placements.Length);
+
+        var Rejectedˉwindows = Windowsˉconsoleˉapplicationˉwriter
+            .Writeˉhostedˉbuildˉdriver(
+                compilerˉfragment,
+                Driverˉmodule.Module.Capabilities,
+                "Compilerˉsourceˉwvbˉtool");
+        True(!Rejectedˉwindows.Success, "The Windows build-driver writer accepted the compiler module identity.");
+        Equal("WVW1401", Rejectedˉwindows.Diagnostics.Single().Code);
+        var Rejectedˉlinux = Linuxˉconsoleˉapplicationˉwriter
+            .Writeˉhostedˉbuildˉdriver(
+                compilerˉfragment,
+                Driverˉmodule.Module.Capabilities,
+                "Compilerˉsourceˉwvbˉtool");
+        True(!Rejectedˉlinux.Success, "The Linux build-driver writer accepted the compiler module identity.");
+        Equal("WVL1401", Rejectedˉlinux.Diagnostics.Single().Code);
+
+        var Firstˉwindows = Windowsˉconsoleˉapplicationˉwriter
+            .Writeˉhostedˉbuildˉdriver(
+                Driverˉnative.Fragment,
+                Driverˉmodule.Module.Capabilities,
+                Driverˉmodule.Module.Name);
+        True(
+            Firstˉwindows.Success,
+            Firstˉwindows.Diagnostics.IsEmpty
+                ? "The Windows build-driver writer failed without a diagnostic."
+                : Firstˉwindows.Diagnostics[0].Message);
+        var Secondˉwindows = Windowsˉhostedˉcompilerˉapplicationˉbuilder.Build(
+            Driverˉmodule.Module.Capabilities,
+            Windowsˉbundle,
+            Nativeˉentry,
+            Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
+        Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
+        Equal(18_099_712, Firstˉwindows.Imageˉbytes.Length);
+        Equal(
+            COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
+        var Verifiedˉwindows = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+            Firstˉwindows.Imageˉbytes.AsSpan(),
+            Windowsˉbundle,
+            Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
+        Equal(
+            Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver,
+            Verifiedˉwindows.Runtime.Metadata.Profile);
+        Equal(Nativeˉentry, Verifiedˉwindows.Nativeˉentryˉoffset);
+        Throwsˉinvalidˉdata(() =>
+            _ = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Firstˉwindows.Imageˉbytes.AsSpan(),
+                Windowsˉbundle));
+
+        var Firstˉlinux = Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉbuildˉdriver(
+            Driverˉnative.Fragment,
+            Driverˉmodule.Module.Capabilities,
+            Driverˉmodule.Module.Name);
+        True(
+            Firstˉlinux.Success,
+            Firstˉlinux.Diagnostics.IsEmpty
+                ? "The Linux build-driver writer failed without a diagnostic."
+                : Firstˉlinux.Diagnostics[0].Message);
+        var Secondˉlinux = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
+            Driverˉmodule.Module.Capabilities,
+            Linuxˉbundle,
+            Nativeˉentry,
+            Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
+        Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
+        Equal(18_100_224, Firstˉlinux.Imageˉbytes.Length);
+        Equal(
+            COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
+        var Verifiedˉlinux = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+            Firstˉlinux.Imageˉbytes.AsSpan(),
+            Linuxˉbundle,
+            Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
+        Equal(
+            Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver,
+            Verifiedˉlinux.Runtime.Metadata.Profile);
+        Equal(Nativeˉentry, Verifiedˉlinux.Nativeˉentryˉoffset);
+        Throwsˉinvalidˉdata(() =>
+            _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Firstˉlinux.Imageˉbytes.AsSpan(),
+                Linuxˉbundle));
+
+        foreach (var Offset in new[]
+        {
+            0x98 + 2,
+            Verifiedˉwindows.Layout.Textˉfileˉoffset + Verifiedˉwindows.Layout.Bundleˉoffset,
+            checked((int)Verifiedˉwindows.Layout.Runtimeˉfileˉoffset +
+                Hostedˉcompilerˉruntimeˉdata.METADATA_OFFSET),
+        })
+        {
+            var Corrupted = Firstˉwindows.Imageˉbytes.ToArray();
+            Corrupted[Offset] ^= 1;
+            Throwsˉinvalidˉdata(() =>
+                _ = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                    Corrupted,
+                    Windowsˉbundle,
+                    Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver));
+        }
+        Throwsˉinvalidˉdata(() =>
+            _ = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Firstˉwindows.Imageˉbytes.AsSpan(0, Firstˉwindows.Imageˉbytes.Length - 1),
+                Windowsˉbundle,
+                Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver));
+        Throwsˉinvalidˉdata(() =>
+            _ = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                [.. Firstˉwindows.Imageˉbytes, 0],
+                Windowsˉbundle,
+                Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver));
+
+        foreach (var Offset in new[]
+        {
+            0x180 + 24,
+            Verifiedˉlinux.Layout.Textˉfileˉoffset + Verifiedˉlinux.Layout.Bundleˉoffset,
+            checked((int)Verifiedˉlinux.Layout.Dataˉfileˉoffset +
+                Hostedˉcompilerˉruntimeˉdata.METADATA_OFFSET),
+        })
+        {
+            var Corrupted = Firstˉlinux.Imageˉbytes.ToArray();
+            Corrupted[Offset] ^= 1;
+            Throwsˉinvalidˉdata(() =>
+                _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                    Corrupted,
+                    Linuxˉbundle,
+                    Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver));
+        }
+        Throwsˉinvalidˉdata(() =>
+            _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Firstˉlinux.Imageˉbytes.AsSpan(0, Firstˉlinux.Imageˉbytes.Length - 1),
+                Linuxˉbundle,
+                Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver));
+        Throwsˉinvalidˉdata(() =>
+            _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                [.. Firstˉlinux.Imageˉbytes, 0],
+                Linuxˉbundle,
+                Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver));
+
+        var Directoryˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-compiler-build-driver-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Directoryˉpath);
+        try
+        {
+            var Driverˉpath = Path.Combine(Directoryˉpath, "Wvbuild.wvb");
+            var Sourceˉpath = Path.Combine(Directoryˉpath, "Function-Only.wv");
+            var Invalidˉpath = Path.Combine(Directoryˉpath, "Invalid.wv");
+            var Outputˉpath = Path.Combine(Directoryˉpath, "Output.wvb");
+            File.WriteAllBytes(Driverˉpath, Driverˉbytes);
+            File.WriteAllText(
+                Sourceˉpath,
+                SOURCE_WVB_FUNCTION_ONLY_SOURCE,
+                new UTF8Encoding(false));
+            File.WriteAllText(
+                Invalidˉpath,
+                "this is not Windvale",
+                new UTF8Encoding(false));
+
+            var Cliˉtarget = OperatingSystem.IsWindows()
+                ? Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME
+                : Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME;
+            var Cliˉapplication = Executeˉtool(
+                "aot",
+                Driverˉpath,
+                "--target",
+                Cliˉtarget);
+            Equal(0, Cliˉapplication.Exitˉcode);
+            Equal(string.Empty, Cliˉapplication.Standardˉerror);
+            Contains(Cliˉapplication.Standardˉoutput, $"Target: {Cliˉtarget}");
+            Sequenceˉequal(
+                OperatingSystem.IsWindows()
+                    ? Firstˉwindows.Imageˉbytes
+                    : Firstˉlinux.Imageˉbytes,
+                File.ReadAllBytes(Path.ChangeExtension(
+                    Driverˉpath,
+                    Windvale.Tool.Program.Targetˉoutputˉextension(Cliˉtarget))));
+
+            var Expectedˉoutput =
+                "build status=Published verification=compiler-aligned functions=4 " +
+                "code-bytes=532 module-bytes=815\n";
+            var Expectedˉerror =
+                "build status=Compileˉrejected source-status=Sourceˉwir " +
+                "wir-status=Sourceˉbindings function=0 operation=0\n";
+            var Sameˉresourceˉerror =
+                "build status=Invalidˉinvocation reason=output-is-input\n";
+            var Sentinel = "preserve-existing-output"u8.ToArray();
+            if (OperatingSystem.IsWindows())
+            {
+                var Loadedˉmodules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                Equal(
+                    0,
+                    Executeˉwindowsˉapplication(
+                        Firstˉwindows.Imageˉbytes,
+                        Expectedˉoutput,
+                        [Sourceˉpath, Outputˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        loadedˉmodules: Loadedˉmodules));
+                Sequenceˉequal(
+                    Compileˉsuccess(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
+                    File.ReadAllBytes(Outputˉpath));
+                File.WriteAllBytes(Outputˉpath, Sentinel);
+                Equal(
+                    1,
+                    Executeˉwindowsˉapplication(
+                        Firstˉwindows.Imageˉbytes,
+                        arguments: [Invalidˉpath, Outputˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: Expectedˉerror));
+                Sequenceˉequal(Sentinel, File.ReadAllBytes(Outputˉpath));
+                var Sourceˉbefore = File.ReadAllBytes(Sourceˉpath);
+                Equal(
+                    64,
+                    Executeˉwindowsˉapplication(
+                        Firstˉwindows.Imageˉbytes,
+                        arguments: [Sourceˉpath, Sourceˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: Sameˉresourceˉerror));
+                Sequenceˉequal(Sourceˉbefore, File.ReadAllBytes(Sourceˉpath));
+                Equal(
+                    0,
+                    Loadedˉmodules.Count(Name =>
+                        Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+            }
+            if (OperatingSystem.IsLinux())
+            {
+                var Loadedˉmappings = new HashSet<string>(StringComparer.Ordinal);
+                Equal(
+                    0,
+                    Executeˉlinuxˉapplication(
+                        Firstˉlinux.Imageˉbytes,
+                        Expectedˉoutput,
+                        [Sourceˉpath, Outputˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        loadedˉmappings: Loadedˉmappings));
+                Sequenceˉequal(
+                    Compileˉsuccess(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
+                    File.ReadAllBytes(Outputˉpath));
+                File.WriteAllBytes(Outputˉpath, Sentinel);
+                Equal(
+                    1,
+                    Executeˉlinuxˉapplication(
+                        Firstˉlinux.Imageˉbytes,
+                        arguments: [Invalidˉpath, Outputˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: Expectedˉerror));
+                Sequenceˉequal(Sentinel, File.ReadAllBytes(Outputˉpath));
+                var Sourceˉbefore = File.ReadAllBytes(Sourceˉpath);
+                Equal(
+                    64,
+                    Executeˉlinuxˉapplication(
+                        Firstˉlinux.Imageˉbytes,
+                        arguments: [Sourceˉpath, Sourceˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: Sameˉresourceˉerror));
+                Sequenceˉequal(Sourceˉbefore, File.ReadAllBytes(Sourceˉpath));
                 Equal(
                     0,
                     Loadedˉmappings.Count(Name =>
@@ -21961,7 +22314,8 @@ internal static class Program
     private static byte[] Compileˉwithˉsourceˉwvbˉsuccess(
         string source,
         string sourceˉname,
-        bool includeˉsourceˉwvb = true)
+        bool includeˉsourceˉwvb = true,
+        IEnumerable<Sourceˉmoduleˉinput>? additionalˉdependencies = null)
     {
         var Dependencies = new List<Sourceˉmoduleˉinput>();
         if (includeˉsourceˉwvb)
@@ -21978,6 +22332,10 @@ internal static class Program
         Dependencies.Add(new("Compiler/Windvale/Source-Set-Core.wv", SOURCE_SET_SOURCE));
         Dependencies.Add(new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE));
         Dependencies.Add(new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE));
+        if (additionalˉdependencies is not null)
+        {
+            Dependencies.AddRange(additionalˉdependencies);
+        }
         var Result = Seedˉcompiler.Compileˉmodules(
             new(sourceˉname, source),
             Dependencies);

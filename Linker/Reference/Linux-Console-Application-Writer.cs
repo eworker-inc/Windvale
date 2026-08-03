@@ -162,6 +162,69 @@ public static class Linuxˉconsoleˉapplicationˉwriter
         }
     }
 
+    public static Linuxˉconsoleˉapplicationˉresult Writeˉhostedˉbuildˉdriver(
+        Nativeˉfragment fragment,
+        ImmutableArray<Capabilityˉdeclaration> capabilities,
+        string moduleˉname)
+    {
+        try
+        {
+            Nativeˉfragmentˉverifier.Verify(fragment);
+            var Entries = fragment.Symbols
+                .Where(Symbol => Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
+                    Symbol.Kind == Nativeˉsymbolˉkind.Function &&
+                    Symbol.Name == "Main")
+                .ToArray();
+            if (Entries.Length != 1)
+            {
+                return Linuxˉconsoleˉapplicationˉresult.Failed(
+                    "WVL1401",
+                    "The hosted build driver requires exactly one exported Main function.");
+            }
+            if (!StringComparer.Ordinal.Equals(
+                    moduleˉname,
+                    "Windvaleˉcompilerˉbuildˉdriver"))
+            {
+                return Linuxˉconsoleˉapplicationˉresult.Failed(
+                    "WVL1401",
+                    "The hosted build driver requires its canonical WVB module identity.");
+            }
+
+            var Bundle = X64ˉnativeˉserviceˉbundle.Build(
+                fragment,
+                Nativeˉserviceˉplatform.Linux);
+            var Image = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
+                capabilities,
+                Bundle,
+                Entries[0].Offset,
+                Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
+            var Verified = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Image.AsSpan(),
+                Bundle,
+                Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
+            if (Verified.Nativeˉentryˉoffset != Entries[0].Offset ||
+                Verified.Runtime.Metadata.Profile !=
+                    Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver ||
+                !Verified.Bundleˉimage.AsSpan().SequenceEqual(Bundle.Imageˉbytes.AsSpan()))
+            {
+                return Linuxˉconsoleˉapplicationˉresult.Failed(
+                    "WVL1402",
+                    "The independently verified Linux build-driver application did not reproduce its profile, entry, and service bundle.");
+            }
+            return Linuxˉconsoleˉapplicationˉresult.Succeeded(Image);
+        }
+        catch (Exception Exception) when (
+            Exception is Nativeˉbackendˉexception or
+                InvalidDataException or
+                OverflowException or
+                ArgumentException)
+        {
+            return Linuxˉconsoleˉapplicationˉresult.Failed(
+                "WVL1402",
+                $"Hosted Linux build-driver application verification failed: {Exception.Message}");
+        }
+    }
+
     public static Linuxˉconsoleˉapplicationˉresult Writeˉhostedˉverifier(
         Nativeˉfragment fragment,
         ImmutableArray<Capabilityˉdeclaration> capabilities)

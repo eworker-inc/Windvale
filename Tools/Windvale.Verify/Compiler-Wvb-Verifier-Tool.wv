@@ -1,0 +1,39 @@
+module Windvaleˉcompilerˉwvbˉverifierˉtool profile hosted;
+
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 {
+        diagnostic.write_line("Usage: wvverify <module.wvb>");
+        return 64;
+    }
+
+    let Status: u32 = Compilerˉwvbˉverify(
+        file.read_bytes(process.argument(0u32))
+    );
+    if Status == 1u32 {
+        diagnostic.write_line("wvb status=Invalid phase=semantic");
+        return 1;
+    }
+    if Status == 2u32 {
+        diagnostic.write_line("wvb status=Invalid phase=typed-execution");
+        return 1;
+    }
+    if Status == 3u32 {
+        diagnostic.write_line("wvb status=Invalid phase=control-reachability");
+        return 1;
+    }
+    if Status != 0u32 {
+        diagnostic.write_line("wvb status=Invalid phase=internal");
+        return 1;
+    }
+
+    console.write_line("wvb status=Valid profile=compiler-aligned");
+    return 0;
+}

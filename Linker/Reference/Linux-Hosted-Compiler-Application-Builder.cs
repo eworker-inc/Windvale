@@ -17,7 +17,9 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉbuilder
     internal static ImmutableArray<byte> Build(
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉcompilerˉapplicationˉprofile profile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
         var Layout = Linuxˉhostedˉcompilerˉapplicationˉcontract.Plan(
             bundle,
@@ -26,7 +28,8 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉbuilder
             Consoleˉapplicationˉtarget.Linuxˉx64,
             capabilities,
             bundle,
-            nativeˉentryˉoffset);
+            nativeˉentryˉoffset,
+            profile);
         var Startup = Linuxˉhostedˉcompilerˉstartup.Build(
             Layout.Textˉaddress,
             Layout.Dataˉaddress,
@@ -75,7 +78,7 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉbuilder
             [0x57, 0x69, 0x6E, 0x64, 0x76, 0x61, 0x6C, 0x65, 0x00];
         Noteˉname.CopyTo(Result.AsSpan(NOTE_OFFSET + 12));
         Writeˉu32(Result, NOTE_OFFSET + 24,
-            Linuxˉhostedˉcompilerˉapplicationˉcontract.FORMAT_VERSION);
+            Hostedˉcompilerˉapplicationˉmetadata.Containerˉformat(profile));
 
         Startup.AsSpan().CopyTo(Result.AsSpan(Layout.Textˉfileˉoffset));
         bundle.Imageˉbytes.AsSpan().CopyTo(Result.AsSpan(

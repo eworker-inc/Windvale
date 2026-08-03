@@ -1,14 +1,8 @@
-module Windvaleˉcompilerˉwvbˉverifierˉsemantic profile hosted;
+module Windvaleˉcompilerˉwvbˉverifierˉsemantic profile portable;
 
 import Windvaleˉcompilerˉwvbˉverifierˉexecutable;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
-
-fn Aˉidentifier(Input: bytes) -> bytes {
+export fn Aˉidentifier(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let End: u32 = Bytesˉlength(Input);
     var Cursor: u32 = 0u32;
@@ -61,7 +55,7 @@ fn Aˉidentifier(Input: bytes) -> bytes {
     return Input;
 }
 
-fn Bˉstructure(Input: bytes) -> bytes {
+export fn Bˉstructure(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Total: u32 = Bytesˉlength(Input);
     if Total < 12u32 { return Invalid; }
@@ -421,7 +415,7 @@ fn Bˉstructure(Input: bytes) -> bytes {
 
 
 
-fn Cˉmoduleˉandˉcapabilities(Input: bytes) -> bytes {
+export fn Cˉmoduleˉandˉcapabilities(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Moduleˉpayload: u32 = 20u32;
     let Profile: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Moduleˉpayload));
@@ -626,7 +620,7 @@ fn Cˉmoduleˉandˉcapabilities(Input: bytes) -> bytes {
     return Input;
 }
 
-fn Dˉdata(Input: bytes) -> bytes {
+export fn Dˉdata(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Header: u32 = 12u32;
     var Section: u32 = 1u32;
@@ -791,7 +785,7 @@ fn Dˉdata(Input: bytes) -> bytes {
     return Input;
 }
 
-fn Eˉfunctions(Input: bytes) -> bytes {
+export fn Eˉfunctions(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Header: u32 = 12u32;
     var Section: u32 = 1u32;
@@ -948,7 +942,7 @@ fn Eˉfunctions(Input: bytes) -> bytes {
     return Input;
 }
 
-fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
+export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Header: u32 = 12u32;
     var Section: u32 = 1u32;
@@ -1374,7 +1368,7 @@ fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     return Input;
 }
 
-fn Gˉtypes(Input: bytes) -> bytes {
+export fn Gˉtypes(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Header: u32 = 12u32;
     var Section: u32 = 1u32;
@@ -1632,7 +1626,7 @@ fn Gˉtypes(Input: bytes) -> bytes {
     return Input;
 }
 
-fn Compilerˉwvbˉverifyˉsemantic(Input: bytes) -> bytes {
+export fn Compilerˉwvbˉverifyˉsemantic(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var State: bytes = Bˉstructure(Input);
     if Bytesˉlength(State) == 0u32 { return Invalid; }
@@ -1649,29 +1643,12 @@ fn Compilerˉwvbˉverifyˉsemantic(Input: bytes) -> bytes {
     return Bytesˉfromˉu8(1u8);
 }
 
-export fn Main() -> i32 {
-    if process.argument_count() != 1u32 {
-        diagnostic.write_line("Usage: wvverify <module.wvb>");
-        return 64;
-    }
-
-    let Input: bytes = file.read_bytes(process.argument(0u32));
+export fn Compilerˉwvbˉverify(Input: bytes) -> u32 {
     var State: bytes = Compilerˉwvbˉverifyˉsemantic(Input);
-    if Bytesˉlength(State) == 0u32 {
-        diagnostic.write_line("wvb status=Invalid phase=semantic");
-        return 1;
-    }
+    if Bytesˉlength(State) == 0u32 { return 1u32; }
     State = Hˉexecutable(Input);
-    if Bytesˉlength(State) == 0u32 {
-        diagnostic.write_line("wvb status=Invalid phase=typed-execution");
-        return 1;
-    }
+    if Bytesˉlength(State) == 0u32 { return 2u32; }
     State = Iˉcontrol(Input);
-    if Bytesˉlength(State) == 0u32 {
-        diagnostic.write_line("wvb status=Invalid phase=control-reachability");
-        return 1;
-    }
-
-    console.write_line("wvb status=Valid profile=compiler-aligned");
-    return 0;
+    if Bytesˉlength(State) == 0u32 { return 3u32; }
+    return 0u32;
 }

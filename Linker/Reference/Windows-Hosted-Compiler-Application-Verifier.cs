@@ -15,7 +15,9 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉverifier
 
     internal static Verifiedˉwindowsˉhostedˉcompilerˉapplication Verify(
         ReadOnlySpan<byte> bytes,
-        Nativeˉserviceˉbundle expectedˉbundle)
+        Nativeˉserviceˉbundle expectedˉbundle,
+        Hostedˉcompilerˉapplicationˉprofile expectedˉprofile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
         Windowsˉhostedˉcompilerˉapplicationˉcontract.Validateˉbundle(expectedˉbundle);
         var Textˉvirtual = checked((uint)(
@@ -58,7 +60,8 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉverifier
 
         Requireˉu16(bytes, OPTIONAL + 0, 0x020B, "PE32+ magic");
         Requireˉbyte(bytes, OPTIONAL + 2,
-            Windowsˉhostedˉcompilerˉapplicationˉcontract.FORMAT_VERSION,
+            checked((byte)Hostedˉcompilerˉapplicationˉmetadata.Containerˉformat(
+                expectedˉprofile)),
             "writer version");
         Requireˉbyte(bytes, OPTIONAL + 3, 0, "writer minor version");
         Requireˉu32(bytes, OPTIONAL + 4, Textˉfileˉbytes, "initialized code size");
@@ -150,7 +153,8 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉverifier
                 checked((int)Windowsˉhostedˉcompilerˉapplicationˉcontract.RUNTIME_FILE_BYTES)),
             Consoleˉapplicationˉtarget.Windowsˉx64,
             expectedˉbundle,
-            bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length));
+            bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length),
+            expectedˉprofile);
         if (Runtime.Metadata.Bundleˉoffset !=
                 Windowsˉhostedˉcompilerˉapplicationˉcontract.BUNDLE_TEXT_OFFSET ||
             Runtime.Metadata.Bundleˉbytes != expectedˉbundle.Imageˉbytes.Length)

@@ -101,7 +101,8 @@ internal static class Program
             "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1|" +
             "windows-x64-console-v2|linux-x64-console-v2|" +
             "windows-x64-console-v3|linux-x64-console-v3|" +
-            "windows-x64-verifier-v1|linux-x64-verifier-v1>] [-o <artifact>]";
+            "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
+            "windows-x64-build-driver-v1|linux-x64-build-driver-v1>] [-o <artifact>]";
         if (arguments.Length == 0 || arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
             return Usageˉerror(Usage);
@@ -156,6 +157,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME => ".exe",
+        Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME => ".exe",
         _ => ".elf",
     };
 
@@ -207,7 +209,8 @@ internal static class Program
             "--target <windows-x64-console-v1|linux-x64-console-v1|" +
             "windows-x64-console-v2|linux-x64-console-v2|" +
             "windows-x64-console-v3|linux-x64-console-v3|" +
-            "windows-x64-verifier-v1|linux-x64-verifier-v1> [-o <artifact>]";
+            "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
+            "windows-x64-build-driver-v1|linux-x64-build-driver-v1> [-o <artifact>]";
         if (arguments.Length is not (3 or 5) ||
             arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
@@ -278,7 +281,9 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
-        Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME;
+        Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
+        Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
+        Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME;
 
     private static int Compileˉsourceˉfiles(
         string sourceˉpath,
@@ -381,11 +386,13 @@ internal static class Program
         {
             Nativeˉfragment Fragment;
             ImmutableArray<Capabilityˉdeclaration> Capabilities;
+            string Moduleˉname;
             try
             {
                 var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
                 Fragment = X64ˉnativeˉbackend.Compile(Module).Fragment;
                 Capabilities = Module.Module.Capabilities;
+                Moduleˉname = Module.Module.Name;
             }
             catch (Nativeˉbackendˉexception Exception)
             {
@@ -398,7 +405,8 @@ internal static class Program
             if (target is Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
-                Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME)
+                Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
+                Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME)
             {
                 var Application = target switch
                 {
@@ -410,6 +418,11 @@ internal static class Program
                         Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉverifier(
                             Fragment,
                             Capabilities),
+                    Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME =>
+                        Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉbuildˉdriver(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     _ => Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉcompiler(
                         Fragment,
                         Capabilities),
@@ -438,6 +451,11 @@ internal static class Program
                         Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉverifier(
                             Fragment,
                             Capabilities),
+                    Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME =>
+                        Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉbuildˉdriver(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     _ => Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉcompiler(
                         Fragment,
                         Capabilities),
@@ -462,7 +480,8 @@ internal static class Program
             if ((target is Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
-                    Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME) &&
+                    Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
+                    Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME) &&
                 OperatingSystem.IsLinux())
             {
                 Prepareˉtemporary = Prepareˉlinuxˉexecutable;
@@ -917,14 +936,16 @@ internal static class Program
             "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1|" +
             "windows-x64-console-v2|linux-x64-console-v2|" +
             "windows-x64-console-v3|linux-x64-console-v3|" +
-            "windows-x64-verifier-v1|linux-x64-verifier-v1>] [-o <artifact>]");
+            "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
+            "windows-x64-build-driver-v1|linux-x64-build-driver-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
         output.WriteLine(
             "  windvale aot <module.wvb> " +
             "--target <windows-x64-console-v1|linux-x64-console-v1|" +
             "windows-x64-console-v2|linux-x64-console-v2|" +
             "windows-x64-console-v3|linux-x64-console-v3|" +
-            "windows-x64-verifier-v1|linux-x64-verifier-v1> [-o <artifact>]");
+            "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
+            "windows-x64-build-driver-v1|linux-x64-build-driver-v1> [-o <artifact>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");
         output.WriteLine("  windvale inspect <module.wvb>");

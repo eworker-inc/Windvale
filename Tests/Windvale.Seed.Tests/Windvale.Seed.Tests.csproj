@@ -406,6 +406,12 @@
       Include="../../Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
       LogicalName="Windvale.Seed.Tests.Compiler-Wvb-Verifier-Executable-Core.wv" />
     <EmbeddedResource
+      Include="../../Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Compiler-Wvb-Verifier-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.Build/Compiler-Build-Driver.wv"
+      LogicalName="Windvale.Seed.Tests.Compiler-Build-Driver.wv" />
+    <EmbeddedResource
       Include="../Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Main.wv" />
   </ItemGroup>

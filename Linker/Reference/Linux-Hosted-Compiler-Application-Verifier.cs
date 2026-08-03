@@ -17,7 +17,9 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉverifier
 
     internal static Verifiedˉlinuxˉhostedˉcompilerˉapplication Verify(
         ReadOnlySpan<byte> bytes,
-        Nativeˉserviceˉbundle expectedˉbundle)
+        Nativeˉserviceˉbundle expectedˉbundle,
+        Hostedˉcompilerˉapplicationˉprofile expectedˉprofile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
         Linuxˉhostedˉcompilerˉapplicationˉcontract.Validateˉbundle(expectedˉbundle);
         var Textˉbytes = checked((uint)(
@@ -86,7 +88,7 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉverifier
             "note owner");
         Requireˉzero(bytes, NOTE_OFFSET + 21, 3, "note owner padding");
         Requireˉu32(bytes, NOTE_OFFSET + 24,
-            Linuxˉhostedˉcompilerˉapplicationˉcontract.FORMAT_VERSION,
+            Hostedˉcompilerˉapplicationˉmetadata.Containerˉformat(expectedˉprofile),
             "container format version");
         Requireˉzero(bytes, NOTE_OFFSET + NOTE_BYTES,
             Linuxˉhostedˉcompilerˉapplicationˉcontract.HEADER_BYTES -
@@ -116,7 +118,8 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉverifier
                 checked((int)Linuxˉhostedˉcompilerˉapplicationˉcontract.DATA_FILE_BYTES)),
             Consoleˉapplicationˉtarget.Linuxˉx64,
             expectedˉbundle,
-            bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length));
+            bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length),
+            expectedˉprofile);
         if (Runtime.Metadata.Bundleˉoffset !=
                 Linuxˉhostedˉcompilerˉapplicationˉcontract.BUNDLE_TEXT_OFFSET ||
             Runtime.Metadata.Bundleˉbytes != expectedˉbundle.Imageˉbytes.Length)

@@ -6,6 +6,8 @@
 
 The candidate allocates hosted container format 3 without changing the qualified version-1 or version-2 formats or bytes. It does not change WVB 1.6, WVO 1.0, native ABI 22, execution-context format 7, service-table format 5, the ordinary 4 MiB Windvale `bytes` limit, or the standard WVO/link admission profile.
 
+The later [compiler build-driver profile](Windvale-Compiler-Build-Driver.md) deliberately reuses this exact authority/runtime/startup family but carries distinct `WVHB 1` metadata and outer container format 5. Compiler and build-driver constructors and parsers select their expected profile explicitly; the qualified format-3 compiler bytes and identities remain unchanged.
+
 ## Exact compiler requirements
 
 The manifest admits only the canonical exact compiler module. Its capability declarations remain in WVB order:

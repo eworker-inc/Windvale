@@ -17,7 +17,9 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉbuilder
     internal static ImmutableArray<byte> Build(
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉcompilerˉapplicationˉprofile profile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
         var Layout = Windowsˉhostedˉcompilerˉapplicationˉcontract.Plan(
             bundle,
@@ -28,7 +30,8 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉbuilder
             Consoleˉapplicationˉtarget.Windowsˉx64,
             capabilities,
             bundle,
-            nativeˉentryˉoffset);
+            nativeˉentryˉoffset,
+            profile);
         var Imports = Windowsˉhostedˉcompilerˉimports.Build(Layout.Importˉaddress);
         var Startup = Windowsˉhostedˉcompilerˉstartup.Build(
             Layout.Textˉaddress,
@@ -50,7 +53,8 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉbuilder
 
         var Optional = OPTIONAL_HEADER_OFFSET;
         Writeˉu16(Result, Optional + 0, 0x020B);
-        Result[Optional + 2] = Windowsˉhostedˉcompilerˉapplicationˉcontract.FORMAT_VERSION;
+        Result[Optional + 2] = checked((byte)
+            Hostedˉcompilerˉapplicationˉmetadata.Containerˉformat(profile));
         Writeˉu32(Result, Optional + 4, Layout.Textˉfileˉbytes);
         Writeˉu32(Result, Optional + 8,
             Layout.Dataˉfileˉbytes +

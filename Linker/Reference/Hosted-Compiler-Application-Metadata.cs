@@ -26,8 +26,15 @@ internal enum Hostedˉcompilerˉcapabilityˉsignature : uint
     Voidˉtoˉu32 = 5,
 }
 
+internal enum Hostedˉcompilerˉapplicationˉprofile : uint
+{
+    Compiler = 1,
+    Buildˉdriver = 2,
+}
+
 internal sealed record Verifiedˉhostedˉcompilerˉmetadata(
     Consoleˉapplicationˉtarget Target,
+    Hostedˉcompilerˉapplicationˉprofile Profile,
     uint Bundleˉoffset,
     uint Bundleˉbytes,
     uint Nativeˉimageˉbytes,
@@ -38,9 +45,11 @@ internal sealed record Verifiedˉhostedˉcompilerˉmetadata(
 
 internal static class Hostedˉcompilerˉapplicationˉmetadata
 {
-    internal const uint MAGIC = 0x4148_5657;
+    internal const uint COMPILER_MAGIC = 0x4148_5657;
+    internal const uint BUILD_DRIVER_MAGIC = 0x4248_5657;
     internal const uint FORMAT_VERSION = 1;
-    internal const uint CONTAINER_FORMAT_VERSION = 3;
+    internal const uint COMPILER_CONTAINER_FORMAT_VERSION = 3;
+    internal const uint BUILD_DRIVER_CONTAINER_FORMAT_VERSION = 5;
     internal const int SIZE = 1024;
     internal const int HEADER_BYTES = 128;
     internal const int CAPABILITY_RECORD_BYTES = 16;
@@ -52,6 +61,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         CAPABILITY_OFFSET + CAPABILITY_COUNT * CAPABILITY_RECORD_BYTES;
     internal const int NATIVE_SHA256_OFFSET = 96;
     internal const uint COMPILER_PROFILE_FLAGS = 1;
+    internal const uint BUILD_DRIVER_PROFILE_FLAGS = 3;
     internal const ulong COMPILER_MAXIMUM_INSTRUCTIONS = 8_000_000_000;
 
     private static readonly ImmutableArray<Hostedˉcompilerˉcapabilityˉcontract>
@@ -107,15 +117,18 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,
         uint bundleˉoffset,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉcompilerˉapplicationˉprofile profile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
         Validateˉinputs(target, capabilities, bundle, bundleˉoffset, nativeˉentryˉoffset);
+        var Profileˉvalue = Profileˉcontract(profile);
         var Bytes = new byte[SIZE];
-        Writeˉu32(Bytes, 0, MAGIC);
+        Writeˉu32(Bytes, 0, Profileˉvalue.Magic);
         Writeˉu32(Bytes, 4, FORMAT_VERSION);
         Writeˉu32(Bytes, 8, SIZE);
         Writeˉu32(Bytes, 12, (uint)target);
-        Writeˉu32(Bytes, 16, CONTAINER_FORMAT_VERSION);
+        Writeˉu32(Bytes, 16, Profileˉvalue.Containerˉformat);
         Writeˉu32(Bytes, 20, Nativeˉcontract.ABI_VERSION);
         Writeˉu32(Bytes, 24, Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
         Writeˉu32(Bytes, 28, Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
@@ -132,7 +145,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         Writeˉu32(Bytes, 72, nativeˉentryˉoffset);
         Writeˉu32(Bytes, 76, Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES);
         Writeˉu32(Bytes, 80, Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES);
-        Writeˉu32(Bytes, 84, COMPILER_PROFILE_FLAGS);
+        Writeˉu32(Bytes, 84, Profileˉvalue.Flags);
         Writeˉu64(Bytes, 88, COMPILER_MAXIMUM_INSTRUCTIONS);
 
         for (var Index = 0; Index < CAPABILITY_CONTRACTS.Length; Index++)
@@ -170,8 +183,11 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         ReadOnlySpan<byte> bytes,
         Consoleˉapplicationˉtarget expectedˉtarget,
         Nativeˉserviceˉbundle expectedˉbundle,
-        ReadOnlySpan<byte> actualˉbundleˉimage)
+        ReadOnlySpan<byte> actualˉbundleˉimage,
+        Hostedˉcompilerˉapplicationˉprofile expectedˉprofile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
+        var Profileˉvalue = Profileˉcontract(expectedˉprofile);
         if (bytes.Length != SIZE)
         {
             throw Invalid("The hosted compiler metadata has an invalid size.");
@@ -184,11 +200,11 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         {
             throw Invalid("The hosted compiler service bundle does not match its verified input.");
         }
-        Require(bytes, 0, MAGIC, "magic");
+        Require(bytes, 0, Profileˉvalue.Magic, "magic");
         Require(bytes, 4, FORMAT_VERSION, "metadata version");
         Require(bytes, 8, SIZE, "metadata size");
         Require(bytes, 12, (uint)expectedˉtarget, "target");
-        Require(bytes, 16, CONTAINER_FORMAT_VERSION, "container version");
+        Require(bytes, 16, Profileˉvalue.Containerˉformat, "container version");
         Require(bytes, 20, Nativeˉcontract.ABI_VERSION, "native ABI version");
         Require(bytes, 24, Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION,
             "execution-context version");
@@ -210,7 +226,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
             "record-arena size");
         Require(bytes, 80, Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES,
             "text-arena size");
-        Require(bytes, 84, COMPILER_PROFILE_FLAGS, "profile flags");
+        Require(bytes, 84, Profileˉvalue.Flags, "profile flags");
         Requireˉu64(bytes, 88, COMPILER_MAXIMUM_INSTRUCTIONS, "instruction budget");
         if (Bundleˉoffset % 16 != 0 || Nativeˉentry >= expectedˉbundle.Nativeˉimageˉbytes)
         {
@@ -269,6 +285,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
 
         return new(
             expectedˉtarget,
+            expectedˉprofile,
             Bundleˉoffset,
             checked((uint)expectedˉbundle.Imageˉbytes.Length),
             checked((uint)expectedˉbundle.Nativeˉimageˉbytes),
@@ -277,6 +294,24 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
             [.. CAPABILITY_CONTRACTS.Select(Contract => Declaration(Contract.Name))],
             expectedˉbundle.Placements);
     }
+
+    internal static uint Containerˉformat(
+        Hostedˉcompilerˉapplicationˉprofile profile) =>
+        Profileˉcontract(profile).Containerˉformat;
+
+    private static Hostedˉcompilerˉprofileˉcontract Profileˉcontract(
+        Hostedˉcompilerˉapplicationˉprofile profile) => profile switch
+        {
+            Hostedˉcompilerˉapplicationˉprofile.Compiler => new(
+                COMPILER_MAGIC,
+                COMPILER_CONTAINER_FORMAT_VERSION,
+                COMPILER_PROFILE_FLAGS),
+            Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver => new(
+                BUILD_DRIVER_MAGIC,
+                BUILD_DRIVER_CONTAINER_FORMAT_VERSION,
+                BUILD_DRIVER_PROFILE_FLAGS),
+            _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+        };
 
     private static void Validateˉinputs(
         Consoleˉapplicationˉtarget target,
@@ -404,4 +439,9 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         string Name,
         Nativeˉservice Service,
         Hostedˉcompilerˉcapabilityˉsignature Signature);
+
+    private sealed record Hostedˉcompilerˉprofileˉcontract(
+        uint Magic,
+        uint Containerˉformat,
+        uint Flags);
 }

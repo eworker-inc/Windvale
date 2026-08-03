@@ -8,8 +8,11 @@ This is a deliberately fixed tool profile, not a general hosted-application form
 
 The canonical source project is [`Windvale-Compiler-Wvb-Verifier.wvproj`](../Windvale-Compiler-Wvb-Verifier.wvproj). It composes:
 
+- `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv` as the hosted adapter;
 - `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv`;
 - `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv`.
+
+The semantic and executable modules are portable. Their shared `Compilerˉwvbˉverify(bytes) -> u32` entry is also consumed in-process by the [compiler build driver](Windvale-Compiler-Build-Driver.md); the standalone tool owns only arguments, file input, diagnostics, and process result mapping.
 
 The executable requires one candidate path:
 
@@ -105,13 +108,13 @@ The package constructors retain only the zero-relocation templates plus typed pa
 
 `windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports eleven functions from `KERNEL32.dll` and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the one bounded input snapshot.
 
-The current canonical application is 957,440 bytes with SHA-256 `0255c26e067724cce0b2cb061c3abb46ad8832f40bccabe49dcd6d7ca7931e15`.
+The current canonical application is 960,512 bytes with SHA-256 `109a093fc9ff0a9f18c4125d635d2713111bf0c61ca71f4eb38e85850430900c`.
 
 ## Linux container
 
 `linux-x64-verifier-v1` emits a sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-4 Windvale note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only checked startup syscalls.
 
-The current canonical application is 958,464 bytes with SHA-256 `bbe44c80c8d1ff035f7b0226c7271f4ab0a1c95aec92acc015d9ba169856cc33`.
+The current canonical application is 962,560 bytes with SHA-256 `35dc54aa0d5055cdce6df3ad1af4e921bbd1f53151835d22c63979b57cbb8716`.
 
 ## Construction and verification
 
@@ -123,12 +126,12 @@ windvale aot Windvale-Compiler-Wvb-Verifier.wvb --target windows-x64-verifier-v1
 windvale aot Windvale-Compiler-Wvb-Verifier.wvb --target linux-x64-verifier-v1
 ```
 
-The canonical WVB is 118,080 bytes with SHA-256 `957384448769a7a5b865301444b06dc9809f8866f515b0f52f9dea20a4f6e011`.
+The canonical WVB is 118,536 bytes with SHA-256 `028af7f7a69d3ea434cfaf5e4122cf09878dfb10593c03af34351844715d49f5`.
 
 Both public writers require exactly one exported `Main() -> i32`, the five canonical capability declarations, and the five canonical fragment services. They add only the startup-internal UTF-8 service, construct the outer application, parse it independently, and atomically publish it only after every manifest, startup, import, section, permission, extent, padding, digest, and native-entry check succeeds.
 
-Qualification shares the existing exact-compiler AOT test so the suite compiles the large compiler once. That test compiles the verifier, verifies both deterministic packages, reconstructs both WVA startups, corrupts each outer boundary, runs the current-host application against the exact compiler WVB, rejects a corrupted candidate, and inspects the child for .NET modules or mappings.
+Qualification shares the existing exact-compiler AOT test so the suite compiles the large compiler once. That test compiles the verifier, verifies both deterministic packages, reconstructs both WVA startups, corrupts each outer boundary, runs the current-host application against the exact compiler WVB, rejects a corrupted candidate, and inspects the child for .NET modules or mappings. The same case then consumes the portable verifier core in the build-driver proof rather than compiling a second verifier implementation.
 
 ## Retirement boundary
 
-These executables satisfy one part of the native-retirement inventory: a Windvale-authored semantic verifier can run as a direct Windows or Linux process. They do not retire Stage 0. The package constructors, CLI, build driver, assembler, linker, inspector, reference recovery compiler, test runner, and normal repository automation still invoke .NET. Cross-host qualification and all remaining [Decision 0057](../Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) conditions remain mandatory before .NET leaves the normal path.
+These executables satisfy one part of the native-retirement inventory: a Windvale-authored semantic verifier can run as a direct Windows or Linux process, and its portable core is now shared by the native compiler build driver. They do not retire Stage 0. The package constructors, CLI, project-aware build shell, assembler, linker, inspector, reference recovery compiler, test runner, and normal repository automation still invoke .NET. Cross-host qualification and all remaining [Decision 0057](../Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) conditions remain mandatory before .NET leaves the normal path.
