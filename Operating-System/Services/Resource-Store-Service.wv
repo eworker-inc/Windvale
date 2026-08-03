@@ -1,0 +1,25 @@
+module Resourceˉstoreˉservice profile hosted;
+
+import Resourceˉstore;
+
+capability file.read_bytes;
+
+data Storeˉname: text = "boot:resources.wvrs";
+data Configurationˉname: text = "boot:main.configuration";
+
+export fn Main() -> i32 {
+    let Store: bytes = file.read_bytes(Storeˉname);
+    let Result: Resourceˉstoreˉresult = Resourceˉstoreˉlookup(Store, Configurationˉname);
+    if Result.Status != Resourceˉstoreˉstatus.Valid {
+        return Resourceˉstoreˉstatusˉi32(Result.Status);
+    }
+    if Result.Identifier != 3u32 { return 20; }
+    if Result.Kind != 3u32 { return 21; }
+    if Result.Attributes != 7u32 { return 22; }
+    if Bytesˉlength(Result.Value) != 4u32 { return 23; }
+    if Bytesˉreadˉu8(Result.Value, 0u32) != 3u8 { return 24; }
+    if Bytesˉreadˉu8(Result.Value, 1u32) != 5u8 { return 25; }
+    if Bytesˉreadˉu8(Result.Value, 2u32) != 8u8 { return 26; }
+    if Bytesˉreadˉu8(Result.Value, 3u32) != 13u8 { return 27; }
+    return 93;
+}

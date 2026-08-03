@@ -1,0 +1,393 @@
+module Resourceˉstore profile portable;
+
+enum Resourceˉstoreˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Invalidˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉidentifier = 5;
+    Invalidˉkind = 6;
+    Invalidˉattributes = 7;
+    Invalidˉname = 8;
+    Invalidˉorder = 9;
+    Invalidˉdata = 10;
+    Invalidˉdigest = 11;
+    Notˉfound = 12;
+    Invalidˉquery = 13;
+}
+
+record Resourceˉstoreˉresult {
+    Status: Resourceˉstoreˉstatus;
+    Identifier: u32;
+    Kind: u32;
+    Attributes: u32;
+    Value: bytes;
+    Failureˉoffset: u32;
+}
+
+export fn Resourceˉstoreˉstatusˉi32(Status: Resourceˉstoreˉstatus) -> i32 {
+    if Status == Resourceˉstoreˉstatus.Invalidˉsize { return 1; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉmagic { return 2; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉversion { return 3; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉheader { return 4; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉidentifier { return 5; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉkind { return 6; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉattributes { return 7; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉname { return 8; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉorder { return 9; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉdata { return 10; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉdigest { return 11; }
+    if Status == Resourceˉstoreˉstatus.Notˉfound { return 12; }
+    if Status == Resourceˉstoreˉstatus.Invalidˉquery { return 13; }
+    return 0;
+}
+
+export fn Resourceˉstoreˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Resourceˉstoreˉfailure(
+    Input: bytes,
+    Status: Resourceˉstoreˉstatus,
+    Failureˉoffset: u32
+) -> Resourceˉstoreˉresult {
+    return Resourceˉstoreˉresult(
+        Status,
+        0u32,
+        0u32,
+        0u32,
+        Resourceˉstoreˉempty(Input),
+        Failureˉoffset
+    );
+}
+
+export fn Resourceˉstoreˉutf8ˉisˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
+    let Value: bytes = Bytesˉslice(Input, Offset, Length);
+    if !Textˉutf8ˉisˉvalid(Value) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) == 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Resourceˉstoreˉordinalˉless(
+    Input: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    var Shared: u32 = Leftˉlength;
+    if Rightˉlength < Shared { Shared = Rightˉlength; }
+    while Index < Shared {
+        let Left: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Leftˉoffset + Index));
+        let Right: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Rightˉoffset + Index));
+        if Left < Right { return true; }
+        if Left > Right { return false; }
+        Index = Index + 1u32;
+    }
+    return Leftˉlength < Rightˉlength;
+}
+
+export fn Resourceˉstoreˉbytesˉequal(
+    Left: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Right: bytes,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> bool {
+    if Leftˉlength != Rightˉlength { return false; }
+    var Index: u32 = 0u32;
+    while Index < Leftˉlength {
+        if Bytesˉreadˉu8(Left, Leftˉoffset + Index) !=
+            Bytesˉreadˉu8(Right, Rightˉoffset + Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Resourceˉstoreˉdigestˉisˉvalid(Input: bytes, Offset: u32) -> bool {
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + Index));
+        var Valid: bool = false;
+        if Value >= 48u32 { if Value <= 57u32 { Valid = true; } }
+        if Value >= 97u32 { if Value <= 102u32 { Valid = true; } }
+        if !Valid { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Resourceˉstoreˉlookup(Input: bytes, Name: text) -> Resourceˉstoreˉresult {
+    let Query: bytes = Textˉtoˉutf8(Name);
+    let Queryˉlength: u32 = Bytesˉlength(Query);
+    if Queryˉlength == 0u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉquery, 0u32
+        );
+    }
+    if Queryˉlength > 1024u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉquery, 0u32
+        );
+    }
+    if !Resourceˉstoreˉutf8ˉisˉvalid(Query, 0u32, Queryˉlength) {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉquery, 0u32
+        );
+    }
+
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 32u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉsize, Total
+        );
+    }
+    if Total > 4194304u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉsize, Total
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1397904983u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉmagic, 0u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉversion, 4u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, 8u32
+        );
+    }
+
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Directoryˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Nameˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Dataˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Count == 0u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, 12u32
+        );
+    }
+    if Count > 64u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, 12u32
+        );
+    }
+    if Directoryˉbytes != Count * 96u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, 16u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, 28u32
+        );
+    }
+    if Directoryˉbytes > Total - 32u32 {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, 16u32
+        );
+    }
+    let Namesˉstart: u32 = 32u32 + Directoryˉbytes;
+    if Nameˉbytes > Total - Namesˉstart {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, 20u32
+        );
+    }
+    let Dataˉstart: u32 = Namesˉstart + Nameˉbytes;
+    if Dataˉbytes != Total - Dataˉstart {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, 24u32
+        );
+    }
+
+    var Nameˉcursor: u32 = Namesˉstart;
+    var Dataˉcursor: u32 = Dataˉstart;
+    var Previousˉnameˉoffset: u32 = 0u32;
+    var Previousˉnameˉlength: u32 = 0u32;
+    var Found: bool = false;
+    var Foundˉidentifier: u32 = 0u32;
+    var Foundˉkind: u32 = 0u32;
+    var Foundˉattributes: u32 = 0u32;
+    var Foundˉvalue: bytes = Resourceˉstoreˉempty(Input);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Entryˉoffset: u32 = 32u32 + Index * 96u32;
+        let Identifier: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset);
+        if Identifier == 0u32 {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉidentifier, Entryˉoffset
+            );
+        }
+        var Prior: u32 = 0u32;
+        while Prior < Index {
+            if Bytesˉreadˉu32ˉlittle(Input, 32u32 + Prior * 96u32) == Identifier {
+                return Resourceˉstoreˉfailure(
+                    Input, Resourceˉstoreˉstatus.Invalidˉidentifier, Entryˉoffset
+                );
+            }
+            Prior = Prior + 1u32;
+        }
+
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 4u32);
+        if Kind == 0u32 {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉkind, Entryˉoffset + 4u32
+            );
+        }
+        if Kind > 3u32 {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉkind, Entryˉoffset + 4u32
+            );
+        }
+        let Attributes: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 8u32);
+        if Attributes != 7u32 {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉattributes, Entryˉoffset + 8u32
+            );
+        }
+        if Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 28u32) != 0u32 {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉattributes, Entryˉoffset + 28u32
+            );
+        }
+
+        let Entryˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 12u32);
+        let Entryˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 16u32);
+        if Entryˉnameˉoffset != Nameˉcursor {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉname, Entryˉoffset + 12u32
+            );
+        }
+        if Entryˉnameˉlength == 0u32 {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉname, Entryˉoffset + 16u32
+            );
+        }
+        if Entryˉnameˉlength > 1024u32 {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉname, Entryˉoffset + 16u32
+            );
+        }
+        if Entryˉnameˉlength > Dataˉstart - Nameˉcursor {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉname, Entryˉoffset + 16u32
+            );
+        }
+        if !Resourceˉstoreˉutf8ˉisˉvalid(Input, Entryˉnameˉoffset, Entryˉnameˉlength) {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉname, Entryˉnameˉoffset
+            );
+        }
+        if Index > 0u32 {
+            if !Resourceˉstoreˉordinalˉless(
+                Input,
+                Previousˉnameˉoffset,
+                Previousˉnameˉlength,
+                Entryˉnameˉoffset,
+                Entryˉnameˉlength
+            ) {
+                return Resourceˉstoreˉfailure(
+                    Input, Resourceˉstoreˉstatus.Invalidˉorder, Entryˉnameˉoffset
+                );
+            }
+        }
+
+        let Entryˉdataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 20u32);
+        let Entryˉdataˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 24u32);
+        if Entryˉdataˉoffset != Dataˉcursor {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉdata, Entryˉoffset + 20u32
+            );
+        }
+        if Entryˉdataˉlength > 4194304u32 {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉdata, Entryˉoffset + 24u32
+            );
+        }
+        if Entryˉdataˉlength > Total - Dataˉcursor {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉdata, Entryˉoffset + 24u32
+            );
+        }
+
+        let Digestˉoffset: u32 = Entryˉoffset + 32u32;
+        if !Resourceˉstoreˉdigestˉisˉvalid(Input, Digestˉoffset) {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉdigest, Digestˉoffset
+            );
+        }
+        let Value: bytes = Bytesˉslice(Input, Entryˉdataˉoffset, Entryˉdataˉlength);
+        let Actualˉdigest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Value));
+        if !Resourceˉstoreˉbytesˉequal(
+            Actualˉdigest,
+            0u32,
+            64u32,
+            Input,
+            Digestˉoffset,
+            64u32
+        ) {
+            return Resourceˉstoreˉfailure(
+                Input, Resourceˉstoreˉstatus.Invalidˉdigest, Digestˉoffset
+            );
+        }
+
+        if Resourceˉstoreˉbytesˉequal(
+            Input,
+            Entryˉnameˉoffset,
+            Entryˉnameˉlength,
+            Query,
+            0u32,
+            Queryˉlength
+        ) {
+            Found = true;
+            Foundˉidentifier = Identifier;
+            Foundˉkind = Kind;
+            Foundˉattributes = Attributes;
+            Foundˉvalue = Value;
+        }
+
+        Previousˉnameˉoffset = Entryˉnameˉoffset;
+        Previousˉnameˉlength = Entryˉnameˉlength;
+        Nameˉcursor = Nameˉcursor + Entryˉnameˉlength;
+        Dataˉcursor = Dataˉcursor + Entryˉdataˉlength;
+        Index = Index + 1u32;
+    }
+
+    if Nameˉcursor != Dataˉstart {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, Total
+        );
+    }
+    if Dataˉcursor != Total {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Invalidˉheader, Total
+        );
+    }
+    if !Found {
+        return Resourceˉstoreˉfailure(
+            Input, Resourceˉstoreˉstatus.Notˉfound, Total
+        );
+    }
+    return Resourceˉstoreˉresult(
+        Resourceˉstoreˉstatus.Valid,
+        Foundˉidentifier,
+        Foundˉkind,
+        Foundˉattributes,
+        Foundˉvalue,
+        Total
+    );
+}

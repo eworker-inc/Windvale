@@ -9,6 +9,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 ### Added
 
 - Typed WVA 8- and 16-bit register families, byte/word register and RIP/SIB-memory operations, signed width-appropriate immediates, width-bounded shifts, condition-result materialization, zero/sign extension, and byte port I/O in both the Windvale assembler and independent C# oracle, with exact-byte, differential, boundary, and malformed-input coverage.
+- The implemented-candidate `WVRS 1` read-only resource store: a deterministic bounded format, independent Stage 0 writer/verifier, portable Windvale validation and dynamic name lookup, and a hosted three-resource service fixture without path or filesystem semantics.
 - Deterministic WVA signed-immediate ALU/test, signed multiply, bounded rotate/shift, and typed SIB base/index/scale/`disp32` memory operations in both the Windvale assembler and independent C# oracle.
 - An expanded WVA x86-64 foundation with typed 32/64-bit general-purpose registers, definition-local labels and deterministic near fixups, register move/ALU/compare/test operations, conditional branches, stack and indirect-control operations, and RIP-relative symbol addressing in both the Windvale assembler and independent C# oracle.
 - The [Windvale Community Source License 1.0](LICENSE), [E-Worker Inc](https://eworker.ca) stewardship, contributor agreement, and third-party notice policy.

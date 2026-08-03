@@ -26,6 +26,9 @@ internal static class Program
         new("UEFI verifier contains bounded hostile input", Verifierˉcontainsˉhostileˉinput),
         new("kernel memory planner selects one bounded conventional arena", Memoryˉplannerˉselectsˉboundedˉarena),
         new("kernel memory planner rejects malformed and hostile maps", Memoryˉplannerˉrejectsˉmalformedˉmaps),
+        new("resource store emits deterministic verified WVRS", Resourceˉstoreˉemitsˉdeterministicˉimage),
+        new("resource store rejects malformed and hostile images", Resourceˉstoreˉrejectsˉmalformedˉimages),
+        new("Windvale resource service resolves a third typed boot resource", Resourceˉstoreˉserviceˉresolvesˉthirdˉresource),
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
         new("kernel paging planner enforces bounded W^X identity tables", Pagingˉplannerˉenforcesˉboundedˉidentityˉtables),
         new("kernel WVA shims bridge Main, normalized traps, and Q35 shutdown", Kernelˉassemblyˉshimˉbridgesˉmain),
@@ -260,6 +263,206 @@ internal static class Program
             Random.NextBytes(Bytes);
             _ = Kernelˉmemoryˉplanner.Plan(Bytes, (ulong)Random.Next(0, 300));
         }
+    }
+
+    private static void Resourceˉstoreˉemitsˉdeterministicˉimage()
+    {
+        var Entries = Buildˉresourceˉstoreˉentries();
+        var First = Resourceˉstoreˉcodec.Write(Entries);
+        var Second = Resourceˉstoreˉcodec.Write(Entries.Reverse());
+        Sequenceˉequal(First, Second);
+
+        Equal(Resourceˉstoreˉcontract.MAGIC,
+            BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()));
+        Equal(Resourceˉstoreˉcontract.FORMAT_VERSION,
+            BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()[4..]));
+        Equal((uint)First.Length,
+            BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()[8..]));
+        Equal(3u, BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()[12..]));
+        Equal(3u * Resourceˉstoreˉcontract.ENTRY_BYTES,
+            BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()[16..]));
+
+        var Verified = Resourceˉstoreˉverifier.Verify(First.AsSpan());
+        Equal(3, Verified.Entries.Length);
+        Equal("boot:main.budget", Verified.Entries[0].Name);
+        Equal("boot:main.configuration", Verified.Entries[1].Name);
+        Equal("boot:main.wvb", Verified.Entries[2].Name);
+        Equal(2u, Verified.Entries[0].Identifier);
+        Equal(3u, Verified.Entries[1].Identifier);
+        Equal(1u, Verified.Entries[2].Identifier);
+        True(Verified.Tryˉlookup("boot:main.configuration", out var Configuration),
+            "The verified store did not resolve its third resource.");
+        True(Configuration!.Kind == Resourceˉstoreˉkind.Opaqueˉbytes,
+            "The third resource has the wrong kind.");
+        Sequenceˉequal([(byte)3, 5, 8, 13], Configuration.Data);
+        True(!Verified.Tryˉlookup("boot:missing", out _),
+            "The verified store resolved an unknown resource name.");
+
+        Throwsˉresourceˉstore("WVRS2001", () => _ = Resourceˉstoreˉcodec.Write([]));
+        Throwsˉresourceˉstore(
+            "WVRS2002",
+            () => _ = Resourceˉstoreˉcodec.Write(
+            [
+                new(1, Resourceˉstoreˉkind.Opaqueˉbytes, "boot:one", []),
+                new(1, Resourceˉstoreˉkind.Opaqueˉbytes, "boot:two", []),
+            ]));
+        Throwsˉresourceˉstore(
+            "WVRS2002",
+            () => _ = Resourceˉstoreˉcodec.Write(
+            [
+                new(1, Resourceˉstoreˉkind.Opaqueˉbytes, "boot:same", []),
+                new(2, Resourceˉstoreˉkind.Opaqueˉbytes, "boot:same", []),
+            ]));
+        Throwsˉresourceˉstore(
+            "WVRS2002",
+            () => _ = Resourceˉstoreˉcodec.Write(
+                [new(1, Resourceˉstoreˉkind.Opaqueˉbytes, "boot:\0bad", [])]));
+
+        var Maximumˉdataˉbytes = Resourceˉstoreˉcontract.MAXIMUM_STORE_BYTES -
+            Resourceˉstoreˉcontract.HEADER_BYTES - Resourceˉstoreˉcontract.ENTRY_BYTES - 1;
+        var Maximum = Resourceˉstoreˉcodec.Write(
+            [new(1, Resourceˉstoreˉkind.Opaqueˉbytes, "r", new byte[Maximumˉdataˉbytes].ToImmutableArray())]);
+        Equal(Resourceˉstoreˉcontract.MAXIMUM_STORE_BYTES, Maximum.Length);
+        Equal(Maximumˉdataˉbytes, Resourceˉstoreˉverifier.Verify(Maximum.AsSpan()).Entries[0].Data.Length);
+        Throwsˉresourceˉstore(
+            "WVRS2003",
+            () => _ = Resourceˉstoreˉcodec.Write(
+                [new(1, Resourceˉstoreˉkind.Opaqueˉbytes, "r", new byte[Maximumˉdataˉbytes + 1].ToImmutableArray())]));
+    }
+
+    private static void Resourceˉstoreˉrejectsˉmalformedˉimages()
+    {
+        var Canonical = Resourceˉstoreˉcodec.Write(Buildˉresourceˉstoreˉentries());
+        const int FIRST_ENTRY = Resourceˉstoreˉcontract.HEADER_BYTES;
+        const int SECOND_ENTRY = FIRST_ENTRY + Resourceˉstoreˉcontract.ENTRY_BYTES;
+        const int NAME_REGION = Resourceˉstoreˉcontract.HEADER_BYTES +
+            3 * Resourceˉstoreˉcontract.ENTRY_BYTES;
+        const int SECOND_NAME = NAME_REGION + 16;
+
+        Rejectˉresourceˉstore(ImmutableArray<byte>.Empty, "WVRS1001");
+        Rejectˉresourceˉstore(new byte[Resourceˉstoreˉcontract.MAXIMUM_STORE_BYTES + 1], "WVRS1001");
+        Rejectˉresourceˉstore(Replaceˉu32(Canonical, 0, 0), "WVRS1002");
+        Rejectˉresourceˉstore(Replaceˉu32(Canonical, 4, 2), "WVRS1002");
+        Rejectˉresourceˉstore(Replaceˉu32(Canonical, 8, (uint)Canonical.Length + 1), "WVRS1003");
+        Rejectˉresourceˉstore(Replaceˉu32(Canonical, 12, 0), "WVRS1003");
+        Rejectˉresourceˉstore(Replaceˉu32(Canonical, 16, 0), "WVRS1003");
+        Rejectˉresourceˉstore(Replaceˉu32(Canonical, 28, 1), "WVRS1003");
+        Rejectˉresourceˉstore(Replaceˉu32(Canonical, FIRST_ENTRY, 0), "WVRS1004");
+        Rejectˉresourceˉstore(
+            Replaceˉu32(Canonical, SECOND_ENTRY, 2),
+            "WVRS1004");
+        Rejectˉresourceˉstore(
+            Replaceˉu32(Canonical, FIRST_ENTRY + Resourceˉstoreˉcontract.KIND_OFFSET, 4),
+            "WVRS1005");
+        Rejectˉresourceˉstore(
+            Replaceˉu32(Canonical, FIRST_ENTRY + Resourceˉstoreˉcontract.FLAGS_OFFSET, 3),
+            "WVRS1005");
+        Rejectˉresourceˉstore(
+            Replaceˉu32(Canonical, FIRST_ENTRY + Resourceˉstoreˉcontract.RESERVED_OFFSET, 1),
+            "WVRS1005");
+        Rejectˉresourceˉstore(
+            Replaceˉu32(Canonical, FIRST_ENTRY + Resourceˉstoreˉcontract.NAME_OFFSET_OFFSET, 0),
+            "WVRS1006");
+        Rejectˉresourceˉstore(Replaceˉbyte(Canonical, SECOND_NAME, 0), "WVRS1006");
+        Rejectˉresourceˉstore(Replaceˉbyte(Canonical, SECOND_NAME, 0xC0), "WVRS1006");
+        Rejectˉresourceˉstore(
+            Replaceˉu32(Canonical, FIRST_ENTRY + Resourceˉstoreˉcontract.DATA_OFFSET_OFFSET, 0),
+            "WVRS1007");
+        Rejectˉresourceˉstore(
+            Replaceˉu32(Canonical, FIRST_ENTRY + Resourceˉstoreˉcontract.DATA_LENGTH_OFFSET, uint.MaxValue),
+            "WVRS1007");
+        Rejectˉresourceˉstore(
+            Replaceˉbyte(Canonical, FIRST_ENTRY + Resourceˉstoreˉcontract.DIGEST_OFFSET, (byte)'g'),
+            "WVRS1008");
+        Rejectˉresourceˉstore(
+            Replaceˉbyte(Canonical, Canonical.Length - 1, (byte)(Canonical[^1] ^ 1)),
+            "WVRS1008");
+
+        var Random = new Random(0x57565253);
+        for (var Case = 0; Case < 256; Case++)
+        {
+            var Bytes = new byte[Random.Next(0, 8_193)];
+            Random.NextBytes(Bytes);
+            try
+            {
+                _ = Resourceˉstoreˉverifier.Verify(Bytes);
+            }
+            catch (Resourceˉstoreˉexception)
+            {
+            }
+        }
+    }
+
+    private static void Resourceˉstoreˉserviceˉresolvesˉthirdˉresource()
+    {
+        var Coreˉsource = Loadˉresourceˉstoreˉsource("Windvale.Os.Services.Resource-Store-Core.wv");
+        var Serviceˉsource = Loadˉresourceˉstoreˉsource("Windvale.Os.Services.Resource-Store-Service.wv");
+        var Coreˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Resource-Store-Core.wv", Coreˉsource),
+            []);
+        True(Coreˉresult.Success,
+            "The Windvale resource-store core did not compile: " +
+                string.Join(" | ", Coreˉresult.Diagnostics));
+        var Serviceˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Resource-Store-Service.wv", Serviceˉsource),
+            [new("Operating-System/Services/Resource-Store-Core.wv", Coreˉsource)]);
+        True(Serviceˉresult.Success,
+            "The Windvale resource-store service did not compile: " +
+                string.Join(" | ", Serviceˉresult.Diagnostics));
+
+        var Module = Moduleˉcodec.Readˉandˉverify(Serviceˉresult.Moduleˉbytes.AsSpan());
+        True(Module.Module.Profile == Moduleˉprofile.Hosted,
+            "The Windvale resource-store service is not hosted.");
+        Equal(Capabilityˉcatalog.FILE_READ_BYTES, Module.Module.Capabilities.Single().Name);
+        var Canonical = Resourceˉstoreˉcodec.Write(Buildˉresourceˉstoreˉentries());
+        Equal(12_612, Coreˉresult.Moduleˉbytes.Length);
+        Equal(
+            "46350c610db3e1a2a445e0ee839bd6a7ffc37dc17afec6e1d21c086d25e78dc6",
+            Objectˉdigest.Calculateˉsha256(Coreˉresult.Moduleˉbytes.AsSpan()));
+        Equal(13_629, Serviceˉresult.Moduleˉbytes.Length);
+        Equal(
+            "3e366ad9888674188ca679c0c10ca5583478d2a382b6b756bd4013b30a1b73e1",
+            Objectˉdigest.Calculateˉsha256(Serviceˉresult.Moduleˉbytes.AsSpan()));
+        Equal(556, Canonical.Length);
+        Equal(
+            "ee2ee737db4f4ab480430616032c0d71e6eec1ee66dc2ee33b1d22ac5b3cde2f",
+            Objectˉdigest.Calculateˉsha256(Canonical.AsSpan()));
+        Equal(93, Runˉresourceˉstoreˉservice(Module, Canonical).Exitˉcode);
+        Equal(1, Runˉresourceˉstoreˉservice(Module, []).Exitˉcode);
+
+        const int FIRST_ENTRY = Resourceˉstoreˉcontract.HEADER_BYTES;
+        const int SECOND_ENTRY = FIRST_ENTRY + Resourceˉstoreˉcontract.ENTRY_BYTES;
+        const int NAME_REGION = Resourceˉstoreˉcontract.HEADER_BYTES +
+            3 * Resourceˉstoreˉcontract.ENTRY_BYTES;
+        const int SECOND_NAME = NAME_REGION + 16;
+        Equal(2, Runˉresourceˉstoreˉservice(Module, Replaceˉu32(Canonical, 0, 0)).Exitˉcode);
+        Equal(3, Runˉresourceˉstoreˉservice(Module, Replaceˉu32(Canonical, 4, 2)).Exitˉcode);
+        Equal(4, Runˉresourceˉstoreˉservice(
+            Module, Replaceˉu32(Canonical, 8, (uint)Canonical.Length + 1)).Exitˉcode);
+        Equal(5, Runˉresourceˉstoreˉservice(
+            Module, Replaceˉu32(Canonical, SECOND_ENTRY, 0)).Exitˉcode);
+        Equal(6, Runˉresourceˉstoreˉservice(
+            Module,
+            Replaceˉu32(Canonical, SECOND_ENTRY + Resourceˉstoreˉcontract.KIND_OFFSET, 4)).Exitˉcode);
+        Equal(7, Runˉresourceˉstoreˉservice(
+            Module,
+            Replaceˉu32(Canonical, SECOND_ENTRY + Resourceˉstoreˉcontract.FLAGS_OFFSET, 3)).Exitˉcode);
+        Equal(8, Runˉresourceˉstoreˉservice(Module, Replaceˉbyte(Canonical, SECOND_NAME, 0)).Exitˉcode);
+        Equal(9, Runˉresourceˉstoreˉservice(
+            Module, Replaceˉbyte(Canonical, SECOND_NAME, (byte)'a')).Exitˉcode);
+        Equal(10, Runˉresourceˉstoreˉservice(
+            Module,
+            Replaceˉu32(Canonical, SECOND_ENTRY + Resourceˉstoreˉcontract.DATA_OFFSET_OFFSET, 0)).Exitˉcode);
+        Equal(11, Runˉresourceˉstoreˉservice(
+            Module,
+            Replaceˉbyte(Canonical, SECOND_ENTRY + Resourceˉstoreˉcontract.DIGEST_OFFSET, (byte)'g')).Exitˉcode);
+        Equal(12, Runˉresourceˉstoreˉservice(
+            Module, Replaceˉbyte(Canonical, SECOND_NAME + 10, (byte)'d')).Exitˉcode);
+
+        Assertˉruntimeˉfailure("WVR3010", () => _ = Runˉresourceˉstoreˉservice(
+            Module, Canonical, authorize: false));
+        Assertˉruntimeˉfailure("WVR3022", () => _ = Runˉresourceˉstoreˉservice(
+            Module, Canonical, includeˉstore: false));
     }
 
     private static void Pageˉallocatorˉisˉboundedˉandˉzeroing()
@@ -2173,6 +2376,120 @@ internal static class Program
         return Result;
     }
 
+    private static ImmutableArray<Resourceˉstoreˉentry> Buildˉresourceˉstoreˉentries()
+    {
+        var Program = Seedˉcompiler.Compile(
+            "module Resourceˉstoreˉfixture profile portable; " +
+                "export fn Main() -> i32 { return 6; }",
+            "Resource-Store-Fixture.wv");
+        True(Program.Success, "The resource-store WVB fixture did not compile.");
+        return
+        [
+            new(1, Resourceˉstoreˉkind.Wvbˉmodule, "boot:main.wvb", Program.Moduleˉbytes),
+            new(2, Resourceˉstoreˉkind.U32ˉexecutionˉbudget, "boot:main.budget", [199, 0, 0, 0]),
+            new(3, Resourceˉstoreˉkind.Opaqueˉbytes, "boot:main.configuration", [3, 5, 8, 13]),
+        ];
+    }
+
+    private static string Loadˉresourceˉstoreˉsource(string resourceˉname)
+    {
+        using var Stream = typeof(Resourceˉstoreˉcodec).Assembly.GetManifestResourceStream(resourceˉname) ??
+            throw new InvalidOperationException($"Embedded resource-store source '{resourceˉname}' is missing.");
+        using var Reader = new StreamReader(Stream, new UTF8Encoding(false, true), false);
+        return Reader.ReadToEnd();
+    }
+
+    private static Runtimeˉresult Runˉresourceˉstoreˉservice(
+        Verifiedˉmodule module,
+        ImmutableArray<byte> store,
+        bool authorize = true,
+        bool includeˉstore = true)
+    {
+        var Resources = new Hostedˉresourceˉcontext(
+            [],
+            TextWriter.Null,
+            TextWriter.Null,
+            new Resourceˉstoreˉreader(store, includeˉstore));
+        var Grants = authorize
+            ? ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.FILE_READ_BYTES)
+            : ImmutableHashSet.Create<string>(StringComparer.Ordinal);
+        return new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(Resources),
+            new(Grants)).Runˉmain();
+    }
+
+    private static ImmutableArray<byte> Replaceˉu32(
+        ImmutableArray<byte> source,
+        int offset,
+        uint value)
+    {
+        var Result = source.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(offset), value);
+        return Result.ToImmutableArray();
+    }
+
+    private static ImmutableArray<byte> Replaceˉbyte(
+        ImmutableArray<byte> source,
+        int offset,
+        byte value)
+    {
+        var Result = source.ToArray();
+        Result[offset] = value;
+        return Result.ToImmutableArray();
+    }
+
+    private static void Rejectˉresourceˉstore(ImmutableArray<byte> source, string expectedˉcode) =>
+        Rejectˉresourceˉstore(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉresourceˉstore(byte[] source, string expectedˉcode) =>
+        Rejectˉresourceˉstore(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉresourceˉstore(ReadOnlySpan<byte> source, string expectedˉcode)
+    {
+        try
+        {
+            _ = Resourceˉstoreˉverifier.Verify(source);
+        }
+        catch (Resourceˉstoreˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A malformed resource store was accepted instead of producing {expectedˉcode}.");
+    }
+
+    private static void Throwsˉresourceˉstore(string expectedˉcode, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Resourceˉstoreˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A resource-store operation succeeded instead of producing {expectedˉcode}.");
+    }
+
+    private static void Assertˉruntimeˉfailure(string expectedˉcode, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Runtimeˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A runtime operation succeeded instead of producing {expectedˉcode}.");
+    }
+
     private static byte[] Mutate(ImmutableArray<byte> source, int offset)
     {
         var Result = source.ToArray();
@@ -2269,6 +2586,22 @@ internal static class Program
                     "The fixed typed Windvale OS boot resource was not found.");
             }
             return Bytes;
+        }
+    }
+
+    private sealed class Resourceˉstoreˉreader(
+        ImmutableArray<byte> store,
+        bool includeˉstore) : IHostedˉfileˉreader
+    {
+        public ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes)
+        {
+            if (!includeˉstore || resourceˉname != "boot:resources.wvrs" || store.Length > maximumˉbytes)
+            {
+                throw new Hostedˉfileˉexception(
+                    Hostedˉfileˉerror.Notˉfound,
+                    "The bounded Windvale resource store was not found.");
+            }
+            return store;
         }
     }
 

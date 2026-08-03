@@ -59,6 +59,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 
 ## Boot and operating system
 
+- [Read-only resource store](Windvale-Resource-Store.md)
 - [x86-64 UEFI boot environment](Windvale-Os-Boot-Environment.md)
 - [UEFI application format](Windvale-Uefi-Application.md)
 - [OS boot probe](Windvale-Os-Boot-Probe.md)
