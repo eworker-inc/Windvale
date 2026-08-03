@@ -2,19 +2,20 @@
 
 ## Status and purpose
 
-Protected-process contract version 17 remains the cross-host-qualified Probe-38 record contract owned by [Decision 0176](../Documents/Decisions/0176-Third-Protected-Service-And-Ready-Wait-Dispatcher.md). Implemented-candidate Probe 39, owned by [Decision 0188](../Documents/Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md), retains every `WVPROC17` field and lifecycle while adding private thread-context/timer evidence and one bounded involuntary-preemption experiment before the existing workload.
+Protected-process contract version 17 remains unchanged. Cross-host-qualified Probe 39, owned by [Decision 0188](../Documents/Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md), supplies the retained timer evidence. Implemented-candidate Probe 40, owned by [Decision 0196](../Documents/Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md), changes process allocation order and reclamation mechanics without changing any `WVPROC17` field or syscall behavior.
 
-Version 17 is cross-host qualified at exact implementation commit `aae6818e3226e9e7e88d205b4666fb9904e4735b` and GitHub [Verify run 30834243770](https://github.com/eworker-inc/Windvale/actions/runs/30834243770): all 87 Seed and 38 OS tests pass on Windows and Debian, and all five pinned Windows QEMU scenarios pass. Probe 39 has focused Windows and all five pinned-QEMU results; cross-host qualification remains pending. This is an internal experiment, not a stable syscall ABI, process manager, endpoint registry, supervisor, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
+Probe 39 is cross-host qualified at exact implementation commit `6a250c86c30e8921d6bf9244a27d0fd763716cb0` and GitHub [Verify run 30847279400](https://github.com/eworker-inc/Windvale/actions/runs/30847279400): all 87 Seed and 39 OS tests pass on Windows and Debian, and all five pinned Windows QEMU scenarios pass. Probe 40 has focused local evidence; cross-host qualification remains pending. This is an internal experiment, not a stable syscall ABI, process manager, endpoint registry, supervisor, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
-- `Process-Foundation.wv` binds the three process identities, two endpoint/channel lifecycles, exact boot-store and directory-snapshot identities, roles, ordered grants, both service exchanges, two client generations, page/profile/syscall budgets, ready/wait selection, the private four-tick/three-switch preemption policy, exact reuse, cleanup, result policy, and contained directory-provider failure.
+- `Process-Foundation.wv` binds the three process identities, two endpoint/channel lifecycles, exact boot-store and directory-snapshot identities, roles, ordered grants, both service exchanges, two client generations, page/profile/syscall budgets, ready/wait selection, the private four-tick/three-switch preemption policy, and the exact `WVMEMO01` non-tail release/reuse invariant.
 - `Init-Resource-Service.wv` selects ordered boot resource identifiers `(1,2)` and serves only the measured `WVRS 1` lookup. Init no longer maps or parses `WVDS 1`.
 - `Directory-Process-Service.wv` owns the measured `WVDQ 1` / `WVDR 1` directory policy. Its WVA seam reads the checked `WVDS 1` descriptor, receives requests through capability `65537`, and replies from a dedicated page.
 - `Bytecode-Interpreter.wv` reads both granted runtime resources, validates runtime profile 7, charges the guest budget, and interprets the admitted program.
 - `Boot-Resource-Service.wva` owns exact typed lookup for the two `WVBR002` entries used by the interpreter runtime.
 - Each process WVA shim exports one exact 88-byte CPU-bound preemption probe with process-specific register sentinels. `X64-Timer-Shims.wva` owns HPET/APIC admission, IRQ entry, clock reads, one-shot rearm, `SWAPGS`, `IRETQ`, and stop.
-- Stage 0 temporarily owns raw page-table writes, checked record serialization, x86-64 dispatch/context orchestration, immutable store/snapshot construction, and firmware packaging. Portable Windvale owns the matching ready/wait and bounded preemption policy model.
+- `X64-Memory-Object-Shims.wva` owns bounded first-fit allocation, complete bitmap/owner preflight, generation-safe release, page-vector publication, and zeroing for process memory objects.
+- Stage 0 temporarily owns fixed IDT/paging allocation, raw page-table writes, checked record serialization, x86-64 dispatch/context orchestration, immutable store/snapshot construction, and firmware packaging. Portable Windvale owns the matching ready/wait, bounded preemption, and memory-object lifecycle policy models.
 
 The kernel treats `WVRS 1` and `WVDS 1` as immutable byte extents with mapping and identity metadata. It does not parse names, snapshot entries, `WVRQ`, `WVRY`, `WVDQ`, or `WVDR`.
 
@@ -64,7 +65,7 @@ The directory provider receives ten physical pages:
 | `8` | complete directory `WVDS 1` image | RO/NX |
 | `9` | dedicated service response | RW/NX |
 
-Each client generation receives one reclaimed 122-page physical extent plus two later aliases:
+Each client generation receives the same reclaimed 122-page physical extent plus two later aliases. Generation 1 occupies arena pages `25..146`; the directory object remains live at `147..156`; generation 2 first-fits `25..146` again.
 
 | Relative page | Purpose | Before grant | After grant |
 | ---: | --- | --- | --- |
@@ -76,7 +77,7 @@ Each client generation receives one reclaimed 122-page physical extent plus two 
 | `122` | module alias | absent | init WVB page, user RO/NX |
 | `123` | budget alias | absent | init budget page, user RO/NX |
 
-No placeholder backs an alias. Neither provider-owned store is mapped into a client. Generation-1 cleanup clears both aliases and publications; the complete 122-page extent is zeroed and released. Generation 2 reconstructs every table, image, stack, data, response, context, and record byte at the same physical root with a different logical identity.
+No placeholder backs an alias. Neither provider-owned store is mapped into a client. Generation-1 cleanup clears both aliases and publications; `WVMEMO01` validates and releases the complete 122-page vector while the later directory object remains active. Every released page is zeroed before generation 2 reconstructs each table, image, stack, data, response, context, and process-record byte at the same physical root with a different logical identity.
 
 ## `WVPROC17`, two `WVENDP01` records, two `WVCHAN04` records, and `WVRES006`
 
@@ -123,21 +124,21 @@ The interrupt boundary saves all fifteen GPRs, preserves uncontrolled live RFLAG
 4. Client generation 1 calls the resource endpoint with the exact 55-byte `boot:main.configuration` request. Init dynamically selects the entry and returns the canonical 116-byte `WVRY 1` response.
 5. The client calls the independent directory endpoint with the exact 37-byte request for `kernel.wv`, offset 0, maximum 3,072. Process 3 validates its snapshot and returns the exact 3,096-byte `WVDR 1` response.
 6. The client validates the complete reply and all 3,072 bytes, interprets the exact 815-byte program for 199 guest instructions, sends `6`, then exits or takes the contained fault.
-7. Cleanup clears both channels' transient client state, records terminal status, removes client aliases/publication, reloads init's CR3, and zeroes/releases the exact 122-page tail.
+7. Cleanup clears both channels' transient client state, records terminal status, removes client aliases/publication, reloads init's CR3, and zeroes/releases the exact 122-page client object while the later directory object remains live.
 8. The same root is immediately reallocated and rebuilt as generation 2; both endpoints rebind their client reference from `65538` to `131074` while retaining provider and endpoint identity.
 9. Generation 2 independently repeats grant, both service calls, interpretation, result, peer cleanup, and resource cleanup.
-10. Process 3 exits after its final reply and closes its endpoint at six resolutions. Init receives the second result and exits, closing the resource endpoint at twelve. The allocator ends exhausted at cursor page 156; both provider extents remain outside the recycled suffix.
+10. Process 3 exits after its final reply and closes its endpoint at six resolutions. Init receives the second result and exits, closing the resource endpoint at twelve. The bitmap ends fully allocated, free pages are zero, and the retained fixed-bootstrap cursor remains page 13.
 
 The contained user-fault scenario sends `6` then executes privileged `CLI`; cleanup records fault status and still completes. CPL0 invalid-opcode and general-protection scenarios remain terminal.
 
 The contained service-fault scenario branches after generation 1's successful resource lookup. The client sends 37 bytes whose `WVDQ 1` total-length field declares 36 and blocks in syscall 6. Process 3 rejects the inconsistent request and executes privileged `CLI`, producing vector 13/error 0 at CPL3. The kernel accepts only the exact role, syscall, endpoint, channel, waiter, counter, and message shape; records the directory provider as faulted; closes only its endpoint/channel at two resolutions; clears every transient directory-channel field; wakes the client once with result `-1`; and leaves init alive. The client exits after three syscalls with result `6` and loses both resource aliases. No generation 2, restart, replacement, or supervision is claimed.
 
-## Deterministic Probe-39 candidate artifacts
+## Deterministic Probe-40 candidate artifacts
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Process-policy WVB | 16,812 | `4904b44715399048e920d126d8a49f15a6b437cd4c77a25b23c3b113b9e7655d` |
-| Process-policy WVO | 115,198 | `a4e218e5417e4ed605ddfbd7df2f92d9df7a9a154a41382f4e94f1ff9bc4c2ed` |
+| Process-policy WVB | 18,763 | `907d89aae0575d05306d4111c87f52f5a684085576a19d6425968ebe83afa3f4` |
+| Process-policy WVO | 129,310 | `483ba9c752862fa739dea5fb9c40ce747e3210797d39bc73ac3f8d22084f669a` |
 | Init/resource WVB | 525 | `0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467` |
 | Init WVA object | 2,118 | `6199fd8b46a384669ecbbf019e87bce0dd98728b0858be72669c276e6d5834e2` |
 | Linked init image | 5,159 | `02122441f8cab2577588b09242a2781e93ec65bc6defed8676905e712473e0c5` |
@@ -152,10 +153,11 @@ The contained service-fault scenario branches after generation 1's successful re
 | Linked user-fault client | 448,109 | `09556fe33c03571d8b701854f2dfeb4c12c68de5a3339e2f19ec3a64d8dd91a8` |
 | Linked service-fault client | 447,917 | `2ecb1d13e45073d93ed56d03e0f7c84633714a42332e6ed67c3fea7db9e53c97` |
 | Timer WVA object | 1,202 | `e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344` |
-| Normal process-machine WVO | 511,765 | `0b348d59ee8659b91bfa317031396292480fe8d26bce77c9712441cc2f43f43f` |
-| User-fault process-machine WVO | 511,797 | `d7aa5d67407321482cbb75f5b9fa90e93106f1647f92d51373b718c587de41e0` |
-| Service-fault process-machine WVO | 497,957 | `4747e4fd56d63ab9d7a945754781eeb535907b650f3ff402976ff95f6fc9d17a` |
+| Memory-object WVA object | 2,538 | `fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee` |
+| Normal process-machine WVO | 511,856 | `052e0a86ae59e753a986cfa675b013222208b82f4501236e5f0822d6db2dab0a` |
+| User-fault process-machine WVO | 511,904 | `b38aa657b004ee1725078889004f4a654e4cc7d81b5930215f3908f56103b388` |
+| Service-fault process-machine WVO | 498,032 | `545b45c2956a706e8f81cf60ce1c64b37f4ce15ee32221f16a7ff27345b18a81` |
 
 ## Deliberate limits
 
-Version 17 retains one exact boot store, one exact directory snapshot, two fixed providers, one current client binding per endpoint, at most two client generations, two ordered grants, bounded service calls, a fixed three-record dispatcher, one exact LIFO reuse, and one private four-tick preemption experiment. It adds no names, lookup, registry, public endpoint creation, nested paths, enumeration, open handles, mounts, arbitrary providers, transfer/delegation, concurrent calls, cancellation, timeout/deadline API, priority, restart, replacement, general supervision, dynamic process creation, general scheduling, idle policy, multiple threads, SMP, block storage, mutation, persistence, packages, networking, Hyper-V, or physical-hardware evidence.
+Version 17 retains one exact boot store, one exact directory snapshot, two fixed providers, one current client binding per endpoint, at most two client generations, two ordered grants, bounded service calls, a fixed three-record dispatcher, three fixed memory objects, and one private four-tick preemption experiment. It adds no object registry, scatter allocation, names, discovery, public endpoint creation, nested paths, enumeration, open handles, mounts, arbitrary providers, transfer/delegation, concurrent calls, cancellation, timeout/deadline API, priority, restart, replacement, general supervision, dynamic process creation, general scheduling, idle policy, multiple threads, SMP, block storage, mutation, persistence, packages, networking, Hyper-V, or physical-hardware evidence.

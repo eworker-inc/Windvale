@@ -1,7 +1,7 @@
 # Decision 0188: First HPET-calibrated local-APIC preemption proof
 
 - Date: 2026-08-03
-- Status: Accepted and implemented candidate; focused Windows and all pinned-QEMU evidence, with cross-host qualification pending
+- Status: Qualified
 - Advances: [Decision 0181](0181-Next-Windvale-Os-Mechanism-Contracts.md)
 - Retains: qualified Probe 38, protected-process version 17, the three-record ready/wait policy, and the private Stage 0 replacement seam
 
@@ -40,7 +40,8 @@ This is not complete Decision-0181 scheduler qualification. It does not yet prov
 - All 39 focused OS tests pass on Windows, including deterministic timer/context codecs, malformed and truncated records, exact WVA linkage, process-root preservation, and all five reproducible firmware artifacts.
 - All 13 focused assembler tests pass, including reference/Windvale byte equality and malformed operand boundaries. The Windvale-owned assembler WVB is `e69b4ddf632ab21aba06aa79ad7c2e6c0d1f80f684ad904d9f80e12a7f1f783f`.
 - The five diagnostic-free firmware images have the exact identities in `Specifications/Windvale-Os-Boot-Probe.md`; normal is 665,088 bytes with SHA-256 `415304780f360508f11cba337638aac4434746ee2e4a08133b06bf4a7f6e01df`.
-- All five pinned Windows QEMU 11.0/Q35/TCG scenarios pass with exact serial and host-exit evidence. The broader local gate and independent Windows/Linux qualification remain pending for the final candidate.
+- All five pinned Windows QEMU 11.0/Q35/TCG scenarios pass with exact serial and host-exit evidence.
+- Exact implementation commit `6a250c86c30e8921d6bf9244a27d0fd763716cb0` passes GitHub [Verify run 30847279400](https://github.com/eworker-inc/Windvale/actions/runs/30847279400). Windows and digest-pinned Debian each complete a zero-warning Release build, all 87 Seed tests including the golden compiler contract, all 39 OS tests, and the complete native CLI gate. Linux finishes in 12m25s and Windows in 13m13s.
 
 ## Reconsider when
 

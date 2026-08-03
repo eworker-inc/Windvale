@@ -71,6 +71,7 @@ public static class Kernelˉprocessˉx64
     private const uint CLIENT_RECORD_SLOT_OFFSET = 0xC0;
     private const uint DIRECTORY_RECORD_SLOT_OFFSET = 0xC8;
     private const uint DISPATCH_CURSOR_SLOT_OFFSET = 0xD0;
+    private const uint CLIENT_ROOT_SLOT_OFFSET = 0xD8;
     private const uint CONTEXT_OFFSET = 0x40;
     private const uint IDT_DESCRIPTOR_OFFSET =
         (Kernelˉtimerˉcontract.IRQ_VECTOR + 1) * Kernelˉexceptionˉcontract.IDT_GATE_BYTES;
@@ -106,6 +107,21 @@ public static class Kernelˉprocessˉx64
                 Kernelˉtimerˉcontract.INIT_CONTEXT_RECORD_OFFSET ||
             Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET +
                 Kernelˉtimerˉcontract.TIMER_RECORD_BYTES >
+                Kernelˉmemoryˉcontract.ALLOCATION_BITMAP_OFFSET ||
+            Kernelˉmemoryˉcontract.ALLOCATION_BITMAP_OFFSET +
+                Kernelˉmemoryˉcontract.ALLOCATION_BITMAP_BYTES >
+                Kernelˉmemoryˉcontract.PAGE_OWNER_OFFSET ||
+            Kernelˉmemoryˉcontract.PAGE_OWNER_OFFSET +
+                Kernelˉmemoryˉcontract.PAGE_OWNER_BYTES >
+                Kernelˉmemoryˉcontract.INIT_MEMORY_OBJECT_OFFSET ||
+            Kernelˉmemoryˉcontract.INIT_MEMORY_OBJECT_OFFSET +
+                Kernelˉmemoryˉcontract.MEMORY_OBJECT_RECORD_BYTES >
+                Kernelˉmemoryˉcontract.CLIENT_MEMORY_OBJECT_OFFSET ||
+            Kernelˉmemoryˉcontract.CLIENT_MEMORY_OBJECT_OFFSET +
+                Kernelˉmemoryˉcontract.MEMORY_OBJECT_RECORD_BYTES >
+                Kernelˉmemoryˉcontract.DIRECTORY_MEMORY_OBJECT_OFFSET ||
+            Kernelˉmemoryˉcontract.DIRECTORY_MEMORY_OBJECT_OFFSET +
+                Kernelˉmemoryˉcontract.MEMORY_OBJECT_RECORD_BYTES >
                 Kernelˉpagingˉcontract.PAGE_BYTES)
         {
             throw new InvalidOperationException(
@@ -257,9 +273,9 @@ public static class Kernelˉprocessˉx64
                     Objectˉsymbolˉkind.Function, 0, Syscallˉoffset, Syscallˉbytes),
                 new(Kernelˉtimerˉcontract.INTERRUPT_SYMBOL, Objectˉsymbolˉbinding.Export,
                     Objectˉsymbolˉkind.Function, 0, Timerˉoffset, Timerˉbytes),
-                Import(Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL),
+                Import(Kernelˉmemoryˉcontract.ALLOCATE_MEMORY_OBJECT_SYMBOL),
                 Import(Kernelˉprocessˉcontract.POLICY_SYMBOL),
-                Import(Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL),
+                Import(Kernelˉmemoryˉcontract.RELEASE_MEMORY_OBJECT_SYMBOL),
                 Import(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL),
                 Import(Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL),
                 Import(Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL),
@@ -363,7 +379,12 @@ public static class Kernelˉprocessˉx64
 
         // Build the init/resource-owner root first. The boot WVB is visible only
         // in this root until Windvale init authorizes one immutable borrow.
-        Emitˉallocateˉextent(output, relocations, Kernelˉprocessˉcontract.INIT_ALLOCATION_PAGES);
+        Emitˉallocateˉextent(
+            output,
+            relocations,
+            Kernelˉmemoryˉcontract.INIT_MEMORY_OBJECT_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.INIT_ALLOCATION_PAGES);
         Emitˉinitializeˉrecord(
             output,
             image.Initˉserviceˉdigest,
@@ -405,10 +426,28 @@ public static class Kernelˉprocessˉx64
             false);
         Emitˉinitializeˉstoreˉdescriptor(output, checked((uint)image.Resourceˉstoreˉbytes.Length));
 
+        // Reserve the recyclable client object before the directory provider.
+        // The later provider allocation therefore remains live above the
+        // client while generation 1 is released and rebuilt.
+        Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
+        Emitˉallocateˉextent(
+            output,
+            relocations,
+            Kernelˉmemoryˉcontract.CLIENT_MEMORY_OBJECT_OFFSET,
+            Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES);
+        output.Emit(0x4C, 0x89, 0xF0);
+        Emitˉstoreˉstackˉrax(output, CLIENT_ROOT_SLOT_OFFSET);
+
         // The immutable directory provider has its own root, snapshot mapping,
         // endpoint, and request/reply pages before any client is runnable.
         Emitˉloadˉstackˉr13(output, DIRECTORY_RECORD_SLOT_OFFSET);
-        Emitˉallocateˉextent(output, relocations, Kernelˉprocessˉcontract.DIRECTORY_ALLOCATION_PAGES);
+        Emitˉallocateˉextent(
+            output,
+            relocations,
+            Kernelˉmemoryˉcontract.DIRECTORY_MEMORY_OBJECT_OFFSET,
+            Kernelˉprocessˉcontract.DIRECTORY_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.DIRECTORY_ALLOCATION_PAGES);
         Emitˉinitializeˉrecord(
             output,
             image.Directoryˉserviceˉdigest,
@@ -448,7 +487,8 @@ public static class Kernelˉprocessˉx64
         // Build a distinct send-only interpreter root. Its target resource PTE
         // and ABI-17 resource tables remain zero until the init grant syscall.
         Emitˉloadˉstackˉr13(output, CLIENT_RECORD_SLOT_OFFSET);
-        Emitˉallocateˉextent(output, relocations, Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES);
+        Emitˉloadˉstackˉrax(output, CLIENT_ROOT_SLOT_OFFSET);
+        output.Emit(0x49, 0x89, 0xC6);
         Emitˉinitializeˉrecord(
             output,
             image.Interpreterˉdigest,
@@ -2489,9 +2529,15 @@ public static class Kernelˉprocessˉx64
     private static void Emitˉallocateˉextent(
         X64ˉcodeˉbuilder output,
         ImmutableArray<Objectˉrelocation>.Builder relocations,
+        uint objectˉrecordˉoffset,
+        uint objectˉreference,
         ulong allocationˉpages)
     {
-        output.Emit(0x4C, 0x89, 0xE1, 0xBA);
+        output.Emit(0x4C, 0x89, 0xE1, 0x49, 0x8D, 0x94, 0x24);
+        output.Emitˉu32(objectˉrecordˉoffset);
+        output.Emit(0x41, 0xB8);
+        output.Emitˉu32(objectˉreference);
+        output.Emit(0x41, 0xB9);
         output.Emitˉu32(checked((uint)allocationˉpages));
         Emitˉexternalˉcall(output, relocations, 11);
         output.Emit(0x48, 0x85, 0xC0);
@@ -2523,24 +2569,27 @@ public static class Kernelˉprocessˉx64
             Kernelˉprocessˉcontract.EXPECTED_RESULT);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
 
-        output.Emit(0x4C, 0x89, 0xE1, 0x49, 0x8B, 0x95);
-        output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
+        output.Emit(0x4C, 0x89, 0xE1, 0x49, 0x8D, 0x94, 0x24);
+        output.Emitˉu32(Kernelˉmemoryˉcontract.CLIENT_MEMORY_OBJECT_OFFSET);
         output.Emit(0x41, 0xB8);
-        output.Emitˉu32(checked((uint)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES));
+        output.Emitˉu32(Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE);
         Emitˉexternalˉcall(output, relocations, 13);
         output.Emit(0x49, 0x3B, 0x85);
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x83, 0x7C, 0x24, 0x20,
-            checked((byte)(Kernelˉmemoryˉcontract.ARENA_PAGES -
-                Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES)));
+            checked((byte)Kernelˉmemoryˉcontract.FIRST_MEMORY_OBJECT_PAGE));
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x81, 0x7C, 0x24, 0x28);
         output.Emitˉu32(checked((uint)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES));
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
 
         Emitˉallocateˉextent(
-            output, relocations, Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES);
+            output,
+            relocations,
+            Kernelˉmemoryˉcontract.CLIENT_MEMORY_OBJECT_OFFSET,
+            Kernelˉprocessˉcontract.SECOND_CLIENT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES);
         output.Emit(0x4D, 0x3B, 0xB5);
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -2615,8 +2664,8 @@ public static class Kernelˉprocessˉx64
     private static void Emitˉvalidateˉexhaustedˉallocator(X64ˉcodeˉbuilder output)
     {
         Emitˉvalidateˉmemoryˉstate(output);
-        output.Emit(0x49, 0x81, 0x7C, 0x24, 0x20);
-        output.Emitˉu32(checked((uint)Kernelˉmemoryˉcontract.ARENA_PAGES));
+        output.Emit(0x49, 0x83, 0x7C, 0x24, 0x20,
+            checked((byte)Kernelˉmemoryˉcontract.FIRST_MEMORY_OBJECT_PAGE));
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x83, 0x7C, 0x24, 0x28, 0x00);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -5073,9 +5122,9 @@ public static class Kernelˉprocessˉx64
             Object.Symbols[9].Name != Kernelˉprocessˉcontract.SYSCALL_ENTRY_SYMBOL ||
             Object.Symbols[10].Name != Kernelˉtimerˉcontract.INTERRUPT_SYMBOL ||
             Object.Symbols[10].Binding != Objectˉsymbolˉbinding.Export ||
-            Object.Symbols[11].Name != Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL ||
+            Object.Symbols[11].Name != Kernelˉmemoryˉcontract.ALLOCATE_MEMORY_OBJECT_SYMBOL ||
             Object.Symbols[12].Name != Kernelˉprocessˉcontract.POLICY_SYMBOL ||
-            Object.Symbols[13].Name != Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL ||
+            Object.Symbols[13].Name != Kernelˉmemoryˉcontract.RELEASE_MEMORY_OBJECT_SYMBOL ||
             Object.Symbols[14].Name != Kernelˉexceptionˉcontract.TERMINAL_SYMBOL ||
             Object.Symbols[15].Name != Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL ||
             Object.Symbols[16].Name != Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL ||

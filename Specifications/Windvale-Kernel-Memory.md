@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Kernel memory version 16 is the implemented Probe-39 candidate owned by [Decision 0188](../Documents/Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md). It adds one page for paging version 5's shared timer-MMIO directory and disjoint state-page storage for three private thread contexts plus one timer record while retaining version 15's provider/client extents, compact stacks, checked LIFO tail release, and same-root client reuse.
+Kernel memory version 17 is the implemented Probe-40 candidate owned by [Decision 0196](../Documents/Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md). It replaces the qualified tail-only process release mechanism with a fixed 160-bit allocation bitmap, one owner byte per arena page, and three generation-safe `WVMEMO01` records. The normal and contained client-fault paths release the 122-page client object while the later directory object remains live, zero every released page, and first-fit the same physical root for generation 2.
 
-Version 15 is cross-host qualified at exact implementation commit `aae6818e3226e9e7e88d205b4666fb9904e4735b` and GitHub [Verify run 30834243770](https://github.com/eworker-inc/Windvale/actions/runs/30834243770). Version 16 has focused Windows and all five pinned-QEMU results; cross-host qualification remains pending. This is one bounded deterministic boot arena, not a general physical-memory manager. Release is LIFO-only and can restore only a caller-proven suffix ending at the current cursor.
+Version 16 and Probe 39 are cross-host qualified at exact implementation commit `6a250c86c30e8921d6bf9244a27d0fd763716cb0` and GitHub [Verify run 30847279400](https://github.com/eworker-inc/Windvale/actions/runs/30847279400). Version 17 has focused Windows host and pinned-QEMU evidence; independent Windows/Linux qualification remains pending. This remains one bounded deterministic boot arena, not a general physical-memory manager.
 
 ## Ownership and validation
 
@@ -14,86 +14,97 @@ An eligible descriptor must contain the complete 157-page range. All comparisons
 
 ## Deterministic arena
 
-The fixed layout is:
-
 | Arena pages | Bytes | Purpose |
 | --- | ---: | --- |
-| `0` | 4,096 | `WVKMEM16`, copied handoff, paging/process/channel/resource/descriptor/timer state |
+| `0` | 4,096 | `WVKMEM17`, copied handoff, paging/process/channel/resource/timer state, bitmap, owner map, and object records |
 | `1..4` | 16,384 | down-growing owned kernel stack |
 | `5..156` | 622,592 | 152 initially free allocator pages |
 
-The complete 643,072-byte arena is zeroed before publication. Stack top is `arena + 0x5000`, aligned to 16 bytes.
-
-Probe 39 consumes the free extent exactly:
+The complete 643,072-byte arena is zeroed before publication. Stack top is `arena + 0x5000`, aligned to 16 bytes. Probe 40 consumes the free range exactly:
 
 | Pages | Owner |
 | --- | --- |
-| `5` | kernel IDT page |
-| `6..12` | seven-page kernel paging hierarchy including timer MMIO |
-| `13..24` | 12-page init/resource-provider extent |
-| `25..34` | ten-page directory-provider extent |
-| `35..156` | 122-page interpreter extent |
+| `5` | fixed kernel IDT page |
+| `6..12` | fixed seven-page kernel paging hierarchy |
+| `13..24` | init memory object `65537`, 12 pages |
+| `25..146` | client memory object `65538`, 122 pages |
+| `147..156` | directory memory object `65539`, 10 pages |
 
-The init extent contains four table pages, two RX code pages, one stack page, one data page, two RO/NX runtime-resource pages, one RO/NX `WVRS 1` page, and one RW/NX service-response page. It does not map `WVDS 1`.
+The fixed allocator advances its retained bootstrap cursor to 13. Object allocation does not reinterpret that cursor: first-fit scans the bitmap from page 5, while the free-page field tracks aggregate availability. After all three objects are active, free pages are zero. Releasing client generation 1 restores 122 free pages without changing the directory pages or raw cursor; generation 2 reference `131074` reuses pages `25..146` and returns free pages to zero.
 
-The directory extent contains four table pages, two RX code pages, one stack page, one data page, one RO/NX `WVDS 1` page, and one RW/NX service-response page. It does not map the boot store or runtime-resource pages.
+The provider/client page contents and mappings remain those in [Windvale-Protected-Process.md](Windvale-Protected-Process.md). The inherited four-page kernel stack and six-page client stack remain fixed evidence.
 
-The client extent contains four table pages, 110 code pages, six stack pages, one data/context page, and one RW/NX service-response page. Its two runtime-resource aliases use later virtual pages backed by init's WVB and budget pages. Neither the store nor snapshot is aliased into a client.
-
-Generation 1 reaches cursor `157` with zero free pages. Exact tail release restores cursor `35` and 122 free pages; generation-2 allocation returns page `35` and restores cursor `157` with zero free pages. Init and directory extents remain allocated and unchanged across client reuse.
-
-The inherited four-page kernel stack remains the pinned-QEMU contract. The six-page user stack is separate and is the minimal whole-page envelope above the verified 24,240-byte native call-graph maximum.
-
-## Memory-state header
+## Memory-state header and page evidence
 
 The first page begins with this 64-byte little-endian header:
 
-| Offset | Bytes | Field | Version-16 rule |
+| Offset | Bytes | Field | Version-17 rule |
 | ---: | ---: | --- | --- |
-| `0x00` | 8 | Magic | ASCII `WVKMEM16` |
-| `0x08` | 4 | Version | `16` |
+| `0x00` | 8 | Magic | ASCII `WVKMEM17` |
+| `0x08` | 4 | Version | `17` |
 | `0x0C` | 4 | Header bytes | `64` |
 | `0x10` | 8 | Arena address | selected 2 MiB-aligned base |
 | `0x18` | 8 | Arena pages | `157` |
-| `0x20` | 8 | Next free page | initially `5` |
-| `0x28` | 8 | Free pages | initially `152` |
+| `0x20` | 8 | Fixed bootstrap cursor | initially `5`, then exactly `13` |
+| `0x28` | 8 | Free pages | initially `152`; object allocation/release changes it |
 | `0x30` | 8 | Handoff-copy address | `arena + 64` |
 | `0x38` | 8 | First allocation address | zero until IDT allocation succeeds |
 
-The Probe-39 state page uses these disjoint intervals:
+The complete state-page layout is disjoint:
 
 | Interval | Record |
 | --- | --- |
 | `0x040..0x06F` | `WVKHAND1` |
 | `0x080...` | `WVKPAG05` |
 | `0x100..0x21F` | init `WVPROC17` |
-| `0x220..0x257` | private GDT |
-| `0x260..0x269` | GDTR |
-| `0x270..0x2D7` | TSS |
+| `0x220..0x2D7` | private GDT, GDTR, and TSS |
 | `0x300..0x41F` | current client `WVPROC17` |
-| `0x420..0x48F` | resource `WVCHAN04` |
-| `0x490..0x4CF` | resource `WVENDP01` |
-| `0x4D0..0x6CF` | four `WVRES006` records |
-| `0x6D0..0x7EF` | directory-provider `WVPROC17` |
-| `0x7F0..0x85F` | directory `WVCHAN04` |
-| `0x860..0x89F` | directory `WVENDP01` |
-| `0x8A0..0x97F` | init private `WVTHR001` context |
-| `0x980..0xA5F` | client private `WVTHR001` context |
-| `0xA60..0xB3F` | directory private `WVTHR001` context |
-| `0xB40..0xB9F` | private `WVTIME01` timer evidence |
+| `0x420..0x89F` | two channels, two endpoints, four resources, and directory `WVPROC17` |
+| `0x8A0..0xB9F` | three private `WVTHR001` contexts and `WVTIME01` |
+| `0xBA0..0xBB3` | 160-bit allocation bitmap |
+| `0xBC0..0xC5C` | 157-byte page-owner table |
+| `0xC60..0xD8F` | init `WVMEMO01` |
+| `0xD90..0xEBF` | client `WVMEMO01` |
+| `0xEC0..0xFEF` | directory `WVMEMO01` |
 
-Process-machine construction checks the process/descriptor/client/final-page boundaries before emitting code. Each endpoint resolution independently checks the exact channel address, magic, version, record size, and capacity before channel mutation. This prevents a future record expansion from silently overlapping the next live object.
+Bitmap bits 157 through 159 are permanently set. Owner byte `0` means free, `255` means fixed kernel ownership, and `1..254` is the low 16-bit memory-object identifier after the allocator rejects larger identifiers. The fixed page allocator marks both bitmap and owner evidence before object allocation begins.
 
-## Bounded allocation and tail release ABI
+## `WVMEMO01`
 
-`Windvale_kernel_allocate_pages` accepts an exact version-16 state pointer and a nonzero page count. Success advances the cursor, decreases free count, zeroes every returned byte, and returns the first page address. Failure returns zero without mutation.
+Each 304-byte little-endian record is exact:
 
-`Windvale_kernel_release_tail_pages` accepts that state, candidate address, and nonzero page count. The candidate must describe a suffix ending exactly at the current cursor; all arithmetic must remain inside the 157-page arena. Success restores cursor/free count, zeroes the complete suffix, and returns its address. Invalid count, non-tail address, overflow, malformed state, or out-of-arena range returns zero without mutation.
+| Offset | Bytes | Field |
+| ---: | ---: | --- |
+| `0x00` | 8 | magic `WVMEMO01` |
+| `0x08` | 4 | version `1` |
+| `0x0C` | 4 | record bytes `304` |
+| `0x10` | 4 | state: active `1` or released `2` |
+| `0x14` | 4 | generation-stamped reference |
+| `0x18` | 4 | owner reference, equal to reference |
+| `0x1C` | 4 | active page count, or zero when released |
+| `0x20` | 4 | allocation count |
+| `0x24` | 4 | release count |
+| `0x28` | 4 | page-vector count, equal to active page count |
+| `0x2C` | 4 | object identifier |
+| `0x30` | 8 | active base address, or zero when released |
+| `0x38` | 248 | little-endian `u16` page vector plus zero tail |
 
-Version 16 retains no free list or allocation-boundary records. The protected-process caller proves that the released 122-page suffix is one complete retired client.
+The reference encodes generation in the high 16 bits and object identifier in the low 16 bits. Active records require `allocation count = release count + 1`; released records require balanced counts, zero base, zero page/vector count, and a zero vector. This first slice admits at most 122 contiguous pages. Its explicit vector and owner evidence prepare later noncontiguous physical backing, but Probe 40 does not claim scatter allocation or a general virtual mapper.
+
+## Allocation and release boundaries
+
+`Windvale_kernel_allocate_pages` remains a private Stage 0 x86-64 leaf for the fixed IDT and paging pages. It validates `WVKMEM17`, advances the raw cursor, updates free count, marks bitmap/owner state as kernel-owned, zeroes the returned pages, and returns the first address. It is not the process allocator.
+
+`Windvale_kernel_allocate_memory_object` and `Windvale_kernel_release_memory_object` are assembled from `X64-Memory-Object-Shims.wva`. The exact 2,538-byte WVO has SHA-256 `fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee`; its 2,374-byte relocation-free text contains a 1,389-byte allocator and 985-byte releaser.
+
+Allocation validates the complete state and prior record, finds a complete first-fit run, preflights every bitmap bit and owner byte before mutation, marks ownership, zeroes every page, writes the page vector and active record, updates free pages, and returns the base. Reuse requires the exact released prior generation and balanced history.
+
+Release validates the exact live reference and complete page vector, contiguity, base, bitmap, owner map, and resulting free bound before mutation. It then clears bitmap/owner evidence, zeroes every page, clears the vector/base, advances release history, and returns the retired base. Rejection returns zero without mutation.
+
+Portable `Process-Foundation.wv` owns the matching object identities, layout bounds, non-tail ordering, generation transition, allocation/release counts, free-page transitions, and requirement that the directory object remain active. WVA owns bounded first-fit mechanics and page zeroing; C# remains the Stage 0 builder, reference oracle, and recovery implementation.
 
 ## Diagnostics and limits
 
-The retained diagnostics are `WVOS4001` invalid map envelope, `WVOS4002` unaligned descriptor, `WVOS4003` zero-page descriptor, `WVOS4004` address overflow, `WVOS4005` no eligible arena, and `WVOS4006` overlap. Malformed and random inputs remain bounded.
+The retained planner diagnostics are `WVOS4001` invalid map envelope, `WVOS4002` unaligned descriptor, `WVOS4003` zero-page descriptor, `WVOS4004` address overflow, `WVOS4005` no eligible arena, and `WVOS4006` overlap. Host tests cover truncation, corrupt ownership, trailing bytes, wrong generation, unchanged state on rejection, exact zeroing, live-directory preservation, and same-root reuse. On Windows x64 the focused test also executes the exact WVA allocator/releaser through the controlled native publication lifetime.
 
-Version 16 does not claim all physical memory, loader-range reclamation, arbitrary release order, free lists, coalescing, independently lived allocations, runtime allocation policy, general process creation, concurrent root reuse, SMP, or physical-hardware qualification. Probe 39 preserves exact release/reallocate behavior on normal and client-fault paths. Its service-fault path stops after contained cleanup of generation 1 and therefore makes no additional reclamation claim.
+Version 17 does not claim all physical memory, loader-range reclamation, coalescing, fragmentation policy, arbitrary object count or size, noncontiguous allocation, general virtual mappings, executable publication, pinning, DMA, concurrency, SMP, dynamic process creation, or physical-hardware qualification. The service-fault path retains its bounded generation-1 cleanup and makes no additional memory-object reuse claim.

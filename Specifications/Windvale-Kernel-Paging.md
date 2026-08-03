@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel paging version 5 is the implemented Probe-39 candidate owned by [Decision 0188](../Documents/Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md). It retains version 4's six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, two-code-table topology, and 768 KiB supervisor executable window, then adds one shared page directory for exact HPET and local-APIC MMIO windows. Version 4 remains the qualified baseline.
+Kernel paging version 5 is cross-host qualified with Probe 39 under [Decision 0188](../Documents/Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md). It retains version 4's six-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, two-code-table topology, and 768 KiB supervisor executable window, then adds one shared page directory for exact HPET and local-APIC MMIO windows. Probe 40 retains paging version 5 unchanged while advancing kernel memory to `WVKMEM17`.
 
 The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 17 derives three private roots and manages two exact client resource aliases without turning the kernel record into a public mapping API.
 
@@ -15,7 +15,7 @@ The kernel root remains a bounded construction foundation, not a general virtual
 
 ## Admission boundary
 
-The installer fails before changing control state unless NX is available, `WVKMEM16` is exact, the retained handoff map and live stack are bounded below 1 GiB, the GDT is valid, the linked boot entry is aligned and leaves the required two complete 2 MiB code regions, and the allocator returns a non-overlapping seven-page range. The image builder separately requires the base-zero linked payload to fit 768 KiB.
+The installer fails before changing control state unless NX is available, the selected memory contract is exact (`WVKMEM17` in Probe 40), the retained handoff map and live stack are bounded below 1 GiB, the GDT is valid, the linked boot entry is aligned and leaves the required two complete 2 MiB code regions, and the fixed allocator returns a non-overlapping seven-page range. The image builder separately requires the base-zero linked payload to fit 768 KiB.
 
 ## Fixed hierarchy
 

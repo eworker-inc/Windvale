@@ -16,6 +16,7 @@ data Resourceˉgrantˉmarker: text = "resource-grant=pass";
 data Typedˉresourcesˉmarker: text = "typed-resources=pass";
 data Resourceˉrevokedˉmarker: text = "resource-revoked=pass";
 data Processˉreuseˉmarker: text = "process-reuse=pass";
+data Memoryˉobjectˉmarker: text = "memory-object-reuse=pass";
 data Runtimeˉmarker: text = "wvb-runtime=interpreted";
 data Initˉserviceˉmarker: text = "init-service=pass";
 data Directoryˉserviceˉmarker: text = "directory-service=pass";
@@ -35,6 +36,7 @@ export fn Main() -> i32 {
     console.write_line(Typedˉresourcesˉmarker);
     console.write_line(Resourceˉrevokedˉmarker);
     console.write_line(Processˉreuseˉmarker);
+    console.write_line(Memoryˉobjectˉmarker);
     console.write_line(Runtimeˉmarker);
     console.write_line(Initˉserviceˉmarker);
     console.write_line(Directoryˉserviceˉmarker);

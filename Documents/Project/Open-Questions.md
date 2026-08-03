@@ -27,9 +27,9 @@ This list records unresolved choices only. Accepted product-wide direction is re
 
 ## Operating system
 
-- Which invariants from qualified `WVPROC17` and candidate Probe 39 must survive the first general timer/scheduler slice without freezing the private timer/context offsets, fixed three-slot order, or one-thread shape?
+- Which invariants from qualified `WVPROC17` and Probe 39 must survive the first general timer/scheduler slice without freezing the private timer/context offsets, fixed three-slot order, or one-thread shape?
 - Which physical-machine measurements qualify HPET/local APIC beyond the pinned Q35 candidate, and what calibrated evidence would justify selecting invariant TSC instead of HPET on a later machine profile?
-- What bitmap size, page-state encoding, memory-object record, zeroing proof, and fragmentation threshold qualify the first physical-page allocator before dynamic process creation?
+- Which measured fragmentation or noncontiguous-allocation consumer should generalize Probe 40's fixed bitmap, owner bytes, and `WVMEMO01` records before dynamic process creation?
 - Which exact COM1 configuration, batching limit, provider protocol, revocation sequence, and diagnostic separation qualify the first isolated serial-output service?
 - Which interface identity and record shape publish the immutable directory provider to two clients, and which queue limit and backpressure result qualify the first multi-client endpoint?
 - Which exact reduced-right copy, cancellation/deadline, provider-replacement, and shared-memory queue consumers should implement the accepted capability sequence one slice at a time?
@@ -111,7 +111,7 @@ The [WebAssembly playground exploration](WebAssembly-Playground-Exploration.md) 
 Decisions 0058 through qualified 0103, 0105, 0108, 0109, 0111, 0112, 0133, and 0150 establish reproducible bytecode compiler convergence, the bounded shared native path through frame-owned direct records and generation-owned dynamic values, all current service leaves and calls through 64 parameters, typed block-scoped physical storage under the 2,048-cell bound, bounded exact-compiler publication and complete native reproduction, live Windvale-produced service leaves, Windvale-owned executable-image layout and lifetime, WVA-owned Q35 poweroff, normalized trap entries, the first kernel-owned W^X root, fixed in-guest WVB admission, protected processes, the first init/resource service, a user-space Windvale bytecode interpreter, section-derived validation, typed WVB/execution-budget publication, automatic terminal cleanup, generation-safe reclaim/reuse, and two exact compiler-produced WVB programs across hosts and Windvale OS. Decisions 0104 through 0177 also retain a separate WebAssembly interoperability track with a capability-free in-memory compiler contract and the exact 1,511/1,512 compiler execution boundary. The recommended next implementation decisions remain:
 
 1. Add caller-visible descriptor liveness before relocating descriptor-bearing aggregate returns; do not infer aggregate safety from the direct-descriptor proof.
-2. Complete independent Windows/Linux qualification of Probe 39's bounded HPET/local-APIC candidate, whose five pinned Windows scenarios already pass; then add independently lived memory and one flat resource domain before dynamic launch, supervision, or driver isolation. Keep each mechanism a separate evidence claim.
+2. Qualify Probe 40's independently lived memory-object slice, then add one flat resource domain before dynamic launch, supervision, or driver isolation. Keep each mechanism a separate evidence claim.
 3. Satisfy the remaining Decision 0057 native-retirement conditions while accumulating Decision 0178 recovery evidence gradually; remove .NET from normal automation only from one fully qualified source state.
 
 The early experimental Windvale-native browser route from Decision 0182 may advance independently when its bounded profile is honest. It does not replace these native and OS priorities or make WebAssembly permanent.

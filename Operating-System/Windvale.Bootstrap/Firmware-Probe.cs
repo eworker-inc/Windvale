@@ -17,12 +17,12 @@ public enum Firmwareˉprobeˉscenario
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 39;
+    public const int FORMAT_VERSION = 40;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 39\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 40\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -42,6 +42,7 @@ public static class Firmwareˉprobe
     public const string TYPED_RESOURCES_MARKER = "typed-resources=pass\n";
     public const string RESOURCE_REVOKED_MARKER = "resource-revoked=pass\n";
     public const string PROCESS_REUSE_MARKER = "process-reuse=pass\n";
+    public const string MEMORY_OBJECT_REUSE_MARKER = "memory-object-reuse=pass\n";
     public const string IPC_MARKER = "ipc=resource-and-directory\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string TIMER_PREEMPTION_MARKER = "timer-preemption=pass\n";
@@ -64,7 +65,7 @@ public static class Firmwareˉprobe
         WVB_ADMISSION_MARKER + PROCESS_MARKER + DIRECTORY_PROCESS_MARKER +
         DISPATCHER_MARKER + ENDPOINT_MARKER +
         RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
-        RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
+        RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER + MEMORY_OBJECT_REUSE_MARKER +
         WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER + DIRECTORY_SERVICE_MARKER +
         IPC_MARKER + HELLO_WORLD_MARKER + TIMER_PREEMPTION_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
@@ -75,7 +76,7 @@ public static class Firmwareˉprobe
         WVB_ADMISSION_MARKER + PROCESS_MARKER + DIRECTORY_PROCESS_MARKER +
         DISPATCHER_MARKER + ENDPOINT_MARKER +
         RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
-        RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
+        RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER + MEMORY_OBJECT_REUSE_MARKER +
         WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER + DIRECTORY_SERVICE_MARKER +
         IPC_MARKER + HELLO_WORLD_MARKER + TIMER_PREEMPTION_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
@@ -184,6 +185,7 @@ public static class Firmwareˉprobe
         var Nativeˉprobe = Kernelˉnativeˉprobe.Build();
         var Exceptions = Kernelˉexceptionˉx64.Build();
         var Paging = Kernelˉpagingˉx64.Build();
+        var Memoryˉobjectˉshimˉbytes = Kernelˉmemoryˉassemblyˉshim.Buildˉobject();
         var Timerˉobjectˉbytes = Kernelˉtimerˉassemblyˉshim.Buildˉobject();
 
         var Loader = Buildˉloaderˉmachineˉcode(scenario);
@@ -240,7 +242,7 @@ public static class Firmwareˉprobe
                     Objectˉsymbolˉkind.Function,
                     0,
                     Memory.Allocatorˉoffset,
-                    Memory.Releaserˉoffset - Memory.Allocatorˉoffset),
+                    checked((uint)Memory.Bytes.Length - Memory.Allocatorˉoffset)),
                 new(
                     Kernelˉmemoryˉcontract.MEMORY_ENTER_SYMBOL,
                     Objectˉsymbolˉbinding.Export,
@@ -249,12 +251,12 @@ public static class Firmwareˉprobe
                     0,
                     Memory.Enterˉbytes),
                 new(
-                    Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL,
-                    Objectˉsymbolˉbinding.Export,
+                    Kernelˉmemoryˉcontract.ALLOCATE_MEMORY_OBJECT_SYMBOL,
+                    Objectˉsymbolˉbinding.Import,
                     Objectˉsymbolˉkind.Function,
+                    Objectˉlimits.UNDEFINED_SECTION,
                     0,
-                    Memory.Releaserˉoffset,
-                    checked((uint)Memory.Bytes.Length - Memory.Releaserˉoffset)),
+                    0),
                 new(
                     Kernelˉassemblyˉcontract.MAIN_SHIM_SYMBOL,
                     Objectˉsymbolˉbinding.Import,
@@ -295,6 +297,7 @@ public static class Firmwareˉprobe
                 new(Nativeˉprobe.Nativeˉobjectˉbytes),
                 new(Processˉimage.Policyˉnativeˉobjectˉbytes),
                 new(Process.Objectˉbytes),
+                new(Memoryˉobjectˉshimˉbytes),
                 new(Timerˉobjectˉbytes),
                 new(Memoryˉobjectˉbytes),
                 new(Exceptions.Objectˉbytes),

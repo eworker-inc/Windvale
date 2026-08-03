@@ -41,13 +41,13 @@ Memory-map bytes must be an exact multiple of descriptor bytes. Every descriptor
 
 ## Lifetime and ownership
 
-The original record occupies the loader's live stack frame and is immutable for the duration of the kernel-entry call. Kernel memory version 16 copies all 48 bytes into its owned state page before changing to the measured four-page stack and passes that identity through the admission, process, retained-native, and compiler-generated paths. The retained memory-map buffer remains borrowed loader data and live after boot services terminate; later reclamation must preserve it until another ownership decision replaces this contract.
+The original record occupies the loader's live stack frame and is immutable for the duration of the kernel-entry call. Kernel memory version 17 copies all 48 bytes into its owned state page before changing to the measured four-page stack and passes that identity through the admission, process, retained-native, and compiler-generated paths. The retained memory-map buffer remains borrowed loader data and live after boot services terminate; later reclamation must preserve it until another ownership decision replaces this contract.
 
 The handoff includes no valid boot-services pointer. Code reached through this ABI must not call a boot service, firmware device-handle protocol, or invalidated system-table field.
 
 ## Current evidence and limit
 
-Implemented-candidate firmware Probe 39 under Decision 0188 retains handoff version 1 while linking the compiler-generated special kernel path, Windvale-owned admission/resource/preemption policy, three protected process roots, two service endpoints and channels, the bounded ready/wait dispatcher, budgeted user-space interpreter, ABI-22 portable native probes, expanded WVA seams, memory 16/paging 5, HPET/local-APIC timer evidence, kernel exception destinations, and the WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
+Implemented-candidate firmware Probe 40 under Decision 0196 retains handoff version 1 while linking the compiler-generated special kernel path, Windvale-owned admission/resource/preemption/memory-object policy, three protected process roots, two service endpoints and channels, the bounded ready/wait dispatcher, budgeted user-space interpreter, ABI-22 portable native probes, expanded WVA seams, memory 17/paging 5, HPET/local-APIC timer evidence, kernel exception destinations, and the WVA Q35 shutdown adapter. The normal image enters the kernel after firmware shutdown and requires this serial suffix:
 
 ```text
 memory-map=pass
@@ -65,6 +65,7 @@ resource-grant=pass
 typed-resources=pass
 resource-revoked=pass
 process-reuse=pass
+memory-object-reuse=pass
 wvb-runtime=interpreted
 init-service=pass
 directory-service=pass
@@ -79,4 +80,4 @@ status=pass
 shutdown=poweroff
 ```
 
-The memory layer calls WVA export `Windvale_kernel_wva_main` only after owned-state initialization, handoff copy, stack switch, exception installation, and [paging version 5](Windvale-Kernel-Paging.md) activation. Admission bridge 2 retains its exact `39,712/2` context and token 73, then calls [protected process version 17](Windvale-Protected-Process.md). The private four-interrupt preemption experiment completes before the retained service workload; only the exact two-resource grant, both endpoint-backed service exchanges, budgeted interpretation, two-alias terminal cleanup, generation reuse, and independent service completion reach the retained 271/2 portable bridge; only its packed result 29 reaches `Windvale_kernel_main`. Separate images retain terminal CPL0 `(6, 0)` and `(13, 0)`, contained client CPL3 `(13, 0)`, and contained directory-provider failure. Probe 38 remains cross-host qualified at implementation commit `aae6818e3226e9e7e88d205b4666fb9904e4735b`; Probe 39 qualification is pending. This does not prove general loading, general memory management, capability transfer, JIT publication, general timer/scheduler behavior, service restart, or a general service runtime.
+The memory layer calls WVA export `Windvale_kernel_wva_main` only after owned-state initialization, handoff copy, stack switch, exception installation, and [paging version 5](Windvale-Kernel-Paging.md) activation. Admission bridge 2 retains its exact `39,712/2` context and token 73, then calls [protected process version 17](Windvale-Protected-Process.md). The private four-interrupt preemption experiment completes before the retained service workload; only the exact two-resource grant, both endpoint-backed service exchanges, budgeted interpretation, two-alias terminal cleanup, generation-safe non-tail client-object release/reuse, and independent service completion reach the retained 271/2 portable bridge; only its packed result 29 reaches `Windvale_kernel_main`. Separate images retain terminal CPL0 `(6, 0)` and `(13, 0)`, contained client CPL3 `(13, 0)`, and contained directory-provider failure. Probe 39 is cross-host qualified at exact implementation commit `6a250c86c30e8921d6bf9244a27d0fd763716cb0` and GitHub Verify run 30847279400. Probe 40 has focused local evidence; independent Windows/Linux qualification remains pending. This does not prove general loading, a general physical-memory manager, capability transfer, JIT publication, general timer/scheduler behavior, service restart, or a general service runtime.

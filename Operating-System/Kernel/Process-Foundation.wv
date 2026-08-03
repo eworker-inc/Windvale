@@ -289,20 +289,62 @@ fn Hasˉserviceˉfailureˉcontract() -> bool {
     return true;
 }
 
-fn Hasˉreuseˉcontract() -> bool {
+fn Hasˉmemoryˉobjectˉcontract() -> bool {
+    let Bitmapˉbits: u32 = 160u32;
+    let Ownerˉentries: u32 = 157u32;
+    let Objectˉrecordˉbytes: u32 = 304u32;
+    let Initˉreference: u32 = 65537u32;
+    let Clientˉfirstˉreference: u32 = 65538u32;
+    let Directoryˉreference: u32 = 65539u32;
+    let Clientˉsecondˉreference: u32 = 131074u32;
+    let Initˉfirstˉpage: u32 = 13u32;
+    let Initˉpages: u32 = 12u32;
+    let Clientˉfirstˉpage: u32 = 25u32;
+    let Clientˉpages: u32 = 122u32;
+    let Directoryˉfirstˉpage: u32 = 147u32;
+    let Directoryˉpages: u32 = 10u32;
     var Clientˉgeneration: u32 = 1u32;
-    var Clientˉextentˉstate: u32 = 1u32;
-    var Clientˉreuseˉcount: u32 = 0u32;
+    var Clientˉobjectˉstate: u32 = 1u32;
+    var Clientˉallocationˉcount: u32 = 1u32;
+    var Clientˉreleaseˉcount: u32 = 0u32;
+    var Freeˉpages: u32 = 0u32;
+    var Directoryˉobjectˉstate: u32 = 1u32;
 
-    if Clientˉextentˉstate != 1u32 { return false; }
-    Clientˉextentˉstate = 2u32;
-    if Clientˉextentˉstate != 2u32 { return false; }
+    if Bitmapˉbits != 160u32 { return false; }
+    if Ownerˉentries != 157u32 { return false; }
+    if Objectˉrecordˉbytes != 304u32 { return false; }
+    if Initˉreference != 65537u32 { return false; }
+    if Clientˉfirstˉreference != 65538u32 { return false; }
+    if Directoryˉreference != 65539u32 { return false; }
+    if Clientˉsecondˉreference != 131074u32 { return false; }
+    if Initˉfirstˉpage + Initˉpages != Clientˉfirstˉpage { return false; }
+    if Clientˉfirstˉpage + Clientˉpages != Directoryˉfirstˉpage { return false; }
+    if Directoryˉfirstˉpage + Directoryˉpages != Ownerˉentries { return false; }
+    if Clientˉobjectˉstate != 1u32 { return false; }
+    if Clientˉallocationˉcount != 1u32 { return false; }
+    if Clientˉreleaseˉcount != 0u32 { return false; }
+    if Directoryˉobjectˉstate != 1u32 { return false; }
+
+    // Generation 1 is released while the later directory object remains live.
+    Clientˉobjectˉstate = 2u32;
+    Clientˉreleaseˉcount = Clientˉreleaseˉcount + 1u32;
+    Freeˉpages = Clientˉpages;
+    if Clientˉobjectˉstate != 2u32 { return false; }
+    if Clientˉreleaseˉcount != Clientˉallocationˉcount { return false; }
+    if Freeˉpages != 122u32 { return false; }
+    if Directoryˉobjectˉstate != 1u32 { return false; }
+
+    // First-fit allocation reuses the same 122 pages under generation 2.
     Clientˉgeneration = 2u32;
-    Clientˉextentˉstate = 1u32;
-    Clientˉreuseˉcount = Clientˉreuseˉcount + 1u32;
+    Clientˉobjectˉstate = 1u32;
+    Clientˉallocationˉcount = Clientˉallocationˉcount + 1u32;
+    Freeˉpages = Freeˉpages - Clientˉpages;
     if Clientˉgeneration != 2u32 { return false; }
-    if Clientˉextentˉstate != 1u32 { return false; }
-    if Clientˉreuseˉcount != 1u32 { return false; }
+    if Clientˉobjectˉstate != 1u32 { return false; }
+    if Clientˉallocationˉcount != 2u32 { return false; }
+    if Clientˉreleaseˉcount != 1u32 { return false; }
+    if Freeˉpages != 0u32 { return false; }
+    if Directoryˉobjectˉstate != 1u32 { return false; }
     return true;
 }
 
@@ -381,11 +423,12 @@ export fn Main() -> i32 {
     if Budgetˉresourceˉkind != 2u32 { return 0; }
     if Executionˉbudget != 199u32 { return 0; }
     // The machine proof enforces the same transition against live records:
-    // generation 1 grants, runs, revokes, releases its exact tail extent, and
-    // generation 2 reuses that physical root without inheriting its identity.
+    // generation 1 grants, runs, revokes, releases its exact non-tail memory
+    // object while directory remains live, and generation 2 reuses that root
+    // without inheriting its identity.
     if !Hasˉresourceˉgeneration(1u32, 0u32, 65538u32) { return 0; }
     if !Hasˉexecutionˉgeneration(1u32) { return 0; }
-    if !Hasˉreuseˉcontract() { return 0; }
+    if !Hasˉmemoryˉobjectˉcontract() { return 0; }
     if !Hasˉresourceˉgeneration(2u32, 1u32, 131074u32) { return 0; }
     if !Hasˉexecutionˉgeneration(2u32) { return 0; }
     // The same measured image also admits a bounded failure scenario: a

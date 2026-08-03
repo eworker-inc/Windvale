@@ -38,7 +38,7 @@ internal static class Program
         new("directory snapshot emits one deterministic verified WVDS page", Directoryˉsnapshotˉemitsˉdeterministicˉpage),
         new("directory snapshot rejects malformed and hostile images", Directoryˉsnapshotˉrejectsˉmalformedˉimages),
         new("Windvale snapshot service completes one maximal directory read", Directoryˉsnapshotˉserviceˉcompletesˉmaximalˉread),
-        new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
+        new("kernel memory objects reclaim a non-tail process extent", Pageˉallocatorˉisˉboundedˉandˉzeroing),
         new("kernel paging planner enforces bounded W^X identity tables", Pagingˉplannerˉenforcesˉboundedˉidentityˉtables),
         new("kernel WVA shims bridge Main, normalized traps, and Q35 shutdown", Kernelˉassemblyˉshimˉbridgesˉmain),
         new("AOT Windvale admission rejects changed WVB before execution", Kernelˉwvbˉadmissionˉisˉbounded),
@@ -1283,37 +1283,218 @@ internal static class Program
         var Allocator = new Kernelˉpageˉallocator(Plan, Arena);
         True(Arena.All(Value => Value == 0), "Kernel arena initialization did not clear every byte.");
 
-        Array.Fill(Arena, (byte)0x5A, 5 * 4_096, 4_096);
+        Array.Fill(Arena, (byte)0x5A, 5 * 4_096, 8 * 4_096);
         Equal(0x0020_5000UL, Allocator.Allocateˉpages(1)!.Value);
-        True(Arena.AsSpan(5 * 4_096, 4_096).IndexOfAnyExcept((byte)0) < 0, "Allocated page was not zeroed.");
-        Equal(Kernelˉmemoryˉcontract.INITIAL_FREE_PAGES - 1, Allocator.Remainingˉpages);
+        Equal(0x0020_6000UL, Allocator.Allocateˉpages(7)!.Value);
+        True(Arena.AsSpan(5 * 4_096, 8 * 4_096).IndexOfAnyExcept((byte)0) < 0,
+            "Fixed kernel pages were not zeroed.");
+        Equal(Kernelˉmemoryˉcontract.INITIAL_FREE_PAGES - 8, Allocator.Remainingˉpages);
         True(Allocator.Allocateˉpages(0) is null, "A zero-page allocation succeeded.");
-        Equal(0x0020_6000UL, Allocator.Allocateˉpages(
-            Kernelˉmemoryˉcontract.INITIAL_FREE_PAGES - 1)!.Value);
+
+        var Init = Allocator.Allocateˉmemoryˉobject(
+            Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.INIT_ALLOCATION_PAGES)!;
+        var Client = Allocator.Allocateˉmemoryˉobject(
+            Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES)!;
+        var Directory = Allocator.Allocateˉmemoryˉobject(
+            Kernelˉprocessˉcontract.DIRECTORY_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.DIRECTORY_ALLOCATION_PAGES)!;
+        Equal(0x0020_D000UL, Init.Address);
+        Equal(0x0021_9000UL, Client.Address);
+        Equal(0x0029_3000UL, Directory.Address);
         Equal(0UL, Allocator.Remainingˉpages);
         True(Allocator.Allocateˉpages(1) is null, "An exhausted allocator returned a page.");
-        var Clientˉtailˉpage = checked((int)(Kernelˉmemoryˉcontract.ARENA_PAGES -
-            Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES));
-        var Clientˉtailˉaddress = 0x0020_0000UL +
-            checked((ulong)Clientˉtailˉpage * Kernelˉmemoryˉcontract.PAGE_BYTES);
-        Array.Fill(Arena, (byte)0xC7, Clientˉtailˉpage * 4_096,
+        Sequenceˉequal(
+            Enumerable.Repeat((byte)0xFF,
+                (int)Kernelˉmemoryˉcontract.ALLOCATION_BITMAP_BYTES).ToImmutableArray(),
+            Allocator.Allocationˉbitmap());
+
+        var Encoded = Kernelˉmemoryˉobjectˉcodec.Write(Client.Object);
+        Equal((int)Kernelˉmemoryˉcontract.MEMORY_OBJECT_RECORD_BYTES, Encoded.Length);
+        Sequenceˉequal(
+            Encoded.ToImmutableArray(),
+            Kernelˉmemoryˉobjectˉcodec.Write(
+                Kernelˉmemoryˉobjectˉcodec.Read(Encoded)).ToImmutableArray());
+        for (var Length = 0; Length < Encoded.Length; Length++)
+        {
+            Rejectˉmemoryˉobject(Encoded.AsSpan(0, Length));
+        }
+        var Corruptˉowner = Encoded.ToArray();
+        Corruptˉowner[24] ^= 1;
+        Rejectˉmemoryˉobject(Corruptˉowner);
+        Rejectˉmemoryˉobject([.. Encoded, (byte)0]);
+
+        var Clientˉpage = checked((int)((Client.Address - Plan.Arenaˉaddress) /
+            Kernelˉmemoryˉcontract.PAGE_BYTES));
+        var Directoryˉpage = checked((int)((Directory.Address - Plan.Arenaˉaddress) /
+            Kernelˉmemoryˉcontract.PAGE_BYTES));
+        Array.Fill(Arena, (byte)0xC7, Clientˉpage * 4_096,
             checked((int)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES) * 4_096);
-        True(!Allocator.Releaseˉtailˉpages(Clientˉtailˉaddress - Kernelˉmemoryˉcontract.PAGE_BYTES,
-                Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES),
-            "A non-tail extent was released.");
-        True(!Allocator.Releaseˉtailˉpages(Clientˉtailˉaddress, 0),
-            "A zero-page extent was released.");
-        True(Allocator.Releaseˉtailˉpages(Clientˉtailˉaddress,
-                Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES),
-            "The exact client-sized tail extent was not released.");
+        Array.Fill(Arena, (byte)0xD9, Directoryˉpage * 4_096,
+            checked((int)Kernelˉprocessˉcontract.DIRECTORY_ALLOCATION_PAGES) * 4_096);
+        var Beforeˉrejection = Allocator.Allocationˉbitmap();
+        True(Allocator.Releaseˉmemoryˉobject(
+                Client.Object,
+                Kernelˉprocessˉcontract.SECOND_CLIENT_PROCESS_REFERENCE) is null,
+            "A stale or wrong-generation memory-object reference was released.");
+        Sequenceˉequal(Beforeˉrejection, Allocator.Allocationˉbitmap());
+        var Released = Allocator.Releaseˉmemoryˉobject(
+            Client.Object,
+            Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE)!;
         Equal(Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES, Allocator.Remainingˉpages);
-        True(Arena.AsSpan(Clientˉtailˉpage * 4_096,
+        True(Arena.AsSpan(Clientˉpage * 4_096,
                 checked((int)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES) * 4_096)
             .IndexOfAnyExcept((byte)0) < 0,
-            "The released tail extent retained stale bytes.");
-        Equal(Clientˉtailˉaddress, Allocator.Allocateˉpages(
-            Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES)!.Value);
+            "The released non-tail client extent retained stale bytes.");
+        True(Arena.AsSpan(Directoryˉpage * 4_096,
+                checked((int)Kernelˉprocessˉcontract.DIRECTORY_ALLOCATION_PAGES) * 4_096)
+            .IndexOfAnyExcept((byte)0xD9) < 0,
+            "Releasing the client changed the still-live later directory object.");
+        var Releasedˉbytes = Kernelˉmemoryˉobjectˉcodec.Write(Released);
+        Sequenceˉequal(
+            Releasedˉbytes.ToImmutableArray(),
+            Kernelˉmemoryˉobjectˉcodec.Write(
+                Kernelˉmemoryˉobjectˉcodec.Read(Releasedˉbytes)).ToImmutableArray());
+
+        var Reused = Allocator.Allocateˉmemoryˉobject(
+            Kernelˉprocessˉcontract.SECOND_CLIENT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES,
+            Released)!;
+        Equal(Client.Address, Reused.Address);
+        Equal(2u, Reused.Object.Allocationˉcount);
+        Equal(1u, Reused.Object.Releaseˉcount);
         Equal(0UL, Allocator.Remainingˉpages);
+        Sequenceˉequal(
+            Enumerable.Repeat((byte)0xFF,
+                (int)Kernelˉmemoryˉcontract.ALLOCATION_BITMAP_BYTES).ToImmutableArray(),
+            Allocator.Allocationˉbitmap());
+
+        Executeˉkernelˉmemoryˉobjectˉmachineˉseam();
+    }
+
+    private static void Executeˉkernelˉmemoryˉobjectˉmachineˉseam()
+    {
+        if (!OperatingSystem.IsWindows() || RuntimeInformation.ProcessArchitecture != Architecture.X64)
+        {
+            return;
+        }
+
+        var Object = Objectˉcodec.Readˉandˉverify(
+            Kernelˉmemoryˉassemblyˉshim.Buildˉobject().AsSpan()).Value;
+        var Code = Object.Sections.Single().Data.ToArray();
+        var Allocateˉoffset = Object.Symbols.Single(Symbol =>
+            Symbol.Name == Kernelˉmemoryˉcontract.ALLOCATE_MEMORY_OBJECT_SYMBOL).Offset;
+        var Releaseˉoffset = Object.Symbols.Single(Symbol =>
+            Symbol.Name == Kernelˉmemoryˉcontract.RELEASE_MEMORY_OBJECT_SYMBOL).Offset;
+        var Arenaˉallocation = Marshal.AllocHGlobal(
+            checked((int)Kernelˉmemoryˉcontract.ARENA_BYTES + 4_095));
+        try
+        {
+            var Arenaˉaddress = (Arenaˉallocation.ToInt64() + 4_095L) & ~4_095L;
+            var Arenaˉpointer = new IntPtr(Arenaˉaddress);
+            var Arena = new byte[checked((int)Kernelˉmemoryˉcontract.ARENA_BYTES)];
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Arena, Kernelˉmemoryˉcontract.STATE_MAGIC);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Arena.AsSpan(8), Kernelˉmemoryˉcontract.STATE_VERSION);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Arena.AsSpan(12), Kernelˉmemoryˉcontract.STATE_HEADER_BYTES);
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Arena.AsSpan(16), checked((ulong)Arenaˉaddress));
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Arena.AsSpan(24), Kernelˉmemoryˉcontract.ARENA_PAGES);
+            BinaryPrimitives.WriteUInt64LittleEndian(Arena.AsSpan(32), 13);
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Arena.AsSpan(40), Kernelˉmemoryˉcontract.INITIAL_FREE_PAGES - 8);
+            Arena.AsSpan(
+                (int)Kernelˉmemoryˉcontract.ALLOCATION_BITMAP_OFFSET, 2).Fill(0xFF);
+            Arena[(int)Kernelˉmemoryˉcontract.ALLOCATION_BITMAP_OFFSET + 1] = 0x1F;
+            Arena[(int)Kernelˉmemoryˉcontract.ALLOCATION_BITMAP_OFFSET + 19] = 0xE0;
+            Arena.AsSpan((int)Kernelˉmemoryˉcontract.PAGE_OWNER_OFFSET, 13)
+                .Fill(Kernelˉmemoryˉcontract.PAGE_OWNER_KERNEL);
+            Marshal.Copy(Arena, 0, Arenaˉpointer, Arena.Length);
+
+            using var Executable = Nativeˉexecutableˉimage.Allocateˉwritable(
+                X64ˉnativeˉpublicationˉlifetime.Plan(Code.Length));
+            Executable.Copyˉimage(Code);
+            Executable.Sealˉexecutable();
+            _ = Executable.Invoke(Address =>
+            {
+                var Allocate = Marshal.GetDelegateForFunctionPointer<
+                    Kernelˉmemoryˉobjectˉleaf>(Address + checked((int)Allocateˉoffset));
+                var Release = Marshal.GetDelegateForFunctionPointer<
+                    Kernelˉmemoryˉobjectˉleaf>(Address + checked((int)Releaseˉoffset));
+                var Initˉrecord = Arenaˉpointer +
+                    checked((int)Kernelˉmemoryˉcontract.INIT_MEMORY_OBJECT_OFFSET);
+                var Clientˉrecord = Arenaˉpointer +
+                    checked((int)Kernelˉmemoryˉcontract.CLIENT_MEMORY_OBJECT_OFFSET);
+                var Directoryˉrecord = Arenaˉpointer +
+                    checked((int)Kernelˉmemoryˉcontract.DIRECTORY_MEMORY_OBJECT_OFFSET);
+
+                var Init = Allocate(
+                    Arenaˉpointer, Initˉrecord,
+                    Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE,
+                    checked((uint)Kernelˉprocessˉcontract.INIT_ALLOCATION_PAGES));
+                var Client = Allocate(
+                    Arenaˉpointer, Clientˉrecord,
+                    Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE,
+                    checked((uint)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES));
+                var Directory = Allocate(
+                    Arenaˉpointer, Directoryˉrecord,
+                    Kernelˉprocessˉcontract.DIRECTORY_PROCESS_REFERENCE,
+                    checked((uint)Kernelˉprocessˉcontract.DIRECTORY_ALLOCATION_PAGES));
+                Equal(checked((ulong)Arenaˉaddress + 13 * 4_096UL), Init);
+                Equal(checked((ulong)Arenaˉaddress + 25 * 4_096UL), Client);
+                Equal(checked((ulong)Arenaˉaddress + 147 * 4_096UL), Directory);
+
+                var Clientˉbytes = Enumerable.Repeat(
+                    (byte)0xC7,
+                    checked((int)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES * 4_096))
+                    .ToArray();
+                var Directoryˉbytes = Enumerable.Repeat(
+                    (byte)0xD9,
+                    checked((int)Kernelˉprocessˉcontract.DIRECTORY_ALLOCATION_PAGES * 4_096))
+                    .ToArray();
+                Marshal.Copy(Clientˉbytes, 0, new IntPtr(checked((long)Client)), Clientˉbytes.Length);
+                Marshal.Copy(
+                    Directoryˉbytes, 0, new IntPtr(checked((long)Directory)), Directoryˉbytes.Length);
+                Equal(0UL, Release(
+                    Arenaˉpointer, Clientˉrecord,
+                    Kernelˉprocessˉcontract.SECOND_CLIENT_PROCESS_REFERENCE, 0));
+                Equal(Client, Release(
+                    Arenaˉpointer, Clientˉrecord,
+                    Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE, 0));
+                Marshal.Copy(new IntPtr(checked((long)Client)), Clientˉbytes, 0, Clientˉbytes.Length);
+                Marshal.Copy(
+                    new IntPtr(checked((long)Directory)), Directoryˉbytes, 0, Directoryˉbytes.Length);
+                True(Clientˉbytes.All(Value => Value == 0),
+                    "The WVA release seam retained client bytes.");
+                True(Directoryˉbytes.All(Value => Value == 0xD9),
+                    "The WVA release seam changed the live directory object.");
+                Equal(Client, Allocate(
+                    Arenaˉpointer, Clientˉrecord,
+                    Kernelˉprocessˉcontract.SECOND_CLIENT_PROCESS_REFERENCE,
+                    checked((uint)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES)));
+                return 0;
+            });
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(Arenaˉallocation);
+        }
+    }
+
+    private static void Rejectˉmemoryˉobject(ReadOnlySpan<byte> source)
+    {
+        try
+        {
+            _ = Kernelˉmemoryˉobjectˉcodec.Read(source);
+            throw new InvalidOperationException("A malformed memory-object record was accepted.");
+        }
+        catch (InvalidDataException)
+        {
+        }
     }
 
     private static void Pagingˉplannerˉenforcesˉboundedˉidentityˉtables()
@@ -1490,11 +1671,11 @@ internal static class Program
         Sequenceˉequal(First.Codeˉbytes, Second.Codeˉbytes);
         Equal(1_292, First.Objectˉbytes.Length);
         Equal(
-            "579ec9af586feab2fee749d92c5a1f90f795710345bb8866b0a644a36eb47bf7",
+            "a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
         Equal(899, First.Codeˉbytes.Length);
         Equal(
-            "9f14df3845f0d307080c75057c25bc1ec0ae65a2f422609d1cd1c73db376142a",
+            "c2b012e938d8639af8fa543788bc78532a4038ca178cb0c5f7ead9bb9c0a1e20",
             Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
 
         var Object = Objectˉcodec.Readˉandˉverify(First.Objectˉbytes.AsSpan()).Value;
@@ -1611,11 +1792,11 @@ internal static class Program
             Admission, Kernelˉprocessˉscenario.Serviceˉfault);
         var Serviceˉfaultˉsecond = Kernelˉprocessˉimage.Build(
             Admission, Kernelˉprocessˉscenario.Serviceˉfault);
-        Equal(16_812, First.Policyˉmoduleˉbytes.Length);
-        Equal("4904b44715399048e920d126d8a49f15a6b437cd4c77a25b23c3b113b9e7655d",
+        Equal(18_763, First.Policyˉmoduleˉbytes.Length);
+        Equal("907d89aae0575d05306d4111c87f52f5a684085576a19d6425968ebe83afa3f4",
             Objectˉdigest.Calculateˉsha256(First.Policyˉmoduleˉbytes.AsSpan()));
-        Equal(115_198, First.Policyˉnativeˉobjectˉbytes.Length);
-        Equal("a4e218e5417e4ed605ddfbd7df2f92d9df7a9a154a41382f4e94f1ff9bc4c2ed",
+        Equal(129_310, First.Policyˉnativeˉobjectˉbytes.Length);
+        Equal("483ba9c752862fa739dea5fb9c40ce747e3210797d39bc73ac3f8d22084f669a",
             Objectˉdigest.Calculateˉsha256(First.Policyˉnativeˉobjectˉbytes.AsSpan()));
         Equal(525, First.Initˉserviceˉmoduleˉbytes.Length);
         Equal("0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467",
@@ -3379,23 +3560,23 @@ internal static class Program
             Serviceˉfaultˉimage, Kernelˉprocessˉscenario.Serviceˉfault);
         var Serviceˉfaultˉsecond = Kernelˉprocessˉx64.Build(
             Serviceˉfaultˉimage, Kernelˉprocessˉscenario.Serviceˉfault);
-        Equal(511_765, First.Objectˉbytes.Length);
-        Equal("0b348d59ee8659b91bfa317031396292480fe8d26bce77c9712441cc2f43f43f",
+        Equal(511_856, First.Objectˉbytes.Length);
+        Equal("052e0a86ae59e753a986cfa675b013222208b82f4501236e5f0822d6db2dab0a",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
-        Equal(46_598, First.Codeˉbytes.Length);
-        Equal("9eb0e46d218fead434d2271be7965ee3a2c90b6b862ef42d89e025d8435e443c",
+        Equal(46_678, First.Codeˉbytes.Length);
+        Equal("71039792d3408a9b6459bbd129074c054ef9be59a5d978dbba07a2cb6d223761",
             Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
-        Equal(511_797, Faultˉfirst.Objectˉbytes.Length);
-        Equal("d7aa5d67407321482cbb75f5b9fa90e93106f1647f92d51373b718c587de41e0",
+        Equal(511_904, Faultˉfirst.Objectˉbytes.Length);
+        Equal("b38aa657b004ee1725078889004f4a654e4cc7d81b5930215f3908f56103b388",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Objectˉbytes.AsSpan()));
-        Equal(46_662, Faultˉfirst.Codeˉbytes.Length);
-        Equal("bf3baf97a78c884874664108e7c77bec216d7f59db92e27e67a8161f78a40618",
+        Equal(46_758, Faultˉfirst.Codeˉbytes.Length);
+        Equal("26aa11fcd58908cb1fd0e9494312374905a3a4891385a3b5dd8898ea1dbf954a",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Codeˉbytes.AsSpan()));
-        Equal(497_957, Serviceˉfaultˉfirst.Objectˉbytes.Length);
-        Equal("4747e4fd56d63ab9d7a945754781eeb535907b650f3ff402976ff95f6fc9d17a",
+        Equal(498_032, Serviceˉfaultˉfirst.Objectˉbytes.Length);
+        Equal("545b45c2956a706e8f81cf60ce1c64b37f4ce15ee32221f16a7ff27345b18a81",
             Objectˉdigest.Calculateˉsha256(Serviceˉfaultˉfirst.Objectˉbytes.AsSpan()));
-        Equal(33_254, Serviceˉfaultˉfirst.Codeˉbytes.Length);
-        Equal("1995845f32c969f251f92c7f613e476d1cfc938f84a919ea38451882971c8bd8",
+        Equal(33_318, Serviceˉfaultˉfirst.Codeˉbytes.Length);
+        Equal("f605cc750bf62e73569c9b0e03a3f1b63861f41c62e42b35f1273842ae1d3e99",
             Objectˉdigest.Calculateˉsha256(Serviceˉfaultˉfirst.Codeˉbytes.AsSpan()));
         Equal(55, First.Relocations.Length);
         Equal(55, Faultˉfirst.Relocations.Length);
@@ -3508,9 +3689,9 @@ internal static class Program
         Equal(Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL, Object.Symbols[8].Name);
         Equal(Kernelˉprocessˉcontract.SYSCALL_ENTRY_SYMBOL, Object.Symbols[9].Name);
         Equal(Kernelˉtimerˉcontract.INTERRUPT_SYMBOL, Object.Symbols[10].Name);
-        Equal(Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL, Object.Symbols[11].Name);
+        Equal(Kernelˉmemoryˉcontract.ALLOCATE_MEMORY_OBJECT_SYMBOL, Object.Symbols[11].Name);
         Equal(Kernelˉprocessˉcontract.POLICY_SYMBOL, Object.Symbols[12].Name);
-        Equal(Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL, Object.Symbols[13].Name);
+        Equal(Kernelˉmemoryˉcontract.RELEASE_MEMORY_OBJECT_SYMBOL, Object.Symbols[13].Name);
         Equal(Kernelˉexceptionˉcontract.TERMINAL_SYMBOL, Object.Symbols[14].Name);
         Equal(Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL, Object.Symbols[15].Name);
         Equal(Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL, Object.Symbols[16].Name);
@@ -3568,14 +3749,14 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Userˉfault);
         Sequenceˉequal(First, Second);
-        Equal(665_600, First.Length);
+        Equal(682_496, First.Length);
         Equal(
-            "bed13cd66bdee6051008dbbe35d71110afcb2b65037853883b221a8b66651aeb",
+            "2dc3bbbb6d413499394840d2466c53a206142c6d62e1c7cdab6c490eb38507ad",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and deliberate user-fault images are identical.");
         Equal(
-            "windvale-os-boot 39\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\ndirectory-process=isolated\ndispatcher=ready-wait\nservice-endpoints=2\nresource-grant=pass\ntyped-resources=pass\nresource-revoked=pass\nprocess-reuse=pass\nwvb-runtime=interpreted\ninit-service=pass\ndirectory-service=pass\nipc=resource-and-directory\nHello from Windvale\ntimer-preemption=pass\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nuser-fault=contained\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 40\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\ndirectory-process=isolated\ndispatcher=ready-wait\nservice-endpoints=2\nresource-grant=pass\ntyped-resources=pass\nresource-revoked=pass\nprocess-reuse=pass\nmemory-object-reuse=pass\nwvb-runtime=interpreted\ninit-service=pass\ndirectory-service=pass\nipc=resource-and-directory\nHello from Windvale\ntimer-preemption=pass\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nuser-fault=contained\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.USER_FAULT_SERIAL_MARKER);
     }
 
@@ -3584,14 +3765,14 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Serviceˉfault);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Serviceˉfault);
         Sequenceˉequal(First, Second);
-        Equal(651_264, First.Length);
+        Equal(667_648, First.Length);
         Equal(
-            "00c8e41e2b9bd0c9e918ac4233f520cebea6aebdbd4d235f2d22a1b53fa57de8",
+            "bf39b8f503c9eaab0437f58dec89a3eb9b011ea1b7d3affe4c9187f2a7ab128d",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and contained service-fault images are identical.");
         Equal(
-            "windvale-os-boot 39\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\ndirectory-process=isolated\ndispatcher=ready-wait\nservice-endpoints=2\nresource-grant=pass\ntyped-resources=pass\nresource-revoked=pass\nwvb-runtime=interpreted\nservice-fault=contained\nipc=service-peer-loss\nHello from Windvale\ntimer-preemption=pass\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 40\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\ndirectory-process=isolated\ndispatcher=ready-wait\nservice-endpoints=2\nresource-grant=pass\ntyped-resources=pass\nresource-revoked=pass\nwvb-runtime=interpreted\nservice-fault=contained\nipc=service-peer-loss\nHello from Windvale\ntimer-preemption=pass\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.SERVICE_FAULT_SERIAL_MARKER);
     }
 
@@ -3601,9 +3782,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication();
         var Second = Firmwareˉprobe.Buildˉapplication();
         Sequenceˉequal(First, Second);
-        Equal(665_088, First.Length);
+        Equal(681_984, First.Length);
         Equal(
-            "415304780f360508f11cba337638aac4434746ee2e4a08133b06bf4a7f6e01df",
+            "4b9ba1425f3e892404fdab41fd6270b4c6f1ea04d96a05233539f45c4253f974",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -3615,9 +3796,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Invalidˉopcode);
         Sequenceˉequal(First, Second);
-        Equal(665_088, First.Length);
+        Equal(681_984, First.Length);
         Equal(
-            "81ca354906173d8c8909271a6ad027d6b302a968eb96c87687647b21fef26184",
+            "b9ecc7f13a50c4c5bbc4c259830554bcec14b64caf6f2d69a6f271bb4d1e11fd",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -3639,9 +3820,9 @@ internal static class Program
         var First = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         var Second = Firmwareˉprobe.Buildˉapplication(Firmwareˉprobeˉscenario.Generalˉprotection);
         Sequenceˉequal(First, Second);
-        Equal(665_600, First.Length);
+        Equal(681_984, First.Length);
         Equal(
-            "ba35ae69e84950f682df45c8928ebe5f3e63841aa486e51945128e5b6fdfa27e",
+            "dbb5a213d3303ecf349166a1cb60114e0347a478227e11f1690bb2dc8b1e853a",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -3666,7 +3847,7 @@ internal static class Program
     private static void Firmwareˉprobeˉcarriesˉcompiledˉsource()
     {
         Equal(
-            "windvale-os-boot 39\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\ndirectory-process=isolated\ndispatcher=ready-wait\nservice-endpoints=2\nresource-grant=pass\ntyped-resources=pass\nresource-revoked=pass\nprocess-reuse=pass\nwvb-runtime=interpreted\ninit-service=pass\ndirectory-service=pass\nipc=resource-and-directory\nHello from Windvale\ntimer-preemption=pass\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
+            "windvale-os-boot 40\nentry=pass\nsystem-table=pass\nmemory-map=pass\nboot-services=exited\nmemory-owned=pass\nallocator=pass\nkernel-stack=pass\npaging=owned\nwvb-admission=pass\nprocesses=isolated\ndirectory-process=isolated\ndispatcher=ready-wait\nservice-endpoints=2\nresource-grant=pass\ntyped-resources=pass\nresource-revoked=pass\nprocess-reuse=pass\nmemory-object-reuse=pass\nwvb-runtime=interpreted\ninit-service=pass\ndirectory-service=pass\nipc=resource-and-directory\nHello from Windvale\ntimer-preemption=pass\ncpu-exceptions=armed\nnative-context=pass\nnative-wvb=pass\nwindvale-source=pass\nstatus=pass\nshutdown=poweroff\n",
             Firmwareˉprobe.SERIAL_MARKER);
         var Application = Firmwareˉprobe.Buildˉapplication();
         var Code = Uefiˉapplicationˉverifier.Verify(Application.AsSpan()).Codeˉbytes;
@@ -3683,12 +3864,12 @@ internal static class Program
         Equal(1, Countˉsequence(Code, [0xFF, 0x50, 0x48]));
         Equal(1, Countˉsequence(Code, [0xFF, 0x90, 0xE8, 0x00, 0x00, 0x00]));
         Equal(3, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x48, 0x41, 0x4E, 0x44, 0x31]));
-        Equal(8, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x31, 0x36]));
+        Equal(7, Countˉsequence(Code, [0x57, 0x56, 0x4B, 0x4D, 0x45, 0x4D, 0x31, 0x37]));
         Equal(1, Countˉsequence(Code, [0xC7, 0x44, 0x24, 0x2C, 0x30, 0x00, 0x00, 0x00]));
         Equal(3, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x28]));
         Equal(2, Countˉsequence(Code, [0x48, 0x83, 0xEC, 0x78]));
         Equal(1, Countˉsequence(Code, [0x49, 0x8D, 0xA6, 0x00, 0x50, 0x00, 0x00]));
-        Equal(14, Countˉsequence(Code, [0xFC, 0xF3, 0x48, 0xAB]));
+        Equal(13, Countˉsequence(Code, [0xFC, 0xF3, 0x48, 0xAB]));
         Equal(1,
             Countˉsequence(Code, [0xBA, 0xFD, 0x03, 0x00, 0x00, 0xEC, 0xA8, 0x20, 0x0F, 0x84]));
         Equal(1,
@@ -4720,6 +4901,13 @@ internal static class Program
     }
 
     private sealed record Testˉcase(string Name, Action Body);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate ulong Kernelˉmemoryˉobjectˉleaf(
+        IntPtr state,
+        IntPtr record,
+        uint reference,
+        uint pages);
 
     private sealed record Memoryˉdescriptorˉinput(
         uint Type,

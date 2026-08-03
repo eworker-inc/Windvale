@@ -1,0 +1,537 @@
+windvale-assembly 1
+
+symbol export function Windvale_kernel_allocate_memory_object in .text
+symbol export function Windvale_kernel_release_memory_object in .text
+
+section code .text align 16
+define Windvale_kernel_allocate_memory_object
+# RCX is WVKMEM17, RDX is one private WVMEMO01 record, R8D is the
+# generation-stamped object/owner reference, and R9D is the page count.
+# The allocator scans the fixed 160-bit map first-fit and mutates nothing until
+# a complete run is known. Process callers separately validate contiguity.
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+move r12 rcx
+move r13 rdx
+move r14d r8d
+move r15d r9d
+
+compare_i32 r12 0
+branch equal memory_object_allocate_failure
+compare_i32 r13 0
+branch equal memory_object_allocate_failure
+compare_i32 r15d 1
+branch below memory_object_allocate_failure
+compare_i32 r15d 122
+branch above memory_object_allocate_failure
+load_memory_u32 eax r12 none 1 0
+move_u32 edx 1296782935
+compare eax edx
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r12 none 1 4
+move_u32 edx 925977925
+compare eax edx
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r12 none 1 8
+compare_i32 eax 17
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r12 none 1 12
+compare_i32 eax 64
+branch not_equal memory_object_allocate_failure
+load_memory_u64 rax r12 none 1 16
+compare rax r12
+branch not_equal memory_object_allocate_failure
+load_memory_u64 rax r12 none 1 24
+compare_i32 rax 157
+branch not_equal memory_object_allocate_failure
+load_memory_u64 rax r12 none 1 32
+compare_i32 rax 13
+branch not_equal memory_object_allocate_failure
+load_memory_u64 rax r12 none 1 40
+move edx r15d
+compare rax rdx
+branch below memory_object_allocate_failure
+
+move eax r14d
+and_i32 eax 65535
+compare_i32 eax 1
+branch below memory_object_allocate_failure
+compare_i32 eax 254
+branch above memory_object_allocate_failure
+move ebx eax
+move eax r14d
+shift_right eax 16
+compare_i32 eax 0
+branch equal memory_object_allocate_failure
+
+# A pristine slot must be entirely zero. A reused slot must be the exact
+# released prior generation with balanced allocation/release history.
+load_memory_u64 rax r13 none 1 0
+compare_i32 rax 0
+branch not_equal memory_object_allocate_prior
+move r10 r13
+move_u32 ecx 38
+label memory_object_allocate_zero_record
+load_memory_u64 rax r10 none 1 0
+compare_i32 rax 0
+branch not_equal memory_object_allocate_failure
+add_i32 r10 8
+subtract_i32 ecx 1
+branch not_equal memory_object_allocate_zero_record
+move_u32 esi 0
+jump_label memory_object_allocate_scan_begin
+
+label memory_object_allocate_prior
+load_memory_u32 eax r13 none 1 0
+move_u32 edx 1162696279
+compare eax edx
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 4
+move_u32 edx 825249613
+compare eax edx
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 1
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 12
+compare_i32 eax 304
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 16
+compare_i32 eax 2
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 20
+move edx eax
+add_i32 eax 65536
+compare eax r14d
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 24
+compare eax edx
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 28
+compare_i32 eax 0
+branch not_equal memory_object_allocate_failure
+load_memory_u32 esi r13 none 1 32
+compare_i32 esi 0
+branch equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 36
+compare eax esi
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 40
+compare_i32 eax 0
+branch not_equal memory_object_allocate_failure
+load_memory_u32 eax r13 none 1 44
+compare eax ebx
+branch not_equal memory_object_allocate_failure
+load_memory_u64 rax r13 none 1 48
+compare_i32 rax 0
+branch not_equal memory_object_allocate_failure
+move r10 r13
+add_i32 r10 56
+move_u32 ecx 31
+label memory_object_allocate_zero_vector
+load_memory_u64 rax r10 none 1 0
+compare_i32 rax 0
+branch not_equal memory_object_allocate_failure
+add_i32 r10 8
+subtract_i32 ecx 1
+branch not_equal memory_object_allocate_zero_vector
+
+label memory_object_allocate_scan_begin
+move r10 r12
+add_i32 r10 2976
+move_u32 r8d 5
+move_u8 r9b 32
+move_u32 edi 0
+move_u32 ebp 0
+label memory_object_allocate_scan
+load_memory_u8 al r10 none 1 0
+test al r9b
+branch not_equal memory_object_allocate_scan_used
+compare_i32 edi 0
+branch not_equal memory_object_allocate_scan_extend
+move ebp r8d
+label memory_object_allocate_scan_extend
+add_i32 edi 1
+compare edi r15d
+branch equal memory_object_allocate_found
+jump_label memory_object_allocate_scan_advance
+label memory_object_allocate_scan_used
+move_u32 edi 0
+label memory_object_allocate_scan_advance
+add_i32 r8d 1
+compare_i32 r8d 157
+branch above_equal memory_object_allocate_failure
+add r9b r9b
+branch not_equal memory_object_allocate_scan
+add_i32 r10 1
+move_u8 r9b 1
+jump_label memory_object_allocate_scan
+
+label memory_object_allocate_found
+# Preflight the owner map as well as the allocation bitmap before publishing
+# any mutation. The first-fit scan alone is insufficient if retained state is
+# internally inconsistent.
+move esi ebp
+move edi r15d
+label memory_object_allocate_preflight
+move r10 r12
+add_i32 r10 2976
+move eax esi
+shift_right eax 3
+add r10 rax
+move ecx esi
+and_i32 ecx 7
+move_u8 r9b 1
+compare_i32 ecx 0
+branch equal memory_object_allocate_preflight_mask_ready
+label memory_object_allocate_preflight_mask
+add r9b r9b
+subtract_i32 ecx 1
+branch not_equal memory_object_allocate_preflight_mask
+label memory_object_allocate_preflight_mask_ready
+load_memory_u8 al r10 none 1 0
+test al r9b
+branch not_equal memory_object_allocate_failure
+move r11 r12
+add_i32 r11 3008
+move eax esi
+add r11 rax
+load_memory_u8 al r11 none 1 0
+compare_i8 al 0
+branch not_equal memory_object_allocate_failure
+add_i32 esi 1
+subtract_i32 edi 1
+branch not_equal memory_object_allocate_preflight
+
+# Recover the first byte/mask, then mark, own, zero, and record every page.
+move r10 r12
+add_i32 r10 2976
+move eax ebp
+shift_right eax 3
+add r10 rax
+move ecx ebp
+and_i32 ecx 7
+move_u8 r9b 1
+compare_i32 ecx 0
+branch equal memory_object_allocate_mask_ready
+label memory_object_allocate_mask_loop
+add r9b r9b
+subtract_i32 ecx 1
+branch not_equal memory_object_allocate_mask_loop
+label memory_object_allocate_mask_ready
+move esi ebp
+move eax ebp
+move rbp rax
+shift_left rbp 12
+add rbp r12
+move edi r15d
+move_u32 edx 0
+
+label memory_object_allocate_publish_page
+load_memory_u8 al r10 none 1 0
+test al r9b
+branch not_equal memory_object_allocate_failure
+or al r9b
+store_memory_u8 r10 none 1 0 al
+move r11 r12
+add_i32 r11 3008
+move eax esi
+add r11 rax
+load_memory_u8 al r11 none 1 0
+compare_i8 al 0
+branch not_equal memory_object_allocate_failure
+store_memory_u8 r11 none 1 0 bl
+move eax edx
+store_memory_u16 r13 rax 2 56 si
+
+move r11 rsi
+shift_left r11 12
+add r11 r12
+move_u32 eax 0
+move_u32 ecx 512
+label memory_object_allocate_zero_page
+store_memory_u64 r11 none 1 0 rax
+add_i32 r11 8
+subtract_i32 ecx 1
+branch not_equal memory_object_allocate_zero_page
+
+add_i32 esi 1
+add_i32 edx 1
+subtract_i32 edi 1
+branch equal memory_object_allocate_publish_complete
+add r9b r9b
+branch not_equal memory_object_allocate_publish_page
+add_i32 r10 1
+move_u8 r9b 1
+jump_label memory_object_allocate_publish_page
+
+label memory_object_allocate_publish_complete
+load_memory_u64 rax r12 none 1 40
+move edx r15d
+subtract rax rdx
+store_memory_u64 r12 none 1 40 rax
+load_memory_u32 esi r13 none 1 32
+load_memory_u32 edi r13 none 1 36
+move_u32 eax 1162696279
+store_memory_u32 r13 none 1 0 eax
+move_u32 eax 825249613
+store_memory_u32 r13 none 1 4 eax
+move_u32 eax 1
+store_memory_u32 r13 none 1 8 eax
+move_u32 eax 304
+store_memory_u32 r13 none 1 12 eax
+move_u32 eax 1
+store_memory_u32 r13 none 1 16 eax
+store_memory_u32 r13 none 1 20 r14d
+store_memory_u32 r13 none 1 24 r14d
+store_memory_u32 r13 none 1 28 r15d
+add_i32 esi 1
+store_memory_u32 r13 none 1 32 esi
+store_memory_u32 r13 none 1 36 edi
+store_memory_u32 r13 none 1 40 r15d
+store_memory_u32 r13 none 1 44 ebx
+store_memory_u64 r13 none 1 48 rbp
+move rax rbp
+jump_label memory_object_allocate_return
+
+label memory_object_allocate_failure
+move_u32 eax 0
+label memory_object_allocate_return
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+
+define Windvale_kernel_release_memory_object
+# RCX is WVKMEM17, RDX is WVMEMO01, and R8D is the exact live reference.
+# Validate the complete vector, bitmap, and owner map before clearing any page.
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+move r12 rcx
+move r13 rdx
+move r14d r8d
+
+compare_i32 r12 0
+branch equal memory_object_release_failure
+compare_i32 r13 0
+branch equal memory_object_release_failure
+load_memory_u32 eax r12 none 1 0
+move_u32 edx 1296782935
+compare eax edx
+branch not_equal memory_object_release_failure
+load_memory_u32 eax r12 none 1 4
+move_u32 edx 925977925
+compare eax edx
+branch not_equal memory_object_release_failure
+load_memory_u32 eax r12 none 1 8
+compare_i32 eax 17
+branch not_equal memory_object_release_failure
+load_memory_u32 eax r12 none 1 12
+compare_i32 eax 64
+branch not_equal memory_object_release_failure
+load_memory_u64 rax r12 none 1 16
+compare rax r12
+branch not_equal memory_object_release_failure
+load_memory_u64 rax r12 none 1 24
+compare_i32 rax 157
+branch not_equal memory_object_release_failure
+load_memory_u64 rax r12 none 1 32
+compare_i32 rax 13
+branch not_equal memory_object_release_failure
+
+load_memory_u32 eax r13 none 1 0
+move_u32 edx 1162696279
+compare eax edx
+branch not_equal memory_object_release_failure
+load_memory_u32 eax r13 none 1 4
+move_u32 edx 825249613
+compare eax edx
+branch not_equal memory_object_release_failure
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 1
+branch not_equal memory_object_release_failure
+load_memory_u32 eax r13 none 1 12
+compare_i32 eax 304
+branch not_equal memory_object_release_failure
+load_memory_u32 eax r13 none 1 16
+compare_i32 eax 1
+branch not_equal memory_object_release_failure
+load_memory_u32 eax r13 none 1 20
+compare eax r14d
+branch not_equal memory_object_release_failure
+load_memory_u32 eax r13 none 1 24
+compare eax r14d
+branch not_equal memory_object_release_failure
+load_memory_u32 r15d r13 none 1 28
+compare_i32 r15d 1
+branch below memory_object_release_failure
+compare_i32 r15d 122
+branch above memory_object_release_failure
+load_memory_u32 eax r13 none 1 40
+compare eax r15d
+branch not_equal memory_object_release_failure
+load_memory_u32 ebx r13 none 1 44
+move eax r14d
+and_i32 eax 65535
+compare eax ebx
+branch not_equal memory_object_release_failure
+load_memory_u64 rbp r13 none 1 48
+compare_i32 rbp 0
+branch equal memory_object_release_failure
+load_memory_u64 rax r12 none 1 40
+move edx r15d
+add rax rdx
+compare_i32 rax 152
+branch above memory_object_release_failure
+
+move_u32 edi 0
+move_u32 r9d 0
+label memory_object_release_preflight
+move eax edi
+load_memory_u16 si r13 rax 2 56
+zero_extend_u16 esi si
+compare_i32 esi 5
+branch below memory_object_release_failure
+compare_i32 esi 157
+branch above_equal memory_object_release_failure
+compare_i32 edi 0
+branch equal memory_object_release_first_page
+move eax r9d
+add_i32 eax 1
+compare eax esi
+branch not_equal memory_object_release_failure
+jump_label memory_object_release_page_ordered
+label memory_object_release_first_page
+move rax rsi
+shift_left rax 12
+add rax r12
+compare rax rbp
+branch not_equal memory_object_release_failure
+label memory_object_release_page_ordered
+move r9d esi
+move r10 r12
+add_i32 r10 3008
+move eax esi
+add r10 rax
+load_memory_u8 al r10 none 1 0
+compare al bl
+branch not_equal memory_object_release_failure
+move r10 r12
+add_i32 r10 2976
+move eax esi
+shift_right eax 3
+add r10 rax
+move ecx esi
+and_i32 ecx 7
+move_u8 r11b 1
+compare_i32 ecx 0
+branch equal memory_object_release_preflight_mask_ready
+label memory_object_release_preflight_mask
+add r11b r11b
+subtract_i32 ecx 1
+branch not_equal memory_object_release_preflight_mask
+label memory_object_release_preflight_mask_ready
+load_memory_u8 al r10 none 1 0
+test al r11b
+branch equal memory_object_release_failure
+add_i32 edi 1
+compare edi r15d
+branch below memory_object_release_preflight
+
+move_u32 edi 0
+label memory_object_release_clear
+move eax edi
+load_memory_u16 si r13 rax 2 56
+zero_extend_u16 esi si
+move r10 r12
+add_i32 r10 2976
+move eax esi
+shift_right eax 3
+add r10 rax
+move ecx esi
+and_i32 ecx 7
+move_u8 r11b 1
+compare_i32 ecx 0
+branch equal memory_object_release_clear_mask_ready
+label memory_object_release_clear_mask
+add r11b r11b
+subtract_i32 ecx 1
+branch not_equal memory_object_release_clear_mask
+label memory_object_release_clear_mask_ready
+load_memory_u8 al r10 none 1 0
+move dl r11b
+xor_i8 dl -1
+and al dl
+store_memory_u8 r10 none 1 0 al
+move r10 r12
+add_i32 r10 3008
+move eax esi
+add r10 rax
+move_u8 al 0
+store_memory_u8 r10 none 1 0 al
+
+move r10 rsi
+shift_left r10 12
+add r10 r12
+move_u32 eax 0
+move_u32 ecx 512
+label memory_object_release_zero_page
+store_memory_u64 r10 none 1 0 rax
+add_i32 r10 8
+subtract_i32 ecx 1
+branch not_equal memory_object_release_zero_page
+move eax edi
+move_u16 si 0
+store_memory_u16 r13 rax 2 56 si
+add_i32 edi 1
+compare edi r15d
+branch below memory_object_release_clear
+
+load_memory_u64 rax r12 none 1 40
+move edx r15d
+add rax rdx
+store_memory_u64 r12 none 1 40 rax
+move_u32 eax 2
+store_memory_u32 r13 none 1 16 eax
+move_u32 eax 0
+store_memory_u32 r13 none 1 28 eax
+load_memory_u32 ecx r13 none 1 36
+add_i32 ecx 1
+store_memory_u32 r13 none 1 36 ecx
+store_memory_u32 r13 none 1 40 eax
+store_memory_u64 r13 none 1 48 rax
+move rax rbp
+jump_label memory_object_release_return
+
+label memory_object_release_failure
+move_u32 eax 0
+label memory_object_release_return
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+end section
