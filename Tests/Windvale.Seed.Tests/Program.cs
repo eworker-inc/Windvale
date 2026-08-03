@@ -95,6 +95,8 @@ internal static class Program
     private const string SOURCE_WVB_DEMO_SHA256 = "acf1f5cbde6e2ba3d831ed8390dac85f812d13525847619b3c85903bb7a44c8f";
     private const string SOURCE_WVB_TOOL_SHA256 = "9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066";
     private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "af8db63675a2441e57a763ca4caa411419a84879cf01a1eb62b4be7556487cab";
+    private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "ee1c77763ad7440ad87ec10c4b7def67f9ec296eb366277cfe219617c76dda4b";
+    private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "86e32c67a41ccb31053d4905191e32dd2aaafd59e4b73416ea2b401e83adc973";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
@@ -976,6 +978,7 @@ internal static class Program
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
+        new("exact compiler AOT transport pressure is deterministic and measured", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER], Nativeˉcompilerˉaotˉtransportˉisˉmeasured),
         new("native exact compiler reproduces full Stage 2 under the bounded text arena", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreproducesˉstage2),
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
@@ -7626,6 +7629,140 @@ internal static class Program
         {
             Directory.Delete(Compilerˉdirectory, recursive: true);
         }
+    }
+
+    private static void Nativeˉcompilerˉaotˉtransportˉisˉmeasured()
+    {
+        var Compilerˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
+            SOURCE_WVB_TOOL_SOURCE,
+            "Source-Wvb-Tool.wv");
+        var Compilerˉtool = Moduleˉcodec.Readˉandˉverify(Compilerˉbytes);
+        var Compilerˉnative = X64ˉnativeˉbackend.Compile(Compilerˉtool);
+        var Measurement = Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment);
+        Equal(Measurement, Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment));
+        Equal(17_130_441, Compilerˉnative.Fragment.Code.Length);
+        Equal(17_147_219, Measurement.Encodedˉobjectˉbytes);
+        Equal(Compilerˉnative.Fragment.Code.Length, Measurement.Materializedˉsectionˉbytes);
+        Equal(Compilerˉnative.Fragment.Code.Length, Measurement.Linkedˉimageˉbytes);
+        Equal(17_129_584, Measurement.Textˉbytes);
+        Equal(857, Measurement.Readˉonlyˉdataˉbytes);
+        Equal(2, Measurement.Sections);
+        Equal(402, Measurement.Symbols);
+        Equal(167, Measurement.Relocations);
+        True(
+            Measurement.Encodedˉobjectˉbytes > Objectˉlimits.MAX_OBJECT_BYTES,
+            "The exact compiler unexpectedly fits the retained encoded-WVO limit.");
+        True(
+            Measurement.Materializedˉsectionˉbytes > Objectˉlimits.MAX_MEMORY_BYTES,
+            "The exact compiler unexpectedly fits the retained WVO memory limit.");
+        True(
+            Measurement.Linkedˉimageˉbytes > Linkˉlimits.MAX_IMAGE_BYTES,
+            "The exact compiler unexpectedly fits the retained flat-link image limit.");
+        Throwsˉobject(
+            "WVO2017",
+            () => _ = Nativeˉobjectˉsink.Writeˉwvo(Compilerˉnative.Fragment));
+
+        var Firstˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+            Compilerˉnative.Fragment,
+            Objectˉadmissionˉprofile.Largeˉnative);
+        var Secondˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+            Compilerˉnative.Fragment,
+            Objectˉadmissionˉprofile.Largeˉnative);
+        Equal(Measurement.Encodedˉobjectˉbytes, Firstˉobject.Length);
+        Sequenceˉequal(Firstˉobject, Secondˉobject);
+        Equal(
+            SOURCE_WVB_TOOL_NATIVE_WVO_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉobject.AsSpan()));
+        _ = Objectˉcodec.Readˉandˉverify(
+            Firstˉobject.AsSpan(),
+            Objectˉadmissionˉprofile.Largeˉnative);
+        Throwsˉobject(
+            "WVO1001",
+            () => _ = Objectˉcodec.Readˉandˉverify(Firstˉobject.AsSpan()));
+
+        Hasˉlinkˉdiagnostic(
+            [Firstˉobject.ToArray()],
+            new(0, "Main"),
+            "WVL1002");
+        var Firstˉlink = Linkˉsuccess(
+            [Firstˉobject.ToArray()],
+            new(0, "Main", Linkˉadmissionˉprofile.Largeˉnative));
+        var Secondˉlink = Linkˉsuccess(
+            [Firstˉobject.ToArray()],
+            new(0, "Main", Linkˉadmissionˉprofile.Largeˉnative));
+        Equal(Measurement.Linkedˉimageˉbytes, Firstˉlink.Imageˉbytes.Length);
+        Equal(
+            Compilerˉnative.Fragment.Symbols.Single(Symbol => Symbol.Name == "Main").Offset,
+            Firstˉlink.Entryˉaddress);
+        Sequenceˉequal(Firstˉlink.Imageˉbytes, Secondˉlink.Imageˉbytes);
+        Sequenceˉequal(Firstˉlink.Mapˉbytes, Secondˉlink.Mapˉbytes);
+        Equal(
+            SOURCE_WVB_TOOL_NATIVE_CODE_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉlink.Imageˉbytes.AsSpan()));
+        Equal(
+            SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉlink.Mapˉbytes.AsSpan()));
+        Contains(
+            System.Text.Encoding.UTF8.GetString(Firstˉlink.Mapˉbytes.AsSpan()),
+            $"target name={Linkˉcontract.LARGE_NATIVE_TARGET_NAME} architecture=x86-64");
+
+        var Aggregateˉoverflowˉdata = new byte[
+            Linkˉlimits.LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES - Firstˉobject.Length + 1];
+        var Aggregateˉoverflowˉobject = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [new(".padding", Objectˉsectionˉkind.Code, 1, (uint)Aggregateˉoverflowˉdata.Length,
+                Aggregateˉoverflowˉdata.ToImmutableArray())],
+            [],
+            []));
+        Hasˉlinkˉdiagnostic(
+            [Firstˉobject.ToArray(), Aggregateˉoverflowˉobject],
+            new(0, "Main", Linkˉadmissionˉprofile.Largeˉnative),
+            "WVL1003");
+
+        var Maximumˉimageˉobject = Objectˉcodec.Write(new Objectˉfile(
+            Objectˉarchitecture.X86ˉ64,
+            [
+                new(".text", Objectˉsectionˉkind.Code, 1, 1, [0xC3]),
+                new(".bss", Objectˉsectionˉkind.Zeroˉfill, 1,
+                    Linkˉlimits.LARGE_NATIVE_MAX_IMAGE_BYTES - 1, []),
+            ],
+            [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 1)],
+            []), Objectˉadmissionˉprofile.Largeˉnative);
+        Equal(
+            Linkˉlimits.LARGE_NATIVE_MAX_IMAGE_BYTES,
+            Linkˉsuccess(
+                [Maximumˉimageˉobject],
+                new(0, "Main", Linkˉadmissionˉprofile.Largeˉnative)).Imageˉbytes.Length);
+        Throwsˉobject(
+            "WVO2017",
+            () => _ = Objectˉcodec.Write(new Objectˉfile(
+                Objectˉarchitecture.X86ˉ64,
+                [
+                    new(".text", Objectˉsectionˉkind.Code, 1, 1, [0xC3]),
+                    new(".bss", Objectˉsectionˉkind.Zeroˉfill, 1,
+                        Linkˉlimits.LARGE_NATIVE_MAX_IMAGE_BYTES, []),
+                ],
+                [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 1)],
+                []), Objectˉadmissionˉprofile.Largeˉnative));
+        Throwsˉobject(
+            "WVO1001",
+            () => _ = Objectˉcodec.Read(
+                new byte[Objectˉlimits.LARGE_NATIVE_MAX_OBJECT_BYTES + 1],
+                Objectˉadmissionˉprofile.Largeˉnative));
+        Hasˉlinkˉdiagnostic(
+            [Firstˉobject.ToArray()],
+            new(0, "Main", (Linkˉadmissionˉprofile)0),
+            "WVL1001");
+        Console.WriteLine(
+            $"NATIVE_COMPILER_AOT_MEASUREMENT code={Compilerˉnative.Fragment.Code.Length} " +
+            $"code-sha256={Objectˉdigest.Calculateˉsha256(Compilerˉnative.Fragment.Code.AsSpan())} " +
+            $"wvo-sha256={Objectˉdigest.Calculateˉsha256(Firstˉobject.AsSpan())} " +
+            $"image-sha256={Objectˉdigest.Calculateˉsha256(Firstˉlink.Imageˉbytes.AsSpan())} " +
+            $"map-sha256={Objectˉdigest.Calculateˉsha256(Firstˉlink.Mapˉbytes.AsSpan())} " +
+            $"wvo={Measurement.Encodedˉobjectˉbytes} memory={Measurement.Materializedˉsectionˉbytes} " +
+            $"linked={Measurement.Linkedˉimageˉbytes} text={Measurement.Textˉbytes} " +
+            $"rodata={Measurement.Readˉonlyˉdataˉbytes} sections={Measurement.Sections} " +
+            $"symbols={Measurement.Symbols} relocations={Measurement.Relocations}");
     }
 
     private static void Nativeˉcompilerˉbootstrapˉreproducesˉstage2()

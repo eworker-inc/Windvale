@@ -68,7 +68,9 @@ internal static class Flatˉimageˉverifier
             }
         }
         Require(Cursor == (ulong)candidate.Imageˉbytes.Length, "The linked image length is inconsistent.");
-        Require(Cursor <= Linkˉlimits.MAX_IMAGE_BYTES, "The linked image exceeds its byte limit.");
+        Require(
+            Cursor <= (uint)Linkˉlimits.Maximumˉimageˉbytes(candidate.Options.Admissionˉprofile),
+            "The linked image exceeds its byte limit.");
         return Result;
     }
 

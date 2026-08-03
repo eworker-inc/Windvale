@@ -31,6 +31,10 @@ public static class Linkˉcompiler
         {
             Fail("WVL1001", -1, "The link entry symbol must be a valid machine name.");
         }
+        if (!Enum.IsDefined(options.Admissionˉprofile))
+        {
+            Fail("WVL1001", -1, "The link admission profile is unknown.");
+        }
         if (inputs.IsDefault || inputs.Length is < 1 or > Linkˉlimits.MAX_INPUT_OBJECTS)
         {
             Fail(
@@ -43,6 +47,14 @@ public static class Linkˉcompiler
         var Totalˉsections = 0;
         var Totalˉsymbols = 0;
         var Totalˉrelocations = 0;
+        var Totalˉinputˉbytes = 0;
+        var Maximumˉtotalˉinputˉbytes = Linkˉlimits.Maximumˉtotalˉinputˉbytes(options.Admissionˉprofile);
+        var Objectˉprofile = options.Admissionˉprofile switch
+        {
+            Linkˉadmissionˉprofile.Standard => Objectˉadmissionˉprofile.Standard,
+            Linkˉadmissionˉprofile.Largeˉnative => Objectˉadmissionˉprofile.Largeˉnative,
+            _ => throw new InvalidOperationException("The validated link admission profile is unavailable."),
+        };
         for (var Inputˉindex = 0; Inputˉindex < inputs.Length; Inputˉindex++)
         {
             var Input = inputs[Inputˉindex];
@@ -51,10 +63,18 @@ public static class Linkˉcompiler
                 Fail("WVL1002", Inputˉindex, "The input object byte value is not initialized.");
             }
 
+            Totalˉinputˉbytes = Addˉbounded(
+                Totalˉinputˉbytes,
+                Input.Objectˉbytes.Length,
+                Maximumˉtotalˉinputˉbytes,
+                "input-byte");
+
             Verifiedˉobject Object;
             try
             {
-                Object = Objectˉcodec.Readˉandˉverify(Input.Objectˉbytes.AsSpan());
+                Object = Objectˉcodec.Readˉandˉverify(
+                    Input.Objectˉbytes.AsSpan(),
+                    Objectˉprofile);
             }
             catch (Objectˉexception Exception)
             {
@@ -104,7 +124,7 @@ public static class Linkˉcompiler
                 $"Entry symbol '{options.Entryˉsymbol}' is not a unique exported function.");
         }
 
-        var Sections = Placeˉsections(inputs, options.Baseˉaddress, out var Imageˉlength);
+        var Sections = Placeˉsections(inputs, options, out var Imageˉlength);
         var Image = new byte[Imageˉlength];
         foreach (var Placement in Sections)
         {
@@ -185,10 +205,12 @@ public static class Linkˉcompiler
 
     private static ImmutableArray<Sectionˉplacement> Placeˉsections(
         ImmutableArray<Loadedˉobject> inputs,
-        uint baseˉaddress,
+        Linkˉoptions options,
         out int imageˉlength)
     {
         var Result = ImmutableArray.CreateBuilder<Sectionˉplacement>();
+        var Baseˉaddress = options.Baseˉaddress;
+        var Maximumˉimageˉbytes = Linkˉlimits.Maximumˉimageˉbytes(options.Admissionˉprofile);
         ulong Cursor = 0;
         foreach (var Kind in Enum.GetValues<Objectˉsectionˉkind>())
         {
@@ -202,15 +224,15 @@ public static class Linkˉcompiler
                         continue;
                     }
 
-                    var Currentˉaddress = (ulong)baseˉaddress + Cursor;
+                    var Currentˉaddress = (ulong)Baseˉaddress + Cursor;
                     var Alignedˉaddress = Alignˉup(Currentˉaddress, Section.Alignment);
                     if (Alignedˉaddress > uint.MaxValue)
                     {
                         Fail("WVL1008", Input.Inputˉindex, "Section alignment exceeds the u32 address space.");
                     }
-                    var Offset = Alignedˉaddress - baseˉaddress;
+                    var Offset = Alignedˉaddress - Baseˉaddress;
                     var End = Offset + Section.Memoryˉsize;
-                    if (End > Linkˉlimits.MAX_IMAGE_BYTES || (ulong)baseˉaddress + End > (ulong)uint.MaxValue + 1)
+                    if (End > (uint)Maximumˉimageˉbytes || (ulong)Baseˉaddress + End > (ulong)uint.MaxValue + 1)
                     {
                         Fail(
                             "WVL1008",

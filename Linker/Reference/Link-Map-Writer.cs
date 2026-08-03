@@ -15,7 +15,7 @@ internal static class Linkˉmapˉwriter
         Add(Output, $"windvale-link-map {Linkˉcontract.FORMAT_VERSION}");
         Add(
             Output,
-            $"target name={Linkˉcontract.TARGET_NAME} architecture=x86-64 base-address={candidate.Options.Baseˉaddress} image-bytes={candidate.Imageˉbytes.Length}");
+            $"target name={Targetˉname(candidate.Options.Admissionˉprofile)} architecture=x86-64 base-address={candidate.Options.Baseˉaddress} image-bytes={candidate.Imageˉbytes.Length}");
         Add(Output, $"entry name={candidate.Options.Entryˉsymbol} address={candidate.Entryˉaddress}");
         Add(Output, $"image sha256={Objectˉdigest.Calculateˉsha256(candidate.Imageˉbytes.AsSpan())}");
         Add(Output, $"inputs count={candidate.Inputs.Length}");
@@ -72,6 +72,13 @@ internal static class Linkˉmapˉwriter
         output.Append(line.ToString(CultureInfo.InvariantCulture));
         output.Append('\n');
     }
+
+    private static string Targetˉname(Linkˉadmissionˉprofile profile) => profile switch
+    {
+        Linkˉadmissionˉprofile.Standard => Linkˉcontract.TARGET_NAME,
+        Linkˉadmissionˉprofile.Largeˉnative => Linkˉcontract.LARGE_NATIVE_TARGET_NAME,
+        _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+    };
 
     private static string Sectionˉkind(Objectˉsectionˉkind kind) => kind switch
     {

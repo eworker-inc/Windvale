@@ -12,9 +12,12 @@ public static class Objectˉcodec
     public const ushort MAJOR_VERSION = 1;
     public const ushort MINOR_VERSION = 0;
 
-    public static byte[] Write(Objectˉfile value)
+    public static byte[] Write(
+        Objectˉfile value,
+        Objectˉadmissionˉprofile admissionˉprofile = Objectˉadmissionˉprofile.Standard)
     {
-        var Verified = Objectˉverifier.Verify(value);
+        var Maximumˉobjectˉbytes = Objectˉlimits.Maximumˉobjectˉbytes(admissionˉprofile);
+        var Verified = Objectˉverifier.Verify(value, admissionˉprofile);
         using var Stream = new MemoryStream();
         var Writer = new Byteˉwriter(Stream);
         Writer.Writeˉbytes(MAGIC);
@@ -62,16 +65,19 @@ public static class Objectˉcodec
         }
 
         var Result = Stream.ToArray();
-        if (Result.Length > Objectˉlimits.MAX_OBJECT_BYTES)
+        if (Result.Length > Maximumˉobjectˉbytes)
         {
             throw new Objectˉverificationˉexception("WVO2006", "The encoded object exceeds the object-size limit.");
         }
         return Result;
     }
 
-    public static Objectˉfile Read(ReadOnlySpan<byte> bytes)
+    public static Objectˉfile Read(
+        ReadOnlySpan<byte> bytes,
+        Objectˉadmissionˉprofile admissionˉprofile = Objectˉadmissionˉprofile.Standard)
     {
-        if (bytes.Length > Objectˉlimits.MAX_OBJECT_BYTES)
+        var Maximumˉobjectˉbytes = Objectˉlimits.Maximumˉobjectˉbytes(admissionˉprofile);
+        if (bytes.Length > Maximumˉobjectˉbytes)
         {
             throw new Objectˉformatˉexception("WVO1001", "The object exceeds the object-size limit.");
         }
@@ -128,7 +134,7 @@ public static class Objectˉcodec
             }
             var Alignment = Reader.Readˉu32();
             var Memoryˉsize = Reader.Readˉu32();
-            var Dataˉlength = Reader.Readˉboundedˉcount(Objectˉlimits.MAX_OBJECT_BYTES, "section data byte");
+            var Dataˉlength = Reader.Readˉboundedˉcount(Maximumˉobjectˉbytes, "section data byte");
             var Name = Reader.Readˉstring();
             var Data = ImmutableArray.Create(Reader.Readˉbytes(Dataˉlength).ToArray());
             Sections.Add(new(Name, (Objectˉsectionˉkind)Rawˉkind, Alignment, Memoryˉsize, Data));
@@ -193,8 +199,10 @@ public static class Objectˉcodec
             Relocations.ToImmutable());
     }
 
-    public static Verifiedˉobject Readˉandˉverify(ReadOnlySpan<byte> bytes) =>
-        Objectˉverifier.Verify(Read(bytes));
+    public static Verifiedˉobject Readˉandˉverify(
+        ReadOnlySpan<byte> bytes,
+        Objectˉadmissionˉprofile admissionˉprofile = Objectˉadmissionˉprofile.Standard) =>
+        Objectˉverifier.Verify(Read(bytes, admissionˉprofile), admissionˉprofile);
 
     private sealed class Byteˉwriter(Stream stream)
     {

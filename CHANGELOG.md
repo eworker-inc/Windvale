@@ -8,6 +8,8 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Explicit bounded large-native WVO/link admission for the measured ABI-22 compiler: the unchanged WVO 1.0 codec and one shared linker now admit a deterministic 17,147,219-byte compiler object and reproduce its exact 17,130,441 native bytes under a 20 MiB opt-in profile, while standard 4 MiB object/link behavior, ordinary Windvale byte values, and existing application/container bytes remain unchanged.
+
 - Invariant `i32`/`u8`/`u32` formatting and deterministic UTF-16-compatible text quoting in the Wasm-hosted WVB interpreter, including scalar extrema, short/control escapes, BMP and supplementary Unicode, complete-verifier-first execution, and an explicit remaining SHA-256 boundary.
 - Bounded text and bytes values in the Wasm-hosted WVB interpreter: uniform descriptor cells, fixed call frames, a charged 64 KiB heap, static data, byte readers/builders/concatenation, text concatenation/conversion, strict UTF-8, exact resource failures, and complete-verifier-first differential evidence under Node.js.
 - The first Wasm-hosted Windvale WVB interpreter: a separate import-free profile-14 artifact executes complete-verifier-approved scalar calls and control with exact guest/outer budgets, call-depth containment, checked overflow, reference-runtime agreement, and a twenty-nine-artifact Node.js gate.

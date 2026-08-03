@@ -5,9 +5,16 @@ namespace Windvale.Linker;
 
 public sealed record Linkˉinput(ImmutableArray<byte> Objectˉbytes);
 
+public enum Linkˉadmissionˉprofile : byte
+{
+    Standard = 1,
+    Largeˉnative = 2,
+}
+
 public sealed record Linkˉoptions(
     uint Baseˉaddress,
-    string Entryˉsymbol);
+    string Entryˉsymbol,
+    Linkˉadmissionˉprofile Admissionˉprofile = Linkˉadmissionˉprofile.Standard);
 
 public sealed record Linkˉdiagnostic(
     string Code,
@@ -101,6 +108,7 @@ public static class Linkˉcontract
 {
     public const int FORMAT_VERSION = 1;
     public const string TARGET_NAME = "flat-x86-64-v1";
+    public const string LARGE_NATIVE_TARGET_NAME = "flat-x86-64-large-v1";
     public const uint DEFAULT_BASE_ADDRESS = 1_048_576;
 }
 
@@ -111,7 +119,24 @@ public static class Linkˉlimits
     public const int MAX_TOTAL_SYMBOLS = 16_384;
     public const int MAX_TOTAL_RELOCATIONS = 65_536;
     public const int MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+    public const int LARGE_NATIVE_MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+    public const int MAX_TOTAL_INPUT_BYTES = MAX_INPUT_OBJECTS * Objectˉlimits.MAX_OBJECT_BYTES;
+    public const int LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES = 20 * 1024 * 1024;
     public const int MAX_MAP_BYTES = 1024 * 1024;
+
+    public static int Maximumˉimageˉbytes(Linkˉadmissionˉprofile profile) => profile switch
+    {
+        Linkˉadmissionˉprofile.Standard => MAX_IMAGE_BYTES,
+        Linkˉadmissionˉprofile.Largeˉnative => LARGE_NATIVE_MAX_IMAGE_BYTES,
+        _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+    };
+
+    public static int Maximumˉtotalˉinputˉbytes(Linkˉadmissionˉprofile profile) => profile switch
+    {
+        Linkˉadmissionˉprofile.Standard => MAX_TOTAL_INPUT_BYTES,
+        Linkˉadmissionˉprofile.Largeˉnative => LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES,
+        _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+    };
 }
 
 internal sealed record Loadedˉobject(

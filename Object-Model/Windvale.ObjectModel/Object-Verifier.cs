@@ -6,9 +6,13 @@ public static class Objectˉverifier
 {
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
-    public static Verifiedˉobject Verify(Objectˉfile value)
+    public static Verifiedˉobject Verify(
+        Objectˉfile value,
+        Objectˉadmissionˉprofile admissionˉprofile = Objectˉadmissionˉprofile.Standard)
     {
         ArgumentNullException.ThrowIfNull(value);
+        var Maximumˉobjectˉbytes = Objectˉlimits.Maximumˉobjectˉbytes(admissionˉprofile);
+        var Maximumˉmemoryˉbytes = Objectˉlimits.Maximumˉmemoryˉbytes(admissionˉprofile);
         if (value.Architecture != Objectˉarchitecture.X86ˉ64)
         {
             Fail("WVO2001", "WVO 1.0 supports only the x86-64 architecture.");
@@ -30,7 +34,7 @@ public static class Objectˉverifier
             Fail("WVO2005", "The object exceeds the relocation-count limit.");
         }
 
-        Verifyˉsections(value);
+        Verifyˉsections(value, Maximumˉobjectˉbytes, Maximumˉmemoryˉbytes);
         Verifyˉsymbols(value);
         Verifyˉrelocations(value);
         return new(value);
@@ -70,7 +74,10 @@ public static class Objectˉverifier
         return true;
     }
 
-    private static void Verifyˉsections(Objectˉfile value)
+    private static void Verifyˉsections(
+        Objectˉfile value,
+        int maximumˉobjectˉbytes,
+        uint maximumˉmemoryˉbytes)
     {
         var Names = new HashSet<string>(StringComparer.Ordinal);
         ulong Totalˉdata = 0;
@@ -121,7 +128,7 @@ public static class Objectˉverifier
 
             Totalˉdata += (uint)Section.Data.Length;
             Totalˉmemory += Section.Memoryˉsize;
-            if (Totalˉdata > Objectˉlimits.MAX_OBJECT_BYTES || Totalˉmemory > Objectˉlimits.MAX_MEMORY_BYTES)
+            if (Totalˉdata > (uint)maximumˉobjectˉbytes || Totalˉmemory > maximumˉmemoryˉbytes)
             {
                 Fail("WVO2017", "The object exceeds its data or memory-size limit.");
             }
