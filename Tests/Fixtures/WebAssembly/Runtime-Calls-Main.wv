@@ -1,0 +1,26 @@
+module WebAssemblyˉruntimeˉcalls profile portable;
+
+fn Aˉhead(Input: bytes) -> bytes {
+    if Bytesˉlength(Input) == 0u32 {
+        return Bytesˉfromˉu8(0u8);
+    }
+    return Bytesˉslice(Input, 0u32, 1u32);
+}
+
+fn Bˉtwice(Input: bytes) -> bytes {
+    let First: bytes = Aˉhead(Input);
+    return Bytesˉconcat(First, First);
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Doubled: bytes = Bˉtwice(Input);
+    if Bytesˉlength(Input) > 1u32 {
+        let Tail: bytes = Bytesˉslice(
+            Input,
+            1u32,
+            Bytesˉlength(Input) - 1u32
+        );
+        return Bytesˉconcat(Doubled, Aˉhead(Tail));
+    }
+    return Doubled;
+}

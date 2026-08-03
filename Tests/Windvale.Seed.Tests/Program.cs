@@ -99,9 +99,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "6c3ead31aa5dc50baa441b8f3021678761b7d5b6c2aaa0f549e73f5b028a8b35";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "1b55616aa64af2324f7ec7f7c4cb1afa05a1e63af829e9ca032af8c1952382c8";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "7fb1ad3d96288b299c55804e5c510bd30d187a0720ec555eaa36f967900ae645";
+    private const string WEBASSEMBLY_CORE_SHA256 = "9d29c443e0642ecce87e5194ec9dc077be8d6b2fec97d47ba667404d0d09e2f9";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "8bef4da0e80aa5d6876800b7ed519e9ee79db9ee963f9d830da455354c58bd24";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "98a3b88f7627218d75cf48debaeb02256415d3fcbf39de899dec00310ca96269";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -149,6 +149,8 @@ internal static class Program
     private const string WEBASSEMBLY_RUNTIME_ARENA_SHA256 = "0e37802a606ee67abd467ddc5da84f0d18807bb86b8bf497c4bdf0a41fa5a089";
     private const string WEBASSEMBLY_RUNTIME_U32_GUARD_WVB_SHA256 = "d6ba02dfe12efdcb7c2f8ed6664551a776e79e3ff2c30134dc7e3642ee7ce743";
     private const string WEBASSEMBLY_RUNTIME_U32_GUARD_SHA256 = "f645c0ff095eb06c825fea056659545cc258d857da55fc9dfd1a928812373f61";
+    private const string WEBASSEMBLY_RUNTIME_CALLS_WVB_SHA256 = "a44c8bdbf9983a7929a769d5ca2e0b60323d72cf96b04e31450d9757bb15729a";
+    private const string WEBASSEMBLY_RUNTIME_CALLS_SHA256 = "5ee04d5b3b33399dce61709135709f0d0ebb7d6374e14759d83986859806eadd";
     private const string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_WVB_SHA256 = "1362b2707a4ff442a1458e3f821e01108bb948858db21e022bfee05869c2fb86";
     private const string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SHA256 = "f493777450b720ef786b60502528819969ad9e0322aa55a9c0259f6de20850fc";
     private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_WVB_SHA256 = "72da44ba1292ed3ef4ac62c239dd937862636229a7d60302305a7dd19ac27376";
@@ -700,6 +702,8 @@ internal static class Program
         "Windvale.Seed.Tests.WebAssembly-Runtime-Arena-Main.wv");
     private static readonly string WEBASSEMBLY_RUNTIME_U32_GUARD_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Runtime-U32-Guard-Main.wv");
+    private static readonly string WEBASSEMBLY_RUNTIME_CALLS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Runtime-Calls-Main.wv");
     private static readonly string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Wvb-Envelope-Verify-Main.wv");
     private static readonly string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SOURCE = Readˉembeddedˉsource(
@@ -9345,6 +9349,85 @@ internal static class Program
             U32ˉguardˉlowered.Writtenˉbytes,
             U32ˉguardˉrepeat.Writtenˉbytes);
 
+        var Runtimeˉcallsˉwvb = Compileˉsuccess(
+            WEBASSEMBLY_RUNTIME_CALLS_SOURCE);
+        Equal(
+            WEBASSEMBLY_RUNTIME_CALLS_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Runtimeˉcallsˉwvb));
+        var Runtimeˉcallsˉverified = Moduleˉcodec.Readˉandˉverify(
+            Runtimeˉcallsˉwvb);
+        Equal(3, Runtimeˉcallsˉverified.Functions.Length);
+        True(
+            Runtimeˉcallsˉverified.Functions.All(Function =>
+                Function.Declaration.Parameterˉtypes.Length == 1 &&
+                Function.Declaration.Parameterˉtypes[0].Kind == Valueˉtype.Bytes &&
+                Function.Declaration.Returnˉtype.Kind == Valueˉtype.Bytes),
+            "The runtime-call fixture does not have the bytes-to-bytes shape.");
+        True(
+            Runtimeˉcallsˉverified.Functions.Any(Function =>
+                Function.Instructions.Any(Instruction =>
+                    Instruction.Opcode == Opcode.Call)) &&
+            Runtimeˉcallsˉverified.Functions.Any(Function =>
+                Function.Instructions.Any(Instruction =>
+                    Instruction.Opcode == Opcode.Branchˉfalse)),
+            "The runtime-call fixture did not retain calls composed with control.");
+        var Runtimeˉcallsˉinput = ImmutableArray.Create<byte>(9, 8);
+        var Runtimeˉcallsˉreference = new Referenceˉruntime(
+            Runtimeˉcallsˉverified,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(
+                Runtimeˉcallsˉinput);
+        Sequenceˉequal(
+            ImmutableArray.Create<byte>(9, 9, 8),
+            Runtimeˉcallsˉreference.Bytes);
+        Equal(127L, Runtimeˉcallsˉreference.Executedˉinstructions);
+        var Runtimeˉcallsˉlowered = Runˉwebassemblyˉtool(
+            Tool, Runtimeˉcallsˉwvb);
+        Equal(0, Runtimeˉcallsˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=4086 execution-abi=3\n",
+            Runtimeˉcallsˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_RUNTIME_CALLS_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Runtimeˉcallsˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉruntimeˉcallˉwebassembly(
+            Runtimeˉcallsˉlowered.Writtenˉbytes.AsSpan(),
+            Runtimeˉcallsˉverified);
+        var Runtimeˉcallsˉrepeat = Runˉwebassemblyˉtool(
+            Tool, Runtimeˉcallsˉwvb);
+        Sequenceˉequal(
+            Runtimeˉcallsˉlowered.Writtenˉbytes,
+            Runtimeˉcallsˉrepeat.Writtenˉbytes);
+        var Forwardˉruntimeˉcall = Runtimeˉcallsˉwvb.ToArray();
+        var Runtimeˉcallsˉcode = Findˉsectionˉpayload(
+            Forwardˉruntimeˉcall, Sectionˉkind.Code);
+        var Callingˉfunctionˉindex = Array.FindIndex(
+            Runtimeˉcallsˉverified.Functions.ToArray(),
+            Function => Function.Instructions.Any(Instruction =>
+                Instruction.Opcode == Opcode.Call));
+        True(
+            Callingˉfunctionˉindex > 0,
+            "The runtime-call fixture has no private caller to corrupt.");
+        var Firstˉruntimeˉcall = Runtimeˉcallsˉverified
+            .Functions[Callingˉfunctionˉindex].Instructions
+            .First(Instruction => Instruction.Opcode == Opcode.Call);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Forwardˉruntimeˉcall.AsSpan(
+                Runtimeˉcallsˉcode +
+                Runtimeˉcallsˉverified.Functions[Callingˉfunctionˉindex]
+                    .Declaration.Codeˉoffset +
+                Firstˉruntimeˉcall.Offset + 1,
+                4),
+            (uint)Callingˉfunctionˉindex);
+        var Forwardˉruntimeˉcallˉresult = Runˉwebassemblyˉtool(
+            Tool, Forwardˉruntimeˉcall);
+        Equal(1, Forwardˉruntimeˉcallˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Forwardˉruntimeˉcallˉresult.Diagnostics);
+        Equal(0, Forwardˉruntimeˉcallˉresult.Writeˉcount);
+
         var Envelopeˉverifierˉwvb = Compileˉsuccess(
             WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SOURCE);
         Equal(
@@ -15627,6 +15710,134 @@ internal static class Program
         }
         Reader.Require(Reader.Position == Codeˉend, "The memory ABI code section has trailing bytes.");
         Reader.Require(Reader.Position == Reader.Length, "The memory ABI module has trailing bytes.");
+    }
+
+    private static void Validateˉruntimeˉcallˉwebassembly(
+        ReadOnlySpan<byte> module,
+        Verifiedˉmodule source)
+    {
+        True(
+            source.Functions.Length is >= 2 and <= 8,
+            "The runtime-call function count is outside the profile.");
+        Equal("Main", source.Functions[^1].Declaration.Name);
+        for (var Functionˉindex = 0; Functionˉindex < source.Functions.Length;
+            Functionˉindex++)
+        {
+            var Function = source.Functions[Functionˉindex];
+            Equal(1, Function.Declaration.Parameterˉtypes.Length);
+            Equal(Valueˉtype.Bytes, Function.Declaration.Parameterˉtypes[0].Kind);
+            Equal(Valueˉtype.Bytes, Function.Declaration.Returnˉtype.Kind);
+            foreach (var Call in Function.Instructions.Where(Instruction =>
+                Instruction.Opcode == Opcode.Call))
+            {
+                True(
+                    Call.Unsignedˉoperand < (uint)Functionˉindex,
+                    "A runtime call does not target a lower function ordinal.");
+            }
+        }
+
+        var Reader = new WebAssemblyˉtestˉreader(module);
+        Reader.Readˉheader();
+        var Typeˉend = Reader.Readˉsection(1);
+        Reader.Require(Reader.Readˉuleb32() == 2, "The runtime-call type count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x60, "The runtime-call wrapper type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 2, "The runtime-call wrapper parameter count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The runtime-call budget type is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The runtime-call input-length type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The runtime-call wrapper result count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The runtime-call status type is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x60, "The runtime-call private type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The runtime-call private parameter count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7E, "The runtime-call descriptor parameter is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The runtime-call private result count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7E, "The runtime-call descriptor result is invalid.");
+        Reader.Require(Reader.Position == Typeˉend, "The runtime-call type section has trailing bytes.");
+
+        var Functionˉend = Reader.Readˉsection(3);
+        Reader.Require(
+            Reader.Readˉuleb32() == (uint)source.Functions.Length + 1u,
+            "The runtime-call Wasm function count is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 0, "The runtime-call wrapper type index is invalid.");
+        for (var Functionˉindex = 0; Functionˉindex < source.Functions.Length;
+            Functionˉindex++)
+        {
+            Reader.Require(Reader.Readˉuleb32() == 1, "A runtime-call private type index is invalid.");
+        }
+        Reader.Require(Reader.Position == Functionˉend, "The runtime-call function section has trailing bytes.");
+
+        var Memoryˉend = Reader.Readˉsection(5);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The runtime-call memory count is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The runtime-call memory is not fixed.");
+        Reader.Require(Reader.Readˉuleb32() == 129, "The runtime-call memory minimum is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 129, "The runtime-call memory maximum is invalid.");
+        Reader.Require(Reader.Position == Memoryˉend, "The runtime-call memory section has trailing bytes.");
+
+        var Globalˉend = Reader.Readˉsection(6);
+        Reader.Require(Reader.Readˉuleb32() == 11, "The runtime-call global count is invalid.");
+        Reader.Readˉglobal(0, 3);
+        Reader.Readˉglobal(0, 65_536);
+        Reader.Readˉglobal(0, 4_194_304);
+        Reader.Readˉglobal(0, 4_259_840);
+        Reader.Readˉglobal(0, 4_194_304);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(0, 1);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 4_259_840);
+        Reader.Readˉglobal(1, 0);
+        Reader.Require(Reader.Position == Globalˉend, "The runtime-call global section has trailing bytes.");
+
+        var Exportˉend = Reader.Readˉsection(7);
+        Reader.Require(Reader.Readˉuleb32() == 10, "The runtime-call export count is invalid.");
+        Reader.Readˉexport("Windvale.run", 0, 0);
+        Reader.Readˉexport("Windvale.abi", 3, 0);
+        Reader.Readˉexport("Windvale.memory", 2, 0);
+        Reader.Readˉexport("Windvale.input_offset", 3, 1);
+        Reader.Readˉexport("Windvale.input_capacity", 3, 2);
+        Reader.Readˉexport("Windvale.output_offset", 3, 3);
+        Reader.Readˉexport("Windvale.output_capacity", 3, 4);
+        Reader.Readˉexport("Windvale.output_length", 3, 5);
+        Reader.Readˉexport("Windvale.output_kind", 3, 6);
+        Reader.Readˉexport("Windvale.instructions", 3, 7);
+        Reader.Require(Reader.Position == Exportˉend, "The runtime-call export section has trailing bytes.");
+
+        var Codeˉend = Reader.Readˉsection(10);
+        Reader.Require(
+            Reader.Readˉuleb32() == (uint)source.Functions.Length + 1u,
+            "The runtime-call body count is invalid.");
+        var Wrapperˉlength = Reader.Readˉuleb32();
+        Reader.Require(Wrapperˉlength <= int.MaxValue, "The runtime-call wrapper is oversized.");
+        var Wrapperˉend = Reader.Position + (int)Wrapperˉlength;
+        Reader.Require(Reader.Readˉuleb32() == 2, "The runtime-call wrapper local groups are invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 2, "The runtime-call wrapper i32 local count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The runtime-call wrapper i32 local type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The runtime-call wrapper descriptor count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7E, "The runtime-call wrapper descriptor type is invalid.");
+        Reader.Skip(Wrapperˉend - Reader.Position);
+
+        foreach (var Function in source.Functions)
+        {
+            var Bodyˉlength = Reader.Readˉuleb32();
+            Reader.Require(Bodyˉlength <= int.MaxValue, "A runtime-call body is oversized.");
+            var Bodyˉend = Reader.Position + (int)Bodyˉlength;
+            Reader.Require(
+                Reader.Readˉuleb32() == (uint)Function.Declaration.Localˉtypes.Length + 2u,
+                "A runtime-call private local group count is invalid.");
+            foreach (var Type in Function.Declaration.Localˉtypes)
+            {
+                Reader.Require(Reader.Readˉuleb32() == 1, "A runtime-call local is not singular.");
+                Reader.Require(
+                    Reader.Readˉbyte() == (Type.Kind == Valueˉtype.Bytes ? 0x7E : 0x7F),
+                    "A runtime-call private local type changed.");
+            }
+            Reader.Require(Reader.Readˉuleb32() == 6, "The runtime-call i32 scratch count is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x7F, "The runtime-call i32 scratch type is invalid.");
+            Reader.Require(Reader.Readˉuleb32() == 3, "The runtime-call descriptor scratch count is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x7E, "The runtime-call descriptor scratch type is invalid.");
+            Reader.Skip(Bodyˉend - Reader.Position);
+        }
+        Reader.Require(Reader.Position == Codeˉend, "The runtime-call code section has trailing bytes.");
+        Reader.Require(Reader.Position == Reader.Length, "The runtime-call module has trailing bytes.");
     }
 
     private static void Validateˉruntimeˉwebassembly(
