@@ -17,7 +17,7 @@ The ABI-22 table has twelve possible service slots. Measurement of the actual co
 - Reuse the existing service generators and their separate instruction-level verifiers. Reuse the qualified executable-publication placement plan rather than creating compiler-specific alignment rules.
 - Keep the unchanged 17,130,441-byte compiler native image as the bundle prefix. Append only the ten required leaves.
 - Assign explicit platform adapter identities to console output, diagnostics, file input, and file output. Assign shared adapter identities to argument snapshots, UTF-8, enum metadata, text concatenation, and u32 formatting.
-- Serialize `WVHA 1` as one fixed 1,024-byte manifest. Bind target, proposed container format 3, ABI/context/table versions, the exact six capabilities, exact ten services, table slots, adapters, bundle offsets and sizes, native entry, arenas, flags, native digest, and every service-leaf digest.
+- Serialize `WVHA 1` as one fixed 1,024-byte manifest. Bind target, proposed container format 3, ABI/context/table versions, the exact six capabilities, exact ten services, table slots, adapters, bundle offsets and sizes, native entry, arenas, the exact eight-billion-instruction compiler budget, flags, native digest, and every service-leaf digest.
 - Distinguish authority-bearing services from intrinsic services. A service requirement is never an authority grant: each capability service points to its exact canonical capability identity.
 - Reject noncanonical capabilities, reordered or incomplete services, platform/bundle disagreement, malformed fields, changed digests, changed bundle bytes, target mismatch, and nonzero reserved bytes.
 - Pin both complete bundle identities and both manifest identities in the existing exact-compiler AOT transport test. Do not add another full compiler compilation or another malformed corpus.
@@ -30,9 +30,9 @@ The focused exact-compiler transport case passes after a zero-warning Release so
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Windows service bundle | 17,143,635 | `6d524aa9b96d0f624b0b449937ec6c0987a57e2c002af8276784c63a185efef6` |
-| Windows `WVHA 1` | 1,024 | `635c432f6af1349c54fee66a43aab7e89471ff5a42a04e6d1cdb29718ebc217d` |
+| Windows `WVHA 1` | 1,024 | `b209eabbced72ccca37a325ac55f1a5198f9c257c6dc9faa5b57954c393c2493` |
 | Linux service bundle | 17,143,351 | `99da55911c81218ac74442a695d340ed440c74515b830bcc659bd4b7df7b2d4b` |
-| Linux `WVHA 1` | 1,024 | `179887b6dec8fd987301a07c290cda93e0833c6827d73d5e62f1ebcf05007d69` |
+| Linux `WVHA 1` | 1,024 | `46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507` |
 
 Both bundles begin with the exact compiler native image SHA-256 `af8db63675a2441e57a763ca4caa411419a84879cf01a1eb62b4be7556487cab`. The target-neutral leaf identities and placements agree. Only console, diagnostic, file-input, and file-output adapters are platform-specific.
 
@@ -40,7 +40,7 @@ This is focused local Windows evidence. Exact identities are pinned so GitHub's 
 
 ## Consequences
 
-The next PE/ELF work no longer needs to guess which compiler services exist or how authority is represented. It can concentrate on bounded startup-owned tables, arenas, imports/syscalls, relocations, and complete outer-container reconstruction while preserving one shared native compiler image.
+The next PE/ELF work no longer needs to guess which compiler services exist or how authority is represented. [Decision 0163](0163-Bounded-Hosted-Compiler-Runtime-Data.md) fixes the startup-owned tables and arenas, so outer-container work can concentrate on imports/syscalls, relocations, and complete reconstruction while preserving one shared native compiler image.
 
 This decision does not produce or expose a compiler executable, initialize runtime tables, bind OS functions, directly execute the compiler, reproduce Stage 2 outside .NET, or satisfy the native-retirement gate. Format 3 is allocated only inside the implemented candidate manifest; version-1 and version-2 targets remain the complete public hosted applications.
 

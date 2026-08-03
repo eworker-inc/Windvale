@@ -98,9 +98,11 @@ internal static class Program
     private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "ee1c77763ad7440ad87ec10c4b7def67f9ec296eb366277cfe219617c76dda4b";
     private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "86e32c67a41ccb31053d4905191e32dd2aaafd59e4b73416ea2b401e83adc973";
     private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "6d524aa9b96d0f624b0b449937ec6c0987a57e2c002af8276784c63a185efef6";
-    private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "635c432f6af1349c54fee66a43aab7e89471ff5a42a04e6d1cdb29718ebc217d";
+    private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "b209eabbced72ccca37a325ac55f1a5198f9c257c6dc9faa5b57954c393c2493";
+    private const string SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256 = "5d61f926461fc19e46e04a7e5dd3636fcbaa554e30370fc10a5eeb7992f5e634";
     private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "99da55911c81218ac74442a695d340ed440c74515b830bcc659bd4b7df7b2d4b";
-    private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "179887b6dec8fd987301a07c290cda93e0833c6827d73d5e62f1ebcf05007d69";
+    private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507";
+    private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
@@ -7808,6 +7810,7 @@ internal static class Program
                 Case.Bundle.Imageˉbytes.AsSpan());
             Equal(Hostedˉcompilerˉapplicationˉmetadata.SIZE, Case.Metadata.Length);
             Equal(Nativeˉentry, Verified.Nativeˉentryˉoffset);
+            Equal(8_000_000_000UL, Verified.Maximumˉinstructions);
             Sequenceˉequal(
                 Compilerˉtool.Module.Capabilities.Select(Capability => (
                     Capability.Name,
@@ -7847,6 +7850,86 @@ internal static class Program
         Throwsˉinvalidˉdata(() =>
             _ = Hostedˉcompilerˉapplicationˉmetadata.Verify(
                 Windowsˉmetadata.AsSpan(),
+                Consoleˉapplicationˉtarget.Linuxˉx64,
+                Windowsˉbundle,
+                Windowsˉbundle.Imageˉbytes.AsSpan()));
+
+        var Windowsˉruntime = Hostedˉcompilerˉruntimeˉdata.Build(
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            Compilerˉtool.Module.Capabilities,
+            Windowsˉbundle,
+            Nativeˉentry);
+        var Linuxˉruntime = Hostedˉcompilerˉruntimeˉdata.Build(
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            Compilerˉtool.Module.Capabilities,
+            Linuxˉbundle,
+            Nativeˉentry);
+        Equal(
+            SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256,
+            Objectˉdigest.Calculateˉsha256(Windowsˉruntime.AsSpan()));
+        Equal(
+            SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256,
+            Objectˉdigest.Calculateˉsha256(Linuxˉruntime.AsSpan()));
+        foreach (var Case in new[]
+        {
+            (Target: Consoleˉapplicationˉtarget.Windowsˉx64,
+                Bundle: Windowsˉbundle, Runtime: Windowsˉruntime,
+                Virtualˉbytes: 409_026_560u, Inputˉscratch: 2_097_154u,
+                Outputˉscratchˉoffset: 406_925_312u),
+            (Target: Consoleˉapplicationˉtarget.Linuxˉx64,
+                Bundle: Linuxˉbundle, Runtime: Linuxˉruntime,
+                Virtualˉbytes: 406_929_408u, Inputˉscratch: 1_048_577u,
+                Outputˉscratchˉoffset: 405_876_736u),
+        })
+        {
+            var Verified = Hostedˉcompilerˉruntimeˉdata.Verify(
+                Case.Runtime.AsSpan(),
+                Case.Target,
+                Case.Bundle,
+                Case.Bundle.Imageˉbytes.AsSpan());
+            Equal(4_096, Case.Runtime.Length);
+            Equal(67u, Verified.Layout.Maximumˉarguments);
+            Equal(4_096u, Verified.Layout.Maximumˉargumentˉbytes);
+            Equal(4_096u, Verified.Layout.Argumentˉtableˉoffset);
+            Equal(1_072u, Verified.Layout.Argumentˉtableˉbytes);
+            Equal(5_168u, Verified.Layout.Argumentˉbytesˉoffset);
+            Equal(65_536u, Verified.Layout.Argumentˉbytes);
+            Equal(70_704u, Verified.Layout.Snapshotˉtableˉoffset);
+            Equal(2_048u, Verified.Layout.Snapshotˉtableˉbytes);
+            Equal(73_728u, Verified.Layout.Recordˉarenaˉoffset);
+            Equal(2_170_880u, Verified.Layout.Textˉarenaˉoffset);
+            Equal(69_279_744u, Verified.Layout.Nameˉarenaˉoffset);
+            Equal(136_388_608u, Verified.Layout.Dataˉarenaˉoffset);
+            Equal(404_824_064u, Verified.Layout.Fileˉinputˉscratchˉoffset);
+            Equal(Case.Inputˉscratch, Verified.Layout.Fileˉinputˉscratchˉbytes);
+            Equal(Case.Outputˉscratchˉoffset, Verified.Layout.Fileˉoutputˉscratchˉoffset);
+            Equal(Case.Inputˉscratch, Verified.Layout.Fileˉoutputˉscratchˉbytes);
+            Equal(Case.Virtualˉbytes, Verified.Layout.Virtualˉbytes);
+            Equal(8_000_000_000UL, Verified.Metadata.Maximumˉinstructions);
+            foreach (var Offset in new[]
+            {
+                Nativeˉexecutionˉcontextˉcontract.INSTRUCTION_BUDGET_OFFSET,
+                checked((int)Hostedˉcompilerˉruntimeˉdata.OUTPUT_TABLE_OFFSET +
+                    Nativeˉoutputˉtableˉcontract.FLAGS_OFFSET),
+                checked((int)Hostedˉcompilerˉruntimeˉdata.FILE_INPUT_TABLE_OFFSET +
+                    Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY_OFFSET),
+                checked((int)Hostedˉcompilerˉruntimeˉdata.METADATA_OFFSET +
+                    Hostedˉcompilerˉapplicationˉmetadata.SERVICE_OFFSET + 12),
+            })
+            {
+                var Corrupted = Case.Runtime.ToArray();
+                Corrupted[Offset] ^= 0x01;
+                Throwsˉinvalidˉdata(() =>
+                    _ = Hostedˉcompilerˉruntimeˉdata.Verify(
+                        Corrupted,
+                        Case.Target,
+                        Case.Bundle,
+                        Case.Bundle.Imageˉbytes.AsSpan()));
+            }
+        }
+        Throwsˉinvalidˉdata(() =>
+            _ = Hostedˉcompilerˉruntimeˉdata.Verify(
+                Windowsˉruntime.AsSpan(),
                 Consoleˉapplicationˉtarget.Linuxˉx64,
                 Windowsˉbundle,
                 Windowsˉbundle.Imageˉbytes.AsSpan()));
@@ -7907,9 +7990,13 @@ internal static class Program
             $"windows-bundle={Windowsˉbundle.Imageˉbytes.Length} " +
             $"windows-bundle-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉbundle.Imageˉbytes.AsSpan())} " +
             $"windows-metadata-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉmetadata.AsSpan())} " +
+            $"windows-runtime={Hostedˉcompilerˉruntimeˉdata.Plan(Consoleˉapplicationˉtarget.Windowsˉx64).Virtualˉbytes} " +
+            $"windows-runtime-header-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉruntime.AsSpan())} " +
             $"linux-bundle={Linuxˉbundle.Imageˉbytes.Length} " +
             $"linux-bundle-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉbundle.Imageˉbytes.AsSpan())} " +
             $"linux-metadata-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉmetadata.AsSpan())} " +
+            $"linux-runtime={Hostedˉcompilerˉruntimeˉdata.Plan(Consoleˉapplicationˉtarget.Linuxˉx64).Virtualˉbytes} " +
+            $"linux-runtime-header-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉruntime.AsSpan())} " +
             $"wvo={Measurement.Encodedˉobjectˉbytes} memory={Measurement.Materializedˉsectionˉbytes} " +
             $"linked={Measurement.Linkedˉimageˉbytes} text={Measurement.Textˉbytes} " +
             $"rodata={Measurement.Readˉonlyˉdataˉbytes} sections={Measurement.Sections} " +

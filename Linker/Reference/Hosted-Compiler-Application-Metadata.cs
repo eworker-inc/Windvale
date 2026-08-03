@@ -32,6 +32,7 @@ internal sealed record Verifiedˉhostedˉcompilerˉmetadata(
     uint Bundleˉbytes,
     uint Nativeˉimageˉbytes,
     uint Nativeˉentryˉoffset,
+    ulong Maximumˉinstructions,
     ImmutableArray<Capabilityˉdeclaration> Capabilities,
     ImmutableArray<Nativeˉserviceˉbundleˉplacement> Services);
 
@@ -51,6 +52,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         CAPABILITY_OFFSET + CAPABILITY_COUNT * CAPABILITY_RECORD_BYTES;
     internal const int NATIVE_SHA256_OFFSET = 96;
     internal const uint COMPILER_PROFILE_FLAGS = 1;
+    internal const ulong COMPILER_MAXIMUM_INSTRUCTIONS = 8_000_000_000;
 
     private static readonly ImmutableArray<Hostedˉcompilerˉcapabilityˉcontract>
         CAPABILITY_CONTRACTS =
@@ -131,6 +133,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         Writeˉu32(Bytes, 76, Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES);
         Writeˉu32(Bytes, 80, Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES);
         Writeˉu32(Bytes, 84, COMPILER_PROFILE_FLAGS);
+        Writeˉu64(Bytes, 88, COMPILER_MAXIMUM_INSTRUCTIONS);
 
         for (var Index = 0; Index < CAPABILITY_CONTRACTS.Length; Index++)
         {
@@ -208,8 +211,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         Require(bytes, 80, Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES,
             "text-arena size");
         Require(bytes, 84, COMPILER_PROFILE_FLAGS, "profile flags");
-        Require(bytes, 88, 0, "reserved header field");
-        Require(bytes, 92, 0, "reserved header tail");
+        Requireˉu64(bytes, 88, COMPILER_MAXIMUM_INSTRUCTIONS, "instruction budget");
         if (Bundleˉoffset % 16 != 0 || Nativeˉentry >= expectedˉbundle.Nativeˉimageˉbytes)
         {
             throw Invalid("The hosted compiler bundle offset or native entry is invalid.");
@@ -271,6 +273,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
             checked((uint)expectedˉbundle.Imageˉbytes.Length),
             checked((uint)expectedˉbundle.Nativeˉimageˉbytes),
             Nativeˉentry,
+            COMPILER_MAXIMUM_INSTRUCTIONS,
             [.. CAPABILITY_CONTRACTS.Select(Contract => Declaration(Contract.Name))],
             expectedˉbundle.Placements);
     }
@@ -358,6 +361,18 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         }
     }
 
+    private static void Requireˉu64(
+        ReadOnlySpan<byte> bytes,
+        int offset,
+        ulong expected,
+        string field)
+    {
+        if (Readˉu64(bytes, offset) != expected)
+        {
+            throw Invalid($"The hosted compiler {field} is invalid.");
+        }
+    }
+
     private static void Requireˉzero(
         ReadOnlySpan<byte> bytes,
         int offset,
@@ -373,8 +388,14 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
     private static uint Readˉu32(ReadOnlySpan<byte> bytes, int offset) =>
         BinaryPrimitives.ReadUInt32LittleEndian(bytes.Slice(offset, sizeof(uint)));
 
+    private static ulong Readˉu64(ReadOnlySpan<byte> bytes, int offset) =>
+        BinaryPrimitives.ReadUInt64LittleEndian(bytes.Slice(offset, sizeof(ulong)));
+
     private static void Writeˉu32(byte[] bytes, int offset, uint value) =>
         BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset, sizeof(uint)), value);
+
+    private static void Writeˉu64(byte[] bytes, int offset, ulong value) =>
+        BinaryPrimitives.WriteUInt64LittleEndian(bytes.AsSpan(offset, sizeof(ulong)), value);
 
     private static InvalidDataException Invalid(string message) => new(message);
 

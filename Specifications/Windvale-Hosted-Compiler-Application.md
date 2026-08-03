@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHA 1` is the implemented candidate manifest for packaging the exact ABI-22 Windvale compiler as paired Windows and Linux hosted applications. It binds the compiler's canonical six capabilities, exact ten required native services, platform adapter identities, service-table slots, service code, native image, and native entry. The manifest and service bundles are implemented and independently checked; public `windows-x64-console-v3` and `linux-x64-console-v3` targets and their startup/container layouts are not yet implemented.
+`WVHA 1` is the implemented candidate manifest for packaging the exact ABI-22 Windvale compiler as paired Windows and Linux hosted applications. It binds the compiler's canonical six capabilities, exact ten required native services, platform adapter identities, service-table slots, service code, native image, native entry, and eight-billion-instruction execution bound. The manifest, service bundles, and initial runtime data layouts are implemented and independently checked; public `windows-x64-console-v3` and `linux-x64-console-v3` targets and their startup/container layouts are not yet implemented.
 
 The candidate allocates hosted container format 3 without changing the qualified version-1 or version-2 formats or bytes. It does not change WVB 1.6, WVO 1.0, native ABI 22, execution-context format 7, service-table format 5, the ordinary 4 MiB Windvale `bytes` limit, or the standard WVO/link admission profile.
 
@@ -76,7 +76,7 @@ The manifest is exactly 1,024 bytes. All integer fields are unsigned 32-bit litt
 | 44 | 4 | Capability-record size 16 |
 | 48 | 4 | Service-record offset 224 |
 | 52 | 4 | Service-record size 64 |
-| 56 | 4 | Bundle file offset, aligned to 16 |
+| 56 | 4 | Bundle offset within executable text, aligned to 16 |
 | 60 | 4 | Complete bundle bytes |
 | 64 | 4 | Native-image offset within bundle, zero |
 | 68 | 4 | Native-image bytes, 17,130,441 |
@@ -84,7 +84,7 @@ The manifest is exactly 1,024 bytes. All integer fields are unsigned 32-bit litt
 | 76 | 4 | Record arena bytes, 2,097,152 |
 | 80 | 4 | Dynamic text/byte arena bytes, 67,108,864 |
 | 84 | 4 | Profile flags, 1: exact hosted compiler |
-| 88 | 8 | Reserved zero |
+| 88 | 8 | Maximum instructions, 8,000,000,000 |
 | 96 | 32 | SHA-256 of the native-image prefix |
 | 128 | 96 | Six capability records |
 | 224 | 640 | Ten service records |
@@ -94,10 +94,41 @@ Each capability record contains numeric capability identity, its authority-beari
 
 Each service record contains service identity at byte 0, capability identity or zero at byte 4, service-table byte offset at byte 8, adapter identity at byte 12, bundle-relative leaf offset at byte 16, leaf byte count at byte 20, flags at byte 24, reserved zero at byte 28, and the 32-byte leaf SHA-256 at byte 32. Flags are exactly 1 for an authority-bearing capability service and exactly 2 for an intrinsic service.
 
-The current exact metadata SHA-256 values, using the candidate bundle file offset 4,096 and the canonical native entry, are `635c432f6af1349c54fee66a43aab7e89471ff5a42a04e6d1cdb29718ebc217d` for Windows and `179887b6dec8fd987301a07c290cda93e0833c6827d73d5e62f1ebcf05007d69` for Linux. An outer container may select a different aligned bundle offset only by producing and verifying the corresponding manifest bytes.
+The current exact metadata SHA-256 values, using text-relative bundle offset 4,096 and the canonical native entry, are `b209eabbced72ccca37a325ac55f1a5198f9c257c6dc9faa5b57954c393c2493` for Windows and `46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507` for Linux. An outer container may select a different aligned text-relative bundle offset only by producing and verifying the corresponding manifest bytes.
+
+## Initial runtime data layout
+
+Format 3 uses one 4,096-byte file-backed RW/NX header followed by loader-zeroed bounded regions. The initial pointer fields are zero; startup must bind them only to the corresponding checked in-image extent or imported platform function. The fixed header contains:
+
+| Offset | Bytes | Contract |
+| ---: | ---: | --- |
+| 0 | 112 | ABI-22 execution context with 8,000,000,000 instructions and call depth 1,024 |
+| 112 | 104 | Service table 5 with all pointers initially zero |
+| 216 | 48 | Console plus diagnostic output table |
+| 264 | 136 | File-input table 1 |
+| 400 | 80 | File-output table 1 |
+| 480 | 1,024 | `WVHA 1` |
+| 1,504 | 2,592 | Reserved for canonical outer-container data, initially zero |
+
+The runtime planner retains the hosted limits of at most 67 arguments, 4,096 UTF-8 bytes per argument, 65,536 argument bytes in aggregate, 64 file snapshots, 1 MiB names, and 4 MiB file values. Every region uses checked arithmetic and the complete RW/NX extent is below a fixed 512 MiB ceiling.
+
+| Region | Offset | Bytes |
+| --- | ---: | ---: |
+| Header | 0 | 4,096 |
+| Argument descriptors | 4,096 | 1,072 |
+| Argument UTF-8 bytes | 5,168 | 65,536 |
+| File snapshot records | 70,704 | 2,048 |
+| Record arena | 73,728 | 2,097,152 |
+| Dynamic text/byte arena | 2,170,880 | 67,108,864 |
+| File-name arena | 69,279,744 | 67,108,864 |
+| File-data arena | 136,388,608 | 268,435,456 |
+| File-input scratch | 404,824,064 | 2,097,154 Windows / 1,048,577 Linux |
+| File-output scratch | 406,925,312 Windows / 405,876,736 Linux | 2,097,154 Windows / 1,048,577 Linux |
+
+The final page-aligned virtual extent is 409,026,560 bytes on Windows and 406,929,408 bytes on Linux. Windows uses UTF-16-sized path scratch; Linux uses UTF-8-sized path scratch. The 4,096-byte initial headers have SHA-256 `5d61f926461fc19e46e04a7e5dd3636fcbaa554e30370fc10a5eeb7992f5e634` and `ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a`, respectively.
 
 ## Verification boundary and remaining work
 
-The native fragment is verified before bundle construction. Every selected leaf is then verified independently, the complete ordered placement is reconstructed, and `WVHA 1` is parsed back against the actual bundle bytes. Focused malformed evidence covers count, capability, adapter, leaf digest, actual-bundle corruption, and target mismatch. Exact overall bundle and manifest identities are pinned for cross-host reproduction.
+The native fragment is verified before bundle construction. Every selected leaf is then verified independently, the complete ordered placement is reconstructed, and `WVHA 1` is parsed back against the actual bundle bytes. The runtime-data verifier separately checks every fixed table field, budget, platform identity, resource limit, zero pointer, reserved byte, manifest, target, and complete bundle input. Focused malformed evidence covers count, capability, adapter, leaf digest, actual-bundle corruption, budget, output flags, snapshot capacity, and target mismatch. Exact overall bundle, manifest, and runtime-header identities are pinned for cross-host reproduction.
 
-This contract does not yet initialize argument, output, file-input, or file-output tables; bind Windows imports or Linux syscalls; allocate their bounded private arenas; construct PE/ELF files; publish public targets; directly execute the packaged compiler; or prove .NET-free Stage 1 to Stage 2 reproduction. Those are successor container and startup gates. Stage 0 remains the builder, oracle, and recovery implementation.
+This contract does not yet populate argument descriptors, bind service and context pointers, bind Windows imports or Linux syscalls, construct PE/ELF files, publish public targets, directly execute the packaged compiler, or prove .NET-free Stage 1 to Stage 2 reproduction. Those are successor container and startup gates. Stage 0 remains the builder, oracle, and recovery implementation.
