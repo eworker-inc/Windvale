@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted architecture direction, refined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Decision 0139](../Decisions/0139-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md). Current implementation status remains governed by the corresponding format, runtime, native-target, and OS specifications.
+Accepted architecture direction, refined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md). Current implementation status remains governed by the corresponding format, runtime, native-target, and OS specifications.
 
 ## Central distinction
 

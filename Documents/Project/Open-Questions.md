@@ -42,7 +42,7 @@ This list records unresolved decisions without presenting them as implementation
 - Which parts of qualified Decision 0098's fixed typed resource pair, atomic cleanup, saved context, and wait/wake coordinator should survive independently lived resources, a reusable address space, third runnable, or general loader case?
 - Which first boot-critical drivers should remain with the kernel temporarily, and which should begin as isolated AOT system services?
 - Which protected-process/channel ABI should adopt implemented-candidate `WVRQ 1` / `WVRY 1`, checked one-page buffer copies, service/client death propagation, and an immutable `WVRS 1` capability in the guest; and what later measured use case should justify paths, directories, writable storage, or an on-disk filesystem?
-- Which first filesystem-core operations have exact shared semantics across Windows, Linux, and Windvale OS providers; which name-comparison, enumeration, offset-width, revocation, and mutation-completion rules do they require; and which guarantees must begin as optional or platform-scoped interfaces under [Decision 0139](../Decisions/0139-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md)?
+- Which first filesystem-core operations have exact shared semantics across Windows, Linux, and Windvale OS providers; which name-comparison, enumeration, offset-width, revocation, and mutation-completion rules do they require; and which guarantees must begin as optional or platform-scoped interfaces under [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md)?
 - Which QEMU and Hyper-V behaviors must be qualified before the first OS milestone is complete?
 
 ## Browser and WebAssembly

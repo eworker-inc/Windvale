@@ -1,4 +1,4 @@
-# Decision 0139: Per-module platform scope and filesystem capabilities
+# Decision 0140: Per-module platform scope and filesystem capabilities
 
 - Date: 2026-08-03
 - Status: Accepted architecture direction; implementation not begun
