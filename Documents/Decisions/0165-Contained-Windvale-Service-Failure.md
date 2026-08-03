@@ -1,9 +1,9 @@
 # Decision 0165: Contain one Windvale service failure
 
-- Status: Implemented candidate
+- Status: Qualified
 - Date: 2026-08-03
 - Owners: Windvale OS process, IPC, and service foundation
-- Advances: [Decision 0084](0084-Windvale-Os-Architecture.md), [Decision 0159](0159-First-Guest-Directory-Service.md)
+- Advances: [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md), [Decision 0159](0159-First-Guest-Directory-Service.md)
 
 ## Context
 
@@ -47,7 +47,7 @@ The candidate carries these exact identities:
 | User-fault process-machine WVO | 491,004 | `57a9874a76d26a1f9af9614051c504ff3022543604db0e9de08a9fe7725bee12` |
 | Service-fault process-machine WVO | 479,556 | `d7220ed33de6f8dac1946a0dc44c87fe4937f7730f3f86997a38d65ddcf5716d` |
 
-The focused Windows Release build has zero warnings and all 38 OS tests pass. All five pinned Windows QEMU 11.0/Q35/TCG scenarios pass with complete exact serial evidence. Cross-host qualification remains pending until the exact implementation commit passes the repository Qualification workflow on Windows and digest-pinned Debian.
+Exact implementation commit `8c7f82a1acb5c55c81845a3d868925f7a91ff23a` passes GitHub [Verify run 30812801520](https://github.com/eworker-inc/Windvale/actions/runs/30812801520). Windows and digest-pinned Debian each complete a zero-warning Release build, all 87 Seed tests including the golden compiler contract, all 38 OS tests, and the native CLI gate. All five pinned Windows QEMU 11.0/Q35/TCG scenarios pass with complete exact serial evidence; no Debian QEMU execution is claimed.
 
 ## Consequences
 

@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Protected-process contract version 15 is the implemented Probe-36 candidate owned by [Decision 0165](../Documents/Decisions/0165-Contained-Windvale-Service-Failure.md). It retains version 14's two-generation reclaim/rebuild, boot-resource grant, dynamic `WVRS 1` lookup, maximal immutable directory read, and terminal client cleanup, then proves one exact init-service failure can close the channel and wake its blocked client without a kernel panic.
+Protected-process contract version 15 is the cross-host-qualified Probe-36 contract owned by [Decision 0165](../Documents/Decisions/0165-Contained-Windvale-Service-Failure.md). It retains version 14's two-generation reclaim/rebuild, boot-resource grant, dynamic `WVRS 1` lookup, maximal immutable directory read, and terminal client cleanup, then proves one exact init-service failure can close the channel and wake its blocked client without a kernel panic.
 
-Version 14 remains the cross-host-qualified baseline at exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5`: Windows and digest-pinned Debian pass all 87 Seed tests and all 37 OS tests, while all four Probe-35 pinned-QEMU scenarios pass on Windows. The version-15 candidate passes all 38 focused OS tests and all five Probe-36 pinned-QEMU scenarios on Windows. Cross-host qualification remains pending. This is an internal experiment, not a stable syscall ABI, process manager, supervisor, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
+Version 15 is qualified at exact implementation commit `8c7f82a1acb5c55c81845a3d868925f7a91ff23a`: Windows and digest-pinned Debian pass all 87 Seed tests and all 38 OS tests in GitHub [Verify run 30812801520](https://github.com/eworker-inc/Windvale/actions/runs/30812801520), while all five Probe-36 pinned-QEMU scenarios pass on Windows. This is an internal experiment, not a stable syscall ABI, process manager, supervisor, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 

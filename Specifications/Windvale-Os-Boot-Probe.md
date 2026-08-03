@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Firmware Probe 36 is the implemented candidate for containing one live Windvale service failure. It composes ABI 22/context 7, WVA seam 11, admission 4/bridge 2, retained bridge 10, memory 14, paging 4, protected processes 15, channel 4, interpreter profile 7, `WVRES006`, `WVBR002`, `WVRS 1`, and `WVDS 1`.
+Firmware Probe 36 is the cross-host-qualified implementation for containing one live Windvale service failure. It composes ABI 22/context 7, WVA seam 11, admission 4/bridge 2, retained bridge 10, memory 14, paging 4, protected processes 15, channel 4, interpreter profile 7, `WVRES006`, `WVBR002`, `WVRS 1`, and `WVDS 1`.
 
-[Decision 0165](../Documents/Decisions/0165-Contained-Windvale-Service-Failure.md) owns Probe 36. The candidate passes all 38 focused OS tests and all five pinned-QEMU scenarios on Windows. Cross-host qualification remains pending. Probe 35 remains the qualified baseline at exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5`, which passes all 87 Seed tests and all 37 OS tests on Windows and digest-pinned Debian in GitHub [Verify run 30808267999](https://github.com/eworker-inc/Windvale/actions/runs/30808267999).
+[Decision 0165](../Documents/Decisions/0165-Contained-Windvale-Service-Failure.md) owns Probe 36. Exact implementation commit `8c7f82a1acb5c55c81845a3d868925f7a91ff23a` passes all 87 Seed tests and all 38 OS tests on Windows and digest-pinned Debian in GitHub [Verify run 30812801520](https://github.com/eworker-inc/Windvale/actions/runs/30812801520). All five pinned-QEMU scenarios pass on Windows; the workflow does not claim Debian QEMU execution.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 
@@ -28,7 +28,7 @@ Candidate image identities are:
 | `user-fault` | 599,040 | `94caba032f9fccae45e0e5eb0747f0d26f892d5cac4526360e13a72c0b2a2bba` | 0 |
 | `service-fault` | 586,752 | `d8629f0a125d39c9289c91fc0536b8577f44b898f6bd381a892ae1830a2d65e1` | 0 |
 
-All five identities pass the Windows pinned-QEMU gate with complete exact serial markers. Cross-host construction qualification and Debian QEMU execution are not yet claimed for Probe 36.
+All five identities pass the Windows pinned-QEMU gate with complete exact serial markers. The exact construction is cross-host qualified; no Debian QEMU execution is claimed.
 
 ## Firmware exit and kernel entry
 
