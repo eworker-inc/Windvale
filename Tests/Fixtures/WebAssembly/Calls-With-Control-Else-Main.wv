@@ -1,0 +1,30 @@
+module Webassemblyˉcallsˉwithˉcontrolˉelse profile portable;
+
+fn Add(Left: i32, Right: i32) -> i32 {
+    return Left + Right;
+}
+
+fn Build(Limit: i32) -> i32 {
+    var Total: i32 = 0;
+    var Index: i32 = 0;
+
+    while Index < Limit {
+        Total = Add(Total, 10);
+        Index = Index + 1;
+    }
+
+    return Total;
+}
+
+export fn Main() -> i32 {
+    let Value: i32 = Build(2);
+    var Result: i32 = 0;
+
+    if Value == 30 {
+        Result = 1;
+    } else {
+        Result = Add(Value, 22);
+    }
+
+    return Result;
+}

@@ -143,16 +143,41 @@ const EXPECTED = [
             { budget: 100, status: 3007, result: 0, instructions: 14 },
         ],
     },
+    {
+        name: "bounded calls with structured control",
+        path: process.argv[15],
+        sha256: "3be50be3c2436638973eb68743f9fdd2e00df9816e50e498b432ff36468c3a77",
+        bytes: 2729,
+        abi: 2,
+        runs: [
+            { budget: 196, status: 0, result: 42, instructions: 196 },
+            { budget: 195, status: 3011, result: 0, instructions: 195 },
+            { budget: 196, status: 0, result: 42, instructions: 196 },
+        ],
+    },
+    {
+        name: "bounded calls with structured-control else route",
+        path: process.argv[16],
+        sha256: "35d75c30ef03dbb693a976cfaa31405ce90ecca4d393c5e93de8953fcf4658da",
+        bytes: 2729,
+        abi: 2,
+        runs: [
+            { budget: 153, status: 0, result: 42, instructions: 153 },
+            { budget: 152, status: 3011, result: 0, instructions: 152 },
+            { budget: 153, status: 0, result: 42, instructions: 153 },
+        ],
+    },
 ];
 
-if (process.argv.length !== 15) {
+if (process.argv.length !== 17) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
             "<subtract-overflow.wasm> <multiply-overflow.wasm> <negate-overflow.wasm> " +
             "<metered-loop.wasm> <nonterminating-loop.wasm> " +
             "<structured-control.wasm> <structured-control-else.wasm> " +
-            "<sequential-if.wasm> <bounded-calls.wasm> <bounded-calls-overflow.wasm>",
+            "<sequential-if.wasm> <bounded-calls.wasm> <bounded-calls-overflow.wasm> " +
+            "<calls-with-control.wasm> <calls-with-control-else.wasm>",
     );
 }
 

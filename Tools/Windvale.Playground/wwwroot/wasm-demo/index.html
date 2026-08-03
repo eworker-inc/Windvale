@@ -42,18 +42,35 @@
                     <span id="source-title">Qualified source fixture</span>
                     <span class="language-badge">WV</span>
                 </div>
-                <pre><code>module Webassemblyˉboundedˉcalls profile portable;
+                <pre><code>module Webassemblyˉcallsˉwithˉcontrol profile portable;
 
 fn Add(Left: i32, Right: i32) -&gt; i32 {
     return Left + Right;
 }
 
-fn Double(Value: i32) -&gt; i32 {
-    return Add(Value, Value);
+fn Build(Limit: i32) -&gt; i32 {
+    var Total: i32 = 0;
+    var Index: i32 = 0;
+
+    while Index &lt; Limit {
+        Total = Add(Total, 10);
+        Index = Index + 1;
+    }
+
+    return Total;
 }
 
 export fn Main() -&gt; i32 {
-    return Add(Double(10), Double(11));
+    let Value: i32 = Build(3);
+    var Result: i32 = 0;
+
+    if Value == 30 {
+        Result = Add(Value, 12);
+    } else {
+        Result = 1;
+    }
+
+    return Result;
 }</code></pre>
                 <p class="source-note">
                     The source is shown as provenance. This milestone executes its prebuilt artifact;
@@ -68,11 +85,11 @@ export fn Main() -&gt; i32 {
                 </div>
 
                 <dl class="artifact-evidence">
-                    <div><dt>Artifact</dt><dd>1,185 bytes</dd></div>
+                    <div><dt>Artifact</dt><dd>2,729 bytes</dd></div>
                     <div><dt>Target</dt><dd>wasm32-browser-v1-experimental</dd></div>
                     <div><dt>Imports</dt><dd>None</dd></div>
-                    <div><dt>Calls</dt><dd>Three functions · depth 3</dd></div>
-                    <div><dt>Expected</dt><dd>ABI 2 · budget 66 succeeds · 65 returns WVR3011</dd></div>
+                    <div><dt>Composition</dt><dd>Three functions · loop · if/else</dd></div>
+                    <div><dt>Expected</dt><dd>ABI 2 · budget 196 succeeds · 195 returns WVR3011</dd></div>
                 </dl>
 
                 <button id="run" type="button">

@@ -33,7 +33,7 @@ if (Requestedˉpaths.some(Path =>
     Fail("The standalone page requests a .NET or Blazor framework asset.");
 }
 Requireˉtext(Index, "./app.js", "standalone application entry");
-Requireˉtext(Index, "Three functions · depth 3", "profile-6 call evidence");
+Requireˉtext(Index, "Three functions · loop · if/else", "profile-7 composition evidence");
 Requireˉtext(Application, "../js/windvale-wasm-host.js", "shared disposable worker host");
 Requireˉtext(Application, "Countˉframeworkˉrequests", "runtime framework-request assertion");
 Requireˉtext(Host, "Workerˉinstance.terminate()", "worker termination boundary");

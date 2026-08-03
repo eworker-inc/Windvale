@@ -1060,6 +1060,12 @@ The retained three-function source compiles to 399-byte WVB SHA-256 `502f5e93942
 
 The standalone verifier reconstructs and executes the embedded artifact without a .NET asset. On 2026-08-02, a Chromium-based in-app browser loads the updated ordinary HTML page, runs both fresh workers, and reports the exact artifact identity, ABI `2`, both retained tuples, and zero .NET/Blazor requests. Focused Windows verification is green. Cross-host and cross-browser qualification remain pending.
 
+## Local WebAssembly calls-with-control evidence
+
+[Decision 0121](../Decisions/0121-WebAssembly-Calls-With-Structured-Control.md) composes the profile-6 call graph with profile-5 sequential structured control. The selector admits compiler-produced `bool` locals, independently reconstructs every region and call, and keeps one ABI-2 count, limit, and status across callers, callees, loop iterations, and conditional routes.
+
+The true-route fixture compiles to 716-byte WVB SHA-256 `cf519c2d636d6e7b22b54afacf632bf5e514982e030d5c8b799a5585e7f39120` and deterministic 2,729-byte Wasm SHA-256 `3be50be3c2436638973eb68743f9fdd2e00df9816e50e498b432ff36468c3a77`. The false-route fixture produces 722-byte WVB SHA-256 `77e65ba692c8abc87dbac4dfeba174f3afc9191ac784b47a65becae8f0df2752` and 2,729-byte Wasm SHA-256 `35d75c30ef03dbb693a976cfaa31405ce90ecca4d393c5e93de8953fcf4658da`. The reference runtime, independent target decoder, and Node.js agree respectively on `0/42/196` plus `3011/0/195`, and `0/42/153` plus `3011/0/152`. An out-of-range branch target and a nested call/control program fail without publication. A fresh Chromium-based in-app browser reproduces `0/42/196` and `3011/0/195`, reports no warning or error, and observes no `.NET`, Blazor, or `_framework` asset. Cross-host and cross-browser qualification remain pending.
+
 ## Qualified ABI-19 one-byte construction
 
 Qualified Decision 0108 advances the implementation to `x86-64-wvb-baseline-v19` while retaining WVB 1.6, WVO 1.0, execution context 7, service table 5, the 64-parameter convention, ABI 18's canonical typed block-slot map, and the 2,048-cell physical frame ceiling. Verified `Bytesˉfromˉu8` now lowers from `U8` to a one-byte execution-arena-backed descriptor. The independent decoder reconstructs its checked allocation, length-one descriptor, scalar source, exact byte store, runtime failure edge, and distinct source/result cells. The retained four-byte encoder now rejects the same malicious scalar/result alias.

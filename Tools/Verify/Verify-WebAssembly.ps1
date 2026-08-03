@@ -22,6 +22,8 @@ $StructuredControlElseSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAsse
 $SequentialIfSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Sequential-If-Main.wv'
 $BoundedCallsSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Bounded-Calls-Main.wv'
 $BoundedCallsOverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Bounded-Calls-Overflow-Main.wv'
+$CallsWithControlSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Calls-With-Control-Main.wv'
+$CallsWithControlElseSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Calls-With-Control-Else-Main.wv'
 $EngineVerifier = Join-Path $RepositoryRoot 'Tools/Verify/Verify-WebAssembly-Engine.mjs'
 $BackendWvb = Join-Path $ArtifactDirectory 'Windvale-WebAssembly.wvb'
 $SuccessWvb = Join-Path $ArtifactDirectory 'Checked-Add-Main.wvb'
@@ -37,6 +39,8 @@ $StructuredControlElseWvb = Join-Path $ArtifactDirectory 'Structured-Control-Els
 $SequentialIfWvb = Join-Path $ArtifactDirectory 'Sequential-If-Main.wvb'
 $BoundedCallsWvb = Join-Path $ArtifactDirectory 'Bounded-Calls-Main.wvb'
 $BoundedCallsOverflowWvb = Join-Path $ArtifactDirectory 'Bounded-Calls-Overflow-Main.wvb'
+$CallsWithControlWvb = Join-Path $ArtifactDirectory 'Calls-With-Control-Main.wvb'
+$CallsWithControlElseWvb = Join-Path $ArtifactDirectory 'Calls-With-Control-Else-Main.wvb'
 $SuccessWasm = Join-Path $ArtifactDirectory 'Checked-Add-Main.wasm'
 $OverflowWasm = Join-Path $ArtifactDirectory 'Checked-Add-Overflow-Main.wasm'
 $StraightWasm = Join-Path $ArtifactDirectory 'Straight-I32-Main.wasm'
@@ -50,6 +54,8 @@ $StructuredControlElseWasm = Join-Path $ArtifactDirectory 'Structured-Control-El
 $SequentialIfWasm = Join-Path $ArtifactDirectory 'Sequential-If-Main.wasm'
 $BoundedCallsWasm = Join-Path $ArtifactDirectory 'Bounded-Calls-Main.wasm'
 $BoundedCallsOverflowWasm = Join-Path $ArtifactDirectory 'Bounded-Calls-Overflow-Main.wasm'
+$CallsWithControlWasm = Join-Path $ArtifactDirectory 'Calls-With-Control-Main.wasm'
+$CallsWithControlElseWasm = Join-Path $ArtifactDirectory 'Calls-With-Control-Else-Main.wasm'
 
 New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
 
@@ -77,6 +83,8 @@ Invoke-Windvale @('compile', $StructuredControlElseSource, '-o', $StructuredCont
 Invoke-Windvale @('compile', $SequentialIfSource, '-o', $SequentialIfWvb)
 Invoke-Windvale @('compile', $BoundedCallsSource, '-o', $BoundedCallsWvb)
 Invoke-Windvale @('compile', $BoundedCallsOverflowSource, '-o', $BoundedCallsOverflowWvb)
+Invoke-Windvale @('compile', $CallsWithControlSource, '-o', $CallsWithControlWvb)
+Invoke-Windvale @('compile', $CallsWithControlElseSource, '-o', $CallsWithControlElseWvb)
 
 $RunArguments = @(
     'run', $BackendWvb,
@@ -102,6 +110,8 @@ Invoke-Windvale ($RunArguments + @($StructuredControlElseWvb, $StructuredControl
 Invoke-Windvale ($RunArguments + @($SequentialIfWvb, $SequentialIfWasm))
 Invoke-Windvale ($RunArguments + @($BoundedCallsWvb, $BoundedCallsWasm))
 Invoke-Windvale ($RunArguments + @($BoundedCallsOverflowWvb, $BoundedCallsOverflowWasm))
+Invoke-Windvale ($RunArguments + @($CallsWithControlWvb, $CallsWithControlWasm))
+Invoke-Windvale ($RunArguments + @($CallsWithControlElseWvb, $CallsWithControlElseWasm))
 
 node $EngineVerifier `
     $SuccessWasm `
@@ -116,7 +126,9 @@ node $EngineVerifier `
     $StructuredControlElseWasm `
     $SequentialIfWasm `
     $BoundedCallsWasm `
-    $BoundedCallsOverflowWasm
+    $BoundedCallsOverflowWasm `
+    $CallsWithControlWasm `
+    $CallsWithControlElseWasm
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

@@ -93,9 +93,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "c84f4cfc0f6040fad4b3bd52baf530b053c2a0ba984b8518d186cf5724b8fadf";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "318acb4cd0deb866c0e9596f1006102943f554db2bde99faec7c6702f05f282d";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "13bad9b2633cde10342ba8a030150c3011cd6f0b80c395b17b9829e42ec4bf9d";
+    private const string WEBASSEMBLY_CORE_SHA256 = "5dad5433446e2fc2fd6afad39fd7e6b1a1fe2ddc070c57feba426db6eb11fe8d";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "6bd6a31848ef71a65828a4109cc6acbee98ab6ec611cbfc2a2d0967acff9c6e0";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "4a66c3fd4726e4f9d317aa2ef04f02a620cef8a9e1c0f371392b310be9372fc4";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -125,6 +125,10 @@ internal static class Program
     private const string WEBASSEMBLY_BOUNDED_CALLS_SHA256 = "d92667752762a992bdb626e34b83b78ee9c531f167b911737dfbf5f6443f3518";
     private const string WEBASSEMBLY_BOUNDED_CALLS_OVERFLOW_WVB_SHA256 = "9e2b2a747287ff49ffce4d34f888b557a48064062e75ff5147bfc0224b54dca2";
     private const string WEBASSEMBLY_BOUNDED_CALLS_OVERFLOW_SHA256 = "4e936e5c4b077d1bce8719f5cc5c974961088f1171ed00158f9ac251f7652bd7";
+    private const string WEBASSEMBLY_CALLS_WITH_CONTROL_WVB_SHA256 = "cf519c2d636d6e7b22b54afacf632bf5e514982e030d5c8b799a5585e7f39120";
+    private const string WEBASSEMBLY_CALLS_WITH_CONTROL_SHA256 = "3be50be3c2436638973eb68743f9fdd2e00df9816e50e498b432ff36468c3a77";
+    private const string WEBASSEMBLY_CALLS_WITH_CONTROL_ELSE_WVB_SHA256 = "77e65ba692c8abc87dbac4dfeba174f3afc9191ac784b47a65becae8f0df2752";
+    private const string WEBASSEMBLY_CALLS_WITH_CONTROL_ELSE_SHA256 = "35d75c30ef03dbb693a976cfaa31405ce90ecca4d393c5e93de8953fcf4658da";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -654,6 +658,10 @@ internal static class Program
         "Windvale.Seed.Tests.WebAssembly-Bounded-Calls-Main.wv");
     private static readonly string WEBASSEMBLY_BOUNDED_CALLS_OVERFLOW_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Bounded-Calls-Overflow-Main.wv");
+    private static readonly string WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Calls-With-Control-Main.wv");
+    private static readonly string WEBASSEMBLY_CALLS_WITH_CONTROL_ELSE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Calls-With-Control-Else-Main.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -8062,6 +8070,100 @@ internal static class Program
             Boundedˉcallsˉoverflowˉlowered.Writtenˉbytes.AsSpan(),
             Boundedˉcallsˉoverflowˉverified);
 
+        foreach (var Case in new[]
+        {
+            (
+                Source: WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE,
+                Wvbˉsha256: WEBASSEMBLY_CALLS_WITH_CONTROL_WVB_SHA256,
+                Wasmˉsha256: WEBASSEMBLY_CALLS_WITH_CONTROL_SHA256,
+                Budget: 196),
+            (
+                Source: WEBASSEMBLY_CALLS_WITH_CONTROL_ELSE_SOURCE,
+                Wvbˉsha256: WEBASSEMBLY_CALLS_WITH_CONTROL_ELSE_WVB_SHA256,
+                Wasmˉsha256: WEBASSEMBLY_CALLS_WITH_CONTROL_ELSE_SHA256,
+                Budget: 153),
+        })
+        {
+            var Callˉcontrolˉwvb = Compileˉsuccess(Case.Source);
+            Equal(Case.Wvbˉsha256, Moduleˉdigest.Calculateˉsha256(Callˉcontrolˉwvb));
+            var Callˉcontrolˉverified = Moduleˉcodec.Readˉandˉverify(Callˉcontrolˉwvb);
+            Equal(3, Callˉcontrolˉverified.Functions.Length);
+            True(
+                Callˉcontrolˉverified.Functions.Any(Function =>
+                    Function.Instructions.Any(Instruction =>
+                        Instruction.Opcode == Opcode.Call)) &&
+                Callˉcontrolˉverified.Functions.Any(Function =>
+                    Function.Instructions.Any(Instruction =>
+                        Instruction.Opcode == Opcode.Branchˉfalse)),
+                "The calls-with-control fixture did not retain both source features.");
+            Equal(
+                new WebAssemblyˉexecutionˉresult(0, 42, Case.Budget),
+                Runˉreferenceˉwebassemblyˉi32(Callˉcontrolˉwvb, Case.Budget));
+            Equal(
+                new WebAssemblyˉexecutionˉresult(3011, 0, Case.Budget - 1),
+                Runˉreferenceˉwebassemblyˉi32(Callˉcontrolˉwvb, Case.Budget - 1));
+            var Callˉcontrolˉlowered = Runˉwebassemblyˉtool(Tool, Callˉcontrolˉwvb);
+            Equal(0, Callˉcontrolˉlowered.Exitˉcode);
+            Equal(
+                "webassembly status=Valid module-bytes=2729 execution-abi=2\n",
+                Callˉcontrolˉlowered.Output);
+            Equal(
+                Case.Wasmˉsha256,
+                Moduleˉdigest.Calculateˉsha256(
+                    Callˉcontrolˉlowered.Writtenˉbytes.AsSpan()));
+            Validateˉboundedˉcallˉwebassembly(
+                Callˉcontrolˉlowered.Writtenˉbytes.AsSpan(),
+                Callˉcontrolˉverified);
+            var Callˉcontrolˉrepeat = Runˉwebassemblyˉtool(Tool, Callˉcontrolˉwvb);
+            Equal(0, Callˉcontrolˉrepeat.Exitˉcode);
+            Sequenceˉequal(
+                Callˉcontrolˉlowered.Writtenˉbytes,
+                Callˉcontrolˉrepeat.Writtenˉbytes);
+        }
+
+        var Invalidˉcallˉcontrol = Compileˉsuccess(
+            WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE).ToArray();
+        var Invalidˉcallˉcontrolˉverified = Moduleˉcodec.Readˉandˉverify(
+            Invalidˉcallˉcontrol);
+        var Invalidˉcallˉcontrolˉcode = Findˉsectionˉpayload(
+            Invalidˉcallˉcontrol,
+            Sectionˉkind.Code);
+        var Invalidˉcontrolˉfunction = Invalidˉcallˉcontrolˉverified.Functions.First(
+            Function => Function.Instructions.Any(Instruction =>
+                Instruction.Opcode == Opcode.Branchˉfalse));
+        var Invalidˉcontrolˉbranch = Invalidˉcontrolˉfunction.Instructions.First(
+            Instruction => Instruction.Opcode == Opcode.Branchˉfalse);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉcallˉcontrol.AsSpan(
+                Invalidˉcallˉcontrolˉcode +
+                Invalidˉcontrolˉfunction.Declaration.Codeˉoffset +
+                Invalidˉcontrolˉbranch.Offset + 1,
+                4),
+            (uint)Invalidˉcontrolˉfunction.Declaration.Codeˉlength);
+        var Invalidˉcallˉcontrolˉresult = Runˉwebassemblyˉtool(
+            Tool,
+            Invalidˉcallˉcontrol);
+        Equal(1, Invalidˉcallˉcontrolˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Invalidˉcallˉcontrolˉresult.Diagnostics);
+        Equal(0, Invalidˉcallˉcontrolˉresult.Writeˉcount);
+
+        var Nestedˉcallˉcontrolˉwvb = Compileˉsuccess(
+            "module Webassemblyˉnestedˉcallˉcontrol profile portable; " +
+            "fn Add(Left: i32, Right: i32) -> i32 { return Left + Right; } " +
+            "export fn Main() -> i32 { var Value: i32 = 0; " +
+            "while Value < 2 { if Value == 0 { Value = Add(Value, 1); } " +
+            "else { Value = Add(Value, 2); } } return Value; }");
+        var Nestedˉcallˉcontrolˉresult = Runˉwebassemblyˉtool(
+            Tool,
+            Nestedˉcallˉcontrolˉwvb);
+        Equal(1, Nestedˉcallˉcontrolˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Nestedˉcallˉcontrolˉresult.Diagnostics);
+        Equal(0, Nestedˉcallˉcontrolˉresult.Writeˉcount);
+
         var Forwardˉcall = Boundedˉcallsˉwvb.ToArray();
         var Boundedˉcallsˉcode = Findˉsectionˉpayload(Forwardˉcall, Sectionˉkind.Code);
         var Doubleˉcall = Boundedˉcallsˉverified.Functions[1].Instructions.Single(
@@ -13517,7 +13619,8 @@ internal static class Program
             source.Functions.All(Function =>
                 Function.Declaration.Parameterˉtypes.Length <= 2 &&
                 Function.Declaration.Parameterˉtypes.All(Type => Type.Kind == Valueˉtype.I32) &&
-                Function.Declaration.Localˉtypes.All(Type => Type.Kind == Valueˉtype.I32) &&
+                Function.Declaration.Localˉtypes.All(Type =>
+                    Type.Kind is Valueˉtype.I32 or Valueˉtype.Bool) &&
                 Function.Declaration.Returnˉtype.Kind == Valueˉtype.I32),
             "The bounded-call source contains a type outside the profile.");
 
@@ -13717,6 +13820,45 @@ internal static class Program
         for (var Functionˉindex = 0; Functionˉindex < source.Functions.Length; Functionˉindex++)
         {
             var Function = source.Functions[Functionˉindex];
+            var Loopˉheaders = new HashSet<uint>();
+            var Loopˉbranches = new HashSet<int>();
+            var Conditionalˉends = new HashSet<uint>();
+            var Elseˉjumps = new HashSet<int>();
+            foreach (var Branch in Function.Instructions.Where(Instruction =>
+                Instruction.Opcode == Opcode.Branchˉfalse))
+            {
+                var Falseˉtarget = Branch.Unsignedˉoperand;
+                var Regionˉinstructions = Function.Instructions.Where(Instruction =>
+                    Instruction.Offset >= Branch.Offset + Branch.Size &&
+                    (uint)Instruction.Offset < Falseˉtarget).ToArray();
+                var Backwardˉjumps = Regionˉinstructions.Where(Instruction =>
+                    Instruction.Opcode == Opcode.Jump &&
+                    Instruction.Unsignedˉoperand < (uint)Instruction.Offset).ToArray();
+                var Forwardˉjumps = Regionˉinstructions.Where(Instruction =>
+                    Instruction.Opcode == Opcode.Jump &&
+                    Instruction.Unsignedˉoperand >
+                        (uint)(Instruction.Offset + Instruction.Size)).ToArray();
+                True(
+                    Backwardˉjumps.Length <= 1 && Forwardˉjumps.Length <= 1,
+                    "A bounded-call control region is not sequential.");
+                True(
+                    Backwardˉjumps.Length == 0 || Forwardˉjumps.Length == 0,
+                    "A bounded-call control region mixes loop and conditional exits.");
+                if (Backwardˉjumps.Length == 1)
+                {
+                    Loopˉheaders.Add(Backwardˉjumps[0].Unsignedˉoperand);
+                    Loopˉbranches.Add(Branch.Offset);
+                }
+                else if (Forwardˉjumps.Length == 1)
+                {
+                    Elseˉjumps.Add(Forwardˉjumps[0].Offset);
+                    Conditionalˉends.Add(Forwardˉjumps[0].Unsignedˉoperand);
+                }
+                else
+                {
+                    Conditionalˉends.Add(Falseˉtarget);
+                }
+            }
             var Bodyˉlength = Reader.Readˉuleb32();
             Reader.Require(Bodyˉlength <= int.MaxValue, "A bounded-call body is oversized.");
             var Bodyˉend = Reader.Position + (int)Bodyˉlength;
@@ -13735,6 +13877,27 @@ internal static class Program
 
             foreach (var Instruction in Function.Instructions)
             {
+                if (Conditionalˉends.Contains((uint)Instruction.Offset))
+                {
+                    Reader.Require(
+                        Reader.Readˉbyte() == 0x0B,
+                        "A bounded-call conditional is unterminated.");
+                }
+                if (Loopˉheaders.Contains((uint)Instruction.Offset))
+                {
+                    Reader.Require(
+                        Reader.Readˉbyte() == 0x02,
+                        "A bounded-call loop block is missing.");
+                    Reader.Require(
+                        Reader.Readˉbyte() == 0x40,
+                        "A bounded-call loop block type is invalid.");
+                    Reader.Require(
+                        Reader.Readˉbyte() == 0x03,
+                        "A bounded-call loop is missing.");
+                    Reader.Require(
+                        Reader.Readˉbyte() == 0x40,
+                        "A bounded-call loop type is invalid.");
+                }
                 Readˉmeter();
                 switch (Instruction.Opcode)
                 {
@@ -13764,6 +13927,48 @@ internal static class Program
                         break;
                     case Opcode.I32ˉnegate:
                         Readˉcheckedˉnegate(Scratchˉleft);
+                        break;
+                    case Opcode.I32ˉequal:
+                        Reader.Require(Reader.Readˉbyte() == 0x46, "A bounded-call equality changed.");
+                        break;
+                    case Opcode.I32ˉnotˉequal:
+                        Reader.Require(Reader.Readˉbyte() == 0x47, "A bounded-call inequality changed.");
+                        break;
+                    case Opcode.I32ˉless:
+                        Reader.Require(Reader.Readˉbyte() == 0x48, "A bounded-call less-than changed.");
+                        break;
+                    case Opcode.I32ˉlessˉequal:
+                        Reader.Require(Reader.Readˉbyte() == 0x4C, "A bounded-call less-or-equal changed.");
+                        break;
+                    case Opcode.I32ˉgreater:
+                        Reader.Require(Reader.Readˉbyte() == 0x4A, "A bounded-call greater-than changed.");
+                        break;
+                    case Opcode.I32ˉgreaterˉequal:
+                        Reader.Require(Reader.Readˉbyte() == 0x4E, "A bounded-call greater-or-equal changed.");
+                        break;
+                    case Opcode.Jump:
+                        if (Instruction.Unsignedˉoperand < (uint)Instruction.Offset)
+                        {
+                            Reader.Readˉindexed(0x0C, 0);
+                            Reader.Require(Reader.Readˉbyte() == 0x0B, "A bounded-call loop is unterminated.");
+                            Reader.Require(Reader.Readˉbyte() == 0x0B, "A bounded-call loop block is unterminated.");
+                        }
+                        else if (Elseˉjumps.Contains(Instruction.Offset))
+                        {
+                            Reader.Require(Reader.Readˉbyte() == 0x05, "A bounded-call else marker is missing.");
+                        }
+                        break;
+                    case Opcode.Branchˉfalse:
+                        if (Loopˉbranches.Contains(Instruction.Offset))
+                        {
+                            Reader.Require(Reader.Readˉbyte() == 0x45, "A bounded-call loop condition is not inverted.");
+                            Reader.Readˉindexed(0x0D, 1);
+                        }
+                        else
+                        {
+                            Reader.Require(Reader.Readˉbyte() == 0x04, "A bounded-call conditional is missing.");
+                            Reader.Require(Reader.Readˉbyte() == 0x40, "A bounded-call conditional type is invalid.");
+                        }
                         break;
                     case Opcode.Call:
                         True(

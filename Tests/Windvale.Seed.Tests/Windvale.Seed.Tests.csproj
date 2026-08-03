@@ -251,5 +251,11 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Bounded-Calls-Overflow-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Bounded-Calls-Overflow-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Calls-With-Control-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Calls-With-Control-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Calls-With-Control-Else-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Calls-With-Control-Else-Main.wv" />
   </ItemGroup>
 </Project>
