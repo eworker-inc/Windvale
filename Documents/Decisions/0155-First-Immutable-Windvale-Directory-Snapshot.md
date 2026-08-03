@@ -1,6 +1,6 @@
 # Decision 0155: First immutable Windvale directory snapshot
 
-- Status: Implemented candidate with local Windows evidence; guest adoption and cross-host qualification pending
+- Status: Implemented with local Windows evidence; guest adoption implemented by Decision 0159, cross-host qualification pending
 - Date: 2026-08-03
 - Owners: Windvale OS init/service data boundary and read-only directory provider
 - Contract: [`WVDS 1`](../../Specifications/Windvale-Directory-Snapshot.md)
@@ -37,7 +37,7 @@ The canonical `WVDS 1` fixture has SHA-256 `0f793a41a701240b9cf41179dafa252384b4
 - 20,061-byte portable composed service, SHA-256 `fc77da4c957dd7c44087012c3f911124b7904ec968ef3b21fc768ca0d6078316`;
 - 20,294-byte hosted differential bridge, SHA-256 `3f45fffcc9aee26fec35661c8a4ecf1b7b27e4f0a3fb0f0027fed0a78580fa4b`.
 
-This is proportional local format/service evidence. Cross-host verification, a guest mapping, process/memory/resource version changes, new firmware identities, and QEMU remain pending until the separate adoption slice.
+This is proportional local format/service evidence for the isolated format decision. [Decision 0159](0159-First-Guest-Directory-Service.md) subsequently implements the guest mapping, process/memory/resource versions, new firmware identities, and all four local Windows QEMU scenarios. Fresh cross-host qualification remains pending.
 
 ## Consequences
 
@@ -45,7 +45,7 @@ The next guest probe has a small immutable provider contract rather than an info
 
 The format deliberately does not grow into a filesystem. A future provider can implement the same directory capability from another verified snapshot, a service-owned cache, a block-backed filesystem, or a native host adapter without changing `WVDQ 1` or application-visible `WVDR 1` semantics.
 
-This decision does not implement the Probe 35 mapping, directory capability grant, client adapter, additional service call, service/client death cases, filesystem root, enumeration, open handles, mutation, persistence, block I/O, drivers, DMA, caching, or concurrent calls.
+This decision alone does not implement the Probe 35 mapping, directory capability grant, client adapter, or additional service call; those are owned by Decision 0159. Neither decision implements live malformed-service injection, a filesystem root, enumeration, open handles, mutation, persistence, block I/O, drivers, DMA, caching, or concurrent calls.
 
 ## Reconsider when
 

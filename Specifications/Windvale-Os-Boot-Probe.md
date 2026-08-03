@@ -2,30 +2,30 @@
 
 ## Status and purpose
 
-Firmware Probe 34 is the current cross-host-qualified implementation for an immutable guest resource store, terminal peer cleanup, and the shared ABI-22 native backend. It composes ABI 22/context 7, WVA seam 10, admission 4/bridge 2, retained bridge 10, memory 13, paging 4, protected processes 13, channel 3, interpreter profile 6, `WVRES005`, and `WVBR002`.
+Firmware Probe 35 is the implemented candidate for the first live guest directory service. It composes ABI 22/context 7, WVA seam 11, admission 4/bridge 2, retained bridge 10, memory 14, paging 4, protected processes 14, channel 3, interpreter profile 7, `WVRES006`, `WVBR002`, `WVRS 1`, and `WVDS 1`.
 
-[Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns Probe 34's resource/lifecycle contract; [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) rebuilds it through ABI 22 and memory 13. Exact descendant `2591cd5` passes all 31 bounded OS tests on Windows and digest-pinned Debian in GitHub Verify run 30797770080; all four pinned-QEMU scenarios pass on Windows. [Decision 0133](../Documents/Decisions/0133-Frame-Owned-Direct-Native-Records.md) retains Probe-32 history.
+[Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md) owns Probe 35. All 37 bounded OS tests and all four pinned-QEMU scenarios pass locally on Windows. Cross-host qualification remains pending, so Probe 34 under [Decisions 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) and [0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) remains the latest fully qualified baseline.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 
 ## Artifact construction
 
-The builder compiles system-profile `Hello-World.wv`; portable admission, process-policy, init, exact `Tests/Fixtures/Source-Wvb/Function-Only.wv`, and retained-native modules; hosted `Bytecode-Interpreter.wv`; and the kernel/init/resource/client WVA shims. Portable modules pass through canonical WVB, mandatory verification, ABI-22 native selection and fragment verification, and WVO. Stage 0 rewrites only verified link-facing symbols.
+The builder compiles system-profile `Hello-World.wv`; portable admission, process-policy, init, exact `Tests/Fixtures/Source-Wvb/Function-Only.wv`, and retained-native modules; hosted `Bytecode-Interpreter.wv`; and the kernel/init/service/client WVA shims. Portable modules pass through canonical WVB, mandatory verification, ABI-22 native selection and fragment verification, and WVO. Stage 0 rewrites only verified link-facing symbols.
 
-The existing Stage 0 and Windvale-written compilers must emit byte-identical canonical WVB for `Function-Only.wv`, and those bytes must equal the embedded admission identity. The native compiler uses ABI 22.
+The existing Stage 0 and Windvale-written compilers must emit byte-identical canonical WVB for `Function-Only.wv`, and those bytes must equal the embedded admission identity. Probe 35 does not change the compiler or ABI-22 backend.
 
-Stage 0 also creates the loader, memory, exception, paging, admission bridge, process machine, retained bridge, x64 byte adapter, and canonical three-entry `WVRS 1` store. It independently verifies the exact store and complete-image SHA-256 before machine publication. The linker reconstructs the base-zero image and passes verified code and read-only data to UEFI application writer 3.
+Stage 0 creates the loader, memory, exception, paging, admission bridge, process machine, retained bridge, x64 byte adapter, canonical three-entry `WVRS 1` store, and canonical two-entry `WVDS 1` snapshot. It independently verifies both immutable values and their complete SHA-256 identities before machine publication. The linker reconstructs the base-zero image and passes verified code and read-only data to UEFI application writer 3.
 
-The linked kernel payload must fit the fixed 768 KiB supervisor RX window. Init fits two user RX pages; the client fits 110 user RX pages. Generated WVB, WVO, EFI, firmware maps, and virtual disks are not committed.
+The linked kernel payload fits the fixed 768 KiB supervisor RX window. Init fits two user RX pages; the client fits 110 user RX pages. Generated WVB, WVO, EFI, firmware maps, and virtual disks are not committed.
 
 Candidate image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
-| `normal` | 568,320 | `584f1cbf06607722aa52cf3ec743a0f25fb595688349be0bc8c41260849a9490` | 0 |
-| `invalid-opcode` | 568,320 | `2e373f6374691cdbfb84f02464b12f00da3a94e2baa9185c1807aab3c28c9efe` | 3 |
-| `general-protection` | 568,320 | `9b905c8202c95ce20a0c72a9b7b2cf6f6bce4b99d7c0c18a1f65b24164444b23` | 3 |
-| `user-fault` | 568,832 | `e25741a6bd565af63498a199a7da9817a5fa8c60512a2c514a58c2e4311ed00d` | 0 |
+| `normal` | 576,512 | `61ae551f668b5771028997e66cf3bfcdf8dd6a78eab3302de1ac8f01874d7629` | 0 |
+| `invalid-opcode` | 576,512 | `e33070af62f39a2d57ba7f295650c9f871ea080104869317d5903c31e90c69c0` | 3 |
+| `general-protection` | 576,512 | `164f1daef6b654291bcfcb170dac2b392925e69234078a4fe584566d4a812c5c` | 3 |
+| `user-fault` | 577,024 | `faeb76a6957e09b5b07b19b3f2df52923a63e03f2f27dd7a5e5f8c5d82144fcb` | 0 |
 
 All four identities pass the Windows pinned-QEMU gate with complete exact serial markers. Fresh Debian and complete cross-host qualification remain pending; no Debian QEMU execution is claimed.
 
@@ -33,30 +33,32 @@ All four identities pass the Windows pinned-QEMU gate with complete exact serial
 
 The loader validates UEFI tables, obtains a bounded memory map, and retries `ExitBootServices` at most three times. It uses no firmware service after successful exit and overlays exact `WVKHAND1` before kernel entry.
 
-Memory 13 selects and clears a 2 MiB-aligned 144-page arena below 4 GiB, publishes `WVKMEM13`, copies the handoff, and switches to the four-page kernel stack. Page 5 becomes the IDT; paging 4 consumes pages 6 through 11 and activates the low-1-GiB W^X root with a 768 KiB supervisor RX window.
+Memory 14 selects and clears a 2 MiB-aligned 147-page arena below 4 GiB, publishes `WVKMEM14`, copies the handoff, and switches to the four-page kernel stack. Page 5 becomes the IDT; paging 4 consumes pages 6 through 11 and activates the low-1-GiB W^X root with a 768 KiB supervisor RX window.
 
 Admission 4 requires token 73 for the exact 815-byte canonical WVB. Protected-process execution then:
 
 1. runs Windvale process policy and requires token 97;
-2. allocates pages 12 through 22 for init and 23 through 143 for the client;
-3. creates two roots, the two client-grant resources, an independently attached init store, absent client aliases, `WVPROC13`, `WVCHAN03`, and three `WVRES005` records;
-4. maps the exact 1,195-byte three-entry store RO/NX only in init and publishes a checked descriptor;
+2. allocates pages 12 through 24 for init and 25 through 146 for the client;
+3. creates two roots, the two client-grant resources, independently attached init store and directory snapshot, absent client aliases, `WVPROC14`, `WVCHAN03`, and four `WVRES006` records;
+4. maps the exact 1,195-byte `WVRS 1` store and 3,184-byte `WVDS 1` snapshot RO/NX only in init, publishes checked descriptors, and maps dedicated RW/NX response pages into init and client;
 5. enters init, which grants ordered set token `131073` and registers a bounded request window;
 6. publishes both client aliases, service table 5, and `WVBR002` atomically;
-7. enters client generation 1, copies the exact `WVRQ 1` request, dynamically selects `boot:main.configuration` from the init-owned store, constructs and validates the `WVRY 1` response, interprets `Sourceˉwvbˉfixture` for exactly 199 guest instructions, and returns `6`;
-8. clears channel message and destination state, records terminal peer status, cleans both client aliases and publications, reloads init's CR3, releases the exact 121-page tail, reopens a clean channel, and rebuilds the same root as generation 2;
-9. repeats grant, dynamic request/reply, interpretation, result, peer cleanup, and resource cleanup under generation 2;
-10. lets init receive the second `6` and exit;
-11. runs the retained native probe and compiler-generated system-profile Main.
+7. enters client generation 1, completes the 55-byte dynamic resource lookup and 116-byte `WVRY 1` reply;
+8. re-registers init, copies the exact 37-byte `WVDQ 1` request, constructs and copies the maximal 3,096-byte `WVDR 1` reply, and requires the client to validate all 3,072 `kernel.wv` bytes;
+9. interprets `Sourceˉwvbˉfixture` for exactly 199 guest instructions and returns `6`;
+10. clears channel message and destination state, records terminal peer status, cleans both client aliases and publications, reloads init's CR3, releases the exact 122-page tail, reopens a clean channel, and rebuilds the same root as generation 2;
+11. repeats grant, resource lookup, directory read, interpretation, result, peer cleanup, and resource cleanup under generation 2;
+12. lets init receive the second `6` and exit; and
+13. runs the retained native probe and compiler-generated system-profile Main.
 
-The user-fault scenario records a faulted peer after client `CLI` and still completes cleanup. CPL0 invalid-opcode and general-protection scenarios remain terminal after the complete successful prefix.
+The user-fault scenario records a faulted peer after client `CLI` and still completes cleanup. CPL0 invalid-opcode and general-protection scenarios remain terminal after the complete successful resource-and-directory prefix.
 
 ## Exact serial evidence
 
 Normal success requires:
 
 ```text
-windvale-os-boot 34
+windvale-os-boot 35
 entry=pass
 system-table=pass
 memory-map=pass
@@ -73,7 +75,8 @@ resource-revoked=pass
 process-reuse=pass
 wvb-runtime=interpreted
 init-service=pass
-ipc=dynamic-resource-store
+directory-service=pass
+ipc=resource-and-directory
 Hello from Windvale
 cpu-exceptions=armed
 native-context=pass
@@ -102,4 +105,4 @@ Harness diagnostics remain `WVOS3001` build failure, `WVOS3002` start failure, `
 
 ## Deliberate non-claims
 
-Probe 34 does not authenticate firmware CRCs, own general physical memory, release non-tail extents, load arbitrary WVB, provide complete verification, publish executable memory, JIT, schedule generally, transfer capabilities, accept arbitrary stores in its bounded guest seam, recompute store-entry payload digests in the guest, enumerate resources, implement path components/directories/handles/mounts/packages/block storage/writable state/network/devices, handle SMP shootdown, or qualify Hyper-V/physical hardware. Stage 0 machine emitters remain explicit replacement seams.
+Probe 35 does not authenticate firmware CRCs, own general physical memory, release non-tail extents, load arbitrary WVB, provide complete verification, publish executable memory, JIT, schedule generally, transfer capabilities, accept arbitrary stores or snapshots in its bounded guest seam, enumerate directories, implement nested paths/handles/mounts/packages/block storage/writable state/network/devices, handle concurrent calls, perform SMP shootdown, or qualify Hyper-V/physical hardware. Stage 0 machine emitters remain explicit replacement seams.

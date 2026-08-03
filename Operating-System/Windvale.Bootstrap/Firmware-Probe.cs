@@ -16,12 +16,12 @@ public enum Firmwareˉprobeˉscenario
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 34;
+    public const int FORMAT_VERSION = 35;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 34\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 35\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -33,11 +33,12 @@ public static class Firmwareˉprobe
     public const string PROCESS_MARKER = "processes=isolated\n";
     public const string WVB_RUNTIME_MARKER = "wvb-runtime=interpreted\n";
     public const string INIT_SERVICE_MARKER = "init-service=pass\n";
+    public const string DIRECTORY_SERVICE_MARKER = "directory-service=pass\n";
     public const string RESOURCE_GRANT_MARKER = "resource-grant=pass\n";
     public const string TYPED_RESOURCES_MARKER = "typed-resources=pass\n";
     public const string RESOURCE_REVOKED_MARKER = "resource-revoked=pass\n";
     public const string PROCESS_REUSE_MARKER = "process-reuse=pass\n";
-    public const string IPC_MARKER = "ipc=dynamic-resource-store\n";
+    public const string IPC_MARKER = "ipc=resource-and-directory\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string CPU_EXCEPTIONS_MARKER = "cpu-exceptions=armed\n";
     public const string INVALID_OPCODE_PANIC_MARKER = Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER;
@@ -54,7 +55,7 @@ public static class Firmwareˉprobe
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
         WVB_ADMISSION_MARKER + PROCESS_MARKER + RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
         RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
-        WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER +
+        WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER + DIRECTORY_SERVICE_MARKER +
         IPC_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
         WINDVALE_SOURCE_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
@@ -63,7 +64,7 @@ public static class Firmwareˉprobe
         MEMORY_OWNED_MARKER + ALLOCATOR_MARKER + KERNEL_STACK_MARKER + PAGING_OWNED_MARKER +
         WVB_ADMISSION_MARKER + PROCESS_MARKER + RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
         RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
-        WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER +
+        WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER + DIRECTORY_SERVICE_MARKER +
         IPC_MARKER + HELLO_WORLD_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
         WINDVALE_SOURCE_MARKER + USER_FAULT_CONTAINED_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;

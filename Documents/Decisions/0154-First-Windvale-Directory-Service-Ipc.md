@@ -1,6 +1,6 @@
 # Decision 0154: First Windvale directory-service IPC
 
-- Status: Implemented candidate with local Windows evidence; guest adoption and cross-host qualification pending
+- Status: Implemented with local Windows evidence; guest adoption implemented by Decision 0159, cross-host qualification pending
 - Date: 2026-08-03
 - Owners: Windvale OS runtime adapter and isolated filesystem-service boundary
 - Contract: [`WVDQ 1` with exact `WVDR 1` replies](../../Specifications/Windvale-Directory-Service-Ipc.md)
@@ -38,7 +38,7 @@ This is proportional local protocol evidence. Cross-host verification, live gues
 
 Windvale now owns a strict OS-facing adapter protocol for its first typed filesystem capability. The kernel remains unaware of names and `WVDR`; the service remains unaware of native paths; and the application contract does not change between hosted and eventual Windvale OS execution.
 
-[Decision 0155](0155-First-Immutable-Windvale-Directory-Snapshot.md) now defines the required provider value as one verified `WVDS 1` page distinct from the package-resource store. The remaining guest slice must add a dedicated page-sized reply window, map that init-owned snapshot, bind one rights-limited endpoint/generation, invoke the exact WVDQ/WVDR protocol from a checked runtime adapter, and prove success plus malformed request, service death, client death, cleanup, and repeatability in QEMU. The measured 3,096-byte response rules out reusing Probe 34's existing reply windows.
+[Decision 0155](0155-First-Immutable-Windvale-Directory-Snapshot.md) defines the required provider value as one verified `WVDS 1` page distinct from the package-resource store. [Decision 0159](0159-First-Guest-Directory-Service.md) now adopts both contracts in Probe 35 with dedicated page-sized reply mappings, an init-owned snapshot, two generation-safe maximal reads, cleanup/rebuild, and all four local Windows QEMU scenarios. Live malformed-request/service-death injection and cross-host qualification remain later evidence.
 
 This decision does not implement that guest adapter, a filesystem root, enumeration, nested paths, handles, mutation, persistence, a block device, DMA, caching, service discovery, concurrent calls, or a general VFS.
 

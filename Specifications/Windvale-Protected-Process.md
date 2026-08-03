@@ -1,111 +1,100 @@
-# Protected Windvale processes and typed resource sets
+# Protected Windvale processes and typed service resources
 
 ## Status and purpose
 
-Protected-process contract version 13 is the current cross-host-qualified Probe-34 implementation. It retains version 12's two-generation reclaim/rebuild and bounded request/reply, then gives init an independently lived immutable `WVRS 1` mapping, dynamic guest lookup, and explicit peer-death cleanup. [Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns version 13; [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) qualifies the integrated ABI-22 rebuild at exact descendant `2591cd5`.
+Protected-process contract version 14 is the implemented Probe-35 candidate owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It retains version 13's two-generation reclaim/rebuild, boot-resource grant, dynamic `WVRS 1` lookup, and terminal peer cleanup, then executes one maximal immutable directory read through the same format-blind service transport in each generation.
 
-This is an internal experiment, not a stable syscall ABI, general process manager, filesystem namespace, transferable capability system, arbitrary WVB loader, complete verifier, or JIT.
+Version 13 remains the current cross-host-qualified baseline. Version 14 has local Windows construction, all 37 focused OS tests, and all four pinned-QEMU scenarios; cross-host qualification is pending. This is an internal experiment, not a stable syscall ABI, process manager, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
 - `Process-Foundation.wv` binds init, interpreter, program, budget, roles, ordered grants, two generations, exact reuse, cleanup, and result policy.
-- `Init-Resource-Service.wv` selects ordered identifiers `(1,2)`; its WVA seam dynamically validates and searches the exact boot `WVRS 1` profile, builds a response, and repeats before exit.
-- `Bytecode-Interpreter.wv` reads both granted names, validates runtime profile 6, charges the guest budget, and interprets the program.
+- `Init-Resource-Service.wv` selects ordered boot resource identifiers `(1,2)`. Its WVA seam serves both the measured `WVRS 1` lookup and the measured `WVDQ 1` / `WVDR 1` directory read.
+- `Bytecode-Interpreter.wv` reads both granted runtime resources, validates runtime profile 7, charges the guest budget, and interprets the admitted program.
 - `Boot-Resource-Service.wva` owns exact typed lookup for the two `WVBR002` entries used by the interpreter runtime.
-- Stage 0 temporarily owns raw page-table writes, records, publication, dispatch, coordination, immutable-store construction, and firmware packaging, with independent checked planners.
+- Stage 0 temporarily owns raw page-table writes, records, machine dispatch/coordination, immutable store/snapshot construction, and firmware packaging, with independent checked planners.
 
-The kernel treats the init store as bytes with mapping and identity metadata. It does not parse `WVRS 1`, names, requests, or replies.
+The kernel treats `WVRS 1` and `WVDS 1` as immutable byte extents with mapping and identity metadata. It does not parse names, snapshot entries, `WVRQ`, `WVRY`, `WVDQ`, or `WVDR`.
 
 ## Fixed identities, roles, and budgets
 
 | Identity | SHA-256 | Authority |
 | --- | --- | --- |
-| Init/resource-service WVB | `0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467` | scalar receive, fixed set grant, resource-request receive, and reply |
-| Bytecode-interpreter WVB | `3669e94d712bd5a78f0061e29d8054ed3b54b687efc9508114f79bb78aa8832f` | scalar send, resource-service call, and two reads after grant |
+| Init/service WVB | `0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467` | scalar receive, fixed set grant, service-request receive, and reply |
+| Bytecode-interpreter WVB | `3669e94d712bd5a78f0061e29d8054ed3b54b687efc9508114f79bb78aa8832f` | scalar send, service call, and two reads after grant |
 | `boot:main.wvb` | `9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761` | resource 1, WVB, immutable RO/NX |
 | `boot:main.budget` | `add7f2a4843f8c512c0e2875546581db11b9ba227ee008b5f719dfacb125de76` | resource 2, four-byte LE value 199, immutable RO/NX |
 | Boot `WVRS 1` store | `e06cb88bc97c8a8c8413c476c41ec86eafb8d1ee3fab0daee8e3b50e788023b8` | resource 4, 1,195 immutable RO/NX bytes attached only to init |
+| Directory `WVDS 1` snapshot | `0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a` | resource 5, 3,184 immutable RO/NX bytes attached only to init |
 
-The store contains the WVB and budget above plus resource 3, kind `opaque-bytes`, name `boot:main.configuration`, attributes `7`, and bytes `[3,5,8,13]`.
+The store contains the WVB and budget above plus resource 3, kind `opaque-bytes`, name `boot:main.configuration`, attributes `7`, and bytes `[3,5,8,13]`. The snapshot contains `folder` as `other` and `kernel.wv` as a 3,072-byte file where byte `i` is `i mod 251`.
 
-Init is process/thread `1/1`, generation 1, process reference `65537`, runtime profile 1, instruction/call budgets `64/1`, seven user pages, one handle, and seven syscalls.
-
-The client is process/thread `2/2`, generation 1 then 2, references `65538` then `131074`, runtime profile 6, native instruction/call budgets `189,114/5`, 755 physical frame cells, exact call-graph stack use 24,240 bytes, 116 pre-grant and 118 post-grant user pages, one handle, and three syscalls per generation. The separate guest execution budget is `199` with maximum `256`.
+Init is process/thread `1/1`, generation 1, process reference `65537`, runtime profile 2, instruction/call budgets `64/1`, nine user pages, one handle, and eleven syscalls. The client is process/thread `2/2`, generation 1 then 2, references `65538` then `131074`, runtime profile 7, native instruction/call budgets `189,114/5`, 755 physical frame cells, exact call-graph stack use 24,240 bytes, 118 pre-grant and 120 post-grant user pages, one handle, and four syscalls per normal generation. The fault client uses three syscalls before its deliberate privileged instruction. The separate guest execution budget remains `199` with maximum `256`.
 
 Both retain result `6`, capability slot 0/generation 1, channel capacity 1, and ABI 22/context 7/service-table 5. Process policy must return token `97` before machine state is published.
 
 ## Address spaces
 
-Init receives 11 physical pages:
+Init receives 13 physical pages:
 
 | Relative page | Purpose | User mapping |
 | ---: | --- | --- |
 | `0..3` | private paging hierarchy | none |
 | `4..5` | linked init image | RX |
 | `6` | stack | RW/NX |
-| `7` | data/context, store descriptor, request and reply windows | RW/NX |
+| `7` | data/context, descriptors, request windows | RW/NX |
 | `8` | admitted runtime WVB | RO/NX |
 | `9` | execution budget | RO/NX |
-| `10` | complete immutable boot `WVRS 1` image | RO/NX |
+| `10` | complete boot `WVRS 1` image | RO/NX |
+| `11` | complete directory `WVDS 1` image | RO/NX |
+| `12` | dedicated service response | RW/NX |
 
-Each client generation receives this reclaimed 121-page physical extent plus two later aliases:
+Each client generation receives this reclaimed 122-page physical extent plus two later aliases:
 
 | Relative page | Purpose | Before grant | After grant |
 | ---: | --- | --- | --- |
 | `0..3` | private paging hierarchy | none | none |
 | `4..113` | 110-page interpreter image | user RX | user RX |
 | `114..119` | six-page stack | user RW/NX | user RW/NX |
-| `120` | ABI-22 context/data and reply window | user RW/NX | user RW/NX |
-| `121` | module alias | absent | init WVB page, user RO/NX |
-| `122` | budget alias | absent | init budget page, user RO/NX |
+| `120` | ABI-22 context/data | user RW/NX | user RW/NX |
+| `121` | dedicated service response | user RW/NX | user RW/NX |
+| `122` | module alias | absent | init WVB page, user RO/NX |
+| `123` | budget alias | absent | init budget page, user RO/NX |
 
-No placeholder backs an alias. The init store has no client PTE. Generation-1 cleanup clears both client aliases and publications; the complete 121-page extent is zeroed and released. Generation 2 reconstructs every table, image, stack, data, context, and record byte at the same physical root with a different logical identity.
+No placeholder backs an alias. Neither init-owned store is mapped into a client. Generation-1 cleanup clears both aliases and publications; the complete 122-page extent is zeroed and released. Generation 2 reconstructs every table, image, stack, data, response, context, and record byte at the same physical root with a different logical identity.
 
-## `WVPROC13` and `WVCHAN03` records
+## `WVPROC14`, `WVCHAN03`, and `WVRES006`
 
-The state page stores two 264-byte little-endian process records at offsets `0x100` and `0x300`. Version 13 preserves version 12's field offsets while binding the new measured values:
+The state page stores two 272-byte little-endian process records at offsets `0x100` and `0x300`. Version 14 binds:
 
-- magic/version `WVPROC13` and `13`;
-- user-page budgets init `7`, client `119`;
-- init allocation/code pages `11/2`, client allocation/code pages `121/110`;
-- client native instruction budget `189,114`, call depth `5`, and six stack pages;
-- runtime profiles init `1`, client `6`;
+- magic/version `WVPROC14` and `14`;
+- user-page budgets init `9`, client `120`;
+- init allocation/code pages `13/2`, client allocation/code pages `122/110`;
+- runtime profiles init `2`, client `7`;
 - process generation init/first client `1`, rebuilt client `2`;
-- exact canonical program digest at offset `0xD8`.
+- exact canonical program digest at offset `0xD8`; and
+- the page-aligned dedicated user service-response address at offset `0x108`.
 
-Both context pages retain valid context-7 headers under ABI 22. Init's data page publishes the store descriptor at offset `0x180`, a 1,056-byte request window at `0x400`, and a 2,016-byte response window at `0x820`. Each rebuilt client begins with runtime service/resource pointers zero and a dormant 1,024-byte compatibility record arena at data offset `0x200`, with used length zero. Grant publishes service table 5 at data offset `0x80`, `WVBR002` at `0x100`, and both runtime resource pointers atomically while preserving the arena fields. ABI 22 retains frame-owned direct records and leaves arena use at zero; cleanup and generation-2 reconstruction preserve that value.
+Both context pages retain valid context-7 headers under ABI 22. Init data publishes the store descriptor at `0x180`, snapshot descriptor at `0x1A0`, and request windows beginning at `0x400`; its dedicated response page prevents a maximal 3,096-byte reply from overlapping live data. Each rebuilt client begins with runtime service/resource pointers zero and a dormant 1,024-byte compatibility record arena at data offset `0x200`, with used length zero.
 
-`WVCHAN03` is a 112-byte kernel-owned record at state offset `0x410`. It retains request/reply counters, byte length, and service/client destinations and capacities. Offsets `0x60`, `0x64`, `0x68`, and `0x6C` add peer status, peer process, close count, and reserved zero. Syscalls 5 through 7 require nonempty extents no larger than 4,096 bytes, checked end arithmetic, RX sources, RW/NX destinations, exact endpoint roles, and directional rights. No user mapping exposes the record.
+`WVCHAN03` remains a 112-byte kernel-owned, capacity-one record at state offset `0x410`. Syscall numbers 5 through 7 retain their wire values but are now service-generic receive, call, and reply operations. They require nonempty extents no larger than 4,096 bytes, checked end arithmetic, RX sources, RW/NX destinations, exact endpoint roles, and directional rights. No user mapping exposes the record.
+
+Four 128-byte `WVRES006` records track fixed identifiers/kinds, generation-stamped owner/borrower references, exact extents, immutable flags, SHA-256 identities, histories, and target PTEs. Resources 1 and 2 form the client grant set. Resource 4 attaches the 1,195-byte store only to init. Resource 5, kind `wvds-snapshot`, attaches the 3,184-byte snapshot only to init with descriptor generation 1. Neither attached resource participates in `WVBR002` or syscall 4.
 
 Terminal peer cleanup clears message state, sender, receiver, waiter, byte length, and both destination/capacity pairs before recording whether the client exited or faulted, its process reference, and the incremented close count. A checked reopen clears terminal peer evidence before generation 2. Generation 2 ends terminally closed; no request bytes or destination pointers survive either client lifetime.
 
-## Native stack preflight
+## Grant, service calls, execution, cleanup, and reuse
 
-The builder decodes the verified interpreter WVO before process construction. Starting at the client entry export, it computes the maximum reachable stack use from generated frame sizes and exact call edges, adding return addresses and the entry shim's saved `r15`. A recursive edge is rejected for this bounded profile. The exact maximum is 24,240 bytes. Six pages provide 24,576 bytes and are the minimal whole-page envelope; five pages provide only 20,480 bytes.
-
-## Typed resources and publication
-
-Three 128-byte `WVRES005` records track fixed identifiers/kinds, generation-stamped owner/borrower references, source and target addresses, exact lengths, immutable RO/NX flags, SHA-256 identity, historical grant count, live mapping count, and exact target PTE.
-
-Resources 1 and 2 retain lengths 815 and 4 and form the client grant set. Resource 4 is the 1,195-byte `WVRS 1` store: state `attached`, owner and borrower both init reference `65537`, source and target the init store page, one historical attachment, one live mapping, and an exact present/user/RO/NX PTE. It is not part of `WVBR002`, not transferred by syscall 4, and never mapped into either client.
-
-`WVBR002` remains exactly 80 bytes: a 16-byte header and two ordered 32-byte entries. Entry zero is `(1, wvb-module)` and entry one is `(2, u32-execution-budget)`. Unknown, duplicate, reversed, or partial tokens fail before mutation. The WVA leaf accepts only `boot:main.wvb` and `boot:main.budget` and validates the selected typed entry before returning a descriptor.
-
-Before machine construction, Stage 0 verifies the exact store and complete-image SHA-256. The init WVA seam then validates checked extents, exact canonical three-entry layout, metadata, strict order, and digest text before scanning directory names and copying the selected digest and value into a response. This measured guest seam does not recompute per-entry payload SHA-256; the immutable page and complete-image digest are the machine boundary for this exact profile.
-
-## Grant, execution, cleanup, and reuse
-
-1. Stage 0 validates and maps the complete boot store only into init, publishes its descriptor, and records the attached `WVRES005` capability.
+1. Stage 0 verifies and maps the complete boot store and directory snapshot only into init, publishes checked descriptors, and records both attached capabilities.
 2. Init returns resource-set token `131073`; syscall 4 validates both client-grant records, pages, digests, absent PTEs, service leaf, and token.
 3. The kernel installs both RO/NX client aliases and publishes service table 5 plus `WVBR002` atomically.
-4. Client generation 1 calls the resource service with the exact 55-byte `boot:main.configuration` request. The kernel copies it into init's registered window and blocks the client.
-5. Init validates the request, dynamically searches its mapped store, and constructs the canonical 116-byte `WVRY 1` response for resource 3. The kernel copies it into the client's upper data-page window.
-6. The client validates the complete response, interprets the exact 815-byte program for 199 guest instructions, sends `6`, then exits or takes the contained fault.
-7. Cleanup clears channel message and destination state, records terminal peer status, validates generation 1, clears both aliases and runtime publication, and preserves grant count 1.
-8. Init's CR3 reload retires non-global translations. The exact 121-page tail is zeroed, released, immediately reallocated at the same root, and the channel is cleanly reopened for generation 2.
-9. Init receives `6`, grants again, and blocks. The second grant records borrower `131074` and grant count 2.
-10. Generation 2 independently repeats dynamic request/reply, validation, interpretation, result send, peer cleanup, and grant cleanup.
-11. Init receives the second result and exits. The allocator ends exactly exhausted at cursor page 144; the init store remains one immutable mapping.
+4. Client generation 1 calls the resource service with the exact 55-byte `boot:main.configuration` request. Init dynamically selects the entry and returns the canonical 116-byte `WVRY 1` response through the dedicated pages.
+5. Init re-registers its receive window. The client sends the exact 37-byte `WVDQ 1` request for `kernel.wv`, offset 0, maximum 3,072. Init validates the measured snapshot and constructs the exact 3,096-byte `WVDR 1` response.
+6. The client validates the entire envelope and all 3,072 bytes, interprets the exact 815-byte program for 199 guest instructions, sends `6`, then exits or takes the contained fault.
+7. Cleanup clears channel state, records terminal peer status, removes client aliases/publication, reloads init's CR3, and zeroes/releases the exact 122-page tail.
+8. The same root is immediately reallocated and rebuilt as generation 2; the channel reopens cleanly.
+9. Generation 2 independently repeats grant, resource lookup, maximal directory read, interpretation, result, peer cleanup, and resource cleanup.
+10. Init receives the second result and exits. The allocator ends exactly exhausted at cursor page 147; both init-owned immutable mappings remain outside the recycled suffix.
 
 The contained user-fault scenario sends `6` then executes privileged `CLI`; cleanup records fault status and still completes. CPL0 invalid-opcode and general-protection scenarios remain terminal.
 
@@ -116,18 +105,17 @@ The contained user-fault scenario sends `6` then executes privileged `CLI`; clea
 | Process-policy WVB | 6,973 | `04c91ebca24d72ba13ab3b8c6d3d0fb4a1ad0be807de58584caa4df5005ab956` |
 | Process-policy WVO | 47,624 | `6e01b565ddaeeea3dd0c2b4e4f4cc7f928b51cb305491892e7bda9a794babe0d` |
 | Init WVB | 525 | `0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467` |
-| Init WVA object | 1,929 | `93d212d61723e5d43d30a4fbe3319b5b448cb7f52e147cd02f95a69cb722b53f` |
-| Linked init image | 5,015 | `0e4afe4990bb6c4dfe1f255ec51594a58a6aaa1ef857d9ea48d44eb5e58e9a5e` |
+| Init WVA object | 3,119 | `64214b7b3ce90365f4ee9962ba1fbdb416f14ce4316b8b309106b8523a80c917` |
+| Linked init image | 6,119 | `d8285cf68d0df45afe9d78f4dc65de427ed9e58b6d24c962f3b4dc9cb7bd9f18` |
 | Boot `WVRS 1` store | 1,195 | `e06cb88bc97c8a8c8413c476c41ec86eafb8d1ee3fab0daee8e3b50e788023b8` |
+| Directory `WVDS 1` snapshot | 3,184 | `0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a` |
 | Interpreter WVB | 56,165 | `3669e94d712bd5a78f0061e29d8054ed3b54b687efc9508114f79bb78aa8832f` |
 | Interpreter WVO | 447,652 | `0748200721cab7d5c3c6a43916fc623dfa0ee35e304fea6ad899877c9601c8e2` |
-| Linked normal client | 447,757 | `aa3fdd6e836c71add4f24b6992fcfae090bf8d5aa056ec068a9c21dea516c919` |
-| Linked fault client | 447,741 | `3344865517e56066ec0b8fbd7e5f80695a715fa04adc9959a876a73e04bbbbe8` |
-| Normal process-machine WVO | 482,698 | `8b8c10b829ebad1f27801a85b246aeec964e4c38ef0a18bf8738afcec5ffad27` |
-| Fault process-machine WVO | 482,762 | `8174add03c1b327152b38c0513215407ac3c1b403dd0dd63c783669e1590304b` |
-
-Exact descendant `2591cd5` passes all 31 bounded OS tests on Windows and digest-pinned Debian in GitHub Verify run 30797770080. All four pinned-QEMU scenarios pass on Windows; no Debian QEMU execution is claimed.
+| Linked normal client | 448,045 | `369e7f22c8bfd48b033c38407be06ff181372a0891db1108e6b987ac14dd7e9b` |
+| Linked fault client | 448,013 | `8153e1e389ee18068b17bc615d2211737160143565aeb852b137ef31fce5513b` |
+| Normal process-machine WVO | 490,972 | `cbeb8d22c1237d8456c3e68cfb8434a9b48d1ec861e66ce98aca11486fb9c0f0` |
+| Fault process-machine WVO | 491,004 | `04e25f89c1946b02a29af0c738dc5ad74ba042d9106a9d8e76fb60c15738737b` |
 
 ## Deliberate limits
 
-Version 13 retains one exact three-entry boot store, one owner, one logical borrower, two generations, two ordered grants, one request per generation, and one exact LIFO reuse. It adds no path components, directories, enumeration, handles, mounts, arbitrary stores, payload-digest recomputation in the guest, transfer/delegation, non-tail release, concurrent root reuse, general scheduling, block storage, mutation, persistence, packages, networking, Hyper-V, or physical-hardware evidence.
+Version 14 retains one exact boot store, one exact directory snapshot, one owner, one logical borrower, two generations, two ordered grants, two service requests per generation, and one exact LIFO reuse. It adds no nested paths, enumeration, open handles, mounts, arbitrary providers, transfer/delegation, concurrent calls, general scheduling, block storage, mutation, persistence, packages, networking, Hyper-V, or physical-hardware evidence.

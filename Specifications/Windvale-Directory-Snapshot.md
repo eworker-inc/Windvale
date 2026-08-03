@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`WVDS 1` is the implemented-candidate, one-page immutable directory snapshot owned by [Decision 0155](../Documents/Decisions/0155-First-Immutable-Windvale-Directory-Snapshot.md). It gives a Windvale directory service a deterministic, measured source for the existing [`filesystem.directory_read_v1`](Read-Only-Directory-Capability.md) operation and [`WVDQ 1` / `WVDR 1`](Windvale-Directory-Service-Ipc.md) exchange.
+`WVDS 1` is the implemented one-page immutable directory snapshot owned by [Decision 0155](../Documents/Decisions/0155-First-Immutable-Windvale-Directory-Snapshot.md) and adopted by the Probe-35 guest under [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It gives a Windvale directory service a deterministic, measured source for the existing [`filesystem.directory_read_v1`](Read-Only-Directory-Capability.md) operation and [`WVDQ 1` / `WVDR 1`](Windvale-Directory-Service-Ipc.md) exchange.
 
 The snapshot is a service-private data format. It is not a package-resource store, filesystem image, path namespace, kernel message, open-file table, or application-visible handle. A loader verifies the complete value before publishing an immutable mapping. Consumers must treat every byte as untrusted even when the page came from a measured boot input.
 
@@ -62,7 +62,7 @@ The `WVDQ 1` service boundary limits `maximum` to 3,072 bytes and validates the 
 
 A canonical writer sorts entries by ordinal ASCII name, packs exact name and file extents, emits only required zero alignment, writes every reserved byte as zero, and verifies its own result. Identical logical entries therefore produce identical bytes regardless of input order.
 
-The first guest-adoption fixture contains `folder` as kind `other` and `kernel.wv` as a 3,072-byte file whose byte at index `i` is `i mod 251`. Its exact layout is:
+The Probe-35 guest fixture contains `folder` as kind `other` and `kernel.wv` as a 3,072-byte file whose byte at index `i` is `i mod 251`. Its exact layout is:
 
 - 32-byte header;
 - two 32-byte entries;
@@ -72,7 +72,7 @@ The first guest-adoption fixture contains `folder` as kind `other` and `kernel.w
 - exact total 3,184 bytes;
 - SHA-256 `0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a`.
 
-This fixture is a reproducibility and boundary-pressure value, not a general root filesystem.
+This fixture is a reproducibility and boundary-pressure value, not a general root filesystem. Probe 35 maps it RO/NX only into init, binds its complete identity as attached resource 5, and proves that two independently rebuilt clients receive and validate its complete file over the format-blind service channel without mapping the snapshot itself.
 
 ## Ownership and current limits
 

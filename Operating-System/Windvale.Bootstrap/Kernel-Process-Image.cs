@@ -31,6 +31,8 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     ImmutableArray<byte> Executionˉbudgetˉdigest,
     ImmutableArray<byte> Resourceˉstoreˉbytes,
     ImmutableArray<byte> Resourceˉstoreˉdigest,
+    ImmutableArray<byte> Directoryˉsnapshotˉbytes,
+    ImmutableArray<byte> Directoryˉsnapshotˉdigest,
     ImmutableArray<byte> Clientˉshimˉobjectˉbytes,
     ImmutableArray<byte> Clientˉimageˉbytes);
 
@@ -82,7 +84,7 @@ public static class Kernelˉprocessˉimage
             Serviceˉassembly.Objectˉbytes,
             Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.INIT_SERVICE_MAIN_SYMBOL,
-            7);
+            11);
         var Serviceˉlink = Linkˉcompiler.Link(
             [new(Serviceˉassembly.Objectˉbytes), new(Serviceˉobject)],
             new(0, Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL));
@@ -183,7 +185,7 @@ public static class Kernelˉprocessˉimage
             Userˉassembly.Objectˉbytes,
             Kernelˉprocessˉcontract.USER_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL,
-            userˉfault ? 2 : 3);
+            userˉfault ? 3 : 4);
         var Userˉlink = Linkˉcompiler.Link(
             [
                 new(Userˉassembly.Objectˉbytes),
@@ -215,6 +217,9 @@ public static class Kernelˉprocessˉimage
                 BOOT_CONFIGURATION_NAME, [(byte)3, 5, 8, 13]),
         ]);
         var Resourceˉstoreˉdigest = SHA256.HashData(Resourceˉstoreˉbytes.AsSpan()).ToImmutableArray();
+        var Directoryˉsnapshotˉbytes = Buildˉdirectoryˉsnapshot();
+        var Directoryˉsnapshotˉdigest =
+            SHA256.HashData(Directoryˉsnapshotˉbytes.AsSpan()).ToImmutableArray();
         return new(
             Policyˉcompilation.Moduleˉbytes,
             Policyˉobject,
@@ -235,8 +240,32 @@ public static class Kernelˉprocessˉimage
             Executionˉbudgetˉdigest,
             Resourceˉstoreˉbytes,
             Resourceˉstoreˉdigest,
+            Directoryˉsnapshotˉbytes,
+            Directoryˉsnapshotˉdigest,
             Userˉassembly.Objectˉbytes,
             Userˉlink.Imageˉbytes);
+    }
+
+    private static ImmutableArray<byte> Buildˉdirectoryˉsnapshot()
+    {
+        var Fileˉbytes = new byte[3_072];
+        for (var Index = 0; Index < Fileˉbytes.Length; Index++)
+        {
+            Fileˉbytes[Index] = checked((byte)(Index % 251));
+        }
+        var Snapshot = Directoryˉsnapshotˉcodec.Write([
+            new(Directoryˉsnapshotˉkind.File, "kernel.wv", Fileˉbytes.ToImmutableArray()),
+            new(Directoryˉsnapshotˉkind.Other, "folder", [])
+        ]);
+        if (Snapshot.Length != 3_184 ||
+            !Convert.ToHexString(SHA256.HashData(Snapshot.AsSpan())).Equals(
+                "0F793A41A701240B9CF41179DAFA252384B43CD23214646FF021D245657C235A",
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "The canonical Windvale OS directory snapshot has changed unexpectedly.");
+        }
+        return Snapshot;
     }
 
     // Stage 0 test seam: compile the interpreter once; tests vary only the

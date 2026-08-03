@@ -1,4 +1,5 @@
 windvale-assembly 1
+symbol local data Windvale_directory_read_request in .rodata
 symbol local data Windvale_resource_configuration_request in .rodata
 symbol export function Windvale_process_user_entry in .text
 symbol import function Windvale_user_bytecode_interpreter_main
@@ -8,15 +9,15 @@ define Windvale_process_user_entry
 load_address r8 Windvale_resource_configuration_request
 move_u32 r9d 55
 move r10 rdx
-add_i32 r10 2048
-move_u32 edi 2048
+add_i32 r10 4096
+move_u32 edi 4096
 move_u32 ebx 6
 move_u32 esi 65536
 syscall
 compare_i32 eax 116
 branch not_equal resource_reply_failure
 move r8 rdx
-add_i32 r8 2048
+add_i32 r8 4096
 load_memory_u32 eax r8 none 1 0
 compare_i32 eax 1498568279
 branch not_equal resource_reply_failure
@@ -104,6 +105,52 @@ branch not_equal resource_reply_failure
 load_memory_u32 eax r8 none 1 112
 compare_i32 eax 218629379
 branch not_equal resource_reply_failure
+load_address r8 Windvale_directory_read_request
+move_u32 r9d 37
+move r10 rdx
+add_i32 r10 4096
+move_u32 edi 4096
+move_u32 ebx 6
+move_u32 esi 65536
+syscall
+compare_i32 eax 3096
+branch not_equal resource_reply_failure
+move r8 rdx
+add_i32 r8 4096
+load_memory_u32 eax r8 none 1 0
+compare_i32 eax 1380210263
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 4
+compare_i32 eax 1
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 8
+test eax eax
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 12
+compare_i32 eax 3072
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 16
+test eax eax
+branch not_equal resource_reply_failure
+load_memory_u32 eax r8 none 1 20
+compare_i32 eax 3072
+branch not_equal resource_reply_failure
+move r10 r8
+add_i32 r10 24
+move_u32 ecx 3072
+move_u32 edi 0
+label directory_reply_pattern
+load_memory_u8 al r10 none 1 0
+compare al dil
+branch not_equal resource_reply_failure
+add_i32 r10 1
+add_i32 edi 1
+compare_i32 edi 251
+branch not_equal directory_reply_pattern_next
+move_u32 edi 0
+label directory_reply_pattern_next
+subtract_i32 ecx 1
+branch not_equal directory_reply_pattern
 call Windvale_user_bytecode_interpreter_main
 move_u32 ebx 1
 move_u32 esi 65536
@@ -114,9 +161,15 @@ syscall
 label resource_reply_failure
 trap
 end define
+
 end section
 
 section rodata .rodata align 4
+define Windvale_directory_read_request
+bytes 87 86 68 81 1 0 0 0 37 0 0 0 0 0 0 0
+bytes 0 12 0 0 9 0 0 0 0 0 0 0
+bytes 107 101 114 110 101 108 46 119 118
+end define
 define Windvale_resource_configuration_request
 bytes 87 86 82 81 1 0 0 0 55 0 0 0 1 0 0 0
 bytes 1 0 0 0 4 0 0 0 23 0 0 0 0 0 0 0
