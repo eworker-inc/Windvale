@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`windows-x64-console-v1` is the first deterministic Windows host-executable target. It packages one already verified ABI-20 x86-64 native fragment as an import-free PE32+ console application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and PE adapter materialize and verify the file, while digest-pinned portable Windvale modules supply every live layout value and every final byte through a sparse construction recipe. The resulting application executes without loading .NET.
+`windows-x64-console-v1` is the first deterministic Windows host-executable target. It packages one already verified ABI-20 x86-64 native fragment as an import-free PE32+ console application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and PE adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without loading .NET.
 
 This is a narrow executable-boundary proof. It is not a general Windows runtime, hosted-capability container, native compiler executable, or .NET-retirement milestone.
 
@@ -68,9 +68,9 @@ The complete file is bounded to 4,196,352 bytes. Canonical `Sum-Data.wv` produce
 
 ## Independent verification
 
-`Windowsˉconsoleˉapplicationˉverifier.Verify` treats the PE as untrusted bytes. It checks the outer size before fixed reads; every DOS, COFF, optional-header, directory, section, permission, raw, virtual, and padding field; the exact startup instruction shapes and all four relative targets; the initial execution context; and the relocation block. It returns the recovered native bytes and native entry offset only after complete validation.
+The portable [console-application verifier](Windvale-Console-Application-Verification.md) first treats the PE as segmented untrusted bytes, regenerates its canonical recipe, checks every container-owned byte and zero gap, and returns the recovered native bytes and entry through fixed evidence. `Windowsˉconsoleˉapplicationˉverifier.Verify` independently parses the same untrusted PE. It checks the outer size before fixed reads; every DOS, COFF, optional-header, directory, section, permission, raw, virtual, and padding field; the exact startup instruction shapes and all four relative targets; the initial execution context; and the relocation block.
 
-The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests independently compile and evaluate the Windvale layout and construction modules, compare their complete serialized evidence with the C# layout and byte oracles, assemble the WVA startup, require its exact symbol and relocation contract, instantiate the four final-image displacements, and compare all 98 startup bytes with the PE. The PE verifier validates the container and startup contract; the native fragment verifier remains responsible for generated machine-code semantics before packaging.
+The writer requires both verifiers to reproduce the verified flat link before publication. Differential tests independently compile and evaluate the Windvale layout, construction, and verification modules; compare their complete serialized evidence with the C# layout and byte oracles; assemble the WVA startup; require its exact symbol and relocation contract; instantiate the four final-image displacements; and compare all 98 startup bytes with the PE. The existing malformed PE corpus drives both completed-container verifiers. The native fragment verifier remains responsible for generated machine-code semantics before packaging.
 
 ## Diagnostics
 

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`linux-x64-console-v1` is the first deterministic Linux host-executable target. It packages one already verified ABI-20 x86-64 native fragment as a sectionless, import-free ELF64 static position-independent application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and ELF adapter materialize and verify the file, while digest-pinned portable Windvale modules supply every live layout value and every final byte through a sparse construction recipe. The resulting application executes without a dynamic loader, libc, or .NET.
+`linux-x64-console-v1` is the first deterministic Linux host-executable target. It packages one already verified ABI-20 x86-64 native fragment as a sectionless, import-free ELF64 static position-independent application. The first implementation is Stage 0 hosted: the C# compiler, native backend, WVO writer, flat linker, and ELF adapter materialize the file, while digest-pinned portable Windvale modules supply every live layout value, every final byte through a sparse construction recipe, and completed-container verification with recovered-native evidence. The resulting application executes without a dynamic loader, libc, or .NET.
 
 This is the Linux twin of `windows-x64-console-v1`. It is a narrow executable-boundary proof, not a general Linux runtime, hosted-capability container, native compiler executable, or .NET-retirement milestone.
 
@@ -70,9 +70,9 @@ The complete file is bounded to 4,202,608 bytes. Canonical `Sum-Data.wv` produce
 
 ## Independent verification
 
-`Linuxˉconsoleˉapplicationˉverifier.Verify` treats the ELF as untrusted bytes. It checks the outer size before fixed reads; the complete ELF identification and header; all five exact program headers; load sizes, permissions, address/offset agreement, and derived extents; the version note; every padding region; the exact startup instruction shapes and four relative targets; the mmap and exit syscall boundaries; and the initial execution context. It returns the recovered native bytes and native entry offset only after complete validation.
+The portable [console-application verifier](Windvale-Console-Application-Verification.md) first treats the ELF as segmented untrusted bytes, regenerates its canonical recipe, checks every container-owned byte and zero gap, and returns the recovered native bytes and entry through fixed evidence. `Linuxˉconsoleˉapplicationˉverifier.Verify` independently parses the same untrusted ELF. It checks the outer size before fixed reads; the complete ELF identification and header; all five exact program headers; load sizes, permissions, address/offset agreement, and derived extents; the version note; every padding region; the exact startup instruction shapes and four relative targets; the mmap and exit syscall boundaries; and the initial execution context.
 
-The writer invokes that verifier before publication and compares its recovered values with the verified flat link. Differential tests independently compile and evaluate the Windvale layout and construction modules, compare their complete serialized evidence with the C# layout and byte oracles, assemble the WVA startup, require its exact symbol and relocation contract, instantiate the four final-image displacements, and compare all 158 startup bytes with the ELF. They also require the PE and ELF verifiers to recover the same native image and `Main` offset.
+The writer requires both verifiers to reproduce the verified flat link before publication. Differential tests independently compile and evaluate the Windvale layout, construction, and verification modules; compare their complete serialized evidence with the C# layout and byte oracles; assemble the WVA startup; require its exact symbol and relocation contract; instantiate the four final-image displacements; and compare all 158 startup bytes with the ELF. The existing malformed ELF corpus drives both completed-container verifiers, and the paired tests require PE and ELF recovery to agree on the same native image and `Main` offset.
 
 ## Diagnostics
 

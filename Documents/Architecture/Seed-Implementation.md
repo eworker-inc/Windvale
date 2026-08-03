@@ -131,6 +131,7 @@ Both implementations own the same WVA contract and remain byte-for-byte differen
 - Checked `absolute-u32` and `relative-i32` relocation application
 - Independent complete-image reconstruction before publication
 - Path-free canonical map construction and hosted publish-after-success composition
+- Portable paired-console layout, sparse exact construction, segmented completed-container verification, and recovered-native evidence
 
 ### Reference linker and target adapters
 
@@ -140,10 +141,10 @@ Both implementations own the same WVA contract and remain byte-for-byte differen
 - The same symbol resolution, layout, relocation, reconstruction, and canonical map contract
 - SHA-256 flat-image evidence and deterministic failure diagnostics
 - The C#-only deterministic UEFI PE32+ application adapter and its independent verifier
-- The first deterministic import-free Windows x64 console adapter for capability-free scalar ABI-20 fragments, including its exact startup/context boundary and independent PE verifier
-- The paired deterministic sectionless Linux x64 static-PIE adapter over the same verified fragment, including its bounded mapped stack, exact syscall boundary, and independent ELF verifier
+- The first deterministic import-free Windows x64 console adapter for capability-free scalar ABI-20 fragments, including its exact startup/context boundary, sparse-recipe materialization, and independent PE recovery verifier
+- The paired deterministic sectionless Linux x64 static-PIE adapter over the same verified fragment, including its bounded mapped stack, exact syscall boundary, sparse-recipe materialization, and independent ELF recovery verifier
 
-Both linker implementations own the same `flat-x86-64-v1` contract and remain byte-for-byte differential oracles. They do not parse WVA, encode instructions, mutate input objects, or define portable semantics. The raw flat image remains a deterministic memory snapshot. The narrow UEFI adapter consumes successful flat-link evidence without changing portable link semantics; the Windows and Linux console targets additionally consume one independently verified ABI-20 fragment, reproduce it through WVO/link, and supply target-specific exact process-entry/context adapters. General hosted-service PE/ELF and Windvale OS target adapters remain later explicit contracts.
+Both linker implementations own the same `flat-x86-64-v1` contract and remain byte-for-byte differential oracles. They do not parse WVA, encode instructions, mutate input objects, or define portable semantics. The raw flat image remains a deterministic memory snapshot. The narrow UEFI adapter consumes successful flat-link evidence without changing portable link semantics; the Windows and Linux console targets additionally consume one independently verified ABI-20 fragment, reproduce it through WVO/link, and supply target-specific exact process-entry/context adapters. Portable Windvale now plans and describes every container byte and verifies completed PE/ELF bytes through two bounded chunks; C# retains materialization, evidence checks, and independently structured PE/ELF recovery. General hosted-service PE/ELF and Windvale OS target adapters remain later explicit contracts.
 
 ### Runtime
 

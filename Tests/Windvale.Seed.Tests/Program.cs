@@ -39,6 +39,8 @@ internal static class Program
     private const string CONSOLE_APPLICATION_PLAN_BRIDGE_SHA256 = "a4421adf6e46f31a5096099b1b164ea93901e97a66ff86b9b5b80ba5e753e790";
     private const string CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256 = "80684e78839f0001950a7b65fbfce4ec79db81f3c089dc74df00fcde1707aa88";
     private const string CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SHA256 = "43f1537c4c4038824512972173e0a5c8acc4e74710d315a5b7498a6dae668bb2";
+    private const string CONSOLE_APPLICATION_VERIFICATION_CORE_SHA256 = "326e2ecfc1f4dd8bd24f71fff4a9db960de2519d9aae17afbcd6a005c2e7c94d";
+    private const string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SHA256 = "74542907a1b7a90d6d13ee157e7a9e7a4e60e83c042a5486e2f0ab3113ad6013";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
@@ -760,6 +762,12 @@ internal static class Program
     private static readonly string CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Console-Application-Construction-Bridge.wv");
 
+    private static readonly string CONSOLE_APPLICATION_VERIFICATION_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Console-Application-Verification-Core.wv");
+
+    private static readonly string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Console-Application-Verification-Bridge.wv");
+
     private static readonly string WVA_ASSEMBLER_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wva-Assembler-Core.wv");
 
@@ -842,7 +850,7 @@ internal static class Program
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
         new("portable Windvale emits a deterministic Windows x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windowsˉconsoleˉapplicationˉruns),
         new("portable Windvale emits a deterministic Linux x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Linuxˉconsoleˉapplicationˉruns),
-        new("Windvale owns bounded Windows and Linux console-application layouts and construction", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉconsoleˉapplicationˉlayoutˉruns),
+        new("Windvale owns bounded Windows and Linux console-application layout, construction, and verification", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉconsoleˉapplicationˉlayoutˉruns),
         new("native console application publication is atomic", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic),
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
@@ -2924,6 +2932,84 @@ internal static class Program
             Verifiedˉconstructor.Module.Functions[Constructionˉmain.Targetˉindex]
                 .Returnˉtype.Kind);
 
+        var Verificationˉcore = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Linker/Windvale/Console-Application-Verification-Core.wv",
+                CONSOLE_APPLICATION_VERIFICATION_CORE_SOURCE),
+            [
+                new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                new(
+                    "Linker/Windvale/Console-Application-Plan-Core.wv",
+                    CONSOLE_APPLICATION_PLAN_CORE_SOURCE),
+                new(
+                    "Linker/Windvale/Console-Application-Construction-Core.wv",
+                    CONSOLE_APPLICATION_CONSTRUCTION_CORE_SOURCE),
+            ]);
+        True(
+            Verificationˉcore.Success,
+            "The Windvale console-application verification core did not compile: " +
+                string.Join(" | ", Verificationˉcore.Diagnostics));
+        Equal(46_074, Verificationˉcore.Moduleˉbytes.Length);
+        Equal(
+            CONSOLE_APPLICATION_VERIFICATION_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Verificationˉcore.Moduleˉbytes.AsSpan()));
+
+        var Verificationˉbridge = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Linker/Windvale/Console-Application-Verification-Bridge.wv",
+                CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SOURCE),
+            [
+                new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                new(
+                    "Linker/Windvale/Console-Application-Plan-Core.wv",
+                    CONSOLE_APPLICATION_PLAN_CORE_SOURCE),
+                new(
+                    "Linker/Windvale/Console-Application-Construction-Core.wv",
+                    CONSOLE_APPLICATION_CONSTRUCTION_CORE_SOURCE),
+                new(
+                    "Linker/Windvale/Console-Application-Verification-Core.wv",
+                    CONSOLE_APPLICATION_VERIFICATION_CORE_SOURCE),
+            ]);
+        True(
+            Verificationˉbridge.Success,
+            "The Windvale console-application verification bridge did not compile: " +
+                string.Join(" | ", Verificationˉbridge.Diagnostics));
+        Equal(
+            Consoleˉapplicationˉverification.VERIFIER_CANONICAL_SIZE,
+            Verificationˉbridge.Moduleˉbytes.Length);
+        Equal(
+            CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Verificationˉbridge.Moduleˉbytes.AsSpan()));
+        Equal(
+            Consoleˉapplicationˉverification.VERIFIER_CANONICAL_SHA256,
+            CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SHA256);
+        using (var Stream = typeof(Consoleˉapplicationˉverification).Assembly
+            .GetManifestResourceStream(
+                "Windvale.Linker.Console-Application-Verification-Bridge.wvb") ??
+            throw new InvalidOperationException(
+                "The retained console-application verification bridge was not embedded."))
+        {
+            var Retained = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Retained);
+            Sequenceˉequal(Verificationˉbridge.Moduleˉbytes, Retained);
+        }
+
+        var Verifiedˉverificationˉbridge = Moduleˉcodec.Readˉandˉverify(
+            Verificationˉbridge.Moduleˉbytes.AsSpan());
+        Equal(Moduleˉprofile.Hosted, Verifiedˉverificationˉbridge.Module.Profile);
+        Sequenceˉequal(
+            [Capabilityˉcatalog.FILE_READ_BYTES, Capabilityˉcatalog.FILE_WRITE_BYTES],
+            Verifiedˉverificationˉbridge.Module.Capabilities
+                .Select(Item => Item.Name)
+                .Order(StringComparer.Ordinal)
+                .ToArray());
+        var Verificationˉmain = Verifiedˉverificationˉbridge.Module.Exports.Single(
+            Item => Item.Name == "Main");
+        Equal(
+            Valueˉtype.Bytes,
+            Verifiedˉverificationˉbridge.Module.Functions[Verificationˉmain.Targetˉindex]
+                .Returnˉtype.Kind);
+
         var Windows = Consoleˉapplicationˉlayout.Plan(
             Consoleˉapplicationˉtarget.Windowsˉx64,
             nativeˉimageˉbytes: 5,
@@ -3193,6 +3279,153 @@ internal static class Program
                 Linuxˉconstruction,
                 Linuxˉrecovery));
 
+        var Windowsˉverificationˉevaluation =
+            Consoleˉapplicationˉverification.Evaluateˉchunks(
+                Windowsˉrecovery.ToImmutableArray(),
+                []);
+        Sequenceˉequal(
+            Windowsˉverificationˉevaluation.Evidence,
+            Consoleˉapplicationˉverification.Evaluateˉchunks(
+                Windowsˉrecovery.ToImmutableArray(),
+                []).Evidence);
+        var Windvaleˉverifiedˉwindows = Consoleˉapplicationˉverification.Verifyˉevidence(
+            Windowsˉrecovery.Length,
+            Windowsˉverificationˉevaluation.Evidence,
+            Windowsˉverificationˉevaluation.Writes);
+        Equal(Consoleˉapplicationˉtarget.Windowsˉx64, Windvaleˉverifiedˉwindows.Target);
+        Equal(2u, Windvaleˉverifiedˉwindows.Nativeˉentryˉoffset);
+        Sequenceˉequal(Nativeˉimage, Windvaleˉverifiedˉwindows.Nativeˉimageˉbytes);
+
+        var Windvaleˉverifiedˉlinux = Consoleˉapplicationˉverification.Verify(
+            Linuxˉrecovery);
+        Equal(Consoleˉapplicationˉtarget.Linuxˉx64, Windvaleˉverifiedˉlinux.Target);
+        Equal(2u, Windvaleˉverifiedˉlinux.Nativeˉentryˉoffset);
+        Sequenceˉequal(Nativeˉimage, Windvaleˉverifiedˉlinux.Nativeˉimageˉbytes);
+
+        static void Expectˉverificationˉevidenceˉfailure(
+            ImmutableArray<byte> evidence,
+            ImmutableArray<Consoleˉapplicationˉverificationˉwrite> writes,
+            int applicationˉbytes,
+            string description)
+        {
+            var Rejected = false;
+            try
+            {
+                _ = Consoleˉapplicationˉverification.Verifyˉevidence(
+                    applicationˉbytes,
+                    evidence,
+                    writes);
+            }
+            catch (InvalidOperationException)
+            {
+                Rejected = true;
+            }
+            True(Rejected, $"The {description} verification evidence was accepted.");
+        }
+
+        Expectˉverificationˉevidenceˉfailure(
+            default,
+            Windowsˉverificationˉevaluation.Writes,
+            Windowsˉrecovery.Length,
+            "uninitialized");
+        Expectˉverificationˉevidenceˉfailure(
+            Windowsˉverificationˉevaluation.Evidence.RemoveAt(
+                Consoleˉapplicationˉverification.EVIDENCE_BYTES - 1),
+            Windowsˉverificationˉevaluation.Writes,
+            Windowsˉrecovery.Length,
+            "truncated");
+        Expectˉverificationˉevidenceˉfailure(
+            Windowsˉverificationˉevaluation.Evidence.Add(0),
+            Windowsˉverificationˉevaluation.Writes,
+            Windowsˉrecovery.Length,
+            "extended");
+        Expectˉverificationˉevidenceˉfailure(
+            Replaceˉu32(Windowsˉverificationˉevaluation.Evidence, 0, 0),
+            Windowsˉverificationˉevaluation.Writes,
+            Windowsˉrecovery.Length,
+            "changed-magic");
+
+        static void Expectˉverificationˉrejection(
+            Consoleˉapplicationˉverificationˉevaluation evaluation,
+            int applicationˉbytes,
+            Consoleˉapplicationˉverificationˉstatus status,
+            uint failureˉoffset,
+            string description)
+        {
+            Equal(0, evaluation.Writes.Length);
+            try
+            {
+                _ = Consoleˉapplicationˉverification.Verifyˉevidence(
+                    applicationˉbytes,
+                    evaluation.Evidence,
+                    evaluation.Writes);
+                throw new InvalidOperationException(
+                    $"The {description} console application was accepted.");
+            }
+            catch (Consoleˉapplicationˉverificationˉexception Exception)
+            {
+                Equal(status, Exception.Status);
+                Equal(failureˉoffset, Exception.Failureˉoffset);
+            }
+        }
+
+        Expectˉverificationˉrejection(
+            Consoleˉapplicationˉverification.Evaluateˉchunks([0x7F], [0x45]),
+            2,
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉchunk,
+            1u,
+            "noncanonical segmented");
+
+        var Maximumˉnativeˉimage = new byte[Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES];
+        Maximumˉnativeˉimage[0] = 0x31;
+        Maximumˉnativeˉimage[^1] = 0xC3;
+        var Maximumˉentry = (uint)Maximumˉnativeˉimage.Length - 1u;
+        var Maximumˉwindowsˉplan = Consoleˉapplicationˉlayout.Plan(
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            Maximumˉnativeˉimage.Length,
+            Maximumˉentry);
+        var Maximumˉwindowsˉimage = Windowsˉconsoleˉapplicationˉwriter.Buildˉrecoveryˉimage(
+            Maximumˉnativeˉimage,
+            Maximumˉentry,
+            Maximumˉwindowsˉplan);
+        var Maximumˉverifiedˉwindows = Consoleˉapplicationˉverification.Verify(
+            Maximumˉwindowsˉimage);
+        Equal(Consoleˉapplicationˉtarget.Windowsˉx64, Maximumˉverifiedˉwindows.Target);
+        Equal(Maximumˉentry, Maximumˉverifiedˉwindows.Nativeˉentryˉoffset);
+        Sequenceˉequal(Maximumˉnativeˉimage, Maximumˉverifiedˉwindows.Nativeˉimageˉbytes);
+
+        var Maximumˉlinuxˉplan = Consoleˉapplicationˉlayout.Plan(
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            Maximumˉnativeˉimage.Length,
+            Maximumˉentry);
+        var Maximumˉlinuxˉimage = Linuxˉconsoleˉapplicationˉwriter.Buildˉrecoveryˉimage(
+            Maximumˉnativeˉimage,
+            Maximumˉentry,
+            Maximumˉlinuxˉplan);
+        var Maximumˉverifiedˉlinux = Consoleˉapplicationˉverification.Verify(
+            Maximumˉlinuxˉimage);
+        Equal(Consoleˉapplicationˉtarget.Linuxˉx64, Maximumˉverifiedˉlinux.Target);
+        Equal(Maximumˉentry, Maximumˉverifiedˉlinux.Nativeˉentryˉoffset);
+        Sequenceˉequal(Maximumˉnativeˉimage, Maximumˉverifiedˉlinux.Nativeˉimageˉbytes);
+
+        var Oversizedˉsecondˉchunk = Maximumˉlinuxˉimage
+            .AsSpan(Consoleˉapplicationˉverification.FIRST_CHUNK_BYTES)
+            .ToArray()
+            .ToImmutableArray()
+            .Add(0);
+        Expectˉverificationˉrejection(
+            Consoleˉapplicationˉverification.Evaluateˉchunks(
+                Maximumˉlinuxˉimage
+                    .AsSpan(0, Consoleˉapplicationˉverification.FIRST_CHUNK_BYTES)
+                    .ToArray()
+                    .ToImmutableArray(),
+                Oversizedˉsecondˉchunk),
+            Consoleˉapplicationˉverification.FIRST_CHUNK_BYTES +
+                Oversizedˉsecondˉchunk.Length,
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉchunk,
+            Consoleˉapplicationˉverification.FIRST_CHUNK_BYTES,
+            "oversized second-chunk");
+
         var Maximumˉwindowsˉconstruction = Consoleˉapplicationˉconstruction.Evaluateˉrequest(
             Consoleˉapplicationˉlayout.Buildˉrequest(
                 Consoleˉapplicationˉtarget.Windowsˉx64,
@@ -3397,6 +3630,19 @@ internal static class Program
         ReadOnlySpan<byte> bytes,
         string expectedˉcode)
     {
+        var Windvaleˉrejected = false;
+        try
+        {
+            _ = Consoleˉapplicationˉverification.Verify(bytes);
+        }
+        catch (Consoleˉapplicationˉverificationˉexception)
+        {
+            Windvaleˉrejected = true;
+        }
+        True(
+            Windvaleˉrejected,
+            "The Windvale-owned verifier accepted a malformed Linux console application.");
+
         try
         {
             _ = Linuxˉconsoleˉapplicationˉverifier.Verify(bytes);
@@ -3420,6 +3666,19 @@ internal static class Program
         ReadOnlySpan<byte> bytes,
         string expectedˉcode)
     {
+        var Windvaleˉrejected = false;
+        try
+        {
+            _ = Consoleˉapplicationˉverification.Verify(bytes);
+        }
+        catch (Consoleˉapplicationˉverificationˉexception)
+        {
+            Windvaleˉrejected = true;
+        }
+        True(
+            Windvaleˉrejected,
+            "The Windvale-owned verifier accepted a malformed Windows console application.");
+
         try
         {
             _ = Windowsˉconsoleˉapplicationˉverifier.Verify(bytes);

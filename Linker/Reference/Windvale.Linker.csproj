@@ -17,5 +17,8 @@
     <EmbeddedResource
       Include="Consumers/Console-Application-Construction-Bridge.wvb"
       LogicalName="Windvale.Linker.Console-Application-Construction-Bridge.wvb" />
+    <EmbeddedResource
+      Include="Consumers/Console-Application-Verification-Bridge.wvb"
+      LogicalName="Windvale.Linker.Console-Application-Verification-Bridge.wvb" />
   </ItemGroup>
 </Project>

@@ -28,6 +28,16 @@ public static class Linuxˉconsoleˉapplicationˉwriter
         var Image = Buildˉimage(Input.Imageˉbytes.AsSpan(), Input.Entryˉoffset);
         try
         {
+            var Portable = Consoleˉapplicationˉverification.Verify(Image.AsSpan());
+            if (Portable.Target != Consoleˉapplicationˉtarget.Linuxˉx64 ||
+                Portable.Nativeˉentryˉoffset != Input.Entryˉoffset ||
+                !Portable.Nativeˉimageˉbytes.AsSpan().SequenceEqual(Input.Imageˉbytes.AsSpan()))
+            {
+                return Linuxˉconsoleˉapplicationˉresult.Failed(
+                    "WVL1004",
+                    "The Windvale-owned verifier did not reproduce the Linux native image and entry.");
+            }
+
             var Verified = Linuxˉconsoleˉapplicationˉverifier.Verify(Image.AsSpan());
             if (Verified.Nativeˉentryˉoffset != Input.Entryˉoffset ||
                 !Verified.Nativeˉimageˉbytes.AsSpan().SequenceEqual(Input.Imageˉbytes.AsSpan()))
@@ -36,6 +46,12 @@ public static class Linuxˉconsoleˉapplicationˉwriter
                     "WVL1004",
                     "The independently verified Linux application did not reproduce the native image and entry.");
             }
+        }
+        catch (Consoleˉapplicationˉverificationˉexception Exception)
+        {
+            return Linuxˉconsoleˉapplicationˉresult.Failed(
+                "WVL1004",
+                $"Windvale-owned Linux application verification failed: {Exception.Message}");
         }
         catch (Linuxˉconsoleˉapplicationˉexception Exception)
         {

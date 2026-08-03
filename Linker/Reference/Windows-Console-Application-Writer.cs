@@ -35,6 +35,16 @@ public static class Windowsˉconsoleˉapplicationˉwriter
         var Image = Buildˉimage(Input.Imageˉbytes.AsSpan(), Input.Entryˉoffset);
         try
         {
+            var Portable = Consoleˉapplicationˉverification.Verify(Image.AsSpan());
+            if (Portable.Target != Consoleˉapplicationˉtarget.Windowsˉx64 ||
+                Portable.Nativeˉentryˉoffset != Input.Entryˉoffset ||
+                !Portable.Nativeˉimageˉbytes.AsSpan().SequenceEqual(Input.Imageˉbytes.AsSpan()))
+            {
+                return Windowsˉconsoleˉapplicationˉresult.Failed(
+                    "WVW1004",
+                    "The Windvale-owned verifier did not reproduce the Windows native image and entry.");
+            }
+
             var Verified = Windowsˉconsoleˉapplicationˉverifier.Verify(Image.AsSpan());
             if (Verified.Nativeˉentryˉoffset != Input.Entryˉoffset ||
                 !Verified.Nativeˉimageˉbytes.AsSpan().SequenceEqual(Input.Imageˉbytes.AsSpan()))
@@ -43,6 +53,12 @@ public static class Windowsˉconsoleˉapplicationˉwriter
                     "WVW1004",
                     "The independently verified Windows application did not reproduce the native image and entry.");
             }
+        }
+        catch (Consoleˉapplicationˉverificationˉexception Exception)
+        {
+            return Windowsˉconsoleˉapplicationˉresult.Failed(
+                "WVW1004",
+                $"Windvale-owned Windows application verification failed: {Exception.Message}");
         }
         catch (Windowsˉconsoleˉapplicationˉexception Exception)
         {
