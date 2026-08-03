@@ -56,7 +56,7 @@ WVIR operations `17` through `22` lower to the established WVB record constructi
 
 ## Capability translation
 
-The validated root profile maps directly to the existing WVB profile byte. Root capability declarations are emitted by ordinal name, independently of source declaration order. Dependencies cannot declare capabilities. Parameter/result tags come from the fixed seven-entry Seed catalog and therefore reproduce Stage 0's canonical Capabilities section exactly.
+The validated root profile maps directly to the existing WVB profile byte. Root capability declarations are emitted by ordinal name, independently of source declaration order. Dependencies cannot declare capabilities in the qualified Windvale-written backend. Parameter/result tags for its qualified seven-entry baseline come from the fixed internal catalog and therefore reproduce Stage 0's canonical Capabilities section exactly. The later Stage 0 static-composition candidate admits capability-bearing dependencies and Decision 0153's eighth catalog entry; the Windvale-written compiler has not yet adopted those candidate extensions.
 
 WVIR operation `63` carries a validated WVSD capability directory entry. The backend ranks that entry among capability declarations by ordinal name and emits WVB `call.capability` with the resulting index. No capability is inferred, removed, or authorized by compilation; host support and runtime authorization remain separate required boundaries.
 

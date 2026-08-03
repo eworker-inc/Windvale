@@ -7,6 +7,7 @@ public static class Capabilityˉcatalog
     public const string CONSOLE_WRITE = "console.write";
     public const string CONSOLE_WRITE_LINE = "console.write_line";
     public const string DIAGNOSTIC_WRITE_LINE = "diagnostic.write_line";
+    public const string FILESYSTEM_DIRECTORY_READ_V1 = "filesystem.directory_read_v1";
     public const string FILE_READ_BYTES = "file.read_bytes";
     public const string FILE_WRITE_BYTES = "file.write_bytes";
     public const string PROCESS_ARGUMENT = "process.argument";
@@ -27,6 +28,10 @@ public static class Capabilityˉcatalog
                 DIAGNOSTIC_WRITE_LINE,
                 [Valueˉtype.Text],
                 Valueˉtype.Void),
+            [FILESYSTEM_DIRECTORY_READ_V1] = new(
+                FILESYSTEM_DIRECTORY_READ_V1,
+                [Valueˉtype.Text, Valueˉtype.U32, Valueˉtype.U32],
+                Valueˉtype.Bytes),
             [FILE_READ_BYTES] = new(
                 FILE_READ_BYTES,
                 [Valueˉtype.Text],

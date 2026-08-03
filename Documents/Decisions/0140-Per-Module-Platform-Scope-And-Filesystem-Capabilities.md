@@ -2,7 +2,7 @@
 
 - Date: 2026-08-03
 - Status: Accepted architecture direction; first bounded static-library candidate implemented
-- First implementation: [Decision 0145](0145-First-Capability-Bearing-Static-Library.md) adds a bounded Stage 0 capability-bearing composition candidate while retaining the current coarse profiles and hosted resource leaf
+- First implementations: [Decision 0145](0145-First-Capability-Bearing-Static-Library.md) adds bounded Stage 0 capability-bearing composition; [Decision 0153](0153-First-Versioned-Read-Only-Directory-Capability.md) adds one versioned rights-limited immutable-directory read while retaining the current coarse profiles
 - Refines: [Platform and portability](../Architecture/Platform-And-Portability.md), [Decision 0039](0039-Capability-Profiles-In-The-Windvale-Backend.md), [Decision 0040](0040-Static-Multi-Module-Windvale-Backend.md), and [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md)
 - Retains: Canonical WVB as the verified distribution contract, explicit capability authorization, bounded host adapters, and the capability-oriented Windvale OS kernel/service boundary
 

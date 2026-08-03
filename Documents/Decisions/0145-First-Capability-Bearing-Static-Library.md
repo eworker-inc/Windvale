@@ -35,6 +35,8 @@ The new library is a hosted resource adapter, not a general filesystem library. 
 
 Before a shared filesystem library is implemented, specify the first source/module representation for independent platform scope and canonical capability interface identity/version, or explicitly accept another bounded compatibility encoding. Then select one rights-limited, read-only filesystem instance operation with typed recoverable results and identical Windows, Linux, and Windvale OS semantics. Native paths and the current opaque hosted resource leaf must not become that public contract by accident.
 
+[Decision 0153](0153-First-Versioned-Read-Only-Directory-Capability.md) subsequently accepts `_v1` in the canonical capability name as the bounded compatibility encoding and implements one pre-bound immutable-directory read with strict segments, exact 3 KiB chunks, typed lifecycle outcomes, and mandatory provider validation. Independent platform/version metadata and the Windvale OS provider binding remain open.
+
 ## Reconsider when
 
 - Independent platform scope can replace the temporary profile compatibility lattice.

@@ -874,7 +874,23 @@ public sealed class Referenceˉruntime
                         Runtimeˉvalue? Capabilityˉresult;
                         try
                         {
-                            Capabilityˉresult = Capabilityˉhost.Invoke(Capability, Capabilityˉarguments);
+                            if (StringComparer.Ordinal.Equals(
+                                    Capability.Name,
+                                    Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1) &&
+                                Readˉonlyˉdirectoryˉcontract.Tryˉrejectˉrequest(
+                                    Capabilityˉarguments[0].Textˉvalue!,
+                                    Capabilityˉarguments[1].U32ˉvalue,
+                                    Capabilityˉarguments[2].U32ˉvalue,
+                                    out var Rejection))
+                            {
+                                Capabilityˉresult = Runtimeˉvalue.Fromˉbytes(Rejection);
+                            }
+                            else
+                            {
+                                Capabilityˉresult = Capabilityˉhost.Invoke(
+                                    Capability,
+                                    Capabilityˉarguments);
+                            }
                         }
                         finally
                         {
@@ -889,6 +905,7 @@ public sealed class Referenceˉruntime
                         Validateˉcapabilityˉresult(
                             Capability,
                             Capabilityˉresult,
+                            Capabilityˉarguments,
                             Function.Name,
                             Instruction.Offset);
                         if (Capabilityˉresult is not null)
@@ -945,6 +962,7 @@ public sealed class Referenceˉruntime
     private static void Validateˉcapabilityˉresult(
         Capabilityˉdeclaration capability,
         Runtimeˉvalue? result,
+        ImmutableArray<Runtimeˉvalue> arguments,
         string functionˉname,
         int offset)
     {
@@ -1009,6 +1027,18 @@ public sealed class Referenceˉruntime
                 functionˉname,
                 offset,
                 $"returned {Value.Bytesˉvalue.Length} bytes; the byte-value limit is {Bytecodeˉlimits.MAX_BYTE_DATA_BYTES}");
+        }
+
+        if (StringComparer.Ordinal.Equals(
+                capability.Name,
+                Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1) &&
+            Value.Type.Kind == Valueˉtype.Bytes)
+        {
+            Readˉonlyˉdirectoryˉcontract.Verifyˉresponse(
+                Value.Bytesˉvalue.Toˉarray(),
+                arguments[0].Textˉvalue!,
+                arguments[1].U32ˉvalue,
+                arguments[2].U32ˉvalue);
         }
     }
 

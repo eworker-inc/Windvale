@@ -683,6 +683,8 @@ internal static class Program
 
     private static readonly string HOSTED_RESOURCE_STORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hosted-Resource-Store.wv");
+    private static readonly string READ_ONLY_DIRECTORY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Read-Only-Directory.wv");
 
     private static readonly string WEBASSEMBLY_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Core.wv");
@@ -935,6 +937,7 @@ internal static class Program
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
+        new("rights-limited directory reads return typed bounded results", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Readˉonlyˉdirectoryˉreadsˉareˉtyped),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
         new("Windvale-written project manifests agree with the reference parser", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉprojectˉmanifestsˉagree),
         new("Windvale-written project manifests agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉprojectˉmanifestsˉagree),
@@ -7858,6 +7861,268 @@ internal static class Program
                     Core,
                 ]),
             "WVC0013");
+    }
+
+    private static void Readˉonlyˉdirectoryˉreadsˉareˉtyped()
+    {
+        const string Rootˉsource = """
+            module Directoryˉapplication profile hosted;
+
+            import Readˉonlyˉdirectory;
+
+            capability filesystem.directory_read_v1;
+
+            export fn Main() -> i32 {
+                let First: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                    "Kernel.wvb", 1u32, 3u32
+                );
+                if First.Status != Directoryˉreadˉstatus.Valid { return 1; }
+                if First.Fileˉlength != 5u32 { return 2; }
+                if First.Nextˉoffset != 4u32 { return 3; }
+                if Bytesˉlength(First.Value) != 3u32 { return 4; }
+                if Bytesˉreadˉu8(First.Value, 0u32) != 5u8 { return 5; }
+                if Bytesˉreadˉu8(First.Value, 1u32) != 8u8 { return 6; }
+                if Bytesˉreadˉu8(First.Value, 2u32) != 13u8 { return 7; }
+
+                let Tail: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                    "Kernel.wvb", 4u32, 3u32
+                );
+                if Tail.Status != Directoryˉreadˉstatus.Valid { return 8; }
+                if Tail.Nextˉoffset != 5u32 { return 9; }
+                if Bytesˉlength(Tail.Value) != 1u32 { return 10; }
+                if Bytesˉreadˉu8(Tail.Value, 0u32) != 21u8 { return 11; }
+
+                let End: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                    "Kernel.wvb", 5u32, 3u32
+                );
+                if End.Status != Directoryˉreadˉstatus.Valid { return 12; }
+                if End.Nextˉoffset != 5u32 { return 13; }
+                if Bytesˉlength(End.Value) != 0u32 { return 14; }
+
+                let Missing: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                    "Missing.wvb", 0u32, 3u32
+                );
+                if Missing.Status != Directoryˉreadˉstatus.Notˉfound { return 15; }
+
+                let Pastˉend: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                    "Kernel.wvb", 6u32, 3u32
+                );
+                if Pastˉend.Status != Directoryˉreadˉstatus.Invalidˉoffset { return 16; }
+                if Pastˉend.Fileˉlength != 5u32 { return 17; }
+
+                let Invalidˉname: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                    "../Kernel.wvb", 0u32, 3u32
+                );
+                if Invalidˉname.Status != Directoryˉreadˉstatus.Invalidˉname { return 18; }
+
+                let Invalidˉlimit: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                    "Kernel.wvb", 0u32, 3073u32
+                );
+                if Invalidˉlimit.Status != Directoryˉreadˉstatus.Invalidˉlimit { return 19; }
+
+                let Invalidˉresponse: Directoryˉreadˉresult = Directoryˉreadˉdecode(
+                    Textˉtoˉutf8("short"), 0u32, 3u32
+                );
+                if Invalidˉresponse.Status != Directoryˉreadˉstatus.Invalidˉresponse { return 20; }
+
+                let Overflowingˉlimit: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                    "Kernel.wvb", 4294967295u32, 1u32
+                );
+                if Overflowingˉlimit.Status != Directoryˉreadˉstatus.Invalidˉlimit { return 21; }
+                return 29;
+            }
+            """;
+        Sourceˉmoduleˉinput Library = new(
+            "Libraries/Platform/Filesystem/Read-Only-Directory.wv",
+            READ_ONLY_DIRECTORY_SOURCE);
+        var First = Seedˉcompiler.Compileˉmodules(
+            new("directory-application.wv", Rootˉsource),
+            [Library]);
+        var Second = Seedˉcompiler.Compileˉmodules(
+            new("directory-application.wv", Rootˉsource),
+            [Library]);
+        True(First.Success, "Read-only directory composition failed: " +
+            string.Join(" | ", First.Diagnostics));
+        True(Second.Success, "Repeated read-only directory composition failed: " +
+            string.Join(" | ", Second.Diagnostics));
+        Sequenceˉequal(First.Moduleˉbytes, Second.Moduleˉbytes);
+
+        var Module = Moduleˉcodec.Readˉandˉverify(First.Moduleˉbytes.AsSpan());
+        Sequenceˉequal(
+            [Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1],
+            Module.Module.Capabilities.Select(Capability => Capability.Name));
+        var Directory = new Testˉreadˉonlyˉdirectory();
+        var Host = new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+            [],
+            TextWriter.Null,
+            TextWriter.Null,
+            readˉonlyˉdirectory: Directory));
+        var Authorized = new Referenceˉruntime(
+            Module,
+            Host,
+            new(ImmutableHashSet.Create(
+                StringComparer.Ordinal,
+                Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1)));
+        Equal(29, Authorized.Runˉmain().Exitˉcode);
+        Equal(5, Directory.Readˉcount);
+
+        True(
+            Readˉonlyˉdirectoryˉcontract.Isˉnameˉvalid(new string('A', 255)),
+            "A 255-byte ASCII segment was rejected.");
+        True(!Readˉonlyˉdirectoryˉcontract.Isˉnameˉvalid(""), "An empty segment was accepted.");
+        True(!Readˉonlyˉdirectoryˉcontract.Isˉnameˉvalid("."), "The current-directory segment was accepted.");
+        True(!Readˉonlyˉdirectoryˉcontract.Isˉnameˉvalid(".."), "The parent-directory segment was accepted.");
+        True(!Readˉonlyˉdirectoryˉcontract.Isˉnameˉvalid("a/b"), "A slash-bearing segment was accepted.");
+        True(!Readˉonlyˉdirectoryˉcontract.Isˉnameˉvalid("a\\b"), "A backslash-bearing segment was accepted.");
+        True(!Readˉonlyˉdirectoryˉcontract.Isˉnameˉvalid("a:b"), "A colon-bearing segment was accepted.");
+        True(!Readˉonlyˉdirectoryˉcontract.Isˉnameˉvalid("é"), "A non-ASCII segment was accepted.");
+        True(
+            !Readˉonlyˉdirectoryˉcontract.Isˉnameˉvalid(new string('A', 256)),
+            "A 256-byte segment was accepted.");
+
+        var Boundaryˉresponse = Readˉonlyˉdirectoryˉcontract.Read(
+            new Boundaryˉreadˉonlyˉdirectory(),
+            "Maximum.bin",
+            0,
+            Readˉonlyˉdirectoryˉcontract.MAX_CHUNK_BYTES);
+        Equal(
+            Readˉonlyˉdirectoryˉcontract.HEADER_BYTES +
+                checked((int)Readˉonlyˉdirectoryˉcontract.MAX_CHUNK_BYTES),
+            Boundaryˉresponse.Length);
+        Readˉonlyˉdirectoryˉcontract.Verifyˉresponse(
+            Boundaryˉresponse.AsSpan(),
+            "Maximum.bin",
+            0,
+            Readˉonlyˉdirectoryˉcontract.MAX_CHUNK_BYTES);
+        var Overflowˉresponse = Readˉonlyˉdirectoryˉcontract.Read(
+            new Throwingˉreadˉonlyˉdirectory(),
+            "Kernel.wvb",
+            uint.MaxValue,
+            1);
+        Readˉonlyˉdirectoryˉcontract.Verifyˉresponse(
+            Overflowˉresponse.AsSpan(),
+            "Kernel.wvb",
+            uint.MaxValue,
+            1);
+
+        void Rejectˉresponse(
+            ImmutableArray<byte> response,
+            string name = "Kernel.wvb",
+            uint offset = 0,
+            uint maximumˉbytes = 3) =>
+            Throwsˉruntime("WVR3030", () =>
+                Readˉonlyˉdirectoryˉcontract.Verifyˉresponse(
+                    response.AsSpan(), name, offset, maximumˉbytes));
+
+        Rejectˉresponse([0, 1, 2, 3]);
+        Rejectˉresponse(new byte[
+            Readˉonlyˉdirectoryˉcontract.HEADER_BYTES +
+            checked((int)Readˉonlyˉdirectoryˉcontract.MAX_CHUNK_BYTES) + 1]
+            .ToImmutableArray());
+        Rejectˉresponse(Buildˉdirectoryˉresponse(11, 0, 0, []));
+        Rejectˉresponse(Buildˉdirectoryˉresponse(0, 5, 1, [3, 5, 8]));
+        Rejectˉresponse(Buildˉdirectoryˉresponse(0, 5, 0, [3]));
+        Rejectˉresponse(Buildˉdirectoryˉresponse(1, 0, 0, [3]));
+        Rejectˉresponse(Buildˉdirectoryˉresponse(8, 5, 5, []), offset: 5);
+        Rejectˉresponse(Buildˉdirectoryˉresponse(9, 0, 0, []));
+        Rejectˉresponse(Buildˉdirectoryˉresponse(10, 0, 0, []));
+        Rejectˉresponse(
+            Buildˉdirectoryˉresponse(0, 5, 0, [3, 5, 8]),
+            name: "../Kernel.wvb");
+        Throwsˉruntime("WVR3030", () =>
+            Readˉonlyˉdirectoryˉcontract.Read(
+                new Throwingˉreadˉonlyˉdirectory(),
+                "Kernel.wvb",
+                0,
+                3));
+
+        var Unauthorized = new Referenceˉruntime(
+            Module,
+            Host,
+            Runtimeˉoptions.Portableˉdefaults);
+        Throwsˉruntime("WVR3010", () => _ = Unauthorized.Runˉmain());
+
+        var Invalidˉprovider = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                readˉonlyˉdirectory: new Invalidˉreadˉonlyˉdirectory())),
+            new(ImmutableHashSet.Create(
+                StringComparer.Ordinal,
+                Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1)));
+        Throwsˉruntime("WVR3030", () => _ = Invalidˉprovider.Runˉmain());
+
+        var Invalidˉhost = new Referenceˉruntime(
+            Module,
+            new Invalidˉdirectoryˉcapabilityˉhost(),
+            new(ImmutableHashSet.Create(
+                StringComparer.Ordinal,
+                Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1)));
+        Throwsˉruntime("WVR3030", () => _ = Invalidˉhost.Runˉmain());
+
+        const string Directˉinvalidˉsource = """
+            module Directˉinvalidˉdirectory profile hosted;
+            capability filesystem.directory_read_v1;
+            export fn Main() -> i32 {
+                let Invalidˉname: bytes = filesystem.directory_read_v1(
+                    "../Kernel.wvb", 0u32, 3u32
+                );
+                if Bytesˉreadˉu32ˉlittle(Invalidˉname, 8u32) != 9u32 { return 1; }
+                let Invalidˉlimit: bytes = filesystem.directory_read_v1(
+                    "Kernel.wvb", 4294967295u32, 1u32
+                );
+                if Bytesˉreadˉu32ˉlittle(Invalidˉlimit, 8u32) != 10u32 { return 2; }
+                return 29;
+            }
+            """;
+        var Directˉinvalid = Seedˉcompiler.Compile(Directˉinvalidˉsource);
+        True(Directˉinvalid.Success, "Direct invalid-request compilation failed: " +
+            string.Join(" | ", Directˉinvalid.Diagnostics));
+        var Rejectedˉhost = new Rejectingˉdirectoryˉcapabilityˉhost();
+        var Directˉruntime = new Referenceˉruntime(
+            Moduleˉcodec.Readˉandˉverify(Directˉinvalid.Moduleˉbytes.AsSpan()),
+            Rejectedˉhost,
+            new(ImmutableHashSet.Create(
+                StringComparer.Ordinal,
+                Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1)));
+        Equal(29, Directˉruntime.Runˉmain().Exitˉcode);
+        Equal(0, Rejectedˉhost.Callˉcount);
+
+        const string Unapprovedˉroot = """
+            module Unapprovedˉdirectoryˉapplication profile hosted;
+            import Readˉonlyˉdirectory;
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("unapproved-directory-application.wv", Unapprovedˉroot),
+                [Library]),
+            "WVC0013");
+    }
+
+    private static ImmutableArray<byte> Buildˉdirectoryˉresponse(
+        uint status,
+        uint fileˉlength,
+        uint returnedˉoffset,
+        ReadOnlySpan<byte> chunk)
+    {
+        var Response = new byte[Readˉonlyˉdirectoryˉcontract.HEADER_BYTES + chunk.Length];
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Response.AsSpan(0),
+            Readˉonlyˉdirectoryˉcontract.MAGIC);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Response.AsSpan(4),
+            Readˉonlyˉdirectoryˉcontract.VERSION);
+        BinaryPrimitives.WriteUInt32LittleEndian(Response.AsSpan(8), status);
+        BinaryPrimitives.WriteUInt32LittleEndian(Response.AsSpan(12), fileˉlength);
+        BinaryPrimitives.WriteUInt32LittleEndian(Response.AsSpan(16), returnedˉoffset);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Response.AsSpan(20),
+            checked((uint)chunk.Length));
+        chunk.CopyTo(Response.AsSpan(Readˉonlyˉdirectoryˉcontract.HEADER_BYTES));
+        return ImmutableArray.Create(Response);
     }
 
     private static ImmutableArray<byte> Buildˉresourceˉstoreˉfixture()
@@ -20631,6 +20896,100 @@ internal static class Program
         {
             Readˉcount++;
             return read(resourceˉname, maximumˉbytes);
+        }
+    }
+
+    private sealed class Testˉreadˉonlyˉdirectory : IReadˉonlyˉdirectory
+    {
+        private static readonly ImmutableArray<byte> KERNEL_BYTES = [3, 5, 8, 13, 21];
+
+        public int Readˉcount { get; private set; }
+
+        public Readˉonlyˉdirectoryˉresult Readˉbytes(
+            string name,
+            uint offset,
+            uint maximumˉbytes)
+        {
+            Readˉcount++;
+            if (!StringComparer.Ordinal.Equals(name, "Kernel.wvb"))
+            {
+                return new(
+                    Readˉonlyˉdirectoryˉstatus.Notˉfound,
+                    0,
+                    []);
+            }
+            var Length = checked((uint)KERNEL_BYTES.Length);
+            if (offset > Length)
+            {
+                return new(
+                    Readˉonlyˉdirectoryˉstatus.Invalidˉoffset,
+                    Length,
+                    []);
+            }
+            var Count = Math.Min(maximumˉbytes, Length - offset);
+            return new(
+                Readˉonlyˉdirectoryˉstatus.Valid,
+                Length,
+                KERNEL_BYTES
+                    .AsSpan(checked((int)offset), checked((int)Count))
+                    .ToArray()
+                    .ToImmutableArray());
+        }
+    }
+
+    private sealed class Invalidˉreadˉonlyˉdirectory : IReadˉonlyˉdirectory
+    {
+        public Readˉonlyˉdirectoryˉresult Readˉbytes(
+            string name,
+            uint offset,
+            uint maximumˉbytes) =>
+            new(Readˉonlyˉdirectoryˉstatus.Valid, 0, []);
+    }
+
+    private sealed class Boundaryˉreadˉonlyˉdirectory : IReadˉonlyˉdirectory
+    {
+        private static readonly ImmutableArray<byte> BYTES =
+            ImmutableArray.Create(new byte[
+                checked((int)Readˉonlyˉdirectoryˉcontract.MAX_CHUNK_BYTES)]);
+
+        public Readˉonlyˉdirectoryˉresult Readˉbytes(
+            string name,
+            uint offset,
+            uint maximumˉbytes) =>
+            new(Readˉonlyˉdirectoryˉstatus.Valid, maximumˉbytes, BYTES);
+    }
+
+    private sealed class Throwingˉreadˉonlyˉdirectory : IReadˉonlyˉdirectory
+    {
+        public Readˉonlyˉdirectoryˉresult Readˉbytes(
+            string name,
+            uint offset,
+            uint maximumˉbytes) =>
+            throw new IOException("Injected provider failure.");
+    }
+
+    private sealed class Invalidˉdirectoryˉcapabilityˉhost : ICapabilityˉhost
+    {
+        public bool Supports(string capabilityˉname) => true;
+
+        public Runtimeˉvalue? Invoke(
+            Capabilityˉdeclaration capability,
+            ImmutableArray<Runtimeˉvalue> arguments) =>
+            Runtimeˉvalue.Fromˉbytes([0, 1, 2, 3]);
+    }
+
+    private sealed class Rejectingˉdirectoryˉcapabilityˉhost : ICapabilityˉhost
+    {
+        public int Callˉcount { get; private set; }
+
+        public bool Supports(string capabilityˉname) => true;
+
+        public Runtimeˉvalue? Invoke(
+            Capabilityˉdeclaration capability,
+            ImmutableArray<Runtimeˉvalue> arguments)
+        {
+            Callˉcount++;
+            throw new InvalidOperationException("An invalid request reached the capability host.");
         }
     }
 

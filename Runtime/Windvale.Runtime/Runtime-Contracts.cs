@@ -438,7 +438,8 @@ public sealed class Hostedˉresourceˉcontext
         TextWriter standardˉoutput,
         TextWriter diagnosticˉoutput,
         IHostedˉfileˉreader? fileˉreader = null,
-        IHostedˉfileˉwriter? fileˉwriter = null)
+        IHostedˉfileˉwriter? fileˉwriter = null,
+        IReadˉonlyˉdirectory? readˉonlyˉdirectory = null)
     {
         ArgumentNullException.ThrowIfNull(standardˉoutput);
         ArgumentNullException.ThrowIfNull(diagnosticˉoutput);
@@ -493,6 +494,7 @@ public sealed class Hostedˉresourceˉcontext
         Diagnosticˉoutput = diagnosticˉoutput;
         Fileˉreader = fileˉreader;
         Fileˉwriter = fileˉwriter;
+        Readˉonlyˉdirectory = readˉonlyˉdirectory;
     }
 
     public ImmutableArray<string> Arguments { get; }
@@ -504,6 +506,8 @@ public sealed class Hostedˉresourceˉcontext
     public IHostedˉfileˉreader? Fileˉreader { get; }
 
     public IHostedˉfileˉwriter? Fileˉwriter { get; }
+
+    public IReadˉonlyˉdirectory? Readˉonlyˉdirectory { get; }
 
     public uint Getˉargumentˉcount() => checked((uint)Arguments.Length);
 
@@ -574,6 +578,24 @@ public sealed class Hostedˉresourceˉcontext
             throw new Runtimeˉexception(Code, Exception.Message);
         }
     }
+
+    public ImmutableArray<byte> Readˉdirectoryˉbytes(
+        string name,
+        uint offset,
+        uint maximumˉbytes)
+    {
+        if (Readˉonlyˉdirectory is null)
+        {
+            throw new Runtimeˉexception(
+                "WVR3001",
+                $"The host does not implement capability '{Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1}'.");
+        }
+        return Readˉonlyˉdirectoryˉcontract.Read(
+            Readˉonlyˉdirectory,
+            name,
+            offset,
+            maximumˉbytes);
+    }
 }
 
 public interface ICapabilityˉhost
@@ -609,6 +631,8 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
             Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE or
             Capabilityˉcatalog.PROCESS_ARGUMENT or
             Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT => true,
+            Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1 =>
+                Resources.Readˉonlyˉdirectory is not null,
             Capabilityˉcatalog.FILE_READ_BYTES => Resources.Fileˉreader is not null,
             Capabilityˉcatalog.FILE_WRITE_BYTES => Resources.Fileˉwriter is not null,
             _ => false,
@@ -634,6 +658,11 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
                 return Runtimeˉvalue.Fromˉu32(Resources.Getˉargumentˉcount());
             case Capabilityˉcatalog.PROCESS_ARGUMENT:
                 return Runtimeˉvalue.Fromˉtext(Resources.Getˉargument(arguments[0].U32ˉvalue));
+            case Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1:
+                return Runtimeˉvalue.Fromˉbytes(Resources.Readˉdirectoryˉbytes(
+                    arguments[0].Textˉvalue!,
+                    arguments[1].U32ˉvalue,
+                    arguments[2].U32ˉvalue));
             case Capabilityˉcatalog.FILE_READ_BYTES:
                 return Runtimeˉvalue.Fromˉbytes(Resources.Readˉfileˉbytes(arguments[0].Textˉvalue!));
             case Capabilityˉcatalog.FILE_WRITE_BYTES:

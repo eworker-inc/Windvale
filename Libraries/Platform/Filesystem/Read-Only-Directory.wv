@@ -1,0 +1,185 @@
+module Readˉonlyˉdirectory profile hosted;
+
+capability filesystem.directory_read_v1;
+
+// The capability is one pre-bound directory instance. Names are single ASCII
+// segments; providers never receive native paths or ambient process state.
+
+enum Directoryˉreadˉstatus {
+    Valid = 0;
+    Notˉfound = 1;
+    Notˉfile = 2;
+    Permissionˉdenied = 3;
+    Unavailable = 4;
+    Revoked = 5;
+    Stale = 6;
+    Peerˉexited = 7;
+    Invalidˉoffset = 8;
+    Invalidˉname = 9;
+    Invalidˉlimit = 10;
+    Invalidˉresponse = 11;
+}
+
+record Directoryˉreadˉresult {
+    Status: Directoryˉreadˉstatus;
+    Value: bytes;
+    Fileˉlength: u32;
+    Nextˉoffset: u32;
+}
+
+export fn Directoryˉreadˉempty() -> bytes {
+    return Textˉtoˉutf8("");
+}
+
+export fn Directoryˉreadˉfailure(
+    Status: Directoryˉreadˉstatus,
+    Offset: u32
+) -> Directoryˉreadˉresult {
+    return Directoryˉreadˉresult(
+        Status,
+        Directoryˉreadˉempty(),
+        0u32,
+        Offset
+    );
+}
+
+export fn Directoryˉreadˉnameˉisˉvalid(Name: text) -> bool {
+    let Bytes: bytes = Textˉtoˉutf8(Name);
+    let Length: u32 = Bytesˉlength(Bytes);
+    if Length == 0u32 { return false; }
+    if Length > 255u32 { return false; }
+    if Length == 1u32 {
+        if Bytesˉreadˉu8(Bytes, 0u32) == 46u8 { return false; }
+    }
+    if Length == 2u32 {
+        if Bytesˉreadˉu8(Bytes, 0u32) == 46u8 {
+            if Bytesˉreadˉu8(Bytes, 1u32) == 46u8 { return false; }
+        }
+    }
+
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Bytes, Index));
+        var Valid: bool = false;
+        if Value >= 48u32 { if Value <= 57u32 { Valid = true; } }
+        if Value >= 65u32 { if Value <= 90u32 { Valid = true; } }
+        if Value >= 97u32 { if Value <= 122u32 { Valid = true; } }
+        if Value == 45u32 { Valid = true; }
+        if Value == 46u32 { Valid = true; }
+        if Value == 95u32 { Valid = true; }
+        if !Valid { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Directoryˉreadˉstatusˉfromˉu32(Value: u32) -> Directoryˉreadˉstatus {
+    if Value == 0u32 { return Directoryˉreadˉstatus.Valid; }
+    if Value == 1u32 { return Directoryˉreadˉstatus.Notˉfound; }
+    if Value == 2u32 { return Directoryˉreadˉstatus.Notˉfile; }
+    if Value == 3u32 { return Directoryˉreadˉstatus.Permissionˉdenied; }
+    if Value == 4u32 { return Directoryˉreadˉstatus.Unavailable; }
+    if Value == 5u32 { return Directoryˉreadˉstatus.Revoked; }
+    if Value == 6u32 { return Directoryˉreadˉstatus.Stale; }
+    if Value == 7u32 { return Directoryˉreadˉstatus.Peerˉexited; }
+    if Value == 8u32 { return Directoryˉreadˉstatus.Invalidˉoffset; }
+    return Directoryˉreadˉstatus.Invalidˉresponse;
+}
+
+export fn Directoryˉreadˉdecode(
+    Response: bytes,
+    Offset: u32,
+    Maximum: u32
+) -> Directoryˉreadˉresult {
+    let Total: u32 = Bytesˉlength(Response);
+    if Total < 24u32 {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+    if Total > 3096u32 {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1380210263u32 {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+
+    let Rawˉstatus: u32 = Bytesˉreadˉu32ˉlittle(Response, 8u32);
+    if Rawˉstatus > 8u32 {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+    let Fileˉlength: u32 = Bytesˉreadˉu32ˉlittle(Response, 12u32);
+    let Returnedˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Response, 16u32);
+    let Chunkˉlength: u32 = Bytesˉreadˉu32ˉlittle(Response, 20u32);
+    if Returnedˉoffset != Offset {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+    if Chunkˉlength != Total - 24u32 {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+    if Chunkˉlength > Maximum {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+
+    let Status: Directoryˉreadˉstatus = Directoryˉreadˉstatusˉfromˉu32(Rawˉstatus);
+    if Status == Directoryˉreadˉstatus.Valid {
+        if Offset > Fileˉlength {
+            return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+        }
+        let Remaining: u32 = Fileˉlength - Offset;
+        var Expected: u32 = Maximum;
+        if Remaining < Expected { Expected = Remaining; }
+        if Chunkˉlength != Expected {
+            return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+        }
+        return Directoryˉreadˉresult(
+            Status,
+            Bytesˉslice(Response, 24u32, Chunkˉlength),
+            Fileˉlength,
+            Offset + Chunkˉlength
+        );
+    }
+
+    if Chunkˉlength != 0u32 {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+    if Status == Directoryˉreadˉstatus.Invalidˉoffset {
+        if Offset <= Fileˉlength {
+            return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+        }
+        return Directoryˉreadˉresult(
+            Status,
+            Directoryˉreadˉempty(),
+            Fileˉlength,
+            Offset
+        );
+    }
+    if Fileˉlength != 0u32 {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉresponse, Offset);
+    }
+    return Directoryˉreadˉresult(
+        Status,
+        Directoryˉreadˉempty(),
+        0u32,
+        Offset
+    );
+}
+
+export fn Directoryˉreadˉbytes(
+    Name: text,
+    Offset: u32,
+    Maximum: u32
+) -> Directoryˉreadˉresult {
+    if !Directoryˉreadˉnameˉisˉvalid(Name) {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉname, Offset);
+    }
+    if Maximum > 3072u32 {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉlimit, Offset);
+    }
+    if Offset > 4294967295u32 - Maximum {
+        return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉlimit, Offset);
+    }
+    let Response: bytes = filesystem.directory_read_v1(Name, Offset, Maximum);
+    return Directoryˉreadˉdecode(Response, Offset, Maximum);
+}

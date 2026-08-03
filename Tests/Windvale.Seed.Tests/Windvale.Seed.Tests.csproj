@@ -127,6 +127,9 @@
       Include="../../Libraries/Platform/Resources/Hosted-Resource-Store.wv"
       LogicalName="Windvale.Seed.Tests.Hosted-Resource-Store.wv" />
     <EmbeddedResource
+      Include="../../Libraries/Platform/Filesystem/Read-Only-Directory.wv"
+      LogicalName="Windvale.Seed.Tests.Read-Only-Directory.wv" />
+    <EmbeddedResource
       Include="../../Examples/Foundation/Byte-Construction-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Byte-Construction-Demo.wv" />
     <EmbeddedResource
