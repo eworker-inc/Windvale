@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Bounded text and bytes values in the Wasm-hosted WVB interpreter: uniform descriptor cells, fixed call frames, a charged 64 KiB heap, static data, byte readers/builders/concatenation, text concatenation/conversion, strict UTF-8, exact resource failures, and complete-verifier-first differential evidence under Node.js.
 - The first Wasm-hosted Windvale WVB interpreter: a separate import-free profile-14 artifact executes complete-verifier-approved scalar calls and control with exact guest/outer budgets, call-depth containment, checked overflow, reference-runtime agreement, and a twenty-nine-artifact Node.js gate.
 - Cross-host-qualified `windows-x64-console-v2` and `linux-x64-console-v2` targets. They package hosted `console.write_line` programs with canonical WVA startups, the existing exact native output leaves, initialized ABI-22 runtime tables, and independently verified `WVHC 1` capability/service metadata while preserving version-1 bytes.
 - The first capability-bearing static platform-library slice: profile-compatible imports require explicit transitive capability approval, portable `WVRS 1` policy now lives under `Libraries/Foundation`, and a `Libraries/Platform` adapter completes a live hosted store lookup without changing WVB or treating opaque host resources as filesystem paths.

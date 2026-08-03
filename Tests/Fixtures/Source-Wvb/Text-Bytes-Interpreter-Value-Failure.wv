@@ -1,0 +1,25 @@
+module Sourceˉwvbˉtextˉbytesˉinterpreterˉvalueˉfailure profile portable;
+
+fn Double(Value: bytes) -> bytes {
+    return Bytesˉconcat(Value, Value);
+}
+
+export fn Main() -> i32 {
+    var Value: bytes = Bytesˉfromˉu8(1u8);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    return 0;
+}

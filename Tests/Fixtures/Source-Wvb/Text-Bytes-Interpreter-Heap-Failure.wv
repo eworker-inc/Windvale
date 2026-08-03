@@ -1,0 +1,34 @@
+module Sourceˉwvbˉtextˉbytesˉinterpreterˉheapˉfailure profile portable;
+
+fn Copy(Value: bytes) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉslice(Value, 0u32, 0u32));
+}
+
+fn Double(Value: bytes) -> bytes {
+    return Bytesˉconcat(Value, Value);
+}
+
+export fn Main() -> i32 {
+    var Value: bytes = Bytesˉfromˉu8(1u8);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Double(Value);
+    Value = Copy(Value);
+    Value = Copy(Value);
+    Value = Copy(Value);
+    Value = Copy(Value);
+    Value = Copy(Value);
+    Value = Copy(Value);
+    Value = Copy(Value);
+    return 0;
+}

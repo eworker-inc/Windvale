@@ -727,7 +727,7 @@ export fn Compilerˉwebassemblyˉreadˉruntimeˉcallˉfunction(
         }
         let Nonparameterˉlocals: u32 =
             Bytesˉreadˉu32ˉlittle(Input, Cursor);
-        if Nonparameterˉlocals > 2047u32 {
+        if Nonparameterˉlocals > 4095u32 {
             return Compilerˉwebassemblyˉruntimeˉcallˉfunctionˉfailure();
         }
         Cursor = Cursor + 4u32;
@@ -755,7 +755,7 @@ export fn Compilerˉwebassemblyˉreadˉruntimeˉcallˉfunction(
         if Codeˉlength == 0u32 {
             return Compilerˉwebassemblyˉruntimeˉcallˉfunctionˉfailure();
         }
-        if Codeˉlength > 32768u32 {
+        if Codeˉlength > 65536u32 {
             return Compilerˉwebassemblyˉruntimeˉcallˉfunctionˉfailure();
         }
         if Maximumˉstack == 0u32 {
@@ -954,7 +954,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
         return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
     }
     let Nonparameterˉlocals: u32 = Bytesˉreadˉu32ˉlittle(Input, Function + 18u32);
-    if Nonparameterˉlocals > 2047u32 {
+    if Nonparameterˉlocals > 4095u32 {
         return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
     }
     let Localˉtypesˉoffset: u32 = Function + 22u32;
@@ -984,7 +984,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
     let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Metadata + 4u32);
     let Maximumˉstack: u32 = Bytesˉreadˉu32ˉlittle(Input, Metadata + 8u32);
     if Codeˉlength == 0u32 { return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure(); }
-    if Codeˉlength > 32768u32 { return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure(); }
+    if Codeˉlength > 65536u32 { return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure(); }
     if Codeˉlength != Code.Payloadˉlength {
         return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
     }

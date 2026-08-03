@@ -99,9 +99,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "1cc90cbe50b2605096c7002e52c5075423dbf3f567ee4bd70d141dee52e61008";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "851f8122acc9314b1061db5a907841dbb4f9aa68641aedc6ef73f3d94f949cd3";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "083222ad86052dc39e3415850ff67dc09a52b6f144aa2dad329b860ad0a5c5d9";
+    private const string WEBASSEMBLY_CORE_SHA256 = "9567208c3547cca63fd7ac3f71f31cf1761b1e255884ba56a1bef47668c8cea3";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "e3cb41c7724130ed18c20af7e823a80f76ca7fafd3a0befef0cecb790c9e305f";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "ddcbd2665f70ff21a1d59024c46d2489f7f0db398ca38e920af872be0412947a";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -161,12 +161,19 @@ internal static class Program
     private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_SHA256 = "8601f90946c0738ad6ce20c236e219f66e4ee4b2b143242a430c203918b1259a";
     private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_WVB_SHA256 = "6a26b09c0f96e3fa9edf8c180ee8f4b2551f1b1007f0faabcec39be1106285b4";
     private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_SHA256 = "6060b8198405b5f8763890ef5b53482398e1e0c7716f91ab279d9307db8d077b";
-    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "f0f51936fec70d64f5d8021733b8d8312bce14ba411d90e4896ef19e317fb7a4";
-    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SHA256 = "683410069c64d0143f748d34cb63f16b7d36c130662c282c003b981b24d37580";
+    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "633745ec1c7e8dbd3daf0439637b46c31b1ae53b17d5dd9a2c7d4a2c41638579";
+    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SHA256 = "57cc1c9c8a27cca63aaba23716c543450b0cfee5172dd6a1c01db246a637f78c";
     private const string SOURCE_WVB_FUNCTION_ONLY_SHA256 = "9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_GUEST_SHA256 = "6e8c2c29dc5f42d5dc2a7283604acca8d183325d9ae972c1dce3430aa7976414";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_I32_OVERFLOW_SHA256 = "f10665d894c6b7cd3d198dc50469f3320e0fad71442aded4bf4eae06a1a1c85c";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_U32_OVERFLOW_SHA256 = "fd0c02a650d54d6618f760a36613eb811c49b8304bd4a9ab20e94f03bd733d2d";
+    private const string SOURCE_WVB_TEXT_BYTES_INTERPRETER_GUEST_SHA256 = "4ec4c9b17097ef6757ae8bcef4dd0adbed0fe86f14860e26e6df6a1448bead8a";
+    private const string SOURCE_WVB_TEXT_BYTES_INTERPRETER_UTF8_SHA256 = "45409d0676db8db96138061ca6f17a77e232ef93055ff2d7eacbe5fc17ba38f4";
+    private const string SOURCE_WVB_TEXT_BYTES_INTERPRETER_INVALID_UTF8_SHA256 = "b70b87ba513d0223f20d0256b349aa29e61c9112d80c944b0df1bb119243b027";
+    private const string SOURCE_WVB_TEXT_BYTES_INTERPRETER_RANGE_SHA256 = "558af30d475b126b7729ed34794280a86f157f85a7a3ab351ae4ad86978c8d57";
+    private const string SOURCE_WVB_TEXT_BYTES_INTERPRETER_U16_SHA256 = "599dacbd3f7aaae824c80a027371b34de97c6c4986cc7f8fdf66b48fc91530cd";
+    private const string SOURCE_WVB_TEXT_BYTES_INTERPRETER_VALUE_SHA256 = "0cdea42a9d9828a2c4aba980ab0b149303a8ddd0a86e95fe281407ad54476670";
+    private const string SOURCE_WVB_TEXT_BYTES_INTERPRETER_HEAP_SHA256 = "ce1871d97448859099e5039bd982a1b9d81663381d391c025c572cb10f4d5a99";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -659,6 +666,27 @@ internal static class Program
 
     private static readonly string SOURCE_WVB_SCALAR_INTERPRETER_U32_OVERFLOW_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-U32-Overflow.wv");
+
+    private static readonly string SOURCE_WVB_TEXT_BYTES_INTERPRETER_GUEST_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Guest.wv");
+
+    private static readonly string SOURCE_WVB_TEXT_BYTES_INTERPRETER_UTF8_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Utf8-Boundaries.wv");
+
+    private static readonly string SOURCE_WVB_TEXT_BYTES_INTERPRETER_INVALID_UTF8_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Invalid-Utf8.wv");
+
+    private static readonly string SOURCE_WVB_TEXT_BYTES_INTERPRETER_RANGE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Range-Failure.wv");
+
+    private static readonly string SOURCE_WVB_TEXT_BYTES_INTERPRETER_U16_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-U16-Failure.wv");
+
+    private static readonly string SOURCE_WVB_TEXT_BYTES_INTERPRETER_VALUE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Value-Failure.wv");
+
+    private static readonly string SOURCE_WVB_TEXT_BYTES_INTERPRETER_HEAP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Heap-Failure.wv");
 
     private static readonly string SOURCE_WVB_DATA_AND_TEXT_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Data-And-Text.wv");
@@ -11609,7 +11637,7 @@ internal static class Program
 
         var Scalarˉinterpreterˉwvb = Compileˉsuccess(
             WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE);
-        Equal(25_568, Scalarˉinterpreterˉwvb.Length);
+        Equal(43_908, Scalarˉinterpreterˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Scalarˉinterpreterˉwvb));
@@ -11619,10 +11647,10 @@ internal static class Program
         var Scalarˉinterpreterˉmain = Scalarˉinterpreterˉverified.Functions[0];
         Equal("Main", Scalarˉinterpreterˉmain.Declaration.Name);
         Equal(1, Scalarˉinterpreterˉmain.Declaration.Parameterˉtypes.Length);
-        Equal(1_572, Scalarˉinterpreterˉmain.Declaration.Localˉtypes.Length);
-        Equal(23_823, Scalarˉinterpreterˉmain.Declaration.Codeˉlength);
+        Equal(2_645, Scalarˉinterpreterˉmain.Declaration.Localˉtypes.Length);
+        Equal(41_090, Scalarˉinterpreterˉmain.Declaration.Codeˉlength);
         Equal(3, Scalarˉinterpreterˉmain.Declaration.Maximumˉstackˉdepth);
-        Equal(5_208, Scalarˉinterpreterˉmain.Instructions.Length);
+        Equal(8_969, Scalarˉinterpreterˉmain.Instructions.Length);
 
         ImmutableArray<byte> Buildˉscalarˉrequest(
             IEnumerable<byte> Candidate,
@@ -11712,7 +11740,7 @@ internal static class Program
             8);
         var Functionˉonlyˉinterpreted = Runˉscalarˉinterpreter(
             Functionˉonlyˉrequest);
-        Equal(121_003L, Functionˉonlyˉinterpreted.Executedˉinstructions);
+        Equal(171_811L, Functionˉonlyˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 6, 199),
             Readˉscalarˉresponse(Functionˉonlyˉinterpreted.Bytes));
@@ -11728,20 +11756,20 @@ internal static class Program
             Runˉreferenceˉwebassemblyˉi32(Scalarˉguestˉwvb));
         var Scalarˉguestˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Scalarˉguestˉwvb, 1_000, 8));
-        Equal(270_950L, Scalarˉguestˉinterpreted.Executedˉinstructions);
+        Equal(376_099L, Scalarˉguestˉinterpreted.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(0, 42, 351),
             Readˉscalarˉresponse(Scalarˉguestˉinterpreted.Bytes));
 
         var Guestˉlimited = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Functionˉonlyˉwvb, 198, 8));
-        Equal(120_641L, Guestˉlimited.Executedˉinstructions);
+        Equal(171_247L, Guestˉlimited.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3011, 0, 198),
             Readˉscalarˉresponse(Guestˉlimited.Bytes));
         var Depthˉlimited = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Functionˉonlyˉwvb, 1_000, 1));
-        Equal(48_861L, Depthˉlimited.Executedˉinstructions);
+        Equal(66_902L, Depthˉlimited.Executedˉinstructions);
         Equal(
             new WebAssemblyˉexecutionˉresult(3004, 0, 27),
             Readˉscalarˉresponse(Depthˉlimited.Bytes));
@@ -11753,7 +11781,7 @@ internal static class Program
             Moduleˉdigest.Calculateˉsha256(I32ˉoverflowˉwvb));
         Equal(3007, Runˉreferenceˉwebassemblyˉi32(I32ˉoverflowˉwvb).Status);
         Equal(
-            10_967L,
+            17_225L,
             Runˉscalarˉoverflow(Buildˉscalarˉrequest(I32ˉoverflowˉwvb, 1_000, 8)));
         var U32ˉoverflowˉwvb = Compileˉsuccess(
             SOURCE_WVB_SCALAR_INTERPRETER_U32_OVERFLOW_SOURCE);
@@ -11762,19 +11790,131 @@ internal static class Program
             Moduleˉdigest.Calculateˉsha256(U32ˉoverflowˉwvb));
         Equal(3007, Runˉreferenceˉwebassemblyˉi32(U32ˉoverflowˉwvb).Status);
         Equal(
-            16_983L,
+            24_937L,
             Runˉscalarˉoverflow(Buildˉscalarˉrequest(U32ˉoverflowˉwvb, 1_000, 8)));
+
+        byte[] Compileˉtextˉbytesˉguest(
+            string Source,
+            int Expectedˉlength,
+            string Expectedˉdigest)
+        {
+            var Bytes = Compileˉsuccess(Source);
+            Equal(Expectedˉlength, Bytes.Length);
+            Equal(Expectedˉdigest, Moduleˉdigest.Calculateˉsha256(Bytes));
+            _ = Moduleˉcodec.Readˉandˉverify(Bytes);
+            return Bytes;
+        }
+
+        var Textˉbytesˉguestˉwvb = Compileˉtextˉbytesˉguest(
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_GUEST_SOURCE,
+            2_021,
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_GUEST_SHA256);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 298),
+            Runˉreferenceˉwebassemblyˉi32(Textˉbytesˉguestˉwvb));
+        var Textˉbytesˉinterpreted = Runˉscalarˉinterpreter(
+            Buildˉscalarˉrequest(Textˉbytesˉguestˉwvb, 4_096, 8));
+        Equal(327_758L, Textˉbytesˉinterpreted.Executedˉinstructions);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 298),
+            Readˉscalarˉresponse(Textˉbytesˉinterpreted.Bytes));
+
+        var Utf8ˉboundariesˉwvb = Compileˉtextˉbytesˉguest(
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_UTF8_SOURCE,
+            1_744,
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_UTF8_SHA256);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 153),
+            Runˉreferenceˉwebassemblyˉi32(Utf8ˉboundariesˉwvb));
+        var Utf8ˉboundariesˉinterpreted = Runˉscalarˉinterpreter(
+            Buildˉscalarˉrequest(Utf8ˉboundariesˉwvb, 4_096, 8));
+        Equal(208_701L, Utf8ˉboundariesˉinterpreted.Executedˉinstructions);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 153),
+            Readˉscalarˉresponse(Utf8ˉboundariesˉinterpreted.Bytes));
+
+        var Invalidˉutf8ˉwvb = Compileˉtextˉbytesˉguest(
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_INVALID_UTF8_SOURCE,
+            269,
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_INVALID_UTF8_SHA256);
+        Throwsˉruntime(
+            "WVR3014",
+            () => Runˉreferenceˉwebassemblyˉi32(Invalidˉutf8ˉwvb));
+        var Invalidˉutf8ˉinterpreted = Runˉscalarˉinterpreter(
+            Buildˉscalarˉrequest(Invalidˉutf8ˉwvb, 4_096, 8));
+        Equal(19_985L, Invalidˉutf8ˉinterpreted.Executedˉinstructions);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3014, 0, 11),
+            Readˉscalarˉresponse(Invalidˉutf8ˉinterpreted.Bytes));
+
+        var Rangeˉfailureˉwvb = Compileˉtextˉbytesˉguest(
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_RANGE_SOURCE,
+            286,
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_RANGE_SHA256);
+        Throwsˉruntime(
+            "WVR3008",
+            () => Runˉreferenceˉwebassemblyˉi32(Rangeˉfailureˉwvb));
+        var Rangeˉfailureˉinterpreted = Runˉscalarˉinterpreter(
+            Buildˉscalarˉrequest(Rangeˉfailureˉwvb, 4_096, 8));
+        Equal(22_552L, Rangeˉfailureˉinterpreted.Executedˉinstructions);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3008, 0, 14),
+            Readˉscalarˉresponse(Rangeˉfailureˉinterpreted.Bytes));
+
+        var U16ˉfailureˉwvb = Compileˉtextˉbytesˉguest(
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_U16_SOURCE,
+            237,
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_U16_SHA256);
+        Throwsˉruntime(
+            "WVR3016",
+            () => Runˉreferenceˉwebassemblyˉi32(U16ˉfailureˉwvb));
+        var U16ˉfailureˉinterpreted = Runˉscalarˉinterpreter(
+            Buildˉscalarˉrequest(U16ˉfailureˉwvb, 4_096, 8));
+        Equal(12_729L, U16ˉfailureˉinterpreted.Executedˉinstructions);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3016, 0, 4),
+            Readˉscalarˉresponse(U16ˉfailureˉinterpreted.Bytes));
+
+        var Valueˉfailureˉwvb = Compileˉtextˉbytesˉguest(
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_VALUE_SOURCE,
+            868,
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_VALUE_SHA256);
+        Equal(0, Runˉreferenceˉwebassemblyˉi32(Valueˉfailureˉwvb).Status);
+        var Valueˉfailureˉinterpreted = Runˉscalarˉinterpreter(
+            Buildˉscalarˉrequest(Valueˉfailureˉwvb, 4_096, 8));
+        Equal(213_416L, Valueˉfailureˉinterpreted.Executedˉinstructions);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3015, 0, 256),
+            Readˉscalarˉresponse(Valueˉfailureˉinterpreted.Bytes));
+
+        var Heapˉfailureˉwvb = Compileˉtextˉbytesˉguest(
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_HEAP_SOURCE,
+            1_171,
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_HEAP_SHA256);
+        Equal(0, Runˉreferenceˉwebassemblyˉi32(Heapˉfailureˉwvb).Status);
+        var Heapˉfailureˉinterpreted = Runˉscalarˉinterpreter(
+            Buildˉscalarˉrequest(Heapˉfailureˉwvb, 4_096, 8));
+        Equal(325_715L, Heapˉfailureˉinterpreted.Executedˉinstructions);
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3018, 0, 404),
+            Readˉscalarˉresponse(Heapˉfailureˉinterpreted.Bytes));
+
+        var Unsupportedˉquote = Runˉscalarˉinterpreter(
+            Buildˉscalarˉrequest(Semanticˉdataˉwvb, 4_096, 8));
+        Equal(36_985L, Unsupportedˉquote.Executedˉinstructions);
+        Sequenceˉequal(ImmutableArray<byte>.Empty, Unsupportedˉquote.Bytes);
 
         var Scalarˉinterpreterˉlowered = Runˉwebassemblyˉtool(
             Tool,
-            Scalarˉinterpreterˉwvb);
+            Scalarˉinterpreterˉwvb,
+            200_000_000);
         True(
             Scalarˉinterpreterˉlowered.Exitˉcode == 0,
             "The scalar WVB interpreter did not lower: " +
                 Scalarˉinterpreterˉlowered.Diagnostics +
                 Scalarˉinterpreterˉlowered.Output);
-        Equal(145_469, Scalarˉinterpreterˉlowered.Writtenˉbytes.Length);
-        Equal(82_657_852L, Scalarˉinterpreterˉlowered.Executedˉinstructions);
+        Equal(253_707, Scalarˉinterpreterˉlowered.Writtenˉbytes.Length);
+        Equal(147_410_612L, Scalarˉinterpreterˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SHA256,
             Moduleˉdigest.Calculateˉsha256(
@@ -18258,7 +18398,7 @@ internal static class Program
         Equal(Valueˉtype.Bytes, Function.Declaration.Parameterˉtypes[0].Kind);
         Equal(Valueˉtype.Bytes, Function.Declaration.Returnˉtype.Kind);
         True(
-            Function.Declaration.Localˉtypes.Length is >= 0 and <= 2_047,
+            Function.Declaration.Localˉtypes.Length is >= 0 and <= 4_095,
             "The runtime-value local count is outside the profile.");
         True(
             Function.Declaration.Localˉtypes.All(Type =>

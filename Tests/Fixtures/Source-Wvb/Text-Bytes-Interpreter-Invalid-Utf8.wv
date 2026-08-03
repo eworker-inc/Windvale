@@ -1,0 +1,7 @@
+module Sourceˉwvbˉtextˉbytesˉinterpreterˉinvalidˉutf8 profile portable;
+
+export fn Main() -> i32 {
+    let Invalid: bytes = Bytesˉfromˉu8(255u8);
+    let Value: text = Textˉfromˉutf8(Invalid);
+    return 0;
+}

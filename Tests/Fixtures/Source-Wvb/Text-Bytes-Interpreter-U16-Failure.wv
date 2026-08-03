@@ -1,0 +1,6 @@
+module Sourceˉwvbˉtextˉbytesˉinterpreterˉu16ˉfailure profile portable;
+
+export fn Main() -> i32 {
+    let Value: bytes = Bytesˉfromˉu16ˉlittle(65536u32);
+    return 0;
+}

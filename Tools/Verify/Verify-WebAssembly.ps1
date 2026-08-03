@@ -43,6 +43,13 @@ $ScalarFunctionOnlySource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb
 $ScalarGuestSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Scalar-Interpreter-Guest.wv'
 $ScalarI32OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Scalar-Interpreter-I32-Overflow.wv'
 $ScalarU32OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Scalar-Interpreter-U32-Overflow.wv'
+$TextBytesGuestSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-Guest.wv'
+$TextBytesUtf8Source = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-Utf8-Boundaries.wv'
+$TextBytesInvalidUtf8Source = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-Invalid-Utf8.wv'
+$TextBytesRangeSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-Range-Failure.wv'
+$TextBytesU16Source = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-U16-Failure.wv'
+$TextBytesValueSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-Value-Failure.wv'
+$TextBytesHeapSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-Heap-Failure.wv'
 $StructuralDataSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Data-And-Text.wv'
 $StructuralTypesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Nominal-Types.wv'
 $StructuralCapabilitiesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv'
@@ -81,6 +88,13 @@ $ScalarFunctionOnlyWvb = Join-Path $ArtifactDirectory 'Scalar-Function-Only.wvb'
 $ScalarGuestWvb = Join-Path $ArtifactDirectory 'Scalar-Interpreter-Guest.wvb'
 $ScalarI32OverflowWvb = Join-Path $ArtifactDirectory 'Scalar-Interpreter-I32-Overflow.wvb'
 $ScalarU32OverflowWvb = Join-Path $ArtifactDirectory 'Scalar-Interpreter-U32-Overflow.wvb'
+$TextBytesGuestWvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-Guest.wvb'
+$TextBytesUtf8Wvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-Utf8-Boundaries.wvb'
+$TextBytesInvalidUtf8Wvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-Invalid-Utf8.wvb'
+$TextBytesRangeWvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-Range-Failure.wvb'
+$TextBytesU16Wvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-U16-Failure.wvb'
+$TextBytesValueWvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-Value-Failure.wvb'
+$TextBytesHeapWvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-Heap-Failure.wvb'
 $StructuralDataWvb = Join-Path $ArtifactDirectory 'Structural-Data-And-Text.wvb'
 $StructuralTypesWvb = Join-Path $ArtifactDirectory 'Structural-Nominal-Types.wvb'
 $StructuralCapabilitiesWvb = Join-Path $ArtifactDirectory 'Structural-Hosted-Capabilities.wvb'
@@ -197,6 +211,13 @@ Invoke-Windvale @('compile', $ScalarFunctionOnlySource, '-o', $ScalarFunctionOnl
 Invoke-Windvale @('compile', $ScalarGuestSource, '-o', $ScalarGuestWvb)
 Invoke-Windvale @('compile', $ScalarI32OverflowSource, '-o', $ScalarI32OverflowWvb)
 Invoke-Windvale @('compile', $ScalarU32OverflowSource, '-o', $ScalarU32OverflowWvb)
+Invoke-Windvale @('compile', $TextBytesGuestSource, '-o', $TextBytesGuestWvb)
+Invoke-Windvale @('compile', $TextBytesUtf8Source, '-o', $TextBytesUtf8Wvb)
+Invoke-Windvale @('compile', $TextBytesInvalidUtf8Source, '-o', $TextBytesInvalidUtf8Wvb)
+Invoke-Windvale @('compile', $TextBytesRangeSource, '-o', $TextBytesRangeWvb)
+Invoke-Windvale @('compile', $TextBytesU16Source, '-o', $TextBytesU16Wvb)
+Invoke-Windvale @('compile', $TextBytesValueSource, '-o', $TextBytesValueWvb)
+Invoke-Windvale @('compile', $TextBytesHeapSource, '-o', $TextBytesHeapWvb)
 Invoke-Windvale @('compile', $StructuralDataSource, '-o', $StructuralDataWvb)
 Invoke-Windvale @('compile', $StructuralTypesSource, '-o', $StructuralTypesWvb)
 Invoke-Windvale @('compile', $StructuralCapabilitiesSource, '-o', $StructuralCapabilitiesWvb)
@@ -264,7 +285,9 @@ $ExecutableSemanticRunArguments = @(
 Invoke-Windvale ($ExecutableSemanticRunArguments + @(
     $WvbExecutableVerifyWvb,
     $WvbExecutableVerifyWasm))
-Invoke-Windvale ($RunArguments + @($WvbScalarInterpreterWvb, $WvbScalarInterpreterWasm))
+Invoke-Windvale ($ExecutableSemanticRunArguments + @(
+    $WvbScalarInterpreterWvb,
+    $WvbScalarInterpreterWasm))
 
 node $EngineVerifier `
     $SuccessWasm `
@@ -313,7 +336,14 @@ node $EngineVerifier `
     $ScalarFunctionOnlyWvb `
     $ScalarGuestWvb `
     $ScalarI32OverflowWvb `
-    $ScalarU32OverflowWvb
+    $ScalarU32OverflowWvb `
+    $TextBytesGuestWvb `
+    $TextBytesUtf8Wvb `
+    $TextBytesInvalidUtf8Wvb `
+    $TextBytesRangeWvb `
+    $TextBytesU16Wvb `
+    $TextBytesValueWvb `
+    $TextBytesHeapWvb
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

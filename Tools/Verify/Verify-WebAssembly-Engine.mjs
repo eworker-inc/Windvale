@@ -289,19 +289,24 @@ const EXPECTED = [
         runtime: "wvb-executable",
     },
     {
-        name: "Wasm-hosted Windvale WVB scalar interpreter",
+        name: "Wasm-hosted Windvale WVB scalar/text/bytes interpreter",
         path: process.argv[44],
         verifierPath: process.argv[40],
-        candidatePaths: [process.argv[45], process.argv[46], process.argv[47], process.argv[48]],
-        sha256: "683410069c64d0143f748d34cb63f16b7d36c130662c282c003b981b24d37580",
-        bytes: 145469,
+        candidatePaths: [
+            process.argv[45], process.argv[46], process.argv[47], process.argv[48],
+            process.argv[49], process.argv[50], process.argv[51], process.argv[52],
+            process.argv[53], process.argv[54], process.argv[55],
+        ],
+        outsideProfilePath: process.argv[41],
+        sha256: "57cc1c9c8a27cca63aaba23716c543450b0cfee5172dd6a1c01db246a637f78c",
+        bytes: 253707,
         abi: 3,
         kind: 1,
         runtime: "wvb-scalar-interpreter",
     },
 ];
 
-if (process.argv.length !== 49) {
+if (process.argv.length !== 56) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -322,7 +327,10 @@ if (process.argv.length !== 49) {
             "<wvb-executable.wasm> <executable-data.wvb> " +
             "<executable-types.wvb> <executable-capabilities.wvb> " +
             "<wvb-scalar-interpreter.wasm> <function-only.wvb> " +
-            "<scalar-guest.wvb> <i32-overflow.wvb> <u32-overflow.wvb>",
+            "<scalar-guest.wvb> <i32-overflow.wvb> <u32-overflow.wvb> " +
+            "<text-bytes-guest.wvb> <utf8-boundaries.wvb> <invalid-utf8.wvb> " +
+            "<range-failure.wvb> <u16-failure.wvb> <value-failure.wvb> " +
+            "<heap-failure.wvb>",
     );
 }
 
@@ -1038,7 +1046,10 @@ function verifyRuntime(expected, module, exports, digest) {
         const verifierModule = new WebAssembly.Module(verifierBytes);
         const verifierExports = new WebAssembly.Instance(verifierModule).exports;
         const candidates = expected.candidatePaths.map(path => readFileSync(path));
-        const verifierSteps = [609_651, 3_056_208, 52_228, 170_625];
+        const verifierSteps = [
+            609_651, 3_056_208, 52_228, 170_625,
+            7_204_207, 5_394_389, 64_350, 72_820, 44_601, 405_013, 598_548,
+        ];
         for (let index = 0; index < candidates.length; index++) {
             requireMemoryResult(
                 expected.verifierPath,
@@ -1104,76 +1115,154 @@ function verifyRuntime(expected, module, exports, digest) {
         const functionRequest = scalarRequest(candidates[0]);
         requireScalarResult(
             "function/control guest",
-            runMemory(exports, functionRequest, 121_003),
+            runMemory(exports, functionRequest, 171_811),
             0,
-            121_003,
+            171_811,
             0,
             199,
             6,
         );
         requireScalarResult(
             "function/control guest repeat",
-            runMemory(exports, functionRequest, 121_003),
+            runMemory(exports, functionRequest, 171_811),
             0,
-            121_003,
+            171_811,
             0,
             199,
             6,
         );
         requireScalarResult(
             "outer instruction exhaustion",
-            runMemory(exports, functionRequest, 121_002),
+            runMemory(exports, functionRequest, 171_810),
             3011,
-            121_002,
+            171_810,
             0,
             0,
             0,
         );
         requireScalarResult(
             "complete scalar guest",
-            runMemory(exports, scalarRequest(candidates[1]), 270_950),
+            runMemory(exports, scalarRequest(candidates[1]), 376_099),
             0,
-            270_950,
+            376_099,
             0,
             351,
             42,
         );
         requireScalarResult(
             "guest instruction exhaustion",
-            runMemory(exports, scalarRequest(candidates[0], 198, 8), 120_641),
+            runMemory(exports, scalarRequest(candidates[0], 198, 8), 171_247),
             0,
-            120_641,
+            171_247,
             3011,
             198,
             0,
         );
         requireScalarResult(
             "guest call-depth exhaustion",
-            runMemory(exports, scalarRequest(candidates[0], 1_000, 1), 48_861),
+            runMemory(exports, scalarRequest(candidates[0], 1_000, 1), 66_902),
             0,
-            48_861,
+            66_902,
             3004,
             27,
             0,
         );
         requireScalarResult(
             "checked i32 overflow",
-            runMemory(exports, scalarRequest(candidates[2]), 10_967),
+            runMemory(exports, scalarRequest(candidates[2]), 17_225),
             3007,
-            10_967,
+            17_225,
             0,
             0,
             0,
         );
         requireScalarResult(
             "checked u32 overflow",
-            runMemory(exports, scalarRequest(candidates[3]), 16_983),
+            runMemory(exports, scalarRequest(candidates[3]), 24_937),
             3007,
-            16_983,
+            24_937,
             0,
             0,
             0,
         );
+        requireScalarResult(
+            "text/bytes values and descriptor calls",
+            runMemory(exports, scalarRequest(candidates[4], 4_096), 327_758),
+            0,
+            327_758,
+            0,
+            298,
+            42,
+        );
+        requireScalarResult(
+            "strict UTF-8 boundaries",
+            runMemory(exports, scalarRequest(candidates[5], 4_096), 208_701),
+            0,
+            208_701,
+            0,
+            153,
+            42,
+        );
+        requireScalarResult(
+            "invalid UTF-8 decoding",
+            runMemory(exports, scalarRequest(candidates[6], 4_096), 19_985),
+            0,
+            19_985,
+            3014,
+            11,
+            0,
+        );
+        requireScalarResult(
+            "byte range failure",
+            runMemory(exports, scalarRequest(candidates[7], 4_096), 22_552),
+            0,
+            22_552,
+            3008,
+            14,
+            0,
+        );
+        requireScalarResult(
+            "u16 narrowing failure",
+            runMemory(exports, scalarRequest(candidates[8], 4_096), 12_729),
+            0,
+            12_729,
+            3016,
+            4,
+            0,
+        );
+        requireScalarResult(
+            "per-value byte limit",
+            runMemory(exports, scalarRequest(candidates[9], 4_096), 213_416),
+            0,
+            213_416,
+            3015,
+            256,
+            0,
+        );
+        requireScalarResult(
+            "aggregate heap limit",
+            runMemory(exports, scalarRequest(candidates[10], 4_096), 325_715),
+            0,
+            325_715,
+            3018,
+            404,
+            0,
+        );
+        const outsideProfile = runMemory(
+            exports,
+            scalarRequest(readFileSync(expected.outsideProfilePath), 4_096),
+            36_985,
+        );
+        if (
+            outsideProfile.status !== 0 ||
+            outsideProfile.instructions !== 36_985 ||
+            outsideProfile.output.length !== 0
+        ) {
+            throw new Error(
+                `${expected.path}: an unsupported text-format operation was not rejected ` +
+                    "before interpretation.",
+            );
+        }
     } else if (expected.runtime === "wvb-semantic") {
         const [data, types, capabilities] = expected.acceptedInputPaths.map(path =>
             readFileSync(path));

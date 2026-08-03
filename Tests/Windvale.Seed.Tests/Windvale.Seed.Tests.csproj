@@ -238,6 +238,27 @@
       Include="../Fixtures/Source-Wvb/Scalar-Interpreter-U32-Overflow.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-U32-Overflow.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Text-Bytes-Interpreter-Guest.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Guest.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Text-Bytes-Interpreter-Utf8-Boundaries.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Utf8-Boundaries.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Text-Bytes-Interpreter-Invalid-Utf8.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Invalid-Utf8.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Text-Bytes-Interpreter-Range-Failure.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Range-Failure.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Text-Bytes-Interpreter-U16-Failure.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-U16-Failure.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Text-Bytes-Interpreter-Value-Failure.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Value-Failure.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Text-Bytes-Interpreter-Heap-Failure.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Heap-Failure.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Data-And-Text.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Data-And-Text.wv" />
     <EmbeddedResource

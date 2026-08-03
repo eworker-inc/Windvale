@@ -25,7 +25,7 @@ public sealed record Playgroundˉwebassemblyˉloweringˉresult(
 public static class Playgroundˉwebassemblyˉlowerer
 {
     public const string BACKEND_WVB_SHA256 =
-        "851f8122acc9314b1061db5a907841dbb4f9aa68641aedc6ef73f3d94f949cd3";
+        "e3cb41c7724130ed18c20af7e823a80f76ca7fafd3a0befef0cecb790c9e305f";
     public const int MAXIMUM_WEBASSEMBLY_BYTES = 1024 * 1024;
     public const long MAXIMUM_LOWERING_INSTRUCTIONS = 225_000_000;
 
