@@ -30,6 +30,8 @@ $RuntimeValuesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Run
 $RuntimeConcatSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-Concat-Main.wv'
 $RuntimeU16GuardSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-U16-Guard-Main.wv'
 $RuntimeArenaSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-Arena-Main.wv'
+$RuntimeU32GuardSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-U32-Guard-Main.wv'
+$WvbEnvelopeVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Envelope-Verify-Main.wv'
 $EngineVerifier = Join-Path $RepositoryRoot 'Tools/Verify/Verify-WebAssembly-Engine.mjs'
 $BackendWvb = Join-Path $ArtifactDirectory 'Windvale-WebAssembly.wvb'
 $SuccessWvb = Join-Path $ArtifactDirectory 'Checked-Add-Main.wvb'
@@ -53,6 +55,8 @@ $RuntimeValuesWvb = Join-Path $ArtifactDirectory 'Runtime-Values-Main.wvb'
 $RuntimeConcatWvb = Join-Path $ArtifactDirectory 'Runtime-Concat-Main.wvb'
 $RuntimeU16GuardWvb = Join-Path $ArtifactDirectory 'Runtime-U16-Guard-Main.wvb'
 $RuntimeArenaWvb = Join-Path $ArtifactDirectory 'Runtime-Arena-Main.wvb'
+$RuntimeU32GuardWvb = Join-Path $ArtifactDirectory 'Runtime-U32-Guard-Main.wvb'
+$WvbEnvelopeVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Envelope-Verify-Main.wvb'
 $SuccessWasm = Join-Path $ArtifactDirectory 'Checked-Add-Main.wasm'
 $OverflowWasm = Join-Path $ArtifactDirectory 'Checked-Add-Overflow-Main.wasm'
 $StraightWasm = Join-Path $ArtifactDirectory 'Straight-I32-Main.wasm'
@@ -74,6 +78,8 @@ $RuntimeValuesWasm = Join-Path $ArtifactDirectory 'Runtime-Values-Main.wasm'
 $RuntimeConcatWasm = Join-Path $ArtifactDirectory 'Runtime-Concat-Main.wasm'
 $RuntimeU16GuardWasm = Join-Path $ArtifactDirectory 'Runtime-U16-Guard-Main.wasm'
 $RuntimeArenaWasm = Join-Path $ArtifactDirectory 'Runtime-Arena-Main.wasm'
+$RuntimeU32GuardWasm = Join-Path $ArtifactDirectory 'Runtime-U32-Guard-Main.wasm'
+$WvbEnvelopeVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Envelope-Verify-Main.wasm'
 
 New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
 
@@ -109,6 +115,8 @@ Invoke-Windvale @('compile', $RuntimeValuesSource, '-o', $RuntimeValuesWvb)
 Invoke-Windvale @('compile', $RuntimeConcatSource, '-o', $RuntimeConcatWvb)
 Invoke-Windvale @('compile', $RuntimeU16GuardSource, '-o', $RuntimeU16GuardWvb)
 Invoke-Windvale @('compile', $RuntimeArenaSource, '-o', $RuntimeArenaWvb)
+Invoke-Windvale @('compile', $RuntimeU32GuardSource, '-o', $RuntimeU32GuardWvb)
+Invoke-Windvale @('compile', $WvbEnvelopeVerifySource, '-o', $WvbEnvelopeVerifyWvb)
 
 $RunArguments = @(
     'run', $BackendWvb,
@@ -142,6 +150,8 @@ Invoke-Windvale ($RunArguments + @($RuntimeValuesWvb, $RuntimeValuesWasm))
 Invoke-Windvale ($RunArguments + @($RuntimeConcatWvb, $RuntimeConcatWasm))
 Invoke-Windvale ($RunArguments + @($RuntimeU16GuardWvb, $RuntimeU16GuardWasm))
 Invoke-Windvale ($RunArguments + @($RuntimeArenaWvb, $RuntimeArenaWasm))
+Invoke-Windvale ($RunArguments + @($RuntimeU32GuardWvb, $RuntimeU32GuardWasm))
+Invoke-Windvale ($RunArguments + @($WvbEnvelopeVerifyWvb, $WvbEnvelopeVerifyWasm))
 
 node $EngineVerifier `
     $SuccessWasm `
@@ -164,7 +174,10 @@ node $EngineVerifier `
     $RuntimeValuesWasm `
     $RuntimeConcatWasm `
     $RuntimeU16GuardWasm `
-    $RuntimeArenaWasm
+    $RuntimeArenaWasm `
+    $RuntimeU32GuardWasm `
+    $WvbEnvelopeVerifyWasm `
+    $WvbEnvelopeVerifyWvb
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

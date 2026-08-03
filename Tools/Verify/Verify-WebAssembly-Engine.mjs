@@ -219,9 +219,28 @@ const EXPECTED = [
         kind: 1,
         runtime: "arena",
     },
+    {
+        name: "linear-memory checked u32 arithmetic",
+        path: process.argv[23],
+        sha256: "f645c0ff095eb06c825fea056659545cc258d857da55fc9dfd1a928812373f61",
+        bytes: 1893,
+        abi: 3,
+        kind: 1,
+        runtime: "u32",
+    },
+    {
+        name: "Windvale-native WVB envelope verifier",
+        path: process.argv[24],
+        inputPath: process.argv[25],
+        sha256: "f493777450b720ef786b60502528819969ad9e0322aa55a9c0259f6de20850fc",
+        bytes: 14902,
+        abi: 3,
+        kind: 1,
+        runtime: "wvb-envelope",
+    },
 ];
 
-if (process.argv.length !== 23) {
+if (process.argv.length !== 26) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -231,7 +250,9 @@ if (process.argv.length !== 23) {
             "<sequential-if.wasm> <bounded-calls.wasm> <bounded-calls-overflow.wasm> " +
             "<calls-with-control.wasm> <calls-with-control-else.wasm> " +
             "<memory-bytes.wasm> <memory-text.wasm> <runtime-values.wasm> " +
-            "<runtime-concat.wasm> <runtime-u16.wasm> <runtime-arena.wasm>",
+            "<runtime-concat.wasm> <runtime-u16.wasm> <runtime-arena.wasm> " +
+            "<runtime-u32.wasm> <wvb-envelope-verifier.wasm> " +
+            "<wvb-envelope-verifier.wvb>",
     );
 }
 
@@ -514,6 +535,73 @@ function verifyRuntime(expected, module, exports, digest) {
             3015,
             14,
         );
+    } else if (expected.runtime === "u32") {
+        requireMemoryResult(
+            expected.path,
+            runMemory(
+                exports,
+                Uint8Array.from([42, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]),
+                57,
+            ),
+            0,
+            57,
+            Uint8Array.from([42, 0, 0, 0]),
+        );
+        requireMemoryResult(
+            expected.path,
+            runMemory(
+                exports,
+                Uint8Array.from([255, 255, 255, 255, 1, 0, 0, 0, 0, 0, 0, 0]),
+                57,
+            ),
+            3007,
+            37,
+        );
+        requireMemoryResult(
+            expected.path,
+            runMemory(
+                exports,
+                Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]),
+                57,
+            ),
+            3007,
+            47,
+        );
+        requireMemoryResult(expected.path, runMemory(exports, Uint8Array.from([1, 2, 3]), 57), 3008, 7);
+    } else if (expected.runtime === "wvb-envelope") {
+        const valid = readFileSync(expected.inputPath);
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, valid, 2_206),
+            0,
+            2_206,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(expected.path, runMemory(exports, valid, 2_205), 3011, 2_205);
+
+        const badMagic = Buffer.from(valid);
+        badMagic[0] ^= 0xFF;
+        const hostileLength = Buffer.from(valid);
+        hostileLength.writeUInt32LE(0xFFFFFFFF, 16);
+        for (const [name, input, instructions] of [
+            ["bad magic", badMagic, 112],
+            ["truncated header", valid.subarray(0, 11), 92],
+            ["trailing byte", Buffer.concat([valid, Buffer.from([0])]), 2_201],
+            ["hostile section length", hostileLength, 460],
+        ]) {
+            const result = runMemory(exports, input, 2_206);
+            try {
+                requireMemoryResult(
+                    expected.path,
+                    result,
+                    0,
+                    instructions,
+                    Uint8Array.from([0]),
+                );
+            } catch (error) {
+                throw new Error(`${expected.path}: ${name}: ${error.message}`);
+            }
+        }
     } else {
         throw new Error(`${expected.path}: unknown runtime-value verification profile.`);
     }

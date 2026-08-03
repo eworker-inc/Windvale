@@ -1,0 +1,10 @@
+module WebAssemblyˉruntimeˉu32ˉguard profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    let Left: u32 = Bytesˉreadˉu32ˉlittle(Input, 0u32);
+    let Right: u32 = Bytesˉreadˉu32ˉlittle(Input, 4u32);
+    let Reduction: u32 = Bytesˉreadˉu32ˉlittle(Input, 8u32);
+    let Sum: u32 = Left + Right;
+    let Result: u32 = Sum - Reduction;
+    return Bytesˉfromˉu32ˉlittle(Result);
+}

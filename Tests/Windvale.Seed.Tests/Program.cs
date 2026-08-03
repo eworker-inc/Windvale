@@ -97,9 +97,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "1a645be89b526929e509f7caf96466636b5b25da8b6da3a119b9b294a6f14f71";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "705c095c1beab9ce6534173dbb08b61eee294a919de8875eead82d90145ca548";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "19af2ca942a95d8254432f260143d0f410e91e0c84585236e2c722e46be4bcd7";
+    private const string WEBASSEMBLY_CORE_SHA256 = "20afbc028e5a0da2cb2f542e7ec783ddecf6104eaa098698cee76984d045d2ac";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "57a5ccad81801ba29cce6b3c4b8944132bbe153b96abb72cd2a1fb3113affaa5";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "68942010c7e87a8b9a5069930e1eaa8f8296bf8cd93cafac372aaa7fc5d21d8c";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -145,6 +145,10 @@ internal static class Program
     private const string WEBASSEMBLY_RUNTIME_U16_GUARD_SHA256 = "f312812fedae4c8dd45ffcb022301c1e85d7bdad4c71906a771cfc95333cde41";
     private const string WEBASSEMBLY_RUNTIME_ARENA_WVB_SHA256 = "17b55b4c767f3d8da1a6f8b524d72d72a34e8f74a7a448b8c37315501f77fcd5";
     private const string WEBASSEMBLY_RUNTIME_ARENA_SHA256 = "0e37802a606ee67abd467ddc5da84f0d18807bb86b8bf497c4bdf0a41fa5a089";
+    private const string WEBASSEMBLY_RUNTIME_U32_GUARD_WVB_SHA256 = "d6ba02dfe12efdcb7c2f8ed6664551a776e79e3ff2c30134dc7e3642ee7ce743";
+    private const string WEBASSEMBLY_RUNTIME_U32_GUARD_SHA256 = "f645c0ff095eb06c825fea056659545cc258d857da55fc9dfd1a928812373f61";
+    private const string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_WVB_SHA256 = "1362b2707a4ff442a1458e3f821e01108bb948858db21e022bfee05869c2fb86";
+    private const string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SHA256 = "f493777450b720ef786b60502528819969ad9e0322aa55a9c0259f6de20850fc";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -690,6 +694,10 @@ internal static class Program
         "Windvale.Seed.Tests.WebAssembly-Runtime-U16-Guard-Main.wv");
     private static readonly string WEBASSEMBLY_RUNTIME_ARENA_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Runtime-Arena-Main.wv");
+    private static readonly string WEBASSEMBLY_RUNTIME_U32_GUARD_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Runtime-U32-Guard-Main.wv");
+    private static readonly string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Wvb-Envelope-Verify-Main.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -9035,6 +9043,105 @@ internal static class Program
             }
         }
 
+        var U32ˉguardˉwvb = Compileˉsuccess(
+            WEBASSEMBLY_RUNTIME_U32_GUARD_SOURCE);
+        Equal(
+            WEBASSEMBLY_RUNTIME_U32_GUARD_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(U32ˉguardˉwvb));
+        var U32ˉguardˉverified = Moduleˉcodec.Readˉandˉverify(U32ˉguardˉwvb);
+        var U32ˉguardˉinput = ImmutableArray.Create<byte>(
+            42, 0, 0, 0,
+            1, 0, 0, 0,
+            1, 0, 0, 0);
+        var U32ˉguardˉreference = new Referenceˉruntime(
+            U32ˉguardˉverified,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(U32ˉguardˉinput);
+        Sequenceˉequal(
+            ImmutableArray.Create<byte>(42, 0, 0, 0),
+            U32ˉguardˉreference.Bytes);
+        Equal(57L, U32ˉguardˉreference.Executedˉinstructions);
+        var U32ˉguardˉlowered = Runˉwebassemblyˉtool(Tool, U32ˉguardˉwvb);
+        Equal(0, U32ˉguardˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=1893 execution-abi=3\n",
+            U32ˉguardˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_RUNTIME_U32_GUARD_SHA256,
+            Moduleˉdigest.Calculateˉsha256(U32ˉguardˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉruntimeˉwebassembly(
+            U32ˉguardˉlowered.Writtenˉbytes.AsSpan(), U32ˉguardˉverified);
+        var U32ˉguardˉrepeat = Runˉwebassemblyˉtool(Tool, U32ˉguardˉwvb);
+        Sequenceˉequal(
+            U32ˉguardˉlowered.Writtenˉbytes,
+            U32ˉguardˉrepeat.Writtenˉbytes);
+
+        var Envelopeˉverifierˉwvb = Compileˉsuccess(
+            WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SOURCE);
+        Equal(
+            WEBASSEMBLY_WVB_ENVELOPE_VERIFY_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Envelopeˉverifierˉwvb));
+        var Envelopeˉverifierˉverified = Moduleˉcodec.Readˉandˉverify(
+            Envelopeˉverifierˉwvb);
+        var Envelopeˉreference = new Referenceˉruntime(
+            Envelopeˉverifierˉverified,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(
+                ImmutableArray.Create(Envelopeˉverifierˉwvb));
+        Sequenceˉequal(ImmutableArray.Create<byte>(1), Envelopeˉreference.Bytes);
+        Equal(2_206L, Envelopeˉreference.Executedˉinstructions);
+        foreach (var Malformed in new byte[][]
+        {
+            Envelopeˉverifierˉwvb[..11],
+            [.. Envelopeˉverifierˉwvb, 0],
+        })
+        {
+            var Rejected = new Referenceˉruntime(
+                Envelopeˉverifierˉverified,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(
+                    ImmutableArray.Create(Malformed));
+            Sequenceˉequal(ImmutableArray.Create<byte>(0), Rejected.Bytes);
+        }
+        var Envelopeˉlowered = Runˉwebassemblyˉtool(
+            Tool, Envelopeˉverifierˉwvb);
+        Equal(0, Envelopeˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=14902 execution-abi=3\n",
+            Envelopeˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Envelopeˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉruntimeˉwebassembly(
+            Envelopeˉlowered.Writtenˉbytes.AsSpan(),
+            Envelopeˉverifierˉverified);
+        var Envelopeˉrepeat = Runˉwebassemblyˉtool(
+            Tool, Envelopeˉverifierˉwvb);
+        Sequenceˉequal(
+            Envelopeˉlowered.Writtenˉbytes,
+            Envelopeˉrepeat.Writtenˉbytes);
+
+        var Invalidˉruntimeˉtarget = Envelopeˉverifierˉwvb.ToArray();
+        var Envelopeˉcode = Findˉsectionˉpayload(
+            Invalidˉruntimeˉtarget, Sectionˉkind.Code);
+        var Firstˉruntimeˉbranch = Envelopeˉverifierˉverified.Functions[0]
+            .Instructions.First(Instruction => Instruction.Opcode == Opcode.Branchˉfalse);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉruntimeˉtarget.AsSpan(
+                Envelopeˉcode +
+                Envelopeˉverifierˉverified.Functions[0].Declaration.Codeˉoffset +
+                Firstˉruntimeˉbranch.Offset + 1,
+                4),
+            (uint)Firstˉruntimeˉbranch.Offset + 1u);
+        var Invalidˉruntimeˉtargetˉresult = Runˉwebassemblyˉtool(
+            Tool, Invalidˉruntimeˉtarget);
+        Equal(1, Invalidˉruntimeˉtargetˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉfunction\n",
+            Invalidˉruntimeˉtargetˉresult.Diagnostics);
+        Equal(0, Invalidˉruntimeˉtargetˉresult.Writeˉcount);
+
         True(
             Runtimeˉvaluesˉverified is not null && Runtimeˉvaluesˉwvb is not null,
             "The runtime-value fixture was not retained for rejection coverage.");
@@ -14973,9 +15080,14 @@ internal static class Program
                 Type.Kind is Valueˉtype.I32 or Valueˉtype.Bool or Valueˉtype.U8 or
                     Valueˉtype.U32 or Valueˉtype.Bytes),
             "The runtime-value source contains a local type outside the profile.");
+        var Hasˉcontrol = Function.Instructions.Any(Instruction =>
+            Instruction.Opcode is Opcode.Jump or Opcode.Branchˉfalse);
         True(
             Function.Instructions.Length is >= 1 and <= 4_096 &&
-                Function.Instructions[^1].Opcode == Opcode.Return,
+                Function.Instructions.Any(Instruction =>
+                    Instruction.Opcode == Opcode.Return) &&
+                Function.Instructions[^1].Opcode is
+                    Opcode.Jump or Opcode.Branchˉfalse or Opcode.Return,
             "The runtime-value source instruction shape is invalid.");
         True(
             Function.Instructions.All(Instruction => Instruction.Opcode is
@@ -14984,10 +15096,39 @@ internal static class Program
                 Opcode.Bytesˉlength or Opcode.Bytesˉslice or Opcode.Bytesˉreadˉu8 or
                 Opcode.Bytesˉreadˉu16ˉlittle or Opcode.Bytesˉreadˉu32ˉlittle or
                 Opcode.Bytesˉreadˉi32ˉlittle or Opcode.U32ˉfromˉu8 or
+                Opcode.U32ˉadd or Opcode.U32ˉsubtract or
+                Opcode.U32ˉequal or Opcode.U32ˉnotˉequal or
+                Opcode.U32ˉless or Opcode.U32ˉlessˉequal or
+                Opcode.U32ˉgreater or Opcode.U32ˉgreaterˉequal or
+                Opcode.U8ˉequal or Opcode.U8ˉnotˉequal or
                 Opcode.Bytesˉconcat or Opcode.Bytesˉfromˉu8 or
                 Opcode.Bytesˉfromˉu16ˉlittle or Opcode.Bytesˉfromˉu32ˉlittle or
-                Opcode.Bytesˉfromˉi32ˉlittle or Opcode.Pop or Opcode.Return),
+                Opcode.Bytesˉfromˉi32ˉlittle or Opcode.Jump or
+                Opcode.Branchˉfalse or Opcode.Pop or Opcode.Return),
             "The runtime-value source opcode is outside the profile.");
+        if (Hasˉcontrol)
+        {
+            var Boundaries = Function.Instructions
+                .Select(Instruction => (uint)Instruction.Offset)
+                .ToHashSet();
+            foreach (var Control in Function.Instructions.Where(Instruction =>
+                Instruction.Opcode is Opcode.Jump or Opcode.Branchˉfalse))
+            {
+                True(
+                    Boundaries.Contains(Control.Unsignedˉoperand),
+                    "A runtime-value control target is not an instruction boundary.");
+                if (Control.Unsignedˉoperand != 0)
+                {
+                    var Previous = Function.Instructions.Last(Instruction =>
+                        (uint)(Instruction.Offset + Instruction.Size) ==
+                            Control.Unsignedˉoperand);
+                    True(
+                        Previous.Opcode is Opcode.Jump or Opcode.Branchˉfalse or
+                            Opcode.Return,
+                        "A runtime-value control target does not follow a terminator.");
+                }
+            }
+        }
 
         var Reader = new WebAssemblyˉtestˉreader(module);
         Reader.Readˉheader();
@@ -15060,7 +15201,9 @@ internal static class Program
                 Reader.Readˉbyte() == (Type.Kind == Valueˉtype.Bytes ? 0x7E : 0x7F),
                 "A runtime-value Wasm local type changed.");
         }
-        Reader.Require(Reader.Readˉuleb32() == 5, "The runtime-value i32 scratch count is invalid.");
+        Reader.Require(
+            Reader.Readˉuleb32() == (Hasˉcontrol ? 6u : 5u),
+            "The runtime-value i32 scratch count is invalid.");
         Reader.Require(Reader.Readˉbyte() == 0x7F, "The runtime-value i32 scratch type is invalid.");
         Reader.Require(Reader.Readˉuleb32() == 3, "The runtime-value descriptor scratch count is invalid.");
         Reader.Require(Reader.Readˉbyte() == 0x7E, "The runtime-value descriptor scratch type is invalid.");
@@ -15069,15 +15212,30 @@ internal static class Program
         var Meterˉglobalˉreads = 0;
         var Outputˉlengthˉwrites = 0;
         var Memoryˉcopies = 0;
+        var Loopˉcount = 0;
+        var Elseˉcount = 0;
+        var Branchˉcount = 0;
+        var Programˉcounterˉaccesses = 0;
+        var Programˉcounter =
+            (uint)Function.Declaration.Allˉlocalˉtypes.Length + 7u;
         var Terminated = false;
         while (Reader.Position < Bodyˉend)
         {
             var Opcodeˉvalue = Reader.Readˉbyte();
             switch (Opcodeˉvalue)
             {
+                case 0x03:
+                    Reader.Require(Reader.Readˉbyte() == 0x40, "A runtime-value loop type is invalid.");
+                    Loopˉcount++;
+                    Depth++;
+                    break;
                 case 0x04:
                     Reader.Require(Reader.Readˉbyte() == 0x40, "A runtime-value if block type is invalid.");
                     Depth++;
+                    break;
+                case 0x05:
+                    Reader.Require(Depth > 0, "A runtime-value else appears outside a block.");
+                    Elseˉcount++;
                     break;
                 case 0x0B:
                     if (Depth == 0)
@@ -15093,7 +15251,11 @@ internal static class Program
                 case 0x0F:
                 case 0x1A:
                 case 0x45:
+                case 0x46:
+                case 0x47:
+                case 0x49:
                 case 0x4B:
+                case 0x4D:
                 case 0x4F:
                 case 0x6A:
                 case 0x6B:
@@ -15105,7 +15267,14 @@ internal static class Program
                     break;
                 case 0x20:
                 case 0x21:
+                    if (Reader.Readˉuleb32() == Programˉcounter)
+                    {
+                        Programˉcounterˉaccesses++;
+                    }
+                    break;
+                case 0x0C:
                     Reader.Readˉuleb32();
+                    Branchˉcount++;
                     break;
                 case 0x23:
                     if (Reader.Readˉuleb32() == 7) Meterˉglobalˉreads++;
@@ -15143,8 +15312,19 @@ internal static class Program
         Reader.Require(
             Meterˉglobalˉreads == Function.Instructions.Length * 2,
             "The runtime-value instruction meter count changed.");
-        Reader.Require(Outputˉlengthˉwrites == 2, "The runtime-value output publication count changed.");
+        Reader.Require(
+            Outputˉlengthˉwrites == 2,
+            "The runtime-value output publication count changed.");
         Reader.Require(Memoryˉcopies >= 1, "The runtime-value body does not publish through memory copy.");
+        Reader.Require(
+            !Hasˉcontrol ||
+                (Loopˉcount == 1 &&
+                    Elseˉcount == Function.Instructions.Count(Instruction =>
+                        Instruction.Opcode == Opcode.Branchˉfalse) &&
+                    Branchˉcount >= Function.Instructions.Count(Instruction =>
+                        Instruction.Opcode is Opcode.Jump or Opcode.Branchˉfalse) &&
+                    Programˉcounterˉaccesses >= Branchˉcount),
+            "The runtime-value control dispatcher evidence changed.");
         Reader.Require(Reader.Position == Codeˉend, "The runtime-value code section has trailing bytes.");
         Reader.Require(Reader.Position == Reader.Length, "The runtime-value module has trailing bytes.");
     }

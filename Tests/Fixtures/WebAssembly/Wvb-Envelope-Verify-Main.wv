@@ -1,0 +1,48 @@
+module WebAssemblyˉwvbˉenvelopeˉverify profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    var Valid: bool = Total >= 12u32;
+    if Valid { Valid = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 0u32)) == 87u32; }
+    if Valid { Valid = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 1u32)) == 86u32; }
+    if Valid { Valid = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 2u32)) == 66u32; }
+    if Valid { Valid = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 3u32)) == 49u32; }
+    if Valid { Valid = Bytesˉreadˉu16ˉlittle(Input, 4u32) == 1u32; }
+    if Valid { Valid = Bytesˉreadˉu16ˉlittle(Input, 6u32) == 6u32; }
+    if Valid { Valid = Bytesˉreadˉu32ˉlittle(Input, 8u32) == 7u32; }
+
+    var Cursor: u32 = 12u32;
+    var Expectedˉkind: u32 = 1u32;
+    var Payload: u32 = 0u32;
+    var Payloadˉlength: u32 = 0u32;
+    var Result: u8 = 0u8;
+    var Ready: bool = false;
+    var Reading: bool = Valid;
+    while Reading {
+        if Expectedˉkind > 7u32 { Reading = false; }
+        if Reading { Valid = Cursor <= Total; }
+        if Valid { Valid = 8u32 <= Total - Cursor; }
+        if Valid { Payload = Cursor + 8u32; }
+        if Valid {
+            Valid = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) ==
+                Expectedˉkind;
+        }
+        if Valid {
+            Valid = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32)) ==
+                0u32;
+        }
+        if Valid { Valid = Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) == 0u32; }
+        if Valid { Payloadˉlength = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32); }
+        if Valid { Valid = Payloadˉlength <= Total - Payload; }
+        if Valid { Cursor = Payload + Payloadˉlength; }
+        if Valid { Expectedˉkind = Expectedˉkind + 1u32; }
+        Reading = Valid;
+        if Reading { Reading = Expectedˉkind <= 7u32; }
+        Ready = Valid;
+        if Ready { Ready = Expectedˉkind == 8u32; }
+        if Ready { Ready = Cursor == Total; }
+        if Ready { Result = 1u8; }
+    }
+
+    return Bytesˉfromˉu8(Result);
+}
