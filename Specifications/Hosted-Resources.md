@@ -22,6 +22,8 @@ A module must use the `hosted` or `system` profile, declare every capability it 
 
 Capability declarations remain ordinary canonical WVB 1.6 imports. Adding catalog entries does not itself change the module envelope or instruction set.
 
+[Decision 0145](../Documents/Decisions/0145-First-Capability-Bearing-Static-Library.md) permits a hosted static library to declare these existing catalog requirements. Every importing module must explicitly redeclare its complete transitive capability set, and the final runtime grant remains separate. This changes source composition, not the capability signatures or hosted adapter behavior below.
+
 ## Arguments
 
 Arguments are an ordered immutable snapshot supplied by the launcher after the `--` separator. They do not include the module path, launcher options, environment variables, or an ambient process command line.
@@ -75,5 +77,7 @@ Host adapters translate expected native file read or write failures into `Hosted
 ## Deliberate limits
 
 Seed has no environment variables, standard input, file handles, directories, globbing, permissions API, asynchronous I/O, memory mapping, network resources, or platform path abstraction. File writing is deliberately whole-value and replacement-only. The first-read cache is a deterministic run snapshot, not a coherent filesystem view: reading two different resource names that the host maps to one native file produces two independently acquired snapshots. Add capabilities only when a Windvale-written tool demonstrates a concrete need.
+
+The first capability-bearing platform library, [`Hosted-Resource-Store.wv`](../Libraries/Platform/Resources/Hosted-Resource-Store.wv), uses `file.read_bytes` only to acquire an immutable store snapshot. It delegates all `WVRS 1` validation and lookup to capability-free Foundation. This proves library requirement/approval/grant composition but does not turn the opaque resource name into a Windvale path or filesystem handle.
 
 [Decision 0140](../Documents/Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) accepts a later filesystem capability family with per-part platform scope, typed rights-limited instances, exact partial-progress and durability semantics, and optional extensions. It does not retroactively turn `file.read_bytes` or `file.write_bytes` into general application filesystem APIs; these leaves retain the bounded tool-oriented behavior specified here.

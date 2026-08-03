@@ -118,6 +118,12 @@
       Include="../../Foundation/Byte-Construction.wv"
       LogicalName="Windvale.Seed.Tests.Byte-Construction.wv" />
     <EmbeddedResource
+      Include="../../Libraries/Foundation/Resources/Resource-Store.wv"
+      LogicalName="Windvale.Seed.Tests.Resource-Store.wv" />
+    <EmbeddedResource
+      Include="../../Libraries/Platform/Resources/Hosted-Resource-Store.wv"
+      LogicalName="Windvale.Seed.Tests.Hosted-Resource-Store.wv" />
+    <EmbeddedResource
       Include="../../Examples/Foundation/Byte-Construction-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Byte-Construction-Demo.wv" />
     <EmbeddedResource

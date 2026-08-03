@@ -127,9 +127,14 @@ internal static class Sourceˉmoduleˉcomposition
                     $"Source module '{Module.Name.Text}' is supplied but is not reachable from root module '{Root.Name.Text}'.");
             }
         }
+        if (diagnostics.Count != 0)
+        {
+            return null;
+        }
 
         foreach (var Name in Included.OrderBy(Item => Item, StringComparer.Ordinal))
         {
+            Validateˉcapabilityˉapproval(Modules[Name], Modules, diagnostics);
             if (StringComparer.Ordinal.Equals(Name, Root.Name.Text))
             {
                 continue;
@@ -249,6 +254,16 @@ internal static class Sourceˉmoduleˉcomposition
                 continue;
             }
 
+            if (!Canˉimportˉprofile(module.Profile.Kind, Dependency.Profile.Kind))
+            {
+                Report(
+                    diagnostics,
+                    "WVC0010",
+                    Import.Name.Span,
+                    $"Module '{module.Name.Text}' with profile {module.Profile.Text} cannot import module " +
+                    $"'{Dependency.Name.Text}' with profile {Dependency.Profile.Text}.");
+            }
+
             if (states.GetValueOrDefault(Dependency.Name.Text) == 1)
             {
                 Report(
@@ -268,21 +283,13 @@ internal static class Sourceˉmoduleˉcomposition
 
     private static void Validateˉdependency(Moduleˉsyntax module, Diagnosticˉbag diagnostics)
     {
-        if (module.Profile.Kind != Tokenˉkind.Portable)
-        {
-            Report(
-                diagnostics,
-                "WVC0010",
-                module.Profile.Span,
-                $"Imported source module '{module.Name.Text}' must use profile portable.");
-        }
-        if (!module.Capabilities.IsEmpty || !module.Data.IsEmpty)
+        if (!module.Data.IsEmpty)
         {
             Report(
                 diagnostics,
                 "WVC0011",
                 module.Name.Span,
-                $"Imported source module '{module.Name.Text}' may contain only imports, records, enums, and exported functions in this Foundation slice.");
+                $"Imported source module '{module.Name.Text}' may not contain module data in this static-library slice.");
         }
         foreach (var Function in module.Functions)
         {
@@ -293,6 +300,40 @@ internal static class Sourceˉmoduleˉcomposition
                     "WVC0012",
                     Function.Name.Span,
                     $"Function '{Function.Name.Text}' in imported module '{module.Name.Text}' must be declared export.");
+            }
+        }
+    }
+
+    private static bool Canˉimportˉprofile(Tokenˉkind importer, Tokenˉkind dependency) =>
+        dependency == Tokenˉkind.Portable ||
+        importer == Tokenˉkind.System ||
+        importer == dependency;
+
+    private static void Validateˉcapabilityˉapproval(
+        Moduleˉsyntax module,
+        IReadOnlyDictionary<string, Moduleˉsyntax> modules,
+        Diagnosticˉbag diagnostics)
+    {
+        var Approved = module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        var Closure = new HashSet<string>(StringComparer.Ordinal);
+        Collectˉreachable(module, modules, Closure);
+        var Required = Closure
+            .Where(Name => !StringComparer.Ordinal.Equals(Name, module.Name.Text))
+            .SelectMany(Name => modules[Name].Capabilities)
+            .Select(Capability => Capability.Name)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(Name => Name, StringComparer.Ordinal);
+        foreach (var Capability in Required)
+        {
+            if (!Approved.Contains(Capability))
+            {
+                Report(
+                    diagnostics,
+                    "WVC0013",
+                    module.Name.Span,
+                    $"Module '{module.Name.Text}' must explicitly approve transitive capability '{Capability}'.");
             }
         }
     }

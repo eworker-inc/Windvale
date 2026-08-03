@@ -67,7 +67,7 @@ Stage 0 format failures use `WVRS1001` through `WVRS1008`; invalid construction 
 
 ## Windvale-owned lookup
 
-[`Resource-Store-Core.wv`](../Operating-System/Services/Resource-Store-Core.wv) independently validates `WVRS 1` and returns this bounded result:
+[`Resource-Store.wv`](../Libraries/Foundation/Resources/Resource-Store.wv) independently validates `WVRS 1` and returns this bounded result:
 
 ```text
 Resourceˉstoreˉresult(
@@ -83,6 +83,8 @@ Resourceˉstoreˉresult(
 Statuses distinguish invalid size, magic, version, header, identifier, kind, attributes, name, order, data, digest, not-found, and invalid-query cases. Failure returns an empty value. Success returns an immutable slice of the supplied store after every entry and digest has been validated; lookup never returns early from a partially validated image.
 
 [`Resource-Store-Service.wv`](../Operating-System/Services/Resource-Store-Service.wv) is the first hosted wrapper. It declares only `file.read_bytes`, reads opaque resource `boot:resources.wvrs`, resolves third typed resource `boot:main.configuration`, and checks its identifier, kind, attributes, length, and bytes. Declaration, authorization, adapter implementation, store verification, and name lookup remain separate boundaries.
+
+[`Hosted-Resource-Store.wv`](../Libraries/Platform/Resources/Hosted-Resource-Store.wv) is the first reusable platform wrapper. Static composition internalizes it with the Foundation core only when every importer explicitly approves its transitive `file.read_bytes` requirement. It accepts the store resource name and lookup name as opaque values and returns the typed `Resourceˉstoreˉresult`; runtime authorization remains a separate grant. This wrapper is still a hosted resource adapter, not a filesystem path or handle API.
 
 ## Implementation evidence and limits
 

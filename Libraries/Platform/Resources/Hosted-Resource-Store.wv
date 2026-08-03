@@ -1,0 +1,13 @@
+module Hostedˉresourceˉstore profile hosted;
+
+import Resourceˉstore;
+
+capability file.read_bytes;
+
+export fn Hostedˉresourceˉstoreˉlookup(
+    Storeˉresource: text,
+    Name: text
+) -> Resourceˉstoreˉresult {
+    let Store: bytes = file.read_bytes(Storeˉresource);
+    return Resourceˉstoreˉlookup(Store, Name);
+}

@@ -1,5 +1,7 @@
 module Resourceˉstore profile portable;
 
+// Format validation remains capability-free; platform libraries supply the bytes.
+
 enum Resourceˉstoreˉstatus {
     Valid = 0;
     Invalidˉsize = 1;

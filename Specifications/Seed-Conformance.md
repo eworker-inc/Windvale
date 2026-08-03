@@ -10,7 +10,7 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, r
 - Hosted capability declaration, refusal without authorization, and successful authorized output
 - Ordered hosted arguments, bounded native file input and output, separate output and diagnostic sinks, unsupported-host refusal, stable resource failures, and host-result validation
 - Exact deterministic module bytes and canonical declaration ordering
-- Bounded compile-time source-module composition, transitive nominal record/enum use, dependency-order independence, root-only WVB exports, dependency semantic isolation, source-specific diagnostics, graph/shape rejection, and no-partial-output CLI behavior
+- Bounded compile-time source-module composition, transitive nominal record/enum use, dependency-order independence, profile-compatible capability-bearing libraries, explicit transitive capability approval, root-only WVB exports, dependency semantic isolation, source-specific diagnostics, graph/shape rejection, and no-partial-output CLI behavior
 - Standalone and composed `Foundationˉmachineˉcontracts` validation, exact alignment/name boundaries, two real tool consumers, dependency internalization, and unchanged assembler/linker outputs
 - Standalone and composed `Foundationˉbyteˉordering` validation, exact ordinal span boundaries, three real tool consumers, and preserved tool ceilings and outputs
 - Standalone and composed `Foundationˉdecimalˉparsing` validation, imported nominal results, exact range/digit/overflow boundaries, assembler/linker consumers, and unchanged binary outputs

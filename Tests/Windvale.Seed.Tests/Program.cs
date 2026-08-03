@@ -637,6 +637,12 @@ internal static class Program
     private static readonly string SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Composition-Middle.wv");
 
+    private static readonly string RESOURCE_STORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Resource-Store.wv");
+
+    private static readonly string HOSTED_RESOURCE_STORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Hosted-Resource-Store.wv");
+
     private static readonly string WEBASSEMBLY_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Core.wv");
 
@@ -881,6 +887,7 @@ internal static class Program
         new("native exact compiler exposes the bounded full-bootstrap text-lifetime boundary", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreachesˉtextˉboundary),
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
+        new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
         new("Windvale-written project manifests agree with the reference parser", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉprojectˉmanifestsˉagree),
         new("Windvale-written project manifests agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉprojectˉmanifestsˉagree),
@@ -6953,14 +6960,14 @@ internal static class Program
             module Hostedˉdependency profile hosted;
             export fn Hostedˉvalue() -> i32 { return 0; }
             """;
-        const string Hostedˉroot = """
-            module Hostedˉroot profile hosted;
+        const string Portableˉroot = """
+            module Portableˉroot profile portable;
             import Hostedˉdependency;
             export fn Main() -> i32 { return Hostedˉvalue(); }
             """;
         Hasˉdiagnostic(
             Seedˉcompiler.Compileˉmodules(
-                new("hosted-root.wv", Hostedˉroot),
+                new("portable-root.wv", Portableˉroot),
                 [new("hosted-dependency.wv", Hostedˉdependency)]),
             "WVC0010");
 
@@ -7086,6 +7093,135 @@ internal static class Program
         Hasˉdiagnostic(
             Seedˉcompiler.Compileˉmodules(new("root.wv", COMPOSITION_ROOT_SOURCE), Excessˉmodules),
             "WVC0002");
+    }
+
+    private static void Capabilityˉbearingˉlibrariesˉcompose()
+    {
+        const string Rootˉsource = """
+            module Resourceˉstoreˉapplication profile hosted;
+
+            import Hostedˉresourceˉstore;
+
+            capability file.read_bytes;
+
+            export fn Main() -> i32 {
+                let Result: Resourceˉstoreˉresult = Hostedˉresourceˉstoreˉlookup(
+                    "fixture.wvrs",
+                    "entry"
+                );
+                if Result.Status != Resourceˉstoreˉstatus.Valid { return 1; }
+                if Result.Identifier != 1u32 { return 2; }
+                if Result.Kind != 3u32 { return 3; }
+                if Result.Attributes != 7u32 { return 4; }
+                if Bytesˉlength(Result.Value) != 4u32 { return 5; }
+                if Bytesˉreadˉu8(Result.Value, 0u32) != 3u8 { return 6; }
+                if Bytesˉreadˉu8(Result.Value, 1u32) != 5u8 { return 7; }
+                if Bytesˉreadˉu8(Result.Value, 2u32) != 8u8 { return 8; }
+                if Bytesˉreadˉu8(Result.Value, 3u32) != 13u8 { return 9; }
+                return 29;
+            }
+            """;
+        Sourceˉmoduleˉinput Core = new(
+            "Libraries/Foundation/Resources/Resource-Store.wv",
+            RESOURCE_STORE_SOURCE);
+        Sourceˉmoduleˉinput Library = new(
+            "Libraries/Platform/Resources/Hosted-Resource-Store.wv",
+            HOSTED_RESOURCE_STORE_SOURCE);
+        var First = Seedˉcompiler.Compileˉmodules(
+            new("resource-store-application.wv", Rootˉsource),
+            [Library, Core]);
+        var Second = Seedˉcompiler.Compileˉmodules(
+            new("resource-store-application.wv", Rootˉsource),
+            [Core, Library]);
+        True(First.Success, "Capability-bearing library composition failed: " +
+            string.Join(" | ", First.Diagnostics));
+        True(Second.Success, "Reordered capability-bearing library composition failed: " +
+            string.Join(" | ", Second.Diagnostics));
+        Sequenceˉequal(First.Moduleˉbytes, Second.Moduleˉbytes);
+
+        var Module = Moduleˉcodec.Readˉandˉverify(First.Moduleˉbytes.AsSpan());
+        True(Module.Module.Profile == Moduleˉprofile.Hosted,
+            "The composed platform-library application lost its hosted profile.");
+        Sequenceˉequal(
+            [Capabilityˉcatalog.FILE_READ_BYTES],
+            Module.Module.Capabilities.Select(Capability => Capability.Name));
+        var Store = Buildˉresourceˉstoreˉfixture();
+        var Reader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            Equal("fixture.wvrs", Name);
+            Equal(Bytecodeˉlimits.MAX_BYTE_DATA_BYTES, Maximumˉbytes);
+            return Store;
+        });
+        var Runtime = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [], TextWriter.Null, TextWriter.Null, Reader)),
+            new(ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.FILE_READ_BYTES)));
+        Equal(29, Runtime.Runˉmain().Exitˉcode);
+        Equal(1, Reader.Readˉcount);
+
+        const string Unapprovedˉroot = """
+            module Unapprovedˉapplication profile hosted;
+            import Hostedˉresourceˉstore;
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("unapproved-application.wv", Unapprovedˉroot),
+                [Library, Core]),
+            "WVC0013");
+
+        const string Unapprovedˉforwarder = """
+            module Unapprovedˉforwarder profile hosted;
+            import Hostedˉresourceˉstore;
+            export fn Forwardˉlookup(Store: text, Name: text) -> Resourceˉstoreˉresult {
+                return Hostedˉresourceˉstoreˉlookup(Store, Name);
+            }
+            """;
+        const string Forwardingˉroot = """
+            module Forwardingˉapplication profile hosted;
+            import Unapprovedˉforwarder;
+            capability file.read_bytes;
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("forwarding-application.wv", Forwardingˉroot),
+                [
+                    new("unapproved-forwarder.wv", Unapprovedˉforwarder),
+                    Library,
+                    Core,
+                ]),
+            "WVC0013");
+    }
+
+    private static ImmutableArray<byte> Buildˉresourceˉstoreˉfixture()
+    {
+        var Name = Encoding.UTF8.GetBytes("entry");
+        byte[] Data = [3, 5, 8, 13];
+        const int HEADER_BYTES = 32;
+        const int ENTRY_BYTES = 96;
+        var Dataˉoffset = HEADER_BYTES + ENTRY_BYTES + Name.Length;
+        var Store = new byte[Dataˉoffset + Data.Length];
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(0), 0x5352_5657);
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(4), 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(8), checked((uint)Store.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(12), 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(16), ENTRY_BYTES);
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(20), checked((uint)Name.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(24), checked((uint)Data.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(HEADER_BYTES), 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(HEADER_BYTES + 4), 3);
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(HEADER_BYTES + 8), 7);
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(HEADER_BYTES + 12), HEADER_BYTES + ENTRY_BYTES);
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(HEADER_BYTES + 16), checked((uint)Name.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(HEADER_BYTES + 20), checked((uint)Dataˉoffset));
+        BinaryPrimitives.WriteUInt32LittleEndian(Store.AsSpan(HEADER_BYTES + 24), checked((uint)Data.Length));
+        Encoding.ASCII.GetBytes(Convert.ToHexString(SHA256.HashData(Data)).ToLowerInvariant())
+            .CopyTo(Store, HEADER_BYTES + 32);
+        Name.CopyTo(Store, HEADER_BYTES + ENTRY_BYTES);
+        Data.CopyTo(Store, Dataˉoffset);
+        return Store.ToImmutableArray();
     }
 
     private static void Projectsˉselectˉsourceˉsets()

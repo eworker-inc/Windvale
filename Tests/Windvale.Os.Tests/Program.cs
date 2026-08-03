@@ -401,14 +401,14 @@ internal static class Program
         var Coreˉsource = Loadˉresourceˉstoreˉsource("Windvale.Os.Services.Resource-Store-Core.wv");
         var Serviceˉsource = Loadˉresourceˉstoreˉsource("Windvale.Os.Services.Resource-Store-Service.wv");
         var Coreˉresult = Seedˉcompiler.Compileˉmodules(
-            new("Operating-System/Services/Resource-Store-Core.wv", Coreˉsource),
+            new("Libraries/Foundation/Resources/Resource-Store.wv", Coreˉsource),
             []);
         True(Coreˉresult.Success,
             "The Windvale resource-store core did not compile: " +
                 string.Join(" | ", Coreˉresult.Diagnostics));
         var Serviceˉresult = Seedˉcompiler.Compileˉmodules(
             new("Operating-System/Services/Resource-Store-Service.wv", Serviceˉsource),
-            [new("Operating-System/Services/Resource-Store-Core.wv", Coreˉsource)]);
+            [new("Libraries/Foundation/Resources/Resource-Store.wv", Coreˉsource)]);
         True(Serviceˉresult.Success,
             "The Windvale resource-store service did not compile: " +
                 string.Join(" | ", Serviceˉresult.Diagnostics));
@@ -642,14 +642,14 @@ internal static class Program
         var Bridgeˉsource = Loadˉresourceˉstoreˉsource("Windvale.Os.Services.Resource-Service-Bridge.wv");
         var Serviceˉresult = Seedˉcompiler.Compileˉmodules(
             new("Operating-System/Services/Resource-Service-Core.wv", Serviceˉsource),
-            [new("Operating-System/Services/Resource-Store-Core.wv", Storeˉsource)]);
+            [new("Libraries/Foundation/Resources/Resource-Store.wv", Storeˉsource)]);
         True(Serviceˉresult.Success,
             "The Windvale resource-service core did not compile: " +
                 string.Join(" | ", Serviceˉresult.Diagnostics));
         var Bridgeˉresult = Seedˉcompiler.Compileˉmodules(
             new("Operating-System/Services/Resource-Service-Bridge.wv", Bridgeˉsource),
             [
-                new("Operating-System/Services/Resource-Store-Core.wv", Storeˉsource),
+                new("Libraries/Foundation/Resources/Resource-Store.wv", Storeˉsource),
                 new("Operating-System/Services/Resource-Service-Core.wv", Serviceˉsource),
             ]);
         True(Bridgeˉresult.Success,
