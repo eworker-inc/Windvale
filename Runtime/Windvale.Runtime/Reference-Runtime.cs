@@ -18,6 +18,8 @@ public sealed class Referenceˉruntime
     private readonly ImmutableArray<Dictionary<int, int>> Instructionˉindices;
     private readonly long[]? Functionˉsteps;
     private readonly long[]? Functionˉrecordˉfields;
+    private readonly long[,]? Functionˉdynamicˉvalueˉcounts;
+    private readonly long[,]? Functionˉdynamicˉvalueˉbytes;
     private long Executedˉinstructions;
 
     public Referenceˉruntime(
@@ -56,6 +58,12 @@ public sealed class Referenceˉruntime
         Functionˉrecordˉfields = options.Collectˉfunctionˉrecordˉfields
             ? new long[verifiedˉmodule.Functions.Length]
             : null;
+        if (options.Collectˉfunctionˉdynamicˉvalues)
+        {
+            var Kinds = Enum.GetValues<Runtimeˉdynamicˉvalueˉkind>().Length;
+            Functionˉdynamicˉvalueˉcounts = new long[verifiedˉmodule.Functions.Length, Kinds];
+            Functionˉdynamicˉvalueˉbytes = new long[verifiedˉmodule.Functions.Length, Kinds];
+        }
     }
 
     public ImmutableArray<Runtimeˉfunctionˉsteps> Readˉfunctionˉsteps()
@@ -91,6 +99,44 @@ public sealed class Referenceˉruntime
             .Where(Item => Item.Constructedˉfields > 0)
             .OrderByDescending(Item => Item.Constructedˉfields)
             .ThenBy(Item => Item.Functionˉindex)
+            .ToImmutableArray();
+    }
+
+    public ImmutableArray<Runtimeˉfunctionˉdynamicˉvalues> Readˉfunctionˉdynamicˉvalues()
+    {
+        if (Functionˉdynamicˉvalueˉcounts is null ||
+            Functionˉdynamicˉvalueˉbytes is null)
+        {
+            return [];
+        }
+
+        var Report = ImmutableArray.CreateBuilder<Runtimeˉfunctionˉdynamicˉvalues>();
+        foreach (var Kind in Enum.GetValues<Runtimeˉdynamicˉvalueˉkind>())
+        {
+            var Kindˉindex = (int)Kind;
+            for (var Functionˉindex = 0;
+                Functionˉindex < Verifiedˉmodule.Functions.Length;
+                Functionˉindex++)
+            {
+                var Count = Functionˉdynamicˉvalueˉcounts[Functionˉindex, Kindˉindex];
+                if (Count == 0)
+                {
+                    continue;
+                }
+                Report.Add(new(
+                    Functionˉindex,
+                    Verifiedˉmodule.Functions[Functionˉindex].Declaration.Name,
+                    Kind,
+                    Count,
+                    Functionˉdynamicˉvalueˉbytes[Functionˉindex, Kindˉindex]));
+            }
+        }
+
+        return Report
+            .OrderByDescending(Item => Item.Constructedˉbytes)
+            .ThenByDescending(Item => Item.Constructedˉvalues)
+            .ThenBy(Item => Item.Functionˉindex)
+            .ThenBy(Item => Item.Kind)
             .ToImmutableArray();
     }
 
@@ -168,6 +214,11 @@ public sealed class Referenceˉruntime
         if (Functionˉrecordˉfields is not null)
         {
             Array.Clear(Functionˉrecordˉfields);
+        }
+        if (Functionˉdynamicˉvalueˉcounts is not null)
+        {
+            Array.Clear(Functionˉdynamicˉvalueˉcounts);
+            Array.Clear(Functionˉdynamicˉvalueˉbytes!);
         }
         return Mainˉexport;
     }
@@ -414,20 +465,37 @@ public sealed class Referenceˉruntime
                         var Enumˉvalue = Stack.Pop();
                         var Namedˉenum = (Enumˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
                             Enumˉvalue.Type.Nominalˉtypeˉindex];
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(Namedˉenum.Members.Single(
-                            Member => Member.Value == Enumˉvalue.Enumˉvalue).Name));
+                        var Enumˉname = Namedˉenum.Members.Single(
+                            Member => Member.Value == Enumˉvalue.Enumˉvalue).Name;
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.Enumˉname,
+                            STRICT_UTF8.GetByteCount(Enumˉname));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(Enumˉname));
                         break;
                     case Opcode.I32ˉformat:
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(
-                            Stack.Pop().I32ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        var I32ˉformatted = Stack.Pop().I32ˉvalue.ToString(CultureInfo.InvariantCulture);
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.I32ˉformat,
+                            I32ˉformatted.Length);
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(I32ˉformatted));
                         break;
                     case Opcode.U8ˉformat:
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(
-                            Stack.Pop().U8ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        var U8ˉformatted = Stack.Pop().U8ˉvalue.ToString(CultureInfo.InvariantCulture);
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.U8ˉformat,
+                            U8ˉformatted.Length);
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(U8ˉformatted));
                         break;
                     case Opcode.U32ˉformat:
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(
-                            Stack.Pop().U32ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        var U32ˉformatted = Stack.Pop().U32ˉvalue.ToString(CultureInfo.InvariantCulture);
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.U32ˉformat,
+                            U32ˉformatted.Length);
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(U32ˉformatted));
                         break;
                     case Opcode.U32ˉfromˉu8:
                         Stack.Push(Runtimeˉvalue.Fromˉu32(Stack.Pop().U8ˉvalue));
@@ -444,6 +512,10 @@ public sealed class Referenceˉruntime
                                 $"Text concatenation result {Utf8ˉlength} exceeds the UTF-8 value limit.");
                         }
 
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.Textˉconcat,
+                            Utf8ˉlength);
                         Stack.Push(Runtimeˉvalue.Fromˉtext(string.Concat(Leftˉtext, Rightˉtext)));
                         break;
                     case Opcode.Textˉutf8ˉisˉvalid:
@@ -472,14 +544,28 @@ public sealed class Referenceˉruntime
 
                         break;
                     case Opcode.Textˉquote:
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(Quoteˉtext(Stack.Pop().Textˉvalue!)));
+                        var Quotedˉtext = Quoteˉtext(Stack.Pop().Textˉvalue!);
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.Textˉquote,
+                            STRICT_UTF8.GetByteCount(Quotedˉtext));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(Quotedˉtext));
                         break;
                     case Opcode.Bytesˉconcat:
                         var Rightˉbytes = Stack.Pop().Bytesˉvalue;
                         var Leftˉbytes = Stack.Pop().Bytesˉvalue;
-                        Stack.Push(Runtimeˉvalue.Fromˉbytes(Concatˉbytes(Leftˉbytes, Rightˉbytes)));
+                        var Concatenatedˉbytes = Concatˉbytes(Leftˉbytes, Rightˉbytes);
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.Bytesˉconcat,
+                            Concatenatedˉbytes.Length);
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(Concatenatedˉbytes));
                         break;
                     case Opcode.Bytesˉfromˉu8:
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu8,
+                            sizeof(byte));
                         Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(Stack.Pop().U8ˉvalue)));
                         break;
                     case Opcode.Bytesˉfromˉu16ˉlittle:
@@ -493,16 +579,28 @@ public sealed class Referenceˉruntime
 
                         var U16ˉbytes = new byte[sizeof(ushort)];
                         BinaryPrimitives.WriteUInt16LittleEndian(U16ˉbytes, (ushort)U16ˉvalue);
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu16ˉlittle,
+                            U16ˉbytes.Length);
                         Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U16ˉbytes)));
                         break;
                     case Opcode.Bytesˉfromˉu32ˉlittle:
                         var U32ˉbytes = new byte[sizeof(uint)];
                         BinaryPrimitives.WriteUInt32LittleEndian(U32ˉbytes, Stack.Pop().U32ˉvalue);
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu32ˉlittle,
+                            U32ˉbytes.Length);
                         Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U32ˉbytes)));
                         break;
                     case Opcode.Bytesˉfromˉi32ˉlittle:
                         var I32ˉbytes = new byte[sizeof(int)];
                         BinaryPrimitives.WriteInt32LittleEndian(I32ˉbytes, Stack.Pop().I32ˉvalue);
+                        Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉi32ˉlittle,
+                            I32ˉbytes.Length);
                         Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(I32ˉbytes)));
                         break;
                     case Opcode.Bytesˉsha256ˉhex:
@@ -721,6 +819,28 @@ public sealed class Referenceˉruntime
         {
             Functionˉsteps[functionˉindex]++;
         }
+    }
+
+    private void Recordˉdynamicˉvalue(
+        int functionˉindex,
+        Runtimeˉdynamicˉvalueˉkind kind,
+        int bytes)
+    {
+        if (Functionˉdynamicˉvalueˉcounts is null ||
+            Functionˉdynamicˉvalueˉbytes is null)
+        {
+            return;
+        }
+        if (bytes < 0)
+        {
+            throw new InvalidOperationException("A dynamic value cannot have a negative byte length.");
+        }
+
+        var Kindˉindex = (int)kind;
+        Functionˉdynamicˉvalueˉcounts[functionˉindex, Kindˉindex] = checked(
+            Functionˉdynamicˉvalueˉcounts[functionˉindex, Kindˉindex] + 1);
+        Functionˉdynamicˉvalueˉbytes[functionˉindex, Kindˉindex] = checked(
+            Functionˉdynamicˉvalueˉbytes[functionˉindex, Kindˉindex] + bytes);
     }
 
     private static ImmutableArray<Runtimeˉvalue> Popˉarguments(

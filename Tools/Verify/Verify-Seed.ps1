@@ -277,7 +277,7 @@ $RunOutput = dotnet $ToolDll run $SumModule
 if (
     $LASTEXITCODE -ne 0 -or
     $RunOutput -notcontains 'Result: 29' -or
-    ($RunOutput -join "`n") -match '(?m)^Function (instructions|record-fields)='
+    ($RunOutput -join "`n") -match '(?m)^Function (instructions|record-fields|dynamic-bytes)='
 ) {
     throw 'The Seed CLI did not produce Result: 29 for Sum-Data.wvb.'
 }
@@ -536,6 +536,17 @@ if ($ByteConstructionDemoHash -ne 'a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abb
 $ByteConstructionDemoOutput = dotnet $ToolDll run $ByteConstructionDemoModule
 if ($LASTEXITCODE -ne 0 -or $ByteConstructionDemoOutput -notcontains 'Result: 0') {
     throw 'The Foundation byte-construction demo did not return Result: 0.'
+}
+$DynamicValueReportOutput = dotnet $ToolDll run $ByteConstructionDemoModule --report-function-dynamic-values 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    $DynamicValueReportOutput -notcontains 'Result: 0' -or
+    ($DynamicValueReportOutput -join "`n") -notmatch '(?m)^Function dynamic-bytes=8388653 values=27 kind=bytes\.concat index=0 name=Foundationˉbytesˉrepeat$' -or
+    ($DynamicValueReportOutput -join "`n") -notmatch '(?m)^Function dynamic-bytes=15 values=4 kind=bytes\.concat index=1 name=Foundationˉbytesˉreplace$' -or
+    ($DynamicValueReportOutput -join "`n") -notmatch '(?m)^Function dynamic-bytes=4 values=4 kind=bytes\.from_u8 index=0 name=Foundationˉbytesˉrepeat$' -or
+    [regex]::Matches(($DynamicValueReportOutput -join "`n"), '(?m)^Function dynamic-bytes=').Count -ne 3
+) {
+    throw 'The Seed CLI did not report deterministic per-function dynamic-value construction pressure.'
 }
 
 $NativeStencilSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Stencil-Core.wv'

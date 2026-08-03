@@ -533,6 +533,7 @@ internal static class Program
             return Usageˉerror(
                 "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
                 "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
+                "[--report-function-dynamic-values] " +
                 "[-- <argument>...]");
         }
 
@@ -543,6 +544,7 @@ internal static class Program
         var Reportˉsteps = false;
         var Reportˉfunctionˉsteps = false;
         var Reportˉfunctionˉrecordˉfields = false;
+        var Reportˉfunctionˉdynamicˉvalues = false;
         for (var Index = 1; Index < arguments.Length; Index++)
         {
             switch (arguments[Index])
@@ -572,6 +574,9 @@ internal static class Program
                 case "--report-function-record-fields":
                     Reportˉfunctionˉrecordˉfields = true;
                     break;
+                case "--report-function-dynamic-values":
+                    Reportˉfunctionˉdynamicˉvalues = true;
+                    break;
                 case "--":
                     Programˉarguments.AddRange(arguments[(Index + 1)..]);
                     Index = arguments.Length;
@@ -595,7 +600,8 @@ internal static class Program
                 Authorized.ToImmutable(),
                 Maximumˉsteps,
                 Collectˉfunctionˉsteps: Reportˉfunctionˉsteps,
-                Collectˉfunctionˉrecordˉfields: Reportˉfunctionˉrecordˉfields));
+                Collectˉfunctionˉrecordˉfields: Reportˉfunctionˉrecordˉfields,
+                Collectˉfunctionˉdynamicˉvalues: Reportˉfunctionˉdynamicˉvalues));
         Runtimeˉresult Result;
         try
         {
@@ -621,6 +627,17 @@ internal static class Program
                         $"index={Function.Functionˉindex} name={Function.Functionˉname}");
                 }
             }
+            if (Reportˉfunctionˉdynamicˉvalues)
+            {
+                foreach (var Function in Runtime.Readˉfunctionˉdynamicˉvalues())
+                {
+                    Console.Error.WriteLine(
+                        $"Function dynamic-bytes={Function.Constructedˉbytes} " +
+                        $"values={Function.Constructedˉvalues} " +
+                        $"kind={Dynamicˉvalueˉkindˉname(Function.Kind)} " +
+                        $"index={Function.Functionˉindex} name={Function.Functionˉname}");
+                }
+            }
         }
         Console.WriteLine($"Result: {Result.Exitˉcode}");
         if (Reportˉsteps)
@@ -629,6 +646,23 @@ internal static class Program
         }
         return EXIT_SUCCESS;
     }
+
+    private static string Dynamicˉvalueˉkindˉname(Runtimeˉdynamicˉvalueˉkind kind) =>
+        kind switch
+        {
+            Runtimeˉdynamicˉvalueˉkind.Enumˉname => "enum.name",
+            Runtimeˉdynamicˉvalueˉkind.I32ˉformat => "i32.format",
+            Runtimeˉdynamicˉvalueˉkind.U8ˉformat => "u8.format",
+            Runtimeˉdynamicˉvalueˉkind.U32ˉformat => "u32.format",
+            Runtimeˉdynamicˉvalueˉkind.Textˉconcat => "text.concat",
+            Runtimeˉdynamicˉvalueˉkind.Textˉquote => "text.quote",
+            Runtimeˉdynamicˉvalueˉkind.Bytesˉconcat => "bytes.concat",
+            Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu8 => "bytes.from_u8",
+            Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu16ˉlittle => "bytes.from_u16_little",
+            Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu32ˉlittle => "bytes.from_u32_little",
+            Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉi32ˉlittle => "bytes.from_i32_little",
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown dynamic-value kind."),
+        };
 
     private static int Inspectˉobject(string[] arguments)
     {
@@ -708,6 +742,7 @@ internal static class Program
         output.WriteLine(
             "  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
             "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
+            "[--report-function-dynamic-values] " +
             "[-- <argument>...]");
         output.WriteLine("  windvale help");
     }

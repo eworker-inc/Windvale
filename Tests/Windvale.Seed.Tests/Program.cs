@@ -921,6 +921,7 @@ internal static class Program
         new("runtime traps overflow and data bounds", [TEST_AREA_RUNTIME], Runtimeˉtrapsˉareˉdeterministic),
         new("runtime enforces instruction and call-depth limits", [TEST_AREA_RUNTIME], Runtimeˉlimitsˉareˉenforced),
         new("reference runtime reports per-function record construction pressure", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉrecordˉpressureˉisˉreported),
+        new("reference runtime reports dynamic-value construction by function and class", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉdynamicˉvalueˉpressureˉisˉreported),
         new("bounded random input never escapes diagnostic boundaries", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_ASSEMBLER], Randomˉinputˉisˉcontained),
         new(GOLDEN_TEST_NAME, [TEST_AREA_GOLDEN], Goldenˉhashesˉmatch),
     ];
@@ -13918,6 +13919,61 @@ internal static class Program
 
         Equal(5, Enabled.Runˉmain().Exitˉcode);
         Sequenceˉequal(Firstˉreport, Enabled.Readˉfunctionˉrecordˉfields());
+    }
+
+    private static void Runtimeˉdynamicˉvalueˉpressureˉisˉreported()
+    {
+        const string Source = """
+            module Runtimeˉdynamicˉvalueˉpressure profile portable;
+            fn Make(Value: u32) -> bytes {
+                return Bytesˉconcat(
+                    Bytesˉfromˉu8(1u8),
+                    Bytesˉfromˉu16ˉlittle(Value)
+                );
+            }
+            export fn Main() -> i32 {
+                let Encoded: bytes = Make(42u32);
+                Textˉquote(Textˉconcat("size=", U32ˉformat(Bytesˉlength(Encoded))));
+                return 0;
+            }
+            """;
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        var Disabled = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults);
+        Equal(0, Disabled.Runˉmain().Exitˉcode);
+        Equal(0, Disabled.Readˉfunctionˉdynamicˉvalues().Length);
+
+        var Enabled = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Collectˉfunctionˉdynamicˉvalues = true,
+            });
+        Equal(0, Enabled.Readˉfunctionˉdynamicˉvalues().Length);
+        Equal(0, Enabled.Runˉmain().Exitˉcode);
+        var Firstˉreport = Enabled.Readˉfunctionˉdynamicˉvalues();
+        Sequenceˉequal(
+            [
+                new Runtimeˉfunctionˉdynamicˉvalues(
+                    0, "Main", Runtimeˉdynamicˉvalueˉkind.Textˉquote, 1, 8),
+                new Runtimeˉfunctionˉdynamicˉvalues(
+                    0, "Main", Runtimeˉdynamicˉvalueˉkind.Textˉconcat, 1, 6),
+                new Runtimeˉfunctionˉdynamicˉvalues(
+                    1, "Make", Runtimeˉdynamicˉvalueˉkind.Bytesˉconcat, 1, 3),
+                new Runtimeˉfunctionˉdynamicˉvalues(
+                    1, "Make", Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu16ˉlittle, 1, 2),
+                new Runtimeˉfunctionˉdynamicˉvalues(
+                    0, "Main", Runtimeˉdynamicˉvalueˉkind.U32ˉformat, 1, 1),
+                new Runtimeˉfunctionˉdynamicˉvalues(
+                    1, "Make", Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu8, 1, 1),
+            ],
+            Firstˉreport);
+
+        Equal(0, Enabled.Runˉmain().Exitˉcode);
+        Sequenceˉequal(Firstˉreport, Enabled.Readˉfunctionˉdynamicˉvalues());
     }
 
     private static void Goldenˉhashesˉmatch()

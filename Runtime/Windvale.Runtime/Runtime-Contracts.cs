@@ -171,7 +171,8 @@ public sealed record Runtimeˉoptions(
     long Maximumˉinstructions = 1_000_000,
     int Maximumˉcallˉdepth = 1024,
     bool Collectˉfunctionˉsteps = false,
-    bool Collectˉfunctionˉrecordˉfields = false)
+    bool Collectˉfunctionˉrecordˉfields = false,
+    bool Collectˉfunctionˉdynamicˉvalues = false)
 {
     public static Runtimeˉoptions Portableˉdefaults { get; } = new(
         ImmutableHashSet.Create<string>(StringComparer.Ordinal));
@@ -196,6 +197,28 @@ public sealed record Runtimeˉfunctionˉrecordˉfields(
     int Functionˉindex,
     string Functionˉname,
     long Constructedˉfields);
+
+public enum Runtimeˉdynamicˉvalueˉkind : byte
+{
+    Enumˉname = 0,
+    I32ˉformat = 1,
+    U8ˉformat = 2,
+    U32ˉformat = 3,
+    Textˉconcat = 4,
+    Textˉquote = 5,
+    Bytesˉconcat = 6,
+    Bytesˉfromˉu8 = 7,
+    Bytesˉfromˉu16ˉlittle = 8,
+    Bytesˉfromˉu32ˉlittle = 9,
+    Bytesˉfromˉi32ˉlittle = 10,
+}
+
+public sealed record Runtimeˉfunctionˉdynamicˉvalues(
+    int Functionˉindex,
+    string Functionˉname,
+    Runtimeˉdynamicˉvalueˉkind Kind,
+    long Constructedˉvalues,
+    long Constructedˉbytes);
 
 public static class Hostedˉresourceˉlimits
 {

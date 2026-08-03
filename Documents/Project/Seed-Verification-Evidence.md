@@ -1212,6 +1212,16 @@ Immediately before the Decision 0131 WebAssembly and Decision 0132 console-verif
 
 Exact commit `ea1aa89ba204ead633f8340c61b2bacc716881fd` passes GitHub [Verify run 30783457203](https://github.com/eworker-inc/Windvale/actions/runs/30783457203). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 77 Seed tests, all 31 OS tests, the golden compiler contract, and the native CLI gate. Windows Seed takes 241.987 seconds with a 169.303-second golden contract; Linux Seed takes 216.976 seconds with a 150.484-second golden contract. Complete jobs finish in 8m58s and 7m44s. This qualifies ABI 21, its shared console/OS consumers, the portable WebAssembly envelope verifier, and the portable PE/ELF verifier as one committed cross-host baseline.
 
+## Local exact-compiler dynamic-value profile
+
+[Decision 0136](../Decisions/0136-Exact-Compiler-Dynamic-Value-Pressure.md) adds an opt-in reference-runtime and CLI profile for every allocation-bearing operation admitted by ABI 21. It reports constructed values and their flat result bytes by function and class without changing default runtime allocation, output, bytecode, or native execution.
+
+The canonical 12-module Stage 1 run succeeds in exactly 6,700,562,174 instructions and reproduces the exact 599,868-byte Stage 2 compiler with SHA-256 `9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066`. It constructs 1,852,773 profiled values representing 902,262,268 flat bytes. `bytes.concat` contributes 962,611 values and 899,106,127 bytes, approximately 99.65% of the total; the next largest class is `bytes.from_u32_little` at 3,020,804 bytes.
+
+The leading row is `Compilerˉsourceˉwirˉmergeˉfunction`: five escaping concatenated payloads per successful merge accumulate 315,298,984 flat bytes across 1,640 values. `Compilerˉsourceˉwirˉemit` adds 265,306,656 bytes across 451,269 concatenations, and `Compilerˉcompileˉsourceˉwvb` adds 102,543,288 bytes across 671 concatenations. This rules out a fixed capacity increase and shows why callee-only reset is insufficient, while not yet claiming a peak-live-byte count or selecting ownership, chunking, or collection.
+
+The focused profiler test passes after a zero-warning Release build in 0.521 seconds. The successful full-bootstrap profile completes locally on Windows in 426.148 seconds. Cross-host qualification is pending; no OS input changed, so QEMU is not rerun for this diagnostic-only slice.
+
 ## Qualified bounded exact-compiler publication
 
 [Decision 0111](../Decisions/0111-Bounded-Exact-Compiler-Fragment-Publication.md) attributes the exact compiler's 4,556,121 selected bytes before revising a security boundary. Function code accounts for 4,555,263 bytes across 328 functions and 191,632 machine-IR operations; alignment and immutable data account for only 858 bytes. The 48,578 zeroed frame slots currently emit 1,360,840 bytes, so eliminating all frame initialization would still leave 3,195,281 bytes. This rules out a local encoding change as an honest way to retain the 1 MiB whole-fragment ceiling.

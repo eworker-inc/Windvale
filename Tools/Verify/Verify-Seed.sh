@@ -249,7 +249,7 @@ printf '%s\n' "$INSPECT_OUTPUT" | grep -F 'data.load.i32' >/dev/null
 
 RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$SUM_MODULE")
 printf '%s\n' "$RUN_OUTPUT" | grep -F 'Result: 29' >/dev/null
-if printf '%s\n' "$RUN_OUTPUT" | grep -E '^Function (instructions|record-fields)=' >/dev/null; then
+if printf '%s\n' "$RUN_OUTPUT" | grep -E '^Function (instructions|record-fields|dynamic-bytes)=' >/dev/null; then
     echo 'The default run unexpectedly reported per-function profiling data.' >&2
     exit 1
 fi
@@ -448,6 +448,19 @@ fi
 BYTE_CONSTRUCTION_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$BYTE_CONSTRUCTION_DEMO_MODULE")
 printf '%s\n' "$BYTE_CONSTRUCTION_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
+DYNAMIC_VALUE_REPORT_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$BYTE_CONSTRUCTION_DEMO_MODULE" --report-function-dynamic-values 2>&1)
+printf '%s\n' "$DYNAMIC_VALUE_REPORT_OUTPUT" | grep -F 'Result: 0' >/dev/null
+printf '%s\n' "$DYNAMIC_VALUE_REPORT_OUTPUT" | grep -F \
+    'Function dynamic-bytes=8388653 values=27 kind=bytes.concat index=0 name=Foundationˉbytesˉrepeat' >/dev/null
+printf '%s\n' "$DYNAMIC_VALUE_REPORT_OUTPUT" | grep -F \
+    'Function dynamic-bytes=15 values=4 kind=bytes.concat index=1 name=Foundationˉbytesˉreplace' >/dev/null
+printf '%s\n' "$DYNAMIC_VALUE_REPORT_OUTPUT" | grep -F \
+    'Function dynamic-bytes=4 values=4 kind=bytes.from_u8 index=0 name=Foundationˉbytesˉrepeat' >/dev/null
+if [ "$(printf '%s\n' "$DYNAMIC_VALUE_REPORT_OUTPUT" | grep -c '^Function dynamic-bytes=')" -ne 3 ]; then
+    echo 'The Seed CLI did not report deterministic per-function dynamic-value construction pressure.' >&2
+    exit 1
+fi
 
 NATIVE_STENCIL_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Core.wv"
 dotnet "$TOOL_DLL" \
