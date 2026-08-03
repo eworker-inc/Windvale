@@ -1,0 +1,5 @@
+module WebAssemblyˉmemoryˉtext profile portable;
+
+export fn Main(Input: text) -> text {
+    return Input;
+}

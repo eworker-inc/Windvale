@@ -258,5 +258,11 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Calls-With-Control-Else-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Calls-With-Control-Else-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Memory-Bytes-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Memory-Bytes-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Memory-Text-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Memory-Text-Main.wv" />
   </ItemGroup>
 </Project>

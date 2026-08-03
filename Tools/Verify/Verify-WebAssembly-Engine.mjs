@@ -167,9 +167,25 @@ const EXPECTED = [
             { budget: 153, status: 0, result: 42, instructions: 153 },
         ],
     },
+    {
+        name: "linear-memory bytes identity",
+        path: process.argv[17],
+        sha256: "b5f87bd47be7a0ce0bb6755de4ecea8bc311c9412ee28d6091092e7aa4c184f5",
+        bytes: 435,
+        abi: 3,
+        kind: 1,
+    },
+    {
+        name: "linear-memory UTF-8 text identity",
+        path: process.argv[18],
+        sha256: "c3635b8df4ed9d471faad7e653e975662099c0a2336639586915ce50b768542d",
+        bytes: 791,
+        abi: 3,
+        kind: 2,
+    },
 ];
 
-if (process.argv.length !== 17) {
+if (process.argv.length !== 19) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -177,7 +193,197 @@ if (process.argv.length !== 17) {
             "<metered-loop.wasm> <nonterminating-loop.wasm> " +
             "<structured-control.wasm> <structured-control-else.wasm> " +
             "<sequential-if.wasm> <bounded-calls.wasm> <bounded-calls-overflow.wasm> " +
-            "<calls-with-control.wasm> <calls-with-control-else.wasm>",
+            "<calls-with-control.wasm> <calls-with-control-else.wasm> " +
+            "<memory-bytes.wasm> <memory-text.wasm>",
+    );
+}
+
+const MEMORY_EXPORTS = [
+    "Windvale.run",
+    "Windvale.abi",
+    "Windvale.memory",
+    "Windvale.input_offset",
+    "Windvale.input_capacity",
+    "Windvale.output_offset",
+    "Windvale.output_capacity",
+    "Windvale.output_length",
+    "Windvale.output_kind",
+    "Windvale.instructions",
+];
+
+function runMemory(exports, input, budget = 4) {
+    const inputOffset = exports["Windvale.input_offset"].value;
+    const outputOffset = exports["Windvale.output_offset"].value;
+    const memory = exports["Windvale.memory"];
+    new Uint8Array(memory.buffer, inputOffset, input.length).set(input);
+    exports["Windvale.output_length"].value = -123;
+    exports["Windvale.instructions"].value = 99;
+    const status = exports["Windvale.run"](budget, input.length);
+    const instructions = exports["Windvale.instructions"].value;
+    const outputLength = exports["Windvale.output_length"].value;
+    const output = new Uint8Array(memory.buffer, outputOffset, outputLength).slice();
+    return { status, instructions, outputLength, output };
+}
+
+function requireMemoryResult(path, actual, expectedStatus, expectedInstructions, expected) {
+    if (
+        actual.status !== expectedStatus ||
+        actual.instructions !== expectedInstructions ||
+        actual.outputLength !== (expected?.length ?? 0)
+    ) {
+        throw new Error(
+            `${path}: expected memory status/instructions/length ` +
+                `${expectedStatus}/${expectedInstructions}/${expected?.length ?? 0}, found ` +
+                `${actual.status}/${actual.instructions}/${actual.outputLength}.`,
+        );
+    }
+    if (expected && !Buffer.from(actual.output).equals(Buffer.from(expected))) {
+        throw new Error(`${path}: the memory output bytes differ from the input.`);
+    }
+}
+
+function verifyMemory(expected, module, exports, digest) {
+    if (WebAssembly.Module.imports(module).length !== 0) {
+        throw new Error(`${expected.path}: the memory module unexpectedly imports a host capability.`);
+    }
+    const names = Object.keys(exports);
+    if (
+        names.length !== MEMORY_EXPORTS.length ||
+        names.some((name, index) => name !== MEMORY_EXPORTS[index])
+    ) {
+        throw new Error(`${expected.path}: the memory ABI export set or order is invalid.`);
+    }
+    const memory = exports["Windvale.memory"];
+    if (!(memory instanceof WebAssembly.Memory) || memory.buffer.byteLength !== 129 * 65_536) {
+        throw new Error(`${expected.path}: the fixed linear memory extent is invalid.`);
+    }
+    if (
+        exports["Windvale.input_offset"].value !== 65_536 ||
+        exports["Windvale.input_capacity"].value !== 4_194_304 ||
+        exports["Windvale.output_offset"].value !== 4_259_840 ||
+        exports["Windvale.output_capacity"].value !== 4_194_304 ||
+        exports["Windvale.output_kind"].value !== expected.kind
+    ) {
+        throw new Error(`${expected.path}: the memory ABI region globals are invalid.`);
+    }
+    let growthRejected = false;
+    try {
+        memory.grow(1);
+    } catch (error) {
+        growthRejected = error instanceof RangeError;
+    }
+    if (!growthRejected || memory.buffer.byteLength !== 129 * 65_536) {
+        throw new Error(`${expected.path}: the fixed memory unexpectedly grew.`);
+    }
+
+    const ordinary = expected.kind === 1
+        ? Uint8Array.from([0x00, 0xFF, 0x01, 0x02, 0x03, 0x80, 0x40])
+        : new TextEncoder().encode("Hello, 世界 🌬️");
+    requireMemoryResult(expected.path, runMemory(exports, ordinary), 0, 4, ordinary);
+    requireMemoryResult(expected.path, runMemory(exports, ordinary, 3), 3011, 3);
+
+    const capacity = exports["Windvale.input_capacity"].value;
+    const boundary = new Uint8Array(capacity);
+    if (expected.kind === 1) {
+        for (let index = 0; index < boundary.length; index++) {
+            boundary[index] = (index * 31 + 17) & 0xFF;
+        }
+    } else {
+        boundary.fill(0x61);
+    }
+    requireMemoryResult(expected.path, runMemory(exports, boundary), 0, 4, boundary);
+    requireMemoryResult(
+        expected.path,
+        {
+            status: exports["Windvale.run"](4, capacity + 1),
+            instructions: exports["Windvale.instructions"].value,
+            outputLength: exports["Windvale.output_length"].value,
+            output: new Uint8Array(),
+        },
+        3008,
+        0,
+    );
+    requireMemoryResult(
+        expected.path,
+        {
+            status: exports["Windvale.run"](4, -1),
+            instructions: exports["Windvale.instructions"].value,
+            outputLength: exports["Windvale.output_length"].value,
+            output: new Uint8Array(),
+        },
+        3008,
+        0,
+    );
+
+    if (expected.kind === 2) {
+        const valid = [
+            [],
+            [0x00, 0x7F],
+            [0xC2, 0x80],
+            [0xDF, 0xBF],
+            [0xE0, 0xA0, 0x80],
+            [0xED, 0x9F, 0xBF],
+            [0xEE, 0x80, 0x80],
+            [0xEF, 0xBF, 0xBF],
+            [0xF0, 0x90, 0x80, 0x80],
+            [0xF4, 0x8F, 0xBF, 0xBF],
+        ];
+        const invalid = [
+            [0x80],
+            [0xC0, 0x80],
+            [0xC1, 0xBF],
+            [0xC2],
+            [0xC2, 0x7F],
+            [0xE0, 0x9F, 0xBF],
+            [0xED, 0xA0, 0x80],
+            [0xE1, 0x80],
+            [0xF0, 0x8F, 0xBF, 0xBF],
+            [0xF4, 0x90, 0x80, 0x80],
+            [0xF5, 0x80, 0x80, 0x80],
+            [0xFF],
+        ];
+        for (const values of valid) {
+            const input = Uint8Array.from(values);
+            requireMemoryResult(expected.path, runMemory(exports, input), 0, 4, input);
+        }
+        for (const values of invalid) {
+            requireMemoryResult(
+                expected.path,
+                runMemory(exports, Uint8Array.from(values)),
+                3014,
+                0,
+            );
+        }
+
+        const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+        let state = 0x6D2B79F5;
+        for (let sample = 0; sample < 20_000; sample++) {
+            state = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0;
+            const input = new Uint8Array(state % 9);
+            for (let index = 0; index < input.length; index++) {
+                state = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0;
+                input[index] = state >>> 24;
+            }
+            let validUtf8 = true;
+            try {
+                decoder.decode(input);
+            } catch {
+                validUtf8 = false;
+            }
+            const result = runMemory(exports, input);
+            requireMemoryResult(
+                expected.path,
+                result,
+                validUtf8 ? 0 : 3014,
+                validUtf8 ? 4 : 0,
+                validUtf8 ? input : undefined,
+            );
+        }
+    }
+
+    console.log(
+        `${expected.path}: ${expected.name}; ABI 3 kind=${expected.kind} ` +
+            `capacity=${capacity} status=0 instructions=4 SHA-256=${digest}`,
     );
 }
 
@@ -198,10 +404,15 @@ for (const expected of EXPECTED) {
         throw new Error(`${expected.path}: WebAssembly.validate rejected the module.`);
     }
 
-    const { instance } = await WebAssembly.instantiate(bytes);
+    const module = await WebAssembly.compile(bytes);
+    const instance = await WebAssembly.instantiate(module);
     const exports = instance.exports;
     if (exports["Windvale.abi"].value !== expected.abi) {
         throw new Error(`${expected.path}: execution ABI is not ${expected.abi}.`);
+    }
+    if (expected.abi === 3) {
+        verifyMemory(expected, module, exports, digest);
+        continue;
     }
 
     const runs = expected.runs ?? [{

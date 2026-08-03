@@ -93,9 +93,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "5dad5433446e2fc2fd6afad39fd7e6b1a1fe2ddc070c57feba426db6eb11fe8d";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "6bd6a31848ef71a65828a4109cc6acbee98ab6ec611cbfc2a2d0967acff9c6e0";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "4a66c3fd4726e4f9d317aa2ef04f02a620cef8a9e1c0f371392b310be9372fc4";
+    private const string WEBASSEMBLY_CORE_SHA256 = "017e53a242669821ddb992b990c75f76c97adc8a61a298747a9e2bc529afbafc";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "444b4a9de3a0650167f08667ff93903e486941e62d0da2f1c2e8ee09cbd2b70b";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "50055bf2d8c607dd00446831488a9d900cbbfde90461e7dd6779c9817ca4d577";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -129,6 +129,10 @@ internal static class Program
     private const string WEBASSEMBLY_CALLS_WITH_CONTROL_SHA256 = "3be50be3c2436638973eb68743f9fdd2e00df9816e50e498b432ff36468c3a77";
     private const string WEBASSEMBLY_CALLS_WITH_CONTROL_ELSE_WVB_SHA256 = "77e65ba692c8abc87dbac4dfeba174f3afc9191ac784b47a65becae8f0df2752";
     private const string WEBASSEMBLY_CALLS_WITH_CONTROL_ELSE_SHA256 = "35d75c30ef03dbb693a976cfaa31405ce90ecca4d393c5e93de8953fcf4658da";
+    private const string WEBASSEMBLY_MEMORY_BYTES_WVB_SHA256 = "3d751ca734faed1832b4d33a9f0cfc605b695f3ae8156e3d431504798869c8d9";
+    private const string WEBASSEMBLY_MEMORY_BYTES_SHA256 = "b5f87bd47be7a0ce0bb6755de4ecea8bc311c9412ee28d6091092e7aa4c184f5";
+    private const string WEBASSEMBLY_MEMORY_TEXT_WVB_SHA256 = "c19463d24d65c1bc46dca48dcda8541491b53b7289483afe4508685f30e0fbda";
+    private const string WEBASSEMBLY_MEMORY_TEXT_SHA256 = "c3635b8df4ed9d471faad7e653e975662099c0a2336639586915ce50b768542d";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -662,6 +666,10 @@ internal static class Program
         "Windvale.Seed.Tests.WebAssembly-Calls-With-Control-Main.wv");
     private static readonly string WEBASSEMBLY_CALLS_WITH_CONTROL_ELSE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Calls-With-Control-Else-Main.wv");
+    private static readonly string WEBASSEMBLY_MEMORY_BYTES_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Memory-Bytes-Main.wv");
+    private static readonly string WEBASSEMBLY_MEMORY_TEXT_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Memory-Text-Main.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -8240,6 +8248,77 @@ internal static class Program
                 Callˉcontrolˉrepeat.Writtenˉbytes);
         }
 
+        var Memoryˉbytesˉwvb = Compileˉsuccess(WEBASSEMBLY_MEMORY_BYTES_SOURCE);
+        Equal(
+            WEBASSEMBLY_MEMORY_BYTES_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Memoryˉbytesˉwvb));
+        var Memoryˉbytesˉverified = Moduleˉcodec.Readˉandˉverify(Memoryˉbytesˉwvb);
+        var Binaryˉinput = ImmutableArray.Create<byte>(0, 255, 1, 2, 3, 128, 64);
+        var Memoryˉbytesˉreference = new Referenceˉruntime(
+            Memoryˉbytesˉverified,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(Binaryˉinput);
+        Sequenceˉequal(Binaryˉinput, Memoryˉbytesˉreference.Bytes);
+        Equal(4L, Memoryˉbytesˉreference.Executedˉinstructions);
+        var Memoryˉbytesˉlowered = Runˉwebassemblyˉtool(Tool, Memoryˉbytesˉwvb);
+        Equal(0, Memoryˉbytesˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=435 execution-abi=3\n",
+            Memoryˉbytesˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_MEMORY_BYTES_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Memoryˉbytesˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉmemoryˉwebassembly(
+            Memoryˉbytesˉlowered.Writtenˉbytes.AsSpan(),
+            Memoryˉbytesˉverified,
+            1);
+
+        var Memoryˉtextˉwvb = Compileˉsuccess(WEBASSEMBLY_MEMORY_TEXT_SOURCE);
+        Equal(
+            WEBASSEMBLY_MEMORY_TEXT_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Memoryˉtextˉwvb));
+        var Memoryˉtextˉverified = Moduleˉcodec.Readˉandˉverify(Memoryˉtextˉwvb);
+        const string Unicodeˉinput = "Hello, 世界 🌬️";
+        var Memoryˉtextˉreference = new Referenceˉruntime(
+            Memoryˉtextˉverified,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmainˉtext(Unicodeˉinput);
+        Equal(Unicodeˉinput, Memoryˉtextˉreference.Text);
+        Equal(4L, Memoryˉtextˉreference.Executedˉinstructions);
+        var Memoryˉtextˉlowered = Runˉwebassemblyˉtool(Tool, Memoryˉtextˉwvb);
+        Equal(0, Memoryˉtextˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=791 execution-abi=3\n",
+            Memoryˉtextˉlowered.Output);
+        Equal(
+            WEBASSEMBLY_MEMORY_TEXT_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Memoryˉtextˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉmemoryˉwebassembly(
+            Memoryˉtextˉlowered.Writtenˉbytes.AsSpan(),
+            Memoryˉtextˉverified,
+            2);
+        var Memoryˉtextˉrepeat = Runˉwebassemblyˉtool(Tool, Memoryˉtextˉwvb);
+        Equal(0, Memoryˉtextˉrepeat.Exitˉcode);
+        Sequenceˉequal(
+            Memoryˉtextˉlowered.Writtenˉbytes,
+            Memoryˉtextˉrepeat.Writtenˉbytes);
+
+        var Mismatchedˉmemoryˉshape = Memoryˉbytesˉwvb.ToArray();
+        var Mismatchedˉfunctions = Findˉsectionˉpayload(
+            Mismatchedˉmemoryˉshape,
+            Sectionˉkind.Functions);
+        Mismatchedˉmemoryˉshape[Mismatchedˉfunctions + 17] = (byte)Valueˉtype.Text;
+        var Mismatchedˉmemoryˉresult = Runˉwebassemblyˉtool(
+            Tool,
+            Mismatchedˉmemoryˉshape);
+        Equal(1, Mismatchedˉmemoryˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉfunction\n",
+            Mismatchedˉmemoryˉresult.Diagnostics);
+        Equal(0, Mismatchedˉmemoryˉresult.Writeˉcount);
+
         var Invalidˉcallˉcontrol = Compileˉsuccess(
             WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE).ToArray();
         var Invalidˉcallˉcontrolˉverified = Moduleˉcodec.Readˉandˉverify(
@@ -13725,6 +13804,171 @@ internal static class Program
             : new(0, Result, Function.Instructions.Length);
     }
 
+    private static void Validateˉmemoryˉwebassembly(
+        ReadOnlySpan<byte> module,
+        Verifiedˉmodule source,
+        int outputˉkind)
+    {
+        Equal(1, source.Functions.Length);
+        var Function = source.Functions[0];
+        Equal("Main", Function.Declaration.Name);
+        Equal(1, Function.Declaration.Parameterˉtypes.Length);
+        Equal(4, Function.Instructions.Length);
+        var Valueˉkind = outputˉkind == 1 ? Valueˉtype.Bytes : Valueˉtype.Text;
+        Equal(Valueˉkind, Function.Declaration.Parameterˉtypes[0].Kind);
+        Equal(Valueˉkind, Function.Declaration.Returnˉtype.Kind);
+        Equal(1, Function.Declaration.Localˉtypes.Length);
+        Equal(Valueˉkind, Function.Declaration.Localˉtypes[0].Kind);
+        Equal(Opcode.Localˉload, Function.Instructions[0].Opcode);
+        Equal(Opcode.Localˉstore, Function.Instructions[1].Opcode);
+        Equal(Opcode.Localˉload, Function.Instructions[2].Opcode);
+        Equal(Opcode.Return, Function.Instructions[3].Opcode);
+
+        var Reader = new WebAssemblyˉtestˉreader(module);
+        Reader.Readˉheader();
+
+        var Typeˉend = Reader.Readˉsection(1);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The memory ABI type count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x60, "The memory ABI function type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 2, "The memory ABI parameter count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The memory ABI budget type is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The memory ABI length type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The memory ABI result count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The memory ABI status type is invalid.");
+        Reader.Require(Reader.Position == Typeˉend, "The memory ABI type section has trailing bytes.");
+
+        var Expectedˉfunctions = outputˉkind == 2 ? 2u : 1u;
+        var Functionˉend = Reader.Readˉsection(3);
+        Reader.Require(
+            Reader.Readˉuleb32() == Expectedˉfunctions,
+            "The memory ABI function count is invalid.");
+        for (var Index = 0u; Index < Expectedˉfunctions; Index++)
+        {
+            Reader.Require(Reader.Readˉuleb32() == 0, "A memory ABI type index is invalid.");
+        }
+        Reader.Require(
+            Reader.Position == Functionˉend,
+            "The memory ABI function section has trailing bytes.");
+
+        var Memoryˉend = Reader.Readˉsection(5);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The memory ABI memory count is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The memory ABI limits are not fixed.");
+        Reader.Require(Reader.Readˉuleb32() == 129, "The memory ABI minimum is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 129, "The memory ABI maximum is invalid.");
+        Reader.Require(
+            Reader.Position == Memoryˉend,
+            "The memory ABI memory section has trailing bytes.");
+
+        var Globalˉend = Reader.Readˉsection(6);
+        Reader.Require(Reader.Readˉuleb32() == 8, "The memory ABI global count is invalid.");
+        Reader.Readˉglobal(0, 3);
+        Reader.Readˉglobal(0, 65_536);
+        Reader.Readˉglobal(0, 4_194_304);
+        Reader.Readˉglobal(0, 4_259_840);
+        Reader.Readˉglobal(0, 4_194_304);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(0, outputˉkind);
+        Reader.Readˉglobal(1, 0);
+        Reader.Require(
+            Reader.Position == Globalˉend,
+            "The memory ABI global section has trailing bytes.");
+
+        var Exportˉend = Reader.Readˉsection(7);
+        Reader.Require(Reader.Readˉuleb32() == 10, "The memory ABI export count is invalid.");
+        Reader.Readˉexport("Windvale.run", 0, 0);
+        Reader.Readˉexport("Windvale.abi", 3, 0);
+        Reader.Readˉexport("Windvale.memory", 2, 0);
+        Reader.Readˉexport("Windvale.input_offset", 3, 1);
+        Reader.Readˉexport("Windvale.input_capacity", 3, 2);
+        Reader.Readˉexport("Windvale.output_offset", 3, 3);
+        Reader.Readˉexport("Windvale.output_capacity", 3, 4);
+        Reader.Readˉexport("Windvale.output_length", 3, 5);
+        Reader.Readˉexport("Windvale.output_kind", 3, 6);
+        Reader.Readˉexport("Windvale.instructions", 3, 7);
+        Reader.Require(
+            Reader.Position == Exportˉend,
+            "The memory ABI export section has trailing bytes.");
+
+        var Codeˉend = Reader.Readˉsection(10);
+        Reader.Require(
+            Reader.Readˉuleb32() == Expectedˉfunctions,
+            "The memory ABI body count is invalid.");
+        var Wrapperˉlength = Reader.Readˉuleb32();
+        Reader.Require(
+            Wrapperˉlength == (outputˉkind == 2 ? 138u : 122u),
+            "The memory ABI wrapper length is invalid.");
+        var Wrapperˉend = Reader.Position + checked((int)Wrapperˉlength);
+        Reader.Require(Reader.Readˉuleb32() == 0, "The memory ABI wrapper has locals.");
+        Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The output length reset is invalid.");
+        Reader.Readˉindexed(0x24, 5);
+        Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The instruction reset is invalid.");
+        Reader.Readˉindexed(0x24, 7);
+        Reader.Readˉindexed(0x20, 1);
+        Reader.Require(Reader.Readˉi32ˉconstant() == 4_194_304, "The input limit is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x4B, "The input range comparison is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x04, "The input range branch is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x40, "The input range block type is invalid.");
+        Reader.Require(Reader.Readˉi32ˉconstant() == 3008, "The input range status is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x0F, "The input range return is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x0B, "The input range branch is unterminated.");
+        if (outputˉkind == 2)
+        {
+            Reader.Require(Reader.Readˉi32ˉconstant() == 65_536, "The UTF-8 input offset is invalid.");
+            Reader.Readˉindexed(0x20, 1);
+            Reader.Readˉindexed(0x10, 1);
+            Reader.Require(Reader.Readˉbyte() == 0x45, "The UTF-8 result check is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x04, "The UTF-8 failure branch is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x40, "The UTF-8 failure block type is invalid.");
+            Reader.Require(Reader.Readˉi32ˉconstant() == 3014, "The UTF-8 status is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0F, "The UTF-8 failure return is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0B, "The UTF-8 failure branch is unterminated.");
+        }
+        for (var Instruction = 0; Instruction < 4; Instruction++)
+        {
+            Reader.Readˉindexed(0x23, 7);
+            Reader.Readˉindexed(0x20, 0);
+            Reader.Require(Reader.Readˉbyte() == 0x4F, "A memory ABI meter comparison is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x04, "A memory ABI meter branch is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x40, "A memory ABI meter block type is invalid.");
+            Reader.Require(Reader.Readˉi32ˉconstant() == 3011, "The memory ABI budget status is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0F, "The memory ABI budget return is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x0B, "A memory ABI meter branch is unterminated.");
+            Reader.Readˉindexed(0x23, 7);
+            Reader.Require(Reader.Readˉi32ˉconstant() == 1, "A memory ABI charge is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x6A, "A memory ABI charge addition is invalid.");
+            Reader.Readˉindexed(0x24, 7);
+        }
+        Reader.Require(Reader.Readˉi32ˉconstant() == 4_259_840, "The output copy offset is invalid.");
+        Reader.Require(Reader.Readˉi32ˉconstant() == 65_536, "The input copy offset is invalid.");
+        Reader.Readˉindexed(0x20, 1);
+        Reader.Require(Reader.Readˉbyte() == 0xFC, "The memory copy prefix is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 10, "The memory copy opcode is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 0, "The memory copy target index is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 0, "The memory copy source index is invalid.");
+        Reader.Readˉindexed(0x20, 1);
+        Reader.Readˉindexed(0x24, 5);
+        Reader.Require(Reader.Readˉi32ˉconstant() == 0, "The memory ABI success status is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x0B, "The memory ABI wrapper is unterminated.");
+        Reader.Require(Reader.Position == Wrapperˉend, "The memory ABI wrapper has trailing bytes.");
+
+        if (outputˉkind == 2)
+        {
+            var Validatorˉlength = Reader.Readˉuleb32();
+            Reader.Require(Validatorˉlength == 335, "The UTF-8 validator length is invalid.");
+            var Validatorˉend = Reader.Position + checked((int)Validatorˉlength);
+            Reader.Require(Reader.Readˉuleb32() == 1, "The UTF-8 validator local groups are invalid.");
+            Reader.Require(Reader.Readˉuleb32() == 5, "The UTF-8 validator local count is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x7F, "The UTF-8 validator local type is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x02, "The UTF-8 validator outer block is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x40, "The UTF-8 validator block type is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x03, "The UTF-8 validator loop is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x40, "The UTF-8 validator loop type is invalid.");
+            Reader.Skip(Validatorˉend - Reader.Position);
+        }
+        Reader.Require(Reader.Position == Codeˉend, "The memory ABI code section has trailing bytes.");
+        Reader.Require(Reader.Position == Reader.Length, "The memory ABI module has trailing bytes.");
+    }
+
     private static void Validateˉboundedˉcallˉwebassembly(
         ReadOnlySpan<byte> module,
         Verifiedˉmodule source)
@@ -16200,6 +16444,13 @@ internal static class Program
         {
             Require(Position < Bytes.Length, "The WebAssembly module is truncated.");
             return Bytes[Position++];
+        }
+
+        public void Skip(int length)
+        {
+            Require(length >= 0, "The WebAssembly skip length is negative.");
+            Require(Position <= Bytes.Length - length, "The WebAssembly module is truncated.");
+            Position += length;
         }
 
         public uint Readˉuleb32()

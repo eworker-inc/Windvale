@@ -42,39 +42,14 @@
                     <span id="source-title">Qualified source fixture</span>
                     <span class="language-badge">WV</span>
                 </div>
-                <pre><code>module Webassemblyˉcallsˉwithˉcontrol profile portable;
+                <pre><code>module WebAssemblyˉmemoryˉtext profile portable;
 
-fn Add(Left: i32, Right: i32) -&gt; i32 {
-    return Left + Right;
-}
-
-fn Build(Limit: i32) -&gt; i32 {
-    var Total: i32 = 0;
-    var Index: i32 = 0;
-
-    while Index &lt; Limit {
-        Total = Add(Total, 10);
-        Index = Index + 1;
-    }
-
-    return Total;
-}
-
-export fn Main() -&gt; i32 {
-    let Value: i32 = Build(3);
-    var Result: i32 = 0;
-
-    if Value == 30 {
-        Result = Add(Value, 12);
-    } else {
-        Result = 1;
-    }
-
-    return Result;
+export fn Main(Input: text) -&gt; text {
+    return Input;
 }</code></pre>
                 <p class="source-note">
-                    The source is shown as provenance. This milestone executes its prebuilt artifact;
-                    source editing still belongs to the Stage 0 playground.
+                    The source is fixed provenance, while the UTF-8 value below is editable.
+                    Source compilation still belongs to the Stage 0 playground.
                 </p>
             </section>
 
@@ -85,12 +60,15 @@ export fn Main() -&gt; i32 {
                 </div>
 
                 <dl class="artifact-evidence">
-                    <div><dt>Artifact</dt><dd>2,729 bytes</dd></div>
+                    <div><dt>Artifact</dt><dd>791 bytes</dd></div>
                     <div><dt>Target</dt><dd>wasm32-browser-v1-experimental</dd></div>
                     <div><dt>Imports</dt><dd>None</dd></div>
-                    <div><dt>Composition</dt><dd>Three functions · loop · if/else</dd></div>
-                    <div><dt>Expected</dt><dd>ABI 2 · budget 196 succeeds · 195 returns WVR3011</dd></div>
+                    <div><dt>Memory</dt><dd>Fixed 4 MiB input + 4 MiB output</dd></div>
+                    <div><dt>Expected</dt><dd>ABI 3 · budget 4 succeeds · 3 returns WVR3011</dd></div>
                 </dl>
+
+                <label class="memory-input-label" for="memory-input">UTF-8 input</label>
+                <textarea id="memory-input" class="memory-input" maxlength="1048576" spellcheck="false">Hello, 世界 🌬️</textarea>
 
                 <button id="run" type="button">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z" /></svg>
@@ -106,7 +84,7 @@ export fn Main() -&gt; i32 {
             <div class="boundary-grid">
                 <p><b>No CLR download</b><span>The page contains no Blazor bootstrap or .NET framework request.</span></p>
                 <p><b>Exact identity</b><span>SHA-256 is checked before the module reaches the worker.</span></p>
-                <p><b>Contained execution</b><span>Fresh workers enforce both wall-clock and exact WVB instruction budgets.</span></p>
+                <p><b>Owned buffers</b><span>The worker copies strict UTF-8 through fixed, non-overlapping input and output windows.</span></p>
             </div>
             <p class="boundary-note">
                 Artifact production and qualification still use the Stage 0 toolchain. This is a .NET-free

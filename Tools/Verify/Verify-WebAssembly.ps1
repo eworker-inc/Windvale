@@ -24,6 +24,8 @@ $BoundedCallsSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Boun
 $BoundedCallsOverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Bounded-Calls-Overflow-Main.wv'
 $CallsWithControlSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Calls-With-Control-Main.wv'
 $CallsWithControlElseSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Calls-With-Control-Else-Main.wv'
+$MemoryBytesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Memory-Bytes-Main.wv'
+$MemoryTextSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Memory-Text-Main.wv'
 $EngineVerifier = Join-Path $RepositoryRoot 'Tools/Verify/Verify-WebAssembly-Engine.mjs'
 $BackendWvb = Join-Path $ArtifactDirectory 'Windvale-WebAssembly.wvb'
 $SuccessWvb = Join-Path $ArtifactDirectory 'Checked-Add-Main.wvb'
@@ -41,6 +43,8 @@ $BoundedCallsWvb = Join-Path $ArtifactDirectory 'Bounded-Calls-Main.wvb'
 $BoundedCallsOverflowWvb = Join-Path $ArtifactDirectory 'Bounded-Calls-Overflow-Main.wvb'
 $CallsWithControlWvb = Join-Path $ArtifactDirectory 'Calls-With-Control-Main.wvb'
 $CallsWithControlElseWvb = Join-Path $ArtifactDirectory 'Calls-With-Control-Else-Main.wvb'
+$MemoryBytesWvb = Join-Path $ArtifactDirectory 'Memory-Bytes-Main.wvb'
+$MemoryTextWvb = Join-Path $ArtifactDirectory 'Memory-Text-Main.wvb'
 $SuccessWasm = Join-Path $ArtifactDirectory 'Checked-Add-Main.wasm'
 $OverflowWasm = Join-Path $ArtifactDirectory 'Checked-Add-Overflow-Main.wasm'
 $StraightWasm = Join-Path $ArtifactDirectory 'Straight-I32-Main.wasm'
@@ -56,6 +60,8 @@ $BoundedCallsWasm = Join-Path $ArtifactDirectory 'Bounded-Calls-Main.wasm'
 $BoundedCallsOverflowWasm = Join-Path $ArtifactDirectory 'Bounded-Calls-Overflow-Main.wasm'
 $CallsWithControlWasm = Join-Path $ArtifactDirectory 'Calls-With-Control-Main.wasm'
 $CallsWithControlElseWasm = Join-Path $ArtifactDirectory 'Calls-With-Control-Else-Main.wasm'
+$MemoryBytesWasm = Join-Path $ArtifactDirectory 'Memory-Bytes-Main.wasm'
+$MemoryTextWasm = Join-Path $ArtifactDirectory 'Memory-Text-Main.wasm'
 
 New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
 
@@ -85,6 +91,8 @@ Invoke-Windvale @('compile', $BoundedCallsSource, '-o', $BoundedCallsWvb)
 Invoke-Windvale @('compile', $BoundedCallsOverflowSource, '-o', $BoundedCallsOverflowWvb)
 Invoke-Windvale @('compile', $CallsWithControlSource, '-o', $CallsWithControlWvb)
 Invoke-Windvale @('compile', $CallsWithControlElseSource, '-o', $CallsWithControlElseWvb)
+Invoke-Windvale @('compile', $MemoryBytesSource, '-o', $MemoryBytesWvb)
+Invoke-Windvale @('compile', $MemoryTextSource, '-o', $MemoryTextWvb)
 
 $RunArguments = @(
     'run', $BackendWvb,
@@ -112,6 +120,8 @@ Invoke-Windvale ($RunArguments + @($BoundedCallsWvb, $BoundedCallsWasm))
 Invoke-Windvale ($RunArguments + @($BoundedCallsOverflowWvb, $BoundedCallsOverflowWasm))
 Invoke-Windvale ($RunArguments + @($CallsWithControlWvb, $CallsWithControlWasm))
 Invoke-Windvale ($RunArguments + @($CallsWithControlElseWvb, $CallsWithControlElseWasm))
+Invoke-Windvale ($RunArguments + @($MemoryBytesWvb, $MemoryBytesWasm))
+Invoke-Windvale ($RunArguments + @($MemoryTextWvb, $MemoryTextWasm))
 
 node $EngineVerifier `
     $SuccessWasm `
@@ -128,7 +138,9 @@ node $EngineVerifier `
     $BoundedCallsWasm `
     $BoundedCallsOverflowWasm `
     $CallsWithControlWasm `
-    $CallsWithControlElseWasm
+    $CallsWithControlElseWasm `
+    $MemoryBytesWasm `
+    $MemoryTextWasm
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

@@ -245,6 +245,39 @@ h1 {
     text-overflow: ellipsis;
 }
 
+.memory-input-label {
+    display: block;
+    margin: 0 1.2rem 0.45rem;
+    color: #68746b;
+    font-size: 0.76rem;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.memory-input {
+    box-sizing: border-box;
+    width: calc(100% - 2.4rem);
+    min-height: 92px;
+    margin: 0 1.2rem 1rem;
+    padding: 0.85rem;
+    resize: vertical;
+    border: 1px solid #cdd7cf;
+    border-radius: 10px;
+    background: #fbfdfb;
+    color: #263129;
+    font: 0.88rem/1.55 "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+}
+
+.memory-input:focus {
+    outline: 2px solid rgba(39, 118, 72, 0.3);
+    outline-offset: 1px;
+}
+
+.memory-input:disabled {
+    opacity: 0.65;
+}
+
 button {
     display: flex;
     align-items: center;
@@ -376,6 +409,16 @@ button svg {
     }
 
     .artifact-evidence dd {
+        color: #e0e9e2;
+    }
+
+    .memory-input-label {
+        color: #9daa9f;
+    }
+
+    .memory-input {
+        border-color: #354139;
+        background: #121915;
         color: #e0e9e2;
     }
 

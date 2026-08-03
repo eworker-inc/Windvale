@@ -6,12 +6,13 @@ import {
     EXHAUSTION_BUDGET,
     EXHAUSTION_STATUS,
     EXPECTED_ABI,
+    EXPECTED_OUTPUT_KIND,
     SUCCESS_BUDGET,
-    SUCCESS_RESULT,
     SUCCESS_STATUS,
 } from "./windvale-artifact.js";
 
 const Runˉbutton = document.getElementById("run");
+const Input = document.getElementById("memory-input");
 const Output = document.getElementById("output");
 const Stateˉbadge = document.getElementById("state-badge");
 
@@ -20,6 +21,7 @@ Runˉbutton.addEventListener("click", Runˉartifact);
 async function Runˉartifact() {
     Setˉstate("running", "Running");
     Runˉbutton.disabled = true;
+    Input.disabled = true;
     Output.textContent = "Decoding and verifying the pinned artifact…";
 
     try {
@@ -33,27 +35,49 @@ async function Runˉartifact() {
             throw new Error("The embedded artifact identity is incorrect.");
         }
 
-        const Success = await Execute(Bytes, 2000, SUCCESS_BUDGET);
+        const Inputˉbytes = new TextEncoder().encode(Input.value);
+        const Canonicalˉinput = new TextDecoder("utf-8", { fatal: true })
+            .decode(Inputˉbytes);
+        if (Canonicalˉinput !== Input.value) {
+            throw new Error("The input contains an unpaired Unicode surrogate.");
+        }
+        const Success = await Execute(Bytes, 2000, SUCCESS_BUDGET, Inputˉbytes);
         if (!Success.Succeeded) {
             throw new Error(Success.Error ?? "The browser worker rejected the module.");
         }
         if (
             Success.ExecutionAbi !== EXPECTED_ABI ||
             Success.Status !== SUCCESS_STATUS ||
-            Success.Result !== SUCCESS_RESULT ||
+            Success.Result !== null ||
+            Success.OutputKind !== EXPECTED_OUTPUT_KIND ||
+            !(Success.Output instanceof ArrayBuffer) ||
             Success.ExecutedInstructions !== SUCCESS_BUDGET
         ) {
             throw new Error("The exact-budget run does not match its qualified evidence.");
         }
+        const Outputˉbytes = new Uint8Array(Success.Output);
+        const Outputˉtext = new TextDecoder("utf-8", { fatal: true })
+            .decode(Outputˉbytes);
+        if (Outputˉtext !== Canonicalˉinput) {
+            throw new Error("The ABI-3 output text differs from the input text.");
+        }
 
-        const Exhausted = await Execute(Bytes, 2000, EXHAUSTION_BUDGET);
+        const Exhausted = await Execute(
+            Bytes,
+            2000,
+            EXHAUSTION_BUDGET,
+            Inputˉbytes,
+        );
         if (!Exhausted.Succeeded) {
             throw new Error(Exhausted.Error ?? "The browser worker rejected the module.");
         }
         if (
             Exhausted.ExecutionAbi !== EXPECTED_ABI ||
             Exhausted.Status !== EXHAUSTION_STATUS ||
-            Exhausted.Result !== 0 ||
+            Exhausted.Result !== null ||
+            Exhausted.OutputKind !== EXPECTED_OUTPUT_KIND ||
+            !(Exhausted.Output instanceof ArrayBuffer) ||
+            Exhausted.Output.byteLength !== 0 ||
             Exhausted.ExecutedInstructions !== EXHAUSTION_BUDGET
         ) {
             throw new Error("The exhausted-budget run does not match WVR3011 evidence.");
@@ -67,8 +91,10 @@ async function Runˉartifact() {
         Output.textContent = [
             `SHA-256     ${Actualˉsha256}`,
             `ABI          ${Success.ExecutionAbi}`,
-            `Budget ${SUCCESS_BUDGET}   status ${Success.Status} · result ${Success.Result} · ${Success.ExecutedInstructions} instructions`,
+            `Memory       4 MiB input · 4 MiB output · kind UTF-8 text`,
+            `Budget ${SUCCESS_BUDGET}     status ${Success.Status} · ${Outputˉbytes.byteLength} UTF-8 bytes · ${Success.ExecutedInstructions} instructions`,
             `Budget ${EXHAUSTION_BUDGET}   status ${Exhausted.Status} (WVR3011) · ${Exhausted.ExecutedInstructions} instructions`,
+            `Output       ${Previewˉtext(Outputˉtext)}`,
             `Framework    ${Frameworkˉrequests} .NET/Blazor requests`,
         ].join("\n");
         Setˉstate("passed", "Passed");
@@ -79,7 +105,16 @@ async function Runˉartifact() {
     }
     finally {
         Runˉbutton.disabled = false;
+        Input.disabled = false;
     }
+}
+
+function Previewˉtext(Value) {
+    const Maximum = 120;
+    const Preview = Value.length <= Maximum
+        ? Value
+        : `${Value.slice(0, Maximum)}…`;
+    return JSON.stringify(Preview);
 }
 
 function Decodeˉbase64(Value) {

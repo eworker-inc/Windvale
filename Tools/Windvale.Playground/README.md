@@ -10,9 +10,9 @@ Direct .NET-free artifact demo: <https://windvale.ca/playground/wasm-demo/>
 
 ## Direct WebAssembly demo
 
-The nested `wwwroot/wasm-demo/` route is ordinary static HTML, CSS, and JavaScript. It does not reference the Blazor bootstrap or any .NET framework asset. It reconstructs the exact 2,729-byte profile-7 artifact containing three functions, a loop, and an `if/else`, checks SHA-256, and sends it through the same disposable worker used by the differential playground. Real direct calls execute both outside and inside structured control while sharing one instruction budget. The page requires ABI `2`: budget 196 must return status `0`, result `42`, and 196 instructions; budget 195 must return status `3011` (`WVR3011`), result zero, and 195 instructions. It also requires zero .NET/Blazor resource requests.
+The nested `wwwroot/wasm-demo/` route is ordinary static HTML, CSS, and JavaScript. It does not reference the Blazor bootstrap or any .NET framework asset. It reconstructs the exact 791-byte profile-8 text-identity artifact, checks SHA-256, and sends it plus an editable UTF-8 value through the same disposable worker used by the differential playground. The page requires ABI `3`, fixed disjoint 4 MiB input/output regions, a non-growable memory, and strict UTF-8. Budget 4 must return status `0`, the exact input bytes, and four instructions; budget 3 must return status `3011` (`WVR3011`), empty output, and three instructions. It also requires zero .NET/Blazor resource requests.
 
-The source displayed by this route is read-only provenance. The artifact was produced and qualified through the current Stage 0 toolchain, so this is a .NET-free browser execution path rather than a .NET-free compiler or build workflow. Run its independent static and engine checks with:
+The source displayed by this route is read-only provenance; the editable text area supplies `Main`'s value. The artifact was produced and qualified through the current Stage 0 toolchain, so this is a .NET-free browser execution path rather than a .NET-free compiler or build workflow. Run its independent static and engine checks with:
 
 ```powershell
 npm run verify:wasm-demo

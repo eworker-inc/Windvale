@@ -108,7 +108,40 @@ public sealed class Referenceˉruntime
         return new(Result!.Value.Bytesˉvalue.Toˉimmutableˉarray(), Executedˉinstructions);
     }
 
+    public Runtimeˉbytesˉresult Runˉmainˉbytes(ImmutableArray<byte> input)
+    {
+        var Mainˉexport = Prepareˉmain(
+            [Valueˉtype.Bytes],
+            Valueˉtype.Bytes,
+            "fn(bytes) -> bytes");
+        using var Arguments = new Runtimeˉstack(1);
+        Arguments.Push(Runtimeˉvalue.Fromˉbytes(input));
+        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, Arguments, 1, 1);
+        return new(Result!.Value.Bytesˉvalue.Toˉimmutableˉarray(), Executedˉinstructions);
+    }
+
+    public Runtimeˉtextˉresult Runˉmainˉtext(string input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        var Mainˉexport = Prepareˉmain(
+            [Valueˉtype.Text],
+            Valueˉtype.Text,
+            "fn(text) -> text");
+        using var Arguments = new Runtimeˉstack(1);
+        Arguments.Push(Runtimeˉvalue.Fromˉtext(input));
+        var Result = Executeˉfunction(Mainˉexport.Targetˉindex, Arguments, 1, 1);
+        return new(Result!.Value.Textˉvalue!, Executedˉinstructions);
+    }
+
     private Exportˉdeclaration Prepareˉmain(Valueˉshape returnˉtype, string signature)
+    {
+        return Prepareˉmain([], returnˉtype, signature);
+    }
+
+    private Exportˉdeclaration Prepareˉmain(
+        ImmutableArray<Valueˉshape> parameterˉtypes,
+        Valueˉshape returnˉtype,
+        string signature)
     {
         Requireˉauthorizedˉcapabilities();
         var Mainˉexport = Verifiedˉmodule.Module.Exports
@@ -119,7 +152,7 @@ public sealed class Referenceˉruntime
         }
 
         var Mainˉfunction = Verifiedˉmodule.Module.Functions[Mainˉexport.Targetˉindex];
-        if (Mainˉfunction.Parameterˉtypes.Length != 0 ||
+        if (!Mainˉfunction.Parameterˉtypes.SequenceEqual(parameterˉtypes) ||
             Mainˉfunction.Returnˉtype != returnˉtype)
         {
             throw new Runtimeˉexception(

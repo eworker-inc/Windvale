@@ -33,13 +33,15 @@ if (Requestedˉpaths.some(Path =>
     Fail("The standalone page requests a .NET or Blazor framework asset.");
 }
 Requireˉtext(Index, "./app.js", "standalone application entry");
-Requireˉtext(Index, "Three functions · loop · if/else", "profile-7 composition evidence");
+Requireˉtext(Index, "Main(Input: text)", "profile-8 source provenance");
+Requireˉtext(Index, "Fixed 4 MiB input + 4 MiB output", "ABI-3 memory evidence");
 Requireˉtext(Application, "../js/windvale-wasm-host.js", "shared disposable worker host");
 Requireˉtext(Application, "Countˉframeworkˉrequests", "runtime framework-request assertion");
 Requireˉtext(Host, "Workerˉinstance.terminate()", "worker termination boundary");
+Requireˉtext(Host, "Input: Transferˉinput.buffer", "worker input transfer boundary");
 Requireˉtext(Worker, "WebAssembly.validate", "WebAssembly validation boundary");
 Requireˉtext(Worker, "WebAssembly.Module.imports(Module).length !== 0", "import rejection boundary");
-Requireˉtext(Worker, "Executeˉabiˉtwo", "metered execution ABI boundary");
+Requireˉtext(Worker, "Executeˉabiˉthree", "linear-memory execution ABI boundary");
 
 const Bytes = Buffer.from(Artifact.ARTIFACT_BASE64, "base64");
 Equal(Artifact.ARTIFACT_SIZE, Bytes.byteLength, "artifact byte length");
@@ -57,7 +59,13 @@ Equal(
     JSON.stringify([
         ["Windvale.run", "function"],
         ["Windvale.abi", "global"],
-        ["Windvale.result", "global"],
+        ["Windvale.memory", "memory"],
+        ["Windvale.input_offset", "global"],
+        ["Windvale.input_capacity", "global"],
+        ["Windvale.output_offset", "global"],
+        ["Windvale.output_capacity", "global"],
+        ["Windvale.output_length", "global"],
+        ["Windvale.output_kind", "global"],
         ["Windvale.instructions", "global"],
     ]),
     JSON.stringify(WebAssembly.Module.exports(Module).map(Item => [Item.name, Item.kind])),
@@ -65,31 +73,66 @@ Equal(
 
 const Instance = new WebAssembly.Instance(Module, {});
 Equal(Artifact.EXPECTED_ABI, Instance.exports["Windvale.abi"].value, "execution ABI");
+Equal(
+    Artifact.EXPECTED_OUTPUT_KIND,
+    Instance.exports["Windvale.output_kind"].value,
+    "output kind");
+Equal(65_536, Instance.exports["Windvale.input_offset"].value, "input offset");
+Equal(4_194_304, Instance.exports["Windvale.input_capacity"].value, "input capacity");
+Equal(4_259_840, Instance.exports["Windvale.output_offset"].value, "output offset");
+Equal(4_194_304, Instance.exports["Windvale.output_capacity"].value, "output capacity");
+Equal(129 * 65_536, Instance.exports["Windvale.memory"].buffer.byteLength, "memory extent");
+const Input = new TextEncoder().encode("Hello, 世界 🌬️");
 for (let Run = 1; Run <= 2; Run++) {
+    new Uint8Array(
+        Instance.exports["Windvale.memory"].buffer,
+        Instance.exports["Windvale.input_offset"].value,
+        Input.byteLength).set(Input);
     Equal(
         Artifact.SUCCESS_STATUS,
-        Instance.exports["Windvale.run"](Artifact.SUCCESS_BUDGET),
+        Instance.exports["Windvale.run"](Artifact.SUCCESS_BUDGET, Input.byteLength),
         `success run ${Run} status`);
-    Equal(Artifact.SUCCESS_RESULT, Instance.exports["Windvale.result"].value, `success run ${Run} result`);
     Equal(
         Artifact.SUCCESS_BUDGET,
         Instance.exports["Windvale.instructions"].value,
         `success run ${Run} instruction count`);
+    Equal(Input.byteLength, Instance.exports["Windvale.output_length"].value, `success run ${Run} output length`);
+    const Output = new Uint8Array(
+        Instance.exports["Windvale.memory"].buffer,
+        Instance.exports["Windvale.output_offset"].value,
+        Instance.exports["Windvale.output_length"].value);
+    Equal(
+        Buffer.from(Input).toString("hex"),
+        Buffer.from(Output).toString("hex"),
+        `success run ${Run} output bytes`);
 }
 Equal(
     Artifact.EXHAUSTION_STATUS,
-    Instance.exports["Windvale.run"](Artifact.EXHAUSTION_BUDGET),
+    Instance.exports["Windvale.run"](Artifact.EXHAUSTION_BUDGET, Input.byteLength),
     "exhausted run status");
-Equal(0, Instance.exports["Windvale.result"].value, "exhausted run result reset");
+Equal(0, Instance.exports["Windvale.output_length"].value, "exhausted output reset");
 Equal(
     Artifact.EXHAUSTION_BUDGET,
     Instance.exports["Windvale.instructions"].value,
     "exhausted run instruction count");
+new Uint8Array(
+    Instance.exports["Windvale.memory"].buffer,
+    Instance.exports["Windvale.input_offset"].value,
+    2).set([0xC0, 0x80]);
+Equal(3014, Instance.exports["Windvale.run"](Artifact.SUCCESS_BUDGET, 2), "invalid UTF-8 status");
+Equal(0, Instance.exports["Windvale.instructions"].value, "invalid UTF-8 instruction count");
+Equal(0, Instance.exports["Windvale.output_length"].value, "invalid UTF-8 output reset");
+Equal(
+    3008,
+    Instance.exports["Windvale.run"](
+        Artifact.SUCCESS_BUDGET,
+        Instance.exports["Windvale.input_capacity"].value + 1),
+    "oversized input status");
 
 console.log(
     "Standalone .NET-free WebAssembly demo verification passed: " +
     `${Bytes.byteLength} bytes, ABI ${Artifact.EXPECTED_ABI}, ` +
-    `budget ${Artifact.SUCCESS_BUDGET} result ${Artifact.SUCCESS_RESULT}, ` +
+    `budget ${Artifact.SUCCESS_BUDGET} UTF-8 bytes ${Input.byteLength}, ` +
     `budget ${Artifact.EXHAUSTION_BUDGET} status ${Artifact.EXHAUSTION_STATUS}.`);
 
 function Requireˉtext(Value, Expected, Boundary) {

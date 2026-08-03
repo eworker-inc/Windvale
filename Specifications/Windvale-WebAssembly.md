@@ -1,6 +1,6 @@
 # Windvale experimental WebAssembly target
 
-- Status: Implemented locally through experimental profile 7 and cross-host qualified through profile 5, but not an accepted permanent target
+- Status: Implemented locally through experimental profile 8 and cross-host qualified through profile 5, but not an accepted permanent target
 - Target identifier: `wasm32-browser-v1-experimental`
 - WebAssembly binary version: 1
 - Portable input identity: canonical WVB 1.6
@@ -110,6 +110,17 @@ Profile 7 composes the profile-6 call graph with the profile-5 structured-contro
 
 Profile 7 retains profile 6's function, call-depth, per-function, aggregate-code, aggregate-instruction, and output limits. Nested, overlapping, or crossing control regions remain unsupported. Every dynamic instruction in every selected caller, callee, loop iteration, or conditional route charges the same ABI-2 global budget. Arithmetic overflow and instruction exhaustion propagate through all active callers exactly as in profile 6.
 
+### Profile 8: versioned linear-memory text and byte buffers
+
+Profile 8 accepts either of two exact compiler-produced identity functions:
+
+- `Main(Input: bytes) -> bytes`; or
+- `Main(Input: text) -> text`.
+
+The module remains canonical WVB 1.6, portable, capability-free, and single-function/single-export. The accepted function has exactly one parameter, one synthesized return local of the same type, declared maximum operand-stack depth one, and the four-instruction sequence `local.load 0; local.store 1; local.load 1; return`. The selector rejects a mixed parameter/return family, any other local or instruction shape, and every malformed envelope without publication.
+
+This deliberately narrow identity profile establishes transport and validation semantics before general dynamic values. It does not yet lower arbitrary text or byte operations, calls, branches, allocation, records, or enums. `bytes` are opaque and may contain any octets. `text` input is validated inside the generated guest by a strict UTF-8 state machine that rejects truncation, invalid continuation ranges, overlong encodings, surrogate code points, and values above U+10FFFF.
+
 ## Profile 1 output module
 
 Successful lowering emits a WebAssembly binary version-1 module with these sections in ascending order:
@@ -172,7 +183,7 @@ e924c7507a363a7b019935622abfbd4bf4ac8445cd37a0412130ce8e5c83d51a
 
 ## Execution ABI 2 and profiles 4 through 7 output
 
-Profiles 4 through 6 retain ABI 1's three published globals and exact export names but change the exported function type to `(i32) -> i32` and set `Windvale.abi` to `2`:
+Profiles 4 through 7 retain ABI 1's three published globals and exact export names but change the exported function type to `(i32) -> i32` and set `Windvale.abi` to `2`:
 
 | Export | WebAssembly kind | Contract |
 | --- | --- | --- |
@@ -221,12 +232,48 @@ The retained profile-7 true-route fixture defines `Add`, looping `Build`, and ex
 
 The matching false-route fixture has 722-byte WVB SHA-256 `77e65ba692c8abc87dbac4dfeba174f3afc9191ac784b47a65becae8f0df2752`. It calls `Add` from the `else` route, succeeds as `0/42/153`, returns `3011/0/152` one instruction below it, and emits a 2,729-byte artifact with SHA-256 `35d75c30ef03dbb693a976cfaa31405ce90ecca4d393c5e93de8953fcf4658da`.
 
+## Execution ABI 3 and profile 8 output
+
+Profile 8 emits an import-free WebAssembly binary version-1 module with one fixed, non-growable 129-page memory. Page zero is reserved. The host owns a 4 MiB input window beginning at byte 65,536; the guest owns a separate 4 MiB output window beginning at byte 4,259,840. The regions are disjoint, checked before access, and exactly fill the remaining memory.
+
+The module exports these values in this exact order:
+
+| Export | WebAssembly kind | Contract |
+| --- | --- | --- |
+| `Windvale.run` | function `(i32, i32) -> i32` | Accepts instruction budget and input byte length; returns `0`, `3008`, `3011`, or `3014`. |
+| `Windvale.abi` | immutable `i32` global | Contains execution ABI version `3`. |
+| `Windvale.memory` | memory | The fixed 129-page linear memory. |
+| `Windvale.input_offset` | immutable `i32` global | Contains `65,536`. |
+| `Windvale.input_capacity` | immutable `i32` global | Contains `4,194,304`. |
+| `Windvale.output_offset` | immutable `i32` global | Contains `4,259,840`. |
+| `Windvale.output_capacity` | immutable `i32` global | Contains `4,194,304`. |
+| `Windvale.output_length` | mutable `i32` global | Contains the valid output byte count only after status zero; reset before every run. |
+| `Windvale.output_kind` | immutable `i32` global | Contains `1` for opaque bytes or `2` for strict UTF-8 text. |
+| `Windvale.instructions` | mutable `i32` global | Contains exact charged WVB instructions; reset before every run and never exceeds the supplied budget. |
+
+Before calling `Windvale.run`, a conforming host validates the export set, immutable layout globals, memory extent and non-growth property, copies exactly `input_length` bytes into the input window, and supplies a positive instruction budget. On status zero it validates `output_length <= output_capacity`, copies exactly that many bytes from the output window, and treats all other memory as unavailable. It must not use the output descriptor after failure. The input may alias no guest output because the two regions are fixed and disjoint.
+
+`WVR3008` reports a negative or over-capacity input length before any instruction is charged. `WVR3011` preserves the ABI-2 budget contract. `WVR3014` reports malformed text input before the first WVB instruction. The guest resets output length and instruction count before all validation and execution. A successful identity run charges four instructions and copies with WebAssembly `memory.copy`; budget three returns `3011` with empty output and three charged instructions. Memory outside the published successful output length may retain stale bytes and is never result evidence.
+
+The retained bytes fixture has 179-byte WVB SHA-256 `3d751ca734faed1832b4d33a9f0cfc605b695f3ae8156e3d431504798869c8d9`. It emits a 435-byte Wasm module with SHA-256:
+
+```text
+b5f87bd47be7a0ce0bb6755de4ecea8bc311c9412ee28d6091092e7aa4c184f5
+```
+
+The retained text fixture has 178-byte WVB SHA-256 `c19463d24d65c1bc46dca48dcda8541491b53b7289483afe4508685f30e0fbda`. Its strict validator produces a 791-byte Wasm module with SHA-256:
+
+```text
+c3635b8df4ed9d471faad7e653e975662099c0a2336639586915ce50b768542d
+```
+
 ## Limits and failure behavior
 
 - Input WVB is limited to the current 4 MiB immutable-`bytes` value and hosted-file boundary. This is narrower than WVB's general 16 MiB module limit.
 - Profiles 3 through 5 are independently bounded to 256 locals, 16,384 code bytes, and 4,096 instructions. Profile 3 admits maximum operand-stack depth through 256; profiles 4 and 5 require exactly two.
 - Profiles 6 and 7 admit two through eight functions, zero through two parameters per function, 256 combined parameters and locals per function, stack depth one or two, and the same per-function code and instruction bounds; aggregate code and instruction limits are 32,768 bytes and 8,192 instructions. Profile 7 additionally admits compiler-produced `bool` locals.
-- Output is limited to 65,536 bytes for this experimental profile.
+- Profile 8 admits one exact text or bytes identity function and independently limits both input and output to 4,194,304 bytes in fixed disjoint memory windows.
+- Encoded WebAssembly output is limited to 65,536 bytes for every experimental profile.
 - All offset and length checks precede reads or additions that depend on untrusted values.
 - Failure returns a typed status and an empty output value.
 - The hosted shell writes no output resource on failure.
@@ -255,7 +302,9 @@ Profile 6 additionally requires independent reconstruction of every generated ty
 
 Profile 7 additionally requires the profile-5 edge and join reconstruction and profile-6 call reconstruction to succeed together for every function; exact reference agreement for selected true and false routes; calls inside loop and conditional bodies; shared-budget success and one-instruction-short exhaustion; deterministic repeat behavior; and rejection of malformed, crossing, overlapping, or nested regions without publication.
 
-On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles fifteen profile-2 through profile-7 fixtures, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine. The ABI-2 cases require exact success, one-instruction-short exhaustion, reset across repeated runs, shared-budget call execution, calls within both conditional routes, callee-overflow propagation, and nonterminating-loop containment.
+Profile 8 additionally requires independent reconstruction of the exact function shape, type, memory declaration, export order, layout globals, wrapper, meter, UTF-8 validator, and memory copy; empty, ordinary, Unicode, arbitrary-byte, and exact-4-MiB boundary round trips; malformed UTF-8 agreement with an independent strict decoder; input-length and budget failures with invalid output descriptors; fixed-memory growth rejection; and deterministic repeat behavior.
+
+On Windows, `pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1` rebuilds the Windvale-authored backend, compiles seventeen profile-2 through profile-8 fixtures, lowers them by running the hosted `.wv` tool, checks exact sizes and digests, and executes every output under the installed Node.js WebAssembly engine. The ABI-2 cases require exact success, one-instruction-short exhaustion, reset across repeated runs, shared-budget call execution, calls within both conditional routes, callee-overflow propagation, and nonterminating-loop containment. The ABI-3 cases additionally exercise exact-capacity bytes, curated UTF-8 boundaries, and deterministic randomized agreement with Node.js's fatal UTF-8 decoder.
 
 Exact profile-4 implementation commit `1342f63bc7eaae17a526ca440b075c2abf3c3b31` passed GitHub [Verify run 30770158910](https://github.com/eworker-inc/Windvale/actions/runs/30770158910). Its Windows and digest-pinned Debian jobs each passed the complete repository verifier with zero-warning builds, all 68 Seed tests, and all 25 OS tests. This establishes deterministic equality for the retained profile-4 WVB and WebAssembly identities and the exact `0/42/157`, `3011/0/156`, and nonterminating `3011/0/50` execution evidence on both hosts.
 
@@ -273,6 +322,8 @@ The exact implementation commit also passed GitHub [Deploy homepage run 30770158
 
 [Decision 0121](../Documents/Decisions/0121-WebAssembly-Calls-With-Structured-Control.md) advances the selector and .NET-free page locally to profile 7. The retained Node.js evidence validates both conditional routes, exact shared-budget exhaustion, calls inside loop and conditional bodies, deterministic output, and malformed or nested-region rejection. On 2026-08-02, a Chromium-based in-app browser validates and executes the pinned 2,729-byte artifact in fresh workers: budget 196 reports `0/42/196`, budget 195 reports `3011/0/195`, the console contains no warning or error, and the observed development assets contain no `.NET`, Blazor, or `_framework` URL. Cross-host and cross-browser qualification remain pending.
 
+[Decision 0123](../Documents/Decisions/0123-Versioned-WebAssembly-Linear-Memory-And-Utf8-Buffers.md) advances the selector, shared worker, and .NET-free page locally to profile 8 and execution ABI 3. Node.js validates arbitrary-byte and strict-UTF-8 round trips through fixed 4 MiB regions, exact-boundary copies, memory non-growth, deterministic budget and range failures, and 20,000 generated byte sequences against an independent fatal UTF-8 decoder. On 2026-08-02, a Chromium-based in-app browser round-trips both default and edited multilingual values, reports exact `0/4` success and `3011/3` exhaustion, zero .NET/Blazor requests, and no console warning or error. Cross-host and cross-browser qualification remain pending.
+
 ## Non-claims
 
 This profile does not establish:
@@ -281,11 +332,11 @@ This profile does not establish:
 - a direct source-to-WebAssembly compiler;
 - a general WVB-to-WebAssembly backend;
 - a Windvale-native general WVB verifier or interpreter;
-- recursion, function values, indirect calls, nested or overlapping control-flow regions, `break`, `continue`, arbitrary or unbounded instruction streams, other scalar families, general resource counters, text, bytes, records, enums, memory management, or capabilities in WebAssembly;
+- recursion, function values, indirect calls, nested or overlapping control-flow regions, `break`, `continue`, arbitrary or unbounded instruction streams, general text or bytes operations beyond the two identity shapes, other scalar families, records, enums, memory allocation, collection, or capabilities in WebAssembly;
 - compilation of the Windvale compiler itself to WebAssembly;
 - replacement of the .NET playground path; or
 - production browser isolation.
 
 ## Next extension boundary
 
-The next backend slice should define a versioned linear-memory ABI for immutable UTF-8 text and bounded byte buffers before adding the compiler-required value and allocation runtime. Nested regions are an alternative semantic extension. Recursion, indirect calls, `break`, `continue`, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, the Stage 0 compiler, verifier, `.wv` lowerer execution, and fallback interpreter should move off the UI thread before the playground is treated as hardened against hostile inputs.
+The next backend slice should implement the compiler-required scalar, text, bytes, record, enum, and bounded allocation runtime over ABI 3, beginning with representative operations whose reference semantics and resource failures can be compared exactly. Nested regions are an alternative semantic extension. Recursion, indirect calls, `break`, `continue`, and browser capability imports remain outside the profile until the verifier-evidence boundary and resource contract are explicit for each. Independently, the Stage 0 compiler, verifier, `.wv` lowerer execution, and fallback interpreter should move off the UI thread before the playground is treated as hardened against hostile inputs.

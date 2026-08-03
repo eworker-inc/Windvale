@@ -1,0 +1,5 @@
+module WebAssemblyˉmemoryˉbytes profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    return Input;
+}

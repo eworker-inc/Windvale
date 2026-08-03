@@ -113,7 +113,9 @@ The direct backend must not become a parallel language implementation. It should
 
 [Decision 0121](../Decisions/0121-WebAssembly-Calls-With-Structured-Control.md) adds local profile-7 evidence for composing those real calls with sequential nonnested loops and conditionals. Retained fixtures call helpers from a loop and both conditional routes while one shared ABI-2 budget spans every caller and callee. The .NET-free route advances to the 2,729-byte composition artifact at exact budgets 196 and 195.
 
-This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet implement recursion, nested control flow, `break`, `continue`, other value families, linear memory, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, cross-browser qualification, or UI-thread containment for Stage 0. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
+[Decision 0123](../Decisions/0123-Versioned-WebAssembly-Linear-Memory-And-Utf8-Buffers.md) adds local profile-8 and execution-ABI-3 evidence for fixed linear-memory transport. Exact compiler-produced `bytes -> bytes` and `text -> text` identities use disjoint 4 MiB host-input and guest-output windows, strict guest-side UTF-8 validation, and exact metering. The shared worker independently checks the layout and returned descriptor; the .NET-free route advances to an editable Unicode input over the 791-byte text artifact.
+
+This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet implement recursion, nested control flow, `break`, `continue`, general text/bytes operations, other value families, records, enums, allocation, capabilities, a general WVB verifier, compiler self-hosting in WebAssembly, cross-browser qualification, or UI-thread containment for Stage 0. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
 ## Proposed playground shape
 
@@ -262,7 +264,7 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 
 1. Prove whether the current C# source compiler, WVB codec/verifier, and reference interpreter can build for browser-hosted .NET WebAssembly without the native project.
 2. Compile and run bounded portable programs in a Web Worker. Implemented locally through profile 7 by Decisions 0107, 0113, 0116, 0120, and 0121; profile 5 remains the latest cross-host-qualified backend boundary.
-3. Compare its WVB bytes, result, trap status, and defined instruction count with the reference path. Implemented for ABI 1 and ABI 2; cross-browser evidence remains open.
+3. Compare its WVB bytes, result or output buffer, trap status, and defined instruction count with the reference path. Implemented for ABI 1 through ABI 3; cross-browser evidence remains open.
 4. Measure compressed download size, cold start, compile time, execution time, peak browser memory, and worker termination behavior.
 5. Record unsupported APIs and required adapter seams before choosing a product route.
 

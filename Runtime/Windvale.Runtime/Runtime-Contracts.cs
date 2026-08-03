@@ -183,6 +183,10 @@ public sealed record Runtimeˉbytesˉresult(
     ImmutableArray<byte> Bytes,
     long Executedˉinstructions);
 
+public sealed record Runtimeˉtextˉresult(
+    string Text,
+    long Executedˉinstructions);
+
 public sealed record Runtimeˉfunctionˉsteps(
     int Functionˉindex,
     string Functionˉname,
