@@ -97,6 +97,16 @@ dotnet run --project Tools/Windvale.Tool -- inspect artifacts/Sum-Data.wvb
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Sum-Data.wvb
 ```
 
+On Windows, build and run the first narrow import-free native application target with:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv --target windows-x64-console-v1 -o artifacts/Sum-Data.exe
+& ./artifacts/Sum-Data.exe
+$LASTEXITCODE # 29
+```
+
+This target currently accepts only capability-free `Main() -> i32` and uses the Stage 0 compiler/tool host to construct the `.exe`; the generated process does not load .NET. See the [Windows console application specification](../../Specifications/Windvale-Windows-Console-Application.md) for its fixed ABI-20 context, arenas, verification, and deliberate limits.
+
 The result is `Result: 29`.
 
 ## Run a hosted program

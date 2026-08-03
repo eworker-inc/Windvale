@@ -118,6 +118,7 @@ if [ "$VERIFY_LEVEL" = 'standard' ]; then
 fi
 
 SUM_MODULE="$ARTIFACTS/Sum-Data.wvb"
+SUM_WINDOWS_APPLICATION="$ARTIFACTS/Sum-Data-Windows.exe"
 HELLO_MODULE="$ARTIFACTS/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
 COMPOSITION_MODULE="$ARTIFACTS/Module-Composition-Demo.wvb"
@@ -195,6 +196,22 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" -o "$SUM_MODULE"
+
+WINDOWS_APPLICATION_OUTPUT=$(dotnet "$TOOL_DLL" \
+    compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" \
+    --target windows-x64-console-v1 \
+    -o "$SUM_WINDOWS_APPLICATION")
+printf '%s\n' "$WINDOWS_APPLICATION_OUTPUT" | \
+    grep -F 'Target: windows-x64-console-v1' >/dev/null
+printf '%s\n' "$WINDOWS_APPLICATION_OUTPUT" | \
+    grep -F 'SHA-256: c6c4568f0a47e36ce8fdb145f4c3de3ce9a28bb2fb1935add75d44e48a2ac805' >/dev/null
+WINDOWS_APPLICATION_HASH=$(sha256sum "$SUM_WINDOWS_APPLICATION" | awk '{print $1}')
+WINDOWS_APPLICATION_BYTES=$(wc -c < "$SUM_WINDOWS_APPLICATION" | tr -d ' ')
+if [ "$WINDOWS_APPLICATION_HASH" != 'c6c4568f0a47e36ce8fdb145f4c3de3ce9a28bb2fb1935add75d44e48a2ac805' ] || \
+   [ "$WINDOWS_APPLICATION_BYTES" != '5120' ]; then
+    echo 'The Seed CLI Windows application identity is not canonical.' >&2
+    exit 1
+fi
 
 VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$SUM_MODULE")
 printf '%s\n' "$VERIFY_OUTPUT" | grep -F 'Verified: Sumˉdata' >/dev/null

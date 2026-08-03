@@ -135,6 +135,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $SumModule = Join-Path $Artifacts 'Sum-Data.wvb'
+$SumWindowsApplication = Join-Path $Artifacts 'Sum-Data-Windows.exe'
 $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $CompositionModule = Join-Path $Artifacts 'Module-Composition-Demo.wvb'
@@ -212,6 +213,33 @@ $LinkMap = Join-Path $Artifacts 'Hello-Linked.wvmap'
 $InvalidLinkedImage = Join-Path $Artifacts '__windvale_invalid_link_output__.bin'
 dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
+
+$WindowsApplicationOutput = dotnet $ToolDll compile `
+    (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') `
+    --target windows-x64-console-v1 `
+    -o $SumWindowsApplication
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WindowsApplicationOutput -notcontains 'Target: windows-x64-console-v1' -or
+    $WindowsApplicationOutput -notcontains 'SHA-256: c6c4568f0a47e36ce8fdb145f4c3de3ce9a28bb2fb1935add75d44e48a2ac805'
+) {
+    $WindowsApplicationText = $WindowsApplicationOutput -join ' | '
+    throw "The Seed CLI failed to produce the canonical Windows application (exit $LASTEXITCODE; output: $WindowsApplicationText)."
+}
+$WindowsApplicationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SumWindowsApplication).Hash.ToLowerInvariant()
+if (
+    (Get-Item -LiteralPath $SumWindowsApplication).Length -ne 5120 -or
+    $WindowsApplicationHash -ne 'c6c4568f0a47e36ce8fdb145f4c3de3ce9a28bb2fb1935add75d44e48a2ac805'
+) {
+    throw 'The Seed CLI Windows application identity is not canonical.'
+}
+if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+    [System.Runtime.InteropServices.OSPlatform]::Windows)) {
+    & $SumWindowsApplication
+    if ($LASTEXITCODE -ne 29) {
+        throw "The generated Windows application returned $LASTEXITCODE instead of 29."
+    }
+}
 
 $VerifyOutput = dotnet $ToolDll verify $SumModule
 if ($LASTEXITCODE -ne 0 -or $VerifyOutput -notcontains 'Verified: Sumˉdata') {

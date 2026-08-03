@@ -1,9 +1,11 @@
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using Windvale.Assembler;
 using Windvale.Bytecode;
 using Windvale.Compiler;
+using Windvale.Compiler.Native;
 using Windvale.Linker;
 using Windvale.ObjectModel;
 using Windvale.Project;
@@ -94,7 +96,8 @@ internal static class Program
     private static int Compile(string[] arguments)
     {
         const string Usage =
-            "Usage: windvale compile <source.wv> [--module <dependency.wv>]... [-o <module.wvb>]";
+            "Usage: windvale compile <source.wv> [--module <dependency.wv>]... " +
+            "[--target <wvb|windows-x64-console-v1>] [-o <artifact>]";
         if (arguments.Length == 0 || arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
             return Usageˉerror(Usage);
@@ -103,6 +106,8 @@ internal static class Program
         var Sourceˉpath = Path.GetFullPath(arguments[0]);
         var Dependencyˉpaths = new List<string>();
         string? Requestedˉoutputˉpath = null;
+        var Target = "wvb";
+        var Sawˉtarget = false;
         for (var Index = 1; Index < arguments.Length; Index += 2)
         {
             if (Index + 1 >= arguments.Length)
@@ -119,12 +124,25 @@ internal static class Program
                 Requestedˉoutputˉpath = Path.GetFullPath(arguments[Index + 1]);
                 continue;
             }
+            if (arguments[Index] == "--target" && !Sawˉtarget)
+            {
+                Target = arguments[Index + 1];
+                Sawˉtarget = true;
+                continue;
+            }
 
             return Usageˉerror($"Unknown, duplicate, or incomplete compile option '{arguments[Index]}'.");
         }
 
-        var Outputˉpath = Requestedˉoutputˉpath ?? Path.ChangeExtension(Sourceˉpath, ".wvb");
-        return Compileˉsourceˉfiles(Sourceˉpath, Dependencyˉpaths, Outputˉpath);
+        if (Target is not ("wvb" or Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME))
+        {
+            return Usageˉerror($"Unknown compile target '{Target}'.");
+        }
+
+        var Outputˉpath = Requestedˉoutputˉpath ?? Path.ChangeExtension(
+            Sourceˉpath,
+            Target == "wvb" ? ".wvb" : ".exe");
+        return Compileˉsourceˉfiles(Sourceˉpath, Dependencyˉpaths, Outputˉpath, Target);
     }
 
     private static int Build(string[] arguments)
@@ -165,13 +183,14 @@ internal static class Program
             return EXIT_COMPILATION;
         }
 
-        return Compileˉsourceˉfiles(Plan.Rootˉpath, Plan.Sourceˉpaths, Outputˉpath);
+        return Compileˉsourceˉfiles(Plan.Rootˉpath, Plan.Sourceˉpaths, Outputˉpath, "wvb");
     }
 
     private static int Compileˉsourceˉfiles(
         string sourceˉpath,
         IReadOnlyList<string> dependencyˉpaths,
-        string outputˉpath)
+        string outputˉpath,
+        string target)
     {
         var Sourceˉpath = Path.GetFullPath(sourceˉpath);
         var Dependencyˉpaths = dependencyˉpaths.Select(Path.GetFullPath).ToList();
@@ -182,9 +201,13 @@ internal static class Program
                 $"A compilation may contain at most {Seedˉcompiler.MAX_SOURCE_MODULES} source modules.");
             return EXIT_COMPILATION;
         }
-        if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(Outputˉpath), ".wvb"))
+        var Expectedˉextension = target == "wvb" ? ".wvb" : ".exe";
+        if (!StringComparer.OrdinalIgnoreCase.Equals(
+            Path.GetExtension(Outputˉpath),
+            Expectedˉextension))
         {
-            return Usageˉerror("The compile output must use the .wvb module extension.");
+            return Usageˉerror(
+                $"The {target} compile output must use the {Expectedˉextension} extension.");
         }
 
         var Pathˉcomparer = OperatingSystem.IsWindows()
@@ -247,9 +270,43 @@ internal static class Program
         }
 
         var Bytes = Result.Moduleˉbytes.ToArray();
+        if (target == Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME)
+        {
+            Nativeˉfragment Fragment;
+            try
+            {
+                var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+                Fragment = X64ˉnativeˉbackend.Compile(Module).Fragment;
+            }
+            catch (Nativeˉbackendˉexception Exception)
+            {
+                Console.Error.WriteLine(
+                    $"{Sourceˉpath}: error {Exception.Code} [native compiler]: {Exception.Message}");
+                return EXIT_COMPILATION;
+            }
+
+            var Application = Windowsˉconsoleˉapplicationˉwriter.Write(Fragment);
+            if (!Application.Success)
+            {
+                foreach (var Diagnostic in Application.Diagnostics)
+                {
+                    Console.Error.WriteLine(
+                        $"{Sourceˉpath}: error {Diagnostic.Code} " +
+                        $"[{Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME}]: {Diagnostic.Message}");
+                }
+                return EXIT_COMPILATION;
+            }
+            Bytes = Application.Imageˉbytes.ToArray();
+        }
+
         File.WriteAllBytes(Outputˉpath, Bytes);
         Console.WriteLine($"Compiled: {Outputˉpath}");
-        Console.WriteLine($"SHA-256: {Moduleˉdigest.Calculateˉsha256(Bytes)}");
+        if (target != "wvb")
+        {
+            Console.WriteLine($"Target: {target}");
+        }
+        Console.WriteLine(
+            $"SHA-256: {Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant()}");
         return EXIT_SUCCESS;
     }
 
@@ -576,7 +633,9 @@ internal static class Program
         output.WriteLine("Windvale Seed tool");
         output.WriteLine();
         output.WriteLine("Commands:");
-        output.WriteLine("  windvale compile <source.wv> [--module <dependency.wv>]... [-o <module.wvb>]");
+        output.WriteLine(
+            "  windvale compile <source.wv> [--module <dependency.wv>]... " +
+            "[--target <wvb|windows-x64-console-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");

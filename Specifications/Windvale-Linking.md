@@ -124,6 +124,6 @@ The CLI requires exact `.wvo` inputs and a distinct `.bin` output. It reads boun
 
 ## Deliberate omissions
 
-The flat target has no PE, ELF, UEFI, archive/library search, dynamic linking, weak symbols, COMDAT selection, dead stripping, section merging, executable permissions, debug data, stack/heap declaration, ABI, start-up code, 64-bit absolute relocation, internal-label model, or loader metadata. A raw flat image is not directly executed by Windows or Linux. The UEFI application adapter is a downstream target with its own narrower input and verification rules.
+The flat target has no PE, ELF, UEFI, archive/library search, dynamic linking, weak symbols, COMDAT selection, dead stripping, section merging, executable permissions, debug data, stack/heap declaration, ABI, start-up code, 64-bit absolute relocation, internal-label model, or loader metadata. A raw flat image is not directly executed by Windows or Linux. The UEFI application adapter and capability-free `windows-x64-console-v1` adapter are downstream targets with their own narrower input and verification rules.
 
 Add target adapters and new relocation or section concepts only when the native backend or VM boot path supplies a concrete case and an independent verification rule.

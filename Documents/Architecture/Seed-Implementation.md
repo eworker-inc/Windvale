@@ -139,9 +139,10 @@ Both implementations own the same WVA contract and remain byte-for-byte differen
 - WVO decoding through the independently verified object-model boundary
 - The same symbol resolution, layout, relocation, reconstruction, and canonical map contract
 - SHA-256 flat-image evidence and deterministic failure diagnostics
-- The currently C#-only deterministic UEFI PE32+ application adapter and its independent verifier
+- The C#-only deterministic UEFI PE32+ application adapter and its independent verifier
+- The first deterministic import-free Windows x64 console adapter for capability-free scalar ABI-20 fragments, including its exact startup/context boundary and independent PE verifier
 
-Both linker implementations own the same `flat-x86-64-v1` contract and remain byte-for-byte differential oracles. They do not parse WVA, encode instructions, mutate input objects, or define an ABI. The raw flat image remains a deterministic memory snapshot; the narrow UEFI adapter consumes successful flat link evidence without changing portable link semantics. Later PE host, ELF, and Windvale OS target adapters remain explicit contracts.
+Both linker implementations own the same `flat-x86-64-v1` contract and remain byte-for-byte differential oracles. They do not parse WVA, encode instructions, mutate input objects, or define portable semantics. The raw flat image remains a deterministic memory snapshot. The narrow UEFI adapter consumes successful flat-link evidence without changing portable link semantics; `windows-x64-console-v1` additionally consumes an independently verified ABI-20 fragment, reproduces it through WVO/link, and supplies an exact process-entry/context adapter. General PE host, hosted-service, ELF, and Windvale OS target adapters remain later explicit contracts.
 
 ### Runtime
 
@@ -244,6 +245,6 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 
 ## Deliberate Seed limits
 
-The core Seed language/runtime contract does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, runtime module linkage, package discovery, or a host executable-container writer. Later repository layers now provide a bounded shared native backend and an experimental OS probe, but those do not silently broaden Seed semantics. The qualified Windvale and Stage 0 linkers remain deliberately limited to verified WVO inputs and one raw flat-memory-image target; UEFI packaging is a separate target adapter.
+The core Seed language/runtime contract does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, runtime module linkage, package discovery, or a general host executable-container writer. Later repository layers provide a bounded shared native backend, the narrow capability-free `windows-x64-console-v1` container, and an experimental OS probe, but those do not silently broaden Seed semantics. The qualified Windvale and Stage 0 linkers remain deliberately limited to verified WVO inputs and one raw flat-memory-image target; UEFI and Windows packaging are separate target adapters.
 
 These are scope boundaries, not assertions that the current language model is final.

@@ -3,6 +3,7 @@
     <Description>Windvale Seed C# reference/recovery flat-image linker and independently verified target adapters.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../Compiler/Native/Windvale.NativeCompiler.csproj" />
     <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
   </ItemGroup>
 </Project>

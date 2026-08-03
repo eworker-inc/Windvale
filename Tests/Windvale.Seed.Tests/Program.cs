@@ -33,6 +33,7 @@ internal static class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
+    private const string WINDOWS_CONSOLE_SUM_SHA256 = "c6c4568f0a47e36ce8fdb145f4c3de3ce9a28bb2fb1935add75d44e48a2ac805";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
@@ -739,6 +740,7 @@ internal static class Program
         new("hosted resources are explicit, separated, and bounded", [TEST_AREA_RUNTIME], Hostedˉresourcesˉareˉbounded),
         new("compiler output is deterministic and canonical", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Compilerˉisˉdeterministic),
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
+        new("portable Windvale emits a deterministic Windows x64 console executable", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windowsˉconsoleˉapplicationˉruns),
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
         new("native dynamic text, descriptor returns, and void calls agree across runtimes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉdynamicˉtextˉagrees),
@@ -2290,6 +2292,178 @@ internal static class Program
             15,
             X64ˉnativeˉexecutor.Executeˉi32(
                 X64ˉnativeˉbackend.Compile(Fiveˉparameterˉverified).Fragment));
+    }
+
+    private static void Windowsˉconsoleˉapplicationˉruns()
+    {
+        var Sumˉfragment = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(SUM_SOURCE))).Fragment;
+        var First = Windowsˉconsoleˉapplicationˉwriter.Write(Sumˉfragment);
+        var Second = Windowsˉconsoleˉapplicationˉwriter.Write(Sumˉfragment);
+        True(
+            First.Success,
+            First.Diagnostics.IsEmpty
+                ? "Windows console application construction failed."
+                : First.Diagnostics[0].Message);
+        True(Second.Success, "Repeated Windows console application construction failed.");
+        Sequenceˉequal(First.Imageˉbytes, Second.Imageˉbytes);
+        Equal(5_120, First.Imageˉbytes.Length);
+        Equal(
+            WINDOWS_CONSOLE_SUM_SHA256,
+            Convert.ToHexString(SHA256.HashData(First.Imageˉbytes.AsSpan())).ToLowerInvariant());
+
+        var Verified = Windowsˉconsoleˉapplicationˉverifier.Verify(First.Imageˉbytes.AsSpan());
+        Sequenceˉequal(Sumˉfragment.Code, Verified.Nativeˉimageˉbytes);
+        Equal(
+            Sumˉfragment.Symbols.Single(Symbol =>
+                Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
+                Symbol.Name == "Main").Offset,
+            Verified.Nativeˉentryˉoffset);
+
+        Equal("WVW1001", Windowsˉconsoleˉapplicationˉwriter.Write(null!).Diagnostics.Single().Code);
+        var Changedˉfragment = Sumˉfragment with
+        {
+            Code = Sumˉfragment.Code.SetItem(0, (byte)(Sumˉfragment.Code[0] ^ 1)),
+        };
+        Equal(
+            "WVW1001",
+            Windowsˉconsoleˉapplicationˉwriter.Write(Changedˉfragment).Diagnostics.Single().Code);
+
+        var Hostedˉfragment = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(HELLO_SOURCE))).Fragment;
+        Equal(
+            "WVW1002",
+            Windowsˉconsoleˉapplicationˉwriter.Write(Hostedˉfragment).Diagnostics.Single().Code);
+
+        const string Byteˉresultˉsource = """
+            module Nativeˉbyteˉresult profile portable;
+            export fn Main() -> bytes { return Bytesˉfromˉu8(42u8); }
+            """;
+        var Byteˉresultˉfragment = X64ˉnativeˉbackend.Compile(
+            Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Byteˉresultˉsource))).Fragment;
+        Equal(
+            "WVW1002",
+            Windowsˉconsoleˉapplicationˉwriter.Write(Byteˉresultˉfragment).Diagnostics.Single().Code);
+
+        Rejectˉwindowsˉapplication(
+            First.Imageˉbytes.AsSpan(0, First.Imageˉbytes.Length - 1),
+            "WVW2001");
+        Rejectˉwindowsˉapplication(
+            new byte[Windowsˉconsoleˉapplicationˉcontract.MAX_APPLICATION_BYTES + 1],
+            "WVW2001");
+        Rejectˉwindowsˉapplication(Mutateˉbyte(First.Imageˉbytes, 0x00), "WVW2002");
+        Rejectˉwindowsˉapplication(Mutateˉbyte(First.Imageˉbytes, 0x80), "WVW2003");
+        Rejectˉwindowsˉapplication(Mutateˉbyte(First.Imageˉbytes, 0x98), "WVW2004");
+        Rejectˉwindowsˉapplication(Mutateˉbyte(First.Imageˉbytes, 0x188), "WVW2005");
+        Rejectˉwindowsˉapplication(Mutateˉbyte(First.Imageˉbytes, 0x200), "WVW2008");
+        Rejectˉwindowsˉapplication(Mutateˉbyte(First.Imageˉbytes, 0x243), "WVW2007");
+        var Dataˉraw = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+            First.Imageˉbytes.AsSpan(0x1C4, sizeof(uint))));
+        Rejectˉwindowsˉapplication(
+            Mutateˉbyte(First.Imageˉbytes, Dataˉraw),
+            "WVW2009");
+        var Relocationˉraw = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+            First.Imageˉbytes.AsSpan(0x1EC, sizeof(uint))));
+        Rejectˉwindowsˉapplication(
+            Mutateˉbyte(First.Imageˉbytes, Relocationˉraw),
+            "WVW2006");
+        Rejectˉwindowsˉapplication(First.Imageˉbytes.Add(0).AsSpan(), "WVW2001");
+
+        var Random = new Random(0x575657);
+        for (var Case = 0; Case < 128; Case++)
+        {
+            var Bytes = new byte[Random.Next(0, 4_097)];
+            Random.NextBytes(Bytes);
+            try
+            {
+                _ = Windowsˉconsoleˉapplicationˉverifier.Verify(Bytes);
+            }
+            catch (Windowsˉconsoleˉapplicationˉexception)
+            {
+            }
+        }
+
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        Equal(29, Executeˉwindowsˉapplication(First.Imageˉbytes));
+        var Nominal = Windowsˉconsoleˉapplicationˉwriter.Write(
+            X64ˉnativeˉbackend.Compile(
+                Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_NOMINAL_SOURCE))).Fragment);
+        True(Nominal.Success, "The Windows target rejected the record-arena fixture.");
+        Equal(42, Executeˉwindowsˉapplication(Nominal.Imageˉbytes));
+
+        var Dynamicˉbytes = Windowsˉconsoleˉapplicationˉwriter.Write(
+            X64ˉnativeˉbackend.Compile(
+                Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_BYTES_SOURCE))).Fragment);
+        True(Dynamicˉbytes.Success, "The Windows target rejected the dynamic-byte arena fixture.");
+        Equal(42, Executeˉwindowsˉapplication(Dynamicˉbytes.Imageˉbytes));
+
+        const string Overflowˉsource = """
+            module Nativeˉoverflowˉapplication profile portable;
+            export fn Main() -> i32 { return 2147483647 + 1; }
+            """;
+        var Overflow = Windowsˉconsoleˉapplicationˉwriter.Write(
+            X64ˉnativeˉbackend.Compile(
+                Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Overflowˉsource))).Fragment);
+        True(Overflow.Success, "The Windows target rejected the checked-overflow fixture.");
+        Equal(1, Executeˉwindowsˉapplication(Overflow.Imageˉbytes));
+    }
+
+    private static int Executeˉwindowsˉapplication(ImmutableArray<byte> image)
+    {
+        var Path = System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(),
+            $"windvale-windows-console-{Guid.NewGuid():N}.exe");
+        try
+        {
+            File.WriteAllBytes(Path, image.AsSpan());
+            using var Process = System.Diagnostics.Process.Start(new ProcessStartInfo
+            {
+                FileName = Path,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            }) ?? throw new InvalidOperationException("Windows did not start the generated application.");
+            if (!Process.WaitForExit(10_000))
+            {
+                Process.Kill(entireProcessTree: true);
+                throw new InvalidOperationException("The generated Windows application did not exit.");
+            }
+            Equal(string.Empty, Process.StandardOutput.ReadToEnd());
+            Equal(string.Empty, Process.StandardError.ReadToEnd());
+            return Process.ExitCode;
+        }
+        finally
+        {
+            File.Delete(Path);
+        }
+    }
+
+    private static byte[] Mutateˉbyte(ImmutableArray<byte> source, int offset)
+    {
+        var Result = source.ToArray();
+        Result[offset] ^= 1;
+        return Result;
+    }
+
+    private static void Rejectˉwindowsˉapplication(
+        ReadOnlySpan<byte> bytes,
+        string expectedˉcode)
+    {
+        try
+        {
+            _ = Windowsˉconsoleˉapplicationˉverifier.Verify(bytes);
+        }
+        catch (Windowsˉconsoleˉapplicationˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException("The malformed Windows console application was accepted.");
     }
 
     private static void Nativeˉwideˉcallsˉagree()
