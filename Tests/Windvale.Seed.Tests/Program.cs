@@ -8094,10 +8094,16 @@ internal static class Program
                 Windowsˉbundle,
                 Windowsˉbundle.Imageˉbytes.AsSpan()));
 
-        var Firstˉwindowsˉapplication = Windowsˉhostedˉcompilerˉapplicationˉbuilder.Build(
-            Compilerˉtool.Module.Capabilities,
-            Windowsˉbundle,
-            Nativeˉentry);
+        var Publicˉwindowsˉapplication =
+            Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉcompiler(
+                Compilerˉnative.Fragment,
+                Compilerˉtool.Module.Capabilities);
+        True(
+            Publicˉwindowsˉapplication.Success,
+            Publicˉwindowsˉapplication.Diagnostics.IsEmpty
+                ? "The public Windows compiler application writer failed without a diagnostic."
+                : Publicˉwindowsˉapplication.Diagnostics[0].Message);
+        var Firstˉwindowsˉapplication = Publicˉwindowsˉapplication.Imageˉbytes;
         var Secondˉwindowsˉapplication = Windowsˉhostedˉcompilerˉapplicationˉbuilder.Build(
             Compilerˉtool.Module.Capabilities,
             Windowsˉbundle,
@@ -8300,10 +8306,16 @@ internal static class Program
             }
         }
 
-        var Firstˉlinuxˉapplication = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
-            Compilerˉtool.Module.Capabilities,
-            Linuxˉbundle,
-            Nativeˉentry);
+        var Publicˉlinuxˉapplication =
+            Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉcompiler(
+                Compilerˉnative.Fragment,
+                Compilerˉtool.Module.Capabilities);
+        True(
+            Publicˉlinuxˉapplication.Success,
+            Publicˉlinuxˉapplication.Diagnostics.IsEmpty
+                ? "The public Linux compiler application writer failed without a diagnostic."
+                : Publicˉlinuxˉapplication.Diagnostics[0].Message);
+        var Firstˉlinuxˉapplication = Publicˉlinuxˉapplication.Imageˉbytes;
         var Secondˉlinuxˉapplication = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
             Compilerˉtool.Module.Capabilities,
             Linuxˉbundle,

@@ -33,7 +33,7 @@ The focused Release test passes with zero warnings on Windows. Two independent c
 | `.reloc` | 17,156,608 / 512 | 426,184,704 / 12 |
 | Complete image | 17,157,120 bytes | 426,188,800 bytes |
 
-The Windows loader ran the raw candidate, startup converted and published both arguments, the exact native compiler read the source through the bounded snapshot service, atomically wrote the output, emitted the canonical status line, returned zero, and produced the byte-identical expected 815-byte WVB. The child image contains no CLR directory or CLR imports; .NET participates only in the retained Stage 0 parent construction and verification process.
+The Windows loader ran the raw candidate, startup converted and published both arguments, the exact native compiler read the source through the bounded snapshot service, durably wrote the output, emitted the canonical status line, returned zero, and produced the byte-identical expected 815-byte WVB. The child image contains no CLR directory or CLR imports; .NET participates only in the retained Stage 0 parent construction and verification process.
 
 ## Consequences
 

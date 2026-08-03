@@ -26,7 +26,8 @@ internal sealed record Verifiedˉlinuxˉhostedˉcompilerˉapplication(
 
 internal static class Linuxˉhostedˉcompilerˉapplicationˉcontract
 {
-    internal const uint FORMAT_VERSION = 3;
+    internal const uint FORMAT_VERSION =
+        Linuxˉconsoleˉapplicationˉcontract.COMPILER_FORMAT_VERSION;
     internal const int HEADER_BYTES = 0x1000;
     internal const uint TEXT_ADDRESS = 0x1000;
     internal const int STARTUP_BYTES = Linuxˉhostedˉcompilerˉstartup.BYTES;

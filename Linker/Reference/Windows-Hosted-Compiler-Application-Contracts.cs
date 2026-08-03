@@ -35,7 +35,8 @@ internal sealed record Verifiedˉwindowsˉhostedˉcompilerˉapplication(
 
 internal static class Windowsˉhostedˉcompilerˉapplicationˉcontract
 {
-    internal const byte FORMAT_VERSION = 3;
+    internal const byte FORMAT_VERSION =
+        Windowsˉconsoleˉapplicationˉcontract.COMPILER_FORMAT_VERSION;
     internal const int HEADER_BYTES = 0x200;
     internal const uint TEXT_ADDRESS = 0x1000;
     internal const int STARTUP_BYTES = Windowsˉhostedˉcompilerˉstartup.BYTES;

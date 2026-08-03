@@ -1,6 +1,8 @@
 using System.Buffers.Binary;
 using System.Collections.Immutable;
+using Windvale.Bytecode;
 using Windvale.Compiler.Native;
+using Windvale.Runtime.Native;
 
 namespace Windvale.Linker;
 
@@ -114,6 +116,56 @@ public static class Windowsˉconsoleˉapplicationˉwriter
             return Windowsˉconsoleˉapplicationˉresult.Failed(
                 "WVW1104",
                 $"Hosted Windows application verification failed: {Exception.Message}");
+        }
+    }
+
+    public static Windowsˉconsoleˉapplicationˉresult Writeˉhostedˉcompiler(
+        Nativeˉfragment fragment,
+        ImmutableArray<Capabilityˉdeclaration> capabilities)
+    {
+        try
+        {
+            Nativeˉfragmentˉverifier.Verify(fragment);
+            var Entries = fragment.Symbols
+                .Where(Symbol => Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
+                    Symbol.Kind == Nativeˉsymbolˉkind.Function &&
+                    Symbol.Name == "Main")
+                .ToArray();
+            if (Entries.Length != 1)
+            {
+                return Windowsˉconsoleˉapplicationˉresult.Failed(
+                    "WVW1201",
+                    "The hosted compiler requires exactly one exported Main function.");
+            }
+
+            var Bundle = X64ˉnativeˉserviceˉbundle.Build(
+                fragment,
+                Nativeˉserviceˉplatform.Windows);
+            var Image = Windowsˉhostedˉcompilerˉapplicationˉbuilder.Build(
+                capabilities,
+                Bundle,
+                Entries[0].Offset);
+            var Verified = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Image.AsSpan(),
+                Bundle);
+            if (Verified.Nativeˉentryˉoffset != Entries[0].Offset ||
+                !Verified.Bundleˉimage.AsSpan().SequenceEqual(Bundle.Imageˉbytes.AsSpan()))
+            {
+                return Windowsˉconsoleˉapplicationˉresult.Failed(
+                    "WVW1202",
+                    "The independently verified Windows compiler application did not reproduce its entry and service bundle.");
+            }
+            return Windowsˉconsoleˉapplicationˉresult.Succeeded(Image);
+        }
+        catch (Exception Exception) when (
+            Exception is Nativeˉbackendˉexception or
+                InvalidDataException or
+                OverflowException or
+                ArgumentException)
+        {
+            return Windowsˉconsoleˉapplicationˉresult.Failed(
+                "WVW1202",
+                $"Hosted Windows compiler application verification failed: {Exception.Message}");
         }
     }
 
