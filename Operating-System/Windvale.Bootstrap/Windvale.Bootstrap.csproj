@@ -26,5 +26,7 @@
     <EmbeddedResource Include="../Runtime/Boot-Resource-Service.wva" LogicalName="Windvale.Os.Runtime.Boot-Resource-Service.wva" />
     <EmbeddedResource Include="../Services/Resource-Store-Core.wv" LogicalName="Windvale.Os.Services.Resource-Store-Core.wv" />
     <EmbeddedResource Include="../Services/Resource-Store-Service.wv" LogicalName="Windvale.Os.Services.Resource-Store-Service.wv" />
+    <EmbeddedResource Include="../Services/Resource-Service-Core.wv" LogicalName="Windvale.Os.Services.Resource-Service-Core.wv" />
+    <EmbeddedResource Include="../Services/Resource-Service-Bridge.wv" LogicalName="Windvale.Os.Services.Resource-Service-Bridge.wv" />
   </ItemGroup>
 </Project>

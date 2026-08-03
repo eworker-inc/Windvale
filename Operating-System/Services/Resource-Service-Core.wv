@@ -1,0 +1,258 @@
+module Resourceˉservice profile portable;
+
+import Resourceˉstore;
+
+enum Resourceˉserviceˉrequestˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Invalidˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉname = 5;
+}
+
+enum Resourceˉserviceˉstatus {
+    Success = 0;
+    Malformedˉrequest = 1;
+    Notˉfound = 2;
+    Responseˉlimit = 3;
+    Invalidˉstore = 4;
+}
+
+record Resourceˉserviceˉrequest {
+    Status: Resourceˉserviceˉrequestˉstatus;
+    Requestˉid: u32;
+    Maximumˉdataˉbytes: u32;
+    Name: text;
+    Failureˉoffset: u32;
+}
+
+export fn Resourceˉserviceˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Resourceˉserviceˉappendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Resourceˉserviceˉzeroˉdigest(Input: bytes) -> bytes {
+    var Result: bytes = Resourceˉserviceˉempty(Input);
+    var Index: u32 = 0u32;
+    while Index < 16u32 {
+        Result = Resourceˉserviceˉappendˉu32(Result, 0u32);
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Resourceˉserviceˉstatusˉvalue(Status: Resourceˉserviceˉstatus) -> u32 {
+    if Status == Resourceˉserviceˉstatus.Malformedˉrequest { return 1u32; }
+    if Status == Resourceˉserviceˉstatus.Notˉfound { return 2u32; }
+    if Status == Resourceˉserviceˉstatus.Responseˉlimit { return 3u32; }
+    if Status == Resourceˉserviceˉstatus.Invalidˉstore { return 4u32; }
+    return 0u32;
+}
+
+export fn Resourceˉserviceˉresponse(
+    Input: bytes,
+    Requestˉid: u32,
+    Status: Resourceˉserviceˉstatus,
+    Failureˉdomain: u32,
+    Failureˉoffset: u32,
+    Identifier: u32,
+    Kind: u32,
+    Attributes: u32,
+    Digest: bytes,
+    Value: bytes
+) -> bytes {
+    let Total: u32 = 112u32 + Bytesˉlength(Value);
+    var Header: bytes = Resourceˉserviceˉempty(Input);
+    Header = Resourceˉserviceˉappendˉu32(Header, 1498568279u32);
+    Header = Resourceˉserviceˉappendˉu32(Header, 1u32);
+    Header = Resourceˉserviceˉappendˉu32(Header, Total);
+    Header = Resourceˉserviceˉappendˉu32(Header, Requestˉid);
+    Header = Resourceˉserviceˉappendˉu32(
+        Header, Resourceˉserviceˉstatusˉvalue(Status)
+    );
+    Header = Resourceˉserviceˉappendˉu32(Header, Failureˉdomain);
+    Header = Resourceˉserviceˉappendˉu32(Header, Failureˉoffset);
+    Header = Resourceˉserviceˉappendˉu32(Header, Identifier);
+    Header = Resourceˉserviceˉappendˉu32(Header, Kind);
+    Header = Resourceˉserviceˉappendˉu32(Header, Attributes);
+    Header = Resourceˉserviceˉappendˉu32(Header, Bytesˉlength(Value));
+    Header = Resourceˉserviceˉappendˉu32(Header, 0u32);
+    Header = Bytesˉconcat(Header, Digest);
+    return Bytesˉconcat(Header, Value);
+}
+
+export fn Resourceˉserviceˉfailure(
+    Input: bytes,
+    Requestˉid: u32,
+    Status: Resourceˉserviceˉstatus,
+    Failureˉdomain: u32,
+    Failureˉoffset: u32
+) -> bytes {
+    let Empty: bytes = Resourceˉserviceˉempty(Input);
+    return Resourceˉserviceˉresponse(
+        Input,
+        Requestˉid,
+        Status,
+        Failureˉdomain,
+        Failureˉoffset,
+        0u32,
+        0u32,
+        0u32,
+        Resourceˉserviceˉzeroˉdigest(Input),
+        Empty
+    );
+}
+
+export fn Resourceˉserviceˉinvalidˉrequest(
+    Requestˉid: u32,
+    Status: Resourceˉserviceˉrequestˉstatus,
+    Failureˉoffset: u32
+) -> Resourceˉserviceˉrequest {
+    return Resourceˉserviceˉrequest(Status, Requestˉid, 0u32, "", Failureˉoffset);
+}
+
+export fn Resourceˉserviceˉparseˉrequest(Input: bytes) -> Resourceˉserviceˉrequest {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 32u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            0u32, Resourceˉserviceˉrequestˉstatus.Invalidˉsize, Total
+        );
+    }
+    if Total > 1056u32 {
+        var Failureˉoffset: u32 = Total;
+        if Failureˉoffset > 4096u32 { Failureˉoffset = 4096u32; }
+        return Resourceˉserviceˉinvalidˉrequest(
+            0u32, Resourceˉserviceˉrequestˉstatus.Invalidˉsize, Failureˉoffset
+        );
+    }
+
+    let Requestˉid: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1364350551u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉmagic, 0u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉversion, 4u32
+        );
+    }
+
+    let Maximumˉdataˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Nameˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉheader, 8u32
+        );
+    }
+    if Requestˉid == 0u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉheader, 8u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) != 1u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉheader, 8u32
+        );
+    }
+    if Maximumˉdataˉbytes > 3984u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉheader, 8u32
+        );
+    }
+    if Nameˉbytes == 0u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉheader, 8u32
+        );
+    }
+    if Nameˉbytes > 1024u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉheader, 8u32
+        );
+    }
+    if Nameˉbytes != Total - 32u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉheader, 8u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉheader, 8u32
+        );
+    }
+    if !Resourceˉstoreˉutf8ˉisˉvalid(Input, 32u32, Nameˉbytes) {
+        return Resourceˉserviceˉinvalidˉrequest(
+            Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉname, 32u32
+        );
+    }
+
+    return Resourceˉserviceˉrequest(
+        Resourceˉserviceˉrequestˉstatus.Valid,
+        Requestˉid,
+        Maximumˉdataˉbytes,
+        Textˉfromˉutf8(Bytesˉslice(Input, 32u32, Nameˉbytes)),
+        0u32
+    );
+}
+
+export fn Resourceˉserviceˉhandle(Store: bytes, Request: bytes) -> bytes {
+    let Parsed: Resourceˉserviceˉrequest = Resourceˉserviceˉparseˉrequest(Request);
+    if Parsed.Status != Resourceˉserviceˉrequestˉstatus.Valid {
+        return Resourceˉserviceˉfailure(
+            Request,
+            Parsed.Requestˉid,
+            Resourceˉserviceˉstatus.Malformedˉrequest,
+            1u32,
+            Parsed.Failureˉoffset
+        );
+    }
+
+    let Lookup: Resourceˉstoreˉresult = Resourceˉstoreˉlookup(Store, Parsed.Name);
+    if Lookup.Status == Resourceˉstoreˉstatus.Notˉfound {
+        return Resourceˉserviceˉfailure(
+            Request,
+            Parsed.Requestˉid,
+            Resourceˉserviceˉstatus.Notˉfound,
+            0u32,
+            0u32
+        );
+    }
+    if Lookup.Status != Resourceˉstoreˉstatus.Valid {
+        var Failureˉoffset: u32 = Lookup.Failureˉoffset;
+        if Failureˉoffset > 4194304u32 { Failureˉoffset = 4194304u32; }
+        return Resourceˉserviceˉfailure(
+            Request,
+            Parsed.Requestˉid,
+            Resourceˉserviceˉstatus.Invalidˉstore,
+            2u32,
+            Failureˉoffset
+        );
+    }
+    if Bytesˉlength(Lookup.Value) > Parsed.Maximumˉdataˉbytes {
+        return Resourceˉserviceˉfailure(
+            Request,
+            Parsed.Requestˉid,
+            Resourceˉserviceˉstatus.Responseˉlimit,
+            1u32,
+            20u32
+        );
+    }
+
+    let Digest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Lookup.Value));
+    return Resourceˉserviceˉresponse(
+        Request,
+        Parsed.Requestˉid,
+        Resourceˉserviceˉstatus.Success,
+        0u32,
+        0u32,
+        Lookup.Identifier,
+        Lookup.Kind,
+        Lookup.Attributes,
+        Digest,
+        Lookup.Value
+    );
+}

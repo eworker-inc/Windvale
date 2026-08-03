@@ -29,6 +29,9 @@ internal static class Program
         new("resource store emits deterministic verified WVRS", Resourceˉstoreˉemitsˉdeterministicˉimage),
         new("resource store rejects malformed and hostile images", Resourceˉstoreˉrejectsˉmalformedˉimages),
         new("Windvale resource service resolves a third typed boot resource", Resourceˉstoreˉserviceˉresolvesˉthirdˉresource),
+        new("resource IPC emits bounded verified WVRQ and WVRY", Resourceˉipcˉemitsˉboundedˉrequestˉreply),
+        new("resource IPC rejects malformed and hostile envelopes", Resourceˉipcˉrejectsˉmalformedˉenvelopes),
+        new("Windvale resource service completes one live IPC lookup", Resourceˉserviceˉcompletesˉliveˉipcˉlookup),
         new("kernel page allocator is bounded deterministic and zeroing", Pageˉallocatorˉisˉboundedˉandˉzeroing),
         new("kernel paging planner enforces bounded W^X identity tables", Pagingˉplannerˉenforcesˉboundedˉidentityˉtables),
         new("kernel WVA shims bridge Main, normalized traps, and Q35 shutdown", Kernelˉassemblyˉshimˉbridgesˉmain),
@@ -463,6 +466,296 @@ internal static class Program
             Module, Canonical, authorize: false));
         Assertˉruntimeˉfailure("WVR3022", () => _ = Runˉresourceˉstoreˉservice(
             Module, Canonical, includeˉstore: false));
+    }
+
+    private static void Resourceˉipcˉemitsˉboundedˉrequestˉreply()
+    {
+        const string CONFIGURATION = "boot:main.configuration";
+        var First = Resourceˉserviceˉipcˉcodec.Writeˉrequest(42, CONFIGURATION, 4);
+        var Second = Resourceˉserviceˉipcˉcodec.Writeˉrequest(42, CONFIGURATION, 4);
+        Sequenceˉequal(First, Second);
+        Equal(Resourceˉserviceˉipcˉcontract.REQUEST_HEADER_BYTES +
+            Encoding.UTF8.GetByteCount(CONFIGURATION), First.Length);
+        Equal(Resourceˉserviceˉipcˉcontract.REQUEST_MAGIC,
+            BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()));
+        Equal(Resourceˉserviceˉipcˉcontract.FORMAT_VERSION,
+            BinaryPrimitives.ReadUInt32LittleEndian(First.AsSpan()[4..]));
+
+        var Request = Resourceˉserviceˉipcˉcodec.Verifyˉrequest(First.AsSpan());
+        Equal(42u, Request.Requestˉid);
+        Equal(4u, Request.Maximumˉdataˉbytes);
+        Equal(CONFIGURATION, Request.Name);
+
+        var Store = Resourceˉstoreˉcodec.Write(Buildˉresourceˉstoreˉentries());
+        var Reply = Resourceˉserviceˉhandler.Handle(Store.AsSpan(), First.AsSpan());
+        var Response = Resourceˉserviceˉipcˉcodec.Verifyˉresponse(Reply.AsSpan());
+        Equal(42u, Response.Requestˉid);
+        Equal(Resourceˉserviceˉstatus.Success, Response.Status);
+        Equal(Resourceˉserviceˉfailureˉdomain.None, Response.Failureˉdomain);
+        Equal(3u, Response.Identifier);
+        Equal((uint)Resourceˉstoreˉkind.Opaqueˉbytes, Response.Kind);
+        Equal(Resourceˉstoreˉcontract.ENTRY_FLAGS, Response.Attributes);
+        Sequenceˉequal([(byte)3, 5, 8, 13], Response.Data);
+        Equal("992cfe75c02f11b17a6ce1c2dd83d34948be3b82c11b62e8302c8bbf53c93cbd",
+            Response.Digest);
+
+        var Limited = Resourceˉserviceˉipcˉcodec.Writeˉrequest(43, CONFIGURATION, 3);
+        var Limitedˉresponse = Resourceˉserviceˉipcˉcodec.Verifyˉresponse(
+            Resourceˉserviceˉhandler.Handle(Store.AsSpan(), Limited.AsSpan()).AsSpan());
+        Equal(Resourceˉserviceˉstatus.Responseˉlimit, Limitedˉresponse.Status);
+        Equal(Resourceˉserviceˉfailureˉdomain.Request, Limitedˉresponse.Failureˉdomain);
+        Equal((uint)Resourceˉserviceˉipcˉcontract.REQUEST_MAXIMUM_DATA_OFFSET,
+            Limitedˉresponse.Failureˉoffset);
+
+        var Missing = Resourceˉserviceˉipcˉcodec.Writeˉrequest(44, "boot:missing", 4);
+        Equal(Resourceˉserviceˉstatus.Notˉfound,
+            Resourceˉserviceˉipcˉcodec.Verifyˉresponse(
+                Resourceˉserviceˉhandler.Handle(Store.AsSpan(), Missing.AsSpan()).AsSpan()).Status);
+
+        var Maximumˉdata = new byte[Resourceˉserviceˉipcˉcontract.MAXIMUM_DATA_BYTES]
+            .ToImmutableArray();
+        var Maximumˉstore = Resourceˉstoreˉcodec.Write(
+            [new(7, Resourceˉstoreˉkind.Opaqueˉbytes, "r", Maximumˉdata)]);
+        var Maximumˉrequest = Resourceˉserviceˉipcˉcodec.Writeˉrequest(
+            45, "r", Resourceˉserviceˉipcˉcontract.MAXIMUM_DATA_BYTES);
+        var Maximumˉreply = Resourceˉserviceˉhandler.Handle(
+            Maximumˉstore.AsSpan(), Maximumˉrequest.AsSpan());
+        Equal(Resourceˉserviceˉipcˉcontract.MAXIMUM_MESSAGE_BYTES, Maximumˉreply.Length);
+        Equal(Resourceˉserviceˉstatus.Success,
+            Resourceˉserviceˉipcˉcodec.Verifyˉresponse(Maximumˉreply.AsSpan()).Status);
+
+        var Tooˉlargeˉstore = Resourceˉstoreˉcodec.Write(
+            [new(8, Resourceˉstoreˉkind.Opaqueˉbytes, "r",
+                new byte[Resourceˉserviceˉipcˉcontract.MAXIMUM_DATA_BYTES + 1].ToImmutableArray())]);
+        Equal(Resourceˉserviceˉstatus.Responseˉlimit,
+            Resourceˉserviceˉipcˉcodec.Verifyˉresponse(
+                Resourceˉserviceˉhandler.Handle(
+                    Tooˉlargeˉstore.AsSpan(), Maximumˉrequest.AsSpan()).AsSpan()).Status);
+
+        Throwsˉresourceˉserviceˉipc("WVRI3001", () =>
+            _ = Resourceˉserviceˉipcˉcodec.Writeˉrequest(0, "r", 0));
+        Throwsˉresourceˉserviceˉipc("WVRI3001", () =>
+            _ = Resourceˉserviceˉipcˉcodec.Writeˉrequest(1, "", 0));
+        Throwsˉresourceˉserviceˉipc("WVRI3001", () =>
+            _ = Resourceˉserviceˉipcˉcodec.Writeˉrequest(1, "bad\0name", 0));
+        Throwsˉresourceˉserviceˉipc("WVRI3001", () =>
+            _ = Resourceˉserviceˉipcˉcodec.Writeˉrequest(
+                1, new string('x', Resourceˉserviceˉipcˉcontract.MAXIMUM_NAME_BYTES + 1), 0));
+        Throwsˉresourceˉserviceˉipc("WVRI3001", () =>
+            _ = Resourceˉserviceˉipcˉcodec.Writeˉrequest(
+                1, "r", Resourceˉserviceˉipcˉcontract.MAXIMUM_DATA_BYTES + 1));
+    }
+
+    private static void Resourceˉipcˉrejectsˉmalformedˉenvelopes()
+    {
+        var Store = Resourceˉstoreˉcodec.Write(Buildˉresourceˉstoreˉentries());
+        var Request = Resourceˉserviceˉipcˉcodec.Writeˉrequest(
+            51, "boot:main.configuration", 4);
+        Rejectˉresourceˉrequest(ImmutableArray<byte>.Empty, "WVRI1001");
+        Rejectˉresourceˉrequest(
+            new byte[Resourceˉserviceˉipcˉcontract.REQUEST_HEADER_BYTES +
+                Resourceˉserviceˉipcˉcontract.MAXIMUM_NAME_BYTES + 1], "WVRI1001");
+        Rejectˉresourceˉrequest(Replaceˉu32(Request, 0, 0), "WVRI1002");
+        Rejectˉresourceˉrequest(Replaceˉu32(Request, 4, 2), "WVRI1002");
+        Rejectˉresourceˉrequest(Replaceˉu32(Request, 8, (uint)Request.Length + 1), "WVRI1003");
+        Rejectˉresourceˉrequest(Replaceˉu32(Request, 12, 0), "WVRI1003");
+        Rejectˉresourceˉrequest(Replaceˉu32(Request, 16, 2), "WVRI1003");
+        Rejectˉresourceˉrequest(
+            Replaceˉu32(Request, 20, Resourceˉserviceˉipcˉcontract.MAXIMUM_DATA_BYTES + 1),
+            "WVRI1003");
+        Rejectˉresourceˉrequest(Replaceˉu32(Request, 24, 0), "WVRI1003");
+        Rejectˉresourceˉrequest(Replaceˉu32(Request, 28, 1), "WVRI1003");
+        Rejectˉresourceˉrequest(
+            Replaceˉbyte(Request, Resourceˉserviceˉipcˉcontract.REQUEST_HEADER_BYTES, 0),
+            "WVRI1004");
+        Rejectˉresourceˉrequest(
+            Replaceˉbyte(Request, Resourceˉserviceˉipcˉcontract.REQUEST_HEADER_BYTES, 0xC0),
+            "WVRI1004");
+
+        var Malformedˉreply = Resourceˉserviceˉipcˉcodec.Verifyˉresponse(
+            Resourceˉserviceˉhandler.Handle(
+                Store.AsSpan(), Replaceˉu32(Request, 0, 0).AsSpan()).AsSpan());
+        Equal(51u, Malformedˉreply.Requestˉid);
+        Equal(Resourceˉserviceˉstatus.Malformedˉrequest, Malformedˉreply.Status);
+        Equal(Resourceˉserviceˉfailureˉdomain.Request, Malformedˉreply.Failureˉdomain);
+        Equal(0u, Malformedˉreply.Failureˉoffset);
+
+        var Invalidˉstore = Resourceˉserviceˉipcˉcodec.Verifyˉresponse(
+            Resourceˉserviceˉhandler.Handle([], Request.AsSpan()).AsSpan());
+        Equal(Resourceˉserviceˉstatus.Invalidˉstore, Invalidˉstore.Status);
+        Equal(Resourceˉserviceˉfailureˉdomain.Store, Invalidˉstore.Failureˉdomain);
+
+        var Reply = Resourceˉserviceˉhandler.Handle(Store.AsSpan(), Request.AsSpan());
+        Rejectˉresourceˉresponse(ImmutableArray<byte>.Empty, "WVRI2001");
+        Rejectˉresourceˉresponse(
+            new byte[Resourceˉserviceˉipcˉcontract.MAXIMUM_MESSAGE_BYTES + 1], "WVRI2001");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 0, 0), "WVRI2002");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 4, 2), "WVRI2002");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 8, (uint)Reply.Length + 1), "WVRI2003");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 40, 0), "WVRI2003");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 44, 1), "WVRI2003");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 16, 9), "WVRI2004");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 20, 9), "WVRI2004");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 12, 0), "WVRI2005");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 28, 0), "WVRI2005");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 32, 0), "WVRI2005");
+        Rejectˉresourceˉresponse(Replaceˉu32(Reply, 36, 0), "WVRI2005");
+        Rejectˉresourceˉresponse(
+            Replaceˉbyte(Reply, Resourceˉserviceˉipcˉcontract.RESPONSE_DIGEST_OFFSET, (byte)'g'),
+            "WVRI2005");
+
+        var Missing = Resourceˉserviceˉhandler.Handle(
+            Store.AsSpan(),
+            Resourceˉserviceˉipcˉcodec.Writeˉrequest(52, "missing", 4).AsSpan());
+        Rejectˉresourceˉresponse(Replaceˉu32(Missing, 20, 1), "WVRI2006");
+        Rejectˉresourceˉresponse(Replaceˉu32(Missing, 28, 1), "WVRI2006");
+        Rejectˉresourceˉresponse(
+            Replaceˉbyte(Missing, Resourceˉserviceˉipcˉcontract.RESPONSE_DIGEST_OFFSET, 1),
+            "WVRI2006");
+
+        var Random = new Random(0x57565249);
+        for (var Case = 0; Case < 256; Case++)
+        {
+            var Bytes = new byte[Random.Next(0, 4_097)];
+            Random.NextBytes(Bytes);
+            try
+            {
+                _ = Resourceˉserviceˉipcˉcodec.Verifyˉrequest(Bytes);
+            }
+            catch (Resourceˉserviceˉipcˉexception)
+            {
+            }
+            try
+            {
+                _ = Resourceˉserviceˉipcˉcodec.Verifyˉresponse(Bytes);
+            }
+            catch (Resourceˉserviceˉipcˉexception)
+            {
+            }
+        }
+    }
+
+    private static void Resourceˉserviceˉcompletesˉliveˉipcˉlookup()
+    {
+        var Storeˉsource = Loadˉresourceˉstoreˉsource("Windvale.Os.Services.Resource-Store-Core.wv");
+        var Serviceˉsource = Loadˉresourceˉstoreˉsource("Windvale.Os.Services.Resource-Service-Core.wv");
+        var Bridgeˉsource = Loadˉresourceˉstoreˉsource("Windvale.Os.Services.Resource-Service-Bridge.wv");
+        var Serviceˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Resource-Service-Core.wv", Serviceˉsource),
+            [new("Operating-System/Services/Resource-Store-Core.wv", Storeˉsource)]);
+        True(Serviceˉresult.Success,
+            "The Windvale resource-service core did not compile: " +
+                string.Join(" | ", Serviceˉresult.Diagnostics));
+        var Bridgeˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Operating-System/Services/Resource-Service-Bridge.wv", Bridgeˉsource),
+            [
+                new("Operating-System/Services/Resource-Store-Core.wv", Storeˉsource),
+                new("Operating-System/Services/Resource-Service-Core.wv", Serviceˉsource),
+            ]);
+        True(Bridgeˉresult.Success,
+            "The hosted Windvale resource-service bridge did not compile: " +
+                string.Join(" | ", Bridgeˉresult.Diagnostics));
+
+        var Module = Moduleˉcodec.Readˉandˉverify(Bridgeˉresult.Moduleˉbytes.AsSpan());
+        True(Module.Module.Profile == Moduleˉprofile.Hosted,
+            "The Windvale resource-service bridge is not hosted.");
+        Equal(Capabilityˉcatalog.FILE_READ_BYTES, Module.Module.Capabilities.Single().Name);
+
+        var Store = Resourceˉstoreˉcodec.Write(Buildˉresourceˉstoreˉentries());
+        var Request = Resourceˉserviceˉipcˉcodec.Writeˉrequest(
+            0x5749, "boot:main.configuration", 4);
+        var Exchange = new Resourceˉserviceˉexchange();
+        Exchange.Sendˉrequest(
+            Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+            Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
+            Request.AsSpan());
+        Equal(Resourceˉserviceˉexchangeˉstate.Requestˉready, Exchange.State);
+        var Serviceˉrequest = Exchange.Receiveˉrequest(
+            Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+            Resourceˉserviceˉexchangeˉcontract.SERVICE_RIGHTS);
+        Sequenceˉequal(Request, Serviceˉrequest);
+        Equal(Resourceˉserviceˉexchangeˉstate.Serviceˉprocessing, Exchange.State);
+
+        var Interpreted = Runˉresourceˉserviceˉbridge(Module, Store, Serviceˉrequest);
+        var Oracle = Resourceˉserviceˉhandler.Handle(Store.AsSpan(), Serviceˉrequest.AsSpan());
+        Sequenceˉequal(Oracle, Interpreted.Bytes);
+        var Malformedˉrequest = Replaceˉu32(Request, 0, 0);
+        Sequenceˉequal(
+            Resourceˉserviceˉhandler.Handle(Store.AsSpan(), Malformedˉrequest.AsSpan()),
+            Runˉresourceˉserviceˉbridge(Module, Store, Malformedˉrequest).Bytes);
+        var Oversizedˉrequest = new byte[Resourceˉserviceˉipcˉcontract.MAXIMUM_MESSAGE_BYTES + 1]
+            .ToImmutableArray();
+        Sequenceˉequal(
+            Resourceˉserviceˉhandler.Handle(Store.AsSpan(), Oversizedˉrequest.AsSpan()),
+            Runˉresourceˉserviceˉbridge(Module, Store, Oversizedˉrequest).Bytes);
+        var Missingˉrequest = Resourceˉserviceˉipcˉcodec.Writeˉrequest(0x574A, "missing", 4);
+        Sequenceˉequal(
+            Resourceˉserviceˉhandler.Handle(Store.AsSpan(), Missingˉrequest.AsSpan()),
+            Runˉresourceˉserviceˉbridge(Module, Store, Missingˉrequest).Bytes);
+        var Limitedˉrequest = Resourceˉserviceˉipcˉcodec.Writeˉrequest(
+            0x574B, "boot:main.configuration", 3);
+        Sequenceˉequal(
+            Resourceˉserviceˉhandler.Handle(Store.AsSpan(), Limitedˉrequest.AsSpan()),
+            Runˉresourceˉserviceˉbridge(Module, Store, Limitedˉrequest).Bytes);
+        Sequenceˉequal(
+            Resourceˉserviceˉhandler.Handle([], Request.AsSpan()),
+            Runˉresourceˉserviceˉbridge(Module, [], Request).Bytes);
+        Exchange.Sendˉreply(
+            Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+            Resourceˉserviceˉexchangeˉcontract.SERVICE_RIGHTS,
+            Interpreted.Bytes.AsSpan());
+        var Clientˉreply = Exchange.Receiveˉreply(
+            Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+            Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS);
+        var Response = Resourceˉserviceˉipcˉcodec.Verifyˉresponse(Clientˉreply.AsSpan());
+        Equal(Resourceˉserviceˉstatus.Success, Response.Status);
+        Equal(3u, Response.Identifier);
+        Sequenceˉequal([(byte)3, 5, 8, 13], Response.Data);
+        Equal(Resourceˉserviceˉexchangeˉstate.Completed, Exchange.State);
+        Exchange.Close();
+        Equal(Resourceˉserviceˉexchangeˉstate.Closed, Exchange.State);
+
+        var Opaque = new Resourceˉserviceˉexchange();
+        Opaque.Sendˉrequest(
+            Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+            Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
+            [0xA5]);
+        Sequenceˉequal([0xA5], Opaque.Receiveˉrequest(
+            Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+            Resourceˉserviceˉexchangeˉcontract.SERVICE_RIGHTS));
+        Opaque.Peerˉexit();
+        Opaque.Close();
+
+        Throwsˉresourceˉserviceˉipc("WVRI4001", () =>
+            new Resourceˉserviceˉexchange().Sendˉrequest(
+                Resourceˉserviceˉexchangeˉcontract.SERVICE_ENDPOINT,
+                Resourceˉserviceˉexchangeˉcontract.SERVICE_RIGHTS,
+                Request.AsSpan()));
+        Throwsˉresourceˉserviceˉipc("WVRI4002", () =>
+            new Resourceˉserviceˉexchange().Receiveˉreply(
+                Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+                Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS));
+        Throwsˉresourceˉserviceˉipc("WVRI4003", () =>
+            new Resourceˉserviceˉexchange().Sendˉrequest(
+                Resourceˉserviceˉexchangeˉcontract.CLIENT_ENDPOINT,
+                Resourceˉserviceˉexchangeˉcontract.CLIENT_RIGHTS,
+                new byte[Resourceˉserviceˉipcˉcontract.MAXIMUM_MESSAGE_BYTES + 1]));
+
+        Assertˉruntimeˉfailure("WVR3010", () =>
+            _ = Runˉresourceˉserviceˉbridge(Module, Store, Request, authorize: false));
+        Assertˉruntimeˉfailure("WVR3022", () =>
+            _ = Runˉresourceˉserviceˉbridge(Module, Store, Request, includeˉstore: false));
+        Assertˉruntimeˉfailure("WVR3022", () =>
+            _ = Runˉresourceˉserviceˉbridge(Module, Store, Request, includeˉrequest: false));
+
+        Equal(19_515, Serviceˉresult.Moduleˉbytes.Length);
+        Equal(
+            "f151fd559b607b3f0dd8b3ae06399c91b2864a9ce7b30a07da1cffa0dc75e129",
+            Objectˉdigest.Calculateˉsha256(Serviceˉresult.Moduleˉbytes.AsSpan()));
+        Equal(19_457, Bridgeˉresult.Moduleˉbytes.Length);
+        Equal(
+            "c13d94aa5fc02676ddbaac315c4b55f0c26dbfd28bbd4f821123f67112db1b3f",
+            Objectˉdigest.Calculateˉsha256(Bridgeˉresult.Moduleˉbytes.AsSpan()));
     }
 
     private static void Pageˉallocatorˉisˉboundedˉandˉzeroing()
@@ -2419,6 +2712,28 @@ internal static class Program
             new(Grants)).Runˉmain();
     }
 
+    private static Runtimeˉbytesˉresult Runˉresourceˉserviceˉbridge(
+        Verifiedˉmodule module,
+        ImmutableArray<byte> store,
+        ImmutableArray<byte> request,
+        bool authorize = true,
+        bool includeˉstore = true,
+        bool includeˉrequest = true)
+    {
+        var Resources = new Hostedˉresourceˉcontext(
+            [],
+            TextWriter.Null,
+            TextWriter.Null,
+            new Resourceˉserviceˉreader(store, request, includeˉstore, includeˉrequest));
+        var Grants = authorize
+            ? ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.FILE_READ_BYTES)
+            : ImmutableHashSet.Create<string>(StringComparer.Ordinal);
+        return new Referenceˉruntime(
+            module,
+            new Referenceˉcapabilityˉhost(Resources),
+            new(Grants)).Runˉmainˉbytes();
+    }
+
     private static ImmutableArray<byte> Replaceˉu32(
         ImmutableArray<byte> source,
         int offset,
@@ -2473,6 +2788,63 @@ internal static class Program
         }
         throw new InvalidOperationException(
             $"A resource-store operation succeeded instead of producing {expectedˉcode}.");
+    }
+
+    private static void Rejectˉresourceˉrequest(ImmutableArray<byte> source, string expectedˉcode) =>
+        Rejectˉresourceˉrequest(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉresourceˉrequest(byte[] source, string expectedˉcode) =>
+        Rejectˉresourceˉrequest(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉresourceˉrequest(ReadOnlySpan<byte> source, string expectedˉcode)
+    {
+        try
+        {
+            _ = Resourceˉserviceˉipcˉcodec.Verifyˉrequest(source);
+        }
+        catch (Resourceˉserviceˉipcˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A malformed resource request was accepted instead of producing {expectedˉcode}.");
+    }
+
+    private static void Rejectˉresourceˉresponse(ImmutableArray<byte> source, string expectedˉcode) =>
+        Rejectˉresourceˉresponse(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉresourceˉresponse(byte[] source, string expectedˉcode) =>
+        Rejectˉresourceˉresponse(source.AsSpan(), expectedˉcode);
+
+    private static void Rejectˉresourceˉresponse(ReadOnlySpan<byte> source, string expectedˉcode)
+    {
+        try
+        {
+            _ = Resourceˉserviceˉipcˉcodec.Verifyˉresponse(source);
+        }
+        catch (Resourceˉserviceˉipcˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A malformed resource response was accepted instead of producing {expectedˉcode}.");
+    }
+
+    private static void Throwsˉresourceˉserviceˉipc(string expectedˉcode, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Resourceˉserviceˉipcˉexception Exception)
+        {
+            Equal(expectedˉcode, Exception.Code);
+            return;
+        }
+        throw new InvalidOperationException(
+            $"A resource IPC operation succeeded instead of producing {expectedˉcode}.");
     }
 
     private static void Assertˉruntimeˉfailure(string expectedˉcode, Action action)
@@ -2549,9 +2921,8 @@ internal static class Program
         T expected,
         T actual,
         [CallerArgumentExpression(nameof(actual))] string? actualˉexpression = null)
-        where T : IEquatable<T>
     {
-        if (!expected.Equals(actual))
+        if (!EqualityComparer<T>.Default.Equals(expected, actual))
         {
             throw new InvalidOperationException(
                 $"Expected '{expected}', received '{actual}' from {actualˉexpression}.");
@@ -2602,6 +2973,30 @@ internal static class Program
                     "The bounded Windvale resource store was not found.");
             }
             return store;
+        }
+    }
+
+    private sealed class Resourceˉserviceˉreader(
+        ImmutableArray<byte> store,
+        ImmutableArray<byte> request,
+        bool includeˉstore,
+        bool includeˉrequest) : IHostedˉfileˉreader
+    {
+        public ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes)
+        {
+            var Bytes = resourceˉname switch
+            {
+                "boot:resources.wvrs" when includeˉstore => store,
+                "ipc:resource-request.wvrq" when includeˉrequest => request,
+                _ => default,
+            };
+            if (Bytes.IsDefault || Bytes.Length > maximumˉbytes)
+            {
+                throw new Hostedˉfileˉexception(
+                    Hostedˉfileˉerror.Notˉfound,
+                    "The bounded resource-service input was not found.");
+            }
+            return Bytes;
         }
     }
 

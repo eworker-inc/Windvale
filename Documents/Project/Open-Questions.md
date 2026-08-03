@@ -41,7 +41,7 @@ This list records unresolved decisions without presenting them as implementation
 - What counts as “from scratch” at each bootstrap stage?
 - Which parts of qualified Decision 0098's fixed typed resource pair, atomic cleanup, saved context, and wait/wake coordinator should survive independently lived resources, a reusable address space, third runnable, or general loader case?
 - Which first boot-critical drivers should remain with the kernel temporarily, and which should begin as isolated AOT system services?
-- Which bounded IPC descriptor, independently lived borrow, and service capability should move implemented-candidate `WVRS 1` into the guest, and what later measured use case should justify paths, directories, writable storage, or an on-disk filesystem?
+- Which protected-process/channel ABI should adopt implemented-candidate `WVRQ 1` / `WVRY 1`, checked one-page buffer copies, service/client death propagation, and an immutable `WVRS 1` capability in the guest; and what later measured use case should justify paths, directories, writable storage, or an on-disk filesystem?
 - Which QEMU and Hyper-V behaviors must be qualified before the first OS milestone is complete?
 
 ## Browser and WebAssembly

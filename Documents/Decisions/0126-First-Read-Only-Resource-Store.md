@@ -39,7 +39,7 @@ Cross-host Qualification, retained artifact comparison, and live QEMU integratio
 
 Windvale now owns a strict dynamic lookup algorithm over a deterministic resource image, and Stage 0 supplies an independent construction/verification oracle. A third resource pressures names and types without making host paths or a disk format portable semantics.
 
-The next guest slice is more precise: add bounded request/reply IPC and a resource-service capability, pass or map `WVRS 1` as an immutable boot input, convert service outcomes to the existing `file.read_bytes` classifications, and prove cleanup for an independently lived result. That work may replace the fixed two-name WVA leaf only after the new boundary is independently checked.
+[Decision 0129](0129-Bounded-Resource-Service-Request-Reply.md) now supplies the independently checked one-page request/reply protocol, format-blind exchange lifecycle, and live hosted service evidence. The remaining guest slice must assign a protected-process/channel ABI, pass or map `WVRS 1` as an immutable boot capability, add checked user-buffer copies and service-death behavior, and prove QEMU cleanup before replacing the fixed two-name WVA leaf.
 
 ## Deliberate non-claims
 
