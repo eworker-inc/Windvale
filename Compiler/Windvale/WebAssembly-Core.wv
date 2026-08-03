@@ -671,7 +671,7 @@ export fn Compilerˉwebassemblyˉreadˉruntimeˉcallˉfunction(
     if Functionˉcount < 2u32 {
         return Compilerˉwebassemblyˉruntimeˉcallˉfunctionˉfailure();
     }
-    if Functionˉcount > 8u32 {
+    if Functionˉcount > 16u32 {
         return Compilerˉwebassemblyˉruntimeˉcallˉfunctionˉfailure();
     }
     if Index >= Functionˉcount {
@@ -1657,7 +1657,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcalls(
             false, 0u32, 0u32, 0u32, 0u32
         );
     }
-    if Functionˉcount > 8u32 {
+    if Functionˉcount > 16u32 {
         return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
             false, 0u32, 0u32, 0u32, 0u32
         );
@@ -1667,7 +1667,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcalls(
             false, 0u32, 0u32, 0u32, 0u32
         );
     }
-    if Code.Payloadˉlength > 65536u32 {
+    if Code.Payloadˉlength > 131072u32 {
         return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
             false, 0u32, 0u32, 0u32, 0u32
         );
@@ -1739,7 +1739,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcalls(
             false, 0u32, 0u32, 0u32, 0u32
         );
     }
-    if Instructionˉcount > 200000u32 {
+    if Instructionˉcount > 400000u32 {
         return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
             false, 0u32, 0u32, 0u32, 0u32
         );
@@ -6851,7 +6851,18 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
                         Code,
                         Runtimeˉcalls
                     );
-                if Bytesˉlength(Runtimeˉcallˉwebassembly) > 524288u32 {
+                var Runtimeˉcallˉoutputˉlimit: u32 = 524288u32;
+                if Runtimeˉcalls.Functionˉcount > 8u32 {
+                    Runtimeˉcallˉoutputˉlimit = 1048576u32;
+                }
+                if Code.Payloadˉlength > 65536u32 {
+                    Runtimeˉcallˉoutputˉlimit = 1048576u32;
+                }
+                if Runtimeˉcalls.Instructionˉcount > 200000u32 {
+                    Runtimeˉcallˉoutputˉlimit = 1048576u32;
+                }
+                if Bytesˉlength(Runtimeˉcallˉwebassembly) >
+                    Runtimeˉcallˉoutputˉlimit {
                     return Compilerˉwebassemblyˉfailure(
                         Input,
                         Compilerˉwebassemblyˉstatus.Outputˉlimit

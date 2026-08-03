@@ -125,6 +125,8 @@ The direct backend must not become a parallel language implementation. It should
 
 [Decision 0144](../Decisions/0144-Modular-WebAssembly-Wvb-Canonical-Metadata-And-References.md) uses that profile-12 boundary for an eight-function Windvale-written verifier. Its 440,093-byte import-free Wasm validates complete WVB 1.6 structure plus canonical names/order, capability catalog signatures, strict text UTF-8, nominal identities, instruction operand indices and data kinds, exact branch targets, export identity, record-to-enum fields, and enum uniqueness. Three representative modules, one-short exhaustion, and thirteen semantic mutations agree with the Stage 0 oracle and Node.js. This is the canonical metadata/reference phase; typed stacks and locals, call value flow, record-field receiver types, joins, reachability, maximum-stack agreement, and authorization remain. The static page remains on profile 8.
 
+[Decision 0146](../Decisions/0146-Expanded-Descriptor-Bearing-WebAssembly-Call-Graph.md) adds local profile 13 over unchanged execution ABI 3 after the semantic verifier reached both profile-12 capacity limits. It retains every per-function rule and decreasing-ordinal call proof while expanding the bounded graph to sixteen functions, 131,072 aggregate code bytes, 400,000 decoded instructions, and 1 MiB of generated Wasm. A derived nine-function verifier crosses both former limits, lowers to 440,333 import-free bytes, agrees with the reference runtime and Node.js on all three representative inputs, and preserves the original profile-12 artifact byte for byte. The added capacity is reserved for executable type/control-flow proof; the static page remains on profile 8.
+
 This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet implement recursion, `break`, `continue`, general text operations, mixed-signature calls, executable records or enums, reclaiming allocation, browser capability imports, complete executable WVB semantic verification, compiler self-hosting in WebAssembly, cross-browser qualification, or UI-thread containment for Stage 0. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
 ## Proposed playground shape
@@ -273,7 +275,7 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 ### Exploration spike
 
 1. Prove whether the current C# source compiler, WVB codec/verifier, and reference interpreter can build for browser-hosted .NET WebAssembly without the native project.
-2. Compile and run bounded portable programs in a Web Worker. Implemented locally through profile 12; profile 10 remains the latest cross-host-qualified backend boundary, while the static .NET-free page intentionally remains on profile 8.
+2. Compile and run bounded portable programs in a Web Worker. Implemented locally through profile 13; profile 10 remains the latest cross-host-qualified backend boundary, while the static .NET-free page intentionally remains on profile 8.
 3. Compare its WVB bytes, result or output buffer, trap status, and defined instruction count with the reference path. Implemented for ABI 1 through ABI 3; cross-browser evidence remains open.
 4. Measure compressed download size, cold start, compile time, execution time, peak browser memory, and worker termination behavior.
 5. Record unsupported APIs and required adapter seams before choosing a product route.

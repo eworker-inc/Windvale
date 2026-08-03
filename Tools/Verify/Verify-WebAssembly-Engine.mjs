@@ -268,9 +268,19 @@ const EXPECTED = [
         kind: 1,
         runtime: "wvb-semantic",
     },
+    {
+        name: "expanded Windvale-native WVB semantic-verifier call graph",
+        path: process.argv[36],
+        acceptedInputPaths: [process.argv[37], process.argv[38], process.argv[39]],
+        sha256: "8601f90946c0738ad6ce20c236e219f66e4ee4b2b143242a430c203918b1259a",
+        bytes: 440333,
+        abi: 3,
+        kind: 1,
+        runtime: "wvb-semantic-expanded",
+    },
 ];
 
-if (process.argv.length !== 36) {
+if (process.argv.length !== 40) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -285,7 +295,9 @@ if (process.argv.length !== 36) {
             "<wvb-envelope-verifier.wvb> <wvb-structural-verifier.wasm> " +
             "<wvb-structural-verifier.wvb> <data.wvb> <types.wvb> <capabilities.wvb> " +
             "<runtime-calls.wasm> <wvb-semantic-verifier.wasm> " +
-            "<semantic-data.wvb> <semantic-types.wvb> <semantic-capabilities.wvb>",
+            "<semantic-data.wvb> <semantic-types.wvb> <semantic-capabilities.wvb> " +
+            "<wvb-semantic-expanded.wasm> <expanded-data.wvb> " +
+            "<expanded-types.wvb> <expanded-capabilities.wvb>",
     );
 }
 
@@ -738,6 +750,31 @@ function verifyRuntime(expected, module, exports, digest) {
                 throw new Error(`${expected.path}: ${name}: ${error.message}`);
             }
         }
+    } else if (expected.runtime === "wvb-semantic-expanded") {
+        const acceptedSteps = [1_122_092, 912_958, 113_464];
+        for (let index = 0; index < expected.acceptedInputPaths.length; index++) {
+            requireMemoryResult(
+                expected.path,
+                runMemory(
+                    exports,
+                    readFileSync(expected.acceptedInputPaths[index]),
+                    acceptedSteps[index],
+                ),
+                0,
+                acceptedSteps[index],
+                Uint8Array.from([1]),
+            );
+        }
+        requireMemoryResult(
+            expected.path,
+            runMemory(
+                exports,
+                readFileSync(expected.acceptedInputPaths[0]),
+                acceptedSteps[0] - 1,
+            ),
+            3011,
+            acceptedSteps[0] - 1,
+        );
     } else if (expected.runtime === "wvb-semantic") {
         const [data, types, capabilities] = expected.acceptedInputPaths.map(path =>
             readFileSync(path));

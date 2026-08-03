@@ -35,6 +35,7 @@ $RuntimeCallsSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runt
 $WvbEnvelopeVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Envelope-Verify-Main.wv'
 $WvbStructuralVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Structural-Verify-Main.wv'
 $WvbSemanticVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Semantic-Verify-Main.wv'
+$WvbSemanticExpandedSource = Join-Path $ArtifactDirectory 'Wvb-Semantic-Expanded-Main.wv'
 $StructuralDataSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Data-And-Text.wv'
 $StructuralTypesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Nominal-Types.wv'
 $StructuralCapabilitiesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv'
@@ -66,6 +67,7 @@ $RuntimeCallsWvb = Join-Path $ArtifactDirectory 'Runtime-Calls-Main.wvb'
 $WvbEnvelopeVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Envelope-Verify-Main.wvb'
 $WvbStructuralVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Structural-Verify-Main.wvb'
 $WvbSemanticVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Semantic-Verify-Main.wvb'
+$WvbSemanticExpandedWvb = Join-Path $ArtifactDirectory 'Wvb-Semantic-Expanded-Main.wvb'
 $StructuralDataWvb = Join-Path $ArtifactDirectory 'Structural-Data-And-Text.wvb'
 $StructuralTypesWvb = Join-Path $ArtifactDirectory 'Structural-Nominal-Types.wvb'
 $StructuralCapabilitiesWvb = Join-Path $ArtifactDirectory 'Structural-Hosted-Capabilities.wvb'
@@ -95,8 +97,24 @@ $RuntimeCallsWasm = Join-Path $ArtifactDirectory 'Runtime-Calls-Main.wasm'
 $WvbEnvelopeVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Envelope-Verify-Main.wasm'
 $WvbStructuralVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Structural-Verify-Main.wasm'
 $WvbSemanticVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Semantic-Verify-Main.wasm'
+$WvbSemanticExpandedWasm = Join-Path $ArtifactDirectory 'Wvb-Semantic-Expanded-Main.wasm'
 
 New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
+
+$WvbSemanticExpandedText = [IO.File]::ReadAllText($WvbSemanticVerifySource)
+$WvbSemanticExpandedText = $WvbSemanticExpandedText.Replace(
+    'export fn Main(Input: bytes) -> bytes {',
+    "fn Hˉsemantic(Input: bytes) -> bytes {`n" +
+        "    return Gˉtypes(Input);`n" +
+        "}`n`n" +
+        'export fn Main(Input: bytes) -> bytes {')
+$WvbSemanticExpandedText = $WvbSemanticExpandedText.Replace(
+    'State = Gˉtypes(State);',
+    'State = Hˉsemantic(State);')
+[IO.File]::WriteAllText(
+    $WvbSemanticExpandedSource,
+    $WvbSemanticExpandedText,
+    [Text.UTF8Encoding]::new($false))
 
 dotnet build $ToolProject -c $Configuration
 if ($LASTEXITCODE -ne 0) { throw 'The Windvale tool build failed.' }
@@ -135,6 +153,7 @@ Invoke-Windvale @('compile', $RuntimeCallsSource, '-o', $RuntimeCallsWvb)
 Invoke-Windvale @('compile', $WvbEnvelopeVerifySource, '-o', $WvbEnvelopeVerifyWvb)
 Invoke-Windvale @('compile', $WvbStructuralVerifySource, '-o', $WvbStructuralVerifyWvb)
 Invoke-Windvale @('compile', $WvbSemanticVerifySource, '-o', $WvbSemanticVerifyWvb)
+Invoke-Windvale @('compile', $WvbSemanticExpandedSource, '-o', $WvbSemanticExpandedWvb)
 Invoke-Windvale @('compile', $StructuralDataSource, '-o', $StructuralDataWvb)
 Invoke-Windvale @('compile', $StructuralTypesSource, '-o', $StructuralTypesWvb)
 Invoke-Windvale @('compile', $StructuralCapabilitiesSource, '-o', $StructuralCapabilitiesWvb)
@@ -187,6 +206,7 @@ $SemanticRunArguments = @(
     '--'
 )
 Invoke-Windvale ($SemanticRunArguments + @($WvbSemanticVerifyWvb, $WvbSemanticVerifyWasm))
+Invoke-Windvale ($SemanticRunArguments + @($WvbSemanticExpandedWvb, $WvbSemanticExpandedWasm))
 
 node $EngineVerifier `
     $SuccessWasm `
@@ -220,6 +240,10 @@ node $EngineVerifier `
     $StructuralCapabilitiesWvb `
     $RuntimeCallsWasm `
     $WvbSemanticVerifyWasm `
+    $StructuralDataWvb `
+    $StructuralTypesWvb `
+    $StructuralCapabilitiesWvb `
+    $WvbSemanticExpandedWasm `
     $StructuralDataWvb `
     $StructuralTypesWvb `
     $StructuralCapabilitiesWvb

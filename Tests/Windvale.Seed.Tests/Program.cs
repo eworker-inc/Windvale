@@ -99,9 +99,9 @@ internal static class Program
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
-    private const string WEBASSEMBLY_CORE_SHA256 = "9d29c443e0642ecce87e5194ec9dc077be8d6b2fec97d47ba667404d0d09e2f9";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "8bef4da0e80aa5d6876800b7ed519e9ee79db9ee963f9d830da455354c58bd24";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "98a3b88f7627218d75cf48debaeb02256415d3fcbf39de899dec00310ca96269";
+    private const string WEBASSEMBLY_CORE_SHA256 = "14be02c61ddfa0b8bcfab5804de8edf7cefa4dffe8c8b0d24762aee63b728222";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "fddf873732a2979c4a5fac25c02d10f91dcc71d7920b77293aed62354bb3e0f7";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "9e96331ed94709f57cc564ff40f5b5827104729fe790aac0e9c276265debadb0";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -157,6 +157,8 @@ internal static class Program
     private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SHA256 = "46fe579fb7082dd4b0dd981e09f6b953127e52c9c6993d7885ca130725762677";
     private const string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_WVB_SHA256 = "09a665dcfbf8fe70d9b830be8376b1c1353a5ef09ff10de7b0183e535036fa64";
     private const string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SHA256 = "a2ef01881a4d381154a0e3feb0cb74cb0cdb3a53631cae1206d2fc03bcabe2fa";
+    private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_WVB_SHA256 = "1b88f7cdbaf6d00fcde3ac6dfa09f38ff721e90edf283018378e5004a91340b4";
+    private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_SHA256 = "8601f90946c0738ad6ce20c236e219f66e4ee4b2b143242a430c203918b1259a";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -10061,7 +10063,7 @@ internal static class Program
         Equal(
             "webassembly status=Valid module-bytes=440093 execution-abi=3\n",
             Semanticˉlowered.Output);
-        Equal(129_151_253L, Semanticˉlowered.Executedˉinstructions);
+        Equal(129_151_299L, Semanticˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SHA256,
             Moduleˉdigest.Calculateˉsha256(
@@ -10076,6 +10078,88 @@ internal static class Program
         Sequenceˉequal(
             Semanticˉlowered.Writtenˉbytes,
             Semanticˉrepeat.Writtenˉbytes);
+
+        var Expandedˉsemanticˉsource = WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE
+            .Replace(
+                "export fn Main(Input: bytes) -> bytes {",
+                "fn Hˉsemantic(Input: bytes) -> bytes {\n" +
+                "    return Gˉtypes(Input);\n" +
+                "}\n\n" +
+                "export fn Main(Input: bytes) -> bytes {",
+                StringComparison.Ordinal)
+            .Replace(
+                "State = Gˉtypes(State);",
+                "State = Hˉsemantic(State);",
+                StringComparison.Ordinal);
+        True(
+            Expandedˉsemanticˉsource != WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE,
+            "The profile-13 semantic source expansion did not apply.");
+        var Expandedˉsemanticˉwvb = Compileˉsuccess(
+            Expandedˉsemanticˉsource);
+        Equal(70_086, Expandedˉsemanticˉwvb.Length);
+        Equal(
+            WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Expandedˉsemanticˉwvb));
+        var Expandedˉsemanticˉverified = Moduleˉcodec.Readˉandˉverify(
+            Expandedˉsemanticˉwvb);
+        Equal(9, Expandedˉsemanticˉverified.Functions.Length);
+        Equal(
+            65_567,
+            Expandedˉsemanticˉverified.Functions.Sum(
+                Function => Function.Declaration.Codeˉlength));
+        var Expandedˉsemanticˉreference = new Referenceˉruntime(
+            Expandedˉsemanticˉverified,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Semanticˉoptions).Runˉmainˉbytes(
+                ImmutableArray.Create(Semanticˉcapabilitiesˉwvb));
+        Sequenceˉequal(
+            ImmutableArray.Create<byte>(1),
+            Expandedˉsemanticˉreference.Bytes);
+        Equal(
+            113_464L,
+            Expandedˉsemanticˉreference.Executedˉinstructions);
+        var Expandedˉsemanticˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Expandedˉsemanticˉwvb,
+            150_000_000);
+        Equal(0, Expandedˉsemanticˉlowered.Exitˉcode);
+        Equal(440_333, Expandedˉsemanticˉlowered.Writtenˉbytes.Length);
+        Equal(
+            WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Expandedˉsemanticˉlowered.Writtenˉbytes.AsSpan()));
+        Equal(
+            130_307_230L,
+            Expandedˉsemanticˉlowered.Executedˉinstructions);
+        Validateˉruntimeˉcallˉwebassembly(
+            Expandedˉsemanticˉlowered.Writtenˉbytes.AsSpan(),
+            Expandedˉsemanticˉverified);
+
+        var Overwideˉruntimeˉsource = new StringBuilder(
+            "module Webassemblyˉoverwideˉruntime profile portable; " +
+            "fn AˉA(Input: bytes) -> bytes { return Input; } ");
+        for (var Suffix = 'B'; Suffix <= 'P'; Suffix++)
+        {
+            Overwideˉruntimeˉsource.Append(
+                $"fn Aˉ{Suffix}(Input: bytes) -> bytes {{ " +
+                $"return Aˉ{(char)(Suffix - 1)}(Input); }} ");
+        }
+        Overwideˉruntimeˉsource.Append(
+            "export fn Main(Input: bytes) -> bytes { return AˉP(Input); }");
+        var Overwideˉruntimeˉwvb = Compileˉsuccess(
+            Overwideˉruntimeˉsource.ToString());
+        Equal(
+            17,
+            Moduleˉcodec.Readˉandˉverify(Overwideˉruntimeˉwvb)
+                .Functions.Length);
+        var Overwideˉruntimeˉresult = Runˉwebassemblyˉtool(
+            Tool,
+            Overwideˉruntimeˉwvb);
+        Equal(1, Overwideˉruntimeˉresult.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Overwideˉruntimeˉresult.Diagnostics);
+        Equal(0, Overwideˉruntimeˉresult.Writeˉcount);
 
         var Invalidˉruntimeˉtarget = Envelopeˉverifierˉwvb.ToArray();
         var Envelopeˉcode = Findˉsectionˉpayload(
@@ -16384,8 +16468,16 @@ internal static class Program
         Verifiedˉmodule source)
     {
         True(
-            source.Functions.Length is >= 2 and <= 8,
+            source.Functions.Length is >= 2 and <= 16,
             "The runtime-call function count is outside the profile.");
+        True(
+            source.Functions.Sum(Function => Function.Declaration.Codeˉlength) <=
+                131_072,
+            "The runtime-call aggregate code is outside the profile.");
+        True(
+            source.Functions.Sum(Function => Function.Instructions.Length) <=
+                400_000,
+            "The runtime-call aggregate instruction count is outside the profile.");
         Equal("Main", source.Functions[^1].Declaration.Name);
         for (var Functionˉindex = 0; Functionˉindex < source.Functions.Length;
             Functionˉindex++)
