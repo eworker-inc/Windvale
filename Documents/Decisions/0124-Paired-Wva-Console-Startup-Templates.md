@@ -37,7 +37,7 @@ Exact descendant `ea1aa89ba204ead633f8340c61b2bacc716881fd` passes GitHub [Verif
 
 The process-entry machine layer is now readable and buildable in Windvale's own assembly language. Typed WVO records identify every final-image dependency, and a writer change cannot silently diverge from the WVA source while the existing tests pass.
 
-At this boundary, normal executable construction remained Stage 0 and the portable PE/ELF layout planners, byte constructors, and untrusted-input verifiers still needed `.wv` implementations. Decisions 0127, 0130, and 0132 subsequently complete and cross-host qualify those transfers with differential malformed-input evidence. Decisions 0133, 0150, and 0152 subsequently complete the ABI-21 record-storage transfer, native Stage 1-to-Stage 2 reproduction, and first serialized hosted-console capability.
+At this boundary, normal executable construction remained Stage 0 and the portable PE/ELF layout planners, byte constructors, and untrusted-input verifiers still needed `.wv` implementations. Decisions 0127, 0130, and 0132 subsequently complete and cross-host qualify those transfers with differential malformed-input evidence. Decisions 0133, 0150, and 0156 subsequently complete the ABI-21 record-storage transfer, native Stage 1-to-Stage 2 reproduction, and first serialized hosted-console capability.
 
 ## Reconsider when
 

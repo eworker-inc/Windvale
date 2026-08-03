@@ -40,7 +40,7 @@ The normal Stage 0 PE and ELF writers now depend on a digest-pinned Windvale art
 
 The runtime dependency used to evaluate the retained planner is still a Stage 0 bootstrap dependency. The hosted bridge is an input adapter, not portable semantics, and its single file capability is explicit.
 
-At this decision boundary, PE/ELF byte construction, untrusted-container verification, native record storage, compiler reproduction, and hosted console services remained separate gates. Decisions 0130, 0132, 0133, 0150, and 0152 subsequently close and qualify them in that order; executable publication was already atomic under Decisions 0119 and 0122.
+At this decision boundary, PE/ELF byte construction, untrusted-container verification, native record storage, compiler reproduction, and hosted console services remained separate gates. Decisions 0130, 0132, 0133, 0150, and 0156 subsequently close and qualify them in that order; executable publication was already atomic under Decisions 0119 and 0122.
 
 ## Reconsider when
 
