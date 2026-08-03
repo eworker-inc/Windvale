@@ -1,0 +1,181 @@
+windvale-assembly 1
+
+# Canonical Linux x64 hosted-verifier startup. Stage 0 retains an independent
+# final-image encoder and parser until the native-retirement gate.
+symbol export function Linux_hosted_verifier_startup in .text
+symbol import data Argument_bytes
+symbol import data Argument_table
+symbol import data Data_arena
+symbol import data Execution_context
+symbol import data File_input_scratch
+symbol import data File_input_table
+symbol import data Name_arena
+symbol import function Native_main
+symbol import data Output_table
+symbol import data Record_arena
+symbol import function Service_console_write
+symbol import function Service_diagnostic_write
+symbol import function Service_file_read
+symbol import function Service_process_argument
+symbol import function Service_process_argument_count
+symbol import data Service_table
+symbol import function Service_utf8
+symbol import data Snapshot_table
+symbol import data Text_arena
+
+section code .text align 16
+define Linux_hosted_verifier_startup
+# Preserve the kernel-provided argc/argv stack, then own a bounded non-executable
+# 64 MiB stack through mmap(NULL, size, RW, PRIVATE|ANONYMOUS|STACK, -1, 0).
+move r12 rsp
+xor edi edi
+move_u32 esi 67108864
+move_u32 edx 3
+move_u32 r10d 131106
+xor r8 r8
+subtract_i32 r8 1
+xor r9d r9d
+move_u32 eax 9
+syscall
+compare_i32 rax -4095
+branch above_equal Failure
+move rsp rax
+add_i32 rsp 67108864
+
+# Bind the execution context to every fixed RW/NX runtime region.
+load_address r15 Execution_context
+load_address rax Service_table
+store_memory_u64 r15 none 1 24 rax
+load_address rax Record_arena
+store_memory_u64 r15 none 1 32 rax
+load_address rax Text_arena
+store_memory_u64 r15 none 1 48 rax
+load_address rax Argument_table
+store_memory_u64 r15 none 1 72 rax
+load_address rax Output_table
+store_memory_u64 r15 none 1 88 rax
+load_address rax File_input_table
+store_memory_u64 r15 none 1 96 rax
+
+# Bind file-input snapshot, name, data, and scratch regions.
+load_address rbx File_input_table
+load_address rax Snapshot_table
+store_memory_u64 rbx none 1 16 rax
+load_address rax Name_arena
+store_memory_u64 rbx none 1 32 rax
+load_address rax Data_arena
+store_memory_u64 rbx none 1 48 rax
+load_address rax File_input_scratch
+store_memory_u64 rbx none 1 64 rax
+
+# Bind exactly the six module and startup services required by the verifier.
+load_address rbx Service_table
+load_address rax Service_console_write
+store_memory_u64 rbx none 1 8 rax
+load_address rax Service_process_argument_count
+store_memory_u64 rbx none 1 16 rax
+load_address rax Service_process_argument
+store_memory_u64 rbx none 1 24 rax
+load_address rax Service_file_read
+store_memory_u64 rbx none 1 32 rax
+load_address rax Service_utf8
+store_memory_u64 rbx none 1 40 rax
+load_address rax Service_diagnostic_write
+store_memory_u64 rbx none 1 48 rax
+
+# Exclude argv[0], reject impossible argc, and publish the bounded count.
+load_memory_u64 rax r12 none 1 0
+compare_i32 rax 1
+branch below Failure
+subtract_i32 rax 1
+compare_i32 rax 67
+branch above Failure
+store_memory_u32 r15 none 1 80 eax
+
+xor ebx ebx
+xor ebp ebp
+load_address r13 Argument_table
+load_address r14 Argument_bytes
+
+label Argument_loop
+load_memory_u32 eax r15 none 1 80
+compare ebx eax
+branch above_equal Run
+load_memory_u64 rsi r12 rbx 8 16
+xor ecx ecx
+
+label Scan_argument
+load_memory_u8 dl rsi rcx 1 0
+test dl dl
+branch equal Argument_length
+compare_i32 ecx 4096
+branch above_equal Failure
+add_i32 ecx 1
+jump_label Scan_argument
+
+label Argument_length
+move r10d ecx
+move edx ebp
+add edx ecx
+compare_i32 edx 65536
+branch above Failure
+
+# Reuse the exact intrinsic service as the startup UTF-8 oracle.
+subtract_i32 rsp 16
+move rcx rsp
+move r8 rsi
+move r9d r10d
+call Service_utf8
+load_memory_u32 eax rsp none 1 0
+add_i32 rsp 16
+compare_i32 eax 1
+branch not_equal Failure
+
+# Publish one immutable descriptor and copy its exact non-NUL bytes.
+move rdx rbx
+shift_left rdx 4
+add rdx r13
+move rdi r14
+add rdi rbp
+store_memory_u64 rdx none 1 0 rdi
+store_memory_u32 rdx none 1 8 r10d
+xor ecx ecx
+
+label Copy_argument
+compare ecx r10d
+branch above_equal Argument_copied
+load_memory_u8 al rsi rcx 1 0
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+jump_label Copy_argument
+
+label Argument_copied
+add ebp r10d
+add_i32 ebx 1
+jump_label Argument_loop
+
+label Run
+load_address rdx Execution_context
+xor edi edi
+xor ecx ecx
+xor r8d r8d
+xor r9d r9d
+call Native_main
+
+# Preserve only successful portable process results; map failures to one.
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Failure
+compare_i32 eax 255
+branch below_equal Exit
+
+label Failure
+move_u32 eax 1
+label Exit
+move edi eax
+move_u32 eax 60
+syscall
+trap
+end define
+end section

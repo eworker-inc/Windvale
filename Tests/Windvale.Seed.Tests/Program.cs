@@ -106,6 +106,9 @@ internal static class Program
     private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507";
     private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a";
     private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "42f3f947cccca8e44c279afce1b6e944682dc440e0e9cda6546883898d951f31";
+    private const string COMPILER_WVB_VERIFIER_SHA256 = "957384448769a7a5b865301444b06dc9809f8866f515b0f52f9dea20a4f6e011";
+    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "0255c26e067724cce0b2cb061c3abb46ad8832f40bccabe49dcd6d7ca7931e15";
+    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "bbe44c80c8d1ff035f7b0226c7271f4ab0a1c95aec92acc015d9ba169856cc33";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
@@ -855,6 +858,18 @@ internal static class Program
 
     private static readonly string WINDOWS_HOSTED_COMPILER_STARTUP_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Windows-X64-Hosted-Compiler.wva");
+
+    private static readonly string LINUX_HOSTED_VERIFIER_STARTUP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Linux-X64-Hosted-Verifier.wva");
+
+    private static readonly string WINDOWS_HOSTED_VERIFIER_STARTUP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Windows-X64-Hosted-Verifier.wva");
+
+    private static readonly string COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Compiler-Wvb-Verifier-Semantic-Core.wv");
+
+    private static readonly string COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Compiler-Wvb-Verifier-Executable-Core.wv");
 
     private static readonly string TYPED_SCALAR_X64_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Typed-Scalar-X64.wva");
@@ -2709,7 +2724,8 @@ internal static class Program
         string expectedˉoutput = "",
         IReadOnlyList<string>? arguments = null,
         int timeoutˉmilliseconds = 10_000,
-        ISet<string>? loadedˉmodules = null)
+        ISet<string>? loadedˉmodules = null,
+        string expectedˉerror = "")
     {
         var Path = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(),
@@ -2780,7 +2796,7 @@ internal static class Program
                 StringComparer.Ordinal.Equals(expectedˉoutput, Standardˉoutput),
                 $"The generated Windows application exited {Process.ExitCode} with " +
                     $"stdout '{Standardˉoutput}' and stderr '{Standardˉerror}'.");
-            Equal(string.Empty, Standardˉerror);
+            Equal(expectedˉerror, Standardˉerror);
             return Process.ExitCode;
         }
         finally
@@ -4079,7 +4095,8 @@ internal static class Program
         string expectedˉoutput = "",
         IReadOnlyList<string>? arguments = null,
         int timeoutˉmilliseconds = 10_000,
-        ISet<string>? loadedˉmappings = null)
+        ISet<string>? loadedˉmappings = null,
+        string expectedˉerror = "")
     {
         if (!OperatingSystem.IsLinux())
         {
@@ -4156,7 +4173,7 @@ internal static class Program
                 StringComparer.Ordinal.Equals(expectedˉoutput, Standardˉoutput),
                 $"The generated Linux application exited {Process.ExitCode} with " +
                     $"stdout '{Standardˉoutput}' and stderr '{Standardˉerror}'.");
-            Equal(string.Empty, Standardˉerror);
+            Equal(expectedˉerror, Standardˉerror);
             return Process.ExitCode;
         }
         finally
@@ -8551,6 +8568,8 @@ internal static class Program
             }
         }
 
+        Compilerˉwvbˉverifierˉpackages(Compilerˉbytes, Compilerˉnative.Fragment);
+
         var Aggregateˉoverflowˉdata = new byte[
             Linkˉlimits.LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES - Firstˉobject.Length + 1];
         var Aggregateˉoverflowˉobject = Objectˉcodec.Write(new Objectˉfile(
@@ -8622,6 +8641,424 @@ internal static class Program
             $"linked={Measurement.Linkedˉimageˉbytes} text={Measurement.Textˉbytes} " +
             $"rodata={Measurement.Readˉonlyˉdataˉbytes} sections={Measurement.Sections} " +
             $"symbols={Measurement.Symbols} relocations={Measurement.Relocations}");
+    }
+
+    private static void Compilerˉwvbˉverifierˉpackages(
+        byte[] compilerˉbytes,
+        Nativeˉfragment compilerˉfragment)
+    {
+        static (int Exitˉcode, string Standardˉoutput, string Standardˉerror) Executeˉtool(
+            params string[] arguments)
+        {
+            var Originalˉoutput = Console.Out;
+            var Originalˉerror = Console.Error;
+            using var Output = new StringWriter(
+                System.Globalization.CultureInfo.InvariantCulture);
+            using var Error = new StringWriter(
+                System.Globalization.CultureInfo.InvariantCulture);
+            try
+            {
+                Console.SetOut(Output);
+                Console.SetError(Error);
+                var Exitˉcode = Windvale.Tool.Program.Main(arguments);
+                return (Exitˉcode, Output.ToString(), Error.ToString());
+            }
+            finally
+            {
+                Console.SetOut(Originalˉoutput);
+                Console.SetError(Originalˉerror);
+            }
+        }
+
+        var Compilation = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Compiler-Wvb-Verifier-Semantic-Core.wv",
+                COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
+            [
+                new(
+                    "Compiler-Wvb-Verifier-Executable-Core.wv",
+                    COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
+            ]);
+        if (!Compilation.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler-aligned verifier compilation failed: " +
+                string.Join(" | ", Compilation.Diagnostics));
+        }
+
+        var Verifierˉbytes = Compilation.Moduleˉbytes.ToArray();
+        Equal(118_080, Verifierˉbytes.Length);
+        Equal(
+            COMPILER_WVB_VERIFIER_SHA256,
+            Objectˉdigest.Calculateˉsha256(Verifierˉbytes));
+        var Verifierˉmodule = Moduleˉcodec.Readˉandˉverify(Verifierˉbytes);
+        Sequenceˉequal(
+            [
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE,
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            ],
+            Verifierˉmodule.Module.Capabilities.Select(Capability => Capability.Name));
+        var Verifierˉnative = X64ˉnativeˉbackend.Compile(Verifierˉmodule);
+        Nativeˉfragmentˉverifier.Verify(Verifierˉnative.Fragment);
+        Sequenceˉequal(
+            [
+                Nativeˉservice.Consoleˉwriteˉline,
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉservice.Processˉargument,
+                Nativeˉservice.Fileˉreadˉbytes,
+                Nativeˉservice.Diagnosticˉwriteˉline,
+            ],
+            Verifierˉnative.Fragment.Requiredˉservices);
+        var Nativeˉentry = Verifierˉnative.Fragment.Symbols.Single(Symbol =>
+            Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
+            Symbol.Kind == Nativeˉsymbolˉkind.Function &&
+            Symbol.Name == "Main").Offset;
+
+        var Windowsˉbundle = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉverifier(
+            Verifierˉnative.Fragment,
+            Nativeˉserviceˉplatform.Windows);
+        var Linuxˉbundle = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉverifier(
+            Verifierˉnative.Fragment,
+            Nativeˉserviceˉplatform.Linux);
+        Throwsˉnative(
+            "WVN4018",
+            () => _ = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉverifier(
+                compilerˉfragment,
+                Nativeˉserviceˉplatform.Windows));
+        ReadOnlySpan<Nativeˉservice> Boundˉservices =
+        [
+            Nativeˉservice.Consoleˉwriteˉline,
+            Nativeˉservice.Processˉargumentˉcount,
+            Nativeˉservice.Processˉargument,
+            Nativeˉservice.Fileˉreadˉbytes,
+            Nativeˉservice.Textˉutf8ˉisˉvalid,
+            Nativeˉservice.Diagnosticˉwriteˉline,
+        ];
+        foreach (var Bundle in new[] { Windowsˉbundle, Linuxˉbundle })
+        {
+            Equal(6, Bundle.Placements.Length);
+            True(
+                Bundle.Placements.Select(Item => Item.Service).ToArray().AsSpan()
+                    .SequenceEqual(Boundˉservices),
+                "The hosted verifier bound a noncanonical service sequence.");
+        }
+
+        var Firstˉwindows = Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉverifier(
+            Verifierˉnative.Fragment,
+            Verifierˉmodule.Module.Capabilities);
+        True(
+            Firstˉwindows.Success,
+            Firstˉwindows.Diagnostics.IsEmpty
+                ? "The Windows verifier writer failed without a diagnostic."
+                : Firstˉwindows.Diagnostics[0].Message);
+        var Secondˉwindows = Windowsˉhostedˉverifierˉapplicationˉbuilder.Build(
+            Verifierˉmodule.Module.Capabilities,
+            Windowsˉbundle,
+            Nativeˉentry);
+        Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
+        Equal(957_440, Firstˉwindows.Imageˉbytes.Length);
+        Equal(
+            COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
+        var Verifiedˉwindows = Windowsˉhostedˉverifierˉapplicationˉverifier.Verify(
+            Firstˉwindows.Imageˉbytes.AsSpan(),
+            Windowsˉbundle);
+
+        var Firstˉlinux = Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉverifier(
+            Verifierˉnative.Fragment,
+            Verifierˉmodule.Module.Capabilities);
+        True(
+            Firstˉlinux.Success,
+            Firstˉlinux.Diagnostics.IsEmpty
+                ? "The Linux verifier writer failed without a diagnostic."
+                : Firstˉlinux.Diagnostics[0].Message);
+        var Secondˉlinux = Linuxˉhostedˉverifierˉapplicationˉbuilder.Build(
+            Verifierˉmodule.Module.Capabilities,
+            Linuxˉbundle,
+            Nativeˉentry);
+        Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
+        Equal(958_464, Firstˉlinux.Imageˉbytes.Length);
+        Equal(
+            COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
+        var Verifiedˉlinux = Linuxˉhostedˉverifierˉapplicationˉverifier.Verify(
+            Firstˉlinux.Imageˉbytes.AsSpan(),
+            Linuxˉbundle);
+
+        foreach (var Runtime in new[] { Verifiedˉwindows.Runtime, Verifiedˉlinux.Runtime })
+        {
+            Equal(1u, Runtime.Layout.Snapshotˉcapacity);
+            Equal(32u, Runtime.Layout.Snapshotˉtableˉbytes);
+            Equal(0u, Runtime.Layout.Fileˉoutputˉscratchˉbytes);
+            True(
+                Runtime.Layout.Virtualˉbytes < 80u * 1024u * 1024u,
+                "The verifier runtime unexpectedly retained compiler-scale file snapshots.");
+            Equal(8_000_000_000UL, Runtime.Metadata.Maximumˉinstructions);
+            Equal(5, Runtime.Metadata.Capabilities.Length);
+            Equal(6, Runtime.Metadata.Services.Length);
+        }
+
+        Dictionary<string, uint> Startupˉtargets(
+            uint runtimeˉaddress,
+            Hostedˉverifierˉruntimeˉlayout layout,
+            Nativeˉserviceˉbundle bundle,
+            uint textˉaddress) => new(StringComparer.Ordinal)
+        {
+            ["Argument_bytes"] = checked(runtimeˉaddress + layout.Argumentˉbytesˉoffset),
+            ["Argument_table"] = checked(runtimeˉaddress + layout.Argumentˉtableˉoffset),
+            ["Data_arena"] = checked(runtimeˉaddress + layout.Dataˉarenaˉoffset),
+            ["Execution_context"] = runtimeˉaddress,
+            ["File_input_scratch"] = checked(
+                runtimeˉaddress + layout.Fileˉinputˉscratchˉoffset),
+            ["File_input_table"] = checked(
+                runtimeˉaddress + Hostedˉverifierˉruntimeˉdata.FILE_INPUT_TABLE_OFFSET),
+            ["Name_arena"] = checked(runtimeˉaddress + layout.Nameˉarenaˉoffset),
+            ["Native_main"] = checked(
+                textˉaddress +
+                (uint)Windowsˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
+                Nativeˉentry),
+            ["Output_table"] = checked(
+                runtimeˉaddress + Hostedˉverifierˉruntimeˉdata.OUTPUT_TABLE_OFFSET),
+            ["Record_arena"] = checked(runtimeˉaddress + layout.Recordˉarenaˉoffset),
+            ["Service_console_write"] = Serviceˉaddress(
+                textˉaddress, bundle, Nativeˉservice.Consoleˉwriteˉline),
+            ["Service_diagnostic_write"] = Serviceˉaddress(
+                textˉaddress, bundle, Nativeˉservice.Diagnosticˉwriteˉline),
+            ["Service_file_read"] = Serviceˉaddress(
+                textˉaddress, bundle, Nativeˉservice.Fileˉreadˉbytes),
+            ["Service_process_argument"] = Serviceˉaddress(
+                textˉaddress, bundle, Nativeˉservice.Processˉargument),
+            ["Service_process_argument_count"] = Serviceˉaddress(
+                textˉaddress, bundle, Nativeˉservice.Processˉargumentˉcount),
+            ["Service_table"] = checked(
+                runtimeˉaddress + Hostedˉverifierˉruntimeˉdata.SERVICE_TABLE_OFFSET),
+            ["Service_utf8"] = Serviceˉaddress(
+                textˉaddress, bundle, Nativeˉservice.Textˉutf8ˉisˉvalid),
+            ["Snapshot_table"] = checked(runtimeˉaddress + layout.Snapshotˉtableˉoffset),
+            ["Text_arena"] = checked(runtimeˉaddress + layout.Textˉarenaˉoffset),
+        };
+        uint Serviceˉaddress(
+            uint textˉaddress,
+            Nativeˉserviceˉbundle bundle,
+            Nativeˉservice service) => checked(
+                textˉaddress +
+                (uint)Windowsˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
+                (uint)bundle.Placements.Single(Item => Item.Service == service).Imageˉoffset);
+
+        var Windowsˉtargets = Startupˉtargets(
+            Verifiedˉwindows.Layout.Runtimeˉaddress,
+            Verifiedˉwindows.Runtime.Layout,
+            Windowsˉbundle,
+            Verifiedˉwindows.Layout.Textˉaddress);
+        Windowsˉtargets.Add("Windows_close_handle_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.CLOSE_HANDLE_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_command_line_to_argv_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.COMMAND_LINE_TO_ARGV_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_create_file_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.CREATE_FILE_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_get_command_line_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.GET_COMMAND_LINE_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_get_file_size_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.GET_FILE_SIZE_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_get_last_error_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.GET_LAST_ERROR_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_get_std_handle_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.GET_STD_HANDLE_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_local_free_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.LOCAL_FREE_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_multi_byte_to_wide_char_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.MULTI_BYTE_TO_WIDE_CHAR_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_read_file_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.READ_FILE_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_wide_char_to_multi_byte_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.WIDE_CHAR_TO_MULTI_BYTE_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_write_file_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.WRITE_FILE_IAT_OFFSET));
+        Requireˉhostedˉstartupˉmatchesˉwva(
+            WINDOWS_HOSTED_VERIFIER_STARTUP_SOURCE,
+            "Windows_hosted_verifier_startup",
+            Firstˉwindows.Imageˉbytes.AsSpan(
+                Verifiedˉwindows.Layout.Textˉfileˉoffset,
+                Verifiedˉwindows.Layout.Startupˉbytes),
+            Verifiedˉwindows.Layout.Textˉaddress,
+            Windowsˉtargets,
+            Windowsˉhostedˉverifierˉstartup.WVO_SHA256);
+
+        var Linuxˉtargets = Startupˉtargets(
+            Verifiedˉlinux.Layout.Dataˉaddress,
+            Verifiedˉlinux.Runtime.Layout,
+            Linuxˉbundle,
+            Verifiedˉlinux.Layout.Textˉaddress);
+        Requireˉhostedˉstartupˉmatchesˉwva(
+            LINUX_HOSTED_VERIFIER_STARTUP_SOURCE,
+            "Linux_hosted_verifier_startup",
+            Firstˉlinux.Imageˉbytes.AsSpan(
+                Verifiedˉlinux.Layout.Textˉfileˉoffset,
+                Verifiedˉlinux.Layout.Startupˉbytes),
+            Verifiedˉlinux.Layout.Textˉaddress,
+            Linuxˉtargets,
+            Linuxˉhostedˉverifierˉstartup.WVO_SHA256);
+
+        foreach (var Offset in new[]
+        {
+            0,
+            0x98 + 2,
+            Verifiedˉwindows.Layout.Textˉfileˉoffset,
+            Verifiedˉwindows.Layout.Textˉfileˉoffset +
+                Verifiedˉwindows.Layout.Bundleˉoffset,
+            checked((int)Verifiedˉwindows.Layout.Importˉfileˉoffset),
+            checked((int)Verifiedˉwindows.Layout.Runtimeˉfileˉoffset),
+        })
+        {
+            var Corrupted = Firstˉwindows.Imageˉbytes.ToArray();
+            Corrupted[Offset] ^= 1;
+            Throwsˉinvalidˉdata(() =>
+                _ = Windowsˉhostedˉverifierˉapplicationˉverifier.Verify(
+                    Corrupted,
+                    Windowsˉbundle));
+        }
+        Throwsˉinvalidˉdata(() =>
+            _ = Windowsˉhostedˉverifierˉapplicationˉverifier.Verify(
+                Firstˉwindows.Imageˉbytes.AsSpan(0, Firstˉwindows.Imageˉbytes.Length - 1),
+                Windowsˉbundle));
+        Throwsˉinvalidˉdata(() =>
+            _ = Windowsˉhostedˉverifierˉapplicationˉverifier.Verify(
+                [.. Firstˉwindows.Imageˉbytes, 0],
+                Windowsˉbundle));
+        foreach (var Offset in new[]
+        {
+            0,
+            0x180 + 24,
+            Verifiedˉlinux.Layout.Textˉfileˉoffset,
+            Verifiedˉlinux.Layout.Textˉfileˉoffset + Verifiedˉlinux.Layout.Bundleˉoffset,
+            checked((int)Verifiedˉlinux.Layout.Dataˉfileˉoffset),
+        })
+        {
+            var Corrupted = Firstˉlinux.Imageˉbytes.ToArray();
+            Corrupted[Offset] ^= 1;
+            Throwsˉinvalidˉdata(() =>
+                _ = Linuxˉhostedˉverifierˉapplicationˉverifier.Verify(
+                    Corrupted,
+                    Linuxˉbundle));
+        }
+        Throwsˉinvalidˉdata(() =>
+            _ = Linuxˉhostedˉverifierˉapplicationˉverifier.Verify(
+                Firstˉlinux.Imageˉbytes.AsSpan(0, Firstˉlinux.Imageˉbytes.Length - 1),
+                Linuxˉbundle));
+        Throwsˉinvalidˉdata(() =>
+            _ = Linuxˉhostedˉverifierˉapplicationˉverifier.Verify(
+                [.. Firstˉlinux.Imageˉbytes, 0],
+                Linuxˉbundle));
+
+        var Directoryˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-compiler-wvb-verifier-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Directoryˉpath);
+        try
+        {
+            var Validˉpath = Path.Combine(Directoryˉpath, "Compiler.wvb");
+            var Invalidˉpath = Path.Combine(Directoryˉpath, "Invalid.wvb");
+            var Verifierˉpath = Path.Combine(Directoryˉpath, "Wvverify.wvb");
+            File.WriteAllBytes(Validˉpath, compilerˉbytes);
+            File.WriteAllBytes(Verifierˉpath, Verifierˉbytes);
+            var Invalidˉbytes = compilerˉbytes.ToArray();
+            Invalidˉbytes[0] = 0;
+            File.WriteAllBytes(Invalidˉpath, Invalidˉbytes);
+
+            var Cliˉtarget = OperatingSystem.IsWindows()
+                ? Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME
+                : Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME;
+            var Cliˉapplication = Executeˉtool(
+                "aot",
+                Verifierˉpath,
+                "--target",
+                Cliˉtarget);
+            Equal(0, Cliˉapplication.Exitˉcode);
+            Equal(string.Empty, Cliˉapplication.Standardˉerror);
+            Contains(Cliˉapplication.Standardˉoutput, $"Target: {Cliˉtarget}");
+            Sequenceˉequal(
+                OperatingSystem.IsWindows()
+                    ? Firstˉwindows.Imageˉbytes
+                    : Firstˉlinux.Imageˉbytes,
+                File.ReadAllBytes(Path.ChangeExtension(
+                    Verifierˉpath,
+                    Windvale.Tool.Program.Targetˉoutputˉextension(Cliˉtarget))));
+
+            if (OperatingSystem.IsWindows())
+            {
+                var Loadedˉmodules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                Equal(
+                    0,
+                    Executeˉwindowsˉapplication(
+                        Firstˉwindows.Imageˉbytes,
+                        "wvb status=Valid profile=compiler-aligned\n",
+                        [Validˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        loadedˉmodules: Loadedˉmodules));
+                Equal(
+                    1,
+                    Executeˉwindowsˉapplication(
+                        Firstˉwindows.Imageˉbytes,
+                        arguments: [Invalidˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: "wvb status=Invalid phase=semantic\n"));
+                True(
+                    Loadedˉmodules.Contains("KERNEL32.DLL") &&
+                    Loadedˉmodules.Contains("SHELL32.DLL"),
+                    "The Windows verifier did not expose its declared host adapters.");
+                Equal(
+                    0,
+                    Loadedˉmodules.Count(Name =>
+                        Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+            }
+            if (OperatingSystem.IsLinux())
+            {
+                var Loadedˉmappings = new HashSet<string>(StringComparer.Ordinal);
+                Equal(
+                    0,
+                    Executeˉlinuxˉapplication(
+                        Firstˉlinux.Imageˉbytes,
+                        "wvb status=Valid profile=compiler-aligned\n",
+                        [Validˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        loadedˉmappings: Loadedˉmappings));
+                Equal(
+                    1,
+                    Executeˉlinuxˉapplication(
+                        Firstˉlinux.Imageˉbytes,
+                        arguments: [Invalidˉpath],
+                        timeoutˉmilliseconds: 600_000,
+                        expectedˉerror: "wvb status=Invalid phase=semantic\n"));
+                Equal(
+                    0,
+                    Loadedˉmappings.Count(Name =>
+                        Name.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("coreclr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                        Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+            }
+        }
+        finally
+        {
+            Directory.Delete(Directoryˉpath, recursive: true);
+        }
     }
 
     private static void Nativeˉcompilerˉbootstrapˉreproducesˉstage2()

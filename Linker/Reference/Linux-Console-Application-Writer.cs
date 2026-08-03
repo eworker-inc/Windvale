@@ -162,6 +162,56 @@ public static class Linuxˉconsoleˉapplicationˉwriter
         }
     }
 
+    public static Linuxˉconsoleˉapplicationˉresult Writeˉhostedˉverifier(
+        Nativeˉfragment fragment,
+        ImmutableArray<Capabilityˉdeclaration> capabilities)
+    {
+        try
+        {
+            Nativeˉfragmentˉverifier.Verify(fragment);
+            var Entries = fragment.Symbols
+                .Where(Symbol => Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
+                    Symbol.Kind == Nativeˉsymbolˉkind.Function &&
+                    Symbol.Name == "Main")
+                .ToArray();
+            if (Entries.Length != 1)
+            {
+                return Linuxˉconsoleˉapplicationˉresult.Failed(
+                    "WVL1301",
+                    "The hosted verifier requires exactly one exported Main function.");
+            }
+
+            var Bundle = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉverifier(
+                fragment,
+                Nativeˉserviceˉplatform.Linux);
+            var Image = Linuxˉhostedˉverifierˉapplicationˉbuilder.Build(
+                capabilities,
+                Bundle,
+                Entries[0].Offset);
+            var Verified = Linuxˉhostedˉverifierˉapplicationˉverifier.Verify(
+                Image.AsSpan(),
+                Bundle);
+            if (Verified.Nativeˉentryˉoffset != Entries[0].Offset ||
+                !Verified.Bundleˉimage.AsSpan().SequenceEqual(Bundle.Imageˉbytes.AsSpan()))
+            {
+                return Linuxˉconsoleˉapplicationˉresult.Failed(
+                    "WVL1302",
+                    "The independently verified Linux verifier application did not reproduce its entry and service bundle.");
+            }
+            return Linuxˉconsoleˉapplicationˉresult.Succeeded(Image);
+        }
+        catch (Exception Exception) when (
+            Exception is Nativeˉbackendˉexception or
+                InvalidDataException or
+                OverflowException or
+                ArgumentException)
+        {
+            return Linuxˉconsoleˉapplicationˉresult.Failed(
+                "WVL1302",
+                $"Hosted Linux verifier application verification failed: {Exception.Message}");
+        }
+    }
+
     private static byte[] Buildˉimage(ReadOnlySpan<byte> nativeˉimage, uint nativeˉentryˉoffset)
     {
         var Layout = Consoleˉapplicationˉlayout.Plan(

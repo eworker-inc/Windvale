@@ -169,6 +169,56 @@ public static class Windowsˉconsoleˉapplicationˉwriter
         }
     }
 
+    public static Windowsˉconsoleˉapplicationˉresult Writeˉhostedˉverifier(
+        Nativeˉfragment fragment,
+        ImmutableArray<Capabilityˉdeclaration> capabilities)
+    {
+        try
+        {
+            Nativeˉfragmentˉverifier.Verify(fragment);
+            var Entries = fragment.Symbols
+                .Where(Symbol => Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
+                    Symbol.Kind == Nativeˉsymbolˉkind.Function &&
+                    Symbol.Name == "Main")
+                .ToArray();
+            if (Entries.Length != 1)
+            {
+                return Windowsˉconsoleˉapplicationˉresult.Failed(
+                    "WVW1301",
+                    "The hosted verifier requires exactly one exported Main function.");
+            }
+
+            var Bundle = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉverifier(
+                fragment,
+                Nativeˉserviceˉplatform.Windows);
+            var Image = Windowsˉhostedˉverifierˉapplicationˉbuilder.Build(
+                capabilities,
+                Bundle,
+                Entries[0].Offset);
+            var Verified = Windowsˉhostedˉverifierˉapplicationˉverifier.Verify(
+                Image.AsSpan(),
+                Bundle);
+            if (Verified.Nativeˉentryˉoffset != Entries[0].Offset ||
+                !Verified.Bundleˉimage.AsSpan().SequenceEqual(Bundle.Imageˉbytes.AsSpan()))
+            {
+                return Windowsˉconsoleˉapplicationˉresult.Failed(
+                    "WVW1302",
+                    "The independently verified Windows verifier application did not reproduce its entry and service bundle.");
+            }
+            return Windowsˉconsoleˉapplicationˉresult.Succeeded(Image);
+        }
+        catch (Exception Exception) when (
+            Exception is Nativeˉbackendˉexception or
+                InvalidDataException or
+                OverflowException or
+                ArgumentException)
+        {
+            return Windowsˉconsoleˉapplicationˉresult.Failed(
+                "WVW1302",
+                $"Hosted Windows verifier application verification failed: {Exception.Message}");
+        }
+    }
+
     private static byte[] Buildˉimage(ReadOnlySpan<byte> nativeˉimage, uint nativeˉentryˉoffset)
     {
         var Layout = Consoleˉapplicationˉlayout.Plan(

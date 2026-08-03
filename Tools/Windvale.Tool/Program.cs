@@ -100,7 +100,8 @@ internal static class Program
             "Usage: windvale compile <source.wv> [--module <dependency.wv>]... " +
             "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1|" +
             "windows-x64-console-v2|linux-x64-console-v2|" +
-            "windows-x64-console-v3|linux-x64-console-v3>] [-o <artifact>]";
+            "windows-x64-console-v3|linux-x64-console-v3|" +
+            "windows-x64-verifier-v1|linux-x64-verifier-v1>] [-o <artifact>]";
         if (arguments.Length == 0 || arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
             return Usageˉerror(Usage);
@@ -154,6 +155,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME => ".exe",
+        Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME => ".exe",
         _ => ".elf",
     };
 
@@ -204,7 +206,8 @@ internal static class Program
             "Usage: windvale aot <module.wvb> " +
             "--target <windows-x64-console-v1|linux-x64-console-v1|" +
             "windows-x64-console-v2|linux-x64-console-v2|" +
-            "windows-x64-console-v3|linux-x64-console-v3> [-o <artifact>]";
+            "windows-x64-console-v3|linux-x64-console-v3|" +
+            "windows-x64-verifier-v1|linux-x64-verifier-v1> [-o <artifact>]";
         if (arguments.Length is not (3 or 5) ||
             arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
@@ -273,7 +276,9 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
-        Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME;
+        Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
+        Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
+        Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME;
 
     private static int Compileˉsourceˉfiles(
         string sourceˉpath,
@@ -392,7 +397,8 @@ internal static class Program
 
             if (target is Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
-                Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME)
+                Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
+                Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME)
             {
                 var Application = target switch
                 {
@@ -400,6 +406,10 @@ internal static class Program
                         Windowsˉconsoleˉapplicationˉwriter.Write(Fragment),
                     Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME =>
                         Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉconsole(Fragment),
+                    Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME =>
+                        Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉverifier(
+                            Fragment,
+                            Capabilities),
                     _ => Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉcompiler(
                         Fragment,
                         Capabilities),
@@ -424,6 +434,10 @@ internal static class Program
                         Linuxˉconsoleˉapplicationˉwriter.Write(Fragment),
                     Linuxˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME =>
                         Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉconsole(Fragment),
+                    Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME =>
+                        Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉverifier(
+                            Fragment,
+                            Capabilities),
                     _ => Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉcompiler(
                         Fragment,
                         Capabilities),
@@ -447,7 +461,8 @@ internal static class Program
             Action<string>? Prepareˉtemporary = null;
             if ((target is Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
-                    Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME) &&
+                    Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
+                    Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME) &&
                 OperatingSystem.IsLinux())
             {
                 Prepareˉtemporary = Prepareˉlinuxˉexecutable;
@@ -901,13 +916,15 @@ internal static class Program
             "  windvale compile <source.wv> [--module <dependency.wv>]... " +
             "[--target <wvb|windows-x64-console-v1|linux-x64-console-v1|" +
             "windows-x64-console-v2|linux-x64-console-v2|" +
-            "windows-x64-console-v3|linux-x64-console-v3>] [-o <artifact>]");
+            "windows-x64-console-v3|linux-x64-console-v3|" +
+            "windows-x64-verifier-v1|linux-x64-verifier-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
         output.WriteLine(
             "  windvale aot <module.wvb> " +
             "--target <windows-x64-console-v1|linux-x64-console-v1|" +
             "windows-x64-console-v2|linux-x64-console-v2|" +
-            "windows-x64-console-v3|linux-x64-console-v3> [-o <artifact>]");
+            "windows-x64-console-v3|linux-x64-console-v3|" +
+            "windows-x64-verifier-v1|linux-x64-verifier-v1> [-o <artifact>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");
         output.WriteLine("  windvale inspect <module.wvb>");

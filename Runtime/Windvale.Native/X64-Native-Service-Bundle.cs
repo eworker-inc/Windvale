@@ -49,13 +49,53 @@ public static class X64ˉnativeˉserviceˉbundle
         Nativeˉfragment fragment,
         Nativeˉserviceˉplatform platform)
     {
+        return Build(fragment, platform, fragment.Requiredˉservices);
+    }
+
+    public static Nativeˉserviceˉbundle Buildˉhostedˉverifier(
+        Nativeˉfragment fragment,
+        Nativeˉserviceˉplatform platform)
+    {
+        Nativeˉfragmentˉverifier.Verify(fragment);
+        ReadOnlySpan<Nativeˉservice> Expected =
+        [
+            Nativeˉservice.Consoleˉwriteˉline,
+            Nativeˉservice.Processˉargumentˉcount,
+            Nativeˉservice.Processˉargument,
+            Nativeˉservice.Fileˉreadˉbytes,
+            Nativeˉservice.Diagnosticˉwriteˉline,
+        ];
+        if (!fragment.Requiredˉservices.AsSpan().SequenceEqual(Expected))
+        {
+            throw new Nativeˉbackendˉexception(
+                "WVN4018",
+                "The hosted verifier requires its exact five-service authority profile.");
+        }
+
+        ImmutableArray<Nativeˉservice> Services =
+        [
+            Nativeˉservice.Consoleˉwriteˉline,
+            Nativeˉservice.Processˉargumentˉcount,
+            Nativeˉservice.Processˉargument,
+            Nativeˉservice.Fileˉreadˉbytes,
+            Nativeˉservice.Textˉutf8ˉisˉvalid,
+            Nativeˉservice.Diagnosticˉwriteˉline,
+        ];
+        return Build(fragment, platform, Services);
+    }
+
+    private static Nativeˉserviceˉbundle Build(
+        Nativeˉfragment fragment,
+        Nativeˉserviceˉplatform platform,
+        ImmutableArray<Nativeˉservice> requiredˉservices)
+    {
         Nativeˉfragmentˉverifier.Verify(fragment);
         if (!Enum.IsDefined(platform))
         {
             throw new ArgumentOutOfRangeException(nameof(platform), platform, null);
         }
 
-        var Services = fragment.Requiredˉservices
+        var Services = requiredˉservices
             .Select(Service => Buildˉservice(Service, platform, fragment.Types))
             .ToImmutableArray();
         var Plan = X64ˉnativeˉpublicationˉlayout.Plan(

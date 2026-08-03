@@ -1,0 +1,4 @@
+windvale-project 1
+root "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
+emit wvb
