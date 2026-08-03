@@ -1,11 +1,11 @@
 # WebAssembly and browser playground exploration
 
 - Date: 2026-08-01
-- Status: Exploration with an implemented Stage 0 playground and bounded Windvale-authored metered-control-flow/direct-call backend; not an accepted permanent WebAssembly target
+- Status: Accepted staged product direction under [Decision 0182](../Decisions/0182-Browser-And-WebAssembly-Product-Direction.md), with an implemented Stage 0 playground and bounded Windvale-authored backend; not yet an accepted permanent WebAssembly host or target
 
 ## Purpose
 
-This document records the current product and architecture discussion around a browser-based Windvale playground and a possible WebAssembly target. A bounded Stage 0 playground now implements the first route below; the larger target direction remains open and is not a permanent platform commitment. The implemented host boundary is specified separately in [`Specifications/Browser-Playground.md`](../../Specifications/Browser-Playground.md).
+This document records the implementation and evidence inventory around a browser-based Windvale playground and possible WebAssembly host and compiler target. Decision 0182 accepts an early experimental Windvale-native route, a later default-route replacement gate, typed-WIR direct compilation, a bounded event direction, and separate permanent-host and compiler-target gates. It does not yet accept WebAssembly permanently. The implemented host boundary is specified separately in [`Specifications/Browser-Playground.md`](../../Specifications/Browser-Playground.md).
 
 The direction under consideration is that portable Windvale source could eventually execute across:
 
@@ -14,7 +14,7 @@ The direction under consideration is that portable Windvale source could eventua
 - WebAssembly hosts, initially web browsers; and
 - Windvale OS.
 
-Windows and Linux remain accepted permanent hosts, and Windvale OS remains the vertical integration target. WebAssembly is not yet an accepted compiler target or runtime host. Accepting it would require a later decision grounded in a bounded prototype and differential evidence.
+Windows and Linux remain accepted permanent hosts, and Windvale OS remains the vertical integration target. WebAssembly is not yet an accepted compiler target or runtime host. A useful Windvale-native route may be published earlier with an explicit experimental profile; permanent host and direct compiler-target acceptance remain separate later evidence decisions.
 
 ## Central distinction
 
@@ -36,7 +36,8 @@ Windvale source
         |
         +-- shared syntax and semantic analysis
         |
-        +-- typed WIR and/or canonical verified WVB
+        +-- typed WIR for direct source compilation
+        +-- canonical verified WVB for distribution and hosted execution
                     |
                     +-- x86-64 backend --> Windows/Linux/Windvale OS adapters
                     |
@@ -49,7 +50,7 @@ Canonical WVB should remain the portable distribution identity unless a later ac
 
 ## Candidate implementation routes
 
-The routes below are alternatives or stages. The first route is selected only for the current experiment; this exploratory document does not accept a permanent product architecture.
+The routes below are stages with separate evidence value. The .NET route remains the active Stage 0 oracle, a bounded Windvale-native route may appear before complete replacement, and direct compilation remains a later target path. None is accepted as a permanent WebAssembly host or target merely by appearing here.
 
 ### Stage 0 compiler and interpreter hosted by .NET WebAssembly
 
@@ -310,14 +311,16 @@ Malformed source, WVB, WVO, UI commands, and capability arguments must fail befo
 
 ### Native browser execution
 
-1. Retain the established Windows/Linux byte equality for the bounded one-function straight-line `i32` lowerer, execution ABI 1, and the Stage 0 differential oracle.
-2. Retain the implemented disposable-worker path and its canonical WVB plus interpreter/WebAssembly differential evidence while broadening browser coverage.
-3. Compose the implemented sequential structured control and bounded call graph, then add a UI/event experiment only after each capability, lifetime, resource, and asynchronous execution contract is explicit.
-4. Decide whether WebAssembly becomes a permanent Windvale host and AOT target.
+1. Publish an explicitly experimental Windvale-native worker route as soon as it honestly performs a useful bounded verifier, interpreter, compiler, or Module Inspector slice and displays every limitation.
+2. Expand Decision 0174's capability-free source/WVB memory contract through compiler-scale function, frame, recursion, instruction-meter, and owned-value execution without weakening complete verification.
+3. Retain the implemented disposable-worker path and its canonical WVB plus interpreter/WebAssembly differential evidence while broadening Chromium, Firefox, WebKit, and real-Safari coverage where claimed.
+4. Move the complete editable source-to-WVB-to-verification-to-execution route behind the worker, then make it the default only after it uses no .NET runtime in normal publication and passes the replacement gate.
+5. Add the bounded wait-set/event-stream experiment only after ordering, queue, cancellation, deadline, lifetime, and resource semantics are explicit.
+6. Decide whether WebAssembly becomes a permanent host; decide direct WIR-to-WebAssembly target permanence later from a real application consumer.
 
-## Qualification direction if WebAssembly is accepted
+## Qualification direction for permanent acceptance
 
-A future acceptance decision should require at least:
+A future permanent-host acceptance decision should require at least:
 
 - one specified browser execution profile and versioned Windvale-to-WebAssembly ABI;
 - identical portable source and canonical WVB inputs across Windows, Linux, and the browser;
@@ -328,6 +331,8 @@ A future acceptance decision should require at least:
 - worker-containment and resource-exhaustion evidence;
 - deployment asset identities and license review; and
 - a statement of which browser engines, devices, and UI capabilities were not qualified.
+
+A later direct-target acceptance additionally requires a real typed-WIR consumer, deterministic `.wasm` publication, semantic parity with canonical WVB execution, useful size/startup/execution evidence, and confirmation that it does not create a parallel language implementation. The retained .NET browser code may remain as reference and recovery evidence after it leaves the normal route.
 
 Browser equality should be claimed only for behavior defined by Windvale. Layout, fonts, browser chrome, scheduling latency, and other host presentation details require separate contracts if they are expected to agree.
 
@@ -343,17 +348,16 @@ Browser equality should be claimed only for behavior defined by Windvale. Layout
 
 ## Open decisions
 
-- Is the playground's first value education, public demonstration, development inspection, or all three in a deliberately ordered interface?
-- What complete-pipeline worker containment and cross-browser evidence threshold should qualify the playground beyond the current local generated-Wasm path?
-- Does direct WebAssembly compilation consume typed WIR, canonical verified WVB, or a shared machine-independent lowering model?
-- Which execution and memory limits provide useful interaction on desktop and mobile browsers?
-- Which browser engines form the first supported profile?
+- Which bounded Windvale-native component and UI produces the first useful experimental route before complete compiler execution?
+- Which compiler-scale expansion follows Decision 0174's exact sixteen-function preflight rejection?
+- Which execution and memory limits provide useful interaction on desktop and mobile browsers while retaining the current fixed-memory ABI where applicable?
+- Which exact Chromium, Firefox, WebKit, and real-Safari versions form the first supported profile?
 - Which diagnostics and intermediate compiler evidence are safe, stable, and useful enough to expose publicly?
-- What is the smallest asynchronous event contract that works across browser, Windows, Linux, and Windvale OS adapters?
+- What are the exact signatures, batching, ordering, cancellation, deadline, and close semantics of the accepted wait-set/event-stream direction?
 - Should ordinary portable UI map to semantic controls, drawing commands, pixels, or a layered combination?
 - How are accessibility, text shaping, international input, focus, clipboard, and event ordering specified without adopting browser behavior as language semantics?
-- Which exact sample should become the cross-host Windows/Linux/WebAssembly portability proof?
-- At what evidence threshold does WebAssembly move from exploration to an accepted permanent target?
+- Which canonical Module Inspector output schema and exported function become the cross-host proof?
+- Which evidence moves WebAssembly first from exploration to a permanent host, and which later real application separately qualifies the direct compiler target?
 
 ## References
 

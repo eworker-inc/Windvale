@@ -274,7 +274,7 @@ C# Stage 0 compiler/runtime
                                       `--> normal workflow without .NET
 ```
 
-The normal post-retirement bootstrap uses a documented previous native Windvale release to rebuild the next. Exact source, seed binaries, manifests, signatures or digests, target identities, and Stage comparisons form the trust record. The final .NET Stage 0 release remains recoverable historical evidence unless a later decision selects and qualifies another minimal from-zero path.
+The normal post-retirement bootstrap uses a documented previous native Windvale release to rebuild the next. Exact source, seed binaries, manifests, signatures or digests, target identities, and Stage comparisons form the trust record. [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) makes this an incremental recovery stream: update the runbook and identities during ordinary work, retain milestone snapshots, and construct one final clean dual-host recovery release before retirement. That final .NET Stage 0 release remains recoverable historical evidence unless a later decision selects and qualifies another minimal from-zero path.
 
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 

@@ -32,6 +32,8 @@ Platform extensions ------> explicit target-scoped providers
 
 The umbrella project is named **Windvale**. Its major tools should initially use clear descriptive names such as Windvale Compiler, Windvale Assembler, Windvale Linker, Windvale Runtime, and Windvale OS.
 
+[Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md) defines the product character behind this stack: Windvale is a deterministic, capability-oriented language for applications and systems. “Code and data together” means that canonical code may be packaged with typed immutable data, resources, manifests, identities, and declared authority; it does not make self-modifying code, ambient files, or mutable databases part of the language model. [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md) and the [language-design guide](../Architecture/Language-Design.md) keep future syntax approachable while retaining explicit mutation, checked same-type operators, exhaustive results, bounded collections, and visible resource ownership.
+
 ## Success principles
 
 - Produce useful host tools before requiring a mature OS.
@@ -39,13 +41,14 @@ The umbrella project is named **Windvale**. Its major tools should initially use
 - Keep one source-language semantic model across bytecode and native execution.
 - Make the bytecode/module contract portable, versioned, inspectable, and verifiable.
 - Share native ABI, machine lowering, typed relocation, and runtime contracts across JIT and AOT rather than building parallel native compilers.
-- Retire C#/.NET from the normal Windows and Linux workflow only after a reproducible Windvale-native compiler, verifier, runtime, toolchain, and recovery seed are qualified; preserve the final Stage 0 evidence as bootstrap history.
+- Retire C#/.NET from the normal Windows and Linux workflow only after a reproducible Windvale-native compiler, verifier, runtime, toolchain, and recovery seed are qualified; accumulate the final Stage 0 recovery evidence throughout development and preserve the completed bundle as bootstrap history.
 - Treat portability as a per-part promise and derive final compatibility from the complete dependency graph; allow honest Windows-, Linux-, or Windvale OS-specific libraries.
 - Keep platform differences behind explicit versioned contracts and capabilities, with separate application approval, rights-limited grants, and provider binding.
 - Reuse compiler, assembler, object, and linker infrastructure instead of building parallel pipelines.
 - Reach self-hosting through documented stages rather than obscuring existing-tool dependencies.
 - Measure AI contribution through completed specifications, tests, reproducibility, understandable changes, and defects found—not line-count claims.
 - Keep each layer independently testable and replaceable through explicit contracts.
+- Keep packages immutable and content-addressed, dependency and authority selection locked, and time, entropy, networking, diagnostics, and updates behind explicit contracts rather than ambient host behavior.
 
 ## First convincing system
 
@@ -72,6 +75,8 @@ The accepted first boot environment is x86-64 with UEFI 2.11, QEMU as the primar
 - Claims that the stack has no external bootstrap dependencies
 
 The accepted native execution and retirement direction is defined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Native execution and .NET retirement](../Architecture/Native-Execution-And-Dotnet-Retirement.md). It is a destination and qualification plan, not current implementation status.
+
+[Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md) defines a future Windvale 0.1 as a reproducible vertical product slice rather than a broad feature checklist. The exact release checklist remains a later evidence decision and does not change the current phase gates.
 
 ## Community-source licensing
 
