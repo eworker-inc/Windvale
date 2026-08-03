@@ -7,14 +7,14 @@
 
 ## Context
 
-Decision 0165 proves that the raw Windows PE can compile a small source through real arguments, file snapshots, and output services. Canonical Stage 2 is materially stronger: twelve source modules drive the exact compiler through its largest measured ownership plan, 64,476,249 bytes of text-arena use, deep generated call paths, repeated file snapshots, and the complete 599,868-byte WVB encoder result.
+Decision 0167 proves that the raw Windows PE can compile a small source through real arguments, file snapshots, and output services. Canonical Stage 2 is materially stronger: twelve source modules drive the exact compiler through its largest measured ownership plan, 64,476,249 bytes of text-arena use, deep generated call paths, repeated file snapshots, and the complete 599,868-byte WVB encoder result.
 
 The first direct attempt reached native code but faulted at image RVA `0x001F8825`. The function subtracted a 16,240-byte frame and immediately stored at the new `RSP`. PE had reserved the exact 64 MiB stack but committed only 64 KiB. Current Windvale native prologues do not probe Windows guard pages, so a frame larger than one page can jump over the guard and turn otherwise bounded stack use into access violation `0xC0000005`. The retained Stage 0 executor already reserves and commits the complete 64 MiB stack before calling the same fragment.
 
 ## Decision
 
 - Keep the 64 MiB stack reserve and set the PE stack commit to the same 64 MiB. This matches the already verified Stage 0 execution contract, preserves the fixed bound and RW/NX protection, and relies on ordinary demand paging for physical residency. General Windows stack probing remains a future native-backend contract rather than an implicit property of this package.
-- Advance the canonical 17,157,120-byte Windows application identity to SHA-256 `356bd9c6be1a927017e987728b479d105f9852c0c7aad1b8b9e93202ba64010f`. Decision 0165's earlier hash remains evidence for the first small-source candidate; it is not the current Stage 2-qualified container.
+- Advance the canonical 17,157,120-byte Windows application identity to SHA-256 `356bd9c6be1a927017e987728b479d105f9852c0c7aad1b8b9e93202ba64010f`. Decision 0167's earlier hash remains evidence for the first small-source candidate; it is not the current Stage 2-qualified container.
 - In the existing exact-compiler AOT transport case, reuse the one compiled ABI-22 fragment, one verified platform bundle, and already constructed container. Replace the packaged small-source smoke run with the same canonical twelve-source inventory used by the retained native-executor oracle. Do not add another native compiler construction or another child run.
 - Require process status zero, the exact status line `functions=328 code-bytes=481356 module-bytes=599868`, and byte identity with the canonical Stage 0 WVB, whose SHA-256 remains `9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066`.
 - While that same Windows child is running, refresh and union its native module snapshots. Require the declared `KERNEL32.DLL` and `SHELL32.DLL` adapters and reject `clr.dll`, `mscoree.dll`, `mscorwks.dll`, `coreclr`, `hostfxr`, or `hostpolicy` modules. The independent PE verifier continues to require a zero CLR directory and the exact thirteen ordinary imports.
