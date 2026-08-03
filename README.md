@@ -117,10 +117,11 @@ export fn Main() -> i32 {
 ## Architecture direction
 
 - Windows and Linux are permanent Windvale runtime and development hosts, not the semantic definition of the language.
-- Portable Windvale modules run through Windvale-defined contracts instead of inheriting host semantics.
+- Each Windvale part declares its honest platform scope; parts that use shared contracts can cross environments, while Windows-, Linux-, or Windvale OS-specific parts remain valid and explicit.
 - Source syntax, typed WIR, distributable bytecode, native IR, object files, and executable images remain distinct contracts.
-- Portable, hosted, and system programming have explicit capability profiles.
+- Platform scope, authority level, required capabilities, and optional capabilities remain separate metadata dimensions; a requirement never grants authority by itself.
 - The durable [Windvale OS architecture](Documents/Architecture/Windvale-Os-Architecture.md) uses a small capability-oriented kernel written primarily in `.wv`, a bounded `.wva` machine layer, and isolated Windvale services.
+- [Proposed next integrated defaults](Documents/Decisions/0198-Next-Integrated-Architecture-Defaults.md) connect the next resource-domain, process, console, network, trust, package, and language contracts for product review without claiming implementation.
 - C# and .NET remain Stage 0 until the documented native-retirement gate is qualified on Windows and Linux.
 - Bootstrap dependencies and AI contributions must be documented honestly and reproducibly.
 

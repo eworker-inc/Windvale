@@ -14,6 +14,7 @@ Windvale separates current status, enduring architecture, accepted decisions, ex
 - [Accepted network-stack direction](Decisions/0192-Capability-Oriented-User-Space-Network-Stack.md) — future user-space protocol service, isolated NIC driver, semantic network capabilities, standards-based dual-stack path, and staged deterministic qualification
 - [Accepted remote-terminal protocol direction](Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md) — one authenticated secure connection, one bounded terminal session, typed control messages, explicit authority, and connection-owned teardown
 - [First generation-safe non-tail memory objects](Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md) — cross-host-qualified Probe-40 bitmap/owner/object policy and WVA reclamation proof
+- [Proposed next integrated defaults](Decisions/0198-Next-Integrated-Architecture-Defaults.md) — successor review set for resource domains, launch, streams, network devices, identity/trust, packages/releases, and language value contracts; not accepted or implemented
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 
@@ -23,9 +24,13 @@ Windvale separates current status, enduring architecture, accepted decisions, ex
 - [Language design](Architecture/Language-Design.md) — accepted future syntax, module, result, collection, resource-lifetime, and operator direction; distinct from implemented Seed
 - [Platform and portability](Architecture/Platform-And-Portability.md) — per-part platform scope, authority, capability-provider, library, filesystem, and VM-provider boundaries
 - [Windvale OS architecture](Architecture/Windvale-Os-Architecture.md) — durable kernel, process, capability, service, virtualization/accelerator, language-ownership, and bootstrap boundaries
+- [Memory objects and resource domains](Architecture/Memory-Objects-And-Resource-Domains.md) — proposed physical-page ownership, memory-object, mapping, accounting, zeroing, and teardown defaults
+- [Process launch and supervision](Architecture/Process-Launch-And-Supervision.md) — proposed semantic/kernel launch plans, atomic clean spawn, transfer, completion, and bounded restart defaults
 - [Console, shell, and CLI architecture](Architecture/Console-Shell-And-Cli.md) — future terminal, session, command resolution, clean launch, standard-stream, pipeline, shell-language, and administration boundaries
 - [Network-stack architecture](Architecture/Network-Stack.md) — future kernel/driver/protocol boundary, application capabilities, Internet protocols, packet data plane, virtio-net, security, testing, and delivery sequence
 - [Remote-terminal protocol architecture](Architecture/Remote-Terminal-Protocol.md) — future `WVTS/1` secure carrier, authentication, authorization, framing, terminal messages, limits, lifecycle, compatibility adapters, and qualification
+- [Identity, time, entropy, and trust](Architecture/Identity-Time-Entropy-And-Trust.md) — proposed provider separation, key custody, pinned mutual identity, authorization, trust generations, and secure-stream prerequisites
+- [Packages, releases, updates, and recovery](Architecture/Packages-Releases-And-Recovery.md) — proposed package/lock/bundle/release split, immutable installation generations, 0.1 gate, and later A/B updates
 - [Compiler bootstrap options](Architecture/Compiler-Bootstrap-Options.md) — bootstrap sequence and representation choices
 - [Native execution and .NET retirement](Architecture/Native-Execution-And-Dotnet-Retirement.md) — interpreter/JIT/AOT destination and retirement gate
 - [Exact compiler Stage 0 recovery](Runbooks/Exact-Compiler-Recovery.md) — clean-checkout reconstruction, identities, and archive provenance

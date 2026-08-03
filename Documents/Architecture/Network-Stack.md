@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted future architecture under [Decision 0192](../Decisions/0192-Capability-Oriented-User-Space-Network-Stack.md). Windvale OS does not yet implement a NIC driver, packet transport, IP stack, resolver, TCP, secure transport, or application network capability. The qualified QEMU machine deliberately has no network device. This document defines direction and staged evidence, not current behavior or a stable network ABI.
+Accepted future architecture under [Decision 0192](../Decisions/0192-Capability-Oriented-User-Space-Network-Stack.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) adds a recommended first link-port and device profile for review. Windvale OS does not yet implement a NIC driver, packet transport, IP stack, resolver, TCP, secure transport, or application network capability. The qualified QEMU machine deliberately has no network device. This document defines direction and staged evidence, not current behavior or a stable network ABI.
 
 ## Recommendation
 
@@ -65,7 +65,7 @@ This placement is not a promise that every network responsibility stays in one p
 
 Applications ask a resolver provider for names and service identities; they do not send ambient DNS packets. Address configuration and route mutation require separate administrative capabilities. Static configuration arrives first, followed by DHCPv4 and IPv6 autoconfiguration only after their state, lifetimes, rollback, and provider-loss behavior are specified.
 
-TLS remains outside the kernel and above the transport service. A secure-connection provider requires exact peer-identity policy, secure entropy, trust-store access, civil-time policy where certificate validation needs it, key protection, protocol/version policy, and bounded handshake evidence. Windvale should use qualified cryptographic primitives and standard test vectors rather than create new cryptography. QUIC remains a later transport over qualified UDP, TLS, timers, loss recovery, and congestion control.
+TLS remains outside the kernel and above the transport service. A secure-connection provider requires exact peer-identity policy, secure entropy, trust-store access, civil-time policy where certificate validation needs it, key protection, protocol/version policy, and bounded handshake evidence. The recommended separation and delivery order are defined in [Identity, time, entropy, and trust](Identity-Time-Entropy-And-Trust.md). Windvale should use qualified cryptographic primitives and standard test vectors rather than create new cryptography. QUIC remains a later transport over qualified UDP, TLS, timers, loss recovery, and congestion control.
 
 ## Standards and protocol profile
 
@@ -144,6 +144,28 @@ Loopback and a deterministic simulated link arrive before real hardware. They le
 
 Future VM networking uses separately authorized virtual-link attachments. A VM-management capability grants no host network, bridge, NAT, capture, or physical-NIC authority. A privileged user-space network-fabric service may later connect virtual ports through switching, routing, NAT, or filtering policy. A guest is disconnected by default until an explicit attachment is approved.
 
+### Recommended `LinkPort 1` contract
+
+The first version is copied and event-driven. It exposes no DMA address, virtqueue descriptor, PCI field, host socket, or native interface index. Its semantic records are:
+
+- an immutable link snapshot containing interface identity and generation, link state, MTU, address evidence, supported operation limits, driver/provider generation, and reset reason;
+- a receive batch containing one or more immutable frame byte values plus link generation and bounded arrival-order identities;
+- a transmit submission containing caller-selected correlation identity and one or more immutable frames;
+- a transmit completion for every accepted correlation identity, distinguishing completed local device submission, rejected, cancelled, reset, removed, and indeterminate device completion; and
+- link-change, queue-space, provider-loss, and reset-complete events available through the common bounded wait mechanism.
+
+Receive ownership crosses the service boundary only after the driver has validated device completion and copied the exact frame bytes out of its DMA pool. The network service then owns the copy. Transmit acceptance means the driver copied the exact submitted bytes into its admitted device queue or DMA pool; it does not mean the Ethernet peer or remote application received them. Link reset increments the generation, completes or fails every accepted submission exactly once, discards partial receive assemblies, and invalidates stale observations.
+
+The copied interface is the semantic baseline even after a shared ring exists. A later `LinkPort 2` may transfer buffer identities through a versioned ring, but it must preserve the same frame, generation, completion, backpressure, reset, and teardown results.
+
+### Recommended first `virtio-net` profile
+
+The first usable profile is modern virtio over the selected Q35 PCI transport, with `VIRTIO_F_VERSION_1`, one receive queue, one transmit queue, the standard Ethernet MTU, and only the smallest link-status or stable-address features justified by the device. It does not negotiate legacy mode, multiqueue, RSS, a control queue, mergeable receive buffers, jumbo MTU, checksum offload, segmentation offload, guest offload control, or promiscuous policy.
+
+Descriptor counts, fixed DMA-buffer counts, interrupt moderation, and batch limits are selected by one focused measurement and then recorded in the device profile. The driver validates every offered feature, queue size, descriptor chain, used length, status transition, notification, and completion. Bounded polling is bring-up evidence only; interrupt-driven RX/TX completion, link change, reset, and full buffer reclamation are required for the usable gate.
+
+Device isolation claims must report the DMA boundary honestly. A virtual or physical IOMMU should restrict the driver/device to the exact queue and packet pool for the first usable isolated-driver claim. A bring-up run without IOMMU enforcement may prove packet mechanics against QEMU but cannot claim containment against a compromised DMA-capable driver. If the chosen QEMU profile cannot supply the required virtual-IOMMU evidence, retain that run as an explicitly weaker development profile rather than weaken the architecture.
+
 ## Security, failure containment, and policy
 
 Every frame, packet, option, extension header, fragment, checksum, transport segment, DNS message, configuration reply, certificate, shared descriptor, and device completion is untrusted input. Parsing uses checked arithmetic, bounded iteration, maximum header-chain depth, exact length agreement, and explicit rejection. Diagnostics are bounded and avoid dumping packet payloads, credentials, keys, or unrelated guest traffic by default.
@@ -163,7 +185,7 @@ Packet capture is a separate privileged capability with interface, direction, fi
 
 ## Implementation and qualification sequence
 
-1. Qualify monotonic timers and preemption, independently lived memory, flat resource domains, dynamic process launch, service supervision, PCI discovery, interrupt delivery, shared memory, DMA/IOMMU ownership, and deterministic device teardown.
+1. Build from qualified Probe 40; add flat resource domains, dynamic process launch, service supervision, PCI discovery, interrupt delivery, shared memory, DMA/IOMMU ownership, and deterministic device teardown.
 2. Implement capability-free packet parsers, serializers, checksums, route selection, protocol state machines, virtual clock, loopback, and a deterministic simulated link reusable on Windows and Linux.
 3. Add one isolated modern `virtio-net` driver with fixed buffers, one RX/TX queue pair, bounded polling bring-up, then interrupt-driven completion and reset evidence.
 4. Add Ethernet, ARP, static IPv4, ICMPv4, and UDP against an isolated deterministic peer. This is the first real packet gate, not a general application-network claim.
@@ -185,13 +207,13 @@ Deterministic protocol tests run outside the OS as well as in QEMU. They record 
 The architecture does not yet freeze:
 
 - application capability names, signatures, records, or source-language syntax;
-- link-port, packet-ring, stream, listener, resolver, route, interface, and configuration encodings;
+- binary encodings for the recommended `LinkPort 1` records, packet rings, streams, listeners, resolvers, routes, interfaces, and configuration;
 - exact queue, buffer, packet, fragment, timer, connection, cache, rate, or diagnostic limits;
 - the initial timer source, tick or deadline policy, retransmission algorithm, and congestion-control selection;
 - source-address and route-selection policy, temporary IPv6 addressing, DHCPv6, encrypted DNS, multicast, or service discovery;
 - bounded fragmentation and reassembly policy for the general host profile;
 - TLS implementation/provider, trust-store format, certificate policy, key custody, and exact secure-stream binding;
-- the first physical NIC, Hyper-V adapter, virtual switch, NAT, firewall-rule, tunnel, or packet-capture contract; or
+- exact `virtio-net` queue and buffer counts, the first physical NIC, Hyper-V adapter, virtual switch, NAT, firewall-rule, tunnel, or packet-capture contract; or
 - measured copy-to-shared-ring, batching, offload, multiqueue, RSS, or sharding thresholds.
 
 These details require focused consumers and evidence. They do not reopen the accepted boundaries: Internet protocols remain standards-based, the kernel remains protocol-blind, drivers remain device-mechanism-only, ordinary applications receive semantic rights-limited capabilities, and remote terminal support waits for a qualified secure network path.

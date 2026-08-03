@@ -330,15 +330,29 @@ The completion gate is the central Windvale portability proof: one module artifa
 
 The completion gate is a source release that another person can inspect, build, verify, and recover from documented inputs.
 
+### Proposed integrated next-contract sequence
+
+Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) connects the accepted future branches from qualified Probe 40 without turning them into current implementation claims. Its recommended main OS dependency line is:
+
+1. retain qualified Probe 40 as the fixed timer and memory-object baseline;
+2. add one flat resource domain with reserved recovery capacity and complete accounting over the existing processes and objects;
+3. add one atomic clean-spawn transaction from separate semantic and kernel admission plans, generalizing object inventory or page selection only as required;
+4. add bounded service supervision and isolate ordinary serial output;
+5. qualify directional byte streams, typed terminal events, and one Shell-1 session;
+6. add shared-memory/DMA/IOMMU mechanisms, copied `LinkPort 1`, and the minimal modern `virtio-net` profile; and
+7. add protocols, secure identity, current TLS 1.3, and finally `WVTS/1`.
+
+The [memory](../Architecture/Memory-Objects-And-Resource-Domains.md), [launch](../Architecture/Process-Launch-And-Supervision.md), [identity/trust](../Architecture/Identity-Time-Entropy-And-Trust.md), and [package/release](../Architecture/Packages-Releases-And-Recovery.md) guides define the proposed defaults. Language metadata, nominal variants/results, bounded sequences/builders, package manifests, lockfiles, release evidence, and native-retirement work may advance in parallel when a direct consumer exists. Review accepts or revises Decision 0198 before any proposed encoding is treated as product direction.
+
 ### Future branch - console, shell, and CLI
 
 [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md) and the [console architecture guide](../Architecture/Console-Shell-And-Cli.md) accept this future product structure without making it an active implementation claim:
 
-1. Complete timer preemption, independently lived memory, a flat resource domain, and clean dynamic launch before treating an interactive shell as reliable process infrastructure.
+1. Build from qualified Probe 40; add a flat resource domain and clean dynamic launch before treating an interactive shell as reliable process infrastructure.
 2. Isolate ordinary serial output while retaining the kernel emergency sink, then add one bounded serial-input adapter and terminal session.
 3. Launch one single-session shell as an ordinary capability-restricted application through exact command resolution and an immutable launch plan.
-4. Bind arguments, standard input, standard output, diagnostics, current directory, optional environment, exact capability instances, resource ceilings, cancellation, supervision, and completion explicitly; inherit none ambiently.
-5. Keep the first grammar to commands, arguments, quoting, and `--`; add sequencing, bounded byte pipelines, redirection, status chaining, and one-argument variables only with their underlying contracts.
+4. Bind arguments, directional standard input, output, and diagnostic streams, current directory, optional environment, exact capability instances, resource ceilings, cancellation, supervision, and completion explicitly; report exact partial and indeterminate mutation progress and inherit none ambiently.
+5. Keep Shell 1 to words, literal and escaped quoting, and `--`; add Shell 2 sequencing, bounded byte pipelines, redirection, and status chaining only with their underlying contracts, then add Shell 3 one-argument variables without splitting or execution.
 6. Use ordinary verified Windvale programs for substantial automation; keep a language REPL separate and defer POSIX compatibility, typed pipelines, background jobs, graphical terminals, remote sessions, and multi-user login.
 7. Keep inspection, filesystem, package, shutdown, and future VM operations as separate applications with exact capabilities rather than privileged shell built-ins.
 
@@ -348,9 +362,9 @@ The first completion gate is one QEMU serial session that survives malformed inp
 
 [Decision 0192](../Decisions/0192-Capability-Oriented-User-Space-Network-Stack.md) and the [network-stack architecture guide](../Architecture/Network-Stack.md) accept this future product structure without making it an active implementation claim:
 
-1. Complete timer/preemption, independently lived memory, resource domains, dynamic launch, service supervision, PCI discovery, interrupts, shared memory, DMA/IOMMU ownership, and deterministic teardown before treating a NIC as an isolated recoverable service.
+1. Build from qualified Probe 40; add resource domains, dynamic launch, service supervision, PCI discovery, interrupts, shared memory, DMA/IOMMU ownership, and deterministic teardown before treating a NIC as an isolated recoverable service.
 2. Implement packet parsers, serializers, checksums, route selection, virtual time, loopback, and a deterministic simulated link as capability-free or semantic code reusable on Windows and Linux.
-3. Add one isolated modern `virtio-net` driver with fixed buffers, one RX/TX queue pair, the smallest feature set, bounded polling only for bring-up, and interrupt-driven completion before usability is claimed.
+3. Add copied `LinkPort 1` and one isolated modern `virtio-net` driver with fixed buffers, one RX/TX queue pair, the smallest feature set, bounded polling only for bring-up, interrupt-driven completion before usability is claimed, and an explicitly weaker label for any run lacking virtual-IOMMU containment.
 4. Add Ethernet, ARP, static IPv4, ICMPv4, and UDP against an isolated deterministic peer before DHCP, DNS, TCP, TLS, applications, remote terminals, or public-Internet access.
 5. Keep public address and transport types dual-stack; add IPv6 link-local addressing, ICMPv6, Neighbor Discovery, Duplicate Address Detection, SLAAC, and version-neutral routing before accepting a general host profile.
 6. Add configuration, DHCPv4, DNS, address and route lifetimes, then bounded TCP with retransmission, congestion control, close, reset, peer loss, and complete timer/state teardown.

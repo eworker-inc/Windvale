@@ -49,6 +49,8 @@ The umbrella project is named **Windvale**. Its major tools should initially use
 - Measure AI contribution through completed specifications, tests, reproducibility, understandable changes, and defects found—not line-count claims.
 - Keep each layer independently testable and replaceable through explicit contracts.
 - Keep packages immutable and content-addressed, dependency and authority selection locked, and time, entropy, networking, diagnostics, and updates behind explicit contracts rather than ambient host behavior.
+- Keep physical pages, memory objects, virtual mappings, and aggregate resource-domain charges separate; reserve complete capacity and validate privately before publishing a process or service resource.
+- Keep authentication, identity, authorization, and capability grants separate. Neither a TLS peer identity nor a package/release signature grants runtime authority.
 - Implement standard Internet protocols behind a capability-oriented user-space network service and isolated device drivers; keep packet parsing, DNS, routing, TCP, and secure-transport policy outside the kernel.
 
 ## First convincing system
@@ -69,6 +71,8 @@ The first Windvale OS milestone should be a small vertical system rather than a 
 
 [Decision 0193](../Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md) keeps that eventual remote path small: one authenticated secure connection creates one rights-limited terminal session and shell resource domain through a supervised adapter. Windvale owns the bounded terminal messages and lifecycle while TCP, TLS, identity, authorization, and the existing terminal service retain their separate responsibilities.
 
+Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) supplies a coherent next set of successor defaults for review. The [memory-object](../Architecture/Memory-Objects-And-Resource-Domains.md) and [launch/supervision](../Architecture/Process-Launch-And-Supervision.md) guides build from qualified Probe 40 and put a flat resource domain and atomic clean spawn before the shell or driver paths. The [identity/trust](../Architecture/Identity-Time-Entropy-And-Trust.md) and [package/release](../Architecture/Packages-Releases-And-Recovery.md) guides keep keys, authorization, package identity, release provenance, installed generations, and recovery separate. Probe 40 remains implemented and qualified; the successor contracts proposed by Decision 0198 are recommendations, not implementation or qualification claims.
+
 The accepted first boot environment is x86-64 with UEFI 2.11, QEMU as the primary automated VM, and Hyper-V Generation 2 as the later Windows compatibility target. [Decisions 0044](../Decisions/0044-First-X64-Uefi-Boot-Environment.md) through qualified [0100](../Decisions/0100-First-Reclaimed-And-Reused-Process-Root.md) establish deterministic PE32+, firmware exit, kernel handoff, owned memory/stack/page tables, WVA shutdown and normalized faults, fixed in-guest WVB admission, protected processes, a Windvale init service, Windvale-written bytecode interpretation at CPL3, a typed WVB/execution-budget pair, per-opcode budget enforcement, automatic terminal cleanup, and one exact generation-safe process-root reclaim/reuse cycle. Probe 30 is the cross-host baseline at exact implementation commit `4a077ab`; all four pinned-QEMU scenarios also pass on Windows. This is substantial vertical source-to-machine evidence, not yet an arbitrary or general WVB loader/verifier, dynamic resource namespace, general ownership-transfer/allocator system, JIT, scheduler, general trap system, or complete kernel runtime.
 
 ## Non-goals for the first stages
@@ -83,7 +87,7 @@ The accepted first boot environment is x86-64 with UEFI 2.11, QEMU as the primar
 
 The accepted native execution and retirement direction is defined by [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Native execution and .NET retirement](../Architecture/Native-Execution-And-Dotnet-Retirement.md). It is a destination and qualification plan, not current implementation status.
 
-[Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md) defines a future Windvale 0.1 as a reproducible vertical product slice rather than a broad feature checklist. The exact release checklist remains a later evidence decision and does not change the current phase gates.
+[Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md) defines a future Windvale 0.1 as a reproducible vertical product slice rather than a broad feature checklist. Proposed Decision 0198 recommends that 0.1 require the complete .NET-free normal Windows/Linux gate, exact archived Stage 0 recovery, one useful packaged application and library, explicit capability evidence, signed reproducible artifacts, a public threat model, and offline third-party verification. Windvale OS completion remains outside that proposed gate. Product review may revise the checklist before it becomes accepted direction.
 
 ## Community-source licensing
 

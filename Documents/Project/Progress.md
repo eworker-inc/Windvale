@@ -34,6 +34,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 
 The current unqualified language candidate adds checked `i64`/`u64` to Stage 0, conditional WVB 1.7, and the reference runtime while retaining exact WVB 1.6 for existing modules. Backend expansion is deliberately visible rather than implied: native reports `WVN2003`, and the Windvale-written compiler, WebAssembly, and OS profiles remain 1.6. Bounded owned values and builders are the accepted prerequisite for the dynamic collections needed by future database work.
 
+Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) is a documentation-only successor review set. It builds from qualified Probe 40 and recommends concrete defaults for resource domains and later memory generalization, clean launch/supervision, streams/terminal/shell, `LinkPort 1`/`virtio-net`, identity/time/entropy/trust, packages/releases/recovery, and language variants/collections/metadata. None of those proposed contracts changes the implemented or qualified indicators above.
+
 ## Working end to end
 
 - ✅ Windvale source → canonical WVB → verification → execution on Windows or Linux

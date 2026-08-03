@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted future architecture under [Decision 0193](../Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md). No remote-terminal listener, TLS provider, `WVTS/1` codec, network terminal adapter, remote identity, or remote session is implemented. The exact wire encoding, limits, identifiers, and key-provisioning records remain experimental until a measured implementation and specification qualify them.
+Accepted future architecture under [Decision 0193](../Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) and the [identity, time, entropy, and trust guide](Identity-Time-Entropy-And-Trust.md) recommend the prerequisite provider split and a pinned mutual-identity first profile for review. No remote-terminal listener, TLS provider, `WVTS/1` codec, network terminal adapter, remote identity, or remote session is implemented. The exact wire encoding, limits, identifiers, and key-provisioning records remain experimental until a measured implementation and specification qualify them.
 
 ## Recommendation
 
@@ -46,7 +46,7 @@ TLS 0-RTT application data is disabled. Terminal input and session creation are 
 
 ## Authentication and authorization
 
-The first usable profile avoids passwords and public-PKI dependence. Provisioning installs:
+The first usable profile avoids passwords and public-PKI dependence. The recommended single first representation uses mutually authenticated small certificates whose subject-public-key digests are pinned. This matches ordinary Windows and Linux TLS-provider capabilities; RFC 7250 raw public keys remain a possible later Windvale-native profile rather than a parallel first implementation. Provisioning installs:
 
 - one exact server certificate or public-key identity pinned by the client;
 - one exact client certificate or public-key identity allow-listed by the machine; and
@@ -55,6 +55,8 @@ The first usable profile avoids passwords and public-PKI dependence. Provisionin
 TLS authenticates the server and requests client authentication. Authentication proves possession of an approved key; it does not grant a shell by itself. A separate authorization provider checks the current identity generation, revocation state, listener, source policy if any, session count, resource ceilings, allowed shell identity, and exact additional capabilities before it creates a terminal-session grant.
 
 There is no automatically omnipotent remote administrator. A provisioned client receives only the profile approved for that key. Key enrollment, replacement, revocation, recovery, and audit use separate local or administrative capabilities. Failure to obtain identity, authorization, terminal, launch, or resource-domain grants rejects the connection without creating a partial shell.
+
+Authentication evidence identifies the peer and exact trust-policy generation. A separate immutable authorization record binds that identity to the listener, remote-session profile, reduced capabilities, resource ceilings, monotonic expiry where used, and revocation behavior. TLS connection state, key handles, identity records, authorization decisions, session grants, and shell capabilities remain separate objects with separate generations.
 
 The listener is disabled unless an administrator binds an exact interface/address, transport port, server identity, client trust set, authorization policy, connection limit, and resource budget. A general network-listen capability is not sufficient to create the remote terminal service.
 

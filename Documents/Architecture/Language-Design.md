@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted evolution direction under [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md) and [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md). The implemented language remains exactly [Windvale Seed](../../Specifications/Seed-Language.md); examples in this document marked as future syntax are not accepted source today.
+Accepted evolution direction under [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md) and [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) adds recommended value and metadata defaults for review. The implemented language remains exactly [Windvale Seed](../../Specifications/Seed-Language.md); examples in this document marked as future syntax are not accepted source today.
 
 ## Product character
 
@@ -92,6 +92,22 @@ fn Decodeˉheader(Value: bytes) -> Imageˉsummary {
 
 The metadata spelling remains a candidate until the versioned source/WVB encoding is selected. The durable rule is that platform scope, authority, required capabilities, optional capabilities, root approval, concrete grants, and provider binding remain separate.
 
+The recommended encoding gives the platform dimension structured, independently ordered fields for environment, architecture, ABI, and named extension requirements. Authority is a separate closed role value. Required and optional capability tables contain canonical ASCII-safe interface identity, major contract version, exact signature-set identity, and declared limit profile. Provider identity, user approval, and granted capability references never enter those requirement tables.
+
+The current `portable`, `hosted`, and `system` profile remains defined only by its existing WVB version. The metadata revision should use a new source edition and WVB version with no overloaded legacy byte. Migration recompiles current source and fixtures into the new canonical tables. Whether a legacy reader remains for one named recovery case is a separate compatibility decision; normal development does not preserve the old format automatically, and no old profile receives inferred new authority. A part's compatibility is derived from its complete dependency graph, not from a blanket portable label.
+
+The exact surface spelling remains reviewable. A preferred source shape keeps declarations simple while allowing the compiler to serialize structured records, for example:
+
+```text
+platform windows, linux, windvale;
+architecture x64;
+authority application;
+requires capability filesystem.directory version 1;
+optional capability terminal.surface version 1;
+```
+
+Omitting a dimension is an error rather than an implicit host default. A later `architecture any` or shared-environment shorthand may be admitted only when it expands to one canonical explicit meaning.
+
 ## Recoverable values and matching
 
 Windvale first adds exhaustive statement-form matching over existing enums. A later nominal `variant` carries payloads:
@@ -114,6 +130,12 @@ match Result {
 
 Match has no fallthrough and is exhaustive. The first result flow remains explicit. A later `try` expression may provide visible propagation after success/failure shape, ownership, cleanup, and return compatibility are exact. Traps remain for contract violations, corrupted state, invalid bounds, and other runtime invariants; expected provider outcomes use typed results.
 
+The recommended variant contract is nominal, immutable, closed, and verifier-bounded. Every case has a stable declaration ordinal and zero or more named fields. Construction names the variant and case and supplies every payload field exactly once. There is no implicit null case, default value, open extension, integer conversion, or layout inspection.
+
+WVB records the nominal type, ordered cases, field types, ownership classes, and maximum admitted value pressure. Construction consumes or retains payload evidence according to each field's ownership class. `match` validates one arm per case, refines the selected payload types inside that arm, has no fallthrough, and rejoins only with compatible stack and ownership state. The native inline-or-descriptor representation remains an ABI choice and cannot be observed by source.
+
+The first typed results are ordinary two-case nominal variants, conventionally `Success` and `Failure`, with explicit exhaustive `match`. Windvale does not need general generics, exceptions, or a magic built-in result to gain recoverable operations. A later visible propagation expression requires one recognized result contract, compatible failure type, exact cleanup ordering, and no hidden capability calls.
+
 ## Bounded collections and resources
 
 The first dynamic collection family is an immutable bounded sequence plus uniquely owned builder:
@@ -131,6 +153,12 @@ for Request in Published {
 ```
 
 The exact constructor and member spelling remains part of the focused collection decision. The semantic requirements are explicit maximum, checked allocation, visible mutation, consuming freeze, immutable publication, deterministic iteration, and compile-time rejection of builder use after freeze.
+
+The recommended first family treats the maximum as part of the exact type. `sequence<Item, 256>` and `sequence<Item, 512>` are different types unless an explicit checked conversion copies or republishes the value. Length varies from zero through the maximum; iteration order is insertion order. Indexing outside current length traps as a contract violation.
+
+`builder<Item, N>` is uniquely owned and move-only. A one-item `Push` either completes or reports the builder unchanged; a later bulk operation may report an exact completed prefix. Capacity exhaustion is a typed recoverable result rather than a trap, and no operation grows beyond `N`. `freeze` consumes the builder and publishes one immutable sequence. A sequence may later share backing or provide borrowed slices, but storage identity, capacity beyond the declared maximum, and reference count remain unobservable.
+
+The first implementation may use contiguous bounded storage and explicit ownership without a tracing collector. Cycles, unbounded growth, lazy iterators, general collection generics, covariance, and concurrent mutation remain outside this family.
 
 A later `using` declaration scopes one owned capability and closes it on ordinary control-flow exits. Terminal process cleanup remains the runtime or kernel boundary; the language does not pretend that arbitrary user cleanup executes after corruption. Package resources may use typed declarations supplied by an immutable content-addressed manifest rather than native paths.
 

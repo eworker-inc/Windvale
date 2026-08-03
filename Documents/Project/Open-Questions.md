@@ -1,12 +1,26 @@
 # Windvale open questions
 
-This list records unresolved choices only. Accepted product-wide direction is recorded by [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md), [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [Decision 0180](../Decisions/0180-Compiler-Runtime-And-Native-Toolchain-Boundaries.md), [Decision 0181](../Decisions/0181-Next-Windvale-Os-Mechanism-Contracts.md), [Decision 0182](../Decisions/0182-Browser-And-WebAssembly-Product-Direction.md), [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md), [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md), [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md), [Decision 0192](../Decisions/0192-Capability-Oriented-User-Space-Network-Stack.md), and [Decision 0193](../Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md). Implementation details remain open when those decisions deliberately require a measured consumer, hardware inventory, or qualification gate.
+This list records unresolved choices only. Accepted product-wide direction is recorded by [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md), [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [Decision 0180](../Decisions/0180-Compiler-Runtime-And-Native-Toolchain-Boundaries.md), [Decision 0181](../Decisions/0181-Next-Windvale-Os-Mechanism-Contracts.md), [Decision 0182](../Decisions/0182-Browser-And-WebAssembly-Product-Direction.md), [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md), [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md), [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md), [Decision 0192](../Decisions/0192-Capability-Oriented-User-Space-Network-Stack.md), [Decision 0193](../Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md), and cross-host-qualified [Decision 0196](../Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) selects recommended successor defaults for the next integrated review but is not accepted or implemented. Implementation details remain open when those records deliberately require a measured consumer, hardware inventory, or qualification gate.
+
+## Proposed defaults awaiting review
+
+Decision 0198 and its linked architecture guides recommend:
+
+- Probe 40's qualified bitmap, ownership, page-vector, generation, and zero-before-reuse invariants as the fixed baseline, followed by separate mappings and one flat resource domain before measured generalization of the object inventory or page selection;
+- a two-level immutable launch plan committed through one atomic clean-spawn transaction with bounded supervision;
+- directional byte streams, typed terminal events, versioned small shell grammar, and all-stage pipeline success;
+- copied `LinkPort 1`, a minimal modern single-queue `virtio-net` profile, and honest virtual-IOMMU qualification scope;
+- separate monotonic/civil time, secure/test entropy, key, identity, trust, and authorization interfaces;
+- content-addressed package parts, canonical lockfiles, immutable installation generations, signed releases, and a .NET-free Windows/Linux Windvale 0.1 gate; and
+- nominal payload variants, explicit result matching, move-only bounded builders, immutable sequences, and structured platform/capability metadata.
+
+The questions below now ask for exact encodings, limits, consumers, and evidence or call out a remaining product choice from that proposed direction.
 
 ## Language and application model
 
-- Which exact WVB payload-variant shape, ownership contract, and verifier flow should implement Decision 0184's accepted `variant`/exhaustive-`match` direction, and when is a later visible `try` propagation expression safe?
-- Which exact source, package, and WVB encodings should separately carry platform scope, authority, required capabilities, and optional capabilities, and how should current profile bytes migrate without changing existing modules?
-- Which bounded typed sequence and unique-builder operations are sufficient for the first database or application consumer, and which allocation, freeze, move, and exhaustion evidence must qualify them?
+- Which WVB version, case-table encoding, construction and match operations, maximum value-pressure proof, and native ABI evidence qualify the proposed nominal payload-variant contract, and which later result annotation could make visible propagation unambiguous?
+- Which exact source spelling and canonical source/package/WVB table encodings carry the proposed environment, architecture, ABI, extension, authority, required-capability, and optional-capability fields, and which source edition performs the one-way migration from current profile bytes?
+- Which first application selects the exact `sequence<T, N>` and move-only `builder<T, N>` constructors and operations, and which allocation, exhaustion, partial-mutation, freeze, stale-builder, and representation-independent evidence qualifies them?
 - Which first bounded consumer should add text/bytes content equality, and which explicit derived-equality syntax should later admit immutable records or variants without giving capabilities, builders, functions, or resources general equality?
 - Which first real scientific, graphics, media, or ML workload justifies floating-point semantics, and which exact IEEE, NaN, conversion, comparison, and formatting rules does it require?
 - Which ownership, scheduler, cancellation, and failure-propagation evidence is required before structured concurrency enters the source language?
@@ -29,7 +43,7 @@ This list records unresolved choices only. Accepted product-wide direction is re
 
 - Which invariants from qualified `WVPROC17` and Probe 39 must survive the first general timer/scheduler slice without freezing the private timer/context offsets, fixed three-slot order, or one-thread shape?
 - Which physical-machine measurements qualify HPET/local APIC beyond the pinned Q35 candidate, and what calibrated evidence would justify selecting invariant TSC instead of HPET on a later machine profile?
-- Which measured fragmentation or noncontiguous-allocation consumer should generalize Probe 40's fixed bitmap, owner bytes, and `WVMEMO01` records before dynamic process creation?
+- Which dynamic-process, fragmentation, or noncontiguous-allocation consumer should generalize Probe 40's fixed bitmap, owner bytes, and three `WVMEMO01` records, and what page-set selection, zeroing, stale-generation, rollback, and scan-cost evidence qualifies that successor?
 - Which exact COM1 configuration, batching limit, provider protocol, revocation sequence, and diagnostic separation qualify the first isolated serial-output service?
 - Which interface identity and record shape publish the immutable directory provider to two clients, and which queue limit and backpressure result qualify the first multi-client endpoint?
 - Which exact reduced-right copy, cancellation/deadline, provider-replacement, and shared-memory queue consumers should implement the accepted capability sequence one slice at a time?
@@ -41,26 +55,26 @@ This list records unresolved choices only. Accepted product-wide direction is re
 
 ## Console, shell, and CLI
 
-The [console architecture guide](../Architecture/Console-Shell-And-Cli.md) fixes the device/terminal/shell/application split, capability-bound clean launch, explicit standard streams, small shell direction, and implementation order. The remaining questions are focused contracts:
+The [console architecture guide](../Architecture/Console-Shell-And-Cli.md) fixes the device/terminal/shell/application split and now recommends directional stream results, typed terminal events, a two-level launch plan, staged Shell 1–3 grammar, a first command catalog, and all-stage pipeline success. The remaining questions are focused encodings and limits:
 
 - Which bounded serial-input adapter and exact UTF-8/control-event profile should qualify the first terminal session without making ANSI escape bytes the semantic interface?
-- What exact terminal event, resize, disconnect, interrupt, end-of-input, editing, output-batch, and scrollback records and limits are sufficient for the first serial shell?
-- Which versioned byte-stream operations and records define read, write, exact partial progress, backpressure, end of stream, cancellation, peer loss, and teardown for standard input, output, and diagnostics?
-- Which exact immutable launch-plan and command-resolution encodings bind package/module identity, entry point, arguments, streams, current directory, optional environment, capability grants, resource domain, cancellation, supervision, and completion?
-- What is the smallest deterministic shell grammar for quoting, sequencing, pipelines, redirection, status chaining, and one-argument variables, and what parser/input limits qualify it?
-- Which canonical first command catalog and optional alias policy provide useful recovery, module inspection, process/service observation, package resolution, and filesystem work without turning commands into shell authority?
+- Which exact event ordinals, key/modifier set, editing behavior, batch limits, and scrollback policy qualify the proposed terminal event family for the first serial shell?
+- Which interface identities, binary records, queue limits, control reserve, and provider-loss tests qualify the proposed directional read/write/close results without requiring indeterminate outcomes for local streams?
+- Which exact serialization and digest bind the proposed semantic and kernel launch plans, and which rollback corpus proves that no malformed or rejected plan publishes a partial child or moved capability?
+- Which exact Shell 1 quote escapes and byte/word limits qualify the first parser, and which later measured stream/file consumer activates each reserved Shell 2 operator?
+- Which subset of the proposed external command catalog is required for the first recovery session, and what optional alias format preserves canonical inspectable command identity?
 - How should a directory capability expose a stable user-facing current-location identity and redirection target without making a native path the shared contract?
-- Which structured completion record and default pipeline-status policy preserve every stage result while remaining simple interactively?
+- Which structured completion and pipeline-record encoding preserves every stage while implementing the proposed all-stage-success and first-failure display rule?
 - What bounded history/configuration format, sensitive-input suppression, and storage grant are safe before startup customization is accepted?
 - Which measured consumer first justifies schema-versioned typed pipelines above the universal byte-stream base?
 - Which multi-user login, identity-directory, administrative-elevation, session-ownership, and session-replacement evidence is required beyond Decision 0193's provisioned first remote profile?
 
 ## Network stack
 
-The [network-stack architecture](../Architecture/Network-Stack.md) fixes the protocol-blind kernel, isolated NIC driver, initially unified user-space protocol service, semantic capability API, standards-based dual-stack direction, copied-first data path, modern `virtio-net` device, and implementation order. The remaining questions are measured contracts:
+The [network-stack architecture](../Architecture/Network-Stack.md) fixes the protocol-blind kernel and now recommends copied `LinkPort 1`, explicit transmit completions, link generations, and a minimal modern single-queue `virtio-net` profile. The remaining questions are measured encodings, sizes, and protocol policies:
 
-- Which exact link-port request, completion, link-state, reset, buffer-ownership, peer-loss, and generation records qualify the simulated link and first isolated NIC driver?
-- Which modern `virtio-net` feature subset, queue and descriptor limits, interrupt behavior, fixed buffer pool, MTU, DMA mapping, IOMMU evidence, and reset sequence define the first device profile?
+- Which exact `LinkPort 1` interface identity, record encoding, batch/queue limits, control reserve, correlation rollover, and reset corpus qualify the deterministic simulated link and first isolated NIC driver?
+- Which exact allowed feature bits, descriptor and buffer counts, interrupt/coalescing behavior, Q35 virtual-IOMMU topology, DMA mapping, and reset sequence qualify the proposed modern single-queue `virtio-net` profile?
 - Which address, prefix, port, interface, route, connection, listener, datagram, resolver, configuration, and provider-evidence records form the smallest dual-stack semantic API without exposing native socket types?
 - Which grant constraints bind names, address prefixes, transports, ports, interfaces, directions, rates, bytes, connection counts, deadlines, and lifetimes, and how does resolve-and-connect preserve one authorization decision across DNS changes?
 - Which bounded IPv4 and IPv6 header, option, extension, fragmentation, reassembly, ICMP, Neighbor Discovery, Duplicate Address Detection, and address-lifetime policies qualify the first general host profile?
@@ -76,12 +90,22 @@ The [network-stack architecture](../Architecture/Network-Stack.md) fixes the pro
 The [remote-terminal architecture](../Architecture/Remote-Terminal-Protocol.md) fixes the secure-stream carrier, one-connection/one-session first profile, separate identity and authorization, typed terminal control, bounded framing, disabled TLS early data, connection-owned teardown, and later compatibility-adapter direction. The remaining questions require measured implementation evidence:
 
 - Which published protocol name, ALPN identifier, port, discovery rule, frame type numbers, flag assignments, maximum payload, and version-negotiation encoding qualify the first `WVTS/1` specification?
-- Which certificate or raw-public-key representation, signature suite, provisioning artifact, key store, pinning rule, rotation, revocation, recovery, and audit records qualify the first mutually authenticated client and server identities?
+- Which bounded small-certificate profile, signature suite, subject-public-key digest, provisioning artifact, key store, rotation, revocation, recovery, and audit records qualify the first mutually authenticated client and server identities, and what later evidence would justify an RFC 7250 raw-public-key profile?
 - Which exact rights-limited remote-session profiles, listener bindings, connection limits, source constraints, authorization results, and optional elevation ceremony are useful without creating ambient remote-root authority?
 - Which canonical key/modifier set, strict-UTF-8 text limits, resize bounds, normal/diagnostic ordering evidence, completion records, and terminal echo behavior are sufficient for the first line-oriented client?
 - Which input, output, diagnostic, parser, control-reserve, authentication-attempt, session, rate, timeout, cancellation, drain, and forced-teardown limits preserve recovery under a hostile or stalled peer?
 - Which exact deterministic and fuzz corpus covers split/coalesced reads, truncation, oversize, invalid UTF-8, invalid enums, unsupported versions/features, illegal state transitions, replay attempts, backpressure, provider loss, and disconnect cleanup?
 - Which real workload first justifies multiple sessions, detach/resume, roaming, keepalive, richer terminal operations, SSH interoperability, WebSocket/browser carriage, or a QUIC stream?
+
+## Identity, time, entropy, and trust
+
+The [identity, time, entropy, and trust guide](../Architecture/Identity-Time-Entropy-And-Trust.md) recommends distinct providers and immutable generations. Remaining questions require cryptographic and operational evidence:
+
+- Which exact monotonic/civil instant records, uncertainty classes, provider-generation rules, and clock synchronization source qualify the first production civil-time capability?
+- Which host APIs, Windvale OS entropy sources, conditioning and DRBG profile, startup/reseed thresholds, health tests, VM snapshot behavior, and failure corpus qualify `entropy.secure` without allowing the deterministic test provider to satisfy it?
+- Which exact small-certificate and pinned-subject-public-key profile, algorithm suite, encoding, parser bounds, provisioning artifact, and Windows/Linux interoperability evidence qualify the proposed first mutual-TLS path?
+- Which key-operation, trust-snapshot, identity, authorization, rotation-overlap, revocation, recovery, and audit encodings qualify the first production remote-session and release-signing providers?
+- Which key-custody mechanism is sufficient for the first production Windvale OS listener, and which separately labeled QEMU provider remains test evidence only?
 
 ## Browser and WebAssembly
 
@@ -97,10 +121,10 @@ The [WebAssembly playground exploration](WebAssembly-Playground-Exploration.md) 
 
 ## Product and release lifecycle
 
-- Which exact qualified source state and application define the Windvale 0.1 checklist, and which native-retirement, package, recovery, and host evidence must be complete before tagging it?
-- What are the first canonical package-bundle and lockfile encodings, and how do they record target selection, transitive capability approval, dependency origin, license, and integrity without requiring a registry?
+- Does product review accept the proposed Windvale 0.1 gate—complete .NET-free normal Windows/Linux operation, exact Stage 0 recovery, one packaged useful application/library, explicit grants, signed reproducible artifacts, threat model, and offline third-party verification—or should an earlier artifact be named a development preview instead?
+- Which exact canonical package-manifest, lockfile, bundle, content-store, and installed-generation encodings implement the proposed separation while recording per-part target selection, capability closure, dependency origin, license, integrity, and provenance without a registry?
 - Which independent version fields and compatibility rules belong in the first source edition, package manifest, and capability-binding implementation?
-- Which key custody, rotation, revocation, offline-verification, and attestation rules are sufficient for the first official signed release while retaining unsigned local development?
+- Which offline-root and release-key threshold, rotation overlap, revocation/freshness mechanism, verification envelope, and optional SLSA translation qualify the first official signed release while retaining unsigned local development?
 - Which threat-model assets, attackers, boundaries, and residual risks should be documented first, and which normative validators or runbooks own each mitigation?
 - Which structured diagnostic envelope and redaction rules should become the first shared compiler/runtime/service/OS observability contract?
 - Which measured application first needs monotonic time, civil time, secure entropy, deterministic test entropy, name resolution, connection, or listening capabilities?

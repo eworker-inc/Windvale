@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted future architecture under [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md). No terminal-input service, shell, standard-input stream, pipeline, redirection, job-control, or Windvale OS CLI application contract is implemented yet. Current behavior remains the bounded hosted output and argument contracts plus the qualified Probe-38 OS baseline.
+Accepted future architecture under [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) adds recommended first semantic records for review. No terminal-input service, shell, standard-input stream, pipeline, redirection, job-control, or Windvale OS CLI application contract is implemented yet. Current behavior remains the bounded hosted output and argument contracts plus the qualified Probe-40 OS baseline.
 
 ## Recommendation
 
@@ -35,7 +35,7 @@ The first hosted contracts already establish useful behavior to preserve:
 - [Seed CLI](../../Specifications/Seed-CLI.md) separates launcher options from application arguments with `--`, grants capabilities individually, separates standard output from diagnostics, and assigns stable usage and failure exits.
 - [Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md) selects clean spawn, resource domains, a minimal service manager, and isolated normal-console output.
 - [Decision 0181](../Decisions/0181-Next-Windvale-Os-Mechanism-Contracts.md) selects the first output-only polled COM1 service while retaining the kernel emergency sink.
-- Probe 38 supplies three fixed protected processes, two endpoints, and a non-preemptive ready/wait dispatcher. It does not yet supply dynamic launch, terminal input, general streams, or sessions.
+- Qualified Probe 40 retains three fixed protected processes and a ready/wait dispatcher, adds Probe 39's private preemption proof, and supplies fixed generation-safe memory objects with non-tail release and reuse. It does not yet supply a general scheduler, resource domains, dynamic launch, terminal input, general streams, or sessions.
 
 Future Windvale OS contracts extend this foundation. They do not retroactively reinterpret `console.write`, `console.write_line`, `diagnostic.write_line`, opaque hosted resource names, or current host process-result mappings.
 
@@ -114,6 +114,28 @@ Typed record pipelines remain a later explicit extension. They require a real co
 
 Filesystem redirection uses directory-relative file capabilities. Input and replacement/truncating output can follow exact open/read/write contracts once implemented. Append waits for a separately specified append interface; `Writeˉat` must not silently acquire append or atomicity semantics. Shell redirection never turns a native path or host handle into Windvale's portable definition.
 
+## Recommended first stream and terminal contracts
+
+The first byte-stream interface should be directional. A readable endpoint cannot write, and a writable endpoint cannot read. The initial pipeline has one reader and one writer; fan-in, fan-out, seeking, append, datagrams, terminal control, and typed records are different interfaces.
+
+A read requests a nonzero bounded maximum and returns exactly one of:
+
+- nonempty `Data` owned by the caller;
+- `End` after the writer closed normally and all accepted bytes were consumed;
+- `Cancelled` or `Deadline` before a value was published;
+- `Peerˉlost` when continuity is no longer knowable; or
+- a stable provider failure.
+
+A successful read consumes exactly the returned prefix. If a provider disappears after consuming bytes but before publishing the reply, the stream closes as peer-lost; the runtime never repeats the request and invents duplicate or reordered input.
+
+A write reports `Completed`, `Partial` with an exact accepted prefix, `Rejected` with zero progress, or `Indeterminate` with bounded minimum and maximum accepted progress when the provider cannot prove the commit point. The caller may retry only the exact unaccepted suffix after `Partial`; it must not retry an indeterminate mutation without an interface-specific idempotency key. Local in-kernel or same-service streams should be designed so they never need the indeterminate result, while host or remote adapters preserve it when reality requires it.
+
+Closing the write side is a graceful end-of-stream operation. Abort, cancellation, peer loss, provider replacement, and domain teardown are distinct. Every wait is interruptible, every buffer and queue is bounded, and a small reserved control capacity permits close and failure to progress under data backpressure.
+
+The first terminal event family should contain typed `Text`, `Key`, `Resize`, `Interrupt`, `Endˉinput`, and `Disconnect` values. Text is strict UTF-8 and nonempty; keys and modifiers are Windvale enums rather than scan codes or ANSI bytes; dimensions are bounded positive character counts. Resize may be coalesced to the newest value, but text, key, interrupt, end-input, and disconnect ordering cannot be rewritten. Terminal-control output remains a separate capability from byte-stream output.
+
+The [process launch and supervision guide](Process-Launch-And-Supervision.md) defines the recommended two-level immutable launch plan. For console use, the semantic plan binds the exact command identity, arguments, three streams, directory capability, optional environment snapshot, selected terminal/session, complete reduced grants, resource domain, cancellation, observer, and completion destination.
+
 ## Shell grammar
 
 The first shell grammar is small, bounded, and separate from Windvale source syntax. It supports only the interactions justified by an implemented command path:
@@ -127,6 +149,14 @@ The first shell grammar is small, bounded, and separate from Windvale source syn
 - later variables whose expansion produces exactly one argument.
 
 The initial grammar has no implicit glob expansion, post-expansion word splitting, command substitution, `eval`, shell functions, loops, unrestricted startup scripts, or hidden command execution. File matching is an explicit command or library operation. Substantial automation is an ordinary verified Windvale program, which avoids growing a second general-purpose language with different authority and failure rules.
+
+The recommended grammar grows in explicit versions:
+
+- Shell 1 admits whitespace-separated words, unquoted words, literal single-quoted text, double-quoted text with a small fixed escape set, and `--`. It has no expansion or operators.
+- Shell 2 adds unquoted `;`, `|`, `<`, `>`, and a distinct diagnostic redirection after streams and files exist. It then adds `&&` and `||` only with structured completion semantics.
+- Shell 3 may add `${Name}` expansion, but one expansion always produces exactly one argument. It never triggers word splitting, globbing, or command execution.
+
+Outside a quoted word, operator punctuation is reserved and must be quoted to become data. The grammar has explicit command-byte, word-count, nesting, pipeline-stage, and redirection limits. The first form has no comments, backticks, `$()`, here-documents, functions, aliases that contain syntax, or line continuation. Exact escape spellings remain part of the focused Shell 1 specification rather than an implementation accident.
 
 A Windvale language REPL is a separate tool and process. The shell does not interpret Windvale expressions as commands or give evaluated source its own authority.
 
@@ -153,13 +183,17 @@ Keep shell built-ins limited to operations that must mutate the shell session it
 
 System information, process and service inspection, capability inspection, module verification, package resolution, directory and file operations, log inspection, shutdown, restart, and future VM management are separate applications. Each receives only the observation or mutation capabilities it needs. A system command must not become privileged merely because the shell shipped it.
 
+The recommended first built-ins are only `help`, `exit`, `clear`, and current-location or shell-variable operations that must mutate session state. A first external recovery catalog should prefer explicit ASCII names such as `system-info`, `process-list`, `service-list`, `capability-list`, `module-verify`, `package-info`, `directory-list`, `file-read`, and `file-write`. Shipping a command creates no authority; each application still needs exact grants.
+
 The resolver should provide a way to inspect the exact command identity and required authority before launch. Package installation or session policy may preapprove ordinary rights. Exceptional or administrative rights require an explicit authorization flow; an interactive prompt alone is not the security boundary.
 
 ## Completion, cancellation, and jobs
 
 Process completion is structured rather than encoded only as a shell integer. It distinguishes normal application completion, verifier or launch rejection, capability refusal, language trap, process fault, cooperative cancellation, forced termination, and provider loss. A numeric application result remains available for program and host-container compatibility.
 
-The shell records every pipeline stage's completion and chooses one simple displayed status policy. The exact default, including any later all-stage or `pipefail` behavior, remains open until pipelines exist; stage results are never discarded internally.
+The shell records every pipeline stage's completion and chooses one simple displayed status policy. Accepted Decision 0191 leaves the exact default open until pipelines exist; proposed Decision 0198 selects the all-stage rule below for review. Stage results are never discarded internally.
+
+The recommended default is simpler than a configurable `pipefail`: a pipeline succeeds only when every stage completes normally with application result zero. The primary displayed failure is the lowest-index non-successful stage, while the structured result retains every stage in order. There is no mode in which a successful final formatter hides an earlier launch failure, trap, fault, or capability denial.
 
 Windvale does not adopt POSIX signals as the foundation. An interrupt key requests typed cancellation of the foreground job. Forced termination is a separate authorized operation with deterministic resource-domain teardown. Background jobs, suspension, resume, terminal reassignment, priorities, and multiple interactive sessions follow only after preemption, dynamic launch, observation, cancellation, and cleanup are qualified.
 
@@ -176,16 +210,15 @@ Windvale does not adopt POSIX signals as the foundation. An interrupt key reques
 
 ## Implementation sequence
 
-1. Qualify timer preemption so malformed or CPU-bound user input cannot starve services or recovery.
-2. Add independently lived memory objects, one flat resource domain, and clean dynamic process launch from immutable plans.
-3. Isolate ordinary serial output while retaining the kernel emergency sink.
-4. Add one bounded serial-input path and the first terminal session with strict UTF-8, editing, interrupt, end-of-input, and disconnect events.
-5. Add one single-session shell with exact command resolution, immutable arguments, capability approval, foreground launch, structured completion, and no pipelines.
-6. Add standard byte streams, bounded pipelines, cancellation, and complete resource-domain teardown.
-7. Add directory-relative input and replacement-output redirection plus separate filesystem tools.
-8. Add bounded history/configuration, background jobs, and explicit environment snapshots only after their consumers and cleanup rules are measured.
-9. Add graphical terminals; add the single-session `WVTS/1` remote adapter only after the network service, secure transport, peer identity, entropy, authorization, and teardown contracts are qualified.
-10. Consider typed pipelines, richer terminal surfaces, multi-user login, and compatibility shells only from measured product needs.
+1. Retain qualified Probe 40 as the scheduler and fixed memory-object baseline; add one flat resource domain and clean dynamic process launch from immutable plans.
+2. Isolate ordinary serial output while retaining the kernel emergency sink.
+3. Add one bounded serial-input path and the first terminal session with strict UTF-8, editing, interrupt, end-of-input, and disconnect events.
+4. Add one single-session shell with exact command resolution, immutable arguments, capability approval, foreground launch, structured completion, and no pipelines.
+5. Add standard byte streams, bounded pipelines, cancellation, and complete resource-domain teardown.
+6. Add directory-relative input and replacement-output redirection plus separate filesystem tools.
+7. Add bounded history/configuration, background jobs, and explicit environment snapshots only after their consumers and cleanup rules are measured.
+8. Add graphical terminals; add the single-session `WVTS/1` remote adapter only after the network service, secure transport, peer identity, entropy, authorization, and teardown contracts are qualified.
+9. Consider typed pipelines, richer terminal surfaces, multi-user login, and compatibility shells only from measured product needs.
 
 An earlier fixed recovery console is permitted when it advances bring-up, but it does not satisfy the permanent-shell gate.
 
@@ -198,7 +231,7 @@ The architecture does not yet freeze:
 - shell quoting punctuation, variable spelling, chaining operators, or command-file extension;
 - the initial canonical command catalog or optional alias policy;
 - current-directory display syntax or filesystem namespace presentation;
-- structured process-result and pipeline-status record layouts;
+- the binary layouts of the recommended stream, terminal, process-result, and pipeline-status records;
 - the first machine-readable output schema;
 - the first typed-pipeline consumer or schema negotiation; or
 - multi-user login, identity-directory, audit-retention, or administrative-authorization UI beyond Decision 0193's first provisioned single-session profile.
