@@ -39,7 +39,7 @@ Both hosts independently report the same 17,130,441-byte native compiler, 17,147
 
 Both candidates are now real self-hosting compiler executables in the narrow Stage 2 sense: each consumes the canonical compiler sources and reproduces the canonical compiler WVB without loading .NET. Stage 0 remains necessary to reconstruct, parse, compare, and recover the native package until the broader documented native-retirement gate is complete.
 
-Decision 0169 supplies recoverable atomic publication around the already verified artifacts. The remaining package work is to retain clean-checkout Stage 0 recovery provenance and replay the public project-manifest targets under the independent dual-host gate; the broader native-tool and runtime conditions of Decision 0057 remain separate.
+Decision 0169 supplies recoverable atomic publication around the already verified artifacts and is cross-host qualified with the public `compile`/`aot` recovery route at exact successor `57d154c`. The recovery runbook records clean-checkout Stage 0 provenance. The final archived recovery release and broader native-tool/runtime conditions of Decision 0057 remain separate.
 
 ## Reconsider when
 

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 14 is the cross-host-qualified Probe-35 contract owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It adds an immutable `WVDS 1` mapping, dedicated init/client service-response pages, and the larger rebuilt client while retaining version 13's compact stacks, checked LIFO tail release, and same-root reuse. Qualified Probe 36 retains the same contract for service-failure containment. Locally verified Probe 37 and [Decision 0172](../Documents/Decisions/0172-First-Kernel-Owned-Service-Endpoint.md) also retain the arena and mappings while using previously zero state-page bytes for `WVENDP01`; cross-host qualification of that composition remains pending.
+Kernel memory version 14 is the cross-host-qualified Probe-35 contract owned by [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md). It adds an immutable `WVDS 1` mapping, dedicated init/client service-response pages, and the larger rebuilt client while retaining version 13's compact stacks, checked LIFO tail release, and same-root reuse. Qualified Probes 36 and 37 retain the same arena and mappings for service-failure containment and [Decision 0172's](../Documents/Decisions/0172-First-Kernel-Owned-Service-Endpoint.md) endpoint identity; Probe 37 uses previously zero state-page bytes for `WVENDP01`.
 
 This is one bounded deterministic boot arena, not a general physical-memory manager. Release is LIFO-only and can restore only a caller-proven suffix ending at the current cursor.
 

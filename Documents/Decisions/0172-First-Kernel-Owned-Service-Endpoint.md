@@ -1,7 +1,7 @@
 # Decision 0172: First kernel-owned service endpoint
 
 - Date: 2026-08-03
-- Status: Implemented and locally verified on Windows; cross-host qualification pending
+- Status: Cross-host qualified at exact commit `2a1461b` in GitHub Verify run 30819690110
 - Advances: [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md), [Decision 0165](0165-Contained-Windvale-Service-Failure.md)
 - Retains: ABI 22, context 7, `WVCHAN04`, `WVKMEM14`, the five boot scenarios, and the existing WVA syscall wire values
 
@@ -46,9 +46,11 @@ All five pinned Windows QEMU 11.0/Q35/TCG scenarios pass with exact Probe-37 ser
 | `user-fault` | 616,448 | `f14b75ef03c2c76a6c6456184baca4087e551a9f5b53be921952c431c0a9e742` | 0 |
 | `service-fault` | 604,160 | `0b8e0e8f07f3465f28db713b711f81e014b979c761d9fb8d3361726cc38f3588` | 0 |
 
-Deterministic candidate identities include process-policy WVB 12,398 bytes at `42676fb558683a5a1a1b30d7f74c15fc0396f0e384bed86db0a3d1f3fb4c0bda`, process-policy WVO 84,836 bytes at `6d0e4e88d862438702da5b034fcaae1a9fcb9e7aac6044d6ebbd254c2f2c10f8`, normal process-machine WVO 493,286 bytes at `5c3f291e8180e448cdd6a0e65fb187c6c1941477a43ab4cb986596a05504c4ed`, user-fault WVO 493,334 bytes at `9a08dfe59cff6a2bb88200ebf5a2bd48242806d97d34d3e88266615ef294feff`, and service-fault WVO 481,598 bytes at `609b46dccc32f44341f59c04f6362d7ee0111083ba5bdb83a01d7eaf79ca58cb`.
+Deterministic qualified identities include process-policy WVB 12,398 bytes at `42676fb558683a5a1a1b30d7f74c15fc0396f0e384bed86db0a3d1f3fb4c0bda`, process-policy WVO 84,836 bytes at `6d0e4e88d862438702da5b034fcaae1a9fcb9e7aac6044d6ebbd254c2f2c10f8`, normal process-machine WVO 493,286 bytes at `5c3f291e8180e448cdd6a0e65fb187c6c1941477a43ab4cb986596a05504c4ed`, user-fault WVO 493,334 bytes at `9a08dfe59cff6a2bb88200ebf5a2bd48242806d97d34d3e88266615ef294feff`, and service-fault WVO 481,598 bytes at `609b46dccc32f44341f59c04f6362d7ee0111083ba5bdb83a01d7eaf79ca58cb`.
 
-No cross-host qualification is claimed until the complete repository verifier reports this exact candidate on Windows and digest-pinned Debian.
+## Cross-host qualification
+
+Exact implementation commit `2a1461b6528c38a73be251a149d97be2854571a1` passes GitHub [Verify run 30819690110](https://github.com/eworker-inc/Windvale/actions/runs/30819690110). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 87 Seed tests, all 38 OS tests, the golden compiler contract, and the native CLI gate. Seed verification takes 434.233 seconds on Windows and 415.827 seconds on Linux; the complete verifier jobs finish in 13m02s and 12m08s. Every pinned Probe-37 artifact identity above remains exact on both hosts. Pinned QEMU execution remains Windows evidence; Debian QEMU is not claimed.
 
 ## Consequences
 

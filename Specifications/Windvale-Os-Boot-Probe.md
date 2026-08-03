@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Firmware Probe 37 is the locally verified candidate for resolving process capabilities through one kernel-owned service endpoint. It composes ABI 22/context 7, WVA seam 11, admission 4/bridge 2, retained bridge 10, memory 14, paging 4, protected processes 16, endpoint 1, channel 4, interpreter profile 7, `WVRES006`, `WVBR002`, `WVRS 1`, and `WVDS 1`.
+Firmware Probe 37 is the cross-host-qualified contract for resolving process capabilities through one kernel-owned service endpoint. It composes ABI 22/context 7, WVA seam 11, admission 4/bridge 2, retained bridge 10, memory 14, paging 4, protected processes 16, endpoint 1, channel 4, interpreter profile 7, `WVRES006`, `WVBR002`, `WVRS 1`, and `WVDS 1`.
 
-[Decision 0172](../Documents/Decisions/0172-First-Kernel-Owned-Service-Endpoint.md) owns Probe 37. The candidate passes all 38 OS tests and all five pinned-QEMU scenarios locally on Windows. Probe 36 and [Decision 0165](../Documents/Decisions/0165-Contained-Windvale-Service-Failure.md) remain the cross-host-qualified baseline until the complete Windows and digest-pinned Debian verifier qualifies this exact candidate.
+[Decision 0172](../Documents/Decisions/0172-First-Kernel-Owned-Service-Endpoint.md) owns Probe 37. Exact commit `2a1461b` passes all 87 Seed and 38 OS tests plus the golden compiler and native CLI gates on Windows and digest-pinned Debian in GitHub [Verify run 30819690110](https://github.com/eworker-inc/Windvale/actions/runs/30819690110). All five pinned-QEMU scenarios pass on Windows; Debian QEMU is not claimed.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 

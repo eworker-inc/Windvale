@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Protected-process contract version 16 is the locally verified Probe-37 candidate owned by [Decision 0172](../Documents/Decisions/0172-First-Kernel-Owned-Service-Endpoint.md). It retains version 15's two-generation reclaim/rebuild, service-failure containment, and exact service exchanges while inserting one kernel-owned `WVENDP01` between process capability entries and `WVCHAN04`.
+Protected-process contract version 16 is the cross-host-qualified Probe-37 contract owned by [Decision 0172](../Documents/Decisions/0172-First-Kernel-Owned-Service-Endpoint.md). It retains version 15's two-generation reclaim/rebuild, service-failure containment, and exact service exchanges while inserting one kernel-owned `WVENDP01` between process capability entries and `WVCHAN04`.
 
-Version 15 remains the cross-host-qualified baseline at exact implementation commit `8c7f82a1acb5c55c81845a3d868925f7a91ff23a` and GitHub [Verify run 30812801520](https://github.com/eworker-inc/Windvale/actions/runs/30812801520). Version 16 passes all 38 OS tests and all five pinned Windows QEMU scenarios locally; cross-host qualification remains pending. This is an internal experiment, not a stable syscall ABI, process manager, endpoint registry, supervisor, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
+Version 16 is cross-host qualified at exact implementation commit `2a1461b6528c38a73be251a149d97be2854571a1` and GitHub [Verify run 30819690110](https://github.com/eworker-inc/Windvale/actions/runs/30819690110): all 87 Seed and 38 OS tests pass on Windows and digest-pinned Debian, and all five pinned Windows QEMU scenarios pass. This is an internal experiment, not a stable syscall ABI, process manager, endpoint registry, supervisor, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
