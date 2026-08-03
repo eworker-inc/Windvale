@@ -46,6 +46,7 @@ record Compilerˉnativeˉx64ˉsummary {
 record Compilerˉnativeˉx64ˉfunction {
     Valid: bool;
     Locals: u32;
+    Localˉtypes: bytes;
     Codeˉlength: u32;
     Maximumˉstack: u32;
 }
@@ -57,6 +58,28 @@ record Compilerˉnativeˉx64ˉanalysis {
     Bodyˉbytes: u32;
     Returnˉvalue: u32;
     Maximumˉstack: u32;
+}
+
+record Compilerˉnativeˉx64ˉcontrolˉanalysis {
+    Valid: bool;
+    I32ˉslots: u32;
+    Boolˉslots: u32;
+    Blocks: u32;
+    Instructions: u32;
+    Bodyˉbytes: u32;
+    Maximumˉstack: u32;
+    Leaders: bytes;
+}
+
+record Compilerˉnativeˉx64ˉblockˉanalysis {
+    Valid: bool;
+    Next: u32;
+    I32ˉvalues: u32;
+    Boolˉvalues: u32;
+    Maximumˉstack: u32;
+    Bodyˉbytes: u32;
+    Terminator: u8;
+    Target: u32;
 }
 
 export fn Compilerˉnativeˉx64ˉempty(Input: bytes) -> bytes {
@@ -278,7 +301,13 @@ export fn Compilerˉnativeˉx64ˉmoduleˉisˉvalid(
 
 export fn Compilerˉnativeˉx64ˉinvalidˉfunction()
     -> Compilerˉnativeˉx64ˉfunction {
-    return Compilerˉnativeˉx64ˉfunction(false, 0u32, 0u32, 0u32);
+    return Compilerˉnativeˉx64ˉfunction(
+        false,
+        0u32,
+        Textˉtoˉutf8(""),
+        0u32,
+        0u32
+    );
 }
 
 export fn Compilerˉnativeˉx64ˉreadˉfunction(
@@ -313,8 +342,11 @@ export fn Compilerˉnativeˉx64ˉreadˉfunction(
     }
     var Local: u32 = 0u32;
     while Local < Locals {
-        if Bytesˉreadˉu8(Input, Offset + 21u32 + Local) != 1u8 {
-            return Compilerˉnativeˉx64ˉinvalidˉfunction();
+        let Localˉtype: u8 = Bytesˉreadˉu8(Input, Offset + 21u32 + Local);
+        if Localˉtype != 1u8 {
+            if Localˉtype != 2u8 {
+                return Compilerˉnativeˉx64ˉinvalidˉfunction();
+            }
         }
         Local = Local + 1u32;
     }
@@ -331,6 +363,7 @@ export fn Compilerˉnativeˉx64ˉreadˉfunction(
     return Compilerˉnativeˉx64ˉfunction(
         true,
         Locals,
+        Bytesˉslice(Input, Offset + 21u32, Locals),
         Codeˉlength,
         Maximumˉstack
     );
@@ -519,6 +552,514 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcode(
         Bodyˉbytes,
         Returnˉvalue,
         Maximumˉstack
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input: bytes)
+    -> Compilerˉnativeˉx64ˉcontrolˉanalysis {
+    return Compilerˉnativeˉx64ˉcontrolˉanalysis(
+        false,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Compilerˉnativeˉx64ˉempty(Input)
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉinvalidˉblock()
+    -> Compilerˉnativeˉx64ˉblockˉanalysis {
+    return Compilerˉnativeˉx64ˉblockˉanalysis(
+        false,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u8,
+        0u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉreplaceˉbyte(
+    Input: bytes,
+    Offset: u32,
+    Value: u8
+) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu8(Value)
+        ),
+        Bytesˉslice(Input, Offset + 1u32, Length - Offset - 1u32)
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉzeroˉmap(Input: bytes, Length: u32) -> bytes {
+    var Result: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Cursor: u32 = 0u32;
+    while Cursor < Length {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+        Cursor = Cursor + 1u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉisˉi32ˉcomparison(Opcode: u8) -> bool {
+    let Numeric: u32 = U32ˉfromˉu8(Opcode);
+    if Numeric < 32u32 { return false; }
+    return Numeric <= 37u32;
+}
+
+export fn Compilerˉnativeˉx64ˉisˉboolˉcomparison(Opcode: u8) -> bool {
+    let Numeric: u32 = U32ˉfromˉu8(Opcode);
+    if Numeric < 38u32 { return false; }
+    return Numeric <= 39u32;
+}
+
+export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
+    let Numeric: u32 = U32ˉfromˉu8(Opcode);
+    if Opcode == 1u8 { return 5u32; }
+    if Opcode == 2u8 { return 2u32; }
+    if Opcode == 4u8 { return 5u32; }
+    if Opcode == 5u8 { return 5u32; }
+    if Numeric >= 16u32 {
+        if Numeric <= 19u32 { return 1u32; }
+    }
+    if Compilerˉnativeˉx64ˉisˉi32ˉcomparison(Opcode) { return 1u32; }
+    if Compilerˉnativeˉx64ˉisˉboolˉcomparison(Opcode) { return 1u32; }
+    if Opcode == 40u8 { return 1u32; }
+    if Opcode == 48u8 { return 5u32; }
+    if Opcode == 49u8 { return 5u32; }
+    if Opcode == 81u8 { return 1u32; }
+    return 0u32;
+}
+
+export fn Compilerˉnativeˉx64ˉnextˉleader(
+    Leaders: bytes,
+    Start: u32,
+    Length: u32
+) -> u32 {
+    var Cursor: u32 = Start + 1u32;
+    while Cursor < Length {
+        if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 { return Cursor; }
+        Cursor = Cursor + 1u32;
+    }
+    return Length;
+}
+
+export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
+    Input: bytes,
+    Section: Compilerˉnativeˉx64ˉsection,
+    Function: Compilerˉnativeˉx64ˉfunction,
+    Leaders: bytes,
+    Instructions: bytes,
+    Start: u32
+) -> Compilerˉnativeˉx64ˉblockˉanalysis {
+    let Length: u32 = Section.Payloadˉlength;
+    let End: u32 = Compilerˉnativeˉx64ˉnextˉleader(Leaders, Start, Length);
+    var Stack: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Depth: u32 = 0u32;
+    var Maximum: u32 = 0u32;
+    var I32ˉvalues: u32 = 0u32;
+    var Boolˉvalues: u32 = 0u32;
+    var Bodyˉbytes: u32 = 0u32;
+    var Terminator: u8 = 0u8;
+    var Target: u32 = 0u32;
+    var Cursor: u32 = Start;
+    while Cursor < End {
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
+        let Numericˉopcode: u32 = U32ˉfromˉu8(Opcode);
+        let Size: u32 = Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
+        let Next: u32 = Cursor + Size;
+        if Next > End { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
+        if Opcode == 1u8 {
+            Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(1u8));
+            Depth = Depth + 1u32;
+            I32ˉvalues = I32ˉvalues + 1u32;
+            Bodyˉbytes = Bodyˉbytes + 22u32;
+        } else {
+            if Opcode == 2u8 {
+                Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(2u8));
+                Depth = Depth + 1u32;
+                Boolˉvalues = Boolˉvalues + 1u32;
+                Bodyˉbytes = Bodyˉbytes + 22u32;
+            } else {
+                if Opcode == 4u8 {
+                    let Loadˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                        Input,
+                        Section.Payloadˉoffset + Cursor + 1u32
+                    );
+                    if Loadˉindex >= Function.Locals {
+                        return Compilerˉnativeˉx64ˉinvalidˉblock();
+                    }
+                    let Loadˉtype: u8 = Bytesˉreadˉu8(
+                        Function.Localˉtypes,
+                        Loadˉindex
+                    );
+                    Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(Loadˉtype));
+                    Depth = Depth + 1u32;
+                    if Loadˉtype == 1u8 {
+                        I32ˉvalues = I32ˉvalues + 1u32;
+                    } else {
+                        Boolˉvalues = Boolˉvalues + 1u32;
+                    }
+                    Bodyˉbytes = Bodyˉbytes + 24u32;
+                } else {
+                    if Opcode == 5u8 {
+                        let Storeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                            Input,
+                            Section.Payloadˉoffset + Cursor + 1u32
+                        );
+                        if Storeˉindex >= Function.Locals {
+                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                        }
+                        if Depth == 0u32 {
+                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                        }
+                        let Storeˉtype: u8 = Bytesˉreadˉu8(
+                            Function.Localˉtypes,
+                            Storeˉindex
+                        );
+                        if Bytesˉreadˉu8(Stack, Depth - 1u32) != Storeˉtype {
+                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                        }
+                        Depth = Depth - 1u32;
+                        Stack = Bytesˉslice(Stack, 0u32, Depth);
+                        Bodyˉbytes = Bodyˉbytes + 24u32;
+                    } else {
+                        if Numericˉopcode >= 16u32 {
+                            if Numericˉopcode <= 18u32 {
+                                if Depth < 2u32 {
+                                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                }
+                                if Bytesˉreadˉu8(Stack, Depth - 1u32) != 1u8 {
+                                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                }
+                                if Bytesˉreadˉu8(Stack, Depth - 2u32) != 1u8 {
+                                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                }
+                                Depth = Depth - 2u32;
+                                Stack = Bytesˉslice(Stack, 0u32, Depth);
+                                Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(1u8));
+                                Depth = Depth + 1u32;
+                                I32ˉvalues = I32ˉvalues + 1u32;
+                                if Opcode == 18u8 {
+                                    Bodyˉbytes = Bodyˉbytes + 40u32;
+                                } else {
+                                    Bodyˉbytes = Bodyˉbytes + 39u32;
+                                }
+                            } else {
+                                if Opcode == 19u8 {
+                                    if Depth == 0u32 {
+                                        return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                    }
+                                    if Bytesˉreadˉu8(Stack, Depth - 1u32) != 1u8 {
+                                        return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                    }
+                                    I32ˉvalues = I32ˉvalues + 1u32;
+                                    Bodyˉbytes = Bodyˉbytes + 32u32;
+                                } else {
+                                    if Compilerˉnativeˉx64ˉisˉi32ˉcomparison(Opcode) {
+                                        if Depth < 2u32 {
+                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                        }
+                                        if Bytesˉreadˉu8(Stack, Depth - 1u32) != 1u8 {
+                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                        }
+                                        if Bytesˉreadˉu8(Stack, Depth - 2u32) != 1u8 {
+                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                        }
+                                        Depth = Depth - 2u32;
+                                        Stack = Bytesˉslice(Stack, 0u32, Depth);
+                                        Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(2u8));
+                                        Depth = Depth + 1u32;
+                                        Boolˉvalues = Boolˉvalues + 1u32;
+                                        Bodyˉbytes = Bodyˉbytes + 39u32;
+                                    } else {
+                                        if Compilerˉnativeˉx64ˉisˉboolˉcomparison(Opcode) {
+                                            if Depth < 2u32 {
+                                                return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                            }
+                                            if Bytesˉreadˉu8(Stack, Depth - 1u32) != 2u8 {
+                                                return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                            }
+                                            if Bytesˉreadˉu8(Stack, Depth - 2u32) != 2u8 {
+                                                return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                            }
+                                            Depth = Depth - 2u32;
+                                            Stack = Bytesˉslice(Stack, 0u32, Depth);
+                                            Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(2u8));
+                                            Depth = Depth + 1u32;
+                                            Boolˉvalues = Boolˉvalues + 1u32;
+                                            Bodyˉbytes = Bodyˉbytes + 39u32;
+                                        } else {
+                                            if Opcode == 40u8 {
+                                                if Depth == 0u32 {
+                                                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                }
+                                                if Bytesˉreadˉu8(Stack, Depth - 1u32) != 2u8 {
+                                                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                }
+                                                Boolˉvalues = Boolˉvalues + 1u32;
+                                                Bodyˉbytes = Bodyˉbytes + 27u32;
+                                            } else {
+                                                if Opcode == 48u8 {
+                                                    if Next != End {
+                                                        return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                    }
+                                                    if Depth != 0u32 {
+                                                        return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                    }
+                                                    let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                                                        Input,
+                                                        Section.Payloadˉoffset + Cursor + 1u32
+                                                    );
+                                                    if Bytesˉreadˉu8(Instructions, Jumpˉtarget) != 1u8 {
+                                                        return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                    }
+                                                    Terminator = 1u8;
+                                                    Target = Jumpˉtarget;
+                                                    Bodyˉbytes = Bodyˉbytes + 15u32;
+                                                } else {
+                                                    if Opcode == 49u8 {
+                                                        if Next != End {
+                                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                        }
+                                                        if Depth != 1u32 {
+                                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                        }
+                                                        if Bytesˉreadˉu8(Stack, 0u32) != 2u8 {
+                                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                        }
+                                                        let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                                                            Input,
+                                                            Section.Payloadˉoffset + Cursor + 1u32
+                                                        );
+                                                        if Bytesˉreadˉu8(Instructions, Branchˉtarget) != 1u8 {
+                                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                        }
+                                                        Depth = 0u32;
+                                                        Stack = Compilerˉnativeˉx64ˉempty(Input);
+                                                        Terminator = 2u8;
+                                                        Target = Branchˉtarget;
+                                                        Bodyˉbytes = Bodyˉbytes + 30u32;
+                                                    } else {
+                                                        if Next != End {
+                                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                        }
+                                                        if Depth != 1u32 {
+                                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                        }
+                                                        if Bytesˉreadˉu8(Stack, 0u32) != 1u8 {
+                                                            return Compilerˉnativeˉx64ˉinvalidˉblock();
+                                                        }
+                                                        Depth = 0u32;
+                                                        Stack = Compilerˉnativeˉx64ˉempty(Input);
+                                                        Terminator = 3u8;
+                                                        Bodyˉbytes = Bodyˉbytes + 30u32;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if Depth > Maximum { Maximum = Depth; }
+        Cursor = Next;
+    }
+    if Terminator == 0u8 {
+        if Depth != 0u32 { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
+        if End == Length { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
+    }
+    return Compilerˉnativeˉx64ˉblockˉanalysis(
+        true,
+        End,
+        I32ˉvalues,
+        Boolˉvalues,
+        Maximum,
+        Bodyˉbytes,
+        Terminator,
+        Target
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
+    Input: bytes,
+    Section: Compilerˉnativeˉx64ˉsection,
+    Function: Compilerˉnativeˉx64ˉfunction
+) -> Compilerˉnativeˉx64ˉcontrolˉanalysis {
+    if Section.Payloadˉlength != Function.Codeˉlength {
+        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+    }
+    let Length: u32 = Section.Payloadˉlength;
+    var Instructionsˉmap: bytes = Compilerˉnativeˉx64ˉzeroˉmap(Input, Length);
+    var Leaders: bytes = Compilerˉnativeˉx64ˉzeroˉmap(Input, Length);
+    Leaders = Compilerˉnativeˉx64ˉreplaceˉbyte(Leaders, 0u32, 1u8);
+    var Instructionˉcount: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    while Cursor < Length {
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
+        let Size: u32 = Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
+        if Size == 0u32 {
+            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        }
+        if Size > Length - Cursor {
+            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        }
+        if Opcode == 2u8 {
+            if U32ˉfromˉu8(
+                Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor + 1u32)
+            ) > 1u32 {
+                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            }
+        }
+        Instructionˉcount = Instructionˉcount + 1u32;
+        if Instructionˉcount > 1024u32 {
+            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        }
+        Instructionsˉmap = Compilerˉnativeˉx64ˉreplaceˉbyte(
+            Instructionsˉmap,
+            Cursor,
+            1u8
+        );
+        let Next: u32 = Cursor + Size;
+        if Opcode == 48u8 {
+            let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Section.Payloadˉoffset + Cursor + 1u32
+            );
+            if Jumpˉtarget <= Cursor {
+                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            }
+            if Jumpˉtarget >= Length {
+                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            }
+            Leaders = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                Leaders,
+                Jumpˉtarget,
+                1u8
+            );
+        }
+        if Opcode == 49u8 {
+            let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Section.Payloadˉoffset + Cursor + 1u32
+            );
+            if Branchˉtarget <= Cursor {
+                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            }
+            if Branchˉtarget >= Length {
+                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            }
+            if Next >= Length {
+                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            }
+            Leaders = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                Leaders,
+                Branchˉtarget,
+                1u8
+            );
+            Leaders = Compilerˉnativeˉx64ˉreplaceˉbyte(Leaders, Next, 1u8);
+        }
+        Cursor = Next;
+    }
+
+    var Blocks: u32 = 0u32;
+    Cursor = 0u32;
+    while Cursor < Length {
+        if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 {
+            if Bytesˉreadˉu8(Instructionsˉmap, Cursor) != 1u8 {
+                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            }
+            Blocks = Blocks + 1u32;
+        }
+        Cursor = Cursor + 1u32;
+    }
+
+    var Reachable: bytes = Compilerˉnativeˉx64ˉzeroˉmap(Input, Length);
+    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(Reachable, 0u32, 1u8);
+    var I32ˉslots: u32 = 0u32;
+    var Boolˉslots: u32 = 0u32;
+    var Maximumˉstack: u32 = 0u32;
+    var Bodyˉbytes: u32 = 0u32;
+    Cursor = 0u32;
+    while Cursor < Length {
+        if Bytesˉreadˉu8(Leaders, Cursor) != 1u8 {
+            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        }
+        if Bytesˉreadˉu8(Reachable, Cursor) != 1u8 {
+            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        }
+        let Block: Compilerˉnativeˉx64ˉblockˉanalysis =
+            Compilerˉnativeˉx64ˉanalyzeˉblock(
+                Input,
+                Section,
+                Function,
+                Leaders,
+                Instructionsˉmap,
+                Cursor
+            );
+        if !Block.Valid {
+            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        }
+        if Block.I32ˉvalues > I32ˉslots { I32ˉslots = Block.I32ˉvalues; }
+        if Block.Boolˉvalues > Boolˉslots { Boolˉslots = Block.Boolˉvalues; }
+        if Block.Maximumˉstack > Maximumˉstack {
+            Maximumˉstack = Block.Maximumˉstack;
+        }
+        Bodyˉbytes = Bodyˉbytes + Block.Bodyˉbytes;
+        if Block.Terminator == 0u8 {
+            Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                Reachable,
+                Block.Next,
+                1u8
+            );
+        }
+        if Block.Terminator == 1u8 {
+            Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                Reachable,
+                Block.Target,
+                1u8
+            );
+        }
+        if Block.Terminator == 2u8 {
+            Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                Reachable,
+                Block.Next,
+                1u8
+            );
+            Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                Reachable,
+                Block.Target,
+                1u8
+            );
+        }
+        Cursor = Block.Next;
+    }
+    if Maximumˉstack != Function.Maximumˉstack {
+        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+    }
+    if Function.Locals + I32ˉslots + Boolˉslots > 2048u32 {
+        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+    }
+    return Compilerˉnativeˉx64ˉcontrolˉanalysis(
+        true,
+        I32ˉslots,
+        Boolˉslots,
+        Blocks,
+        Instructionˉcount,
+        Bodyˉbytes,
+        Maximumˉstack,
+        Leaders
     );
 }
 
@@ -976,6 +1517,663 @@ export fn Compilerˉnativeˉx64ˉemitˉcode(
     return Compilerˉnativeˉx64ˉappendˉbyte(Result, 195u8);
 }
 
+export fn Compilerˉnativeˉx64ˉemittedˉbytes(Opcode: u8) -> u32 {
+    if Opcode == 1u8 { return 22u32; }
+    if Opcode == 2u8 { return 22u32; }
+    if Opcode == 4u8 { return 24u32; }
+    if Opcode == 5u8 { return 24u32; }
+    if Opcode == 16u8 { return 39u32; }
+    if Opcode == 17u8 { return 39u32; }
+    if Opcode == 18u8 { return 40u32; }
+    if Opcode == 19u8 { return 32u32; }
+    if Compilerˉnativeˉx64ˉisˉi32ˉcomparison(Opcode) { return 39u32; }
+    if Compilerˉnativeˉx64ˉisˉboolˉcomparison(Opcode) { return 39u32; }
+    if Opcode == 40u8 { return 27u32; }
+    if Opcode == 48u8 { return 15u32; }
+    if Opcode == 49u8 { return 30u32; }
+    return 30u32;
+}
+
+export fn Compilerˉnativeˉx64ˉblockˉid(Leaders: bytes, Offset: u32) -> u32 {
+    var Id: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    while Cursor < Offset {
+        if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 { Id = Id + 1u32; }
+        Cursor = Cursor + 1u32;
+    }
+    return Id;
+}
+
+export fn Compilerˉnativeˉx64ˉbuildˉblockˉoffsets(
+    Input: bytes,
+    Section: Compilerˉnativeˉx64ˉsection,
+    Leaders: bytes,
+    Prologueˉbytes: u32
+) -> bytes {
+    var Result: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Machine: u32 = Prologueˉbytes;
+    var Cursor: u32 = 0u32;
+    while Cursor < Section.Payloadˉlength {
+        if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 {
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Machine));
+        }
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
+        Machine = Machine + Compilerˉnativeˉx64ˉemittedˉbytes(Opcode);
+        Cursor = Cursor + Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
+    }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉmachineˉtarget(
+    Leaders: bytes,
+    Blockˉoffsets: bytes,
+    Wvbˉoffset: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Blockˉoffsets,
+        Compilerˉnativeˉx64ˉblockˉid(Leaders, Wvbˉoffset) * 4u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉjump(
+    Result: bytes,
+    Target: u32
+) -> bytes {
+    var Output: bytes = Compilerˉnativeˉx64ˉappendˉbyte(Result, 233u8);
+    return Compilerˉnativeˉx64ˉappendˉu32(
+        Output,
+        Target - Bytesˉlength(Output) - 4u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉcomparisonˉcondition(Opcode: u8) -> u8 {
+    if Opcode == 32u8 { return 148u8; }
+    if Opcode == 33u8 { return 149u8; }
+    if Opcode == 34u8 { return 156u8; }
+    if Opcode == 35u8 { return 158u8; }
+    if Opcode == 36u8 { return 159u8; }
+    if Opcode == 37u8 { return 157u8; }
+    if Opcode == 38u8 { return 148u8; }
+    return 149u8;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉcomparison(
+    Result: bytes,
+    Leftˉslot: u32,
+    Rightˉslot: u32,
+    Condition: u8,
+    Resultˉslot: u32
+) -> bytes {
+    var Output: bytes = Compilerˉnativeˉx64ˉemitˉloadˉeax(
+        Result,
+        Leftˉslot * 16u32
+    );
+    Output = Compilerˉnativeˉx64ˉemitˉloadˉecx(Output, Rightˉslot * 16u32);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 57u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 200u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 15u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, Condition);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 192u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 15u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 182u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 192u8);
+    return Compilerˉnativeˉx64ˉemitˉstoreˉeax(
+        Output,
+        Resultˉslot * 16u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉconditionalˉbranch(
+    Result: bytes,
+    Conditionˉslot: u32,
+    Trueˉtarget: u32,
+    Falseˉtarget: u32
+) -> bytes {
+    var Output: bytes = Compilerˉnativeˉx64ˉemitˉloadˉeax(
+        Result,
+        Conditionˉslot * 16u32
+    );
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 133u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 192u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 15u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 133u8);
+    Output = Compilerˉnativeˉx64ˉappendˉu32(
+        Output,
+        Trueˉtarget - Bytesˉlength(Output) - 4u32
+    );
+    return Compilerˉnativeˉx64ˉemitˉjump(Output, Falseˉtarget);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
+    Input: bytes,
+    Section: Compilerˉnativeˉx64ˉsection,
+    Function: Compilerˉnativeˉx64ˉfunction,
+    Analysis: Compilerˉnativeˉx64ˉcontrolˉanalysis
+) -> bytes {
+    let Slots: u32 = Function.Locals + Analysis.I32ˉslots + Analysis.Boolˉslots;
+    let Frameˉbytes: u32 = Slots * 16u32;
+    let Prologueˉbytes: u32 = 32u32 + Slots * 28u32;
+    let Propagateˉoffset: u32 = Prologueˉbytes + Analysis.Bodyˉbytes;
+    let Overflowˉoffset: u32 = Propagateˉoffset + 13u32;
+    let Instructionˉlimitˉoffset: u32 = Overflowˉoffset + 23u32;
+    let Depthˉoffset: u32 = Overflowˉoffset + 161u32;
+    let Blockˉoffsets: bytes = Compilerˉnativeˉx64ˉbuildˉblockˉoffsets(
+        Input,
+        Section,
+        Analysis.Leaders,
+        Prologueˉbytes
+    );
+    var Result: bytes = Compilerˉnativeˉx64ˉempty(Input);
+
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 65u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 87u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 73u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 137u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 215u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 77u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 139u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 95u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 8u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 77u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 139u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 87u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 16u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 73u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 131u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 234u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 1u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 15u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 130u8);
+    Result = Compilerˉnativeˉx64ˉappendˉu32(
+        Result,
+        Depthˉoffset - Bytesˉlength(Result) - 4u32
+    );
+    Result = Compilerˉnativeˉx64ˉemitˉframe(Result, true, Frameˉbytes);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 49u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 192u8);
+    var Zeroˉoffset: u32 = 0u32;
+    while Zeroˉoffset < Frameˉbytes {
+        Result = Compilerˉnativeˉx64ˉemitˉstoreˉeax(Result, Zeroˉoffset);
+        Zeroˉoffset = Zeroˉoffset + 4u32;
+    }
+
+    var Stackˉtypes: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Stackˉslots: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Stackˉdepth: u32 = 0u32;
+    var Nextˉi32: u32 = 0u32;
+    var Nextˉbool: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    while Cursor < Section.Payloadˉlength {
+        if Bytesˉreadˉu8(Analysis.Leaders, Cursor) == 1u8 {
+            Stackˉtypes = Compilerˉnativeˉx64ˉempty(Input);
+            Stackˉslots = Compilerˉnativeˉx64ˉempty(Input);
+            Stackˉdepth = 0u32;
+            Nextˉi32 = 0u32;
+            Nextˉbool = 0u32;
+        }
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
+        Result = Compilerˉnativeˉx64ˉemitˉcharge(
+            Result,
+            Instructionˉlimitˉoffset
+        );
+        if Opcode == 1u8 {
+            let Constantˉslot: u32 = Function.Locals + Nextˉi32;
+            Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 184u8);
+            Result = Compilerˉnativeˉx64ˉappendˉi32(
+                Result,
+                Bytesˉreadˉi32ˉlittle(Input, Section.Payloadˉoffset + Cursor + 1u32)
+            );
+            Result = Compilerˉnativeˉx64ˉemitˉstoreˉeax(
+                Result,
+                Constantˉslot * 16u32
+            );
+            Stackˉtypes = Bytesˉconcat(Stackˉtypes, Bytesˉfromˉu8(1u8));
+            Stackˉslots = Bytesˉconcat(
+                Stackˉslots,
+                Bytesˉfromˉu32ˉlittle(Constantˉslot)
+            );
+            Stackˉdepth = Stackˉdepth + 1u32;
+            Nextˉi32 = Nextˉi32 + 1u32;
+        } else {
+            if Opcode == 2u8 {
+                let Boolˉconstantˉslot: u32 =
+                    Function.Locals + Analysis.I32ˉslots + Nextˉbool;
+                Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 184u8);
+                Result = Compilerˉnativeˉx64ˉappendˉu32(
+                    Result,
+                    U32ˉfromˉu8(Bytesˉreadˉu8(
+                        Input,
+                        Section.Payloadˉoffset + Cursor + 1u32
+                    ))
+                );
+                Result = Compilerˉnativeˉx64ˉemitˉstoreˉeax(
+                    Result,
+                    Boolˉconstantˉslot * 16u32
+                );
+                Stackˉtypes = Bytesˉconcat(Stackˉtypes, Bytesˉfromˉu8(2u8));
+                Stackˉslots = Bytesˉconcat(
+                    Stackˉslots,
+                    Bytesˉfromˉu32ˉlittle(Boolˉconstantˉslot)
+                );
+                Stackˉdepth = Stackˉdepth + 1u32;
+                Nextˉbool = Nextˉbool + 1u32;
+            } else {
+                if Opcode == 4u8 {
+                    let Loadˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                        Input,
+                        Section.Payloadˉoffset + Cursor + 1u32
+                    );
+                    let Loadˉtype: u8 = Bytesˉreadˉu8(
+                        Function.Localˉtypes,
+                        Loadˉlocal
+                    );
+                    var Loadˉslot: u32 = Function.Locals + Nextˉi32;
+                    if Loadˉtype == 2u8 {
+                        Loadˉslot = Function.Locals + Analysis.I32ˉslots + Nextˉbool;
+                    }
+                    Result = Compilerˉnativeˉx64ˉemitˉloadˉeax(
+                        Result,
+                        Loadˉlocal * 16u32
+                    );
+                    Result = Compilerˉnativeˉx64ˉemitˉstoreˉeax(
+                        Result,
+                        Loadˉslot * 16u32
+                    );
+                    Stackˉtypes = Bytesˉconcat(Stackˉtypes, Bytesˉfromˉu8(Loadˉtype));
+                    Stackˉslots = Bytesˉconcat(
+                        Stackˉslots,
+                        Bytesˉfromˉu32ˉlittle(Loadˉslot)
+                    );
+                    Stackˉdepth = Stackˉdepth + 1u32;
+                    if Loadˉtype == 1u8 {
+                        Nextˉi32 = Nextˉi32 + 1u32;
+                    } else {
+                        Nextˉbool = Nextˉbool + 1u32;
+                    }
+                } else {
+                    if Opcode == 5u8 {
+                        let Storeˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                            Input,
+                            Section.Payloadˉoffset + Cursor + 1u32
+                        );
+                        let Storeˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+                            Stackˉslots,
+                            (Stackˉdepth - 1u32) * 4u32
+                        );
+                        Stackˉdepth = Stackˉdepth - 1u32;
+                        Stackˉtypes = Bytesˉslice(Stackˉtypes, 0u32, Stackˉdepth);
+                        Stackˉslots = Bytesˉslice(
+                            Stackˉslots,
+                            0u32,
+                            Stackˉdepth * 4u32
+                        );
+                        Result = Compilerˉnativeˉx64ˉemitˉloadˉeax(
+                            Result,
+                            Storeˉslot * 16u32
+                        );
+                        Result = Compilerˉnativeˉx64ˉemitˉstoreˉeax(
+                            Result,
+                            Storeˉlocal * 16u32
+                        );
+                    } else {
+                        let Numericˉopcode: u32 = U32ˉfromˉu8(Opcode);
+                        if Numericˉopcode >= 16u32 {
+                            if Numericˉopcode <= 18u32 {
+                                let Binaryˉright: u32 = Bytesˉreadˉu32ˉlittle(
+                                    Stackˉslots,
+                                    (Stackˉdepth - 1u32) * 4u32
+                                );
+                                let Binaryˉleft: u32 = Bytesˉreadˉu32ˉlittle(
+                                    Stackˉslots,
+                                    (Stackˉdepth - 2u32) * 4u32
+                                );
+                                Stackˉdepth = Stackˉdepth - 2u32;
+                                Stackˉtypes = Bytesˉslice(
+                                    Stackˉtypes,
+                                    0u32,
+                                    Stackˉdepth
+                                );
+                                Stackˉslots = Bytesˉslice(
+                                    Stackˉslots,
+                                    0u32,
+                                    Stackˉdepth * 4u32
+                                );
+                                let Binaryˉresult: u32 =
+                                    Function.Locals + Nextˉi32;
+                                Result = Compilerˉnativeˉx64ˉemitˉloadˉeax(
+                                    Result,
+                                    Binaryˉleft * 16u32
+                                );
+                                Result = Compilerˉnativeˉx64ˉemitˉloadˉecx(
+                                    Result,
+                                    Binaryˉright * 16u32
+                                );
+                                if Opcode == 16u8 {
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 1u8);
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 200u8);
+                                }
+                                if Opcode == 17u8 {
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 41u8);
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 200u8);
+                                }
+                                if Opcode == 18u8 {
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 15u8);
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 175u8);
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 193u8);
+                                }
+                                Result = Compilerˉnativeˉx64ˉemitˉoverflowˉbranch(
+                                    Result,
+                                    Overflowˉoffset
+                                );
+                                Result = Compilerˉnativeˉx64ˉemitˉstoreˉeax(
+                                    Result,
+                                    Binaryˉresult * 16u32
+                                );
+                                Stackˉtypes = Bytesˉconcat(
+                                    Stackˉtypes,
+                                    Bytesˉfromˉu8(1u8)
+                                );
+                                Stackˉslots = Bytesˉconcat(
+                                    Stackˉslots,
+                                    Bytesˉfromˉu32ˉlittle(Binaryˉresult)
+                                );
+                                Stackˉdepth = Stackˉdepth + 1u32;
+                                Nextˉi32 = Nextˉi32 + 1u32;
+                            } else {
+                                if Opcode == 19u8 {
+                                    let Negateˉinput: u32 = Bytesˉreadˉu32ˉlittle(
+                                        Stackˉslots,
+                                        (Stackˉdepth - 1u32) * 4u32
+                                    );
+                                    Stackˉdepth = Stackˉdepth - 1u32;
+                                    Stackˉtypes = Bytesˉslice(
+                                        Stackˉtypes,
+                                        0u32,
+                                        Stackˉdepth
+                                    );
+                                    Stackˉslots = Bytesˉslice(
+                                        Stackˉslots,
+                                        0u32,
+                                        Stackˉdepth * 4u32
+                                    );
+                                    let Negateˉresult: u32 =
+                                        Function.Locals + Nextˉi32;
+                                    Result = Compilerˉnativeˉx64ˉemitˉloadˉeax(
+                                        Result,
+                                        Negateˉinput * 16u32
+                                    );
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 247u8);
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 216u8);
+                                    Result = Compilerˉnativeˉx64ˉemitˉoverflowˉbranch(
+                                        Result,
+                                        Overflowˉoffset
+                                    );
+                                    Result = Compilerˉnativeˉx64ˉemitˉstoreˉeax(
+                                        Result,
+                                        Negateˉresult * 16u32
+                                    );
+                                    Stackˉtypes = Bytesˉconcat(
+                                        Stackˉtypes,
+                                        Bytesˉfromˉu8(1u8)
+                                    );
+                                    Stackˉslots = Bytesˉconcat(
+                                        Stackˉslots,
+                                        Bytesˉfromˉu32ˉlittle(Negateˉresult)
+                                    );
+                                    Stackˉdepth = Stackˉdepth + 1u32;
+                                    Nextˉi32 = Nextˉi32 + 1u32;
+                                } else {
+                                    if Compilerˉnativeˉx64ˉisˉi32ˉcomparison(Opcode) {
+                                        let I32ˉcompareˉright: u32 =
+                                            Bytesˉreadˉu32ˉlittle(
+                                                Stackˉslots,
+                                                (Stackˉdepth - 1u32) * 4u32
+                                            );
+                                        let I32ˉcompareˉleft: u32 =
+                                            Bytesˉreadˉu32ˉlittle(
+                                                Stackˉslots,
+                                                (Stackˉdepth - 2u32) * 4u32
+                                            );
+                                        Stackˉdepth = Stackˉdepth - 2u32;
+                                        Stackˉtypes = Bytesˉslice(
+                                            Stackˉtypes,
+                                            0u32,
+                                            Stackˉdepth
+                                        );
+                                        Stackˉslots = Bytesˉslice(
+                                            Stackˉslots,
+                                            0u32,
+                                            Stackˉdepth * 4u32
+                                        );
+                                        let I32ˉcompareˉresult: u32 =
+                                            Function.Locals + Analysis.I32ˉslots + Nextˉbool;
+                                        Result = Compilerˉnativeˉx64ˉemitˉcomparison(
+                                            Result,
+                                            I32ˉcompareˉleft,
+                                            I32ˉcompareˉright,
+                                            Compilerˉnativeˉx64ˉcomparisonˉcondition(Opcode),
+                                            I32ˉcompareˉresult
+                                        );
+                                        Stackˉtypes = Bytesˉconcat(
+                                            Stackˉtypes,
+                                            Bytesˉfromˉu8(2u8)
+                                        );
+                                        Stackˉslots = Bytesˉconcat(
+                                            Stackˉslots,
+                                            Bytesˉfromˉu32ˉlittle(I32ˉcompareˉresult)
+                                        );
+                                        Stackˉdepth = Stackˉdepth + 1u32;
+                                        Nextˉbool = Nextˉbool + 1u32;
+                                    } else {
+                                        if Compilerˉnativeˉx64ˉisˉboolˉcomparison(Opcode) {
+                                            let Boolˉcompareˉright: u32 =
+                                                Bytesˉreadˉu32ˉlittle(
+                                                    Stackˉslots,
+                                                    (Stackˉdepth - 1u32) * 4u32
+                                                );
+                                            let Boolˉcompareˉleft: u32 =
+                                                Bytesˉreadˉu32ˉlittle(
+                                                    Stackˉslots,
+                                                    (Stackˉdepth - 2u32) * 4u32
+                                                );
+                                            Stackˉdepth = Stackˉdepth - 2u32;
+                                            Stackˉtypes = Bytesˉslice(
+                                                Stackˉtypes,
+                                                0u32,
+                                                Stackˉdepth
+                                            );
+                                            Stackˉslots = Bytesˉslice(
+                                                Stackˉslots,
+                                                0u32,
+                                                Stackˉdepth * 4u32
+                                            );
+                                            let Boolˉcompareˉresult: u32 =
+                                                Function.Locals + Analysis.I32ˉslots + Nextˉbool;
+                                            Result = Compilerˉnativeˉx64ˉemitˉcomparison(
+                                                Result,
+                                                Boolˉcompareˉleft,
+                                                Boolˉcompareˉright,
+                                                Compilerˉnativeˉx64ˉcomparisonˉcondition(Opcode),
+                                                Boolˉcompareˉresult
+                                            );
+                                            Stackˉtypes = Bytesˉconcat(
+                                                Stackˉtypes,
+                                                Bytesˉfromˉu8(2u8)
+                                            );
+                                            Stackˉslots = Bytesˉconcat(
+                                                Stackˉslots,
+                                                Bytesˉfromˉu32ˉlittle(Boolˉcompareˉresult)
+                                            );
+                                            Stackˉdepth = Stackˉdepth + 1u32;
+                                            Nextˉbool = Nextˉbool + 1u32;
+                                        } else {
+                                            if Opcode == 40u8 {
+                                                let Notˉinput: u32 =
+                                                    Bytesˉreadˉu32ˉlittle(
+                                                        Stackˉslots,
+                                                        (Stackˉdepth - 1u32) * 4u32
+                                                    );
+                                                Stackˉdepth = Stackˉdepth - 1u32;
+                                                Stackˉtypes = Bytesˉslice(
+                                                    Stackˉtypes,
+                                                    0u32,
+                                                    Stackˉdepth
+                                                );
+                                                Stackˉslots = Bytesˉslice(
+                                                    Stackˉslots,
+                                                    0u32,
+                                                    Stackˉdepth * 4u32
+                                                );
+                                                let Notˉresult: u32 =
+                                                    Function.Locals +
+                                                    Analysis.I32ˉslots + Nextˉbool;
+                                                Result = Compilerˉnativeˉx64ˉemitˉloadˉeax(
+                                                    Result,
+                                                    Notˉinput * 16u32
+                                                );
+                                                Result = Compilerˉnativeˉx64ˉappendˉbyte(
+                                                    Result,
+                                                    131u8
+                                                );
+                                                Result = Compilerˉnativeˉx64ˉappendˉbyte(
+                                                    Result,
+                                                    240u8
+                                                );
+                                                Result = Compilerˉnativeˉx64ˉappendˉbyte(
+                                                    Result,
+                                                    1u8
+                                                );
+                                                Result = Compilerˉnativeˉx64ˉemitˉstoreˉeax(
+                                                    Result,
+                                                    Notˉresult * 16u32
+                                                );
+                                                Stackˉtypes = Bytesˉconcat(
+                                                    Stackˉtypes,
+                                                    Bytesˉfromˉu8(2u8)
+                                                );
+                                                Stackˉslots = Bytesˉconcat(
+                                                    Stackˉslots,
+                                                    Bytesˉfromˉu32ˉlittle(Notˉresult)
+                                                );
+                                                Stackˉdepth = Stackˉdepth + 1u32;
+                                                Nextˉbool = Nextˉbool + 1u32;
+                                            } else {
+                                                if Opcode == 48u8 {
+                                                    let Jumpˉwvbˉtarget: u32 =
+                                                        Bytesˉreadˉu32ˉlittle(
+                                                            Input,
+                                                            Section.Payloadˉoffset + Cursor + 1u32
+                                                        );
+                                                    Result = Compilerˉnativeˉx64ˉemitˉjump(
+                                                        Result,
+                                                        Compilerˉnativeˉx64ˉmachineˉtarget(
+                                                            Analysis.Leaders,
+                                                            Blockˉoffsets,
+                                                            Jumpˉwvbˉtarget
+                                                        )
+                                                    );
+                                                } else {
+                                                    if Opcode == 49u8 {
+                                                        let Branchˉconditionˉslot: u32 =
+                                                            Bytesˉreadˉu32ˉlittle(
+                                                                Stackˉslots,
+                                                                (Stackˉdepth - 1u32) * 4u32
+                                                            );
+                                                        Stackˉdepth = Stackˉdepth - 1u32;
+                                                        Stackˉtypes = Bytesˉslice(
+                                                            Stackˉtypes,
+                                                            0u32,
+                                                            Stackˉdepth
+                                                        );
+                                                        Stackˉslots = Bytesˉslice(
+                                                            Stackˉslots,
+                                                            0u32,
+                                                            Stackˉdepth * 4u32
+                                                        );
+                                                        let Branchˉfalseˉwvb: u32 =
+                                                            Bytesˉreadˉu32ˉlittle(
+                                                                Input,
+                                                                Section.Payloadˉoffset + Cursor + 1u32
+                                                            );
+                                                        let Branchˉnextˉwvb: u32 =
+                                                            Cursor + 5u32;
+                                                        Result = Compilerˉnativeˉx64ˉemitˉconditionalˉbranch(
+                                                            Result,
+                                                            Branchˉconditionˉslot,
+                                                            Compilerˉnativeˉx64ˉmachineˉtarget(
+                                                                Analysis.Leaders,
+                                                                Blockˉoffsets,
+                                                                Branchˉnextˉwvb
+                                                            ),
+                                                            Compilerˉnativeˉx64ˉmachineˉtarget(
+                                                                Analysis.Leaders,
+                                                                Blockˉoffsets,
+                                                                Branchˉfalseˉwvb
+                                                            )
+                                                        );
+                                                    } else {
+                                                        let Returnˉslot: u32 =
+                                                            Bytesˉreadˉu32ˉlittle(
+                                                                Stackˉslots,
+                                                                (Stackˉdepth - 1u32) * 4u32
+                                                            );
+                                                        Stackˉdepth = Stackˉdepth - 1u32;
+                                                        Stackˉtypes = Bytesˉslice(
+                                                            Stackˉtypes,
+                                                            0u32,
+                                                            Stackˉdepth
+                                                        );
+                                                        Stackˉslots = Bytesˉslice(
+                                                            Stackˉslots,
+                                                            0u32,
+                                                            Stackˉdepth * 4u32
+                                                        );
+                                                        Result = Compilerˉnativeˉx64ˉemitˉloadˉeax(
+                                                            Result,
+                                                            Returnˉslot * 16u32
+                                                        );
+                                                        Result = Compilerˉnativeˉx64ˉemitˉframe(
+                                                            Result,
+                                                            false,
+                                                            Frameˉbytes
+                                                        );
+                                                        Result = Compilerˉnativeˉx64ˉemitˉrestore(Result);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Cursor = Cursor + Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
+    }
+
+    Result = Compilerˉnativeˉx64ˉemitˉframe(Result, false, Frameˉbytes);
+    Result = Compilerˉnativeˉx64ˉemitˉrestore(Result);
+    Result = Compilerˉnativeˉx64ˉemitˉstatus(Result, Frameˉbytes, 1u32);
+    Result = Compilerˉnativeˉx64ˉemitˉstatus(Result, Frameˉbytes, 2u32);
+    Result = Compilerˉnativeˉx64ˉemitˉstatus(Result, Frameˉbytes, 4u32);
+    Result = Compilerˉnativeˉx64ˉemitˉstatus(Result, Frameˉbytes, 6u32);
+    Result = Compilerˉnativeˉx64ˉemitˉstatus(Result, Frameˉbytes, 5u32);
+    Result = Compilerˉnativeˉx64ˉemitˉstatus(Result, Frameˉbytes, 8u32);
+    Result = Compilerˉnativeˉx64ˉemitˉstatus(Result, Frameˉbytes, 7u32);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 73u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 255u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 194u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 72u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 184u8);
+    Result = Compilerˉnativeˉx64ˉappendˉu32(Result, 0u32);
+    Result = Compilerˉnativeˉx64ˉappendˉu32(Result, 3u32);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 65u8);
+    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 95u8);
+    return Compilerˉnativeˉx64ˉappendˉbyte(Result, 195u8);
+}
+
 export fn Compilerˉnativeˉx64ˉemitˉobject(Input: bytes, Code: bytes) -> bytes {
     let Codeˉlength: u32 = Bytesˉlength(Code);
     var Result: bytes = Textˉtoˉutf8("WVO1");
@@ -1104,8 +2302,8 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
         Structure.Codeˉlength,
         0u32
     );
-    let Analysis: Compilerˉnativeˉx64ˉanalysis =
-        Compilerˉnativeˉx64ˉanalyzeˉcode(Input, Codeˉsection, Function);
+    let Analysis: Compilerˉnativeˉx64ˉcontrolˉanalysis =
+        Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(Input, Codeˉsection, Function);
     if !Analysis.Valid {
         return Compilerˉnativeˉx64ˉfailure(
             Input,
@@ -1114,7 +2312,8 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
     }
 
     let Expectedˉcodeˉbytes: u32 =
-        222u32 + (Function.Locals + Analysis.Values) * 28u32 +
+        222u32 +
+        (Function.Locals + Analysis.I32ˉslots + Analysis.Boolˉslots) * 28u32 +
         Analysis.Bodyˉbytes;
     if Expectedˉcodeˉbytes > 33554432u32 {
         return Compilerˉnativeˉx64ˉfailure(
@@ -1122,7 +2321,7 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
             Compilerˉnativeˉx64ˉstatus.Outputˉlimit
         );
     }
-    let Code: bytes = Compilerˉnativeˉx64ˉemitˉcode(
+    let Code: bytes = Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
         Input,
         Codeˉsection,
         Function,

@@ -33,9 +33,9 @@ internal static class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "59c78a1eba86bd93084d815b3667f04b9297304dc29eac59db2b306c750a047d";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "eae679ce43b0c421de4768871cef83f32b482399f0a276d3952f10da6f63f914";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "87f3b0c51fb4a2778539f4bb8e0533e96eab8a5a5d0378fa0ff76b609b4f5139";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "3ba83ebe5d848273b42f9a4fed3aa110b7396ba54796b03bf43324c5077c584b";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "8c01614988c24d17070b9bbb55276fd9d35a34a917d4fcfb70bc77dc16532a4f";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "f6d44af0a3ea8d4dd5c8c3367358d970fb9bd0b2252305d8058bec791a041a57";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "7fe718d644e426b9a90e3bd1dcc51c4e1bb1ac4af439cd4bbcda2cf7d01f276a";
@@ -2041,11 +2041,6 @@ internal static class Program
         Equal(
             NATIVE_ARITHMETIC_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirstˉobject.AsSpan()));
-        Windvaleˉnativeˉx64ˉloweringˉagrees(
-            Wvbˉbytes,
-            Firstˉobject,
-            Arithmeticˉwvb,
-            Arithmeticˉfirstˉobject);
         var Arithmeticˉlinked = Linkˉsuccess(
             [Arithmeticˉfirstˉobject.ToArray()],
             new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
@@ -2054,7 +2049,8 @@ internal static class Program
         Equal(42, X64ˉnativeˉexecutor.Executeˉi32(
             Arithmeticˉfirst.Fragment with { Code = Arithmeticˉlinked.Imageˉbytes }));
 
-        var Controlˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_CONTROL_SOURCE));
+        var Controlˉwvb = Compileˉsuccess(NATIVE_CONTROL_SOURCE);
+        var Controlˉverified = Moduleˉcodec.Readˉandˉverify(Controlˉwvb);
         var Controlˉinterpreted = new Referenceˉruntime(
             Controlˉverified,
             new Referenceˉcapabilityˉhost(TextWriter.Null),
@@ -2118,6 +2114,13 @@ internal static class Program
         Equal(
             NATIVE_CONTROL_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Controlˉfirstˉobject.AsSpan()));
+        Windvaleˉnativeˉx64ˉloweringˉagrees(
+            Wvbˉbytes,
+            Firstˉobject,
+            Arithmeticˉwvb,
+            Arithmeticˉfirstˉobject,
+            Controlˉwvb,
+            Controlˉfirstˉobject);
         var Controlˉlinked = Linkˉsuccess(
             [Controlˉfirstˉobject.ToArray()],
             new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
@@ -2616,7 +2619,9 @@ internal static class Program
         byte[] wvbˉbytes,
         ImmutableArray<byte> expectedˉobject,
         byte[] arithmeticˉwvb,
-        ImmutableArray<byte> arithmeticˉobject)
+        ImmutableArray<byte> arithmeticˉobject,
+        byte[] controlˉwvb,
+        ImmutableArray<byte> controlˉobject)
     {
         static int Codeˉpayloadˉoffset(byte[] Input)
         {
@@ -2662,6 +2667,13 @@ internal static class Program
                 new Referenceˉcapabilityˉhost(TextWriter.Null),
                 Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
                 .Runˉmainˉbytes(arithmeticˉwvb.ToImmutableArray()).Bytes);
+        Sequenceˉequal(
+            controlˉobject,
+            new Referenceˉruntime(
+                Memory,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+                .Runˉmainˉbytes(controlˉwvb.ToImmutableArray()).Bytes);
         Equal(
             0,
             new Referenceˉruntime(
@@ -2699,6 +2711,13 @@ internal static class Program
             "native x64 status=Valid abi=22 code-bytes=1871 object-bytes=1944\n",
             Arithmeticˉreference.Output);
         Sequenceˉequal(arithmeticˉobject, Arithmeticˉreference.Writtenˉbytes);
+
+        var Controlˉreference = Runˉnativeˉx64ˉloweringˉtool(Tool, controlˉwvb);
+        Equal(0, Controlˉreference.Exitˉcode);
+        Equal(
+            "native x64 status=Valid abi=22 code-bytes=4835 object-bytes=4908\n",
+            Controlˉreference.Output);
+        Sequenceˉequal(controlˉobject, Controlˉreference.Writtenˉbytes);
 
         const string Nextˉconstantˉsource = """
             module Nativeˉconstant profile portable;
@@ -2767,7 +2786,21 @@ internal static class Program
         BinaryPrimitives.WriteUInt32LittleEndian(
             Invalidˉlocalˉwvb.AsSpan(Invalidˉlocalˉcode + 1, 4),
             10u);
-        foreach (var Malformed in new[] { Underflowˉwvb, Invalidˉlocalˉwvb })
+        var Backwardˉbranchˉwvb = controlˉwvb.ToArray();
+        var Firstˉbranch = Moduleˉcodec.Readˉandˉverify(controlˉwvb)
+            .Functions[0].Instructions
+            .First(Instruction => Instruction.Opcode == Opcode.Branchˉfalse);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Backwardˉbranchˉwvb.AsSpan(
+                Codeˉpayloadˉoffset(Backwardˉbranchˉwvb) + Firstˉbranch.Offset + 1,
+                4),
+            1u);
+        foreach (var Malformed in new[]
+        {
+            Underflowˉwvb,
+            Invalidˉlocalˉwvb,
+            Backwardˉbranchˉwvb,
+        })
         {
             Equal(
                 0,
@@ -2841,6 +2874,26 @@ internal static class Program
             Equal(Arithmeticˉreference.Output, Arithmeticˉoutput.Readˉtext());
             Equal(Arithmeticˉreference.Diagnostics, Arithmeticˉdiagnostic.Readˉtext());
             Sequenceˉequal(arithmeticˉobject, File.ReadAllBytes(Outputˉpath));
+
+            File.WriteAllBytes(Inputˉpath, controlˉwvb);
+            using var Controlˉoutput = new Nativeˉoutputˉcapture();
+            using var Controlˉdiagnostic = new Nativeˉoutputˉcapture();
+            var Controlˉhost = new Nativeˉhostˉservices(
+                Controlˉoutput.Channel,
+                Authorized,
+                Resources,
+                Controlˉdiagnostic.Channel,
+                Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                Nativeˉfileˉoutput.Hostˉfileˉsystem());
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    Toolˉnative.Fragment,
+                    maximumˉinstructions: Controlˉreference.Executedˉinstructions,
+                    hostˉservices: Controlˉhost));
+            Equal(Controlˉreference.Output, Controlˉoutput.Readˉtext());
+            Equal(Controlˉreference.Diagnostics, Controlˉdiagnostic.Readˉtext());
+            Sequenceˉequal(controlˉobject, File.ReadAllBytes(Outputˉpath));
 
             File.WriteAllBytes(Inputˉpath, wvbˉbytes[..^1]);
             var Sentinel = new byte[] { 0x57, 0x56, 0x4F, 0x21 };
