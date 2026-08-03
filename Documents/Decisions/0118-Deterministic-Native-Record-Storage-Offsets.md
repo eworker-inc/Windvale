@@ -1,7 +1,7 @@
 # Decision 0118: Deterministic native record-storage offsets
 
 - Date: 2026-08-02
-- Status: Implemented; cross-host qualification pending
+- Status: Qualified
 - Retains: Native ABI 20, execution-context version 7, target `x86-64-wvb-baseline-v20`, the 2,048-cell physical frame ceiling, and the 2 MiB host record arena
 - Refines: [Decision 0105](0105-Typed-Block-Scoped-Native-Value-Slots.md), [Decision 0115](0115-Exact-Compiler-Record-Lifetime-Pressure.md), and [Decision 0117](0117-Nominal-Native-Record-Storage-Plan.md)
 
@@ -43,7 +43,9 @@ Repeated planning over separately lowered native IR produces byte-for-byte equal
 
 Static weighted allocation introduces no fragmentation for the exact compiler: scratch storage remains exactly the 7,463 peak-live field cells summed across functions. Persistent storage remains 9,291 cells summed across functions, and `Compilerˉsourceˉwirˉcompileˉblock` remains the largest projected frame at 1,489 cells: 1,178 existing, 196 persistent, 114 scratch, and one record-return pointer. Every function remains within the unchanged 2,048-cell ceiling.
 
-The exact selected compiler remains 4,556,121 bytes with SHA-256 `8e74707df03a535e3ef68cfcfc8da6fa68fda29ccf4344e272fc50c8a5845bab` and passes the existing independent ABI-20 fragment decoder. Focused Windows verification passes the small nominal record plan and exact compiler plan. Windows Development completes a zero-warning Release build, all 69 regular Seed tests, and all 25 bounded OS tests in 81.2 seconds wall time; cross-host qualification remains pending.
+The exact selected compiler remains 4,556,121 bytes with SHA-256 `8e74707df03a535e3ef68cfcfc8da6fa68fda29ccf4344e272fc50c8a5845bab` and passes the existing independent ABI-20 fragment decoder. Focused Windows verification passes the small nominal record plan and exact compiler plan. Windows Development completes a zero-warning Release build, all 69 regular Seed tests, and all 25 bounded OS tests in 81.2 seconds wall time.
+
+Exact implementation commit `060cf481d9783170cde4cf2cdd7ddab3cee1028e` passes GitHub [Verify run 30774669075](https://github.com/eworker-inc/Windvale/actions/runs/30774669075). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 70 Seed tests, all 25 OS tests, and the complete native CLI gate. The nominal record case takes 93 ms on Windows and 33 ms on Linux; the exact compiler-plan case takes 2.637 and 2.174 seconds; the retained full-bootstrap boundary takes 1.037 seconds and 623 ms. Windows Seed takes 252.041 seconds with a 186.165-second golden contract; Linux Seed takes 176.775 seconds with a 128.564-second golden contract. The complete host jobs finish in 9m15s and 6m31s. QEMU is not rerun because ABI 20, every generated machine byte, and all OS source/artifact inputs remain unchanged.
 
 ## Consequences
 
