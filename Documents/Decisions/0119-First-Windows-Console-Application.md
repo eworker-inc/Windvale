@@ -1,7 +1,7 @@
 # Decision 0119: First Windows console application target
 
 - Date: 2026-08-02
-- Status: Implemented candidate; normalized Windows execution passes locally and dual-host qualification is pending
+- Status: Cross-host qualified at `ea1aa89`
 - Target: `windows-x64-console-v1`
 - Retains: Canonical WVB 1.6, native ABI 20/context 7, WVO 1.0, `flat-x86-64-v1`, the 4 MiB object/link limits, and the .NET retirement gate
 
@@ -27,7 +27,9 @@ Waiting for complete native compiler reproduction would leave the process-contai
 
 On Windows, the current implementation produces a deterministic 5,120-byte executable from `Examples/Seed/Sum-Data.wv`, SHA-256 `5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77`. Windows loads it directly and reports process result `29`. Focused tests also execute the existing nominal-record and dynamic-byte fixtures to result `42`, proving both fixed arena pointers, map a checked-overflow native status to process result `1`, and require exact portable process results at `0`, `1`, and `255` while mapping `-1`, `256`, and `2,147,483,647` to `1`. Decision 0124 moves the exact startup candidate into WVA while retaining the C# writer as an independently checked recovery oracle.
 
-The same focused case covers deterministic repetition, independent recovery of exact native bytes and `Main`, required-service and descriptor-entry rejection, changed-fragment rejection, truncated/oversized/trailing files, targeted corruption in every PE/startup/context/relocation class, and bounded random hostile input. It passes after the portable-result update with a zero-warning build and direct Windows execution. The earlier pre-normalization candidate completed the local Windows Qualification gate; the updated exact bytes still require fresh Windows/Linux Qualification before this decision is promoted.
+The same focused case covers deterministic repetition, independent recovery of exact native bytes and `Main`, required-service and descriptor-entry rejection, changed-fragment rejection, truncated/oversized/trailing files, targeted corruption in every PE/startup/context/relocation class, and bounded random hostile input. It passes after the portable-result update with a zero-warning build and direct Windows execution.
+
+Exact descendant `ea1aa89ba204ead633f8340c61b2bacc716881fd` passes GitHub [Verify run 30783457203](https://github.com/eworker-inc/Windvale/actions/runs/30783457203). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 77 Seed tests, all 31 OS tests, the golden compiler contract, and the native CLI gate. The current-host branches directly execute the canonical PE on Windows and its paired ELF on Linux, including the normalized process-result corpus; both hosts reproduce and independently verify the exact version-1 artifacts. This qualifies the Windows target, shared result semantics, and atomic publication path as part of the paired baseline.
 
 ## Consequences
 

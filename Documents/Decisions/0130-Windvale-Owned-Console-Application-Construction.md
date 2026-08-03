@@ -1,7 +1,7 @@
 # Decision 0130: Windvale-owned console-application construction
 
 - Date: 2026-08-02
-- Status: Implemented candidate; fresh dual-host qualification pending
+- Status: Cross-host qualified at `ea1aa89`
 - Targets: `windows-x64-console-v1` and `linux-x64-console-v1`
 - Retains: Canonical WVB 1.6, native ABI 20/context 7, the 4 MiB byte-value limit, WVA 1, WVO 1.0, both executable format versions, and the .NET retirement gate
 
@@ -32,15 +32,15 @@ The focused construction test passes with a zero-warning Release build. It prove
 
 The two existing executable tests pass after both live writers switch to the Windvale recipe. Canonical output is unchanged: the PE remains 5,120 bytes with SHA-256 `5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77`, and the ELF remains 8,304 bytes with SHA-256 `8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4`.
 
-Windows Development passes a zero-warning Release build, all 76 regular Seed tests, and all 31 bounded OS tests on the merged candidate in 91.680 seconds wall time. Seed takes 73.201 seconds; the combined layout/construction and existing Windows/Linux container cases take 120, 1,164, and 34 milliseconds. The qualification-only golden contract and direct Linux execution are not part of Development, so fresh dual-host Qualification remains pending.
+Windows Development passes a zero-warning Release build, all 76 regular Seed tests, and all 31 bounded OS tests on the merged candidate in 91.680 seconds wall time. Seed takes 73.201 seconds; the combined layout/construction and existing Windows/Linux container cases take 120, 1,164, and 34 milliseconds.
+
+Exact descendant `ea1aa89ba204ead633f8340c61b2bacc716881fd` passes GitHub [Verify run 30783457203](https://github.com/eworker-inc/Windvale/actions/runs/30783457203). Windows and digest-pinned Debian 12 each complete all 77 Seed tests, all 31 OS tests, the golden compiler contract, and the native CLI gate after zero-warning Release builds. The shared construction corpus recompiles and identity-checks the portable sources, validates deterministic and maximum sparse recipes, exercises malformed evidence, and requires complete byte equality with independent C# recovery images for both targets. This qualifies the live Windvale-owned construction boundary on both hosts.
 
 ## Consequences
 
 Portable Windvale now determines every byte of both supported console containers, including zero gaps, without changing a general runtime limit. C# performs a small generic sparse materialization and remains an independent byte-for-byte recovery oracle.
 
-This is not yet a Windvale-owned untrusted-container verifier. The existing C# PE and ELF verifiers remain authoritative for accepting completed executable bytes, and Stage 0 still evaluates and materializes the retained WVB.
-
-The next container-transfer slice should express structural PE/ELF verification and recovered-native evidence in portable Windvale while keeping the current C# verifiers differential and fail closed.
+At this decision boundary, the existing C# PE and ELF verifiers remained authoritative and Stage 0 still evaluated and materialized the retained WVB. Decision 0132 subsequently adds and cross-host qualifies structural PE/ELF verification plus recovered-native evidence in portable Windvale while retaining the C# verifiers as differential fail-closed recovery oracles.
 
 ## Reconsider when
 

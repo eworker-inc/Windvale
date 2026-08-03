@@ -1,7 +1,7 @@
 # Decision 0122: First Linux console application target
 
 - Date: 2026-08-02
-- Status: Implemented candidate; direct Debian execution and dual-host qualification pending
+- Status: Cross-host qualified at `ea1aa89`
 - Target: `linux-x64-console-v1`
 - Retains: Canonical WVB 1.6, native ABI 20/context 7, WVO 1.0, `flat-x86-64-v1`, the 4 MiB object/link limits, and the .NET retirement gate
 
@@ -30,7 +30,9 @@ A literal PE translation would be misleading. Linux enters an ELF at `_start` ra
 
 On Windows, the implementation deterministically constructs an 8,304-byte ELF from `Examples/Seed/Sum-Data.wv`, SHA-256 `8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4`. An external file classifier identifies it as a statically linked, sectionless, x86-64 ELF shared object. The independently verified PE and ELF containers recover byte-identical native images and the same `Main` offset. Decision 0124 moves the exact startup candidate into WVA while retaining the C# writer as an independently checked recovery oracle.
 
-The focused construction test passes a zero-warning build and covers deterministic repetition; malformed fragment, hosted-service, and descriptor-entry rejection; truncated, oversized, trailing, and targeted corruptions across every ELF/header/note/startup/context/padding diagnostic class; and bounded random hostile inputs. Linux-only branches directly execute sum, nominal-record, dynamic-byte, checked-overflow, and the six shared process-result boundary fixtures. This Windows construction result does not claim those branches have run; direct Debian execution and the repository's dual-host Qualification gate remain pending.
+The focused construction test passes a zero-warning build and covers deterministic repetition; malformed fragment, hosted-service, and descriptor-entry rejection; truncated, oversized, trailing, and targeted corruptions across every ELF/header/note/startup/context/padding diagnostic class; and bounded random hostile inputs. Linux-only branches directly execute sum, nominal-record, dynamic-byte, checked-overflow, and the six shared process-result boundary fixtures.
+
+Exact descendant `ea1aa89ba204ead633f8340c61b2bacc716881fd` passes GitHub [Verify run 30783457203](https://github.com/eworker-inc/Windvale/actions/runs/30783457203). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 77 Seed tests, all 31 OS tests, the golden compiler contract, and the native CLI gate. Debian directly executes the ELF cases, including all normalized process-result boundaries, while both hosts reproduce and independently verify the same canonical PE/ELF bytes and recovered native image. This qualifies the Linux target and the paired Windows/Linux container contract.
 
 ## Consequences
 

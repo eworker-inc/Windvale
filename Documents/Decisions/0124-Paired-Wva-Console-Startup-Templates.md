@@ -1,7 +1,7 @@
 # Decision 0124: Paired WVA console startup templates
 
 - Date: 2026-08-02
-- Status: Implemented candidate; fresh dual-host qualification pending
+- Status: Cross-host qualified at `ea1aa89`
 - Targets: `windows-x64-console-v1` and `linux-x64-console-v1`
 - Retains: Canonical WVB 1.6, native ABI 20/context 7, WVA 1, WVO 1.0, both container format versions, and the .NET retirement gate
 
@@ -29,15 +29,15 @@ The C# assembler produces a 98-byte Windows code section in a WVO with SHA-256 `
 
 The two existing console-executable tests pass together with a zero-warning Release build. The Windows case assembles and relocates the PE candidate, compares all 98 bytes, independently verifies the container, and directly executes the complete shared process-result corpus. The Linux case assembles and relocates the ELF candidate, compares all 158 bytes, and completes construction, malformed-input, and PE/ELF recovery parity on Windows; direct ELF execution remains reserved for the Linux host. Canonical `Sum-Data.wv` remains 5,120 PE bytes with SHA-256 `5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77` and 8,304 ELF bytes with SHA-256 `8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4`.
 
-Windows Development completes a zero-warning Release build, all 74 regular Seed tests, and all 25 bounded OS tests in 97.9 seconds wall time on the rebased candidate. Seed takes 76.360 seconds; the WVA-backed Windows and Linux container cases take 799 and 24 milliseconds. The qualification-only golden contract and direct Linux execution are not part of Development, so fresh dual-host Qualification remains pending.
+Windows Development completes a zero-warning Release build, all 74 regular Seed tests, and all 25 bounded OS tests in 97.9 seconds wall time on the rebased candidate. Seed takes 76.360 seconds; the WVA-backed Windows and Linux container cases take 799 and 24 milliseconds.
+
+Exact descendant `ea1aa89ba204ead633f8340c61b2bacc716881fd` passes GitHub [Verify run 30783457203](https://github.com/eworker-inc/Windvale/actions/runs/30783457203). Windows and digest-pinned Debian 12 each complete all 77 Seed tests, all 31 OS tests, the golden compiler contract, and the native CLI gate after zero-warning Release builds. On both hosts, the existing paired tests assemble each WVA source, verify its object and typed relocations, and require complete startup-byte equality with the independent C# oracle before direct host execution. This qualifies both exact WVA templates without adding a duplicate construction suite.
 
 ## Consequences
 
 The process-entry machine layer is now readable and buildable in Windvale's own assembly language. Typed WVO records identify every final-image dependency, and a writer change cannot silently diverge from the WVA source while the existing tests pass.
 
-Normal executable construction remains Stage 0. The portable PE/ELF layout planners, byte constructors, and untrusted-input verifiers still need `.wv` implementations and differential malformed-input evidence before normal ownership can move away from C#.
-
-The larger goal still requires fresh Windows/Linux qualification, native ABI 21 record storage, complete native Stage 1-to-Stage 2 reproduction, and an explicitly serialized hosted-console capability. This decision claims none of those later gates.
+At this boundary, normal executable construction remained Stage 0 and the portable PE/ELF layout planners, byte constructors, and untrusted-input verifiers still needed `.wv` implementations. Decisions 0127, 0130, and 0132 subsequently complete and cross-host qualify those transfers with differential malformed-input evidence. Decisions 0133, 0150, and 0152 subsequently complete the ABI-21 record-storage transfer, native Stage 1-to-Stage 2 reproduction, and first serialized hosted-console capability.
 
 ## Reconsider when
 

@@ -47,7 +47,7 @@ The current unqualified language candidate adds checked `i64`/`u64` to Stage 0, 
 - ✅ Windvale lifetime graph → internal state owner → allocate/copy/seal/invoke/release
 - ✅ Qualified compiler WVB → native compiler execution → byte-identical WVB file publication
 - ✅ Native Stage 1 compiler → complete 12-source inventory → byte-identical Stage 2 compiler on Windows and pinned Debian
-- 🚧 Portable scalar `.wv` → verified WVB/native fragment → deterministic import-free Windows `.exe` or Linux `.elf` → process result
+- ✅ Portable scalar `.wv` → verified WVB/native fragment → cross-host-qualified deterministic import-free Windows `.exe` or Linux `.elf` → normalized process result
 - ✅ Hosted `.wv` with `console.write_line` → verified service requirement → `WVHC 1` metadata and exact output leaf → cross-host-qualified standalone Windows/Linux console application
 - ✅ ABI-21 direct records → deterministic frame backing → caller-owned returns → zero record-arena use in both the exact compiler and rebuilt Probe 32
 - 🚧 Verified descriptor ownership → exact WVA allocator leaf → physical emission schedule → live W^X differential execution; full-allocator selection remains open

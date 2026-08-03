@@ -1,7 +1,7 @@
 # Decision 0127: Windvale-owned console-application layout
 
 - Date: 2026-08-02
-- Status: Implemented candidate; fresh dual-host qualification pending
+- Status: Cross-host qualified at `ea1aa89`
 - Targets: `windows-x64-console-v1` and `linux-x64-console-v1`
 - Retains: Canonical WVB 1.6, native ABI 20/context 7, WVA 1, WVO 1.0, both executable format versions, and the .NET retirement gate
 
@@ -30,7 +30,9 @@ The focused planner test passes with a zero-warning Release build. It proves exa
 
 The existing Windows and Linux console tests pass after the live writers begin consuming the Windvale plan. Their exact canonical outputs remain unchanged: the PE is 5,120 bytes with SHA-256 `5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77`, and the ELF is 8,304 bytes with SHA-256 `8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4`.
 
-Windows Development passes a zero-warning Release build, all 76 regular Seed tests, and all 28 bounded OS tests in 91.631 seconds wall time. Seed takes 74.940 seconds; the planner and existing Windows/Linux container cases take 64, 838, and 23 milliseconds. The qualification-only golden contract and direct Linux execution are not part of Development, so fresh dual-host Qualification remains pending rather than being inferred from this host.
+Windows Development passes a zero-warning Release build, all 76 regular Seed tests, and all 28 bounded OS tests in 91.631 seconds wall time. Seed takes 74.940 seconds; the planner and existing Windows/Linux container cases take 64, 838, and 23 milliseconds.
+
+Exact descendant `ea1aa89ba204ead633f8340c61b2bacc716881fd` passes GitHub [Verify run 30783457203](https://github.com/eworker-inc/Windvale/actions/runs/30783457203). Windows and digest-pinned Debian 12 each complete all 77 Seed tests, all 31 OS tests, the golden compiler contract, and the native CLI gate after zero-warning Release builds. The shared planner corpus recompiles the portable source, checks its pinned artifact, evaluates representative and maximum inputs for both targets, mutates every serialized response field, and requires agreement with the separately implemented C# calculations. This qualifies the live Windvale-owned layout boundary on both hosts.
 
 ## Consequences
 
@@ -38,7 +40,7 @@ The normal Stage 0 PE and ELF writers now depend on a digest-pinned Windvale art
 
 The runtime dependency used to evaluate the retained planner is still a Stage 0 bootstrap dependency. The hosted bridge is an input adapter, not portable semantics, and its single file capability is explicit.
 
-This decision does not move PE/ELF byte construction, untrusted-container verification, executable publication, native record storage, compiler reproduction, or hosted console services into Windvale. Those remain separate gates in the active goal.
+At this decision boundary, PE/ELF byte construction, untrusted-container verification, native record storage, compiler reproduction, and hosted console services remained separate gates. Decisions 0130, 0132, 0133, 0150, and 0152 subsequently close and qualify them in that order; executable publication was already atomic under Decisions 0119 and 0122.
 
 ## Reconsider when
 
