@@ -1,0 +1,9 @@
+module Sourceˉwvbˉsha256ˉinterpreter profile portable;
+
+data Value: bytes = [97, 98, 99];
+
+export fn Main() -> i32 {
+    let Digest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Value));
+    if Bytesˉlength(Digest) != 64u32 { return 1; }
+    return 42;
+}

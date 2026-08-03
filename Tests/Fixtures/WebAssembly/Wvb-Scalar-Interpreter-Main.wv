@@ -248,9 +248,13 @@ export fn Main(Request: bytes) -> bytes {
             if Scanˉopcode >= 96u32 {
                 if Scanˉopcode <= 103u32 { Supported = true; }
             }
+            if Scanˉopcode >= 110u32 {
+                if Scanˉopcode <= 112u32 { Supported = true; }
+            }
             if Scanˉopcode >= 113u32 {
                 if Scanˉopcode <= 116u32 { Supported = true; }
             }
+            if Scanˉopcode == 117u32 { Supported = true; }
             if Scanˉopcode == 118u32 { Supported = true; }
             if Scanˉopcode >= 119u32 {
                 if Scanˉopcode <= 124u32 { Supported = true; }
@@ -1034,6 +1038,341 @@ export fn Main(Request: bytes) -> bytes {
                 Pc = Pc + 1u32;
                 Handled = true;
             }
+        }
+
+        var Isˉintegerˉformat: bool = false;
+        if Opcode == 110u32 { Isˉintegerˉformat = true; }
+        if Opcode == 111u32 { Isˉintegerˉformat = true; }
+        if Opcode == 112u32 { Isˉintegerˉformat = true; }
+        if Isˉintegerˉformat {
+            let Formatˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Formatˉraw: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Formatˉstackˉlength - 8u32
+            );
+            Stack = Bytesˉslice(Stack, 0u32, Formatˉstackˉlength - 8u32);
+            var Formatˉnegative: bool = false;
+            var Formatˉmagnitude: u32 = Formatˉraw;
+            if Opcode == 110u32 {
+                if Formatˉraw >= 2147483648u32 {
+                    Formatˉnegative = true;
+                    Formatˉmagnitude =
+                        4294967295u32 - Formatˉraw + 1u32;
+                }
+            }
+            var Formattedˉvalue: bytes = Invalid;
+            if Formatˉnegative {
+                Formattedˉvalue = Bytesˉconcat(
+                    Formattedˉvalue,
+                    Bytesˉfromˉu8(45u8)
+                );
+            }
+            var Formatˉplace: u32 = 1000000000u32;
+            var Formatˉplaceˉindex: u32 = 0u32;
+            var Formatˉstarted: bool = false;
+            while Formatˉplaceˉindex < 10u32 {
+                var Formatˉdigit: u32 = 0u32;
+                while Formatˉmagnitude >= Formatˉplace {
+                    Formatˉmagnitude = Formatˉmagnitude - Formatˉplace;
+                    Formatˉdigit = Formatˉdigit + 1u32;
+                }
+                if Formatˉdigit != 0u32 { Formatˉstarted = true; }
+                var Formatˉemit: bool = Formatˉstarted;
+                if Formatˉplaceˉindex == 9u32 { Formatˉemit = true; }
+                if Formatˉemit {
+                    let Formatˉdigitˉbytes: bytes = Bytesˉfromˉu32ˉlittle(
+                        48u32 + Formatˉdigit
+                    );
+                    Formattedˉvalue = Bytesˉconcat(
+                        Formattedˉvalue,
+                        Bytesˉslice(Formatˉdigitˉbytes, 0u32, 1u32)
+                    );
+                }
+                Formatˉplaceˉindex = Formatˉplaceˉindex + 1u32;
+                if Formatˉplaceˉindex == 1u32 {
+                    Formatˉplace = 100000000u32;
+                }
+                if Formatˉplaceˉindex == 2u32 {
+                    Formatˉplace = 10000000u32;
+                }
+                if Formatˉplaceˉindex == 3u32 {
+                    Formatˉplace = 1000000u32;
+                }
+                if Formatˉplaceˉindex == 4u32 {
+                    Formatˉplace = 100000u32;
+                }
+                if Formatˉplaceˉindex == 5u32 {
+                    Formatˉplace = 10000u32;
+                }
+                if Formatˉplaceˉindex == 6u32 {
+                    Formatˉplace = 1000u32;
+                }
+                if Formatˉplaceˉindex == 7u32 {
+                    Formatˉplace = 100u32;
+                }
+                if Formatˉplaceˉindex == 8u32 {
+                    Formatˉplace = 10u32;
+                }
+                if Formatˉplaceˉindex == 9u32 {
+                    Formatˉplace = 1u32;
+                }
+            }
+            let Formattedˉlength: u32 = Bytesˉlength(Formattedˉvalue);
+            let Formattedˉoffset: u32 = Bytesˉlength(Heap);
+            if Formattedˉoffset > 65536u32 - Formattedˉlength {
+                Guestˉstatus = 3018u32;
+                Running = false;
+            } else {
+                Heap = Bytesˉconcat(Heap, Formattedˉvalue);
+                Stack = Bytesˉconcat(
+                    Stack,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Formattedˉoffset),
+                        Bytesˉfromˉu32ˉlittle(Formattedˉlength)
+                    )
+                );
+            }
+            Pc = Pc + 1u32;
+            Handled = true;
+        }
+
+        if Opcode == 117u32 {
+            let Quoteˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Quoteˉsourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Quoteˉstackˉlength - 8u32
+            );
+            let Quoteˉsourceˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                Quoteˉstackˉlength - 4u32
+            );
+            Stack = Bytesˉslice(Stack, 0u32, Quoteˉstackˉlength - 8u32);
+            var Quotedˉvalue: bytes = Bytesˉfromˉu8(34u8);
+            var Quoteˉcursor: u32 = 0u32;
+            while Quoteˉcursor < Quoteˉsourceˉlength {
+                let Quoteˉfirst: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Heap,
+                    Quoteˉsourceˉoffset + Quoteˉcursor
+                ));
+                var Quoteˉwidth: u32 = 1u32;
+                var Quoteˉpiece: bytes = Invalid;
+                var Quoteˉpieceˉset: bool = false;
+                var Quoteˉfirstˉunit: u32 = 0u32;
+                var Quoteˉsecondˉunit: u32 = 0u32;
+                var Quoteˉunitˉcount: u32 = 0u32;
+                if Quoteˉfirst <= 127u32 {
+                    if Quoteˉfirst == 34u32 {
+                        Quoteˉpiece = Bytesˉconcat(
+                            Bytesˉfromˉu8(92u8),
+                            Bytesˉfromˉu8(34u8)
+                        );
+                        Quoteˉpieceˉset = true;
+                    }
+                    if Quoteˉfirst == 92u32 {
+                        Quoteˉpiece = Bytesˉconcat(
+                            Bytesˉfromˉu8(92u8),
+                            Bytesˉfromˉu8(92u8)
+                        );
+                        Quoteˉpieceˉset = true;
+                    }
+                    if Quoteˉfirst == 8u32 {
+                        Quoteˉpiece = Bytesˉconcat(
+                            Bytesˉfromˉu8(92u8),
+                            Bytesˉfromˉu8(98u8)
+                        );
+                        Quoteˉpieceˉset = true;
+                    }
+                    if Quoteˉfirst == 12u32 {
+                        Quoteˉpiece = Bytesˉconcat(
+                            Bytesˉfromˉu8(92u8),
+                            Bytesˉfromˉu8(102u8)
+                        );
+                        Quoteˉpieceˉset = true;
+                    }
+                    if Quoteˉfirst == 10u32 {
+                        Quoteˉpiece = Bytesˉconcat(
+                            Bytesˉfromˉu8(92u8),
+                            Bytesˉfromˉu8(110u8)
+                        );
+                        Quoteˉpieceˉset = true;
+                    }
+                    if Quoteˉfirst == 13u32 {
+                        Quoteˉpiece = Bytesˉconcat(
+                            Bytesˉfromˉu8(92u8),
+                            Bytesˉfromˉu8(114u8)
+                        );
+                        Quoteˉpieceˉset = true;
+                    }
+                    if Quoteˉfirst == 9u32 {
+                        Quoteˉpiece = Bytesˉconcat(
+                            Bytesˉfromˉu8(92u8),
+                            Bytesˉfromˉu8(116u8)
+                        );
+                        Quoteˉpieceˉset = true;
+                    }
+                    if Quoteˉpieceˉset {
+                        Quoteˉpieceˉset = true;
+                    } else {
+                        if Quoteˉfirst >= 32u32 {
+                            if Quoteˉfirst <= 126u32 {
+                                let Quoteˉasciiˉbytes: bytes =
+                                    Bytesˉfromˉu32ˉlittle(Quoteˉfirst);
+                                Quoteˉpiece = Bytesˉslice(
+                                    Quoteˉasciiˉbytes,
+                                    0u32,
+                                    1u32
+                                );
+                                Quoteˉpieceˉset = true;
+                            }
+                        }
+                    }
+                    if Quoteˉpieceˉset {
+                        Quotedˉvalue = Bytesˉconcat(
+                            Quotedˉvalue,
+                            Quoteˉpiece
+                        );
+                    } else {
+                        Quoteˉfirstˉunit = Quoteˉfirst;
+                        Quoteˉunitˉcount = 1u32;
+                    }
+                } else {
+                    let Quoteˉsecond: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                        Heap,
+                        Quoteˉsourceˉoffset + Quoteˉcursor + 1u32
+                    ));
+                    if Quoteˉfirst <= 223u32 {
+                        Quoteˉwidth = 2u32;
+                        Quoteˉfirstˉunit =
+                            (Quoteˉfirst - 192u32) * 64u32
+                            + Quoteˉsecond - 128u32;
+                        Quoteˉunitˉcount = 1u32;
+                    } else {
+                        let Quoteˉthird: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                            Heap,
+                            Quoteˉsourceˉoffset + Quoteˉcursor + 2u32
+                        ));
+                        if Quoteˉfirst <= 239u32 {
+                            Quoteˉwidth = 3u32;
+                            Quoteˉfirstˉunit =
+                                (Quoteˉfirst - 224u32) * 4096u32
+                                + (Quoteˉsecond - 128u32) * 64u32
+                                + Quoteˉthird - 128u32;
+                            Quoteˉunitˉcount = 1u32;
+                        } else {
+                            let Quoteˉfourth: u32 = U32ˉfromˉu8(
+                                Bytesˉreadˉu8(
+                                    Heap,
+                                    Quoteˉsourceˉoffset + Quoteˉcursor + 3u32
+                                )
+                            );
+                            Quoteˉwidth = 4u32;
+                            var Quoteˉthirdˉpart: u32 = Quoteˉthird - 128u32;
+                            var Quoteˉsurrogateˉquotient: u32 =
+                                (Quoteˉfirst - 240u32) * 256u32
+                                + (Quoteˉsecond - 128u32) * 4u32;
+                            if Quoteˉthirdˉpart >= 48u32 {
+                                Quoteˉthirdˉpart = Quoteˉthirdˉpart - 48u32;
+                                Quoteˉsurrogateˉquotient =
+                                    Quoteˉsurrogateˉquotient + 3u32;
+                            } else {
+                                if Quoteˉthirdˉpart >= 32u32 {
+                                    Quoteˉthirdˉpart = Quoteˉthirdˉpart - 32u32;
+                                    Quoteˉsurrogateˉquotient =
+                                        Quoteˉsurrogateˉquotient + 2u32;
+                                } else {
+                                    if Quoteˉthirdˉpart >= 16u32 {
+                                        Quoteˉthirdˉpart =
+                                            Quoteˉthirdˉpart - 16u32;
+                                        Quoteˉsurrogateˉquotient =
+                                            Quoteˉsurrogateˉquotient + 1u32;
+                                    }
+                                }
+                            }
+                            Quoteˉsurrogateˉquotient =
+                                Quoteˉsurrogateˉquotient - 64u32;
+                            let Quoteˉsurrogateˉremainder: u32 =
+                                Quoteˉthirdˉpart * 64u32
+                                + Quoteˉfourth - 128u32;
+                            Quoteˉfirstˉunit =
+                                55296u32 + Quoteˉsurrogateˉquotient;
+                            Quoteˉsecondˉunit =
+                                56320u32 + Quoteˉsurrogateˉremainder;
+                            Quoteˉunitˉcount = 2u32;
+                        }
+                    }
+                }
+                var Quoteˉunitˉindex: u32 = 0u32;
+                while Quoteˉunitˉindex < Quoteˉunitˉcount {
+                    var Quoteˉunit: u32 = Quoteˉfirstˉunit;
+                    if Quoteˉunitˉindex == 1u32 {
+                        Quoteˉunit = Quoteˉsecondˉunit;
+                    }
+                    Quotedˉvalue = Bytesˉconcat(
+                        Quotedˉvalue,
+                        Bytesˉconcat(
+                            Bytesˉfromˉu8(92u8),
+                            Bytesˉfromˉu8(117u8)
+                        )
+                    );
+                    var Quoteˉhexˉplace: u32 = 4096u32;
+                    var Quoteˉhexˉindex: u32 = 0u32;
+                    while Quoteˉhexˉindex < 4u32 {
+                        var Quoteˉhexˉdigit: u32 = 0u32;
+                        while Quoteˉunit >= Quoteˉhexˉplace {
+                            Quoteˉunit = Quoteˉunit - Quoteˉhexˉplace;
+                            Quoteˉhexˉdigit = Quoteˉhexˉdigit + 1u32;
+                        }
+                        var Quoteˉhexˉascii: u32 = 48u32 + Quoteˉhexˉdigit;
+                        if Quoteˉhexˉdigit >= 10u32 {
+                            Quoteˉhexˉascii = 65u32 + Quoteˉhexˉdigit - 10u32;
+                        }
+                        let Quoteˉhexˉbytes: bytes =
+                            Bytesˉfromˉu32ˉlittle(Quoteˉhexˉascii);
+                        Quotedˉvalue = Bytesˉconcat(
+                            Quotedˉvalue,
+                            Bytesˉslice(Quoteˉhexˉbytes, 0u32, 1u32)
+                        );
+                        Quoteˉhexˉindex = Quoteˉhexˉindex + 1u32;
+                        if Quoteˉhexˉindex == 1u32 {
+                            Quoteˉhexˉplace = 256u32;
+                        }
+                        if Quoteˉhexˉindex == 2u32 {
+                            Quoteˉhexˉplace = 16u32;
+                        }
+                        if Quoteˉhexˉindex == 3u32 {
+                            Quoteˉhexˉplace = 1u32;
+                        }
+                    }
+                    Quoteˉunitˉindex = Quoteˉunitˉindex + 1u32;
+                }
+                Quoteˉcursor = Quoteˉcursor + Quoteˉwidth;
+            }
+            Quotedˉvalue = Bytesˉconcat(
+                Quotedˉvalue,
+                Bytesˉfromˉu8(34u8)
+            );
+            let Quotedˉlength: u32 = Bytesˉlength(Quotedˉvalue);
+            let Quotedˉoffset: u32 = Bytesˉlength(Heap);
+            if Quotedˉlength > 16384u32 {
+                Guestˉstatus = 3015u32;
+                Running = false;
+            } else {
+                if Quotedˉoffset > 65536u32 - Quotedˉlength {
+                    Guestˉstatus = 3018u32;
+                    Running = false;
+                } else {
+                    Heap = Bytesˉconcat(Heap, Quotedˉvalue);
+                    Stack = Bytesˉconcat(
+                        Stack,
+                        Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(Quotedˉoffset),
+                            Bytesˉfromˉu32ˉlittle(Quotedˉlength)
+                        )
+                    );
+                }
+            }
+            Pc = Pc + 1u32;
+            Handled = true;
         }
 
         var Isˉdescriptorˉconcat: bool = false;

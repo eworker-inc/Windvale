@@ -50,6 +50,8 @@ $TextBytesRangeSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Tex
 $TextBytesU16Source = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-U16-Failure.wv'
 $TextBytesValueSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-Value-Failure.wv'
 $TextBytesHeapSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-Heap-Failure.wv'
+$FormattingQuoteSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Formatting-Quote-Interpreter-Guest.wv'
+$Sha256Source = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Sha256-Interpreter-Guest.wv'
 $StructuralDataSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Data-And-Text.wv'
 $StructuralTypesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Nominal-Types.wv'
 $StructuralCapabilitiesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv'
@@ -95,6 +97,8 @@ $TextBytesRangeWvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-Range-
 $TextBytesU16Wvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-U16-Failure.wvb'
 $TextBytesValueWvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-Value-Failure.wvb'
 $TextBytesHeapWvb = Join-Path $ArtifactDirectory 'Text-Bytes-Interpreter-Heap-Failure.wvb'
+$FormattingQuoteWvb = Join-Path $ArtifactDirectory 'Formatting-Quote-Interpreter-Guest.wvb'
+$Sha256Wvb = Join-Path $ArtifactDirectory 'Sha256-Interpreter-Guest.wvb'
 $StructuralDataWvb = Join-Path $ArtifactDirectory 'Structural-Data-And-Text.wvb'
 $StructuralTypesWvb = Join-Path $ArtifactDirectory 'Structural-Nominal-Types.wvb'
 $StructuralCapabilitiesWvb = Join-Path $ArtifactDirectory 'Structural-Hosted-Capabilities.wvb'
@@ -218,6 +222,8 @@ Invoke-Windvale @('compile', $TextBytesRangeSource, '-o', $TextBytesRangeWvb)
 Invoke-Windvale @('compile', $TextBytesU16Source, '-o', $TextBytesU16Wvb)
 Invoke-Windvale @('compile', $TextBytesValueSource, '-o', $TextBytesValueWvb)
 Invoke-Windvale @('compile', $TextBytesHeapSource, '-o', $TextBytesHeapWvb)
+Invoke-Windvale @('compile', $FormattingQuoteSource, '-o', $FormattingQuoteWvb)
+Invoke-Windvale @('compile', $Sha256Source, '-o', $Sha256Wvb)
 Invoke-Windvale @('compile', $StructuralDataSource, '-o', $StructuralDataWvb)
 Invoke-Windvale @('compile', $StructuralTypesSource, '-o', $StructuralTypesWvb)
 Invoke-Windvale @('compile', $StructuralCapabilitiesSource, '-o', $StructuralCapabilitiesWvb)
@@ -343,7 +349,9 @@ node $EngineVerifier `
     $TextBytesRangeWvb `
     $TextBytesU16Wvb `
     $TextBytesValueWvb `
-    $TextBytesHeapWvb
+    $TextBytesHeapWvb `
+    $FormattingQuoteWvb `
+    $Sha256Wvb
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'

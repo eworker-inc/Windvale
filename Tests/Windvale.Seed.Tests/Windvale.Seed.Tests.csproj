@@ -259,6 +259,12 @@
       Include="../Fixtures/Source-Wvb/Text-Bytes-Interpreter-Heap-Failure.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Text-Bytes-Interpreter-Heap-Failure.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Formatting-Quote-Interpreter-Guest.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Formatting-Quote-Interpreter-Guest.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Sha256-Interpreter-Guest.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Sha256-Interpreter-Guest.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Data-And-Text.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Data-And-Text.wv" />
     <EmbeddedResource

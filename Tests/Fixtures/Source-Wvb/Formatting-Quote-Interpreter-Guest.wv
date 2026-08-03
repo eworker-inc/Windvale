@@ -1,0 +1,63 @@
+module Sourceˉwvbˉformattingˉquoteˉinterpreter profile portable;
+
+data I32ˉminimum: bytes = [45, 50, 49, 52, 55, 52, 56, 51, 54, 52, 56];
+data I32ˉmaximum: bytes = [50, 49, 52, 55, 52, 56, 51, 54, 52, 55];
+data Zero: bytes = [48];
+data U32ˉmaximum: bytes = [52, 50, 57, 52, 57, 54, 55, 50, 57, 53];
+data U8ˉmaximum: bytes = [50, 53, 53];
+data Quoteˉinput: bytes = [
+    34, 92, 8, 12, 10, 13, 9, 65, 127,
+    194, 162,
+    226, 130, 172,
+    240, 159, 152, 128
+];
+data Quoteˉexpected: bytes = [
+    34,
+    92, 34,
+    92, 92,
+    92, 98,
+    92, 102,
+    92, 110,
+    92, 114,
+    92, 116,
+    65,
+    92, 117, 48, 48, 55, 70,
+    92, 117, 48, 48, 65, 50,
+    92, 117, 50, 48, 65, 67,
+    92, 117, 68, 56, 51, 68,
+    92, 117, 68, 69, 48, 48,
+    34
+];
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    if !Bytesˉequal(
+        Textˉtoˉutf8(I32ˉformat(-2147483647 - 1)),
+        I32ˉminimum
+    ) { return 1; }
+    if !Bytesˉequal(Textˉtoˉutf8(I32ˉformat(2147483647)), I32ˉmaximum) {
+        return 2;
+    }
+    if !Bytesˉequal(Textˉtoˉutf8(I32ˉformat(0)), Zero) { return 3; }
+    if !Bytesˉequal(Textˉtoˉutf8(U32ˉformat(4294967295u32)), U32ˉmaximum) {
+        return 4;
+    }
+    if !Bytesˉequal(Textˉtoˉutf8(U8ˉformat(255u8)), U8ˉmaximum) {
+        return 5;
+    }
+    let Quoted: bytes = Textˉtoˉutf8(Textˉquote(Textˉfromˉutf8(Quoteˉinput)));
+    if !Bytesˉequal(Quoted, Quoteˉexpected) { return 6; }
+    return 42;
+}
