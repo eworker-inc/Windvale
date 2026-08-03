@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Protected-process contract version 13 is the current Probe-34 implemented candidate. It retains version 12's two-generation reclaim/rebuild and bounded request/reply, then gives init an independently lived immutable `WVRS 1` mapping, dynamic guest lookup, and explicit peer-death cleanup. [Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns version 13. Version 11 remains the latest cross-host-qualified process contract under [Decision 0133](../Documents/Decisions/0133-Frame-Owned-Direct-Native-Records.md).
+Protected-process contract version 13 is the current cross-host-qualified Probe-34 implementation. It retains version 12's two-generation reclaim/rebuild and bounded request/reply, then gives init an independently lived immutable `WVRS 1` mapping, dynamic guest lookup, and explicit peer-death cleanup. [Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns version 13; [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) qualifies the integrated ABI-22 rebuild at exact descendant `2591cd5`.
 
 This is an internal experiment, not a stable syscall ABI, general process manager, filesystem namespace, transferable capability system, arbitrary WVB loader, complete verifier, or JIT.
 
@@ -126,7 +126,7 @@ The contained user-fault scenario sends `6` then executes privileged `CLI`; clea
 | Normal process-machine WVO | 482,698 | `8b8c10b829ebad1f27801a85b246aeec964e4c38ef0a18bf8738afcec5ffad27` |
 | Fault process-machine WVO | 482,762 | `8174add03c1b327152b38c0513215407ac3c1b403dd0dd63c783669e1590304b` |
 
-The current candidate passes all 31 bounded OS tests and all four Windows pinned-QEMU scenarios. Fresh Debian and complete dual-host qualification are pending; no Debian QEMU execution is claimed.
+Exact descendant `2591cd5` passes all 31 bounded OS tests on Windows and digest-pinned Debian in GitHub Verify run 30797770080. All four pinned-QEMU scenarios pass on Windows; no Debian QEMU execution is claimed.
 
 ## Deliberate limits
 

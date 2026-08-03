@@ -1,7 +1,7 @@
 # Decision 0147: Native descriptor ownership plan
 
 - Date: 2026-08-03
-- Status: Implemented with local Windows evidence; cross-host qualification pending
+- Status: Implemented and cross-host qualified
 - Retains: Native ABI 21, execution-context version 7, service-table version 5, target `x86-64-wvb-baseline-v21`, the existing 16-byte descriptor, the 16 MiB dynamic-value arena, and every generated machine byte
 - Refines: [Decision 0133](0133-Frame-Owned-Direct-Native-Records.md), [Decision 0137](0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), and [Decision 0143](0143-Bounded-First-Fit-Dynamic-Arena-Replay.md)
 
@@ -25,7 +25,7 @@ Emitting allocator operations before publishing those answers would hide lifetim
 - Reconstruct the complete plan with a separately implemented oracle. The verifier compares every function summary and ordered action, and the selector refuses code generation unless the reconstruction agrees.
 - Do not consume the plan in machine instruction selection yet. ABI 21, its descriptor reserved word, context layout, service table, fragment bytes, host containers, and OS consumers remain unchanged.
 
-## Local evidence
+## Evidence
 
 The exact 12-module compiler lowers to 328 native functions and a deterministic 186,557-action ownership plan. It accounts for 293 descriptor parameter bindings, zero assigned descriptor parameters, 3,190 descriptor locals, 524 descriptor-bearing record-parameter fields, zero assigned record parameters, 9,287 descriptor-bearing record-local fields, 6,182 descriptor value identities, and 17,898 descriptor-bearing record-value fields.
 
@@ -39,7 +39,9 @@ The exact compiler evidence includes both static borrowing and hosted file-snaps
 
 A focused portable fixture combines a static byte constant, allocations, a slice alias, mutable descriptor-local replacement, a two-descriptor direct record, internal calls, a record return, field selection, and a descriptor return. Repeated lowering produces the same actions, the independent reconstruction agrees, and the unchanged ABI-21 fragment executes to result zero. Mutating one action kind or the aggregate action count is rejected as `WVN2903`.
 
-Focused ownership, exact-compiler boundary, dynamic descriptor call/return, nominal record, and exact native-output checks pass locally after zero-warning builds. After integration with Decisions 0144 and 0145, change-aware Windows verification completes a zero-warning Release build and passes all 83 selected Seed tests in 324.221 suite seconds; the golden compiler contract takes 213.423 seconds. After the subsequent Decision 0146 WebAssembly rebase, the focused ownership and exact-compiler checks pass again with a zero-warning build. This is proportional development evidence rather than cross-host qualification. No WVB/WVO bytes, source semantics, native ABI, generated machine bytes, OS source, or guest artifact changes, so QEMU is not rerun.
+Focused ownership, exact-compiler boundary, dynamic descriptor call/return, nominal record, and exact native-output checks pass locally after zero-warning builds. After integration with Decisions 0144 and 0145, change-aware Windows verification completes a zero-warning Release build and passes all 83 selected Seed tests in 324.221 suite seconds; the golden compiler contract takes 213.423 seconds. After the subsequent Decision 0146 WebAssembly rebase, the focused ownership and exact-compiler checks pass again with a zero-warning build. No WVB/WVO bytes, source semantics, native ABI, generated machine bytes, OS source, or guest artifact changes, so QEMU is not rerun.
+
+Exact descendant commit `2591cd557f2b3055ae1e4ba96561bf3ca7864283` passes GitHub [Verify run 30797770080](https://github.com/eworker-inc/Windvale/actions/runs/30797770080). Windows and digest-pinned Debian 12 each complete all 84 Seed tests, including the exact ownership-plan reconstruction and the integrated ABI-22 compiler reproduction. This qualifies the deterministic action plan and independent reconstruction across both hosts without claiming that ABI 22 emits the later full-allocator schedule.
 
 ## Consequences
 

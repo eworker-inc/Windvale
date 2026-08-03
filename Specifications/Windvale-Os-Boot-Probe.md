@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Firmware Probe 34 is the current implemented candidate for an immutable guest resource store, terminal peer cleanup, and the shared ABI-22 native backend. It composes ABI 22/context 7, WVA seam 10, admission 4/bridge 2, retained bridge 10, memory 13, paging 4, protected processes 13, channel 3, interpreter profile 6, `WVRES005`, and `WVBR002`.
+Firmware Probe 34 is the current cross-host-qualified implementation for an immutable guest resource store, terminal peer cleanup, and the shared ABI-22 native backend. It composes ABI 22/context 7, WVA seam 10, admission 4/bridge 2, retained bridge 10, memory 13, paging 4, protected processes 13, channel 3, interpreter profile 6, `WVRES005`, and `WVBR002`.
 
-[Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns Probe 34's resource/lifecycle contract; [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) rebuilds it through ABI 22 and memory 13. The integrated candidate passes all 31 bounded OS tests and all four Windows pinned-QEMU scenarios; fresh dual-host qualification remains pending. [Decision 0133](../Documents/Decisions/0133-Frame-Owned-Direct-Native-Records.md) retains the latest cross-host-qualified Probe-32 history.
+[Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns Probe 34's resource/lifecycle contract; [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) rebuilds it through ABI 22 and memory 13. Exact descendant `2591cd5` passes all 31 bounded OS tests on Windows and digest-pinned Debian in GitHub Verify run 30797770080; all four pinned-QEMU scenarios pass on Windows. [Decision 0133](../Documents/Decisions/0133-Frame-Owned-Direct-Native-Records.md) retains Probe-32 history.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 

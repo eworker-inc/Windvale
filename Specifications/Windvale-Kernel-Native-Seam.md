@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Native ABI 22, WVA seam 10, exception version 3, admission bridge 2, retained bridge 10, and paging 4 compose the current Probe-34 implemented candidate with interpreter profile 6, memory 13, protected processes 13, and channel 3. Resource records remain version 5 while the OS-private directory remains `WVBR002`. [Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns the store/process/channel composition; [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) rebuilds it through ABI 22. Probe 32 remains the latest complete cross-host-qualified OS baseline; fresh dual-host qualification of Probe 34 is pending.
+Native ABI 22, WVA seam 10, exception version 3, admission bridge 2, retained bridge 10, and paging 4 compose the current cross-host-qualified Probe-34 implementation with interpreter profile 6, memory 13, protected processes 13, and channel 3. Resource records remain version 5 while the OS-private directory remains `WVBR002`. [Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns the store/process/channel composition; [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) rebuilds it through ABI 22. Exact descendant `2591cd5` passes the complete Windows and digest-pinned Debian qualification gates in GitHub Verify run 30797770080; all four pinned-QEMU scenarios pass on Windows.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 

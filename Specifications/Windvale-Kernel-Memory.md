@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel memory version 13 is the current Probe-34 implemented candidate. It composes version 12's second init RX page and immutable `WVRS 1` mapping with ABI 22's additional client code page while retaining the compact client stack, checked tail release, and same-root reuse. [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) owns version 13; [Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns the version-12 predecessor. Version 11 remains the latest cross-host-qualified contract under [Decision 0133](../Documents/Decisions/0133-Frame-Owned-Direct-Native-Records.md).
+Kernel memory version 13 is the current cross-host-qualified Probe-34 contract. It composes version 12's second init RX page and immutable `WVRS 1` mapping with ABI 22's additional client code page while retaining the compact client stack, checked tail release, and same-root reuse. [Decision 0150](../Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) owns version 13 and is qualified at exact descendant `2591cd5` in GitHub Verify run 30797770080; [Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns the version-12 predecessor.
 
 This remains one bounded deterministic boot arena, not a general physical-memory manager. Release is LIFO-only and can restore only a caller-proven suffix ending at the current cursor.
 

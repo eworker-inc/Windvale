@@ -1,7 +1,7 @@
 # Decision 0142: Immutable guest resource store and peer cleanup
 
 - Date: 2026-08-03
-- Status: Implemented candidate; fresh dual-host qualification pending
+- Status: Implemented and cross-host qualified through the ABI-22 rebuild
 - Advances: Firmware Probe 34, WVA seam 10, `WVKMEM12`, `WVPROC13`, `WVCHAN03`, and `WVRES005`
 - Retains: Canonical WVB 1.6, native ABI 21/context 7, paging 4, admission 4/bridge 2, retained bridge 10, `WVBR002`, interpreter profile 6, and the two-generation reclaim/rebuild proof
 
@@ -23,11 +23,11 @@ Putting resource names or store parsing in the kernel would collapse service pol
 - Require both client generations to receive the dynamically constructed response, validate it completely, interpret the admitted WVB to result `6`, and complete the existing grant revocation and exact tail reuse proof.
 - Advance firmware to Probe 34 and replace the serial marker with `ipc=dynamic-resource-store`.
 
-## Local evidence
+## Evidence
 
 All 31 bounded OS tests pass on Windows. Deterministic pins cover the 1,929-byte init WVA object, 5,015-byte linked init image, immutable store image, process-machine objects, and all four firmware scenarios. Pinned QEMU 11.0/Q35/TCG completes normal, invalid-opcode, general-protection, and contained user-fault scenarios with exact Probe-34 serial evidence.
 
-Fresh Debian execution and the complete dual-host qualification gate remain pending, so this decision does not replace the latest cross-host-qualified Probe-32 baseline.
+Exact descendant commit `2591cd557f2b3055ae1e4ba96561bf3ca7864283` passes all 31 bounded OS tests on Windows and digest-pinned Debian 12 in GitHub [Verify run 30797770080](https://github.com/eworker-inc/Windvale/actions/runs/30797770080). The same ABI-22 composition passes all four pinned-QEMU scenarios on Windows; no Debian QEMU execution is claimed.
 
 ## Consequences
 

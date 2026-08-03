@@ -1,10 +1,10 @@
 # Windvale Seed verification evidence
 
-- Evidence date: 2026-08-02
+- Evidence date: 2026-08-03
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified implementation commit: `ea1aa89ba204ead633f8340c61b2bacc716881fd`
-- Latest pinned Windvale OS qualified implementation commit: `ea1aa89ba204ead633f8340c61b2bacc716881fd`
+- Latest cross-host Seed qualified implementation commit: `2591cd557f2b3055ae1e4ba96561bf3ca7864283`
+- Latest pinned Windvale OS qualified implementation commit: `2591cd557f2b3055ae1e4ba96561bf3ca7864283`
 
 ## Requirement evidence
 
@@ -1304,7 +1304,7 @@ The exact Decision 0147 plan projects its 435 acquisitions, 34,772 retains, and 
 
 Exact commit `85af9c502467b236877fc77dcdac344c56b09735` passes GitHub [Verify run 30795423694](https://github.com/eworker-inc/Windvale/actions/runs/30795423694). Windows and digest-pinned Debian 12 each complete zero-warning builds and all 84 selected Seed tests. Windows takes 319.682 suite seconds with a 201.809-second golden contract and nine-millisecond allocator case. Debian takes 250.651 suite seconds with a 157.529-second golden contract and six-millisecond allocator case. This cross-host qualifies the canonical WVA/WVO identity, platform-common live calling convention, independent reference agreement, and integrated loader behavior.
 
-## Local native descriptor allocator emission schedule
+## Qualified native descriptor allocator emission schedule
 
 [Decision 0151](../Decisions/0151-Native-Descriptor-Allocator-Emission-Schedule.md) attaches a format-1 physical emission plan after independently verified semantic ownership and direct-record offsets. It fixes candidate context 8 at 128 bytes by appending allocator-state and WVA-leaf pointers at offsets 112 and 120. Direct locations name an absolute frame cell and owner displacement 12; indirect locations retain a borrowed record-handle cell plus `field * 16 + 12`. The plan is verified beside ABI 22 but does not alter or invoke Decision 0150's generation/checkpoint policy.
 
@@ -1312,9 +1312,11 @@ The focused fixture proves generated acquisition, pre-copy replacement, post-def
 
 The exact 328-function compiler maps all 180,190 allocator invocations and 6,367 ownership movements. Generated code owns 180,168 calls, runtime services own 22 acquisitions, and 265 functions need request scratch. Phase counts are 25,918 before-operation, 435 allocation, 44,904 after-operation, 108,933 terminator-cleanup, and zero entry calls. Target/source rows contain 209,836 direct and 5,126 indirect location occurrences. The largest candidate frame is 1,492 cells; function 204, `Compilerˉsourceˉwirˉcompileˉblock`, is largest with 46,834 calls. The canonical emission-map SHA-256 is `b1e985c17c64f98993964bb399b3a9e47cc5666f1fc03d6727a05d5b5da46ff6`.
 
-Focused ownership/emission and exact-compiler checks pass after zero-warning Release builds. Change-aware Windows verification completes another zero-warning build and passes all 84 selected Seed tests in 344.346 suite seconds; the unchanged golden contract takes 216.439 seconds, the ownership/emission fixture takes 17 milliseconds, and the exact-compiler boundary takes 5.496 seconds. After integration with Decision 0150, focused ownership, exact native file-output, and expanded WebAssembly checks pass again after zero-warning builds. This slice changes no ABI-22 selected bytes, native context, host container, OS input, or QEMU artifact. Cross-host qualification and actual full-allocator selection remain pending.
+Focused ownership/emission and exact-compiler checks pass after zero-warning Release builds. Change-aware Windows verification completes another zero-warning build and passes all 84 selected Seed tests in 344.346 suite seconds; the unchanged golden contract takes 216.439 seconds, the ownership/emission fixture takes 17 milliseconds, and the exact-compiler boundary takes 5.496 seconds. After integration with Decision 0150, focused ownership, exact native file-output, and expanded WebAssembly checks pass again after zero-warning builds. This slice changes no ABI-22 selected bytes, native context, host container, OS input, or QEMU artifact.
 
-## Implemented ABI-22 bounded dynamic-value lifetimes
+Exact implementation commit `2591cd557f2b3055ae1e4ba96561bf3ca7864283` passes GitHub [Verify run 30797770080](https://github.com/eworker-inc/Windvale/actions/runs/30797770080). Windows and digest-pinned Debian 12 each complete all 84 Seed tests, the golden compiler contract, all 31 OS tests, and the native CLI gate after zero-warning builds. Windows takes 331.420 Seed-suite seconds and Debian takes 238.621 seconds. This cross-host qualifies the physical schedule and independent reconstruction while actual context-8 publication and full-allocator selection remain pending.
+
+## Qualified ABI-22 bounded dynamic-value lifetimes
 
 [Decision 0150](../Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md) advances the single shared selector and independent decoder to ABI 22. Generated byte buffers of at least 64 bytes carry an eight-byte checked capacity/generation header; `Bytesˉconcat` reuses only a valid current owner at the arena tail, doubles capacity through 2 MiB, and caps it at 4 MiB. Complete descriptor copies propagate the high word. Every non-entry descriptor/record hidden result saves the entry arena cursor; direct descriptor returns reset or compact safe ranges, and scalar-only record returns roll back. Descriptor-bearing aggregate relocation remains deferred until caller-liveness evidence makes it safe. Corrupt ownership thresholds and checkpoint stencils fail as `WVN3030`.
 
@@ -1322,7 +1324,9 @@ The exact compiler selects 17,130,441 code bytes with SHA-256 `af8db63675a2441e5
 
 The integrated Probe-34 rebuild retains its 755-cell `Executeˉmain`, 24,240-byte deepest call path, six client stack pages, zero record-arena use, exact guest WVB, `WVPROC13`, dynamic resource lookup, and terminal peer cleanup. Its interpreter WVO remains 447,652 bytes / SHA-256 `0748200721cab7d5c3c6a43916fc623dfa0ee35e304fea6ad899877c9601c8e2`; the normal linked client becomes 447,757 bytes / `aa3fdd6e836c71add4f24b6992fcfae090bf8d5aa056ec068a9c21dea516c919`, and the fault client becomes 447,741 bytes / `3344865517e56066ec0b8fbd7e5f80695a715fa04adc9959a876a73e04bbbbe8`. The client needs 110 RX pages and a 121-page root, so `WVKMEM13` supplies a 144-page arena beside the retained 11-page init/resource extent. Four pinned-QEMU Probe-34 scenarios pass with the exact Decision 0150 identities.
 
-Immediately before the additive WebAssembly Decision 0149 rebase, integrated Windows Qualification completes in 646.9 seconds with a zero-warning Release build, all 84 Seed tests in 352.724 seconds including the 212.138-second golden contract, all 31 OS tests, and the complete native CLI gate. Decision 0149 changes no native or OS input; its expanded WebAssembly case and the complete native Stage 1-to-Stage 2 case pass after rebase. Complete Linux Qualification remains pending.
+Immediately before the additive WebAssembly Decision 0149 rebase, integrated Windows Qualification completes in 646.9 seconds with a zero-warning Release build, all 84 Seed tests in 352.724 seconds including the 212.138-second golden contract, all 31 OS tests, and the complete native CLI gate. Decision 0149 changes no native or OS input; its expanded WebAssembly case and the complete native Stage 1-to-Stage 2 case pass after rebase.
+
+Exact descendant commit `2591cd557f2b3055ae1e4ba96561bf3ca7864283` passes GitHub [Verify run 30797770080](https://github.com/eworker-inc/Windvale/actions/runs/30797770080). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 84 Seed tests, the golden compiler contract, all 31 OS tests, and the native CLI gate. Windows takes 331.420 Seed-suite seconds with a 191.546-second golden contract and approximately 11 minutes 45 seconds for the job. Debian takes 238.621 Seed-suite seconds with a 129.787-second golden contract and approximately 7 minutes 46 seconds for the job. Decision 0151 is additive and changes no selected ABI-22 bytes or OS inputs, so this exact descendant qualifies Decision 0150's complete native reproduction and integrated Probe-34 composition.
 
 ## Qualified bounded exact-compiler publication
 

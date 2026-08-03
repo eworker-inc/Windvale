@@ -1,7 +1,7 @@
 # Decision 0150: Bounded native dynamic-value lifetimes
 
 - Date: 2026-08-03
-- Status: Implemented candidate; cross-host qualification pending
+- Status: Implemented and cross-host qualified
 - Advances: Native ABI 22, target `x86-64-wvb-baseline-v22`, native host text/byte arena capacity to 64 MiB, and kernel memory `WVKMEM13`
 - Retains: Execution-context version 7, service-table version 5, canonical WVB 1.6 compiler identity, WVO 1.0, the 2,048-cell frame ceiling, the 32 MiB fragment ceiling, the 34 MiB publication-image ceiling, `WVPROC13`, Probe 34, `WVCHAN03`, `WVRES005`, and console-application format 1
 - Refines: [Decision 0071](0071-Native-Text-Arena-And-Core-Text-Services.md), [Decision 0115](0115-Exact-Compiler-Record-Lifetime-Pressure.md), [Decision 0133](0133-Frame-Owned-Direct-Native-Records.md), [Decision 0142](0142-Immutable-Guest-Resource-Store.md), [Decision 0147](0147-Native-Descriptor-Ownership-Plan.md), [Decision 0148](0148-First-Wva-Native-Descriptor-Allocator-Leaf.md), [Decision 0119](0119-First-Windows-Console-Application.md), and [Decision 0122](0122-First-Linux-Console-Application.md)
@@ -50,7 +50,9 @@ The shared Probe-34 rebuild retains the exact 24,240-byte deepest stack path, si
 | General protection | 568,320 | `9b905c8202c95ce20a0c72a9b7b2cf6f6bce4b99d7c0c18a1f65b24164444b23` | 3 |
 | Contained user fault | 568,832 | `e25741a6bd565af63498a199a7da9817a5fa8c60512a2c514a58c2e4311ed00d` | 0 |
 
-Immediately before the additive WebAssembly Decision 0149 rebase, integrated Windows Qualification completes in 646.9 seconds with a zero-warning Release build, all 84 Seed tests in 352.724 seconds including the 212.138-second golden contract, all 31 OS tests, and the complete native CLI gate. Decision 0149 changes no native or OS input; its expanded WebAssembly case and the complete native Stage 1-to-Stage 2 case both pass after rebase. Cross-host qualification remains pending.
+Immediately before the additive WebAssembly Decision 0149 rebase, integrated Windows Qualification completes in 646.9 seconds with a zero-warning Release build, all 84 Seed tests in 352.724 seconds including the 212.138-second golden contract, all 31 OS tests, and the complete native CLI gate. Decision 0149 changes no native or OS input; its expanded WebAssembly case and the complete native Stage 1-to-Stage 2 case both pass after rebase.
+
+Exact descendant commit `2591cd557f2b3055ae1e4ba96561bf3ca7864283` passes GitHub [Verify run 30797770080](https://github.com/eworker-inc/Windvale/actions/runs/30797770080). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 84 Seed tests, the qualification-only golden compiler contract, all 31 OS tests, and the complete native CLI gate. Windows takes 331.420 Seed-suite seconds with a 191.546-second golden contract; its job completes in approximately 11 minutes 45 seconds. Debian takes 238.621 Seed-suite seconds with a 129.787-second golden contract; its job completes in approximately 7 minutes 46 seconds. Descendant Decision 0151 changes no selected ABI-22 bytes or OS inputs, so this run cross-host qualifies Decision 0150's exact compiler reproduction and `WVKMEM13`/Probe-34 composition while also exercising the additive allocator-emission-plan verifier.
 
 ## Consequences
 

@@ -49,7 +49,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 - A Windvale-written typed WVIR producer with explicit blocks, temporaries, source spans, and an independent packed-directory validator
 - A Windvale-written WVIR-to-WVB backend that emits one canonical verified module from a validated source graph
 
-This implementation is the qualified Windvale bytecode compiler: Stage 0 builds Stage 1, and Stage 1 reproduces the exact Stage 2 WVB from the committed 12-module inventory on Windows and Debian. Implemented-candidate ABI 22 also runs Stage 1 as verified native x86-64 and reproduces the same Stage 2 bytes under a bounded host arena; cross-host qualification and standalone native-tool packaging remain open.
+This implementation is the qualified Windvale bytecode compiler: Stage 0 builds Stage 1, and Stage 1 reproduces the exact Stage 2 WVB from the committed 12-module inventory on Windows and Debian. Cross-host-qualified ABI 22 also runs Stage 1 as verified native x86-64 and reproduces the same Stage 2 bytes under a bounded host arena. Standalone native-tool packaging remains open.
 
 ### Reference compiler
 

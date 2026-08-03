@@ -1,7 +1,7 @@
 # Decision 0151: Native descriptor allocator emission schedule
 
 - Date: 2026-08-03
-- Status: Implemented with local Windows evidence; cross-host qualification pending
+- Status: Implemented and cross-host qualified
 - Retains: Native ABI 22, execution-context version 7, service-table version 5, target `x86-64-wvb-baseline-v22`, WVB 1.6, WVO 1.0, every selected ABI-22 byte, and all host/OS consumers
 - Plans: Candidate execution-context version 8 with an append-only 128-byte layout
 - Refines: [Decision 0147](0147-Native-Descriptor-Ownership-Plan.md) and [Decision 0148](0148-First-Wva-Native-Descriptor-Allocator-Leaf.md)
@@ -27,7 +27,7 @@ The integration also has a hidden register constraint. Generated code keeps its 
 - Keep borrowing, call borrowing, caller acceptance, and callee transfer as ownership movement without allocator calls. The complete emission count must equal acquire plus retain plus release and must remain within the ownership-plan limit.
 - Do not change ABI-22 descriptors, context bytes, generated code, fragment identity, native execution, console containers, or Windvale OS inputs in this planning slice.
 
-## Local evidence
+## Evidence
 
 The focused ownership fixture covers generated acquisition, aliasing, mutable descriptor replacement, descriptor-bearing direct records, an indirect borrowed record-parameter field, internal calls, descriptor and record returns, and return cleanup. Repeated lowering produces identical emission rows. The independent verifier agrees on every phase and direct/indirect location, and rejects a changed phase or aggregate invocation count as `WVN2905`. The unchanged ABI-22 fragment still executes successfully.
 
@@ -47,7 +47,9 @@ The rows reference 209,836 direct-frame and 5,126 indirect-record owner location
 b1e985c17c64f98993964bb399b3a9e47cc5666f1fc03d6727a05d5b5da46ff6
 ```
 
-Focused ownership/emission and exact-compiler boundary tests pass after zero-warning Release builds. Change-aware Windows verification then completes another zero-warning build and passes all 84 selected Seed tests in 344.346 suite seconds. The golden compiler contract takes 216.439 seconds, the ownership/emission fixture takes 17 milliseconds, and the exact-compiler boundary takes 5.496 seconds. This is proportional local Windows evidence rather than cross-host qualification. No selected fragment, executable container, OS source, guest artifact, or QEMU input changes.
+Focused ownership/emission and exact-compiler boundary tests pass after zero-warning Release builds. Change-aware Windows verification then completes another zero-warning build and passes all 84 selected Seed tests in 344.346 suite seconds. The golden compiler contract takes 216.439 seconds, the ownership/emission fixture takes 17 milliseconds, and the exact-compiler boundary takes 5.496 seconds. No selected fragment, executable container, OS source, guest artifact, or QEMU input changes.
+
+Exact implementation commit `2591cd557f2b3055ae1e4ba96561bf3ca7864283` passes GitHub [Verify run 30797770080](https://github.com/eworker-inc/Windvale/actions/runs/30797770080). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 84 Seed tests, the golden compiler contract, all 31 OS tests, and the complete native CLI gate. Windows takes 331.420 suite seconds with a 191.546-second golden contract; Debian takes 238.621 suite seconds with a 129.787-second golden contract. This qualifies the deterministic schedule, independent reconstruction, frame projection, and unchanged ABI-22 integration across both hosts. It does not select context 8 or emit allocator calls.
 
 ## Consequences
 
