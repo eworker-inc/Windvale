@@ -103,6 +103,7 @@ internal static class Program
     private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "99da55911c81218ac74442a695d340ed440c74515b830bcc659bd4b7df7b2d4b";
     private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507";
     private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a";
+    private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "42f3f947cccca8e44c279afce1b6e944682dc440e0e9cda6546883898d951f31";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
@@ -827,6 +828,9 @@ internal static class Program
 
     private static readonly string LINUX_HOSTED_CONSOLE_STARTUP_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Linux-X64-Hosted-Console.wva");
+
+    private static readonly string LINUX_HOSTED_COMPILER_STARTUP_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Linux-X64-Hosted-Compiler.wva");
 
     private static readonly string TYPED_SCALAR_X64_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Typed-Scalar-X64.wva");
@@ -3081,9 +3085,15 @@ internal static class Program
         string exportˉname,
         ReadOnlySpan<byte> imageˉstartup,
         uint startupˉaddress,
-        IReadOnlyDictionary<string, uint> targets)
+        IReadOnlyDictionary<string, uint> targets,
+        string? expectedˉwvoˉsha256 = null)
     {
-        var Object = Objectˉcodec.Readˉandˉverify(Assembleˉsuccess(source)).Value;
+        var Wvo = Assembleˉsuccess(source);
+        if (expectedˉwvoˉsha256 is not null)
+        {
+            Equal(expectedˉwvoˉsha256, Objectˉdigest.Calculateˉsha256(Wvo.AsSpan()));
+        }
+        var Object = Objectˉcodec.Readˉandˉverify(Wvo).Value;
         var Text = Object.Sections.Single();
         Equal(Objectˉarchitecture.X86ˉ64, Object.Architecture);
         Equal(exportˉname, Object.Symbols.Single(Symbol =>
@@ -7934,6 +7944,122 @@ internal static class Program
                 Windowsˉbundle,
                 Windowsˉbundle.Imageˉbytes.AsSpan()));
 
+        var Firstˉlinuxˉapplication = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
+            Compilerˉtool.Module.Capabilities,
+            Linuxˉbundle,
+            Nativeˉentry);
+        var Secondˉlinuxˉapplication = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
+            Compilerˉtool.Module.Capabilities,
+            Linuxˉbundle,
+            Nativeˉentry);
+        Sequenceˉequal(Firstˉlinuxˉapplication, Secondˉlinuxˉapplication);
+        Equal(
+            SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Firstˉlinuxˉapplication.AsSpan()));
+        var Verifiedˉlinuxˉapplication =
+            Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Firstˉlinuxˉapplication.AsSpan(),
+                Linuxˉbundle);
+        Equal(Nativeˉentry, Verifiedˉlinuxˉapplication.Nativeˉentryˉoffset);
+        Equal(17_158_144, Verifiedˉlinuxˉapplication.Layout.Applicationˉbytes);
+        Equal(17_147_447u, Verifiedˉlinuxˉapplication.Layout.Textˉbytes);
+        Equal(17_154_048u, Verifiedˉlinuxˉapplication.Layout.Dataˉfileˉoffset);
+        Equal(406_929_408u, Verifiedˉlinuxˉapplication.Layout.Dataˉvirtualˉbytes);
+        Equal(424_083_456u, Verifiedˉlinuxˉapplication.Layout.Imageˉvirtualˉbytes);
+        Sequenceˉequal(Linuxˉbundle.Imageˉbytes, Verifiedˉlinuxˉapplication.Bundleˉimage);
+
+        var Linuxˉapplicationˉlayout = Verifiedˉlinuxˉapplication.Layout;
+        uint Linuxˉserviceˉaddress(Nativeˉservice service) => checked(
+            Linuxˉhostedˉcompilerˉapplicationˉcontract.TEXT_ADDRESS +
+            Linuxˉhostedˉcompilerˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
+            (uint)Linuxˉbundle.Placements.Single(
+                Placement => Placement.Service == service).Imageˉoffset);
+        var Linuxˉstartupˉtargets = new Dictionary<string, uint>(StringComparer.Ordinal)
+        {
+            ["Argument_bytes"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Verifiedˉlinuxˉapplication.Runtime.Layout.Argumentˉbytesˉoffset),
+            ["Argument_table"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Verifiedˉlinuxˉapplication.Runtime.Layout.Argumentˉtableˉoffset),
+            ["Data_arena"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Verifiedˉlinuxˉapplication.Runtime.Layout.Dataˉarenaˉoffset),
+            ["Execution_context"] = Linuxˉapplicationˉlayout.Dataˉaddress,
+            ["File_input_scratch"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Verifiedˉlinuxˉapplication.Runtime.Layout.Fileˉinputˉscratchˉoffset),
+            ["File_input_table"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Hostedˉcompilerˉruntimeˉdata.FILE_INPUT_TABLE_OFFSET),
+            ["File_output_scratch"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Verifiedˉlinuxˉapplication.Runtime.Layout.Fileˉoutputˉscratchˉoffset),
+            ["File_output_table"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Hostedˉcompilerˉruntimeˉdata.FILE_OUTPUT_TABLE_OFFSET),
+            ["Name_arena"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Verifiedˉlinuxˉapplication.Runtime.Layout.Nameˉarenaˉoffset),
+            ["Native_main"] = checked(
+                Linuxˉhostedˉcompilerˉapplicationˉcontract.TEXT_ADDRESS +
+                Linuxˉhostedˉcompilerˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
+                Nativeˉentry),
+            ["Output_table"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Hostedˉcompilerˉruntimeˉdata.OUTPUT_TABLE_OFFSET),
+            ["Record_arena"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Verifiedˉlinuxˉapplication.Runtime.Layout.Recordˉarenaˉoffset),
+            ["Service_console_write"] = Linuxˉserviceˉaddress(
+                Nativeˉservice.Consoleˉwriteˉline),
+            ["Service_diagnostic_write"] = Linuxˉserviceˉaddress(
+                Nativeˉservice.Diagnosticˉwriteˉline),
+            ["Service_enum_name"] = Linuxˉserviceˉaddress(Nativeˉservice.Enumˉname),
+            ["Service_file_read"] = Linuxˉserviceˉaddress(Nativeˉservice.Fileˉreadˉbytes),
+            ["Service_file_write"] = Linuxˉserviceˉaddress(Nativeˉservice.Fileˉwriteˉbytes),
+            ["Service_process_argument"] = Linuxˉserviceˉaddress(
+                Nativeˉservice.Processˉargument),
+            ["Service_process_argument_count"] = Linuxˉserviceˉaddress(
+                Nativeˉservice.Processˉargumentˉcount),
+            ["Service_table"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Hostedˉcompilerˉruntimeˉdata.SERVICE_TABLE_OFFSET),
+            ["Service_text_concat"] = Linuxˉserviceˉaddress(Nativeˉservice.Textˉconcat),
+            ["Service_u32_format"] = Linuxˉserviceˉaddress(Nativeˉservice.U32ˉformat),
+            ["Service_utf8"] = Linuxˉserviceˉaddress(Nativeˉservice.Textˉutf8ˉisˉvalid),
+            ["Snapshot_table"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Verifiedˉlinuxˉapplication.Runtime.Layout.Snapshotˉtableˉoffset),
+            ["Text_arena"] = checked(Linuxˉapplicationˉlayout.Dataˉaddress +
+                Verifiedˉlinuxˉapplication.Runtime.Layout.Textˉarenaˉoffset),
+        };
+        Requireˉhostedˉstartupˉmatchesˉwva(
+            LINUX_HOSTED_COMPILER_STARTUP_SOURCE,
+            "Linux_hosted_compiler_startup",
+            Firstˉlinuxˉapplication.AsSpan(
+                Linuxˉapplicationˉlayout.Textˉfileˉoffset,
+                Linuxˉapplicationˉlayout.Startupˉbytes),
+            Linuxˉapplicationˉlayout.Textˉaddress,
+            Linuxˉstartupˉtargets,
+            Linuxˉhostedˉcompilerˉstartup.WVO_SHA256);
+
+        foreach (var Offset in new[]
+        {
+            0,
+            0x180 + 24,
+            Linuxˉapplicationˉlayout.Textˉfileˉoffset,
+            Linuxˉapplicationˉlayout.Textˉfileˉoffset +
+                Linuxˉapplicationˉlayout.Startupˉbytes,
+            Linuxˉapplicationˉlayout.Textˉfileˉoffset +
+                Linuxˉapplicationˉlayout.Bundleˉoffset,
+            checked((int)Linuxˉapplicationˉlayout.Dataˉfileˉoffset),
+        })
+        {
+            var Corrupted = Firstˉlinuxˉapplication.ToArray();
+            Corrupted[Offset] ^= 0x01;
+            Throwsˉinvalidˉdata(() =>
+                _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                    Corrupted,
+                    Linuxˉbundle));
+        }
+        Throwsˉinvalidˉdata(() =>
+            _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                Firstˉlinuxˉapplication.AsSpan(0, Firstˉlinuxˉapplication.Length - 1),
+                Linuxˉbundle));
+        Throwsˉinvalidˉdata(() =>
+            _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+                [.. Firstˉlinuxˉapplication, 0],
+                Linuxˉbundle));
+
         var Aggregateˉoverflowˉdata = new byte[
             Linkˉlimits.LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES - Firstˉobject.Length + 1];
         var Aggregateˉoverflowˉobject = Objectˉcodec.Write(new Objectˉfile(
@@ -7997,6 +8123,8 @@ internal static class Program
             $"linux-metadata-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉmetadata.AsSpan())} " +
             $"linux-runtime={Hostedˉcompilerˉruntimeˉdata.Plan(Consoleˉapplicationˉtarget.Linuxˉx64).Virtualˉbytes} " +
             $"linux-runtime-header-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉruntime.AsSpan())} " +
+            $"linux-application={Firstˉlinuxˉapplication.Length} " +
+            $"linux-application-sha256={Objectˉdigest.Calculateˉsha256(Firstˉlinuxˉapplication.AsSpan())} " +
             $"wvo={Measurement.Encodedˉobjectˉbytes} memory={Measurement.Materializedˉsectionˉbytes} " +
             $"linked={Measurement.Linkedˉimageˉbytes} text={Measurement.Textˉbytes} " +
             $"rodata={Measurement.Readˉonlyˉdataˉbytes} sections={Measurement.Sections} " +
