@@ -1,7 +1,7 @@
 # Decision 0167: First exact-compiler Windows executable container
 
 - Date: 2026-08-03
-- Status: Implemented with focused local Windows construction and execution evidence; Linux execution, cross-host qualification, and direct Stage 2 reproduction pending
+- Status: Implemented initial Windows candidate; the current paired format-3 containers and direct Stage 2 gate are cross-host qualified by Decision 0168
 - Adds: canonical WVA startup and deterministic independently verified format-3 Windows PE32+ compiler candidate
 - Retains: ABI 22, the exact compiler and service bytes, the bounded runtime-data plan, ordinary 4 MiB behavior, and all existing application bytes
 
@@ -37,9 +37,9 @@ The Windows loader ran the raw candidate, startup converted and published both a
 
 ## Consequences
 
-Both permanent hosts now have deterministic format-3 executable candidates derived from the same ABI-22 compiler and verified service bundle. Windows has direct loader and small-source execution evidence; Linux currently has construction/parser evidence only. Neither result yet qualifies cross-host conformance or canonical Stage 2 reproduction.
+At this decision boundary, both permanent hosts had deterministic format-3 executable candidates derived from the same ABI-22 compiler and verified service bundle. Windows had direct loader and small-source execution evidence while Linux had construction/parser evidence only. Decision 0168 subsequently advances the Windows stack contract and cross-host qualifies canonical Stage 2 reproduction on both hosts.
 
-The next milestone is operational reproduction: publish each candidate atomically, execute it on its named host against the canonical compiler source set, require byte-identical Stage 2 WVB, record the actually loaded module set to prove the child does not load .NET, and compare final artifacts across hosts. The retained C# path remains the explicit recovery oracle until that dual-host retirement gate is complete.
+Decision 0168 completes direct paired reproduction and Decision 0169 supplies public atomic publication. The retained C# path remains the explicit recovery oracle until the broader native-retirement gate is complete.
 
 ## Reconsider when
 

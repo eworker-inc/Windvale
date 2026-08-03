@@ -18,6 +18,7 @@ Windvale separates current status, enduring architecture, accepted decisions, ex
 - [Windvale OS architecture](Architecture/Windvale-Os-Architecture.md) — durable kernel, process, capability, service, language-ownership, and bootstrap boundaries
 - [Compiler bootstrap options](Architecture/Compiler-Bootstrap-Options.md) — bootstrap sequence and representation choices
 - [Native execution and .NET retirement](Architecture/Native-Execution-And-Dotnet-Retirement.md) — interpreter/JIT/AOT destination and retirement gate
+- [Exact compiler Stage 0 recovery](Runbooks/Exact-Compiler-Recovery.md) — clean-checkout reconstruction, identities, and archive provenance
 - [Seed verification throughput](Architecture/Seed-Verification-Throughput.md) — performance evidence and verification strategy
 
 ## Contracts and decisions

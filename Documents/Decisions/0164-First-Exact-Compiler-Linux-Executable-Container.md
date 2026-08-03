@@ -1,7 +1,7 @@
 # Decision 0164: First exact-compiler Linux executable container
 
 - Date: 2026-08-03
-- Status: Implemented with focused local Windows construction evidence; Linux execution and cross-host qualification pending
+- Status: Cross-host qualified through Decision 0168 at exact commit `db20fef`; initial construction evidence was Windows-local
 - Adds: canonical WVA startup and deterministic independently verified format-3 Linux ELF candidate
 - Retains: ABI 22, the exact compiler and service bytes, the bounded runtime-data plan, ordinary 4 MiB behavior, and all existing application bytes
 
@@ -34,13 +34,13 @@ The focused Release test passes with zero warnings on Windows. Two independent c
 
 The verifier recovers the exact native entry and complete service bundle, and all eight malformed classes fail closed. The roughly 404 MiB gap between data file size and data virtual size is zero-initialized, demand-paged RW/NX capacity governed by Decision 0163 rather than bytes stored in the executable.
 
-This is construction and parser evidence produced on Windows. It does not claim that the Linux kernel has loaded the file, that the compiler has run outside .NET, or that canonical Stage 2 has been reproduced.
+This was the initial construction and parser evidence produced on Windows. Decision 0168 subsequently executes the same pinned ELF on digest-pinned Debian 12, reproduces canonical Stage 2 outside .NET, and cross-host qualifies the paired container identities at exact commit `db20fef` in GitHub Verify run 30816153900.
 
 ## Consequences
 
 The exact compiler now crosses the Linux executable-format boundary as deterministic bytes. The startup's machine code is owned as WVA, while the bootstrap C# encoder remains a recovery implementation whose result is checked against that source. No existing console target or ordinary admission limit changes.
 
-The next Linux milestone is operational: publish this candidate atomically with executable permissions, run it on the qualified Debian host against a small source and then the canonical compiler source set, and compare produced WVB bytes. Windows still needs its equivalent format-3 startup, PE imports/relocations, container writer, and independent verifier before paired direct reproduction can begin.
+Decisions 0167 and 0168 add the paired Windows container and complete direct canonical Stage 2 execution on both permanent hosts. Decision 0169 then exposes both exact format-3 images through the existing atomic publication path. This decision's construction boundary remains the Linux recovery oracle and malformed-input surface rather than a separate compiler.
 
 ## Reconsider when
 

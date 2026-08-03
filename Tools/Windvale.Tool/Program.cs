@@ -41,6 +41,7 @@ internal static class Program
             {
                 "compile" => Compile(arguments[1..]),
                 "build" => Build(arguments[1..]),
+                "aot" => Aot(arguments[1..]),
                 "assemble" => Assemble(arguments[1..]),
                 "link" => Link(arguments[1..]),
                 "inspect" => Inspect(arguments[1..]),
@@ -136,14 +137,7 @@ internal static class Program
             return Usageˉerror($"Unknown, duplicate, or incomplete compile option '{arguments[Index]}'.");
         }
 
-        if (Target is not (
-            "wvb" or
-            Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME or
-            Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME or
-            Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
-            Linuxˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
-            Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
-            Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME))
+        if (!Isˉcompileˉtarget(Target))
         {
             return Usageˉerror($"Unknown compile target '{Target}'.");
         }
@@ -203,6 +197,83 @@ internal static class Program
 
         return Compileˉsourceˉfiles(Plan.Rootˉpath, Plan.Sourceˉpaths, Outputˉpath, "wvb");
     }
+
+    private static int Aot(string[] arguments)
+    {
+        const string Usage =
+            "Usage: windvale aot <module.wvb> " +
+            "--target <windows-x64-console-v1|linux-x64-console-v1|" +
+            "windows-x64-console-v2|linux-x64-console-v2|" +
+            "windows-x64-console-v3|linux-x64-console-v3> [-o <artifact>]";
+        if (arguments.Length is not (3 or 5) ||
+            arguments[0].StartsWith("-", StringComparison.Ordinal))
+        {
+            return Usageˉerror(Usage);
+        }
+
+        var Moduleˉpath = Path.GetFullPath(arguments[0]);
+        if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(Moduleˉpath), ".wvb"))
+        {
+            return Usageˉerror("The AOT input must use the .wvb module extension.");
+        }
+
+        string? Requestedˉoutputˉpath = null;
+        string? Target = null;
+        for (var Index = 1; Index < arguments.Length; Index += 2)
+        {
+            if (arguments[Index] == "-o" && Requestedˉoutputˉpath is null)
+            {
+                Requestedˉoutputˉpath = Path.GetFullPath(arguments[Index + 1]);
+                continue;
+            }
+            if (arguments[Index] == "--target" && Target is null)
+            {
+                Target = arguments[Index + 1];
+                continue;
+            }
+
+            return Usageˉerror($"Unknown, duplicate, or incomplete AOT option '{arguments[Index]}'.");
+        }
+        if (Target is null || Target == "wvb" || !Isˉcompileˉtarget(Target))
+        {
+            return Usageˉerror($"Unknown or missing AOT target '{Target}'.");
+        }
+
+        var Outputˉpath = Requestedˉoutputˉpath ?? Path.ChangeExtension(
+            Moduleˉpath,
+            Targetˉoutputˉextension(Target));
+        var Expectedˉextension = Targetˉoutputˉextension(Target);
+        if (!StringComparer.OrdinalIgnoreCase.Equals(
+            Path.GetExtension(Outputˉpath),
+            Expectedˉextension))
+        {
+            return Usageˉerror(
+                $"The {Target} AOT output must use the {Expectedˉextension} extension.");
+        }
+
+        var Pathˉcomparer = OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal;
+        if (Pathˉcomparer.Equals(Moduleˉpath, Outputˉpath))
+        {
+            return Usageˉerror("The AOT output path must differ from its module input.");
+        }
+
+        return Writeˉcompiledˉartifact(
+            Moduleˉpath,
+            Outputˉpath,
+            Target,
+            Readˉmoduleˉbytes(Moduleˉpath));
+    }
+
+    private static bool Isˉcompileˉtarget(string target) => target is
+        "wvb" or
+        Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME or
+        Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME or
+        Windowsˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
+        Linuxˉconsoleˉapplicationˉcontract.HOSTED_TARGET_NAME or
+        Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
+        Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME;
 
     private static int Compileˉsourceˉfiles(
         string sourceˉpath,
@@ -287,7 +358,20 @@ internal static class Program
             return EXIT_COMPILATION;
         }
 
-        var Bytes = Result.Moduleˉbytes.ToArray();
+        return Writeˉcompiledˉartifact(
+            Sourceˉpath,
+            Outputˉpath,
+            target,
+            Result.Moduleˉbytes.ToArray());
+    }
+
+    private static int Writeˉcompiledˉartifact(
+        string diagnosticˉpath,
+        string outputˉpath,
+        string target,
+        byte[] moduleˉbytes)
+    {
+        var Bytes = moduleˉbytes;
         if (target != "wvb")
         {
             Nativeˉfragment Fragment;
@@ -301,7 +385,8 @@ internal static class Program
             catch (Nativeˉbackendˉexception Exception)
             {
                 Console.Error.WriteLine(
-                    $"{Sourceˉpath}: error {Exception.Code} [native compiler]: {Exception.Message}");
+                    $"{diagnosticˉpath}: error {Exception.Code} " +
+                    $"[native compiler]: {Exception.Message}");
                 return EXIT_COMPILATION;
             }
 
@@ -324,7 +409,7 @@ internal static class Program
                     foreach (var Diagnostic in Application.Diagnostics)
                     {
                         Console.Error.WriteLine(
-                            $"{Sourceˉpath}: error {Diagnostic.Code} " +
+                            $"{diagnosticˉpath}: error {Diagnostic.Code} " +
                             $"[{target}]: {Diagnostic.Message}");
                     }
                     return EXIT_COMPILATION;
@@ -348,7 +433,7 @@ internal static class Program
                     foreach (var Diagnostic in Application.Diagnostics)
                     {
                         Console.Error.WriteLine(
-                            $"{Sourceˉpath}: error {Diagnostic.Code} " +
+                            $"{diagnosticˉpath}: error {Diagnostic.Code} " +
                             $"[{target}]: {Diagnostic.Message}");
                     }
                     return EXIT_COMPILATION;
@@ -367,13 +452,13 @@ internal static class Program
             {
                 Prepareˉtemporary = Prepareˉlinuxˉexecutable;
             }
-            Atomicˉfileˉpublisher.Publish(Outputˉpath, Bytes, Prepareˉtemporary);
+            Atomicˉfileˉpublisher.Publish(outputˉpath, Bytes, Prepareˉtemporary);
         }
         else
         {
-            File.WriteAllBytes(Outputˉpath, Bytes);
+            File.WriteAllBytes(outputˉpath, Bytes);
         }
-        Console.WriteLine($"Compiled: {Outputˉpath}");
+        Console.WriteLine($"Compiled: {outputˉpath}");
         if (target != "wvb")
         {
             Console.WriteLine($"Target: {target}");
@@ -818,6 +903,11 @@ internal static class Program
             "windows-x64-console-v2|linux-x64-console-v2|" +
             "windows-x64-console-v3|linux-x64-console-v3>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
+        output.WriteLine(
+            "  windvale aot <module.wvb> " +
+            "--target <windows-x64-console-v1|linux-x64-console-v1|" +
+            "windows-x64-console-v2|linux-x64-console-v2|" +
+            "windows-x64-console-v3|linux-x64-console-v3> [-o <artifact>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");
         output.WriteLine("  windvale inspect <module.wvb>");

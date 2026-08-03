@@ -3919,6 +3919,29 @@ internal static class Program
 
     private static void Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic()
     {
+        static (int Exitˉcode, string Standardˉoutput, string Standardˉerror) Executeˉtool(
+            params string[] arguments)
+        {
+            var Originalˉoutput = Console.Out;
+            var Originalˉerror = Console.Error;
+            using var Output = new StringWriter(
+                System.Globalization.CultureInfo.InvariantCulture);
+            using var Error = new StringWriter(
+                System.Globalization.CultureInfo.InvariantCulture);
+            try
+            {
+                Console.SetOut(Output);
+                Console.SetError(Error);
+                var Exitˉcode = Windvale.Tool.Program.Main(arguments);
+                return (Exitˉcode, Output.ToString(), Error.ToString());
+            }
+            finally
+            {
+                Console.SetOut(Originalˉoutput);
+                Console.SetError(Originalˉerror);
+            }
+        }
+
         Sequenceˉequal(
             [".wvb", ".exe", ".elf", ".exe", ".elf", ".exe", ".elf"],
             new[]
@@ -3939,6 +3962,39 @@ internal static class Program
         Directory.CreateDirectory(Directoryˉpath);
         try
         {
+            var Moduleˉpath = System.IO.Path.Combine(Directoryˉpath, "Sum.wvb");
+            var Aotˉpath = System.IO.Path.Combine(Directoryˉpath, "Sum.exe");
+            File.WriteAllBytes(Moduleˉpath, Compileˉsuccess(SUM_SOURCE));
+            var Aot = Executeˉtool(
+                "aot",
+                Moduleˉpath,
+                "--target",
+                Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME,
+                "-o",
+                Aotˉpath);
+            Equal(0, Aot.Exitˉcode);
+            Contains(
+                Aot.Standardˉoutput,
+                $"Target: {Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME}");
+            Equal(
+                WINDOWS_CONSOLE_SUM_SHA256,
+                Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Aotˉpath)))
+                    .ToLowerInvariant());
+
+            var Rejectedˉpath = System.IO.Path.Combine(Directoryˉpath, "Rejected.bin");
+            var Rejected = Executeˉtool(
+                "aot",
+                Moduleˉpath,
+                "--target",
+                Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME,
+                "-o",
+                Rejectedˉpath);
+            Equal(64, Rejected.Exitˉcode);
+            False(
+                File.Exists(Rejectedˉpath),
+                "Rejected AOT publication created an output file.");
+            Contains(Rejected.Standardˉerror, "AOT output must use the .exe extension");
+
             byte[] Original = [1, 2, 3, 4];
             File.WriteAllBytes(Outputˉpath, Original);
             try

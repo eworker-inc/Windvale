@@ -1,8 +1,8 @@
 # Decision 0168: Direct packaged-compiler Stage 2 reproduction
 
 - Date: 2026-08-03
-- Status: Implemented and locally verified on Windows; equivalent Linux execution gate implemented but awaiting a Linux host report
-- Advances: the format-3 Windows compiler from small-source execution to byte-identical canonical Stage 2 reproduction without loading .NET
+- Status: Cross-host qualified at exact commit `db20fef` in GitHub Verify run 30816153900
+- Advances: both format-3 compilers to byte-identical canonical Stage 2 reproduction without loading .NET
 - Retains: ABI 22, exact compiler/service bytes, the 64 MiB stack bound, the bounded runtime-data plan, and the Stage 0 recovery oracle
 
 ## Context
@@ -25,15 +25,21 @@ The first direct attempt reached native code but faulted at image RVA `0x001F882
 
 The focused Release case passes on Windows with zero build warnings. The raw PE runs for the complete compile, reports success, and produces exactly 599,868 bytes equal to the Stage 0 compiler WVB. Live module sampling observes both declared Windows adapter libraries and no named .NET loader or runtime module. The parent test process uses .NET to construct and independently verify the candidate; the child does not.
 
-The local Windows host has no WSL, container engine, Linux user-mode emulator, or other configured Linux execution environment. Linux construction, independent parsing, exact ELF identity, malformed-input rejection, and conditional direct-reproduction code are locally checked as managed logic, but no Linux-kernel execution claim is made here. A Linux host report is required before paired direct reproduction or cross-host qualification is complete.
+The local Windows host has no WSL, container engine, Linux user-mode emulator, or other configured Linux execution environment. The equivalent Linux-kernel claim therefore comes from the independently checked clean GitHub host described below rather than from local emulation.
 
 This milestone verifies compiler output identity, not atomic distribution publication. The current exact `file.write_bytes` capability deliberately performs durable but non-atomic replacement under its existing contract. A later gate must place verified compiler/executable artifacts through the repository's outer unique-sibling plus atomic-replacement publication workflow without silently changing that source-visible capability.
 
+## Cross-host qualification
+
+Exact commit `db20fefaa3333b7b78392ba12141d1ae2b6bb0c2` passes GitHub [Verify run 30816153900](https://github.com/eworker-inc/Windvale/actions/runs/30816153900). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 87 Seed tests, all 38 OS tests, the golden compiler contract, and the native CLI gate. Windows reports the exact-compiler case in 22.324 seconds; Debian reports it in 20.393 seconds.
+
+Both hosts independently report the same 17,130,441-byte native compiler, 17,147,219-byte WVO, link map, platform bundles, `WVHA` records, runtime headers, 17,157,120-byte PE, and 17,158,144-byte ELF with every pinned SHA-256 unchanged. The current-host branch on Windows executes the PE; the current-host branch on Debian writes mode `0755` and executes the raw ELF. Each child consumes the same twelve-source inventory, returns zero, emits the exact status line, reproduces the 599,868-byte canonical WVB, exposes its required host boundary, and rejects named CLR/.NET host or runtime mappings. This qualifies paired direct reproduction without claiming that the Stage 0 parent processes are .NET-free.
+
 ## Consequences
 
-The Windows candidate is now a real self-hosting compiler executable in the narrow Stage 2 sense: it consumes the canonical compiler sources and reproduces the canonical compiler WVB without loading .NET. Stage 0 remains necessary to reconstruct, parse, compare, and recover the native package until Linux reports the same result and the documented dual-host retirement gate is complete.
+Both candidates are now real self-hosting compiler executables in the narrow Stage 2 sense: each consumes the canonical compiler sources and reproduces the canonical compiler WVB without loading .NET. Stage 0 remains necessary to reconstruct, parse, compare, and recover the native package until the broader documented native-retirement gate is complete.
 
-The next work is host pairing rather than new compiler semantics: obtain the Linux direct report, compare the reproduced WVB across both hosts, add recoverable atomic publication around already verified artifacts, and record Stage 0 provenance sufficient to rebuild either candidate from a clean checkout.
+Decision 0169 supplies recoverable atomic publication around the already verified artifacts. The remaining package work is to retain clean-checkout Stage 0 recovery provenance and replay the public project-manifest targets under the independent dual-host gate; the broader native-tool and runtime conditions of Decision 0057 remain separate.
 
 ## Reconsider when
 
