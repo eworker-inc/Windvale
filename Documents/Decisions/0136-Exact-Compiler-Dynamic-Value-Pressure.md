@@ -62,6 +62,8 @@ The next native compiler blocker is no longer described only as a 16 MiB failure
 
 The profiler is a Stage 0 diagnostic seam. It measures the bytes a contiguous ABI-21 implementation would construct while leaving the reference runtime's balanced immutable representation and all program output unchanged.
 
+[Decision 0141](0141-Exact-Compiler-Dynamic-Value-Lifetime.md) completes the requested next measurement: the same workload peaks at 9,030,829 bytes across 17 live backings when typed roots and allocation copy overlap are preserved.
+
 This decision does not qualify native Stage 1-to-Stage 2 reproduction, choose a garbage collector or ownership system, change the observable `bytes` contract, retire .NET, or advance the OS guest ABI.
 
 ## Reconsider when

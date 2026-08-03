@@ -1230,6 +1230,16 @@ The leading row is `Compilerˉsourceˉwirˉmergeˉfunction`: five escaping conca
 
 The focused profiler test passes after a zero-warning Release build in 0.521 seconds. The successful full-bootstrap profile completes locally on Windows in 426.148 seconds. Cross-host qualification is pending; no OS input changed, so QEMU is not rerun for this diagnostic-only slice.
 
+## Local exact-compiler dynamic-value lifetime
+
+[Decision 0141](../Decisions/0141-Exact-Compiler-Dynamic-Value-Lifetime.md) follows each conceptual flat backing through verified operand stacks, local frames, calls, returns, borrowed byte/text views, and direct records. It counts unique reachable backing storage and separately retains popped input plus new-output overlap at allocation operations. The profiler is opt-in and leaves default execution unchanged.
+
+The canonical 12-module Stage 1 run again returns zero after exactly 6,700,562,174 instructions and reproduces the exact 599,868-byte Stage 2 compiler with SHA-256 `9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066`. Decision 0136's 1,852,773 constructed values and 902,262,268 constructed bytes reduce to a 17-backing, 9,030,829-byte ideal live peak. The allocation-operation peak is identical and occurs at `Compilerˉsourceˉwirˉdirectory` / `bytes.concat`; retained backings and bytes are both zero after completion.
+
+The peak leaves 7,746,387 bytes, approximately 7.39 MiB, inside the unchanged 16 MiB native arena before metadata and fragmentation. Two local Windows Release executions reproduce the exact result and artifact identity in 512.450 and 517.510 seconds. The bounded Foundation CLI fixture deterministically reports 8,388,672 constructed bytes, a 6,291,475-byte/five-backing peak, and zero retained roots. The focused dynamic tests pass after a zero-warning build; QEMU is not rerun because this diagnostic slice changes no OS input or artifact.
+
+After linear integration of Decisions 0137 through 0139, change-aware Windows verification completes a zero-warning Release build and passes all 80 selected Seed tests in 314.943 suite seconds. The exact golden compiler contract takes 219.181 seconds and the warm lifetime case takes three milliseconds. The new WVB 1.7 and WebAssembly paths do not execute in the canonical WVB 1.6 lifetime profile, so the separate multi-billion-instruction measurement is not repeated after that additive integration.
+
 ## Qualified bounded exact-compiler publication
 
 [Decision 0111](../Decisions/0111-Bounded-Exact-Compiler-Fragment-Publication.md) attributes the exact compiler's 4,556,121 selected bytes before revising a security boundary. Function code accounts for 4,555,263 bytes across 328 functions and 191,632 machine-IR operations; alignment and immutable data account for only 858 bytes. The 48,578 zeroed frame slots currently emit 1,360,840 bytes, so eliminating all frame initialization would still leave 3,195,281 bytes. This rules out a local encoding change as an honest way to retain the 1 MiB whole-fragment ceiling.

@@ -927,6 +927,7 @@ internal static class Program
         new("runtime enforces instruction and call-depth limits", [TEST_AREA_RUNTIME], Runtimeˉlimitsˉareˉenforced),
         new("reference runtime reports per-function record construction pressure", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉrecordˉpressureˉisˉreported),
         new("reference runtime reports dynamic-value construction by function and class", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉdynamicˉvalueˉpressureˉisˉreported),
+        new("reference runtime reports dynamic-value lifetime through aliases and records", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉdynamicˉvalueˉlifetimeˉisˉreported),
         new("bounded random input never escapes diagnostic boundaries", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_ASSEMBLER], Randomˉinputˉisˉcontained),
         new(GOLDEN_TEST_NAME, [TEST_AREA_GOLDEN], Goldenˉhashesˉmatch),
     ];
@@ -14190,6 +14191,85 @@ internal static class Program
 
         Equal(0, Enabled.Runˉmain().Exitˉcode);
         Sequenceˉequal(Firstˉreport, Enabled.Readˉfunctionˉdynamicˉvalues());
+    }
+
+    private static void Runtimeˉdynamicˉvalueˉlifetimeˉisˉreported()
+    {
+        const string Source = """
+            module Runtimeˉdynamicˉvalueˉlifetime profile portable;
+            record Runtimeˉbyteˉpair { Whole: bytes; Part: bytes; }
+            fn Build() -> Runtimeˉbyteˉpair {
+                let Whole: bytes = Bytesˉconcat(
+                    Bytesˉfromˉu8(1u8),
+                    Bytesˉfromˉu16ˉlittle(2u32)
+                );
+                let Part: bytes = Bytesˉslice(Whole, 0u32, 1u32);
+                return Runtimeˉbyteˉpair(Whole, Part);
+            }
+            export fn Main() -> i32 {
+                var Replaced: bytes = Bytesˉfromˉu32ˉlittle(7u32);
+                let Built: Runtimeˉbyteˉpair = Build();
+                Replaced = Built.Part;
+                let Tail: bytes = Bytesˉfromˉu8(9u8);
+                Bytesˉconcat(Built.Whole, Tail);
+                return 0;
+            }
+            """;
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        var Disabled = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults);
+        Equal(0, Disabled.Runˉmain().Exitˉcode);
+        Equal<Runtimeˉdynamicˉvalueˉlifetime?>(
+            null,
+            Disabled.Readˉdynamicˉvalueˉlifetime());
+
+        var Enabled = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Collectˉdynamicˉvalueˉlifetime = true,
+            });
+        Equal(
+            new Runtimeˉdynamicˉvalueˉlifetime(
+                0, 0, 0, 0, 0, 0, -1, null, null, 0, 0),
+            Enabled.Readˉdynamicˉvalueˉlifetime());
+        Equal(0, Enabled.Runˉmain().Exitˉcode);
+        var Firstˉreport = Enabled.Readˉdynamicˉvalueˉlifetime();
+        Equal(
+            new Runtimeˉdynamicˉvalueˉlifetime(
+                Constructedˉvalues: 6,
+                Constructedˉbytes: 15,
+                Peakˉliveˉvalues: 4,
+                Peakˉliveˉbytes: 12,
+                Peakˉoperationˉvalues: 4,
+                Peakˉoperationˉbytes: 12,
+                Peakˉoperationˉfunctionˉindex: 1,
+                Peakˉoperationˉfunctionˉname: "Main",
+                Peakˉoperationˉkind: Runtimeˉdynamicˉvalueˉkind.Bytesˉconcat,
+                Retainedˉvalues: 0,
+                Retainedˉbytes: 0),
+            Firstˉreport);
+
+        Equal(0, Enabled.Runˉmain().Exitˉcode);
+        Equal(Firstˉreport, Enabled.Readˉdynamicˉvalueˉlifetime());
+
+        var Instructionˉlimited = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Maximumˉinstructions = 5,
+                Collectˉdynamicˉvalueˉlifetime = true,
+            });
+        Throwsˉruntime("WVR3011", () => _ = Instructionˉlimited.Runˉmain());
+        var Failedˉreport = Instructionˉlimited.Readˉdynamicˉvalueˉlifetime()!;
+        Equal(1L, Failedˉreport.Constructedˉvalues);
+        Equal(4L, Failedˉreport.Constructedˉbytes);
+        Equal(0L, Failedˉreport.Retainedˉvalues);
+        Equal(0L, Failedˉreport.Retainedˉbytes);
     }
 
     private static void Goldenˉhashesˉmatch()

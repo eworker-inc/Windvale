@@ -58,7 +58,8 @@ public readonly record struct Runtimeˉvalue
         ulong u64,
         int enumˉvalue,
         Runtimeˉbyteˉslice bytes,
-        Runtimeˉrecordˉvalue? record)
+        Runtimeˉrecordˉvalue? record,
+        Runtimeˉdynamicˉrootˉset? dynamicˉroots = null)
     {
         Type = type;
         I32ˉvalue = i32;
@@ -71,6 +72,7 @@ public readonly record struct Runtimeˉvalue
         Enumˉvalue = enumˉvalue;
         Bytesˉvalue = bytes;
         Recordˉvalue = record;
+        Dynamicˉroots = dynamicˉroots;
     }
 
     public Valueˉshape Type { get; }
@@ -95,6 +97,9 @@ public readonly record struct Runtimeˉvalue
 
     public Runtimeˉrecordˉvalue? Recordˉvalue { get; }
 
+    // Profiler-only ownership evidence; Windvale operations compare explicit payload fields.
+    internal Runtimeˉdynamicˉrootˉset? Dynamicˉroots { get; }
+
     public static Runtimeˉvalue Fromˉi32(int value) =>
         new(Valueˉtype.I32, value, 0, false, null, 0, 0, 0, 0, default, null);
 
@@ -106,6 +111,11 @@ public readonly record struct Runtimeˉvalue
 
     public static Runtimeˉvalue Fromˉtext(string value) =>
         new(Valueˉtype.Text, 0, 0, false, value, 0, 0, 0, 0, default, null);
+
+    internal static Runtimeˉvalue Fromˉtext(
+        string value,
+        Runtimeˉdynamicˉrootˉset? dynamicˉroots) =>
+        new(Valueˉtype.Text, 0, 0, false, value, 0, 0, 0, 0, default, null, dynamicˉroots);
 
     public static Runtimeˉvalue Fromˉu8(byte value) =>
         new(Valueˉtype.U8, 0, 0, false, null, value, 0, 0, 0, default, null);
@@ -119,8 +129,18 @@ public readonly record struct Runtimeˉvalue
     public static Runtimeˉvalue Fromˉbytes(ImmutableArray<byte> values) =>
         Fromˉbytes(new Runtimeˉbyteˉslice(values, 0, values.Length));
 
+    internal static Runtimeˉvalue Fromˉbytes(
+        ImmutableArray<byte> values,
+        Runtimeˉdynamicˉrootˉset? dynamicˉroots) =>
+        Fromˉbytes(new Runtimeˉbyteˉslice(values, 0, values.Length), dynamicˉroots);
+
     public static Runtimeˉvalue Fromˉbytes(Runtimeˉbyteˉslice value) =>
         new(Valueˉtype.Bytes, 0, 0, false, null, 0, 0, 0, 0, value, null);
+
+    internal static Runtimeˉvalue Fromˉbytes(
+        Runtimeˉbyteˉslice value,
+        Runtimeˉdynamicˉrootˉset? dynamicˉroots) =>
+        new(Valueˉtype.Bytes, 0, 0, false, null, 0, 0, 0, 0, value, null, dynamicˉroots);
 
     public static Runtimeˉvalue Fromˉenum(int typeˉindex, int value) =>
         new(Valueˉshape.Forˉenum(typeˉindex), 0, 0, false, null, 0, 0, 0, value, default, null);
@@ -128,6 +148,12 @@ public readonly record struct Runtimeˉvalue
     public static Runtimeˉvalue Fromˉrecord(
         int typeˉindex,
         ImmutableArray<Runtimeˉvalue> fields) =>
+        Fromˉrecord(typeˉindex, fields, null);
+
+    internal static Runtimeˉvalue Fromˉrecord(
+        int typeˉindex,
+        ImmutableArray<Runtimeˉvalue> fields,
+        Runtimeˉdynamicˉrootˉset? dynamicˉroots) =>
         new(
             Valueˉshape.Forˉrecord(typeˉindex),
             0,
@@ -139,7 +165,8 @@ public readonly record struct Runtimeˉvalue
             0,
             0,
             default,
-            new(typeˉindex, fields));
+            new(typeˉindex, fields),
+            dynamicˉroots);
 
     public static Runtimeˉvalue Default(
         Valueˉshape type,
@@ -184,13 +211,92 @@ public sealed record Runtimeˉrecordˉvalue(
     int Typeˉindex,
     ImmutableArray<Runtimeˉvalue> Fields);
 
+internal sealed class Runtimeˉdynamicˉrootˉset
+{
+    private Runtimeˉdynamicˉrootˉset(int bytes)
+    {
+        Backingˉbytes = bytes;
+    }
+
+    private Runtimeˉdynamicˉrootˉset(
+        ImmutableArray<Runtimeˉdynamicˉrootˉset> backingˉmembers)
+    {
+        Backingˉmembers = backingˉmembers;
+    }
+
+    public int Backingˉbytes { get; }
+
+    public int Rootˉcount { get; set; }
+
+    public ImmutableArray<Runtimeˉdynamicˉrootˉset> Backingˉmembers { get; }
+
+    // Composite sets contain only unique backing leaves, never another composite.
+    public bool Isˉbacking => Backingˉmembers.IsDefault;
+
+    public static Runtimeˉdynamicˉrootˉset Createˉbacking(int bytes) => new(bytes);
+
+    public static Runtimeˉdynamicˉrootˉset? Combine(
+        ImmutableArray<Runtimeˉvalue> fields)
+    {
+        Runtimeˉdynamicˉrootˉset? First = null;
+        HashSet<Runtimeˉdynamicˉrootˉset>? Unique = null;
+        foreach (var Field in fields)
+        {
+            var Roots = Field.Dynamicˉroots;
+            if (Roots is null)
+            {
+                continue;
+            }
+
+            if (Roots.Isˉbacking)
+            {
+                Addˉbacking(Roots, ref First, ref Unique);
+                continue;
+            }
+
+            foreach (var Backing in Roots.Backingˉmembers)
+            {
+                Addˉbacking(Backing, ref First, ref Unique);
+            }
+        }
+
+        if (Unique is null)
+        {
+            return First;
+        }
+
+        return new([.. Unique]);
+    }
+
+    private static void Addˉbacking(
+        Runtimeˉdynamicˉrootˉset backing,
+        ref Runtimeˉdynamicˉrootˉset? first,
+        ref HashSet<Runtimeˉdynamicˉrootˉset>? unique)
+    {
+        if (first is null)
+        {
+            first = backing;
+            return;
+        }
+
+        if (ReferenceEquals(first, backing))
+        {
+            return;
+        }
+
+        unique ??= [first];
+        unique.Add(backing);
+    }
+}
+
 public sealed record Runtimeˉoptions(
     ImmutableHashSet<string> Authorizedˉcapabilities,
     long Maximumˉinstructions = 1_000_000,
     int Maximumˉcallˉdepth = 1024,
     bool Collectˉfunctionˉsteps = false,
     bool Collectˉfunctionˉrecordˉfields = false,
-    bool Collectˉfunctionˉdynamicˉvalues = false)
+    bool Collectˉfunctionˉdynamicˉvalues = false,
+    bool Collectˉdynamicˉvalueˉlifetime = false)
 {
     public static Runtimeˉoptions Portableˉdefaults { get; } = new(
         ImmutableHashSet.Create<string>(StringComparer.Ordinal));
@@ -229,6 +335,8 @@ public enum Runtimeˉdynamicˉvalueˉkind : byte
     Bytesˉfromˉu16ˉlittle = 8,
     Bytesˉfromˉu32ˉlittle = 9,
     Bytesˉfromˉi32ˉlittle = 10,
+    I64ˉformat = 11,
+    U64ˉformat = 12,
 }
 
 public sealed record Runtimeˉfunctionˉdynamicˉvalues(
@@ -237,6 +345,19 @@ public sealed record Runtimeˉfunctionˉdynamicˉvalues(
     Runtimeˉdynamicˉvalueˉkind Kind,
     long Constructedˉvalues,
     long Constructedˉbytes);
+
+public sealed record Runtimeˉdynamicˉvalueˉlifetime(
+    long Constructedˉvalues,
+    long Constructedˉbytes,
+    long Peakˉliveˉvalues,
+    long Peakˉliveˉbytes,
+    long Peakˉoperationˉvalues,
+    long Peakˉoperationˉbytes,
+    int Peakˉoperationˉfunctionˉindex,
+    string? Peakˉoperationˉfunctionˉname,
+    Runtimeˉdynamicˉvalueˉkind? Peakˉoperationˉkind,
+    long Retainedˉvalues,
+    long Retainedˉbytes);
 
 public static class Hostedˉresourceˉlimits
 {

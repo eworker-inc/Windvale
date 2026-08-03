@@ -20,6 +20,7 @@ public sealed class Referenceˉruntime
     private readonly long[]? Functionˉrecordˉfields;
     private readonly long[,]? Functionˉdynamicˉvalueˉcounts;
     private readonly long[,]? Functionˉdynamicˉvalueˉbytes;
+    private readonly Runtimeˉdynamicˉlifetimeˉtracker? Dynamicˉlifetime;
     private long Executedˉinstructions;
 
     public Referenceˉruntime(
@@ -64,6 +65,9 @@ public sealed class Referenceˉruntime
             Functionˉdynamicˉvalueˉcounts = new long[verifiedˉmodule.Functions.Length, Kinds];
             Functionˉdynamicˉvalueˉbytes = new long[verifiedˉmodule.Functions.Length, Kinds];
         }
+        Dynamicˉlifetime = options.Collectˉdynamicˉvalueˉlifetime
+            ? new Runtimeˉdynamicˉlifetimeˉtracker()
+            : null;
     }
 
     public ImmutableArray<Runtimeˉfunctionˉsteps> Readˉfunctionˉsteps()
@@ -140,6 +144,30 @@ public sealed class Referenceˉruntime
             .ToImmutableArray();
     }
 
+    public Runtimeˉdynamicˉvalueˉlifetime? Readˉdynamicˉvalueˉlifetime()
+    {
+        if (Dynamicˉlifetime is null)
+        {
+            return null;
+        }
+
+        var Peakˉfunctionˉindex = Dynamicˉlifetime.Peakˉoperationˉfunctionˉindex;
+        return new(
+            Dynamicˉlifetime.Constructedˉvalues,
+            Dynamicˉlifetime.Constructedˉbytes,
+            Dynamicˉlifetime.Peakˉliveˉvalues,
+            Dynamicˉlifetime.Peakˉliveˉbytes,
+            Dynamicˉlifetime.Peakˉoperationˉvalues,
+            Dynamicˉlifetime.Peakˉoperationˉbytes,
+            Peakˉfunctionˉindex,
+            Peakˉfunctionˉindex < 0
+                ? null
+                : Verifiedˉmodule.Functions[Peakˉfunctionˉindex].Declaration.Name,
+            Dynamicˉlifetime.Peakˉoperationˉkind,
+            Dynamicˉlifetime.Liveˉvalues,
+            Dynamicˉlifetime.Liveˉbytes);
+    }
+
     public Runtimeˉresult Runˉmain()
     {
         var Mainˉexport = Prepareˉmain(Valueˉtype.I32, "fn() -> i32");
@@ -160,7 +188,7 @@ public sealed class Referenceˉruntime
             [Valueˉtype.Bytes],
             Valueˉtype.Bytes,
             "fn(bytes) -> bytes");
-        using var Arguments = new Runtimeˉstack(1);
+        using var Arguments = new Runtimeˉstack(1, Dynamicˉlifetime);
         Arguments.Push(Runtimeˉvalue.Fromˉbytes(input));
         var Result = Executeˉfunction(Mainˉexport.Targetˉindex, Arguments, 1, 1);
         return new(Result!.Value.Bytesˉvalue.Toˉimmutableˉarray(), Executedˉinstructions);
@@ -173,7 +201,7 @@ public sealed class Referenceˉruntime
             [Valueˉtype.Text],
             Valueˉtype.Text,
             "fn(text) -> text");
-        using var Arguments = new Runtimeˉstack(1);
+        using var Arguments = new Runtimeˉstack(1, Dynamicˉlifetime);
         Arguments.Push(Runtimeˉvalue.Fromˉtext(input));
         var Result = Executeˉfunction(Mainˉexport.Targetˉindex, Arguments, 1, 1);
         return new(Result!.Value.Textˉvalue!, Executedˉinstructions);
@@ -220,6 +248,7 @@ public sealed class Referenceˉruntime
             Array.Clear(Functionˉdynamicˉvalueˉcounts);
             Array.Clear(Functionˉdynamicˉvalueˉbytes!);
         }
+        Dynamicˉlifetime?.Reset();
         return Mainˉexport;
     }
 
@@ -270,6 +299,13 @@ public sealed class Referenceˉruntime
         }
         finally
         {
+            if (Dynamicˉlifetime is not null)
+            {
+                for (var Index = 0; Index < Localˉcount; Index++)
+                {
+                    Dynamicˉlifetime.Removeˉroots(Locals[Index]);
+                }
+            }
             ArrayPool<Runtimeˉvalue>.Shared.Return(Locals, clearArray: true);
         }
     }
@@ -281,7 +317,7 @@ public sealed class Referenceˉruntime
     {
         var Verifiedˉfunction = Verifiedˉmodule.Functions[functionˉindex];
         var Function = Verifiedˉfunction.Declaration;
-        using var Stack = new Runtimeˉstack(Function.Maximumˉstackˉdepth);
+        using var Stack = new Runtimeˉstack(Function.Maximumˉstackˉdepth, Dynamicˉlifetime);
         var Instructionˉindex = 0;
         while (true)
         {
@@ -323,7 +359,11 @@ public sealed class Referenceˉruntime
                         Stack.Push(Locals[(int)Instruction.Unsignedˉoperand]);
                         break;
                     case Opcode.Localˉstore:
-                        Locals[(int)Instruction.Unsignedˉoperand] = Stack.Pop();
+                        var Localˉindex = (int)Instruction.Unsignedˉoperand;
+                        var Localˉvalue = Stack.Pop();
+                        Dynamicˉlifetime?.Removeˉroots(Locals[Localˉindex]);
+                        Locals[Localˉindex] = Localˉvalue;
+                        Dynamicˉlifetime?.Addˉroots(Localˉvalue);
                         break;
                     case Opcode.Dataˉlength:
                         var Lengthˉdata = (I32ˉarrayˉdataˉdeclaration)Verifiedˉmodule.Module.Data[(int)Instruction.Unsignedˉoperand];
@@ -347,8 +387,11 @@ public sealed class Referenceˉruntime
                     case Opcode.Bytesˉslice:
                         var Sliceˉlength = Stack.Pop().U32ˉvalue;
                         var Sliceˉoffset = Stack.Pop().U32ˉvalue;
-                        var Sliceˉsource = Stack.Pop().Bytesˉvalue;
-                        Stack.Push(Runtimeˉvalue.Fromˉbytes(Sliceˉbytes(Sliceˉsource, Sliceˉoffset, Sliceˉlength)));
+                        var Sliceˉsourceˉvalue = Stack.Pop();
+                        var Sliceˉsource = Sliceˉsourceˉvalue.Bytesˉvalue;
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(
+                            Sliceˉbytes(Sliceˉsource, Sliceˉoffset, Sliceˉlength),
+                            Sliceˉsourceˉvalue.Dynamicˉroots));
                         break;
                     case Opcode.Bytesˉreadˉu8:
                         var U8ˉoffset = Stack.Pop().U32ˉvalue;
@@ -530,50 +573,60 @@ public sealed class Referenceˉruntime
                             Enumˉvalue.Type.Nominalˉtypeˉindex];
                         var Enumˉname = Namedˉenum.Members.Single(
                             Member => Member.Value == Enumˉvalue.Enumˉvalue).Name;
-                        Recordˉdynamicˉvalue(
+                        var Enumˉnameˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.Enumˉname,
                             STRICT_UTF8.GetByteCount(Enumˉname));
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(Enumˉname));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(Enumˉname, Enumˉnameˉroots));
                         break;
                     case Opcode.I32ˉformat:
                         var I32ˉformatted = Stack.Pop().I32ˉvalue.ToString(CultureInfo.InvariantCulture);
-                        Recordˉdynamicˉvalue(
+                        var I32ˉformattedˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.I32ˉformat,
                             I32ˉformatted.Length);
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(I32ˉformatted));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(I32ˉformatted, I32ˉformattedˉroots));
                         break;
                     case Opcode.I64ˉformat:
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(
-                            Stack.Pop().I64ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        var I64ˉformatted = Stack.Pop().I64ˉvalue.ToString(CultureInfo.InvariantCulture);
+                        var I64ˉformattedˉroots = Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.I64ˉformat,
+                            I64ˉformatted.Length);
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(I64ˉformatted, I64ˉformattedˉroots));
                         break;
                     case Opcode.U8ˉformat:
                         var U8ˉformatted = Stack.Pop().U8ˉvalue.ToString(CultureInfo.InvariantCulture);
-                        Recordˉdynamicˉvalue(
+                        var U8ˉformattedˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.U8ˉformat,
                             U8ˉformatted.Length);
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(U8ˉformatted));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(U8ˉformatted, U8ˉformattedˉroots));
                         break;
                     case Opcode.U32ˉformat:
                         var U32ˉformatted = Stack.Pop().U32ˉvalue.ToString(CultureInfo.InvariantCulture);
-                        Recordˉdynamicˉvalue(
+                        var U32ˉformattedˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.U32ˉformat,
                             U32ˉformatted.Length);
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(U32ˉformatted));
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(U32ˉformatted, U32ˉformattedˉroots));
                         break;
                     case Opcode.U64ˉformat:
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(
-                            Stack.Pop().U64ˉvalue.ToString(CultureInfo.InvariantCulture)));
+                        var U64ˉformatted = Stack.Pop().U64ˉvalue.ToString(CultureInfo.InvariantCulture);
+                        var U64ˉformattedˉroots = Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.U64ˉformat,
+                            U64ˉformatted.Length);
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(U64ˉformatted, U64ˉformattedˉroots));
                         break;
                     case Opcode.U32ˉfromˉu8:
                         Stack.Push(Runtimeˉvalue.Fromˉu32(Stack.Pop().U8ˉvalue));
                         break;
                     case Opcode.Textˉconcat:
-                        var Rightˉtext = Stack.Pop().Textˉvalue!;
-                        var Leftˉtext = Stack.Pop().Textˉvalue!;
+                        var Rightˉtextˉvalue = Stack.Pop();
+                        var Leftˉtextˉvalue = Stack.Pop();
+                        var Rightˉtext = Rightˉtextˉvalue.Textˉvalue!;
+                        var Leftˉtext = Leftˉtextˉvalue.Textˉvalue!;
                         var Utf8ˉlength = checked(
                             Encoding.UTF8.GetByteCount(Leftˉtext) + Encoding.UTF8.GetByteCount(Rightˉtext));
                         if (Utf8ˉlength > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
@@ -583,18 +636,23 @@ public sealed class Referenceˉruntime
                                 $"Text concatenation result {Utf8ˉlength} exceeds the UTF-8 value limit.");
                         }
 
-                        Recordˉdynamicˉvalue(
+                        var Concatenatedˉtextˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.Textˉconcat,
-                            Utf8ˉlength);
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(string.Concat(Leftˉtext, Rightˉtext)));
+                            Utf8ˉlength,
+                            Leftˉtextˉvalue,
+                            Rightˉtextˉvalue);
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(
+                            string.Concat(Leftˉtext, Rightˉtext),
+                            Concatenatedˉtextˉroots));
                         break;
                     case Opcode.Textˉutf8ˉisˉvalid:
                         var Utf8ˉcandidate = Stack.Pop().Bytesˉvalue;
                         Stack.Push(Runtimeˉvalue.Fromˉbool(Isˉvalidˉutf8(Utf8ˉcandidate)));
                         break;
                     case Opcode.Textˉfromˉutf8:
-                        var Utf8ˉsource = Stack.Pop().Bytesˉvalue;
+                        var Utf8ˉsourceˉvalue = Stack.Pop();
+                        var Utf8ˉsource = Utf8ˉsourceˉvalue.Bytesˉvalue;
                         if (Utf8ˉsource.Length > Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES)
                         {
                             throw new Runtimeˉexception(
@@ -604,7 +662,9 @@ public sealed class Referenceˉruntime
 
                         try
                         {
-                            Stack.Push(Runtimeˉvalue.Fromˉtext(STRICT_UTF8.GetString(Utf8ˉsource.Toˉarray())));
+                            Stack.Push(Runtimeˉvalue.Fromˉtext(
+                                STRICT_UTF8.GetString(Utf8ˉsource.Toˉarray()),
+                                Utf8ˉsourceˉvalue.Dynamicˉroots));
                         }
                         catch (DecoderFallbackException)
                         {
@@ -615,29 +675,40 @@ public sealed class Referenceˉruntime
 
                         break;
                     case Opcode.Textˉquote:
-                        var Quotedˉtext = Quoteˉtext(Stack.Pop().Textˉvalue!);
-                        Recordˉdynamicˉvalue(
+                        var Quoteˉsource = Stack.Pop();
+                        var Quotedˉtext = Quoteˉtext(Quoteˉsource.Textˉvalue!);
+                        var Quotedˉtextˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.Textˉquote,
-                            STRICT_UTF8.GetByteCount(Quotedˉtext));
-                        Stack.Push(Runtimeˉvalue.Fromˉtext(Quotedˉtext));
+                            STRICT_UTF8.GetByteCount(Quotedˉtext),
+                            Quoteˉsource);
+                        Stack.Push(Runtimeˉvalue.Fromˉtext(Quotedˉtext, Quotedˉtextˉroots));
                         break;
                     case Opcode.Bytesˉconcat:
-                        var Rightˉbytes = Stack.Pop().Bytesˉvalue;
-                        var Leftˉbytes = Stack.Pop().Bytesˉvalue;
+                        var Rightˉbytesˉvalue = Stack.Pop();
+                        var Leftˉbytesˉvalue = Stack.Pop();
+                        var Rightˉbytes = Rightˉbytesˉvalue.Bytesˉvalue;
+                        var Leftˉbytes = Leftˉbytesˉvalue.Bytesˉvalue;
                         var Concatenatedˉbytes = Concatˉbytes(Leftˉbytes, Rightˉbytes);
-                        Recordˉdynamicˉvalue(
+                        var Concatenatedˉbytesˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.Bytesˉconcat,
-                            Concatenatedˉbytes.Length);
-                        Stack.Push(Runtimeˉvalue.Fromˉbytes(Concatenatedˉbytes));
+                            Concatenatedˉbytes.Length,
+                            Leftˉbytesˉvalue,
+                            Rightˉbytesˉvalue);
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(
+                            Concatenatedˉbytes,
+                            Concatenatedˉbytesˉroots));
                         break;
                     case Opcode.Bytesˉfromˉu8:
-                        Recordˉdynamicˉvalue(
+                        var U8ˉbyte = Stack.Pop().U8ˉvalue;
+                        var U8ˉbytesˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu8,
                             sizeof(byte));
-                        Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(Stack.Pop().U8ˉvalue)));
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(
+                            ImmutableArray.Create(U8ˉbyte),
+                            U8ˉbytesˉroots));
                         break;
                     case Opcode.Bytesˉfromˉu16ˉlittle:
                         var U16ˉvalue = Stack.Pop().U32ˉvalue;
@@ -650,39 +721,47 @@ public sealed class Referenceˉruntime
 
                         var U16ˉbytes = new byte[sizeof(ushort)];
                         BinaryPrimitives.WriteUInt16LittleEndian(U16ˉbytes, (ushort)U16ˉvalue);
-                        Recordˉdynamicˉvalue(
+                        var U16ˉbytesˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu16ˉlittle,
                             U16ˉbytes.Length);
-                        Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U16ˉbytes)));
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(
+                            ImmutableArray.Create(U16ˉbytes),
+                            U16ˉbytesˉroots));
                         break;
                     case Opcode.Bytesˉfromˉu32ˉlittle:
                         var U32ˉbytes = new byte[sizeof(uint)];
                         BinaryPrimitives.WriteUInt32LittleEndian(U32ˉbytes, Stack.Pop().U32ˉvalue);
-                        Recordˉdynamicˉvalue(
+                        var U32ˉbytesˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu32ˉlittle,
                             U32ˉbytes.Length);
-                        Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(U32ˉbytes)));
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(
+                            ImmutableArray.Create(U32ˉbytes),
+                            U32ˉbytesˉroots));
                         break;
                     case Opcode.Bytesˉfromˉi32ˉlittle:
                         var I32ˉbytes = new byte[sizeof(int)];
                         BinaryPrimitives.WriteInt32LittleEndian(I32ˉbytes, Stack.Pop().I32ˉvalue);
-                        Recordˉdynamicˉvalue(
+                        var I32ˉbytesˉroots = Recordˉdynamicˉvalue(
                             functionˉindex,
                             Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉi32ˉlittle,
                             I32ˉbytes.Length);
-                        Stack.Push(Runtimeˉvalue.Fromˉbytes(ImmutableArray.Create(I32ˉbytes)));
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(
+                            ImmutableArray.Create(I32ˉbytes),
+                            I32ˉbytesˉroots));
                         break;
                     case Opcode.Bytesˉsha256ˉhex:
                         Stack.Push(Runtimeˉvalue.Fromˉtext(
                             Convert.ToHexStringLower(SHA256.HashData(Stack.Pop().Bytesˉvalue.Toˉarray()))));
                         break;
                     case Opcode.Textˉtoˉutf8:
+                        var Utf8ˉtext = Stack.Pop();
                         try
                         {
                             Stack.Push(Runtimeˉvalue.Fromˉbytes(
-                                ImmutableArray.Create(STRICT_UTF8.GetBytes(Stack.Pop().Textˉvalue!))));
+                                ImmutableArray.Create(STRICT_UTF8.GetBytes(Utf8ˉtext.Textˉvalue!)),
+                                Utf8ˉtext.Dynamicˉroots));
                         }
                         catch (EncoderFallbackException)
                         {
@@ -704,7 +783,10 @@ public sealed class Referenceˉruntime
                         var Recordˉfields = Popˉarguments(Stack, Recordˉtype.Fields.Length);
                         Stack.Push(Runtimeˉvalue.Fromˉrecord(
                             (int)Instruction.Unsignedˉoperand,
-                            Recordˉfields));
+                            Recordˉfields,
+                            Dynamicˉlifetime is null
+                                ? null
+                                : Runtimeˉdynamicˉrootˉset.Combine(Recordˉfields)));
                         break;
                     case Opcode.Recordˉfield:
                         var Record = Stack.Pop().Recordˉvalue!;
@@ -738,7 +820,28 @@ public sealed class Referenceˉruntime
                     case Opcode.Callˉcapability:
                         var Capability = Verifiedˉmodule.Module.Capabilities[(int)Instruction.Unsignedˉoperand];
                         var Capabilityˉarguments = Popˉarguments(Stack, Capability.Parameterˉtypes.Length);
-                        var Capabilityˉresult = Capabilityˉhost.Invoke(Capability, Capabilityˉarguments);
+                        if (Dynamicˉlifetime is not null)
+                        {
+                            foreach (var Argument in Capabilityˉarguments)
+                            {
+                                Dynamicˉlifetime.Addˉroots(Argument);
+                            }
+                        }
+                        Runtimeˉvalue? Capabilityˉresult;
+                        try
+                        {
+                            Capabilityˉresult = Capabilityˉhost.Invoke(Capability, Capabilityˉarguments);
+                        }
+                        finally
+                        {
+                            if (Dynamicˉlifetime is not null)
+                            {
+                                foreach (var Argument in Capabilityˉarguments)
+                                {
+                                    Dynamicˉlifetime.Removeˉroots(Argument);
+                                }
+                            }
+                        }
                         Validateˉcapabilityˉresult(
                             Capability,
                             Capabilityˉresult,
@@ -892,26 +995,34 @@ public sealed class Referenceˉruntime
         }
     }
 
-    private void Recordˉdynamicˉvalue(
+    private Runtimeˉdynamicˉrootˉset? Recordˉdynamicˉvalue(
         int functionˉindex,
         Runtimeˉdynamicˉvalueˉkind kind,
-        int bytes)
+        int bytes,
+        Runtimeˉvalue? firstˉinput = null,
+        Runtimeˉvalue? secondˉinput = null)
     {
-        if (Functionˉdynamicˉvalueˉcounts is null ||
-            Functionˉdynamicˉvalueˉbytes is null)
-        {
-            return;
-        }
         if (bytes < 0)
         {
             throw new InvalidOperationException("A dynamic value cannot have a negative byte length.");
         }
 
-        var Kindˉindex = (int)kind;
-        Functionˉdynamicˉvalueˉcounts[functionˉindex, Kindˉindex] = checked(
-            Functionˉdynamicˉvalueˉcounts[functionˉindex, Kindˉindex] + 1);
-        Functionˉdynamicˉvalueˉbytes[functionˉindex, Kindˉindex] = checked(
-            Functionˉdynamicˉvalueˉbytes[functionˉindex, Kindˉindex] + bytes);
+        if (Functionˉdynamicˉvalueˉcounts is not null &&
+            Functionˉdynamicˉvalueˉbytes is not null)
+        {
+            var Kindˉindex = (int)kind;
+            Functionˉdynamicˉvalueˉcounts[functionˉindex, Kindˉindex] = checked(
+                Functionˉdynamicˉvalueˉcounts[functionˉindex, Kindˉindex] + 1);
+            Functionˉdynamicˉvalueˉbytes[functionˉindex, Kindˉindex] = checked(
+                Functionˉdynamicˉvalueˉbytes[functionˉindex, Kindˉindex] + bytes);
+        }
+
+        return Dynamicˉlifetime?.Allocate(
+            functionˉindex,
+            kind,
+            bytes,
+            firstˉinput,
+            secondˉinput);
     }
 
     private static ImmutableArray<Runtimeˉvalue> Popˉarguments(
@@ -1030,9 +1141,12 @@ public sealed class Referenceˉruntime
     {
         private Runtimeˉvalue[] Values;
         private readonly int Capacity;
+        private readonly Runtimeˉdynamicˉlifetimeˉtracker? Dynamicˉlifetime;
         private int Count;
 
-        public Runtimeˉstack(int capacity)
+        public Runtimeˉstack(
+            int capacity,
+            Runtimeˉdynamicˉlifetimeˉtracker? dynamicˉlifetime)
         {
             if (capacity < 0)
             {
@@ -1040,6 +1154,7 @@ public sealed class Referenceˉruntime
             }
 
             Capacity = capacity;
+            Dynamicˉlifetime = dynamicˉlifetime;
             Values = ArrayPool<Runtimeˉvalue>.Shared.Rent(Math.Max(1, capacity));
         }
 
@@ -1051,6 +1166,7 @@ public sealed class Referenceˉruntime
             }
 
             Values[Count++] = value;
+            Dynamicˉlifetime?.Addˉroots(value);
         }
 
         public Runtimeˉvalue Pop()
@@ -1063,6 +1179,7 @@ public sealed class Referenceˉruntime
             var Index = --Count;
             var Value = Values[Index];
             Values[Index] = default;
+            Dynamicˉlifetime?.Removeˉroots(Value);
             return Value;
         }
 
@@ -1089,9 +1206,240 @@ public sealed class Referenceˉruntime
                 return;
             }
 
+            if (Dynamicˉlifetime is not null)
+            {
+                for (var Index = 0; Index < Count; Index++)
+                {
+                    Dynamicˉlifetime.Removeˉroots(Rentedˉvalues[Index]);
+                }
+            }
             Values = [];
             Count = 0;
             ArrayPool<Runtimeˉvalue>.Shared.Return(Rentedˉvalues, clearArray: true);
+        }
+    }
+
+    private sealed class Runtimeˉdynamicˉlifetimeˉtracker
+    {
+        public long Constructedˉvalues { get; private set; }
+
+        public long Constructedˉbytes { get; private set; }
+
+        public long Liveˉvalues { get; private set; }
+
+        public long Liveˉbytes { get; private set; }
+
+        public long Peakˉliveˉvalues { get; private set; }
+
+        public long Peakˉliveˉbytes { get; private set; }
+
+        public long Peakˉoperationˉvalues { get; private set; }
+
+        public long Peakˉoperationˉbytes { get; private set; }
+
+        public int Peakˉoperationˉfunctionˉindex { get; private set; } = -1;
+
+        public Runtimeˉdynamicˉvalueˉkind? Peakˉoperationˉkind { get; private set; }
+
+        public Runtimeˉdynamicˉrootˉset Allocate(
+            int functionˉindex,
+            Runtimeˉdynamicˉvalueˉkind kind,
+            int bytes,
+            Runtimeˉvalue? firstˉinput,
+            Runtimeˉvalue? secondˉinput)
+        {
+            Constructedˉvalues = checked(Constructedˉvalues + 1);
+            Constructedˉbytes = checked(Constructedˉbytes + bytes);
+
+            var Operationˉvalues = checked(Liveˉvalues + 1);
+            var Operationˉbytes = checked(Liveˉbytes + bytes);
+            Addˉunrootedˉinputs(
+                firstˉinput?.Dynamicˉroots,
+                secondˉinput?.Dynamicˉroots,
+                ref Operationˉvalues,
+                ref Operationˉbytes);
+            if (Operationˉbytes > Peakˉoperationˉbytes ||
+                (Operationˉbytes == Peakˉoperationˉbytes &&
+                 Operationˉvalues > Peakˉoperationˉvalues))
+            {
+                Peakˉoperationˉvalues = Operationˉvalues;
+                Peakˉoperationˉbytes = Operationˉbytes;
+                Peakˉoperationˉfunctionˉindex = functionˉindex;
+                Peakˉoperationˉkind = kind;
+            }
+
+            return Runtimeˉdynamicˉrootˉset.Createˉbacking(bytes);
+        }
+
+        public void Addˉroots(Runtimeˉvalue value)
+        {
+            var Roots = value.Dynamicˉroots;
+            if (Roots is null)
+            {
+                return;
+            }
+
+            if (Roots.Isˉbacking)
+            {
+                Addˉbacking(Roots);
+            }
+            else
+            {
+                foreach (var Backing in Roots.Backingˉmembers)
+                {
+                    Addˉbacking(Backing);
+                }
+            }
+
+            if (Liveˉbytes > Peakˉliveˉbytes ||
+                (Liveˉbytes == Peakˉliveˉbytes && Liveˉvalues > Peakˉliveˉvalues))
+            {
+                Peakˉliveˉvalues = Liveˉvalues;
+                Peakˉliveˉbytes = Liveˉbytes;
+            }
+        }
+
+        public void Removeˉroots(Runtimeˉvalue value)
+        {
+            var Roots = value.Dynamicˉroots;
+            if (Roots is null)
+            {
+                return;
+            }
+
+            if (Roots.Isˉbacking)
+            {
+                Removeˉbacking(Roots);
+            }
+            else
+            {
+                foreach (var Backing in Roots.Backingˉmembers)
+                {
+                    Removeˉbacking(Backing);
+                }
+            }
+        }
+
+        public void Reset()
+        {
+            if (Liveˉvalues != 0 || Liveˉbytes != 0)
+            {
+                throw new InvalidOperationException(
+                    "Dynamic-value lifetime tracking retained roots after execution completed.");
+            }
+
+            Constructedˉvalues = 0;
+            Constructedˉbytes = 0;
+            Peakˉliveˉvalues = 0;
+            Peakˉliveˉbytes = 0;
+            Peakˉoperationˉvalues = 0;
+            Peakˉoperationˉbytes = 0;
+            Peakˉoperationˉfunctionˉindex = -1;
+            Peakˉoperationˉkind = null;
+        }
+
+        private static void Addˉunrootedˉinputs(
+            Runtimeˉdynamicˉrootˉset? first,
+            Runtimeˉdynamicˉrootˉset? second,
+            ref long values,
+            ref long bytes)
+        {
+            if (first is not null)
+            {
+                if (first.Isˉbacking)
+                {
+                    Addˉunrootedˉbacking(first, ref values, ref bytes);
+                }
+                else
+                {
+                    foreach (var Backing in first.Backingˉmembers)
+                    {
+                        Addˉunrootedˉbacking(Backing, ref values, ref bytes);
+                    }
+                }
+            }
+
+            if (second is null)
+            {
+                return;
+            }
+
+            if (second.Isˉbacking)
+            {
+                if (!Containsˉbacking(first, second))
+                {
+                    Addˉunrootedˉbacking(second, ref values, ref bytes);
+                }
+                return;
+            }
+
+            foreach (var Backing in second.Backingˉmembers)
+            {
+                if (!Containsˉbacking(first, Backing))
+                {
+                    Addˉunrootedˉbacking(Backing, ref values, ref bytes);
+                }
+            }
+        }
+
+        private void Addˉbacking(Runtimeˉdynamicˉrootˉset backing)
+        {
+            var Previousˉcount = backing.Rootˉcount;
+            backing.Rootˉcount = checked(Previousˉcount + 1);
+            if (Previousˉcount != 0)
+            {
+                return;
+            }
+
+            Liveˉvalues = checked(Liveˉvalues + 1);
+            Liveˉbytes = checked(Liveˉbytes + backing.Backingˉbytes);
+        }
+
+        private void Removeˉbacking(Runtimeˉdynamicˉrootˉset backing)
+        {
+            if (backing.Rootˉcount <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Dynamic-value lifetime tracking observed an unbalanced root removal.");
+            }
+
+            if (--backing.Rootˉcount != 0)
+            {
+                return;
+            }
+
+            Liveˉvalues--;
+            Liveˉbytes -= backing.Backingˉbytes;
+        }
+
+        private static void Addˉunrootedˉbacking(
+            Runtimeˉdynamicˉrootˉset backing,
+            ref long values,
+            ref long bytes)
+        {
+            if (backing.Rootˉcount != 0)
+            {
+                return;
+            }
+
+            values = checked(values + 1);
+            bytes = checked(bytes + backing.Backingˉbytes);
+        }
+
+        private static bool Containsˉbacking(
+            Runtimeˉdynamicˉrootˉset? roots,
+            Runtimeˉdynamicˉrootˉset backing)
+        {
+            if (roots is null)
+            {
+                return false;
+            }
+            if (roots.Isˉbacking)
+            {
+                return ReferenceEquals(roots, backing);
+            }
+
+            return roots.Backingˉmembers.Contains(backing);
         }
     }
 

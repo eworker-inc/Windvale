@@ -461,6 +461,11 @@ if [ "$(printf '%s\n' "$DYNAMIC_VALUE_REPORT_OUTPUT" | grep -c '^Function dynami
     echo 'The Seed CLI did not report deterministic per-function dynamic-value construction pressure.' >&2
     exit 1
 fi
+DYNAMIC_LIFETIME_OUTPUT=$(dotnet "$TOOL_DLL" \
+    run "$BYTE_CONSTRUCTION_DEMO_MODULE" --report-dynamic-lifetime 2>&1)
+printf '%s\n' "$DYNAMIC_LIFETIME_OUTPUT" | grep -F 'Result: 0' >/dev/null
+printf '%s\n' "$DYNAMIC_LIFETIME_OUTPUT" | grep -F \
+    'Dynamic lifetime constructed-bytes=8388672 constructed-values=35 peak-live-bytes=6291475 peak-live-values=5 peak-operation-bytes=6291475 peak-operation-values=5 retained-bytes=0 retained-values=0 kind=bytes.concat index=0 name=Foundationˉbytesˉrepeat' >/dev/null
 
 NATIVE_STENCIL_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Core.wv"
 dotnet "$TOOL_DLL" \

@@ -533,7 +533,7 @@ internal static class Program
             return Usageˉerror(
                 "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
                 "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
-                "[--report-function-dynamic-values] " +
+                "[--report-function-dynamic-values] [--report-dynamic-lifetime] " +
                 "[-- <argument>...]");
         }
 
@@ -545,6 +545,7 @@ internal static class Program
         var Reportˉfunctionˉsteps = false;
         var Reportˉfunctionˉrecordˉfields = false;
         var Reportˉfunctionˉdynamicˉvalues = false;
+        var Reportˉdynamicˉlifetime = false;
         for (var Index = 1; Index < arguments.Length; Index++)
         {
             switch (arguments[Index])
@@ -577,6 +578,9 @@ internal static class Program
                 case "--report-function-dynamic-values":
                     Reportˉfunctionˉdynamicˉvalues = true;
                     break;
+                case "--report-dynamic-lifetime":
+                    Reportˉdynamicˉlifetime = true;
+                    break;
                 case "--":
                     Programˉarguments.AddRange(arguments[(Index + 1)..]);
                     Index = arguments.Length;
@@ -601,7 +605,8 @@ internal static class Program
                 Maximumˉsteps,
                 Collectˉfunctionˉsteps: Reportˉfunctionˉsteps,
                 Collectˉfunctionˉrecordˉfields: Reportˉfunctionˉrecordˉfields,
-                Collectˉfunctionˉdynamicˉvalues: Reportˉfunctionˉdynamicˉvalues));
+                Collectˉfunctionˉdynamicˉvalues: Reportˉfunctionˉdynamicˉvalues,
+                Collectˉdynamicˉvalueˉlifetime: Reportˉdynamicˉlifetime));
         Runtimeˉresult Result;
         try
         {
@@ -638,6 +643,25 @@ internal static class Program
                         $"index={Function.Functionˉindex} name={Function.Functionˉname}");
                 }
             }
+            if (Reportˉdynamicˉlifetime)
+            {
+                var Lifetime = Runtime.Readˉdynamicˉvalueˉlifetime()!;
+                var Peakˉkind = Lifetime.Peakˉoperationˉkind is { } Kind
+                    ? Dynamicˉvalueˉkindˉname(Kind)
+                    : "none";
+                Console.Error.WriteLine(
+                    $"Dynamic lifetime constructed-bytes={Lifetime.Constructedˉbytes} " +
+                    $"constructed-values={Lifetime.Constructedˉvalues} " +
+                    $"peak-live-bytes={Lifetime.Peakˉliveˉbytes} " +
+                    $"peak-live-values={Lifetime.Peakˉliveˉvalues} " +
+                    $"peak-operation-bytes={Lifetime.Peakˉoperationˉbytes} " +
+                    $"peak-operation-values={Lifetime.Peakˉoperationˉvalues} " +
+                    $"retained-bytes={Lifetime.Retainedˉbytes} " +
+                    $"retained-values={Lifetime.Retainedˉvalues} " +
+                    $"kind={Peakˉkind} " +
+                    $"index={Lifetime.Peakˉoperationˉfunctionˉindex} " +
+                    $"name={Lifetime.Peakˉoperationˉfunctionˉname ?? "none"}");
+            }
         }
         Console.WriteLine($"Result: {Result.Exitˉcode}");
         if (Reportˉsteps)
@@ -661,6 +685,8 @@ internal static class Program
             Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu16ˉlittle => "bytes.from_u16_little",
             Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu32ˉlittle => "bytes.from_u32_little",
             Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉi32ˉlittle => "bytes.from_i32_little",
+            Runtimeˉdynamicˉvalueˉkind.I64ˉformat => "i64.format",
+            Runtimeˉdynamicˉvalueˉkind.U64ˉformat => "u64.format",
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown dynamic-value kind."),
         };
 
@@ -742,7 +768,7 @@ internal static class Program
         output.WriteLine(
             "  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
             "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
-            "[--report-function-dynamic-values] " +
+            "[--report-function-dynamic-values] [--report-dynamic-lifetime] " +
             "[-- <argument>...]");
         output.WriteLine("  windvale help");
     }

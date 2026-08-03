@@ -548,6 +548,14 @@ if (
 ) {
     throw 'The Seed CLI did not report deterministic per-function dynamic-value construction pressure.'
 }
+$DynamicLifetimeOutput = dotnet $ToolDll run $ByteConstructionDemoModule --report-dynamic-lifetime 2>&1
+if (
+    $LASTEXITCODE -ne 0 -or
+    $DynamicLifetimeOutput -notcontains 'Result: 0' -or
+    ($DynamicLifetimeOutput -join "`n") -notmatch '(?m)^Dynamic lifetime constructed-bytes=8388672 constructed-values=35 peak-live-bytes=6291475 peak-live-values=5 peak-operation-bytes=6291475 peak-operation-values=5 retained-bytes=0 retained-values=0 kind=bytes\.concat index=0 name=Foundationˉbytesˉrepeat$'
+) {
+    throw 'The Seed CLI did not report deterministic dynamic-value lifetime pressure.'
+}
 
 $NativeStencilSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Stencil-Core.wv'
 dotnet $ToolDll `
