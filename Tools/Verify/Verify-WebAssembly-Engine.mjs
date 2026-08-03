@@ -258,9 +258,19 @@ const EXPECTED = [
         kind: 1,
         runtime: "calls",
     },
+    {
+        name: "Windvale-native WVB canonical metadata and reference verifier",
+        path: process.argv[32],
+        acceptedInputPaths: [process.argv[33], process.argv[34], process.argv[35]],
+        sha256: "a2ef01881a4d381154a0e3feb0cb74cb0cdb3a53631cae1206d2fc03bcabe2fa",
+        bytes: 440093,
+        abi: 3,
+        kind: 1,
+        runtime: "wvb-semantic",
+    },
 ];
 
-if (process.argv.length !== 32) {
+if (process.argv.length !== 36) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -274,7 +284,8 @@ if (process.argv.length !== 32) {
             "<runtime-u32.wasm> <wvb-envelope-verifier.wasm> " +
             "<wvb-envelope-verifier.wvb> <wvb-structural-verifier.wasm> " +
             "<wvb-structural-verifier.wvb> <data.wvb> <types.wvb> <capabilities.wvb> " +
-            "<runtime-calls.wasm>",
+            "<runtime-calls.wasm> <wvb-semantic-verifier.wasm> " +
+            "<semantic-data.wvb> <semantic-types.wvb> <semantic-capabilities.wvb>",
     );
 }
 
@@ -722,6 +733,261 @@ function verifyRuntime(expected, module, exports, digest) {
                     0,
                     instructions,
                     Uint8Array.from([0]),
+                );
+            } catch (error) {
+                throw new Error(`${expected.path}: ${name}: ${error.message}`);
+            }
+        }
+    } else if (expected.runtime === "wvb-semantic") {
+        const [data, types, capabilities] = expected.acceptedInputPaths.map(path =>
+            readFileSync(path));
+        const acceptedSteps = [1_122_085, 912_951, 113_457];
+        for (let index = 0; index < expected.acceptedInputPaths.length; index++) {
+            requireMemoryResult(
+                expected.path,
+                runMemory(
+                    exports,
+                    readFileSync(expected.acceptedInputPaths[index]),
+                    acceptedSteps[index],
+                ),
+                0,
+                acceptedSteps[index],
+                Uint8Array.from([1]),
+            );
+        }
+        requireMemoryResult(
+            expected.path,
+            runMemory(exports, data, acceptedSteps[0] - 1),
+            3011,
+            acceptedSteps[0] - 1,
+        );
+
+        const readU32 = (bytes, offset) => bytes.readUInt32LE(offset);
+        function findSections(bytes) {
+            const result = [];
+            let cursor = 12;
+            for (let kind = 1; kind <= 7; kind++) {
+                const length = readU32(bytes, cursor + 4);
+                result[kind] = { payload: cursor + 8, length };
+                cursor += 8 + length;
+            }
+            return result;
+        }
+        function findUtf8(bytes, value) {
+            const offset = bytes.indexOf(Buffer.from(value, "utf8"));
+            if (offset < 0) {
+                throw new Error(`${expected.path}: semantic input does not contain '${value}'.`);
+            }
+            return offset;
+        }
+        function skipShape(bytes, cursor) {
+            return cursor + (bytes[cursor] >= 7 ? 5 : 1);
+        }
+        function parseFunctions(bytes) {
+            const sections = findSections(bytes);
+            let cursor = sections[4].payload;
+            const count = readU32(bytes, cursor);
+            cursor += 4;
+            const functions = [];
+            for (let functionIndex = 0; functionIndex < count; functionIndex++) {
+                const nameLength = readU32(bytes, cursor);
+                cursor += 4 + nameLength;
+                const parameterCount = readU32(bytes, cursor);
+                cursor += 4;
+                for (let index = 0; index < parameterCount; index++) {
+                    cursor = skipShape(bytes, cursor);
+                }
+                cursor = skipShape(bytes, cursor);
+                const localCount = readU32(bytes, cursor);
+                cursor += 4;
+                for (let index = 0; index < localCount; index++) {
+                    cursor = skipShape(bytes, cursor);
+                }
+                functions.push({
+                    codeOffset: readU32(bytes, cursor),
+                    codeLength: readU32(bytes, cursor + 4),
+                });
+                cursor += 12;
+            }
+            return { functions, codePayload: sections[5].payload };
+        }
+        function firstNominalShapeIndex(bytes) {
+            const sections = findSections(bytes);
+            let cursor = sections[4].payload;
+            const count = readU32(bytes, cursor);
+            cursor += 4;
+            for (let functionIndex = 0; functionIndex < count; functionIndex++) {
+                const nameLength = readU32(bytes, cursor);
+                cursor += 4 + nameLength;
+                const parameterCount = readU32(bytes, cursor);
+                cursor += 4;
+                for (let index = 0; index < parameterCount; index++) {
+                    if (bytes[cursor] >= 7) { return cursor + 1; }
+                    cursor = skipShape(bytes, cursor);
+                }
+                if (bytes[cursor] >= 7) { return cursor + 1; }
+                cursor = skipShape(bytes, cursor);
+                const localCount = readU32(bytes, cursor);
+                cursor += 4;
+                for (let index = 0; index < localCount; index++) {
+                    if (bytes[cursor] >= 7) { return cursor + 1; }
+                    cursor = skipShape(bytes, cursor);
+                }
+                cursor += 12;
+            }
+            throw new Error(`${expected.path}: semantic nominal input has no nominal shape.`);
+        }
+        function instructionWidth(opcode) {
+            if (opcode === 2 || opcode === 8) { return 2; }
+            if (opcode === 106) { return 9; }
+            if ([1, 3, 4, 5, 6, 7, 9, 10, 48, 49, 64, 65, 104, 105]
+                .includes(opcode)) {
+                return 5;
+            }
+            return 1;
+        }
+        function mutateInstruction(bytes, wanted, mutate) {
+            const parsed = parseFunctions(bytes);
+            for (const functionDeclaration of parsed.functions) {
+                let instructionOffset = 0;
+                while (instructionOffset < functionDeclaration.codeLength) {
+                    const absolute = parsed.codePayload +
+                        functionDeclaration.codeOffset + instructionOffset;
+                    const opcode = bytes[absolute];
+                    if (wanted(opcode)) {
+                        mutate(bytes, absolute, instructionOffset);
+                        return;
+                    }
+                    instructionOffset += instructionWidth(opcode);
+                }
+            }
+            throw new Error(`${expected.path}: semantic input has no requested instruction.`);
+        }
+        function duplicateEnumValue(bytes) {
+            const sections = findSections(bytes);
+            let cursor = sections[7].payload;
+            const count = readU32(bytes, cursor);
+            cursor += 4;
+            for (let typeIndex = 0; typeIndex < count; typeIndex++) {
+                const kind = bytes[cursor++];
+                const nameLength = readU32(bytes, cursor);
+                cursor += 4 + nameLength;
+                const itemCount = readU32(bytes, cursor);
+                cursor += 4;
+                if (kind === 1) {
+                    for (let itemIndex = 0; itemIndex < itemCount; itemIndex++) {
+                        const itemLength = readU32(bytes, cursor);
+                        cursor = skipShape(bytes, cursor + 4 + itemLength);
+                    }
+                    continue;
+                }
+                let firstValue = 0;
+                for (let itemIndex = 0; itemIndex < itemCount; itemIndex++) {
+                    const itemLength = readU32(bytes, cursor);
+                    cursor += 4 + itemLength;
+                    if (itemIndex === 0) {
+                        firstValue = readU32(bytes, cursor);
+                    } else if (itemIndex === 1) {
+                        bytes.writeUInt32LE(firstValue, cursor);
+                        return;
+                    }
+                    cursor += 4;
+                }
+            }
+            throw new Error(`${expected.path}: semantic nominal input has no two-member enum.`);
+        }
+        function redirectRecordEnumFieldToRecord(bytes) {
+            const sections = findSections(bytes);
+            let cursor = sections[7].payload;
+            const count = readU32(bytes, cursor);
+            cursor += 4;
+            for (let typeIndex = 0; typeIndex < count; typeIndex++) {
+                const kind = bytes[cursor++];
+                const nameLength = readU32(bytes, cursor);
+                cursor += 4 + nameLength;
+                const itemCount = readU32(bytes, cursor);
+                cursor += 4;
+                for (let itemIndex = 0; itemIndex < itemCount; itemIndex++) {
+                    const itemLength = readU32(bytes, cursor);
+                    cursor += 4 + itemLength;
+                    if (kind === 1) {
+                        if (bytes[cursor] === 8) {
+                            bytes.writeUInt32LE(0, cursor + 1);
+                            return;
+                        }
+                        cursor = skipShape(bytes, cursor);
+                    } else {
+                        cursor += 4;
+                    }
+                }
+            }
+            throw new Error(`${expected.path}: semantic nominal input has no enum field.`);
+        }
+
+        const malformed = [];
+        function corrupt(name, original, mutate, instructions) {
+            const value = Buffer.from(original);
+            mutate(value);
+            malformed.push([name, value, instructions]);
+        }
+        corrupt("module identifier", data, value => {
+            value[findSections(value)[1].payload + 5] = 45;
+        }, 103_959);
+        corrupt("portable capabilities", capabilities, value => {
+            value[findSections(value)[1].payload] = 1;
+        }, 33_211);
+        corrupt("capability signature", capabilities, value => {
+            let cursor = findSections(value)[2].payload + 4;
+            const nameLength = readU32(value, cursor);
+            cursor += 4 + nameLength;
+            const parameterCount = readU32(value, cursor);
+            cursor += 4 + parameterCount;
+            value[cursor] = value[cursor] === 0 ? 1 : 0;
+        }, 35_029);
+        corrupt("data order", data, value => {
+            value[findUtf8(value, "__Text_000001") + 12] = 48;
+        }, 117_006);
+        corrupt("text UTF-8", data, value => {
+            value[findUtf8(value, "same")] = 0xC0;
+        }, 109_928);
+        corrupt("function order", data, value => {
+            Buffer.from("Alpha").copy(value, findUtf8(value, "Zebra"));
+        }, 127_546);
+        corrupt("nominal shape kind", types, value => {
+            value.writeUInt32LE(2, firstNominalShapeIndex(value));
+        }, 104_007);
+        corrupt("text data kind", data, value => {
+            mutateInstruction(value, opcode => opcode === 3, (bytes, absolute) => {
+                bytes.writeUInt32LE(0, absolute + 1);
+            });
+        }, 149_357);
+        corrupt("branch boundary", data, value => {
+            mutateInstruction(
+                value,
+                opcode => opcode === 48 || opcode === 49,
+                (bytes, absolute, instructionOffset) => {
+                    bytes.writeUInt32LE(instructionOffset + 1, absolute + 1);
+                },
+            );
+        }, 202_322);
+        corrupt("export identity", data, value => {
+            value[findSections(value)[6].payload + 8] = 78;
+        }, 1_121_296);
+        corrupt("type identity", types, value => {
+            Buffer.from("Reading").copy(value, findUtf8(value, "Weather"));
+        }, 908_171);
+        corrupt("enum backing value", types, duplicateEnumValue, 906_662);
+        corrupt("record enum target", types, redirectRecordEnumFieldToRecord, 890_847);
+
+        for (const [name, input, instructions] of malformed) {
+            const result = runMemory(exports, input, 2_000_000);
+            try {
+                requireMemoryResult(
+                    expected.path,
+                    result,
+                    0,
+                    instructions,
+                    new Uint8Array(),
                 );
             } catch (error) {
                 throw new Error(`${expected.path}: ${name}: ${error.message}`);

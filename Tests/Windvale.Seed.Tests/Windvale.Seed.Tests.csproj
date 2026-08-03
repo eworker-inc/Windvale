@@ -315,5 +315,8 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Wvb-Structural-Verify-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Structural-Verify-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Wvb-Semantic-Verify-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Semantic-Verify-Main.wv" />
   </ItemGroup>
 </Project>

@@ -155,6 +155,8 @@ internal static class Program
     private const string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SHA256 = "f493777450b720ef786b60502528819969ad9e0322aa55a9c0259f6de20850fc";
     private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_WVB_SHA256 = "72da44ba1292ed3ef4ac62c239dd937862636229a7d60302305a7dd19ac27376";
     private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SHA256 = "46fe579fb7082dd4b0dd981e09f6b953127e52c9c6993d7885ca130725762677";
+    private const string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_WVB_SHA256 = "09a665dcfbf8fe70d9b830be8376b1c1353a5ef09ff10de7b0183e535036fa64";
+    private const string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SHA256 = "a2ef01881a4d381154a0e3feb0cb74cb0cdb3a53631cae1206d2fc03bcabe2fa";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -708,6 +710,8 @@ internal static class Program
         "Windvale.Seed.Tests.WebAssembly-Wvb-Envelope-Verify-Main.wv");
     private static readonly string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Wvb-Structural-Verify-Main.wv");
+    private static readonly string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Wvb-Semantic-Verify-Main.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -9587,6 +9591,356 @@ internal static class Program
             Structuralˉlowered.Writtenˉbytes,
             Structuralˉrepeat.Writtenˉbytes);
 
+        var Semanticˉverifierˉwvb = Compileˉsuccess(
+            WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE);
+        Equal(
+            WEBASSEMBLY_WVB_SEMANTIC_VERIFY_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Semanticˉverifierˉwvb));
+        var Semanticˉverifierˉverified = Moduleˉcodec.Readˉandˉverify(
+            Semanticˉverifierˉwvb);
+        Equal(8, Semanticˉverifierˉverified.Functions.Length);
+        Equal(
+            65_536,
+            Semanticˉverifierˉverified.Functions.Sum(
+                Function => Function.Declaration.Codeˉlength));
+        Sequenceˉequal(
+            new[]
+            {
+                "Aˉidentifier",
+                "Bˉstructure",
+                "Cˉmoduleˉandˉcapabilities",
+                "Dˉdata",
+                "Eˉfunctions",
+                "Fˉcodeˉandˉexports",
+                "Gˉtypes",
+                "Main",
+            },
+            Semanticˉverifierˉverified.Functions.Select(
+                Function => Function.Declaration.Name));
+
+        var Semanticˉoptions = Runtimeˉoptions.Portableˉdefaults with
+        {
+            Maximumˉinstructions = 2_000_000,
+        };
+        var Semanticˉdataˉwvb = Compileˉsuccess(
+            SOURCE_WVB_DATA_AND_TEXT_SOURCE);
+        var Semanticˉtypesˉwvb = Compileˉsuccess(
+            SOURCE_WVB_NOMINAL_TYPES_SOURCE);
+        var Semanticˉcapabilitiesˉwvb = Compileˉsuccess(
+            SOURCE_WVB_HOSTED_CAPABILITIES_SOURCE);
+        var Semanticˉaccepted = new[]
+        {
+            (Name: "data and text", Bytes: Semanticˉdataˉwvb, Instructions: 1_122_085L),
+            (Name: "nominal types", Bytes: Semanticˉtypesˉwvb, Instructions: 912_951L),
+            (Name: "hosted capabilities", Bytes: Semanticˉcapabilitiesˉwvb, Instructions: 113_457L),
+        };
+        foreach (var Accepted in Semanticˉaccepted)
+        {
+            var Result = new Referenceˉruntime(
+                Semanticˉverifierˉverified,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Semanticˉoptions).Runˉmainˉbytes(
+                    ImmutableArray.Create(Accepted.Bytes));
+            Sequenceˉequal(ImmutableArray.Create<byte>(1), Result.Bytes);
+            Equal(Accepted.Instructions, Result.Executedˉinstructions);
+        }
+
+        static int Findˉutf8(byte[] Bytes, string Value)
+        {
+            var Offset = Bytes.AsSpan().IndexOf(
+                System.Text.Encoding.UTF8.GetBytes(Value));
+            True(Offset >= 0, $"The WVB does not contain '{Value}'.");
+            return Offset;
+        }
+
+        static int Skipˉshape(byte[] Bytes, int Cursor) =>
+            checked(Cursor + (Bytes[Cursor] >= 7 ? 5 : 1));
+
+        static int Findˉfirstˉnominalˉshapeˉindex(byte[] Bytes)
+        {
+            var Cursor = Findˉsectionˉpayload(Bytes, Sectionˉkind.Functions);
+            var Count = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                Bytes.AsSpan(Cursor, 4)));
+            Cursor += 4;
+            for (var Functionˉindex = 0; Functionˉindex < Count; Functionˉindex++)
+            {
+                var Length = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4 + Length;
+                var Parameterˉcount = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4;
+                for (var Index = 0; Index < Parameterˉcount; Index++)
+                {
+                    if (Bytes[Cursor] >= 7) { return Cursor + 1; }
+                    Cursor = Skipˉshape(Bytes, Cursor);
+                }
+                if (Bytes[Cursor] >= 7) { return Cursor + 1; }
+                Cursor = Skipˉshape(Bytes, Cursor);
+                var Localˉcount = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4;
+                for (var Index = 0; Index < Localˉcount; Index++)
+                {
+                    if (Bytes[Cursor] >= 7) { return Cursor + 1; }
+                    Cursor = Skipˉshape(Bytes, Cursor);
+                }
+                Cursor += 12;
+            }
+
+            throw new InvalidOperationException("The nominal WVB has no nominal shape.");
+        }
+
+        static (int Operandˉoffset, int Instructionˉoffset) Findˉinstruction(
+            byte[] Bytes,
+            Verifiedˉmodule Module,
+            params Opcode[] Opcodes)
+        {
+            var Code = Findˉsectionˉpayload(Bytes, Sectionˉkind.Code);
+            foreach (var Function in Module.Functions)
+            {
+                foreach (var Instruction in Function.Instructions)
+                {
+                    if (Opcodes.Contains(Instruction.Opcode))
+                    {
+                        return (
+                            Code + Function.Declaration.Codeˉoffset +
+                                Instruction.Offset + 1,
+                            Instruction.Offset);
+                    }
+                }
+            }
+
+            throw new InvalidOperationException("The WVB has no requested instruction.");
+        }
+
+        static void Duplicateˉenumˉvalue(byte[] Bytes)
+        {
+            var Cursor = Findˉsectionˉpayload(Bytes, Sectionˉkind.Types);
+            var Count = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                Bytes.AsSpan(Cursor, 4)));
+            Cursor += 4;
+            for (var Typeˉindex = 0; Typeˉindex < Count; Typeˉindex++)
+            {
+                var Kind = (Nominalˉtypeˉkind)Bytes[Cursor++];
+                var Nameˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4 + Nameˉlength;
+                var Itemˉcount = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4;
+                if (Kind == Nominalˉtypeˉkind.Record)
+                {
+                    for (var Itemˉindex = 0; Itemˉindex < Itemˉcount; Itemˉindex++)
+                    {
+                        var Itemˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                            Bytes.AsSpan(Cursor, 4)));
+                        Cursor = Skipˉshape(Bytes, Cursor + 4 + Itemˉlength);
+                    }
+                    continue;
+                }
+
+                var Firstˉvalue = 0u;
+                for (var Itemˉindex = 0; Itemˉindex < Itemˉcount; Itemˉindex++)
+                {
+                    var Itemˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                        Bytes.AsSpan(Cursor, 4)));
+                    Cursor += 4 + Itemˉlength;
+                    if (Itemˉindex == 0)
+                    {
+                        Firstˉvalue = BinaryPrimitives.ReadUInt32LittleEndian(
+                            Bytes.AsSpan(Cursor, 4));
+                    }
+                    else if (Itemˉindex == 1)
+                    {
+                        BinaryPrimitives.WriteUInt32LittleEndian(
+                            Bytes.AsSpan(Cursor, 4), Firstˉvalue);
+                        return;
+                    }
+                    Cursor += 4;
+                }
+            }
+
+            throw new InvalidOperationException("The nominal WVB has no two-member enum.");
+        }
+
+        static void Redirectˉrecordˉenumˉfieldˉtoˉrecord(byte[] Bytes)
+        {
+            var Cursor = Findˉsectionˉpayload(Bytes, Sectionˉkind.Types);
+            var Count = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                Bytes.AsSpan(Cursor, 4)));
+            Cursor += 4;
+            for (var Typeˉindex = 0; Typeˉindex < Count; Typeˉindex++)
+            {
+                var Kind = (Nominalˉtypeˉkind)Bytes[Cursor++];
+                var Nameˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4 + Nameˉlength;
+                var Itemˉcount = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                    Bytes.AsSpan(Cursor, 4)));
+                Cursor += 4;
+                for (var Itemˉindex = 0; Itemˉindex < Itemˉcount; Itemˉindex++)
+                {
+                    var Itemˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                        Bytes.AsSpan(Cursor, 4)));
+                    Cursor += 4 + Itemˉlength;
+                    if (Kind == Nominalˉtypeˉkind.Record)
+                    {
+                        if (Bytes[Cursor] == (byte)Valueˉtype.Enum)
+                        {
+                            BinaryPrimitives.WriteUInt32LittleEndian(
+                                Bytes.AsSpan(Cursor + 1, 4), 0u);
+                            return;
+                        }
+                        Cursor = Skipˉshape(Bytes, Cursor);
+                    }
+                    else
+                    {
+                        Cursor += 4;
+                    }
+                }
+            }
+
+            throw new InvalidOperationException("The nominal WVB has no enum record field.");
+        }
+
+        var Semanticˉdataˉverified = Moduleˉcodec.Readˉandˉverify(
+            Semanticˉdataˉwvb);
+        var Semanticˉmalformed = new List<(string Name, byte[] Bytes)>();
+        void Addˉsemanticˉmalformed(
+            string Name,
+            byte[] Source,
+            Action<byte[]> Corrupt)
+        {
+            var Malformed = Source.ToArray();
+            Corrupt(Malformed);
+            Semanticˉmalformed.Add((Name, Malformed));
+        }
+
+        Addˉsemanticˉmalformed("module identifier", Semanticˉdataˉwvb, Bytes =>
+        {
+            var Payload = Findˉsectionˉpayload(Bytes, Sectionˉkind.Module);
+            Bytes[Payload + 5] = (byte)'-';
+        });
+        Addˉsemanticˉmalformed("portable capabilities", Semanticˉcapabilitiesˉwvb, Bytes =>
+        {
+            Bytes[Findˉsectionˉpayload(Bytes, Sectionˉkind.Module)] =
+                (byte)Moduleˉprofile.Portable;
+        });
+        Addˉsemanticˉmalformed("capability signature", Semanticˉcapabilitiesˉwvb, Bytes =>
+        {
+            var Cursor = Findˉsectionˉpayload(Bytes, Sectionˉkind.Capabilities) + 4;
+            var Nameˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                Bytes.AsSpan(Cursor, 4)));
+            Cursor += 4 + Nameˉlength;
+            var Parameterˉcount = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                Bytes.AsSpan(Cursor, 4)));
+            Cursor += 4 + Parameterˉcount;
+            Bytes[Cursor] = Bytes[Cursor] == 0 ? (byte)Valueˉtype.I32 : (byte)Valueˉtype.Void;
+        });
+        Addˉsemanticˉmalformed("data order", Semanticˉdataˉwvb, Bytes =>
+        {
+            var Name = "__Text_000001";
+            Bytes[Findˉutf8(Bytes, Name) + Name.Length - 1] = (byte)'0';
+        });
+        Addˉsemanticˉmalformed("text UTF-8", Semanticˉdataˉwvb, Bytes =>
+        {
+            Bytes[Findˉutf8(Bytes, "same")] = 0xC0;
+        });
+        Addˉsemanticˉmalformed("function order", Semanticˉdataˉwvb, Bytes =>
+        {
+            System.Text.Encoding.UTF8.GetBytes("Alpha").CopyTo(
+                Bytes.AsSpan(Findˉutf8(Bytes, "Zebra"), 5));
+        });
+        Addˉsemanticˉmalformed("nominal shape kind", Semanticˉtypesˉwvb, Bytes =>
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Bytes.AsSpan(Findˉfirstˉnominalˉshapeˉindex(Bytes), 4), 2u);
+        });
+        Addˉsemanticˉmalformed("text data kind", Semanticˉdataˉwvb, Bytes =>
+        {
+            var Instruction = Findˉinstruction(
+                Bytes, Semanticˉdataˉverified, Opcode.Textˉconst);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Bytes.AsSpan(Instruction.Operandˉoffset, 4), 0u);
+        });
+        Addˉsemanticˉmalformed("branch boundary", Semanticˉdataˉwvb, Bytes =>
+        {
+            var Instruction = Findˉinstruction(
+                Bytes,
+                Semanticˉdataˉverified,
+                Opcode.Branchˉfalse,
+                Opcode.Jump);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Bytes.AsSpan(Instruction.Operandˉoffset, 4),
+                checked((uint)Instruction.Instructionˉoffset + 1u));
+        });
+        Addˉsemanticˉmalformed("export identity", Semanticˉdataˉwvb, Bytes =>
+        {
+            var Payload = Findˉsectionˉpayload(Bytes, Sectionˉkind.Exports);
+            Bytes[Payload + 8] = (byte)'N';
+        });
+        Addˉsemanticˉmalformed("type identity", Semanticˉtypesˉwvb, Bytes =>
+        {
+            System.Text.Encoding.UTF8.GetBytes("Reading").CopyTo(
+                Bytes.AsSpan(Findˉutf8(Bytes, "Weather"), 7));
+        });
+        Addˉsemanticˉmalformed(
+            "enum backing value",
+            Semanticˉtypesˉwvb,
+            Duplicateˉenumˉvalue);
+        Addˉsemanticˉmalformed(
+            "record enum target",
+            Semanticˉtypesˉwvb,
+            Redirectˉrecordˉenumˉfieldˉtoˉrecord);
+
+        foreach (var Malformed in Semanticˉmalformed)
+        {
+            var Oracleˉrejected = false;
+            try
+            {
+                _ = Moduleˉcodec.Readˉandˉverify(Malformed.Bytes);
+            }
+            catch (Bytecodeˉexception)
+            {
+                Oracleˉrejected = true;
+            }
+            True(
+                Oracleˉrejected,
+                $"The Stage 0 verifier accepted semantic corruption '{Malformed.Name}'.");
+
+            var Rejected = new Referenceˉruntime(
+                Semanticˉverifierˉverified,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Semanticˉoptions).Runˉmainˉbytes(
+                    ImmutableArray.Create(Malformed.Bytes));
+            Sequenceˉequal(ImmutableArray<byte>.Empty, Rejected.Bytes);
+        }
+
+        var Semanticˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Semanticˉverifierˉwvb,
+            150_000_000);
+        Equal(0, Semanticˉlowered.Exitˉcode);
+        Equal(
+            "webassembly status=Valid module-bytes=440093 execution-abi=3\n",
+            Semanticˉlowered.Output);
+        Equal(129_151_253L, Semanticˉlowered.Executedˉinstructions);
+        Equal(
+            WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Semanticˉlowered.Writtenˉbytes.AsSpan()));
+        Validateˉruntimeˉcallˉwebassembly(
+            Semanticˉlowered.Writtenˉbytes.AsSpan(),
+            Semanticˉverifierˉverified);
+        var Semanticˉrepeat = Runˉwebassemblyˉtool(
+            Tool,
+            Semanticˉverifierˉwvb,
+            150_000_000);
+        Sequenceˉequal(
+            Semanticˉlowered.Writtenˉbytes,
+            Semanticˉrepeat.Writtenˉbytes);
+
         var Invalidˉruntimeˉtarget = Envelopeˉverifierˉwvb.ToArray();
         var Envelopeˉcode = Findˉsectionˉpayload(
             Invalidˉruntimeˉtarget, Sectionˉkind.Code);
@@ -15410,7 +15764,8 @@ internal static class Program
 
     private static WebAssemblyˉtoolˉresult Runˉwebassemblyˉtool(
         Verifiedˉmodule module,
-        IEnumerable<byte> input)
+        IEnumerable<byte> input,
+        long maximumˉinstructions = 100_000_000)
     {
         var Input = input.ToImmutableArray();
         var Output = new StringWriter();
@@ -15433,7 +15788,7 @@ internal static class Program
                 Diagnostics,
                 Reader,
                 Writer)),
-            new(Authorized, Maximumˉinstructions: 100_000_000)).Runˉmain();
+            new(Authorized, Maximumˉinstructions: maximumˉinstructions)).Runˉmain();
         return new(
             Result.Exitˉcode,
             Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal),

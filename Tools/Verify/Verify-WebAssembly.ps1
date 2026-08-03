@@ -34,6 +34,7 @@ $RuntimeU32GuardSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/R
 $RuntimeCallsSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Runtime-Calls-Main.wv'
 $WvbEnvelopeVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Envelope-Verify-Main.wv'
 $WvbStructuralVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Structural-Verify-Main.wv'
+$WvbSemanticVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Semantic-Verify-Main.wv'
 $StructuralDataSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Data-And-Text.wv'
 $StructuralTypesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Nominal-Types.wv'
 $StructuralCapabilitiesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv'
@@ -64,6 +65,7 @@ $RuntimeU32GuardWvb = Join-Path $ArtifactDirectory 'Runtime-U32-Guard-Main.wvb'
 $RuntimeCallsWvb = Join-Path $ArtifactDirectory 'Runtime-Calls-Main.wvb'
 $WvbEnvelopeVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Envelope-Verify-Main.wvb'
 $WvbStructuralVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Structural-Verify-Main.wvb'
+$WvbSemanticVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Semantic-Verify-Main.wvb'
 $StructuralDataWvb = Join-Path $ArtifactDirectory 'Structural-Data-And-Text.wvb'
 $StructuralTypesWvb = Join-Path $ArtifactDirectory 'Structural-Nominal-Types.wvb'
 $StructuralCapabilitiesWvb = Join-Path $ArtifactDirectory 'Structural-Hosted-Capabilities.wvb'
@@ -92,6 +94,7 @@ $RuntimeU32GuardWasm = Join-Path $ArtifactDirectory 'Runtime-U32-Guard-Main.wasm
 $RuntimeCallsWasm = Join-Path $ArtifactDirectory 'Runtime-Calls-Main.wasm'
 $WvbEnvelopeVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Envelope-Verify-Main.wasm'
 $WvbStructuralVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Structural-Verify-Main.wasm'
+$WvbSemanticVerifyWasm = Join-Path $ArtifactDirectory 'Wvb-Semantic-Verify-Main.wasm'
 
 New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
 
@@ -131,6 +134,7 @@ Invoke-Windvale @('compile', $RuntimeU32GuardSource, '-o', $RuntimeU32GuardWvb)
 Invoke-Windvale @('compile', $RuntimeCallsSource, '-o', $RuntimeCallsWvb)
 Invoke-Windvale @('compile', $WvbEnvelopeVerifySource, '-o', $WvbEnvelopeVerifyWvb)
 Invoke-Windvale @('compile', $WvbStructuralVerifySource, '-o', $WvbStructuralVerifyWvb)
+Invoke-Windvale @('compile', $WvbSemanticVerifySource, '-o', $WvbSemanticVerifyWvb)
 Invoke-Windvale @('compile', $StructuralDataSource, '-o', $StructuralDataWvb)
 Invoke-Windvale @('compile', $StructuralTypesSource, '-o', $StructuralTypesWvb)
 Invoke-Windvale @('compile', $StructuralCapabilitiesSource, '-o', $StructuralCapabilitiesWvb)
@@ -171,6 +175,18 @@ Invoke-Windvale ($RunArguments + @($RuntimeU32GuardWvb, $RuntimeU32GuardWasm))
 Invoke-Windvale ($RunArguments + @($RuntimeCallsWvb, $RuntimeCallsWasm))
 Invoke-Windvale ($RunArguments + @($WvbEnvelopeVerifyWvb, $WvbEnvelopeVerifyWasm))
 Invoke-Windvale ($RunArguments + @($WvbStructuralVerifyWvb, $WvbStructuralVerifyWasm))
+$SemanticRunArguments = @(
+    'run', $BackendWvb,
+    '--allow', 'console.write_line',
+    '--allow', 'diagnostic.write_line',
+    '--allow', 'file.read_bytes',
+    '--allow', 'file.write_bytes',
+    '--allow', 'process.argument',
+    '--allow', 'process.argument_count',
+    '--max-steps', '150000000',
+    '--'
+)
+Invoke-Windvale ($SemanticRunArguments + @($WvbSemanticVerifyWvb, $WvbSemanticVerifyWasm))
 
 node $EngineVerifier `
     $SuccessWasm `
@@ -202,7 +218,11 @@ node $EngineVerifier `
     $StructuralDataWvb `
     $StructuralTypesWvb `
     $StructuralCapabilitiesWvb `
-    $RuntimeCallsWasm
+    $RuntimeCallsWasm `
+    $WvbSemanticVerifyWasm `
+    $StructuralDataWvb `
+    $StructuralTypesWvb `
+    $StructuralCapabilitiesWvb
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'
