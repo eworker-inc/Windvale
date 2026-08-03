@@ -75,3 +75,5 @@ Host adapters translate expected native file read or write failures into `Hosted
 ## Deliberate limits
 
 Seed has no environment variables, standard input, file handles, directories, globbing, permissions API, asynchronous I/O, memory mapping, network resources, or platform path abstraction. File writing is deliberately whole-value and replacement-only. The first-read cache is a deterministic run snapshot, not a coherent filesystem view: reading two different resource names that the host maps to one native file produces two independently acquired snapshots. Add capabilities only when a Windvale-written tool demonstrates a concrete need.
+
+[Decision 0139](../Documents/Decisions/0139-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) accepts a later filesystem capability family with per-part platform scope, typed rights-limited instances, exact partial-progress and durability semantics, and optional extensions. It does not retroactively turn `file.read_bytes` or `file.write_bytes` into general application filesystem APIs; these leaves retain the bounded tool-oriented behavior specified here.

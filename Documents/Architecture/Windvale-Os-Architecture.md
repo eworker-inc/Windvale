@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted long-lived architecture direction. [Decision 0084](../Decisions/0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md) records the boundary. Implementation remains incremental, and current behavior is defined only by qualified specifications or explicitly labeled candidate evidence.
+Accepted long-lived architecture direction. [Decision 0084](../Decisions/0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md) records the kernel and service boundary; [Decision 0139](../Decisions/0139-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) records per-part platform scope and the application-library/provider boundary. Implementation remains incremental, and current behavior is defined only by qualified specifications or explicitly labeled candidate evidence.
 
 This document fixes ownership, trust, and portability rules. It intentionally does not freeze syscall numbers, binary layouts, scheduling policy, package or filesystem formats, or other details that still need measured experiments.
 
@@ -37,7 +37,7 @@ Windvale adopts a small capability-oriented kernel with isolated services around
 
 ```mermaid
 flowchart TB
-    Apps["Portable applications<br/>canonical verified WVB"]
+    Apps["Applications<br/>canonical verified WVB<br/>shared or platform-scoped contracts"]
     SysApps["AOT low-level drivers and trusted boot components<br/>Windvale system profile"]
     Runtime["User-space Windvale runtime<br/>verifier, interpreter, JIT, AOT loader"]
     Services["Isolated services<br/>resources, files, packages, network, UI"]
@@ -62,14 +62,14 @@ Some boot-critical adapters still reside with the kernel because the current iso
 
 The following rules are intended to survive individual ABI and implementation revisions:
 
-1. Canonical WVB is the portable program identity. Interpreted, JIT-compiled, cached, install-time, and AOT code are execution products of that identity, not different language semantics.
+1. Canonical WVB is the program identity and cross-host distribution format. A particular module may use only shared contracts or may declare explicit platform-scoped requirements. Interpreted, JIT-compiled, cached, install-time, and AOT code are execution products of that identity, not different language semantics.
 2. Kernel and low-level driver code is AOT. General JIT compilation never runs in the kernel; it runs in an ordinary process or an isolated authorized service.
 3. The kernel grants no ambient filesystem, device, process, native-memory, or executable-publication authority.
-4. Capabilities are unforgeable, rights-limited references to kernel-mediated objects. Raw host handles and persistent kernel pointers do not cross portable boundaries.
+4. Capabilities are unforgeable, rights-limited references to kernel-mediated objects. Raw host handles and persistent kernel pointers do not cross application or service boundaries.
 5. Writable-or-executable discipline is mandatory. No accepted design requires a page to remain writable and executable.
 6. Every loaded module, package, object, relocation, capability request, offset, length, and resource count is untrusted until validated within explicit limits.
 7. CPU faults and Windvale runtime traps remain different contracts. A processor exception does not silently redefine a `WVR` language/runtime result.
-8. Windows, Linux, and Windvale OS implement Windvale platform contracts. None of them defines portable language semantics.
+8. Windows, Linux, and Windvale OS implement shared Windvale platform contracts and may expose explicit extensions. None of them defines language semantics, and an application is not required to support every environment when its platform scope is declared honestly.
 9. C# is a bootstrap and recovery implementation only. New C# at a native or OS boundary must identify the Windvale or WVA component that will replace it.
 
 ## Kernel responsibilities
@@ -105,6 +105,8 @@ A process is conceptually a protection domain containing:
 This conceptual model is accepted. Qualified protected-process [version 11](../../Specifications/Windvale-Protected-Process.md) pressures that representation with separate init and interpreter roots, role-specific W^X extents, two init-owned typed RO/NX resources, one ordered atomic grant, two client aliases, execution-budget enforcement, automatic terminal cleanup, generation-safe same-root reuse, reduced rights, one kernel-owned capacity-one result channel, and closed lifecycle/fault/result evidence. This representation is implementation evidence, not yet a stable public process ABI.
 
 A capability identifies a kernel-mediated object plus permitted operations. The current experiment uses slot 0, generation 1, machine reference 65536, a send-only client right, and init's combined receive-plus-fixed-grant rights. The one reference still names a deliberately closed boot contract rather than a general object table. The kernel checks every component before either channel or resource state changes. General capability allocation, transfer, revocation, and generation rollover remain unimplemented. References must not be recovered from raw addresses, and the current integer encoding remains internal and replaceable.
+
+Application-library capability requirements are distinct from these internal object references. A library declares a versioned semantic requirement, the application explicitly approves its transitive requirements, init or a service manager grants a rights-limited instance, and the runtime binds the semantic operation to that instance. A required binding is established before process entry; an optional extension is reported absent before use. The binding may name an in-process provider on Windows or Linux and an IPC endpoint plus service-owned object on Windvale OS without changing the application-facing library contract. Binding does not promise permanent availability: revocation, stale generation, peer exit, service restart, and device removal remain explicit runtime outcomes.
 
 Expected kernel-object families include processes, threads, address spaces, memory regions, channels or endpoints, interrupt bindings, device-memory ranges, and resource providers. This is a design inventory, not a commitment that every family is a public object or syscall.
 
@@ -159,6 +161,10 @@ The boot container is a target artifact, not a replacement for WVB identity. Its
 ## Services and drivers
 
 Resource, package, filesystem, network, compiler, JIT, shell, and GUI policy belongs outside the kernel. Services communicate through bounded IPC and receive only declared capabilities. A service failure should not automatically become a kernel failure.
+
+Platform libraries sit above these services. Ordinary applications call typed Windvale library contracts rather than syscalls or raw IPC. A Windvale OS runtime adapter validates values and messages, invokes the granted endpoint, validates the reply, and translates service lifecycle into the specified result. Mutating service protocols must preserve request correlation, exact progress, and indeterminate-completion evidence; neither the runtime nor service manager may blindly replay an uncertain mutation after restart. The kernel remains format-blind: it enforces endpoint identity, rights, buffer access, bounds, ownership, waiting, peer exit, and cleanup without interpreting file paths, resource names, window operations, or network protocols.
+
+The filesystem is a family of capabilities rather than one kernel interface. A small shared core may cover only exact common semantics; atomic replacement, watching, links, permissions, memory mapping, sparse storage, transactions, and native OS facilities remain separate interfaces. Feature availability belongs to the granted filesystem or directory instance because volumes and remote stores on one OS can provide different guarantees. Application-visible file, directory, and watch references are typed capabilities; native handles, file descriptors, and kernel addresses remain provider details.
 
 Drivers are AOT system-profile Windvale modules with explicit authority for the exact MMIO ranges, port-I/O ranges, interrupts, DMA resources, and kernel operations they need. WVA supplies instructions that cannot safely be expressed in `.wv`; it does not own device policy. Early serial, timer, interrupt-controller, or boot-storage code may begin in the kernel to establish the first working machine, but each such adapter needs an isolation or retention rationale.
 
@@ -248,7 +254,7 @@ The following should remain open until a focused implementation supplies evidenc
 - IPC wire encoding, zero-copy thresholds, and service discovery;
 - virtual-address layout, page size policy beyond architecture requirements, and shared-memory model;
 - language heap, garbage collection, ownership, and reclamation strategy;
-- package/archive format, filesystem on-disk format, namespaces, and update mechanism;
+- package/archive format, filesystem on-disk format, namespace encoding, exact common filesystem-core operations, and update mechanism;
 - driver isolation granularity, DMA/IOMMU policy, and supported device families;
 - executable cache format and native-code persistence policy;
 - network stack, GUI/compositor, compatibility layers, and application model;
@@ -264,7 +270,7 @@ Deferring these is not indecision. It protects Windvale from supporting an accid
 | The kernel grows into every subsystem | Kernel ownership is limited to privilege, isolation, capabilities, IPC, memory, lifecycle, and unavoidable boot mechanisms |
 | A strict microkernel creates complexity before it creates isolation | Early boot-critical code may remain local; movement to services requires measured containment and cost evidence |
 | The first WVB cannot be verified without already running WVB | Boot an AOT Windvale verifier as a trusted component, then use it to admit canonical WVB |
-| Unsafe system facilities leak into portable code | System profile, syntax, metadata, verifier rules, and capabilities make unsafe authority explicit |
+| Unsafe system facilities leak into ordinary application code | Authority metadata, syntax, verifier rules, and explicit system capabilities keep privilege separate from platform scope |
 | JIT code weakens the kernel trust boundary | JIT stays outside the kernel; publication is bounded, validated, capability-authorized, and W^X |
 | Host or x86 details become language semantics | WVB and semantic operations remain architecture-neutral; WVA and target adapters own mechanics |
 | Early encodings become permanent ABI debt | Stabilize invariants now, version experimental contracts, and defer public binary compatibility |

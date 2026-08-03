@@ -13,7 +13,7 @@ This list records unresolved decisions without presenting them as implementation
 - What programming model makes Windvale distinct while remaining approachable?
 - What exactly does “code and data together” mean in the language and package model?
 - Beyond the accepted checked `i32`, `u8`, `u32`, immutable text, immutable bytes, nominal records, and nominal enums, what integer, floating-point, text, error, concurrency, and memory semantics are needed?
-- Which facilities belong to safe, unsafe, portable, hosted, and system profiles?
+- Which exact source and module metadata should encode the accepted independent platform scope, authority level, required capabilities, and optional capabilities while preserving deterministic composition?
 - Should Windvale eventually admit broader Unicode identifiers beyond ASCII segments joined by U+02C9, and if so, under which normalization and confusable-character rules?
 
 ## Compiler and runtime
@@ -42,6 +42,7 @@ This list records unresolved decisions without presenting them as implementation
 - Which parts of qualified Decision 0098's fixed typed resource pair, atomic cleanup, saved context, and wait/wake coordinator should survive independently lived resources, a reusable address space, third runnable, or general loader case?
 - Which first boot-critical drivers should remain with the kernel temporarily, and which should begin as isolated AOT system services?
 - Which protected-process/channel ABI should adopt implemented-candidate `WVRQ 1` / `WVRY 1`, checked one-page buffer copies, service/client death propagation, and an immutable `WVRS 1` capability in the guest; and what later measured use case should justify paths, directories, writable storage, or an on-disk filesystem?
+- Which first filesystem-core operations have exact shared semantics across Windows, Linux, and Windvale OS providers; which name-comparison, enumeration, offset-width, revocation, and mutation-completion rules do they require; and which guarantees must begin as optional or platform-scoped interfaces under [Decision 0139](../Decisions/0139-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md)?
 - Which QEMU and Hyper-V behaviors must be qualified before the first OS milestone is complete?
 
 ## Browser and WebAssembly

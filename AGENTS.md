@@ -22,10 +22,10 @@ Windvale is a source-available experiment in constructing a small computing stac
 - Windows and Linux are permanent Windvale hosts. They are not the semantic definition of the language.
 - Windvale defines its own source semantics, bytecode, module format, runtime contracts, capability profiles, and standard-library behavior.
 - The same source language should eventually support portable bytecode and native compilation.
-- Canonical WVB remains the portable distribution contract while a shared Windvale-native backend serves interpreter, JIT, cached/install-time, and AOT execution without changing semantics.
+- Canonical WVB remains the verified cross-host distribution contract while a shared Windvale-native backend serves interpreter, JIT, cached/install-time, and AOT execution without changing semantics. An individual WVB may carry explicit platform-scoped requirements.
 - C# and .NET are the active Stage 0 bootstrap, not permanent product dependencies. Retire them from the normal build, test, packaging, and execution path only after the documented native-retirement gate is qualified on Windows and Linux; preserve recovery provenance explicitly.
-- Portable applications target Windvale contracts. Host adapters map those contracts to Windows, Linux, and Windvale OS.
-- Host-specific capabilities remain explicit and must not leak into portable modules.
+- Applications may target shared Windvale contracts, an explicit subset of environments, or one named platform extension. Portability is a per-part promise and a derived artifact property, not a blanket dependency requirement. Host adapters map shared contracts to Windows, Linux, and Windvale OS.
+- Platform-specific capabilities remain explicit and must not leak into parts that claim portability.
 - The OS is a vertical integration target, not a reason to postpone useful host tools and libraries.
 - Keep bootstrap dependencies explicit. A bootstrap tool may be temporary, but its role and replacement path must be documented.
 - Prefer a small coherent path over parallel compilers, runtimes, object models, or compatibility layers.
@@ -41,7 +41,7 @@ Keep these responsibilities distinct even if early prototypes temporarily share 
 - `Object-Model/` owns structured sections, symbols, relocations, and serialization contracts.
 - `Linker/` owns symbol resolution, layout, relocation, and final image production.
 - `Runtime/` owns bytecode loading, validation, execution, memory/runtime services, and host adaptation.
-- `Libraries/` owns reusable Windvale APIs and their portable or capability-specific implementations.
+- `Libraries/` owns reusable Windvale APIs and their shared, platform-scoped, capability-specific, protocol, or system implementations.
 - `Operating-System/` owns boot, kernel, drivers, processes, and Windvale-native platform services.
 - `Tools/` owns repository development, inspection, generation, and verification utilities.
 - `Tests/` owns conformance, differential, integration, malformed-input, and reproducibility coverage.
@@ -64,9 +64,13 @@ Create these source areas only when implementation begins; do not add empty dire
 
 ## Capability and safety rules
 
-- Classify modules as portable, hosted, or system profile before implementation.
+- Classify each part by platform scope, authority level, required capabilities, and optional capabilities before implementation. Until source/module metadata separates those dimensions, retain the implemented portable, hosted, or system profile and document any narrower platform scope explicitly.
 - Portable code must not depend on native paths, host handles, ambient process state, privileged instructions, or undocumented host behavior.
 - Hosted and system operations require declared capabilities. Unsupported and unauthorized operations must fail explicitly.
+- A library requirement is not a grant. The application must approve its exact transitive capability set, and the launcher or service manager must bind rights-limited provider instances separately.
+- Give semantic capability interfaces canonical names, major contract versions, exact signatures, limits, and failure behavior. Binding proves initial availability, not permanent availability; revocation, stale handles, peer exit, and provider restart must remain explicit.
+- Keep shared filesystem semantics small and exact. Put stronger or platform-specific behavior in separate capability interfaces, and never use one operation name for different partial-write, atomicity, durability, path, or failure guarantees.
+- Mutating I/O must distinguish rejection, exact partial progress, completion, and indeterminate completion. Never retry an indeterminate mutation without a specified idempotency contract.
 - Unsafe operations must be syntactically and contractually visible; do not allow safety-sensitive behavior through ordinary convenience APIs.
 - Treat every loaded module, object file, package, symbol table, relocation, and debug record as untrusted input.
 - Use checked arithmetic for file offsets, memory sizes, indices, and address calculations.

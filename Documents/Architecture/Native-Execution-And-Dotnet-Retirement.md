@@ -4,6 +4,8 @@
 
 Accepted architectural direction under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md). Decision 0058 qualifies bytecode compiler self-reproduction. Decisions 0059 through 0083 cross-host qualify the shared Stage 0 and first OS consumer seams through ABI 14, native leaves for all eleven then-current service slots, two Windvale-owned stencil consumers, a bounded byte-result entry, Windvale-owned executable-image layout and lifetime policy, and firmware probe 17's terminal invalid-opcode boundary. Decisions 0085 through 0087 cross-host qualify ABI 15/context 7, the twelfth exact native file-output leaf, WVA-owned Q35 shutdown and normalized trap entries, and composed firmware probe 20 at exact commit `12e9e2e`. Exact commit `860c69c` qualifies Decisions 0088 through 0090: ABI 16's bounded 64-parameter convention, a kernel-owned W^X root, and one fixed Windvale-owned in-guest WVB admission profile. Exact implementation commit `4a077ab` qualifies [Decision 0099](../Decisions/0099-Bounded-Native-Frame-Admission.md) and advances the backend to ABI 17's 2,048-cell envelope. Exact implementation commit `484c228` qualifies [Decision 0105](../Decisions/0105-Typed-Block-Scoped-Native-Value-Slots.md) and ABI 18's typed block-scoped physical reuse. Exact implementation commit `a35c348` qualifies [Decision 0108](../Decisions/0108-Native-One-Byte-Construction.md) and ABI 19's one-byte encoder. Exact implementation commit `a63ca0f` qualifies [Decision 0109](../Decisions/0109-Native-Two-Byte-Little-Endian-Construction.md) and ABI 20's checked two-byte encoder, moving exact compiler preflight from missing operation coverage to a measured whole-fragment code-size boundary. Implemented [Decision 0119](../Decisions/0119-First-Windows-Console-Application.md) and [Decision 0122](../Decisions/0122-First-Linux-Console-Application.md) add paired narrow capability-free scalar PE and ELF targets; their pure constructors/verifiers and exact startup templates are explicit `.wv` and `.wva` transfer seams. Cross-host-qualified [Decision 0133](../Decisions/0133-Frame-Owned-Direct-Native-Records.md) advances the shared host/container/OS selector and verifier to ABI 21's frame-owned direct records and rebuilds Probe 32 under `WVKMEM11`. This document defines the larger native destination and migration boundaries; it does not claim a general in-guest WVB loader/verifier, a general Windvale-owned native runtime, broad JIT or AOT compiler, hosted PE or ELF services, garbage collector, or native self-hosting chain.
 
+[Decision 0139](../Decisions/0139-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) additionally makes portability a per-part and derived artifact property. Native publication must preserve the canonical module's platform scope and capability requirements even when a particular application intentionally targets only one environment.
+
 ## Destination
 
 Windvale source has one semantic frontend and two durable publication levels:
@@ -21,7 +23,7 @@ Windvale source
       `--> typed Windvale IR --> shared native backend --> WVO/AOT image
 ```
 
-WVB is the portable distributable contract. WIR and the future native machine IR are compiler contracts. WVO, PE/COFF, ELF, in-memory linked code, and Windvale OS process images are target artifacts. None silently defines source semantics for another layer.
+WVB is the verified cross-host distributable contract. An individual WVB may use only shared contracts or declare explicit platform-scoped requirements. WIR and the future native machine IR are compiler contracts. WVO, PE/COFF, ELF, in-memory linked code, and Windvale OS process images are target artifacts. None silently defines source semantics or discards the canonical module's platform and capability requirements.
 
 Windows and Linux remain permanent Windvale hosts after .NET retirement. Windvale OS adds another platform implementation; it does not absorb or replace the host tool and application ecosystem.
 
@@ -34,7 +36,7 @@ JIT and AOT describe when native compilation occurs, not competing language defi
 | Build time | Deterministic AOT | Kernel, drivers, core tools, release applications |
 | Install time | Target-local AOT or cache population | Portable packages deployed to a known machine |
 | Load time | Eager JIT | Small complete modules where predictable latency matters |
-| First call | Lazy baseline JIT | Ordinary portable applications |
+| First call | Lazy baseline JIT | Ordinary applications whose declared providers are available |
 | Hot execution | Selective optimizing JIT | Measured long-running functions |
 | Post-link/profile rebuild | Profile-guided AOT | Qualified release performance |
 

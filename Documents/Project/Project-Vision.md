@@ -15,18 +15,19 @@ As of July 2026, Windvale is among the earliest known publicly developed efforts
 ```text
 Windvale source language
         |
-        +-- portable verified bytecode --> Windvale-native execution
+        +-- canonical verified bytecode --> Windvale-native execution
         |                                  |-- interpreter
         |                                  |-- baseline/optimizing JIT
         |                                  `-- cached or install-time compilation
         |
         `-- shared native backend --> object model/linker --> AOT programs and kernel
 
-Windows adapter ---------+
-Linux adapter -----------+--> runtime capabilities and process services
-Windvale OS adapter -----+
-
-Foundation library --> portable contracts --> host and OS adapters
+Foundation library -------> deterministic capability-free contracts
+Platform libraries -------> versioned capability requirements
+                              |-- Windows providers
+                              |-- Linux providers
+                              `-- Windvale OS providers and services
+Platform extensions ------> explicit target-scoped providers
 ```
 
 The umbrella project is named **Windvale**. Its major tools should initially use clear descriptive names such as Windvale Compiler, Windvale Assembler, Windvale Linker, Windvale Runtime, and Windvale OS.
@@ -39,7 +40,8 @@ The umbrella project is named **Windvale**. Its major tools should initially use
 - Make the bytecode/module contract portable, versioned, inspectable, and verifiable.
 - Share native ABI, machine lowering, typed relocation, and runtime contracts across JIT and AOT rather than building parallel native compilers.
 - Retire C#/.NET from the normal Windows and Linux workflow only after a reproducible Windvale-native compiler, verifier, runtime, toolchain, and recovery seed are qualified; preserve the final Stage 0 evidence as bootstrap history.
-- Keep platform differences behind explicit contracts and capabilities.
+- Treat portability as a per-part promise and derive final compatibility from the complete dependency graph; allow honest Windows-, Linux-, or Windvale OS-specific libraries.
+- Keep platform differences behind explicit versioned contracts and capabilities, with separate application approval, rights-limited grants, and provider binding.
 - Reuse compiler, assembler, object, and linker infrastructure instead of building parallel pipelines.
 - Reach self-hosting through documented stages rather than obscuring existing-tool dependencies.
 - Measure AI contribution through completed specifications, tests, reproducibility, understandable changes, and defects found—not line-count claims.
