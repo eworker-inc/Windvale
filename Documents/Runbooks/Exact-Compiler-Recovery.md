@@ -13,7 +13,7 @@ The recovery dependency closure is deliberately small:
 
 Record the output of `git rev-parse HEAD`, `git rev-parse HEAD^{tree}`, `dotnet --version`, and the final artifact hashes with every retained recovery copy.
 
-Exact commit `db20fefaa3333b7b78392ba12141d1ae2b6bb0c2` is the first paired direct-execution baseline. GitHub [Verify run 30816153900](https://github.com/eworker-inc/Windvale/actions/runs/30816153900) reconstructs both containers from clean checkouts, runs the PE on Windows and ELF on digest-pinned Debian 12, and reports every identity below unchanged. Later public CLI/recovery changes require their own successor dual-host run rather than inheriting that baseline automatically.
+Exact commit `db20fefaa3333b7b78392ba12141d1ae2b6bb0c2` is the first paired direct-execution baseline. GitHub [Verify run 30816153900](https://github.com/eworker-inc/Windvale/actions/runs/30816153900) reconstructs both containers from clean checkouts, runs the PE on Windows and ELF on digest-pinned Debian 12, and reports every identity below unchanged. Exact public/recovery commit `57d154c1f6758315692e35a47939d51702d5c96b` then passes isolated GitHub [Verify run 30819768981](https://github.com/eworker-inc/Windvale/actions/runs/30819768981), qualifying the public writers, `aot` route, shared atomic publisher, and this recovery boundary on both hosts.
 
 ## Clean-checkout reconstruction
 

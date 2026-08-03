@@ -1,7 +1,7 @@
 # Decision 0169: Public format-3 compiler targets
 
 - Date: 2026-08-03
-- Status: Implemented and locally verified; underlying paired direct Stage 2 execution is cross-host qualified at `db20fef`, while the public CLI additions await their own dual-host replay
+- Status: Cross-host qualified at exact commit `57d154c` in GitHub Verify run 30819768981
 - Adds: public `windows-x64-console-v3` and `linux-x64-console-v3` compiler targets through the existing atomic artifact publisher
 - Retains: ABI 22, exact format-3 bytes, ordinary 4 MiB values, version-1/version-2 application bytes, and source-visible file-output semantics
 
@@ -28,11 +28,17 @@ The shared atomic-publication case already injects a prepublication failure, pro
 
 The clean project-manifest recovery route is also executed locally against `Windvale-Compiler.wvproj`: `build` emits the canonical 599,868-byte WVB once, then paired `aot` commands consume that exact verified module and reproduce the 17,157,120-byte PE and 17,158,144-byte ELF at their pinned SHA-256 values. Target extension selection is shared between default naming and final validation and covered for all seven source targets, closing an initial split in which Windows format 3 defaulted to `.exe` but the later validator treated it as `.elf`.
 
+## Cross-host qualification
+
+Exact commit `57d154c1f6758315692e35a47939d51702d5c96b` passes GitHub [Verify run 30819768981](https://github.com/eworker-inc/Windvale/actions/runs/30819768981) from the isolated `codex/compiler-package-qualification` evidence ref. Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 87 Seed tests, all 38 OS tests, the golden compiler contract, and the native CLI gate; the verification gate succeeds.
+
+The shared AOT/publication case passes in 137 ms on Windows and 63 ms on Debian. It packages a separately verified WVB through the public `aot` command, checks its exact native container, rejects an invalid extension without output, then proves injected prepublication failure, sibling cleanup, complete replacement, and Linux mode. The exact-compiler case passes in 20.194 and 16.878 seconds, respectively. Both hosts reproduce every pinned native, WVO, link, service, metadata, runtime, PE, ELF, and canonical Stage 2 WVB identity unchanged; each current-host raw compiler again runs without a CLR/.NET host or runtime mapping.
+
 ## Consequences
 
 The exact compiler containers are normal deterministic CLI artifacts rather than test-only images. Artifact publication is recoverable against interruption before replacement without silently strengthening the authority-bearing file capability seen by Windvale programs.
 
-Decision 0168's underlying containers and direct Stage 2 behavior are paired-host qualified. This decision's public writer and CLI routing still require their own clean dual-host replay before their publication interface is called qualified. Stage 0 remains the independent construction and recovery oracle until the full native-retirement gate is documented and qualified.
+The underlying containers, public writers, `compile`/`aot` routing, atomic publication boundary, and direct Stage 2 behavior are paired-host qualified. Stage 0 remains the independent construction and recovery oracle until the much broader native-retirement gate is documented and qualified; this decision does not imply that the other native tools or normal automation are .NET-free.
 
 ## Reconsider when
 
