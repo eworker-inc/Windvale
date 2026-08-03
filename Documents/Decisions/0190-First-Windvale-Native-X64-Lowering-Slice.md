@@ -1,7 +1,7 @@
 # Decision 0190: First Windvale-native x86-64 lowering slice
 
 - Date: 2026-08-03
-- Status: Implemented; cross-host qualification pending
+- Status: Implemented; extended by [Decision 0194](0194-Straight-Line-Windvale-Native-X64-Lowering.md); cross-host qualification pending
 - Advances: Phase 10 native host tools and the [Decision 0057 native-retirement gate](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Extends: [Decision 0180](0180-Compiler-Runtime-And-Native-Toolchain-Boundaries.md) and [Decision 0059](0059-First-Shared-Native-Wvb-Slice.md)
 - Contract: [Windvale-native x86-64 lowering](../../Specifications/Windvale-Native-X64-Lowering.md)

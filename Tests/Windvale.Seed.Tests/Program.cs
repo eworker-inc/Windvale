@@ -33,9 +33,9 @@ internal static class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "654251d1aad3f8099bedb49193ec3a4a92ebeab99f0a7315c4fed780b4535620";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "e5c7472f9eca2a36fa7b63009fb01bdeb38c97229e5a8c7e880ea7c5800a8252";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "a0e1894ce9ca79cb9181936f8d5f0ca0a114da3eb62a5c26c149720a1f707fe7";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "59c78a1eba86bd93084d815b3667f04b9297304dc29eac59db2b306c750a047d";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "eae679ce43b0c421de4768871cef83f32b482399f0a276d3952f10da6f63f914";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "87f3b0c51fb4a2778539f4bb8e0533e96eab8a5a5d0378fa0ff76b609b4f5139";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "7fe718d644e426b9a90e3bd1dcc51c4e1bb1ac4af439cd4bbcda2cf7d01f276a";
@@ -1969,8 +1969,6 @@ internal static class Program
         Equal(1, Verifiedˉobject.Symbols.Length);
         True(Verifiedˉobject.Symbols.Any(Symbol => Symbol.Name == "Main"), "Native WVO omitted Main.");
         Equal(0, Verifiedˉobject.Relocations.Length);
-        Windvaleˉnativeˉx64ˉloweringˉagrees(Wvbˉbytes, Firstˉobject);
-
         var Linked = Linkˉsuccess(
             [Firstˉobject.ToArray()],
             new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
@@ -2001,7 +1999,8 @@ internal static class Program
         Equal(Interpreted.Exitˉcode, Jitˉresult);
         Equal(Interpreted.Exitˉcode, Aotˉresult);
 
-        var Arithmeticˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(NATIVE_ARITHMETIC_SOURCE));
+        var Arithmeticˉwvb = Compileˉsuccess(NATIVE_ARITHMETIC_SOURCE);
+        var Arithmeticˉverified = Moduleˉcodec.Readˉandˉverify(Arithmeticˉwvb);
         var Arithmeticˉinterpreted = new Referenceˉruntime(
             Arithmeticˉverified,
             new Referenceˉcapabilityˉhost(TextWriter.Null),
@@ -2042,6 +2041,11 @@ internal static class Program
         Equal(
             NATIVE_ARITHMETIC_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Arithmeticˉfirstˉobject.AsSpan()));
+        Windvaleˉnativeˉx64ˉloweringˉagrees(
+            Wvbˉbytes,
+            Firstˉobject,
+            Arithmeticˉwvb,
+            Arithmeticˉfirstˉobject);
         var Arithmeticˉlinked = Linkˉsuccess(
             [Arithmeticˉfirstˉobject.ToArray()],
             new(Linkˉcontract.DEFAULT_BASE_ADDRESS, "Main"));
@@ -2610,8 +2614,23 @@ internal static class Program
 
     private static void Windvaleˉnativeˉx64ˉloweringˉagrees(
         byte[] wvbˉbytes,
-        ImmutableArray<byte> expectedˉobject)
+        ImmutableArray<byte> expectedˉobject,
+        byte[] arithmeticˉwvb,
+        ImmutableArray<byte> arithmeticˉobject)
     {
+        static int Codeˉpayloadˉoffset(byte[] Input)
+        {
+            var Cursor = 12;
+            for (var Section = 0; Section < 4; Section++)
+            {
+                Cursor = checked(
+                    Cursor + 8 +
+                    (int)BinaryPrimitives.ReadUInt32LittleEndian(Input.AsSpan(Cursor + 4, 4)));
+            }
+            Equal((byte)Sectionˉkind.Code, Input[Cursor]);
+            return checked(Cursor + 8);
+        }
+
         var Coreˉbytes = Compileˉsuccess(NATIVE_X64_LOWERING_CORE_SOURCE);
         Equal(
             NATIVE_X64_LOWERING_CORE_SHA256,
@@ -2636,6 +2655,13 @@ internal static class Program
             Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 });
         var Memoryˉresult = Memoryˉruntime.Runˉmainˉbytes(wvbˉbytes.ToImmutableArray());
         Sequenceˉequal(expectedˉobject, Memoryˉresult.Bytes);
+        Sequenceˉequal(
+            arithmeticˉobject,
+            new Referenceˉruntime(
+                Memory,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
+                .Runˉmainˉbytes(arithmeticˉwvb.ToImmutableArray()).Bytes);
         Equal(
             0,
             new Referenceˉruntime(
@@ -2667,6 +2693,13 @@ internal static class Program
         Equal("output.wvo", Reference.Writtenˉresourceˉname);
         Sequenceˉequal(expectedˉobject, Reference.Writtenˉbytes);
 
+        var Arithmeticˉreference = Runˉnativeˉx64ˉloweringˉtool(Tool, arithmeticˉwvb);
+        Equal(0, Arithmeticˉreference.Exitˉcode);
+        Equal(
+            "native x64 status=Valid abi=22 code-bytes=1871 object-bytes=1944\n",
+            Arithmeticˉreference.Output);
+        Sequenceˉequal(arithmeticˉobject, Arithmeticˉreference.Writtenˉbytes);
+
         const string Nextˉconstantˉsource = """
             module Nativeˉconstant profile portable;
             export fn Main() -> i32 { return 43; }
@@ -2677,6 +2710,78 @@ internal static class Program
         var Nextˉreference = Runˉnativeˉx64ˉloweringˉtool(Tool, Nextˉwvb);
         Equal(0, Nextˉreference.Exitˉcode);
         Sequenceˉequal(Nextˉoracle, Nextˉreference.Writtenˉbytes);
+
+        foreach (var Source in new[]
+        {
+            "module Nativeˉzero profile portable; export fn Main() -> i32 { return 0; }",
+            "module Nativeˉnegate profile portable; export fn Main() -> i32 { return -7; }",
+            "module Nativeˉadd profile portable; export fn Main() -> i32 { return 11 + 31; }",
+            "module Nativeˉsubtract profile portable; export fn Main() -> i32 { return 100 - 58; }",
+            "module Nativeˉmultiply profile portable; export fn Main() -> i32 { return 6 * 7; }",
+            "module Nativeˉnested profile portable; export fn Main() -> i32 { return (5 * 9) - (1 + 2); }",
+        })
+        {
+            var Corpusˉwvb = Compileˉsuccess(Source);
+            var Corpusˉoracle = Nativeˉobjectˉsink.Writeˉwvo(
+                X64ˉnativeˉbackend.Compile(
+                    Moduleˉcodec.Readˉandˉverify(Corpusˉwvb)).Fragment);
+            Sequenceˉequal(
+                Corpusˉoracle,
+                new Referenceˉruntime(
+                    Memory,
+                    new Referenceˉcapabilityˉhost(TextWriter.Null),
+                    Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
+                    .Runˉmainˉbytes(Corpusˉwvb.ToImmutableArray()).Bytes);
+            var Corpusˉreference = Runˉnativeˉx64ˉloweringˉtool(Tool, Corpusˉwvb);
+            Equal(0, Corpusˉreference.Exitˉcode);
+            Sequenceˉequal(Corpusˉoracle, Corpusˉreference.Writtenˉbytes);
+        }
+
+        var Defaultˉlocalˉwvb = wvbˉbytes.ToArray();
+        var Defaultˉlocalˉcode = Codeˉpayloadˉoffset(Defaultˉlocalˉwvb);
+        Defaultˉlocalˉwvb[Defaultˉlocalˉcode] = (byte)Opcode.Localˉload;
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Defaultˉlocalˉwvb.AsSpan(Defaultˉlocalˉcode + 1, 4),
+            0u);
+        var Defaultˉlocalˉoracle = Nativeˉobjectˉsink.Writeˉwvo(
+            X64ˉnativeˉbackend.Compile(
+                Moduleˉcodec.Readˉandˉverify(Defaultˉlocalˉwvb)).Fragment);
+        Sequenceˉequal(
+            Defaultˉlocalˉoracle,
+            new Referenceˉruntime(
+                Memory,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
+                .Runˉmainˉbytes(Defaultˉlocalˉwvb.ToImmutableArray()).Bytes);
+        var Defaultˉlocalˉreference = Runˉnativeˉx64ˉloweringˉtool(
+            Tool,
+            Defaultˉlocalˉwvb);
+        Equal(0, Defaultˉlocalˉreference.Exitˉcode);
+        Sequenceˉequal(Defaultˉlocalˉoracle, Defaultˉlocalˉreference.Writtenˉbytes);
+
+        var Underflowˉwvb = wvbˉbytes.ToArray();
+        Underflowˉwvb[Codeˉpayloadˉoffset(Underflowˉwvb)] = (byte)Opcode.I32ˉadd;
+        var Invalidˉlocalˉwvb = arithmeticˉwvb.ToArray();
+        var Invalidˉlocalˉcode = Codeˉpayloadˉoffset(Invalidˉlocalˉwvb);
+        Invalidˉlocalˉwvb[Invalidˉlocalˉcode] = (byte)Opcode.Localˉload;
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉlocalˉwvb.AsSpan(Invalidˉlocalˉcode + 1, 4),
+            10u);
+        foreach (var Malformed in new[] { Underflowˉwvb, Invalidˉlocalˉwvb })
+        {
+            Equal(
+                0,
+                new Referenceˉruntime(
+                    Memory,
+                    new Referenceˉcapabilityˉhost(TextWriter.Null),
+                    Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
+                    .Runˉmainˉbytes(Malformed.ToImmutableArray()).Bytes.Length);
+            var Rejected = Runˉnativeˉx64ˉloweringˉtool(Tool, Malformed);
+            Equal(1, Rejected.Exitˉcode);
+            Equal(string.Empty, Rejected.Output);
+            Equal("native x64 status=Unsupportedˉcode\n", Rejected.Diagnostics);
+            Equal(0, Rejected.Writeˉcount);
+        }
 
         var Toolˉnative = X64ˉnativeˉbackend.Compile(Tool);
         _ = Nativeˉfragmentˉverifier.Verify(Toolˉnative.Fragment);
@@ -2716,6 +2821,26 @@ internal static class Program
             Equal(Reference.Output, Output.Readˉtext());
             Equal(Reference.Diagnostics, Diagnostic.Readˉtext());
             Sequenceˉequal(expectedˉobject, File.ReadAllBytes(Outputˉpath));
+
+            File.WriteAllBytes(Inputˉpath, arithmeticˉwvb);
+            using var Arithmeticˉoutput = new Nativeˉoutputˉcapture();
+            using var Arithmeticˉdiagnostic = new Nativeˉoutputˉcapture();
+            var Arithmeticˉhost = new Nativeˉhostˉservices(
+                Arithmeticˉoutput.Channel,
+                Authorized,
+                Resources,
+                Arithmeticˉdiagnostic.Channel,
+                Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                Nativeˉfileˉoutput.Hostˉfileˉsystem());
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    Toolˉnative.Fragment,
+                    maximumˉinstructions: Arithmeticˉreference.Executedˉinstructions,
+                    hostˉservices: Arithmeticˉhost));
+            Equal(Arithmeticˉreference.Output, Arithmeticˉoutput.Readˉtext());
+            Equal(Arithmeticˉreference.Diagnostics, Arithmeticˉdiagnostic.Readˉtext());
+            Sequenceˉequal(arithmeticˉobject, File.ReadAllBytes(Outputˉpath));
 
             File.WriteAllBytes(Inputˉpath, wvbˉbytes[..^1]);
             var Sentinel = new byte[] { 0x57, 0x56, 0x4F, 0x21 };
