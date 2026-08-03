@@ -875,6 +875,7 @@ internal static class Program
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
         new("native descriptor ownership is deterministic and independently reconstructed", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Nativeˉdescriptorˉownershipˉisˉplanned),
+        new("WVA descriptor allocator reclaims and coalesces bounded native storage", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉdescriptorˉallocatorˉreclaims),
         new("native dynamic text, descriptor returns, and void calls agree across runtimes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉdynamicˉtextˉagrees),
         new("Windvale-written wvdump structural parser runs through JIT and WVO AOT", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvdumpˉstructuralˉparserˉruns),
         new("complete Windvale-written wvdump agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvdumpˉcompleteˉruns),
@@ -4019,6 +4020,11 @@ internal static class Program
             Plan.Functions.SelectMany(Function => Function.Actions),
             Repeated.Functions.SelectMany(Function => Function.Actions));
         Nativeˉdescriptorˉownershipˉverifier.Verify(First.Module, Plan);
+        var Projection = Nativeˉdescriptorˉallocatorˉprojector.Project(Plan);
+        Equal(Plan.Totalˉactions, Projection.Ownershipˉactions);
+        Equal(
+            Projection.Ownershipˉactions,
+            checked(Projection.Allocatorˉleafˉcalls + Projection.Ownershipˉmovementˉactions));
         True(Plan.Functions.Sum(Function => Function.Acquireˉactions) > 0,
             "The ownership plan omitted allocated descriptor results.");
         True(Plan.Functions.Sum(Function => Function.Borrowˉactions) > 0,
@@ -4066,6 +4072,306 @@ internal static class Program
             () => Nativeˉdescriptorˉownershipˉverifier.Verify(
                 First.Module,
                 Plan with { Totalˉactions = checked(Plan.Totalˉactions + 1) }));
+    }
+
+    private static void Nativeˉdescriptorˉallocatorˉreclaims()
+    {
+        var Source = Readˉembeddedˉsource("Windvale.Seed.Tests.Descriptor-Allocator.wva");
+        var Objectˉbytes = Assembleˉsuccess(Source);
+        Equal(
+            X64ˉnativeˉdescriptorˉallocator.CANONICAL_OBJECT_SHA256,
+            Objectˉdigest.Calculateˉsha256(Objectˉbytes));
+        var Object = Objectˉcodec.Readˉandˉverify(Objectˉbytes);
+        Sequenceˉequal(
+            X64ˉnativeˉdescriptorˉallocator.Code,
+            X64ˉnativeˉdescriptorˉallocator.Read(Object));
+        Equal(
+            X64ˉnativeˉdescriptorˉallocator.CANONICAL_CODE_SHA256,
+            Objectˉdigest.Calculateˉsha256(X64ˉnativeˉdescriptorˉallocator.Code.AsSpan()));
+
+        var Corruptedˉobject = Objectˉbytes.ToArray();
+        var Codeˉoffset = Corruptedˉobject.AsSpan().IndexOf(
+            X64ˉnativeˉdescriptorˉallocator.Code.AsSpan());
+        True(Codeˉoffset >= 0, "The canonical WVO omitted its allocator code extent.");
+        Corruptedˉobject[
+            checked(Codeˉoffset + (X64ˉnativeˉdescriptorˉallocator.Code.Length / 2))] ^= 0x01;
+        Throwsˉinvalidˉoperation(
+            "WVA descriptor allocator code",
+            () => _ = X64ˉnativeˉdescriptorˉallocator.Read(
+                Objectˉcodec.Readˉandˉverify(Corruptedˉobject)));
+
+        const int Arenaˉbytes = 128;
+        var State = new byte[Nativeˉdescriptorˉallocatorˉcontract.STATE_BYTES];
+        var Arena = new byte[Arenaˉbytes];
+        var Nativeˉstateˉallocation = Marshal.AllocHGlobal(
+            Nativeˉdescriptorˉallocatorˉcontract.STATE_BYTES + 7);
+        var Nativeˉrequestˉallocation = Marshal.AllocHGlobal(
+            Nativeˉdescriptorˉallocatorˉcontract.REQUEST_BYTES + 7);
+        var Nativeˉarenaˉallocation = Marshal.AllocHGlobal(Arenaˉbytes + 15);
+        var Nativeˉstate = Alignˉpointer(Nativeˉstateˉallocation, 8);
+        var Nativeˉrequest = Alignˉpointer(Nativeˉrequestˉallocation, 8);
+        var Nativeˉarena = Alignˉpointer(Nativeˉarenaˉallocation, 16);
+        var Arenaˉaddress = checked((ulong)Nativeˉarena.ToInt64());
+        BinaryPrimitives.WriteUInt64LittleEndian(State, Arenaˉaddress);
+        BinaryPrimitives.WriteUInt32LittleEndian(State.AsSpan(8), (uint)Arenaˉbytes);
+        Marshal.Copy(State, 0, Nativeˉstate, State.Length);
+        Marshal.Copy(Arena, 0, Nativeˉarena, Arena.Length);
+
+        using var Executable = Nativeˉexecutableˉimage.Allocateˉwritable(
+            X64ˉnativeˉpublicationˉlifetime.Plan(
+                X64ˉnativeˉdescriptorˉallocator.Code.Length));
+        try
+        {
+            Executable.Copyˉimage(X64ˉnativeˉdescriptorˉallocator.Code.ToArray());
+            Executable.Sealˉexecutable();
+            _ = Executable.Invoke(Address =>
+            {
+                var Leaf = Marshal.GetDelegateForFunctionPointer<
+                    Nativeˉdescriptorˉallocatorˉleaf>(Address);
+
+                uint Call(
+                    Nativeˉdescriptorˉallocatorˉoperation operation,
+                    uint payload,
+                    uint owner,
+                    Nativeˉdescriptorˉallocatorˉstatus expected)
+                {
+                    var Request = new byte[Nativeˉdescriptorˉallocatorˉcontract.REQUEST_BYTES];
+                    BinaryPrimitives.WriteUInt32LittleEndian(
+                        Request,
+                        Nativeˉdescriptorˉallocatorˉcontract.FORMAT_VERSION);
+                    BinaryPrimitives.WriteUInt32LittleEndian(
+                        Request.AsSpan(4),
+                        Nativeˉdescriptorˉallocatorˉcontract.REQUEST_BYTES);
+                    BinaryPrimitives.WriteUInt32LittleEndian(
+                        Request.AsSpan(8),
+                        (uint)operation);
+                    BinaryPrimitives.WriteUInt32LittleEndian(Request.AsSpan(12), payload);
+                    BinaryPrimitives.WriteUInt32LittleEndian(Request.AsSpan(16), owner);
+                    var Referenceˉstatus = Nativeˉdescriptorˉallocatorˉreference.Execute(
+                        State,
+                        Request,
+                        Arena,
+                        Arenaˉaddress);
+                    Equal(expected, Referenceˉstatus);
+
+                    var Nativeˉinput = new byte[Nativeˉdescriptorˉallocatorˉcontract.REQUEST_BYTES];
+                    BinaryPrimitives.WriteUInt32LittleEndian(
+                        Nativeˉinput,
+                        Nativeˉdescriptorˉallocatorˉcontract.FORMAT_VERSION);
+                    BinaryPrimitives.WriteUInt32LittleEndian(
+                        Nativeˉinput.AsSpan(4),
+                        Nativeˉdescriptorˉallocatorˉcontract.REQUEST_BYTES);
+                    BinaryPrimitives.WriteUInt32LittleEndian(
+                        Nativeˉinput.AsSpan(8),
+                        (uint)operation);
+                    BinaryPrimitives.WriteUInt32LittleEndian(Nativeˉinput.AsSpan(12), payload);
+                    BinaryPrimitives.WriteUInt32LittleEndian(Nativeˉinput.AsSpan(16), owner);
+                    Marshal.Copy(Nativeˉinput, 0, Nativeˉrequest, Nativeˉinput.Length);
+                    var Nativeˉstatus = Leaf(
+                        0,
+                        0,
+                        checked((ulong)Nativeˉstate.ToInt64()),
+                        checked((ulong)Nativeˉrequest.ToInt64()),
+                        checked((ulong)Nativeˉstate.ToInt64()),
+                        checked((ulong)Nativeˉrequest.ToInt64()));
+                    Equal((uint)expected, Nativeˉstatus);
+
+                    var Nativeˉresult = new byte[Nativeˉinput.Length];
+                    var Nativeˉstateˉbytes = new byte[State.Length];
+                    var Nativeˉarenaˉbytes = new byte[Arena.Length];
+                    Marshal.Copy(Nativeˉrequest, Nativeˉresult, 0, Nativeˉresult.Length);
+                    Marshal.Copy(Nativeˉstate, Nativeˉstateˉbytes, 0, Nativeˉstateˉbytes.Length);
+                    Marshal.Copy(Nativeˉarena, Nativeˉarenaˉbytes, 0, Nativeˉarenaˉbytes.Length);
+                    Sequenceˉequal(Request, Nativeˉresult);
+                    Sequenceˉequal(State, Nativeˉstateˉbytes);
+                    Sequenceˉequal(Arena, Nativeˉarenaˉbytes);
+                    return BinaryPrimitives.ReadUInt32LittleEndian(
+                        Request.AsSpan(
+                            Nativeˉdescriptorˉallocatorˉcontract.REQUEST_OWNER_TOKEN_OFFSET));
+                }
+
+                var First = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: 1,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                Equal(1u, First);
+                Equal(
+                    checked(Arenaˉaddress +
+                        Nativeˉdescriptorˉallocatorˉcontract.BLOCK_HEADER_BYTES),
+                    Readˉnativeˉrequestˉu64(
+                        Nativeˉrequest,
+                        Nativeˉdescriptorˉallocatorˉcontract.REQUEST_DATA_POINTER_OFFSET));
+                var Second = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: 1,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                Equal(33u, Second);
+                var Third = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: 1,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                Equal(65u, Third);
+                var Fourth = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: 1,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                Equal(97u, Fourth);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: 0,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Exhausted);
+
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Retain,
+                    payload: 0,
+                    First,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Release,
+                    payload: 0,
+                    First,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Release,
+                    payload: 0,
+                    Second,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Release,
+                    payload: 0,
+                    Fourth,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Release,
+                    payload: 0,
+                    Third,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Release,
+                    payload: 0,
+                    First,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+
+                Equal(
+                    0u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(
+                        State.AsSpan(
+                            Nativeˉdescriptorˉallocatorˉcontract.STATE_ALLOCATED_BLOCKS_OFFSET)));
+                Equal(
+                    0u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(
+                        State.AsSpan(
+                            Nativeˉdescriptorˉallocatorˉcontract.STATE_CHARGED_BYTES_OFFSET)));
+                Equal(1u, BinaryPrimitives.ReadUInt32LittleEndian(State.AsSpan(16)));
+                Equal((uint)Arenaˉbytes, BinaryPrimitives.ReadUInt32LittleEndian(Arena));
+                Equal(
+                    Nativeˉdescriptorˉallocatorˉcontract.FREE_BLOCK_MAGIC,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Arena.AsSpan(12)));
+
+                var Reused = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: 112,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                Equal(1u, Reused);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Release,
+                    payload: 0,
+                    Reused,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Release,
+                    payload: 0,
+                    Reused,
+                    Nativeˉdescriptorˉallocatorˉstatus.Invalidˉowner);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Retain,
+                    payload: 0,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Release,
+                    payload: 0,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                _ = Call(
+                    (Nativeˉdescriptorˉallocatorˉoperation)0,
+                    payload: 0,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Invalidˉrequest);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: 1,
+                    owner: 1,
+                    Nativeˉdescriptorˉallocatorˉstatus.Invalidˉrequest);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Retain,
+                    payload: 1,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Invalidˉrequest);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: checked((uint)Bytecodeˉlimits.MAX_BYTE_DATA_BYTES + 1),
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Invalidˉrequest);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: checked((uint)Bytecodeˉlimits.MAX_BYTE_DATA_BYTES),
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Exhausted);
+
+                var Overflowˉowner = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: 1,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+                BinaryPrimitives.WriteUInt32LittleEndian(Arena.AsSpan(4), uint.MaxValue);
+                Marshal.Copy(Arena, 0, Nativeˉarena, Arena.Length);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Retain,
+                    payload: 0,
+                    Overflowˉowner,
+                    Nativeˉdescriptorˉallocatorˉstatus.Referenceˉoverflow);
+                BinaryPrimitives.WriteUInt32LittleEndian(Arena.AsSpan(4), 1);
+                Marshal.Copy(Arena, 0, Nativeˉarena, Arena.Length);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Release,
+                    payload: 0,
+                    Overflowˉowner,
+                    Nativeˉdescriptorˉallocatorˉstatus.Success);
+
+                BinaryPrimitives.WriteUInt32LittleEndian(Arena.AsSpan(8), 1);
+                Marshal.Copy(Arena, 0, Nativeˉarena, Arena.Length);
+                _ = Call(
+                    Nativeˉdescriptorˉallocatorˉoperation.Acquire,
+                    payload: 1,
+                    owner: 0,
+                    Nativeˉdescriptorˉallocatorˉstatus.Corruptˉstate);
+
+                return 0;
+            });
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(Nativeˉarenaˉallocation);
+            Marshal.FreeHGlobal(Nativeˉrequestˉallocation);
+            Marshal.FreeHGlobal(Nativeˉstateˉallocation);
+        }
+
+        static IntPtr Alignˉpointer(IntPtr value, int alignment)
+        {
+            var Address = checked((ulong)value.ToInt64());
+            return new(checked((long)((Address + checked((uint)alignment - 1)) &
+                ~checked((ulong)alignment - 1))));
+        }
+
+        static ulong Readˉnativeˉrequestˉu64(IntPtr request, int offset) =>
+            unchecked((ulong)Marshal.ReadInt64(request, offset));
     }
 
     private static void Nativeˉdynamicˉtextˉagrees()
@@ -6949,6 +7255,7 @@ internal static class Program
         var Ownershipˉactions = Ownership.Functions
             .SelectMany(Function => Function.Actions)
             .ToImmutableArray();
+        var Allocatorˉprojection = Nativeˉdescriptorˉallocatorˉprojector.Project(Ownership);
         True(Ownershipˉactions.Any(Action => Action.Kind ==
                 Nativeˉdescriptorˉownershipˉactionˉkind.Borrowˉstatic),
             "The exact compiler ownership plan omitted static descriptor borrowing.");
@@ -6959,6 +7266,7 @@ internal static class Program
             Function => Function.Actions.Length)!;
         Equal(
             "NATIVE_DESCRIPTOR_OWNERSHIP format=1 functions=328 actions=186557 " +
+            "allocator-leaf-calls=180190 ownership-movement-actions=6367 " +
             "parameters=293 assigned-parameters=0 locals=3190 " +
             "record-parameter-fields=524 assigned-record-parameter-fields=0 " +
             "record-local-fields=9287 values=6182 record-value-fields=17898 " +
@@ -6968,6 +7276,8 @@ internal static class Program
             "action-map=8681cfd9d8c96e3d5dc70c2b97f62795c2e29b632fb66065f2dea8ca102b0511",
             $"NATIVE_DESCRIPTOR_OWNERSHIP format={Ownership.Formatˉversion} " +
             $"functions={Ownership.Functions.Length} actions={Ownership.Totalˉactions} " +
+            $"allocator-leaf-calls={Allocatorˉprojection.Allocatorˉleafˉcalls} " +
+            $"ownership-movement-actions={Allocatorˉprojection.Ownershipˉmovementˉactions} " +
             $"parameters={Ownership.Functions.Sum(Function => Function.Descriptorˉparameterˉbindings)} " +
             $"assigned-parameters={Ownership.Functions.Sum(Function => Function.Assignedˉdescriptorˉparameterˉbindings)} " +
             $"locals={Ownership.Functions.Sum(Function => Function.Descriptorˉlocalˉbindings)} " +
@@ -19834,6 +20144,15 @@ internal static class Program
         string Name,
         ImmutableArray<string> Areas,
         Action Body);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate uint Nativeˉdescriptorˉallocatorˉleaf(
+        ulong first,
+        ulong second,
+        ulong windowsˉstate,
+        ulong windowsˉrequest,
+        ulong systemvˉstate,
+        ulong systemvˉrequest);
 
     private sealed record Testˉrunnerˉoptions(
         string? Reportˉpath,

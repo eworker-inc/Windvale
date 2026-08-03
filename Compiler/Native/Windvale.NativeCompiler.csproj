@@ -9,6 +9,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource
+      Include="Allocator/Descriptor-Allocator.wvo"
+      LogicalName="Windvale.NativeCompiler.Descriptor-Allocator.wvo" />
+    <EmbeddedResource
       Include="Stencils/Process-Argument-Count.wvo"
       LogicalName="Windvale.NativeCompiler.Process-Argument-Count.wvo" />
     <EmbeddedResource

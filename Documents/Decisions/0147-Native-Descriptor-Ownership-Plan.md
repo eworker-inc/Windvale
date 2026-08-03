@@ -49,6 +49,8 @@ The retained 16-byte descriptor has an unused `u32` reserved word. A successor A
 
 The action plan is lifetime evidence, not a garbage collector or an emitted program. It does not reclaim native allocations yet, qualify the full compiler under native execution, handle cycles, add collection syntax, retire .NET, or change the Windvale OS guest ABI.
 
+[Decision 0148](0148-First-Wva-Native-Descriptor-Allocator-Leaf.md) subsequently implements the selected first-fit/reference-count mechanics as one exact WVA-owned x86-64 leaf and projects this plan to 180,190 allocator calls. It deliberately remains outside ABI-21 selection; owner-token descriptors and emitted lifetime operations are still a successor-ABI transition.
+
 ## Reconsider when
 
 - A contained trap or recoverable exception requires cleanup across more than the terminal arena boundary.

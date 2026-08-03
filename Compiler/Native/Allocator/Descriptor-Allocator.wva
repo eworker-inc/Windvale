@@ -1,0 +1,661 @@
+windvale-assembly 1
+
+# Successor-native descriptor allocator leaf candidate.
+#
+# R8 points to one 32-byte allocator state and R9 points to one 40-byte
+# request. These registers are volatile on both Windows x64 and System V.
+# The leaf returns the exact request status in EAX and clobbers only the
+# platform-common volatile registers RAX, RCX, RDX, R8, R9, R10, and R11.
+#
+# State:   arena u64, length u32, magic u32, free-head token u32,
+#          allocated blocks u32, charged bytes u32, reserved u32.
+# Request: version u32, size u32, operation u32, payload bytes u32,
+#          owner token u32, status u32, data pointer u64,
+#          charged bytes u32, reserved u32.
+#
+# Owner token zero is borrowed. A nonzero token is arena header offset plus
+# one. Blocks have a 16-byte header: charged size, references, next-free
+# token, and allocated/free magic. Operation 1 acquires, 2 retains, and 3
+# releases. Status 0 succeeds; 1 is a malformed request, 2 is exhaustion,
+# 3 is corrupt allocator state, 4 is an invalid owner, and 5 is reference
+# overflow.
+symbol export function Windvale_descriptor_allocator in .text
+
+section code .text align 16
+define Windvale_descriptor_allocator
+# Validate the two bounded records before reading or mutating their fields.
+test r8 r8
+branch equal invalid_pointer
+move rax r8
+and_i32 rax 7
+branch not_equal invalid_pointer
+test r9 r9
+branch equal invalid_pointer
+move rax r9
+and_i32 rax 7
+branch not_equal invalid_pointer
+load_memory_u32 eax r9 none 1 0
+compare_i32 eax 1
+branch not_equal invalid_request
+load_memory_u32 eax r9 none 1 4
+compare_i32 eax 40
+branch not_equal invalid_request
+load_memory_u32 eax r9 none 1 8
+compare_i32 eax 1
+branch below invalid_request
+compare_i32 eax 3
+branch above invalid_request
+load_memory_u32 eax r9 none 1 20
+test eax eax
+branch not_equal invalid_request
+load_memory_u64 rax r9 none 1 24
+test rax rax
+branch not_equal invalid_request
+load_memory_u32 eax r9 none 1 32
+test eax eax
+branch not_equal invalid_request
+load_memory_u32 eax r9 none 1 36
+test eax eax
+branch not_equal invalid_request
+
+# Clear the deterministic output fields after their zero-input proof.
+move_u32 eax 0
+store_memory_u32 r9 none 1 20 eax
+store_memory_u64 r9 none 1 24 rax
+store_memory_u32 r9 none 1 32 eax
+
+# Operation-specific input fields are validated before lazy state mutation.
+load_memory_u32 eax r9 none 1 8
+compare_i32 eax 1
+branch not_equal validate_non_acquire_request
+load_memory_u32 eax r9 none 1 16
+test eax eax
+branch not_equal invalid_request
+jump_label validate_state
+
+label validate_non_acquire_request
+load_memory_u32 eax r9 none 1 12
+test eax eax
+branch not_equal invalid_request
+
+label validate_state
+# Validate or lazily initialize one complete address-ordered free span.
+load_memory_u64 rax r8 none 1 0
+test rax rax
+branch equal corrupt_state
+move rcx rax
+and_i32 rcx 15
+branch not_equal corrupt_state
+load_memory_u32 eax r8 none 1 8
+compare_i32 eax 16
+branch below corrupt_state
+compare_i32 eax 16777216
+branch above corrupt_state
+test_i32 eax 15
+branch not_equal corrupt_state
+load_memory_u32 ecx r8 none 1 28
+test ecx ecx
+branch not_equal corrupt_state
+load_memory_u32 ecx r8 none 1 12
+test ecx ecx
+branch equal initialize_state
+compare_i32 ecx 1396790871
+branch not_equal corrupt_state
+load_memory_u32 ecx r8 none 1 20
+compare_i32 ecx 1048576
+branch above corrupt_state
+load_memory_u32 ecx r8 none 1 24
+compare ecx eax
+branch above corrupt_state
+test_i32 ecx 15
+branch not_equal corrupt_state
+jump_label dispatch
+
+label initialize_state
+load_memory_u32 ecx r8 none 1 16
+test ecx ecx
+branch not_equal corrupt_state
+load_memory_u32 ecx r8 none 1 20
+test ecx ecx
+branch not_equal corrupt_state
+load_memory_u32 ecx r8 none 1 24
+test ecx ecx
+branch not_equal corrupt_state
+load_memory_u64 rcx r8 none 1 0
+store_memory_u32 rcx none 1 0 eax
+move_u32 edx 0
+store_memory_u32 rcx none 1 4 edx
+store_memory_u32 rcx none 1 8 edx
+move_u32 edx 1380341335
+store_memory_u32 rcx none 1 12 edx
+move_u32 edx 1396790871
+store_memory_u32 r8 none 1 12 edx
+move_u32 edx 1
+store_memory_u32 r8 none 1 16 edx
+
+label dispatch
+load_memory_u32 eax r9 none 1 8
+compare_i32 eax 1
+branch equal acquire
+compare_i32 eax 2
+branch equal retain
+jump_label release
+
+label acquire
+load_memory_u32 eax r9 none 1 16
+test eax eax
+branch not_equal invalid_request
+load_memory_u32 eax r9 none 1 12
+compare_i32 eax 4194304
+branch above invalid_request
+add_i32 eax 31
+branch below invalid_request
+and_i32 eax -16
+compare_i32 eax 16
+branch below invalid_request
+store_memory_u32 r9 none 1 32 eax
+
+# Prove counters can accept the selected charged extent before mutation.
+load_memory_u32 ecx r8 none 1 20
+compare_i32 ecx 1048576
+branch above_equal exhausted
+load_memory_u32 ecx r8 none 1 24
+add ecx eax
+branch below corrupt_state
+load_memory_u32 edx r8 none 1 8
+compare ecx edx
+branch above exhausted
+
+load_memory_u32 r10d r8 none 1 16
+move_u32 r11d 0
+label acquire_scan
+test r10d r10d
+branch equal exhausted
+
+# Validate this free node and its strictly increasing link.
+move eax r10d
+subtract_i32 eax 1
+branch below corrupt_state
+test_i32 eax 15
+branch not_equal corrupt_state
+move edx eax
+add_i32 edx 16
+branch below corrupt_state
+load_memory_u32 ecx r8 none 1 8
+compare edx ecx
+branch above corrupt_state
+load_memory_u64 rcx r8 none 1 0
+move edx eax
+add rcx rdx
+load_memory_u32 edx rcx none 1 0
+compare_i32 edx 16
+branch below corrupt_state
+test_i32 edx 15
+branch not_equal corrupt_state
+add eax edx
+branch below corrupt_state
+load_memory_u32 edx r8 none 1 8
+compare eax edx
+branch above corrupt_state
+load_memory_u32 eax rcx none 1 4
+test eax eax
+branch not_equal corrupt_state
+load_memory_u32 eax rcx none 1 12
+compare_i32 eax 1380341335
+branch not_equal corrupt_state
+load_memory_u32 eax rcx none 1 8
+test eax eax
+branch equal acquire_size
+compare eax r10d
+branch below_equal corrupt_state
+
+label acquire_size
+load_memory_u32 eax rcx none 1 0
+load_memory_u32 edx r9 none 1 32
+compare eax edx
+branch above_equal acquire_found
+move r11d r10d
+load_memory_u32 r10d rcx none 1 8
+jump_label acquire_scan
+
+label acquire_found
+load_memory_u32 eax rcx none 1 0
+load_memory_u32 edx r9 none 1 32
+subtract eax edx
+branch equal acquire_exact
+compare_i32 eax 16
+branch below corrupt_state
+
+# Split the sufficient span. Request status/data are private scratch until
+# the final success publication.
+store_memory_u32 r9 none 1 20 eax
+move eax r10d
+load_memory_u32 edx r9 none 1 32
+add eax edx
+branch below corrupt_state
+store_memory_u64 r9 none 1 24 rax
+move rax rcx
+add rax rdx
+load_memory_u32 edx r9 none 1 20
+store_memory_u32 rax none 1 0 edx
+move_u32 edx 0
+store_memory_u32 rax none 1 4 edx
+load_memory_u32 edx rcx none 1 8
+store_memory_u32 rax none 1 8 edx
+move_u32 edx 1380341335
+store_memory_u32 rax none 1 12 edx
+load_memory_u32 edx r9 none 1 24
+test r11d r11d
+branch equal acquire_split_head
+load_memory_u64 rax r8 none 1 0
+move ecx r11d
+subtract_i32 ecx 1
+add rax rcx
+store_memory_u32 rax none 1 8 edx
+jump_label acquire_publish
+
+label acquire_split_head
+store_memory_u32 r8 none 1 16 edx
+jump_label acquire_publish
+
+label acquire_exact
+load_memory_u32 edx rcx none 1 8
+test r11d r11d
+branch equal acquire_exact_head
+load_memory_u64 rax r8 none 1 0
+move ecx r11d
+subtract_i32 ecx 1
+add rax rcx
+store_memory_u32 rax none 1 8 edx
+jump_label acquire_publish
+
+label acquire_exact_head
+store_memory_u32 r8 none 1 16 edx
+
+label acquire_publish
+# Recompute the selected header after predecessor-link mutation.
+load_memory_u64 rcx r8 none 1 0
+move eax r10d
+subtract_i32 eax 1
+move edx eax
+add rcx rdx
+load_memory_u32 eax r9 none 1 32
+store_memory_u32 rcx none 1 0 eax
+move_u32 edx 1
+store_memory_u32 rcx none 1 4 edx
+move_u32 edx 0
+store_memory_u32 rcx none 1 8 edx
+move_u32 edx 1279350359
+store_memory_u32 rcx none 1 12 edx
+
+load_memory_u32 eax r8 none 1 20
+add_i32 eax 1
+store_memory_u32 r8 none 1 20 eax
+load_memory_u32 eax r8 none 1 24
+load_memory_u32 edx r9 none 1 32
+add eax edx
+store_memory_u32 r8 none 1 24 eax
+store_memory_u32 r9 none 1 16 r10d
+add_i32 rcx 16
+store_memory_u64 r9 none 1 24 rcx
+move_u32 eax 0
+store_memory_u32 r9 none 1 20 eax
+return
+
+label retain
+load_memory_u32 eax r9 none 1 12
+test eax eax
+branch not_equal invalid_request
+load_memory_u32 r10d r9 none 1 16
+test r10d r10d
+branch equal success
+
+# Validate the owner token and allocated header.
+move eax r10d
+subtract_i32 eax 1
+branch below invalid_owner
+test_i32 eax 15
+branch not_equal invalid_owner
+move edx eax
+add_i32 edx 16
+branch below invalid_owner
+load_memory_u32 ecx r8 none 1 8
+compare edx ecx
+branch above invalid_owner
+load_memory_u64 rcx r8 none 1 0
+move edx eax
+add rcx rdx
+load_memory_u32 edx rcx none 1 0
+compare_i32 edx 16
+branch below invalid_owner
+test_i32 edx 15
+branch not_equal invalid_owner
+add eax edx
+branch below invalid_owner
+load_memory_u32 edx r8 none 1 8
+compare eax edx
+branch above invalid_owner
+load_memory_u32 eax rcx none 1 12
+compare_i32 eax 1279350359
+branch not_equal invalid_owner
+load_memory_u32 eax rcx none 1 4
+test eax eax
+branch equal invalid_owner
+add_i32 eax 1
+branch below reference_overflow
+store_memory_u32 rcx none 1 4 eax
+jump_label success
+
+label release
+load_memory_u32 eax r9 none 1 12
+test eax eax
+branch not_equal invalid_request
+load_memory_u32 r10d r9 none 1 16
+test r10d r10d
+branch equal success
+
+# Validate the owner token and allocated header.
+move eax r10d
+subtract_i32 eax 1
+branch below invalid_owner
+test_i32 eax 15
+branch not_equal invalid_owner
+move edx eax
+add_i32 edx 16
+branch below invalid_owner
+load_memory_u32 ecx r8 none 1 8
+compare edx ecx
+branch above invalid_owner
+load_memory_u64 rcx r8 none 1 0
+move edx eax
+add rcx rdx
+load_memory_u32 edx rcx none 1 0
+compare_i32 edx 16
+branch below invalid_owner
+test_i32 edx 15
+branch not_equal invalid_owner
+add eax edx
+branch below invalid_owner
+load_memory_u32 edx r8 none 1 8
+compare eax edx
+branch above invalid_owner
+load_memory_u32 eax rcx none 1 12
+compare_i32 eax 1279350359
+branch not_equal invalid_owner
+load_memory_u32 eax rcx none 1 4
+test eax eax
+branch equal invalid_owner
+load_memory_u32 edx rcx none 1 0
+store_memory_u32 r9 none 1 32 edx
+subtract_i32 eax 1
+branch not_equal release_retained
+
+# The final reference becomes one address-ordered free span. Validate the
+# counters and find the predecessor/successor before mutating any header.
+load_memory_u32 eax r8 none 1 20
+test eax eax
+branch equal corrupt_state
+load_memory_u32 eax r8 none 1 24
+load_memory_u32 edx r9 none 1 32
+compare eax edx
+branch below corrupt_state
+load_memory_u32 r10d r8 none 1 16
+move_u32 r11d 0
+
+label release_scan
+test r10d r10d
+branch equal release_position
+
+# Validate this free node and its increasing link.
+move eax r10d
+subtract_i32 eax 1
+branch below corrupt_state
+test_i32 eax 15
+branch not_equal corrupt_state
+move edx eax
+add_i32 edx 16
+branch below corrupt_state
+load_memory_u32 ecx r8 none 1 8
+compare edx ecx
+branch above corrupt_state
+load_memory_u64 rcx r8 none 1 0
+move edx eax
+add rcx rdx
+load_memory_u32 edx rcx none 1 0
+compare_i32 edx 16
+branch below corrupt_state
+test_i32 edx 15
+branch not_equal corrupt_state
+add eax edx
+branch below corrupt_state
+load_memory_u32 edx r8 none 1 8
+compare eax edx
+branch above corrupt_state
+load_memory_u32 eax rcx none 1 4
+test eax eax
+branch not_equal corrupt_state
+load_memory_u32 eax rcx none 1 12
+compare_i32 eax 1380341335
+branch not_equal corrupt_state
+load_memory_u32 eax rcx none 1 8
+test eax eax
+branch equal release_order
+compare eax r10d
+branch below_equal corrupt_state
+
+label release_order
+load_memory_u32 eax r9 none 1 16
+compare r10d eax
+branch equal corrupt_state
+branch above release_position
+move r11d r10d
+load_memory_u32 r10d rcx none 1 8
+jump_label release_scan
+
+label release_position
+# Reject predecessor overlap and branch directly to the adjacent case.
+test r11d r11d
+branch equal release_no_predecessor
+load_memory_u64 rcx r8 none 1 0
+move eax r11d
+subtract_i32 eax 1
+move edx eax
+add rcx rdx
+load_memory_u32 edx rcx none 1 0
+move eax r11d
+add eax edx
+branch below corrupt_state
+load_memory_u32 edx r9 none 1 16
+compare eax edx
+branch above corrupt_state
+branch equal release_merge_predecessor
+jump_label release_without_predecessor_merge
+
+label release_no_predecessor
+jump_label release_without_predecessor_merge
+
+label release_without_predecessor_merge
+# Reject successor overlap and choose a successor merge or plain insertion.
+load_memory_u32 eax r9 none 1 16
+load_memory_u32 edx r9 none 1 32
+add eax edx
+branch below corrupt_state
+test r10d r10d
+branch equal release_insert_plain
+compare eax r10d
+branch above corrupt_state
+branch equal release_merge_successor
+jump_label release_insert_plain
+
+label release_insert_plain
+load_memory_u64 rcx r8 none 1 0
+load_memory_u32 eax r9 none 1 16
+subtract_i32 eax 1
+move edx eax
+add rcx rdx
+load_memory_u32 eax r9 none 1 32
+store_memory_u32 rcx none 1 0 eax
+move_u32 eax 0
+store_memory_u32 rcx none 1 4 eax
+store_memory_u32 rcx none 1 8 r10d
+move_u32 eax 1380341335
+store_memory_u32 rcx none 1 12 eax
+load_memory_u32 edx r9 none 1 16
+test r11d r11d
+branch equal release_plain_head
+load_memory_u64 rax r8 none 1 0
+move ecx r11d
+subtract_i32 ecx 1
+add rax rcx
+store_memory_u32 rax none 1 8 edx
+jump_label release_counters
+
+label release_plain_head
+store_memory_u32 r8 none 1 16 edx
+jump_label release_counters
+
+label release_merge_successor
+# Current is exactly adjacent above the released block.
+load_memory_u64 rcx r8 none 1 0
+load_memory_u32 eax r9 none 1 16
+subtract_i32 eax 1
+move edx eax
+add rcx rdx
+load_memory_u32 eax r9 none 1 32
+load_memory_u64 rdx r8 none 1 0
+subtract_i32 r10d 1
+add rdx r10
+load_memory_u32 r10d rdx none 1 0
+add eax r10d
+branch below corrupt_state
+store_memory_u32 rcx none 1 0 eax
+move_u32 eax 0
+store_memory_u32 rcx none 1 4 eax
+load_memory_u32 eax rdx none 1 8
+store_memory_u32 rcx none 1 8 eax
+move_u32 eax 1380341335
+store_memory_u32 rcx none 1 12 eax
+load_memory_u32 edx r9 none 1 16
+test r11d r11d
+branch equal release_successor_head
+load_memory_u64 rax r8 none 1 0
+move ecx r11d
+subtract_i32 ecx 1
+add rax rcx
+store_memory_u32 rax none 1 8 edx
+jump_label release_counters
+
+label release_successor_head
+store_memory_u32 r8 none 1 16 edx
+jump_label release_counters
+
+label release_merge_predecessor
+# Predecessor is exactly adjacent below. Determine whether current is also
+# adjacent above, then extend the predecessor over one or both spans.
+load_memory_u32 eax r9 none 1 16
+load_memory_u32 edx r9 none 1 32
+add eax edx
+branch below corrupt_state
+test r10d r10d
+branch equal release_predecessor_only
+compare eax r10d
+branch above corrupt_state
+branch equal release_merge_both
+
+label release_predecessor_only
+load_memory_u64 rcx r8 none 1 0
+move eax r11d
+subtract_i32 eax 1
+move edx eax
+add rcx rdx
+load_memory_u32 eax rcx none 1 0
+load_memory_u32 edx r9 none 1 32
+add eax edx
+branch below corrupt_state
+store_memory_u32 rcx none 1 0 eax
+store_memory_u32 rcx none 1 8 r10d
+jump_label release_mark_interior
+
+label release_merge_both
+load_memory_u64 rcx r8 none 1 0
+move eax r11d
+subtract_i32 eax 1
+move edx eax
+add rcx rdx
+load_memory_u32 eax rcx none 1 0
+load_memory_u32 edx r9 none 1 32
+add eax edx
+branch below corrupt_state
+load_memory_u64 rdx r8 none 1 0
+subtract_i32 r10d 1
+add rdx r10
+load_memory_u32 r10d rdx none 1 0
+add eax r10d
+branch below corrupt_state
+store_memory_u32 rcx none 1 0 eax
+load_memory_u32 eax rdx none 1 8
+store_memory_u32 rcx none 1 8 eax
+
+label release_mark_interior
+load_memory_u64 rcx r8 none 1 0
+load_memory_u32 eax r9 none 1 16
+subtract_i32 eax 1
+move edx eax
+add rcx rdx
+load_memory_u32 eax r9 none 1 32
+store_memory_u32 rcx none 1 0 eax
+move_u32 eax 0
+store_memory_u32 rcx none 1 4 eax
+store_memory_u32 rcx none 1 8 eax
+move_u32 eax 1380341335
+store_memory_u32 rcx none 1 12 eax
+
+label release_counters
+load_memory_u32 eax r8 none 1 20
+subtract_i32 eax 1
+store_memory_u32 r8 none 1 20 eax
+load_memory_u32 eax r8 none 1 24
+load_memory_u32 edx r9 none 1 32
+subtract eax edx
+store_memory_u32 r8 none 1 24 eax
+jump_label success
+
+label release_retained
+store_memory_u32 rcx none 1 4 eax
+jump_label success
+
+label success
+move_u32 eax 0
+store_memory_u32 r9 none 1 20 eax
+return
+
+label invalid_pointer
+move_u32 eax 1
+return
+
+label invalid_request
+move_u32 eax 1
+store_memory_u32 r9 none 1 20 eax
+return
+
+label exhausted
+move_u32 eax 2
+store_memory_u32 r9 none 1 20 eax
+return
+
+label corrupt_state
+move_u32 eax 3
+store_memory_u32 r9 none 1 20 eax
+return
+
+label invalid_owner
+move_u32 eax 4
+store_memory_u32 r9 none 1 20 eax
+return
+
+label reference_overflow
+move_u32 eax 5
+store_memory_u32 r9 none 1 20 eax
+return
+end define
+end section

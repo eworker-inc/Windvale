@@ -61,6 +61,9 @@
       Include="../../Compiler/Native/Stencils/Process-Argument.wva"
       LogicalName="Windvale.Seed.Tests.Process-Argument.wva" />
     <EmbeddedResource
+      Include="../../Compiler/Native/Allocator/Descriptor-Allocator.wva"
+      LogicalName="Windvale.Seed.Tests.Descriptor-Allocator.wva" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-Stencil-Core.wv"
       LogicalName="Windvale.Seed.Tests.Native-Stencil-Core.wv" />
     <EmbeddedResource
