@@ -637,6 +637,7 @@ export fn Compilerˉwebassemblyˉruntimeˉlocalˉtype(
     Function: Compilerˉwebassemblyˉruntimeˉfunction,
     Index: u32
 ) -> u8 {
+    if Index >= Function.Localˉcount { return 0u8; }
     if Index == 0u32 { return 6u8; }
     return Bytesˉreadˉu8(Input, Function.Localˉtypesˉoffset + Index - 1u32);
 }
@@ -790,6 +791,7 @@ export fn Compilerˉwebassemblyˉruntimeˉcallˉlocalˉtype(
     Function: Compilerˉwebassemblyˉruntimeˉcallˉfunction,
     Index: u32
 ) -> u8 {
+    if Index >= Function.Localˉcount { return 0u8; }
     if Index == 0u32 { return 6u8; }
     return Bytesˉreadˉu8(
         Input,
@@ -827,6 +829,206 @@ export fn Compilerˉwebassemblyˉruntimeˉtypeˉisˉsupported(Type: u8) -> bool 
     if Type == 4u8 { return true; }
     if Type == 5u8 { return true; }
     return Type == 6u8;
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(Type: u8) -> bool {
+    if Type == 3u8 { return true; }
+    return Type == 6u8;
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
+    Input: bytes,
+    Function: Compilerˉwebassemblyˉruntimeˉfunction,
+    Offset: u32,
+    Opcode: u8,
+    Operationˉtype: u8,
+    Stack: Compilerˉwebassemblyˉruntimeˉstack
+) -> Compilerˉwebassemblyˉruntimeˉstack {
+    var Result: Compilerˉwebassemblyˉruntimeˉstack = Stack;
+    if Opcode == 1u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 1u8);
+    }
+    if Opcode == 2u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 2u8);
+    }
+    if Opcode == 8u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 4u8);
+    }
+    if Opcode == 9u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
+    }
+    if Opcode == 4u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Stack,
+            Operationˉtype
+        );
+    }
+    if Opcode == 5u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpopˉany(Stack);
+    }
+    if Opcode == 11u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 6u8),
+            5u8
+        );
+    }
+    if Opcode == 12u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 6u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 6u8);
+    }
+    if Opcode == 13u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 6u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 4u8);
+    }
+    if Opcode == 14u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 6u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 15u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 6u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 114u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 6u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 1u8);
+    }
+    if Opcode == 16u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 1u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 1u8);
+    }
+    if Opcode == 17u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 1u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 1u8);
+    }
+    if Opcode == 18u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 1u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 1u8);
+    }
+    if Opcode == 19u8 {
+        return Stack;
+    }
+    if Opcode == 20u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 21u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 22u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    let Opcodeˉvalue: u32 = U32ˉfromˉu8(Opcode);
+    if Opcodeˉvalue >= 32u32 {
+        if Opcodeˉvalue <= 37u32 {
+            Result =
+                Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8);
+            Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 1u8);
+            return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 2u8);
+        }
+    }
+    if Opcodeˉvalue >= 96u32 {
+        if Opcodeˉvalue <= 101u32 {
+            Result =
+                Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+            Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+            return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 2u8);
+        }
+    }
+    if Opcode == 102u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 4u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 4u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 2u8);
+    }
+    if Opcode == 103u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 4u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 4u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 2u8);
+    }
+    if Opcode == 118u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 4u8),
+            5u8
+        );
+    }
+    if Opcode == 119u8 {
+        Result =
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 6u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 6u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 6u8);
+    }
+    if Opcode == 120u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 4u8),
+            6u8
+        );
+    }
+    if Opcode == 121u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8),
+            6u8
+        );
+    }
+    if Opcode == 122u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8),
+            6u8
+        );
+    }
+    if Opcode == 123u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 1u8),
+            6u8
+        );
+    }
+    if Opcode == 124u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 3u8),
+            6u8
+        );
+    }
+    if Opcode == 125u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 6u8),
+            3u8
+        );
+    }
+    if Opcode == 49u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 2u8);
+    }
+    if Opcode == 80u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpopˉany(Stack);
+    }
+    if Opcode == 81u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 6u8);
+    }
+    return Stack;
 }
 
 export fn Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
@@ -4105,6 +4307,12 @@ export fn Compilerˉwebassemblyˉruntimeˉmemoryˉcopy() -> bytes {
     return Bytesˉconcat(Result, Compilerˉwebassemblyˉuleb32(0u32));
 }
 
+export fn Compilerˉwebassemblyˉruntimeˉmemoryˉfill() -> bytes {
+    var Result: bytes = Compilerˉwebassemblyˉbyte(252u32);
+    Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉuleb32(11u32));
+    return Bytesˉconcat(Result, Compilerˉwebassemblyˉuleb32(0u32));
+}
+
 export fn Compilerˉwebassemblyˉruntimeˉmemoryˉinstruction(
     Opcode: u32,
     Alignment: u32
@@ -4112,6 +4320,839 @@ export fn Compilerˉwebassemblyˉruntimeˉmemoryˉinstruction(
     var Result: bytes = Compilerˉwebassemblyˉbyte(Opcode);
     Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉuleb32(Alignment));
     return Bytesˉconcat(Result, Compilerˉwebassemblyˉuleb32(0u32));
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+    Left: bytes,
+    Right: bytes,
+    Opcode: u32
+) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Left, Right),
+        Compilerˉwebassemblyˉbyte(Opcode)
+    );
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+    Address: bytes
+) -> bytes {
+    return Bytesˉconcat(
+        Address,
+        Compilerˉwebassemblyˉruntimeˉmemoryˉinstruction(40u32, 2u32)
+    );
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+    Address: bytes,
+    Value: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉconcat(Address, Value);
+    return Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉruntimeˉmemoryˉinstruction(54u32, 2u32)
+    );
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Index: u32) -> bytes {
+    return Compilerˉwebassemblyˉindexedˉinstruction(32u32, Index);
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(
+    Index: u32,
+    Offset: u32
+) -> bytes {
+    return Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Index),
+        Compilerˉwebassemblyˉpositiveˉi32ˉconstant(Offset),
+        106u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉreturnˉzero() -> bytes {
+    return Bytesˉconcat(
+        Compilerˉwebassemblyˉi32ˉconstant(0),
+        Compilerˉwebassemblyˉbyte(15u32)
+    );
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉinitialize() -> bytes {
+    var Result: bytes = Compilerˉwebassemblyˉpositiveˉi32ˉconstant(512u32);
+    Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉi32ˉconstant(0));
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉpositiveˉi32ˉconstant(49188u32)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉruntimeˉmemoryˉfill()
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(50000u32),
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(4259840u32)
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(4259840u32),
+            Compilerˉwebassemblyˉi32ˉconstant(0)
+        )
+    );
+    return Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(4259844u32),
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(4194304u32)
+        )
+    );
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉallocateˉbody() -> bytes {
+    let Length: u32 = 0u32;
+    let Required: u32 = 1u32;
+    let Cursor: u32 = 2u32;
+    let Previous: u32 = 3u32;
+    let Next: u32 = 4u32;
+    let Available: u32 = 5u32;
+    let Entry: u32 = 6u32;
+    let Candidate: u32 = 7u32;
+    let Remainder: u32 = 8u32;
+
+    var Body: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉuleb32(8u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(127u32));
+
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Length),
+                Compilerˉwebassemblyˉpositiveˉi32ˉconstant(7u32),
+                106u32
+            ),
+            Compilerˉwebassemblyˉruntimeˉu32ˉconstant(4294967288u32),
+            113u32
+        )
+    );
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Required)
+    );
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉpositiveˉi32ˉconstant(512u32)
+    );
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Entry)
+    );
+
+    var Noˉmetadata: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉreturnˉzero();
+    var Metadataˉloop: bytes = Compilerˉwebassemblyˉifˉinstructions(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Entry),
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(49700u32),
+            79u32
+        ),
+        Noˉmetadata
+    );
+    Metadataˉloop = Bytesˉconcat(
+        Metadataˉloop,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Entry)
+        )
+    );
+    Metadataˉloop = Bytesˉconcat(
+        Metadataˉloop,
+        Compilerˉwebassemblyˉbyte(69u32)
+    );
+    Metadataˉloop = Bytesˉconcat(
+        Metadataˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(13u32, 1u32)
+    );
+    Metadataˉloop = Bytesˉconcat(
+        Metadataˉloop,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Entry),
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(12u32),
+            106u32
+        )
+    );
+    Metadataˉloop = Bytesˉconcat(
+        Metadataˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Entry)
+    );
+    Metadataˉloop = Bytesˉconcat(
+        Metadataˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(12u32, 0u32)
+    );
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(2u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(3u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
+    Body = Bytesˉconcat(Body, Metadataˉloop);
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(50000u32)
+        )
+    );
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Cursor)
+    );
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉi32ˉconstant(0));
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Previous)
+    );
+
+    var Allocation: bytes = Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor)
+    );
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Next)
+    );
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Available),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Required),
+            107u32
+        )
+    );
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Remainder)
+    );
+
+    var Split: bytes = Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor),
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Required),
+        106u32
+    );
+    Split = Bytesˉconcat(
+        Split,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Candidate)
+    );
+    Split = Bytesˉconcat(
+        Split,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Candidate),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Next)
+        )
+    );
+    Split = Bytesˉconcat(
+        Split,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(
+                Candidate, 4u32
+            ),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Remainder)
+        )
+    );
+
+    var Useˉnext: bytes = Compilerˉwebassemblyˉifˉelseˉinstructions(
+        Compilerˉwebassemblyˉindexedˉinstruction(32u32, Previous),
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Previous),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Next)
+        ),
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(50000u32),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Next)
+        )
+    );
+    var Useˉcandidate: bytes = Compilerˉwebassemblyˉifˉelseˉinstructions(
+        Compilerˉwebassemblyˉindexedˉinstruction(32u32, Previous),
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Previous),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Candidate)
+        ),
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(50000u32),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Candidate)
+        )
+    );
+    Split = Bytesˉconcat(Split, Useˉcandidate);
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉifˉelseˉinstructions(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Remainder),
+            Split,
+            Useˉnext
+        )
+    );
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Entry),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor)
+        )
+    );
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(Entry, 4u32),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Length)
+        )
+    );
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(Entry, 8u32),
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(1u32)
+        )
+    );
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor)
+    );
+    Allocation = Bytesˉconcat(Allocation, Compilerˉwebassemblyˉbyte(15u32));
+
+    var Freeˉloop: bytes = Bytesˉconcat(
+        Compilerˉwebassemblyˉifˉinstructions(
+            Bytesˉconcat(
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, Cursor),
+                Compilerˉwebassemblyˉbyte(69u32)
+            ),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉreturnˉzero()
+        ),
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(
+                Cursor, 4u32
+            )
+        )
+    );
+    Freeˉloop = Bytesˉconcat(
+        Freeˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Available)
+    );
+    Freeˉloop = Bytesˉconcat(
+        Freeˉloop,
+        Compilerˉwebassemblyˉifˉinstructions(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Available),
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Required),
+                79u32
+            ),
+            Allocation
+        )
+    );
+    Freeˉloop = Bytesˉconcat(
+        Freeˉloop,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor)
+    );
+    Freeˉloop = Bytesˉconcat(
+        Freeˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Previous)
+    );
+    Freeˉloop = Bytesˉconcat(
+        Freeˉloop,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor)
+        )
+    );
+    Freeˉloop = Bytesˉconcat(
+        Freeˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Cursor)
+    );
+    Freeˉloop = Bytesˉconcat(
+        Freeˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(12u32, 0u32)
+    );
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(2u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(3u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
+    Body = Bytesˉconcat(Body, Freeˉloop);
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉi32ˉconstant(0));
+    return Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉreferenceˉbody() -> bytes {
+    let Descriptor: u32 = 0u32;
+    let Retain: u32 = 1u32;
+    let Pointer: u32 = 2u32;
+    let Entry: u32 = 3u32;
+    let Base: u32 = 4u32;
+    let Logical: u32 = 5u32;
+    let References: u32 = 6u32;
+    let Charged: u32 = 7u32;
+    let Previous: u32 = 8u32;
+    let Cursor: u32 = 9u32;
+    let Next: u32 = 10u32;
+
+    var Body: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉuleb32(9u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(127u32));
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Descriptor)
+    );
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(167u32));
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Pointer)
+    );
+
+    var Outside: bytes = Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Pointer),
+        Compilerˉwebassemblyˉpositiveˉi32ˉconstant(4259840u32),
+        73u32
+    );
+    Outside = Bytesˉconcat(
+        Outside,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Pointer),
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(8454144u32),
+            79u32
+        )
+    );
+    Outside = Bytesˉconcat(Outside, Compilerˉwebassemblyˉbyte(114u32));
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉifˉinstructions(
+            Outside,
+            Compilerˉwebassemblyˉbyte(15u32)
+        )
+    );
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉpositiveˉi32ˉconstant(512u32)
+    );
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Entry)
+    );
+
+    var Release: bytes = Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Entry),
+        Compilerˉwebassemblyˉi32ˉconstant(0)
+    );
+    Release = Bytesˉconcat(
+        Release,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Logical),
+                Compilerˉwebassemblyˉpositiveˉi32ˉconstant(7u32),
+                106u32
+            ),
+            Compilerˉwebassemblyˉruntimeˉu32ˉconstant(4294967288u32),
+            113u32
+        )
+    );
+    Release = Bytesˉconcat(
+        Release,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Charged)
+    );
+    Release = Bytesˉconcat(Release, Compilerˉwebassemblyˉi32ˉconstant(0));
+    Release = Bytesˉconcat(
+        Release,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Previous)
+    );
+    Release = Bytesˉconcat(
+        Release,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(50000u32)
+        )
+    );
+    Release = Bytesˉconcat(
+        Release,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Cursor)
+    );
+
+    var Insertˉloop: bytes = Bytesˉconcat(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor),
+        Compilerˉwebassemblyˉbyte(69u32)
+    );
+    Insertˉloop = Bytesˉconcat(
+        Insertˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(13u32, 1u32)
+    );
+    Insertˉloop = Bytesˉconcat(
+        Insertˉloop,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base),
+            79u32
+        )
+    );
+    Insertˉloop = Bytesˉconcat(
+        Insertˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(13u32, 1u32)
+    );
+    Insertˉloop = Bytesˉconcat(
+        Insertˉloop,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor)
+    );
+    Insertˉloop = Bytesˉconcat(
+        Insertˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Previous)
+    );
+    Insertˉloop = Bytesˉconcat(
+        Insertˉloop,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor)
+        )
+    );
+    Insertˉloop = Bytesˉconcat(
+        Insertˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Cursor)
+    );
+    Insertˉloop = Bytesˉconcat(
+        Insertˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(12u32, 0u32)
+    );
+    Release = Bytesˉconcat(Release, Compilerˉwebassemblyˉbyte(2u32));
+    Release = Bytesˉconcat(Release, Compilerˉwebassemblyˉbyte(64u32));
+    Release = Bytesˉconcat(Release, Compilerˉwebassemblyˉbyte(3u32));
+    Release = Bytesˉconcat(Release, Compilerˉwebassemblyˉbyte(64u32));
+    Release = Bytesˉconcat(Release, Insertˉloop);
+    Release = Bytesˉconcat(Release, Compilerˉwebassemblyˉbyte(11u32));
+    Release = Bytesˉconcat(Release, Compilerˉwebassemblyˉbyte(11u32));
+    Release = Bytesˉconcat(
+        Release,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor)
+        )
+    );
+    Release = Bytesˉconcat(
+        Release,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(Base, 4u32),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Charged)
+        )
+    );
+
+    var Coalesceˉnextˉcondition: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor),
+            Compilerˉwebassemblyˉi32ˉconstant(0),
+            71u32
+        );
+    Coalesceˉnextˉcondition = Bytesˉconcat(
+        Coalesceˉnextˉcondition,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base),
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Charged),
+                106u32
+            ),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor),
+            70u32
+        )
+    );
+    Coalesceˉnextˉcondition = Bytesˉconcat(
+        Coalesceˉnextˉcondition,
+        Compilerˉwebassemblyˉbyte(113u32)
+    );
+    var Coalesceˉnext: bytes = Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Cursor)
+    );
+    Coalesceˉnext = Bytesˉconcat(
+        Coalesceˉnext,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Next)
+    );
+    Coalesceˉnext = Bytesˉconcat(
+        Coalesceˉnext,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Charged),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(
+                    Cursor, 4u32
+                )
+            ),
+            106u32
+        )
+    );
+    Coalesceˉnext = Bytesˉconcat(
+        Coalesceˉnext,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Charged)
+    );
+    Coalesceˉnext = Bytesˉconcat(
+        Coalesceˉnext,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Next)
+        )
+    );
+    Coalesceˉnext = Bytesˉconcat(
+        Coalesceˉnext,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(Base, 4u32),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Charged)
+        )
+    );
+    Release = Bytesˉconcat(
+        Release,
+        Compilerˉwebassemblyˉifˉinstructions(
+            Coalesceˉnextˉcondition,
+            Coalesceˉnext
+        )
+    );
+
+    var Coalesceˉpreviousˉcondition: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Previous),
+            Compilerˉwebassemblyˉi32ˉconstant(0),
+            71u32
+        );
+    Coalesceˉpreviousˉcondition = Bytesˉconcat(
+        Coalesceˉpreviousˉcondition,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Previous),
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+                    Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(
+                        Previous, 4u32
+                    )
+                ),
+                106u32
+            ),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base),
+            70u32
+        )
+    );
+    Coalesceˉpreviousˉcondition = Bytesˉconcat(
+        Coalesceˉpreviousˉcondition,
+        Compilerˉwebassemblyˉbyte(113u32)
+    );
+    var Coalesceˉprevious: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Previous),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base)
+            )
+        );
+    Coalesceˉprevious = Bytesˉconcat(
+        Coalesceˉprevious,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(
+                Previous, 4u32
+            ),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+                    Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(
+                        Previous, 4u32
+                    )
+                ),
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+                    Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(
+                        Base, 4u32
+                    )
+                ),
+                106u32
+            )
+        )
+    );
+    var Linkˉbase: bytes = Compilerˉwebassemblyˉifˉelseˉinstructions(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Previous),
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Previous),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base)
+        ),
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(50000u32),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base)
+        )
+    );
+    Release = Bytesˉconcat(
+        Release,
+        Compilerˉwebassemblyˉifˉelseˉinstructions(
+            Coalesceˉpreviousˉcondition,
+            Coalesceˉprevious,
+            Linkˉbase
+        )
+    );
+    Release = Bytesˉconcat(Release, Compilerˉwebassemblyˉbyte(15u32));
+
+    var Releaseˉorˉdecrement: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(Entry, 8u32),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(References),
+                Compilerˉwebassemblyˉpositiveˉi32ˉconstant(1u32),
+                107u32
+            )
+        );
+    Releaseˉorˉdecrement = Bytesˉconcat(
+        Releaseˉorˉdecrement,
+        Compilerˉwebassemblyˉbyte(15u32)
+    );
+    Releaseˉorˉdecrement = Compilerˉwebassemblyˉifˉelseˉinstructions(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(References),
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(1u32),
+            75u32
+        ),
+        Releaseˉorˉdecrement,
+        Release
+    );
+
+    var Retainˉreference: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉstore(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(Entry, 8u32),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(References),
+                Compilerˉwebassemblyˉpositiveˉi32ˉconstant(1u32),
+                106u32
+            )
+        );
+    Retainˉreference = Bytesˉconcat(
+        Retainˉreference,
+        Compilerˉwebassemblyˉbyte(15u32)
+    );
+    var Found: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(Entry, 8u32)
+        );
+    Found = Bytesˉconcat(
+        Found,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, References)
+    );
+    Found = Bytesˉconcat(
+        Found,
+        Compilerˉwebassemblyˉifˉelseˉinstructions(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Retain),
+            Retainˉreference,
+            Releaseˉorˉdecrement
+        )
+    );
+
+    var Occupied: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocalˉaddress(Entry, 4u32)
+        );
+    Occupied = Bytesˉconcat(
+        Occupied,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Logical)
+    );
+    var Contains: bytes = Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Pointer),
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base),
+        79u32
+    );
+    Contains = Bytesˉconcat(
+        Contains,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Pointer),
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base),
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Logical),
+                106u32
+            ),
+            73u32
+        )
+    );
+    Contains = Bytesˉconcat(Contains, Compilerˉwebassemblyˉbyte(113u32));
+    Occupied = Bytesˉconcat(
+        Occupied,
+        Compilerˉwebassemblyˉifˉinstructions(Contains, Found)
+    );
+
+    var Searchˉloop: bytes = Compilerˉwebassemblyˉifˉinstructions(
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Entry),
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(49700u32),
+            79u32
+        ),
+        Compilerˉwebassemblyˉbyte(15u32)
+    );
+    Searchˉloop = Bytesˉconcat(
+        Searchˉloop,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉload(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Entry)
+        )
+    );
+    Searchˉloop = Bytesˉconcat(
+        Searchˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(34u32, Base)
+    );
+    Searchˉloop = Bytesˉconcat(
+        Searchˉloop,
+        Compilerˉwebassemblyˉifˉinstructions(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Base),
+            Occupied
+        )
+    );
+    Searchˉloop = Bytesˉconcat(
+        Searchˉloop,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉbinary(
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉlocal(Entry),
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(12u32),
+            106u32
+        )
+    );
+    Searchˉloop = Bytesˉconcat(
+        Searchˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Entry)
+    );
+    Searchˉloop = Bytesˉconcat(
+        Searchˉloop,
+        Compilerˉwebassemblyˉindexedˉinstruction(12u32, 0u32)
+    );
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(3u32));
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(64u32));
+    Body = Bytesˉconcat(Body, Searchˉloop);
+    Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+    return Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(
+    Length: u32,
+    Pointer: u32
+) -> bytes {
+    var Allocation: bytes = Compilerˉwebassemblyˉindexedˉinstruction(
+        32u32, Length
+    );
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉindexedˉinstruction(16u32, 1u32)
+    );
+    Allocation = Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉindexedˉinstruction(34u32, Pointer)
+    );
+    Allocation = Bytesˉconcat(Allocation, Compilerˉwebassemblyˉbyte(69u32));
+    return Bytesˉconcat(
+        Allocation,
+        Compilerˉwebassemblyˉruntimeˉfailureˉif(
+            Compilerˉwebassemblyˉempty(Allocation),
+            3018
+        )
+    );
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+    Descriptor: u32,
+    Retain: bool
+) -> bytes {
+    var Result: bytes = Compilerˉwebassemblyˉindexedˉinstruction(
+        32u32, Descriptor
+    );
+    if Retain {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(1u32)
+        );
+    } else {
+        Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉi32ˉconstant(0));
+    }
+    return Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉindexedˉinstruction(16u32, 2u32)
+    );
 }
 
 export fn Compilerˉwebassemblyˉruntimeˉfailureˉif(
@@ -4948,6 +5989,7 @@ export fn Compilerˉwebassemblyˉruntimeˉsha256(
     Value: u32,
     Descriptorˉsource: u32,
     Descriptorˉresult: u32,
+    Reclaiming: bool,
     Privateˉfunction: bool
 ) -> bytes {
     var Result: bytes = Compilerˉwebassemblyˉindexedˉinstruction(
@@ -4969,23 +6011,45 @@ export fn Compilerˉwebassemblyˉruntimeˉsha256(
         Result,
         Compilerˉwebassemblyˉindexedˉinstruction(33u32, Pointer)
     );
-    var Exhausted: bytes = Compilerˉwebassemblyˉpositiveˉi32ˉconstant(64u32);
-    Exhausted = Bytesˉconcat(
-        Exhausted,
-        Compilerˉwebassemblyˉpositiveˉi32ˉconstant(8454144u32)
-    );
-    Exhausted = Bytesˉconcat(
-        Exhausted,
-        Compilerˉwebassemblyˉindexedˉinstruction(32u32, Arena)
-    );
-    Exhausted = Bytesˉconcat(Exhausted, Compilerˉwebassemblyˉbyte(107u32));
-    Exhausted = Bytesˉconcat(Exhausted, Compilerˉwebassemblyˉbyte(75u32));
-    Result = Bytesˉconcat(
-        Result,
-        Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(
-            Exhausted, 3018, Privateˉfunction
-        )
-    );
+    if Reclaiming {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(64u32)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, Value)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(Value, Arena)
+        );
+    } else {
+        var Exhausted: bytes =
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(64u32);
+        Exhausted = Bytesˉconcat(
+            Exhausted,
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(8454144u32)
+        );
+        Exhausted = Bytesˉconcat(
+            Exhausted,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Arena)
+        );
+        Exhausted = Bytesˉconcat(
+            Exhausted,
+            Compilerˉwebassemblyˉbyte(107u32)
+        );
+        Exhausted = Bytesˉconcat(
+            Exhausted,
+            Compilerˉwebassemblyˉbyte(75u32)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(
+                Exhausted, 3018, Privateˉfunction
+            )
+        );
+    }
     var Paddedˉlength: bytes = Compilerˉwebassemblyˉindexedˉinstruction(
         32u32, Length
     );
@@ -5142,19 +6206,21 @@ export fn Compilerˉwebassemblyˉruntimeˉsha256(
         Result,
         Compilerˉwebassemblyˉindexedˉinstruction(33u32, Descriptorˉresult)
     );
-    Result = Bytesˉconcat(
-        Result,
-        Compilerˉwebassemblyˉindexedˉinstruction(32u32, Arena)
-    );
-    Result = Bytesˉconcat(
-        Result,
-        Compilerˉwebassemblyˉpositiveˉi32ˉconstant(64u32)
-    );
-    Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(106u32));
-    Result = Bytesˉconcat(
-        Result,
-        Compilerˉwebassemblyˉindexedˉinstruction(33u32, Arena)
-    );
+    if !Reclaiming {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Arena)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(64u32)
+        );
+        Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(106u32));
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, Arena)
+        );
+    }
     return Bytesˉconcat(
         Result,
         Compilerˉwebassemblyˉindexedˉinstruction(32u32, Descriptorˉresult)
@@ -5174,7 +6240,9 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
     Descriptorˉsecond: u32,
     Descriptorˉresult: u32,
     Localˉoffset: u32,
-    Privateˉfunction: bool
+    Privateˉfunction: bool,
+    Reclaiming: bool,
+    Descriptorˉoperation: bool
 ) -> bytes {
     var Result: bytes = Compilerˉwebassemblyˉruntimeˉmeter(Privateˉfunction);
     var Isˉread: bool = false;
@@ -5216,6 +6284,38 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
         );
     }
     if Opcode == 4u8 {
+        if Reclaiming {
+            if Descriptorˉoperation {
+                Result = Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉindexedˉinstruction(
+                        32u32,
+                        Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32) +
+                            Localˉoffset
+                    )
+                );
+                Result = Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉindexedˉinstruction(
+                        34u32, Descriptorˉresult
+                    )
+                );
+                Result = Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉpositiveˉi32ˉconstant(1u32)
+                );
+                Result = Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉindexedˉinstruction(16u32, 2u32)
+                );
+                return Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉindexedˉinstruction(
+                        32u32, Descriptorˉresult
+                    )
+                );
+            }
+        }
         return Bytesˉconcat(
             Result,
             Compilerˉwebassemblyˉindexedˉinstruction(
@@ -5225,6 +6325,38 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
         );
     }
     if Opcode == 5u8 {
+        if Reclaiming {
+            if Descriptorˉoperation {
+                Result = Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉindexedˉinstruction(
+                        33u32, Descriptorˉresult
+                    )
+                );
+                Result = Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+                        Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32) +
+                            Localˉoffset,
+                        false
+                    )
+                );
+                Result = Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉindexedˉinstruction(
+                        32u32, Descriptorˉresult
+                    )
+                );
+                return Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉindexedˉinstruction(
+                        33u32,
+                        Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32) +
+                            Localˉoffset
+                    )
+                );
+            }
+        }
         return Bytesˉconcat(
             Result,
             Compilerˉwebassemblyˉindexedˉinstruction(
@@ -5430,6 +6562,34 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
         );
     }
     if Opcode == 11u8 {
+        if Reclaiming {
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    33u32, Descriptorˉfirst
+                )
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉdescriptorˉlength(
+                    Descriptorˉfirst
+                )
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(33u32, First)
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+                    Descriptorˉfirst, false
+                )
+            );
+            return Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+            );
+        }
         Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉruntimeˉi64ˉconstant(32u32));
         Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(136u32));
         return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(167u32));
@@ -5456,6 +6616,49 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
         Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second));
         Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(106u32));
         Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉindexedˉinstruction(33u32, Fourth));
+        if Reclaiming {
+            var Emptyˉslice: bytes =
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+                    Descriptorˉfirst, false
+                );
+            Emptyˉslice = Bytesˉconcat(
+                Emptyˉslice,
+                Compilerˉwebassemblyˉruntimeˉi64ˉconstant(0u32)
+            );
+            Emptyˉslice = Bytesˉconcat(
+                Emptyˉslice,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    33u32, Descriptorˉresult
+                )
+            );
+            var Aliasedˉslice: bytes =
+                Compilerˉwebassemblyˉruntimeˉpackˉdescriptor(Fourth, Third);
+            Aliasedˉslice = Bytesˉconcat(
+                Aliasedˉslice,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    33u32, Descriptorˉresult
+                )
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉifˉelseˉinstructions(
+                    Bytesˉconcat(
+                        Compilerˉwebassemblyˉindexedˉinstruction(
+                            32u32, Third
+                        ),
+                        Compilerˉwebassemblyˉbyte(69u32)
+                    ),
+                    Emptyˉslice,
+                    Aliasedˉslice
+                )
+            );
+            return Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    32u32, Descriptorˉresult
+                )
+            );
+        }
         return Bytesˉconcat(Result, Compilerˉwebassemblyˉruntimeˉpackˉdescriptor(Fourth, Third));
     }
     if Isˉread {
@@ -5481,17 +6684,34 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
         var Readˉalignment: u32 = 2u32;
         if Opcode == 13u8 { Loadˉopcode = 45u32; Readˉalignment = 0u32; }
         if Opcode == 14u8 { Loadˉopcode = 47u32; Readˉalignment = 1u32; }
-        return Bytesˉconcat(
+        Result = Bytesˉconcat(
             Result,
             Compilerˉwebassemblyˉruntimeˉmemoryˉinstruction(
                 Loadˉopcode, Readˉalignment
             )
         );
+        if Reclaiming {
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(33u32, First)
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+                    Descriptorˉfirst, false
+                )
+            );
+            return Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+            );
+        }
+        return Result;
     }
     if Opcode == 118u8 { return Result; }
     if Opcode == 124u8 { return Result; }
     if Opcode == 125u8 {
-        return Bytesˉconcat(
+        Result = Bytesˉconcat(
             Result,
             Compilerˉwebassemblyˉruntimeˉsha256(
                 Arena,
@@ -5501,9 +6721,31 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
                 Fourth,
                 Descriptorˉfirst,
                 Descriptorˉresult,
+                Reclaiming,
                 Privateˉfunction
             )
         );
+        if Reclaiming {
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    33u32, Descriptorˉresult
+                )
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+                    Descriptorˉfirst, false
+                )
+            );
+            return Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    32u32, Descriptorˉresult
+                )
+            );
+        }
+        return Result;
     }
     if Opcode == 119u8 {
         Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉindexedˉinstruction(33u32, Descriptorˉsecond));
@@ -5520,6 +6762,103 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
         Tooˉlarge = Bytesˉconcat(Tooˉlarge, Compilerˉwebassemblyˉpositiveˉi32ˉconstant(4194304u32));
         Tooˉlarge = Bytesˉconcat(Tooˉlarge, Compilerˉwebassemblyˉbyte(75u32));
         Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(Tooˉlarge, 3015, Privateˉfunction));
+        if Reclaiming {
+            var Emptyˉconcat: bytes =
+                Compilerˉwebassemblyˉruntimeˉi64ˉconstant(0u32);
+            Emptyˉconcat = Bytesˉconcat(
+                Emptyˉconcat,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    33u32, Descriptorˉresult
+                )
+            );
+            var Reclaimedˉconcat: bytes =
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(
+                    Third, Fourth
+                );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, Fourth)
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉruntimeˉdescriptorˉpointer(
+                    Descriptorˉfirst
+                )
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉruntimeˉmemoryˉcopy()
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, Fourth)
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉbyte(106u32)
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉruntimeˉdescriptorˉpointer(
+                    Descriptorˉsecond
+                )
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second)
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉruntimeˉmemoryˉcopy()
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉruntimeˉpackˉdescriptor(Fourth, Third)
+            );
+            Reclaimedˉconcat = Bytesˉconcat(
+                Reclaimedˉconcat,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    33u32, Descriptorˉresult
+                )
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉifˉelseˉinstructions(
+                    Bytesˉconcat(
+                        Compilerˉwebassemblyˉindexedˉinstruction(32u32, Third),
+                        Compilerˉwebassemblyˉbyte(69u32)
+                    ),
+                    Emptyˉconcat,
+                    Reclaimedˉconcat
+                )
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+                    Descriptorˉfirst, false
+                )
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+                    Descriptorˉsecond, false
+                )
+            );
+            return Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(
+                    32u32, Descriptorˉresult
+                )
+            );
+        }
         var Concatˉexhausted: bytes = Compilerˉwebassemblyˉindexedˉinstruction(32u32, Third);
         Concatˉexhausted = Bytesˉconcat(Concatˉexhausted, Compilerˉwebassemblyˉpositiveˉi32ˉconstant(8454144u32));
         Concatˉexhausted = Bytesˉconcat(Concatˉexhausted, Compilerˉwebassemblyˉindexedˉinstruction(32u32, Arena));
@@ -5557,8 +6896,41 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
             Tooˉwide = Bytesˉconcat(Tooˉwide, Compilerˉwebassemblyˉbyte(75u32));
             Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(Tooˉwide, 3016, Privateˉfunction));
         }
-        Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉpositiveˉi32ˉconstant(Buildˉwidth));
-        Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉindexedˉinstruction(33u32, Second));
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(Buildˉwidth)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, Second)
+        );
+        if Reclaiming {
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(
+                    Second, Third
+                )
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, Third)
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉmemoryˉinstruction(
+                    Storeˉopcode, Buildˉalignment
+                )
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉpackˉdescriptor(Third, Second)
+            );
+            return Result;
+        }
         var Builderˉexhausted: bytes = Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second);
         Builderˉexhausted = Bytesˉconcat(Builderˉexhausted, Compilerˉwebassemblyˉpositiveˉi32ˉconstant(8454144u32));
         Builderˉexhausted = Bytesˉconcat(Builderˉexhausted, Compilerˉwebassemblyˉindexedˉinstruction(32u32, Arena));
@@ -5577,6 +6949,22 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
         return Bytesˉconcat(Result, Compilerˉwebassemblyˉindexedˉinstruction(32u32, Descriptorˉresult));
     }
     if Opcode == 80u8 {
+        if Reclaiming {
+            if Descriptorˉoperation {
+                Result = Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉindexedˉinstruction(
+                        33u32, Descriptorˉresult
+                    )
+                );
+                return Bytesˉconcat(
+                    Result,
+                    Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+                        Descriptorˉresult, false
+                    )
+                );
+            }
+        }
         return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(26u32));
     }
     return Result;
@@ -5665,10 +7053,52 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉwrapper(
         Body,
         Compilerˉwebassemblyˉindexedˉinstruction(33u32, Arena)
     );
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉinitialize()
+    );
 
     var Cursor: u32 = 0u32;
+    var Encodingˉstack: Compilerˉwebassemblyˉruntimeˉstack =
+        Compilerˉwebassemblyˉruntimeˉstackˉempty();
     while Cursor < Function.Codeˉlength {
         let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        var Descriptorˉoperation: bool = false;
+        var Operationˉtype: u8 = 0u8;
+        if Opcode == 4u8 {
+            Operationˉtype = Compilerˉwebassemblyˉruntimeˉlocalˉtype(
+                Input,
+                Function,
+                Bytesˉreadˉu32ˉlittle(
+                    Input, Codeˉoffset + Cursor + 1u32
+                )
+            );
+            Descriptorˉoperation =
+                Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+                    Operationˉtype
+                );
+        }
+        if Opcode == 5u8 {
+            Operationˉtype = Compilerˉwebassemblyˉruntimeˉlocalˉtype(
+                Input,
+                Function,
+                Bytesˉreadˉu32ˉlittle(
+                    Input, Codeˉoffset + Cursor + 1u32
+                )
+            );
+            Descriptorˉoperation =
+                Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+                    Operationˉtype
+                );
+        }
+        if Opcode == 80u8 {
+            Operationˉtype =
+                Compilerˉwebassemblyˉruntimeˉstackˉtop(Encodingˉstack);
+            Descriptorˉoperation =
+                Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+                    Operationˉtype
+                );
+        }
         var Width: u32 = 1u32;
         if Opcode == 1u8 { Width = 5u32; }
         if Opcode == 2u8 { Width = 2u32; }
@@ -5745,10 +7175,21 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉwrapper(
                     Descriptorˉsecond,
                     Descriptorˉresult,
                     2u32,
-                    false
+                    false,
+                    true,
+                    Descriptorˉoperation
                 )
             );
         }
+        Encodingˉstack =
+            Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
+                Input,
+                Function,
+                Codeˉoffset + Cursor,
+                Opcode,
+                Operationˉtype,
+                Encodingˉstack
+            );
         Cursor = Cursor + Width;
     }
     return Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
@@ -5890,6 +7331,10 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
         Body,
         Compilerˉwebassemblyˉindexedˉinstruction(33u32, Arena)
     );
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉinitialize()
+    );
     Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉi32ˉconstant(0));
     Body = Bytesˉconcat(
         Body,
@@ -5901,6 +7346,8 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
     var Cursor: u32 = 0u32;
     var Openˉblock: bool = false;
     var Block: bytes = Compilerˉwebassemblyˉempty(Input);
+    var Encodingˉstack: Compilerˉwebassemblyˉruntimeˉstack =
+        Compilerˉwebassemblyˉruntimeˉstackˉempty();
     while Cursor < Function.Codeˉlength {
         if !Openˉblock {
             Block = Bytesˉconcat(
@@ -5920,6 +7367,42 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
         }
 
         let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        var Descriptorˉoperation: bool = false;
+        var Operationˉtype: u8 = 0u8;
+        if Opcode == 4u8 {
+            Operationˉtype = Compilerˉwebassemblyˉruntimeˉlocalˉtype(
+                Input,
+                Function,
+                Bytesˉreadˉu32ˉlittle(
+                    Input, Codeˉoffset + Cursor + 1u32
+                )
+            );
+            Descriptorˉoperation =
+                Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+                    Operationˉtype
+                );
+        }
+        if Opcode == 5u8 {
+            Operationˉtype = Compilerˉwebassemblyˉruntimeˉlocalˉtype(
+                Input,
+                Function,
+                Bytesˉreadˉu32ˉlittle(
+                    Input, Codeˉoffset + Cursor + 1u32
+                )
+            );
+            Descriptorˉoperation =
+                Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+                    Operationˉtype
+                );
+        }
+        if Opcode == 80u8 {
+            Operationˉtype =
+                Compilerˉwebassemblyˉruntimeˉstackˉtop(Encodingˉstack);
+            Descriptorˉoperation =
+                Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+                    Operationˉtype
+                );
+        }
         let Width: u32 = Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
             Input, Codeˉoffset, Function.Codeˉlength, Cursor
         );
@@ -6014,12 +7497,23 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
                             Descriptorˉsecond,
                             Descriptorˉresult,
                             2u32,
-                            false
+                            false,
+                            true,
+                            Descriptorˉoperation
                         )
                     );
                 }
             }
         }
+        Encodingˉstack =
+            Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
+                Input,
+                Function,
+                Codeˉoffset + Cursor,
+                Opcode,
+                Operationˉtype,
+                Encodingˉstack
+            );
         Cursor = Cursor + Width;
     }
     Body = Bytesˉconcat(
@@ -6380,7 +7874,9 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
                                 Descriptorˉsecond,
                                 Descriptorˉresult,
                                 0u32,
-                                true
+                                true,
+                                false,
+                                false
                             )
                         );
                     }
@@ -6514,18 +8010,36 @@ export fn Compilerˉwebassemblyˉencodeˉruntime(
     Codeˉoffset: u32,
     Function: Compilerˉwebassemblyˉruntimeˉfunction
 ) -> bytes {
-    var Typeˉpayload: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    var Typeˉpayload: bytes = Compilerˉwebassemblyˉuleb32(3u32);
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(96u32));
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(2u32));
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(1u32));
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(96u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(1u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(1u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(96u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(2u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(126u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(0u32));
 
-    var Functionˉpayload: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    var Functionˉpayload: bytes = Compilerˉwebassemblyˉuleb32(3u32);
     Functionˉpayload = Bytesˉconcat(
         Functionˉpayload,
         Compilerˉwebassemblyˉuleb32(0u32)
+    );
+    Functionˉpayload = Bytesˉconcat(
+        Functionˉpayload,
+        Compilerˉwebassemblyˉuleb32(1u32)
+    );
+    Functionˉpayload = Bytesˉconcat(
+        Functionˉpayload,
+        Compilerˉwebassemblyˉuleb32(2u32)
     );
     var Memoryˉpayload: bytes = Compilerˉwebassemblyˉuleb32(1u32);
     Memoryˉpayload = Bytesˉconcat(Memoryˉpayload, Compilerˉwebassemblyˉuleb32(1u32));
@@ -6562,12 +8076,26 @@ export fn Compilerˉwebassemblyˉencodeˉruntime(
             Input, Codeˉoffset, Function
         );
     }
-    var Codeˉpayload: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    let Allocator: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉallocateˉbody();
+    let Reference: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉreferenceˉbody();
+    var Codeˉpayload: bytes = Compilerˉwebassemblyˉuleb32(3u32);
     Codeˉpayload = Bytesˉconcat(
         Codeˉpayload,
         Compilerˉwebassemblyˉuleb32(Bytesˉlength(Wrapper))
     );
     Codeˉpayload = Bytesˉconcat(Codeˉpayload, Wrapper);
+    Codeˉpayload = Bytesˉconcat(
+        Codeˉpayload,
+        Compilerˉwebassemblyˉuleb32(Bytesˉlength(Allocator))
+    );
+    Codeˉpayload = Bytesˉconcat(Codeˉpayload, Allocator);
+    Codeˉpayload = Bytesˉconcat(
+        Codeˉpayload,
+        Compilerˉwebassemblyˉuleb32(Bytesˉlength(Reference))
+    );
+    Codeˉpayload = Bytesˉconcat(Codeˉpayload, Reference);
 
     var Result: bytes = Compilerˉwebassemblyˉbyte(0u32);
     Result = Bytesˉconcat(Result, Textˉtoˉutf8("asm"));

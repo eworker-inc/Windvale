@@ -196,6 +196,8 @@ export fn Main(Request: bytes) -> bytes {
     var Functionˉframeˉmetadata: bytes = Invalid;
     var Functionˉcodeˉoffsets: bytes = Invalid;
     var Functionˉcodeˉlengths: bytes = Invalid;
+    var Functionˉshapeˉoffsets: bytes = Invalid;
+    var Localˉshapes: bytes = Invalid;
     while Functionˉindex < Functionˉcount {
         Functionˉoffsets = Bytesˉconcat(
             Functionˉoffsets,
@@ -212,9 +214,14 @@ export fn Main(Request: bytes) -> bytes {
             Functionˉframeˉmetadata,
             Bytesˉfromˉu32ˉlittle(Parameterˉcount)
         );
+        Functionˉshapeˉoffsets = Bytesˉconcat(
+            Functionˉshapeˉoffsets,
+            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Localˉshapes))
+        );
         Functionˉcursor = Functionˉcursor + 4u32;
         var Shapeˉindex: u32 = 0u32;
         var Shapeˉkind: u32 = 0u32;
+        var Parameterˉnominalˉtoken: u32 = 0u32;
         while Shapeˉindex < Parameterˉcount {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
             if Functionˉindex == Mainˉindex {
@@ -226,13 +233,26 @@ export fn Main(Request: bytes) -> bytes {
             }
             if Shapeˉkind < 1u32 { return Invalid; }
             if Shapeˉkind > 8u32 { return Invalid; }
+            Parameterˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind >= 7u32 {
-                if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
+                Parameterˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
+                    Module,
+                    Functionˉcursor
+                );
+                if Parameterˉnominalˉtoken >= Typeˉcount {
                     return Invalid;
                 }
+                Parameterˉnominalˉtoken = Parameterˉnominalˉtoken + 1u32;
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
+            Localˉshapes = Bytesˉconcat(
+                Localˉshapes,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Shapeˉkind),
+                    Bytesˉfromˉu32ˉlittle(Parameterˉnominalˉtoken)
+                )
+            );
             Shapeˉindex = Shapeˉindex + 1u32;
         }
         let Returnˉkind: u32 = U32ˉfromˉu8(
@@ -257,17 +277,31 @@ export fn Main(Request: bytes) -> bytes {
         }
         Functionˉcursor = Functionˉcursor + 4u32;
         Shapeˉindex = 0u32;
+        var Localˉnominalˉtoken: u32 = 0u32;
         while Shapeˉindex < Localˉcount {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
             if Shapeˉkind < 1u32 { return Invalid; }
             if Shapeˉkind > 8u32 { return Invalid; }
+            Localˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind >= 7u32 {
-                if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
+                Localˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
+                    Module,
+                    Functionˉcursor
+                );
+                if Localˉnominalˉtoken >= Typeˉcount {
                     return Invalid;
                 }
+                Localˉnominalˉtoken = Localˉnominalˉtoken + 1u32;
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
+            Localˉshapes = Bytesˉconcat(
+                Localˉshapes,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Shapeˉkind),
+                    Bytesˉfromˉu32ˉlittle(Localˉnominalˉtoken)
+                )
+            );
             Shapeˉindex = Shapeˉindex + 1u32;
         }
         Functionˉframeˉmetadata = Bytesˉconcat(
@@ -421,6 +455,7 @@ export fn Main(Request: bytes) -> bytes {
         Payloadˉlength = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Payload));
         Mainˉfound = false;
 
+        if Payloadˉlength <= 22u32 {
         if Payloadˉlength == 1u32 {
             Stack = Bytesˉconcat(
                 Stack,
@@ -631,84 +666,29 @@ export fn Main(Request: bytes) -> bytes {
             );
             if Bytesˉreadˉu32ˉlittle(Loadedˉvalue, 0u32) == 0u32 {
                 if Bytesˉreadˉu32ˉlittle(Loadedˉvalue, 4u32) == 0u32 {
-                    var Loadedˉshapeˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
-                        Functionˉoffsets,
-                        Functionˉindex * 4u32
+                    let Loadedˉshapeˉoffset: u32 =
+                        Bytesˉreadˉu32ˉlittle(
+                            Functionˉshapeˉoffsets,
+                            Functionˉindex * 4u32
+                        ) + Loadedˉlocalˉindex * 8u32;
+                    let Loadedˉshapeˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+                        Localˉshapes,
+                        Loadedˉshapeˉoffset
                     );
-                    Loadedˉshapeˉcursor = Loadedˉshapeˉcursor
-                        + 4u32
-                        + Bytesˉreadˉu32ˉlittle(Module, Loadedˉshapeˉcursor);
-                    var Loadedˉparameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-                        Module,
-                        Loadedˉshapeˉcursor
+                    let Loadedˉnominalˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
+                        Localˉshapes,
+                        Loadedˉshapeˉoffset + 4u32
                     );
-                    Loadedˉshapeˉcursor = Loadedˉshapeˉcursor + 4u32;
-                    var Loadedˉshapeˉindex: u32 = 0u32;
-                    var Loadedˉshapeˉkind: u32 = 0u32;
-                    var Loadedˉnominalˉtype: u32 = 0u32;
-                    while Loadedˉshapeˉindex < Loadedˉparameterˉcount {
-                        let Candidateˉshapeˉkind: u32 = U32ˉfromˉu8(
-                            Bytesˉreadˉu8(Module, Loadedˉshapeˉcursor)
-                        );
-                        if Loadedˉshapeˉindex == Loadedˉlocalˉindex {
-                            Loadedˉshapeˉkind = Candidateˉshapeˉkind;
-                            if Candidateˉshapeˉkind >= 7u32 {
-                                Loadedˉnominalˉtype = Bytesˉreadˉu32ˉlittle(
-                                    Module,
-                                    Loadedˉshapeˉcursor + 1u32
-                                );
-                            }
-                        }
-                        Loadedˉshapeˉcursor = Loadedˉshapeˉcursor + 1u32;
-                        if Candidateˉshapeˉkind >= 7u32 {
-                            Loadedˉshapeˉcursor = Loadedˉshapeˉcursor + 4u32;
-                        }
-                        Loadedˉshapeˉindex = Loadedˉshapeˉindex + 1u32;
-                    }
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(
-                        Module,
-                        Loadedˉshapeˉcursor
-                    )) >= 7u32 {
-                        Loadedˉshapeˉcursor = Loadedˉshapeˉcursor + 5u32;
-                    } else {
-                        Loadedˉshapeˉcursor = Loadedˉshapeˉcursor + 1u32;
-                    }
-                    Loadedˉparameterˉcount = Bytesˉreadˉu32ˉlittle(
-                        Module,
-                        Loadedˉshapeˉcursor
-                    );
-                    Loadedˉshapeˉcursor = Loadedˉshapeˉcursor + 4u32;
-                    var Loadedˉdeclarationˉlocal: u32 = 0u32;
-                    while Loadedˉdeclarationˉlocal < Loadedˉparameterˉcount {
-                        let Candidateˉlocalˉkind: u32 = U32ˉfromˉu8(
-                            Bytesˉreadˉu8(Module, Loadedˉshapeˉcursor)
-                        );
-                        if Loadedˉshapeˉindex + Loadedˉdeclarationˉlocal
-                            == Loadedˉlocalˉindex {
-                            Loadedˉshapeˉkind = Candidateˉlocalˉkind;
-                            if Candidateˉlocalˉkind >= 7u32 {
-                                Loadedˉnominalˉtype = Bytesˉreadˉu32ˉlittle(
-                                    Module,
-                                    Loadedˉshapeˉcursor + 1u32
-                                );
-                            }
-                        }
-                        Loadedˉshapeˉcursor = Loadedˉshapeˉcursor + 1u32;
-                        if Candidateˉlocalˉkind >= 7u32 {
-                            Loadedˉshapeˉcursor = Loadedˉshapeˉcursor + 4u32;
-                        }
-                        Loadedˉdeclarationˉlocal = Loadedˉdeclarationˉlocal + 1u32;
-                    }
                     if Loadedˉshapeˉkind == 7u32 {
                         Loadedˉvalue = Bytesˉconcat(
                             Bytesˉfromˉu32ˉlittle(4294967295u32),
-                            Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtype + 1u32)
+                            Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtoken)
                         );
                     }
                     if Loadedˉshapeˉkind == 8u32 {
                         var Loadedˉenumˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
                             Typeˉoffsets,
-                            Loadedˉnominalˉtype * 4u32
+                            (Loadedˉnominalˉtoken - 1u32) * 4u32
                         ) + 1u32;
                         let Loadedˉenumˉnameˉlength: u32 =
                             Bytesˉreadˉu32ˉlittle(Module, Loadedˉenumˉcursor);
@@ -723,7 +703,7 @@ export fn Main(Request: bytes) -> bytes {
                             + Loadedˉmemberˉnameˉlength;
                         Loadedˉvalue = Bytesˉconcat(
                             Bytesˉslice(Module, Loadedˉenumˉcursor, 4u32),
-                            Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtype + 1u32)
+                            Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtoken)
                         );
                     }
                 }
@@ -996,9 +976,11 @@ export fn Main(Request: bytes) -> bytes {
                 Mainˉfound = true;
             }
         }
+        }
 
         if Payloadˉlength >= 32u32 {
-            if Payloadˉlength <= 37u32 {
+        if Payloadˉlength <= 40u32 {
+        if Payloadˉlength <= 37u32 {
                 var I32ˉcompareˉstackˉlength: u32 = Bytesˉlength(Stack);
                 let I32ˉcompareˉright: i32 = Bytesˉreadˉi32ˉlittle(
                     Stack,
@@ -1057,7 +1039,6 @@ export fn Main(Request: bytes) -> bytes {
                 );
                 Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
                 Mainˉfound = true;
-            }
         }
         if Payloadˉlength == 38u32 {
             var Boolˉequalˉstackˉlength: u32 = Bytesˉlength(Stack);
@@ -1152,9 +1133,12 @@ export fn Main(Request: bytes) -> bytes {
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
             Mainˉfound = true;
         }
+        }
+        }
 
         if Payloadˉlength >= 96u32 {
-            if Payloadˉlength <= 103u32 {
+        if Payloadˉlength <= 125u32 {
+        if Payloadˉlength <= 103u32 {
                 var U32ˉcompareˉstackˉlength: u32 = Bytesˉlength(Stack);
                 let U32ˉcompareˉright: u32 = Bytesˉreadˉu32ˉlittle(
                     Stack,
@@ -1221,7 +1205,6 @@ export fn Main(Request: bytes) -> bytes {
                 );
                 Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
                 Mainˉfound = true;
-            }
         }
 
         if Payloadˉlength == 104u32 {
@@ -2220,6 +2203,8 @@ export fn Main(Request: bytes) -> bytes {
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
             Mainˉfound = true;
         }
+        }
+        }
 
         if Payloadˉlength == 48u32 {
             Aggregateˉinstructions = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
@@ -2257,15 +2242,6 @@ export fn Main(Request: bytes) -> bytes {
                 Functionˉframeˉmetadata,
                 Target * 8u32
             );
-            let Targetˉcodeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Functionˉcodeˉoffsets,
-                Target * 4u32
-            );
-            let Targetˉcodeˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                Functionˉcodeˉlengths,
-                Target * 4u32
-            );
-
             var Frame: bytes = Bytesˉfromˉu32ˉlittle(Aggregateˉinstructions + 5u32);
             Frame = Bytesˉconcat(Frame, Locals);
             Frame = Bytesˉconcat(
@@ -2315,8 +2291,14 @@ export fn Main(Request: bytes) -> bytes {
             }
 
             Functionˉindex = Target;
-            Mainˉcodeˉoffset = Targetˉcodeˉoffset;
-            Mainˉcodeˉlength = Targetˉcodeˉlength;
+            Mainˉcodeˉoffset = Bytesˉreadˉu32ˉlittle(
+                Functionˉcodeˉoffsets,
+                Target * 4u32
+            );
+            Mainˉcodeˉlength = Bytesˉreadˉu32ˉlittle(
+                Functionˉcodeˉlengths,
+                Target * 4u32
+            );
             Aggregateˉinstructions = 0u32;
             Locals = Nextˉlocals;
             Exportˉindex = Exportˉindex + 1u32;

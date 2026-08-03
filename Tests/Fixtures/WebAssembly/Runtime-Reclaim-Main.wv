@@ -1,0 +1,11 @@
+module WebAssemblyˉruntimeˉreclaim profile portable;
+
+export fn Main(Input: bytes) -> bytes {
+    var Index: u32 = 0u32;
+    var Value: bytes = Input;
+    while Index < 8192u32 {
+        Value = Bytesˉconcat(Input, Input);
+        Index = Index + 1u32;
+    }
+    return Value;
+}
