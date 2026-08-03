@@ -1,7 +1,7 @@
 # Decision 0152: First standalone hosted console capability
 
 - Date: 2026-08-03
-- Status: Implemented candidate; cross-host qualification pending
+- Status: Implemented and cross-host qualified
 - Adds: `windows-x64-console-v2`, `linux-x64-console-v2`, and serialized `WVHC 1` metadata
 - Retains: Native ABI 22, execution-context version 7, service-table version 5, WVB 1.6, WVO 1.0, and exact version-1 container bytes
 
@@ -28,7 +28,7 @@ The next narrow Phase-10 gate is therefore one new versioned container per host,
 
 The focused paired test passes after a zero-warning Release solution build. Windows Development verification passes all 85 regular Seed tests in 161.191 suite seconds and the then-current 31 bounded OS tests after integrating the concurrent directory-capability change. A second OS-only upstream integration retains the zero-warning build and focused hosted-console result and passes all 34 resulting OS tests. On Windows, the public CLI compiles `Examples/Seed/Hello-Windvale.wv` to a 3,584-byte PE with SHA-256 `abb38c9de40d75eb8f4029aeb0d7f6dbba7b1ec776fefc8bc96aa376bd310f61`; the executable writes `Hello from Windvale`, then exits 0 without loading .NET. The same invocation produces a 9,216-byte Linux ELF with SHA-256 `5103d02b883a40757281ccce027445cab59c2330833efeb60ec57d1a39363b78`, and the Windows-side independent ELF verifier accepts it.
 
-Direct Linux execution, complete Seed verification, and exact cross-host artifact equality remain pending. These are required before changing this decision to cross-host qualified.
+Exact implementation commit `ed4a0b40b9f59b45f1aaedf9d147cac0330fd1cb` passes GitHub [Verify run 30802630910](https://github.com/eworker-inc/Windvale/actions/runs/30802630910). Windows and digest-pinned Debian 12 each complete a zero-warning Release build, all 86 Seed tests including the golden compiler contract, all 34 OS tests, and the complete native CLI gate. The paired hosted-console case directly executes the current host's version-2 application, observes `Hello from Windvale` and result 0, and checks deterministic canonical PE/ELF identities on both hosts. Windows Seed takes 364.810 seconds with a 205.826-second golden contract; Linux Seed takes 332.904 seconds with a 188.554-second golden contract. The complete verifier jobs finish in 12m03s and 10m39s. This qualifies the version-2 metadata, service binding, independent container verification, exact artifacts, and direct Windows/Linux execution as one committed cross-host baseline.
 
 ## Consequences
 
