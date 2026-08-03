@@ -1,12 +1,14 @@
 windvale-assembly 1
-symbol local data Windvale_resource_configuration_reply in .rodata
+
+symbol local function Windvale_init_resource_build_reply in .text
 symbol export function Windvale_init_resource_user_entry in .text
 symbol import function Windvale_init_resource_service_main
 
 section code .text align 16
 define Windvale_init_resource_user_entry
 call Windvale_init_resource_service_main
-# EAX carries Windvale's canonical ordered resource-set token unchanged.
+compare_i32 eax 131073
+branch not_equal resource_request_failure
 move_u32 ebx 4
 move_u32 esi 65536
 syscall
@@ -16,63 +18,20 @@ move_u32 r9d 1056
 move_u32 ebx 5
 move_u32 esi 65536
 syscall
-compare_i32 eax 55
-branch not_equal resource_request_failure
+move edi eax
+call Windvale_init_resource_build_reply
+test eax eax
+branch equal resource_request_failure
 move r8 rdx
-add_i32 r8 1024
-load_memory_u32 eax r8 none 1 0
-compare_i32 eax 1364350551
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 4
-compare_i32 eax 1
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 8
-compare_i32 eax 55
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 12
-compare_i32 eax 1
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 16
-compare_i32 eax 1
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 20
-compare_i32 eax 4
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 24
-compare_i32 eax 23
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 28
-compare_i32 eax 0
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 32
-compare_i32 eax 1953460066
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 36
-compare_i32 eax 1767992634
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 40
-compare_i32 eax 1868770926
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 44
-compare_i32 eax 1734960750
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 48
-compare_i32 eax 1952543349
-branch not_equal resource_request_failure
-load_memory_u16 ax r8 none 1 52
-compare_i16 ax 28521
-branch not_equal resource_request_failure
-load_memory_u8 al r8 none 1 54
-compare_i8 al 110
-branch not_equal resource_request_failure
-load_address r8 Windvale_resource_configuration_reply
-move_u32 r9d 116
+add_i32 r8 2080
+move r9d eax
 move_u32 ebx 7
 move_u32 esi 65536
 syscall
-# The coordinator reclaims and rebuilds the terminal client before resuming
-# this service. Regrant the same ordered set to generation 2 and repeat the
-# bounded request/reply before accepting its independently interpreted result.
+
+# Generation 1 is terminal before the coordinator reopens the same logical
+# endpoint for generation 2. The store mapping and its capability record live
+# independently, so only the client grant is repeated.
 move_u32 eax 131073
 move_u32 ebx 4
 move_u32 esi 65536
@@ -83,24 +42,13 @@ move_u32 r9d 1056
 move_u32 ebx 5
 move_u32 esi 65536
 syscall
-compare_i32 eax 55
-branch not_equal resource_request_failure
+move edi eax
+call Windvale_init_resource_build_reply
+test eax eax
+branch equal resource_request_failure
 move r8 rdx
-add_i32 r8 1024
-load_memory_u32 eax r8 none 1 0
-compare_i32 eax 1364350551
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 8
-compare_i32 eax 55
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 12
-compare_i32 eax 1
-branch not_equal resource_request_failure
-load_memory_u32 eax r8 none 1 24
-compare_i32 eax 23
-branch not_equal resource_request_failure
-load_address r8 Windvale_resource_configuration_reply
-move_u32 r9d 116
+add_i32 r8 2080
+move r9d eax
 move_u32 ebx 7
 move_u32 esi 65536
 syscall
@@ -109,17 +57,285 @@ syscall
 label resource_request_failure
 trap
 end define
-end section
 
-section rodata .rodata align 4
-define Windvale_resource_configuration_reply
-bytes 87 86 82 89 1 0 0 0 116 0 0 0 1 0 0 0
-bytes 0 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0
-bytes 3 0 0 0 7 0 0 0 4 0 0 0 0 0 0 0
-bytes 57 57 50 99 102 101 55 53 99 48 50 102 49 49 98 49
-bytes 55 97 54 99 101 49 99 50 100 100 56 51 100 51 52 57
-bytes 52 56 98 101 51 98 56 50 99 49 49 98 54 50 101 56
-bytes 51 48 50 99 56 98 98 102 53 51 99 57 51 99 98 100
-bytes 3 5 8 13
+# EDI is the copied request length and RDX is the immutable execution-context
+# address. The kernel-created descriptor at offset 384 names one measured,
+# page-bounded, RO/NX WVRS image. This seam validates the complete bounded
+# three-entry layout before comparing the request name against store bytes.
+# It returns a canonical reply length in EAX, or zero on rejection.
+define Windvale_init_resource_build_reply
+compare_i32 edi 32
+branch below resource_reply_invalid
+compare_i32 edi 1056
+branch above resource_reply_invalid
+move r9 rdx
+add_i32 r9 1024
+load_memory_u32 eax r9 none 1 0
+compare_i32 eax 1364350551
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r9 none 1 4
+compare_i32 eax 1
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r9 none 1 8
+compare eax edi
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r9 none 1 12
+test eax eax
+branch equal resource_reply_invalid
+load_memory_u32 eax r9 none 1 16
+compare_i32 eax 1
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r9 none 1 20
+compare_i32 eax 3984
+branch above resource_reply_invalid
+load_memory_u32 ebx r9 none 1 24
+test ebx ebx
+branch equal resource_reply_invalid
+compare_i32 ebx 1024
+branch above resource_reply_invalid
+move eax ebx
+add_i32 eax 32
+compare eax edi
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r9 none 1 28
+test eax eax
+branch not_equal resource_reply_invalid
+
+# The measured capability is one exact canonical three-resource WVRS 1 image.
+load_memory_u64 r8 rdx none 1 384
+test r8 r8
+branch equal resource_reply_invalid
+load_memory_u32 eax rdx none 1 392
+compare_i32 eax 1195
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 0
+compare_i32 eax 1397904983
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 4
+compare_i32 eax 1
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 8
+compare_i32 eax 1195
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 12
+compare_i32 eax 3
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 16
+compare_i32 eax 288
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 20
+compare_i32 eax 52
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 24
+compare_i32 eax 823
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 28
+test eax eax
+branch not_equal resource_reply_invalid
+
+# Entry 0: boot:main.budget.
+load_memory_u32 eax r8 none 1 32
+compare_i32 eax 2
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 36
+compare_i32 eax 2
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 40
+compare_i32 eax 7
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 44
+compare_i32 eax 320
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 48
+compare_i32 eax 16
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 52
+compare_i32 eax 372
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 56
+compare_i32 eax 4
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 60
+test eax eax
+branch not_equal resource_reply_invalid
+
+# Entry 1: boot:main.configuration.
+load_memory_u32 eax r8 none 1 128
+compare_i32 eax 3
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 132
+compare_i32 eax 3
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 136
+compare_i32 eax 7
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 140
+compare_i32 eax 336
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 144
+compare_i32 eax 23
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 148
+compare_i32 eax 376
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 152
+compare_i32 eax 4
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 156
+test eax eax
+branch not_equal resource_reply_invalid
+
+# Entry 2: boot:main.wvb.
+load_memory_u32 eax r8 none 1 224
+compare_i32 eax 1
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 228
+compare_i32 eax 1
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 232
+compare_i32 eax 7
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 236
+compare_i32 eax 359
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 240
+compare_i32 eax 13
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 244
+compare_i32 eax 380
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 248
+compare_i32 eax 815
+branch not_equal resource_reply_invalid
+load_memory_u32 eax r8 none 1 252
+test eax eax
+branch not_equal resource_reply_invalid
+
+# Every directory digest must use the canonical lowercase ASCII form. The
+# whole immutable store SHA-256 is separately bound by WVRES005 before entry.
+move r10 r8
+add_i32 r10 64
+move_u32 esi 3
+label resource_digest_entry
+move_u32 ecx 64
+label resource_digest_byte
+load_memory_u8 al r10 none 1 0
+compare_i8 al 48
+branch below resource_digest_letter
+compare_i8 al 57
+branch below_equal resource_digest_next
+label resource_digest_letter
+compare_i8 al 97
+branch below resource_reply_invalid
+compare_i8 al 102
+branch above resource_reply_invalid
+label resource_digest_next
+add_i32 r10 1
+subtract_i32 ecx 1
+branch not_equal resource_digest_byte
+add_i32 r10 32
+subtract_i32 esi 1
+branch not_equal resource_digest_entry
+
+# Scan the validated directory and compare its stored name bytes with the
+# request. No resource name is compiled into the lookup path.
+move r10 r8
+add_i32 r10 32
+move_u32 edi 0
+label resource_lookup_entry
+compare_i32 edi 3
+branch equal resource_reply_invalid
+load_memory_u32 eax r10 none 1 16
+load_memory_u32 ebx r9 none 1 24
+compare eax ebx
+branch not_equal resource_lookup_next
+load_memory_u32 eax r10 none 1 12
+move r11 r8
+add r11 rax
+move rcx r9
+add_i32 rcx 32
+label resource_lookup_byte
+test ebx ebx
+branch equal resource_lookup_found
+load_memory_u8 al r11 none 1 0
+load_memory_u8 sil rcx none 1 0
+compare al sil
+branch not_equal resource_lookup_next
+add_i32 r11 1
+add_i32 rcx 1
+subtract_i32 ebx 1
+jump_label resource_lookup_byte
+label resource_lookup_next
+add_i32 r10 96
+add_i32 edi 1
+jump_label resource_lookup_entry
+
+label resource_lookup_found
+store_memory_u64 rdx none 1 400 r10
+load_memory_u32 ebx r10 none 1 24
+compare_i32 ebx 1904
+branch above resource_reply_invalid
+move r11 rdx
+add_i32 r11 2080
+move_u32 eax 1498568279
+store_memory_u32 r11 none 1 0 eax
+move_u32 eax 1
+store_memory_u32 r11 none 1 4 eax
+move eax ebx
+add_i32 eax 112
+store_memory_u32 r11 none 1 8 eax
+load_memory_u32 eax r9 none 1 12
+store_memory_u32 r11 none 1 12 eax
+move_u32 eax 0
+store_memory_u32 r11 none 1 16 eax
+store_memory_u32 r11 none 1 20 eax
+store_memory_u32 r11 none 1 24 eax
+load_memory_u32 eax r10 none 1 0
+store_memory_u32 r11 none 1 28 eax
+load_memory_u32 eax r10 none 1 4
+store_memory_u32 r11 none 1 32 eax
+load_memory_u32 eax r10 none 1 8
+store_memory_u32 r11 none 1 36 eax
+move eax ebx
+store_memory_u32 r11 none 1 40 eax
+move_u32 eax 0
+store_memory_u32 r11 none 1 44 eax
+
+move rcx r10
+add_i32 rcx 32
+move rdi r11
+add_i32 rdi 48
+move_u32 esi 64
+label resource_reply_digest_copy
+load_memory_u8 al rcx none 1 0
+store_memory_u8 rdi none 1 0 al
+add_i32 rcx 1
+add_i32 rdi 1
+subtract_i32 esi 1
+branch not_equal resource_reply_digest_copy
+
+load_memory_u32 eax r10 none 1 20
+move rcx r8
+add rcx rax
+move rdi r11
+add_i32 rdi 112
+move esi ebx
+label resource_reply_data_copy
+test esi esi
+branch equal resource_reply_complete
+load_memory_u8 al rcx none 1 0
+store_memory_u8 rdi none 1 0 al
+add_i32 rcx 1
+add_i32 rdi 1
+subtract_i32 esi 1
+jump_label resource_reply_data_copy
+label resource_reply_complete
+move eax ebx
+add_i32 eax 112
+return
+
+label resource_reply_invalid
+move_u32 eax 0
+return
 end define
 end section

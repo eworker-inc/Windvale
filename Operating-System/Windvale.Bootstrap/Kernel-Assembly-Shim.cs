@@ -8,8 +8,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉassemblyˉcontract
 {
-    public const int FORMAT_VERSION = 9;
-    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v9";
+    public const int FORMAT_VERSION = 10;
+    public const string TARGET_NAME = "x86-64-kernel-wva-seam-v10";
     public const string MAIN_SHIM_SYMBOL = "Windvale_kernel_wva_main";
     public const string Q35_SHUTDOWN_SYMBOL = "Windvale_kernel_x64_q35_shutdown";
     public const string X64_WRITE_BYTE_SYMBOL = "Windvale_kernel_x64_write_byte";

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Native ABI 21, WVA seam 9, exception version 3, admission bridge 2, retained bridge 10, and paging 4 compose the current Probe-33 implemented candidate with interpreter profile 6, memory 11, protected processes 12, and channel 2. Resource records remain version 4 and the OS-private directory remains `WVBR002`. [Decision 0135](../Documents/Decisions/0135-Bounded-Guest-Resource-Request-Reply.md) owns the new process/channel composition. Probe 32 remains the latest complete cross-host-qualified OS baseline; fresh dual-host qualification of Probe 33 is pending.
+Native ABI 21, WVA seam 10, exception version 3, admission bridge 2, retained bridge 10, and paging 4 compose the current Probe-34 implemented candidate with interpreter profile 6, memory 12, protected processes 13, and channel 3. Resource records advance to version 5 while the OS-private directory remains `WVBR002`. [Decision 0142](../Documents/Decisions/0142-Immutable-Guest-Resource-Store.md) owns the new store/process/channel composition. Probe 32 remains the latest complete cross-host-qualified OS baseline; fresh dual-host qualification of Probe 34 is pending.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 
@@ -19,7 +19,7 @@ New kernel mechanisms should default to WVA for irreducible machine mechanics an
 
 ## Current WVA, admission, process, and retained-native seam
 
-`Operating-System/Kernel/X64-Kernel-Shims.wva` assembles through the WVA 1 reference/recovery assembler into a canonical WVO object. The version-9 candidate retains the qualified version-8 functions and adds typed terminal mechanics:
+`Operating-System/Kernel/X64-Kernel-Shims.wva` assembles through the WVA 1 reference/recovery assembler into a canonical WVO object. Version 10 retains the qualified global shim functions and bytes while advancing the composed kernel seam for the independently assembled dynamic init-service object:
 
 - exported compiler-facing function `Windvale_kernel_write_byte`;
 - exported machine-entry function `Windvale_kernel_wva_main`;
@@ -32,9 +32,9 @@ New kernel mechanisms should default to WVA for irreducible machine mechanics an
 - one local serial function plus three local read-only panic markers; and
 - fourteen `relative-i32` relocations with addend `-4` for imported-function shims, normalized tail transfers, the shutdown retry, marker addresses, and local serial calls. The paging wrappers contain no relocations.
 
-WVA version 9 retains process-specific normalized entries for vectors 6, 13, and 14 plus typed terminal mechanics. The init and client WVA objects use the exact `syscall` instruction statement. Under Probe 33, init links to its Windvale `Main`, performs grant/receive-request/reply twice with ordered token `131073`, then exits. Each rebuilt client performs call/response validation before entering the same Windvale bytecode-interpreter export inside its bounded 109-page RX image.
+WVA version 10 retains process-specific normalized entries for vectors 6, 13, and 14 plus typed terminal mechanics. The init and client WVA objects use the exact `syscall` instruction statement. Under Probe 34, init links to its Windvale `Main`, reads a checked descriptor for its RO/NX store mapping, dynamically validates and searches the exact three-entry `WVRS 1` profile, constructs each response in RW/NX data, performs grant/receive-request/reply twice with ordered token `131073`, then exits. Each rebuilt client performs call/response validation before entering the same Windvale bytecode-interpreter export inside its bounded 109-page RX image.
 
-The kernel memory object calls the exception installer and paging installer after switching to the measured four-page kernel-owned stack, then calls `Windvale_kernel_wva_main`. Paging retains its checked six-page hierarchy and 768 KiB supervisor RX window. Admission bridge 2 supplies budget/depth `39,712/2` and requires token 73 for the exact 815-byte canonical `Function-Only.wv` WVB. The Probe-33 process path runs policy token `97`, revalidates `WVKMEM11`, and enters init plus client generation 1. Each generation completes the exact 55-byte request and 116-byte reply before its 199-opcode interpretation. Stage 0 then zeroes/releases the exact 120-page tail, reallocates the identical root, and rebuilds generation 2. The second cleanup preserves grant history `2`; init exits after both results. [Windvale-Resource-Service-Ipc.md](Windvale-Resource-Service-Ipc.md), [Windvale-Os-Bytecode-Interpreter.md](Windvale-Os-Bytecode-Interpreter.md), and [Windvale-Protected-Process.md](Windvale-Protected-Process.md) own the exact identities and bounds.
+The kernel memory object calls the exception installer and paging installer after switching to the measured four-page kernel-owned stack, then calls `Windvale_kernel_wva_main`. Paging retains its checked six-page hierarchy and 768 KiB supervisor RX window. Admission bridge 2 supplies budget/depth `39,712/2` and requires token 73 for the exact 815-byte canonical `Function-Only.wv` WVB. The Probe-34 process path runs policy token `97`, revalidates `WVKMEM12`, and enters init plus client generation 1. Each generation completes the exact 55-byte request and dynamically built 116-byte reply before its 199-opcode interpretation. Terminal peer cleanup clears retained channel bytes and destinations; Stage 0 then zeroes/releases the exact 120-page tail, reallocates the identical root, reopens a clean channel, and rebuilds generation 2. The second cleanup preserves grant history `2`; init exits after both results. [Windvale-Resource-Service-Ipc.md](Windvale-Resource-Service-Ipc.md), [Windvale-Resource-Store.md](Windvale-Resource-Store.md), and [Windvale-Protected-Process.md](Windvale-Protected-Process.md) own the exact identities and bounds.
 
 The retained native probe bridge then:
 
@@ -47,7 +47,7 @@ The retained native probe bridge then:
 
 The compiler object imports `Windvale_kernel_write_byte`, which resolves to the WVA export. WVA tail-transfers each call to explicitly internal symbol `Windvale_kernel_x64_write_byte`. The public kernel capability boundary is therefore WVA-owned even though its current COM1 instruction sequence remains bootstrap code.
 
-The builder independently decodes the assembled WVA objects, paging/process objects, both bridge objects, and all portable native objects and requires their exact architecture, section, symbol, code, and relocation shapes before linking. On normal Probe 32, final success requires exact WVB admission, Windvale set selection, atomic typed grant, two resource reads, budgeted four-function scalar/control-flow interpretation in both client generations, send/exit, two-alias cleanup, retained native probe, and Main. Kernel-fault paths retain terminal WVA normalization; the user-fault path contains vector 13 and performs the same cleanup.
+The builder independently decodes the assembled WVA objects, paging/process objects, immutable store section, both bridge objects, and all portable native objects and requires their exact architecture, section, symbol, code, and relocation shapes before linking. On normal Probe 34, final success requires exact WVB admission, Windvale set selection, atomic typed grant, two dynamic store lookups, budgeted four-function scalar/control-flow interpretation in both client generations, send/exit, peer-state cleanup, two-alias cleanup, retained native probe, and Main. Kernel-fault paths retain terminal WVA normalization; the user-fault path contains vector 13 and performs the same cleanup while recording a faulted peer.
 
 ## Portable native probe
 

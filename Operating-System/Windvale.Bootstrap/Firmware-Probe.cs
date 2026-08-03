@@ -16,12 +16,12 @@ public enum Firmwareˉprobeˉscenario
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 33;
+    public const int FORMAT_VERSION = 34;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 33\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 34\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -37,7 +37,7 @@ public static class Firmwareˉprobe
     public const string TYPED_RESOURCES_MARKER = "typed-resources=pass\n";
     public const string RESOURCE_REVOKED_MARKER = "resource-revoked=pass\n";
     public const string PROCESS_REUSE_MARKER = "process-reuse=pass\n";
-    public const string IPC_MARKER = "ipc=resource-request-reply\n";
+    public const string IPC_MARKER = "ipc=dynamic-resource-store\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
     public const string CPU_EXCEPTIONS_MARKER = "cpu-exceptions=armed\n";
     public const string INVALID_OPCODE_PANIC_MARKER = Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER;

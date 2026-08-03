@@ -7,8 +7,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉprocessˉcontract
 {
-    public const int FORMAT_VERSION = 12;
-    public const string TARGET_NAME = "x86-64-kernel-process-v12";
+    public const int FORMAT_VERSION = 13;
+    public const string TARGET_NAME = "x86-64-kernel-process-v13";
     public const string ENTER_SYMBOL = "Windvale_kernel_x64_process_enter";
     public const string POLICY_SYMBOL = "Windvale_kernel_process_policy";
     public const string USER_ENTRY_SYMBOL = "Windvale_process_user_entry";
@@ -50,7 +50,7 @@ public static class Kernelˉprocessˉcontract
     public const uint THREAD_STATE_EXITED = 3;
     public const uint THREAD_STATE_FAULTED = 4;
     public const uint THREAD_STATE_WAITING = 5;
-    public const uint INIT_MEMORY_PAGE_BUDGET = 5;
+    public const uint INIT_MEMORY_PAGE_BUDGET = 7;
     public const uint CLIENT_MEMORY_PAGE_BUDGET = 118;
     public const uint INIT_INSTRUCTION_BUDGET = 64;
     public const uint CLIENT_INSTRUCTION_BUDGET = 189_114;
@@ -84,7 +84,7 @@ public static class Kernelˉprocessˉcontract
     public const uint SYSCALL_CALL_RESOURCE_SERVICE = 6;
     public const uint SYSCALL_REPLY_RESOURCE_REQUEST = 7;
     public const uint RESOURCE_SET_TOKEN = 0x0002_0001;
-    public const ulong INIT_ALLOCATION_PAGES = 9;
+    public const ulong INIT_ALLOCATION_PAGES = 11;
     public const ulong CLIENT_ALLOCATION_PAGES = 120;
     public const ulong TABLE_PAGES = 4;
     public const ulong TABLE_BYTES = TABLE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES;
@@ -93,7 +93,7 @@ public static class Kernelˉprocessˉcontract
     public const ulong PD_PAGE = 2;
     public const ulong USER_PT_PAGE = 3;
     public const ulong USER_CODE_PAGE = 4;
-    public const ulong INIT_CODE_PAGES = 1;
+    public const ulong INIT_CODE_PAGES = 2;
     public const ulong CLIENT_CODE_PAGES = 109;
     public const ulong INIT_STACK_PAGES = 1;
     public const ulong CLIENT_STACK_PAGES = 6;
@@ -102,6 +102,7 @@ public static class Kernelˉprocessˉcontract
     public const ulong INIT_DATA_PAGE = INIT_STACK_PAGE + INIT_STACK_PAGES;
     public const ulong INIT_RUNTIME_INPUT_PAGE = INIT_DATA_PAGE + 1;
     public const ulong INIT_RUNTIME_BUDGET_PAGE = INIT_RUNTIME_INPUT_PAGE + 1;
+    public const ulong INIT_RESOURCE_STORE_PAGE = INIT_RUNTIME_BUDGET_PAGE + 1;
     public const ulong CLIENT_STACK_PAGE = USER_CODE_PAGE + CLIENT_CODE_PAGES;
     public const ulong CLIENT_DATA_PAGE = CLIENT_STACK_PAGE + CLIENT_STACK_PAGES;
     public const ulong CLIENT_RUNTIME_INPUT_PAGE = CLIENT_DATA_PAGE + 1;
@@ -132,8 +133,8 @@ public static class Kernelˉprocessˉcontract
     public const uint CLIENT_RECORD_OFFSET = 768;
     public const uint CHANNEL_RECORD_OFFSET = 1_040;
     public const uint RECORD_BYTES = 264;
-    public const ulong RECORD_MAGIC = 0x3231_434F_5250_5657;
-    public const uint RECORD_VERSION = 12;
+    public const ulong RECORD_MAGIC = 0x3331_434F_5250_5657;
+    public const uint RECORD_VERSION = 13;
     public const int MODULE_DIGEST_BYTES = 32;
     public const uint PROCESS_STATE_OFFSET = 16;
     public const uint THREAD_STATE_OFFSET = 20;
@@ -168,9 +169,9 @@ public static class Kernelˉprocessˉcontract
     public const uint WAIT_REASON_CHANNEL_RECEIVE = 1;
     public const uint WAIT_REASON_RESOURCE_REQUEST = 2;
     public const uint WAIT_REASON_RESOURCE_REPLY = 3;
-    public const ulong CHANNEL_MAGIC = 0x3230_4E41_4843_5657;
-    public const uint CHANNEL_VERSION = 2;
-    public const uint CHANNEL_RECORD_BYTES = 96;
+    public const ulong CHANNEL_MAGIC = 0x3330_4E41_4843_5657;
+    public const uint CHANNEL_VERSION = 3;
+    public const uint CHANNEL_RECORD_BYTES = 112;
     public const uint CHANNEL_STATE_OFFSET = 16;
     public const uint CHANNEL_MESSAGE_OFFSET = 20;
     public const uint CHANNEL_SENDER_OFFSET = 24;
@@ -187,23 +188,36 @@ public static class Kernelˉprocessˉcontract
     public const uint CHANNEL_SERVICE_CAPACITY_OFFSET = 72;
     public const uint CHANNEL_CLIENT_DESTINATION_OFFSET = 80;
     public const uint CHANNEL_CLIENT_CAPACITY_OFFSET = 88;
+    public const uint CHANNEL_PEER_STATUS_OFFSET = 96;
+    public const uint CHANNEL_PEER_PROCESS_OFFSET = 100;
+    public const uint CHANNEL_CLOSE_COUNT_OFFSET = 104;
+    public const uint CHANNEL_RESERVED_OFFSET = 108;
     public const uint CHANNEL_STATE_REQUEST_DELIVERED = 2;
+    public const uint CHANNEL_PEER_STATUS_OPEN = 0;
+    public const uint CHANNEL_PEER_STATUS_EXITED = 1;
+    public const uint CHANNEL_PEER_STATUS_FAULTED = 2;
     public const uint MAXIMUM_CHANNEL_MESSAGE_BYTES = 4_096;
     public const uint RESOURCE_CONFIGURATION_REQUEST_BYTES = 55;
     public const uint RESOURCE_CONFIGURATION_REPLY_BYTES = 116;
     public const uint RESOURCE_RECORD_OFFSET = CHANNEL_RECORD_OFFSET + CHANNEL_RECORD_BYTES;
     public const uint SECOND_RESOURCE_RECORD_OFFSET = RESOURCE_RECORD_OFFSET + RESOURCE_RECORD_BYTES;
+    public const uint STORE_RESOURCE_RECORD_OFFSET = SECOND_RESOURCE_RECORD_OFFSET + RESOURCE_RECORD_BYTES;
     public const uint RESOURCE_COUNT = 2;
+    public const uint RESOURCE_RECORD_COUNT = 3;
     public const uint RESOURCE_RECORD_BYTES = 128;
     public const uint RESOURCE_RECORD_SET_BYTES = RESOURCE_COUNT * RESOURCE_RECORD_BYTES;
-    public const ulong RESOURCE_MAGIC = 0x3430_3053_4552_5657;
-    public const uint RESOURCE_VERSION = 4;
+    public const uint RESOURCE_STATE_BYTES = RESOURCE_RECORD_COUNT * RESOURCE_RECORD_BYTES;
+    public const ulong RESOURCE_MAGIC = 0x3530_3053_4552_5657;
+    public const uint RESOURCE_VERSION = 5;
     public const uint RESOURCE_STATE_OWNED = 1;
     public const uint RESOURCE_STATE_BORROWED = 2;
+    public const uint RESOURCE_STATE_ATTACHED = 3;
     public const uint MODULE_RESOURCE_ID = 1;
     public const uint BUDGET_RESOURCE_ID = 2;
+    public const uint STORE_RESOURCE_ID = 4;
     public const uint RESOURCE_KIND_WVB_MODULE = 1;
     public const uint RESOURCE_KIND_U32_EXECUTION_BUDGET = 2;
+    public const uint RESOURCE_KIND_WVRS_STORE = 3;
     public const uint EXECUTION_BUDGET = 199;
     public const uint MAXIMUM_EXECUTION_BUDGET = 256;
     public const uint EXECUTION_BUDGET_BYTES = sizeof(uint);
@@ -233,6 +247,13 @@ public static class Kernelˉprocessˉcontract
         RESOURCE_BASE_FLAGS | (RESOURCE_KIND_WVB_MODULE << (int)RESOURCE_KIND_SHIFT);
     public const uint BUDGET_RESOURCE_ATTRIBUTES =
         RESOURCE_BASE_FLAGS | (RESOURCE_KIND_U32_EXECUTION_BUDGET << (int)RESOURCE_KIND_SHIFT);
+    public const uint STORE_RESOURCE_ATTRIBUTES =
+        RESOURCE_BASE_FLAGS | (RESOURCE_KIND_WVRS_STORE << (int)RESOURCE_KIND_SHIFT);
+    public const uint INIT_STORE_DESCRIPTOR_OFFSET = 384;
+    public const uint INIT_REQUEST_BUFFER_OFFSET = 1_024;
+    public const uint INIT_REQUEST_BUFFER_BYTES = 1_056;
+    public const uint INIT_RESPONSE_BUFFER_OFFSET = 2_080;
+    public const uint INIT_RESPONSE_BUFFER_BYTES = 2_016;
     public const uint GDT_OFFSET = 528;
     public const uint GDT_BYTES = 56;
     public const uint GDTR_OFFSET = 592;
@@ -265,6 +286,8 @@ public sealed record Kernelˉprocessˉplan(
     ImmutableArray<byte> Userˉruntimeˉinputˉbytes,
     ulong Userˉruntimeˉbudgetˉaddress,
     ImmutableArray<byte> Userˉruntimeˉbudgetˉbytes,
+    ulong Userˉresourceˉstoreˉaddress,
+    ImmutableArray<byte> Userˉresourceˉstoreˉbytes,
     ImmutableArray<byte> Processˉrecord);
 
 public sealed record Kernelˉprocessˉplanˉresult(
@@ -310,6 +333,7 @@ public static class Kernelˉprocessˉplanner
         ReadOnlySpan<byte> programˉdigest,
         ReadOnlySpan<byte> runtimeˉinput,
         ReadOnlySpan<byte> runtimeˉbudget,
+        ReadOnlySpan<byte> resourceˉstore,
         uint bootˉresourceˉserviceˉoffset,
         Kernelˉprocessˉdefinition definition)
     {
@@ -403,10 +427,12 @@ public static class Kernelˉprocessˉplanner
                  runtimeˉbudget.Length != Kernelˉprocessˉcontract.EXECUTION_BUDGET_BYTES ||
                  BinaryPrimitives.ReadUInt32LittleEndian(runtimeˉbudget) !=
                     Kernelˉprocessˉcontract.EXECUTION_BUDGET ||
-                 bootˉresourceˉserviceˉoffset != 0 ||
-                 !SHA256.HashData(runtimeˉinput).AsSpan().SequenceEqual(programˉdigest))) ||
+                  resourceˉstore.Length is < Resourceˉstoreˉcontract.HEADER_BYTES or >
+                    (int)Kernelˉpagingˉcontract.PAGE_BYTES ||
+                  bootˉresourceˉserviceˉoffset != 0 ||
+                  !SHA256.HashData(runtimeˉinput).AsSpan().SequenceEqual(programˉdigest))) ||
             (Isˉclient &&
-                (!runtimeˉinput.IsEmpty || !runtimeˉbudget.IsEmpty ||
+                (!runtimeˉinput.IsEmpty || !runtimeˉbudget.IsEmpty || !resourceˉstore.IsEmpty ||
                  bootˉresourceˉserviceˉoffset > (uint)userˉimage.Length ||
                  Kernelˉprocessˉcontract.BOOT_RESOURCE_SERVICE_BYTES >
                     (uint)userˉimage.Length - bootˉresourceˉserviceˉoffset)))
@@ -427,10 +453,24 @@ public static class Kernelˉprocessˉplanner
             Isˉinit
                 ? Kernelˉprocessˉcontract.INIT_RUNTIME_BUDGET_PAGE
                 : Kernelˉprocessˉcontract.CLIENT_RUNTIME_BUDGET_PAGE);
+        var Userˉresourceˉstoreˉaddress = Isˉinit
+            ? Pageˉaddress(allocationˉaddress, Kernelˉprocessˉcontract.INIT_RESOURCE_STORE_PAGE)
+            : 0;
         var Executableˉend = kernelˉpaging.Executableˉaddress + Kernelˉpagingˉcontract.EXECUTABLE_BYTES;
         if (allocationˉaddress < Executableˉend && Allocationˉend > kernelˉpaging.Executableˉaddress)
         {
             return Fail("WVOS6005", "The process allocation overlaps the retained kernel executable window.");
+        }
+        if (Isˉinit)
+        {
+            try
+            {
+                _ = Resourceˉstoreˉverifier.Verify(resourceˉstore);
+            }
+            catch (Resourceˉstoreˉexception)
+            {
+                return Fail("WVOS6008", "The init resource-store capability is malformed.");
+            }
         }
 
         var Tables = new byte[checked((int)Kernelˉprocessˉcontract.TABLE_BYTES)];
@@ -486,6 +526,9 @@ public static class Kernelˉprocessˉplanner
             Writeˉuserˉentry(Tables, Regionˉaddress, Userˉruntimeˉbudgetˉaddress,
                 Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
                 Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
+            Writeˉuserˉentry(Tables, Regionˉaddress, Userˉresourceˉstoreˉaddress,
+                Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉprocessˉcontract.ENTRY_USER |
+                Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE);
         }
         else
         {
@@ -523,10 +566,20 @@ public static class Kernelˉprocessˉplanner
         var Runtimeˉbudgetˉbytes = Isˉinit
             ? new byte[Kernelˉpagingˉcontract.PAGE_BYTES]
             : [];
+        var Resourceˉstoreˉbytes = Isˉinit
+            ? new byte[Kernelˉpagingˉcontract.PAGE_BYTES]
+            : [];
         if (Isˉinit)
         {
             runtimeˉinput.CopyTo(Runtimeˉinputˉbytes);
             runtimeˉbudget.CopyTo(Runtimeˉbudgetˉbytes);
+            resourceˉstore.CopyTo(Resourceˉstoreˉbytes);
+            BinaryPrimitives.WriteUInt64LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.INIT_STORE_DESCRIPTOR_OFFSET),
+                Userˉresourceˉstoreˉaddress);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Data.AsSpan((int)Kernelˉprocessˉcontract.INIT_STORE_DESCRIPTOR_OFFSET + sizeof(ulong)),
+                checked((uint)resourceˉstore.Length));
         }
 
         var Record = new byte[Kernelˉprocessˉcontract.RECORD_BYTES];
@@ -584,6 +637,8 @@ public static class Kernelˉprocessˉplanner
             Runtimeˉinputˉbytes.ToImmutableArray(),
             Userˉruntimeˉbudgetˉaddress,
             Runtimeˉbudgetˉbytes.ToImmutableArray(),
+            Userˉresourceˉstoreˉaddress,
+            Resourceˉstoreˉbytes.ToImmutableArray(),
             Record.ToImmutableArray()), []);
     }
 
@@ -1211,4 +1266,90 @@ public static class Kernelˉresourceˉrevocationˉplanner
 
     private static Kernelˉresourceˉrevocationˉresult Fail(string code, string message) =>
         new(null, [new(code, message)]);
+}
+
+public static class Kernelˉchannelˉpeerˉlifecycle
+{
+    public static ImmutableArray<byte> Create()
+    {
+        var Record = new byte[Kernelˉprocessˉcontract.CHANNEL_RECORD_BYTES];
+        BinaryPrimitives.WriteUInt64LittleEndian(Record, Kernelˉprocessˉcontract.CHANNEL_MAGIC);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(8), Kernelˉprocessˉcontract.CHANNEL_VERSION);
+        BinaryPrimitives.WriteUInt32LittleEndian(Record.AsSpan(12), Kernelˉprocessˉcontract.CHANNEL_RECORD_BYTES);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Record.AsSpan((int)Kernelˉprocessˉcontract.CHANNEL_CAPACITY_OFFSET),
+            Kernelˉprocessˉcontract.CHANNEL_CAPACITY);
+        return Record.ToImmutableArray();
+    }
+
+    public static ImmutableArray<byte> Terminateˉpeer(
+        ImmutableArray<byte> record,
+        uint processˉid,
+        uint peerˉstatus)
+    {
+        if (!Hasˉheader(record) ||
+            processˉid is not (Kernelˉprocessˉcontract.INIT_PROCESS_ID or
+                Kernelˉprocessˉcontract.CLIENT_PROCESS_ID) ||
+            peerˉstatus is not (Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_EXITED or
+                Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_FAULTED) ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_OFFSET..]) !=
+                Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_OPEN)
+        {
+            throw new InvalidOperationException("The channel peer transition is invalid or stale.");
+        }
+
+        var Result = record.ToArray();
+        foreach (var Offset in new[]
+        {
+            Kernelˉprocessˉcontract.CHANNEL_STATE_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_MESSAGE_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_SENDER_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_RECEIVER_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_WAITER_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_BYTE_LENGTH_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_SERVICE_CAPACITY_OFFSET,
+            Kernelˉprocessˉcontract.CHANNEL_CLIENT_CAPACITY_OFFSET,
+        })
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan((int)Offset), 0);
+        }
+        BinaryPrimitives.WriteUInt64LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.CHANNEL_SERVICE_DESTINATION_OFFSET), 0);
+        BinaryPrimitives.WriteUInt64LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.CHANNEL_CLIENT_DESTINATION_OFFSET), 0);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_OFFSET), peerˉstatus);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.CHANNEL_PEER_PROCESS_OFFSET), processˉid);
+        var Closeˉcount = BinaryPrimitives.ReadUInt32LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.CHANNEL_CLOSE_COUNT_OFFSET));
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.CHANNEL_CLOSE_COUNT_OFFSET), checked(Closeˉcount + 1));
+        return Result.ToImmutableArray();
+    }
+
+    public static ImmutableArray<byte> Reopen(ImmutableArray<byte> record)
+    {
+        if (!Hasˉheader(record) ||
+            BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[
+                (int)Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_OFFSET..]) ==
+                Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_OPEN)
+        {
+            throw new InvalidOperationException("Only one cleanly terminated channel generation can be reopened.");
+        }
+        var Result = record.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.CHANNEL_PEER_STATUS_OFFSET), 0);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(
+            (int)Kernelˉprocessˉcontract.CHANNEL_PEER_PROCESS_OFFSET), 0);
+        return Result.ToImmutableArray();
+    }
+
+    private static bool Hasˉheader(ImmutableArray<byte> record) =>
+        record.Length == Kernelˉprocessˉcontract.CHANNEL_RECORD_BYTES &&
+        BinaryPrimitives.ReadUInt64LittleEndian(record.AsSpan()) == Kernelˉprocessˉcontract.CHANNEL_MAGIC &&
+        BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[8..]) == Kernelˉprocessˉcontract.CHANNEL_VERSION &&
+        BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan()[12..]) ==
+            Kernelˉprocessˉcontract.CHANNEL_RECORD_BYTES;
 }

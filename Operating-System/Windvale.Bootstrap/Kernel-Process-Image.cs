@@ -29,6 +29,8 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     ImmutableArray<byte> Admittedˉprogramˉdigest,
     ImmutableArray<byte> Executionˉbudgetˉbytes,
     ImmutableArray<byte> Executionˉbudgetˉdigest,
+    ImmutableArray<byte> Resourceˉstoreˉbytes,
+    ImmutableArray<byte> Resourceˉstoreˉdigest,
     ImmutableArray<byte> Clientˉshimˉobjectˉbytes,
     ImmutableArray<byte> Clientˉimageˉbytes);
 
@@ -46,6 +48,7 @@ public static class Kernelˉprocessˉimage
         "B43BC2457FD5B5622095BAD6D59AD3CD2AA045BDE1CC79576AFBB419BAC02FD7";
     private const string BOOT_RESOURCE_NAME = "boot:main.wvb";
     private const string BOOT_BUDGET_NAME = "boot:main.budget";
+    private const string BOOT_CONFIGURATION_NAME = "boot:main.configuration";
     private const string USER_RESOURCE = "Windvale.Os.Kernel.Process-User-Shim.wva";
     private const string USER_FAULT_RESOURCE = "Windvale.Os.Kernel.Process-User-Fault-Shim.wva";
 
@@ -83,7 +86,10 @@ public static class Kernelˉprocessˉimage
         var Serviceˉlink = Linkˉcompiler.Link(
             [new(Serviceˉassembly.Objectˉbytes), new(Serviceˉobject)],
             new(0, Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL));
-        Verifyˉlinkedˉimage(Serviceˉlink, "init/resource service", Kernelˉpagingˉcontract.PAGE_BYTES);
+        Verifyˉlinkedˉimage(
+            Serviceˉlink,
+            "init/resource service",
+            Kernelˉprocessˉcontract.INIT_CODE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES);
         var Serviceˉdigest = SHA256.HashData(Serviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Serviceˉidentity = Convert.ToHexString(Serviceˉdigest.AsSpan());
         if (!Serviceˉidentity.Equals(
@@ -199,6 +205,16 @@ public static class Kernelˉprocessˉimage
         var Executionˉbudgetˉbytes = ImmutableArray.Create<byte>(
             (byte)Kernelˉprocessˉcontract.EXECUTION_BUDGET, 0, 0, 0);
         var Executionˉbudgetˉdigest = SHA256.HashData(Executionˉbudgetˉbytes.AsSpan()).ToImmutableArray();
+        var Resourceˉstoreˉbytes = Resourceˉstoreˉcodec.Write(
+        [
+            new(Kernelˉprocessˉcontract.MODULE_RESOURCE_ID, Resourceˉstoreˉkind.Wvbˉmodule,
+                BOOT_RESOURCE_NAME, admission.Embeddedˉmoduleˉbytes),
+            new(Kernelˉprocessˉcontract.BUDGET_RESOURCE_ID, Resourceˉstoreˉkind.U32ˉexecutionˉbudget,
+                BOOT_BUDGET_NAME, Executionˉbudgetˉbytes),
+            new(3, Resourceˉstoreˉkind.Opaqueˉbytes,
+                BOOT_CONFIGURATION_NAME, [(byte)3, 5, 8, 13]),
+        ]);
+        var Resourceˉstoreˉdigest = SHA256.HashData(Resourceˉstoreˉbytes.AsSpan()).ToImmutableArray();
         return new(
             Policyˉcompilation.Moduleˉbytes,
             Policyˉobject,
@@ -217,6 +233,8 @@ public static class Kernelˉprocessˉimage
             Admittedˉprogramˉdigest,
             Executionˉbudgetˉbytes,
             Executionˉbudgetˉdigest,
+            Resourceˉstoreˉbytes,
+            Resourceˉstoreˉdigest,
             Userˉassembly.Objectˉbytes,
             Userˉlink.Imageˉbytes);
     }
