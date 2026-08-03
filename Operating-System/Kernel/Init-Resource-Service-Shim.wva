@@ -2,6 +2,7 @@ windvale-assembly 1
 
 symbol local function Windvale_init_resource_build_reply in .text
 symbol export function Windvale_init_resource_user_entry in .text
+symbol export function Windvale_process_preemption_probe in .text
 symbol import function Windvale_init_resource_service_main
 
 section code .text align 16
@@ -348,6 +349,26 @@ return
 label resource_reply_invalid
 move_u32 eax 0
 return
+end define
+
+define Windvale_process_preemption_probe
+move_u32 eax 4353
+move_u32 ebx 4354
+move_u32 ecx 4355
+move_u32 edx 4356
+move_u32 esi 4357
+move_u32 edi 4358
+move_u32 ebp 4359
+move_u32 r8d 4360
+move_u32 r9d 4361
+move_u32 r10d 4362
+move_u32 r11d 4363
+move_u32 r12d 4364
+move_u32 r13d 4365
+move_u32 r14d 4366
+move_u32 r15d 4367
+label preemption_spin
+jump_label preemption_spin
 end define
 
 end section

@@ -5,8 +5,8 @@ namespace Windvale.Bootstrap;
 
 public static class Kernelˉpagingˉcontract
 {
-    public const int FORMAT_VERSION = 4;
-    public const string TARGET_NAME = "x86-64-kernel-paging-v4";
+    public const int FORMAT_VERSION = 5;
+    public const string TARGET_NAME = "x86-64-kernel-paging-v5";
     public const string INSTALL_SYMBOL = "Windvale_kernel_x64_paging_install";
     public const string PROTECTION_ENABLE_SYMBOL = "Windvale_kernel_x64_page_protection_enable";
     public const string PAGE_TABLE_ACTIVATE_SYMBOL = "Windvale_kernel_x64_page_table_activate";
@@ -14,7 +14,7 @@ public static class Kernelˉpagingˉcontract
     public const ulong LARGE_PAGE_BYTES = 2 * 1024 * 1024;
     public const ulong IDENTITY_BYTES = 1UL << 30;
     public const ulong EXECUTABLE_BYTES = 768 * 1024;
-    public const ulong TABLE_PAGES = 6;
+    public const ulong TABLE_PAGES = 7;
     public const ulong TABLE_BYTES = TABLE_PAGES * PAGE_BYTES;
     public const ulong PML4_PAGE = 0;
     public const ulong PDPT_PAGE = 1;
@@ -22,21 +22,33 @@ public static class Kernelˉpagingˉcontract
     public const ulong NULL_PT_PAGE = 3;
     public const ulong CODE_PT0_PAGE = 4;
     public const ulong CODE_PT1_PAGE = 5;
+    public const ulong MMIO_PD_PAGE = 6;
+    public const ulong HPET_PAGE_ADDRESS = 0xFED0_0000;
+    public const ulong LOCAL_APIC_PAGE_ADDRESS = 0xFEE0_0000;
+    public const ulong MMIO_HPET_LARGE_PAGE_ADDRESS = 0xFEC0_0000;
+    public const ulong MMIO_LOCAL_APIC_LARGE_PAGE_ADDRESS = 0xFEE0_0000;
+    public const int MMIO_PDPT_INDEX = 3;
+    public const int MMIO_HPET_PD_INDEX = 502;
+    public const int MMIO_LOCAL_APIC_PD_INDEX = 503;
     public const ulong ENTRY_PRESENT = 1UL << 0;
     public const ulong ENTRY_WRITABLE = 1UL << 1;
     public const ulong ENTRY_ACCESSED = 1UL << 5;
     public const ulong ENTRY_LARGE_PAGE = 1UL << 7;
+    public const ulong ENTRY_WRITE_THROUGH = 1UL << 3;
+    public const ulong ENTRY_CACHE_DISABLE = 1UL << 4;
     public const ulong ENTRY_NO_EXECUTE = 1UL << 63;
     public const ulong ENTRY_ADDRESS_MASK = 0x000F_FFFF_FFFF_F000;
     public const uint RECORD_OFFSET = 128;
     public const uint RECORD_BYTES = 64;
-    public const ulong RECORD_MAGIC = 0x3430_4741_504B_5657;
-    public const uint RECORD_VERSION = 4;
+    public const ulong RECORD_MAGIC = 0x3530_4741_504B_5657;
+    public const uint RECORD_VERSION = 5;
     public const ulong RECORD_FLAG_NX = 1UL << 0;
     public const ulong RECORD_FLAG_WRITE_PROTECT = 1UL << 1;
     public const ulong RECORD_FLAG_NULL_GUARD = 1UL << 2;
+    public const ulong RECORD_FLAG_TIMER_MMIO = 1UL << 3;
     public const ulong RECORD_FLAGS =
-        RECORD_FLAG_NX | RECORD_FLAG_WRITE_PROTECT | RECORD_FLAG_NULL_GUARD;
+        RECORD_FLAG_NX | RECORD_FLAG_WRITE_PROTECT | RECORD_FLAG_NULL_GUARD |
+        RECORD_FLAG_TIMER_MMIO;
 }
 
 public sealed record Kernelˉpagingˉdiagnostic(string Code, string Message);
@@ -66,7 +78,7 @@ public static class Kernelˉpagingˉplanner
             (rootˉaddress & (Kernelˉpagingˉcontract.PAGE_BYTES - 1)) != 0 ||
             rootˉaddress > Kernelˉpagingˉcontract.IDENTITY_BYTES - Kernelˉpagingˉcontract.TABLE_BYTES)
         {
-            return Fail("WVOS5001", "The page-table allocation must be a complete aligned six-page range below 1 GiB.");
+            return Fail("WVOS5001", "The page-table allocation must be a complete aligned seven-page range below 1 GiB.");
         }
 
         if ((executableˉaddress & (Kernelˉpagingˉcontract.PAGE_BYTES - 1)) != 0 ||
@@ -89,6 +101,10 @@ public static class Kernelˉpagingˉplanner
             Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE);
         Writeˉentry(Tables, Kernelˉpagingˉcontract.PDPT_PAGE, 0,
             Tableˉaddress(rootˉaddress, Kernelˉpagingˉcontract.PD_PAGE) |
+            Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE);
+        Writeˉentry(Tables, Kernelˉpagingˉcontract.PDPT_PAGE,
+            Kernelˉpagingˉcontract.MMIO_PDPT_INDEX,
+            Tableˉaddress(rootˉaddress, Kernelˉpagingˉcontract.MMIO_PD_PAGE) |
             Kernelˉpagingˉcontract.ENTRY_PRESENT | Kernelˉpagingˉcontract.ENTRY_WRITABLE);
 
         for (var Index = 0; Index < ENTRIES_PER_TABLE; Index++)
@@ -134,6 +150,19 @@ public static class Kernelˉpagingˉplanner
             Writeˉentry(Tables, Tableˉpage, Pageˉindex,
                 Address | Kernelˉpagingˉcontract.ENTRY_PRESENT);
         }
+
+        var Mmioˉflags = Kernelˉpagingˉcontract.ENTRY_PRESENT |
+            Kernelˉpagingˉcontract.ENTRY_WRITABLE |
+            Kernelˉpagingˉcontract.ENTRY_WRITE_THROUGH |
+            Kernelˉpagingˉcontract.ENTRY_CACHE_DISABLE |
+            Kernelˉpagingˉcontract.ENTRY_LARGE_PAGE |
+            Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE;
+        Writeˉentry(Tables, Kernelˉpagingˉcontract.MMIO_PD_PAGE,
+            Kernelˉpagingˉcontract.MMIO_HPET_PD_INDEX,
+            Kernelˉpagingˉcontract.MMIO_HPET_LARGE_PAGE_ADDRESS | Mmioˉflags);
+        Writeˉentry(Tables, Kernelˉpagingˉcontract.MMIO_PD_PAGE,
+            Kernelˉpagingˉcontract.MMIO_LOCAL_APIC_PD_INDEX,
+            Kernelˉpagingˉcontract.MMIO_LOCAL_APIC_LARGE_PAGE_ADDRESS | Mmioˉflags);
 
         var Record = new byte[Kernelˉpagingˉcontract.RECORD_BYTES];
         BinaryPrimitives.WriteUInt64LittleEndian(Record, Kernelˉpagingˉcontract.RECORD_MAGIC);

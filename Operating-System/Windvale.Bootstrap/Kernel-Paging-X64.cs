@@ -137,7 +137,7 @@ public static class Kernelˉpagingˉx64
         output.Emitˉu32((uint)(Kernelˉpagingˉcontract.IDENTITY_BYTES - Kernelˉpagingˉcontract.LARGE_PAGE_BYTES));
         output.Jumpˉif(CONDITION_ABOVE_OR_EQUAL, FAILURE_LABEL);
 
-        // Allocate exactly six contiguous zeroed pages through the existing kernel allocator.
+        // Allocate exactly seven contiguous zeroed pages through the existing kernel allocator.
         output.Emit(0x4C, 0x89, 0xE1, 0xBA);
         output.Emitˉu32((uint)Kernelˉpagingˉcontract.TABLE_PAGES);
         Emitˉexternalˉcall(output, relocations, 2);
@@ -218,6 +218,36 @@ public static class Kernelˉpagingˉx64
         output.Emit(0x49, 0x01, 0xC2);
         output.Emit(0x49, 0x8D, 0x85, 0x03, 0x40, 0x00, 0x00, 0x49, 0x89, 0x02);
         output.Emit(0x49, 0x8D, 0x85, 0x03, 0x50, 0x00, 0x00, 0x49, 0x89, 0x42, 0x08);
+
+        // Share one supervisor-only MMIO directory for the Q35 HPET and local APIC pages.
+        output.Emit(0x49, 0x8D, 0x85);
+        output.Emitˉu32(checked((uint)(Kernelˉpagingˉcontract.MMIO_PD_PAGE *
+            Kernelˉpagingˉcontract.PAGE_BYTES +
+            Kernelˉpagingˉcontract.ENTRY_PRESENT + Kernelˉpagingˉcontract.ENTRY_WRITABLE)));
+        output.Emit(0x49, 0x89, 0x85);
+        output.Emitˉu32(checked((uint)(Kernelˉpagingˉcontract.PDPT_PAGE *
+            Kernelˉpagingˉcontract.PAGE_BYTES +
+            Kernelˉpagingˉcontract.MMIO_PDPT_INDEX * sizeof(ulong))));
+        var Mmioˉflags = Kernelˉpagingˉcontract.ENTRY_PRESENT |
+            Kernelˉpagingˉcontract.ENTRY_WRITABLE |
+            Kernelˉpagingˉcontract.ENTRY_WRITE_THROUGH |
+            Kernelˉpagingˉcontract.ENTRY_CACHE_DISABLE |
+            Kernelˉpagingˉcontract.ENTRY_LARGE_PAGE |
+            Kernelˉpagingˉcontract.ENTRY_NO_EXECUTE;
+        foreach (var Mapping in new (int Index, ulong Address)[]
+        {
+            (Kernelˉpagingˉcontract.MMIO_HPET_PD_INDEX,
+                Kernelˉpagingˉcontract.MMIO_HPET_LARGE_PAGE_ADDRESS),
+            (Kernelˉpagingˉcontract.MMIO_LOCAL_APIC_PD_INDEX,
+                Kernelˉpagingˉcontract.MMIO_LOCAL_APIC_LARGE_PAGE_ADDRESS),
+        })
+        {
+            output.Emit(0x48, 0xB8);
+            output.Emitˉu64(Mapping.Address | Mmioˉflags);
+            output.Emit(0x49, 0x89, 0x85);
+            output.Emitˉu32(checked((uint)(Kernelˉpagingˉcontract.MMIO_PD_PAGE *
+                Kernelˉpagingˉcontract.PAGE_BYTES + (ulong)Mapping.Index * sizeof(ulong))));
+        }
 
         // Narrow exactly the contracted code leaves to supervisor read-only/executable.
         output.Emit(0x4C, 0x89, 0xF0, 0x48, 0xC1, 0xE8, 0x09, 0x25, 0xF8, 0x0F, 0x00, 0x00);

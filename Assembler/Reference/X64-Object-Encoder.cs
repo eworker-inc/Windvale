@@ -155,6 +155,21 @@ internal static class X64ˉobjectˉencoder
             case Assemblyˉstatementˉkind.Syscall:
                 output.Writeˉbytes([0x0F, 0x05], statement.Span);
                 break;
+            case Assemblyˉstatementˉkind.Cpuid:
+                output.Writeˉbytes([0x0F, 0xA2], statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Readˉtsc:
+                output.Writeˉbytes([0x0F, 0x31], statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Readˉmsr:
+                output.Writeˉbytes([0x0F, 0x32], statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Swapˉgs:
+                output.Writeˉbytes([0x0F, 0x01, 0xF8], statement.Span);
+                break;
+            case Assemblyˉstatementˉkind.Interruptˉreturn:
+                output.Writeˉbytes([0x48, 0xCF], statement.Span);
+                break;
             case Assemblyˉstatementˉkind.Call:
             case Assemblyˉstatementˉkind.Jump:
                 output.Writeˉu8(
@@ -354,7 +369,10 @@ internal static class X64ˉobjectˉencoder
             Assemblyˉstatementˉkind.Trap or Assemblyˉstatementˉkind.Disableˉinterrupts or
             Assemblyˉstatementˉkind.Halt or Assemblyˉstatementˉkind.Inˉu8 or
             Assemblyˉstatementˉkind.Outˉu8 => 1,
-        Assemblyˉstatementˉkind.Outˉu16 or Assemblyˉstatementˉkind.Syscall => 2,
+        Assemblyˉstatementˉkind.Outˉu16 or Assemblyˉstatementˉkind.Syscall or
+            Assemblyˉstatementˉkind.Cpuid or Assemblyˉstatementˉkind.Readˉtsc or
+            Assemblyˉstatementˉkind.Readˉmsr or Assemblyˉstatementˉkind.Interruptˉreturn => 2,
+        Assemblyˉstatementˉkind.Swapˉgs => 3,
         Assemblyˉstatementˉkind.Call or Assemblyˉstatementˉkind.Jump or
             Assemblyˉstatementˉkind.Pushˉi32 or Assemblyˉstatementˉkind.Jumpˉlabel => 5,
         Assemblyˉstatementˉkind.Moveˉi32 or Assemblyˉstatementˉkind.Moveˉu32 =>

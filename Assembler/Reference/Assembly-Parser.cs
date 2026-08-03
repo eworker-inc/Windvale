@@ -302,7 +302,10 @@ internal static class Assemblyˉparser
                         Assemblyˉstatementˉkind.Setˉcondition or Assemblyˉstatementˉkind.Zeroˉextendˉu8 or
                         Assemblyˉstatementˉkind.Zeroˉextendˉu16 or Assemblyˉstatementˉkind.Signˉextendˉi8 or
                         Assemblyˉstatementˉkind.Signˉextendˉi16 or Assemblyˉstatementˉkind.Inˉu8 or
-                        Assemblyˉstatementˉkind.Outˉu8;
+                        Assemblyˉstatementˉkind.Outˉu8 or Assemblyˉstatementˉkind.Cpuid or
+                        Assemblyˉstatementˉkind.Readˉtsc or Assemblyˉstatementˉkind.Readˉmsr or
+                        Assemblyˉstatementˉkind.Swapˉgs or
+                        Assemblyˉstatementˉkind.Interruptˉreturn;
                     var Materializedˉdataˉstatement = Statement.Kind is
                         Assemblyˉstatementˉkind.Bytes or Assemblyˉstatementˉkind.U32 or
                         Assemblyˉstatementˉkind.I32 or Assemblyˉstatementˉkind.Addressˉu32;
@@ -820,6 +823,11 @@ internal static class Assemblyˉparser
             case "enable_page_protection":
             case "activate_page_table":
             case "syscall":
+            case "cpuid":
+            case "read_tsc":
+            case "read_msr":
+            case "swap_gs":
+            case "interrupt_return":
                 if (tokens.Count != 1)
                 {
                     return (null, Diagnostic("WVA1003", Span, $"'{tokens[0].Text}' takes no operands."));
@@ -836,7 +844,12 @@ internal static class Assemblyˉparser
                     "out_u8" => Assemblyˉstatementˉkind.Outˉu8,
                     "enable_page_protection" => Assemblyˉstatementˉkind.Enableˉpageˉprotection,
                     "activate_page_table" => Assemblyˉstatementˉkind.Activateˉpageˉtable,
-                    _ => Assemblyˉstatementˉkind.Syscall,
+                    "syscall" => Assemblyˉstatementˉkind.Syscall,
+                    "cpuid" => Assemblyˉstatementˉkind.Cpuid,
+                    "read_tsc" => Assemblyˉstatementˉkind.Readˉtsc,
+                    "read_msr" => Assemblyˉstatementˉkind.Readˉmsr,
+                    "swap_gs" => Assemblyˉstatementˉkind.Swapˉgs,
+                    _ => Assemblyˉstatementˉkind.Interruptˉreturn,
                 };
                 return (new(Simpleˉkind, null, 0, 0, [], Span), null);
             case "call":

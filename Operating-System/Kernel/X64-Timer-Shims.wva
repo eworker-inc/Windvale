@@ -1,0 +1,223 @@
+windvale-assembly 1
+
+symbol export function Windvale_kernel_x64_timer_arm in .text
+symbol export function Windvale_kernel_x64_timer_irq0_entry in .text
+symbol export function Windvale_kernel_x64_timer_read_clock in .text
+symbol export function Windvale_kernel_x64_timer_rearm in .text
+symbol export function Windvale_kernel_x64_timer_resume in .text
+symbol export function Windvale_kernel_x64_timer_stop in .text
+symbol import function Windvale_kernel_x64_timer_interrupt
+
+section code .text align 16
+define Windvale_kernel_x64_timer_arm
+push rbx
+disable_interrupts
+# The accepted clockevent is local-APIC one-shot. Mask both legacy PICs so the
+# PIT and other ISA lines cannot enter this proof.
+move_u32 edx 33
+move_u8 al 255
+out_u8
+move_u32 edx 161
+move_u8 al 255
+out_u8
+
+# Require architectural APIC support and an enabled xAPIC MMIO base at the
+# contracted Q35 address. x2APIC is a separate later machine contract.
+move_u32 eax 1
+move_u32 ecx 0
+cpuid
+test_i32 edx 512
+branch equal timer_arm_failure
+move_u32 ecx 27
+read_msr
+test_i32 eax 2048
+branch equal timer_arm_failure
+test_i32 eax 1024
+branch not_equal timer_arm_failure
+and_i32 eax -4096
+compare_i32 eax -18874368
+branch not_equal timer_arm_failure
+
+# The pinned Q35 machine exposes a 64-bit 100 MHz HPET counter. It is both the
+# initial clocksource and the calibration source for the local-APIC event.
+move_u32 r10d 4275044352
+load_memory_u64 rax r10 none 1 0
+test_i32 eax 8192
+branch equal timer_arm_failure
+move rdx rax
+shift_right rdx 32
+compare_i32 edx 10000000
+branch not_equal timer_arm_failure
+move_u32 eax 0
+store_memory_u64 r10 none 1 16 rax
+store_memory_u64 r10 none 1 240 rax
+move_u32 eax 1
+store_memory_u64 r10 none 1 16 rax
+
+# Validate and configure one local-APIC one-shot event at vector 32. Divide by
+# sixteen, measure one exact five-millisecond HPET interval, and retain the
+# resulting provider-specific initial count in the timer record.
+move_u32 r11d 4276092928
+load_memory_u32 eax r11 none 1 48
+compare_i32 eax 0
+branch equal timer_arm_failure
+compare_i32 eax -1
+branch equal timer_arm_failure
+load_memory_u32 eax r11 none 1 240
+test_i32 eax 256
+branch equal timer_arm_failure
+move_u32 eax 0
+store_memory_u32 r11 none 1 128 eax
+move_u32 eax 3
+store_memory_u32 r11 none 1 992 eax
+move_u32 eax 65568
+store_memory_u32 r11 none 1 800 eax
+load_memory_u64 r8 r10 none 1 240
+move_u32 eax 500000
+add r8 rax
+move_u32 eax 4294967295
+store_memory_u32 r11 none 1 896 eax
+label timer_arm_calibration_wait
+load_memory_u64 r9 r10 none 1 240
+compare r9 r8
+branch below timer_arm_calibration_wait
+load_memory_u32 eax r11 none 1 912
+move_u32 edx 4294967295
+subtract edx eax
+compare_i32 edx 0
+branch equal timer_arm_failure
+store_memory_u32 r12 none 1 2948 edx
+
+# Record immutable machine evidence before arming the first one-shot event.
+move_u32 eax 1
+store_memory_u32 r12 none 1 2900 eax
+store_memory_u32 r12 none 1 2956 eax
+move_u32 eax 32
+store_memory_u32 r12 none 1 2904 eax
+move_u32 eax 5000
+store_memory_u32 r12 none 1 2908 eax
+move_u32 eax 10000000
+store_memory_u32 r12 none 1 2944 eax
+move_u32 eax 500000
+store_memory_u32 r12 none 1 2972 eax
+
+# Retain HPET as the initial monotonic clocksource. Invariant TSC selection is
+# a later machine contract because a feature bit alone is not calibration.
+move_u32 eax 2
+store_memory_u32 r12 none 1 2896 eax
+move_u32 eax 0
+store_memory_u32 r12 none 1 2952 eax
+move_u32 r10d 4275044352
+load_memory_u64 rax r10 none 1 240
+store_memory_u64 r12 none 1 2960 rax
+
+move_u32 r11d 4276092928
+move_u32 eax 32
+store_memory_u32 r11 none 1 800 eax
+load_memory_u32 eax r12 none 1 2948
+store_memory_u32 r11 none 1 896 eax
+move_u32 eax 0
+pop rbx
+return
+label timer_arm_failure
+move_u32 eax 1
+pop rbx
+return
+end define
+
+define Windvale_kernel_x64_timer_irq0_entry
+# Hardware already pushed RIP, CS, RFLAGS, RSP, and SS. Save all fifteen GPRs
+# in reverse order, prepend the normalized error/vector cells, then acquire the
+# current process record through the existing GS swap contract.
+push r15
+push r14
+push r13
+push r12
+push r11
+push r10
+push r9
+push r8
+push rbp
+push rdi
+push rsi
+push rdx
+push rcx
+push rbx
+push rax
+push_i32 0
+push_i32 32
+swap_gs
+move_u32 r10d 4276092928
+move_u32 eax 0
+store_memory_u32 r10 none 1 176 eax
+jump Windvale_kernel_x64_timer_interrupt
+end define
+
+define Windvale_kernel_x64_timer_read_clock
+load_memory_u32 ecx r12 none 1 2896
+compare_i32 ecx 1
+branch equal timer_read_tsc
+compare_i32 ecx 2
+branch not_equal timer_read_failure
+move_u32 r10d 4275044352
+load_memory_u64 rax r10 none 1 240
+return
+label timer_read_tsc
+read_tsc
+move r8 rdx
+shift_left r8 32
+or rax r8
+return
+label timer_read_failure
+move_u32 eax 0
+return
+end define
+
+define Windvale_kernel_x64_timer_rearm
+move_u32 r10d 4276092928
+move_u32 eax 32
+store_memory_u32 r10 none 1 800 eax
+load_memory_u32 eax r12 none 1 2948
+store_memory_u32 r10 none 1 896 eax
+return
+end define
+
+define Windvale_kernel_x64_timer_resume
+# The Stage 0 replacement seam supplies RSP at the first saved GPR, having
+# independently selected and validated the exact context record and frame.
+swap_gs
+pop rax
+pop rbx
+pop rcx
+pop rdx
+pop rsi
+pop rdi
+pop rbp
+pop r8
+pop r9
+pop r10
+pop r11
+pop r12
+pop r13
+pop r14
+pop r15
+interrupt_return
+end define
+
+define Windvale_kernel_x64_timer_stop
+disable_interrupts
+move_u32 edx 33
+move_u8 al 255
+out_u8
+move_u32 edx 161
+move_u8 al 255
+out_u8
+move_u32 r10d 4276092928
+move_u32 eax 65568
+store_memory_u32 r10 none 1 800 eax
+move_u32 r10d 4275044352
+move_u32 eax 0
+store_memory_u64 r10 none 1 16 rax
+return
+end define
+end section

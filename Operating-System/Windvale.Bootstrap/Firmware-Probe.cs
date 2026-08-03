@@ -17,12 +17,12 @@ public enum Firmwareˉprobeˉscenario
 
 public static class Firmwareˉprobe
 {
-    public const int FORMAT_VERSION = 38;
+    public const int FORMAT_VERSION = 39;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
     public const string KERNEL_ENTRY_SYMBOL = X64ˉkernelˉcontract.KERNEL_ENTRY_SYMBOL;
     public const string WRITE_BYTE_SYMBOL = X64ˉkernelˉcontract.WRITE_BYTE_SYMBOL;
     public const string X64_WRITE_BYTE_SYMBOL = Kernelˉassemblyˉcontract.X64_WRITE_BYTE_SYMBOL;
-    public const string ENTRY_MARKER = "windvale-os-boot 38\nentry=pass\n";
+    public const string ENTRY_MARKER = "windvale-os-boot 39\nentry=pass\n";
     public const string SYSTEM_TABLE_MARKER = "system-table=pass\n";
     public const string MEMORY_MAP_MARKER = "memory-map=pass\n";
     public const string BOOT_SERVICES_MARKER = "boot-services=exited\n";
@@ -44,6 +44,7 @@ public static class Firmwareˉprobe
     public const string PROCESS_REUSE_MARKER = "process-reuse=pass\n";
     public const string IPC_MARKER = "ipc=resource-and-directory\n";
     public const string HELLO_WORLD_MARKER = "Hello from Windvale\n";
+    public const string TIMER_PREEMPTION_MARKER = "timer-preemption=pass\n";
     public const string CPU_EXCEPTIONS_MARKER = "cpu-exceptions=armed\n";
     public const string INVALID_OPCODE_PANIC_MARKER = Kernelˉexceptionˉcontract.INVALID_OPCODE_PANIC_MARKER;
     public const string GENERAL_PROTECTION_PANIC_MARKER =
@@ -65,7 +66,7 @@ public static class Firmwareˉprobe
         RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
         RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
         WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER + DIRECTORY_SERVICE_MARKER +
-        IPC_MARKER + HELLO_WORLD_MARKER +
+        IPC_MARKER + HELLO_WORLD_MARKER + TIMER_PREEMPTION_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
         WINDVALE_SOURCE_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
     public const string USER_FAULT_SERIAL_MARKER =
@@ -76,7 +77,7 @@ public static class Firmwareˉprobe
         RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
         RESOURCE_REVOKED_MARKER + PROCESS_REUSE_MARKER +
         WVB_RUNTIME_MARKER + INIT_SERVICE_MARKER + DIRECTORY_SERVICE_MARKER +
-        IPC_MARKER + HELLO_WORLD_MARKER +
+        IPC_MARKER + HELLO_WORLD_MARKER + TIMER_PREEMPTION_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
         WINDVALE_SOURCE_MARKER + USER_FAULT_CONTAINED_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
     public const string SERVICE_FAULT_SERIAL_MARKER =
@@ -86,7 +87,7 @@ public static class Firmwareˉprobe
         DISPATCHER_MARKER + ENDPOINT_MARKER +
         RESOURCE_GRANT_MARKER + TYPED_RESOURCES_MARKER +
         RESOURCE_REVOKED_MARKER + WVB_RUNTIME_MARKER + SERVICE_FAULT_CONTAINED_MARKER +
-        SERVICE_PEER_LOSS_MARKER + HELLO_WORLD_MARKER +
+        SERVICE_PEER_LOSS_MARKER + HELLO_WORLD_MARKER + TIMER_PREEMPTION_MARKER +
         CPU_EXCEPTIONS_MARKER + NATIVE_CONTEXT_MARKER + NATIVE_WVB_MARKER +
         WINDVALE_SOURCE_MARKER + SUCCESS_MARKER + SHUTDOWN_MARKER;
 
@@ -183,6 +184,7 @@ public static class Firmwareˉprobe
         var Nativeˉprobe = Kernelˉnativeˉprobe.Build();
         var Exceptions = Kernelˉexceptionˉx64.Build();
         var Paging = Kernelˉpagingˉx64.Build();
+        var Timerˉobjectˉbytes = Kernelˉtimerˉassemblyˉshim.Buildˉobject();
 
         var Loader = Buildˉloaderˉmachineˉcode(scenario);
         var Loaderˉobject = new Objectˉfile(
@@ -293,6 +295,7 @@ public static class Firmwareˉprobe
                 new(Nativeˉprobe.Nativeˉobjectˉbytes),
                 new(Processˉimage.Policyˉnativeˉobjectˉbytes),
                 new(Process.Objectˉbytes),
+                new(Timerˉobjectˉbytes),
                 new(Memoryˉobjectˉbytes),
                 new(Exceptions.Objectˉbytes),
                 new(Paging.Objectˉbytes),
@@ -524,6 +527,7 @@ public static class Firmwareˉprobe
         Kernelˉcallˉoffset = Output.Emitˉcallˉplaceholder();
         Output.Emit(0x48, 0x85, 0xC0);
         Output.Jumpˉif(CONDITION_NOT_EQUAL, TERMINAL_FAILURE_LABEL);
+        Emitˉserialˉtext(Output, TIMER_PREEMPTION_MARKER);
         Emitˉserialˉtext(Output, CPU_EXCEPTIONS_MARKER);
         Emitˉserialˉtext(Output, NATIVE_CONTEXT_MARKER);
         Emitˉserialˉtext(Output, NATIVE_WVB_MARKER);

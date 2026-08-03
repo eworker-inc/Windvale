@@ -81,6 +81,11 @@ push_i32 <i32>
 enable_page_protection
 activate_page_table
 syscall
+cpuid
+read_tsc
+read_msr
+swap_gs
+interrupt_return
 disable_interrupts
 halt
 in_u8
@@ -188,6 +193,11 @@ The fixed machine encodings are:
 | `enable_page_protection` | `B9 80 00 00 C0 0F 32 0F BA E8 0B 0F 30 0F 20 C0 48 0F BA E8 10 0F 22 C0` | none |
 | `activate_page_table` | `0F 22 D8 0F 20 D8` | none |
 | `syscall` | `0F 05` | none |
+| `cpuid` | `0F A2` | none |
+| `read_tsc` | `0F 31` | none |
+| `read_msr` | `0F 32` | none |
+| `swap_gs` | `0F 01 F8` | none |
+| `interrupt_return` | `48 CF` | none |
 | `disable_interrupts` | `FA` | none |
 | `halt` | `F4` | none |
 | `in_u8` | `EC` | none |
@@ -270,6 +280,10 @@ The move instructions write a 32-bit register and carry the exact little-endian 
 `enable_page_protection` selects EFER MSR `0xC0000080`, sets NXE bit 11, writes EFER, reads CR0, sets WP bit 16, and writes CR0. It clobbers `EAX`/`RAX`, `ECX`/`RCX`, and `EDX`/`RDX`. `activate_page_table` loads CR3 from `RAX` and reads active CR3 back into `RAX`. These are semantic compound operations for [kernel paging version 1](Windvale-Kernel-Paging.md), not general MSR or control-register access. Their caller must prove processor support, table validity, address reachability, and ABI preservation before use.
 
 `syscall` enters the x86-64 syscall target configured by privileged kernel policy. It has no implicit Windvale operation number, capability semantics, buffer convention, or authorization: the owning versioned OS boundary defines the complete register and state contract. Portable and ordinary hosted Windvale source cannot emit this WVA-only machine instruction.
+
+`cpuid` consumes `EAX`/`ECX` and writes `EAX`/`EBX`/`ECX`/`EDX`. `read_tsc` writes the current architectural timestamp-counter value to `EDX:EAX`. `read_msr` consumes the model-specific-register index in `ECX` and writes its value to `EDX:EAX`. These operations provide feature, clocksource, and local-APIC evidence to an owning kernel machine contract; WVA supplies no leaf selection, serialization, availability, privilege, calibration, or monotonicity guarantee by itself.
+
+`swap_gs` exchanges `GS.base` with `IA32_KERNEL_GS_BASE`. `interrupt_return` executes 64-bit `IRETQ` and consumes the exact privilege-transition frame at `RSP`. Neither statement validates privilege, model-specific-register state, selectors, frame shape, addresses, flags, or the destination stack. They exist only for an owning kernel interrupt boundary that proves those invariants before use; ordinary Windvale source receives no authority to emit them.
 
 `disable_interrupts` clears the x86 interrupt flag. `halt` stops instruction execution until an admitted wake event; it is not a process exit or permanent loop by itself. `in_u8` reads one byte from the I/O port selected by `DX` into `AL`; `out_u8` writes `AL` to that port; and `out_u16` writes `AX`. These statements expose privileged architecture mechanics deliberately. Their caller owns register initialization, authorization, hardware selection, and any terminal fallback loop. Ordinary Windvale source receives no ambient port-I/O authority from their presence in WVA.
 

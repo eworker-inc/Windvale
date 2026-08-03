@@ -16,8 +16,10 @@ public static class Kernelˉprocessˉx64
     private const string BOOT_RESOURCE_SERVICE_OBJECT_SHA256 =
         "ECB940ABB9DE8086D50AE418853021CF1F7566A9415A5A3A3B4E5CC45ED5E78C";
     private const string DIRECTORY_SERVICE_IMAGE_SHA256 =
-        "BF25040B4925A13C4A919FFD5A53DE8FF281E4452132A9F7CD9BB3624740C883";
+        "F4D047C6F311B1561A5621B98F3DB2868A969C54BB81DAC2F75D599B7207F3FB";
     private const string FAILURE_LABEL = "process_failure";
+    private const string TIMER_PROBE_COMPLETE_LABEL = "process_timer_probe_complete";
+    private const string TIMER_FAILURE_LABEL = "process_timer_failure";
     private const string SERVICE_BLOCKED_LABEL = "process_service_blocked";
     private const string DIRECTORY_SERVICE_BLOCKED_LABEL = "process_directory_service_blocked";
     private const string CLIENT_COMPLETION_LABEL = "process_client_completion";
@@ -70,7 +72,8 @@ public static class Kernelˉprocessˉx64
     private const uint DIRECTORY_RECORD_SLOT_OFFSET = 0xC8;
     private const uint DISPATCH_CURSOR_SLOT_OFFSET = 0xD0;
     private const uint CONTEXT_OFFSET = 0x40;
-    private const uint IDT_DESCRIPTOR_OFFSET = 15 * Kernelˉexceptionˉcontract.IDT_GATE_BYTES;
+    private const uint IDT_DESCRIPTOR_OFFSET =
+        (Kernelˉtimerˉcontract.IRQ_VECTOR + 1) * Kernelˉexceptionˉcontract.IDT_GATE_BYTES;
     private const ushort IDT_LIMIT = (ushort)(IDT_DESCRIPTOR_OFFSET - 1);
     private const ushort KERNEL_CODE_SELECTOR = 0x08;
     private const ushort KERNEL_DATA_SELECTOR = 0x10;
@@ -100,6 +103,9 @@ public static class Kernelˉprocessˉx64
                 Kernelˉprocessˉcontract.CHANNEL_RECORD_OFFSET ||
             Kernelˉprocessˉcontract.DIRECTORY_ENDPOINT_RECORD_OFFSET +
                 Kernelˉprocessˉcontract.ENDPOINT_RECORD_BYTES >
+                Kernelˉtimerˉcontract.INIT_CONTEXT_RECORD_OFFSET ||
+            Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET +
+                Kernelˉtimerˉcontract.TIMER_RECORD_BYTES >
                 Kernelˉpagingˉcontract.PAGE_BYTES)
         {
             throw new InvalidOperationException(
@@ -142,7 +148,18 @@ public static class Kernelˉprocessˉx64
                 .SequenceEqual(image.Directoryˉsnapshotˉdigest.AsSpan()) ||
             image.Bootˉresourceˉserviceˉoffset > (uint)image.Clientˉimageˉbytes.Length ||
             Kernelˉprocessˉcontract.BOOT_RESOURCE_SERVICE_BYTES >
-                (uint)image.Clientˉimageˉbytes.Length - image.Bootˉresourceˉserviceˉoffset)
+                (uint)image.Clientˉimageˉbytes.Length - image.Bootˉresourceˉserviceˉoffset ||
+            image.Initˉpreemptionˉprobeˉoffset > (uint)image.Initˉserviceˉimageˉbytes.Length ||
+            Kernelˉtimerˉcontract.PREEMPTION_PROBE_BYTES >
+                (uint)image.Initˉserviceˉimageˉbytes.Length - image.Initˉpreemptionˉprobeˉoffset ||
+            image.Directoryˉpreemptionˉprobeˉoffset >
+                (uint)image.Directoryˉserviceˉimageˉbytes.Length ||
+            Kernelˉtimerˉcontract.PREEMPTION_PROBE_BYTES >
+                (uint)image.Directoryˉserviceˉimageˉbytes.Length -
+                    image.Directoryˉpreemptionˉprobeˉoffset ||
+            image.Clientˉpreemptionˉprobeˉoffset > (uint)image.Clientˉimageˉbytes.Length ||
+            Kernelˉtimerˉcontract.PREEMPTION_PROBE_BYTES >
+                (uint)image.Clientˉimageˉbytes.Length - image.Clientˉpreemptionˉprobeˉoffset)
         {
             throw new InvalidOperationException("The process machine seam received an invalid user image.");
         }
@@ -164,6 +181,18 @@ public static class Kernelˉprocessˉx64
             throw new InvalidOperationException(
                 "The process machine seam received a client with a changed boot-resource service leaf.");
         }
+        Verifyˉlinkedˉpreemptionˉprobe(
+            image.Initˉserviceˉimageˉbytes,
+            image.Initˉserviceˉshimˉobjectˉbytes,
+            image.Initˉpreemptionˉprobeˉoffset);
+        Verifyˉlinkedˉpreemptionˉprobe(
+            image.Directoryˉserviceˉimageˉbytes,
+            image.Directoryˉserviceˉshimˉobjectˉbytes,
+            image.Directoryˉpreemptionˉprobeˉoffset);
+        Verifyˉlinkedˉpreemptionˉprobe(
+            image.Clientˉimageˉbytes,
+            image.Clientˉshimˉobjectˉbytes,
+            image.Clientˉpreemptionˉprobeˉoffset);
 
         var Output = new X64ˉcodeˉbuilder();
         var Relocations = ImmutableArray.CreateBuilder<Objectˉrelocation>();
@@ -177,6 +206,10 @@ public static class Kernelˉprocessˉx64
         var Syscallˉoffset = Output.Position;
         Emitˉsyscallˉentry(Output, image);
         var Syscallˉbytes = Output.Position - Syscallˉoffset;
+        Output.Align(16);
+        var Timerˉoffset = Output.Position;
+        Emitˉtimerˉinterrupt(Output, Relocations, image);
+        var Timerˉbytes = Output.Position - Timerˉoffset;
         var Code = Output.Build();
         var Frozenˉrelocations = Relocations.ToImmutable();
 
@@ -222,6 +255,8 @@ public static class Kernelˉprocessˉx64
                     Objectˉsymbolˉkind.Function, 0, Exceptionˉoffset, Exceptionˉbytes),
                 new(Kernelˉprocessˉcontract.SYSCALL_ENTRY_SYMBOL, Objectˉsymbolˉbinding.Export,
                     Objectˉsymbolˉkind.Function, 0, Syscallˉoffset, Syscallˉbytes),
+                new(Kernelˉtimerˉcontract.INTERRUPT_SYMBOL, Objectˉsymbolˉbinding.Export,
+                    Objectˉsymbolˉkind.Function, 0, Timerˉoffset, Timerˉbytes),
                 Import(Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL),
                 Import(Kernelˉprocessˉcontract.POLICY_SYMBOL),
                 Import(Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL),
@@ -230,6 +265,12 @@ public static class Kernelˉprocessˉx64
                 Import(Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL),
                 Import(Kernelˉprocessˉcontract.EXCEPTION_14_ENTRY_SYMBOL),
                 Import(Kernelˉprocessˉcontract.EXCEPTION_6_ENTRY_SYMBOL),
+                Import(Kernelˉtimerˉcontract.ARM_SYMBOL),
+                Import(Kernelˉtimerˉcontract.IRQ_ENTRY_SYMBOL),
+                Import(Kernelˉtimerˉcontract.READ_CLOCK_SYMBOL),
+                Import(Kernelˉtimerˉcontract.REARM_SYMBOL),
+                Import(Kernelˉtimerˉcontract.RESUME_SYMBOL),
+                Import(Kernelˉtimerˉcontract.STOP_SYMBOL),
             ],
             Frozenˉrelocations);
         var Objectˉbytes = Objectˉcodec.Write(Object).ToImmutableArray();
@@ -290,7 +331,7 @@ public static class Kernelˉprocessˉx64
         // Recover the aligned arena base from the owned stack and revalidate it
         // instead of trusting coordinator temporaries across this Stage 0 seam.
         output.Emit(0x48, 0x83, 0xEC, 0x28);
-        Emitˉexternalˉcall(output, relocations, 11);
+        Emitˉexternalˉcall(output, relocations, 12);
         output.Emit(0x48, 0x83, 0xC4, 0x28);
         output.Emit(0x49, 0x89, 0xE4, 0x49, 0x81, 0xE4);
         output.Emitˉu32(unchecked((uint)~(Kernelˉmemoryˉcontract.ARENA_ALIGNMENT_BYTES - 1)));
@@ -444,6 +485,9 @@ public static class Kernelˉprocessˉx64
 
         Emitˉinstallˉdescriptorˉstate(output, relocations);
         Emitˉconfigureˉsyscallˉmsrs(output);
+
+        Emitˉrunˉtimerˉprobe(output, relocations, image);
+        output.Mark(TIMER_PROBE_COMPLETE_LABEL);
 
         // The ready/wait dispatcher starts the directory provider first so its
         // exact receive destination exists before either client can call it.
@@ -1571,7 +1615,7 @@ public static class Kernelˉprocessˉx64
 
         output.Mark(EXCEPTION_KERNEL_LABEL);
         var Jumpˉfield = output.Emitˉjumpˉplaceholder();
-        relocations.Add(Relocation(Jumpˉfield, 13));
+        relocations.Add(Relocation(Jumpˉfield, 14));
     }
 
     private static void Emitˉsyscallˉentry(
@@ -2449,7 +2493,7 @@ public static class Kernelˉprocessˉx64
     {
         output.Emit(0x4C, 0x89, 0xE1, 0xBA);
         output.Emitˉu32(checked((uint)allocationˉpages));
-        Emitˉexternalˉcall(output, relocations, 10);
+        Emitˉexternalˉcall(output, relocations, 11);
         output.Emit(0x48, 0x85, 0xC0);
         output.Jumpˉif(CONDITION_EQUAL, FAILURE_LABEL);
         output.Emit(0x49, 0x89, 0xC6);
@@ -2483,7 +2527,7 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
         output.Emit(0x41, 0xB8);
         output.Emitˉu32(checked((uint)Kernelˉprocessˉcontract.CLIENT_ALLOCATION_PAGES));
-        Emitˉexternalˉcall(output, relocations, 12);
+        Emitˉexternalˉcall(output, relocations, 13);
         output.Emit(0x49, 0x3B, 0x85);
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -2904,6 +2948,616 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(Kernelˉprocessˉcontract.DIRECTORY_DESCRIPTOR_GENERATION);
     }
 
+    private static void Emitˉrunˉtimerˉprobe(
+        X64ˉcodeˉbuilder output,
+        ImmutableArray<Objectˉrelocation>.Builder relocations,
+        Kernelˉprocessˉimageˉartifacts image)
+    {
+        var Init = new Timerˉparticipant(
+            Kernelˉtimerˉcontract.INIT_CONTEXT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.INIT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.INIT_THREAD_ID,
+            Kernelˉtimerˉcontract.INIT_SENTINEL_BASE,
+            image.Initˉpreemptionˉprobeˉoffset,
+            Kernelˉprocessˉcontract.INIT_STACK_PAGES);
+        var Client = new Timerˉparticipant(
+            Kernelˉtimerˉcontract.CLIENT_CONTEXT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.CLIENT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
+            Kernelˉtimerˉcontract.CLIENT_SENTINEL_BASE,
+            image.Clientˉpreemptionˉprobeˉoffset,
+            Kernelˉprocessˉcontract.CLIENT_STACK_PAGES);
+        var Directory = new Timerˉparticipant(
+            Kernelˉtimerˉcontract.DIRECTORY_CONTEXT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.DIRECTORY_PROCESS_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.DIRECTORY_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.DIRECTORY_THREAD_ID,
+            Kernelˉtimerˉcontract.DIRECTORY_SENTINEL_BASE,
+            image.Directoryˉpreemptionˉprobeˉoffset,
+            Kernelˉprocessˉcontract.DIRECTORY_STACK_PAGES);
+
+        output.Emit(0x49, 0x8D, 0xBC, 0x24);
+        output.Emitˉu32(Kernelˉtimerˉcontract.INIT_CONTEXT_RECORD_OFFSET);
+        output.Emit(0x31, 0xC0, 0xB9);
+        output.Emitˉu32((Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET +
+            Kernelˉtimerˉcontract.TIMER_RECORD_BYTES -
+            Kernelˉtimerˉcontract.INIT_CONTEXT_RECORD_OFFSET) / sizeof(ulong));
+        output.Emit(0xFC, 0xF3, 0x48, 0xAB);
+
+        Emitˉinitializeˉtimerˉparticipant(output, Init, Kernelˉtimerˉcontract.CONTEXT_STATE_READY, 0);
+        Emitˉinitializeˉtimerˉparticipant(output, Client, Kernelˉtimerˉcontract.CONTEXT_STATE_READY, 0);
+        Emitˉinitializeˉtimerˉparticipant(
+            output, Directory, Kernelˉtimerˉcontract.CONTEXT_STATE_RUNNING, 1);
+
+        var Timer = Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET;
+        Emitˉstoreˉarenaˉu64(output, Timer, Kernelˉtimerˉcontract.TIMER_MAGIC);
+        Emitˉstoreˉarenaˉu32(output, Timer + 8, Kernelˉtimerˉcontract.TIMER_VERSION);
+        Emitˉstoreˉarenaˉu32(output, Timer + 12, Kernelˉtimerˉcontract.TIMER_RECORD_BYTES);
+        Emitˉstoreˉarenaˉu32(output, Timer + Kernelˉtimerˉcontract.TIMER_MAXIMUM_TICKS_OFFSET,
+            Kernelˉtimerˉcontract.MAXIMUM_TICKS);
+        Emitˉstoreˉarenaˉu32(output, Timer + Kernelˉtimerˉcontract.TIMER_ACTIVE_PROCESS_OFFSET,
+            Kernelˉprocessˉcontract.DIRECTORY_PROCESS_REFERENCE);
+        Emitˉstoreˉarenaˉu32(output, Timer + Kernelˉtimerˉcontract.TIMER_FLAGS_OFFSET,
+            Kernelˉtimerˉcontract.TIMER_FLAG_ACTIVE);
+        Emitˉleaˉarenaˉr13(output, Directory.Recordˉoffset);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+            Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_RUNNING);
+        Emitˉactivateˉrecordˉroot(output, relocations);
+        Emitˉsetˉkernelˉgsˉbaseˉzero(output);
+        Emitˉsetˉactiveˉgsˉbase(output);
+        Emitˉexternalˉcall(output, relocations, 19);
+        output.Emit(0x85, 0xC0);
+        output.Jumpˉif(CONDITION_EQUAL, "process_timer_armed");
+        Emitˉsetˉgsˉbaseˉzero(output);
+        output.Jump(FAILURE_LABEL);
+        output.Mark("process_timer_armed");
+        output.Emit(0x49, 0x8D, 0xA4, 0x24);
+        output.Emitˉu32(Directory.Contextˉoffset + Kernelˉtimerˉcontract.CONTEXT_FRAME_OFFSET + 16);
+        Emitˉexternalˉjump(output, relocations, 23);
+    }
+
+    private static void Emitˉinitializeˉtimerˉparticipant(
+        X64ˉcodeˉbuilder output,
+        Timerˉparticipant participant,
+        uint state,
+        uint dispatchˉcount)
+    {
+        var Context = participant.Contextˉoffset;
+        var Frame = Context + Kernelˉtimerˉcontract.CONTEXT_FRAME_OFFSET;
+        Emitˉstoreˉarenaˉu64(output, Context, Kernelˉtimerˉcontract.CONTEXT_MAGIC);
+        Emitˉstoreˉarenaˉu32(output, Context + 8, Kernelˉtimerˉcontract.CONTEXT_VERSION);
+        Emitˉstoreˉarenaˉu32(output, Context + 12, Kernelˉtimerˉcontract.CONTEXT_RECORD_BYTES);
+        Emitˉstoreˉarenaˉu32(
+            output, Context + Kernelˉtimerˉcontract.CONTEXT_PROCESS_REFERENCE_OFFSET,
+            participant.Processˉreference);
+        Emitˉstoreˉarenaˉu32(output, Context + Kernelˉtimerˉcontract.CONTEXT_THREAD_ID_OFFSET,
+            participant.Threadˉid);
+        Emitˉstoreˉarenaˉu32(output, Context + Kernelˉtimerˉcontract.CONTEXT_STATE_OFFSET, state);
+        Emitˉstoreˉarenaˉu32(
+            output, Context + Kernelˉtimerˉcontract.CONTEXT_FRAME_BYTES_OFFSET,
+            Kernelˉtimerˉcontract.NORMALIZED_FRAME_BYTES);
+        Emitˉstoreˉarenaˉu32(
+            output, Context + Kernelˉtimerˉcontract.CONTEXT_DISPATCH_COUNT_OFFSET,
+            dispatchˉcount);
+        Emitˉstoreˉarenaˉu64(
+            output, Frame + Kernelˉtimerˉcontract.FRAME_VECTOR_OFFSET,
+            Kernelˉtimerˉcontract.IRQ_VECTOR);
+        Emitˉstoreˉarenaˉu64(
+            output, Frame + Kernelˉtimerˉcontract.FRAME_CS_OFFSET,
+            Kernelˉtimerˉcontract.USER_CODE_SELECTOR);
+        Emitˉstoreˉarenaˉu64(
+            output, Frame + Kernelˉtimerˉcontract.FRAME_RFLAGS_OFFSET,
+            Kernelˉtimerˉcontract.USER_RFLAGS);
+        Emitˉstoreˉarenaˉu64(
+            output, Frame + Kernelˉtimerˉcontract.FRAME_SS_OFFSET,
+            Kernelˉtimerˉcontract.USER_DATA_SELECTOR);
+
+        Emitˉleaˉarenaˉr13(output, participant.Recordˉoffset);
+        output.Emit(0x49, 0x89, 0xA5);
+        output.Emitˉu32(Kernelˉprocessˉcontract.KERNEL_STACK_OFFSET);
+        output.Emit(0x49, 0x8B, 0x85);
+        output.Emitˉu32(Kernelˉprocessˉcontract.USER_CODE_ADDRESS_OFFSET);
+        output.Emit(0x48, 0x05);
+        output.Emitˉu32(participant.Probeˉoffset);
+        Emitˉstoreˉarenaˉrax(output, Frame + Kernelˉtimerˉcontract.FRAME_RIP_OFFSET);
+        output.Emit(0x49, 0x8B, 0x85);
+        output.Emitˉu32(Kernelˉprocessˉcontract.USER_STACK_ADDRESS_OFFSET);
+        output.Emit(0x48, 0x05);
+        output.Emitˉu32(checked((uint)(participant.Stackˉpages * Kernelˉpagingˉcontract.PAGE_BYTES)));
+        Emitˉstoreˉarenaˉrax(output, Frame + Kernelˉtimerˉcontract.FRAME_RSP_OFFSET);
+    }
+
+    private static void Emitˉtimerˉinterrupt(
+        X64ˉcodeˉbuilder output,
+        ImmutableArray<Objectˉrelocation>.Builder relocations,
+        Kernelˉprocessˉimageˉartifacts image)
+    {
+        var Init = new Timerˉparticipant(
+            Kernelˉtimerˉcontract.INIT_CONTEXT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.INIT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.INIT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.INIT_THREAD_ID,
+            Kernelˉtimerˉcontract.INIT_SENTINEL_BASE,
+            image.Initˉpreemptionˉprobeˉoffset,
+            Kernelˉprocessˉcontract.INIT_STACK_PAGES);
+        var Client = new Timerˉparticipant(
+            Kernelˉtimerˉcontract.CLIENT_CONTEXT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.CLIENT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.FIRST_CLIENT_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.CLIENT_THREAD_ID,
+            Kernelˉtimerˉcontract.CLIENT_SENTINEL_BASE,
+            image.Clientˉpreemptionˉprobeˉoffset,
+            Kernelˉprocessˉcontract.CLIENT_STACK_PAGES);
+        var Directory = new Timerˉparticipant(
+            Kernelˉtimerˉcontract.DIRECTORY_CONTEXT_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.DIRECTORY_PROCESS_RECORD_OFFSET,
+            Kernelˉprocessˉcontract.DIRECTORY_PROCESS_REFERENCE,
+            Kernelˉprocessˉcontract.DIRECTORY_THREAD_ID,
+            Kernelˉtimerˉcontract.DIRECTORY_SENTINEL_BASE,
+            image.Directoryˉpreemptionˉprobeˉoffset,
+            Kernelˉprocessˉcontract.DIRECTORY_STACK_PAGES);
+        Timerˉcase[] Cases =
+        [
+            new(0, 0, 0, 0, Directory, 0, 1, 0, 0,
+                Init, Kernelˉtimerˉcontract.CONTEXT_STATE_READY, 0, 0, 0, 0, 1, 0),
+            new(1, 1, 1, 0, Init, 0, 1, 0, 0,
+                Client, Kernelˉtimerˉcontract.CONTEXT_STATE_READY, 0, 0, 0, 0, 2, 0),
+            new(2, 2, 2, 0, Client, 0, 1, 0, 0,
+                Directory, Kernelˉtimerˉcontract.CONTEXT_STATE_SAVED, 1, 1, 0, 1, 0, 1),
+            new(3, 3, 0, 1, Directory, 1, 2, 1, 1,
+                null, 0, 0, 0, 0, 0, 0, 1),
+        ];
+
+        output.Emit(0x65, 0x4C, 0x8B, 0x24, 0x25);
+        output.Emitˉu32(Kernelˉprocessˉcontract.KERNEL_STACK_OFFSET);
+        output.Emit(0x49, 0x81, 0xE4);
+        output.Emitˉu32(unchecked((uint)~(Kernelˉmemoryˉcontract.ARENA_ALIGNMENT_BYTES - 1)));
+        Emitˉvalidateˉtimerˉstatic(output);
+        Emitˉloadˉarenaˉeax(
+            output, Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET +
+                Kernelˉtimerˉcontract.TIMER_TICK_COUNT_OFFSET);
+        for (var Index = 0; Index < Cases.Length; Index++)
+        {
+            output.Emit(0x83, 0xF8, checked((byte)Index));
+            output.Jumpˉif(CONDITION_EQUAL, $"process_timer_tick_{Index}");
+        }
+        output.Jump(TIMER_FAILURE_LABEL);
+
+        for (var Index = 0; Index < Cases.Length; Index++)
+        {
+            output.Mark($"process_timer_tick_{Index}");
+            Emitˉtimerˉcase(output, relocations, Cases[Index]);
+        }
+
+        output.Mark(TIMER_FAILURE_LABEL);
+        Emitˉexternalˉcall(output, relocations, 24);
+        Emitˉloadˉgsˉrsp(output, Kernelˉprocessˉcontract.KERNEL_STACK_OFFSET);
+        Emitˉsetˉgsˉbaseˉzero(output);
+        output.Jump(FAILURE_LABEL);
+    }
+
+    private static void Emitˉvalidateˉtimerˉstatic(X64ˉcodeˉbuilder output)
+    {
+        var Timer = Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET;
+        Emitˉcompareˉarenaˉu64(output, Timer, Kernelˉtimerˉcontract.TIMER_MAGIC);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (8, Kernelˉtimerˉcontract.TIMER_VERSION),
+            (12, Kernelˉtimerˉcontract.TIMER_RECORD_BYTES),
+            (Kernelˉtimerˉcontract.TIMER_EVENT_KIND_OFFSET,
+                Kernelˉtimerˉcontract.TIMER_EVENT_LOCAL_APIC_ONE_SHOT),
+            (Kernelˉtimerˉcontract.TIMER_VECTOR_OFFSET, Kernelˉtimerˉcontract.IRQ_VECTOR),
+            (Kernelˉtimerˉcontract.TIMER_QUANTUM_OFFSET,
+                Kernelˉtimerˉcontract.QUANTUM_MICROSECONDS),
+            (Kernelˉtimerˉcontract.TIMER_MAXIMUM_TICKS_OFFSET, Kernelˉtimerˉcontract.MAXIMUM_TICKS),
+            (Kernelˉtimerˉcontract.TIMER_FLAGS_OFFSET, Kernelˉtimerˉcontract.TIMER_FLAG_ACTIVE),
+            (Kernelˉtimerˉcontract.TIMER_HPET_PERIOD_OFFSET,
+                Kernelˉtimerˉcontract.HPET_PERIOD_FEMTOSECONDS),
+            (Kernelˉtimerˉcontract.TIMER_EVENT_FEATURES_OFFSET,
+                Kernelˉtimerˉcontract.TIMER_EVENT_FEATURE_CALIBRATED),
+            (Kernelˉtimerˉcontract.TIMER_CALIBRATION_TICKS_OFFSET,
+                Kernelˉtimerˉcontract.HPET_CALIBRATION_TICKS),
+        })
+        {
+            Emitˉcompareˉarenaˉu32(output, Timer + Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        }
+        Emitˉcompareˉarenaˉu32(output, Timer + Kernelˉtimerˉcontract.TIMER_SOURCE_OFFSET,
+            Kernelˉtimerˉcontract.TIMER_CLOCKSOURCE_HPET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        Emitˉcompareˉarenaˉu32(output, Timer + Kernelˉtimerˉcontract.TIMER_CLOCK_FEATURES_OFFSET, 0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        Emitˉloadˉarenaˉeax(
+            output, Timer + Kernelˉtimerˉcontract.TIMER_EVENT_INITIAL_COUNT_OFFSET);
+        output.Emit(0x85, 0xC0);
+        output.Jumpˉif(CONDITION_EQUAL, TIMER_FAILURE_LABEL);
+        Emitˉcompareˉarenaˉu64(output, Timer + Kernelˉtimerˉcontract.TIMER_LAST_CLOCK_OFFSET, 0);
+        output.Jumpˉif(CONDITION_EQUAL, TIMER_FAILURE_LABEL);
+    }
+
+    private static void Emitˉtimerˉcase(
+        X64ˉcodeˉbuilder output,
+        ImmutableArray<Objectˉrelocation>.Builder relocations,
+        Timerˉcase value)
+    {
+        var Timer = Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET;
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (Kernelˉtimerˉcontract.TIMER_TICK_COUNT_OFFSET, value.Tick),
+            (Kernelˉtimerˉcontract.TIMER_SWITCH_COUNT_OFFSET, value.Switches),
+            (Kernelˉtimerˉcontract.TIMER_EOI_COUNT_OFFSET, value.Tick),
+            (Kernelˉtimerˉcontract.TIMER_CURSOR_OFFSET, value.Cursor),
+            (Kernelˉtimerˉcontract.TIMER_ACTIVE_PROCESS_OFFSET,
+                value.Outgoing.Processˉreference),
+            (Kernelˉtimerˉcontract.TIMER_DIRECTORY_RESUME_COUNT_OFFSET,
+                value.Directoryˉresumes),
+            (Kernelˉtimerˉcontract.TIMER_CLOCK_READ_COUNT_OFFSET, value.Tick),
+        })
+        {
+            Emitˉcompareˉarenaˉu32(output, Timer + Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        }
+
+        Emitˉvalidateˉactiveˉparticipant(output, value);
+        Emitˉreadˉtimerˉclock(output, relocations, value.Tick);
+        output.Emit(0x48, 0x89, 0xE6, 0x49, 0x8D, 0xBC, 0x24);
+        output.Emitˉu32(value.Outgoing.Contextˉoffset + Kernelˉtimerˉcontract.CONTEXT_FRAME_OFFSET);
+        output.Emit(0xB9);
+        output.Emitˉu32(Kernelˉtimerˉcontract.NORMALIZED_FRAME_BYTES / sizeof(ulong));
+        output.Emit(0xFC, 0xF3, 0x48, 0xA5);
+
+        Emitˉstoreˉarenaˉu32(
+            output, value.Outgoing.Contextˉoffset + Kernelˉtimerˉcontract.CONTEXT_STATE_OFFSET,
+            Kernelˉtimerˉcontract.CONTEXT_STATE_SAVED);
+        Emitˉstoreˉarenaˉu32(
+            output, value.Outgoing.Contextˉoffset + Kernelˉtimerˉcontract.CONTEXT_TICK_COUNT_OFFSET,
+            checked(value.Contextˉticks + 1));
+        Emitˉstoreˉarenaˉu32(
+            output,
+            value.Outgoing.Contextˉoffset + Kernelˉtimerˉcontract.CONTEXT_PREEMPTION_COUNT_OFFSET,
+            checked(value.Contextˉpreemptions + 1));
+        Emitˉleaˉarenaˉr13(output, value.Outgoing.Recordˉoffset);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+            Kernelˉprocessˉcontract.PROCESS_STATE_READY);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_READY);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+            Kernelˉprocessˉcontract.WAIT_REASON_NONE);
+        Emitˉstoreˉarenaˉu32(
+            output, Timer + Kernelˉtimerˉcontract.TIMER_TICK_COUNT_OFFSET,
+            checked(value.Tick + 1));
+        Emitˉstoreˉarenaˉu32(
+            output, Timer + Kernelˉtimerˉcontract.TIMER_EOI_COUNT_OFFSET,
+            checked(value.Tick + 1));
+
+        if (value.Next is not null)
+        {
+            Emitˉtimerˉswitch(output, relocations, value);
+            return;
+        }
+
+        Emitˉstoreˉarenaˉu32(output, Timer + Kernelˉtimerˉcontract.TIMER_FLAGS_OFFSET,
+            Kernelˉtimerˉcontract.TIMER_FLAG_COMPLETE);
+        Emitˉexternalˉcall(output, relocations, 24);
+        foreach (var Participant in new[]
+        {
+            new Timerˉparticipant(0, Kernelˉprocessˉcontract.INIT_RECORD_OFFSET, 0, 0, 0, 0, 0),
+            new Timerˉparticipant(0, Kernelˉprocessˉcontract.CLIENT_RECORD_OFFSET, 0, 0, 0, 0, 0),
+            new Timerˉparticipant(
+                0, Kernelˉprocessˉcontract.DIRECTORY_PROCESS_RECORD_OFFSET, 0, 0, 0, 0, 0),
+        })
+        {
+            Emitˉleaˉarenaˉr13(output, Participant.Recordˉoffset);
+            Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+                Kernelˉprocessˉcontract.PROCESS_STATE_READY);
+            Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+                Kernelˉprocessˉcontract.THREAD_STATE_READY);
+            Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+                Kernelˉprocessˉcontract.WAIT_REASON_NONE);
+        }
+        Emitˉloadˉgsˉrsp(output, Kernelˉprocessˉcontract.KERNEL_STACK_OFFSET);
+        Emitˉsetˉgsˉbaseˉzero(output);
+        output.Jump(TIMER_PROBE_COMPLETE_LABEL);
+    }
+
+    private static void Emitˉvalidateˉactiveˉparticipant(
+        X64ˉcodeˉbuilder output,
+        Timerˉcase value)
+    {
+        output.Emit(0x48, 0xB8);
+        output.Emitˉu64(Kernelˉprocessˉcontract.RECORD_MAGIC);
+        output.Emit(0x65, 0x48, 0x39, 0x04, 0x25);
+        output.Emitˉu32(0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (8, Kernelˉprocessˉcontract.RECORD_VERSION),
+            (12, Kernelˉprocessˉcontract.RECORD_BYTES),
+            (Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+                Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING),
+            (Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+                Kernelˉprocessˉcontract.THREAD_STATE_RUNNING),
+            (24, value.Outgoing.Processˉreference & 0xFFFF),
+            (28, value.Outgoing.Threadˉid),
+            (Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET,
+                value.Outgoing.Processˉreference >> 16),
+            (Kernelˉprocessˉcontract.WAIT_REASON_OFFSET,
+                Kernelˉprocessˉcontract.WAIT_REASON_NONE),
+        })
+        {
+            Emitˉcompareˉgsˉu32(output, Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        }
+
+        var Context = value.Outgoing.Contextˉoffset;
+        Emitˉcompareˉarenaˉu64(output, Context, Kernelˉtimerˉcontract.CONTEXT_MAGIC);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (8, Kernelˉtimerˉcontract.CONTEXT_VERSION),
+            (12, Kernelˉtimerˉcontract.CONTEXT_RECORD_BYTES),
+            (Kernelˉtimerˉcontract.CONTEXT_PROCESS_REFERENCE_OFFSET,
+                value.Outgoing.Processˉreference),
+            (Kernelˉtimerˉcontract.CONTEXT_THREAD_ID_OFFSET, value.Outgoing.Threadˉid),
+            (Kernelˉtimerˉcontract.CONTEXT_STATE_OFFSET,
+                Kernelˉtimerˉcontract.CONTEXT_STATE_RUNNING),
+            (Kernelˉtimerˉcontract.CONTEXT_FRAME_BYTES_OFFSET,
+                Kernelˉtimerˉcontract.NORMALIZED_FRAME_BYTES),
+            (Kernelˉtimerˉcontract.CONTEXT_TICK_COUNT_OFFSET, value.Contextˉticks),
+            (Kernelˉtimerˉcontract.CONTEXT_DISPATCH_COUNT_OFFSET, value.Contextˉdispatches),
+            (Kernelˉtimerˉcontract.CONTEXT_RESUME_COUNT_OFFSET, value.Contextˉresumes),
+            (Kernelˉtimerˉcontract.CONTEXT_PREEMPTION_COUNT_OFFSET,
+                value.Contextˉpreemptions),
+        })
+        {
+            Emitˉcompareˉarenaˉu32(output, Context + Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        }
+
+        Emitˉcompareˉstackˉu64(output, Kernelˉtimerˉcontract.FRAME_VECTOR_OFFSET,
+            Kernelˉtimerˉcontract.IRQ_VECTOR);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        Emitˉcompareˉstackˉu64(output, Kernelˉtimerˉcontract.FRAME_ERROR_OFFSET, 0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        for (uint Index = 0; Index < 15; Index++)
+        {
+            Emitˉcompareˉstackˉu64(
+                output,
+                Kernelˉtimerˉcontract.FRAME_RAX_OFFSET + Index * sizeof(ulong),
+                value.Outgoing.Sentinelˉbase + Index);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        }
+        Emitˉleaˉarenaˉr13(output, value.Outgoing.Recordˉoffset);
+        output.Emit(0x49, 0x8B, 0x85);
+        output.Emitˉu32(Kernelˉprocessˉcontract.USER_CODE_ADDRESS_OFFSET);
+        output.Emit(0x48, 0x05);
+        output.Emitˉu32(checked(value.Outgoing.Probeˉoffset +
+            Kernelˉtimerˉcontract.PREEMPTION_PROBE_SETUP_BYTES));
+        Emitˉcompareˉstackˉrax(output, Kernelˉtimerˉcontract.FRAME_RIP_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        Emitˉcompareˉstackˉu64(output, Kernelˉtimerˉcontract.FRAME_CS_OFFSET,
+            Kernelˉtimerˉcontract.USER_CODE_SELECTOR);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        Emitˉvalidateˉstackˉuserˉrflags(output);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        output.Emit(0x49, 0x8B, 0x85);
+        output.Emitˉu32(Kernelˉprocessˉcontract.USER_STACK_ADDRESS_OFFSET);
+        output.Emit(0x48, 0x05);
+        output.Emitˉu32(checked((uint)(value.Outgoing.Stackˉpages *
+            Kernelˉpagingˉcontract.PAGE_BYTES)));
+        Emitˉcompareˉstackˉrax(output, Kernelˉtimerˉcontract.FRAME_RSP_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        Emitˉcompareˉstackˉu64(output, Kernelˉtimerˉcontract.FRAME_SS_OFFSET,
+            Kernelˉtimerˉcontract.USER_DATA_SELECTOR);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+    }
+
+    private static void Emitˉtimerˉswitch(
+        X64ˉcodeˉbuilder output,
+        ImmutableArray<Objectˉrelocation>.Builder relocations,
+        Timerˉcase value)
+    {
+        var Next = value.Next ?? throw new InvalidOperationException("A timer switch requires a target.");
+        var Context = Next.Contextˉoffset;
+        Emitˉcompareˉarenaˉu64(output, Context, Kernelˉtimerˉcontract.CONTEXT_MAGIC);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (8, Kernelˉtimerˉcontract.CONTEXT_VERSION),
+            (12, Kernelˉtimerˉcontract.CONTEXT_RECORD_BYTES),
+            (Kernelˉtimerˉcontract.CONTEXT_PROCESS_REFERENCE_OFFSET, Next.Processˉreference),
+            (Kernelˉtimerˉcontract.CONTEXT_THREAD_ID_OFFSET, Next.Threadˉid),
+            (Kernelˉtimerˉcontract.CONTEXT_STATE_OFFSET, value.Nextˉcontextˉstate),
+            (Kernelˉtimerˉcontract.CONTEXT_FRAME_BYTES_OFFSET,
+                Kernelˉtimerˉcontract.NORMALIZED_FRAME_BYTES),
+            (Kernelˉtimerˉcontract.CONTEXT_TICK_COUNT_OFFSET, value.Nextˉcontextˉticks),
+            (Kernelˉtimerˉcontract.CONTEXT_DISPATCH_COUNT_OFFSET,
+                value.Nextˉcontextˉdispatches),
+            (Kernelˉtimerˉcontract.CONTEXT_RESUME_COUNT_OFFSET, value.Nextˉcontextˉresumes),
+            (Kernelˉtimerˉcontract.CONTEXT_PREEMPTION_COUNT_OFFSET,
+                value.Nextˉcontextˉpreemptions),
+        })
+        {
+            Emitˉcompareˉarenaˉu32(output, Context + Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        }
+
+        Emitˉleaˉarenaˉr13(output, Next.Recordˉoffset);
+        output.Emit(0x48, 0xB8);
+        output.Emitˉu64(Kernelˉprocessˉcontract.RECORD_MAGIC);
+        output.Emit(0x49, 0x39, 0x45, 0x00);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        foreach (var Field in new (uint Offset, uint Value)[]
+        {
+            (8, Kernelˉprocessˉcontract.RECORD_VERSION),
+            (12, Kernelˉprocessˉcontract.RECORD_BYTES),
+            (Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+                Kernelˉprocessˉcontract.PROCESS_STATE_READY),
+            (Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+                Kernelˉprocessˉcontract.THREAD_STATE_READY),
+            (24, Next.Processˉreference & 0xFFFF),
+            (28, Next.Threadˉid),
+            (Kernelˉprocessˉcontract.PROCESS_GENERATION_OFFSET, Next.Processˉreference >> 16),
+            (Kernelˉprocessˉcontract.WAIT_REASON_OFFSET, Kernelˉprocessˉcontract.WAIT_REASON_NONE),
+        })
+        {
+            Emitˉcompareˉrecordˉu32(output, Field.Offset, Field.Value);
+            output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        }
+
+        Emitˉstoreˉarenaˉu32(output, Context + Kernelˉtimerˉcontract.CONTEXT_STATE_OFFSET,
+            Kernelˉtimerˉcontract.CONTEXT_STATE_RUNNING);
+        Emitˉstoreˉarenaˉu32(
+            output, Context + Kernelˉtimerˉcontract.CONTEXT_DISPATCH_COUNT_OFFSET,
+            checked(value.Nextˉcontextˉdispatches + 1));
+        if (Next.Processˉreference == Kernelˉprocessˉcontract.DIRECTORY_PROCESS_REFERENCE)
+        {
+            Emitˉstoreˉarenaˉu32(
+                output, Context + Kernelˉtimerˉcontract.CONTEXT_RESUME_COUNT_OFFSET,
+                checked(value.Nextˉcontextˉresumes + 1));
+        }
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.PROCESS_STATE_OFFSET,
+            Kernelˉprocessˉcontract.PROCESS_STATE_RUNNING);
+        Emitˉstoreˉrecordˉu32(output, Kernelˉprocessˉcontract.THREAD_STATE_OFFSET,
+            Kernelˉprocessˉcontract.THREAD_STATE_RUNNING);
+
+        var Timer = Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET;
+        Emitˉstoreˉarenaˉu32(
+            output, Timer + Kernelˉtimerˉcontract.TIMER_SWITCH_COUNT_OFFSET,
+            checked(value.Switches + 1));
+        Emitˉstoreˉarenaˉu32(output, Timer + Kernelˉtimerˉcontract.TIMER_CURSOR_OFFSET,
+            value.Nextˉcursor);
+        Emitˉstoreˉarenaˉu32(
+            output, Timer + Kernelˉtimerˉcontract.TIMER_ACTIVE_PROCESS_OFFSET,
+            Next.Processˉreference);
+        Emitˉstoreˉarenaˉu32(
+            output, Timer + Kernelˉtimerˉcontract.TIMER_DIRECTORY_RESUME_COUNT_OFFSET,
+            value.Nextˉdirectoryˉresumes);
+
+        output.Emit(0x49, 0x8B, 0x85);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
+        Emitˉexternalˉcall(output, relocations, 15);
+        output.Emit(0x49, 0x3B, 0x85);
+        output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        Emitˉexternalˉcall(output, relocations, 22);
+        Emitˉsetˉactiveˉgsˉbase(output);
+        output.Emit(0x49, 0x8D, 0xA4, 0x24);
+        output.Emitˉu32(Context + Kernelˉtimerˉcontract.CONTEXT_FRAME_OFFSET + 16);
+        Emitˉexternalˉjump(output, relocations, 23);
+    }
+
+    private static void Emitˉreadˉtimerˉclock(
+        X64ˉcodeˉbuilder output,
+        ImmutableArray<Objectˉrelocation>.Builder relocations,
+        uint currentˉtick)
+    {
+        Emitˉexternalˉcall(output, relocations, 21);
+        output.Emit(0x48, 0x85, 0xC0);
+        output.Jumpˉif(CONDITION_EQUAL, TIMER_FAILURE_LABEL);
+        output.Emit(0x49, 0x3B, 0x84, 0x24);
+        output.Emitˉu32(
+            Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET +
+            Kernelˉtimerˉcontract.TIMER_LAST_CLOCK_OFFSET);
+        output.Jumpˉif(CONDITION_BELOW, TIMER_FAILURE_LABEL);
+        output.Jumpˉif(CONDITION_EQUAL, TIMER_FAILURE_LABEL);
+        Emitˉstoreˉarenaˉrax(
+            output,
+            Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET +
+            Kernelˉtimerˉcontract.TIMER_LAST_CLOCK_OFFSET);
+        Emitˉstoreˉarenaˉu32(
+            output,
+            Kernelˉtimerˉcontract.TIMER_RECORD_OFFSET +
+            Kernelˉtimerˉcontract.TIMER_CLOCK_READ_COUNT_OFFSET,
+            checked(currentˉtick + 1));
+    }
+
+    private static void Emitˉstoreˉarenaˉu32(X64ˉcodeˉbuilder output, uint offset, uint value)
+    {
+        output.Emit(0x41, 0xC7, 0x84, 0x24);
+        output.Emitˉu32(offset);
+        output.Emitˉu32(value);
+    }
+
+    private static void Emitˉstoreˉarenaˉu64(X64ˉcodeˉbuilder output, uint offset, ulong value)
+    {
+        output.Emit(0x48, 0xB8);
+        output.Emitˉu64(value);
+        Emitˉstoreˉarenaˉrax(output, offset);
+    }
+
+    private static void Emitˉstoreˉarenaˉrax(X64ˉcodeˉbuilder output, uint offset)
+    {
+        output.Emit(0x49, 0x89, 0x84, 0x24);
+        output.Emitˉu32(offset);
+    }
+
+    private static void Emitˉloadˉarenaˉeax(X64ˉcodeˉbuilder output, uint offset)
+    {
+        output.Emit(0x41, 0x8B, 0x84, 0x24);
+        output.Emitˉu32(offset);
+    }
+
+    private static void Emitˉcompareˉarenaˉu32(X64ˉcodeˉbuilder output, uint offset, uint value)
+    {
+        output.Emit(0x41, 0x81, 0xBC, 0x24);
+        output.Emitˉu32(offset);
+        output.Emitˉu32(value);
+    }
+
+    private static void Emitˉcompareˉarenaˉu64(X64ˉcodeˉbuilder output, uint offset, ulong value)
+    {
+        output.Emit(0x48, 0xB8);
+        output.Emitˉu64(value);
+        output.Emit(0x49, 0x39, 0x84, 0x24);
+        output.Emitˉu32(offset);
+    }
+
+    private static void Emitˉcompareˉstackˉu64(X64ˉcodeˉbuilder output, uint offset, ulong value)
+    {
+        output.Emit(0x48, 0xB8);
+        output.Emitˉu64(value);
+        Emitˉcompareˉstackˉrax(output, offset);
+    }
+
+    private static void Emitˉcompareˉstackˉrax(X64ˉcodeˉbuilder output, uint offset)
+    {
+        output.Emit(0x48, 0x39, 0x84, 0x24);
+        output.Emitˉu32(offset);
+    }
+
+    private static void Emitˉvalidateˉstackˉuserˉrflags(X64ˉcodeˉbuilder output)
+    {
+        output.Emit(0x81, 0xBC, 0x24);
+        output.Emitˉu32(Kernelˉtimerˉcontract.FRAME_RFLAGS_OFFSET + sizeof(uint));
+        output.Emitˉu32(0);
+        output.Jumpˉif(CONDITION_NOT_EQUAL, TIMER_FAILURE_LABEL);
+        output.Emit(0x8B, 0x84, 0x24);
+        output.Emitˉu32(Kernelˉtimerˉcontract.FRAME_RFLAGS_OFFSET);
+        output.Emit(0x25);
+        output.Emitˉu32(Kernelˉtimerˉcontract.USER_RFLAGS_CONTROL_MASK);
+        output.Emit(0x3D);
+        output.Emitˉu32(Kernelˉtimerˉcontract.USER_RFLAGS_REQUIRED);
+    }
+
+    private static void Emitˉleaˉarenaˉr13(X64ˉcodeˉbuilder output, uint offset)
+    {
+        output.Emit(0x4D, 0x8D, 0xAC, 0x24);
+        output.Emitˉu32(offset);
+    }
+
+    private static void Emitˉsetˉgsˉbaseˉzero(X64ˉcodeˉbuilder output)
+    {
+        output.Emit(0xB9);
+        output.Emitˉu32(0xC000_0101);
+        output.Emit(0x31, 0xC0, 0x31, 0xD2, 0x0F, 0x30);
+    }
+
     private static void Emitˉinstallˉdescriptorˉstate(
         X64ˉcodeˉbuilder output,
         ImmutableArray<Objectˉrelocation>.Builder relocations)
@@ -2944,12 +3598,17 @@ public static class Kernelˉprocessˉx64
         // Reuse the existing kernel-owned zeroed IDT page, extending it through
         // page fault and routing 6/13/14 through WVA-normalized process stubs.
         output.Emit(0x4D, 0x8B, 0x44, 0x24, 0x38);
-        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.INVALID_OPCODE_GATE_OFFSET, 17);
-        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.GENERAL_PROTECTION_GATE_OFFSET, 15);
-        Emitˉgate(output, relocations, 14 * Kernelˉexceptionˉcontract.IDT_GATE_BYTES, 16);
+        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.INVALID_OPCODE_GATE_OFFSET, 18);
+        Emitˉgate(output, relocations, Kernelˉexceptionˉcontract.GENERAL_PROTECTION_GATE_OFFSET, 16);
+        Emitˉgate(output, relocations, 14 * Kernelˉexceptionˉcontract.IDT_GATE_BYTES, 17);
+        Emitˉgate(
+            output,
+            relocations,
+            Kernelˉtimerˉcontract.IRQ_VECTOR * Kernelˉexceptionˉcontract.IDT_GATE_BYTES,
+            20);
         output.Emit(0x66, 0x41, 0xC7, 0x80);
         output.Emitˉu32(IDT_DESCRIPTOR_OFFSET);
-        output.Emit((byte)IDT_LIMIT, (byte)(IDT_LIMIT >> 8));
+        output.Emit(unchecked((byte)IDT_LIMIT), (byte)(IDT_LIMIT >> 8));
         output.Emit(0x4D, 0x89, 0x80);
         output.Emitˉu32(IDT_DESCRIPTOR_OFFSET + 2);
         output.Emit(0xFA, 0x41, 0x0F, 0x01, 0x98);
@@ -2998,7 +3657,7 @@ public static class Kernelˉprocessˉx64
     {
         output.Emit(0x49, 0x8B, 0x85);
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
-        Emitˉexternalˉcall(output, relocations, 14);
+        Emitˉexternalˉcall(output, relocations, 15);
         output.Emit(0x49, 0x3B, 0x85);
         output.Emitˉu32(Kernelˉprocessˉcontract.ROOT_ADDRESS_OFFSET);
         output.Jumpˉif(CONDITION_NOT_EQUAL, FAILURE_LABEL);
@@ -3009,6 +3668,20 @@ public static class Kernelˉprocessˉx64
         output.Emit(0x4C, 0x89, 0xE8, 0x48, 0x89, 0xC2, 0x48, 0xC1, 0xEA, 0x20, 0xB9);
         output.Emitˉu32(0xC000_0102);
         output.Emit(0x0F, 0x30);
+    }
+
+    private static void Emitˉsetˉactiveˉgsˉbase(X64ˉcodeˉbuilder output)
+    {
+        output.Emit(0x4C, 0x89, 0xE8, 0x48, 0x89, 0xC2, 0x48, 0xC1, 0xEA, 0x20, 0xB9);
+        output.Emitˉu32(0xC000_0101);
+        output.Emit(0x0F, 0x30);
+    }
+
+    private static void Emitˉsetˉkernelˉgsˉbaseˉzero(X64ˉcodeˉbuilder output)
+    {
+        output.Emit(0xB9);
+        output.Emitˉu32(0xC000_0102);
+        output.Emit(0x31, 0xC0, 0x31, 0xD2, 0x0F, 0x30);
     }
 
     private static void Emitˉenterˉinitialˉprocess(
@@ -4303,6 +4976,15 @@ public static class Kernelˉprocessˉx64
         relocations.Add(Relocation(Field, symbolˉindex));
     }
 
+    private static void Emitˉexternalˉjump(
+        X64ˉcodeˉbuilder output,
+        ImmutableArray<Objectˉrelocation>.Builder relocations,
+        uint symbolˉindex)
+    {
+        var Field = output.Emitˉjumpˉplaceholder();
+        relocations.Add(Relocation(Field, symbolˉindex));
+    }
+
     private static Objectˉrelocation Relocation(uint offset, uint symbolˉindex) =>
         new(Objectˉrelocationˉkind.Relativeˉi32, 0, offset, symbolˉindex, -4);
 
@@ -4316,6 +4998,34 @@ public static class Kernelˉprocessˉx64
         output.Emitˉu32(FRAME_BYTES);
         output.Emit(0x41, 0x5F, 0x41, 0x5E, 0x41, 0x5D, 0x41, 0x5C, 0x5F, 0x5E, 0x5D, 0x5B, 0xC3);
     }
+
+    private sealed record Timerˉparticipant(
+        uint Contextˉoffset,
+        uint Recordˉoffset,
+        uint Processˉreference,
+        uint Threadˉid,
+        uint Sentinelˉbase,
+        uint Probeˉoffset,
+        ulong Stackˉpages);
+
+    private sealed record Timerˉcase(
+        uint Tick,
+        uint Switches,
+        uint Cursor,
+        uint Directoryˉresumes,
+        Timerˉparticipant Outgoing,
+        uint Contextˉticks,
+        uint Contextˉdispatches,
+        uint Contextˉresumes,
+        uint Contextˉpreemptions,
+        Timerˉparticipant? Next,
+        uint Nextˉcontextˉstate,
+        uint Nextˉcontextˉticks,
+        uint Nextˉcontextˉdispatches,
+        uint Nextˉcontextˉresumes,
+        uint Nextˉcontextˉpreemptions,
+        uint Nextˉcursor,
+        uint Nextˉdirectoryˉresumes);
 
 
     private static void Verifyˉobject(
@@ -4348,7 +5058,7 @@ public static class Kernelˉprocessˉx64
             !Object.Sections[5].Data.AsSpan().SequenceEqual(resourceˉstore.AsSpan()) ||
             !Object.Sections[6].Data.AsSpan().SequenceEqual(directoryˉsnapshot.AsSpan()) ||
             !Object.Sections[7].Data.AsSpan().SequenceEqual(directoryˉserviceˉimage.AsSpan()) ||
-            Object.Symbols.Length != 18 ||
+            Object.Symbols.Length != 25 ||
             Object.Symbols[2].Name != "Windvale_resource_init_boot" ||
             Object.Symbols[3].Name != "Windvale_resource_init_budget" ||
             Object.Symbols[3].Sectionˉindex != 4 ||
@@ -4361,14 +5071,22 @@ public static class Kernelˉprocessˉx64
             Object.Symbols[7].Name != Kernelˉprocessˉcontract.ENTER_SYMBOL ||
             Object.Symbols[8].Name != Kernelˉprocessˉcontract.EXCEPTION_ENTRY_SYMBOL ||
             Object.Symbols[9].Name != Kernelˉprocessˉcontract.SYSCALL_ENTRY_SYMBOL ||
-            Object.Symbols[10].Name != Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL ||
-            Object.Symbols[11].Name != Kernelˉprocessˉcontract.POLICY_SYMBOL ||
-            Object.Symbols[12].Name != Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL ||
-            Object.Symbols[13].Name != Kernelˉexceptionˉcontract.TERMINAL_SYMBOL ||
-            Object.Symbols[14].Name != Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL ||
-            Object.Symbols[15].Name != Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL ||
-            Object.Symbols[16].Name != Kernelˉprocessˉcontract.EXCEPTION_14_ENTRY_SYMBOL ||
-            Object.Symbols[17].Name != Kernelˉprocessˉcontract.EXCEPTION_6_ENTRY_SYMBOL ||
+            Object.Symbols[10].Name != Kernelˉtimerˉcontract.INTERRUPT_SYMBOL ||
+            Object.Symbols[10].Binding != Objectˉsymbolˉbinding.Export ||
+            Object.Symbols[11].Name != Kernelˉmemoryˉcontract.ALLOCATE_PAGES_SYMBOL ||
+            Object.Symbols[12].Name != Kernelˉprocessˉcontract.POLICY_SYMBOL ||
+            Object.Symbols[13].Name != Kernelˉmemoryˉcontract.RELEASE_TAIL_PAGES_SYMBOL ||
+            Object.Symbols[14].Name != Kernelˉexceptionˉcontract.TERMINAL_SYMBOL ||
+            Object.Symbols[15].Name != Kernelˉpagingˉcontract.PAGE_TABLE_ACTIVATE_SYMBOL ||
+            Object.Symbols[16].Name != Kernelˉprocessˉcontract.EXCEPTION_13_ENTRY_SYMBOL ||
+            Object.Symbols[17].Name != Kernelˉprocessˉcontract.EXCEPTION_14_ENTRY_SYMBOL ||
+            Object.Symbols[18].Name != Kernelˉprocessˉcontract.EXCEPTION_6_ENTRY_SYMBOL ||
+            Object.Symbols[19].Name != Kernelˉtimerˉcontract.ARM_SYMBOL ||
+            Object.Symbols[20].Name != Kernelˉtimerˉcontract.IRQ_ENTRY_SYMBOL ||
+            Object.Symbols[21].Name != Kernelˉtimerˉcontract.READ_CLOCK_SYMBOL ||
+            Object.Symbols[22].Name != Kernelˉtimerˉcontract.REARM_SYMBOL ||
+            Object.Symbols[23].Name != Kernelˉtimerˉcontract.RESUME_SYMBOL ||
+            Object.Symbols[24].Name != Kernelˉtimerˉcontract.STOP_SYMBOL ||
             !Object.Relocations.AsSpan().SequenceEqual(relocations.AsSpan()))
         {
             throw new InvalidOperationException(
@@ -4410,5 +5128,45 @@ public static class Kernelˉprocessˉx64
                 "The process machine seam received a malformed boot-resource service object.");
         }
         return Object.Sections[0].Data;
+    }
+
+    private static void Verifyˉlinkedˉpreemptionˉprobe(
+        ImmutableArray<byte> image,
+        ImmutableArray<byte> objectˉbytes,
+        uint offset)
+    {
+        Objectˉfile Object;
+        try
+        {
+            Object = Objectˉcodec.Readˉandˉverify(objectˉbytes.AsSpan()).Value;
+        }
+        catch (Objectˉexception Exception)
+        {
+            throw new InvalidOperationException(
+                "The process machine seam received an invalid preemption probe object.",
+                Exception);
+        }
+        var Symbol = Object.Symbols.SingleOrDefault(Value =>
+            Value.Name == Kernelˉprocessˉcontract.PREEMPTION_PROBE_SYMBOL &&
+            Value.Binding == Objectˉsymbolˉbinding.Export &&
+            Value.Kind == Objectˉsymbolˉkind.Function);
+        if (Symbol is null ||
+            Symbol.Size != Kernelˉtimerˉcontract.PREEMPTION_PROBE_BYTES ||
+            Symbol.Sectionˉindex >= Object.Sections.Length ||
+            Object.Sections[(int)Symbol.Sectionˉindex].Kind != Objectˉsectionˉkind.Code ||
+            Symbol.Offset > (uint)Object.Sections[(int)Symbol.Sectionˉindex].Data.Length ||
+            Symbol.Size > (uint)Object.Sections[(int)Symbol.Sectionˉindex].Data.Length - Symbol.Offset)
+        {
+            throw new InvalidOperationException(
+                "The process machine seam received a malformed preemption probe object.");
+        }
+        var Probe = Object.Sections[(int)Symbol.Sectionˉindex].Data.AsSpan(
+            (int)Symbol.Offset, (int)Symbol.Size);
+        if (offset > (uint)image.Length || Symbol.Size > (uint)image.Length - offset ||
+            !image.AsSpan((int)offset, (int)Symbol.Size).SequenceEqual(Probe))
+        {
+            throw new InvalidOperationException(
+                "The process machine seam received a changed linked preemption probe.");
+        }
     }
 }

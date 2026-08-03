@@ -23,6 +23,7 @@ public static class Kernelˉprocessˉcontract
     public const string INIT_SERVICE_MAIN_SYMBOL = "Windvale_init_resource_service_main";
     public const string DIRECTORY_SERVICE_ENTRY_SYMBOL = "Windvale_directory_process_user_entry";
     public const string DIRECTORY_SERVICE_MAIN_SYMBOL = "Windvale_directory_process_service_main";
+    public const string PREEMPTION_PROBE_SYMBOL = "Windvale_process_preemption_probe";
     public const string BYTECODE_INTERPRETER_MAIN_SYMBOL = "Windvale_user_bytecode_interpreter_main";
     public const string BOOT_RESOURCE_SERVICE_SYMBOL = "Windvale_os_boot_resource_read_bytes";
     public const string SYSCALL_ENTRY_SYMBOL = "Windvale_kernel_x64_process_syscall";

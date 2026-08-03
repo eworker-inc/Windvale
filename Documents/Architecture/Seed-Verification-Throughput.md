@@ -51,7 +51,7 @@ The next source-level optimization groups intrinsic-call candidates by UTF-8 byt
 
 This is a CPU-throughput trade rather than another allocation reduction. The changed bootstrap source increased source-bindings instructions from 3,722,805,908 to 3,746,501,967, or 0.6%, and allocation traffic from 319.98 to 322.46 GiB, or 0.8%, while replacing expensive candidate text conversions with cheaper length and branch instructions. Runtime byte-value allocation therefore remains the next measured allocation target.
 
-Runtime optimization does not require the entire suite on every edit. Use the focused `bodies, locals` compiler test for the seconds-scale correctness loop, use Development after a coherent batch, run the `golden` area alone with a timing report for occasional performance checkpoints, and reserve Standard plus Qualification for the final candidate:
+Runtime optimization does not require the entire suite on every edit. Use the focused `bodies, locals` compiler test for the seconds-scale correctness loop, use Development after a coherent batch, run the `golden` area alone with a timing report for occasional performance checkpoints, and reserve one final Standard or Qualification gate for the final candidate according to the claim being made:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea compiler -TestFilter 'bodies, locals' -FailFast

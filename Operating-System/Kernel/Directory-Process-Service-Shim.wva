@@ -2,6 +2,7 @@ windvale-assembly 1
 
 symbol local function Windvale_directory_process_build_reply in .text
 symbol export function Windvale_directory_process_user_entry in .text
+symbol export function Windvale_process_preemption_probe in .text
 symbol import function Windvale_directory_process_service_main
 
 section code .text align 16
@@ -222,5 +223,25 @@ return
 label directory_reply_invalid
 move_u32 eax 0
 return
+end define
+
+define Windvale_process_preemption_probe
+move_u32 eax 13057
+move_u32 ebx 13058
+move_u32 ecx 13059
+move_u32 edx 13060
+move_u32 esi 13061
+move_u32 edi 13062
+move_u32 ebp 13063
+move_u32 r8d 13064
+move_u32 r9d 13065
+move_u32 r10d 13066
+move_u32 r11d 13067
+move_u32 r12d 13068
+move_u32 r13d 13069
+move_u32 r14d 13070
+move_u32 r15d 13071
+label preemption_spin
+jump_label preemption_spin
 end define
 end section

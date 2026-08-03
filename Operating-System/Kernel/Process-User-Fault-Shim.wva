@@ -1,6 +1,7 @@
 windvale-assembly 1
 symbol local data Windvale_directory_read_request in .rodata
 symbol local data Windvale_resource_configuration_request in .rodata
+symbol export function Windvale_process_preemption_probe in .text
 symbol export function Windvale_process_user_entry in .text
 symbol import function Windvale_user_bytecode_interpreter_main
 
@@ -155,6 +156,26 @@ syscall
 disable_interrupts
 label resource_reply_failure
 trap
+end define
+
+define Windvale_process_preemption_probe
+move_u32 eax 8705
+move_u32 ebx 8706
+move_u32 ecx 8707
+move_u32 edx 8708
+move_u32 esi 8709
+move_u32 edi 8710
+move_u32 ebp 8711
+move_u32 r8d 8712
+move_u32 r9d 8713
+move_u32 r10d 8714
+move_u32 r11d 8715
+move_u32 r12d 8716
+move_u32 r13d 8717
+move_u32 r14d 8718
+move_u32 r15d 8719
+label preemption_spin
+jump_label preemption_spin
 end define
 
 end section

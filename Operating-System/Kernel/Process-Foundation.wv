@@ -126,6 +126,29 @@ fn Selectˉnextˉrunnable(
     return 0u32;
 }
 
+fn Hasˉpreemptionˉcontract() -> bool {
+    // This is the portable policy half of the first bounded machine proof.
+    // HPET/APIC discovery and context transfer remain privileged WVA seams;
+    // the approximately five-millisecond quantum is private evidence, not a
+    // public timing promise.
+    let Hpetˉclocksource: u32 = 2u32;
+    let Localˉapicˉoneˉshot: u32 = 1u32;
+    let Quantumˉmicroseconds: u32 = 5000u32;
+    let Maximumˉticks: u32 = 4u32;
+    let Expectedˉswitches: u32 = 3u32;
+    let Expectedˉeois: u32 = 4u32;
+    let Expectedˉdirectoryˉresumes: u32 = 1u32;
+
+    if Hpetˉclocksource != 2u32 { return false; }
+    if Localˉapicˉoneˉshot != 1u32 { return false; }
+    if Quantumˉmicroseconds != 5000u32 { return false; }
+    if Maximumˉticks != 4u32 { return false; }
+    if Expectedˉswitches != 3u32 { return false; }
+    if Expectedˉeois != Maximumˉticks { return false; }
+    if Expectedˉdirectoryˉresumes != 1u32 { return false; }
+    return true;
+}
+
 fn Hasˉresourceˉgeneration(
     Generation: u32,
     Historicalˉgrants: u32,
@@ -342,6 +365,7 @@ export fn Main() -> i32 {
     if Selectˉnextˉrunnable(2u32, 5u32, 1u32, 1u32, 2u32, 5u32, 0u32) != 2u32 { return 0; }
     if Selectˉnextˉrunnable(2u32, 5u32, 2u32, 5u32, 2u32, 1u32, 0u32) != 3u32 { return 0; }
     if Selectˉnextˉrunnable(3u32, 3u32, 4u32, 4u32, 2u32, 5u32, 0u32) != 0u32 { return 0; }
+    if !Hasˉpreemptionˉcontract() { return 0; }
 
     let Resourceˉsetˉtoken: u32 = 131073u32;
     let Moduleˉresourceˉid: u32 = 1u32;

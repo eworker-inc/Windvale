@@ -18,11 +18,13 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     ImmutableArray<byte> Initˉserviceˉnativeˉobjectˉbytes,
     ImmutableArray<byte> Initˉserviceˉshimˉobjectˉbytes,
     ImmutableArray<byte> Initˉserviceˉimageˉbytes,
+    uint Initˉpreemptionˉprobeˉoffset,
     ImmutableArray<byte> Initˉserviceˉdigest,
     ImmutableArray<byte> Directoryˉserviceˉmoduleˉbytes,
     ImmutableArray<byte> Directoryˉserviceˉnativeˉobjectˉbytes,
     ImmutableArray<byte> Directoryˉserviceˉshimˉobjectˉbytes,
     ImmutableArray<byte> Directoryˉserviceˉimageˉbytes,
+    uint Directoryˉpreemptionˉprobeˉoffset,
     ImmutableArray<byte> Directoryˉserviceˉdigest,
     ImmutableArray<byte> Interpreterˉmoduleˉbytes,
     ImmutableArray<byte> Interpreterˉnativeˉobjectˉbytes,
@@ -40,6 +42,7 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     ImmutableArray<byte> Directoryˉsnapshotˉdigest,
     ImmutableArray<byte> Clientˉshimˉobjectˉbytes,
     ImmutableArray<byte> Clientˉimageˉbytes,
+    uint Clientˉpreemptionˉprobeˉoffset,
     Kernelˉprocessˉscenario Scenario);
 
 public static class Kernelˉprocessˉimage
@@ -108,6 +111,10 @@ public static class Kernelˉprocessˉimage
             Serviceˉlink,
             "init/resource service",
             Kernelˉprocessˉcontract.INIT_CODE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES);
+        var Initˉpreemptionˉprobeˉoffset = Readˉlinkedˉfunctionˉoffset(
+            Serviceˉlink,
+            Serviceˉassembly.Objectˉbytes,
+            Kernelˉprocessˉcontract.PREEMPTION_PROBE_SYMBOL);
         var Serviceˉdigest = SHA256.HashData(Serviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Serviceˉidentity = Convert.ToHexString(Serviceˉdigest.AsSpan());
         if (!Serviceˉidentity.Equals(
@@ -154,6 +161,10 @@ public static class Kernelˉprocessˉimage
             Directoryˉserviceˉlink,
             "directory process service",
             Kernelˉprocessˉcontract.DIRECTORY_CODE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES);
+        var Directoryˉpreemptionˉprobeˉoffset = Readˉlinkedˉfunctionˉoffset(
+            Directoryˉserviceˉlink,
+            Directoryˉserviceˉassembly.Objectˉbytes,
+            Kernelˉprocessˉcontract.PREEMPTION_PROBE_SYMBOL);
         var Directoryˉserviceˉdigest = SHA256.HashData(
             Directoryˉserviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Directoryˉserviceˉidentity = Convert.ToHexString(
@@ -266,8 +277,12 @@ public static class Kernelˉprocessˉimage
             ],
             new(0, Kernelˉprocessˉcontract.USER_ENTRY_SYMBOL));
         Verifyˉlinkedˉimage(Userˉlink, "bytecode-interpreter client", Kernelˉprocessˉcontract.CLIENT_CODE_BYTES);
-        var Bootˉresourceˉserviceˉoffset = Readˉlinkedˉserviceˉoffset(
+        var Bootˉresourceˉserviceˉoffset = Readˉlinkedˉfunctionˉoffset(
             Userˉlink, Bootˉresourceˉserviceˉobject, BOOT_RESOURCE_SERVICE_SYMBOL);
+        var Clientˉpreemptionˉprobeˉoffset = Readˉlinkedˉfunctionˉoffset(
+            Userˉlink,
+            Userˉassembly.Objectˉbytes,
+            Kernelˉprocessˉcontract.PREEMPTION_PROBE_SYMBOL);
 
         var Admittedˉprogramˉdigest = SHA256.HashData(admission.Embeddedˉmoduleˉbytes.AsSpan()).ToImmutableArray();
         if (!Convert.ToHexString(Admittedˉprogramˉdigest.AsSpan()).Equals(
@@ -299,11 +314,13 @@ public static class Kernelˉprocessˉimage
             Serviceˉobject,
             Serviceˉassembly.Objectˉbytes,
             Serviceˉlink.Imageˉbytes,
+            Initˉpreemptionˉprobeˉoffset,
             Serviceˉdigest,
             Directoryˉserviceˉcompilation.Moduleˉbytes,
             Directoryˉserviceˉobject,
             Directoryˉserviceˉassembly.Objectˉbytes,
             Directoryˉserviceˉlink.Imageˉbytes,
+            Directoryˉpreemptionˉprobeˉoffset,
             Directoryˉserviceˉdigest,
             Interpreterˉcompilation.Moduleˉbytes,
             Interpreterˉobject,
@@ -321,6 +338,7 @@ public static class Kernelˉprocessˉimage
             Directoryˉsnapshotˉdigest,
             Userˉassembly.Objectˉbytes,
             Userˉlink.Imageˉbytes,
+            Clientˉpreemptionˉprobeˉoffset,
             scenario);
     }
 
@@ -435,7 +453,7 @@ public static class Kernelˉprocessˉimage
                 Profile: Moduleˉprofile.Portable,
                 Capabilities.Length: 0,
                 Data.Length: 14,
-                Functions.Length: 10,
+                Functions.Length: 11,
                 Exports.Length: 1,
                 Types.Length: 0,
             } ||
@@ -541,11 +559,18 @@ public static class Kernelˉprocessˉimage
             Symbol.Name == mainˉsymbol &&
             Symbol.Binding == Objectˉsymbolˉbinding.Import &&
             Symbol.Kind == Objectˉsymbolˉkind.Function);
+        var Preemptionˉprobe = Object.Symbols.SingleOrDefault(Symbol =>
+            Symbol.Name == Kernelˉprocessˉcontract.PREEMPTION_PROBE_SYMBOL &&
+            Symbol.Binding == Objectˉsymbolˉbinding.Export &&
+            Symbol.Kind == Objectˉsymbolˉkind.Function);
         if (Codeˉsections.Length != 1 ||
             Object.Sections.Any(Section => Section.Kind is not
                 (Objectˉsectionˉkind.Code or Objectˉsectionˉkind.Readˉonlyˉdata)) ||
             Entry is null || Entry.Sectionˉindex != Codeˉsections[0].Index || Entry.Offset != 0 ||
-            Main is null || Object.Relocations.IsEmpty ||
+            Main is null || Preemptionˉprobe is null ||
+            Preemptionˉprobe.Sectionˉindex != Codeˉsections[0].Index ||
+            Preemptionˉprobe.Size != Kernelˉtimerˉcontract.PREEMPTION_PROBE_BYTES ||
+            Object.Relocations.IsEmpty ||
             Countˉsequence(Codeˉsections[0].Section.Data.AsSpan(), [0x0F, 0x05]) != expectedˉsyscalls)
         {
             throw new InvalidOperationException("A process WVA shim violated its fixed syscall contract.");
@@ -714,7 +739,7 @@ public static class Kernelˉprocessˉimage
         return Output.Build();
     }
 
-    private static uint Readˉlinkedˉserviceˉoffset(
+    private static uint Readˉlinkedˉfunctionˉoffset(
         Linkˉresult link,
         ImmutableArray<byte> objectˉbytes,
         string symbol)
@@ -725,7 +750,7 @@ public static class Kernelˉprocessˉimage
         if (Markerˉoffset < 0)
         {
             throw new InvalidOperationException(
-                "The linked client image is missing its boot-resource service leaf.");
+                $"The linked image is missing function '{symbol}'.");
         }
         var Addressˉstart = Markerˉoffset + Marker.Length;
         var Addressˉend = Map.IndexOf(' ', Addressˉstart);
@@ -734,15 +759,30 @@ public static class Kernelˉprocessˉimage
             Address > (uint)link.Imageˉbytes.Length)
         {
             throw new InvalidOperationException(
-                "The linked boot-resource service address is malformed or outside the client image.");
+                $"The linked function '{symbol}' has a malformed or out-of-range address.");
         }
         var Object = Objectˉcodec.Readˉandˉverify(objectˉbytes.AsSpan()).Value;
-        var Leaf = Object.Sections[0].Data;
-        if ((uint)Leaf.Length > (uint)link.Imageˉbytes.Length - Address ||
-            !link.Imageˉbytes.AsSpan((int)Address, Leaf.Length).SequenceEqual(Leaf.AsSpan()))
+        var Function = Object.Symbols.SingleOrDefault(Symbol =>
+            Symbol.Name == symbol &&
+            Symbol.Binding == Objectˉsymbolˉbinding.Export &&
+            Symbol.Kind == Objectˉsymbolˉkind.Function);
+        if (Function is null || Function.Sectionˉindex >= Object.Sections.Length ||
+            Object.Sections[(int)Function.Sectionˉindex].Kind != Objectˉsectionˉkind.Code ||
+            Function.Size == 0 ||
+            Function.Offset > (uint)Object.Sections[(int)Function.Sectionˉindex].Data.Length ||
+            Function.Size > (uint)Object.Sections[(int)Function.Sectionˉindex].Data.Length -
+                Function.Offset)
         {
             throw new InvalidOperationException(
-                "The linked boot-resource service bytes do not match their verified WVA leaf.");
+                $"The function '{symbol}' is not one exact exported code range.");
+        }
+        var Leaf = Object.Sections[(int)Function.Sectionˉindex].Data.AsSpan(
+            (int)Function.Offset, (int)Function.Size);
+        if ((uint)Leaf.Length > (uint)link.Imageˉbytes.Length - Address ||
+            !link.Imageˉbytes.AsSpan((int)Address, Leaf.Length).SequenceEqual(Leaf))
+        {
+            throw new InvalidOperationException(
+                $"The linked function '{symbol}' does not match its verified WVA bytes.");
         }
         return Address;
     }

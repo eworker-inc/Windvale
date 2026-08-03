@@ -28,7 +28,7 @@ internal static class Program
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_ASSEMBLER_CORE_SHA256 = "99c5b138eb42523bb5e653b9fe3fb0fd37950890f1f5c3fb2ac47b998dbc33ae";
+    private const string WVA_ASSEMBLER_CORE_SHA256 = "e69b4ddf632ab21aba06aa79ad7c2e6c0d1f80f684ad904d9f80e12a7f1f783f";
     private const string WVLINK_CORE_SHA256 = "091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
@@ -242,6 +242,11 @@ internal static class Program
         enable_page_protection
         activate_page_table
         syscall
+        cpuid
+        read_tsc
+        read_msr
+        swap_gs
+        interrupt_return
         move_u32 edx 1540
         move_u32 eax 8192
         out_u16
@@ -15683,12 +15688,14 @@ internal static class Program
                 0xB9, 0x80, 0x00, 0x00, 0xC0, 0x0F, 0x32, 0x0F, 0xBA, 0xE8, 0x0B,
                 0x0F, 0x30, 0x0F, 0x20, 0xC0, 0x48, 0x0F, 0xBA, 0xE8, 0x10,
                 0x0F, 0x22, 0xC0, 0x0F, 0x22, 0xD8, 0x0F, 0x20, 0xD8, 0x0F, 0x05,
+                0x0F, 0xA2, 0x0F, 0x31, 0x0F, 0x32,
+                0x0F, 0x01, 0xF8, 0x48, 0xCF,
                 0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
                 0x66, 0xEF, 0xFA, 0xF4, 0xE9, 0x00, 0x00, 0x00, 0x00],
             Mechanics.Sections[0].Data);
-        Equal(56u, Mechanics.Symbols[0].Size);
+        Equal(67u, Mechanics.Symbols[0].Size);
         Equal(
-            new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 52, 0, -4),
+            new Objectˉrelocation(Objectˉrelocationˉkind.Relativeˉi32, 0, 63, 0, -4),
             Mechanics.Relocations.Single());
     }
 
@@ -16203,6 +16210,51 @@ internal static class Program
             section code .text align 16
             define Main
             activate_page_table rax
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            cpuid eax
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            read_tsc 1
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            read_msr ecx
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            swap_gs eax
+            end define
+            end section
+            """, "WVA1003");
+        Hasˉassemblyˉdiagnostic("""
+            windvale-assembly 1
+            symbol export function Main in .text
+            section code .text align 16
+            define Main
+            interrupt_return 1
             end define
             end section
             """, "WVA1003");
@@ -17254,6 +17306,8 @@ internal static class Program
                 0xB9, 0x80, 0x00, 0x00, 0xC0, 0x0F, 0x32, 0x0F, 0xBA, 0xE8, 0x0B,
                 0x0F, 0x30, 0x0F, 0x20, 0xC0, 0x48, 0x0F, 0xBA, 0xE8, 0x10,
                 0x0F, 0x22, 0xC0, 0x0F, 0x22, 0xD8, 0x0F, 0x20, 0xD8, 0x0F, 0x05,
+                0x0F, 0xA2, 0x0F, 0x31, 0x0F, 0x32,
+                0x0F, 0x01, 0xF8, 0x48, 0xCF,
                 0xBA, 0x04, 0x06, 0x00, 0x00, 0xB8, 0x00, 0x20, 0x00, 0x00,
                 0x66, 0xEF, 0xFA, 0xF4, 0xE9, 0x00, 0x00, 0x00, 0x00],
             Mechanicsˉobject.Sections[0].Data);
@@ -17846,6 +17900,51 @@ internal static class Program
                 section code .text align 16
                 define Main
                 activate_page_table rax
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                cpuid eax
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                read_tsc 1
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                read_msr ecx
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                swap_gs eax
+                end define
+                end section
+                """, "WVA1003"),
+            ("""
+                windvale-assembly 1
+                symbol export function Main in .text
+                section code .text align 16
+                define Main
+                interrupt_return 1
                 end define
                 end section
                 """, "WVA1003"),
