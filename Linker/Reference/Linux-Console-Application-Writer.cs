@@ -53,7 +53,24 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             Consoleˉapplicationˉtarget.Linuxˉx64,
             nativeˉimage.Length,
             nativeˉentryˉoffset);
-        var Result = new byte[Layout.Applicationˉbytes];
+        var Recoveryˉimage = Buildˉrecoveryˉimage(
+            nativeˉimage,
+            nativeˉentryˉoffset,
+            Layout);
+        return Consoleˉapplicationˉconstruction.Construct(
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            nativeˉimage,
+            nativeˉentryˉoffset,
+            Layout,
+            Recoveryˉimage);
+    }
+
+    internal static byte[] Buildˉrecoveryˉimage(
+        ReadOnlySpan<byte> nativeˉimage,
+        uint nativeˉentryˉoffset,
+        Consoleˉapplicationˉplan layout)
+    {
+        var Result = new byte[layout.Applicationˉbytes];
 
         ReadOnlySpan<byte> Identification =
         [
@@ -83,8 +100,8 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             flags: 4,
             fileˉoffset: 0,
             virtualˉaddress: 0,
-            fileˉbytes: checked((ulong)Layout.Headerˉbytes),
-            memoryˉbytes: checked((ulong)Layout.Headerˉbytes),
+            fileˉbytes: checked((ulong)layout.Headerˉbytes),
+            memoryˉbytes: checked((ulong)layout.Headerˉbytes),
             alignment: Linuxˉconsoleˉapplicationˉcontract.HEADER_BYTES);
 
         var Textˉload = Headerˉload + PROGRAM_HEADER_BYTES;
@@ -93,10 +110,10 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             Textˉload,
             type: 1,
             flags: 5,
-            fileˉoffset: checked((ulong)Layout.Textˉfileˉoffset),
-            virtualˉaddress: Layout.Textˉvirtualˉaddress,
-            fileˉbytes: Layout.Textˉfileˉbytes,
-            memoryˉbytes: Layout.Textˉvirtualˉbytes,
+            fileˉoffset: checked((ulong)layout.Textˉfileˉoffset),
+            virtualˉaddress: layout.Textˉvirtualˉaddress,
+            fileˉbytes: layout.Textˉfileˉbytes,
+            memoryˉbytes: layout.Textˉvirtualˉbytes,
             alignment: Linuxˉconsoleˉapplicationˉcontract.HEADER_BYTES);
 
         var Dataˉload = Textˉload + PROGRAM_HEADER_BYTES;
@@ -105,10 +122,10 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             Dataˉload,
             type: 1,
             flags: 6,
-            fileˉoffset: Layout.Dataˉfileˉoffset,
-            virtualˉaddress: Layout.Dataˉvirtualˉaddress,
-            fileˉbytes: Layout.Dataˉfileˉbytes,
-            memoryˉbytes: Layout.Dataˉvirtualˉbytes,
+            fileˉoffset: layout.Dataˉfileˉoffset,
+            virtualˉaddress: layout.Dataˉvirtualˉaddress,
+            fileˉbytes: layout.Dataˉfileˉbytes,
+            memoryˉbytes: layout.Dataˉvirtualˉbytes,
             alignment: Linuxˉconsoleˉapplicationˉcontract.HEADER_BYTES);
 
         var Note = Dataˉload + PROGRAM_HEADER_BYTES;
@@ -117,10 +134,10 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             Note,
             type: 4,
             flags: 4,
-            fileˉoffset: Layout.Metadataˉfileˉoffset,
-            virtualˉaddress: Layout.Metadataˉvirtualˉaddress,
-            fileˉbytes: Layout.Metadataˉfileˉbytes,
-            memoryˉbytes: Layout.Metadataˉvirtualˉbytes,
+            fileˉoffset: layout.Metadataˉfileˉoffset,
+            virtualˉaddress: layout.Metadataˉvirtualˉaddress,
+            fileˉbytes: layout.Metadataˉfileˉbytes,
+            memoryˉbytes: layout.Metadataˉvirtualˉbytes,
             alignment: 4);
 
         var Stack = Note + PROGRAM_HEADER_BYTES;
@@ -135,7 +152,7 @@ public static class Linuxˉconsoleˉapplicationˉwriter
             memoryˉbytes: Linuxˉconsoleˉapplicationˉcontract.STACK_BYTES,
             alignment: 16);
 
-        var Metadataˉoffset = checked((int)Layout.Metadataˉfileˉoffset);
+        var Metadataˉoffset = checked((int)layout.Metadataˉfileˉoffset);
         Writeˉu32(Result, Metadataˉoffset + 0, 9);
         Writeˉu32(Result, Metadataˉoffset + 4, sizeof(uint));
         Writeˉu32(Result, Metadataˉoffset + 8, 1);
@@ -148,14 +165,14 @@ public static class Linuxˉconsoleˉapplicationˉwriter
 
         Writeˉstartup(
             Result.AsSpan(
-                Layout.Textˉfileˉoffset,
-                Layout.Startupˉbytes),
-            Layout.Dataˉvirtualˉaddress,
+                layout.Textˉfileˉoffset,
+                layout.Startupˉbytes),
+            layout.Dataˉvirtualˉaddress,
             nativeˉentryˉoffset);
         nativeˉimage.CopyTo(Result.AsSpan(
-            Layout.Textˉfileˉoffset + Layout.Nativeˉimageˉoffset));
+            layout.Textˉfileˉoffset + layout.Nativeˉimageˉoffset));
 
-        var Contextˉoffset = checked((int)Layout.Dataˉfileˉoffset);
+        var Contextˉoffset = checked((int)layout.Dataˉfileˉoffset);
         Writeˉu32(Result, Contextˉoffset + 0, Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
         Writeˉu32(Result, Contextˉoffset + 4, Nativeˉexecutionˉcontextˉcontract.SIZE);
         Writeˉu64(Result, Contextˉoffset + 8, checked((ulong)Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS));

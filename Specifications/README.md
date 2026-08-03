@@ -53,6 +53,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Windows x64 console application target](Windvale-Windows-Console-Application.md)
 - [Linux x64 console application target](Windvale-Linux-Console-Application.md)
 - [Portable console-application layout plan](Windvale-Console-Application-Plan.md)
+- [Portable console-application construction recipe](Windvale-Console-Application-Construction.md)
 - [WVA native stencils](Wva-Native-Stencil.md)
 - [Native publication plan](Windvale-Native-Publication-Plan.md)
 - [Native publication lifetime](Windvale-Native-Publication-Lifetime.md)

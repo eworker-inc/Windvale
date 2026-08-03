@@ -1,0 +1,565 @@
+module Linkerˉconsoleˉapplicationˉconstruction profile portable;
+
+import Foundationˉbyteˉconstruction;
+import Linkerˉconsoleˉapplicationˉplan;
+
+export fn Consoleˉapplicationˉconstructionˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Consoleˉapplicationˉconstructionˉzeros(Count: u32) -> bytes {
+    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(0u8, Count);
+    return Result.Value;
+}
+
+export fn Consoleˉapplicationˉconstructionˉreplace(
+    Input: bytes,
+    Offset: u32,
+    Removedˉbytes: u32,
+    Value: bytes
+) -> bytes {
+    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        Input, Offset, Removedˉbytes, Value
+    );
+    return Result.Value;
+}
+
+export fn Consoleˉapplicationˉconstructionˉpatchˉu8(
+    Input: bytes,
+    Offset: u32,
+    Value: u8
+) -> bytes {
+    return Consoleˉapplicationˉconstructionˉreplace(
+        Input, Offset, 1u32, Bytesˉfromˉu8(Value)
+    );
+}
+
+export fn Consoleˉapplicationˉconstructionˉpatchˉu16(
+    Input: bytes,
+    Offset: u32,
+    Value: u32
+) -> bytes {
+    return Consoleˉapplicationˉconstructionˉreplace(
+        Input, Offset, 2u32, Bytesˉfromˉu16ˉlittle(Value)
+    );
+}
+
+export fn Consoleˉapplicationˉconstructionˉpatchˉu32(
+    Input: bytes,
+    Offset: u32,
+    Value: u32
+) -> bytes {
+    return Consoleˉapplicationˉconstructionˉreplace(
+        Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
+    );
+}
+
+export fn Consoleˉapplicationˉconstructionˉpatchˉu64(
+    Input: bytes,
+    Offset: u32,
+    Low: u32,
+    High: u32
+) -> bytes {
+    var Result: bytes = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Input, Offset, Low
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, Offset + 4u32, High
+    );
+    return Result;
+}
+
+export fn Consoleˉapplicationˉconstructionˉappendˉu32(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Consoleˉapplicationˉconstructionˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Target: u32,
+    Applicationˉbytes: u32,
+    Nativeˉimageˉbytes: u32,
+    Nativeˉentryˉoffset: u32,
+    Segmentˉcount: u32
+) -> bytes {
+    var Result: bytes = Consoleˉapplicationˉconstructionˉempty(Input);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1128486487u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Totalˉbytes);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Status);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Failureˉoffset);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Target);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Applicationˉbytes);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉimageˉbytes);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉentryˉoffset);
+    return Consoleˉapplicationˉconstructionˉappendˉu32(Result, Segmentˉcount);
+}
+
+export fn Consoleˉapplicationˉconstructionˉsegment(
+    Input: bytes,
+    Kind: u32,
+    Offset: u32,
+    Length: u32
+) -> bytes {
+    var Result: bytes = Consoleˉapplicationˉconstructionˉappendˉu32(Input, Kind);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Offset);
+    return Consoleˉapplicationˉconstructionˉappendˉu32(Result, Length);
+}
+
+export fn Consoleˉapplicationˉconstructionˉcontext() -> bytes {
+    var Result: bytes = Consoleˉapplicationˉconstructionˉzeros(112u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 0u32, 7u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 4u32, 112u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, 8u32, 1000000u32, 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, 16u32, 1024u32, 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 40u32, 2097152u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 56u32, 16777216u32
+    );
+    return Result;
+}
+
+export fn Consoleˉapplicationˉconstructionˉwindowsˉstartup(
+    Plan: bytes
+) -> bytes {
+    let Textˉaddress: u32 = Bytesˉreadˉu32ˉlittle(Plan, 36u32);
+    let Nativeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan, 44u32);
+    let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Plan, 52u32);
+    let Dataˉaddress: u32 = Bytesˉreadˉu32ˉlittle(Plan, 72u32);
+    var Result: bytes = Consoleˉapplicationˉconstructionˉempty(Plan);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 686588232u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1207959552u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 5517u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2370306048u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 5u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2223589376u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 8226u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 93145088u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 0u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 579111240u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 48u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1237922120u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 827183241u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 59593u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2303197184u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 3938535618u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 265454880u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 3205u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 4294476032u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 251658240u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1414u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 112640u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2168979456u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 10436u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(49920u32));
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 10u32, Dataˉaddress - (Textˉaddress + 14u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 17u32, Dataˉaddress + 112u32 - (Textˉaddress + 21u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result,
+        32u32,
+        Dataˉaddress + 112u32 + 2097152u32 - (Textˉaddress + 36u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result,
+        54u32,
+        Textˉaddress + Nativeˉoffset + Nativeˉentry - (Textˉaddress + 58u32)
+    );
+    return Result;
+}
+
+export fn Consoleˉapplicationˉconstructionˉwindowsˉheader(
+    Plan: bytes
+) -> bytes {
+    let Textˉname: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(2019914798u32), Bytesˉfromˉu8(116u8)
+    );
+    let Dataˉname: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(1952539694u32), Bytesˉfromˉu8(97u8)
+    );
+    let Relocationˉname: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(1818587694u32),
+        Bytesˉfromˉu16ˉlittle(25455u32)
+    );
+    var Result: bytes = Consoleˉapplicationˉconstructionˉzeros(512u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 0u32, 23117u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 60u32, 128u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 128u32, 17744u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 132u32, 34404u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 134u32, 3u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 148u32, 240u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 150u32, 34u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 152u32, 523u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu8(Result, 154u32, 1u8);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 156u32, Bytesˉreadˉu32ˉlittle(Plan, 64u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result,
+        160u32,
+        Bytesˉreadˉu32ˉlittle(Plan, 76u32) +
+            Bytesˉreadˉu32ˉlittle(Plan, 88u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result,
+        164u32,
+        Bytesˉreadˉu32ˉlittle(Plan, 80u32) -
+            Bytesˉreadˉu32ˉlittle(Plan, 76u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 168u32, 4096u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 172u32, 4096u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, 176u32, 1073741824u32, 1u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 184u32, 4096u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 188u32, 512u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 192u32, 6u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 200u32, 6u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 208u32, Bytesˉreadˉu32ˉlittle(Plan, 100u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 212u32, Bytesˉreadˉu32ˉlittle(Plan, 28u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 220u32, 3u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 222u32, 352u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, 224u32, 67108864u32, 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, 232u32, 65536u32, 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, 240u32, 1048576u32, 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, 248u32, 4096u32, 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 260u32, 16u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 304u32, Bytesˉreadˉu32ˉlittle(Plan, 92u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 308u32, Bytesˉreadˉu32ˉlittle(Plan, 96u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉreplace(
+        Result, 392u32, 5u32, Textˉname
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 400u32, Bytesˉreadˉu32ˉlittle(Plan, 60u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 404u32, Bytesˉreadˉu32ˉlittle(Plan, 36u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 408u32, Bytesˉreadˉu32ˉlittle(Plan, 64u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 412u32, Bytesˉreadˉu32ˉlittle(Plan, 32u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 428u32, 1610612768u32);
+    Result = Consoleˉapplicationˉconstructionˉreplace(
+        Result, 432u32, 5u32, Dataˉname
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 440u32, Bytesˉreadˉu32ˉlittle(Plan, 80u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 444u32, Bytesˉreadˉu32ˉlittle(Plan, 72u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 448u32, Bytesˉreadˉu32ˉlittle(Plan, 76u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 452u32, Bytesˉreadˉu32ˉlittle(Plan, 68u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 468u32, 3221225536u32);
+    Result = Consoleˉapplicationˉconstructionˉreplace(
+        Result, 472u32, 6u32, Relocationˉname
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 480u32, Bytesˉreadˉu32ˉlittle(Plan, 96u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 484u32, Bytesˉreadˉu32ˉlittle(Plan, 92u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 488u32, Bytesˉreadˉu32ˉlittle(Plan, 88u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 492u32, Bytesˉreadˉu32ˉlittle(Plan, 84u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 508u32, 1107296320u32);
+    return Result;
+}
+
+export fn Consoleˉapplicationˉconstructionˉwindows(
+    Input: bytes,
+    Plan: bytes
+) -> bytes {
+    let Applicationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 24u32);
+    let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 48u32);
+    let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Plan, 52u32);
+    let Textˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan, 32u32);
+    let Nativeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan, 44u32);
+    let Dataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan, 68u32);
+    let Metadataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan, 84u32);
+    let Header: bytes = Consoleˉapplicationˉconstructionˉwindowsˉheader(Plan);
+    let Startup: bytes = Consoleˉapplicationˉconstructionˉwindowsˉstartup(Plan);
+    let Context: bytes = Consoleˉapplicationˉconstructionˉcontext();
+    var Metadata: bytes = Consoleˉapplicationˉconstructionˉzeros(12u32);
+    Metadata = Consoleˉapplicationˉconstructionˉpatchˉu32(Metadata, 0u32, 4096u32);
+    Metadata = Consoleˉapplicationˉconstructionˉpatchˉu32(Metadata, 4u32, 12u32);
+    var Result: bytes = Consoleˉapplicationˉconstructionˉheader(
+        Input, 834u32, 0u32, 32u32, 1u32,
+        Applicationˉbytes, Nativeˉbytes, Nativeˉentry, 5u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉsegment(Result, 1u32, 0u32, 512u32);
+    Result = Consoleˉapplicationˉconstructionˉsegment(Result, 1u32, Textˉoffset, 98u32);
+    Result = Consoleˉapplicationˉconstructionˉsegment(
+        Result, 2u32, Textˉoffset + Nativeˉoffset, Nativeˉbytes
+    );
+    Result = Consoleˉapplicationˉconstructionˉsegment(Result, 1u32, Dataˉoffset, 112u32);
+    Result = Consoleˉapplicationˉconstructionˉsegment(Result, 1u32, Metadataˉoffset, 12u32);
+    Result = Bytesˉconcat(Result, Header);
+    Result = Bytesˉconcat(Result, Startup);
+    Result = Bytesˉconcat(Result, Context);
+    return Bytesˉconcat(Result, Metadata);
+}
+
+export fn Consoleˉapplicationˉconstructionˉlinuxˉprogramˉheader(
+    Input: bytes,
+    Offset: u32,
+    Type: u32,
+    Flags: u32,
+    Fileˉoffset: u32,
+    Virtualˉaddress: u32,
+    Fileˉbytes: u32,
+    Memoryˉbytes: u32,
+    Alignment: u32
+) -> bytes {
+    var Result: bytes = Consoleˉapplicationˉconstructionˉpatchˉu32(Input, Offset, Type);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, Offset + 4u32, Flags);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, Offset + 8u32, Fileˉoffset, 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, Offset + 16u32, Virtualˉaddress, 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, Offset + 32u32, Fileˉbytes, 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, Offset + 40u32, Memoryˉbytes, 0u32
+    );
+    return Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, Offset + 48u32, Alignment, 0u32
+    );
+}
+
+export fn Consoleˉapplicationˉconstructionˉlinuxˉheader(Plan: bytes) -> bytes {
+    var Identification: bytes = Consoleˉapplicationˉconstructionˉempty(Plan);
+    Identification = Consoleˉapplicationˉconstructionˉappendˉu32(
+        Identification, 1179403647u32
+    );
+    Identification = Consoleˉapplicationˉconstructionˉappendˉu32(
+        Identification, 65794u32
+    );
+    Identification = Consoleˉapplicationˉconstructionˉappendˉu32(
+        Identification, 0u32
+    );
+    Identification = Consoleˉapplicationˉconstructionˉappendˉu32(
+        Identification, 0u32
+    );
+    var Noteˉname: bytes = Consoleˉapplicationˉconstructionˉempty(Plan);
+    Noteˉname = Consoleˉapplicationˉconstructionˉappendˉu32(
+        Noteˉname, 1684957527u32
+    );
+    Noteˉname = Consoleˉapplicationˉconstructionˉappendˉu32(
+        Noteˉname, 1701601654u32
+    );
+    Noteˉname = Bytesˉconcat(Noteˉname, Bytesˉfromˉu8(0u8));
+    var Result: bytes = Consoleˉapplicationˉconstructionˉzeros(4096u32);
+    Result = Consoleˉapplicationˉconstructionˉreplace(
+        Result, 0u32, 16u32, Identification
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 16u32, 3u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 18u32, 62u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 20u32, 1u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(
+        Result, 24u32, Bytesˉreadˉu32ˉlittle(Plan, 36u32), 0u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu64(Result, 32u32, 64u32, 0u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 52u32, 64u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 54u32, 56u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 56u32, 5u32);
+    Result = Consoleˉapplicationˉconstructionˉlinuxˉprogramˉheader(
+        Result, 64u32, 1u32, 4u32, 0u32, 0u32,
+        Bytesˉreadˉu32ˉlittle(Plan, 28u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 28u32),
+        4096u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉlinuxˉprogramˉheader(
+        Result, 120u32, 1u32, 5u32,
+        Bytesˉreadˉu32ˉlittle(Plan, 32u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 36u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 64u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 60u32),
+        4096u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉlinuxˉprogramˉheader(
+        Result, 176u32, 1u32, 6u32,
+        Bytesˉreadˉu32ˉlittle(Plan, 68u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 72u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 76u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 80u32),
+        4096u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉlinuxˉprogramˉheader(
+        Result, 232u32, 4u32, 4u32,
+        Bytesˉreadˉu32ˉlittle(Plan, 84u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 92u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 88u32),
+        Bytesˉreadˉu32ˉlittle(Plan, 96u32),
+        4u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉlinuxˉprogramˉheader(
+        Result, 288u32, 1685382481u32, 6u32,
+        0u32, 0u32, 0u32, 67108864u32, 16u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 384u32, 9u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 388u32, 4u32);
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 392u32, 1u32);
+    Result = Consoleˉapplicationˉconstructionˉreplace(
+        Result, 396u32, 9u32, Noteˉname
+    );
+    return Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 408u32, 1u32);
+}
+
+export fn Consoleˉapplicationˉconstructionˉlinuxˉstartup(Plan: bytes) -> bytes {
+    let Textˉaddress: u32 = Bytesˉreadˉu32ˉlittle(Plan, 36u32);
+    let Nativeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan, 44u32);
+    let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Plan, 52u32);
+    let Dataˉaddress: u32 = Bytesˉreadˉu32ˉlittle(Plan, 72u32);
+    var Result: bytes = Consoleˉapplicationˉconstructionˉempty(Plan);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 12517169u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 3120824320u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 3u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2275905u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 827129858u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 3900787136u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 3100193093u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 9u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2168980751u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 4293919224u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1552093183u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1207959552u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2169029769u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 196u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 361580548u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 0u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1222019400u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1421u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2303197184u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2105988u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2370306048u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 5u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2223589376u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 12322u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 838807808u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 3224454601u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 3905499461u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 0u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1220708680u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2233526977u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 210046930u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 2164260864u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 65528u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 92671744u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 3087007744u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1018742665u32);
+    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 251658240u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(52229u32));
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 64u32, Dataˉaddress - (Textˉaddress + 68u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result, 74u32, Dataˉaddress + 112u32 - (Textˉaddress + 78u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result,
+        89u32,
+        Dataˉaddress + 112u32 + 2097152u32 - (Textˉaddress + 93u32)
+    );
+    Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
+        Result,
+        112u32,
+        Textˉaddress + Nativeˉoffset + Nativeˉentry - (Textˉaddress + 116u32)
+    );
+    return Result;
+}
+
+export fn Consoleˉapplicationˉconstructionˉlinux(
+    Input: bytes,
+    Plan: bytes
+) -> bytes {
+    let Applicationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 24u32);
+    let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 48u32);
+    let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Plan, 52u32);
+    let Textˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan, 32u32);
+    let Nativeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan, 44u32);
+    let Dataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan, 68u32);
+    let Header: bytes = Consoleˉapplicationˉconstructionˉlinuxˉheader(Plan);
+    let Startup: bytes = Consoleˉapplicationˉconstructionˉlinuxˉstartup(Plan);
+    let Context: bytes = Consoleˉapplicationˉconstructionˉcontext();
+    var Result: bytes = Consoleˉapplicationˉconstructionˉheader(
+        Input, 4454u32, 0u32, 32u32, 2u32,
+        Applicationˉbytes, Nativeˉbytes, Nativeˉentry, 4u32
+    );
+    Result = Consoleˉapplicationˉconstructionˉsegment(Result, 1u32, 0u32, 4096u32);
+    Result = Consoleˉapplicationˉconstructionˉsegment(Result, 1u32, Textˉoffset, 158u32);
+    Result = Consoleˉapplicationˉconstructionˉsegment(
+        Result, 2u32, Textˉoffset + Nativeˉoffset, Nativeˉbytes
+    );
+    Result = Consoleˉapplicationˉconstructionˉsegment(Result, 1u32, Dataˉoffset, 112u32);
+    Result = Bytesˉconcat(Result, Header);
+    Result = Bytesˉconcat(Result, Startup);
+    return Bytesˉconcat(Result, Context);
+}
+
+export fn Consoleˉapplicationˉconstruction(Input: bytes) -> bytes {
+    let Planned: Consoleˉapplicationˉplanˉresult = Consoleˉapplicationˉplan(Input);
+    if Planned.Status != Consoleˉapplicationˉplanˉstatus.Valid {
+        return Consoleˉapplicationˉconstructionˉheader(
+            Input,
+            40u32,
+            Consoleˉapplicationˉplanˉstatusˉvalue(Planned.Status),
+            Planned.Failureˉoffset,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Planned.Value, 20u32) == 1u32 {
+        return Consoleˉapplicationˉconstructionˉwindows(Input, Planned.Value);
+    }
+    return Consoleˉapplicationˉconstructionˉlinux(Input, Planned.Value);
+}

@@ -37,6 +37,8 @@ internal static class Program
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "7fe718d644e426b9a90e3bd1dcc51c4e1bb1ac4af439cd4bbcda2cf7d01f276a";
     private const string CONSOLE_APPLICATION_PLAN_BRIDGE_SHA256 = "a4421adf6e46f31a5096099b1b164ea93901e97a66ff86b9b5b80ba5e753e790";
+    private const string CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256 = "80684e78839f0001950a7b65fbfce4ec79db81f3c089dc74df00fcde1707aa88";
+    private const string CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SHA256 = "43f1537c4c4038824512972173e0a5c8acc4e74710d315a5b7498a6dae668bb2";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
@@ -744,6 +746,12 @@ internal static class Program
     private static readonly string CONSOLE_APPLICATION_PLAN_BRIDGE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Console-Application-Plan-Bridge.wv");
 
+    private static readonly string CONSOLE_APPLICATION_CONSTRUCTION_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Console-Application-Construction-Core.wv");
+
+    private static readonly string CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Console-Application-Construction-Bridge.wv");
+
     private static readonly string WVA_ASSEMBLER_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wva-Assembler-Core.wv");
 
@@ -826,7 +834,7 @@ internal static class Program
         new("shared x86-64 backend agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉbackendˉconstantˉagrees),
         new("portable Windvale emits a deterministic Windows x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windowsˉconsoleˉapplicationˉruns),
         new("portable Windvale emits a deterministic Linux x64 console executable", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Linuxˉconsoleˉapplicationˉruns),
-        new("Windvale owns bounded Windows and Linux console-application layouts", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉconsoleˉapplicationˉlayoutˉruns),
+        new("Windvale owns bounded Windows and Linux console-application layouts and construction", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉconsoleˉapplicationˉlayoutˉruns),
         new("native console application publication is atomic", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic),
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),
@@ -2839,6 +2847,75 @@ internal static class Program
             Valueˉtype.Bytes,
             Verifiedˉbridge.Module.Functions[Main.Targetˉindex].Returnˉtype.Kind);
 
+        var Constructionˉcore = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Linker/Windvale/Console-Application-Construction-Core.wv",
+                CONSOLE_APPLICATION_CONSTRUCTION_CORE_SOURCE),
+            [
+                new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                new(
+                    "Linker/Windvale/Console-Application-Plan-Core.wv",
+                    CONSOLE_APPLICATION_PLAN_CORE_SOURCE),
+            ]);
+        True(
+            Constructionˉcore.Success,
+            "The Windvale console-application construction core did not compile: " +
+                string.Join(" | ", Constructionˉcore.Diagnostics));
+        Equal(31_022, Constructionˉcore.Moduleˉbytes.Length);
+        Equal(
+            CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Constructionˉcore.Moduleˉbytes.AsSpan()));
+
+        var Constructionˉbridge = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Linker/Windvale/Console-Application-Construction-Bridge.wv",
+                CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SOURCE),
+            [
+                new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                new(
+                    "Linker/Windvale/Console-Application-Plan-Core.wv",
+                    CONSOLE_APPLICATION_PLAN_CORE_SOURCE),
+                new(
+                    "Linker/Windvale/Console-Application-Construction-Core.wv",
+                    CONSOLE_APPLICATION_CONSTRUCTION_CORE_SOURCE),
+            ]);
+        True(
+            Constructionˉbridge.Success,
+            "The Windvale console-application construction bridge did not compile: " +
+                string.Join(" | ", Constructionˉbridge.Diagnostics));
+        Equal(
+            Consoleˉapplicationˉconstruction.CONSTRUCTOR_CANONICAL_SIZE,
+            Constructionˉbridge.Moduleˉbytes.Length);
+        Equal(
+            CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Constructionˉbridge.Moduleˉbytes.AsSpan()));
+        Equal(
+            Consoleˉapplicationˉconstruction.CONSTRUCTOR_CANONICAL_SHA256,
+            CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SHA256);
+        using (var Stream = typeof(Consoleˉapplicationˉconstruction).Assembly
+            .GetManifestResourceStream(
+                "Windvale.Linker.Console-Application-Construction-Bridge.wvb") ??
+            throw new InvalidOperationException(
+                "The retained console-application construction bridge was not embedded."))
+        {
+            var Retained = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Retained);
+            Sequenceˉequal(Constructionˉbridge.Moduleˉbytes, Retained);
+        }
+
+        var Verifiedˉconstructor = Moduleˉcodec.Readˉandˉverify(
+            Constructionˉbridge.Moduleˉbytes.AsSpan());
+        Equal(Moduleˉprofile.Hosted, Verifiedˉconstructor.Module.Profile);
+        Equal(
+            Capabilityˉcatalog.FILE_READ_BYTES,
+            Verifiedˉconstructor.Module.Capabilities.Single().Name);
+        var Constructionˉmain = Verifiedˉconstructor.Module.Exports.Single(
+            Item => Item.Name == "Main");
+        Equal(
+            Valueˉtype.Bytes,
+            Verifiedˉconstructor.Module.Functions[Constructionˉmain.Targetˉindex]
+                .Returnˉtype.Kind);
+
         var Windows = Consoleˉapplicationˉlayout.Plan(
             Consoleˉapplicationˉtarget.Windowsˉx64,
             nativeˉimageˉbytes: 5,
@@ -3037,6 +3114,156 @@ internal static class Program
             var Mutated = Replaceˉu32(Response, Offset, Original == uint.MaxValue ? 0 : Original + 1);
             Expectˉresponseˉfailure(Mutated, $"changed field at offset {Offset}");
         }
+
+        static void Expectˉconstructionˉfailure(
+            ImmutableArray<byte> response,
+            byte[] nativeˉimage,
+            Consoleˉapplicationˉplan plan,
+            byte[] recoveryˉimage,
+            string description)
+        {
+            var Rejected = false;
+            try
+            {
+                _ = Consoleˉapplicationˉconstruction.Verifyˉandˉmaterialize(
+                    Consoleˉapplicationˉtarget.Windowsˉx64,
+                    nativeˉimage,
+                    nativeˉentryˉoffset: 2,
+                    plan,
+                    response,
+                    recoveryˉimage);
+            }
+            catch (Consoleˉapplicationˉconstructionˉexception)
+            {
+                Rejected = true;
+            }
+            True(Rejected, $"The {description} console-application construction was accepted.");
+        }
+
+        byte[] Nativeˉimage = [0x11, 0x22, 0x33, 0x44, 0x55];
+        var Windowsˉrecovery = Windowsˉconsoleˉapplicationˉwriter.Buildˉrecoveryˉimage(
+            Nativeˉimage,
+            nativeˉentryˉoffset: 2,
+            Windows);
+        var Windowsˉconstruction = Consoleˉapplicationˉconstruction.Evaluateˉrequest(Request);
+        Equal(
+            Consoleˉapplicationˉconstruction.WINDOWS_RESPONSE_BYTES,
+            Windowsˉconstruction.Length);
+        Sequenceˉequal(
+            Windowsˉconstruction,
+            Consoleˉapplicationˉconstruction.Evaluateˉrequest(Request));
+        Sequenceˉequal(
+            Windowsˉrecovery,
+            Consoleˉapplicationˉconstruction.Verifyˉandˉmaterialize(
+                Consoleˉapplicationˉtarget.Windowsˉx64,
+                Nativeˉimage,
+                nativeˉentryˉoffset: 2,
+                Windows,
+                Windowsˉconstruction,
+                Windowsˉrecovery));
+
+        var Linuxˉrequest = Consoleˉapplicationˉlayout.Buildˉrequest(
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            nativeˉimageˉbytes: Nativeˉimage.Length,
+            nativeˉentryˉoffset: 2);
+        var Linuxˉconstruction = Consoleˉapplicationˉconstruction.Evaluateˉrequest(
+            Linuxˉrequest);
+        Equal(
+            Consoleˉapplicationˉconstruction.LINUX_RESPONSE_BYTES,
+            Linuxˉconstruction.Length);
+        var Linuxˉrecovery = Linuxˉconsoleˉapplicationˉwriter.Buildˉrecoveryˉimage(
+            Nativeˉimage,
+            nativeˉentryˉoffset: 2,
+            Linux);
+        Sequenceˉequal(
+            Linuxˉrecovery,
+            Consoleˉapplicationˉconstruction.Verifyˉandˉmaterialize(
+                Consoleˉapplicationˉtarget.Linuxˉx64,
+                Nativeˉimage,
+                nativeˉentryˉoffset: 2,
+                Linux,
+                Linuxˉconstruction,
+                Linuxˉrecovery));
+
+        var Maximumˉwindowsˉconstruction = Consoleˉapplicationˉconstruction.Evaluateˉrequest(
+            Consoleˉapplicationˉlayout.Buildˉrequest(
+                Consoleˉapplicationˉtarget.Windowsˉx64,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES - 1u));
+        Equal(
+            (uint)Windowsˉconsoleˉapplicationˉcontract.MAX_APPLICATION_BYTES,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Maximumˉwindowsˉconstruction.AsSpan()[24..]));
+        Equal(
+            (uint)Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Maximumˉwindowsˉconstruction.AsSpan()[72..]));
+
+        var Maximumˉlinuxˉconstruction = Consoleˉapplicationˉconstruction.Evaluateˉrequest(
+            Consoleˉapplicationˉlayout.Buildˉrequest(
+                Consoleˉapplicationˉtarget.Linuxˉx64,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES,
+                Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES - 1u));
+        Equal(
+            (uint)Linuxˉconsoleˉapplicationˉcontract.MAX_APPLICATION_BYTES,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Maximumˉlinuxˉconstruction.AsSpan()[24..]));
+        Equal(
+            (uint)Consoleˉapplicationˉlayout.MAXIMUM_NATIVE_IMAGE_BYTES,
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Maximumˉlinuxˉconstruction.AsSpan()[72..]));
+
+        var Failedˉconstruction = Consoleˉapplicationˉconstruction.Evaluateˉrequest([]);
+        Equal(Consoleˉapplicationˉconstruction.HEADER_BYTES, Failedˉconstruction.Length);
+        Equal(
+            (uint)Consoleˉapplicationˉplanˉstatus.Invalidˉsize,
+            BinaryPrimitives.ReadUInt32LittleEndian(Failedˉconstruction.AsSpan()[12..]));
+        Equal(
+            0u,
+            BinaryPrimitives.ReadUInt32LittleEndian(Failedˉconstruction.AsSpan()[16..]));
+
+        Expectˉconstructionˉfailure(
+            default,
+            Nativeˉimage,
+            Windows,
+            Windowsˉrecovery,
+            "uninitialized");
+        Expectˉconstructionˉfailure(
+            Windowsˉconstruction.AsSpan(0, Windowsˉconstruction.Length - 1)
+                .ToArray()
+                .ToImmutableArray(),
+            Nativeˉimage,
+            Windows,
+            Windowsˉrecovery,
+            "truncated");
+        Expectˉconstructionˉfailure(
+            Windowsˉconstruction.Add(0),
+            Nativeˉimage,
+            Windows,
+            Windowsˉrecovery,
+            "extended");
+        for (var Offset = 0; Offset < 100; Offset += 4)
+        {
+            var Original = BinaryPrimitives.ReadUInt32LittleEndian(
+                Windowsˉconstruction.AsSpan()[Offset..]);
+            Expectˉconstructionˉfailure(
+                Replaceˉu32(
+                    Windowsˉconstruction,
+                    Offset,
+                    Original == uint.MaxValue ? 0 : Original + 1),
+                Nativeˉimage,
+                Windows,
+                Windowsˉrecovery,
+                $"changed field at offset {Offset}");
+        }
+        var Changedˉliteral = Windowsˉconstruction.ToArray();
+        Changedˉliteral[100] ^= 1;
+        Expectˉconstructionˉfailure(
+            Changedˉliteral.ToImmutableArray(),
+            Nativeˉimage,
+            Windows,
+            Windowsˉrecovery,
+            "changed literal");
     }
 
     private static void Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic()
