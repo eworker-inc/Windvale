@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
-$AllAreas = @('assembler', 'bytecode', 'compiler', 'foundation', 'golden', 'linker', 'object-model', 'runtime')
+$AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')
 $Cases = @(
     @{ Name = 'documentation'; Paths = @('README.md'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'editor'; Paths = @('Tools/Editors/Windvale/package.json'); Scope = 'lightweight'; Editor = $true; Areas = @() },
@@ -21,6 +21,8 @@ $Cases = @(
     @{ Name = 'linker reference'; Paths = @('Linker/Reference/Link-Compiler.cs'); Scope = 'qualification'; Editor = $false; Areas = @('linker') },
     @{ Name = 'linker Windvale'; Paths = @('Linker/Windvale/Wv-Linker-Core.wv'); Scope = 'qualification'; Editor = $false; Areas = @('linker') },
     @{ Name = 'Foundation'; Paths = @('Foundation/Byte-Ordering.wv'); Scope = 'qualification'; Editor = $false; Areas = @('foundation') },
+    @{ Name = 'database'; Paths = @('Libraries/Database/Wvdb-Reader.wv'); Scope = 'qualification'; Editor = $false; Areas = @('database') },
+    @{ Name = 'database specification'; Paths = @('Specifications/Windvale-Database-Reader.md'); Scope = 'qualification'; Editor = $false; Areas = @('database') },
     @{ Name = 'Seed example'; Paths = @('Examples/Seed/Sum-Data.wv'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler', 'runtime') },
     @{ Name = 'project tool'; Paths = @('Tools/Windvale.Project/Project-Parser.cs'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler') },
     @{ Name = 'project manifest'; Paths = @('Windvale-Compiler.wvproj'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler') },

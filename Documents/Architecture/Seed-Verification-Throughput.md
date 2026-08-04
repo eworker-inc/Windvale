@@ -15,9 +15,9 @@ Qualification builds the CLI once and invokes the resulting `windvale.dll` direc
 
 ## Development selection
 
-The conformance runner assigns every registered test to one or more stable areas: `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. Repeated area selections form a union. Supplying a displayed-name filter as well intersects that filter with the selected areas. The runner exposes the canonical names through `--list-areas`.
+The conformance runner assigns every registered test to one or more stable areas: `assembler`, `bytecode`, `compiler`, `database`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. Repeated area selections form a union. Supplying a displayed-name filter as well intersects that filter with the selected areas. The runner exposes the canonical names through `--list-areas`.
 
-`Tools/Verify/Verify-Changed.ps1` maps changed paths to those areas and invokes the Fast verifier. Compiler, runtime, bytecode, assembler, object-model, linker, and Foundation paths select their owned areas. Specification paths select the areas that implement the named contract. Tests, build configuration, workflows, verification tooling, broad Seed examples, unknown specifications, and unrecognized implementation paths fail closed to all areas. Documentation outside `Specifications/`, the root license, and editor-only changes do not run Seed; editor-relevant paths still run the editor verifier.
+`Tools/Verify/Verify-Changed.ps1` maps changed paths to those areas and invokes the Fast verifier. Compiler, runtime, bytecode, assembler, object-model, linker, Foundation, and database paths select their owned areas. Specification paths select the areas that implement the named contract. Tests, build configuration, workflows, verification tooling, broad Seed examples, unknown specifications, and unrecognized implementation paths fail closed to all areas. Documentation outside `Specifications/`, the root license, and editor-only changes do not run Seed; editor-relevant paths still run the editor verifier.
 
 Changed-file selection is an inner-loop optimization only. It never writes a conformance report or supplies Standard or Qualification evidence.
 

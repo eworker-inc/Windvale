@@ -67,6 +67,7 @@ elif [ "$VERIFY_LEVEL" = 'development' ]; then
         --area assembler \
         --area bytecode \
         --area compiler \
+        --area database \
         --area foundation \
         --area linker \
         --area object-model \

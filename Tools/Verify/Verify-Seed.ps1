@@ -6,7 +6,7 @@ param(
     [ValidateSet('Fast', 'Development', 'Standard', 'Qualification')]
     [string]$Level = 'Development',
     [string]$TestFilter,
-    [ValidateSet('assembler', 'bytecode', 'compiler', 'foundation', 'golden', 'linker', 'object-model', 'runtime')]
+    [ValidateSet('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')]
     [string[]]$TestArea,
     [switch]$FailFast,
     [string]$TimingReportPath
@@ -32,6 +32,7 @@ $DevelopmentAreas = @(
     'assembler',
     'bytecode',
     'compiler',
+    'database',
     'foundation',
     'linker',
     'object-model',

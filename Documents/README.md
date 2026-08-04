@@ -8,6 +8,7 @@ Windvale separates current status, enduring architecture, accepted decisions, ex
 - [Roadmap](Project/Roadmap.md) — phase gates, detailed sequence, and current transfer
 - [Project vision](Project/Project-Vision.md) — purpose, intended stack, success principles, and non-goals
 - [Open questions](Project/Open-Questions.md) — unresolved choices only
+- [Windvale Database proposal](Project/Windvale-Database-Proposal.md) — EWDB-informed engine/application/service split, language-readiness boundaries, performance-transfer rules, and the implemented Stage 1 read-only experiment; no durable format or product direction is accepted
 - [Accepted product-direction set](Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) — stewardship and recovery, followed by linked language, runtime/toolchain, OS, browser, and product-lifecycle decisions 0179 through 0183
 - [First timer-preemption proof](Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md) — cross-host-qualified HPET/local-APIC mechanics and bounded three-root preemption evidence
 - [Accepted console, shell, and CLI direction](Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md) — future device/terminal/shell/application split, explicit launch and stream bindings, small command language, and staged delivery

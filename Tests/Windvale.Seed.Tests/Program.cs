@@ -71,6 +71,7 @@ internal static class Program
     private const string DECIMAL_PARSING_DEMO_SHA256 = "2a9789972a77e3fcf0fbacf686050e22d30f0bc0aab5a7e09f1d5620d8168ac8";
     private const string BYTE_CONSTRUCTION_SHA256 = "6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207";
     private const string BYTE_CONSTRUCTION_DEMO_SHA256 = "e12b9f36be719c4f448b074f8d40e19e2dc044908e85945759f024ae69335a1b";
+    private const string WVDB_READER_SHA256 = "e0c89af47e87ead3b881808a782eb579092aff605c1d77b33436ac4d6199c042";
     private const string SOURCE_LEXER_SHA256 = "e108cc3721092a114c8bab3b58224aef7e4fb63b8ed46c368cf341860c0a44f9";
     private const string SOURCE_LEXER_DEMO_SHA256 = "b0ee43b2441448e0e719fc8e80902a5cffea162450ce10a704685e8fec6c6918";
     private const string SOURCE_DECLARATION_PARSER_SHA256 = "85d9d909c378a69223c3321b882ddf483eef19afc5042568da70a183bd8ed193";
@@ -804,6 +805,18 @@ internal static class Program
     private static readonly string RESOURCE_STORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Resource-Store.wv");
 
+    private static readonly string WVDB_READER_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wvdb-Reader.wv");
+
+    private static readonly string WVDB_READER_ADAPTER_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wvdb-Reader-Adapter.wv");
+
+    private const int WVDB_DATABASE_HEADER_SIZE = 32;
+    private const int WVDB_PAGE_SIZE = 256;
+    private const int WVDB_PAGE_HEADER_SIZE = 32;
+    private const uint WVDB_DATABASE_MAGIC = 0x4244_5657u;
+    private const uint WVDB_PAGE_MAGIC = 0x4750_5657u;
+
     private static readonly string HOSTED_RESOURCE_STORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hosted-Resource-Store.wv");
     private static readonly string READ_ONLY_DIRECTORY_SOURCE = Readˉembeddedˉsource(
@@ -1027,6 +1040,7 @@ internal static class Program
     private const string TEST_AREA_ASSEMBLER = "assembler";
     private const string TEST_AREA_BYTECODE = "bytecode";
     private const string TEST_AREA_COMPILER = "compiler";
+    private const string TEST_AREA_DATABASE = "database";
     private const string TEST_AREA_FOUNDATION = "foundation";
     private const string TEST_AREA_GOLDEN = "golden";
     private const string TEST_AREA_LINKER = "linker";
@@ -1039,6 +1053,7 @@ internal static class Program
         TEST_AREA_ASSEMBLER,
         TEST_AREA_BYTECODE,
         TEST_AREA_COMPILER,
+        TEST_AREA_DATABASE,
         TEST_AREA_FOUNDATION,
         TEST_AREA_GOLDEN,
         TEST_AREA_LINKER,
@@ -1102,6 +1117,7 @@ internal static class Program
         new("Foundation byte ordering is shared, ordinal, and portable", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉorderingˉruns),
         new("Foundation decimal parsing shares nominal results and boundaries", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉdecimalˉparsingˉruns),
         new("Foundation byte construction is total, bounded, and shared", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉconstructionˉruns),
+        new("Windvale Database validates bounded pages and performs exact B+tree lookup", [TEST_AREA_DATABASE, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvdbˉreaderˉruns),
         new("Windvale-written source lexer streams the complete Seed token contract", [TEST_AREA_COMPILER], Compilerˉsourceˉlexerˉruns),
         new("Windvale-written declaration parser exposes bounded streaming source views", [TEST_AREA_COMPILER], Compilerˉsourceˉdeclarationˉparserˉruns),
         new("Windvale-written body parser exposes bounded statement and expression views", [TEST_AREA_COMPILER], Compilerˉsourceˉbodyˉparserˉruns),
@@ -11361,6 +11377,255 @@ internal static class Program
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
     }
 
+    private static void Wvdbˉreaderˉruns()
+    {
+        var Firstˉlibraryˉbytes = Compileˉsuccess(WVDB_READER_SOURCE);
+        var Secondˉlibraryˉbytes = Compileˉsuccess(WVDB_READER_SOURCE);
+        Sequenceˉequal(Firstˉlibraryˉbytes, Secondˉlibraryˉbytes);
+        Equal(WVDB_READER_SHA256, Moduleˉdigest.Calculateˉsha256(Firstˉlibraryˉbytes));
+        var Library = Moduleˉcodec.Readˉandˉverify(Firstˉlibraryˉbytes);
+        Equal("Windvaleˉdatabaseˉreader", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Sequenceˉequal(
+            ["Wvdbˉreaderˉlookup", "Wvdbˉreaderˉvalidate"],
+            Library.Module.Exports.Select(Export => Export.Name).Order(StringComparer.Ordinal));
+        True(
+            Library.Module.Types.Any(Type => Type.Name == "Wvdbˉlookupˉresult"),
+            "The WVDB reader did not preserve its typed lookup result.");
+        True(
+            Library.Module.Types.Any(Type => Type.Name == "Wvdbˉvalidationˉresult"),
+            "The WVDB reader did not preserve its typed validation result.");
+
+        var Adapterˉbytes = Compileˉwithˉwvdbˉreaderˉsuccess(
+            WVDB_READER_ADAPTER_SOURCE,
+            "Tests/Fixtures/Database/Wvdb-Reader-Adapter.wv");
+        var Adapter = Moduleˉcodec.Readˉandˉverify(Adapterˉbytes);
+        Sequenceˉequal(["Main"], Adapter.Module.Exports.Select(Export => Export.Name));
+
+        void Expect(byte[] Database, uint Key, uint Kind, int Valueˉorˉerror, uint Offset)
+        {
+            var Input = new byte[4 + Database.Length];
+            BinaryPrimitives.WriteUInt32LittleEndian(Input.AsSpan(0, 4), Key);
+            Database.CopyTo(Input, 4);
+            var Run = new Referenceˉruntime(
+                Adapter,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
+                .Runˉmainˉbytes(Input.ToImmutableArray());
+            Equal(12, Run.Bytes.Length);
+            Equal(Kind, BinaryPrimitives.ReadUInt32LittleEndian(Run.Bytes.AsSpan(0, 4)));
+            Equal(Valueˉorˉerror, BinaryPrimitives.ReadInt32LittleEndian(Run.Bytes.AsSpan(4, 4)));
+            Equal(Offset, BinaryPrimitives.ReadUInt32LittleEndian(Run.Bytes.AsSpan(8, 4)));
+        }
+
+        var Emptyˉinput = new Referenceˉruntime(
+            Adapter,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(ImmutableArray<byte>.Empty);
+        Equal(12, Emptyˉinput.Bytes.Length);
+        Equal(3u, BinaryPrimitives.ReadUInt32LittleEndian(Emptyˉinput.Bytes.AsSpan(0, 4)));
+
+        var Database = Buildˉwvdbˉtreeˉfixture();
+        Expect(Database, 10u, 0u, 7, 0u);
+        Expect(Database, 20u, 0u, 11, 0u);
+        Expect(Database, 30u, 0u, 42, 0u);
+        Expect(Database, 40u, 0u, -5, 0u);
+        Expect(Database, 0u, 1u, 0, 0u);
+        Expect(Database, 25u, 1u, 0, 0u);
+        Expect(Database, uint.MaxValue, 1u, 0, 0u);
+        Expect(Buildˉwvdbˉemptyˉfixture(64), 7u, 1u, 0, 0u);
+
+        Expect([], 7u, 2u, 1, 0u);
+        Expect(new byte[WVDB_DATABASE_HEADER_SIZE + 64 * WVDB_PAGE_SIZE + 1], 7u, 2u, 1, 16_417u);
+
+        var Truncated = Database[..^1];
+        Expect(Truncated, 7u, 2u, 4, 8u);
+
+        var Badˉmagic = (byte[])Database.Clone();
+        Badˉmagic[0] ^= 0xFF;
+        Expect(Badˉmagic, 7u, 2u, 2, 0u);
+
+        var Badˉversion = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(Badˉversion.AsSpan(4, 4), 2u);
+        Expect(Badˉversion, 7u, 2u, 3, 4u);
+
+        var Badˉlength = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(Badˉlength.AsSpan(8, 4), 799u);
+        Expect(Badˉlength, 7u, 2u, 4, 8u);
+
+        var Badˉpageˉmagic = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(Badˉpageˉmagic.AsSpan(Wvdbˉpageˉoffset(2), 4), 0u);
+        Expect(Badˉpageˉmagic, 7u, 2u, 5, 544u);
+
+        var Badˉpageˉversion = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(Badˉpageˉversion.AsSpan(Wvdbˉpageˉoffset(2) + 4, 4), 2u);
+        Expect(Badˉpageˉversion, 7u, 2u, 6, 548u);
+
+        var Badˉpageˉidentity = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(Badˉpageˉidentity.AsSpan(Wvdbˉpageˉoffset(2) + 8, 4), 1u);
+        Expect(Badˉpageˉidentity, 7u, 2u, 7, 552u);
+
+        var Badˉpageˉkind = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(Badˉpageˉkind.AsSpan(Wvdbˉpageˉoffset(2) + 12, 4), 3u);
+        Expect(Badˉpageˉkind, 7u, 2u, 8, 556u);
+
+        var Badˉpageˉcount = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(Badˉpageˉcount.AsSpan(Wvdbˉpageˉoffset(0) + 16, 4), 29u);
+        Expect(Badˉpageˉcount, 7u, 2u, 9, 48u);
+
+        var Badˉpageˉreserved = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(Badˉpageˉreserved.AsSpan(Wvdbˉpageˉoffset(0) + 20, 4), 1u);
+        Expect(Badˉpageˉreserved, 7u, 2u, 10, 52u);
+
+        var Badˉchecksum = (byte[])Database.Clone();
+        Badˉchecksum[Wvdbˉpageˉoffset(2) + WVDB_PAGE_HEADER_SIZE + 4] ^= 0x01;
+        Expect(Badˉchecksum, 30u, 2u, 11, 568u);
+
+        var Badˉorder = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Badˉorder.AsSpan(Wvdbˉpageˉoffset(2) + WVDB_PAGE_HEADER_SIZE + 8, 4),
+            30u);
+        Wvdbˉwriteˉpageˉchecksum(Badˉorder, 2);
+        Expect(Badˉorder, 30u, 2u, 12, 584u);
+
+        var Badˉchild = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Badˉchild.AsSpan(Wvdbˉpageˉoffset(0) + WVDB_PAGE_HEADER_SIZE + 4, 4),
+            3u);
+        Wvdbˉwriteˉpageˉchecksum(Badˉchild, 0);
+        Expect(Badˉchild, 10u, 2u, 13, 68u);
+
+        var Badˉpadding = (byte[])Database.Clone();
+        Badˉpadding[Wvdbˉpageˉoffset(1) + WVDB_PAGE_HEADER_SIZE + 16] = 1;
+        Wvdbˉwriteˉpageˉchecksum(Badˉpadding, 1);
+        Expect(Badˉpadding, 10u, 2u, 14, 336u);
+
+        var Cyclic = (byte[])Database.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Cyclic.AsSpan(Wvdbˉpageˉoffset(0) + WVDB_PAGE_HEADER_SIZE + 4, 4),
+            0u);
+        Wvdbˉwriteˉpageˉchecksum(Cyclic, 0);
+        Expect(Cyclic, 10u, 2u, 15, 32u);
+
+        Expect(Buildˉwvdbˉdepthˉfixture(), 7u, 2u, 16, 24u);
+    }
+
+    private static byte[] Buildˉwvdbˉtreeˉfixture()
+    {
+        var Database = Wvdbˉcreateˉdatabase(3, 0u, 16u);
+        Wvdbˉinitializeˉpage(Database, 0, 2u, 2u);
+        Wvdbˉwriteˉentry(Database, 0, 0, 20u, 1u);
+        Wvdbˉwriteˉentry(Database, 0, 1, uint.MaxValue, 2u);
+        Wvdbˉinitializeˉpage(Database, 1, 1u, 2u);
+        Wvdbˉwriteˉleafˉentry(Database, 1, 0, 10u, 7);
+        Wvdbˉwriteˉleafˉentry(Database, 1, 1, 20u, 11);
+        Wvdbˉinitializeˉpage(Database, 2, 1u, 2u);
+        Wvdbˉwriteˉleafˉentry(Database, 2, 0, 30u, 42);
+        Wvdbˉwriteˉleafˉentry(Database, 2, 1, 40u, -5);
+        for (var Page = 0; Page < 3; Page++)
+        {
+            Wvdbˉwriteˉpageˉchecksum(Database, Page);
+        }
+        return Database;
+    }
+
+    private static byte[] Buildˉwvdbˉemptyˉfixture(int pageˉcount)
+    {
+        var Database = Wvdbˉcreateˉdatabase(pageˉcount, 0u, 1u);
+        for (var Page = 0; Page < pageˉcount; Page++)
+        {
+            Wvdbˉinitializeˉpage(Database, Page, 1u, 0u);
+            Wvdbˉwriteˉpageˉchecksum(Database, Page);
+        }
+        return Database;
+    }
+
+    private static byte[] Buildˉwvdbˉdepthˉfixture()
+    {
+        const int Pageˉcount = 17;
+        var Database = Wvdbˉcreateˉdatabase(Pageˉcount, 0u, 16u);
+        for (var Page = 0; Page < Pageˉcount - 1; Page++)
+        {
+            Wvdbˉinitializeˉpage(Database, Page, 2u, 1u);
+            Wvdbˉwriteˉentry(Database, Page, 0, uint.MaxValue, checked((uint)(Page + 1)));
+            Wvdbˉwriteˉpageˉchecksum(Database, Page);
+        }
+        Wvdbˉinitializeˉpage(Database, Pageˉcount - 1, 1u, 0u);
+        Wvdbˉwriteˉpageˉchecksum(Database, Pageˉcount - 1);
+        return Database;
+    }
+
+    private static byte[] Wvdbˉcreateˉdatabase(int pageˉcount, uint rootˉpage, uint depthˉlimit)
+    {
+        var Database = new byte[checked(WVDB_DATABASE_HEADER_SIZE + pageˉcount * WVDB_PAGE_SIZE)];
+        BinaryPrimitives.WriteUInt32LittleEndian(Database.AsSpan(0, 4), WVDB_DATABASE_MAGIC);
+        BinaryPrimitives.WriteUInt32LittleEndian(Database.AsSpan(4, 4), 1u);
+        BinaryPrimitives.WriteUInt32LittleEndian(Database.AsSpan(8, 4), checked((uint)Database.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(Database.AsSpan(12, 4), WVDB_PAGE_SIZE);
+        BinaryPrimitives.WriteUInt32LittleEndian(Database.AsSpan(16, 4), checked((uint)pageˉcount));
+        BinaryPrimitives.WriteUInt32LittleEndian(Database.AsSpan(20, 4), rootˉpage);
+        BinaryPrimitives.WriteUInt32LittleEndian(Database.AsSpan(24, 4), depthˉlimit);
+        return Database;
+    }
+
+    private static void Wvdbˉinitializeˉpage(
+        byte[] database,
+        int pageˉidentifier,
+        uint pageˉkind,
+        uint entryˉcount)
+    {
+        var Offset = Wvdbˉpageˉoffset(pageˉidentifier);
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset, 4), WVDB_PAGE_MAGIC);
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset + 4, 4), 1u);
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset + 8, 4), checked((uint)pageˉidentifier));
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset + 12, 4), pageˉkind);
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset + 16, 4), entryˉcount);
+    }
+
+    private static void Wvdbˉwriteˉentry(
+        byte[] database,
+        int pageˉidentifier,
+        int entryˉindex,
+        uint key,
+        uint value)
+    {
+        var Offset = Wvdbˉpageˉoffset(pageˉidentifier) + WVDB_PAGE_HEADER_SIZE + entryˉindex * 8;
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset, 4), key);
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset + 4, 4), value);
+    }
+
+    private static void Wvdbˉwriteˉleafˉentry(
+        byte[] database,
+        int pageˉidentifier,
+        int entryˉindex,
+        uint key,
+        int value)
+    {
+        var Offset = Wvdbˉpageˉoffset(pageˉidentifier) + WVDB_PAGE_HEADER_SIZE + entryˉindex * 8;
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset, 4), key);
+        BinaryPrimitives.WriteInt32LittleEndian(database.AsSpan(Offset + 4, 4), value);
+    }
+
+    private static void Wvdbˉwriteˉpageˉchecksum(byte[] database, int pageˉidentifier)
+    {
+        var Offset = Wvdbˉpageˉoffset(pageˉidentifier);
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset + 24, 4), 0u);
+        uint Checksum = 0u;
+        for (var Index = 0; Index < WVDB_PAGE_SIZE; Index++)
+        {
+            if (Index < 24 || Index >= 28)
+            {
+                Checksum += database[Offset + Index];
+            }
+        }
+        BinaryPrimitives.WriteUInt32LittleEndian(database.AsSpan(Offset + 24, 4), Checksum);
+    }
+
+    private static int Wvdbˉpageˉoffset(int pageˉidentifier)
+    {
+        return checked(WVDB_DATABASE_HEADER_SIZE + pageˉidentifier * WVDB_PAGE_SIZE);
+    }
+
     private static void Compilerˉsourceˉlexerˉruns()
     {
         var Libraryˉbytes = Compileˉwithˉdecimalˉparsingˉsuccess(
@@ -12497,6 +12762,7 @@ internal static class Program
             ("variants", SOURCE_WVB_VARIANTS_SOURCE, SOURCE_WVB_VARIANTS_SHA256, 45),
             ("collections", SOURCE_WVB_COLLECTIONS_SOURCE, SOURCE_WVB_COLLECTIONS_SHA256, 16),
             ("operators", SOURCE_WVB_OPERATORS_WINDVALE_SOURCE, SOURCE_WVB_OPERATORS_WINDVALE_SHA256, 28),
+            ("wvdb-reader", WVDB_READER_SOURCE, WVDB_READER_SHA256, null),
         };
         foreach (var Feature in Featureˉcases)
         {
@@ -23716,6 +23982,20 @@ internal static class Program
         {
             throw new InvalidOperationException(
                 "Foundation composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉwvdbˉreaderˉsuccess(string source, string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [new("Libraries/Database/Wvdb-Reader.wv", WVDB_READER_SOURCE)]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "WVDB reader composition failed: " + string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();

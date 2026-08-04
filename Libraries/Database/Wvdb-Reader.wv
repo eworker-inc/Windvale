@@ -1,0 +1,285 @@
+module Windvaleˉdatabaseˉreader profile portable;
+
+const DATABASE_MAGIC: u32 = 1111774807u32;
+const PAGE_MAGIC: u32 = 1196447319u32;
+const FORMAT_VERSION: u32 = 1u32;
+const DATABASE_HEADER_SIZE: u32 = 32u32;
+const PAGE_SIZE: u32 = 256u32;
+const PAGE_HEADER_SIZE: u32 = 32u32;
+const ENTRY_SIZE: u32 = 8u32;
+const MAXIMUM_PAGES: u32 = 64u32;
+const MAXIMUM_ENTRIES: u32 = 28u32;
+const MAXIMUM_DEPTH: u32 = 16u32;
+const LEAF_PAGE: u32 = 1u32;
+const BRANCH_PAGE: u32 = 2u32;
+const MAXIMUM_KEY: u32 = 4294967295u32;
+
+export enum Wvdbˉerror {
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉpageˉmagic = 5;
+    Unsupportedˉpageˉversion = 6;
+    Invalidˉpageˉidentity = 7;
+    Invalidˉpageˉkind = 8;
+    Invalidˉpageˉcount = 9;
+    Invalidˉpageˉreserved = 10;
+    Invalidˉpageˉchecksum = 11;
+    Invalidˉpageˉorder = 12;
+    Invalidˉchild = 13;
+    Invalidˉpageˉpadding = 14;
+    Invalidˉcycle = 15;
+    Invalidˉdepth = 16;
+}
+
+export record Wvdbˉfailure {
+    Error: Wvdbˉerror;
+    Offset: u32;
+}
+
+export variant Wvdbˉvalidationˉresult {
+    Valid;
+    Failure(Value: Wvdbˉfailure);
+}
+
+export variant Wvdbˉlookupˉresult {
+    Found(Value: i32);
+    Missing;
+    Failure(Value: Wvdbˉfailure);
+}
+
+record Wvdbˉleafˉlookup {
+    Found: bool;
+    Value: i32;
+}
+
+fn Wvdbˉvalidationˉfailure(Error: Wvdbˉerror, Offset: u32) -> Wvdbˉvalidationˉresult {
+    return Wvdbˉvalidationˉresult.Failure(Wvdbˉfailure(Error, Offset));
+}
+
+fn Wvdbˉlookupˉfailure(Error: Wvdbˉerror, Offset: u32) -> Wvdbˉlookupˉresult {
+    return Wvdbˉlookupˉresult.Failure(Wvdbˉfailure(Error, Offset));
+}
+
+fn Wvdbˉpageˉoffset(Pageˉidentifier: u32) -> u32 {
+    return DATABASE_HEADER_SIZE + Pageˉidentifier * PAGE_SIZE;
+}
+
+fn Wvdbˉpageˉchecksum(Input: bytes, Pageˉoffset: u32) -> u32 {
+    var Checksum: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < PAGE_SIZE {
+        if Index < 24u32 || Index >= 28u32 {
+            Checksum = Checksum + U32ˉfromˉu8(Bytesˉreadˉu8(Input, Pageˉoffset + Index));
+        }
+        Index = Index + 1u32;
+    }
+    return Checksum;
+}
+
+fn Wvdbˉvalidateˉpage(
+    Input: bytes,
+    Pageˉcount: u32,
+    Pageˉidentifier: u32
+) -> Wvdbˉvalidationˉresult {
+    let Pageˉoffset: u32 = Wvdbˉpageˉoffset(Pageˉidentifier);
+    if Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset) != PAGE_MAGIC {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉmagic, Pageˉoffset);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 4u32) != FORMAT_VERSION {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Unsupportedˉpageˉversion, Pageˉoffset + 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 8u32) != Pageˉidentifier {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉidentity, Pageˉoffset + 8u32);
+    }
+
+    let Pageˉkind: u32 = Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 12u32);
+    if Pageˉkind != LEAF_PAGE && Pageˉkind != BRANCH_PAGE {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉkind, Pageˉoffset + 12u32);
+    }
+
+    let Entryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 16u32);
+    if Entryˉcount > MAXIMUM_ENTRIES || (Pageˉkind == BRANCH_PAGE && Entryˉcount == 0u32) {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉcount, Pageˉoffset + 16u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 20u32) != 0u32 {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉreserved, Pageˉoffset + 20u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 28u32) != 0u32 {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉreserved, Pageˉoffset + 28u32);
+    }
+
+    let Storedˉchecksum: u32 = Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 24u32);
+    if Storedˉchecksum != Wvdbˉpageˉchecksum(Input, Pageˉoffset) {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉchecksum, Pageˉoffset + 24u32);
+    }
+
+    var Entryˉindex: u32 = 0u32;
+    var Previousˉkey: u32 = 0u32;
+    while Entryˉindex < Entryˉcount {
+        let Entryˉoffset: u32 = Pageˉoffset + PAGE_HEADER_SIZE + Entryˉindex * ENTRY_SIZE;
+        let Key: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset);
+        if Entryˉindex > 0u32 && Key <= Previousˉkey {
+            return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉorder, Entryˉoffset);
+        }
+        if Pageˉkind == BRANCH_PAGE {
+            let Child: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 4u32);
+            if Child >= Pageˉcount {
+                return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉchild, Entryˉoffset + 4u32);
+            }
+        }
+        Previousˉkey = Key;
+        Entryˉindex = Entryˉindex + 1u32;
+    }
+    if Pageˉkind == BRANCH_PAGE && Previousˉkey != MAXIMUM_KEY {
+        return Wvdbˉvalidationˉfailure(
+            Wvdbˉerror.Invalidˉpageˉorder,
+            Pageˉoffset + PAGE_HEADER_SIZE + (Entryˉcount - 1u32) * ENTRY_SIZE
+        );
+    }
+
+    var Paddingˉoffset: u32 = PAGE_HEADER_SIZE + Entryˉcount * ENTRY_SIZE;
+    while Paddingˉoffset < PAGE_SIZE {
+        if Bytesˉreadˉu8(Input, Pageˉoffset + Paddingˉoffset) != 0u8 {
+            return Wvdbˉvalidationˉfailure(
+                Wvdbˉerror.Invalidˉpageˉpadding,
+                Pageˉoffset + Paddingˉoffset
+            );
+        }
+        Paddingˉoffset = Paddingˉoffset + 1u32;
+    }
+    return Wvdbˉvalidationˉresult.Valid();
+}
+
+export fn Wvdbˉreaderˉvalidate(Input: bytes) -> Wvdbˉvalidationˉresult {
+    let Inputˉlength: u32 = Bytesˉlength(Input);
+    let Maximumˉlength: u32 = DATABASE_HEADER_SIZE + MAXIMUM_PAGES * PAGE_SIZE;
+    if Inputˉlength < DATABASE_HEADER_SIZE || Inputˉlength > Maximumˉlength {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉsize, Inputˉlength);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_MAGIC {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉmagic, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != FORMAT_VERSION {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Unsupportedˉversion, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != PAGE_SIZE {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉheader, 12u32);
+    }
+
+    let Pageˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Pageˉcount == 0u32 || Pageˉcount > MAXIMUM_PAGES {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉheader, 16u32);
+    }
+    let Expectedˉlength: u32 = DATABASE_HEADER_SIZE + Pageˉcount * PAGE_SIZE;
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Expectedˉlength || Inputˉlength != Expectedˉlength {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉheader, 8u32);
+    }
+
+    let Rootˉpage: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Rootˉpage >= Pageˉcount {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉheader, 20u32);
+    }
+    let Depthˉlimit: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Depthˉlimit == 0u32 || Depthˉlimit > MAXIMUM_DEPTH {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉheader, 24u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉheader, 28u32);
+    }
+
+    var Pageˉidentifier: u32 = 0u32;
+    while Pageˉidentifier < Pageˉcount {
+        var Pageˉvalid: bool = false;
+        let Pageˉresult: Wvdbˉvalidationˉresult = Wvdbˉvalidateˉpage(
+            Input,
+            Pageˉcount,
+            Pageˉidentifier
+        );
+        match Pageˉresult {
+            case Wvdbˉvalidationˉresult.Valid {
+                Pageˉvalid = true;
+            }
+            case Wvdbˉvalidationˉresult.Failure(Failure) {
+                return Wvdbˉvalidationˉresult.Failure(Failure);
+            }
+        }
+        if !Pageˉvalid {
+            return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉkind, Wvdbˉpageˉoffset(Pageˉidentifier));
+        }
+        Pageˉidentifier = Pageˉidentifier + 1u32;
+    }
+    return Wvdbˉvalidationˉresult.Valid();
+}
+
+fn Wvdbˉleafˉlookupˉat(Input: bytes, Pageˉoffset: u32, Key: u32) -> Wvdbˉleafˉlookup {
+    let Entryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 16u32);
+    var Entryˉindex: u32 = 0u32;
+    while Entryˉindex < Entryˉcount {
+        let Entryˉoffset: u32 = Pageˉoffset + PAGE_HEADER_SIZE + Entryˉindex * ENTRY_SIZE;
+        let Candidateˉkey: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset);
+        if Candidateˉkey == Key {
+            return Wvdbˉleafˉlookup(true, Bytesˉreadˉi32ˉlittle(Input, Entryˉoffset + 4u32));
+        }
+        Entryˉindex = Entryˉindex + 1u32;
+    }
+    return Wvdbˉleafˉlookup(false, 0);
+}
+
+fn Wvdbˉbranchˉchildˉat(Input: bytes, Pageˉoffset: u32, Key: u32) -> u32 {
+    let Entryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 16u32);
+    var Entryˉindex: u32 = 0u32;
+    while Entryˉindex < Entryˉcount {
+        let Entryˉoffset: u32 = Pageˉoffset + PAGE_HEADER_SIZE + Entryˉindex * ENTRY_SIZE;
+        let Maximumˉkey: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset);
+        if Key <= Maximumˉkey {
+            return Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 4u32);
+        }
+        Entryˉindex = Entryˉindex + 1u32;
+    }
+    return 0u32;
+}
+
+fn Wvdbˉreaderˉlookupˉvalidated(Input: bytes, Key: u32) -> Wvdbˉlookupˉresult {
+    let Rootˉpage: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Depthˉlimit: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    return Wvdbˉreaderˉlookupˉpage(Input, Key, Rootˉpage, Depthˉlimit);
+}
+
+fn Wvdbˉreaderˉlookupˉpage(
+    Input: bytes,
+    Key: u32,
+    Pageˉidentifier: u32,
+    Remainingˉdepth: u32
+) -> Wvdbˉlookupˉresult {
+    if Remainingˉdepth == 0u32 {
+        return Wvdbˉlookupˉfailure(Wvdbˉerror.Invalidˉdepth, 24u32);
+    }
+    let Pageˉoffset: u32 = Wvdbˉpageˉoffset(Pageˉidentifier);
+    let Pageˉkind: u32 = Bytesˉreadˉu32ˉlittle(Input, Pageˉoffset + 12u32);
+    if Pageˉkind == LEAF_PAGE {
+        let Leafˉlookup: Wvdbˉleafˉlookup = Wvdbˉleafˉlookupˉat(Input, Pageˉoffset, Key);
+        if Leafˉlookup.Found {
+            return Wvdbˉlookupˉresult.Found(Leafˉlookup.Value);
+        }
+        return Wvdbˉlookupˉresult.Missing();
+    }
+    let Child: u32 = Wvdbˉbranchˉchildˉat(Input, Pageˉoffset, Key);
+    if Child == Pageˉidentifier {
+        return Wvdbˉlookupˉfailure(Wvdbˉerror.Invalidˉcycle, Wvdbˉpageˉoffset(Child));
+    }
+    return Wvdbˉreaderˉlookupˉpage(Input, Key, Child, Remainingˉdepth - 1u32);
+}
+
+export fn Wvdbˉreaderˉlookup(Input: bytes, Key: u32) -> Wvdbˉlookupˉresult {
+    let Validation: Wvdbˉvalidationˉresult = Wvdbˉreaderˉvalidate(Input);
+    match Validation {
+        case Wvdbˉvalidationˉresult.Valid {
+            return Wvdbˉreaderˉlookupˉvalidated(Input, Key);
+        }
+        case Wvdbˉvalidationˉresult.Failure(Failure) {
+            return Wvdbˉlookupˉresult.Failure(Failure);
+        }
+    }
+}

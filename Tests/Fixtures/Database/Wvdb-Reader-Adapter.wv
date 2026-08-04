@@ -1,0 +1,54 @@
+module Wvdbˉreaderˉadapter profile portable;
+
+import Windvaleˉdatabaseˉreader as Database;
+
+fn Wvdbˉadapterˉerrorˉcode(Error: Database.Wvdbˉerror) -> u32 {
+    match Error {
+        case Database.Wvdbˉerror.Invalidˉsize { return 1u32; }
+        case Database.Wvdbˉerror.Invalidˉmagic { return 2u32; }
+        case Database.Wvdbˉerror.Unsupportedˉversion { return 3u32; }
+        case Database.Wvdbˉerror.Invalidˉheader { return 4u32; }
+        case Database.Wvdbˉerror.Invalidˉpageˉmagic { return 5u32; }
+        case Database.Wvdbˉerror.Unsupportedˉpageˉversion { return 6u32; }
+        case Database.Wvdbˉerror.Invalidˉpageˉidentity { return 7u32; }
+        case Database.Wvdbˉerror.Invalidˉpageˉkind { return 8u32; }
+        case Database.Wvdbˉerror.Invalidˉpageˉcount { return 9u32; }
+        case Database.Wvdbˉerror.Invalidˉpageˉreserved { return 10u32; }
+        case Database.Wvdbˉerror.Invalidˉpageˉchecksum { return 11u32; }
+        case Database.Wvdbˉerror.Invalidˉpageˉorder { return 12u32; }
+        case Database.Wvdbˉerror.Invalidˉchild { return 13u32; }
+        case Database.Wvdbˉerror.Invalidˉpageˉpadding { return 14u32; }
+        case Database.Wvdbˉerror.Invalidˉcycle { return 15u32; }
+        case Database.Wvdbˉerror.Invalidˉdepth { return 16u32; }
+    }
+}
+
+fn Wvdbˉadapterˉresult(Kind: u32, Value: bytes, Offset: u32) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Kind);
+    Result = Bytesˉconcat(Result, Value);
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Offset));
+}
+
+export fn Main(Input: bytes) -> bytes {
+    if Bytesˉlength(Input) < 4u32 {
+        return Wvdbˉadapterˉresult(3u32, Bytesˉfromˉu32ˉlittle(0u32), 0u32);
+    }
+    let Key: u32 = Bytesˉreadˉu32ˉlittle(Input, 0u32);
+    let Databaseˉbytes: bytes = Bytesˉslice(Input, 4u32, Bytesˉlength(Input) - 4u32);
+    let Lookup: Database.Wvdbˉlookupˉresult = Database.Wvdbˉreaderˉlookup(Databaseˉbytes, Key);
+    match Lookup {
+        case Database.Wvdbˉlookupˉresult.Found(Value) {
+            return Wvdbˉadapterˉresult(0u32, Bytesˉfromˉi32ˉlittle(Value), 0u32);
+        }
+        case Database.Wvdbˉlookupˉresult.Missing {
+            return Wvdbˉadapterˉresult(1u32, Bytesˉfromˉu32ˉlittle(0u32), 0u32);
+        }
+        case Database.Wvdbˉlookupˉresult.Failure(Failure) {
+            return Wvdbˉadapterˉresult(
+                2u32,
+                Bytesˉfromˉu32ˉlittle(Wvdbˉadapterˉerrorˉcode(Failure.Error)),
+                Failure.Offset
+            );
+        }
+    }
+}

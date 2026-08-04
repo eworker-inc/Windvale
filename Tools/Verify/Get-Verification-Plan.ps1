@@ -13,6 +13,7 @@ $AllAreas = @(
     'assembler',
     'bytecode',
     'compiler',
+    'database',
     'foundation',
     'golden',
     'linker',
@@ -75,6 +76,8 @@ foreach ($Path in $Paths) {
 
     if ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
         Add-Area 'compiler'
+    } elseif ($Path.StartsWith('Libraries/Database/', [StringComparison]::Ordinal)) {
+        Add-Area 'database'
     } elseif ($Path.StartsWith('Runtime/Windvale.Bytecode/', [StringComparison]::Ordinal)) {
         Add-Area 'bytecode'
     } elseif ($Path.StartsWith('Runtime/Windvale.Native/', [StringComparison]::Ordinal)) {
@@ -109,6 +112,8 @@ foreach ($Path in $Paths) {
         Add-Area @('bytecode', 'runtime')
     } elseif ($Path -eq 'Specifications/Hosted-Resources.md') {
         Add-Area 'runtime'
+    } elseif ($Path.StartsWith('Specifications/Windvale-Database', [StringComparison]::Ordinal)) {
+        Add-Area 'database'
     } elseif ($Path -match '^Specifications/Foundation-') {
         Add-Area 'foundation'
     } elseif ($Path -match '^Specifications/Wv-Dump-') {

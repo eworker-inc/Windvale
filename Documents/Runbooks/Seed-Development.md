@@ -31,7 +31,7 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
   -TimingReportPath artifacts/seed-timing-fast.json
 ```
 
-Available Seed areas are `assembler`, `bytecode`, `compiler`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. `Verify-Changed.ps1` fails closed to all areas for broad or unrecognized implementation changes.
+Available Seed areas are `assembler`, `bytecode`, `compiler`, `database`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. `Verify-Changed.ps1` fails closed to all areas for broad or unrecognized implementation changes.
 
 `Development`, `Standard`, and `Qualification` have fixed suites, so omit `-TestArea`, `-TestFilter`, and `-FailFast` at those levels. For the broad regular suite without the very long golden contract, use:
 
