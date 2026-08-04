@@ -937,9 +937,6 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
                 Input,
                 Section.Payloadˉoffset + Cursor + 1u32
             );
-            if Jumpˉtarget <= Cursor {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
-            }
             if Jumpˉtarget >= Length {
                 return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
             }
@@ -954,9 +951,6 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
                 Input,
                 Section.Payloadˉoffset + Cursor + 1u32
             );
-            if Branchˉtarget <= Cursor {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
-            }
             if Branchˉtarget >= Length {
                 return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
             }
@@ -985,8 +979,6 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         Cursor = Cursor + 1u32;
     }
 
-    var Reachable: bytes = Compilerˉnativeˉx64ˉzeroˉmap(Input, Length);
-    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(Reachable, 0u32, 1u8);
     var I32ˉslots: u32 = 0u32;
     var Boolˉslots: u32 = 0u32;
     var Maximumˉstack: u32 = 0u32;
@@ -994,9 +986,6 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
     Cursor = 0u32;
     while Cursor < Length {
         if Bytesˉreadˉu8(Leaders, Cursor) != 1u8 {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
-        }
-        if Bytesˉreadˉu8(Reachable, Cursor) != 1u8 {
             return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
         }
         let Block: Compilerˉnativeˉx64ˉblockˉanalysis =
@@ -1017,33 +1006,64 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             Maximumˉstack = Block.Maximumˉstack;
         }
         Bodyˉbytes = Bodyˉbytes + Block.Bodyˉbytes;
-        if Block.Terminator == 0u8 {
-            Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                Reachable,
-                Block.Next,
-                1u8
-            );
-        }
-        if Block.Terminator == 1u8 {
-            Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                Reachable,
-                Block.Target,
-                1u8
-            );
-        }
-        if Block.Terminator == 2u8 {
-            Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                Reachable,
-                Block.Next,
-                1u8
-            );
-            Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                Reachable,
-                Block.Target,
-                1u8
-            );
-        }
         Cursor = Block.Next;
+    }
+
+    var Reachable: bytes = Compilerˉnativeˉx64ˉzeroˉmap(Input, Length);
+    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(Reachable, 0u32, 1u8);
+    var Reachˉiteration: u32 = 0u32;
+    while Reachˉiteration < Blocks {
+        Cursor = 0u32;
+        while Cursor < Length {
+            let Reachˉblock: Compilerˉnativeˉx64ˉblockˉanalysis =
+                Compilerˉnativeˉx64ˉanalyzeˉblock(
+                    Input,
+                    Section,
+                    Function,
+                    Leaders,
+                    Instructionsˉmap,
+                    Cursor
+                );
+            if Bytesˉreadˉu8(Reachable, Cursor) == 1u8 {
+                if Reachˉblock.Terminator == 0u8 {
+                    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                        Reachable,
+                        Reachˉblock.Next,
+                        1u8
+                    );
+                }
+                if Reachˉblock.Terminator == 1u8 {
+                    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                        Reachable,
+                        Reachˉblock.Target,
+                        1u8
+                    );
+                }
+                if Reachˉblock.Terminator == 2u8 {
+                    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                        Reachable,
+                        Reachˉblock.Next,
+                        1u8
+                    );
+                    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
+                        Reachable,
+                        Reachˉblock.Target,
+                        1u8
+                    );
+                }
+            }
+            Cursor = Reachˉblock.Next;
+        }
+        Reachˉiteration = Reachˉiteration + 1u32;
+    }
+    Cursor = 0u32;
+    while Cursor < Length {
+        if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 {
+            if Bytesˉreadˉu8(Reachable, Cursor) != 1u8 {
+                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            }
+        }
+        Cursor = Cursor + 1u32;
     }
     if Maximumˉstack != Function.Maximumˉstack {
         return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
@@ -1575,6 +1595,15 @@ export fn Compilerˉnativeˉx64ˉmachineˉtarget(
     );
 }
 
+export fn Compilerˉnativeˉx64ˉrelativeˉu32(
+    Target: u32,
+    Origin: u32
+) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
+}
+
 export fn Compilerˉnativeˉx64ˉemitˉjump(
     Result: bytes,
     Target: u32
@@ -1582,7 +1611,10 @@ export fn Compilerˉnativeˉx64ˉemitˉjump(
     var Output: bytes = Compilerˉnativeˉx64ˉappendˉbyte(Result, 233u8);
     return Compilerˉnativeˉx64ˉappendˉu32(
         Output,
-        Target - Bytesˉlength(Output) - 4u32
+        Compilerˉnativeˉx64ˉrelativeˉu32(
+            Target,
+            Bytesˉlength(Output) + 4u32
+        )
     );
 }
 
@@ -1639,7 +1671,10 @@ export fn Compilerˉnativeˉx64ˉemitˉconditionalˉbranch(
     Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 133u8);
     Output = Compilerˉnativeˉx64ˉappendˉu32(
         Output,
-        Trueˉtarget - Bytesˉlength(Output) - 4u32
+        Compilerˉnativeˉx64ˉrelativeˉu32(
+            Trueˉtarget,
+            Bytesˉlength(Output) + 4u32
+        )
     );
     return Compilerˉnativeˉx64ˉemitˉjump(Output, Falseˉtarget);
 }
