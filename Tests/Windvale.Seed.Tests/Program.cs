@@ -179,26 +179,26 @@ internal static class Program
     private const string WEBASSEMBLY_RUNTIME_CALLS_SHA256 = "5ee04d5b3b33399dce61709135709f0d0ebb7d6374e14759d83986859806eadd";
     private const string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_WVB_SHA256 = "93b3301a773941044e281e085730aea8900a5cf2146d744132e05cf4ad23d24e";
     private const string WEBASSEMBLY_WVB_ENVELOPE_VERIFY_SHA256 = "91b6d98ce13cb7701d38b550821e75b053a2c707f0b78c5e1c3409470c159659";
-    private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_WVB_SHA256 = "abb48d412615ed223cb973feb6fb7d892cad0dbceb539b5864bba1e0812ed429";
-    private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SHA256 = "efd12a96ba21f9cdac3fc42c570292623681fd2beef5be451343076589224b9e";
-    private const string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_WVB_SHA256 = "881e6e88944895f96225c8a8841ca8c6de8b0faab55a7133ff40ef97090c7aaa";
-    private const string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SHA256 = "a0e4133feeb18c20102b34121fa7efca0d58d60f4898af0cdc62a66d6c0a1fa2";
-    private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_WVB_SHA256 = "acc21dd556a940afcc925499f452245c1246f73ef99bfb2f970b6db889f1c6f0";
-    private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_SHA256 = "4b06ca57cb33516fbcd53dcfd3e7fbfb96e9710dabf77d969a3973d5d25190f1";
-    private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_WVB_SHA256 = "3a0ac614539cdd8888eb3b73f90af8f9c79e19f5de01c4b453e236f6418c7f27";
-    private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_SHA256 = "ae0224e0200d7e32c6ca96e1771715a7dcec9578e82ab9b93947f7714f290dd5";
-    private const string WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_WVB_SHA256 = "d3937269036106277cfe80bd7e5b328d9f3bc39ad4b9036f8c1be29a97125cc5";
-    private const string WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_SHA256 = "2c3163128e71bc6fd1fb62740655f46f95fa1598d59c3d7bcdf8881331a4a112";
-    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_WVB_SHA256 = "954b01a14b0d297407547fce7fb10055671507ded2e890d534008088fb4c511f";
-    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_SHA256 = "c5e1415a3a6d83198263fe254c89162422b23adcb63ef47d530a7dc949ae358f";
-    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_WVB_SHA256 = "efdf5c0f402cbb8fc331c5e5da880e3a0defe274c246cd47fd4e4007415f203e";
-    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_SHA256 = "83d924bcca1767311502cbca6d9b0a3144f1833a0c14ac9e14fbc4c96c288296";
-    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_THIRD_VERIFY_WVB_SHA256 = "6a37117d672017112ace14585ca885e124c94bc6030646607099f6cc7b6b406c";
-    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_THIRD_VERIFY_SHA256 = "530deb37652d3ddd4c7b189e4901e49ad7e35a401a00499092f2bbdae978f0e8";
-    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_WVB_SHA256 = "47e7582614003558ddc223e9f53dd06eb7728fb8b9d7e63c03520c4413a12adf";
-    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_SHA256 = "ba40b57a6a8633e2ebb0da6e2d45c7286d675156be94c196e7a48b9e02e91c62";
-    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_WVB_SHA256 = "ae450739c8e98a1ebe55936672f6022f98d560339ecdc060e78b3619e84ae9cf";
-    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_SHA256 = "5cc8299462f0a267a25dcf44f8aa5de1f1351c36f7c5f68bc579d57c5dda9cee";
+    private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_WVB_SHA256 = "3ef86d538900fd67f2487edb2d63ac0b71567e9e536bfbc3235cb1c60358b58d";
+    private const string WEBASSEMBLY_WVB_STRUCTURAL_VERIFY_SHA256 = "e0587c543b18f762f31de93f55727f559441246ad729b9cff12470a94943d77d";
+    private const string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_WVB_SHA256 = "517e8dbab96768d47e72ec2ebdec62d186faca77b646a62181f10be09a75497d";
+    private const string WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SHA256 = "94faf26c53d2f9a643a894fc629de5db25d6fc24b70395e8cd8ba8d6c9e4415d";
+    private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_WVB_SHA256 = "5bfbd90b0948a888a9663f0ed2de7facc7c2a0ed03e6d026f817e29c9d44fa11";
+    private const string WEBASSEMBLY_WVB_SEMANTIC_EXPANDED_SHA256 = "5066b3f5167fa90dfa883f30a6e6466339aba6f47ac6fd72b29b32a14c24266d";
+    private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_WVB_SHA256 = "369d39326816deaa7c071510fb8f5a8fbf8dc26e024d68b2221e7c1187b04221";
+    private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_SHA256 = "1ac99c63257e817d980cf78c3f53254f12e55e6b760eed0106415cc71e13166c";
+    private const string WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_WVB_SHA256 = "510991d66e25bf5e05ca7b8742ab8901e3fc4ba2aa76a5eff42c54486911ab2d";
+    private const string WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_SHA256 = "47f58bee714efea5c1b7b854b08097ea1baba7630fc9aa6f0d837e7e88466b6e";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_WVB_SHA256 = "be7de14452788d4c8e44b3cdca1c6bbab9b63420627309cf188b37cb3ce6db5e";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_SHA256 = "bfaeee2d36c4443a16c8fa3d973ccc22c266dadc51f4fd23114631af5af4ac02";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_WVB_SHA256 = "97cfe31013a584bce433a75580e60bb9096ec549b96bf1aec7488f4c9e4d12fe";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_SHA256 = "51420e937484038238c1104fafbecef73e2e0ec7fa3f06a85c277d82f62d5b93";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_THIRD_VERIFY_WVB_SHA256 = "dd72ff77d2e28ab6eedb9fba69799db0a68a3a27dd813dc84d68c4c43bf1c7dc";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_THIRD_VERIFY_SHA256 = "a621d549d95c32cb9e41963c449bb65dbba00e94c8e842067e75dd097ea9f50a";
+    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_WVB_SHA256 = "de2ecfaecbaabf6c595f0dc9aa8bf1b1a54b050e86882007fd407278ef73f12f";
+    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_SHA256 = "6a71829c14b4beb5c20a0368574bedb65aa89b3f1d8989889bc0433118a39ca5";
+    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_WVB_SHA256 = "2e277f962a47f6ebf06a17de329d221913f792ee940cd68873a1cdfce63a8ac0";
+    private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_SHA256 = "e2a906bc7e0c91b5fc8b51a220f6be192af1775b630f0627018ad70bf2e9e308";
     private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "7bd13f2c19d8f45343a16d165530ff4779fb1d770e4fc0687e89a65c409f73d3";
     private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SHA256 = "a14a4b67a0b6d9e495ec46c121b44cfaa0b9905a1f37f2a0218590a9844eb6e5";
     private const string SOURCE_WVB_BYTES_ENTRY_GUEST_SHA256 = "2e76ffb1e78ccc3b4e153a5d2ada5d247f7c96c5e0f82761d06e3a496eac5b81";
@@ -8472,13 +8472,13 @@ internal static class Program
             "Native record-storage accounting violated its bounded frame model.");
         Equal(
             "NATIVE_RECORD_STORAGE functions=413 record-functions=319 " +
-            "parameters=416 assigned-parameters=0 locals=13188 declared=227999 persistent=12721 " +
-            "block=121588 peak-live=9921 scratch=9921 values=24320 slots=6018 " +
+            "parameters=416 assigned-parameters=0 locals=13189 declared=228005 persistent=12721 " +
+            "block=121588 peak-live=9921 scratch=9921 values=24322 slots=6018 " +
             "return-functions=259 return-fields=3957 max-frame=1916 " +
             "largest-declared=17538 largest-persistent=229 largest-peak=147 " +
             "largest-scratch=147 max-existing=1539 max-width=34 largest-index=312 " +
             "largest-name=__WvM8F50 nested=0 " +
-            "offset-map=0a7b8ce68610889c046589e5eb5ab586fe9b73a71dd3e4b4fbfbc834862bdf61",
+            "offset-map=83bea137cb0b9605baba15e176bfc1fc4e97b9ae48e90e18e59ae296f2017068",
             $"NATIVE_RECORD_STORAGE functions={Compilerˉrecordˉstorage.Length} " +
             $"record-functions={Compilerˉrecordˉstorage.Count(Function => Function.Recordˉvalueˉidentifiers > 0 || Function.Recordˉparameterˉbindings > 0 || Function.Recordˉlocalˉbindings > 0 || Function.Returnsˉrecord)} " +
             $"parameters={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉparameterˉbindings)} " +
@@ -8504,7 +8504,7 @@ internal static class Program
             $"largest-name={Largestˉrecordˉframe.Functionˉname} " +
             $"nested={Compilerˉrecordˉstorage.Count(Function => Function.Containsˉnestedˉrecordˉfields)} " +
             $"offset-map={Nativeˉrecordˉstorageˉdigest(Compilerˉrecordˉstorage)}");
-        Equal(27_428_212, Compilerˉnative.Fragment.Code.Length);
+        Equal(27_437_138, Compilerˉnative.Fragment.Code.Length);
         Equal(
             SOURCE_WVB_TOOL_NATIVE_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Compilerˉnative.Fragment.Code.AsSpan()));
@@ -9217,8 +9217,8 @@ internal static class Program
                     0,
                     Executeˉlinuxˉapplication(
                         Firstˉlinuxˉapplication,
-                        "source wvb status=Valid functions=413 code-bytes=753669 " +
-                            "module-bytes=913513\n",
+                        "source wvb status=Valid functions=413 code-bytes=754761 " +
+                            "module-bytes=914746\n",
                         Arguments,
                         timeoutˉmilliseconds: 600_000,
                         loadedˉmappings: Loadedˉmappings));
@@ -10228,15 +10228,15 @@ internal static class Program
         var Largestˉownershipˉfunction = Ownership.Functions.MaxBy(
             Function => Function.Actions.Length)!;
         Equal(
-            "NATIVE_DESCRIPTOR_OWNERSHIP format=1 functions=413 actions=349535 " +
-            "allocator-leaf-calls=338739 ownership-movement-actions=10796 " +
-            "parameters=375 assigned-parameters=0 locals=4375 " +
+            "NATIVE_DESCRIPTOR_OWNERSHIP format=1 functions=413 actions=350113 " +
+            "allocator-leaf-calls=339302 ownership-movement-actions=10811 " +
+            "parameters=375 assigned-parameters=0 locals=4385 " +
             "record-parameter-fields=629 assigned-record-parameter-fields=0 " +
-            "record-local-fields=14076 values=8470 record-value-fields=26884 " +
-            "acquire=531 borrow=227 retain=50719 release=287489 call-borrow=5984 " +
+            "record-local-fields=14076 values=8490 record-value-fields=26884 " +
+            "acquire=531 borrow=232 retain=50744 release=288027 call-borrow=5994 " +
             "accept-return=3124 transfer-return=1461 largest-actions=80449 " +
             "largest-index=312 largest-name=__WvM8F50 " +
-            "action-map=ff2a77b8b905cdda068a943afeb3deb0b959b33fe294daf8b627f7c635a43da9",
+            "action-map=a9c6ac6e4fae386537b4f30ebfc7b8d49a71a2d347c00c0a8a0edd85dbd2afad",
             $"NATIVE_DESCRIPTOR_OWNERSHIP format={Ownership.Formatˉversion} " +
             $"functions={Ownership.Functions.Length} actions={Ownership.Totalˉactions} " +
             $"allocator-leaf-calls={Allocatorˉprojection.Allocatorˉleafˉcalls} " +
@@ -10268,12 +10268,12 @@ internal static class Program
         Equal(
             "NATIVE_DESCRIPTOR_ALLOCATOR_EMISSION format=1 context=8/128 " +
             "state-offset=112 leaf-offset=120 request-cells=3 functions=413 " +
-            "ownership-actions=349535 leaf-invocations=338739 movement-actions=10796 " +
-            "generated=338712 service=27 request-functions=317 entry=0 before=38494 " +
-            "allocation=531 after=65365 cleanup=234349 direct-locations=383452 " +
+            "ownership-actions=350113 leaf-invocations=339302 movement-actions=10811 " +
+            "generated=339275 service=27 request-functions=317 entry=0 before=38514 " +
+            "allocation=531 after=65400 cleanup=234857 direct-locations=384040 " +
             "indirect-locations=6006 max-frame=1919 largest-invocations=78676 " +
             "largest-index=312 largest-name=__WvM8F50 " +
-            "emission-map=45a05efe70faf27f94c7a2e76b33e3370a077369fcb30f85f0f021a28f44905f",
+            "emission-map=18acb7155aa4d170bb25bdacdd17670edb8f7bd5ad72aa951969a1cbbb75f6ee",
             $"NATIVE_DESCRIPTOR_ALLOCATOR_EMISSION format={Allocatorˉemission.Formatˉversion} " +
             $"context={Allocatorˉemission.Candidateˉcontextˉformatˉversion}/" +
             $"{Allocatorˉemission.Candidateˉcontextˉsize} " +
@@ -10330,9 +10330,9 @@ internal static class Program
                     Nativeˉfileˉoutput.Hostˉfileˉsystem()));
             Equal(0, Measurement.Scalar);
             Equal(0u, Measurement.Recordˉarenaˉused);
-            Equal(125_407_189u, Measurement.Textˉarenaˉused);
+            Equal(126_065_489u, Measurement.Textˉarenaˉused);
             Equal(
-                "source wvb status=Valid functions=413 code-bytes=753669 module-bytes=913513\n",
+                "source wvb status=Valid functions=413 code-bytes=754761 module-bytes=914746\n",
                 Compilerˉoutput.Readˉtext());
             Equal(string.Empty, Compilerˉdiagnostic.Readˉtext());
             Sequenceˉequal(Compilerˉbytes, File.ReadAllBytes(Outputˉpath));
@@ -15318,17 +15318,17 @@ internal static class Program
         var Executableˉsemanticˉwvb = Executableˉsemanticˉresult.Moduleˉbytes.ToArray();
         var Executableˉsemanticˉverified = Moduleˉcodec.Readˉandˉverify(
             Executableˉsemanticˉwvb);
-        Equal(121_032, Executableˉsemanticˉwvb.Length);
+        Equal(122_784, Executableˉsemanticˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Executableˉsemanticˉwvb));
         Equal(10, Executableˉsemanticˉverified.Functions.Length);
         var Executableˉtypedˉphase = Executableˉsemanticˉverified.Functions.Single(
             Function =>
-                Function.Declaration.Localˉtypes.Length == 2_163 &&
-                Function.Declaration.Codeˉlength == 35_389);
-        Equal(2_163, Executableˉtypedˉphase.Declaration.Localˉtypes.Length);
-        Equal(35_389, Executableˉtypedˉphase.Declaration.Codeˉlength);
+                Function.Declaration.Localˉtypes.Length == 2_250 &&
+                Function.Declaration.Codeˉlength == 37_054);
+        Equal(2_250, Executableˉtypedˉphase.Declaration.Localˉtypes.Length);
+        Equal(37_054, Executableˉtypedˉphase.Declaration.Codeˉlength);
         var Executableˉcontrolˉphase = Executableˉsemanticˉverified.Functions.Single(
             Function =>
                 Function.Declaration.Localˉtypes.Length == 579 &&
@@ -15336,7 +15336,7 @@ internal static class Program
         Equal(579, Executableˉcontrolˉphase.Declaration.Localˉtypes.Length);
         Equal(10_057, Executableˉcontrolˉphase.Declaration.Codeˉlength);
         Equal(
-            113_593,
+            115_258,
             Executableˉsemanticˉverified.Functions.Sum(
                 Function => Function.Declaration.Codeˉlength));
         var Executableˉsemanticˉoptions = Runtimeˉoptions.Portableˉdefaults with
@@ -15573,10 +15573,10 @@ internal static class Program
             "The executable semantic verifier did not lower: " +
                 Executableˉsemanticˉlowered.Diagnostics +
                 Executableˉsemanticˉlowered.Output);
-        Equal(757_110, Executableˉsemanticˉlowered.Writtenˉbytes.Length);
+        Equal(767_307, Executableˉsemanticˉlowered.Writtenˉbytes.Length);
         Equalˉwebassemblyˉinstructions(
             "executable-semantic",
-            239_188_645L,
+            242_502_902L,
             Executableˉsemanticˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_SHA256,
@@ -15752,11 +15752,11 @@ internal static class Program
         var Compilerˉtoolˉverified = Compilerˉtoolˉfixture.Module;
         Equal(413, Compilerˉtoolˉverified.Functions.Length);
         Equal(
-            753_669,
+            754_761,
             Compilerˉtoolˉverified.Functions.Sum(
                 Function => Function.Declaration.Codeˉlength));
         Equal(
-            156_668,
+            156_901,
             Compilerˉtoolˉverified.Functions.Sum(Function => Function.Instructions.Length));
         Equal(
             1_408,
@@ -15839,66 +15839,66 @@ internal static class Program
             WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_SHA256,
             Objectˉdigest.Calculateˉsha256(
                 Compilerˉcapacityˉsemanticˉlowered.Writtenˉbytes.AsSpan()));
-        Equal(48_706, Compilerˉcapacityˉtypedˉwvb.Length);
+        Equal(50_458, Compilerˉcapacityˉtypedˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉtypedˉwvb));
-        Equal(302_034, Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.Length);
+        Equal(312_231, Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.Length);
         Equalˉwebassemblyˉinstructions(
             "compiler-capacity-typed",
-            93_389_616L,
+            96_691_813L,
             Compilerˉcapacityˉtypedˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_SHA256,
             Objectˉdigest.Calculateˉsha256(
                 Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.AsSpan()));
-        Equal(48_807, Compilerˉcapacityˉtypedˉsecondˉwvb.Length);
+        Equal(50_559, Compilerˉcapacityˉtypedˉsecondˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉtypedˉsecondˉwvb));
-        Equal(302_608, Compilerˉcapacityˉtypedˉsecondˉlowered.Writtenˉbytes.Length);
+        Equal(312_805, Compilerˉcapacityˉtypedˉsecondˉlowered.Writtenˉbytes.Length);
         Equalˉwebassemblyˉinstructions(
             "compiler-capacity-typed-second",
-            93_668_516L,
+            96_867_014L,
             Compilerˉcapacityˉtypedˉsecondˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_SHA256,
             Objectˉdigest.Calculateˉsha256(
                 Compilerˉcapacityˉtypedˉsecondˉlowered.Writtenˉbytes.AsSpan()));
-        Equal(48_713, Compilerˉcapacityˉtypedˉthirdˉwvb.Length);
+        Equal(50_465, Compilerˉcapacityˉtypedˉthirdˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_TYPED_THIRD_VERIFY_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉtypedˉthirdˉwvb));
-        Equal(302_034, Compilerˉcapacityˉtypedˉthirdˉlowered.Writtenˉbytes.Length);
+        Equal(312_231, Compilerˉcapacityˉtypedˉthirdˉlowered.Writtenˉbytes.Length);
         Equalˉwebassemblyˉinstructions(
             "compiler-capacity-typed-third",
-            93_389_584L,
+            96_691_781L,
             Compilerˉcapacityˉtypedˉthirdˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_TYPED_THIRD_VERIFY_SHA256,
             Objectˉdigest.Calculateˉsha256(
                 Compilerˉcapacityˉtypedˉthirdˉlowered.Writtenˉbytes.AsSpan()));
-        Equal(48_708, Compilerˉcapacityˉcontrolˉwvb.Length);
+        Equal(50_460, Compilerˉcapacityˉcontrolˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉcontrolˉwvb));
-        Equal(302_044, Compilerˉcapacityˉcontrolˉlowered.Writtenˉbytes.Length);
+        Equal(312_241, Compilerˉcapacityˉcontrolˉlowered.Writtenˉbytes.Length);
         Equalˉwebassemblyˉinstructions(
             "compiler-capacity-control",
-            93_443_090L,
+            96_749_337L,
             Compilerˉcapacityˉcontrolˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_SHA256,
             Objectˉdigest.Calculateˉsha256(
                 Compilerˉcapacityˉcontrolˉlowered.Writtenˉbytes.AsSpan()));
-        Equal(48_716, Compilerˉcapacityˉcontrolˉsecondˉwvb.Length);
+        Equal(50_468, Compilerˉcapacityˉcontrolˉsecondˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉcontrolˉsecondˉwvb));
-        Equal(302_044, Compilerˉcapacityˉcontrolˉsecondˉlowered.Writtenˉbytes.Length);
+        Equal(312_241, Compilerˉcapacityˉcontrolˉsecondˉlowered.Writtenˉbytes.Length);
         Equalˉwebassemblyˉinstructions(
             "compiler-capacity-control-second",
-            93_443_090L,
+            96_749_337L,
             Compilerˉcapacityˉcontrolˉsecondˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_SHA256,
@@ -16102,7 +16102,7 @@ internal static class Program
         var Compilerˉmemoryˉwvb = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_MEMORY_ADAPTER_SOURCE,
             "Source-Wvb-Memory-Adapter.wv");
-        Equal(911_190, Compilerˉmemoryˉwvb.Length);
+        Equal(912_423, Compilerˉmemoryˉwvb.Length);
         Equal(
             SOURCE_WVB_MEMORY_ADAPTER_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉmemoryˉwvb));
@@ -16141,14 +16141,6 @@ internal static class Program
                 1_511,
                 64),
             80_000_000);
-        Equalˉscalarˉinstructions(
-            "compiler-memory-preflight",
-            76_357_741L,
-            Compilerˉmemoryˉpreflight.Executedˉinstructions);
-        Equalˉscalarˉinstructions(
-            "compiler-memory-maximum",
-            77_520_673L,
-            Compilerˉmemoryˉmaximumˉsuccess.Executedˉinstructions);
         Equal(20, Compilerˉmemoryˉmaximumˉsuccess.Bytes.Length);
         Equal(
             3011u,
@@ -16170,8 +16162,16 @@ internal static class Program
                 64),
             200_000_000);
         Equalˉscalarˉinstructions(
+            "compiler-memory-preflight",
+            76_469_173L,
+            Compilerˉmemoryˉpreflight.Executedˉinstructions);
+        Equalˉscalarˉinstructions(
+            "compiler-memory-maximum",
+            77_632_105L,
+            Compilerˉmemoryˉmaximumˉsuccess.Executedˉinstructions);
+        Equalˉscalarˉinstructions(
             "compiler-memory-budget",
-            134_268_322L,
+            134_386_894L,
             Compilerˉmemoryˉbudgetˉboundary.Executedˉinstructions);
         Equal(20, Compilerˉmemoryˉbudgetˉboundary.Bytes.Length);
         Equal(
