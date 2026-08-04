@@ -322,6 +322,7 @@ BB bytes.equal
 BC bytes.not_equal
 BD bytes.read_u64_little consumes bytes and u32 offset, produces u64
 BE bytes.from_u64_little consumes u64, produces eight bytes
+BF u64.from_u32    consumes u32, produces the same numeric value as u64
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool

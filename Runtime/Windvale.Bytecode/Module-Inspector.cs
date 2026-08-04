@@ -232,6 +232,7 @@ public static class Moduleˉinspector
             Opcode.Textˉfromˉutf8 => "text.from_utf8",
             Opcode.Textˉquote => "text.quote",
             Opcode.U32ˉfromˉu8 => "u32.from_u8",
+            Opcode.U64ˉfromˉu32 => "u64.from_u32",
             Opcode.Bytesˉconcat => "bytes.concat",
             Opcode.Bytesˉfromˉu8 => "bytes.from_u8",
             Opcode.Bytesˉfromˉu16ˉlittle => "bytes.from_u16_little",

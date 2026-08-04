@@ -821,6 +821,9 @@ public sealed class Referenceˉruntime
                     case Opcode.U32ˉfromˉu8:
                         Stack.Push(Runtimeˉvalue.Fromˉu32(Stack.Pop().U8ˉvalue));
                         break;
+                    case Opcode.U64ˉfromˉu32:
+                        Stack.Push(Runtimeˉvalue.Fromˉu64(Stack.Pop().U32ˉvalue));
+                        break;
                     case Opcode.Textˉconcat:
                         var Rightˉtextˉvalue = Stack.Pop();
                         var Leftˉtextˉvalue = Stack.Pop();

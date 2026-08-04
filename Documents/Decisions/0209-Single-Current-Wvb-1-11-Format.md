@@ -18,6 +18,8 @@ WVB 1.11 is the sole canonical current bytecode format. Every general writer emi
 
 Opcodes `0xBD` and `0xBE` retain Decision 0207's exact `Bytesˉreadˉu64ˉlittle` and `Bytesˉfromˉu64ˉlittle` semantics as part of the complete WVB 1.11 vocabulary. This changes only their version allocation, not the durable-field rationale, checked range behavior, byte order, or runtime behavior.
 
+Decision 0211 subsequently appends lossless `U64ˉfromˉu32` at opcode `0xBF` to that same sole current WVB 1.11 vocabulary. It does not introduce another minor version.
+
 Narrow consumers use the same WVB 1.11 envelope and state their actual accepted subset explicitly. A consumer that does not implement module metadata requires the presence byte to be zero. Native, WebAssembly, Foundation inspection, and Windvale OS admission code may reject valid WVB 1.11 types, opcodes, metadata, graphs, or profiles outside their named subset; an older header version is never used as a proxy for that subset.
 
 Complete `i64` and `u64` support moves into the Windvale-written compiler at the same boundary. Its lexer, declaration/body models, symbols, bindings, typed WVIR, and WVB lowering cover wide types, literals, constants, parameters, returns, records, locals, inference, checked arithmetic, division/remainder, comparisons, invariant formatting, unsigned bitwise/complement/shift operations, byte codecs, and the admitted compound assignments. Wide constant evaluation uses explicit low/high `u32` limbs and produces byte-identical WVB with Stage 0.

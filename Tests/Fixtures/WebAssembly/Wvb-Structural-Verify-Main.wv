@@ -265,7 +265,7 @@ export fn Main(Input: bytes) -> bytes {
                     if Raw <= 154u32 { Width = 9u32; }
                 }
                 if Raw >= 155u32 {
-                    if Raw <= 190u32 { Width = 1u32; }
+                    if Raw <= 191u32 { Width = 1u32; }
                 }
                 if Width == 0u32 { return Invalid; }
                 if Width > Payloadˉend - Payloadˉcursor { return Invalid; }

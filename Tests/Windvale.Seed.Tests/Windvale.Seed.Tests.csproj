@@ -145,6 +145,12 @@
       Include="../../Libraries/Database/Wvdb-Reader.wv"
       LogicalName="Windvale.Seed.Tests.Wvdb-Reader.wv" />
     <EmbeddedResource
+      Include="../../Libraries/Database/Storage-Geometry.wv"
+      LogicalName="Windvale.Seed.Tests.Storage-Geometry.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Database/Storage-Geometry-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.Storage-Geometry-Adapter.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Database/Wvdb-Reader-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Wvdb-Reader-Adapter.wv" />
     <EmbeddedResource

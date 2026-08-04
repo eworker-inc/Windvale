@@ -318,6 +318,7 @@ export fn Compilerˉsourceˉsymbolsˉisˉreserved(
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return true; }
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉsha256ˉhex") { return true; }
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return true; }
+    if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return true; }
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return true; }
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return true; }
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return true; }

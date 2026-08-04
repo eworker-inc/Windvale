@@ -44,6 +44,7 @@ internal enum Wirˉoperation
     U32ˉformat,
     U64ˉformat,
     U32ˉfromˉu8,
+    U64ˉfromˉu32,
     Textˉconcat,
     Textˉutf8ˉisˉvalid,
     Textˉfromˉutf8,

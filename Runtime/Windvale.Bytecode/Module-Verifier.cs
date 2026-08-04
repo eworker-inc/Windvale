@@ -987,6 +987,10 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.U32);
                 break;
+            case Opcode.U64ˉfromˉu32:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U64);
+                break;
             case Opcode.Textˉconcat:
                 Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
                 Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);

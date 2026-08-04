@@ -1,7 +1,7 @@
 # Windvale Database proposal
 
 - Date: 2026-08-04
-- Status: Proposal for review; the Stage 1 reader and first hosted snapshot consumer are implemented, but no durable database format, writable engine, service contract, or product name is accepted by this document
+- Status: Proposal for review; the Stage 1 reader, first hosted snapshot consumer, and format-neutral checked storage geometry are implemented, but no durable database format, writable engine, storage-resource contract, service contract, or product name is accepted by this document
 - Working name: Windvale Database
 - Informed by: EWDB source, performance evidence, and operational experience
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
@@ -176,6 +176,7 @@ algorithm layers.
 | Checksums, endian codecs, key comparison, and page validation | Ready in bounded slices | Current scalars and immutable `bytes` can express the algorithms; canonical WVB 1.11 includes exact little-endian `u64` field codecs in the Stage 0 and Windvale-written compiler/reference-runtime path. |
 | One read-only B+tree lookup over a small in-memory fixture | Implemented experiment | [`WVDB 1`](../../Specifications/Windvale-Database-Reader.md) validates at most 64 256-byte pages and returns a typed exact `u32` to `i32` result. It is not an accepted durable format. |
 | Rights-limited hosted snapshot lookup | Implemented candidate | [`Readˉonlyˉwvdb`](../../Libraries/Platform/Database/Read-Only-Wvdb.wv) composes the immutable directory provider and portable reader, assembles at most six chunks, and distinguishes provider failures from invalid database bytes. Independent Linux qualification remains pending. |
+| Checked page identity and byte-range arithmetic | Implemented candidate | [`Windvaleˉdatabaseˉstorageˉgeometry`](../../Specifications/Database-Storage-Geometry.md) computes zero-based `u64` page ranges, widens `u32` page size explicitly, and returns typed invalid-size, overflow, or outside-storage outcomes without I/O authority. |
 | Bounded sequences and builders | Ready for narrow algorithms | WVB 1.11 implements bounded immutable sequences, affine builders, and deterministic `for`; nested collections, general maps, and database page ownership remain unavailable. |
 | General page and row collections | Not ready | Deterministic maps/page tables, nested or variable-size aggregates, exact allocation charging, and consuming database publication remain unimplemented. |
 | Durable page-file mutation and WAL recovery | Not ready | Windvale lacks the required random-access, append, exact flush, atomic publication, directory-durability, handle, and typed I/O-result contracts. |
@@ -187,7 +188,10 @@ Checked `i64` and `u64` are implemented in Stage 0 and the Windvale-written comp
 [Decision 0138](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md),
 and [Decision 0207](../Decisions/0207-U64-Binary-Fields-For-Durable-Storage.md)
 adds exact little-endian `u64` field codecs. [Decision 0209](../Decisions/0209-Single-Current-Wvb-1-11-Format.md)
-folds the complete surface into canonical WVB 1.11. Native, WebAssembly, and
+folds the complete surface into canonical WVB 1.11. Implemented-candidate
+[Decision 0211](../Decisions/0211-U64-Database-Storage-Geometry.md) adds the
+lossless `u32` to `u64` transition and the first checked portable page-range
+module. Native, WebAssembly, and
 Windvale OS profiles retain explicit narrower WVB 1.11 subsets.
 [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md)
 now supplies the first bounded ownership and builder slice required by
@@ -201,6 +205,12 @@ or ownership are complete.
 The experimental reader's `u32` fields remain intentionally local to its
 16,416-byte immutable fixture. A future durable format uses distinct scalar
 domains rather than treating every integer as interchangeable:
+
+The implemented storage-geometry module now proves the shared arithmetic seam:
+zero-based `u64` page identity, `u64` offset and exclusive end, a losslessly
+widened `u32` page size, complete overflow preflight, and typed out-of-storage
+failure. It does not select a page size, header size, durable format, provider,
+or authority model.
 
 | Domain | Selected durable direction | Reason |
 | --- | --- | --- |

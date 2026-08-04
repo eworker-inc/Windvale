@@ -103434,6 +103434,11 @@ var jSe = [
 		detail: "Widen an unsigned byte to u32"
 	},
 	{
+		label: "U64ˉfromˉu32",
+		group: "built-in",
+		detail: "Widen an unsigned u32 to u64"
+	},
+	{
 		label: "Enumˉname",
 		group: "built-in",
 		detail: "Get the declared name of an enum value"

@@ -197,6 +197,7 @@ Bytesˉfromˉi32ˉlittle(Value: i32) -> bytes
 Bytesˉfromˉu64ˉlittle(Value: u64) -> bytes
 Bytesˉsha256ˉhex(Value: bytes) -> text
 U32ˉfromˉu8(Value: u8) -> u32
+U64ˉfromˉu32(Value: u32) -> u64
 I32ˉformat(Value: i32) -> text
 I64ˉformat(Value: i64) -> text
 U8ˉformat(Value: u8) -> text
@@ -210,7 +211,7 @@ Textˉquote(Value: text) -> text
 Enumˉname(Value: <enum>) -> text
 ```
 
-The little-endian reads consume exactly 1, 2, 4, or 8 bytes beginning at `Offset`; the signed read preserves the two's-complement `i32` value. Fixed-width encoders produce exactly the corresponding little-endian bytes, and the `u16` encoder traps with `WVR3016` above 65,535. The `u64` codecs are part of canonical WVB 1.11 and execute through the Stage 0 and Windvale-written compiler/reference-runtime path. Byte concatenation is immutable and traps with `WVR3015` if its result would exceed 4 MiB. SHA-256 hashes exactly the supplied bytes or slice and returns 64 lowercase ASCII hexadecimal characters. `U32ˉfromˉu8` is an explicit width change. UTF-8 validation never traps for invalid input, while decoding or encoding an invalid Unicode value traps with `WVR3014`. Quoting emits printable ASCII directly, uses JSON escapes for quotes, backslashes, and controls, and writes every non-ASCII UTF-16 code unit as uppercase `\uXXXX`; this makes names and text safe to place in line reports without terminal control injection. Numeric formatting uses invariant base-10 text with no host locale, grouping, or leading padding. Text concatenation and quoting trap if their result would exceed the 1 MiB UTF-8 value limit. Foundation intrinsic names cannot be redefined by source functions. None of these pure operations provides ambient file access.
+The little-endian reads consume exactly 1, 2, 4, or 8 bytes beginning at `Offset`; the signed read preserves the two's-complement `i32` value. Fixed-width encoders produce exactly the corresponding little-endian bytes, and the `u16` encoder traps with `WVR3016` above 65,535. The `u64` codecs are part of canonical WVB 1.11 and execute through the Stage 0 and Windvale-written compiler/reference-runtime path. Byte concatenation is immutable and traps with `WVR3015` if its result would exceed 4 MiB. SHA-256 hashes exactly the supplied bytes or slice and returns 64 lowercase ASCII hexadecimal characters. `U32ˉfromˉu8` and `U64ˉfromˉu32` are explicit lossless width changes. UTF-8 validation never traps for invalid input, while decoding or encoding an invalid Unicode value traps with `WVR3014`. Quoting emits printable ASCII directly, uses JSON escapes for quotes, backslashes, and controls, and writes every non-ASCII UTF-16 code unit as uppercase `\uXXXX`; this makes names and text safe to place in line reports without terminal control injection. Numeric formatting uses invariant base-10 text with no host locale, grouping, or leading padding. Text concatenation and quoting trap if their result would exceed the 1 MiB UTF-8 value limit. Foundation intrinsic names cannot be redefined by source functions. None of these pure operations provides ambient file access.
 
 ## Runtime behavior
 

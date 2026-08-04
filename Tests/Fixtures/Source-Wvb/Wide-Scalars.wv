@@ -60,6 +60,7 @@ export fn Main() -> i32 {
     Unsignedˉvalue += 4u64;
     Unsignedˉvalue -= 1u64;
     if Unsignedˉvalue != 24u64 { return -18; }
+    if U64ˉfromˉu32(4294967295u32) != 4294967295u64 { return -19; }
 
     return 64;
 }

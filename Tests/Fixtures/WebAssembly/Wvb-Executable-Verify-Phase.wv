@@ -231,6 +231,16 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             if Opcode >= 177u32 {
                 if Opcode <= 178u32 { Popˉcount = 2u32; Firstˉkind = 5u32; Secondˉkind = 5u32; Hasˉpush = true; Pushˉkind = 5u32; Handled = true; }
             }
+            if Opcode >= 179u32 {
+                if Opcode <= 181u32 { Popˉcount = 2u32; Firstˉkind = 10u32; Secondˉkind = 10u32; Hasˉpush = true; Pushˉkind = 10u32; Handled = true; }
+            }
+            if Opcode == 182u32 { Popˉcount = 1u32; Firstˉkind = 10u32; Hasˉpush = true; Pushˉkind = 10u32; Handled = true; }
+            if Opcode == 183u32 || Opcode == 184u32 { Popˉcount = 2u32; Firstˉkind = 5u32; Secondˉkind = 10u32; Hasˉpush = true; Pushˉkind = 10u32; Handled = true; }
+            if Opcode == 185u32 || Opcode == 186u32 { Popˉcount = 2u32; Firstˉkind = 3u32; Secondˉkind = 3u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            if Opcode == 187u32 || Opcode == 188u32 { Popˉcount = 2u32; Firstˉkind = 6u32; Secondˉkind = 6u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
+            if Opcode == 189u32 { Popˉcount = 2u32; Firstˉkind = 5u32; Secondˉkind = 6u32; Hasˉpush = true; Pushˉkind = 10u32; Handled = true; }
+            if Opcode == 190u32 { Popˉcount = 1u32; Firstˉkind = 10u32; Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
+            if Opcode == 191u32 { Popˉcount = 1u32; Firstˉkind = 5u32; Hasˉpush = true; Pushˉkind = 10u32; Handled = true; }
             if Opcode >= 32u32 {
                 if Opcode <= 37u32 { Popˉcount = 2u32; Firstˉkind = 1u32; Secondˉkind = 1u32; Hasˉpush = true; Pushˉkind = 2u32; Handled = true; }
             }

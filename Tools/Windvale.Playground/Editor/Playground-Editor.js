@@ -93,6 +93,7 @@ const WINDVALE_COMPLETIONS = [
     { label: "U8ˉformat", group: "built-in", detail: "Format an unsigned byte as text" },
     { label: "U32ˉformat", group: "built-in", detail: "Format an unsigned integer as text" },
     { label: "U32ˉfromˉu8", group: "built-in", detail: "Widen an unsigned byte to u32" },
+    { label: "U64ˉfromˉu32", group: "built-in", detail: "Widen an unsigned u32 to u64" },
     { label: "Enumˉname", group: "built-in", detail: "Get the declared name of an enum value" },
     { label: "console.write", group: "capability", detail: "Write text without a newline" },
     { label: "console.write_line", group: "capability", detail: "Write one line of text" },

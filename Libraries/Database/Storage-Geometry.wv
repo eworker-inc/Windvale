@@ -1,0 +1,67 @@
+module Windvaleˉdatabaseˉstorageˉgeometry profile portable;
+
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉpageˉrangeˉerror {
+    Invalidˉpageˉsize = 1;
+    Arithmeticˉoverflow = 2;
+    Outsideˉstorage = 3;
+}
+
+export record Databaseˉpageˉrange {
+    Pageˉidentifier: u64;
+    Offset: u64;
+    Length: u64;
+    Endˉexclusive: u64;
+}
+
+export variant Databaseˉpageˉrangeˉresult {
+    Valid(Value: Databaseˉpageˉrange);
+    Failure(Error: Databaseˉpageˉrangeˉerror);
+}
+
+export fn Databaseˉstorageˉpageˉrange(
+    Headerˉsize: u64,
+    Pageˉsize: u32,
+    Pageˉidentifier: u64,
+    Storageˉlength: u64
+) -> Databaseˉpageˉrangeˉresult {
+    if Pageˉsize == 0u32 {
+        return Databaseˉpageˉrangeˉresult.Failure(
+            Databaseˉpageˉrangeˉerror.Invalidˉpageˉsize
+        );
+    }
+
+    let Pageˉlength: u64 = U64ˉfromˉu32(Pageˉsize);
+    if Headerˉsize > U64_MAXIMUM - Pageˉlength {
+        return Databaseˉpageˉrangeˉresult.Failure(
+            Databaseˉpageˉrangeˉerror.Arithmeticˉoverflow
+        );
+    }
+
+    let Maximumˉpageˉidentifier: u64 = (
+        U64_MAXIMUM - Headerˉsize - Pageˉlength
+    ) / Pageˉlength;
+    if Pageˉidentifier > Maximumˉpageˉidentifier {
+        return Databaseˉpageˉrangeˉresult.Failure(
+            Databaseˉpageˉrangeˉerror.Arithmeticˉoverflow
+        );
+    }
+
+    let Offset: u64 = Headerˉsize + Pageˉidentifier * Pageˉlength;
+    let Endˉexclusive: u64 = Offset + Pageˉlength;
+    if Endˉexclusive > Storageˉlength {
+        return Databaseˉpageˉrangeˉresult.Failure(
+            Databaseˉpageˉrangeˉerror.Outsideˉstorage
+        );
+    }
+
+    return Databaseˉpageˉrangeˉresult.Valid(
+        Databaseˉpageˉrange(
+            Pageˉidentifier,
+            Offset,
+            Pageˉlength,
+            Endˉexclusive
+        )
+    );
+}

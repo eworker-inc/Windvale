@@ -24,6 +24,7 @@ internal static class Foundationˉintrinsics
     public const string U32_FORMAT = "U32ˉformat";
     public const string U64_FORMAT = "U64ˉformat";
     public const string U32_FROM_U8 = "U32ˉfromˉu8";
+    public const string U64_FROM_U32 = "U64ˉfromˉu32";
     public const string TEXT_CONCAT = "Textˉconcat";
     public const string TEXT_UTF8_IS_VALID = "Textˉutf8ˉisˉvalid";
     public const string TEXT_FROM_UTF8 = "Textˉfromˉutf8";
@@ -78,6 +79,7 @@ internal static class Foundationˉintrinsics
             new(U32_FORMAT, [Valueˉtype.U32], Valueˉtype.Text, Wirˉoperation.U32ˉformat),
             new(U64_FORMAT, [Valueˉtype.U64], Valueˉtype.Text, Wirˉoperation.U64ˉformat),
             new(U32_FROM_U8, [Valueˉtype.U8], Valueˉtype.U32, Wirˉoperation.U32ˉfromˉu8),
+            new(U64_FROM_U32, [Valueˉtype.U32], Valueˉtype.U64, Wirˉoperation.U64ˉfromˉu32),
             new(
                 TEXT_CONCAT,
                 [Valueˉtype.Text, Valueˉtype.Text],

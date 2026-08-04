@@ -53,7 +53,7 @@ The backend accepts:
 - literal operations produced directly or by typed-constant substitution, parameter/local load and store, static-data length and integer-array indexing, and function calls;
 - positional and named record construction through the same canonical operation, record field reads, enum constants, exact equality/inequality, and declared names;
 - capability calls with their validated catalog parameter and result shapes;
-- the implemented Foundation byte, text, formatting, conversion, and SHA-256 intrinsics, including exact little-endian `u64` read and construction;
+- the implemented Foundation byte, text, formatting, conversion, and SHA-256 intrinsics, including exact little-endian `u64` read and construction plus lossless `u32` to `u64` widening;
 - checked `i32`/`i64`/`u32`/`u64` arithmetic including division and remainder; `u8`/`u32`/`u64` bitwise and shift operations; exact text/bytes equality; full fixed-width scalar comparison, signed negation, invariant formatting, Boolean negation, short-circuit Boolean conjunction/disjunction, and mutable-local compound assignment; and
 - variant and collection operations plus explicit jump, branch, and return terminators produced by `if`, `else if`, `else`, `match`, `while`, `for`, `break`, and `continue`.
 
@@ -80,6 +80,8 @@ Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `
 WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
 
 WVIR operations `126` and `127` lower to WVB opcodes `BD` and `BE` for `Bytesˉreadˉu64ˉlittle` and `Bytesˉfromˉu64ˉlittle`. They are ordinary members of the canonical WVB 1.11 vocabulary; the backend does not select another minor version when they occur.
+
+WVIR operation `128` lowers to WVB opcode `BF` for `U64ˉfromˉu32`. It preserves the complete `u32` numeric domain exactly and is likewise part of canonical WVB 1.11.
 
 Named-record syntax has disappeared by this boundary: typed WVIR has already evaluated source fields left to right and reordered their temporary operands to canonical declaration order. It therefore lowers through the same record-construction opcode and value layout as the retained positional spelling.
 

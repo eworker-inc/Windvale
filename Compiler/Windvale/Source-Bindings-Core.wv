@@ -954,6 +954,9 @@ export fn Compilerˉsourceˉbindingsˉintrinsicˉarity(
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉlength") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
     }
+    if Length == 14u32 {
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
+    }
     if Length == 15u32 {
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu8") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 2u32, 0u32); }
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu8") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }

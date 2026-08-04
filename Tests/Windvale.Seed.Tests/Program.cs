@@ -90,36 +90,36 @@ internal static class Program
     private const string SOURCE_GRAPH_SHA256 = "7fe9276273e48432f6206bde0d8a533dbc35ddf055b2f68b8a03810f07b4fb14";
     private const string SOURCE_GRAPH_DEMO_SHA256 = "fc046e27037f0b2f18129b270b21d8d2c5c3c532601c5a4bfdf211881b0c2acb";
     private const string SOURCE_GRAPH_TOOL_SHA256 = "9d49a4e321429ea203bd9a00ab2f6a9196c844c7cdf77a6b707ad6e0dc48b0fd";
-    private const string SOURCE_SYMBOLS_SHA256 = "c0ea4ba24ba6f9395a509aa8d1673409747da4aa5bd839dda1d511341676c56a";
-    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "4572ff2175a2f7ecd56c9c6caab3865080f17834548be066f15e909984e063bc";
-    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "c0cb2d71ceb2fe979c819ec6668f8eb762e33576fe0ee3e74d1920f8d84015d0";
-    private const string SOURCE_BINDINGS_SHA256 = "55a2d97d55dc7e52f6732dc6312b04ed066a997e2b92be625354645a28370c22";
-    private const string SOURCE_BINDINGS_DEMO_SHA256 = "caecddffa3ee83c35424f46b7581e185e434d85533b56ca05c497d90da9d08e3";
-    private const string SOURCE_BINDINGS_TOOL_SHA256 = "f30016abc392c6e0141426f488397ac74a404d8f1aa636c9ed5ed69d16c458b4";
-    private const string SOURCE_WIR_SHA256 = "4849dfcd26d3ff70f54aec80072888f4f96612575c1999306dbbe7a4b99a6847";
-    private const string SOURCE_WIR_DEMO_SHA256 = "4b9236a103bd77f8fecbc8b514fd37b0ca647da7317d7d319606332f4b3e2361";
-    private const string SOURCE_WIR_TOOL_SHA256 = "324a6292aac0f51b63bad887b880c29c7f1959fb6281a0a40f4252c2a2182de7";
-    private const string SOURCE_WVB_SHA256 = "389024fb26cb9335413fbfbdd739518b53962d7221480b42db7c6c6a9c9a4dd3";
-    private const string SOURCE_WVB_DEMO_SHA256 = "b910bd18abbca23882cdadbea289b8e1e41dbc2f5871c2f8772c10a170b42c2a";
-    private const string SOURCE_WVB_TOOL_SHA256 = "abc2ef9839944bddee172cbeb3e11f716d7be9c0d94c1a0d4378341030ee4207";
-    private const string SOURCE_WVB_MEMORY_ADAPTER_SHA256 = "5113f846684aacfe533660bc7db45badf5422bf720a92c47044f4c3f0e84ebf4";
-    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "11ba1dfac768347f7f2c548a12032e0598433d209bdc2091754014d750e131f0";
-    private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "4db563afa4cd9188f4021dd237fa30e089078bcbb8d5340e9f4355a2cbcaf92f";
-    private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "43ab043209ad95ab682bb32a8fc1c49e77ab48cf6beca591955fff2f995f8a57";
-    private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "a16bfa5e027734724ddcadddc1127b72d99b2d2c8c3083ee773aa1b268fa6d94";
-    private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "5d7243345d431bf90005ae4ac34d02f74b9fe712b9c247e04691a26a8fa6cf4a";
-    private const string SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256 = "9b1193b4b9b13ee516fb6afe9c7f03a715c563f98bb7cd759c6fb620041bb8dd";
-    private const string SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256 = "e71066a2f8462616e9968d580f0f3ada94641ff877928ed3551fcb03d19886da";
-    private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "6925b1b31aa7804f631cef06be23ce8435ec55b2fb847e54897c88e143a2b77f";
-    private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "94816d868b40ec05f25b1dd485cae97c1cdb2bc28adefabb94996fc3488f5d11";
-    private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "a393b4e63d586edfccafeca0fd65e6daef11659f720f348cb7f2b350cd782404";
-    private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "358a3cbcff2900c4b534c9ae7605c42a688cf9a00baa5d5907d4002f4d60b312";
-    private const string COMPILER_WVB_VERIFIER_SHA256 = "0e5a11c8ce5e9ab9c9b4d87d7b57ef1ace89e13b449a9f32815ef90bc7c41696";
-    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "c223b71e7580c9d9b9ba3d2f6f82e1689d0638967f7112c0c1a952432128b154";
-    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "04a800ee9a81471dd6b2be0727c94b833229ef7b6020390df0ce23b909c6d1f1";
-    private const string COMPILER_BUILD_DRIVER_SHA256 = "04fdb0c8de6ada23bf3c28b840782764551a27daa1244ff8315d41b0fb879210";
-    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "dae678ebe263ae6aeb62eace0943f8666878cc904cb5614f29e0de52f6548621";
-    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "ffbd7f2849cc9507c1d6231e5e77c60d2e70d232ffddf18f83af2deeb09b918b";
+    private const string SOURCE_SYMBOLS_SHA256 = "9d82d52310cd542a6a2854d10f990080f7a56fd98567ef4ec4042ce6fd6e7a9b";
+    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "43f6aef685cbc265105abf36e7b8cae4de9974824fadfb8e5b83270c96d1ad1e";
+    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "0555ca0b6d86a67cf94e8ee150d0baa92252f6a8ae7a06d7cbf2f7649f1ae43c";
+    private const string SOURCE_BINDINGS_SHA256 = "64b9fb7d92df4b40fc315d1f13f80118856a05ac2fb6b1d27e58dbb2d3bd9999";
+    private const string SOURCE_BINDINGS_DEMO_SHA256 = "f6b9c184bfe8668a5c597dbe76d7709120a541789661df0156ce8f1785272e0a";
+    private const string SOURCE_BINDINGS_TOOL_SHA256 = "7b75e3cd72eb7a2521d3b382effbdf2435879ceca2ed24561683ac63b956dad8";
+    private const string SOURCE_WIR_SHA256 = "3345bdfb062cf467f8b658414a672157b518af8c5a4aa994b0eb0e32e15837a4";
+    private const string SOURCE_WIR_DEMO_SHA256 = "d0b3f7b8fdbf1a7c56ebd8a2f024988933019f6e8b75202d5e97c5a96e567983";
+    private const string SOURCE_WIR_TOOL_SHA256 = "302409f6f1e8c0a1c3061dda2400083e06cf6781a28922f0138a952f2edfb574";
+    private const string SOURCE_WVB_SHA256 = "08d0630b0b6411c218778faf4f6e9b0ea7332a4e634a072c14de6d7f6bd83307";
+    private const string SOURCE_WVB_DEMO_SHA256 = "e5bf9aaf00598092243578f39aae693de5f728204ffce86ffb7b03340c985715";
+    private const string SOURCE_WVB_TOOL_SHA256 = "48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6";
+    private const string SOURCE_WVB_MEMORY_ADAPTER_SHA256 = "7ad497d480eac6d232b7618bb1bdbc5eda256a103e35e4fcd2c6ca01d52685f7";
+    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "96547e74e54ccd452e85d859539d6c282eafc3562d161af029cbd3168546f0ec";
+    private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "55e51e665a59575ac134d171e24bcf1e73863489815e50aba5167a5b920a9e44";
+    private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "8e7cd4105994b9228460e5b96468c613c906f97c7784d298e7b790b91e3a1358";
+    private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "06f9f19784133d313950d571fe834a2c6d062fc6007f6d8ff8114f7bdff9be30";
+    private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "ed6e1f2c7d657bda10ca751474401947abcef1b6040fb4aeefe1d0ccc4ef5637";
+    private const string SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256 = "db188356139f3a99e6dcf2693a23933c315817b85f4a00356b6b38ba00881a9c";
+    private const string SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256 = "1be3bd8c653d17721c6e4324a12e1338a06acdc7e7a3dee24222d03a2ade278b";
+    private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "f7becf508479ac813541dca94aeef85417c93e78039eaea664278793a0424e1c";
+    private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "31bab9637aae9e37ed204baaf55fe7261ab4398d21f4fb6531c01d69375a1944";
+    private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "6bed8725e7f20d6bcae8cc7ef027a068b30a1f189df3e483712fc7ab61eb33b9";
+    private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "72d701eaf6b5e31579cd7473c49805ee6ca360ddf0db03d15de588042bb07aba";
+    private const string COMPILER_WVB_VERIFIER_SHA256 = "259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f";
+    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0";
+    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a";
+    private const string COMPILER_BUILD_DRIVER_SHA256 = "51f680d7fb96819e21ad8ab68988437c3ae5cfc3aa7a7ca5627641cae4fccbfe";
+    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "1792ec58a433812d3a6cf32786ca968b5fd26155585805bd250d93ead60128e6";
+    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "2728c871c9d6083f02cade80c41aa58328185e0a3b8a2997d935fdf91186b2a2";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
@@ -210,7 +210,7 @@ internal static class Program
     private const string SOURCE_WVB_COLLECTIONS_SHA256 = "c8a61eb6254b701c012b0b3c5fba47a485822e28976f684d973af0efffb236d3";
     private const string SOURCE_WVB_OPERATORS_WINDVALE_SHA256 = "26fcb52bc7e893d306d6f12343fa596bdbf919c95c74f033ef67c2afaf46a210";
     private const string SOURCE_WVB_OPERATORS_SHA256 = "82ae423000f0cf44f1170def85806488bf823be3d762731145f6fd461f35c685";
-    private const string SOURCE_WVB_WIDE_SCALARS_SHA256 = "b898bc07461f7d93b2c8bd5806e06fa5c98cdaa5c11a7f4ce1fef89b77a7bf69";
+    private const string SOURCE_WVB_WIDE_SCALARS_SHA256 = "6d64f0d9ee597e655c18457a7ea6f40dd67a4cea2ad24b525782977739240b29";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_GUEST_SHA256 = "e790d2162d1223f68bc374ee3c27720e1c660a4e8a2be906aade28cabc5f7713";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_I32_OVERFLOW_SHA256 = "1f73749e231f12f7082a701b2a9f76789944e9933ed11c7251bc4fb54f75bc95";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_U32_OVERFLOW_SHA256 = "5d8e247993031623ff63e50168856f9c43c94ce42d79637eba89f1aae2088a4e";
@@ -819,6 +819,12 @@ internal static class Program
     private static readonly string WVDB_READER_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wvdb-Reader.wv");
 
+    private static readonly string STORAGE_GEOMETRY_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Storage-Geometry.wv");
+
+    private static readonly string STORAGE_GEOMETRY_ADAPTER_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Storage-Geometry-Adapter.wv");
+
     private static readonly string WVDB_READER_ADAPTER_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wvdb-Reader-Adapter.wv");
 
@@ -1136,6 +1142,7 @@ internal static class Program
         new("Foundation byte construction is total, bounded, and shared", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉconstructionˉruns),
         new("Windvale Database validates bounded pages and performs exact B+tree lookup", [TEST_AREA_DATABASE, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvdbˉreaderˉruns),
         new("Windvale Database reads bounded snapshots through a rights-limited directory", [TEST_AREA_DATABASE, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvdbˉsnapshotˉlookupˉruns),
+        new("Windvale Database computes checked u64 storage page ranges", [TEST_AREA_DATABASE, TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Databaseˉstorageˉgeometryˉruns),
         new("Windvale-written source lexer streams the complete Seed token contract", [TEST_AREA_COMPILER], Compilerˉsourceˉlexerˉruns),
         new("Windvale-written declaration parser exposes bounded streaming source views", [TEST_AREA_COMPILER], Compilerˉsourceˉdeclarationˉparserˉruns),
         new("Windvale-written body parser exposes bounded statement and expression views", [TEST_AREA_COMPILER], Compilerˉsourceˉbodyˉparserˉruns, Testˉcost.Extended),
@@ -8569,15 +8576,15 @@ internal static class Program
         var Compilerˉnative = EXACT_COMPILER_NATIVE.Value;
         var Measurement = Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment);
         Equal(Measurement, Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment));
-        Equal(27_428_212, Compilerˉnative.Fragment.Code.Length);
-        Equal(27_450_030, Measurement.Encodedˉobjectˉbytes);
+        Equal(27_437_138, Compilerˉnative.Fragment.Code.Length);
+        Equal(27_459_086, Measurement.Encodedˉobjectˉbytes);
         Equal(Compilerˉnative.Fragment.Code.Length, Measurement.Materializedˉsectionˉbytes);
         Equal(Compilerˉnative.Fragment.Code.Length, Measurement.Linkedˉimageˉbytes);
-        Equal(27_427_136, Measurement.Textˉbytes);
-        Equal(1_076, Measurement.Readˉonlyˉdataˉbytes);
+        Equal(27_436_048, Measurement.Textˉbytes);
+        Equal(1_090, Measurement.Readˉonlyˉdataˉbytes);
         Equal(2, Measurement.Sections);
-        Equal(522, Measurement.Symbols);
-        Equal(222, Measurement.Relocations);
+        Equal(523, Measurement.Symbols);
+        Equal(227, Measurement.Relocations);
         True(
             Measurement.Encodedˉobjectˉbytes > Objectˉlimits.MAX_OBJECT_BYTES,
             "The exact compiler unexpectedly fits the retained encoded-WVO limit.");
@@ -8665,11 +8672,11 @@ internal static class Program
         var Linuxˉbundle = X64ˉnativeˉserviceˉbundle.Build(
             Compilerˉnative.Fragment,
             Nativeˉserviceˉplatform.Linux);
-        Equal(27_445_667, Windowsˉbundle.Imageˉbytes.Length);
+        Equal(27_454_627, Windowsˉbundle.Imageˉbytes.Length);
         Equal(
             SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256,
             Objectˉdigest.Calculateˉsha256(Windowsˉbundle.Imageˉbytes.AsSpan()));
-        Equal(27_445_383, Linuxˉbundle.Imageˉbytes.Length);
+        Equal(27_454_343, Linuxˉbundle.Imageˉbytes.Length);
         Equal(
             SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256,
             Objectˉdigest.Calculateˉsha256(Linuxˉbundle.Imageˉbytes.AsSpan()));
@@ -8880,14 +8887,14 @@ internal static class Program
                 Firstˉwindowsˉapplication.AsSpan(),
                 Windowsˉbundle);
         Equal(Nativeˉentry, Verifiedˉwindowsˉapplication.Nativeˉentryˉoffset);
-        Equal(27_459_072, Verifiedˉwindowsˉapplication.Layout.Applicationˉbytes);
-        Equal(27_449_763u, Verifiedˉwindowsˉapplication.Layout.Textˉvirtualˉbytes);
-        Equal(27_449_856u, Verifiedˉwindowsˉapplication.Layout.Textˉfileˉbytes);
-        Equal(27_450_368u, Verifiedˉwindowsˉapplication.Layout.Dataˉfileˉoffset);
-        Equal(27_455_488u, Verifiedˉwindowsˉapplication.Layout.Dataˉsectionˉaddress);
-        Equal(27_459_584u, Verifiedˉwindowsˉapplication.Layout.Runtimeˉaddress);
+        Equal(27_468_288, Verifiedˉwindowsˉapplication.Layout.Applicationˉbytes);
+        Equal(27_458_723u, Verifiedˉwindowsˉapplication.Layout.Textˉvirtualˉbytes);
+        Equal(27_459_072u, Verifiedˉwindowsˉapplication.Layout.Textˉfileˉbytes);
+        Equal(27_459_584u, Verifiedˉwindowsˉapplication.Layout.Dataˉfileˉoffset);
+        Equal(27_463_680u, Verifiedˉwindowsˉapplication.Layout.Dataˉsectionˉaddress);
+        Equal(27_467_776u, Verifiedˉwindowsˉapplication.Layout.Runtimeˉaddress);
         Equal(476_139_520u, Verifiedˉwindowsˉapplication.Layout.Dataˉvirtualˉbytes);
-        Equal(503_599_104u, Verifiedˉwindowsˉapplication.Layout.Imageˉvirtualˉbytes);
+        Equal(503_607_296u, Verifiedˉwindowsˉapplication.Layout.Imageˉvirtualˉbytes);
         Sequenceˉequal(Windowsˉbundle.Imageˉbytes,
             Verifiedˉwindowsˉapplication.Bundleˉimage);
 
@@ -9041,8 +9048,8 @@ internal static class Program
                     0,
                     Executeˉwindowsˉapplication(
                         Firstˉwindowsˉapplication,
-                        "source wvb status=Valid functions=413 code-bytes=753669 " +
-                            "module-bytes=913513\n",
+                        "source wvb status=Valid functions=413 code-bytes=754761 " +
+                            "module-bytes=914746\n",
                         Arguments,
                         timeoutˉmilliseconds: 600_000,
                         loadedˉmodules: Loadedˉmodules));
@@ -9092,11 +9099,11 @@ internal static class Program
                 Firstˉlinuxˉapplication.AsSpan(),
                 Linuxˉbundle);
         Equal(Nativeˉentry, Verifiedˉlinuxˉapplication.Nativeˉentryˉoffset);
-        Equal(27_459_584, Verifiedˉlinuxˉapplication.Layout.Applicationˉbytes);
-        Equal(27_449_479u, Verifiedˉlinuxˉapplication.Layout.Textˉbytes);
-        Equal(27_455_488u, Verifiedˉlinuxˉapplication.Layout.Dataˉfileˉoffset);
+        Equal(27_467_776, Verifiedˉlinuxˉapplication.Layout.Applicationˉbytes);
+        Equal(27_458_439u, Verifiedˉlinuxˉapplication.Layout.Textˉbytes);
+        Equal(27_463_680u, Verifiedˉlinuxˉapplication.Layout.Dataˉfileˉoffset);
         Equal(474_038_272u, Verifiedˉlinuxˉapplication.Layout.Dataˉvirtualˉbytes);
-        Equal(501_493_760u, Verifiedˉlinuxˉapplication.Layout.Imageˉvirtualˉbytes);
+        Equal(501_501_952u, Verifiedˉlinuxˉapplication.Layout.Imageˉvirtualˉbytes);
         Sequenceˉequal(Linuxˉbundle.Imageˉbytes, Verifiedˉlinuxˉapplication.Bundleˉimage);
 
         var Linuxˉapplicationˉlayout = Verifiedˉlinuxˉapplication.Layout;
@@ -9331,7 +9338,7 @@ internal static class Program
         }
 
         var Verifierˉbytes = Compilation.Moduleˉbytes.ToArray();
-        Equal(123_969, Verifierˉbytes.Length);
+        Equal(125_721, Verifierˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_SHA256,
             Objectˉdigest.Calculateˉsha256(Verifierˉbytes));
@@ -9403,7 +9410,7 @@ internal static class Program
             Windowsˉbundle,
             Nativeˉentry);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(996_352, Firstˉwindows.Imageˉbytes.Length);
+        Equal(1_007_104, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -9424,7 +9431,7 @@ internal static class Program
             Linuxˉbundle,
             Nativeˉentry);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(995_328, Firstˉlinux.Imageˉbytes.Length);
+        Equal(1_007_616, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
@@ -9748,7 +9755,7 @@ internal static class Program
                     "Compiler-Wvb-Verifier-Executable-Core.wv",
                     COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
             ]);
-        Equal(1_068_108, Driverˉbytes.Length);
+        Equal(1_071_093, Driverˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_SHA256,
             Objectˉdigest.Calculateˉsha256(Driverˉbytes));
@@ -9812,7 +9819,7 @@ internal static class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(28_820_992, Firstˉwindows.Imageˉbytes.Length);
+        Equal(28_840_960, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -9844,7 +9851,7 @@ internal static class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(28_823_552, Firstˉlinux.Imageˉbytes.Length);
+        Equal(28_839_936, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
@@ -11645,6 +11652,96 @@ internal static class Program
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
     }
 
+    private static void Databaseˉstorageˉgeometryˉruns()
+    {
+        var Firstˉlibraryˉbytes = Compileˉsuccess(STORAGE_GEOMETRY_SOURCE);
+        var Secondˉlibraryˉbytes = Compileˉsuccess(STORAGE_GEOMETRY_SOURCE);
+        Sequenceˉequal(Firstˉlibraryˉbytes, Secondˉlibraryˉbytes);
+        var Library = Moduleˉcodec.Readˉandˉverify(Firstˉlibraryˉbytes);
+        Equal("Windvaleˉdatabaseˉstorageˉgeometry", Library.Module.Name);
+        Equal(Moduleˉprofile.Portable, Library.Module.Profile);
+        Sequenceˉequal(
+            ["Databaseˉstorageˉpageˉrange"],
+            Library.Module.Exports.Select(Export => Export.Name));
+        True(
+            Library.Module.Types.Any(Type => Type.Name == "Databaseˉpageˉrangeˉresult"),
+            "The storage geometry library did not preserve its typed result.");
+        True(
+            Library.Module.Types.Any(Type => Type.Name == "Databaseˉpageˉrangeˉerror"),
+            "The storage geometry library did not preserve typed failures.");
+        Contains(
+            Moduleˉinspector.Inspect(Library, Firstˉlibraryˉbytes),
+            "u64.from_u32");
+
+        Sourceˉmoduleˉinput Geometryˉlibrary = new(
+            "Libraries/Database/Storage-Geometry.wv",
+            STORAGE_GEOMETRY_SOURCE);
+        var Adapterˉresult = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Tests/Fixtures/Database/Storage-Geometry-Adapter.wv",
+                STORAGE_GEOMETRY_ADAPTER_SOURCE),
+            [Geometryˉlibrary]);
+        True(Adapterˉresult.Success, "Storage geometry adapter composition failed: " +
+            string.Join(" | ", Adapterˉresult.Diagnostics));
+        var Adapter = Moduleˉcodec.Readˉandˉverify(Adapterˉresult.Moduleˉbytes.AsSpan());
+
+        void Expect(
+            ulong headerˉsize,
+            uint pageˉsize,
+            ulong pageˉidentifier,
+            ulong storageˉlength,
+            uint status,
+            ulong offset = 0,
+            ulong endˉexclusive = 0)
+        {
+            var Input = new byte[28];
+            BinaryPrimitives.WriteUInt64LittleEndian(Input.AsSpan(0, 8), headerˉsize);
+            BinaryPrimitives.WriteUInt32LittleEndian(Input.AsSpan(8, 4), pageˉsize);
+            BinaryPrimitives.WriteUInt64LittleEndian(Input.AsSpan(12, 8), pageˉidentifier);
+            BinaryPrimitives.WriteUInt64LittleEndian(Input.AsSpan(20, 8), storageˉlength);
+            var Run = new Referenceˉruntime(
+                Adapter,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(Input.ToImmutableArray());
+            Equal(status, BinaryPrimitives.ReadUInt32LittleEndian(Run.Bytes.AsSpan(0, 4)));
+            if (status != 0)
+            {
+                Equal(4, Run.Bytes.Length);
+                return;
+            }
+
+            Equal(36, Run.Bytes.Length);
+            Equal(pageˉidentifier, BinaryPrimitives.ReadUInt64LittleEndian(Run.Bytes.AsSpan(4, 8)));
+            Equal(offset, BinaryPrimitives.ReadUInt64LittleEndian(Run.Bytes.AsSpan(12, 8)));
+            Equal((ulong)pageˉsize, BinaryPrimitives.ReadUInt64LittleEndian(Run.Bytes.AsSpan(20, 8)));
+            Equal(endˉexclusive, BinaryPrimitives.ReadUInt64LittleEndian(Run.Bytes.AsSpan(28, 8)));
+        }
+
+        Expect(4096, 4096, 2, 16384, 0, 12288, 16384);
+        Expect(4096, 4096, 1_048_576, 4_294_975_488, 0, 4_294_971_392, 4_294_975_488);
+        Expect(
+            0,
+            4096,
+            uint.MaxValue,
+            17_592_186_044_416,
+            0,
+            17_592_186_040_320,
+            17_592_186_044_416);
+        Expect(0, uint.MaxValue, 0, uint.MaxValue, 0, 0, uint.MaxValue);
+        Expect(0, 0, 0, 0, 1);
+        Expect(ulong.MaxValue, 1, 0, ulong.MaxValue, 2);
+        Expect(0, 4096, ulong.MaxValue, ulong.MaxValue, 2);
+        Expect(0, 1, ulong.MaxValue, ulong.MaxValue, 2);
+        Expect(4096, 4096, 2, 16383, 3);
+
+        var Invalidˉinput = new Referenceˉruntime(
+            Adapter,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(ImmutableArray<byte>.Empty);
+        Equal(4, Invalidˉinput.Bytes.Length);
+        Equal(4u, BinaryPrimitives.ReadUInt32LittleEndian(Invalidˉinput.Bytes.AsSpan()));
+    }
+
     private static void Wvdbˉreaderˉruns()
     {
         var Firstˉlibraryˉbytes = Compileˉsuccess(WVDB_READER_SOURCE);
@@ -12708,7 +12805,7 @@ internal static class Program
         var Memoryˉadapterˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_MEMORY_ADAPTER_SOURCE,
             "Source-Wvb-Memory-Adapter.wv");
-        Equal(911_190, Memoryˉadapterˉbytes.Length);
+        Equal(912_423, Memoryˉadapterˉbytes.Length);
         Equal(
             SOURCE_WVB_MEMORY_ADAPTER_SHA256,
             Moduleˉdigest.Calculateˉsha256(Memoryˉadapterˉbytes));
@@ -12722,10 +12819,10 @@ internal static class Program
         Equal(Valueˉtype.Bytes, Memoryˉmain.Declaration.Parameterˉtypes[0]);
         Equal(Valueˉtype.Bytes, Memoryˉmain.Declaration.Returnˉtype);
         Equal(
-            752_046,
+            753_138,
             Memoryˉadapter.Functions.Sum(Function => Function.Declaration.Codeˉlength));
         Equal(
-            156_313,
+            156_546,
             Memoryˉadapter.Functions.Sum(Function => Function.Instructions.Length));
         Equal(
             1_408,
@@ -20537,6 +20634,8 @@ internal static class Program
                 if Bytesˉreadˉu64ˉlittle(
                     Bytesˉfromˉu64ˉlittle(Boundary), 0u32
                 ) != Boundary { return 6; }
+                let Widened: u64 = U64ˉfromˉu32(4294967295u32);
+                if Widened != 4294967295u64 { return 7; }
                 return 29;
             }
             """;
@@ -20551,6 +20650,7 @@ internal static class Program
         Contains(Inspection, "Windvale bytecode 1.11");
         Contains(Inspection, "bytes.from_u64_little");
         Contains(Inspection, "bytes.read_u64_little");
+        Contains(Inspection, "u64.from_u32");
         Equal(
             29,
             new Referenceˉruntime(
@@ -22080,7 +22180,7 @@ internal static class Program
         Equal(string.Empty, Sourceˉbindingsˉselfˉresult.Diagnostics);
         Equal(9, Sourceˉbindingsˉselfˉresult.Readˉcount);
         Equal(
-            "source bindings status=Valid modules=9 functions=261 parameters=1154 locals=1584 reads=13346 assignments=1098 calls=2314 directory-bytes=101120\n",
+            "source bindings status=Valid modules=9 functions=261 parameters=1154 locals=1584 reads=13354 assignments=1098 calls=2317 directory-bytes=101120\n",
             Sourceˉbindingsˉselfˉresult.Output);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",

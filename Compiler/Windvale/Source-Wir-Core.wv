@@ -172,6 +172,7 @@ enum Compilerˉsourceˉwirˉoperation {
     U64ˉshiftˉright = 125;
     Bytesˉreadˉu64ˉlittle = 126;
     Bytesˉfromˉu64ˉlittle = 127;
+    U64ˉfromˉu32 = 128;
 }
 
 enum Compilerˉsourceˉwirˉterminator {
@@ -550,6 +551,7 @@ export fn Compilerˉsourceˉwirˉoperationˉvalue(
     if Operation == Compilerˉsourceˉwirˉoperation.U64ˉshiftˉright { return 125u32; }
     if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu64ˉlittle { return 126u32; }
     if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu64ˉlittle { return 127u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉfromˉu32 { return 128u32; }
     return 0u32;
 }
 
@@ -1117,6 +1119,7 @@ export fn Compilerˉsourceˉwirˉintrinsicˉoperation(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu64ˉlittle; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉsha256ˉhex") { return Compilerˉsourceˉwirˉoperation.Bytesˉsha256ˉhex; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return Compilerˉsourceˉwirˉoperation.U32ˉfromˉu8; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return Compilerˉsourceˉwirˉoperation.U64ˉfromˉu32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return Compilerˉsourceˉwirˉoperation.I32ˉformat; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return Compilerˉsourceˉwirˉoperation.U8ˉformat; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return Compilerˉsourceˉwirˉoperation.U32ˉformat; }
@@ -1169,6 +1172,7 @@ export fn Compilerˉsourceˉwirˉintrinsicˉparameterˉshape(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉi32ˉlittle") { return 1u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return 8u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return 2u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return 3u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return 1u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return 2u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return 3u32; }
@@ -1191,6 +1195,7 @@ export fn Compilerˉsourceˉwirˉintrinsicˉreturnˉshape(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉi32ˉlittle") { return 1u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") { return 8u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return 3u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return 8u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉutf8ˉisˉvalid") { return 4u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return 5u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return 5u32; }
@@ -4876,6 +4881,7 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     }
     if Operation == 126u32 { return Shape == 8u32; }
     if Operation == 127u32 { return Shape == 6u32; }
+    if Operation == 128u32 { return Shape == 8u32; }
     return false;
 }
 
@@ -4954,6 +4960,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == 124u32 || Operation == 125u32 { return Count == 2u32; }
     if Operation == 126u32 { return Count == 2u32; }
     if Operation == 127u32 { return Count == 1u32; }
+    if Operation == 128u32 { return Count == 1u32; }
     return false;
 }
 
@@ -5078,6 +5085,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
         return Shape == 3u32;
     }
     if Operation == 127u32 { return Shape == 8u32; }
+    if Operation == 128u32 { return Shape == 3u32; }
     return true;
 }
 
@@ -5699,7 +5707,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind > 127u32 { return false; }
+        if Operationˉkind > 128u32 { return false; }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalid(Operationˉshape, Symbols, true) {
             return false;
         }
@@ -5955,9 +5963,11 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
             if Operationˉtarget != Compilerˉsourceˉwirˉsentinel() { return false; }
             if Operationˉauxiliary != 0u32 { return false; }
         }
-        if Operationˉkind == 126u32 || Operationˉkind == 127u32 {
+        if Operationˉkind >= 126u32 {
+            if Operationˉkind <= 128u32 {
             if Operationˉtarget != Compilerˉsourceˉwirˉsentinel() { return false; }
             if Operationˉauxiliary != 0u32 { return false; }
+            }
         }
         if Operationˉkind >= 97u32 {
             if Operationˉkind <= 125u32 {

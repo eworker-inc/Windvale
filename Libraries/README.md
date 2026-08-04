@@ -2,13 +2,14 @@
 
 ## Status
 
-This tree owns reusable Windvale APIs and implementations. [Decision 0140](../Documents/Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) defines the durable platform/capability direction; [Decision 0145](../Documents/Decisions/0145-First-Capability-Bearing-Static-Library.md) implements the first bounded capability-bearing static-library slice; [Decision 0153](../Documents/Decisions/0153-First-Versioned-Read-Only-Directory-Capability.md) implements the first rights-limited read-only directory operation; and [Decision 0210](../Documents/Decisions/0210-First-Hosted-Wvdb-Snapshot-Consumer.md) composes that operation with the experimental portable database reader.
+This tree owns reusable Windvale APIs and implementations. [Decision 0140](../Documents/Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) defines the durable platform/capability direction; [Decision 0145](../Documents/Decisions/0145-First-Capability-Bearing-Static-Library.md) implements the first bounded capability-bearing static-library slice; [Decision 0153](../Documents/Decisions/0153-First-Versioned-Read-Only-Directory-Capability.md) implements the first rights-limited read-only directory operation; [Decision 0210](../Documents/Decisions/0210-First-Hosted-Wvdb-Snapshot-Consumer.md) composes that operation with the experimental portable database reader; and [Decision 0211](../Documents/Decisions/0211-U64-Database-Storage-Geometry.md) adds format-neutral checked `u64` page geometry without granting storage authority.
 
 The current compiler still uses `portable`, `hosted`, and `system` as a coarse compatibility and authority boundary. Independent platform scope, optional capabilities, typed capability values, provider binding metadata, and runtime module linking are not implemented.
 
 ## Layers
 
 - `Foundation/` contains deterministic capability-free algorithms and values. `Foundation/Resources/Resource-Store.wv` owns portable `WVRS 1` validation and lookup.
+- `Database/` contains reusable capability-free database algorithms. `Storage-Geometry.wv` owns checked zero-based `u64` page-range arithmetic, while `Wvdb-Reader.wv` remains the bounded experimental snapshot reader.
 - `Platform/` contains application-facing adapters over semantic capabilities. `Platform/Resources/Hosted-Resource-Store.wv` obtains store bytes through the bounded `file.read_bytes` bootstrap leaf and delegates format policy to Foundation. `Platform/Filesystem/Read-Only-Directory.wv` owns a typed 3 KiB read-at API over one pre-bound immutable directory instance. `Platform/Database/Read-Only-Wvdb.wv` composes that provider with the portable experimental WVDB reader, assembling at most six chunks while keeping storage and database failures distinct.
 - `Protocol/` is reserved until a reusable bounded provider/service wire contract moves here from a concrete implementation.
 - `System/` is reserved until a reusable privileged kernel, driver, or machine API has an implemented owner and contract.

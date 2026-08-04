@@ -378,6 +378,7 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.U32ˉformat:
                 case Wirˉoperation.U64ˉformat:
                 case Wirˉoperation.U32ˉfromˉu8:
+                case Wirˉoperation.U64ˉfromˉu32:
                 case Wirˉoperation.Textˉutf8ˉisˉvalid:
                 case Wirˉoperation.Textˉfromˉutf8:
                 case Wirˉoperation.Textˉquote:
@@ -774,6 +775,7 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.U32ˉformat => Opcode.U32ˉformat,
                 Wirˉoperation.U64ˉformat => Opcode.U64ˉformat,
                 Wirˉoperation.U32ˉfromˉu8 => Opcode.U32ˉfromˉu8,
+                Wirˉoperation.U64ˉfromˉu32 => Opcode.U64ˉfromˉu32,
                 Wirˉoperation.Textˉconcat => Opcode.Textˉconcat,
                 Wirˉoperation.Textˉutf8ˉisˉvalid => Opcode.Textˉutf8ˉisˉvalid,
                 Wirˉoperation.Textˉfromˉutf8 => Opcode.Textˉfromˉutf8,

@@ -507,12 +507,13 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> u8 {
     if Operation == 125u32 { return 184u8; }
     if Operation == 126u32 { return 189u8; }
     if Operation == 127u32 { return 190u8; }
+    if Operation == 128u32 { return 191u8; }
     return 0u8;
 }
 
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 127u32 { return true; }
+        if Operation <= 128u32 { return true; }
     }
     return false;
 }
@@ -560,7 +561,7 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     }
     if Operation == 93u32 || Operation == 94u32 { Opcodeˉbytes = 9u32; }
     if Operation >= 95u32 {
-        if Operation <= 127u32 { Opcodeˉbytes = 1u32; }
+        if Operation <= 128u32 { Opcodeˉbytes = 1u32; }
     }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
@@ -2489,7 +2490,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
         }
     }
     if Operation >= 95u32 {
-        if Operation <= 127u32 {
+        if Operation <= 128u32 {
             Result = Bytesˉconcat(
                 Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
             );
