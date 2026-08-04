@@ -1,7 +1,7 @@
 # Decision 0057: Windvale-native execution and .NET retirement
 
 - Date: 2026-07-31
-- Status: Accepted direction; retirement condition 1 is qualified by Decision 0058, while the native implementation and remaining conditions are future work
+- Status: Accepted direction; condition 1 has qualified evidence, Decisions 0059 through 0213 partially advance conditions 2 through 8, and the complete retirement gate remains open
 - Refines: [Decision 0002](0002-Windvale-Seed-Bootstrap.md)'s long-term bootstrap and recovery role
 
 ## Context
@@ -43,7 +43,7 @@ Portable WVB and native execution solve different problems. WVB remains the veri
 
 This gate retires a dependency; it does not erase bootstrap history or claim that every optional optimizer is complete.
 
-Decision 0058 qualifies condition 1 on Windows and Debian with an exact committed 12-module inventory, byte-identical Stage 1 and Stage 2 compilers, and a clean recovery procedure. Conditions 2 through 8 remain open; this does not retire .NET or qualify any native execution path.
+Decision 0058 qualifies condition 1 on Windows and Debian with an exact committed 12-module inventory, byte-identical Stage 1 and Stage 2 compilers, and a clean recovery procedure. Later decisions add substantial native execution, compiler packaging, verifier, build-driver, runtime, and backend evidence without completing conditions 2 through 8. [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md) records their current partial status, freezes forward C# source-language growth at the next qualified WVB 1.11 baseline, and sequences the native front-door cutover; it does not retire .NET.
 
 ## Consequences
 

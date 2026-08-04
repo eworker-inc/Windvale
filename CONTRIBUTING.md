@@ -60,7 +60,7 @@ Changes to portable semantics, bytecode, serialization, runtime behavior, or gol
 
 ## Pull requests
 
-Keep pull requests focused and reviewable. Update tests and specifications in the same change when a contract changes. Do not describe proposals, incomplete work, or unverified behavior as implemented or qualified.
+Keep pull requests focused and reviewable. Prefer focused source files and consider extracting a very large file along real ownership boundaries when that improves comprehension and review; this is not a mandatory line limit, and artificial numbered fragments are not an improvement. Update tests and specifications in the same change when a contract changes. Do not describe proposals, incomplete work, or unverified behavior as implemented or qualified.
 
 A maintainer may request a smaller change, additional hostile-input coverage, an independent verifier, deterministic-byte comparison, a decision record, or clearer ownership boundaries before acceptance. [E-Worker Inc](https://eworker.ca) retains final responsibility for accepting and releasing changes under [GOVERNANCE.md](GOVERNANCE.md).
 
