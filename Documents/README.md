@@ -64,7 +64,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 
 - [Seed development runbook](Runbooks/Seed-Development.md) — prerequisites, verification tiers, bootstrap convergence, CLI examples, assembly, and linking
 - [Contributing guide](../CONTRIBUTING.md) — CLA acceptance, DCO sign-off, provenance, and pull-request requirements
-- [Website guide](../Website/README.md) — local preview, progress data, support configuration, analytics, and publication
+- [Website guide](../Website/README.md) — local preview, featured progress stories, social and favicon assets, support configuration, analytics, and publication
 
 ## Evidence and operations
 

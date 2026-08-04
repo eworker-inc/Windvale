@@ -58,7 +58,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 - Probe 34's immutable guest resource service: init alone maps an exact digest-bound `WVRS 1` page RO/NX, its WVA seam dynamically selects and copies the requested configuration resource, and `WVCHAN03` clears retained IPC state while recording terminal client exit/fault across the two-generation rebuild proof.
 - Deterministic WVA signed-immediate ALU/test, signed multiply, bounded rotate/shift, and typed SIB base/index/scale/`disp32` memory operations in both the Windvale assembler and independent C# oracle.
 - An expanded WVA x86-64 foundation with typed 32/64-bit general-purpose registers, definition-local labels and deterministic near fixups, register move/ALU/compare/test operations, conditional branches, stack and indirect-control operations, and RIP-relative symbol addressing in both the Windvale assembler and independent C# oracle.
-- The [Windvale Community Source License 1.0](LICENSE), [E-Worker Inc](https://eworker.ca) stewardship, contributor agreement, and third-party notice policy.
+- The [Windvale Community Source License 1.0](LICENSE.md), [E-Worker Inc](https://eworker.ca) stewardship, contributor agreement, and third-party notice policy.
 - Vendor-neutral AI-authorship and attribution policy.
 - Public contribution, governance, security, support, conduct, and project-identity policies.
 - The public [`eworker-inc/Windvale`](https://github.com/eworker-inc/Windvale) repository, issue and pull-request templates, private vulnerability reporting, and public development workflow.

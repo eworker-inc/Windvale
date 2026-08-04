@@ -11,7 +11,7 @@ Windvale was created with open-source intent, but an intent statement is not a l
 
 Release Windvale under the MIT License with copyright held by [E-Worker Inc](https://eworker.ca). E-Worker Inc is the project business and steward.
 
-The root `LICENSE` file is authoritative for repository content unless a file or incorporated third-party component carries a compatible, separately identified notice. Copies or substantial portions must retain the copyright and permission notice. The license permits private, public, and commercial use, modification, distribution, sublicensing, and sale without a copyleft requirement, and it supplies the standard MIT warranty and liability disclaimer.
+The root `LICENSE.md` file is authoritative for repository content unless a file or incorporated third-party component carries a compatible, separately identified notice. Copies or substantial portions must retain the copyright and permission notice. The license permits private, public, and commercial use, modification, distribution, sublicensing, and sale without a copyleft requirement, and it supplies the standard MIT warranty and liability disclaimer.
 
 Repository contributions are intended for distribution under the same MIT terms. A separate contributor license agreement is not introduced by this decision; contribution, provenance, security-reporting, trademark, and governance policies remain later public-foundation work.
 

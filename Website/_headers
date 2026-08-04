@@ -43,3 +43,6 @@
 
 /og.png
   Cache-Control: public, max-age=86400
+
+/support-og.png
+  Cache-Control: public, max-age=86400

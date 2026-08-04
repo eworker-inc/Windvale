@@ -91,6 +91,7 @@ body {
     background:
         radial-gradient(circle at 78% 12%, color-mix(in srgb, var(--blue) 7%, transparent), transparent 24rem),
         var(--page);
+    overflow-x: clip;
 }
 
 .material-symbol {
@@ -238,11 +239,11 @@ main {
 
 .hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
+    grid-template-columns: minmax(0, 1fr) minmax(380px, 0.82fr);
     align-items: center;
-    gap: clamp(54px, 7vw, 104px);
-    min-height: 490px;
-    padding: 52px 0 38px;
+    gap: clamp(42px, 6vw, 84px);
+    min-height: 620px;
+    padding: 46px 0 30px;
 }
 
 .eyebrow,
@@ -264,16 +265,16 @@ main {
 }
 
 h1 {
-    max-width: 720px;
+    max-width: 660px;
     margin-bottom: 19px;
-    font-size: clamp(43px, 4.4vw, 61px);
+    font-size: clamp(42px, 4.2vw, 60px);
     font-weight: 720;
     line-height: 1.04;
     letter-spacing: -0.05em;
 }
 
 .hero-intro {
-    max-width: 680px;
+    max-width: 620px;
     margin-bottom: 25px;
     color: var(--muted);
     font-size: 16px;
@@ -351,20 +352,59 @@ h1 {
     margin-bottom: 0;
 }
 
+.hero-art picture {
+    display: block;
+    width: min(100%, 510px);
+}
+
 .hero-art img {
-    width: min(100%, 560px);
-    max-height: 420px;
-    object-fit: contain;
-    filter: drop-shadow(0 22px 32px rgba(23, 85, 177, 0.13));
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line-strong);
+    border-radius: 17px;
+    box-shadow: 0 22px 48px rgba(23, 85, 177, 0.14);
 }
 
 .hero-art figcaption {
-    margin-top: -3px;
+    display: flex;
+    width: min(100%, 510px);
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 10px;
     color: var(--muted);
     font-size: 10px;
+    line-height: 1.45;
+}
+
+.hero-art figcaption strong {
+    color: var(--ink);
+}
+
+.hero-art figcaption a {
+    color: var(--blue);
+    font-weight: 750;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.comic-transcript {
+    width: min(100%, 510px);
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.55;
+}
+
+.comic-transcript summary {
+    width: max-content;
+    color: var(--muted);
+    cursor: pointer;
     font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+}
+
+.comic-transcript ol {
+    margin: 8px 0 0;
+    padding-left: 20px;
 }
 
 .quick-links {
@@ -457,6 +497,67 @@ h1 {
 .quick-links b {
     color: var(--blue);
     font-size: 18px;
+}
+
+.progress-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 36px;
+    margin-bottom: 48px;
+    padding: 24px 26px;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.progress-strip h2 {
+    margin-bottom: 8px;
+    font-size: 22px;
+    font-weight: 730;
+    letter-spacing: -0.025em;
+}
+
+.progress-strip p:last-child {
+    max-width: 760px;
+    margin-bottom: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.progress-strip nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 9px 16px;
+}
+
+.progress-strip nav a {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.progress-strip nav a:first-child {
+    padding: 9px 12px;
+    color: #ffffff;
+    border-radius: 8px;
+    background: #1768e5;
+}
+
+.progress-strip nav a:hover,
+.progress-strip nav a:focus-visible {
+    color: var(--blue);
+}
+
+.progress-strip nav a:first-child:hover,
+.progress-strip nav a:first-child:focus-visible {
+    color: #ffffff;
+    background: #0f54bd;
 }
 
 .progress-section {
@@ -1198,7 +1299,7 @@ button:focus-visible {
 
 @media (max-width: 1040px) {
     .hero {
-        grid-template-columns: 1fr 400px;
+        grid-template-columns: minmax(0, 1fr) minmax(330px, 400px);
         gap: 42px;
     }
 
@@ -1243,11 +1344,12 @@ button:focus-visible {
 
     .hero {
         grid-template-columns: 1fr;
-        padding-top: 50px;
+        padding-top: 42px;
     }
 
     .hero-art {
         width: min(620px, 100%);
+        justify-self: center;
     }
 
     .quick-links {
@@ -1278,6 +1380,15 @@ button:focus-visible {
     .quick-links > a {
         min-height: 74px;
     }
+
+    .progress-strip {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .progress-strip nav {
+        justify-content: flex-start;
+    }
 }
 
 @media (max-width: 650px) {
@@ -1301,11 +1412,11 @@ button:focus-visible {
 
     .hero {
         min-height: 0;
-        padding: 42px 0 34px;
+        padding: 34px 0 26px;
     }
 
     h1 {
-        font-size: clamp(39px, 11.5vw, 54px);
+        font-size: clamp(36px, 10.7vw, 48px);
     }
 
     .hero-actions {
@@ -1323,7 +1434,17 @@ button:focus-visible {
     }
 
     .hero-art img {
-        max-height: 360px;
+        max-height: none;
+    }
+
+    .hero-art figcaption {
+        align-items: start;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .progress-strip {
+        padding: 20px;
     }
 
     .progress-section {

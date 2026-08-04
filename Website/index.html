@@ -3,25 +3,30 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Windvale is a source-available project building a programming language, its tools, and a small operating system together." />
+    <meta name="description" content="Windvale is a source-available programming language growing its own compiler, runtime, tools, and operating system." />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f9fc" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#071018" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Windvale" />
-    <meta property="og:title" content="Windvale — An understandable computing stack" />
-    <meta property="og:description" content="A programming language, compiler, runtime, and operating system—built together in the open." />
+    <meta property="og:title" content="Windvale — The stack is growing" />
+    <meta property="og:description" content="A programming language growing its own compiler, runtime, tools, and operating system." />
     <meta property="og:url" content="https://windvale.ca/" />
     <meta property="og:image" content="https://windvale.ca/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The Windvale language, compiler, runtime, operating-system butterfly, and database reader together beside the words The stack is growing." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Windvale — An understandable computing stack" />
-    <meta name="twitter:description" content="A programming language, compiler, runtime, and operating system—built together in the open." />
+    <meta name="twitter:title" content="Windvale — The stack is growing" />
+    <meta name="twitter:description" content="A programming language growing its own compiler, runtime, tools, and operating system." />
     <meta name="twitter:image" content="https://windvale.ca/og.png" />
+    <meta name="twitter:image:alt" content="The Windvale language, compiler, runtime, operating-system butterfly, and database reader together beside the words The stack is growing." />
     <link rel="canonical" href="https://windvale.ca/" />
-    <link rel="icon" href="assets/windvale-mark-transparent.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <link rel="stylesheet" href="styles.css" />
     <script type="module" src="/analytics.js"></script>
     <script type="module" src="site.js"></script>
-    <title>Windvale — An understandable computing stack</title>
+    <title>Windvale — The stack is growing</title>
 </head>
 <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -33,12 +38,10 @@
                 <span>Windvale</span>
             </a>
             <nav aria-label="Primary navigation">
-                <a class="active" href="#overview">Overview</a>
                 <a href="#progress">Progress</a>
-                <a href="/support/">Support</a>
                 <a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/README.md">Docs</a>
                 <a href="https://github.com/eworker-inc/Windvale">GitHub</a>
-                <a href="https://eworker.ca">E-Worker</a>
+                <a href="/support/">Support</a>
                 <a class="nav-button" href="/playground/">Playground <span aria-hidden="true">↗</span></a>
             </nav>
             <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch color theme">
@@ -51,14 +54,13 @@
         <section class="hero" id="overview">
             <div class="hero-copy">
                 <p class="eyebrow">AI-authored · human-directed</p>
-                <h1>A programming language built all the way down to its own operating system.</h1>
+                <h1>A programming language growing its own computing stack.</h1>
                 <p class="hero-intro">
-                    Windvale is a source-available <a href="https://eworker.ca">E-Worker Inc</a> experiment bringing the language, compiler, tools, and operating system into one project.
-                    The goal is simple: make the whole computing stack possible to read, test, and understand.
+                    Windvale brings the language, compiler, runtime, tools, and operating system into one source-available project designed to be read, tested, and understood.
                 </p>
                 <div class="hero-actions">
                     <a class="button primary" href="/playground/">Try Windvale <span aria-hidden="true">→</span></a>
-                    <a class="button secondary" href="/support/">Support Windvale</a>
+                    <a class="button secondary" href="https://github.com/eworker-inc/Windvale">Explore the source</a>
                 </div>
                 <div class="runs-on" aria-label="Windvale runs on Windows, Linux, and the browser">
                     <span>Runs today on</span>
@@ -69,8 +71,31 @@
             </div>
 
             <figure class="hero-art">
-                <img src="assets/hero-stack.png" width="1120" height="919" fetchpriority="high" alt="Five colorful layers representing the Windvale language, compiler, bytecode, runtime, and operating system" />
-                <figcaption>One project · five understandable layers</figcaption>
+                <picture>
+                    <source
+                        type="image/webp"
+                        srcset="assets/progress/windvale-progress-2026-08-04-640.webp 640w, assets/progress/windvale-progress-2026-08-04-1120.webp 1120w"
+                        sizes="(max-width: 850px) calc(100vw - 30px), 510px" />
+                    <img
+                        src="assets/progress/windvale-progress-2026-08-04-1120.webp"
+                        width="1120"
+                        height="1390"
+                        fetchpriority="high"
+                        alt="Four-panel Windvale progress comic: the language asks for a compiler, the compiler asks for a runtime, and the runtime asks for an operating system before a database reader joins the family." />
+                </picture>
+                <figcaption>
+                    <span><strong>Latest progress story</strong> · 4 August 2026</span>
+                    <a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/Project/Progress.md">Full progress →</a>
+                </figcaption>
+                <details class="comic-transcript">
+                    <summary>Read the comic transcript</summary>
+                    <ol>
+                        <li>Windvale starts with a programming language.</li>
+                        <li>The language asks for a compiler.</li>
+                        <li>The compiler asks for a runtime.</li>
+                        <li>The runtime asks for an operating system, represented by the Windvale butterfly, and a database reader joins the growing family.</li>
+                    </ol>
+                </details>
             </figure>
         </section>
 
@@ -97,40 +122,23 @@
             </a>
         </section>
 
-        <section class="progress-section" id="progress" aria-labelledby="progress-title">
-            <div class="progress-heading">
-                <div>
-                    <p class="kicker">Project progress</p>
-                    <h2 id="progress-title">Five parts. One shared mission.</h2>
-                </div>
-                <p>Hover, focus, or tap a card for the evidence and the next step. Updated <span id="progress-updated">from project data</span>.</p>
+        <section class="progress-strip" id="progress" aria-labelledby="progress-title">
+            <div>
+                <p class="kicker">Follow the build</p>
+                <h2 id="progress-title">Useful today. Still growing downward.</h2>
+                <p>Windvale already compiles and runs portable programs while more of the compiler, runtime, native tools, and operating system move into Windvale itself.</p>
             </div>
-
-            <div class="progress-cards" id="progress-cards">
-                <noscript>Enable JavaScript to view the current interactive project progress cards.</noscript>
-            </div>
-
-            <p class="progress-note">These indicators describe qualification evidence, not percentage-complete estimates. A qualified gate proves one defined milestone—it does not mean the whole component is finished.</p>
-        </section>
-
-        <section class="milestone-section" aria-labelledby="milestone-title">
-            <div class="progress-heading">
-                <div>
-                    <p class="kicker">Development milestones</p>
-                    <h2 id="milestone-title">A closer look inside the stack.</h2>
-                </div>
-                <p>These smaller milestones show which foundations are qualified and where active development is focused.</p>
-            </div>
-
-            <div class="milestone-cards" id="milestone-cards">
-                <noscript>Enable JavaScript to view the detailed development milestone cards.</noscript>
-            </div>
+            <nav aria-label="Project status links">
+                <a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/Project/Progress.md">Current progress <span aria-hidden="true">→</span></a>
+                <a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/Project/Roadmap.md">Roadmap</a>
+                <a href="https://github.com/eworker-inc/Windvale/blob/main/Documents/Project/Seed-Verification-Evidence.md">Evidence</a>
+            </nav>
         </section>
     </main>
     <footer class="site-footer">
         <span>Windvale is stewarded by <a href="https://eworker.ca">E-Worker Inc</a>.</span>
         <nav aria-label="Legal and project links">
-            <a href="https://github.com/eworker-inc/Windvale/blob/main/LICENSE">Community Source License</a>
+            <a href="https://github.com/eworker-inc/Windvale/blob/main/LICENSE.md">Community Source License</a>
             <a href="https://github.com/eworker-inc/Windvale/blob/main/THIRD-PARTY-NOTICES.md">Third-party notices</a>
             <a href="mailto:info@eworker.ca">Commercial licensing</a>
         </nav>

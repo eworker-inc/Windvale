@@ -13,7 +13,7 @@ Future external contributions must provide enough rights for E-Worker to continu
 
 ## Decision
 
-Apply the [Windvale Community Source License 1.0](../../LICENSE) to Windvale-owned work published from the adopting commit onward. It is a source-available license and is not represented as an Open Source Initiative approved open-source license.
+Apply the [Windvale Community Source License 1.0](../../LICENSE.md) to Windvale-owned work published from the adopting commit onward. It is a source-available license and is not represented as an Open Source Initiative approved open-source license.
 
 The license permits personal, noncommercial, evaluation, and qualifying small-organization use without charge. Large-organization production use, Windvale-as-a-product use, certain hosted offerings, and proprietary redistribution require a separate written commercial agreement. The consolidated gross-revenue threshold is US$20 million over the preceding consecutive twelve months, with the transition period defined in the license.
 

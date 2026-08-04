@@ -75,7 +75,7 @@ function Test-LightweightPath {
 
     return (
         $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
-        $Path -eq 'LICENSE' -or
+        $Path -eq 'LICENSE.md' -or
         $IsDocumentationImage
     )
 }

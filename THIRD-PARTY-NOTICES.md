@@ -1,6 +1,6 @@
 # Third-party notices
 
-The [Windvale Community Source License](LICENSE) applies only to Windvale-owned
+The [Windvale Community Source License](LICENSE.md) applies only to Windvale-owned
 material to which that license is expressly applied. Third-party components
 remain under their separately identified licenses, and those terms take
 precedence for the third-party material.

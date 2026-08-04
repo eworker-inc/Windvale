@@ -27,9 +27,18 @@ pwsh -NoProfile -File Tools/Verify/Verify-Website.ps1
 
 It installs the pinned root and playground Node dependencies, rebuilds the browser editor and its exact third-party notices, verifies the direct WebAssembly demo and supporter contract, checks the website tooling syntax, and builds the Vite site. Change-aware local and GitHub verification select this gate for website and browser-packaging paths without running unrelated Seed qualification.
 
-## Updating the progress cards
+## Updating the featured progress story
 
-All public component and development-milestone progress lives in `project-progress.js`. To update the dashboard, change an item's evidence `indicator`, `status`, `details`, and `next` values plus `PROGRESS_UPDATED`. The page creates both sets of cards and accessible tooltips automatically; no HTML or CSS change is needed. Keep the indicators aligned with `Documents/Project/Progress.md`; do not invent percentage-complete estimates.
+The homepage is an editorial introduction, not a second progress dashboard. [`Documents/Project/Progress.md`](../Documents/Project/Progress.md) remains the authoritative current-state source; the website shows one dated comic and links to that dashboard, the roadmap, and qualification evidence.
+
+To rotate the featured story:
+
+1. Put the full-resolution dated original in [`Documents/Project/Images/`](../Documents/Project/Images/), and update the root README if it uses the same story.
+2. Add 640-pixel and 1120-pixel WebP derivatives under `assets/progress/`.
+3. Update the hero image paths, intrinsic dimensions, date, alt text, caption, and collapsed transcript in `index.html`.
+4. Run the website verifier and inspect the desktop and mobile hero before publication.
+
+The 1200×630 `og.png` is the homepage social preview for X and other link unfurls, while `support-og.png` is the support-page preview. Refresh either deliberately when its public visual direction changes, not automatically with every comic, and keep its Open Graph and X alt text synchronized with the page that uses it. The six 768×512 illustrations under `assets/support/` form a character-led mini-story across the support tiers; keep their shared style, safe crop, and tier meanings coherent when replacing them. `assets/favicon.png` and `assets/apple-touch-icon.png` use the Windvale wind-and-butterfly mark on a dark background so the mark remains visible in browser and device chrome.
 
 The page uses a small self-hosted subset of Google Material Symbols Rounded. Its Apache 2.0 license is stored beside the font in `assets/material-symbols-LICENSE.txt`; visitors do not contact Google to load the icons. The playground build copies the exact Monaco Editor, Monaco third-party, DOMPurify, and Marked notices from the pinned packages into `wwwroot/editor/notices/`. The repository-wide [third-party notice index](../THIRD-PARTY-NOTICES.md) records the ownership boundary.
 

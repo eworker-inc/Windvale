@@ -4,7 +4,7 @@
 
 [E-Worker Inc](https://eworker.ca) initiated Windvale and is its project steward. The steward controls official repositories and releases, appoints maintainers, accepts or rejects contributions, administers security reports, and decides when a contract or milestone is qualified.
 
-Windvale-owned work is source-available under the [Windvale Community Source License 1.0](LICENSE). The public license permits defined free uses while reserving large-organization production use and Windvale-as-a-product use for separate commercial terms. Independent applications remain the property of their creators, and third-party components remain under their own licenses. Source availability does not require the official project to accept every compatible change or transfer stewardship of the Windvale identity.
+Windvale-owned work is source-available under the [Windvale Community Source License 1.0](LICENSE.md). The public license permits defined free uses while reserving large-organization production use and Windvale-as-a-product use for separate commercial terms. Independent applications remain the property of their creators, and third-party components remain under their own licenses. Source availability does not require the official project to accept every compatible change or transfer stewardship of the Windvale identity.
 
 ## Roles
 

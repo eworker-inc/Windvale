@@ -71,7 +71,7 @@ foreach ($Path in $Paths) {
         !$Path.StartsWith('Specifications/', [StringComparison]::Ordinal) -and
         (
             $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
-            $Path -eq 'LICENSE' -or
+            $Path -eq 'LICENSE.md' -or
             (
                 $Path.StartsWith('Documents/Project/Images/', [StringComparison]::Ordinal) -and
                 [System.IO.Path]::GetExtension($Path) -in @('.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp')
