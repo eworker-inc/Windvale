@@ -559,7 +559,8 @@ public sealed class Hostedˉresourceˉcontext
         TextWriter diagnosticˉoutput,
         IHostedˉfileˉreader? fileˉreader = null,
         IHostedˉfileˉwriter? fileˉwriter = null,
-        IReadˉonlyˉdirectory? readˉonlyˉdirectory = null)
+        IReadˉonlyˉdirectory? readˉonlyˉdirectory = null,
+        IRandomˉaccessˉstorage? randomˉaccessˉstorage = null)
     {
         ArgumentNullException.ThrowIfNull(standardˉoutput);
         ArgumentNullException.ThrowIfNull(diagnosticˉoutput);
@@ -615,6 +616,7 @@ public sealed class Hostedˉresourceˉcontext
         Fileˉreader = fileˉreader;
         Fileˉwriter = fileˉwriter;
         Readˉonlyˉdirectory = readˉonlyˉdirectory;
+        Randomˉaccessˉstorage = randomˉaccessˉstorage;
     }
 
     public ImmutableArray<string> Arguments { get; }
@@ -628,6 +630,8 @@ public sealed class Hostedˉresourceˉcontext
     public IHostedˉfileˉwriter? Fileˉwriter { get; }
 
     public IReadˉonlyˉdirectory? Readˉonlyˉdirectory { get; }
+
+    public IRandomˉaccessˉstorage? Randomˉaccessˉstorage { get; }
 
     public uint Getˉargumentˉcount() => checked((uint)Arguments.Length);
 
@@ -716,6 +720,28 @@ public sealed class Hostedˉresourceˉcontext
             offset,
             maximumˉbytes);
     }
+
+    public ImmutableArray<byte> Invokeˉrandomˉaccessˉstorage(
+        uint operation,
+        ulong generation,
+        ulong position,
+        uint control,
+        ImmutableArray<byte> value)
+    {
+        if (Randomˉaccessˉstorage is null)
+        {
+            throw new Runtimeˉexception(
+                "WVR3001",
+                $"The host does not implement capability '{Capabilityˉcatalog.STORAGE_RANDOM_ACCESS_V1}'.");
+        }
+        return Randomˉaccessˉstorageˉcontract.Invoke(
+            Randomˉaccessˉstorage,
+            operation,
+            generation,
+            position,
+            control,
+            value);
+    }
 }
 
 public interface ICapabilityˉhost
@@ -755,6 +781,8 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
                 Resources.Readˉonlyˉdirectory is not null,
             Capabilityˉcatalog.FILE_READ_BYTES => Resources.Fileˉreader is not null,
             Capabilityˉcatalog.FILE_WRITE_BYTES => Resources.Fileˉwriter is not null,
+            Capabilityˉcatalog.STORAGE_RANDOM_ACCESS_V1 =>
+                Resources.Randomˉaccessˉstorage is not null,
             _ => false,
         };
     }
@@ -788,6 +816,13 @@ public sealed class Referenceˉcapabilityˉhost : ICapabilityˉhost
             case Capabilityˉcatalog.FILE_WRITE_BYTES:
                 Writeˉfile(arguments[0].Textˉvalue!, arguments[1].Bytesˉvalue);
                 return null;
+            case Capabilityˉcatalog.STORAGE_RANDOM_ACCESS_V1:
+                return Runtimeˉvalue.Fromˉbytes(Resources.Invokeˉrandomˉaccessˉstorage(
+                    arguments[0].U32ˉvalue,
+                    arguments[1].U64ˉvalue,
+                    arguments[2].U64ˉvalue,
+                    arguments[3].U32ˉvalue,
+                    arguments[4].Bytesˉvalue.Toˉimmutableˉarray()));
             default:
                 throw new Runtimeˉexception(
                     "WVR3001",

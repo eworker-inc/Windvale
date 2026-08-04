@@ -166,6 +166,9 @@
       Include="../../Libraries/Platform/Filesystem/Read-Only-Directory.wv"
       LogicalName="Windvale.Seed.Tests.Read-Only-Directory.wv" />
     <EmbeddedResource
+      Include="../../Libraries/Platform/Storage/Random-Access-Storage.wv"
+      LogicalName="Windvale.Seed.Tests.Random-Access-Storage.wv" />
+    <EmbeddedResource
       Include="../../Examples/Foundation/Byte-Construction-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Byte-Construction-Demo.wv" />
     <EmbeddedResource

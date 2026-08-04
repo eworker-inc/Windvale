@@ -116,6 +116,15 @@ Reusable application-facing facilities belong in distinct layers:
 - **Protocol libraries** encode and strictly validate bounded service messages used between a provider and an OS service. Ordinary applications should not manipulate those wire bytes.
 - **System libraries** expose privileged kernel, driver, and machine facilities and require system authority.
 
+Repository paths express that ownership hierarchy, for example
+`Libraries/Platform/Storage/Random-Access-Storage.wv` and
+`Libraries/Database/Storage-Geometry.wv`. Source modules remain named units;
+an explicit import alias supplies the concise local namespace used at call
+sites. Folder segments are not automatically source namespaces. Future package
+parts add globally unique dependency identity while source aliases continue to
+define local vocabulary. This separates stable ownership, source naming, and
+package identity instead of forcing one string to serve all three roles.
+
 An application calls a platform library. The library reaches a small semantic capability. Windows and Linux may bind that capability to an in-process or native adapter; Windvale OS may bind it to a checked runtime adapter that communicates with an isolated service through bounded IPC. The app-facing contract remains independent of the provider mechanism.
 
 Process placement is likewise provider-specific. Windows or Linux may use an in-process adapter, native child process, or supervised service; Windvale OS may use a protected endpoint provider. Decision 0173's clean launch, explicit pre-entry binding, peer-loss, and no-ambient-inheritance rules preserve the semantic boundary without requiring every environment to expose the same native process API.
@@ -139,7 +148,7 @@ A single ambiguous `file.write` is not an adequate contract. The family should d
 - data flush from data-and-metadata or directory durability; and
 - atomic replacement from replacement that may expose a partial or missing destination.
 
-Core reads and writes operate on bounded chunks so large files do not require one whole-value allocation. File offsets, lengths, and resulting sizes require an explicitly selected unsigned width and checked arithmetic; adopting `u64` for the public contract waits until every selected execution target supports that value shape. A zero-length operation, end-of-file result, short read, short write, and maximum chunk must each have one specified meaning.
+Core reads and writes operate on bounded chunks so large files do not require one whole-value allocation. File offsets, lengths, and resulting sizes require an explicitly selected unsigned width and checked arithmetic. Implemented-candidate [`storage.random_access_v1`](../../Specifications/Random-Access-Storage-Capability.md) now selects `u64` for its hosted source/reference-runtime profile while native, bounded WebAssembly, and Windvale OS execution profiles retain explicit narrower support until they adopt the value and capability. A zero-length operation, end-of-file result, short read, short write, and maximum chunk must each have one specified meaning.
 
 Mutating operations must report whether they were rejected before change, completed, partially completed with exact progress, or left indeterminate by a provider or transport failure. A library must not automatically retry an indeterminate mutation unless the operation is defined as idempotent or carries a provider-validated idempotency identity. A service restart must not turn an uncertain write, append, rename, or replacement into an unnoticed duplicate or second mutation.
 

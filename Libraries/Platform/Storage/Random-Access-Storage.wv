@@ -1,0 +1,328 @@
+module Randomˉaccessˉstorage profile hosted;
+
+capability storage.random_access_v1;
+
+const STORAGE_RESPONSE_MAGIC: u32 = 1095980631u32;
+const STORAGE_MAX_TRANSFER: u32 = 65536u32;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Storageˉstatus {
+    Valid = 0;
+    Permissionˉdenied = 1;
+    Unavailable = 2;
+    Revoked = 3;
+    Stale = 4;
+    Peerˉexited = 5;
+    Outsideˉstorage = 6;
+    Unsupported = 7;
+    Invalidˉrequest = 8;
+    Invalidˉresponse = 9;
+}
+
+export enum Storageˉcompletion {
+    None = 0;
+    Completed = 1;
+    Partial = 2;
+    Indeterminate = 3;
+}
+
+export enum Storageˉflush {
+    Content = 1;
+    Contentˉandˉlength = 2;
+}
+
+export record Storageˉresult {
+    Status: Storageˉstatus;
+    Generation: u64;
+    Storageˉlength: u64;
+    Position: u64;
+    Progress: u32;
+    Completion: Storageˉcompletion;
+    Value: bytes;
+}
+
+export fn Storageˉempty() -> bytes {
+    return Textˉtoˉutf8("");
+}
+
+export fn Storageˉfailure(
+    Status: Storageˉstatus,
+    Generation: u64,
+    Position: u64
+) -> Storageˉresult {
+    return Storageˉresult(
+        Status,
+        Generation,
+        0u64,
+        Position,
+        0u32,
+        Storageˉcompletion.None,
+        Storageˉempty()
+    );
+}
+
+fn Storageˉstatusˉfromˉu32(Value: u32) -> Storageˉstatus {
+    if Value == 0u32 { return Storageˉstatus.Valid; }
+    if Value == 1u32 { return Storageˉstatus.Permissionˉdenied; }
+    if Value == 2u32 { return Storageˉstatus.Unavailable; }
+    if Value == 3u32 { return Storageˉstatus.Revoked; }
+    if Value == 4u32 { return Storageˉstatus.Stale; }
+    if Value == 5u32 { return Storageˉstatus.Peerˉexited; }
+    if Value == 6u32 { return Storageˉstatus.Outsideˉstorage; }
+    if Value == 7u32 { return Storageˉstatus.Unsupported; }
+    if Value == 8u32 { return Storageˉstatus.Invalidˉrequest; }
+    return Storageˉstatus.Invalidˉresponse;
+}
+
+fn Storageˉcompletionˉfromˉu32(Value: u32) -> Storageˉcompletion {
+    if Value == 1u32 { return Storageˉcompletion.Completed; }
+    if Value == 2u32 { return Storageˉcompletion.Partial; }
+    if Value == 3u32 { return Storageˉcompletion.Indeterminate; }
+    return Storageˉcompletion.None;
+}
+
+fn Storageˉrequestˉisˉvalid(
+    Operation: u32,
+    Generation: u64,
+    Position: u64,
+    Control: u32,
+    Valueˉlength: u32
+) -> bool {
+    if Valueˉlength > STORAGE_MAX_TRANSFER { return false; }
+    if Operation == 0u32 {
+        if Generation != 0u64 { return false; }
+        if Position != 0u64 { return false; }
+        if Control != 0u32 { return false; }
+        return Valueˉlength == 0u32;
+    }
+    if Operation == 1u32 {
+        if Generation == 0u64 { return false; }
+        if Control > STORAGE_MAX_TRANSFER { return false; }
+        return Valueˉlength == 0u32;
+    }
+    if Operation == 2u32 {
+        if Generation == 0u64 || Control != 0u32 { return false; }
+        return Position <= U64_MAXIMUM - U64ˉfromˉu32(Valueˉlength);
+    }
+    if Operation == 3u32 {
+        if Generation == 0u64 { return false; }
+        if Control != 0u32 { return false; }
+        return Valueˉlength == 0u32;
+    }
+    if Operation == 4u32 {
+        if Generation == 0u64 || Position != 0u64 || Valueˉlength != 0u32 {
+            return false;
+        }
+        if Control == 1u32 { return true; }
+        return Control == 2u32;
+    }
+    return false;
+}
+
+export fn Storageˉdecode(
+    Response: bytes,
+    Operation: u32,
+    Generation: u64,
+    Position: u64,
+    Control: u32,
+    Valueˉlength: u32
+) -> Storageˉresult {
+    let Invalid: Storageˉresult = Storageˉfailure(
+        Storageˉstatus.Invalidˉresponse,
+        Generation,
+        Position
+    );
+    let Total: u32 = Bytesˉlength(Response);
+    if Total < 48u32 || Total > 65584u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != STORAGE_RESPONSE_MAGIC {
+        return Invalid;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Response, 8u32) != Operation { return Invalid; }
+
+    let Rawˉstatus: u32 = Bytesˉreadˉu32ˉlittle(Response, 12u32);
+    let Returnedˉgeneration: u64 = Bytesˉreadˉu64ˉlittle(Response, 16u32);
+    let Storageˉlength: u64 = Bytesˉreadˉu64ˉlittle(Response, 24u32);
+    let Returnedˉposition: u64 = Bytesˉreadˉu64ˉlittle(Response, 32u32);
+    let Progress: u32 = Bytesˉreadˉu32ˉlittle(Response, 40u32);
+    let Rawˉcompletion: u32 = Bytesˉreadˉu32ˉlittle(Response, 44u32);
+    let Payloadˉlength: u32 = Total - 48u32;
+    if Rawˉstatus > 8u32 || Rawˉcompletion > 3u32 { return Invalid; }
+    if Returnedˉposition != Position { return Invalid; }
+
+    let Status: Storageˉstatus = Storageˉstatusˉfromˉu32(Rawˉstatus);
+    let Completion: Storageˉcompletion = Storageˉcompletionˉfromˉu32(
+        Rawˉcompletion
+    );
+    if Status == Storageˉstatus.Invalidˉrequest {
+        if Storageˉrequestˉisˉvalid(
+            Operation, Generation, Position, Control, Valueˉlength
+        ) { return Invalid; }
+        if Returnedˉgeneration != Generation || Storageˉlength != 0u64 ||
+            Progress != 0u32 || Completion != Storageˉcompletion.None ||
+            Payloadˉlength != 0u32 { return Invalid; }
+        return Storageˉfailure(Status, Generation, Position);
+    }
+    if !Storageˉrequestˉisˉvalid(
+        Operation, Generation, Position, Control, Valueˉlength
+    ) { return Invalid; }
+
+    if Status == Storageˉstatus.Stale {
+        if Returnedˉgeneration == 0u64 || Returnedˉgeneration == Generation ||
+            Storageˉlength != 0u64 || Progress != 0u32 ||
+            Completion != Storageˉcompletion.None || Payloadˉlength != 0u32 {
+            return Invalid;
+        }
+        return Storageˉresult(
+            Status,
+            Returnedˉgeneration,
+            0u64,
+            Position,
+            0u32,
+            Storageˉcompletion.None,
+            Storageˉempty()
+        );
+    }
+
+    if Status == Storageˉstatus.Outsideˉstorage {
+        if Operation != 1u32 || Returnedˉgeneration != Generation ||
+            Position <= Storageˉlength || Progress != 0u32 ||
+            Completion != Storageˉcompletion.None || Payloadˉlength != 0u32 {
+            return Invalid;
+        }
+        return Storageˉresult(
+            Status,
+            Generation,
+            Storageˉlength,
+            Position,
+            0u32,
+            Storageˉcompletion.None,
+            Storageˉempty()
+        );
+    }
+
+    if Status != Storageˉstatus.Valid {
+        if Returnedˉgeneration != Generation || Storageˉlength != 0u64 ||
+            Progress != 0u32 || Completion != Storageˉcompletion.None ||
+            Payloadˉlength != 0u32 { return Invalid; }
+        return Storageˉfailure(Status, Generation, Position);
+    }
+
+    if Returnedˉgeneration == 0u64 { return Invalid; }
+    if Operation != 0u32 {
+        if Returnedˉgeneration != Generation { return Invalid; }
+    }
+    if Operation == 0u32 {
+        if Progress != 0u32 || Completion != Storageˉcompletion.None ||
+            Payloadˉlength != 0u32 { return Invalid; }
+    } else if Operation == 1u32 {
+        if Position > Storageˉlength { return Invalid; }
+        let Remaining: u64 = Storageˉlength - Position;
+        var Expected: u64 = U64ˉfromˉu32(Control);
+        if Remaining < Expected { Expected = Remaining; }
+        if U64ˉfromˉu32(Payloadˉlength) != Expected ||
+            Progress != Payloadˉlength ||
+            Completion != Storageˉcompletion.None { return Invalid; }
+    } else if Operation == 2u32 {
+        if Payloadˉlength != 0u32 { return Invalid; }
+        if Completion == Storageˉcompletion.Completed {
+            if Progress != Valueˉlength { return Invalid; }
+            if Storageˉlength < Position + U64ˉfromˉu32(Valueˉlength) {
+                return Invalid;
+            }
+        } else if Completion == Storageˉcompletion.Partial {
+            if Progress == 0u32 || Progress >= Valueˉlength { return Invalid; }
+            if Storageˉlength < Position + U64ˉfromˉu32(Progress) { return Invalid; }
+        } else if Completion == Storageˉcompletion.Indeterminate {
+            if Progress != 0u32 || Storageˉlength != 0u64 { return Invalid; }
+        } else { return Invalid; }
+    } else if Operation == 3u32 {
+        if Payloadˉlength != 0u32 || Progress != 0u32 { return Invalid; }
+        if Completion == Storageˉcompletion.Completed {
+            if Storageˉlength != Position { return Invalid; }
+        } else if Completion == Storageˉcompletion.Indeterminate {
+            if Storageˉlength != 0u64 { return Invalid; }
+        } else { return Invalid; }
+    } else if Operation == 4u32 {
+        if Payloadˉlength != 0u32 || Progress != 0u32 { return Invalid; }
+        if Completion == Storageˉcompletion.Indeterminate {
+            if Storageˉlength != 0u64 { return Invalid; }
+        } else if Completion != Storageˉcompletion.Completed { return Invalid; }
+    } else { return Invalid; }
+
+    return Storageˉresult(
+        Status,
+        Returnedˉgeneration,
+        Storageˉlength,
+        Position,
+        Progress,
+        Completion,
+        Bytesˉslice(Response, 48u32, Payloadˉlength)
+    );
+}
+
+fn Storageˉinvoke(
+    Operation: u32,
+    Generation: u64,
+    Position: u64,
+    Control: u32,
+    Value: bytes
+) -> Storageˉresult {
+    let Valueˉlength: u32 = Bytesˉlength(Value);
+    if !Storageˉrequestˉisˉvalid(
+        Operation, Generation, Position, Control, Valueˉlength
+    ) {
+        return Storageˉfailure(Storageˉstatus.Invalidˉrequest, Generation, Position);
+    }
+    return Storageˉdecode(
+        storage.random_access_v1(
+            Operation,
+            Generation,
+            Position,
+            Control,
+            Value
+        ),
+        Operation,
+        Generation,
+        Position,
+        Control,
+        Valueˉlength
+    );
+}
+
+export fn Storageˉdescribe() -> Storageˉresult {
+    return Storageˉinvoke(0u32, 0u64, 0u64, 0u32, Storageˉempty());
+}
+
+export fn Storageˉreadˉat(
+    Generation: u64,
+    Position: u64,
+    Maximum: u32
+) -> Storageˉresult {
+    return Storageˉinvoke(1u32, Generation, Position, Maximum, Storageˉempty());
+}
+
+export fn Storageˉwriteˉat(
+    Generation: u64,
+    Position: u64,
+    Value: bytes
+) -> Storageˉresult {
+    return Storageˉinvoke(2u32, Generation, Position, 0u32, Value);
+}
+
+export fn Storageˉresize(
+    Generation: u64,
+    Length: u64
+) -> Storageˉresult {
+    return Storageˉinvoke(3u32, Generation, Length, 0u32, Storageˉempty());
+}
+
+export fn Storageˉflush(
+    Generation: u64,
+    Flush: Storageˉflush
+) -> Storageˉresult {
+    if Flush == Storageˉflush.Content {
+        return Storageˉinvoke(4u32, Generation, 0u64, 1u32, Storageˉempty());
+    }
+    return Storageˉinvoke(4u32, Generation, 0u64, 2u32, Storageˉempty());
+}

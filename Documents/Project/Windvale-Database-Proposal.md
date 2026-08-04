@@ -1,7 +1,7 @@
 # Windvale Database proposal
 
 - Date: 2026-08-04
-- Status: Proposal for review; the Stage 1 reader, first hosted snapshot consumer, and format-neutral checked storage geometry are implemented, but no durable database format, writable engine, storage-resource contract, service contract, or product name is accepted by this document
+- Status: Proposal for review; the Stage 1 reader, hosted snapshot consumer, checked storage geometry, and first pre-opened mutable storage-resource contract are implemented candidates, but no durable database format, writer, recovery protocol, service contract, or product name is accepted by this document
 - Working name: Windvale Database
 - Informed by: EWDB source, performance evidence, and operational experience
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
@@ -167,8 +167,8 @@ capability, concurrency, and resource-accounting rules.
 
 ## Windvale readiness
 
-Windvale can begin the database work, but only at the format and bounded pure-
-algorithm layers.
+Windvale can now exercise bounded format algorithms and one hosted mutable
+storage resource. A recoverable database writer is not ready.
 
 | Candidate work | Current readiness | Boundary |
 | --- | --- | --- |
@@ -177,9 +177,10 @@ algorithm layers.
 | One read-only B+tree lookup over a small in-memory fixture | Implemented experiment | [`WVDB 1`](../../Specifications/Windvale-Database-Reader.md) validates at most 64 256-byte pages and returns a typed exact `u32` to `i32` result. It is not an accepted durable format. |
 | Rights-limited hosted snapshot lookup | Implemented candidate | [`Readˉonlyˉwvdb`](../../Libraries/Platform/Database/Read-Only-Wvdb.wv) composes the immutable directory provider and portable reader, assembles at most six chunks, and distinguishes provider failures from invalid database bytes. Independent Linux qualification remains pending. |
 | Checked page identity and byte-range arithmetic | Implemented candidate | [`Windvaleˉdatabaseˉstorageˉgeometry`](../../Specifications/Database-Storage-Geometry.md) computes zero-based `u64` page ranges, widens `u32` page size explicitly, and returns typed invalid-size, overflow, or outside-storage outcomes without I/O authority. |
+| Pre-opened mutable storage object | Implemented candidate | [`storage.random_access_v1`](../../Specifications/Random-Access-Storage-Capability.md) binds one object with `u64` generation/positions/length, exact 64 KiB reads, positioned writes, resize, typed mutation completion, and two flush classes. The reference launcher has one shared Windows/Linux file adapter; independent Linux and crash-recovery qualification remain pending. |
 | Bounded sequences and builders | Ready for narrow algorithms | WVB 1.11 implements bounded immutable sequences, affine builders, and deterministic `for`; nested collections, general maps, and database page ownership remain unavailable. |
 | General page and row collections | Not ready | Deterministic maps/page tables, nested or variable-size aggregates, exact allocation charging, and consuming database publication remain unimplemented. |
-| Durable page-file mutation and WAL recovery | Not ready | Windvale lacks the required random-access, append, exact flush, atomic publication, directory-durability, handle, and typed I/O-result contracts. |
+| Durable page-file mutation and WAL recovery | Not ready | The first random-access and flush contract now exists, but internal commit publication, mutation identities, recovery, crash injection, WAL policy, and accepted page/superblock bytes remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
 | Concurrent readers, one hosted writer, and group commit | Not ready | Structured tasks, channels, cancellation, synchronization, and cross-task ownership remain future contracts. |
 | High-performance native database process | Not ready | General Windvale-owned native lowering, 64-bit backend coverage, memory management, optimization, and host services remain incomplete. |
 | Windvale OS database service | Not ready | Persistent storage, general launch/supervision, resource domains, service bindings, and filesystem providers remain future work. |
@@ -191,8 +192,12 @@ adds exact little-endian `u64` field codecs. [Decision 0209](../Decisions/0209-S
 folds the complete surface into canonical WVB 1.11. Implemented-candidate
 [Decision 0211](../Decisions/0211-U64-Database-Storage-Geometry.md) adds the
 lossless `u32` to `u64` transition and the first checked portable page-range
-module. Native, WebAssembly, and
-Windvale OS profiles retain explicit narrower WVB 1.11 subsets.
+module. Implemented-candidate
+[Decision 0212](../Decisions/0212-First-Preopened-Random-Access-Storage.md)
+then binds those widths to one format-neutral hosted storage object with typed
+generation, lifecycle, mutation-completion, and flush results. Native,
+WebAssembly, and Windvale OS execution profiles retain explicit narrower WVB
+1.11/capability subsets.
 [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md)
 now supplies the first bounded ownership and builder slice required by
 [Decision 0137](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md).
@@ -237,19 +242,21 @@ must be selected together before a persistent format is accepted.
 The first writable database milestone requires at least:
 
 1. payload variants and typed recoverable results for expected storage and
-   provider outcomes; the pure reader now exercises this part, while provider
-   and mutation outcomes remain future work;
+   provider outcomes; the reader and first mutable storage library now exercise
+   this part;
 2. bounded immutable sequences and uniquely owned builders are now present;
    deterministic maps or page tables, exact allocation charges, and consuming
    database publication remain required;
 3. scoped capability-resource ownership with explicit close, stale-generation,
-   and provider-loss behavior;
+   and provider-loss behavior; the current binding supplies generation/loss
+   results and launcher-owned teardown, while source-scoped typed close remains;
 4. `i64` and `u64` support, including the canonical WVB 1.11 binary codecs, through the
    selected compiler, verifier, interpreter, native ABI, and backend profile;
-5. a rights-limited storage capability with exact random-access reads, append or
-   positioned writes, partial-progress reporting, flush and durability classes,
-   atomic root replacement, directory-metadata behavior, locking or fencing,
-   and bounded file growth;
+5. a rights-limited storage capability with exact random-access reads,
+   positioned writes, partial-progress reporting, flush classes, fencing, and
+   bounded requests is now implemented; durable mutation identity and recovery
+   remain, while atomic root publication should occur inside the first object
+   and native replacement/directory durability stay separate;
 6. monotonic time for deadlines and measurements without making wall-clock time
    part of database ordering;
 7. structured tasks, bounded channels, cancellation, synchronization, and
@@ -262,38 +269,36 @@ grant ambient native paths. Its operations must distinguish rejection, exact
 partial progress, completion, and indeterminate mutation completion. A flush
 must state exactly which data and metadata durability boundary it proves.
 
-### First database-storage interface to specify
+### First database-storage interface — implemented candidate
 
-The first mutable interface should bind one pre-opened database storage object
-with one exclusive writer fence. Its semantic operations should be separated
-rather than hidden behind a general file API:
+Implemented-candidate [Decision 0212](../Decisions/0212-First-Preopened-Random-Access-Storage.md)
+binds one pre-opened storage object behind one capability identity and one
+provider generation. The typed source library exposes:
 
 ```text
-Describe() -> limits, durability class, provider generation
-Length() -> typed u64 length result
-Read_at(Offset: u64, Maximum: u32) -> typed exact chunk result
-Write_at(Offset: u64, Value: bytes, Mutation: u64) -> typed progress result
-Set_length(Length: u64, Mutation: u64) -> typed mutation result
-Flush_content(Mutation: u64) -> typed durability result
-Close() -> typed close result
+Storage_describe() -> typed generation and u64 length result
+Storage_read_at(Generation: u64, Offset: u64, Maximum: u32) -> exact chunk result
+Storage_write_at(Generation: u64, Offset: u64, Value: bytes) -> typed progress result
+Storage_resize(Generation: u64, Length: u64) -> typed mutation result
+Storage_flush(Generation: u64, Class) -> typed durability result
 ```
 
-These are semantic shapes, not accepted source syntax or capability catalog
-names. `Describe` must complete before mutation and report the maximum storage
-length, maximum chunk, alignment requirements, whether extending positioned
-writes are allowed, and the exact stable-storage guarantee. `Read_at` has no
-implicit cursor. `Write_at` never creates a gap unless the contract explicitly
-admits it, and its result distinguishes rejected-before-change, exact partial
-progress, complete progress, and indeterminate completion. `Set_length` is a
-separate metadata mutation. `Flush_content` covers completed content and the
-extent metadata required to read it after provider-declared power loss; it does
-not imply atomic native-path replacement or directory-entry durability.
+The exact source names use Windvale macron separators; the abbreviated shapes
+above emphasize the boundary. `Describe` must complete before later operations.
+`Read_at` has no implicit cursor. `Write_at` may extend the object and
+distinguishes rejected-before-change, exact partial progress, completion, and
+indeterminate completion. Resize remains a separate metadata mutation.
+`Content` and `Content_and_length` flushes do not imply atomic native-path
+replacement or directory-entry durability.
 
-The `Mutation` identity and provider generation make retry decisions explicit.
-After an indeterminate result, the engine must query or recover the operation's
-state; it must not blindly replay the mutation. Loss of the exclusive writer
-fence makes the instance stale and prevents further writes. Revocation,
-provider exit, close, and stale generation are ordinary typed outcomes.
+The provider generation fences the current binding. After an indeterminate
+result, the engine must recover from checksummed storage state and must not
+blindly replay the mutation. Loss of the writer fence makes the instance stale.
+Revocation, provider exit, and stale generation are ordinary typed outcomes;
+the Stage 0 launcher owns close at runtime teardown. Version 1 deliberately
+does not claim a persistent mutation identity across provider restart. Add one
+only with a query/recovery contract that makes retries safer than storage-based
+recovery.
 
 The first database can avoid requiring cross-platform atomic file replacement
 by publishing commits inside one storage object: write new pages, flush their
@@ -457,12 +462,10 @@ This proposal does not:
 
 ## Recommended next decision
 
-The Stage 1 experiment and Decision 0210 now provide a complete rights-limited
-hosted snapshot path without changing the experimental bytes. The next database
-decision should select one product-facing read-only consumer and specify the
-smallest pre-opened database-storage resource contract that Windows, Linux, and
-later Windvale OS can implement with identical semantics. That contract needs
-`u64` positions and identities, explicit resource lifetime and writer fencing,
-typed exact or indeterminate mutation progress, flush classes, and a recovery
-boundary before any write implementation begins. It should not promote the
-256-byte experimental page format into a durable contract by default.
+Decision 0212 now provides the smallest pre-opened hosted storage resource
+without changing the experimental database bytes. The next database decision
+should compose it with checked geometry and page validation for one exact
+`u64` page read, then specify a two-superblock internal commit/recovery protocol
+and crash-injection oracle before any general writer is added. That work should
+select new durable bytes from recovery requirements rather than silently
+promoting the 256-byte experimental page format.

@@ -844,6 +844,8 @@ internal static class Program
         "Windvale.Seed.Tests.Hosted-Resource-Store.wv");
     private static readonly string READ_ONLY_DIRECTORY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Read-Only-Directory.wv");
+    private static readonly string RANDOM_ACCESS_STORAGE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Random-Access-Storage.wv");
 
     private static readonly string WEBASSEMBLY_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Core.wv");
@@ -1133,6 +1135,7 @@ internal static class Program
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
         new("rights-limited directory reads return typed bounded results", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Readˉonlyˉdirectoryˉreadsˉareˉtyped),
+        new("pre-opened random-access storage is typed, fenced, and durable", [TEST_AREA_DATABASE, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Randomˉaccessˉstorageˉisˉtyped),
         new("Windvale projects select bounded deterministic source sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Projectsˉselectˉsourceˉsets),
         new("Windvale-written project manifests agree with the reference parser", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉprojectˉmanifestsˉagree),
         new("Windvale-written project manifests agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉprojectˉmanifestsˉagree),
@@ -11072,6 +11075,312 @@ internal static class Program
             checked((uint)chunk.Length));
         chunk.CopyTo(Response.AsSpan(Readˉonlyˉdirectoryˉcontract.HEADER_BYTES));
         return ImmutableArray.Create(Response);
+    }
+
+    private static void Randomˉaccessˉstorageˉisˉtyped()
+    {
+        const string Rootˉsource = """
+            module Randomˉaccessˉstorageˉapplication profile hosted;
+            import Randomˉaccessˉstorage as Storage;
+            capability storage.random_access_v1;
+
+            export fn Main() -> i32 {
+                let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+                if Description.Status != Storage.Storageˉstatus.Valid { return 1; }
+                if Description.Generation == 0u64 { return 2; }
+                if Description.Storageˉlength != 5u64 { return 3; }
+                let Generation: u64 = Description.Generation;
+
+                let Read: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+                    Generation, 1u64, 3u32
+                );
+                if Read.Status != Storage.Storageˉstatus.Valid { return 4; }
+                if Read.Value != Textˉtoˉutf8("bcd") { return 5; }
+                if Read.Progress != 3u32 { return 6; }
+
+                let Invalid: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+                    Generation, 0u64, 65537u32
+                );
+                if Invalid.Status != Storage.Storageˉstatus.Invalidˉrequest { return 7; }
+
+                let Stale: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+                    Generation + 1u64, 0u64, 1u32
+                );
+                if Stale.Status != Storage.Storageˉstatus.Stale { return 8; }
+                if Stale.Generation != Generation { return 9; }
+
+                let Write: Storage.Storageˉresult = Storage.Storageˉwriteˉat(
+                    Generation, 2u64, Textˉtoˉutf8("XY")
+                );
+                if Write.Status != Storage.Storageˉstatus.Valid { return 10; }
+                if Write.Completion != Storage.Storageˉcompletion.Completed { return 11; }
+                if Write.Progress != 2u32 || Write.Storageˉlength != 5u64 { return 12; }
+
+                let Full: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+                    Generation, 0u64, 5u32
+                );
+                if Full.Value != Textˉtoˉutf8("abXYe") { return 13; }
+
+                let Resize: Storage.Storageˉresult = Storage.Storageˉresize(
+                    Generation, 4u64
+                );
+                if Resize.Completion != Storage.Storageˉcompletion.Completed { return 14; }
+                if Resize.Storageˉlength != 4u64 { return 15; }
+
+                let Flush: Storage.Storageˉresult = Storage.Storageˉflush(
+                    Generation, Storage.Storageˉflush.Contentˉandˉlength
+                );
+                if Flush.Completion != Storage.Storageˉcompletion.Completed { return 16; }
+                if Flush.Storageˉlength != 4u64 { return 17; }
+
+                let Past: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+                    Generation, 5u64, 1u32
+                );
+                if Past.Status != Storage.Storageˉstatus.Outsideˉstorage { return 18; }
+                if Past.Storageˉlength != 4u64 { return 19; }
+                return 29;
+            }
+            """;
+        Sourceˉmoduleˉinput Library = new(
+            "Libraries/Platform/Storage/Random-Access-Storage.wv",
+            RANDOM_ACCESS_STORAGE_SOURCE);
+        var First = Seedˉcompiler.Compileˉmodules(
+            new("random-access-storage-application.wv", Rootˉsource),
+            [Library]);
+        var Second = Seedˉcompiler.Compileˉmodules(
+            new("random-access-storage-application.wv", Rootˉsource),
+            [Library]);
+        True(First.Success, "Random-access storage composition failed: " +
+            string.Join(" | ", First.Diagnostics));
+        True(Second.Success, "Repeated random-access storage composition failed: " +
+            string.Join(" | ", Second.Diagnostics));
+        Sequenceˉequal(First.Moduleˉbytes, Second.Moduleˉbytes);
+
+        var Module = Moduleˉcodec.Readˉandˉverify(First.Moduleˉbytes.AsSpan());
+        Sequenceˉequal(
+            [Capabilityˉcatalog.STORAGE_RANDOM_ACCESS_V1],
+            Module.Module.Capabilities.Select(Capability => Capability.Name));
+        var Storage = new Testˉrandomˉaccessˉstorage("abcde"u8.ToImmutableArray());
+        var Host = new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+            [],
+            TextWriter.Null,
+            TextWriter.Null,
+            randomˉaccessˉstorage: Storage));
+        var Authorized = new Referenceˉruntime(
+            Module,
+            Host,
+            new(ImmutableHashSet.Create(
+                StringComparer.Ordinal,
+                Capabilityˉcatalog.STORAGE_RANDOM_ACCESS_V1)));
+        Equal(29, Authorized.Runˉmain().Exitˉcode);
+        Equal(1, Storage.Describeˉcount);
+        Equal(4, Storage.Readˉcount);
+        Equal(1, Storage.Writeˉcount);
+        Equal(1, Storage.Resizeˉcount);
+        Equal(1, Storage.Flushˉcount);
+        Sequenceˉequal<byte>("abXY"u8.ToArray(), Storage.Bytes);
+
+        var Unauthorized = new Referenceˉruntime(
+            Module,
+            Host,
+            Runtimeˉoptions.Portableˉdefaults);
+        Throwsˉruntime("WVR3010", () => _ = Unauthorized.Runˉmain());
+
+        var Unsupported = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [], TextWriter.Null, TextWriter.Null)),
+            new(ImmutableHashSet.Create(
+                StringComparer.Ordinal,
+                Capabilityˉcatalog.STORAGE_RANDOM_ACCESS_V1)));
+        Throwsˉruntime("WVR3001", () => _ = Unsupported.Runˉmain());
+
+        var Rejecting = new Rejectingˉrandomˉaccessˉstorage();
+        var Rejection = Randomˉaccessˉstorageˉcontract.Invoke(
+            Rejecting,
+            uint.MaxValue,
+            0,
+            0,
+            0,
+            []);
+        Equal(0, Rejecting.Callˉcount);
+        Equal(
+            (uint)Randomˉaccessˉstorageˉstatus.Invalidˉrequest,
+            BinaryPrimitives.ReadUInt32LittleEndian(Rejection.AsSpan()[12..]));
+        _ = Randomˉaccessˉstorageˉcontract.Invoke(
+            Rejecting,
+            (uint)Randomˉaccessˉstorageˉoperation.Write,
+            1,
+            ulong.MaxValue,
+            0,
+            [1]);
+        _ = Randomˉaccessˉstorageˉcontract.Invoke(
+            Rejecting,
+            (uint)Randomˉaccessˉstorageˉoperation.Read,
+            1,
+            0,
+            1,
+            [1]);
+        Equal(0, Rejecting.Callˉcount);
+
+        Throwsˉruntime("WVR3031", () =>
+            Randomˉaccessˉstorageˉcontract.Invoke(
+                new Invalidˉrandomˉaccessˉstorage(),
+                (uint)Randomˉaccessˉstorageˉoperation.Describe,
+                0,
+                0,
+                0,
+                []));
+        Throwsˉruntime("WVR3031", () =>
+            Randomˉaccessˉstorageˉcontract.Invoke(
+                new Invalidˉrandomˉaccessˉstorage(),
+                (uint)Randomˉaccessˉstorageˉoperation.Read,
+                1,
+                0,
+                1,
+                []));
+        var Description = Randomˉaccessˉstorageˉcontract.Invoke(
+            Storage,
+            (uint)Randomˉaccessˉstorageˉoperation.Describe,
+            0,
+            0,
+            0,
+            []);
+        void Rejectˉresponse(byte[] response) =>
+            Throwsˉruntime("WVR3031", () =>
+            Randomˉaccessˉstorageˉcontract.Verifyˉresponse(
+                response,
+                (uint)Randomˉaccessˉstorageˉoperation.Describe,
+                0,
+                0,
+                0,
+                0));
+        Rejectˉresponse([0, 1, 2, 3]);
+        Rejectˉresponse(new byte[
+            Randomˉaccessˉstorageˉcontract.HEADER_BYTES +
+            checked((int)Randomˉaccessˉstorageˉcontract.MAX_TRANSFER_BYTES) + 1]);
+        var Corruptˉresponse = Description.ToArray();
+        Corruptˉresponse[0] ^= 0xFF;
+        Rejectˉresponse(Corruptˉresponse);
+        Corruptˉresponse = Description.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(Corruptˉresponse.AsSpan(12), 9);
+        Rejectˉresponse(Corruptˉresponse);
+        Corruptˉresponse = Description.ToArray();
+        BinaryPrimitives.WriteUInt64LittleEndian(Corruptˉresponse.AsSpan(32), ulong.MaxValue);
+        Rejectˉresponse(Corruptˉresponse);
+        Corruptˉresponse = Description.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(Corruptˉresponse.AsSpan(44), 4);
+        Rejectˉresponse(Corruptˉresponse);
+
+        var Boundaryˉstorage = new Testˉrandomˉaccessˉstorage(
+            new byte[checked((int)Randomˉaccessˉstorageˉcontract.MAX_TRANSFER_BYTES)]
+                .ToImmutableArray());
+        var Boundaryˉresponse = Randomˉaccessˉstorageˉcontract.Invoke(
+            Boundaryˉstorage,
+            (uint)Randomˉaccessˉstorageˉoperation.Read,
+            Testˉrandomˉaccessˉstorage.GENERATION,
+            0,
+            Randomˉaccessˉstorageˉcontract.MAX_TRANSFER_BYTES,
+            []);
+        Equal(
+            Randomˉaccessˉstorageˉcontract.HEADER_BYTES +
+                checked((int)Randomˉaccessˉstorageˉcontract.MAX_TRANSFER_BYTES),
+            Boundaryˉresponse.Length);
+
+        var Partial = Randomˉaccessˉstorageˉcontract.Invoke(
+            new Writeˉoutcomeˉrandomˉaccessˉstorage(
+                Randomˉaccessˉstorageˉcompletion.Partial,
+                2,
+                12),
+            (uint)Randomˉaccessˉstorageˉoperation.Write,
+            Writeˉoutcomeˉrandomˉaccessˉstorage.GENERATION,
+            10,
+            0,
+            [1, 2, 3]);
+        Equal(
+            (uint)Randomˉaccessˉstorageˉcompletion.Partial,
+            BinaryPrimitives.ReadUInt32LittleEndian(Partial.AsSpan()[44..]));
+        var Indeterminate = Randomˉaccessˉstorageˉcontract.Invoke(
+            new Writeˉoutcomeˉrandomˉaccessˉstorage(
+                Randomˉaccessˉstorageˉcompletion.Indeterminate,
+                0,
+                0),
+            (uint)Randomˉaccessˉstorageˉoperation.Write,
+            Writeˉoutcomeˉrandomˉaccessˉstorage.GENERATION,
+            10,
+            0,
+            [1, 2, 3]);
+        Equal(
+            (uint)Randomˉaccessˉstorageˉcompletion.Indeterminate,
+            BinaryPrimitives.ReadUInt32LittleEndian(Indeterminate.AsSpan()[44..]));
+        Throwsˉruntime("WVR3031", () =>
+            Randomˉaccessˉstorageˉcontract.Invoke(
+                new Writeˉoutcomeˉrandomˉaccessˉstorage(
+                    Randomˉaccessˉstorageˉcompletion.Partial,
+                    3,
+                    13),
+                (uint)Randomˉaccessˉstorageˉoperation.Write,
+                Writeˉoutcomeˉrandomˉaccessˉstorage.GENERATION,
+                10,
+                0,
+                [1, 2, 3]));
+
+        Storage.Isˉrevoked = true;
+        var Revoked = Randomˉaccessˉstorageˉcontract.Invoke(
+            Storage,
+            (uint)Randomˉaccessˉstorageˉoperation.Read,
+            Testˉrandomˉaccessˉstorage.GENERATION,
+            0,
+            1,
+            []);
+        Equal(
+            (uint)Randomˉaccessˉstorageˉstatus.Revoked,
+            BinaryPrimitives.ReadUInt32LittleEndian(Revoked.AsSpan()[12..]));
+
+        var Nativeˉdirectory = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-random-storage-{Guid.NewGuid():N}");
+        System.IO.Directory.CreateDirectory(Nativeˉdirectory);
+        try
+        {
+            var Moduleˉpath = Path.Combine(Nativeˉdirectory, "Storage-Application.wvb");
+            var Storageˉpath = Path.Combine(Nativeˉdirectory, "Database.wvdb");
+            File.WriteAllBytes(Moduleˉpath, First.Moduleˉbytes.AsSpan());
+            File.WriteAllBytes(Storageˉpath, "abcde"u8);
+            var Originalˉoutput = Console.Out;
+            var Originalˉerror = Console.Error;
+            using var Output = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);
+            using var Error = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);
+            try
+            {
+                Console.SetOut(Output);
+                Console.SetError(Error);
+                Equal(
+                    0,
+                    Windvale.Tool.Program.Main(
+                    [
+                        "run",
+                        Moduleˉpath,
+                        "--allow",
+                        Capabilityˉcatalog.STORAGE_RANDOM_ACCESS_V1,
+                        "--bind-random-access-storage",
+                        Storageˉpath,
+                    ]));
+            }
+            finally
+            {
+                Console.SetOut(Originalˉoutput);
+                Console.SetError(Originalˉerror);
+            }
+            Equal("Result: 29\n", Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal));
+            Equal("", Error.ToString());
+            Sequenceˉequal<byte>("abXY"u8.ToArray(), File.ReadAllBytes(Storageˉpath));
+            File.WriteAllBytes(Storageˉpath, "lease-released"u8);
+        }
+        finally
+        {
+            System.IO.Directory.Delete(Nativeˉdirectory, recursive: true);
+        }
     }
 
     private static ImmutableArray<byte> Buildˉresourceˉstoreˉfixture()
@@ -26390,6 +26699,294 @@ internal static class Program
         {
             Callˉcount++;
             throw new InvalidOperationException("An invalid request reached the capability host.");
+        }
+    }
+
+    private sealed class Testˉrandomˉaccessˉstorage(
+        ImmutableArray<byte> initialˉbytes) : IRandomˉaccessˉstorage
+    {
+        public const ulong GENERATION = 7;
+
+        private readonly List<byte> Mutableˉbytes = [.. initialˉbytes];
+
+        public int Describeˉcount { get; private set; }
+
+        public int Readˉcount { get; private set; }
+
+        public int Writeˉcount { get; private set; }
+
+        public int Resizeˉcount { get; private set; }
+
+        public int Flushˉcount { get; private set; }
+
+        public bool Isˉrevoked { get; set; }
+
+        public ImmutableArray<byte> Bytes => [.. Mutableˉbytes];
+
+        public Randomˉaccessˉstorageˉresult Describe()
+        {
+            Describeˉcount++;
+            if (Isˉrevoked)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Revoked, 0, 0);
+            }
+            return Success(
+                checked((ulong)Mutableˉbytes.Count),
+                0,
+                0,
+                Randomˉaccessˉstorageˉcompletion.None,
+                []);
+        }
+
+        public Randomˉaccessˉstorageˉresult Readˉat(
+            ulong generation,
+            ulong position,
+            uint maximumˉbytes)
+        {
+            Readˉcount++;
+            if (Isˉrevoked)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Revoked, generation, position);
+            }
+            if (generation != GENERATION)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Stale, GENERATION, position);
+            }
+            var Length = checked((ulong)Mutableˉbytes.Count);
+            if (position > Length)
+            {
+                return new(
+                    Randomˉaccessˉstorageˉstatus.Outsideˉstorage,
+                    GENERATION,
+                    Length,
+                    position,
+                    0,
+                    Randomˉaccessˉstorageˉcompletion.None,
+                    []);
+            }
+            var Count = checked((int)Math.Min((ulong)maximumˉbytes, Length - position));
+            var Value = Mutableˉbytes
+                .GetRange(checked((int)position), Count)
+                .ToImmutableArray();
+            return Success(
+                Length,
+                position,
+                checked((uint)Count),
+                Randomˉaccessˉstorageˉcompletion.None,
+                Value);
+        }
+
+        public Randomˉaccessˉstorageˉresult Writeˉat(
+            ulong generation,
+            ulong position,
+            ImmutableArray<byte> bytes)
+        {
+            Writeˉcount++;
+            if (Isˉrevoked)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Revoked, generation, position);
+            }
+            if (generation != GENERATION)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Stale, GENERATION, position);
+            }
+            if (position > int.MaxValue || position + (ulong)bytes.Length > int.MaxValue)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Unsupported, generation, position);
+            }
+            var End = checked((int)(position + (ulong)bytes.Length));
+            while (Mutableˉbytes.Count < End)
+            {
+                Mutableˉbytes.Add(0);
+            }
+            for (var Index = 0; Index < bytes.Length; Index++)
+            {
+                Mutableˉbytes[checked((int)position + Index)] = bytes[Index];
+            }
+            return Success(
+                checked((ulong)Mutableˉbytes.Count),
+                position,
+                checked((uint)bytes.Length),
+                Randomˉaccessˉstorageˉcompletion.Completed,
+                []);
+        }
+
+        public Randomˉaccessˉstorageˉresult Resize(ulong generation, ulong length)
+        {
+            Resizeˉcount++;
+            if (Isˉrevoked)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Revoked, generation, length);
+            }
+            if (generation != GENERATION)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Stale, GENERATION, length);
+            }
+            if (length > int.MaxValue)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Unsupported, generation, length);
+            }
+            while (Mutableˉbytes.Count > (int)length)
+            {
+                Mutableˉbytes.RemoveAt(Mutableˉbytes.Count - 1);
+            }
+            while (Mutableˉbytes.Count < (int)length)
+            {
+                Mutableˉbytes.Add(0);
+            }
+            return Success(
+                length,
+                length,
+                0,
+                Randomˉaccessˉstorageˉcompletion.Completed,
+                []);
+        }
+
+        public Randomˉaccessˉstorageˉresult Flush(
+            ulong generation,
+            Randomˉaccessˉstorageˉflush flush)
+        {
+            Flushˉcount++;
+            if (Isˉrevoked)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Revoked, generation, 0);
+            }
+            if (generation != GENERATION)
+            {
+                return Failure(Randomˉaccessˉstorageˉstatus.Stale, GENERATION, 0);
+            }
+            return Success(
+                checked((ulong)Mutableˉbytes.Count),
+                0,
+                0,
+                Randomˉaccessˉstorageˉcompletion.Completed,
+                []);
+        }
+
+        private static Randomˉaccessˉstorageˉresult Success(
+            ulong storageˉlength,
+            ulong position,
+            uint progress,
+            Randomˉaccessˉstorageˉcompletion completion,
+            ImmutableArray<byte> bytes) =>
+            new(
+                Randomˉaccessˉstorageˉstatus.Valid,
+                GENERATION,
+                storageˉlength,
+                position,
+                progress,
+                completion,
+                bytes);
+
+        private static Randomˉaccessˉstorageˉresult Failure(
+            Randomˉaccessˉstorageˉstatus status,
+            ulong generation,
+            ulong position) =>
+            new(
+                status,
+                generation,
+                0,
+                position,
+                0,
+                Randomˉaccessˉstorageˉcompletion.None,
+                []);
+    }
+
+    private sealed class Invalidˉrandomˉaccessˉstorage : IRandomˉaccessˉstorage
+    {
+        public Randomˉaccessˉstorageˉresult Describe() =>
+            new(
+                Randomˉaccessˉstorageˉstatus.Valid,
+                0,
+                0,
+                0,
+                0,
+                Randomˉaccessˉstorageˉcompletion.None,
+                []);
+
+        public Randomˉaccessˉstorageˉresult Readˉat(
+            ulong generation,
+            ulong position,
+            uint maximumˉbytes) => throw new NotSupportedException();
+
+        public Randomˉaccessˉstorageˉresult Writeˉat(
+            ulong generation,
+            ulong position,
+            ImmutableArray<byte> bytes) => throw new NotSupportedException();
+
+        public Randomˉaccessˉstorageˉresult Resize(
+            ulong generation,
+            ulong length) => throw new NotSupportedException();
+
+        public Randomˉaccessˉstorageˉresult Flush(
+            ulong generation,
+            Randomˉaccessˉstorageˉflush flush) => throw new NotSupportedException();
+    }
+
+    private sealed class Writeˉoutcomeˉrandomˉaccessˉstorage(
+        Randomˉaccessˉstorageˉcompletion completion,
+        uint progress,
+        ulong storageˉlength) : IRandomˉaccessˉstorage
+    {
+        public const ulong GENERATION = 11;
+
+        public Randomˉaccessˉstorageˉresult Describe() => throw new NotSupportedException();
+
+        public Randomˉaccessˉstorageˉresult Readˉat(
+            ulong generation,
+            ulong position,
+            uint maximumˉbytes) => throw new NotSupportedException();
+
+        public Randomˉaccessˉstorageˉresult Writeˉat(
+            ulong generation,
+            ulong position,
+            ImmutableArray<byte> bytes) =>
+            new(
+                Randomˉaccessˉstorageˉstatus.Valid,
+                GENERATION,
+                storageˉlength,
+                position,
+                progress,
+                completion,
+                []);
+
+        public Randomˉaccessˉstorageˉresult Resize(
+            ulong generation,
+            ulong length) => throw new NotSupportedException();
+
+        public Randomˉaccessˉstorageˉresult Flush(
+            ulong generation,
+            Randomˉaccessˉstorageˉflush flush) => throw new NotSupportedException();
+    }
+
+    private sealed class Rejectingˉrandomˉaccessˉstorage : IRandomˉaccessˉstorage
+    {
+        public int Callˉcount { get; private set; }
+
+        public Randomˉaccessˉstorageˉresult Describe() => Reject();
+
+        public Randomˉaccessˉstorageˉresult Readˉat(
+            ulong generation,
+            ulong position,
+            uint maximumˉbytes) => Reject();
+
+        public Randomˉaccessˉstorageˉresult Writeˉat(
+            ulong generation,
+            ulong position,
+            ImmutableArray<byte> bytes) => Reject();
+
+        public Randomˉaccessˉstorageˉresult Resize(
+            ulong generation,
+            ulong length) => Reject();
+
+        public Randomˉaccessˉstorageˉresult Flush(
+            ulong generation,
+            Randomˉaccessˉstorageˉflush flush) => Reject();
+
+        private Randomˉaccessˉstorageˉresult Reject()
+        {
+            Callˉcount++;
+            throw new InvalidOperationException("An invalid request reached the storage provider.");
         }
     }
 

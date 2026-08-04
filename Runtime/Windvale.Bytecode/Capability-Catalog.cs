@@ -12,6 +12,7 @@ public static class Capabilityˉcatalog
     public const string FILE_WRITE_BYTES = "file.write_bytes";
     public const string PROCESS_ARGUMENT = "process.argument";
     public const string PROCESS_ARGUMENT_COUNT = "process.argument_count";
+    public const string STORAGE_RANDOM_ACCESS_V1 = "storage.random_access_v1";
 
     private static readonly ImmutableDictionary<string, Capabilityˉdeclaration> DECLARATIONS =
         new Dictionary<string, Capabilityˉdeclaration>(StringComparer.Ordinal)
@@ -48,6 +49,10 @@ public static class Capabilityˉcatalog
                 PROCESS_ARGUMENT_COUNT,
                 [],
                 Valueˉtype.U32),
+            [STORAGE_RANDOM_ACCESS_V1] = new(
+                STORAGE_RANDOM_ACCESS_V1,
+                [Valueˉtype.U32, Valueˉtype.U64, Valueˉtype.U64, Valueˉtype.U32, Valueˉtype.Bytes],
+                Valueˉtype.Bytes),
         }.ToImmutableDictionary(StringComparer.Ordinal);
 
     public static bool Tryˉget(string name, out Capabilityˉdeclaration declaration)

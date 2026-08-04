@@ -680,6 +680,7 @@ internal static class Program
             return Usageˉerror(
                 "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
                 "[--bind-read-only-directory <path>] " +
+                "[--bind-random-access-storage <path>] " +
                 "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
                 "[--report-function-dynamic-values] [--report-dynamic-lifetime] " +
                 "[--report-dynamic-allocator] " +
@@ -690,6 +691,7 @@ internal static class Program
         var Authorized = ImmutableHashSet.CreateBuilder<string>(StringComparer.Ordinal);
         var Programˉarguments = ImmutableArray.CreateBuilder<string>();
         string? Readˉonlyˉdirectoryˉpath = null;
+        string? Randomˉaccessˉstorageˉpath = null;
         long Maximumˉsteps = 1_000_000;
         var Reportˉsteps = false;
         var Reportˉfunctionˉsteps = false;
@@ -720,6 +722,10 @@ internal static class Program
                 case "--bind-read-only-directory" when
                     Index + 1 < arguments.Length && Readˉonlyˉdirectoryˉpath is null:
                     Readˉonlyˉdirectoryˉpath = arguments[++Index];
+                    break;
+                case "--bind-random-access-storage" when
+                    Index + 1 < arguments.Length && Randomˉaccessˉstorageˉpath is null:
+                    Randomˉaccessˉstorageˉpath = arguments[++Index];
                     break;
                 case "--report-steps":
                     Reportˉsteps = true;
@@ -753,6 +759,9 @@ internal static class Program
         var Readˉonlyˉdirectory = Readˉonlyˉdirectoryˉpath is null
             ? null
             : new Nativeˉreadˉonlyˉdirectory(Readˉonlyˉdirectoryˉpath);
+        using var Randomˉaccessˉstorage = Randomˉaccessˉstorageˉpath is null
+            ? null
+            : new Nativeˉrandomˉaccessˉstorage(Randomˉaccessˉstorageˉpath);
         var Runtime = new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
@@ -761,7 +770,8 @@ internal static class Program
                 Console.Error,
                 new Nativeˉhostedˉfileˉreader(),
                 new Nativeˉhostedˉfileˉwriter(),
-                Readˉonlyˉdirectory)),
+                Readˉonlyˉdirectory,
+                Randomˉaccessˉstorage)),
             new(
                 Authorized.ToImmutable(),
                 Maximumˉsteps,
@@ -965,6 +975,7 @@ internal static class Program
         output.WriteLine(
             "  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
             "[--bind-read-only-directory <path>] " +
+            "[--bind-random-access-storage <path>] " +
             "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
             "[--report-function-dynamic-values] [--report-dynamic-lifetime] " +
             "[--report-dynamic-allocator] " +
