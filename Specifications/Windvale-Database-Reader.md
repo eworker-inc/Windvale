@@ -159,7 +159,25 @@ requires byte-for-byte agreement with Stage 0.
 
 An application may embed these bytes as immutable data or obtain them through
 an explicitly authorized adapter, but the input snapshot must fit the bounds
-above. Whole-file hosted reading does not provide database durability.
+above. `Libraries/Platform/Database/Read-Only-Wvdb.wv` is the implemented hosted
+adapter over `filesystem.directory_read_v1`. It reads exact chunks of at most
+3,072 bytes, rejects a snapshot above 16,416 bytes after the first response,
+assembles at most six chunks, verifies stable length and progress, and then
+invokes the portable reader.
+
+Its exported API is:
+
+```text
+Wvdbˉsnapshotˉlookup(Name: text, Key: u32)
+    -> Wvdbˉsnapshotˉlookupˉresult
+```
+
+The result keeps `Found` and `Missing` separate from a typed storage failure or
+the reader's exact `Wvdbˉfailure`. The final application must redeclare and the
+launcher must separately authorize `filesystem.directory_read_v1`. The adapter
+receives only one validated single-segment name; it never receives a native
+path or handle. Whole-snapshot hosted reading does not provide database
+durability.
 
 The next database format must be separately proposed if it adds larger page
 identities, variable keys or values, global tree proofs, page caching, mutable

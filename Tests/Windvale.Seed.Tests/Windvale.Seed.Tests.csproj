@@ -148,6 +148,12 @@
       Include="../Fixtures/Database/Wvdb-Reader-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Wvdb-Reader-Adapter.wv" />
     <EmbeddedResource
+      Include="../../Libraries/Platform/Database/Read-Only-Wvdb.wv"
+      LogicalName="Windvale.Seed.Tests.Read-Only-Wvdb.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Database/Wvdb-Snapshot-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.Wvdb-Snapshot-Adapter.wv" />
+    <EmbeddedResource
       Include="../../Libraries/Platform/Resources/Hosted-Resource-Store.wv"
       LogicalName="Windvale.Seed.Tests.Hosted-Resource-Store.wv" />
     <EmbeddedResource

@@ -1,7 +1,7 @@
 # Windvale Database proposal
 
 - Date: 2026-08-04
-- Status: Proposal for review; the Stage 1 reader experiment is implemented, but no durable database format, writable engine, service contract, or product name is accepted by this document
+- Status: Proposal for review; the Stage 1 reader and first hosted snapshot consumer are implemented, but no durable database format, writable engine, service contract, or product name is accepted by this document
 - Working name: Windvale Database
 - Informed by: EWDB source, performance evidence, and operational experience
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
@@ -175,6 +175,7 @@ algorithm layers.
 | Database architecture and format proposal | Ready | Documentation makes no execution claim. |
 | Checksums, endian codecs, key comparison, and page validation | Ready in bounded slices | Current scalars and immutable `bytes` can express the algorithms; canonical WVB 1.11 includes exact little-endian `u64` field codecs in the Stage 0 and Windvale-written compiler/reference-runtime path. |
 | One read-only B+tree lookup over a small in-memory fixture | Implemented experiment | [`WVDB 1`](../../Specifications/Windvale-Database-Reader.md) validates at most 64 256-byte pages and returns a typed exact `u32` to `i32` result. It is not an accepted durable format. |
+| Rights-limited hosted snapshot lookup | Implemented candidate | [`Readˉonlyˉwvdb`](../../Libraries/Platform/Database/Read-Only-Wvdb.wv) composes the immutable directory provider and portable reader, assembles at most six chunks, and distinguishes provider failures from invalid database bytes. Independent Linux qualification remains pending. |
 | Bounded sequences and builders | Ready for narrow algorithms | WVB 1.11 implements bounded immutable sequences, affine builders, and deterministic `for`; nested collections, general maps, and database page ownership remain unavailable. |
 | General page and row collections | Not ready | Deterministic maps/page tables, nested or variable-size aggregates, exact allocation charging, and consuming database publication remain unimplemented. |
 | Durable page-file mutation and WAL recovery | Not ready | Windvale lacks the required random-access, append, exact flush, atomic publication, directory-durability, handle, and typed I/O-result contracts. |
@@ -329,6 +330,13 @@ corrupt inputs. The test pins deterministic library bytes and registers the
 same source for byte-identical Stage 0 and Windvale-written compiler output.
 It remains a format-reader experiment, not an accepted database format.
 
+Implemented-candidate [Decision 0210](../Decisions/0210-First-Hosted-Wvdb-Snapshot-Consumer.md)
+adds the first hosted consumer path. It obtains one named immutable snapshot
+through the rights-limited directory capability, checks the reader's exact
+16,416-byte ceiling, assembles no more than six bounded chunks, and returns
+typed storage-versus-database outcomes. It does not change any `WVDB 1` byte or
+claim durable storage.
+
 ### Stage 2: language and storage prerequisites
 
 Use concrete pressure from the reader and first writer to advance the smallest
@@ -439,9 +447,12 @@ This proposal does not:
 
 ## Recommended next decision
 
-The Stage 1 experiment now provides concrete review evidence. The next database
-decision should accept, revise, or discard its bounded reader API and select
-one real read-only consumer. It should not promote the 256-byte experimental
-page format into a durable contract by default. Writable storage, transactions,
-and service placement remain later decisions based on an exact storage-
-capability proposal and the language/runtime evidence the reader produces.
+The Stage 1 experiment and Decision 0210 now provide a complete rights-limited
+hosted snapshot path without changing the experimental bytes. The next database
+decision should select one product-facing read-only consumer and specify the
+smallest pre-opened database-storage resource contract that Windows, Linux, and
+later Windvale OS can implement with identical semantics. That contract needs
+`u64` positions and identities, explicit resource lifetime and writer fencing,
+typed exact or indeterminate mutation progress, flush classes, and a recovery
+boundary before any write implementation begins. It should not promote the
+256-byte experimental page format into a durable contract by default.

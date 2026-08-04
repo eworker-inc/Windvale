@@ -822,6 +822,12 @@ internal static class Program
     private static readonly string WVDB_READER_ADAPTER_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wvdb-Reader-Adapter.wv");
 
+    private static readonly string READ_ONLY_WVDB_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Read-Only-Wvdb.wv");
+
+    private static readonly string WVDB_SNAPSHOT_ADAPTER_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wvdb-Snapshot-Adapter.wv");
+
     private const int WVDB_DATABASE_HEADER_SIZE = 32;
     private const int WVDB_PAGE_SIZE = 256;
     private const int WVDB_PAGE_HEADER_SIZE = 32;
@@ -1129,6 +1135,7 @@ internal static class Program
         new("Foundation decimal parsing shares nominal results and boundaries", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉdecimalˉparsingˉruns),
         new("Foundation byte construction is total, bounded, and shared", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Foundationˉbyteˉconstructionˉruns),
         new("Windvale Database validates bounded pages and performs exact B+tree lookup", [TEST_AREA_DATABASE, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvdbˉreaderˉruns),
+        new("Windvale Database reads bounded snapshots through a rights-limited directory", [TEST_AREA_DATABASE, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvdbˉsnapshotˉlookupˉruns),
         new("Windvale-written source lexer streams the complete Seed token contract", [TEST_AREA_COMPILER], Compilerˉsourceˉlexerˉruns),
         new("Windvale-written declaration parser exposes bounded streaming source views", [TEST_AREA_COMPILER], Compilerˉsourceˉdeclarationˉparserˉruns),
         new("Windvale-written body parser exposes bounded statement and expression views", [TEST_AREA_COMPILER], Compilerˉsourceˉbodyˉparserˉruns, Testˉcost.Extended),
@@ -11771,9 +11778,122 @@ internal static class Program
         Expect(Buildˉwvdbˉdepthˉfixture(), 7u, 2u, 16, 24u);
     }
 
-    private static byte[] Buildˉwvdbˉtreeˉfixture()
+    private static void Wvdbˉsnapshotˉlookupˉruns()
     {
-        var Database = Wvdbˉcreateˉdatabase(3, 0u, 16u);
+        Sourceˉmoduleˉinput Directoryˉlibrary = new(
+            "Libraries/Platform/Filesystem/Read-Only-Directory.wv",
+            READ_ONLY_DIRECTORY_SOURCE);
+        Sourceˉmoduleˉinput Readerˉlibrary = new(
+            "Libraries/Database/Wvdb-Reader.wv",
+            WVDB_READER_SOURCE);
+        var Firstˉlibrary = Seedˉcompiler.Compileˉmodules(
+            new("Libraries/Platform/Database/Read-Only-Wvdb.wv", READ_ONLY_WVDB_SOURCE),
+            [Directoryˉlibrary, Readerˉlibrary]);
+        var Secondˉlibrary = Seedˉcompiler.Compileˉmodules(
+            new("Libraries/Platform/Database/Read-Only-Wvdb.wv", READ_ONLY_WVDB_SOURCE),
+            [Readerˉlibrary, Directoryˉlibrary]);
+        True(Firstˉlibrary.Success, "Read-only WVDB composition failed: " +
+            string.Join(" | ", Firstˉlibrary.Diagnostics));
+        True(Secondˉlibrary.Success, "Repeated read-only WVDB composition failed: " +
+            string.Join(" | ", Secondˉlibrary.Diagnostics));
+        Sequenceˉequal(Firstˉlibrary.Moduleˉbytes, Secondˉlibrary.Moduleˉbytes);
+
+        var Library = Moduleˉcodec.Readˉandˉverify(Firstˉlibrary.Moduleˉbytes.AsSpan());
+        Equal("Readˉonlyˉwvdb", Library.Module.Name);
+        Equal(Moduleˉprofile.Hosted, Library.Module.Profile);
+        Sequenceˉequal(
+            [Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1],
+            Library.Module.Capabilities.Select(Capability => Capability.Name));
+        Sequenceˉequal(
+            ["Wvdbˉsnapshotˉlookup"],
+            Library.Module.Exports.Select(Export => Export.Name));
+        True(
+            Library.Module.Types.Any(Type => Type.Name == "Wvdbˉsnapshotˉlookupˉresult"),
+            "The hosted WVDB adapter did not preserve its typed lookup result.");
+        True(
+            Library.Module.Types.Any(Type => Type.Name == "Wvdbˉsnapshotˉstorageˉfailure"),
+            "The hosted WVDB adapter did not preserve typed storage failures.");
+
+        Sourceˉmoduleˉinput Snapshotˉlibrary = new(
+            "Libraries/Platform/Database/Read-Only-Wvdb.wv",
+            READ_ONLY_WVDB_SOURCE);
+        var Adapterˉresult = Seedˉcompiler.Compileˉmodules(
+            new("Tests/Fixtures/Database/Wvdb-Snapshot-Adapter.wv", WVDB_SNAPSHOT_ADAPTER_SOURCE),
+            [Snapshotˉlibrary, Directoryˉlibrary, Readerˉlibrary]);
+        True(Adapterˉresult.Success, "WVDB snapshot adapter composition failed: " +
+            string.Join(" | ", Adapterˉresult.Diagnostics));
+        var Adapter = Moduleˉcodec.Readˉandˉverify(Adapterˉresult.Moduleˉbytes.AsSpan());
+        Sequenceˉequal(
+            [Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1],
+            Adapter.Module.Capabilities.Select(Capability => Capability.Name));
+
+        const string Unapprovedˉroot = """
+            module Unapprovedˉwvdbˉsnapshot profile hosted;
+            import Readˉonlyˉwvdb as Snapshot;
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("unapproved-wvdb-snapshot.wv", Unapprovedˉroot),
+                [Snapshotˉlibrary, Directoryˉlibrary, Readerˉlibrary]),
+            "WVC0013");
+
+        int Run(IReadˉonlyˉdirectory directory)
+        {
+            var Host = new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                TextWriter.Null,
+                readˉonlyˉdirectory: directory));
+            return new Referenceˉruntime(
+                Adapter,
+                Host,
+                new(
+                    ImmutableHashSet.Create(
+                        StringComparer.Ordinal,
+                        Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1),
+                    Maximumˉinstructions: 20_000_000))
+                .Runˉmain().Exitˉcode;
+        }
+
+        var Foundˉdirectory = new Databaseˉsnapshotˉdirectory(
+            Buildˉwvdbˉtreeˉfixture(13).ToImmutableArray());
+        Equal(42, Run(Foundˉdirectory));
+        Equal(2, Foundˉdirectory.Readˉcount);
+
+        var Missingˉdirectory = new Databaseˉsnapshotˉdirectory(
+            Buildˉwvdbˉemptyˉfixture(64).ToImmutableArray());
+        Equal(-1, Run(Missingˉdirectory));
+        Equal(6, Missingˉdirectory.Readˉcount);
+
+        var Malformedˉdirectory = new Databaseˉsnapshotˉdirectory([0]);
+        Equal(-6, Run(Malformedˉdirectory));
+        Equal(1, Malformedˉdirectory.Readˉcount);
+
+        var Absentˉdirectory = new Databaseˉsnapshotˉdirectory(
+            [],
+            Readˉonlyˉdirectoryˉstatus.Notˉfound);
+        Equal(-3, Run(Absentˉdirectory));
+        Equal(1, Absentˉdirectory.Readˉcount);
+
+        var Oversizedˉdirectory = new Databaseˉsnapshotˉdirectory(
+            ImmutableArray.Create(new byte[WVDB_DATABASE_HEADER_SIZE + 64 * WVDB_PAGE_SIZE + 1]));
+        Equal(-2, Run(Oversizedˉdirectory));
+        Equal(1, Oversizedˉdirectory.Readˉcount);
+
+        var Changingˉdirectory = new Changingˉdatabaseˉsnapshotˉdirectory(
+            Buildˉwvdbˉtreeˉfixture(13).ToImmutableArray());
+        Equal(-4, Run(Changingˉdirectory));
+        Equal(2, Changingˉdirectory.Readˉcount);
+    }
+
+    private static byte[] Buildˉwvdbˉtreeˉfixture(int pageˉcount = 3)
+    {
+        if (pageˉcount < 3)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pageˉcount));
+        }
+        var Database = Wvdbˉcreateˉdatabase(pageˉcount, 0u, 16u);
         Wvdbˉinitializeˉpage(Database, 0, 2u, 2u);
         Wvdbˉwriteˉentry(Database, 0, 0, 20u, 1u);
         Wvdbˉwriteˉentry(Database, 0, 1, uint.MaxValue, 2u);
@@ -11783,7 +11903,11 @@ internal static class Program
         Wvdbˉinitializeˉpage(Database, 2, 1u, 2u);
         Wvdbˉwriteˉleafˉentry(Database, 2, 0, 30u, 42);
         Wvdbˉwriteˉleafˉentry(Database, 2, 1, 40u, -5);
-        for (var Page = 0; Page < 3; Page++)
+        for (var Page = 3; Page < pageˉcount; Page++)
+        {
+            Wvdbˉinitializeˉpage(Database, Page, 1u, 0u);
+        }
+        for (var Page = 0; Page < pageˉcount; Page++)
         {
             Wvdbˉwriteˉpageˉchecksum(Database, Page);
         }
@@ -26045,6 +26169,69 @@ internal static class Program
                 Length,
                 KERNEL_BYTES
                     .AsSpan(checked((int)offset), checked((int)Count))
+                    .ToArray()
+                    .ToImmutableArray());
+        }
+    }
+
+    private sealed class Databaseˉsnapshotˉdirectory(
+        ImmutableArray<byte> bytes,
+        Readˉonlyˉdirectoryˉstatus status = Readˉonlyˉdirectoryˉstatus.Valid) :
+        IReadˉonlyˉdirectory
+    {
+        public int Readˉcount { get; private set; }
+
+        public Readˉonlyˉdirectoryˉresult Readˉbytes(
+            string name,
+            uint offset,
+            uint maximumˉbytes)
+        {
+            Readˉcount++;
+            if (!StringComparer.Ordinal.Equals(name, "Catalog.wvdb"))
+            {
+                return new(Readˉonlyˉdirectoryˉstatus.Notˉfound, 0, []);
+            }
+            if (status != Readˉonlyˉdirectoryˉstatus.Valid)
+            {
+                return new(status, 0, []);
+            }
+
+            var Length = checked((uint)bytes.Length);
+            if (offset > Length)
+            {
+                return new(Readˉonlyˉdirectoryˉstatus.Invalidˉoffset, Length, []);
+            }
+            var Count = Math.Min(maximumˉbytes, Length - offset);
+            return new(
+                Readˉonlyˉdirectoryˉstatus.Valid,
+                Length,
+                bytes.AsSpan(checked((int)offset), checked((int)Count))
+                    .ToArray()
+                    .ToImmutableArray());
+        }
+    }
+
+    private sealed class Changingˉdatabaseˉsnapshotˉdirectory(
+        ImmutableArray<byte> bytes) : IReadˉonlyˉdirectory
+    {
+        public int Readˉcount { get; private set; }
+
+        public Readˉonlyˉdirectoryˉresult Readˉbytes(
+            string name,
+            uint offset,
+            uint maximumˉbytes)
+        {
+            Readˉcount++;
+            var Length = checked((uint)bytes.Length);
+            if (Readˉcount > 1)
+            {
+                Length--;
+            }
+            var Count = Math.Min(maximumˉbytes, Length - offset);
+            return new(
+                Readˉonlyˉdirectoryˉstatus.Valid,
+                Length,
+                bytes.AsSpan(checked((int)offset), checked((int)Count))
                     .ToArray()
                     .ToImmutableArray());
         }

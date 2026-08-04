@@ -1,0 +1,173 @@
+module Readˉonlyˉwvdb profile hosted;
+
+import Readˉonlyˉdirectory as Directory;
+import Windvaleˉdatabaseˉreader as Database;
+
+capability filesystem.directory_read_v1;
+
+const MAXIMUM_WVDB_BYTES: u32 = 16416u32;
+const MAXIMUM_DIRECTORY_CHUNK: u32 = 3072u32;
+
+export enum Wvdbˉsnapshotˉstorageˉstatus {
+    Notˉfound = 1;
+    Notˉfile = 2;
+    Permissionˉdenied = 3;
+    Unavailable = 4;
+    Revoked = 5;
+    Stale = 6;
+    Peerˉexited = 7;
+    Invalidˉoffset = 8;
+    Invalidˉname = 9;
+    Invalidˉlimit = 10;
+    Invalidˉresponse = 11;
+    Tooˉlarge = 12;
+}
+
+export record Wvdbˉsnapshotˉstorageˉfailure {
+    Status: Wvdbˉsnapshotˉstorageˉstatus;
+    Requestedˉoffset: u32;
+    Fileˉlength: u32;
+}
+
+export variant Wvdbˉsnapshotˉlookupˉresult {
+    Found(Value: i32);
+    Missing;
+    Storageˉfailure(Value: Wvdbˉsnapshotˉstorageˉfailure);
+    Databaseˉfailure(Value: Database.Wvdbˉfailure);
+}
+
+fn Wvdbˉsnapshotˉstorageˉstatus(
+    Status: Directory.Directoryˉreadˉstatus
+) -> Wvdbˉsnapshotˉstorageˉstatus {
+    match Status {
+        case Directory.Directoryˉreadˉstatus.Valid {
+            return Wvdbˉsnapshotˉstorageˉstatus.Invalidˉresponse;
+        }
+        case Directory.Directoryˉreadˉstatus.Notˉfound {
+            return Wvdbˉsnapshotˉstorageˉstatus.Notˉfound;
+        }
+        case Directory.Directoryˉreadˉstatus.Notˉfile {
+            return Wvdbˉsnapshotˉstorageˉstatus.Notˉfile;
+        }
+        case Directory.Directoryˉreadˉstatus.Permissionˉdenied {
+            return Wvdbˉsnapshotˉstorageˉstatus.Permissionˉdenied;
+        }
+        case Directory.Directoryˉreadˉstatus.Unavailable {
+            return Wvdbˉsnapshotˉstorageˉstatus.Unavailable;
+        }
+        case Directory.Directoryˉreadˉstatus.Revoked {
+            return Wvdbˉsnapshotˉstorageˉstatus.Revoked;
+        }
+        case Directory.Directoryˉreadˉstatus.Stale {
+            return Wvdbˉsnapshotˉstorageˉstatus.Stale;
+        }
+        case Directory.Directoryˉreadˉstatus.Peerˉexited {
+            return Wvdbˉsnapshotˉstorageˉstatus.Peerˉexited;
+        }
+        case Directory.Directoryˉreadˉstatus.Invalidˉoffset {
+            return Wvdbˉsnapshotˉstorageˉstatus.Invalidˉoffset;
+        }
+        case Directory.Directoryˉreadˉstatus.Invalidˉname {
+            return Wvdbˉsnapshotˉstorageˉstatus.Invalidˉname;
+        }
+        case Directory.Directoryˉreadˉstatus.Invalidˉlimit {
+            return Wvdbˉsnapshotˉstorageˉstatus.Invalidˉlimit;
+        }
+        case Directory.Directoryˉreadˉstatus.Invalidˉresponse {
+            return Wvdbˉsnapshotˉstorageˉstatus.Invalidˉresponse;
+        }
+    }
+}
+
+fn Wvdbˉsnapshotˉstorageˉfailureˉfromˉdirectory(
+    Result: Directory.Directoryˉreadˉresult,
+    Requestedˉoffset: u32
+) -> Wvdbˉsnapshotˉlookupˉresult {
+    return Wvdbˉsnapshotˉlookupˉresult.Storageˉfailure(
+        Wvdbˉsnapshotˉstorageˉfailure(
+            Wvdbˉsnapshotˉstorageˉstatus(Result.Status),
+            Requestedˉoffset,
+            Result.Fileˉlength
+        )
+    );
+}
+
+fn Wvdbˉsnapshotˉinvalidˉresponse(
+    Requestedˉoffset: u32,
+    Fileˉlength: u32
+) -> Wvdbˉsnapshotˉlookupˉresult {
+    return Wvdbˉsnapshotˉlookupˉresult.Storageˉfailure(
+        Wvdbˉsnapshotˉstorageˉfailure(
+            Wvdbˉsnapshotˉstorageˉstatus.Invalidˉresponse,
+            Requestedˉoffset,
+            Fileˉlength
+        )
+    );
+}
+
+export fn Wvdbˉsnapshotˉlookup(
+    Name: text,
+    Key: u32
+) -> Wvdbˉsnapshotˉlookupˉresult {
+    let First: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
+        Name,
+        0u32,
+        MAXIMUM_DIRECTORY_CHUNK
+    );
+    if First.Status != Directory.Directoryˉreadˉstatus.Valid {
+        return Wvdbˉsnapshotˉstorageˉfailureˉfromˉdirectory(First, 0u32);
+    }
+    if First.Fileˉlength > MAXIMUM_WVDB_BYTES {
+        return Wvdbˉsnapshotˉlookupˉresult.Storageˉfailure(
+            Wvdbˉsnapshotˉstorageˉfailure(
+                Wvdbˉsnapshotˉstorageˉstatus.Tooˉlarge,
+                0u32,
+                First.Fileˉlength
+            )
+        );
+    }
+
+    let Fileˉlength: u32 = First.Fileˉlength;
+    var Snapshot: bytes = First.Value;
+    var Offset: u32 = First.Nextˉoffset;
+    while Offset < Fileˉlength {
+        let Remaining: u32 = Fileˉlength - Offset;
+        var Maximum: u32 = MAXIMUM_DIRECTORY_CHUNK;
+        if Remaining < Maximum { Maximum = Remaining; }
+
+        let Chunk: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
+            Name,
+            Offset,
+            Maximum
+        );
+        if Chunk.Status != Directory.Directoryˉreadˉstatus.Valid {
+            return Wvdbˉsnapshotˉstorageˉfailureˉfromˉdirectory(Chunk, Offset);
+        }
+        if Chunk.Fileˉlength != Fileˉlength {
+            return Wvdbˉsnapshotˉinvalidˉresponse(Offset, Chunk.Fileˉlength);
+        }
+        if Chunk.Nextˉoffset <= Offset {
+            return Wvdbˉsnapshotˉinvalidˉresponse(Offset, Chunk.Fileˉlength);
+        }
+
+        Snapshot = Bytesˉconcat(Snapshot, Chunk.Value);
+        Offset = Chunk.Nextˉoffset;
+    }
+
+    if Offset != Fileˉlength || Bytesˉlength(Snapshot) != Fileˉlength {
+        return Wvdbˉsnapshotˉinvalidˉresponse(Offset, Fileˉlength);
+    }
+
+    let Lookup: Database.Wvdbˉlookupˉresult = Database.Wvdbˉreaderˉlookup(Snapshot, Key);
+    match Lookup {
+        case Database.Wvdbˉlookupˉresult.Found(Value) {
+            return Wvdbˉsnapshotˉlookupˉresult.Found(Value);
+        }
+        case Database.Wvdbˉlookupˉresult.Missing {
+            return Wvdbˉsnapshotˉlookupˉresult.Missing();
+        }
+        case Database.Wvdbˉlookupˉresult.Failure(Failure) {
+            return Wvdbˉsnapshotˉlookupˉresult.Databaseˉfailure(Failure);
+        }
+    }
+}

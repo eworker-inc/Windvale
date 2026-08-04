@@ -40,7 +40,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 
 ## Database experiment
 
-- [Experimental Windvale Database reader](Windvale-Database-Reader.md)
+- [Experimental Windvale Database reader and hosted snapshot adapter](Windvale-Database-Reader.md)
 
 ## Assembly, objects, and linking
 

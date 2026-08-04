@@ -1728,3 +1728,20 @@ The current compiler-capacity WebAssembly bundle uses six import-free ABI-3 inst
 Focused Windows tests pass for the complete feature fixture family, exact Stage 0/Windvale byte parity, and the WVB 1.11 `u64` storage codecs. Broader native, WebAssembly, editor, malformed-input, and bootstrap evidence is pending the final change-aware gate for this candidate. Independent dual-host Qualification remains pending; no new cross-host claim is made here.
 
 The current hosted compiler verifier and build driver consume the explicit import/privacy contract directly. `WVHV 1` retains its monolithic semantic, typed-execution, and control/reachability verifier under a 16,000,000,000-instruction `u64` ceiling. Its exact WVB is 123,969 bytes / `0e5a11c8ce5e9ab9c9b4d87d7b57ef1ace89e13b449a9f32815ef90bc7c41696`; it packages as a 996,352-byte Windows PE / `c223b71e7580c9d9b9ba3d2f6f82e1689d0638967f7112c0c1a952432128b154` and a 995,328-byte Linux ELF / `04a800ee9a81471dd6b2be0727c94b833229ef7b6020390df0ce23b909c6d1f1`. The shared-ceiling build driver is 1,068,108 WVB bytes / `04fdb0c8de6ada23bf3c28b840782764551a27daa1244ff8315d41b0fb879210`; it packages as a 28,820,992-byte Windows PE / `dae678ebe263ae6aeb62eace0943f8666878cc904cb5614f29e0de52f6548621` and a 28,823,552-byte Linux ELF / `ffbd7f2849cc9507c1d6231e5e77c60d2e70d232ffddf18f83af2deeb09b918b`. The focused AOT transport case passes deterministic construction, malformed-container rejection, direct Windows compiler admission and corrupted-candidate rejection, build-driver source/Project publication and output preservation, and host-module inspection. Independent Linux execution and dual-host qualification remain pending.
+
+## Local hosted WVDB snapshot consumer candidate
+
+Implemented-candidate Decision 0210 composes the portable experimental `WVDB 1`
+reader with `filesystem.directory_read_v1` in the hosted `Readˉonlyˉwvdb`
+library. The exact dependency graph is deterministic in both supplied orders,
+publishes one capability requirement, and rejects an importing application that
+does not redeclare that transitive requirement with `WVC0013`.
+
+The Windows Fast database selection completes a zero-warning Release build and
+passes all three selected tests: the original bounded page/B+tree and malformed-
+input suite, the WVB 1.11 `u64` durable-field codecs, and the hosted snapshot
+consumer. The new test proves a two-chunk found lookup, a six-chunk maximum-size
+missing lookup, separate malformed-database and provider failures, one-read
+oversized rejection, and cross-chunk immutable-length defense. Independent
+Linux and dual-host Qualification remain pending; no durable format, writable
+storage, or new cross-host claim is made.
