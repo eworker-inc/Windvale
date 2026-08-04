@@ -109,12 +109,12 @@ internal static class Program
     private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507";
     private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a";
     private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "42f3f947cccca8e44c279afce1b6e944682dc440e0e9cda6546883898d951f31";
-    private const string COMPILER_WVB_VERIFIER_SHA256 = "028af7f7a69d3ea434cfaf5e4122cf09878dfb10593c03af34351844715d49f5";
-    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "109a093fc9ff0a9f18c4125d635d2713111bf0c61ca71f4eb38e85850430900c";
-    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "35dc54aa0d5055cdce6df3ad1af4e921bbd1f53151835d22c63979b57cbb8716";
-    private const string COMPILER_BUILD_DRIVER_SHA256 = "ed3a1d7ab0079af604ae692da98db048747ddf74f491ee4f3f25f42d353063d1";
-    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "92ce5643e5e1685a2c292e6e97c17013d7f2153d8976c749415d2d0a1a7310ab";
-    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "4b90674255d11ee4b6ffc375eaa80575dd1fe39b6d7f2b5d6ba4d246f3a7d99e";
+    private const string COMPILER_WVB_VERIFIER_SHA256 = "a70d02d85b7a67980220b2b7f6a3b6338cc5f1f51639f17816f3b97eab62e2a1";
+    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "3045f343ed5fd428ab5e8089ee254e3455f34f0e27f084af82d7784d231a7379";
+    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "44b16d42ec1aa6f775285ad2f53ac52be8a32479e1a446dfebe59c7db10b1c75";
+    private const string COMPILER_BUILD_DRIVER_SHA256 = "a7cb475dbed8dd8dbf55c45e4d168f462af0a39ec707deff3108bba70e9dfd77";
+    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "885baedad6e5065f09409a793c51b610753d8ef75ce746498be050413405641d";
+    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "01629d1ab879c8dd73956179f9dad1986a8e545e9377268578171d8d3e17b978";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
@@ -9044,7 +9044,7 @@ internal static class Program
         }
 
         var Verifierˉbytes = Compilation.Moduleˉbytes.ToArray();
-        Equal(118_536, Verifierˉbytes.Length);
+        Equal(118_612, Verifierˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_SHA256,
             Objectˉdigest.Calculateˉsha256(Verifierˉbytes));
@@ -9116,7 +9116,7 @@ internal static class Program
             Windowsˉbundle,
             Nativeˉentry);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(960_512, Firstˉwindows.Imageˉbytes.Length);
+        Equal(961_536, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -9461,7 +9461,7 @@ internal static class Program
                     "Compiler-Wvb-Verifier-Executable-Core.wv",
                     COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
             ]);
-        Equal(749_460, Driverˉbytes.Length);
+        Equal(749_536, Driverˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_SHA256,
             Objectˉdigest.Calculateˉsha256(Driverˉbytes));
@@ -9525,7 +9525,7 @@ internal static class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(18_483_200, Firstˉwindows.Imageˉbytes.Length);
+        Equal(18_484_224, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
