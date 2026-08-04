@@ -17,6 +17,7 @@ internal static class Foundationˉintrinsics
     public const string BYTES_READ_U16_LITTLE = "Bytesˉreadˉu16ˉlittle";
     public const string BYTES_READ_U32_LITTLE = "Bytesˉreadˉu32ˉlittle";
     public const string BYTES_READ_I32_LITTLE = "Bytesˉreadˉi32ˉlittle";
+    public const string BYTES_READ_U64_LITTLE = "Bytesˉreadˉu64ˉlittle";
     public const string I32_FORMAT = "I32ˉformat";
     public const string I64_FORMAT = "I64ˉformat";
     public const string U8_FORMAT = "U8ˉformat";
@@ -32,6 +33,7 @@ internal static class Foundationˉintrinsics
     public const string BYTES_FROM_U16_LITTLE = "Bytesˉfromˉu16ˉlittle";
     public const string BYTES_FROM_U32_LITTLE = "Bytesˉfromˉu32ˉlittle";
     public const string BYTES_FROM_I32_LITTLE = "Bytesˉfromˉi32ˉlittle";
+    public const string BYTES_FROM_U64_LITTLE = "Bytesˉfromˉu64ˉlittle";
     public const string BYTES_SHA256_HEX = "Bytesˉsha256ˉhex";
     public const string TEXT_TO_UTF8 = "Textˉtoˉutf8";
     public const string ENUM_NAME = "Enumˉname";
@@ -65,6 +67,11 @@ internal static class Foundationˉintrinsics
                 [Valueˉtype.Bytes, Valueˉtype.U32],
                 Valueˉtype.I32,
                 Wirˉoperation.Bytesˉreadˉi32ˉlittle),
+            new(
+                BYTES_READ_U64_LITTLE,
+                [Valueˉtype.Bytes, Valueˉtype.U32],
+                Valueˉtype.U64,
+                Wirˉoperation.Bytesˉreadˉu64ˉlittle),
             new(I32_FORMAT, [Valueˉtype.I32], Valueˉtype.Text, Wirˉoperation.I32ˉformat),
             new(I64_FORMAT, [Valueˉtype.I64], Valueˉtype.Text, Wirˉoperation.I64ˉformat),
             new(U8_FORMAT, [Valueˉtype.U8], Valueˉtype.Text, Wirˉoperation.U8ˉformat),
@@ -112,6 +119,11 @@ internal static class Foundationˉintrinsics
                 [Valueˉtype.I32],
                 Valueˉtype.Bytes,
                 Wirˉoperation.Bytesˉfromˉi32ˉlittle),
+            new(
+                BYTES_FROM_U64_LITTLE,
+                [Valueˉtype.U64],
+                Valueˉtype.Bytes,
+                Wirˉoperation.Bytesˉfromˉu64ˉlittle),
             new(
                 BYTES_SHA256_HEX,
                 [Valueˉtype.Bytes],

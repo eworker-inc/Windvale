@@ -34,6 +34,8 @@ These indicators describe evidence, not effort. Windvale does not publish percen
 
 The current unqualified language candidate advances Stage 0 and the Windvale-written compiler together through WVB 1.11: inference and trailing commas; constants; privacy, aliases, qualified identities, and metadata; named records and `else if`; exhaustive `match`; nominal payload variants and recoverable-result shapes; bounded sequences, affine builders, and `for`; loop control and short-circuit flow; compound assignment; checked division/remainder; bitwise operations and shifts; and exact text/bytes equality. The ordinary native compiler path, deterministic artifacts, editor grammar, and focused compiler/runtime/WebAssembly cases are synchronized. Resource-lifetime syntax remains at its explicit design gate until provider values, cleanup ordering/failures, and immutable manifest representation are decided.
 
+Implemented-candidate [Decision 0207](../Decisions/0207-U64-Binary-Fields-For-Durable-Storage.md) advances the Stage 0 reference path alone to conditional WVB 1.12 with exact little-endian `u64` byte codecs for future durable storage fields. The Windvale-written compiler, native, WebAssembly, and Windvale OS profiles remain at their previously stated vocabularies. Implemented-candidate [Decision 0208](../Decisions/0208-Native-Read-Only-Directory-Snapshot-Binding.md) also gives `windvale run` an explicit bounded Windows/Linux snapshot binding for the already qualified directory-read contract; independent Linux qualification remains pending.
+
 The [Windvale Database reader experiment](../../Specifications/Windvale-Database-Reader.md) is the first concrete database-driven consumer of that evolved result surface. It validates a maximum 16,416-byte immutable snapshot containing at most 64 checksummed pages, performs an exact bounded B+tree lookup, returns typed found/missing/failure outcomes, and has independent malformed-input fixtures. It does not implement durable storage, transactions, caching, concurrency, or a service.
 
 Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) is a documentation-only successor review set. It builds from qualified Probe 40 and recommends concrete defaults for resource domains and later memory generalization, clean launch/supervision, streams/terminal/shell, `LinkPort 1`/`virtio-net`, identity/time/entropy/trust, packages/releases/recovery, and language variants/collections/metadata. None of those proposed contracts changes the implemented or qualified indicators above.
@@ -41,7 +43,7 @@ Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults
 ## Working end to end
 
 - ✅ Windvale source → canonical WVB → verification → execution on Windows or Linux
-- 🚧 Evolved source surface → conditional WVB 1.6–1.11 → verified reference, Windvale-compiler, native, and bounded WebAssembly paths; independent dual-host qualification remains
+- 🚧 Evolved shared source surface → conditional WVB 1.6–1.11 → verified reference, Windvale-compiler, native, and bounded WebAssembly paths; Stage 0 alone additionally admits WVB 1.12 `u64` byte codecs, and independent dual-host qualification remains
 - ✅ Windvale assembly → verified WVO → deterministic linked x86-64 image
 - ✅ Portable WVB → shared WVO/AOT backend → linked UEFI image → kernel-owned execution
 - ✅ Hosted `Wv-Dump-Core.wv` → W^X/WVO execution → deterministic report for a real WVB

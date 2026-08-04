@@ -1163,6 +1163,7 @@ internal static class Program
         new("match, metadata, variants, collections, and extended operators execute", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Advancedˉlanguageˉfeaturesˉrun),
         new("Seed arithmetic and comparison operators execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Operatorsˉrun),
         new("WVB 1.7 checked 64-bit scalars execute in the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wideˉscalarsˉrun),
+        new("WVB 1.12 u64 binary codecs preserve durable storage fields", [TEST_AREA_DATABASE, TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], U64ˉbinaryˉcodecsˉrun),
         new("source diagnostics contain stable codes and locations", [TEST_AREA_COMPILER], Sourceˉdiagnosticsˉareˉuseful),
         new("binary reader rejects malformed envelopes and UTF-8", [TEST_AREA_BYTECODE], Malformedˉmodulesˉareˉrejected),
         new("verifier rejects unsafe instruction streams", [TEST_AREA_BYTECODE], Unsafeˉbytecodeˉisˉrejected),
@@ -10936,6 +10937,70 @@ internal static class Program
                 new("unapproved-directory-application.wv", Unapprovedˉroot),
                 [Library]),
             "WVC0013");
+
+        var Snapshotˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-directory-snapshot-{Guid.NewGuid():N}");
+        System.IO.Directory.CreateDirectory(Snapshotˉpath);
+        try
+        {
+            var Kernelˉpath = Path.Combine(Snapshotˉpath, "Kernel.wvb");
+            File.WriteAllBytes(Kernelˉpath, [3, 5, 8, 13, 21]);
+            System.IO.Directory.CreateDirectory(Path.Combine(Snapshotˉpath, "Nested"));
+            File.WriteAllBytes(Path.Combine(Snapshotˉpath, "not queryable.txt"), [1]);
+
+            var Nativeˉsnapshot = new Windvale.Tool.Nativeˉreadˉonlyˉdirectory(Snapshotˉpath);
+            File.WriteAllBytes(Kernelˉpath, [99]);
+
+            var Nativeˉread = Nativeˉsnapshot.Readˉbytes("Kernel.wvb", 1, 3);
+            Equal(Readˉonlyˉdirectoryˉstatus.Valid, Nativeˉread.Status);
+            Equal(5u, Nativeˉread.Fileˉlength);
+            Sequenceˉequal<byte>([5, 8, 13], Nativeˉread.Bytes);
+            Equal(
+                Readˉonlyˉdirectoryˉstatus.Notˉfound,
+                Nativeˉsnapshot.Readˉbytes("kernel.wvb", 0, 3).Status);
+            Equal(
+                Readˉonlyˉdirectoryˉstatus.Notˉfile,
+                Nativeˉsnapshot.Readˉbytes("Nested", 0, 3).Status);
+            Equal(
+                Readˉonlyˉdirectoryˉstatus.Invalidˉoffset,
+                Nativeˉsnapshot.Readˉbytes("Kernel.wvb", 6, 3).Status);
+
+            File.WriteAllBytes(Kernelˉpath, [3, 5, 8, 13, 21]);
+            var Moduleˉpath = Path.Combine(Snapshotˉpath, "Directory-Application.wvb");
+            File.WriteAllBytes(Moduleˉpath, First.Moduleˉbytes.AsSpan());
+            var Originalˉoutput = Console.Out;
+            var Originalˉerror = Console.Error;
+            using var Output = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);
+            using var Error = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);
+            try
+            {
+                Console.SetOut(Output);
+                Console.SetError(Error);
+                Equal(
+                    0,
+                    Windvale.Tool.Program.Main(
+                    [
+                        "run",
+                        Moduleˉpath,
+                        "--allow",
+                        Capabilityˉcatalog.FILESYSTEM_DIRECTORY_READ_V1,
+                        "--bind-read-only-directory",
+                        Snapshotˉpath,
+                    ]));
+            }
+            finally
+            {
+                Console.SetOut(Originalˉoutput);
+                Console.SetError(Originalˉerror);
+            }
+            Equal("Result: 29\n", Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal));
+            Equal("", Error.ToString());
+        }
+        finally
+        {
+            System.IO.Directory.Delete(Snapshotˉpath, recursive: true);
+        }
     }
 
     private static ImmutableArray<byte> Buildˉdirectoryˉresponse(
@@ -20105,6 +20170,68 @@ internal static class Program
         Equal(7, Result.Exitˉcode);
         Equal("-9223372036854775808 18446744073709551615\n", Output.ToString());
         Throwsˉnative("WVN2003", () => X64ˉnativeˉbackend.Compile(Module));
+    }
+
+    private static void U64ˉbinaryˉcodecsˉrun()
+    {
+        const string Source = """
+            module U64ˉbinaryˉcodecs profile portable;
+
+            export fn Main() -> i32 {
+                let Maximum: u64 = 18446744073709551615u64;
+                let Encoded: bytes = Bytesˉfromˉu64ˉlittle(Maximum);
+                if Bytesˉlength(Encoded) != 8u32 { return 1; }
+                if Bytesˉreadˉu8(Encoded, 0u32) != 255u8 { return 2; }
+                if Bytesˉreadˉu8(Encoded, 7u32) != 255u8 { return 3; }
+                if Bytesˉreadˉu64ˉlittle(Encoded, 0u32) != Maximum { return 4; }
+
+                let Offset: bytes = Bytesˉconcat(Bytesˉfromˉu8(7u8), Encoded);
+                if Bytesˉreadˉu64ˉlittle(Offset, 1u32) != Maximum { return 5; }
+                let Boundary: u64 = 4294967296u64;
+                if Bytesˉreadˉu64ˉlittle(
+                    Bytesˉfromˉu64ˉlittle(Boundary), 0u32
+                ) != Boundary { return 6; }
+                return 29;
+            }
+            """;
+
+        var Bytes = Compileˉsuccess(Source);
+        Equal(
+            Moduleˉcodec.STORAGE_MINOR_VERSION,
+            BinaryPrimitives.ReadUInt16LittleEndian(Bytes.AsSpan(6)));
+        var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        Sequenceˉequal(Bytes, Moduleˉcodec.Write(Module.Module));
+        var Inspection = Moduleˉinspector.Inspect(Module, Bytes);
+        Contains(Inspection, "Windvale bytecode 1.12");
+        Contains(Inspection, "bytes.from_u64_little");
+        Contains(Inspection, "bytes.read_u64_little");
+        Equal(
+            29,
+            new Referenceˉruntime(
+                Module,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        var Relabeled = (byte[])Bytes.Clone();
+        BinaryPrimitives.WriteUInt16LittleEndian(
+            Relabeled.AsSpan(6),
+            Moduleˉcodec.OPERATOR_MINOR_VERSION);
+        Throwsˉbytecode("WVB2107", () => Moduleˉcodec.Readˉandˉverify(Relabeled));
+
+        const string Truncatedˉsource = """
+            module Truncatedˉu64ˉread profile portable;
+            export fn Main() -> i32 {
+                Bytesˉreadˉu64ˉlittle(Textˉtoˉutf8("1234567"), 0u32);
+                return 0;
+            }
+            """;
+        var Truncated = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Truncatedˉsource));
+        Throwsˉruntime(
+            "WVR3008",
+            () => new Referenceˉruntime(
+                Truncated,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain());
     }
 
     private static void Malformedˉmodulesˉareˉrejected()

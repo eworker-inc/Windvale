@@ -16,12 +16,15 @@ public static class Moduleˉcodec
     public const ushort VARIANT_MINOR_VERSION = 9;
     public const ushort COLLECTION_MINOR_VERSION = 10;
     public const ushort OPERATOR_MINOR_VERSION = 11;
+    public const ushort STORAGE_MINOR_VERSION = 12;
     private const byte MODULE_METADATA_VERSION = 1;
 
     public static byte[] Write(Bytecodeˉmodule module)
     {
         ArgumentNullException.ThrowIfNull(module);
-        var Candidateˉminorˉversion = Requiresˉversionˉ1ˉ11(module)
+        var Candidateˉminorˉversion = Requiresˉversionˉ1ˉ12(module)
+            ? STORAGE_MINOR_VERSION
+            : Requiresˉversionˉ1ˉ11(module)
             ? OPERATOR_MINOR_VERSION
             : Requiresˉcollectionˉshape(module)
             ? COLLECTION_MINOR_VERSION
@@ -36,7 +39,9 @@ public static class Moduleˉcodec
         });
         module = module with
         {
-            Formatˉminorˉversion = Requiresˉversionˉ1ˉ11(Verified)
+            Formatˉminorˉversion = Requiresˉversionˉ1ˉ12(Verified)
+                ? STORAGE_MINOR_VERSION
+                : Requiresˉversionˉ1ˉ11(Verified)
                 ? OPERATOR_MINOR_VERSION
                 : Requiresˉversionˉ1ˉ10(Verified)
                 ? COLLECTION_MINOR_VERSION
@@ -236,7 +241,7 @@ public static class Moduleˉcodec
         var Majorˉversion = Reader.Readˉu16();
         var Minorˉversion = Reader.Readˉu16();
         if (Majorˉversion != MAJOR_VERSION ||
-            Minorˉversion is not (BASE_MINOR_VERSION or WIDE_MINOR_VERSION or MINOR_VERSION or VARIANT_MINOR_VERSION or COLLECTION_MINOR_VERSION or OPERATOR_MINOR_VERSION))
+            Minorˉversion is not (BASE_MINOR_VERSION or WIDE_MINOR_VERSION or MINOR_VERSION or VARIANT_MINOR_VERSION or COLLECTION_MINOR_VERSION or OPERATOR_MINOR_VERSION or STORAGE_MINOR_VERSION))
         {
             throw new Moduleˉformatˉexception(
                 "WVB1003",
@@ -390,6 +395,19 @@ public static class Moduleˉcodec
 
     internal static bool Isˉversionˉ1ˉ11ˉopcode(Opcode opcode) =>
         opcode is >= Opcode.I32ˉdivide and <= Opcode.Bytesˉnotˉequal;
+
+    private static bool Requiresˉversionˉ1ˉ12(Bytecodeˉmodule module) =>
+        module.Functions.Any(Function =>
+            Instructionˉcodec.Decode(
+                module.Code.AsSpan(Function.Codeˉoffset, Function.Codeˉlength),
+                Function.Name).Any(Instruction => Isˉversionˉ1ˉ12ˉopcode(Instruction.Opcode)));
+
+    private static bool Requiresˉversionˉ1ˉ12(Verifiedˉmodule module) =>
+        module.Functions.SelectMany(Function => Function.Instructions).Any(
+            Instruction => Isˉversionˉ1ˉ12ˉopcode(Instruction.Opcode));
+
+    internal static bool Isˉversionˉ1ˉ12ˉopcode(Opcode opcode) =>
+        opcode is Opcode.Bytesˉreadˉu64ˉlittle or Opcode.Bytesˉfromˉu64ˉlittle;
 
     private static void Writeˉmetadata(Byteˉwriter writer, Moduleˉmetadata metadata)
     {

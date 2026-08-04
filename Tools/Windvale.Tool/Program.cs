@@ -679,6 +679,7 @@ internal static class Program
         {
             return Usageˉerror(
                 "Usage: windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
+                "[--bind-read-only-directory <path>] " +
                 "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
                 "[--report-function-dynamic-values] [--report-dynamic-lifetime] " +
                 "[--report-dynamic-allocator] " +
@@ -688,6 +689,7 @@ internal static class Program
         var Moduleˉpath = arguments[0];
         var Authorized = ImmutableHashSet.CreateBuilder<string>(StringComparer.Ordinal);
         var Programˉarguments = ImmutableArray.CreateBuilder<string>();
+        string? Readˉonlyˉdirectoryˉpath = null;
         long Maximumˉsteps = 1_000_000;
         var Reportˉsteps = false;
         var Reportˉfunctionˉsteps = false;
@@ -714,6 +716,10 @@ internal static class Program
                         return Usageˉerror("--max-steps requires a positive integer.");
                     }
 
+                    break;
+                case "--bind-read-only-directory" when
+                    Index + 1 < arguments.Length && Readˉonlyˉdirectoryˉpath is null:
+                    Readˉonlyˉdirectoryˉpath = arguments[++Index];
                     break;
                 case "--report-steps":
                     Reportˉsteps = true;
@@ -744,6 +750,9 @@ internal static class Program
 
         var Bytes = Readˉmoduleˉbytes(Moduleˉpath);
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Readˉonlyˉdirectory = Readˉonlyˉdirectoryˉpath is null
+            ? null
+            : new Nativeˉreadˉonlyˉdirectory(Readˉonlyˉdirectoryˉpath);
         var Runtime = new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
@@ -751,7 +760,8 @@ internal static class Program
                 Console.Out,
                 Console.Error,
                 new Nativeˉhostedˉfileˉreader(),
-                new Nativeˉhostedˉfileˉwriter())),
+                new Nativeˉhostedˉfileˉwriter(),
+                Readˉonlyˉdirectory)),
             new(
                 Authorized.ToImmutable(),
                 Maximumˉsteps,
@@ -954,6 +964,7 @@ internal static class Program
         output.WriteLine("  windvale object-verify <object.wvo>");
         output.WriteLine(
             "  windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] " +
+            "[--bind-read-only-directory <path>] " +
             "[--report-steps] [--report-function-steps] [--report-function-record-fields] " +
             "[--report-function-dynamic-values] [--report-dynamic-lifetime] " +
             "[--report-dynamic-allocator] " +

@@ -49,6 +49,14 @@ public static class Moduleˉverifier
                     "WVB2107",
                     $"Function '{Function.Name}' uses a WVB 1.11 opcode in a WVB 1.{module.Formatˉminorˉversion} module.");
             }
+            if (module.Formatˉminorˉversion < Moduleˉcodec.STORAGE_MINOR_VERSION &&
+                Instructions.Any(Instruction =>
+                    Moduleˉcodec.Isˉversionˉ1ˉ12ˉopcode(Instruction.Opcode)))
+            {
+                Fail(
+                    "WVB2107",
+                    $"Function '{Function.Name}' uses a WVB 1.12 opcode in a WVB 1.{module.Formatˉminorˉversion} module.");
+            }
 
             Verifyˉfunction(module, Function, Instructions);
             Verifiedˉfunctions.Add(new(Function, Instructions));
@@ -65,7 +73,8 @@ public static class Moduleˉverifier
             Moduleˉcodec.MINOR_VERSION or
             Moduleˉcodec.VARIANT_MINOR_VERSION or
             Moduleˉcodec.COLLECTION_MINOR_VERSION or
-            Moduleˉcodec.OPERATOR_MINOR_VERSION))
+            Moduleˉcodec.OPERATOR_MINOR_VERSION or
+            Moduleˉcodec.STORAGE_MINOR_VERSION))
         {
             Fail(
                 "WVB2107",
@@ -744,6 +753,11 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.I32);
                 break;
+            case Opcode.Bytesˉreadˉu64ˉlittle:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U64);
+                break;
             case Opcode.I32ˉadd:
             case Opcode.I32ˉsubtract:
             case Opcode.I32ˉmultiply:
@@ -1086,6 +1100,10 @@ public static class Moduleˉverifier
                 break;
             case Opcode.Bytesˉfromˉi32ˉlittle:
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bytes);
+                break;
+            case Opcode.Bytesˉfromˉu64ˉlittle:
+                Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Bytes);
                 break;
             case Opcode.Bytesˉsha256ˉhex:

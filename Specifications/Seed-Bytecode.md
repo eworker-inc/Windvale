@@ -2,7 +2,7 @@
 
 ## Status
 
-This document specifies the current Windvale bytecode 1.6 through 1.11 vocabulary. Windvale is in early development; these versions identify currently implemented binary contracts and are not a backward-compatibility promise. Version 1.7 adds 64-bit scalars, 1.8 adds independent module metadata, 1.9 adds nominal payload variants and a metadata-presence byte, 1.10 adds bounded sequences and affine builders, and 1.11 adds division, remainder, fixed-width unsigned bitwise/shift operations, and exact text/bytes equality. The canonical writer emits the lowest current minor that contains every used feature, except that a metadata-bearing pre-variant module uses 1.8.
+This document specifies the current Windvale bytecode 1.6 through 1.12 vocabulary. Windvale is in early development; these versions identify currently implemented binary contracts and are not a backward-compatibility promise. Version 1.7 adds 64-bit scalars, 1.8 adds independent module metadata, 1.9 adds nominal payload variants and a metadata-presence byte, 1.10 adds bounded sequences and affine builders, 1.11 adds division, remainder, fixed-width unsigned bitwise/shift operations, and exact text/bytes equality, and 1.12 adds exact little-endian `u64` byte codecs. The canonical writer emits the lowest current minor that contains every used feature, except that a metadata-bearing pre-variant module uses 1.8.
 
 ## Encoding
 
@@ -19,11 +19,11 @@ This document specifies the current Windvale bytecode 1.6 through 1.11 vocabular
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 6 through 11, selected by the module vocabulary
+u16      minor version: 6 through 12, selected by the module vocabulary
 u32      section count: 7
 ```
 
-The verifier rejects every type or opcode introduced after the declared minor version. In particular, 1.7 owns types `9` and `10` plus opcodes `80` through `96`; 1.9 owns nominal kind `3`, shape `11`, and opcodes `97` through `99`; 1.10 owns shapes `12` and `13` plus opcodes `9A` through `9E`; and 1.11 owns opcodes `9F` through `BC`.
+The verifier rejects every type or opcode introduced after the declared minor version. In particular, 1.7 owns types `9` and `10` plus opcodes `80` through `96`; 1.9 owns nominal kind `3`, shape `11`, and opcodes `97` through `99`; 1.10 owns shapes `12` and `13` plus opcodes `9A` through `9E`; 1.11 owns opcodes `9F` through `BC`; and 1.12 owns opcodes `BD` and `BE`.
 
 Every section has this envelope:
 
@@ -323,6 +323,8 @@ B9 text.equal
 BA text.not_equal
 BB bytes.equal
 BC bytes.not_equal
+BD bytes.read_u64_little consumes bytes and u32 offset, produces u64 (WVB 1.12)
+BE bytes.from_u64_little consumes u64, produces eight bytes (WVB 1.12)
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -339,7 +341,7 @@ BC bytes.not_equal
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The minor version matches the vocabulary through WVB 1.11, and 1.8 versus 1.9-or-later Module metadata is encoded exactly as specified above.
+- The minor version matches the vocabulary through WVB 1.12, and 1.8 versus 1.9-or-later Module metadata is encoded exactly as specified above.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent WVB 1.8 metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
@@ -348,7 +350,7 @@ Verification is required before execution and rejects a module unless:
 - Every collection shape has an admitted non-collection element and maximum; builder transitions and sequence operations have exact types and cannot cross forbidden boundaries.
 - Division/remainder, bitwise/shift, and content equality operations have exact operand types; shifts use a `u32` count and content equality is limited to text and bytes.
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
-- Strict UTF-8 decoding and encoding, safe quoting, signed little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
+- Strict UTF-8 decoding and encoding, safe quoting, signed and `u64` little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
 - Calls consume the declared parameter types and push only a non-void result.
 - Returns match the function return type.

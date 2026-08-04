@@ -202,6 +202,7 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.Bytesˉreadˉu16ˉlittle:
                 case Wirˉoperation.Bytesˉreadˉu32ˉlittle:
                 case Wirˉoperation.Bytesˉreadˉi32ˉlittle:
+                case Wirˉoperation.Bytesˉreadˉu64ˉlittle:
                     Loadˉarguments(instruction.Operands);
                     Emitˉnone(
                         Mapˉopcode(instruction.Operation),
@@ -384,6 +385,7 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.Bytesˉfromˉu16ˉlittle:
                 case Wirˉoperation.Bytesˉfromˉu32ˉlittle:
                 case Wirˉoperation.Bytesˉfromˉi32ˉlittle:
+                case Wirˉoperation.Bytesˉfromˉu64ˉlittle:
                 case Wirˉoperation.Bytesˉsha256ˉhex:
                 case Wirˉoperation.Textˉtoˉutf8:
                     Loadˉtemporary(instruction.Operands[0]);
@@ -712,6 +714,7 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.Bytesˉreadˉu16ˉlittle => Opcode.Bytesˉreadˉu16ˉlittle,
                 Wirˉoperation.Bytesˉreadˉu32ˉlittle => Opcode.Bytesˉreadˉu32ˉlittle,
                 Wirˉoperation.Bytesˉreadˉi32ˉlittle => Opcode.Bytesˉreadˉi32ˉlittle,
+                Wirˉoperation.Bytesˉreadˉu64ˉlittle => Opcode.Bytesˉreadˉu64ˉlittle,
                 Wirˉoperation.U32ˉadd => Opcode.U32ˉadd,
                 Wirˉoperation.U32ˉsubtract => Opcode.U32ˉsubtract,
                 Wirˉoperation.U32ˉmultiply => Opcode.U32ˉmultiply,
@@ -780,6 +783,7 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.Bytesˉfromˉu16ˉlittle => Opcode.Bytesˉfromˉu16ˉlittle,
                 Wirˉoperation.Bytesˉfromˉu32ˉlittle => Opcode.Bytesˉfromˉu32ˉlittle,
                 Wirˉoperation.Bytesˉfromˉi32ˉlittle => Opcode.Bytesˉfromˉi32ˉlittle,
+                Wirˉoperation.Bytesˉfromˉu64ˉlittle => Opcode.Bytesˉfromˉu64ˉlittle,
                 Wirˉoperation.Bytesˉsha256ˉhex => Opcode.Bytesˉsha256ˉhex,
                 Wirˉoperation.Textˉtoˉutf8 => Opcode.Textˉtoˉutf8,
                 _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),

@@ -250,6 +250,8 @@ public enum Opcode : byte
     Textˉnotˉequal = 0xBA,
     Bytesˉequal = 0xBB,
     Bytesˉnotˉequal = 0xBC,
+    Bytesˉreadˉu64ˉlittle = 0xBD,
+    Bytesˉfromˉu64ˉlittle = 0xBE,
 
     Jump = 0x30,
     Branchˉfalse = 0x31,

@@ -48,7 +48,11 @@ reading the format.
 | Leaf value | `i32` |
 
 These small values make malformed-input and complete-boundary execution cheap.
-They are not performance recommendations for a later storage engine.
+They are not performance recommendations for a later storage engine. The
+durable direction uses `u64` byte offsets, page identities, generations, and
+log positions under
+[Decision 0207](../Documents/Decisions/0207-U64-Binary-Fields-For-Durable-Storage.md);
+this experimental format is not widened in place.
 
 ## Database header
 

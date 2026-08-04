@@ -173,7 +173,7 @@ algorithm layers.
 | Candidate work | Current readiness | Boundary |
 | --- | --- | --- |
 | Database architecture and format proposal | Ready | Documentation makes no execution claim. |
-| Checksums, endian codecs, key comparison, and page validation | Ready in bounded slices | Current scalars and immutable `bytes` can express the algorithms. |
+| Checksums, endian codecs, key comparison, and page validation | Ready in bounded slices | Current scalars and immutable `bytes` can express the algorithms; WVB 1.12 adds exact little-endian `u64` field codecs in the Stage 0 reference profile. |
 | One read-only B+tree lookup over a small in-memory fixture | Implemented experiment | [`WVDB 1`](../../Specifications/Windvale-Database-Reader.md) validates at most 64 256-byte pages and returns a typed exact `u32` to `i32` result. It is not an accepted durable format. |
 | Bounded sequences and builders | Ready for narrow algorithms | WVB 1.11 implements bounded immutable sequences, affine builders, and deterministic `for`; nested collections, general maps, and database page ownership remain unavailable. |
 | General page and row collections | Not ready | Deterministic maps/page tables, nested or variable-size aggregates, exact allocation charging, and consuming database publication remain unimplemented. |
@@ -184,14 +184,41 @@ algorithm layers.
 
 Checked `i64` and `u64` are an implemented Stage 0 candidate under
 [Decision 0138](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md),
-but native, Windvale-written compiler, WebAssembly, and Windvale OS profiles do
-not yet share that support.
+and [Decision 0207](../Decisions/0207-U64-Binary-Fields-For-Durable-Storage.md)
+adds exact WVB 1.12 little-endian `u64` field codecs. Native, Windvale-written
+compiler, WebAssembly, and Windvale OS profiles do not yet share that support.
 [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md)
 now supplies the first bounded ownership and builder slice required by
 [Decision 0137](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md).
 The reader uses the concurrently delivered payload-variant result surface; its
 small recursive search path does not claim that general database collections
 or ownership are complete.
+
+## Durable integer-width direction
+
+The experimental reader's `u32` fields remain intentionally local to its
+16,416-byte immutable fixture. A future durable format uses distinct scalar
+domains rather than treating every integer as interchangeable:
+
+| Domain | Selected durable direction | Reason |
+| --- | --- | --- |
+| Byte offset and file length | `u64` | Avoid the approximate 4 GiB `u32` byte-position ceiling. |
+| Page identity and persisted child reference | `u64` | Preserve long-lived identity across growth, recovery, reclamation, and generations. |
+| Generation, commit sequence, and WAL position | `u64` | Prevent practical rollover from aliasing durable history. |
+| Mutation/idempotency identity | `u64` minimum | Make uncertain-completion detection explicit; final shape may be wider or structured. |
+| Page size, chunk length, entry count, and bounded collection count | `u32` | These remain deliberately bounded in memory and at capability boundaries. |
+| Status, version, flags, and algorithm identifiers | Small explicit widths | Their closed value spaces do not benefit from widening. |
+
+A page identity is not a byte offset. Converting it to storage position uses
+checked `u64` arithmetic for `header_size + page_id * page_size`, then validates
+the complete requested range against the granted storage object's length and
+configured growth ceiling. Reusing a physical page requires an explicit
+generation/fencing rule; an equal numeric offset alone cannot prove that a
+cached or logged reference is current.
+
+This direction does not assign a durable magic or format version yet. Page
+layout, checksums, commit publication, WAL recovery, and malformed-input rules
+must be selected together before a persistent format is accepted.
 
 ## Required enabling contracts
 
@@ -205,8 +232,8 @@ The first writable database milestone requires at least:
    database publication remain required;
 3. scoped capability-resource ownership with explicit close, stale-generation,
    and provider-loss behavior;
-4. `i64` and `u64` support through the selected compiler, verifier, interpreter,
-   native ABI, and backend profile;
+4. `i64` and `u64` support, including the WVB 1.12 binary codecs, through the
+   selected compiler, verifier, interpreter, native ABI, and backend profile;
 5. a rights-limited storage capability with exact random-access reads, append or
    positioned writes, partial-progress reporting, flush and durability classes,
    atomic root replacement, directory-metadata behavior, locking or fencing,
@@ -222,6 +249,46 @@ The storage capability should bind pre-authorized storage roots or objects, not
 grant ambient native paths. Its operations must distinguish rejection, exact
 partial progress, completion, and indeterminate mutation completion. A flush
 must state exactly which data and metadata durability boundary it proves.
+
+### First database-storage interface to specify
+
+The first mutable interface should bind one pre-opened database storage object
+with one exclusive writer fence. Its semantic operations should be separated
+rather than hidden behind a general file API:
+
+```text
+Describe() -> limits, durability class, provider generation
+Length() -> typed u64 length result
+Read_at(Offset: u64, Maximum: u32) -> typed exact chunk result
+Write_at(Offset: u64, Value: bytes, Mutation: u64) -> typed progress result
+Set_length(Length: u64, Mutation: u64) -> typed mutation result
+Flush_content(Mutation: u64) -> typed durability result
+Close() -> typed close result
+```
+
+These are semantic shapes, not accepted source syntax or capability catalog
+names. `Describe` must complete before mutation and report the maximum storage
+length, maximum chunk, alignment requirements, whether extending positioned
+writes are allowed, and the exact stable-storage guarantee. `Read_at` has no
+implicit cursor. `Write_at` never creates a gap unless the contract explicitly
+admits it, and its result distinguishes rejected-before-change, exact partial
+progress, complete progress, and indeterminate completion. `Set_length` is a
+separate metadata mutation. `Flush_content` covers completed content and the
+extent metadata required to read it after provider-declared power loss; it does
+not imply atomic native-path replacement or directory-entry durability.
+
+The `Mutation` identity and provider generation make retry decisions explicit.
+After an indeterminate result, the engine must query or recover the operation's
+state; it must not blindly replay the mutation. Loss of the exclusive writer
+fence makes the instance stale and prevents further writes. Revocation,
+provider exit, close, and stale generation are ordinary typed outcomes.
+
+The first database can avoid requiring cross-platform atomic file replacement
+by publishing commits inside one storage object: write new pages, flush their
+content, write one checksummed alternate superblock/root record, then flush
+again. Recovery selects the newest completely valid generation. Backup and
+whole-file replacement remain later optional interfaces with their own
+directory-durability contracts.
 
 ## Proposed implementation sequence
 

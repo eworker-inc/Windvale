@@ -211,6 +211,7 @@ public static class Moduleˉinspector
             Opcode.Bytesˉreadˉu16ˉlittle => "bytes.read_u16_little",
             Opcode.Bytesˉreadˉu32ˉlittle => "bytes.read_u32_little",
             Opcode.Bytesˉreadˉi32ˉlittle => "bytes.read_i32_little",
+            Opcode.Bytesˉreadˉu64ˉlittle => "bytes.read_u64_little",
             Opcode.Recordˉcreate =>
                 $"record.create type[{instruction.Unsignedˉoperand}] ({module.Types[(int)instruction.Unsignedˉoperand].Name})",
             Opcode.Recordˉfield => $"record.field {instruction.Unsignedˉoperand}",
@@ -236,6 +237,7 @@ public static class Moduleˉinspector
             Opcode.Bytesˉfromˉu16ˉlittle => "bytes.from_u16_little",
             Opcode.Bytesˉfromˉu32ˉlittle => "bytes.from_u32_little",
             Opcode.Bytesˉfromˉi32ˉlittle => "bytes.from_i32_little",
+            Opcode.Bytesˉfromˉu64ˉlittle => "bytes.from_u64_little",
             Opcode.Bytesˉsha256ˉhex => "bytes.sha256_hex",
             Opcode.Textˉtoˉutf8 => "text.to_utf8",
             Opcode.I32ˉadd => "i32.add",

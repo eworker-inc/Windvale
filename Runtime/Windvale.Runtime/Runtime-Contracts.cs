@@ -464,6 +464,7 @@ public enum Runtimeˉdynamicˉvalueˉkind : byte
     Bytesˉfromˉi32ˉlittle = 10,
     I64ˉformat = 11,
     U64ˉformat = 12,
+    Bytesˉfromˉu64ˉlittle = 13,
 }
 
 public sealed record Runtimeˉfunctionˉdynamicˉvalues(

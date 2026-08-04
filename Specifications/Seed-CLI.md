@@ -12,7 +12,7 @@ windvale inspect <module.wvb>
 windvale verify <module.wvb>
 windvale object-inspect <object.wvo>
 windvale object-verify <object.wvo>
-windvale run <module.wvb> [--allow <capability>]... [--max-steps <count>] [--report-steps] [--report-function-steps] [-- <argument>...]
+windvale run <module.wvb> [--allow <capability>]... [--bind-read-only-directory <path>] [--max-steps <count>] [--report-steps] [--report-function-steps] [-- <argument>...]
 windvale help
 ```
 
@@ -37,6 +37,7 @@ windvale help
 - `object-verify` performs complete WVO structural verification and prints the architecture and SHA-256 digest.
 - `run` verifies before execution and invokes exported `Main() -> i32`.
 - Hosted capabilities must be granted individually with `--allow`. Declaring a capability in the module does not authorize it.
+- `--bind-read-only-directory <path>` materializes one rights-limited immutable reference-host snapshot for `filesystem.directory_read_v1`. Binding does not grant authority; the capability still requires its own `--allow`. The provider retains at most 4,096 queryable immediate entries and 64 MiB of regular-file bytes, uses exact ordinal names, does not follow links, and exposes no native path to Windvale source.
 - `--max-steps` is a positive integer and defaults to 1,000,000 executed instructions.
 - `--report-steps` prints the exact executed-instruction count after a successful run. It is opt-in so existing scripts keep stable output.
 - `--report-function-steps` writes one deterministic standard-error line for every executed function, ordered by descending instruction count then function index. It reports partial counts after a runtime failure and is opt-in; the default runtime does not allocate function counters.

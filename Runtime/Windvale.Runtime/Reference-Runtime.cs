@@ -561,6 +561,17 @@ public sealed class Referenceˉruntime
                             Readˉi32ˉsource.Storage,
                             Readˉi32ˉabsolute)));
                         break;
+                    case Opcode.Bytesˉreadˉu64ˉlittle:
+                        var Readˉu64ˉoffset = Stack.Pop().U32ˉvalue;
+                        var Readˉu64ˉsource = Stack.Pop().Bytesˉvalue;
+                        var Readˉu64ˉabsolute = Requireˉbyteˉrange(
+                            Readˉu64ˉsource,
+                            Readˉu64ˉoffset,
+                            sizeof(ulong));
+                        Stack.Push(Runtimeˉvalue.Fromˉu64(Readˉu64(
+                            Readˉu64ˉsource.Storage,
+                            Readˉu64ˉabsolute)));
+                        break;
                     case Opcode.I32ˉadd:
                         Applyˉi32ˉbinary(Stack, (Left, Right) => checked(Left + Right));
                         break;
@@ -938,6 +949,17 @@ public sealed class Referenceˉruntime
                         Stack.Push(Runtimeˉvalue.Fromˉbytes(
                             ImmutableArray.Create(I32ˉbytes),
                             I32ˉbytesˉroots));
+                        break;
+                    case Opcode.Bytesˉfromˉu64ˉlittle:
+                        var U64ˉbytes = new byte[sizeof(ulong)];
+                        BinaryPrimitives.WriteUInt64LittleEndian(U64ˉbytes, Stack.Pop().U64ˉvalue);
+                        var U64ˉbytesˉroots = Recordˉdynamicˉvalue(
+                            functionˉindex,
+                            Runtimeˉdynamicˉvalueˉkind.Bytesˉfromˉu64ˉlittle,
+                            U64ˉbytes.Length);
+                        Stack.Push(Runtimeˉvalue.Fromˉbytes(
+                            ImmutableArray.Create(U64ˉbytes),
+                            U64ˉbytesˉroots));
                         break;
                     case Opcode.Bytesˉsha256ˉhex:
                         Stack.Push(Runtimeˉvalue.Fromˉtext(
@@ -2335,6 +2357,13 @@ public sealed class Referenceˉruntime
         Span<byte> Buffer = stackalloc byte[sizeof(uint)];
         source.Copyˉto(Buffer, offset, Buffer.Length);
         return BinaryPrimitives.ReadUInt32LittleEndian(Buffer);
+    }
+
+    private static ulong Readˉu64(Runtimeˉbyteˉnode source, int offset)
+    {
+        Span<byte> Buffer = stackalloc byte[sizeof(ulong)];
+        source.Copyˉto(Buffer, offset, Buffer.Length);
+        return BinaryPrimitives.ReadUInt64LittleEndian(Buffer);
     }
 
     private static int Readˉi32(Runtimeˉbyteˉnode source, int offset)
